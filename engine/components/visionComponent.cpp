@@ -960,7 +960,10 @@ namespace Vector {
                 
         // Store frame rate and last image processed time. Time should only move forward.
         DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
-        _processingPeriod_ms = (TimeStamp_t)(result.timestamp - _lastProcessedImageTimeStamp_ms);
+        if(_lastProcessedImageTimeStamp_ms != 0)
+        {
+          _processingPeriod_ms = (TimeStamp_t)(result.timestamp - _lastProcessedImageTimeStamp_ms);
+        }
         _lastProcessedImageTimeStamp_ms = result.timestamp;
 
         auto visionModesList = std::vector<VisionMode>();
@@ -2310,10 +2313,15 @@ namespace Vector {
                      numCols,numRows);
     }
 
-    // Get image buffer
+    // Get image buffer. Only request an image from a timestamp for which we have both robot state history _and_ IMU
+    // history.
+    u32 newestStateHistoryTimeStamp = (u32)_robot->GetStateHistory()->GetNewestTimeStamp();
+    const auto& imuHistory = _robot->GetImuComponent().GetImuHistory();
+    if (!imuHistory.empty()) {
+      newestStateHistoryTimeStamp = std::min(newestStateHistoryTimeStamp, (u32) imuHistory.back().timestamp);
+    }
+    const bool gotImage = cameraService->CameraGetFrame(newestStateHistoryTimeStamp, buffer);
     const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    const bool gotImage = cameraService->CameraGetFrame((u32)_robot->GetStateHistory()->GetNewestTimeStamp(),
-                                                        buffer);
     if(gotImage)
     {
       buffer.SetDownsampleIfBayer(_shouldDownsampleBayer);
@@ -2919,6 +2927,15 @@ namespace Vector {
     PRINT_NAMED_INFO("VisionComponent.EnableImageCapture",
                      "%s image capture",
                      (enable ? "Enabling" : "Disabling"));
+
+    // If going from disabled to enabled then reset
+    // _lastProcessedImageTimeStamp_ms since it could be really old
+    if(!_enableImageCapture && enable)
+    {
+      _lastProcessedImageTimeStamp_ms = 0;
+      _lastReceivedImageTimeStamp_ms = 0;
+    }
+    
     _enableImageCapture = enable;
     CameraService::getInstance()->PauseCamera(!enable);
   }

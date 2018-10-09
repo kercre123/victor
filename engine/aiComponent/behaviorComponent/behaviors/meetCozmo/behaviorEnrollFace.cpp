@@ -67,19 +67,15 @@ namespace Vector {
 
 namespace {
 
-CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeoutForReLookForFace_ms,          CONSOLE_GROUP, 1500);
+CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeoutForReLookForFace_ms,          CONSOLE_GROUP, 3000);
 
 // Thresholds for when to update face ID based on pose
 CONSOLE_VAR(f32,               kEnrollFace_UpdateFacePositionThreshold_mm,      CONSOLE_GROUP, 100.f);
 CONSOLE_VAR(f32,               kEnrollFace_UpdateFaceAngleThreshold_deg,        CONSOLE_GROUP, 45.f);
 
 // Default timeout for overall enrollment (e.g. to be looking for a face or waiting for enrollment to complete)
-CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         CONSOLE_GROUP, 15.f);
-CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      CONSOLE_GROUP, 35.f);
-
-// Amount of "extra" time to add each time we re-start actually enrolling, in case we lose the face
-// mid way or take a while to initially find the face, up to the max timeout
-CONSOLE_VAR(f32,               kEnrollFace_TimeoutExtraTime_sec,                CONSOLE_GROUP, 8.f);
+CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         CONSOLE_GROUP, 25.f);
+CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      CONSOLE_GROUP, 45.f);
 
 // Amount to drive forward once face is found to signify intent
 CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentDist_mm,           CONSOLE_GROUP, 14.f);
@@ -724,6 +720,9 @@ void BehaviorEnrollFace::BehaviorUpdate()
         // or reoriented, go back to looking for them
         if(lostEnrollee)
         {
+          DASMSG(behavior_meet_victor_lost_enrollee, "behavior.meet_victor.lost_enrollee",
+                 "It has been too long since we saw the face we were trying to enroll, resetting enrollment");
+          DASMSG_SEND();
           PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.LostEnrollee",
                         "LastSeen:%ums LastImage:%ums",
                         (TimeStamp_t)_dVars->lastFaceSeenTime_ms, (TimeStamp_t)lastImgTime_ms);
@@ -1070,6 +1069,10 @@ bool BehaviorEnrollFace::HasTimedOut() const
 
   if(hasTimedOut)
   {
+    DASMSG(behavior_meet_victor_has_timed_out, "behavior.meet_victor.has_timed_out",
+           "We reached the global timeout for meet victor");
+    DASMSG_SET(i1, _dVars->timeout_sec, "Timeout value (sec)");
+    DASMSG_SEND();
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HasTimedOut.BehaviorTimedOut",
                   "TimedOut after %.1fsec in State:%s",
                   _dVars->timeout_sec, GetDebugStateName().c_str());
@@ -1328,7 +1331,10 @@ void BehaviorEnrollFace::TransitionToStartEnrollment()
   
   // Give ourselves a little more time to finish now that we've seen a face, but
   // don't go over the max timeout
-  _dVars->timeout_sec = std::min(kEnrollFace_TimeoutMax_sec, _dVars->timeout_sec + kEnrollFace_TimeoutExtraTime_sec);
+  _dVars->timeout_sec = std::min(kEnrollFace_TimeoutMax_sec,
+                                 _dVars->timeout_sec +
+                                 kEnrollFace_TimeoutForReLookForFace_ms *
+                                 (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry);
   
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.FaceSeen",
                 "Found face %d to enroll. Timeout set to %.1fsec",

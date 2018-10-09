@@ -142,6 +142,7 @@
     'FACE_TRACKER_FACESDK=1',
     'FACE_TRACKER_OPENCV=2',
     'FACE_TRACKER_OKAO=3',
+    'FACE_TRACKER_TEST=4',
   ],
   'conditions': [
     ['face_library=="faciometric"', {
@@ -155,6 +156,9 @@
     }],
     ['face_library=="okao"', {
       'defines' : ['FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO'],
+    }],
+    ['face_library=="test"', {
+      'defines' : ['FACE_TRACKER_PROVIDER=FACE_TRACKER_TEST'],
     }],
   ],
   'xcode_settings': {

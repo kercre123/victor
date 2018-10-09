@@ -128,6 +128,7 @@ protected:
   void MoveLiftToLowDock();
   void MoveLiftToHighDock();
   void MoveLiftToCarryHeight();
+  void MoveLiftToAngle();
   
   void MoveHeadToLowLimit();
   void MoveHeadToHorizontal();

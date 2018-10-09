@@ -3,14 +3,17 @@ cxx_project(
     srcs = glob([
       'run_SwitchboardTests.cpp',
       'test_INetworkStreamV2.cpp',
-      'test_INetworkStreamV3.cpp'
+      'test_INetworkStreamV3.cpp',
+      'test_INetworkStreamV4.cpp'
     ]),
     platform_srcs = [],
     headers = [
       'test_INetworkStreamV2.h',
       'test_INetworkStreamV3.h',
+      'test_INetworkStreamV4.h',
       'test_CladHandler.h',
-      'test_CladHandlerV3.h'
+      'test_CladHandlerV3.h',
+      'test_CladHandlerV4.h'
     ],
     platform_headers = []
 )

@@ -153,6 +153,7 @@ PROTO WebotsKeyboardController [
 
   field SFFloat liftSpeedDegPerSec 120
   field SFFloat liftAccelDegPerSec2 600
+  field SFFloat liftTargetAngleDeg 0
 
   # If non-zero, this is how much time it will take for the lift to move
   # to a commanded height (via keys '1', '2', and '3')

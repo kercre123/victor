@@ -145,7 +145,9 @@ void MirrorModeManager::DrawAutoExposure(const VisionProcessingResult& procResul
   }
   const f32  kFontScale = 0.4f;
   const bool kUseDropShadow = true;
-  _screenImg.DrawText({1,_screenImg.GetNumRows()-1}, exposureStr, NamedColors::RED, kFontScale, kUseDropShadow);
+  Vec2f textSize = _screenImg.GetTextSize(exposureStr, kFontScale, 1);
+  _screenImg.DrawText({_screenImg.GetNumCols() - textSize.x() - 1, _screenImg.GetNumRows()-1}, 
+                      exposureStr, NamedColors::RED, kFontScale, kUseDropShadow);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -90,9 +90,9 @@ TEST(BehaviorDirectoryStructure, Run)
   //          bool _gTestDumpAnimTriggers = false;
   //          std::set<std::string> _gTestAnimTriggers;
   //    (5) Still in animationTrigger.cpp, in the EnumToString() for anim triggers, add this before return true:
-  //        if( _gTestDumpAnimTriggers ) {
-  //          _gTestAnimTriggers.insert(str);
-  //        }
+  //          if( _gTestDumpAnimTriggers ) {
+  //            _gTestAnimTriggers.insert(str);
+  //          }
   //    (6) Rerun this test. (In Xcode, this won't cause the clad to regenerate, but if you're instead
   //        using build scripts, you'll have to disable clad generation.) You should now see an additional
   //        stdout output for all animation triggers used during a behavior's construction and Init()
@@ -190,7 +190,7 @@ TEST(BehaviorDirectoryStructure, Run)
     ss += elem;
     ss += "\n";
   }
-  std::cout << "BEHAVIOR CLASSES USED:" << std::endl << ss;
+  std::cout << "<BEGIN_BEHAVIOR_CLASSES_USED>" << std::endl << ss << "<END_BEHAVIOR_CLASSES_USED>" << std::endl;
   
   // (Part 3) dump animation trigger loaded by config
 # if TEST_GENERATE_ANIMATION_TRIGGERS
@@ -201,7 +201,7 @@ TEST(BehaviorDirectoryStructure, Run)
         ss += trigger;
         ss += "\n";
       }
-      std::cout << "ANIMATIONTRIGGERS USED:" << std::endl << ss;
+      std::cout << "<BEGIN_ANIMATION_TRIGGERS_USED>" << std::endl << ss << "<END_ANIMATION_TRIGGERS_USED>" << std::endl;
     }
   }
 # endif

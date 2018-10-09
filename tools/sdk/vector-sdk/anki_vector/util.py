@@ -509,7 +509,6 @@ class Matrix44:
         self.m32 = z
 
 
-# TODO See Cozmo class Quaternion definition. Use some/all of that here, including helper methods?
 class Quaternion:
     """Represents the rotation of an object in the world."""
 
@@ -629,16 +628,8 @@ class Position(Vector3):
     __slots__ = ()
 
 
-# TODO In Cozmo, this class has an `invalidate` method that is used in the SDK. Why not in Vector?
-# TODO add pose_quaternion and pose_z_angle from Cozmo or remove from docs below
 class Pose:
     """Represents where an object is in the world.
-
-    Use the :func:'pose_quaternion' to return pose in the form of
-    position and rotation defined by a quaternion
-
-    Use the :func:'pose_z_angle' to return pose in the form of
-    position and rotation defined by rotation about the z axis.
 
     Whenever Vector is de-localized (i.e. whenever Vector no longer knows
     where he is - e.g. when he's picked up), Vector creates a new pose starting at
@@ -925,7 +916,7 @@ class RectangleOverlay(BaseOverlay):
         :param line_color: The color of the line to be drawn.
     """
 
-    # @TODO: This overlay should be implemented using an ImageRect similar to cozmo, rather than a raw width&height
+    # @TODO Implement overlay using an ImageRect rather than a raw width & height
     def __init__(self, width: int, height: int, line_thickness: int = 5, line_color: tuple = (255, 0, 0)):
         super().__init__(line_thickness, line_color)
         self._width: int = width

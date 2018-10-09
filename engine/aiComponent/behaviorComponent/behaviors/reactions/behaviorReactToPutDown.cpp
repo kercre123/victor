@@ -19,6 +19,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "util/logging/DAS.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Vector {
@@ -52,6 +53,7 @@ void BehaviorReactToPutDown::InitBehavior()
   // Waiting animation that cancels itself when the robot has been on its treads for at least 3 seconds,
   // or the animation has been played for at least 3 seconds.
   _iConfig.waitInternalBehavior = FindAnonymousBehaviorByName("PutDownWaitInternal");
+  DEV_ASSERT(_iConfig.waitInternalBehavior != nullptr, "BehaviorReactToPutDown.InitBehavior.AnonymousBehaviorNotFound");
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -101,7 +103,10 @@ void BehaviorReactToPutDown::TransitionToPlayingWaitAnimation()
   DEBUG_SET_STATE(Waiting);
  
   // Play the waiting animation.
-  DelegateIfInControl(_iConfig.waitInternalBehavior.get());
+  if (ANKI_VERIFY(_iConfig.waitInternalBehavior->WantsToBeActivated(),
+                  "BehaviorReactToPutDown.TransitionToPlayingWaitAnimation.WaitDoesNotWantToBeActivated", "")) {
+    DelegateIfInControl(_iConfig.waitInternalBehavior.get());
+  }
 }
 
 }

@@ -202,7 +202,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.GoToPose(go_to_pose_request)
 
-    # TODO Check that num_retries is actually working (and if not, same for other num_retries).
+    # TODO Check that num_retries is working (and if not, same for other num_retries).
     # TODO alignment_type coming out ugly in the docs without real values
     # TODO DockWithCubeResponse not clear what it is in docs
     @sync.Synchronizer.wrap

@@ -323,6 +323,7 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
 #endif
   newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
   newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
+  newJob->SetAudioFadeInTime(MicDataInfo::kDefaultAudioFadeIn_ms);
   
   // Copy the current audio chunks in the trigger overlap buffer
   // The immediate buffer is bigger than just the overlap time (time right after trigger end but before trigger was

@@ -885,11 +885,11 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
 {
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToRobot");
-  msgProfiler.Update(msg.tag, msg.Size());
-
   LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
   bool result = AnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
-  if (!result) {
+  if (result) {
+    msgProfiler.Update(msg.tag, msg.Size());
+  } else {
     msgProfiler.ReportOnFailure();
   }
   return result;
@@ -898,11 +898,12 @@ bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& m
 bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
 {
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToEngine");
-  msgProfiler.Update(msg.tag, msg.Size());
 
   LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", msg.tag, msg.Size());
   bool result = AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
-  if (!result) {
+  if (result) {
+    msgProfiler.Update(msg.tag, msg.Size());
+  } else {
     msgProfiler.ReportOnFailure();
   }
   return result;

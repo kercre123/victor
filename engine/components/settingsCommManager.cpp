@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/components/accountSettingsManager.h"
 #include "engine/components/jdocsManager.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/components/settingsManager.h"
 #include "engine/components/userEntitlementsManager.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
@@ -390,7 +391,12 @@ void SettingsCommManager::OnRequestPullJdocs(const external_interface::PullJdocs
     auto jdocType = pullJdocsRequest.jdoc_types(i);
     auto* namedJdoc = pullJdocsResp->add_named_jdocs();
     namedJdoc->set_jdoc_type(jdocType);
-    _jdocsManager->GetJdoc(jdocType, *namedJdoc->mutable_doc());
+    JdocsManager::JsonTransformFunc transformFunc = nullptr;
+    if (jdocType == external_interface::JdocType::ROBOT_LIFETIME_STATS)
+    {
+      transformFunc = &RobotStatsTracker::FilterStatsForApp;
+    }
+    _jdocsManager->GetJdoc(jdocType, *namedJdoc->mutable_doc(), transformFunc);
   }
   _gatewayInterface->Broadcast(ExternalMessageRouter::WrapResponse(pullJdocsResp));
 }

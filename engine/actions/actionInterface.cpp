@@ -146,6 +146,7 @@ namespace Anki {
         case RobotActionType::HANG:
         case RobotActionType::MOUNT_CHARGER:
         case RobotActionType::MOVE_HEAD_TO_ANGLE:
+        case RobotActionType::MOVE_LIFT_TO_ANGLE:
         case RobotActionType::MOVE_LIFT_TO_HEIGHT:
         case RobotActionType::PAN_AND_TILT:
         case RobotActionType::PLAY_CUBE_ANIMATION:

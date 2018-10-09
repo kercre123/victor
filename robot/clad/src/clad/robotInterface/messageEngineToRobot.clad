@@ -85,6 +85,15 @@ message SetLiftHeight
   uint_8   actionID = 0,
 }
 
+message SetLiftAngle
+{
+  float_32 angle_rad,
+  float_32 max_speed_rad_per_sec,
+  float_32 accel_rad_per_sec2,
+  float_32 duration_sec,
+  uint_8   actionID = 0,
+}
+
 message SetHeadAngle
 {
   float_32 angle_rad,
@@ -666,7 +675,7 @@ union EngineToRobot
   MoveHead                      moveHead                    = 0x13,
   SetLiftHeight                 liftHeight                  = 0x14,
   SetHeadAngle                  headAngle                   = 0x15,
-  //   FREE SLOT                                            = 0x16,
+  SetLiftAngle                  setLiftAngle                = 0x16,
   SetBodyAngle                  setBodyAngle                = 0x17,
   TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x18,
   RecordHeading                 recordHeading               = 0x19,

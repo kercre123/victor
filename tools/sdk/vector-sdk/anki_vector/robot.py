@@ -38,11 +38,6 @@ MIN_HEAD_ANGLE = util.degrees(-22)
 #: The maximum angle the robot's head can be set to
 MAX_HEAD_ANGLE = util.degrees(45)
 
-# TODO Consider adding constants from Cozmo's robot.py for MIN_LIFT_HEIGHT_MM, MIN_LIFT_HEIGHT,
-# MAX_LIFT_HEIGHT_MM, MAX_LIFT_HEIGHT, LIFT_ARM_LENGTH, LIFT_PIVOT_HEIGHT, MIN_LIFT_ANGLE, and MAX_LIFT_ANGLE
-
-# TODO Consider adding Cozmo's LiftPosition class
-
 
 class Robot:
     """The Robot object is responsible for managing the state and connections
@@ -100,7 +95,7 @@ class Robot:
                  behavior_activation_timeout: int = 10,
                  cache_animation_list: bool = True,
                  enable_vision_mode: bool = False,
-                 enable_camera_feed: bool = True,
+                 enable_camera_feed: bool = False,
                  enable_audio_feed: bool = False,
                  show_viewer: bool = False):
 
@@ -180,7 +175,13 @@ class Robot:
         conf_file = str(home / "sdk_config.ini")
         parser = configparser.ConfigParser(strict=False)
         parser.read(conf_file)
-        return parser[serial]
+
+        try:
+            dict_entry = parser[serial]
+        except KeyError:
+            raise Exception("Could not find matching robot info for serial. Please check your serial number is correct.")
+
+        return dict_entry
 
     # TODO sample code
     @property
@@ -425,7 +426,6 @@ class Robot:
         """
         return self._last_image_time_stamp
 
-    # TODO Cozmo SDK has Robot properties including is_cliff_detected, is_moving, is_falling, is_picked_up, is_animated, is_pathing, and more (see Cozmo's robot.py). Instead we are currently burying this in status, it seems? Make this more palatable to Python. Needs improved sample code.
     @property
     def status(self) -> float:
         """Describes Vector's status.
@@ -463,7 +463,7 @@ class Robot:
         """The audio feed enabled/disabled
 
         :getter: Returns whether the audio feed is enabled
-        :setter: Enable/disable the audio feeed
+        :setter: Enable/disable the audio feed
 
         .. code-block:: python
 
@@ -480,13 +480,12 @@ class Robot:
         if self.enable_audio_feed:
             self.audio.init_audio_feed()
 
-    # TODO For Cozmo, this was named robot.camera.image_stream_enabled. Rename?
     @property
     def enable_camera_feed(self) -> bool:
         """The camera feed enabled/disabled
 
         :getter: Returns whether the camera feed is enabled
-        :setter: Enable/disable the camera feeed
+        :setter: Enable/disable the camera feed
 
         .. code-block:: python
 
@@ -549,7 +548,7 @@ class Robot:
 
         # Initialize components
         self._anim = animation.AnimationComponent(self)
-        self._audio = audio.AudioComponent(self)
+        # self._audio = audio.AudioComponent(self) # TODO turn on
         self._behavior = behavior.BehaviorComponent(self)
         self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)

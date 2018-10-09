@@ -1,0 +1,31 @@
+[
+    {
+        "environment": [
+            {
+                "name": "ENVIRONMENT",
+                "value": "loadtest"
+            },
+            {
+                "name": "ENABLE_ACCOUNT_CREATION",
+                "value": "${enable_account_creation}"
+            },
+            {
+                "name": "REDIS_ADDRESS",
+                "value": "redis.loadtest:6379"
+            }
+        ],
+        "name": "load_test",
+        "image": "${image}",
+        "cpu": ${cpu},
+        "memory": ${memory},
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-create-group": "true",
+                "awslogs-group": "awslogs-load-test",
+                "awslogs-region": "${region}",
+                "awslogs-stream-prefix": "awslogs-load-test"
+            }
+        }
+    }
+  ]

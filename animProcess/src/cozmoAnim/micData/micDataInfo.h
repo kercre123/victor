@@ -33,6 +33,7 @@ class MicDataInfo
 public:
   static constexpr uint32_t kDefaultFilesToCapture = 15;
   static constexpr uint32_t kMinAudioSizeToSave_ms = kTriggerOverlapSize_ms + 100;
+  static constexpr uint32_t kDefaultAudioFadeIn_ms = 5;
 
   bool                          _doFFTProcess     = false;
   bool                          _repeating        = false;
@@ -50,6 +51,11 @@ public:
   std::function<void(const std::string&)> _audioSaveCallback;
 
   void SetTimeToRecord(uint32_t timeToRecord);
+  
+  // Add a linear fade to the begining of the stream
+  // Note: Must set the fade in duration before CollectProcessedAudio() is called, default duration is 0 (no fade)
+  void SetAudioFadeInTime(uint32_t fadeInTime_ms);
+  
   void CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
   void CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
 
@@ -68,6 +74,11 @@ private:
   // These members are accessed via multiple threads when the job is running, so they use a mutex
   uint32_t _timeRecorded_ms  = 0;
   uint32_t _timeToRecord_ms  = 0;
+  // Perform audio fade in at the begining of the processed audio data stream
+  int32_t _fadeInSamples  = 0;
+  float   _fadeInScalar   = 0.0f;
+  float   _fadeInStepSize = 0.0f;
+  
   AudioUtil::AudioChunkList _rawAudioData{};
   AudioUtil::AudioChunkList _processedAudioData{};
   mutable std::mutex _dataMutex;

@@ -13,6 +13,7 @@ Prerequisites
 * Vector is powered on.
 * You have successfully created an Anki account.
 * Vector has been set up with the Vector companion app.
+* The Vector companion app is *not* currently connected to Vector.
 * Vector is connected to the same network as your computer.
 * You can see Vector's eyes on his screen.
 
@@ -22,21 +23,23 @@ Python Installation
 ^^^^^^^^^^^^^^^^^^^
 
 
-Download the `Python 3.5.1 (or later) executable file from Python.org <https://www.python.org/downloads/>`_ and
+Download the `Python 3.6.1 (or later) executable file from Python.org <https://www.python.org/downloads/windows/>`_ and
 run it on your computer.
 
-.. important:: We recommend that you tick the "Add Python 3.5 to PATH" checkbox on the Setup screen.
+.. important:: Be sure to tick the "Add Python 3.6 to PATH" checkbox on the Setup screen. Then tap "Install Now" and complete the Python installation.
 
 ^^^^^^^^^^^^^^^^
 SDK Installation
 ^^^^^^^^^^^^^^^^
 
-To install the SDK, type the following into the Command Prompt window::
+To install the SDK, type the following into a Command Prompt window::
 
     cd vector-sdk
     pip3 install --user vector-0.4-py3-none-any.whl
 
-Note that the [camera] option adds support for processing images from Vector's camera.
+.. note:: If you encounter an error during SDK installation, you may need to upgrade your pip install. Try `python -m pip install --upgrade pip` or `py -3 -m pip install --upgrade pip`
+
+.. note:: If you encounter an error during SDK installation, you may need to upgrade your Python Setuptools. Try `py -3 -m pip install --upgrade setuptools`
 
 ^^^^^^^^^^^^^^^^^^^^^
 Vector Authentication
@@ -45,13 +48,22 @@ Vector Authentication
 To authenticate with the robot, type the following into the Terminal window::
 
     cd vector-sdk
-    ./configure.py
+    py configure.py
 
 You will be prompted for your robot's name, ip address and serial number. You will also be asked for your Anki login and password.
 
 .. note:: Running `configure.py` will automatically download the Vector robot certificate to your computer and store credentials to allow you to connect to Vector. These credentials will be stored under your home directory in folder `.anki_vector`.
 
 .. warning:: These credentials give full access to your robot, including camera stream, audio stream and data. Do not share these credentials.
+
+^^^^^^^^^^^^^^^^^^
+Extra Dependencies
+^^^^^^^^^^^^^^^^^^
+
+There are a few extra packages that must be installed to run the experimental examples. To install these dependencies, enter this command::
+
+    cd vector-sdk
+    pip3 install .[experimental]
 
 ^^^^^^^^^^^^^^^
 Troubleshooting

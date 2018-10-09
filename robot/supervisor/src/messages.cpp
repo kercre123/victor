@@ -90,6 +90,17 @@ namespace Anki {
         robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
+        
+        auto& imuDataBuffer = IMUFilter::GetImuDataBuffer();
+        for (int i=0 ; i < IMUConstants::IMU_FRAMES_PER_ROBOT_STATE ; i++) {
+          if (!imuDataBuffer.empty()) {
+            robotState_.imuData[i] = imuDataBuffer.front();
+            imuDataBuffer.pop_front();
+          } else {
+            static IMUDataFrame invalidDataFrame{0, {0, 0, 0}};
+            robotState_.imuData[i] = invalidDataFrame;
+          }
+        }
 
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
@@ -376,6 +387,18 @@ namespace Anki {
           LiftController::SetDesiredHeightByDuration(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
         } else {
           LiftController::SetDesiredHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        }
+        AckMotorCommand(msg.actionID);
+      }
+
+      void Process_setLiftAngle(const RobotInterface::SetLiftAngle& msg) {
+        // AnkiInfo( "Messages.Process_liftAngle.Recvd", 
+        //           "height %f, maxSpeed %f, duration %f", 
+        //           msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
+        if (msg.duration_sec > 0) {
+          LiftController::SetDesiredAngleByDuration(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
+        } else {
+          LiftController::SetDesiredAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         }
         AckMotorCommand(msg.actionID);
       }

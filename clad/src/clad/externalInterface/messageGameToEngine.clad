@@ -924,6 +924,7 @@ autounion MessageGameToEngine
   SetLiftHeight                  SetLiftHeight                  = 0x16,
   SetBackpackLEDs                SetBackpackLEDs                = 0x17,
   AlignWithObject                AlignWithObject                = 0x18,
+  SetLiftAngle                   SetLiftAngle                   = 0x19,
 }
 
 

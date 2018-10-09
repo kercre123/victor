@@ -234,7 +234,7 @@ void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
     _lastTimeAliveUpdated_s = currTime_s;
     _lastAliveWallTime = currWallTime;
   }
-  
+
   // Update jdoc if there were change(s) this tick
   if (_dirtyJdoc)
   {
@@ -243,6 +243,24 @@ void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
     _dirtyJdoc = false;
   }
 }
+
+
+#define FILTER_HELPER(key) if (json.isMember(key)) { jsonOut[key] = json[key]; }
+
+Json::Value RobotStatsTracker::FilterStatsForApp(const Json::Value& json)
+{
+  Json::Value jsonOut;
+
+  FILTER_HELPER("Stim.CumlPosDelta")
+  FILTER_HELPER("BStat.ReactedToTriggerWord")
+  FILTER_HELPER("Odom.Body")
+  FILTER_HELPER("FeatureType.Utility")
+  FILTER_HELPER("Pet.ms")
+  FILTER_HELPER("Alive.seconds")
+
+  return jsonOut;
+}
+
 
 bool RobotStatsTracker::UpdateStatsJdoc(const bool saveToDiskImmediately,
                                         const bool saveToCloudImmediately)

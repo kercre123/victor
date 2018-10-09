@@ -10,7 +10,7 @@
         "conditionType"   : "time",
         "operator"        : "or",
         "LocalTimeBefore" : "05:00",
-        "LocalTimeAfter"  : "21:00"
+        "LocalTimeAfter"  : "19:00"
       }
     ],
 

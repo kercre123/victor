@@ -223,7 +223,6 @@ class Face:
         """sequence of tuples of float (x,y): points representing the outline of the mouth."""
         return self._mouth
 
-    # TODO Nic to make private. See how Cozmo has 1 subscription in world.py (to update the faces array) and 1 subscription in faces.py (to add all the face data to a Face instance)
     def unpack_face_stream_data(self, msg):
         """Unpacks the face observed stream data from Vector into a Face instance."""
         self._face_id = msg.face_id
@@ -286,18 +285,12 @@ class FaceComponent(util.Component):
         return await self.grpc_interface.EraseAllEnrolledFaces(req)
 
     # TODO move out of face component? This is general to objects, not specific to faces? Move to new vision component? Needs sample code.
-    # TODO list of modes showing ugly in docs
+    # TODO improve list of modes as shown in docs
     @sync.Synchronizer.wrap
-    async def enable_vision_mode(self, enable: bool, mode: protocol.VisionMode = protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
-        """Enable a vision mode
-
-        The vision system can be enabled for modes including the following:
-        Marker detection: `VISION_MODE_DETECTING_MARKERS`
-        Face detection and recognition: `VISION_MODE_DETECTING_FACES`
-        Motion detection: `VISION_MODE_DETECTING_MOTION`
+    async def enable_vision_mode(self, enable: bool):
+        """Enable facial detection on the robot's camera
 
         :param enable: Enable/Disable the mode specified.
-        :param mode: Specifies the vision mode to edit.
         """
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=mode, enable=enable)
+        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=enable)
         return await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)

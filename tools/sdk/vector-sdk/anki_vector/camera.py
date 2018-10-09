@@ -120,6 +120,7 @@ class CameraComponent(util.Component):
 
         # Decode compressed source data into uncompressed image data
         imageArray = cv2.imdecode(array, -1)
+        imageArray = cv2.cvtColor(imageArray, cv2.COLOR_BGR2RGB)
 
         # Convert to Pillow Image
         self._latest_image = Image.fromarray(imageArray)
@@ -127,7 +128,7 @@ class CameraComponent(util.Component):
 
     async def _request_and_handle_images(self) -> None:
         """Queries and listens for camera feed events from the robot.
-        Recieved events are parsed by a helper function."""
+        Received events are parsed by a helper function."""
         try:
             req = protocol.CameraFeedRequest()
             async for evt in self.grpc_interface.CameraFeed(req):

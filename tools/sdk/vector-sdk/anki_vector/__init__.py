@@ -21,11 +21,11 @@ import logging
 
 from . import messaging
 from .robot import Robot, AsyncRobot
+from .version import __version__
 
 logger = logging.getLogger('vector')  # pylint: disable=invalid-name
 
-# TODO Confirm this is the minimum Python version
-if sys.version_info < (3, 5, 1):
-    sys.exit('anki_vector requires Python 3.5.1 or later')
+if sys.version_info < (3, 6, 1):
+    sys.exit('anki_vector requires Python 3.6.1 or later')
 
 __all__ = ['Robot', 'AsyncRobot', 'logger', 'messaging']

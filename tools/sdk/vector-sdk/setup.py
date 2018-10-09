@@ -4,16 +4,15 @@
 Vector SDK, by Anki.
 
 Requirements:
-    * Python 3.5.1 or later
+    * Python 3.6.1 or later
 """
 
 import os.path
 import sys
 from setuptools import setup
 
-# TODO update the next two lines of Python min version info
-if sys.version_info < (3, 5, 1):
-    sys.exit('The Anki Vector SDK requires Python 3.5.1 or later')
+if sys.version_info < (3, 6, 1):
+    sys.exit('The Anki Vector SDK requires Python 3.6.1 or later')
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -46,19 +45,20 @@ setup(
     license='Apache License, Version 2.0',
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries',
         'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3.5', # TODO update this version?
+        'Programming Language :: Python :: 3.6',
     ],
     zip_safe=True,
     keywords='anki vector robot robotics sdk'.split(),
-    #package_dir={'': 'anki_vector'}, # TODO test this is correct
-    #packages=find_packages('anki_vector'), # TODO test this is correct
-    #package_data={ # What to put in here? Copied from Cozmo.
-    #    'anki_vector': ['LICENSE.txt', 'assets/*.obj', 'assets/*.mtl', 'assets/*.jpg',
-    #              'assets/LICENSE.txt']
-    #},
+    packages=['anki_vector', 'anki_vector.messaging'],
     install_requires=get_requirements(),
+    extras_require={
+        '3dviewer': ['PyOpenGL>=3.1'],
+        'docs': ['sphinx', 'sphinx_rtd_theme', 'sphinx_autodoc_typehints'],
+        'experimental': ['keras', 'scikit-learn', 'scipy', 'tensorflow'],
+        'test': ['pytest', 'requests', 'requests_toolbelt'],
+    }
 )

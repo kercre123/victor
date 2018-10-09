@@ -1,0 +1,14 @@
+[
+    {
+        "name": "redis",
+        "image": "redis",
+        "cpu": ${cpu},
+        "memory": ${memory},
+        "portMappings": [
+            {
+              "containerPort": 6379,
+              "hostPort": 6379
+            }
+        ]
+    }
+  ]

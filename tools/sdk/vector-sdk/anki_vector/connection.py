@@ -24,18 +24,14 @@ from enum import Enum
 from concurrent import futures
 
 import aiogrpc
+import grpc
 
 from . import exceptions, util
 from .messaging import client, protocol
 
 
 class CONTROL_PRIORITY_LEVEL(Enum):
-    # TODO Review these levels to make sure they represent what we are shipping
     """Enum used to specify the priority level for the program."""
-
-    #: Runs above all levels of the behvaior tree. It is recommended to use a lower level, so
-    #: Vector may safely react to events such as falling.
-    OVERRIDE_ALL = protocol.ControlRequest.OVERRIDE_ALL  # pylint: disable=no-member
 
     #: Runs below Mandatory Physical Reactions such as tucking Vector's head and lift during a fall,
     #: yet above Trigger-Word Detection.
@@ -239,7 +235,21 @@ class Connection:
         self._logger.info(f"Connecting to {self.host} for {self.name} using {self.cert_file}")
         self._channel = aiogrpc.secure_channel(self.host, credentials,
                                                options=(("grpc.ssl_target_name_override", self.name,),))
+
+        # Verify the connection to Vector is able to be established (client-side)
+        try:
+            # Explicitly grab _channel._channel to test the underlying grpc channel directly
+            grpc.channel_ready_future(self._channel._channel).result(timeout=timeout)  # pylint: disable=protected-access
+        except grpc.FutureTimeoutError as e:
+            raise exceptions.VectorNotFoundException() from e
+
         self._interface = client.ExternalInterfaceStub(self._channel)
+
+        # Verify Vector and the SDK have compatible protocol versions
+        version = protocol.ProtocolVersionRequest(client_version=0, min_host_version=0)
+        protocol_version = self._loop.run_until_complete(self._interface.ProtocolVersion(version))
+        if protocol_version.result != protocol.ProtocolVersionResponse.SUCCESS:  # pylint: disable=no-member
+            raise exceptions.VectorInvalidVersionException(version, protocol_version)
 
         self._control_stream_task = self._loop.create_task(self._open_connections())
         self.request_control(timeout=timeout)

@@ -96,6 +96,7 @@ namespace Vision {
     EnrolledFaceEntry GetRecognitionData(TrackingID_t forTrackingID, s32& enrollmentCountReached);
     
     bool HasRecognitionData(TrackingID_t forTrackingID) const;
+    bool HasName(TrackingID_t forTrackingID) const;
     
     Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);
     Result SaveAlbum(const std::string& albumName);

@@ -340,7 +340,9 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   if(_dVars.currentClassIter != _iConfig.classNames.end())
   {
     using namespace Util;
-    const size_t numFiles = FileUtils::FilesInDirectory(GetSavePath()).size();
+    
+    const size_t numFiles = FileUtils::FilesInDirectory(GetSavePath(), false,
+                                                        ImageSaver::GetExtension(_iConfig.imageSaveQuality)).size();
 
     const std::string str(*_dVars.currentClassIter + ":" + std::to_string(numFiles));
     visionComponent.SetMirrorModeDisplayString(str, NamedColors::YELLOW);
@@ -475,11 +477,21 @@ void BehaviorDevImageCapture::MoveToNewPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
 {
+  // To help avoid duplicate images names when combining images from multiple robots on multiple runs of
+  // this behavior, use a basename built from the robot's serial number and the milliseconds since epoch.
+  // Note that for streaming, a frame number will also be appended by the ImageSaver because all saved
+  // images will share the same timestamp (since it comes from when the button was pressed).
+  using namespace std::chrono;
+  const auto time_ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+  const auto epochTimestamp = static_cast<int>(time_ms);
+  const auto robotESN = GetBEI().GetRobotInfo().GetHeadSerialNumber();
+  const std::string basename = std::to_string(robotESN) + "_" + std::to_string(epochTimestamp);
+  
   // Tell VisionComponent to save an image
   const ImageSaverParams params(GetSavePath(),
                                 sendMode,
                                 _iConfig.imageSaveQuality,
-                                "",
+                                basename,
                                 _iConfig.imageSaveSize);
   
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();

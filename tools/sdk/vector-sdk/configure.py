@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-#TODO Update file throughout to be good for the public.
-
 """
 ***Anki Vector Python SDK Setup***
 
@@ -19,14 +17,21 @@ robot (such as faces and photos).
 
 See the README for more information.
 
+Use of Vector and the Vector SDK is subject to Anki's Privacy Policy and Terms and Conditions.
+
+https://www.anki.com/en-us/company/privacy
+https://www.anki.com/en-us/company/terms-and-conditions
 
 """
 
 import configparser
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from getpass import getpass
 import json
 import os
 from pathlib import Path
+import re
 import requests
 import sys
 
@@ -38,7 +43,8 @@ except:
     def colored(text, color=None, on_color=None, attrs=None):
         return text
 
-import anki_vector.messaging as api
+import anki_vector
+from anki_vector import messaging
 
 class ApiHandler:
     def __init__(self, headers: dict, url: str):
@@ -54,23 +60,18 @@ class ApiHandler:
         return self._url
 
 class Api:
-    def __init__(self, environment):
-        if environment == "prod":
-            self._handler = ApiHandler(
-                headers={'Anki-App-Key': 'aung2ieCho3aiph7Een3Ei'},
-                url='https://accounts.api.anki.com/1/sessions'
-            )
-        # TODO: remove beta and dev from released version
-        elif environment == "beta":
-            self._handler = ApiHandler(
-                headers={'Anki-App-Key': 'va3guoqueiN7aedashailo'},
-                url='https://accounts-beta.api.anki.com/1/sessions'
-            )
-        else:
-            self._handler = ApiHandler(
-                headers={'Anki-App-Key': 'eiqu8ae6aesae4vi7ooYi7'},
-                url='https://accounts-dev2.api.anki.com/1/sessions'
-            )
+    def __init__(self):
+        self._handler = ApiHandler(
+            headers={
+                'User-Agent': f'Vector-sdk/{anki_vector.__version__}',
+                'Anki-App-Key': 'aung2ieCho3aiph7Een3Ei'
+            },
+            url='https://accounts.api.anki.com/1/sessions'
+        )
+
+    @property
+    def name(self):
+        return "Anki Cloud"
 
     @property
     def handler(self):
@@ -91,7 +92,7 @@ def get_esn():
     if r.status_code != 200:
         print(colored(" ERROR", "red"))
         sys.exit(r.content)
-    print(colored(" DONE\n", "green"))
+    print(colored(" DONE", "green"))
     cert = r.content
     return cert, esn
 
@@ -103,39 +104,44 @@ def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> s
     sys.stdout.flush()
     channel = grpc.secure_channel("{}:443".format(ip), creds,
                                         options=(("grpc.ssl_target_name_override", name,),))
-    interface = api.client.ExternalInterfaceStub(channel)
-    request = api.protocol.UserAuthenticationRequest(user_session_id=session_id.encode('utf-8'))
+    interface = messaging.client.ExternalInterfaceStub(channel)
+    request = messaging.protocol.UserAuthenticationRequest(user_session_id=session_id.encode('utf-8'))
     response = interface.UserAuthentication(request)
-    if response.code != api.protocol.UserAuthenticationResponse.AUTHORIZED:
+    if response.code != messaging.protocol.UserAuthenticationResponse.AUTHORIZED:
         print(colored(" ERROR", "red"))
         sys.exit("Failed to authorize request: {}\n\n"
                  "Please be sure to connect via the Vector companion app and log into a Vector into an account first.")
     print(colored(" DONE\n", "green"))
     return response.client_token_guid
 
-# TODO Remove everything that is not prod
-def get_session_token():
-    valid = ["prod", "beta", "dev"]
-    environ = input("Select an environment [(dev)/beta/prod]? ")
-    if environ == "":
-        environ = "dev"
-    if environ not in valid:
-        sys.exit("{}: That is not a valid environment".format(colored("ERROR", "red")))
-
+def get_session_token(api):
     print("Enter your email and password. Make sure to use the same account that was used to set up your Vector.")
     username = input("Enter Email: ")
     password = getpass("Enter Password: ")
     payload = {'username': username, 'password': password}
 
-    print("\nAuthenticating with Anki...", end="")
+    print("\nAuthenticating with {}...".format(api.name), end="")
     sys.stdout.flush()
-    api = Api(environ)
     r = requests.post(api.handler.url, data=payload, headers=api.handler.headers)
     if r.status_code != 200:
         print(colored(" ERROR", "red"))
         sys.exit(r.content)
     print(colored(" DONE\n", "green"))
     return json.loads(r.content)
+
+def standardize_name(robot_name):
+    # Extend the name if not enough is provided
+    if len(robot_name) == 4:
+        robot_name = "Vector-{}".format(robot_name.upper())
+    # Fix possible capitalization and space/dash/etc.
+    if re.match("[Vv]ector.[A-Za-z0-9]{4}", robot_name):
+        robot_name = "V{}-{}".format(robot_name[1:-5], robot_name[-4:].upper())
+    # Check that the end is valid
+    if re.match("Vector-[A-Z0-9]{4}", robot_name):
+        return robot_name
+    print(colored(" ERROR", "red"))
+    sys.exit("Invalid robot name. Please match the format exactly. Example: Vector-A1B2")
+    return
 
 def get_name_and_ip():
     robot_name = os.environ.get('VECTOR_ROBOT_NAME')
@@ -144,18 +150,44 @@ def get_name_and_ip():
         robot_name = input("Enter robot name: ")
     else:
         print("Found robot name in environment variable '{}'".format(colored("VECTOR_ROBOT_NAME", "green")))
+    robot_name = standardize_name(robot_name)
     print("Using robot name: {}".format(colored(robot_name, "cyan")))
     ip = os.environ.get('ANKI_ROBOT_HOST')
     if ip is None or len(ip) == 0:
-        print("\n\nFind your robot ip address (ex. 192.168.42.42) by placing Vector on the charger, double clicking Vector's backpack button, then raising and lowering his arms.\n"
-              "If you see {} on his face, reconnect Vector to your WiFi using the Vector Companion App.".format(colored("XX.XX.XX.XX", "red")))
+        print("\n\nFind your robot ip address (ex. 192.168.42.42) by placing Vector on the charger, double clicking Vector's backpack button,\n"
+              "then raising and lowering his arms. If you see {} on his face, reconnect Vector to your WiFi using the Vector Companion App.".format(colored("XX.XX.XX.XX", "red")))
         ip = input("Enter robot ip: ")
     else:
         print("Found robot ip address in environment variable '{}'".format(colored("ANKI_ROBOT_HOST", "green")))
     print("Using IP: {}".format(colored(ip, "cyan")))
     return robot_name, ip
 
-def main():
+def save_cert(cert, name, esn, anki_dir):
+    """Write Vector's certificate to a file located in the user's home directory"""
+    os.makedirs(str(anki_dir), exist_ok=True)
+    cert_file = str(anki_dir / "{name}-{esn}.cert".format(name=name, esn=esn))
+    print("Writing certificate file to '{}'...\n".format(colored(cert_file, "cyan")))
+    with os.fdopen(os.open(cert_file, os.O_WRONLY | os.O_CREAT, 0o600), 'wb') as f:
+        f.write(cert)
+    return cert_file
+
+def validate_cert_name(cert_file, robot_name):
+    """Validate the name on Vector's certificate against the user-provided name"""
+    with open(cert_file, "rb") as f:
+        cert_file = f.read()
+        cert = x509.load_pem_x509_certificate(cert_file, default_backend())
+        for fields in cert.subject:
+            current = str(fields.oid)
+            if "commonName" in current:
+                common_name = fields.value
+                if common_name != robot_name:
+                    print(colored(" ERROR", "red"))
+                    sys.exit("The name of the certificate ({}) does not match the name provided ({}).\n"
+                             "Please verify the name, and try again.".format(common_name, robot_name))
+                else:
+                    return
+
+def main(api):
     print(__doc__)
 
     valid = ["y", "Y", "yes", "YES"]
@@ -165,22 +197,20 @@ def main():
 
     name, ip = get_name_and_ip()
     cert, esn = get_esn()
-    token = get_session_token()
+
+    home = Path.home()
+    anki_dir = home / ".anki_vector"
+
+    cert_file = save_cert(cert, name, esn, anki_dir)
+    validate_cert_name(cert_file, name)
+
+    token = get_session_token(api)
     if token.get("session") is None:
         sys.exit("Session error: {}".format(token))
 
-    # Write cert to a file located in user's home direction: sdk_config.ini
-    home = Path.home()
-    anki_dir = home / ".anki_vector"
-    os.makedirs(str(anki_dir), exist_ok=True)
-    cert_file = str(anki_dir / "{name}-{esn}.cert".format(name=name, esn=esn))
-    print("Writing certificate file to '{}'...".format(colored(cert_file, "cyan")))
-    with os.fdopen(os.open(cert_file, os.O_WRONLY | os.O_CREAT, 0o600), 'wb') as f:
-        f.write(cert)
-
     guid = user_authentication(token["session"]["session_token"], cert, ip, name)
 
-    # Store details in a config file
+    # Store credentials in the .anki_vector directory's sdk_config.ini file
     config_file = str(anki_dir / "sdk_config.ini")
     print("Writing config file to '{}'...".format(colored(config_file, "cyan")))
 
@@ -212,4 +242,4 @@ def main():
     print(colored("SUCCESS!", "green"))
 
 if __name__ == "__main__":
-    main()
+    main(Api())

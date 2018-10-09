@@ -196,16 +196,16 @@ func (manager *EngineProtoIpcManager) ProcessMessages() {
 		msg.Reset()
 		block = manager.conn.ReadBlock()
 		if block == nil {
-			log.Println("Error: engine socket returned empty message")
-			continue
+			log.Errorln("EngineProtoIpcManager.ProcessMessages.Fatal: engine socket returned empty message")
+			return
 		} else if len(block) < 2 {
-			log.Println("Error: engine socket message too small")
+			log.Errorln("EngineProtoIpcManager.ProcessMessages.Error: engine socket message too small")
 			continue
 		}
 		b = block[2:]
 
 		if err := proto.Unmarshal(b, &msg); err != nil {
-			log.Println("Decoding error (", err, "):", b)
+			log.Errorln("EngineProtoIpcManager.DecodingError (", err, "):", b)
 			continue
 		}
 		tag := reflect.TypeOf(msg.OneofMessageType).String()
@@ -247,17 +247,16 @@ func (manager *SwitchboardIpcManager) ProcessMessages() {
 		buf.Reset()
 		block = manager.conn.ReadBlock()
 		if block == nil {
-			log.Println("Error: switchboard socket returned empty message")
-			continue
+			log.Errorln("SwitchboardIpcManager.ProcessMessages.Fatal: switchboard socket returned empty message")
+			return
 		} else if len(block) < 2 {
-			log.Println("Error: switchboard socket message too small")
+			log.Errorln("SwitchboardIpcManager.ProcessMessages.Error: switchboard socket message too small")
 			continue
 		}
 		b = block[2:]
 		buf.Write(b)
 		if err := msg.Unpack(&buf); err != nil {
-			// Intentionally ignoring errors for unknown messages
-			// TODO: treat this as an error condition once VIC-3186 is completed
+			log.Errorln("SwitchboardIpcManager.DecodingError (", err, "):", b)
 			continue
 		}
 
@@ -522,10 +521,10 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 		buf.Reset()
 		block = manager.conn.ReadBlock()
 		if block == nil {
-			log.Println("Error: engine socket returned empty message")
-			continue
+			log.Errorln("EngineCladIpcManager.ProcessMessages.Fatal: engine socket returned empty message")
+			return
 		} else if len(block) < 2 {
-			log.Println("Error: engine socket message too small")
+			log.Errorln("EngineCladIpcManager.ProcessMessages.Error: engine socket message too small")
 			continue
 		}
 		b = block[2:]

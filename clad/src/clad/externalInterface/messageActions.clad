@@ -252,6 +252,14 @@ message SetHeadAngle {
     float_32 duration_sec
 }
 
+// SetLiftAngle
+message SetLiftAngle {
+    float_32 angle_rad,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
+}
+
 // SetLiftHeight
 message SetLiftHeight {
     float_32 height_mm,
@@ -484,6 +492,7 @@ union RobotActionUnion {
   SearchForNearbyObject         searchForNearbyObject,
   SetHeadAngle                  setHeadAngle,
   SetLiftHeight                 setLiftHeight,
+  SetLiftAngle                  setLiftAngle,
   TrackToFace                   trackFace,
   TrackToObject                 trackObject,
   TrackToLaserPoint             trackLaserPoint,

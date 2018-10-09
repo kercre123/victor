@@ -229,7 +229,7 @@ union RobotToEngine {
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process
   RobotState                 state                  = 0xF0,
-  ImuData                    imuData                = 0xF1,
+  // FREE SLOT
   MicData                    micData                = 0xF2,
 
   // From anim process

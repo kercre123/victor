@@ -80,6 +80,7 @@ enum uint_8 BehaviorClass {
   DevDisplayReadingsOnFace,
   DevEventSequenceCapture,
   DevImageCapture,
+  DevSquawkBoxTest,
   DevTestBlackjackViz,
   DevTouchDataCollection,
   DevTurnInPlaceTest,

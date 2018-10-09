@@ -49,7 +49,6 @@ OBJECT_VISIBILITY_TIMEOUT = 0.4
 LightCube1Type = protocol.ObjectType.Value("BLOCK_LIGHTCUBE1")
 
 
-# TODO Instead inherit from ObservableObject, like for Cozmo?
 # TODO In this class, how are we deciding whether a member has a leading underscore or not?
 class LightCube(util.Component):
     """Represents Vector's Cube."""
@@ -242,8 +241,6 @@ class LightCube(util.Component):
 
     #### Private Methods ####
 
-    # TODO For the events in this file, shouldn't they be dispatched for all objects and not just LightCubes? They are currently in the LightCube class. Cozmo did this differently. Revisit the docstrings to refer to objects v LightCube as appropriate.
-
     def _repr_values(self):
         return 'object_id=%s' % self.object_id
 
@@ -266,13 +263,11 @@ class LightCube(util.Component):
 
     def _dispatch_appeared_event(self, image_rect):
         # @TODO: feed this into a proper event system
-        # TODO Add a way for Python to subscribe to this event. Use docstring from Cozmo EvtObjectAppeared
         # Image Rect refers to the bounding rect in Vector's vision where the object was seen
         pass
 
     def _dispatch_disappeared_event(self):
         # @TODO: feed this into a proper event system
-        # TODO Add a way for Python to subscribe to this event. Use docstring from Cozmo EvtObjectDisappeared
         pass
 
     def _on_observed(self, image_rect, timestamp):

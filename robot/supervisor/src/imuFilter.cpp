@@ -100,6 +100,10 @@ namespace Anki {
         
         bool gyro_sign[3] = {false}; // true is negative, false is positive
 
+        // Circular buffer of robot-frame gyro readings corresponding to every IMU reading that we have received. These
+        // get sent to engine as part of RobotState and are used for image de-warping, etc.
+        ImuDataBufferType imuDataBuffer_;
+        
         f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
         f32 accel_robot_frame[3]        = {0};    // Unfiltered accelerometer measurements in robot frame
         f32 accel_robot_frame_filt[3]   = {0};    // Filtered accelerometer measurements in robot frame
@@ -909,22 +913,12 @@ namespace Anki {
         
         DetectFalling();
 
-        // Send ImageImuData to engine
-        static RobotInterface::ImuData batchData;
-        static uint8_t sampleIdx = 0;
-
-        // load the current sample onto the packet
-        batchData.frames[sampleIdx].timestamp = curTime;
-        batchData.frames[sampleIdx].rateX = gyro_robot_frame_filt[0];
-        batchData.frames[sampleIdx].rateY = gyro_robot_frame_filt[1];
-        batchData.frames[sampleIdx].rateZ = gyro_robot_frame_filt[2];
-
-
-        // reset index and send batch packet
-        if ( ++sampleIdx >= IMUConstants::IMU_BATCH_SIZE ) {
-          sampleIdx = 0;
-          RobotInterface::SendMessage(batchData);
-        }
+        // Queue ImuData to be sent as part of RobotState
+        auto& thisDataFrame = imuDataBuffer_.push_back();
+        thisDataFrame.timestamp = curTime;
+        thisDataFrame.gyroRobotFrame.x = gyro_robot_frame_filt[0];
+        thisDataFrame.gyroRobotFrame.y = gyro_robot_frame_filt[1];
+        thisDataFrame.gyroRobotFrame.z = gyro_robot_frame_filt[2];
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {
@@ -983,6 +977,11 @@ namespace Anki {
       const f32* GetBiasCorrectedGyroData()
       {
         return gyro_;
+      }
+      
+      ImuDataBufferType& GetImuDataBuffer()
+      {
+        return imuDataBuffer_;
       }
 
       f32 GetRotation()

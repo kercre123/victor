@@ -18,6 +18,7 @@
 #include "camera/cameraService.h"
 #include "util/logging/logging.h"
 
+#include "util/container/fixedCircularBuffer.h"
 #include "util/random/randomGenerator.h"
 
 #include <vector>
@@ -25,11 +26,9 @@
 #include <webots/Supervisor.hpp>
 #include <webots/Camera.hpp>
 
-#define BLUR_CAPTURED_IMAGES 1
+#define BLUR_CAPTURED_IMAGES 0
 
-#if BLUR_CAPTURED_IMAGES
 #include "opencv2/imgproc/imgproc.hpp"
-#endif
 
 #ifndef SIMULATOR
 #error SIMULATOR should be defined by any target using cameraService_mac.cpp
@@ -61,6 +60,12 @@ namespace Anki {
       const f32 kTangentialDistCoeff2 = 0.001523473592445885f;
       const f32 kDistCoeffNoiseFrac   = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
 
+      // This buffers Webots camera images from the recent past, so that engine can request an image from a specific
+      // timestamp (in the past). The buffer contains pairs, where the first element is timestamp of image capture, and
+      // the second element is the RGB image itself.
+      constexpr size_t nBufferEntries = 3; // 3 images = 195 ms
+      Util::FixedCircularBuffer<std::pair<TimeStamp_t, std::vector<u8>>, nBufferEntries> webotsImageBuffer_;
+      
       std::vector<u8> imageBuffer_;
       TimeStamp_t cameraStartTime_ms_;
       TimeStamp_t lastImageCapturedTime_ms_;
@@ -74,6 +79,8 @@ namespace Anki {
     // Declarations
     void FillCameraInfo(const webots::Camera *camera, CameraCalibration &info);
 
+    // Apply lens distortion to the RGB image in frame, using the information from headCamInfo
+    void ApplyLensDistortion(u8* frame, const CameraCalibration& headCamInfo);
 
     // Definition of static field
     CameraService* CameraService::_instance = nullptr;
@@ -218,6 +225,53 @@ namespace Anki {
         }
       }
     } // FillCameraInfo
+    
+    void ApplyLensDistortion(u8* frame, const CameraCalibration& headCamInfo)
+    {
+      // Apply radial/lens distortion. Note that cv::remap uses in inverse lookup to find where the pixels in
+      // the output (distorted) image came from in the source. So we have to compute the inverse distortion here.
+      // We do that using cv::undistortPoints to create the necessary x/y maps for remap:
+      static cv::Mat_<f32> x_undistorted, y_undistorted;
+      if(x_undistorted.empty())
+      {
+        // Compute distortion maps on first use
+        std::vector<cv::Point2f> points;
+        points.reserve(headCamInfo.nrows * headCamInfo.ncols);
+        
+        for (s32 i=0; i < headCamInfo.nrows; i++) {
+          for (s32 j=0; j < headCamInfo.ncols; j++) {
+            points.emplace_back(j,i);
+          }
+        }
+        
+        const std::vector<f32> distCoeffs{
+          kRadialDistCoeff1, kRadialDistCoeff2, kTangentialDistCoeff1, kTangentialDistCoeff2, kRadialDistCoeff3
+        };
+        const cv::Matx<f32,3,3> cameraMatrix(headCamInfo.focalLength_x, 0.f, headCamInfo.center_x,
+                                             0.f, headCamInfo.focalLength_y, headCamInfo.center_y,
+                                             0.f, 0.f, 1.f);
+        
+        cv::undistortPoints(points, points, cameraMatrix, distCoeffs, cv::noArray(), cameraMatrix);
+        
+        x_undistorted.create(headCamInfo.nrows, headCamInfo.ncols);
+        y_undistorted.create(headCamInfo.nrows, headCamInfo.ncols);
+        std::vector<cv::Point2f>::const_iterator pointIter = points.begin();
+        for (s32 i=0; i < headCamInfo.nrows; i++)
+        {
+          f32* x_i = x_undistorted.ptr<f32>(i);
+          f32* y_i = y_undistorted.ptr<f32>(i);
+          
+          for (s32 j=0; j < headCamInfo.ncols; j++)
+          {
+            x_i[j] = pointIter->x;
+            y_i[j] = pointIter->y;
+            ++pointIter;
+          }
+        }
+      }
+      cv::Mat  cvFrame(headCamInfo.nrows, headCamInfo.ncols, CV_8UC3, frame);
+      cv::remap(cvFrame, cvFrame, x_undistorted, y_undistorted, CV_INTER_LINEAR);
+    }
 
     const CameraCalibration* CameraService::GetHeadCamInfo(void)
     {
@@ -281,123 +335,93 @@ namespace Anki {
       _skipNextImage = true;
     }
 
-    // Starts camera frame synchronization
-    // As opposed to the vicos implementation of CameraService, this version does
-    // not have a buffer of multiple valid frames to pick from to get the one closest
-    // to or before atTimestamp_ms. Therefore atTimestamp_ms will be ignored and the most
-    // recent image always returned
+    // Starts camera frame synchronization.
+    // Returns true and popuates buffer if we have an available image from at or before atTimestamp_ms.
     bool CameraService::CameraGetFrame(u32 atTimestamp_ms, Vision::ImageBuffer& buffer)
     {
       if (nullptr == headCam_) {
         return false;
       }
 
-      const TimeStamp_t currentTime_ms = GetTimeStamp();
-
-      // This computation is based on Cyberbotics support's explanation for how to compute
-      // the actual capture time of the current available image from the simulated camera
-      // *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
-      // (The available frame is still one frame behind? I.e. we are just *about* to capture
-      //  the next one?)
-      const TimeStamp_t currentImageTime_ms = (std::floor((currentTime_ms-cameraStartTime_ms_)/VISION_TIME_STEP) * VISION_TIME_STEP
-                                               + cameraStartTime_ms_ - VISION_TIME_STEP);
-
-      // Have we already sent the currently-available image?
-      if(lastImageCapturedTime_ms_ == currentImageTime_ms)
-      {
-        return false;
-      }
-
-      imageBuffer_.resize(headCamInfo_.nrows * headCamInfo_.ncols * 3);
-
-      const u8* image = headCam_->getImage();
-
-      // If we are skipping this image, do so after calling getImage
-      // so the webots camera will capture another image
-      if(_skipNextImage)
-      {
+      if (_skipNextImage) {
         _skipNextImage = false;
         return false;
       }
       
-      DEV_ASSERT(image != NULL, "cameraService_mac.CameraGetFrame.NullImagePointer");
-      DEV_ASSERT_MSG(headCam_->getWidth() == headCamInfo_.ncols,
-                     "cameraService_mac.CameraGetFrame.MismatchedImageWidths",
-                     "HeadCamInfo:%d HeadCamWidth:%d", headCamInfo_.ncols, headCam_->getWidth());
+      const TimeStamp_t currentTime_ms = GetTimeStamp();
 
-      u8* frame = imageBuffer_.data();
-      u8* pixel = frame;
-      for (s32 y=0; y < headCamInfo_.nrows; y++) {
-        for (s32 x=0; x < headCamInfo_.ncols; x++) {
-          pixel[0] = webots::Camera::imageGetRed(image,   headCamInfo_.ncols, x, y);
-          pixel[1] = webots::Camera::imageGetGreen(image, headCamInfo_.ncols, x, y);
-          pixel[2] = webots::Camera::imageGetBlue(image,  headCamInfo_.ncols, x, y);
+      // This computation is based on Cyberbotics support's explanation for how to compute
+      // the actual capture time of the current available image from the simulated camera
+      const TimeStamp_t currentImageTime_ms = (std::floor((currentTime_ms-cameraStartTime_ms_)/VISION_TIME_STEP) * VISION_TIME_STEP
+                                               + cameraStartTime_ms_);
+
+      // Do we have a 'new' image from webots?
+      if(lastImageCapturedTime_ms_ != currentImageTime_ms)
+      {
+        // A 'new' image is available. Push the current webots image into the buffer of available webots images
+        auto& thisImage = webotsImageBuffer_.push_back();
+        thisImage.first = currentImageTime_ms;
+        auto& imageVec = thisImage.second;
+        imageVec.resize(headCamInfo_.nrows * headCamInfo_.ncols * 3);
+        
+        const u8* image = headCam_->getImage();
+        DEV_ASSERT(image != NULL, "cameraService_mac.CameraGetFrame.NullImagePointer");
+        DEV_ASSERT_MSG(headCam_->getWidth() == headCamInfo_.ncols,
+                       "cameraService_mac.CameraGetFrame.MismatchedImageWidths",
+                       "HeadCamInfo:%d HeadCamWidth:%d", headCamInfo_.ncols, headCam_->getWidth());
+        
+        // Copy from the webots 'image' into imageVec, converting from BGRA to RGB along the way
+        u8* frame = imageVec.data();
+        u8* pixel = frame;
+        for (s32 i=0 ; i < headCamInfo_.nrows * headCamInfo_.ncols ; i++) {
+          pixel[2] = *image++; // blue
+          pixel[1] = *image++; // green
+          pixel[0] = *image++; // red
+          ++image;             // don't need alpha channel, so skip it
           pixel+=3;
         }
-      }
-
-      if (kUseLensDistortion)
-      {
-        // Apply radial/lens distortion. Note that cv::remap uses in inverse lookup to find where the pixels in
-        // the output (distorted) image came from in the source. So we have to compute the inverse distortion here.
-        // We do that using cv::undistortPoints to create the necessary x/y maps for remap:
-        static cv::Mat_<f32> x_undistorted, y_undistorted;
-        if(x_undistorted.empty())
+        
+        if (kUseLensDistortion)
         {
-          // Compute distortion maps on first use
-          std::vector<cv::Point2f> points;
-          points.reserve(headCamInfo_.nrows * headCamInfo_.ncols);
-
-          for (s32 i=0; i < headCamInfo_.nrows; i++) {
-            for (s32 j=0; j < headCamInfo_.ncols; j++) {
-              points.emplace_back(j,i);
-            }
-          }
-
-          const std::vector<f32> distCoeffs{
-            kRadialDistCoeff1, kRadialDistCoeff2, kTangentialDistCoeff1, kTangentialDistCoeff2, kRadialDistCoeff3
-          };
-          const cv::Matx<f32,3,3> cameraMatrix(headCamInfo_.focalLength_x, 0.f, headCamInfo_.center_x,
-                                               0.f, headCamInfo_.focalLength_y, headCamInfo_.center_y,
-                                               0.f, 0.f, 1.f);
-
-          cv::undistortPoints(points, points, cameraMatrix, distCoeffs, cv::noArray(), cameraMatrix);
-
-          x_undistorted.create(headCamInfo_.nrows, headCamInfo_.ncols);
-          y_undistorted.create(headCamInfo_.nrows, headCamInfo_.ncols);
-          std::vector<cv::Point2f>::const_iterator pointIter = points.begin();
-          for (s32 i=0; i < headCamInfo_.nrows; i++)
-          {
-            f32* x_i = x_undistorted.ptr<f32>(i);
-            f32* y_i = y_undistorted.ptr<f32>(i);
-
-            for (s32 j=0; j < headCamInfo_.ncols; j++)
-            {
-              x_i[j] = pointIter->x;
-              y_i[j] = pointIter->y;
-              ++pointIter;
-            }
-          }
+          ApplyLensDistortion(frame, headCamInfo_);
         }
-        cv::Mat  cvFrame(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
-        cv::remap(cvFrame, cvFrame, x_undistorted, y_undistorted, CV_INTER_LINEAR);
+        
+        if (BLUR_CAPTURED_IMAGES)
+        {
+          // Add some blur to simulated images
+          cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
+          cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
+        }
+        
+        // Mark that we've buffered this image for the current time
+        lastImageCapturedTime_ms_ = currentImageTime_ms;
       }
 
-      if (BLUR_CAPTURED_IMAGES)
-      {
-        // Add some blur to simulated images
-        cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
-        cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
+      if (webotsImageBuffer_.empty()) {
+        // no image available
+        return false;
+      }
+      
+      const auto earliestImageTimestamp = webotsImageBuffer_.front().first;
+      if (atTimestamp_ms < earliestImageTimestamp) {
+        return false;
+      }
+      
+      // Find the image in the webots image buffer that is before or equal to atTimestamp_ms, popping older images
+      // from the buffer along the way.
+      u32 outputTimestamp = 0;
+      while (!webotsImageBuffer_.empty() &&
+             webotsImageBuffer_.front().first <= atTimestamp_ms) {
+        outputTimestamp = webotsImageBuffer_.front().first;
+        imageBuffer_.swap(webotsImageBuffer_.front().second);
+        webotsImageBuffer_.pop_front();
       }
 
-      // Mark that we've already sent the image for the current time
-      lastImageCapturedTime_ms_ = currentImageTime_ms;
-
-      buffer = Vision::ImageBuffer(frame,
+      buffer = Vision::ImageBuffer(imageBuffer_.data(),
                                    headCamInfo_.nrows,
                                    headCamInfo_.ncols,
                                    Vision::ImageEncoding::RawRGB,
-                                   currentImageTime_ms,
+                                   outputTimestamp,
                                    _imageFrameID);
 
       _imageFrameID++;

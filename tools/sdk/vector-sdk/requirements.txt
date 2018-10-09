@@ -1,6 +1,8 @@
 aiogrpc>=1.4
+cryptography
+flask
 googleapis-common-protos
-opencv-python
 numpy
+opencv-python
 Pillow
 requests

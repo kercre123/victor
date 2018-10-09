@@ -1029,7 +1029,7 @@ namespace Vision {
     }
     Toc("FaceDetect");
 
-    // If there are multiple faces, figure out which detected faces we already recognize
+    // Figure out which detected faces we already recognize
     // so that we can choose to run recognition more selectively in the loop below,
     // effectively prioritizing those we don't already recognize
     std::vector<INT32> detectionIndices(numDetections);
@@ -1051,10 +1051,14 @@ namespace Vision {
       }
 
       // Don't re-recognize faces we're tracking whose IDs we already know.
+      // In this context, a face must be named to be "known" because it's possible
+      // (and common!) that we first see a face without matching it to someone
+      // already enrolled (e.g. due to difficult pose), and then _later_ realize
+      // it's someone we knew, in which case we notify about a updated ID.
       // Note that we don't consider the face currently being enrolled to be
-      // "known" because we're in the process of updating it and want to run
+      // "known" because we're in the process of updating it and _want_ to run
       // recognition on it.
-      const bool isKnown = _recognizer.HasRecognitionData(detectionInfo.nID);
+      const bool isKnown = _recognizer.HasName(detectionInfo.nID);
       const bool isEnrollmentTrackID = (_recognizer.GetEnrollmentTrackID() == detectionInfo.nID);
       if(isKnown && !isEnrollmentTrackID)
       {

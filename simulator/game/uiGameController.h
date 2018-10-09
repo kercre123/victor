@@ -159,6 +159,7 @@ protected:
   void SendMoveLift(const f32 speed_rad_per_sec);
   void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
+  void SendMoveLiftToAngle(const f32 angle_rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendEnableLiftPower(bool enable);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);

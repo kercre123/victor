@@ -40,7 +40,7 @@ public:
   ImuHistory() = default;
   
   // process a gyro frame and add it to history
-  void AddData(RobotInterface::IMUDataFrame&& frame);
+  void AddData(IMUDataFrame&& frame);
   
   // Checks if IMU data at or near timestamp t indicates the head was rotating
   // faster than the given limit
@@ -61,22 +61,22 @@ public:
                           const int numImuDataToLookBack = 0) const;
   
   // Provide STL-style (const) accessors to underlying history data
-  const RobotInterface::IMUDataFrame& front() const { return _history.front(); }
-  const RobotInterface::IMUDataFrame& back() const { return _history.back(); }
+  const IMUDataFrame& front() const { return _history.front(); }
+  const IMUDataFrame& back() const { return _history.back(); }
   bool empty() const { return _history.empty(); }
   
-  using const_iterator = std::deque<RobotInterface::IMUDataFrame>::const_iterator;
+  using const_iterator = std::deque<IMUDataFrame>::const_iterator;
   const_iterator begin() const { return _history.begin(); }
   const_iterator end()   const { return _history.end();   }
   
 private:
   
-  std::deque<RobotInterface::IMUDataFrame> _history;
+  std::deque<IMUDataFrame> _history;
   
   // Gets the imu data before and after the timestamp
   bool GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
-                                RobotInterface::IMUDataFrame& before,
-                                RobotInterface::IMUDataFrame& after) const;
+                                IMUDataFrame& before,
+                                IMUDataFrame& after) const;
   
   // Returns true if the any of the numToLookBack imu data before timestamp t have rates that are greater than
   // the given rates
@@ -98,7 +98,7 @@ public:
   virtual ~ImuComponent() override = default;
 
   // process a gyro frame and add it to history
-  void AddData(RobotInterface::IMUDataFrame&& frame);
+  void AddData(IMUDataFrame&& frame);
   
   //////
   // IDependencyManagedComponent functions

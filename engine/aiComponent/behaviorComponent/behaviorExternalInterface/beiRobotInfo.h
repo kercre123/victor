@@ -156,6 +156,7 @@ private:
   friend class BehaviorDevBatteryLogging;
   friend class BehaviorDockingTestSimple;
   friend class BehaviorLiftLoadTest;
+  friend class BehaviorDevSquawkBoxTest;
 
   friend class IBehaviorPlaypen;
   friend class BehaviorPlaypenInitChecks;

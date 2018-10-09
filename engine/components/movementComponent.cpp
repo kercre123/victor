@@ -683,6 +683,20 @@ u8 MovementComponent::GetTracksLockedAtRelativeStreamTime(const TimeStamp_t rela
   return trackState;
 }
 
+// Sends a message to the robot to move the lift to the specified angle
+Result MovementComponent::MoveLiftToAngle(const f32 angle_rad,
+                                          const f32 max_speed_rad_per_sec,
+                                          const f32 accel_rad_per_sec2,
+                                          const f32 duration_sec,
+                                          MotorActionID* actionID_out)
+{
+  return _robot->SendRobotMessage<RobotInterface::SetLiftAngle>(angle_rad,
+                                                                max_speed_rad_per_sec,
+                                                                accel_rad_per_sec2,
+                                                                duration_sec,
+                                                                GetNextMotorActionID(actionID_out));
+}
+
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,

@@ -48,6 +48,20 @@ namespace Anki {
       // TODO: Get rid of SetAngularVelocty?
       void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2);
       
+      // Command the desired angle of the lift
+      // If useVPG, the commanded position profile considers current velocity and honors max velocity/acceleration.
+      // If not useVPG, desired height_mm is commanded instantaneously.
+      void SetDesiredAngle(f32 angle_rad,
+                           f32 speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S,
+                           f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2,
+                           bool useVPG = true);
+      
+      // Command the desired angle of the lift
+      // duration_seconds:  The time it should take for it to reach the desired height
+      // acc_start_frac:    The fraction of duration that it should be accelerating at the start
+      // acc_end_frac:      The fraction of duration that it should be slowing down to a stop at the end
+      void SetDesiredAngleByDuration(f32 angle_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
+
       // Command the desired height of the lift
       // If useVPG, the commanded position profile considers current velocity and honors max velocity/acceleration.
       // If not useVPG, desired height_mm is commanded instantaneously.

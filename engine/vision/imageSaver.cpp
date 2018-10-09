@@ -21,6 +21,9 @@
 
 #include "opencv2/imgproc/imgproc.hpp"
 
+#include <iomanip>
+#include <sstream>
+
 namespace Anki {
 namespace Vector {
 
@@ -220,6 +223,14 @@ Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
   
   return RESULT_OK;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline std::string GetZeroPaddedFrameNumber(const s32 frameNumber)
+{
+  std::stringstream ss;
+  ss << std::setw(12) << std::setfill('0') << frameNumber;
+  return ss.str();
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ImageSaver::GetFullFilename(const s32 frameNumber, const char *extension) const
@@ -228,14 +239,19 @@ std::string ImageSaver::GetFullFilename(const s32 frameNumber, const char *exten
   if(_params.basename.empty())
   {
     // No base name provided: Use zero-padded frame number as filename
-    char filename[32];
-    snprintf(filename, sizeof(filename)-1, "%08d.%s", frameNumber, extension);
+    const std::string filename(GetZeroPaddedFrameNumber(frameNumber) + "." + extension);
     fullFilename = Util::FileUtils::FullFilePath({_params.path, filename});
   }
   else
   {
-    // Add the specified extension to the specified base name
-    fullFilename = Util::FileUtils::FullFilePath({_params.path, _params.basename + "." + extension});
+    // Add the specified extension to the specified base name. Include frame number iff streaming.
+    std::string basename(_params.basename);
+    if(ImageSendMode::Stream == _params.mode)
+    {
+      basename += "_";
+      basename += GetZeroPaddedFrameNumber(frameNumber);
+    }
+    fullFilename = Util::FileUtils::FullFilePath({_params.path, basename + "." + extension});
   }
   
   return fullFilename;

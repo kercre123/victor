@@ -50,6 +50,7 @@ enum int_32 RobotActionType {
     HANG,
     MOUNT_CHARGER,
     MOVE_HEAD_TO_ANGLE,
+    MOVE_LIFT_TO_ANGLE,
     MOVE_LIFT_TO_HEIGHT,
     PAN_AND_TILT,
     PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()

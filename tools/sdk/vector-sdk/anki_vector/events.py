@@ -20,6 +20,7 @@ __all__ = ['EventHandler']
 
 import asyncio
 from concurrent.futures import CancelledError
+import uuid
 
 from .connection import Connection
 from . import util
@@ -33,6 +34,7 @@ class EventHandler:
         self.logger = util.get_class_logger(__name__, self)
         self._loop = None
         self._conn = None
+        self._conn_id = None
         self.listening_for_events = False
         self.event_task = None
         self.subscribers = {}
@@ -64,8 +66,9 @@ class EventHandler:
         self._loop.run_until_complete(self.event_task)
 
     async def _handle_events(self):
+        self._conn_id = bytes(uuid.uuid4().hex, "utf-8")
         try:
-            req = protocol.EventRequest()
+            req = protocol.EventRequest(connection_id=self._conn_id)
             async for evt in self._conn.grpc_interface.EventStream(req):
                 if not self.listening_for_events:
                     break
@@ -87,7 +90,6 @@ class EventHandler:
         :param event_type: The name of the event that will result in func being called.
         :param func: A method implemented in your code that will be called when the event is fired.
         """
-        # TODO The sample code above refers to robot_observed_face but that isn't implemented in the Python anywhere.
         if event_type not in self.subscribers.keys():
             self.subscribers[event_type] = set()
         self.subscribers[event_type].add(func)

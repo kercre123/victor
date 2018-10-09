@@ -23,6 +23,8 @@ The :class:`AudioComponent` class defined in this module is made available as
 sending and process audio data being sent by the robot.
 """
 
+# TODO Not yet supported. Audio from robot does not yet reach Python.
+
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['AudioComponent']
 

@@ -53,7 +53,22 @@ void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kSamplesPerBlock);
-    std::copy(audioChunk, audioChunk + size, newChunk.begin());
+    
+    // Apply fade in
+    if (_fadeInSamples > 0) {
+      size_t sampleIdx = 0;
+      for (; (sampleIdx < size) && (_fadeInScalar < 1.0f); ++sampleIdx) {
+        newChunk[sampleIdx] = static_cast<AudioUtil::AudioSample>(audioChunk[sampleIdx] * _fadeInScalar);
+        _fadeInScalar += _fadeInStepSize;
+        --_fadeInSamples;
+      }
+      // Copy remaining samples
+      std::copy(audioChunk + sampleIdx, audioChunk + size, newChunk.begin() + sampleIdx);
+    }
+    else {
+      // Copy entire chunk
+      std::copy(audioChunk, audioChunk + size, newChunk.begin());
+    }
     _processedAudioData.push_back(std::move(newChunk));
   }
 }
@@ -85,6 +100,30 @@ void MicDataInfo::SetTimeToRecord(uint32_t timeToRecord)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
   _timeToRecord_ms = timeToRecord;
+}
+
+void MicDataInfo::SetAudioFadeInTime(uint32_t fadeInTime_ms)
+{
+  if (!_processedAudioData.empty()) {
+    LOG_WARNING("MicDataInfo.SetAudioFadeInTime",
+                "Attempt to set fade in duration after collecting processed audio");
+    return;
+  }
+  
+  std::lock_guard<std::mutex> lock(_dataMutex);
+  if (fadeInTime_ms > 0) {
+    // Calculate fade in vars
+    constexpr uint32_t samplesPerMilliSecond = AudioUtil::kSampleRate_hz / 1000;
+    _fadeInSamples = samplesPerMilliSecond * fadeInTime_ms;
+    _fadeInStepSize = 1.0f / static_cast<float>(_fadeInSamples);
+    _fadeInScalar = 0.0f;
+  }
+  else {
+    // Clear Fade in vars
+    _fadeInSamples = 0;
+    _fadeInStepSize = 0.0f;
+    _fadeInScalar = 0.0f;
+  }
 }
 
 void MicDataInfo::UpdateForNextChunk()

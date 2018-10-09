@@ -14,6 +14,7 @@
 #include "ev++.h"
 #include "test_INetworkStreamV2.h"
 #include "test_INetworkStreamV3.h"
+#include "test_INetworkStreamV4.h"
 
 struct TestData {
   bool(*method)();
@@ -263,12 +264,19 @@ bool Test_SecurePairing() {
 
   // Create objects for testing
   Test_INetworkStream* netStream = new Test_INetworkStream();
+  std::shared_ptr<Anki::TaskExecutor> taskExecutor = std::make_shared<Anki::TaskExecutor>(ev_default_loop(0));
+  Anki::Wifi::Initialize(taskExecutor);
+  std::shared_ptr<WifiWatcher> wifiWatcher = std::make_shared<WifiWatcher>(ev_default_loop(0));
 
   RtsComms* securePairing = new RtsComms(
     netStream,            // 
     ev_default_loop(0),   // ev loop
     nullptr,              // engineClient (don't need--only for updating face)
+    nullptr,              // gatewayServer
     nullptr,              // tokenClient
+    nullptr,              // connectionIdManager
+    wifiWatcher,
+    taskExecutor,
     false,                // is pairing
     false,                // is ota-ing
     false);               // has cloud owner
@@ -292,12 +300,55 @@ bool Test_SecurePairingV3() {
 
   // Create objects for testing
   Test_INetworkStreamV3* netStream = new Test_INetworkStreamV3();
+  std::shared_ptr<Anki::TaskExecutor> taskExecutor = std::make_shared<Anki::TaskExecutor>(ev_default_loop(0));
+  Anki::Wifi::Initialize(taskExecutor);
+  std::shared_ptr<WifiWatcher> wifiWatcher = std::make_shared<WifiWatcher>(ev_default_loop(0));
 
   RtsComms* securePairing = new RtsComms(
     netStream,            // 
     ev_default_loop(0),   // ev loop
     nullptr,              // engineClient (don't need--only for updating face)
+    nullptr,              // gatewayServer
     nullptr,              // tokenClient
+    nullptr,              // connectionIdManager
+    wifiWatcher,
+    taskExecutor,
+    false,                // is pairing
+    false,                // is ota-ing
+    false);               // has cloud owner
+
+  // Start Test loop
+  // Right now this tests will just be a simple runthrough of the
+  // messages to form a secure connection.
+  //
+  netStream->Test(securePairing);
+
+  // cleanup
+  SavedSessionManager::SaveRtsKeys(oldKeys);
+  delete netStream;
+  delete securePairing;
+
+  return true;
+}
+
+bool Test_SecurePairingV4() {
+  RtsKeys oldKeys = SavedSessionManager::LoadRtsKeys();
+
+  // Create objects for testing
+  Test_INetworkStreamV4* netStream = new Test_INetworkStreamV4();
+  std::shared_ptr<Anki::TaskExecutor> taskExecutor = std::make_shared<Anki::TaskExecutor>(ev_default_loop(0));
+  Anki::Wifi::Initialize(taskExecutor);
+  std::shared_ptr<WifiWatcher> wifiWatcher = std::make_shared<WifiWatcher>(ev_default_loop(0));
+
+  RtsComms* securePairing = new RtsComms(
+    netStream,            // 
+    ev_default_loop(0),   // ev loop
+    nullptr,              // engineClient (don't need--only for updating face)
+    nullptr,              // gatewayServer
+    nullptr,              // tokenClient
+    nullptr,              // connectionIdManager
+    wifiWatcher,
+    taskExecutor,
     false,                // is pairing
     false,                // is ota-ing
     false);               // has cloud owner
@@ -324,7 +375,8 @@ int main() {
     { Test_RtsSavedSessions,        "SavedSessionManager encountered problem." },
     { Test_ChristenNameGeneration,  "Christening generated invalid name." },
     { Test_SecurePairing,           "SecurePairing V2 failed tests." },
-    { Test_SecurePairingV3,         "SecurePairing V3 failed tests." }
+    { Test_SecurePairingV3,         "SecurePairing V3 failed tests." },
+    { Test_SecurePairingV4,         "SecurePairing V4 failed tests." }
   };
 
   int totalPassed = 0;

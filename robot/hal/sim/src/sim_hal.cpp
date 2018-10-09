@@ -548,21 +548,6 @@ namespace Anki {
         }
       }
 
-      static RobotInterface::ImuData batchData;
-      static uint8_t sampleIdx = 0;
-
-      // load the current sample onto the packet
-      batchData.frames[sampleIdx].timestamp = HAL::GetTimeStamp();
-      batchData.frames[sampleIdx].rateX = IMUData.gyro[0];
-      batchData.frames[sampleIdx].rateY = IMUData.gyro[1];
-      batchData.frames[sampleIdx].rateZ = IMUData.gyro[2];
-
-      // reset index and send batch packet
-      if ( ++sampleIdx >= IMUConstants::IMU_BATCH_SIZE ) {
-        sampleIdx = 0;
-        RobotInterface::SendMessage(batchData);
-      }
-
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;
       bool newReading = lastReadTimestamp != HAL::GetTimeStamp();

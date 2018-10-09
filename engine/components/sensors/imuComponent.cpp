@@ -26,9 +26,7 @@ namespace Vector {
   
 namespace {
   const std::string kLogDirName = "imu";
-  const f32         kTimeBetweenFrames_ms = 65.0;
   const int         kMaxSizeOfHistory = 80;
-
 } // end anonymous namespace
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,25 +37,30 @@ ImuComponent::ImuComponent()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ImuComponent::AddData(RobotInterface::IMUDataFrame&& frame)
+void ImuComponent::AddData(IMUDataFrame&& frame)
 {
   _imuHistory.AddData(std::move(frame));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ImuHistory::AddData(RobotInterface::IMUDataFrame&& frame)
+void ImuHistory::AddData(IMUDataFrame&& frame)
 {
-  if(_history.size() == kMaxSizeOfHistory)
-  {
+  while (_history.size() >= kMaxSizeOfHistory) {
     _history.pop_front();
   }
+  
+  DEV_ASSERT_MSG(_history.empty() || (frame.timestamp >= _history.back().timestamp),
+                 "ImuHistory.AddData.TimeMovingBackwards",
+                 "history size %zu, frame timestamp %d, last timestamp %d",
+                 _history.size(), frame.timestamp, _history.back().timestamp);
+  
   _history.emplace_back(frame);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ImuHistory::GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
-                                          RobotInterface::IMUDataFrame& before,
-                                          RobotInterface::IMUDataFrame& after) const
+                                          IMUDataFrame& before,
+                                          IMUDataFrame& after) const
 {
   if(_history.size() < 2)
   {
@@ -67,14 +70,8 @@ bool ImuHistory::GetImuDataBeforeAndAfter(RobotTimeStamp_t t,
   // Start at beginning + 1 because there is no data before the first element
   for(auto iter = _history.begin() + 1; iter != _history.end(); ++iter)
   {
-    // If we get to the imu data after the timestamp
-    // or We have gotten to the imu data that has yet to be given a timestamp and
-    // our last known timestamped imu data is fairly close the time we are looking for
-    // so use it and the data after it that doesn't have a timestamp
-    const int64_t tDiff = ((int64_t)(TimeStamp_t)(iter - 1)->timestamp - (int64_t)(TimeStamp_t)t);
-    if(iter->timestamp > t ||
-        (iter->timestamp == 0 &&
-        ABS(tDiff) < kTimeBetweenFrames_ms))
+    // If we get to the imu data after or equal to the timestamp
+    if(iter->timestamp >= t)
     {
       after = *iter;
       before = *(iter - 1);
@@ -98,7 +95,7 @@ bool ImuHistory::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
   // Separate check for the first element due to there not being anything before it
   if(iter->timestamp > t)
   {
-    if(ABS(iter->rateX) > rateX && ABS(iter->rateY) > rateY && ABS(iter->rateZ) > rateZ)
+    if(ABS(iter->gyroRobotFrame.x) > rateX && ABS(iter->gyroRobotFrame.y) > rateY && ABS(iter->gyroRobotFrame.z) > rateZ)
     {
       return true;
     }
@@ -113,18 +110,13 @@ bool ImuHistory::IsImuDataBeforeTimeGreaterThan(const RobotTimeStamp_t t,
   
   for(iter = _history.begin() + 1; iter != _history.end(); ++iter)
   {
-    // If we get to the imu data after the timestamp
-    // or We have gotten to the imu data that has yet to be given a timestamp and
-    // our last known timestamped imu data is fairly close the time we are looking for
-    const int64_t tDiff = ((int64_t)(TimeStamp_t)(iter - 1)->timestamp - (int64_t)(TimeStamp_t)t);
-    if(iter->timestamp > t ||
-        (iter->timestamp == 0 &&
-        ABS(tDiff) < kTimeBetweenFrames_ms))
+    // If we get to the imu data after or equal to the timestamp
+    if(iter->timestamp >= t)
     {          
       // Once we get to the imu data after the timestamp look at the numToLookBack imu data before it
       for(int i = 0; i < numToLookBack; i++)
       {
-        if(ABS(iter->rateX) > rateX && ABS(iter->rateY) > rateY && ABS(iter->rateZ) > rateZ)
+        if(ABS(iter->gyroRobotFrame.x) > rateX && ABS(iter->gyroRobotFrame.y) > rateY && ABS(iter->gyroRobotFrame.z) > rateZ)
         {
           return true;
         }
@@ -151,10 +143,10 @@ std::string ImuComponent::GetLogRow()
   std::stringstream ss;
   if (!_imuHistory.empty()) {
     const auto& d = _imuHistory.back();
-    ss << d.timestamp << ", ";
-    ss << d.rateX     << ", ";
-    ss << d.rateY     << ", ";
-    ss << d.rateZ;
+    ss << d.timestamp        << ", ";
+    ss << d.gyroRobotFrame.x << ", ";
+    ss << d.gyroRobotFrame.y << ", ";
+    ss << d.gyroRobotFrame.z;
   }
 
   return ss.str();
@@ -172,16 +164,18 @@ bool ImuHistory::WasHeadRotatingTooFast(RobotTimeStamp_t t,
                                            0, headTurnSpeedLimit_radPerSec, 0));
   }
   
-  RobotInterface::IMUDataFrame prev, next;
+  IMUDataFrame prev, next;
   if(!GetImuDataBeforeAndAfter(t, prev, next))
   {
+    const u32 newestTimestamp = _history.empty() ? 0 : (u32) _history.back().timestamp;
     LOG_INFO("ImuComponent.WasHeadRotatingTooFast.NoIMUData",
-             "Could not get next/previous imu data for timestamp %u", (TimeStamp_t)t);
+             "Could not get next/previous imu data for timestamp %u (newest timestamp in history %u - diff %u)",
+             (TimeStamp_t)t, newestTimestamp, (u32) t - newestTimestamp);
     return true;
   }
   
-  if(ABS(prev.rateY) > headTurnSpeedLimit_radPerSec ||
-     ABS(next.rateY) > headTurnSpeedLimit_radPerSec)
+  if(ABS(prev.gyroRobotFrame.y) > headTurnSpeedLimit_radPerSec ||
+     ABS(next.gyroRobotFrame.y) > headTurnSpeedLimit_radPerSec)
   {
     return true;
   }
@@ -201,7 +195,7 @@ bool ImuHistory::WasBodyRotatingTooFast(RobotTimeStamp_t t,
                                            0, 0, bodyTurnSpeedLimit_radPerSec));
   }
   
-  RobotInterface::IMUDataFrame prev, next;
+  IMUDataFrame prev, next;
   if(!GetImuDataBeforeAndAfter(t, prev, next))
   {
     LOG_INFO("ImuComponent..WasBodyRotatingTooFast",
@@ -209,8 +203,8 @@ bool ImuHistory::WasBodyRotatingTooFast(RobotTimeStamp_t t,
     return true;
   }
   
-  if(ABS(prev.rateZ) > bodyTurnSpeedLimit_radPerSec ||
-     ABS(next.rateZ) > bodyTurnSpeedLimit_radPerSec)
+  if(ABS(prev.gyroRobotFrame.z) > bodyTurnSpeedLimit_radPerSec ||
+     ABS(next.gyroRobotFrame.z) > bodyTurnSpeedLimit_radPerSec)
   {
     return true;
   }

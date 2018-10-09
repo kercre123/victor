@@ -25,11 +25,14 @@ namespace Util {
   MessageProfiler::MessageProfiler(const std::string& prefix)
   : m_prefix(prefix)
   , m_start(clock())
+  , m_started(false)
   , m_failed(false) {
     memset(m_count, 0, sizeof(m_count));
   }
 
   void MessageProfiler::Update(int msg, size_t size) {
+    m_started = true;
+
     if (msg < kMaxMessages) {
       ++m_count[msg];
       m_size[msg] = size;
@@ -43,20 +46,16 @@ namespace Util {
   }
 
   void MessageProfiler::ReportOnFailure() {
-    clock_t end = clock();
-    float duration = ((float)(end - m_start)) / CLOCKS_PER_SEC;
-
-    Report();
-
-    if (duration > 10.0f) {
-      // ignore errors in the first 10 seconds to allow for start-up issues
+    if (m_started) {
+      // have recieved at least one good message
+      Report();
       m_failed = true;
     }
   }
 
   void MessageProfiler::Report() {
     if (m_failed) {
-      // failed already, prevent double-reporting
+      // failed, prevent repeat messages
       return;
     }
   

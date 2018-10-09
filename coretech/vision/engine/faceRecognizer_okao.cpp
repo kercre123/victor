@@ -544,6 +544,34 @@ namespace Vision {
     const bool haveEntry = (_trackingToFaceID.find(forTrackingID) != _trackingToFaceID.end());
     return haveEntry;
   }
+  
+  bool FaceRecognizer::HasName(TrackingID_t forTrackingID) const
+  {
+    auto iter = _trackingToFaceID.find(forTrackingID);
+    if(iter == _trackingToFaceID.end())
+    {
+      // No recognition data, so definitely can't be named!
+      return false;
+    }
+    
+    const FaceID_t faceID = iter->second;
+    if(!ANKI_VERIFY(faceID != UnknownFaceID, "FaceRecognizer.HasName.TrackedFaceWithUnknownID", ""))
+    {
+      return false;
+    }
+    
+    auto enrollIter = _enrollmentData.find(faceID);
+    
+    // If this verify triggers, something has gotten messed up with bookkeeping:
+    // For example the enrollment data got changed (via load?) without updating
+    // or clearing the trackingToFaceID LUT.
+    if(!ANKI_VERIFY(enrollIter != _enrollmentData.end(), "FaceRecognizer.HasName.TrackedFaceWithNoEnrollData", ""))
+    {
+      return false;
+    }
+    
+    return !enrollIter->second.IsForThisSessionOnly();
+  }
 
   EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached)
   {

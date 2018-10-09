@@ -94,7 +94,6 @@ class World(util.Component):
         """Fetches a Face instance with the given id."""
         return self._faces.get(face_id)
 
-    # TODO Nic to revisit. See how Cozmo has 1 subscription in world.py (to update the faces array) and 1 subscription in faces.py (to add all the face data to a Face instance). world should not be telling face to update the face data.
     def _add_update_face_to_world_view(self, _, msg):
         """Adds/Updates the world view when a face is observed."""
         face = self.face_factory()
@@ -244,7 +243,6 @@ class World(util.Component):
     def on_object_event(self, _, msg):
         object_event_type = msg.WhichOneof("object_event_type")
 
-        # TODO How can we document these better? These are a bit buried right now.
         object_event_handlers = {
             "object_connection_state": self._on_object_connection_state,
             "object_moved": self._on_object_moved,
