@@ -95,7 +95,7 @@ class Robot:
                  behavior_activation_timeout: int = 10,
                  cache_animation_list: bool = True,
                  enable_vision_mode: bool = False,
-                 enable_camera_feed: bool = True,
+                 enable_camera_feed: bool = False,
                  enable_audio_feed: bool = False,
                  show_viewer: bool = False):
 
@@ -463,7 +463,7 @@ class Robot:
         """The audio feed enabled/disabled
 
         :getter: Returns whether the audio feed is enabled
-        :setter: Enable/disable the audio feeed
+        :setter: Enable/disable the audio feed
 
         .. code-block:: python
 
@@ -485,7 +485,7 @@ class Robot:
         """The camera feed enabled/disabled
 
         :getter: Returns whether the camera feed is enabled
-        :setter: Enable/disable the camera feeed
+        :setter: Enable/disable the camera feed
 
         .. code-block:: python
 

@@ -19,7 +19,7 @@ def main():
     print("------ begin testing camera feed ------")
 
     # Receive camera feed from robot
-    with anki_vector.Robot(args.serial, show_viewer=True) as robot:
+    with anki_vector.Robot(args.serial, enable_camera_feed=True, show_viewer=True) as robot:
         print("------ waiting for image events, press ctrl+c to exit early ------")
         try:
             # Render video for 10 seconds

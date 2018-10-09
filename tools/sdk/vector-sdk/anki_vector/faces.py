@@ -287,16 +287,10 @@ class FaceComponent(util.Component):
     # TODO move out of face component? This is general to objects, not specific to faces? Move to new vision component? Needs sample code.
     # TODO improve list of modes as shown in docs
     @sync.Synchronizer.wrap
-    async def enable_vision_mode(self, enable: bool, mode: protocol.VisionMode = protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES")):
-        """Enable a vision mode
-
-        The vision system can be enabled for modes including the following:
-        Marker detection: `VISION_MODE_DETECTING_MARKERS`
-        Face detection and recognition: `VISION_MODE_DETECTING_FACES`
-        Motion detection: `VISION_MODE_DETECTING_MOTION`
+    async def enable_vision_mode(self, enable: bool):
+        """Enable facial detection on the robot's camera
 
         :param enable: Enable/Disable the mode specified.
-        :param mode: Specifies the vision mode to edit.
         """
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=mode, enable=enable)
+        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=enable)
         return await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
