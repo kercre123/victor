@@ -20,10 +20,12 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
 {
   EContentType newContentType = newContent->type;
   EContentType dataType = type;
-  if ( newContentType == EContentType::Cliff )
+  if ( newContentType == EContentType::Cliff ) 
   {
-    // Cliff can override any other
-    return true;
+    // note: new cliffs cannot override old cliffs
+    // a special transformation function is needed instead to ensure that
+    // from-vision and from-sensor fields are properly handled
+    return ( dataType != EContentType::Cliff );
   }
   else if ( dataType == EContentType::Cliff )
   {
