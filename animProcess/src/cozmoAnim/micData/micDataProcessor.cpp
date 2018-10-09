@@ -55,9 +55,6 @@ namespace {
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
   CONSOLE_VAR_RANGED(uint32_t, kMicData_QuietTimeCooldown_ms, CONSOLE_GROUP, 1000, 500, 10000);
-  
-  // VIC-7175 To test a theory we want to be able to ignore the VAD state and always feed mic data to the recognizer
-  CONSOLE_VAR(bool, kIgnoreVadStateInRecognizer, CONSOLE_GROUP, false);
 
 #if ANKI_DEV_CHEATS
 
@@ -854,7 +851,7 @@ void MicDataProcessor::ProcessTriggerLoop()
 
     // Run the trigger detection, which will use the callback defined above
     // Note we skip it if there is no activity as of the latest processed audioblock
-    if ((_micImmediateDirection->GetLatestSample().activeState != 0) || kIgnoreVadStateInRecognizer)
+    if (_micImmediateDirection->GetLatestSample().activeState != 0)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
       _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
