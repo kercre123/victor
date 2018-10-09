@@ -46,7 +46,7 @@ namespace Vector {
 namespace MicData {
 
 namespace {
-# define CONSOLE_GROUP "MicData"
+#define CONSOLE_GROUP "MicData"
 #define CONSOLE_GROUP_RECOGNIZER "MicData.Recognizer"
 
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
@@ -114,14 +114,16 @@ namespace {
   CONSOLE_VAR_ENUM(int, kRecognizerModelSensitivity, CONSOLE_GROUP_RECOGNIZER, _triggerModelSensitivityIndex,
                    "default,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20");
   
+  bool kEnableRobotNoiseMicProcLogic = false;
   std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 
 #endif // ANKI_DEV_CHEATS
 
   CONSOLE_VAR(bool, kBeatDetectorUseProcessedAudio, CONSOLE_GROUP, false);
   
-# undef CONSOLE_GROUP
+  #define ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG 0
   using MicProcessingState = MicDataProcessor::ProcessingState;
+  const MicProcessingState kDefaultProcessingState = MicProcessingState::SigEsBeamformingOff;
   const MicProcessingState kLowPowerModeProcessingState = MicProcessingState::NoProcessingSingleMic;
 
 } // anonymous namespace
@@ -142,6 +144,15 @@ static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of Mic
 void MicDataProcessor::SetupConsoleFuncs()
 {
 #if ANKI_DEV_CHEATS
+  // Toggle robot noise mic processing logic ON/OFF
+  auto toggleRobotNoiseMicProcLogic = [this](ConsoleFunctionContextRef context) {
+    kEnableRobotNoiseMicProcLogic = !kEnableRobotNoiseMicProcLogic;
+    if (!kEnableRobotNoiseMicProcLogic) {
+      // Set back to default state
+      SetPreferredMicDataProcessingState(kDefaultProcessingState);
+    }
+    context->channel->WriteLog("Toggle Robot Noise Mic Processing Logic %s", (kEnableRobotNoiseMicProcLogic ? "ON" : "OFF"));
+  };
   // Update Recognizer Model with kRecognizerModel & kRecognizerModelSensitivity enums
   auto updateRecognizerModel = [this](ConsoleFunctionContextRef context) {
     if ((_recognizerModelTypeIndex != kRecognizerModel) ||
@@ -159,10 +170,11 @@ void MicDataProcessor::SetupConsoleFuncs()
       context->channel->WriteLog("UpdateRecognizerModel %s", (success ? "success!" : "fail :("));
     }
   };
+  sConsoleFuncs.emplace_front("ToggleRobotNoiseMicProcLogic", std::move(toggleRobotNoiseMicProcLogic), CONSOLE_GROUP, "");
   sConsoleFuncs.emplace_front("UpdateRecognizerModel", std::move(updateRecognizerModel), CONSOLE_GROUP_RECOGNIZER, "");
 #endif
 }
-  
+# undef CONSOLE_GROUP
 # undef CONSOLE_GROUP_RECOGNIZER
 
 
@@ -228,9 +240,8 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Local
   UpdateTriggerForLocale(locale);
   
   // Set initial processing state
-  const auto initProcessState = ProcessingState::SigEsBeamformingOff;
-  SetPreferredMicDataProcessingState(initProcessState);
-  SetActiveMicDataProcessingState(initProcessState);
+  SetPreferredMicDataProcessingState(kDefaultProcessingState);
+  SetActiveMicDataProcessingState(kDefaultProcessingState);
 }
 
 void MicDataProcessor::InitVAD()
@@ -604,17 +615,24 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     }
   }
 
-  // Check if the power mode state needs to be updated
+  // Determine mic processing state
   ProcessingState processingState = _activeProcState;
-  // Low Power Mode toggle
+
+  // Check if the power mode state needs to be updated
   if (isLowPowerMode != _isInLowPowerMode) {
     // Update Power mode state
     processingState = isLowPowerMode ? kLowPowerModeProcessingState : _preferredProcState.load();
     _isInLowPowerMode = isLowPowerMode;
   }
 
-  
 #if ANKI_DEV_CHEATS
+  // NOTE: This logic goes with the statement above ^^^^^^
+  else if (kEnableRobotNoiseMicProcLogic && !isLowPowerMode) {
+    // Update preferred processing state for robot noise state
+    processingState = hasRobotNoise ? ProcessingState::SigEsBeamformingOff : ProcessingState::SigEsBeamformingOn;
+    SetPreferredMicDataProcessingState(processingState);
+  }
+  
   // Allow overriding (for testing) to force enable or disable mic data processing & force processing state
   if (kMicData_ForceEnableMicDataProc)
   {
@@ -982,9 +1000,10 @@ bool MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
 void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::ProcessingState state)
 {
   if (state != _activeProcState) {
-    
-    PRINT_NAMED_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
-                     GetProcessingStateName(_activeProcState), GetProcessingStateName(state));
+    if (ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG) {
+      PRINT_NAMED_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
+                       GetProcessingStateName(_activeProcState), GetProcessingStateName(state));
+    }
     
     switch (state) {
       case ProcessingState::None:
