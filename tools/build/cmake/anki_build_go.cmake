@@ -93,7 +93,11 @@ macro(__anki_run_go_build target_name extra_deps)
 
   set(__go_platform_ldflags "")
   if (VICOS)
-    set(__go_platform_ldflags "-r /anki/lib")
+    # Provide compressdwarf=false for compatibility with Google Breakpad tools
+    # See also https://bugs.chromium.org/p/google-breakpad/issues/detail?id=615
+    set(__go_platform_ldflags "-r /anki/lib -compressdwarf=false")
+  elseif (MACOSX)
+    set(__go_platform_ldflags "-r ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
   endif()
   set(__go_build_ldflags $<TARGET_PROPERTY:${target_name},GO_LDFLAGS>\ ${__go_platform_ldflags})
   set(__ldflags_str $<$<BOOL:${__go_build_ldflags}>:-ldflags>)
