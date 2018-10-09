@@ -15,7 +15,7 @@
 #include "util/math/math.h"
 
 
-TEST(TestMaybe, NothingFmap)
+TEST(TestMaybe, NothingFMap)
 {
   using namespace Anki::Util;
 
@@ -27,19 +27,30 @@ TEST(TestMaybe, NothingFmap)
     return x+2; 
   };
 
-  auto result = notInt.fmap(plus2);
+  auto result = notInt.FMap(plus2);
   
   EXPECT_TRUE(notInt.IsNothing());
   EXPECT_TRUE(result.IsNothing());
   EXPECT_EQ(0, plus2CalledCount);
 
   // test monadic chaining
-  auto result2 = result.fmap(plus2)
-                       .fmap(plus2)
-                       .fmap(plus2);
+  auto result2 = result.FMap(plus2)
+                       .FMap(plus2)
+                       .FMap(plus2);
 
   EXPECT_TRUE(result.IsNothing());
   EXPECT_TRUE(result2.IsNothing());
+  EXPECT_EQ(0, plus2CalledCount);
+
+  // test infix format
+  using namespace Anki::Util::MaybeOperators;
+  
+  auto result3 = plus2 *= plus2 *= result;
+  auto result4 = FMap( plus2, FMap(plus2, Nothing<int>()) );
+
+  EXPECT_TRUE(result.IsNothing());
+  EXPECT_TRUE(result3.IsNothing());
+  EXPECT_TRUE(result4.IsNothing());
   EXPECT_EQ(0, plus2CalledCount);
 }
 
@@ -56,7 +67,7 @@ TEST(TestMaybe, JustFmap)
     return x+2; 
   };
 
-  auto result = intM.fmap(plus2);
+  auto result = intM.FMap(plus2);
   int extractedVal = result.ValueOr(0);
   
   EXPECT_TRUE(intM.IsJust());
@@ -65,9 +76,9 @@ TEST(TestMaybe, JustFmap)
   EXPECT_EQ(1, plus2CalledCount) << "called " << plus2CalledCount << " times, should have been called once";
 
   // test monadic chaining
-  auto result2 = result.fmap(plus2)
-                       .fmap(plus2)
-                       .fmap(plus2);
+  auto result2 = result.FMap(plus2)
+                       .FMap(plus2)
+                       .FMap(plus2);
 
 
   extractedVal = result2.ValueOr(0);
@@ -76,6 +87,44 @@ TEST(TestMaybe, JustFmap)
   EXPECT_TRUE(result2.IsJust());
   EXPECT_EQ(12, extractedVal);
   EXPECT_EQ(4, plus2CalledCount);
+
+  // test infix format
+  using namespace Anki::Util::MaybeOperators;
+
+  auto result3 = plus2 *= plus2 *= result;
+  auto result4 = FMap( plus2, FMap(plus2, Just(1)) );
+
+  EXPECT_TRUE(result3.IsJust());
+  EXPECT_TRUE(result4.IsJust());
+  EXPECT_EQ(10, result3.ValueOr(-1)) << "calculated " << result3.ValueOr(-1) << ", not 10";
+  EXPECT_EQ( 5, result4.ValueOr(-1)) << "calculated " << result4.ValueOr(-1) << ", not 10";
+}
+
+TEST(TestMaybe, NothingBind)
+{
+  using namespace Anki::Util;
+
+  Maybe<int> intM = Nothing<int>();
+
+  auto safeInv = [](float divisor) { return ( NEAR_ZERO(divisor) ) ? Nothing<float>() : Just(1/divisor); };
+
+  // double inverse should change the type, but keep the value
+  auto result = intM.Bind(safeInv)
+                    .Bind(safeInv);
+
+  float extractedVal = result.ValueOr(-1.2);
+  
+  EXPECT_TRUE(result.IsNothing());
+  EXPECT_TRUE( FLT_NEAR(-1.2f, extractedVal) ) << "calculated " << extractedVal << ", not -1.2";
+
+  // test infix format
+  using namespace Anki::Util::MaybeOperators;
+
+  auto result2 = safeInv >>= safeInv >>= intM;
+  auto result3 = Bind( safeInv, Bind(safeInv, intM) );
+
+  EXPECT_TRUE(result2.IsNothing());
+  EXPECT_TRUE(result3.IsNothing());
 }
 
 TEST(TestMaybe, JustBind)
@@ -96,77 +145,225 @@ TEST(TestMaybe, JustBind)
   EXPECT_TRUE(result.IsJust());
   EXPECT_TRUE( FLT_NEAR(4.f, extractedVal) ) << "calculated " << extractedVal << ", not 4.";
 
-  auto result2 = result.fmap(minus2).fmap(minus2);
+  auto result2 = result.FMap(minus2).FMap(minus2);
   extractedVal = result2.ValueOr(-5.f);
   EXPECT_TRUE( NEAR_ZERO(extractedVal) ) << "calculated " << extractedVal << ", should be 0.f";
 
   // alternative syntax test
   auto result3 = result2.Bind(safeInv).Bind(safeInv);
   EXPECT_TRUE( result3.IsNothing() ) << "safeInverse should return Nothing if inverting 0";
+
+
+  // test infix format
+  using namespace Anki::Util::MaybeOperators;
+
+  auto result4 = safeInv >>= safeInv >>= Just(4);
+  auto result5 = Bind( safeInv, Bind(safeInv, Just(4)) );
+
+  EXPECT_TRUE(result4.IsJust());
+  EXPECT_TRUE(result5.IsJust());
+  EXPECT_TRUE( FLT_NEAR(4.f, result4.ValueOr(-1)) ) << "calculated " << result4.ValueOr(-1) << ", not 4.";
+  EXPECT_TRUE( FLT_NEAR(4.f, result5.ValueOr(-1)) ) << "calculated " << result5.ValueOr(-1) << ", not 4.";
+
+  auto result6 = safeInv >>= safeInv >>= Just(0);
+  EXPECT_TRUE( result6.IsNothing() ) << "safeInverse should return Nothing if inverting 0";
 }
 
-TEST(TestMaybe, ClassMemberAccess)
+TEST(TestMaybe, MutableClassMember)
 {
   using namespace Anki::Util;
 
-  auto intM = Just(4);
-
-  auto minus2  = [](int x)   { return x-2; };
-  auto safeInv = [](float divisor) { return ( NEAR_ZERO(divisor) ) ? Nothing<float>() : Just(1/divisor); };
-
-  // double inverse should change the type, but keep the value
-  auto result = intM.Bind(safeInv)
-                    .Bind(safeInv);
-
-  float extractedVal = result.ValueOr(0.);
-  
-  EXPECT_TRUE(result.IsJust());
-  EXPECT_TRUE( FLT_NEAR(4.f, extractedVal) ) << "calculated " << extractedVal << ", not 4.";
-
-  auto result2 = result.fmap(minus2).fmap(minus2);
-  extractedVal = result2.ValueOr(-5.f);
-  EXPECT_TRUE( NEAR_ZERO(extractedVal) ) << "calculated " << extractedVal << ", should be 0.f";
-
-  // alternative syntax test
-  auto result3 = result2.Bind(safeInv).Bind(safeInv);
-  EXPECT_TRUE( result3.IsNothing() ) << "safeInverse should return Nothing if inverting 0";
-}
-
-
-template <typename Func>
-constexpr bool IsVoidRef() { return std::is_void<typename std::result_of<Func&()>::type>::value; }
-
-TEST(TestMaybe, MaybeMutableClass)
-{
-  using namespace Anki::Util;
-
-  class IntWrapper {
+  class NumWrapper {
   public:
-    IntWrapper(int x) : _x(x) {}
-    void Inc()           { ++_x; }
-    void Plus(int y)          { _x+=y; }
+    NumWrapper(float x) : _x(x) {}
+
+    void decr() { --_x; }
+
+    Maybe<void> invert() 
+    { 
+      if ( NEAR_ZERO(_x) ) {
+        return Nothing<void>(); 
+      } else { 
+        _x = 1/_x; 
+        return Just<void>();
+      }
+    }
+
+    float get() const { return _x; }
 
   private:
-    int _x;
+    float _x;
   };
 
-  // auto just4 = Just<IntWrapper>(4);
-  // auto result1 = just4.fmap( [&](auto& x) { x.Inc(); } );
-  // auto result2 = just4 & [&](auto& x) { return Just(x.Inc()); };
+  auto decrSelf   = [](NumWrapper& x) { x.decr(); };
+  auto invertSelf = [](NumWrapper& x) { return x.invert(); };
 
-  // auto result3 = just4.fmap( [&](auto& x) { x.Inc(); } );
-  // auto result4 = just4.fmapMember( &IntWrapper::Inc );
-  // auto result5 = just4.fmapMember( &IntWrapper::Plus );
+  auto wrapM = Just<NumWrapper>(2.f);
 
+  wrapM.FMap(decrSelf);
+  wrapM.FMap(decrSelf);
+  auto failHere = wrapM.Bind(invertSelf);
+  wrapM.FMap(decrSelf);
+  auto succeedHere = wrapM.Bind(invertSelf);
+  auto extract = wrapM.FMap( [](auto w) { return w.get(); } );
 
-
-  // auto resultM = just4 _Bind( Inc() );
-
+  EXPECT_TRUE(failHere.IsNothing());
+  EXPECT_TRUE(succeedHere.IsJust());
+  EXPECT_TRUE( FLT_NEAR(-1.f, extract.ValueOr(0.f)) ) << "should have inverted -1";
 }
-  // TODO: make this 
-  // (func1 >> func2 >> func3).apply(intM); 
-  // func1.bind(func2).eval(intM);
 
-  // auto result = function.Do( minus2,
-  //                        minus,
-  //                        invers);
+namespace {
+  template<typename T>
+  T SubtractAbs(T x, T y) { return fabs(x - y); }
+
+  template<typename T>
+  T Double(T x) { return x*2; }
+    
+  struct IntWrapper {
+    IntWrapper(int a) : x(a) {}
+    int x;
+    int& operator++() { return ++x; }
+    static int inc(int y) { return ++y; }
+  };
+}
+
+TEST(TestMaybe, FMapFunctionTypes)
+{
+  using namespace Anki::Util;
+
+  // these tests are just to ensure these calls are compiled without SFINAE errors.
+  // Other tests check proper execution
+
+  // std::function
+  float z = 2;
+  std::function<void(double)> a = [=](double x) { return z + x; };
+  Just(5).FMap(a);
+
+  // std::bind
+  auto b = std::bind(&SubtractAbs<int>, std::placeholders::_1, 5);
+  Just(2).FMap(b);
+
+  // lambda
+  auto c = [](float x) { return x / 2.f ; };
+  Just(5).FMap(c);
+
+  // anonymous
+  auto d = &Double<int>;
+  Just(2).FMap(d);
+
+  // static member function reference
+  auto e = &IntWrapper::inc;
+  Just(2).FMap(e);
+
+  // member function of existing type
+  auto f = std::bind(&IntWrapper::operator++, std::placeholders::_1);
+  Just<IntWrapper>(2).FMap(f);
+}
+
+TEST(TestMaybe, NothingVoid)
+{
+  using namespace Anki::Util;
+
+  // from Nothing<void>
+  auto notAnything = Nothing<void>();
+
+  int calledCount = 0;
+  auto get2 = [&calledCount]() -> int { 
+    ++calledCount;
+    return 2; 
+  };
+    
+  auto maybe2 = [&calledCount]() { 
+    ++calledCount;
+    return Just(2); 
+  };
+
+  auto resultFMap     = notAnything.FMap(get2);
+  auto resultBind     = notAnything.Bind(maybe2);
+  auto resultNotThis  = notAnything.ThisOr(Nothing<void>());
+  // NOTE: ValueOr does not exist for Maybe<void> since void cannot resolve to an instance
+  
+  EXPECT_TRUE(notAnything.IsNothing());
+  EXPECT_FALSE(notAnything.IsJust());
+  EXPECT_TRUE(resultFMap.IsNothing());
+  EXPECT_TRUE(resultBind.IsNothing());
+  EXPECT_EQ(0, calledCount) << "bind or fmap called the bound method even though the input was Nothing";
+
+  EXPECT_EQ(6, resultFMap.ValueOr(6)) << "Fmap result did not return default value in `ValueOr`";
+  EXPECT_TRUE(resultNotThis.IsNothing()) << "Bind result did not return default value in `ThisOr`";
+
+  // to Nothing<void>
+  auto notInt = Nothing<int>();
+  auto voidM  = notInt.FMap( [](auto x) { ++x; } );
+  auto voidM2 = Nothing<int>().FMap( [](auto x) { ++x; } );
+
+  EXPECT_TRUE(voidM.IsNothing());
+  EXPECT_TRUE(voidM2.IsNothing());
+  static_assert(std::is_same<decltype(voidM)::Type, void>(), "");
+}
+
+TEST(TestMaybe, JustVoid)
+{
+  using namespace Anki::Util;
+
+  // from Just<void>
+  auto justEmpty = Just<void>();
+
+  auto get2   = []() { return 2; };
+  auto maybe4 = []() { return Just(4); };
+
+  auto resultFMap = justEmpty.FMap(get2);
+  auto resultBind = justEmpty.Bind(maybe4);
+  auto resultThis = justEmpty.ThisOr(Nothing<void>());
+  // NOTE: ValueOr does not exist for Maybe<void> since void cannot resolve to an instance
+  
+  EXPECT_FALSE(justEmpty.IsNothing());
+  EXPECT_TRUE(justEmpty.IsJust());
+
+  EXPECT_TRUE(resultFMap.IsJust());
+  EXPECT_TRUE(resultBind.IsJust());
+  EXPECT_TRUE(resultThis.IsJust());
+
+  EXPECT_EQ(2, resultFMap.ValueOr(6)) << "Fmap result did not return current value in `ValueOr`";
+  EXPECT_EQ(4, resultBind.ValueOr(6)) << "Bind result did not return current value in `ValueOr`";
+
+  // to Just<void>
+  auto justInt = Just<int>(5);
+  auto voidM  = justInt.FMap( [](auto x) { ++x; } );
+
+  EXPECT_TRUE(voidM.IsJust());
+  static_assert(std::is_same<decltype(voidM)::Type, void>(), "");
+}
+
+TEST(TestMaybe, ValueOrTypeConversion) 
+{
+  using namespace Anki::Util;
+  auto intM = Just<int>(2); 
+  auto result = intM.ValueOr(.2);
+
+  static_assert(std::is_same<decltype(result), int>(), "ValueOr does maintain declaired type" );
+  EXPECT_TRUE( result == 2 ) << "calculated " << result << ", not 2.";
+
+  intM = Nothing<int>();
+  result = intM.ValueOr(.2);
+  EXPECT_TRUE( result == 0 ) << "calculated " << result << ", should of cast (float .2) to (int 0).";
+}
+
+TEST(TestMaybe, ThisOrInternalTypeConversion) 
+{
+  using namespace Anki::Util;
+
+  const float floatVal = -5.6;
+  auto intM = Just<int>(2); 
+  auto floatM = Just<float>(floatVal);
+  auto resultM = intM.ThisOr(floatM);
+  auto result = resultM.ValueOr(0);
+
+  static_assert(std::is_same<decltype(resultM), decltype(intM)>(), "ThisOr does maintain left declaired type" );
+  EXPECT_TRUE( result == 2 ) << "calculated " << result << ", not 2.";
+
+  intM = Nothing<int>();
+  resultM = intM.ThisOr(floatM);
+  result = resultM.ValueOr(0);
+  EXPECT_TRUE( result == ((int) floatVal) ) << "calculated " << result << ", should of cast (float " << floatVal << ") to (int " <<  (int) floatVal << ").";
+}

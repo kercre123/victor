@@ -142,7 +142,7 @@ bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction trans
     }
   };
 
-  GetNodeAtAddress(address).fmap(trfm);
+  GetNodeAtAddress(address).FMap(trfm);
   return contentChanged;
 }
 

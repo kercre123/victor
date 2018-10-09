@@ -49,7 +49,7 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::ResetAddress()
 {
-  _parent.fmap( [&](const QuadTreeNode* p) { _address = p->GetAddress(); });
+  _parent.FMap( [&](const QuadTreeNode* p) { _address = p->GetAddress(); });
   _address.SetQuadrant(_level, _quadrant);
 }
 
@@ -251,10 +251,10 @@ QuadTreeNode::NodeCPtrVector QuadTreeNode::GetNeighbors() const
 {
   NodeCPtrVector neighbors;
   
-  FindSingleNeighbor(EDirection::North).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::South, neighbors); });
-  FindSingleNeighbor(EDirection::South).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::North, neighbors); });
-  FindSingleNeighbor(EDirection::East ).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::West,  neighbors); });
-  FindSingleNeighbor(EDirection::West ).fmap( [&](auto& node) { node->AddSmallestDescendants(EDirection::East,  neighbors); });
+  FindSingleNeighbor(EDirection::North).FMap( [&](auto& node) { node->AddSmallestDescendants(EDirection::South, neighbors); });
+  FindSingleNeighbor(EDirection::South).FMap( [&](auto& node) { node->AddSmallestDescendants(EDirection::North, neighbors); });
+  FindSingleNeighbor(EDirection::East ).FMap( [&](auto& node) { node->AddSmallestDescendants(EDirection::West,  neighbors); });
+  FindSingleNeighbor(EDirection::West ).FMap( [&](auto& node) { node->AddSmallestDescendants(EDirection::East,  neighbors); });
  
   return neighbors;
 }
