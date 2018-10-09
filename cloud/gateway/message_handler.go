@@ -1603,6 +1603,7 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 		response := make(chan struct{})
 		tokenManager.ForceUpdate(response)
 		<-response
+		log.Das("sdk.activate", &log.DasFields{})
 	} else {
 		token = ""
 	}
