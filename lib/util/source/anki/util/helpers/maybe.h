@@ -50,7 +50,7 @@
  *         classes, though the lack of Algebraic Data Types in C++ makes it difficult for
  *         a typename to map to two types concurrently
  *
- *
+ * 
  * Copyright: Anki, Inc. 2018
  *
  **/
@@ -92,9 +92,9 @@ namespace MaybeOperators {
 
 namespace TypeOperators {
   // check if object is of Maybe typeclass
-template <typename T> struct MaybeT             : public std::false_type {};
-template <typename T> struct MaybeT< Maybe<T> > : public std::true_type {};
-template <typename T> constexpr bool IsMaybe() { return MaybeT<T>::value; }
+  template <typename T> struct MaybeT             : public std::false_type {};
+  template <typename T> struct MaybeT< Maybe<T> > : public std::true_type {};
+  template <typename T> constexpr bool IsMaybe() { return MaybeT<T>::value; }
 
   // checking if a function is void type
   template <typename Func, typename... Args>
@@ -110,9 +110,11 @@ template <typename T> constexpr bool IsMaybe() { return MaybeT<T>::value; }
 
 template<typename T>
 class Maybe {
-  template <typename U> friend class Maybe;           // allow deferred binding of function parameter to result type
+  template <typename U> friend class Maybe;  // allow deferred binding of function parameter to result type
 
 public:
+  using Type = T;
+
   // static constructor helpers
   template<typename U>
   static Maybe<T> Just(U val)                  { return Maybe<T>( val ); }
@@ -121,8 +123,7 @@ public:
   // test the state of Maybe object
   bool IsJust()    const { return  _valid; }
   bool IsNothing() const { return !_valid; }
-    
-  using Type = T;
+
     
   template <typename Func, typename RT = Maybe< TypeOperators::DerefResult<Func&(T&)> >>
   RT FMap(Func&& f) const {
@@ -136,7 +137,7 @@ public:
   RT Bind(Func&& f) const {
     return (_valid) ? std::forward<Func>(f)(*_data) : RT::Nothing(); 
   }
-
+  
   // throw a specific error if we call bind with a function that does not return `Maybe<T>`
   template<typename Func, bool IsMaybe = TypeOperators::IsMaybe<std::result_of_t<Func&(T&)>>(),
            typename = typename std::enable_if_t<!IsMaybe>>
@@ -170,11 +171,11 @@ class Maybe<void> {
   template <typename U> friend class Maybe;           // allow defering binding of function parameter to result type
 
 public:
+  using Type = void;
+
   // static constructor helpers
   static Maybe<void> Just()    { return Maybe<void>(true); }
   static Maybe<void> Nothing() { return Maybe<void>(false); }
-
-  using Type = void;
 
   // test the state of Maybe object
   bool IsJust()    const { return  _valid; }
@@ -207,7 +208,7 @@ protected:
     return Maybe<void>(true); 
   }
 
-  bool               _valid;
+  bool _valid;
 };
 
 } // Util
