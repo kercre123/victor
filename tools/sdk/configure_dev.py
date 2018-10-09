@@ -8,6 +8,8 @@ import argparse
 import importlib
 import sys
 
+import anki_vector
+
 conf = importlib.import_module('vector-sdk.configure')
 
 class InternalApi(conf.Api):
@@ -17,12 +19,18 @@ class InternalApi(conf.Api):
             sys.exit("Please use 'vector_sdk/configure.py' for production")
         elif env == "beta":
             self._handler = conf.ApiHandler(
-                headers={'Anki-App-Key': 'va3guoqueiN7aedashailo'},
+                headers={
+                    'User-Agent': f'Vector-sdk/{anki_vector.__version__}',
+                    'Anki-App-Key': 'va3guoqueiN7aedashailo'
+                },
                 url='https://accounts-beta.api.anki.com/1/sessions'
             )
         elif env == "dev":
             self._handler = conf.ApiHandler(
-                headers={'Anki-App-Key': 'eiqu8ae6aesae4vi7ooYi7'},
+                headers={
+                    'User-Agent': f'Vector-sdk/{anki_vector.__version__}',
+                    'Anki-App-Key': 'eiqu8ae6aesae4vi7ooYi7'
+                },
                 url='https://accounts-dev2.api.anki.com/1/sessions'
             )
         else:

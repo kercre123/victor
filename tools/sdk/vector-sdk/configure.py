@@ -43,6 +43,7 @@ except:
     def colored(text, color=None, on_color=None, attrs=None):
         return text
 
+import anki_vector
 from anki_vector import messaging
 
 class ApiHandler:
@@ -61,7 +62,10 @@ class ApiHandler:
 class Api:
     def __init__(self):
         self._handler = ApiHandler(
-            headers={'Anki-App-Key': 'aung2ieCho3aiph7Een3Ei'},
+            headers={
+                'User-Agent': f'Vector-sdk/{anki_vector.__version__}',
+                'Anki-App-Key': 'aung2ieCho3aiph7Een3Ei'
+            },
             url='https://accounts.api.anki.com/1/sessions'
         )
 
