@@ -358,10 +358,7 @@ def run_sdk(output, sdk_root, sdk_file_name, log_file_name):
 
   run_command = [
     "python3",
-    sdk_root + '/' + sdk_file_name,
-    "--port",
-    str(VICTOR_SDK_PORT)
-    ]
+    sdk_root + '/' + sdk_file_name]
 
   UtilLog.debug('run command {command}'.format(command=' '.join(run_command)))
 
