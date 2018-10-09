@@ -126,8 +126,9 @@ class Robot:
                              '{"name":"Vector-XXXX", "ip":"XX.XX.XX.XX", "cert":"/path/to/cert_file", "guid":"<secret_key>"}')
 
         #: :class:`anki_vector.connection.Connection`: The active connection to the robot.
-        self.conn = connection.Connection(self._name, ':'.join([self._ip, self._port]), self._cert_file, self._guid)
-        self.events = events.EventHandler()
+        self._conn = connection.Connection(self._name, ':'.join([self._ip, self._port]), self._cert_file, self._guid)
+        self._events = events.EventHandler()
+
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
         self._audio: audio.AudioComponent = None
@@ -183,11 +184,20 @@ class Robot:
 
         return dict_entry
 
-    # TODO sample code
     @property
     def robot(self) -> 'Robot':
         """A reference to the Robot object instance."""
         return self
+
+    @property
+    def conn(self) -> connection.Connection:
+        """A reference to the Connection instance."""
+        return self._conn
+
+    @property
+    def events(self) -> events.EventHandler:
+        """A reference to the EventHandler instance."""
+        return self._events
 
     @property
     def anim(self) -> animation.AnimationComponent:
@@ -198,9 +208,7 @@ class Robot:
 
     @property
     def audio(self) -> audio.AudioComponent:
-        """:class:`anki_vector.audio.AudioComponent`: The audio instance used to control
-        Vector's audio feed
-        """
+        """The audio instance used to control Vector's audio feed."""
         if self._audio is None:
             raise exceptions.VectorNotReadyException("AudioComponent is not yet initialized")
         return self._audio
@@ -212,8 +220,7 @@ class Robot:
 
     @property
     def camera(self) -> camera.CameraComponent:
-        """:class:`anki_vector.camera.CameraComponent`: The camera instance used to control
-        Vector's camera feed.
+        """The camera instance used to control Vector's camera feed.
 
         .. code-block:: python
 
@@ -581,8 +588,7 @@ class Robot:
         self._faces.enable_vision_mode(enable=self.enable_vision_mode)
 
         # Subscribe to a callback that updates the robot's local properties
-        # See Robot properties including robot.pose, robot.accel and robot.gyro to access data from robot_state.
-        self.events.subscribe("robot_state", self._unpack_robot_state)
+        self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
 
     def disconnect(self) -> None:
         """Close the connection with Vector.
@@ -607,7 +613,10 @@ class Robot:
         # Shutdown camera feed
         self.camera.close_camera_feed()
         # Shutdown audio feed
-        self.audio.close_audio_feed()
+        if self._audio is not None:
+            self._audio.close_audio_feed()
+        # Close the world and cleanup its objects
+        self.world.close()
 
         self.events.close()
         self.conn.close()
