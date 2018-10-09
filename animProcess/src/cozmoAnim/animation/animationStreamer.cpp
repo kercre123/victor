@@ -1787,6 +1787,9 @@ namespace Vector {
           // Reset the animation so it can be played again:
           InitStreamingAnimation(_tag);
           _incrementTimeThisTick = false;
+          for(const auto& callback: _newLoopCallbacks){
+            callback();
+          }
 
           // To avoid streaming faceLayers set true and start streaming animation next Update() tick.
           streamUpdated = true;

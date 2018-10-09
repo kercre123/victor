@@ -59,6 +59,7 @@ namespace Vector {
   {
   public:
     using NewAnimationCallback = std::function<void()>;
+    using NewLoopCallback = std::function<void()>;
 
     using Tag = AnimationTag;
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
@@ -133,6 +134,11 @@ namespace Vector {
     // Functions passed in here will be called each time a new animation is set to streaming
     void AddNewAnimationCallback(NewAnimationCallback callback) {
       _newAnimationCallbacks.push_back(callback);
+    }
+
+    // Functions passed in here will be called each time an animation is played in a loop
+    void AddNewLoopCallback(NewLoopCallback callback) {
+      _newLoopCallbacks.push_back(callback);
     }
 
     // Returns the time in ms that the animation streamer will use to get animation frames
@@ -325,6 +331,7 @@ namespace Vector {
     bool _redirectFaceImagesToDebugScreen = false;
 
     std::vector<NewAnimationCallback> _newAnimationCallbacks;
+    std::vector<NewLoopCallback> _newLoopCallbacks;
     
     bool _bodyWhiteListActive = false;
 
