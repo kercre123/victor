@@ -22,7 +22,6 @@ __all__ = ['MAX_HEAD_ANGLE', 'MIN_HEAD_ANGLE', 'AsyncRobot', 'Robot']
 import asyncio
 import configparser
 import functools
-import sys
 from pathlib import Path
 
 from . import (animation, audio, behavior, camera,
@@ -131,7 +130,7 @@ class Robot:
         self.events = events.EventHandler()
         # placeholders for components before they exist
         self._anim: animation.AnimationComponent = None
-        #self._audio: audio.AudioComponent = None // TODO turn on
+        self._audio: audio.AudioComponent = None
         self._behavior: behavior.BehaviorComponent = None
         self._camera: camera.CameraComponent = None
         self._faces: faces.FaceComponent = None
@@ -549,7 +548,7 @@ class Robot:
 
         # Initialize components
         self._anim = animation.AnimationComponent(self)
-        self._audio = audio.AudioComponent(self)
+        # self._audio = audio.AudioComponent(self) # TODO turn on
         self._behavior = behavior.BehaviorComponent(self)
         self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)
