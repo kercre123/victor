@@ -1303,15 +1303,18 @@ void MapComponent::AddProxData(const BoundedConvexSet2f& region, const MemoryMap
   auto currentMap = GetCurrentMemoryMap();
   if (currentMap)
   {
-    MemoryMapDataPtr newData = data.Clone();
     // Make sure we enable collision types before inserting
-    MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>(newData)->SetCollidable(_enableProxCollisions);
+    auto newData = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>(data.Clone());
+    newData->SetCollidable(_enableProxCollisions);
 
-    NodeTransformFunction trfm = [&newData] (MemoryMapDataPtr currentData) {
+    NodeTransformFunction trfm = [&newData] (MemoryMapDataPtr currentData) -> MemoryMapDataPtr {
 
       if (currentData->type == EContentType::ObstacleProx) {
         auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( currentData );
         castPtr->MarkObserved();
+        if (castPtr->IsExplored()) { 
+          newData->MarkExplored(); 
+        }
         return currentData;
       } else if ( currentData->CanOverrideSelfWithContent(newData) ) {
         return newData;
