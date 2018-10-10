@@ -19,9 +19,12 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/cozmoContext.h"
+#include "engine/robot.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
@@ -57,6 +60,12 @@ namespace {
   // use some margin here to account for sensor noise.
   static const u16   kSuspiciousCliffValDiff = 20;
 
+  // minimum number of images with edge detection activated
+  const int kNumImagesToWaitForEdges = 10;
+
+  // rate of turning the robot while searching for cliffs with vision
+  const f32 kBodyTurnSpeedForCliffSearch_degPerSec = 120.0f;
+
   // Cooldown for playing more dramatic react to cliff reaction
   CONSOLE_VAR(float, kDramaticReactToCliffCooldown_sec, CONSOLE_GROUP, 3 * 60.f);
 
@@ -64,6 +73,10 @@ namespace {
   // while activated, then just give up and go to StuckOnEdge.
   // It's probably too dangerous to keep trying anything
   CONSOLE_VAR(uint32_t, kMaxNumRobotStopsBeforeGivingUp, CONSOLE_GROUP, 5);
+
+  // whether this experimental feature whereby the robot uses vision
+  // to extend known cliffs via edge detection is active
+  CONSOLE_VAR(bool, kEnableVisualCliffExtension, CONSOLE_GROUP, false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -114,6 +127,10 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
   gotStop = false;
   putDownOnCliff = false;
   wantsToBeActivated = false;
+  hasTargetCliff = false;
+
+  cliffPose.ClearParent();
+  cliffPose = Pose3d(); // identity
 
   const auto kInitVal = std::numeric_limits<u16>::max();
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
@@ -131,7 +148,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
   
   SubscribeToTags({{
     EngineToGameTag::RobotStopped,
-    EngineToGameTag::RobotOffTreadsStateChanged
+    EngineToGameTag::RobotOffTreadsStateChanged,
   }});
 }
 
@@ -188,6 +205,21 @@ void BehaviorReactToCliff::OnBehaviorActivated()
           _dVars.quitReaction = true;    
         }
       }
+    }
+
+    // compute the pose of the detected cliff, 
+    // and cache it for determining lookat positions
+    if(cliffComp.GetCliffPoseRelativeToRobot(cliffComp.GetCliffDetectedFlags(), _dVars.cliffPose)) {
+      _dVars.cliffPose.SetParent(GetBEI().GetRobotInfo().GetPose());
+      if (_dVars.cliffPose.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), _dVars.cliffPose)) {
+        _dVars.hasTargetCliff = true;
+      } else {
+        PRINT_NAMED_WARNING("BehaviorReactToCliff.OnBehaviorActivated.OriginMismatch",
+                            "cliffPose and WorldOrigin do not share the same origin!");
+      }
+    } else {
+      PRINT_NAMED_WARNING("BehaviorReactToCliff.OnBehaviorActivated.NoPoseForCliffFlags",
+                          "flags=%hhu", cliffComp.GetCliffDetectedFlags());
     }
 
     return true;
@@ -296,12 +328,80 @@ void BehaviorReactToCliff::TransitionToBackingUp()
                                          "%x", 
                                          cliffComponent.GetCliffDetectedFlags());
                         TransitionToStuckOnEdge();
+                      } else {
+                        TransitionToVisualExtendCliffs();
                       }
                   });
+  } else {
+    TransitionToVisualExtendCliffs();
   }
-  else {
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
+{
+  if(!kEnableVisualCliffExtension) {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
+    return;
   }
+  
+  Pose3d leftHandSide, rightHandSide;
+
+  bool didComputeLookAtPoses = false;
+  if(_dVars.hasTargetCliff) {
+    // use the cached position of the observed cliff to
+    // determine nearby positions to observe for possible edges
+    // the positions here are a best guess of where to look
+    leftHandSide.SetParent(_dVars.cliffPose);
+    leftHandSide.SetTranslation({0.f, +90.f, 0.f});
+    bool result = leftHandSide.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), leftHandSide);
+
+    rightHandSide.SetParent(_dVars.cliffPose);
+    rightHandSide.SetTranslation({0.f, -90.f, 0.f});
+    result &= rightHandSide.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), rightHandSide);
+
+    if(result) {
+      didComputeLookAtPoses = true;
+      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservingCliffAt", 
+                      "x=%4.2f y=%4.2f",
+                      _dVars.cliffPose.GetTranslation().x(),
+                      _dVars.cliffPose.GetTranslation().y());
+    } else {
+      PRINT_NAMED_WARNING("BehaviorReactToCliff.TransitionToVisualCliffExtend.CliffPoseNotInSameTreeAsCurrentWorldOrigin","");
+    }
+  }
+
+  if(!didComputeLookAtPoses) {
+    // no previously set target cliff pose to look at
+    // instead look at two arbitrary positions in front
+    // and to either side of the robot
+    leftHandSide.SetParent(GetBEI().GetRobotInfo().GetPose());
+    leftHandSide.SetTranslation({60.f, +60.f, 0.f});
+
+    rightHandSide.SetParent(GetBEI().GetRobotInfo().GetPose());
+    rightHandSide.SetTranslation({60.f, -60.f, 0.f});
+  }
+  
+  CompoundActionSequential* action = new CompoundActionSequential();
+
+  action->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK)); // move lift to be out of the FOV
+
+  const auto addTurnAndObserveAction = [&action](const Pose3d& pose) -> void {
+    auto turnAction = new TurnTowardsPoseAction(pose);
+    turnAction->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec));
+    action->AddAction(turnAction);
+    action->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::DetectingOverheadEdges));
+  };
+
+  addTurnAndObserveAction(leftHandSide);
+  addTurnAndObserveAction(rightHandSide);
+  
+  BehaviorSimpleCallback callback = [this] (void) -> void {
+    PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservationFinished", "");
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
+  };
+
+  DelegateIfInControl(action, callback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -311,7 +411,7 @@ void BehaviorReactToCliff::OnBehaviorDeactivated()
   _dVars = DynamicVariables();
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.stuckOnEdgeBehavior.get());
@@ -370,6 +470,8 @@ void BehaviorReactToCliff::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
+  auto& robotInfo = GetBEI().GetRobotInfo();
+
   const bool alreadyActivated = IsActivated();
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::RobotStopped: {
@@ -384,7 +486,6 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
 
       // Record triggered cliff sensor value(s) and compare to what they are when wheels
       // stop moving. If the values are higher, the cliff is suspicious and we should quit.
-      auto& robotInfo = GetBEI().GetRobotInfo();
       const auto& cliffComp = robotInfo.GetCliffSensorComponent();
       const auto& cliffData = cliffComp.GetCliffDataRaw();
       std::copy(cliffData.begin(), cliffData.end(), _dVars.persistent.cliffValsAtStart.begin());

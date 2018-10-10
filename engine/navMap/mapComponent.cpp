@@ -1450,12 +1450,88 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     return RESULT_OK;
   }
 
-  const Pose2d& robotPose = _robot->GetPose();
-  MemoryMapData_Cliff cliffData(_robot->GetPose(), frameInfo.timestamp);
+  // the robot may be moving while we are importing edges
+  // take care to get the historical pose estimate for the
+  // image timestamp, and use that to project the points on
+  // to the ground plane
+  HistRobotState histState;
+  RobotTimeStamp_t histTimestamp;
+  const bool useInterp = true;
+  const auto& res = _robot->GetStateHistory()->ComputeStateAt(frameInfo.timestamp, histTimestamp, histState, useInterp);
+  if (res != RESULT_OK) {
+    PRINT_NAMED_WARNING("MapComponent.AddVisionOverheadEdges.NoHistoricalPose",
+                        "Could not retrieve historical pose for timestamp %u",
+                        (TimeStamp_t)frameInfo.timestamp);
+    return RESULT_FAIL;
+  }
+  const Pose2d& robotPose = histState.GetPose();
+
+  // data node to overwrite with once a cliff is discovered visually
+  MemoryMapData_Cliff cliffDataVis(robotPose, frameInfo.timestamp);
+  cliffDataVis.isFromVision = true;
+
   NodePredicate isCliffType     = [] (const auto& data) { return  data->type == EContentType::Cliff; };
   NodePredicate isCollisionType = [] (const auto& data) { return (data->type == EContentType::ObstacleProx) ||
                                                                  (data->type == EContentType::ObstacleObservable) ||
                                                                  (data->type == EContentType::ObstacleUnrecognized); };
+
+  using CliffDataType = MemoryMapDataWrapper<const MemoryMapData_Cliff>;
+
+  // helper hashers for creating a set of unique cliff poses
+  std::function<s64 (const CliffDataType&)> cliffPoseHasher = 
+  [] (const CliffDataType& cliff) -> s64
+  { 
+    return ((s64) cliff->pose.GetTranslation().x()) << 32 | ((s64) cliff->pose.GetTranslation().y());
+  };
+
+  std::function<bool (const CliffDataType&, const CliffDataType&)> cliffPoseEqual = 
+  [&cliffPoseHasher] (const CliffDataType& cliff1, const CliffDataType& cliff2) -> bool
+  { 
+    return cliffPoseHasher(cliff1) == cliffPoseHasher(cliff2);
+  };
+
+  // set of unique cliff poses (stored as MemoryMapDataWrapper)
+  std::unordered_set<CliffDataType, decltype(cliffPoseHasher), decltype(cliffPoseEqual)> 
+    uniqueCliffs(10, cliffPoseHasher, cliffPoseEqual);
+
+  NodePredicate isDropSensorCliff = [](MemoryMapDataConstPtr nodeData) -> bool {
+    const bool isValidCliff = nodeData->type == EContentType::Cliff;
+    if(isValidCliff) {
+      CliffDataType nCliff = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(nodeData);
+      if(nCliff->isFromCliffSensor) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  MemoryMapDataConstList cliffNodeList;
+  currentMap->FindContentIf(isDropSensorCliff, cliffNodeList);
+  for(const auto& item : cliffNodeList) {
+    CliffDataType cliffNode = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(item);
+    uniqueCliffs.insert(cliffNode);
+  }
+
+  // cliff detections from the drop-sensor are associated with a sensor-pose
+  // at the time of detection
+  // this quad defines the space near this initial detection pose which can
+  // be filled in using visual edge detection
+  const Quad2f kVisualCliffExtensionArea {
+    { +20.f, +120.f },  // up L
+    { -20.f, +120.f },  // lo L
+    { +20.f, -120.f },  // up R
+    { -20.f, -120.f }}; // lo R
+
+  // all previously-known cliff quads that may be filled
+  // populate this list by:
+  // + collecting all unique cliffs detected by drop-sensor
+  // + transforming the visual cliff quad onto those positions 
+  std::vector<FastPolygon> validCliffQuads;
+  for(auto& cliffData : uniqueCliffs) {
+    Quad2f visCliffQuad; 
+    ((Pose2d) cliffData->pose).ApplyTo(kVisualCliffExtensionArea, visCliffQuad);
+    validCliffQuads.emplace_back( Poly2f(visCliffQuad) );
+  }
 
   std::vector<std::vector<Point2f>> possibleEdges;
   for( const auto& chain : frameInfo.chains.GetVector() )
@@ -1465,14 +1541,39 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     // will pickup obstructions), so make sure the line formed by the camera and point is free of 
     // positive space obstacles
     for( const auto& imagePt : chain.points) {
-      if ( currentMap->AnyOf( {robotPose.GetTranslation(), imagePt.position}, isCollisionType) ) {
-        // ray is obstructed, so start a new set
+      Point2f imagePtOnGround = robotPose * imagePt.position;
+      
+      const bool inValidRegion = std::any_of(validCliffQuads.begin(), 
+                                              validCliffQuads.end(), 
+                                              [&imagePtOnGround](const FastPolygon& polygon)->bool {
+                                                return polygon.Contains(imagePtOnGround);
+                                              });
+
+      if (!inValidRegion || currentMap->AnyOf( {robotPose.GetTranslation(), imagePtOnGround}, isCollisionType) ) {
+        // either the ray from robot center to the imagePtOnGround is obstructed
+        // or the imagePtOnGround is outside of the allowed cliff extending area
         if (!possibleEdges.back().empty()) { possibleEdges.push_back({}); }
       } else {
-        possibleEdges.back().push_back(robotPose * imagePt.position);
+        possibleEdges.back().push_back(imagePtOnGround);
       }
     }
   }
+
+  const auto& cliffDataVisPtr = cliffDataVis.Clone();
+  NodeTransformFunction transformVisionCliffs = [&cliffDataVisPtr] (MemoryMapDataPtr currNode) -> MemoryMapDataPtr {
+    if(currNode->type == EContentType::Cliff) {
+      // a node can be from the cliff sensor AND from vision
+      auto currCliff = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(currNode);
+      if(currCliff->isFromCliffSensor && !currCliff->isFromVision) {
+        currCliff->isFromVision = true;
+        // already modified the current node, no need to clone it
+        return currNode;
+      }
+    } else if(currNode->CanOverrideSelfWithContent(cliffDataVisPtr)) {
+      return cliffDataVisPtr;
+    }
+    return currNode;
+  };
 
   // build a polyline set for insertion
   for(const auto& pointSet : possibleEdges) {
@@ -1484,7 +1585,9 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
       // if any of the segments in this pointset intersect with a cliff, then insert all of them
       if (std::any_of(polyLines.begin(), polyLines.end(), [&](const auto& seg) { return currentMap->AnyOf(seg, isCliffType); } )) {
-        for(const auto& seg : polyLines) { currentMap->Insert(seg, cliffData); }
+        for(const auto& seg : polyLines) { 
+          currentMap->Insert(seg, transformVisionCliffs); 
+        }
       }
     }
   }

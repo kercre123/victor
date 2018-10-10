@@ -12,6 +12,7 @@
 
 #include "memoryMapTypes.h"
 #include "data/memoryMapData_ProxObstacle.h"
+#include "data/memoryMapData_Cliff.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/math/pose.h"
@@ -40,6 +41,10 @@ CONSOLE_VAR(bool, kRenderProxBeliefs, "ProxSensorComponent", false);
 
 namespace
 {
+
+// helper method to colorize nodes based on their type and attributes in visualization
+Anki::ColorRGBA GetNodeVizColor(MemoryMapDataPtr node);
+
 #define MONITOR_PERFORMANCE(eval) (kMapPerformanceTestsEnabled) ? PerformanceMonitor([&]() {return eval;}, __FILE__ ":" + std::string(__func__)) : eval
 
 struct PerformanceRecord { double avgTime_us = 0; u32 samples = 0; };
@@ -105,6 +110,58 @@ EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullCont
   }
 
   return contentTypeFlags;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ColorRGBA GetNodeVizColor(MemoryMapDataPtr node)
+{
+  // scale used to help visualize confidence levels for obstacles
+  float scale = 1.f;
+  if (node->type == EContentType::ObstacleProx && kRenderProxBeliefs) {
+    u8 val = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>(node)->GetObstacleConfidence();
+    scale = std::fmax(0.f, std::fmin(val/100.f, 1.f));
+  }
+
+  // check for special coloring rules per content type
+  // e.g. visually observed cliffs versus drop sensor cliffs
+  // e.g. confidence visualziation for prox obstacles (as a gradient)
+  Anki::ColorRGBA color = Anki::NamedColors::WHITE; // default that any other rule overrides
+
+  using namespace ExternalInterface;
+  switch(node->GetExternalContentType())
+  {
+    case ENodeContentTypeEnum::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
+    case ENodeContentTypeEnum::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
+    case ENodeContentTypeEnum::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
+    case ENodeContentTypeEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
+    case ENodeContentTypeEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.5f); break; }
+    case ENodeContentTypeEnum::Cliff                  : { 
+      const auto& cliffData = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(node);
+      if(!cliffData->isFromCliffSensor && cliffData->isFromVision) {
+        color = ColorRGBA(1.f, 0.84f, 0.f, 0.75f);   // gold
+      } else if(cliffData->isFromCliffSensor && cliffData->isFromVision) {
+        color = ColorRGBA(1.f, 0.41f, 0.70f, 0.75f); // pink
+      } else if(cliffData->isFromCliffSensor && !cliffData->isFromVision) {
+        color = Anki::NamedColors::BLACK;
+      }
+      color.SetAlpha(0.8f); 
+      break; 
+    }
+    case ENodeContentTypeEnum::InterestingEdge        : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
+    case ENodeContentTypeEnum::NotInterestingEdge     : { color = Anki::NamedColors::PINK;     color.SetAlpha(0.8f); break; }
+    case ENodeContentTypeEnum::ObstacleProx           : { 
+      color = (Anki::NamedColors::CYAN * scale) + (Anki::NamedColors::GREEN * (1 - scale));  
+      color.SetAlpha(0.5f + .5*scale); 
+      break; 
+    }
+    case ENodeContentTypeEnum::ObstacleProxExplored   : { 
+      color = (Anki::NamedColors::BLUE * scale) + (Anki::NamedColors::GREEN * (1 - scale));  
+      color.SetAlpha(0.5f + .5*scale); 
+      break; 
+    }
+  }
+
+  return color;
 }
 
 }; // namespace
@@ -287,14 +344,10 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
       // leaf node
       if ( !node.IsSubdivided() )
       {
-        // TODO: make a `Pack` virtual member of MemoryMapData
-        float aux = 1.f;
-        if (node.GetData()->type == EContentType::ObstacleProx && kRenderProxBeliefs) {
-          u8 val = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( node.GetData() )->GetObstacleConfidence();
-          aux = std::fmax(0.f, std::fmin(val/100.f, 1.f));
-        }
         info.quadInfo.emplace_back(
-          ExternalInterface::MemoryMapQuadInfo( node.GetData()->GetExternalContentType(), node.GetLevel(), aux));
+          node.GetData()->GetExternalContentType(), 
+          node.GetLevel(), 
+          GetNodeVizColor(node.GetData()).AsRGBA());
       }
     };
 

@@ -10,6 +10,7 @@ import sys
 
 import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from anki_vector.events import Events  # pylint: disable=wrong-import-position
 import anki_vector  # pylint: disable=wrong-import-position
 
 
@@ -32,9 +33,9 @@ def main():
             print(f"Updated face id: {face.updated_face_id}")
             print(f"Name: {face.name}")
             print(f"Expression: {face.expression}")
-            print(f"Timestamp: {face.timestamp}")
+            print(f"Timestamp: {face.last_observed_time}")
             print(f"Pose: {face.pose}")
-            print(f"Image Rect: {face.face_rect}")
+            print(f"Image Rect: {face.last_observed_image_rect}")
             print(f"Expression score: {face.expression_score}")
             print(f"Left eye: {face.left_eye}")
             print(f"Right eye: {face.right_eye}")
@@ -43,12 +44,12 @@ def main():
 
     with anki_vector.Robot(args.serial, enable_vision_mode=True) as robot:
         test_subscriber = functools.partial(test_subscriber, robot)
-        robot.events.subscribe('robot_changed_observed_face_id', test_subscriber)
-        robot.events.subscribe('robot_observed_face', test_subscriber)
+        robot.events.subscribe(test_subscriber, Events.robot_changed_observed_face_id)
+        robot.events.subscribe(test_subscriber, Events.robot_observed_face)
 
         print("------ waiting for face events, press ctrl+c to exit early ------")
         try:
-            robot.loop.run_until_complete(utilities.delay_close())
+            robot.loop.run_until_complete(utilities.delay_close(10))
         except KeyboardInterrupt:
             print("------ finished testing face events ------")
             robot.disconnect()

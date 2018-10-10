@@ -212,10 +212,63 @@ void CliffSensorComponent::SetCliffDetectThreshold(unsigned int ind, uint16_t ne
   }
 }
 
-
-bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const
+bool CliffSensorComponent::GetCliffPoseRelativeToRobot(const uint8_t cliffDetectedFlags, Pose3d& relativePose) const
 {
-  if (cliffEvent.detectedFlags == 0) {
+  // The cliff pose depends on which cliff sensors were tripped
+  // Bit flags for each of the cliff sensors:
+  const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
+  const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
+  const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
+  const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
+  
+  // Estimate the cliff's pose with respect to the robot frame of reference
+  switch (cliffDetectedFlags) {
+    case (FL | FR):
+      // Hit cliff straight-on
+      relativePose.SetTranslation({kCliffSensorXOffsetFront_mm, 0.f, 0.f});
+      relativePose.SetRotation(0.f, Z_AXIS_3D());
+      break;
+    case FL:
+      relativePose.SetTranslation({kCliffSensorXOffsetFront_mm, kCliffSensorYOffset_mm, 0.f});
+      relativePose.SetRotation(DEG_TO_RAD(45.f), Z_AXIS_3D());
+      break;
+    case FR:
+      relativePose.SetTranslation({kCliffSensorXOffsetFront_mm, -kCliffSensorYOffset_mm, 0.f});
+      relativePose.SetRotation(DEG_TO_RAD(-45.f), Z_AXIS_3D());
+      break;
+    case BL:
+      relativePose.SetTranslation({kCliffSensorXOffsetRear_mm, kCliffSensorYOffset_mm, 0.f});
+      relativePose.SetRotation(DEG_TO_RAD(135.f), Z_AXIS_3D());
+      break;
+    case BR:
+      relativePose.SetTranslation({kCliffSensorXOffsetRear_mm, -kCliffSensorYOffset_mm, 0.f});
+      relativePose.SetRotation(DEG_TO_RAD(-135.f), Z_AXIS_3D());
+      break;
+    case (FL | BL):
+      relativePose.SetTranslation({(kCliffSensorXOffsetFront_mm + kCliffSensorXOffsetRear_mm)/2.f, kCliffSensorYOffset_mm, 0.f});
+      relativePose.SetRotation(DEG_TO_RAD(90.f), Z_AXIS_3D());
+      break;
+    case (FR | BR):
+      relativePose.SetTranslation({(kCliffSensorXOffsetFront_mm + kCliffSensorXOffsetRear_mm)/2.f, -kCliffSensorYOffset_mm, 0.f});
+      relativePose.SetRotation(DEG_TO_RAD(-90.f), Z_AXIS_3D());
+      break;
+    case (BL | BR):
+      relativePose.SetTranslation({kCliffSensorXOffsetRear_mm, 0.f, 0.f});
+      relativePose.SetRotation(DEG_TO_RAD(180.f), Z_AXIS_3D());
+      break;
+    default:
+      // Improbable combination of cliff sensors - just assume robot hit cliff straight-on
+      relativePose.SetTranslation({kCliffSensorXOffsetFront_mm, 0.f, 0.f});
+      relativePose.SetRotation(0.f, Z_AXIS_3D());
+      return false;
+  }
+
+  return true;
+}
+
+bool CliffSensorComponent::ComputeCliffPose(uint32_t timestampOfCliff, uint8_t cliffDetectedFlags, Pose3d& cliffPose) const
+{
+  if (cliffDetectedFlags == 0) {
     PRINT_NAMED_WARNING("CliffSensorComponent.ComputeCliffPose.NoCliff",
                         "CliffEvent::detectedFlags == 0! Can't compute a cliff pose if there was no cliff detected.");
     return false;
@@ -225,86 +278,48 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   HistRobotState histState;
   RobotTimeStamp_t histTimestamp;
   const bool useInterp = true;
-  const auto& res = _robot->GetStateHistory()->ComputeStateAt(cliffEvent.timestamp, histTimestamp, histState, useInterp);
+  const auto& res = _robot->GetStateHistory()->ComputeStateAt(timestampOfCliff, histTimestamp, histState, useInterp);
   if (res != RESULT_OK) {
     PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.NoHistoricalPose",
                       "Could not retrieve historical pose for timestamp %u",
-                      cliffEvent.timestamp);
+                      timestampOfCliff);
     return false;
   }
   
   const auto& robotPoseAtCliff = histState.GetPose();
   
-  // The cliff pose depends on which cliff sensors were tripped
-  // Bit flags for each of the cliff sensors:
-  const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
-  const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
-  const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
-  const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
-  
-  // Estimate the cliff's pose with respect to the robot frame of reference
   Pose3d cliffWrtRobot;
-  cliffWrtRobot.SetParent(robotPoseAtCliff);
-  switch (cliffEvent.detectedFlags) {
-    case (FL | FR):
-      // Hit cliff straight-on
-      cliffWrtRobot.SetTranslation({kCliffSensorXOffsetFront_mm, 0.f, 0.f});
-      cliffWrtRobot.SetRotation(0.f, Z_AXIS_3D());
-      break;
-    case FL:
-      cliffWrtRobot.SetTranslation({kCliffSensorXOffsetFront_mm, kCliffSensorYOffset_mm, 0.f});
-      cliffWrtRobot.SetRotation(DEG_TO_RAD(45.f), Z_AXIS_3D());
-      break;
-    case FR:
-      cliffWrtRobot.SetTranslation({kCliffSensorXOffsetFront_mm, -kCliffSensorYOffset_mm, 0.f});
-      cliffWrtRobot.SetRotation(DEG_TO_RAD(-45.f), Z_AXIS_3D());
-      break;
-    case BL:
-      cliffWrtRobot.SetTranslation({kCliffSensorXOffsetRear_mm, kCliffSensorYOffset_mm, 0.f});
-      cliffWrtRobot.SetRotation(DEG_TO_RAD(135.f), Z_AXIS_3D());
-      break;
-    case BR:
-      cliffWrtRobot.SetTranslation({kCliffSensorXOffsetRear_mm, -kCliffSensorYOffset_mm, 0.f});
-      cliffWrtRobot.SetRotation(DEG_TO_RAD(-135.f), Z_AXIS_3D());
-      break;
-    case (FL | BL):
-      cliffWrtRobot.SetTranslation({(kCliffSensorXOffsetFront_mm + kCliffSensorXOffsetRear_mm)/2.f, kCliffSensorYOffset_mm, 0.f});
-      cliffWrtRobot.SetRotation(DEG_TO_RAD(90.f), Z_AXIS_3D());
-      break;
-    case (FR | BR):
-      cliffWrtRobot.SetTranslation({(kCliffSensorXOffsetFront_mm + kCliffSensorXOffsetRear_mm)/2.f, -kCliffSensorYOffset_mm, 0.f});
-      cliffWrtRobot.SetRotation(DEG_TO_RAD(-90.f), Z_AXIS_3D());
-      break;
-    case (BL | BR):
-      cliffWrtRobot.SetTranslation({kCliffSensorXOffsetRear_mm, 0.f, 0.f});
-      cliffWrtRobot.SetRotation(DEG_TO_RAD(180.f), Z_AXIS_3D());
-      break;
-    default:
-      // Improbable combination of cliff sensors - just assume robot hit cliff straight-on
-      cliffWrtRobot.SetTranslation({kCliffSensorXOffsetFront_mm, 0.f, 0.f});
-      cliffWrtRobot.SetRotation(0.f, Z_AXIS_3D());
-      break;
+  bool isValidPose = GetCliffPoseRelativeToRobot(cliffDetectedFlags, cliffWrtRobot);
+  if(!isValidPose) {
+    PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.NoPoseForCliffFlags",
+                      "flags=%hhu", cliffDetectedFlags);
+    return false;
   }
 
   // Compute the cliff pose with respect to the robot world origin
+  cliffWrtRobot.SetParent(robotPoseAtCliff);
   if (!cliffWrtRobot.GetWithRespectTo(_robot->GetWorldOrigin(), cliffPose)) {
     PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.OriginMismatch",
                       "cliffWrtRobot and robot.GetWorldOrigin() do not share the same origin!");
     return false;
   }
-  
-  // update navmap
+
+  return true;
+}
+
+void CliffSensorComponent::UpdateNavMapWithCliffAt(const Pose3d& pose, const uint32_t timestamp) const
+{
   Point2f cliffSize = MarkerlessObject(ObjectType::CliffDetection).GetSize();
   Quad2f cliffquad {
     { +cliffSize.x(), +cliffSize.y() * .5f },  // up L
     { 0.f,            +cliffSize.y() * .5f },  // lo L
     { +cliffSize.x(), -cliffSize.y() * .5f },  // up R
     { 0.f,            -cliffSize.y() * .5f }}; // lo R
-  ((Pose2d) cliffPose).ApplyTo(cliffquad, cliffquad);
+  ((Pose2d) pose).ApplyTo(cliffquad, cliffquad);
 
-  _robot->GetMapComponent().InsertData(Poly2f(cliffquad), MemoryMapData_Cliff(cliffPose, cliffEvent.timestamp));
-
-  return true;
+  MemoryMapData_Cliff cliffFromSensor(pose, timestamp);
+  cliffFromSensor.isFromCliffSensor = true;
+  _robot->GetMapComponent().InsertData(Poly2f(cliffquad), cliffFromSensor);
 }
 
 void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
