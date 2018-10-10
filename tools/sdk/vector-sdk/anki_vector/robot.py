@@ -76,7 +76,7 @@ class Robot:
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-XXXX", "guid": "<secret_key>"}`
                    where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
-                   when his backpack is double clicked on the charger, and :code:`guid` is the authorization token
+                   when his backpack is double-clicked on the charger, and :code:`guid` is the authorization token
                    that identifies the SDK user. Note: Never share your authentication credentials with anyone.
     :param loop: The async loop on which the Vector commands will execute.
     :param default_logging: Disable default logging.
@@ -726,7 +726,7 @@ class AsyncRobot(Robot):
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-XXXX", "guid": "<secret_key>"}`
                    where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
-                   when his backpack is double clicked on the charger, and :code:`guid` is the authorization token
+                   when his backpack is double-clicked on the charger, and :code:`guid` is the authorization token
                    that identifies the SDK user. Note: Never share your authentication credentials with anyone.
     :param loop: The async loop on which the Vector commands will execute.
     :param default_logging: Disable default logging.
