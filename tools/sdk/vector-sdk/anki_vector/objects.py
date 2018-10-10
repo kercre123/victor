@@ -725,3 +725,10 @@ class LightCube(ObservableObject):
     def _on_object_connection_lost(self, _, msg):
         if msg.object_id == self._object_id:
             self._is_connected = False
+
+#: ?? markers look like 2 concentric circles with lines and gaps.
+#?? = protocol.ObjectType.Value("BLOCK_LIGHTCUBE1")
+
+
+#class CustomObjects(ObservableObject):
+#    """Represents Vector's Cube."""
