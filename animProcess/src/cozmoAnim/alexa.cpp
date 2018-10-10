@@ -96,7 +96,7 @@ namespace {
   static const std::string ENDPOINT_KEY("endpoint");
   
   CONSOLE_VAR(bool, kUseWakeWord, "AAA", true);
-    
+  CONSOLE_VAR_RANGED(uint32_t, kAlexaSerialNumberModifier, "AAA", 1, 0, 100);
   
   const std::string kConfig = R"4Nk1({
     "cblAuthDelegate":{
@@ -110,9 +110,9 @@ namespace {
       // Unique device serial number. e.g. 123456
       "deviceSerialNumber":"<SERIAL_NUMBER>", // this gets replaced
       // The Client ID of the Product from developer.amazon.com
-      "clientId": "amzn1.application-oa2-client.35a58ee8f3444563aed328cb189da216",
+      "clientId": "amzn1.application-oa2-client.ada3c4fa4e2b4e5f93e48771c449c522",
       // Product ID from developer.amazon.com
-      "productId": "test_product_1"
+      "productId": "test_product_2"
     },
     "capabilitiesDelegate":{
       // The endpoint to connect in order to send device capabilities.
@@ -269,10 +269,10 @@ void Alexa::Init(const AnimContext* context,
   std::string configWithSerial = kConfig;
   const std::string toReplace = "<SERIAL_NUMBER>";
   auto* osState = OSState::getInstance();
-  const uint32_t esn = osState->GetSerialNumber();
+  const uint32_t esn = osState->GetSerialNumber() + kAlexaSerialNumberModifier;
   PRINT_NAMED_WARNING("WHATNOW", "Registering serial %s", std::to_string(esn).c_str());
   Util::StringReplace( configWithSerial, toReplace, std::to_string(esn) );
-  configJsonStreams.push_back( std::shared_ptr<std::istringstream>(new std::istringstream(kConfig)) );
+  configJsonStreams.push_back( std::shared_ptr<std::istringstream>(new std::istringstream(configWithSerial)) );
   
   // for (auto configFile : configFiles) {
   //   if (configFile.empty()) {
