@@ -20,10 +20,6 @@
     "AnimName": "ag_explorer_huh"
   },
   {
-    "CladEvent": "BeQuiet",
-    "AnimName": "ag_feedback_bequiet"
-  },
-  {
     "CladEvent": "BlackJack_Deal",
     "AnimName" : "ag_blackjack_deal"
   },
@@ -517,7 +513,7 @@
   },
   {
     "CladEvent": "FetchCubeSuccess",
-    "AnimName": "ag_greeting_big_hello"
+    "AnimName": "ag_greeting_imhome"
   },
   {
     "CladEvent": "FindCubeReactToCube",
@@ -1437,13 +1433,35 @@
     "AnimName": "ag_pounceonmotionfail"
   },
   {
-    "CladEvent": "ReactToAffirmative",
+    "CladEvent": "Feedback_GoodRobot",
     "AnimName": "ag_feedback_goodrobot"
   },
   {
-    "CladEvent": "ReactToNegative",
+    "CladEvent": "Feedback_BadRobot",
     "AnimName": "ag_feedback_badrobot"
   },
+  {
+    "CladEvent": "Feedback_ShutUp",
+    "AnimName": "ag_feedback_shutup"
+  },
+  {
+    "CladEvent": "Feedback_BeQuiet",
+    "AnimName": "ag_feedback_bequiet"
+  },
+
+  {
+    "CladEvent": "Feedback_Apology",
+    "AnimName": "ag_feedback_apology"
+  },
+  {
+    "CladEvent": "Feedback_ILoveYou",
+    "AnimName": "ag_feedback_iloveyou"
+  },
+  {
+    "CladEvent": "Feedback_MeanWords",
+    "AnimName": "ag_feedback_meanwords"
+  },
+
   {
     "CladEvent": "ReactToGoodBye",
     "AnimName": "ag_greeting_goodbye"
@@ -1621,10 +1639,6 @@
     "AnimName": "ag_knowledgegraph_success_01"
   },
   {
-    "CladEvent": "ShutUp",
-    "AnimName": "ag_feedback_shutup"
-  },
-  {
     "CladEvent": "NoCloudGetIn",
     "AnimName": "ag_nowifi_getin"
   },
@@ -1646,7 +1660,7 @@
   },
   {
     "CladEvent": "GreetAfterLongTime",
-    "AnimName" : "ag_greeting_big_hello"
+    "AnimName" : "ag_greeting_imhome"
   },
   {
     "CladEvent": "ComeHereStart",
@@ -1658,7 +1672,7 @@
   },
   {
     "CladEvent": "PRDemoGreeting",
-    "AnimName": "ag_greeting_big_hello"
+    "AnimName": "ag_greeting_imhome"
   },
   {
     "CladEvent": "VC_SleepingToListeningGetIn",

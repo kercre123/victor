@@ -35,7 +35,7 @@ structure MemoryMapQuadInfo
 {
   ENodeContentTypeEnum content,
   uint_8               depth,
-  float_32             aux
+  uint_32              colorRGBA
 }
 
 

@@ -38,15 +38,23 @@
     },
     {
       "cloud_intent": "intent_imperative_praise",
-      "user_intent": "imperative_affirmative"
+      "user_intent": "imperative_praise"
     },
     {
       "cloud_intent": "intent_imperative_apologize",
-      "user_intent": "imperative_affirmative"
+      "user_intent": "imperative_apology"
     },
     {
       "cloud_intent": "intent_imperative_scold",
-      "user_intent": "imperative_negative"
+      "user_intent": "imperative_scold"
+    },
+    {
+      "cloud_intent": "intent_imperative_iloveyou",
+      "user_intent": "imperative_love"
+    },
+    {
+      "cloud_intent": "intent_imperative_abuse",
+      "user_intent": "imperative_abuse"
     },
     {
       "cloud_intent": "intent_global_stop_extend",

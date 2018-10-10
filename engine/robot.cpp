@@ -114,8 +114,10 @@ static void PlayAnimationByName(ConsoleFunctionContextRef context)
     const char* animName = ConsoleArg_Get_String(context, "animName");
     if (animName) {
       int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
-      _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW,
-                                              new PlayAnimationAction(animName, numLoops));
+      bool renderInEyeHue = ConsoleArg_GetOptional_Bool(context, "renderInEyeHue", true);
+      auto* action = new PlayAnimationAction(animName, numLoops);
+      action->SetRenderInEyeHue(renderInEyeHue);
+      _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
     }
   }
 }
@@ -148,7 +150,7 @@ static void AddAnimation(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName, optional int numLoops);
+CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName, optional int numLoops, optional bool renderInEyeHue);
 CONSOLE_FUNC(AddAnimation, "Animation", const char* animFile);
 
 // Perform Text to Speech Coordinator from debug console

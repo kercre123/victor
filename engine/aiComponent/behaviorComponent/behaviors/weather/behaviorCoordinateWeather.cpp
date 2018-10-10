@@ -154,21 +154,7 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
   if(_iConfig.intentParser->IsForecast(weatherResponse)){
     cantDoThat = true;
   }else{
-    ///////
-    /// PR DEMO HACK - want a city where it always rains, so if it's the PRDemo the WeatherIntentParser may lie
-    /// about the weather condition based on the location returned by the cloud intent
-    ///////
-    const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
-    const bool isForPRDemo = (featureGate != nullptr) ? 
-                                  featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo) :
-                                  false;
-
-    const auto condition = _iConfig.intentParser->GetCondition(weatherResponse,
-                                                               isForPRDemo);
-    ///////
-    /// END PR DEMO HACK
-    ///////
-
+    const auto condition = _iConfig.intentParser->GetCondition(weatherResponse);
     const auto iter = _iConfig.weatherBehaviorMap.find(condition);
     if((iter != _iConfig.weatherBehaviorMap.end()) &&
        iter->second->WantsToBeActivated()){

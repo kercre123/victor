@@ -18,6 +18,10 @@ enum uint_8 DockingMethod
   // Combines BLIND and TRACKER docking, will check error signals but only adjust docking
   // if the error signals indicate too much change
   HYBRID_DOCKING,
+  
+  // Like HYBRID_DOCKING but it doesn't try to plan a path that ends up square with the marker.
+  // Instead it just always follows a straight line between the robot's current pose and the marker's center.
+  HYBRID_DOCKING_BEELINE,
 
   // Only ever needs to receive one error signal (to start), therefore docking will always complete
   // once it starts

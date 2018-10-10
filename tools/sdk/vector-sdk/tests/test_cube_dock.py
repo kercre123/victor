@@ -34,7 +34,7 @@ def main():
         else:
             print("------ cube docking failed with code {0} ({1}) ------".format(str(docking_result).rstrip('\n\r'), docking_result.code))
     else:
-        print("------ skipping cube docking, could not connect to robot ------")
+        print("------ skipping cube docking, could not connect to robot or cube ------")
 
 
 if __name__ == "__main__":

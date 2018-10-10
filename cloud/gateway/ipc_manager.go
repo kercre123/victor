@@ -535,11 +535,12 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 			continue
 		}
 
-		// TODO: Refactor after RobotObservedFace and RobotChangedObservedFaceID are added to events
+		// TODO: Refactor now that RobotObservedFace and RobotChangedObservedFaceID have been added to events
 		switch msg.Tag() {
 		case gw_clad.MessageRobotToExternalTag_Event:
 			event := CladEventToProto(msg.GetEvent())
 			manager.SendEventToChannel(event)
+			// @TODO: Convert all face events to proto VIC-4643
 		case gw_clad.MessageRobotToExternalTag_RobotObservedFace:
 			event := &extint.Event{
 				EventType: &extint.Event_RobotObservedFace{

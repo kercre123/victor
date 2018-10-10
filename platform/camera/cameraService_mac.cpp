@@ -403,18 +403,29 @@ namespace Anki {
       }
       
       const auto earliestImageTimestamp = webotsImageBuffer_.front().first;
-      if (atTimestamp_ms < earliestImageTimestamp) {
+      if ((atTimestamp_ms != 0) &&
+          (atTimestamp_ms < earliestImageTimestamp)) {
         return false;
       }
       
-      // Find the image in the webots image buffer that is before or equal to atTimestamp_ms, popping older images
-      // from the buffer along the way.
       u32 outputTimestamp = 0;
-      while (!webotsImageBuffer_.empty() &&
-             webotsImageBuffer_.front().first <= atTimestamp_ms) {
-        outputTimestamp = webotsImageBuffer_.front().first;
-        imageBuffer_.swap(webotsImageBuffer_.front().second);
-        webotsImageBuffer_.pop_front();
+      // If atTimestamp_ms is zero, this indicates that the caller simply wants the latest available image
+      if (atTimestamp_ms == 0) {
+        if (!webotsImageBuffer_.empty()) {
+          outputTimestamp = webotsImageBuffer_.back().first;
+          imageBuffer_.swap(webotsImageBuffer_.back().second);
+          // Clear the buffer to prevent the same image from being used twice
+          webotsImageBuffer_.clear();
+        }
+      } else {
+        // Find the image in the webots image buffer that is before or equal to atTimestamp_ms, popping older images
+        // from the buffer along the way.
+        while (!webotsImageBuffer_.empty() &&
+               webotsImageBuffer_.front().first <= atTimestamp_ms) {
+          outputTimestamp = webotsImageBuffer_.front().first;
+          imageBuffer_.swap(webotsImageBuffer_.front().second);
+          webotsImageBuffer_.pop_front();
+        }
       }
 
       buffer = Vision::ImageBuffer(imageBuffer_.data(),
