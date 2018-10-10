@@ -124,7 +124,7 @@ void BehaviorSayName::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSayName::BehaviorUpdate()
 {
-  if(!IsActivated())
+  if(!IsActivated() || IsControlDelegated())
   {
     return;
   }
@@ -144,7 +144,6 @@ void BehaviorSayName::BehaviorUpdate()
     if( nameKnown )
     {
       LOG_INFO("BehaviorSayName.Update.NameKnown", "CurrentTick:%zu", BaseStationTimer::getInstance()->GetTickCount());
-      _dVars.waitingForRecognition = false;
       SayName(facePtr->GetName());
     }
     else
@@ -157,11 +156,9 @@ void BehaviorSayName::BehaviorUpdate()
         const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if((currentTime - GetTimeActivated_s()) > _iConfig.waitForRecognitionMaxTime_sec)
         {
-          LOG_INFO("BehaviorSayName.Update.WaitingForRecognitionTimedOut", "");
           DASMSG(behavior_sayname_recognition_timed_out, "behavior.sayname.recognition_timeout",
                  "Behavior timed out waiting for tracked face to complete recognition");
           DASMSG_SEND();
-          _dVars.waitingForRecognition = false;
           SayDontKnow();
         }
         else
@@ -205,31 +202,51 @@ void BehaviorSayName::SayDontKnow()
   const bool haveDontKnowText = !_iConfig.dontKnowText.empty();
   if(haveDontKnowText)
   {
-    // Play the animation and then say the text with TTS
-    _iConfig.ttsBehavior->SetTextToSay( _iConfig.dontKnowText ); // set text in advance to begin generation
-    
-    DelegateIfInControl( animAction, [this]() {
-      if(ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(),
-                     "BehaviorSayName.OnBehaviorActivated.NoTTS",""))
-      {
-        // TODO: add ability to tell FaceWorld to log DAS for unnamed->named ID update that occurs for this face later
-        DASMSG(behavior_sayname_dont_know, "behavior.sayname.dont_know",
-               "SayName behavior resulted in 'don't know' response");
+    // Set text in advance to begin generation
+    _iConfig.ttsBehavior->SetTextToSay( _iConfig.dontKnowText );
+  }
+  
+  // Play the animation and then say the text with TTS, if there is any
+  DelegateIfInControl( animAction, [this]() {
+    const bool haveDontKnowText = !_iConfig.dontKnowText.empty();
+    if(_dVars.waitingForRecognition) {
+      // Now that animation has played, eating a little more time, check one last time
+      // to see if the face has a name yet. Say it if so.
+      const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( GetTargetFace() );
+      if(facePtr->HasName()) {
+        DASMSG(behavior_sayname_switch_to_do_know, "behavior.sayname.switch_to_do_know",
+               "Name realized after initially playing 'don't know' animation");
         DASMSG_SEND();
-        DelegateIfInControl( _iConfig.ttsBehavior.get(), &BehaviorSayName::Finish );
+        if(haveDontKnowText) {
+          // Remember to clear the generated TTS
+          _iConfig.ttsBehavior->ClearTextToSay();
+        }
+        SayName(facePtr->GetName());
+        return;
       }
-    });
-  }
-  else
-  {
-    // Just play the animation
-    DelegateIfInControl( animAction, &BehaviorSayName::Finish );
-  }
+    }
+    
+    // TODO: add ability to tell FaceWorld to log DAS for unnamed->named ID update that occurs for this face later
+    DASMSG(behavior_sayname_dont_know, "behavior.sayname.dont_know",
+           "SayName behavior resulted in 'don't know' response");
+    DASMSG_SEND();
+    
+    if(haveDontKnowText && ANKI_VERIFY( _iConfig.ttsBehavior->WantsToBeActivated(),
+                                       "BehaviorSayName.OnBehaviorActivated.NoTTS",""))
+    {
+      DelegateIfInControl( _iConfig.ttsBehavior.get(), &BehaviorSayName::Finish );
+    }
+    else {
+      Finish();
+    }
+  });
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSayName::Finish()
 {
+  _dVars.waitingForRecognition = false;
   CancelSelf();
 }
   

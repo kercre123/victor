@@ -38,7 +38,9 @@ public:
   void SetTextToSay(const std::string& textToSay,
                     const UtteranceReadyCallback readyCallback = {},
                     const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed);
-
+  
+  void ClearTextToSay();
+  
   // true when the utterance has been generated
   // note: can also pass a callback into SetTextToSay(...)
   bool IsUtteranceReady() const;
