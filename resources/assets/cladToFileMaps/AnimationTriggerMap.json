@@ -513,7 +513,7 @@
   },
   {
     "CladEvent": "FetchCubeSuccess",
-    "AnimName": "ag_greeting_big_hello"
+    "AnimName": "ag_greeting_imhome"
   },
   {
     "CladEvent": "FindCubeReactToCube",
@@ -1660,7 +1660,7 @@
   },
   {
     "CladEvent": "GreetAfterLongTime",
-    "AnimName" : "ag_greeting_big_hello"
+    "AnimName" : "ag_greeting_imhome"
   },
   {
     "CladEvent": "ComeHereStart",
@@ -1672,7 +1672,7 @@
   },
   {
     "CladEvent": "PRDemoGreeting",
-    "AnimName": "ag_greeting_big_hello"
+    "AnimName": "ag_greeting_imhome"
   },
   {
     "CladEvent": "VC_SleepingToListeningGetIn",
