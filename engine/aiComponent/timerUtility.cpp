@@ -244,9 +244,9 @@ void TimerUtility::OnAlexaAlerts( const AnkiEvent<RobotInterface::RobotToEngine>
     const int alertID = alerts.alertIDs[i];
     const int time_s = alerts.alertTimes[i] + GetUTCOffset();
     const bool isAlarm = alerts.isAlarm[i];
-    newTimes[alertID] = time_s;
-    PRINT_NAMED_WARNING("WHATNOW", "engine received alert id=%d, t=%d, isAlarm=%d (std=%d, sys=%d)", alertID, time_s, isAlarm, GetSteadyTime_s(), GetEpochTime_s());
     int duration_s = std::max(time_s - GetEpochTime_s(), 0);
+    newTimes[alertID] = duration_s;
+    PRINT_NAMED_WARNING("WHATNOW", "engine received alert id=%d, t=%d, isAlarm=%d duration_s=%d (std=%d, sys=%d)", alertID, time_s, isAlarm, duration_s, GetSteadyTime_s(), GetEpochTime_s());
     auto newHandle = std::make_shared<TimerHandle>(duration_s);
     //newHandle->SetTimeSinceEpoch( time_s );
     newHandle->SetAlexaID(alertID);
@@ -299,7 +299,8 @@ void TimerUtility::OnAlexaAlerts( const AnkiEvent<RobotInterface::RobotToEngine>
   }
   if( hasOneToSet ) {
     PRINT_NAMED_WARNING("WHATNOW", "Setting at time %d", minTime);
-    _setTime = minTime;
+    // -3 is because the alexa response is usually that long (todo: actually save time)
+    _setTime = std::max(0, minTime - 3);
   }
   
   
