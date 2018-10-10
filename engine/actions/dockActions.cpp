@@ -59,7 +59,7 @@ namespace Anki {
 
     // Which docking method actions should use
     CONSOLE_VAR(u32, kDefaultDockingMethod,"DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
-    CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
+    CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING_BEELINE);
     CONSOLE_VAR(u32, kRollDockingMethod,   "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
     CONSOLE_VAR(u32, kStackDockingMethod,  "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
 
