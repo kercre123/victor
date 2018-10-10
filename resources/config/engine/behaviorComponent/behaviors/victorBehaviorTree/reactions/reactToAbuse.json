@@ -1,5 +1,5 @@
 {
-  "behaviorID": "ReactToNegative",
+  "behaviorID": "ReactToAbuse",
   "behaviorClass": "AnimSequence",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
@@ -7,15 +7,12 @@
   "respondToUserIntents":
   [
     {
-      "type": "imperative_negative"
-    },
-    {
-      "type": "imperative_scold"
+      "type": "imperative_abuse"
     }
   ],
 
   "animTriggers":
   [
-    "Feedback_BadRobot"
+    "Feedback_MeanWords"
   ]
 }
