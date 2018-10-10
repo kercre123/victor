@@ -7,6 +7,8 @@ import (
 	"anki/log"
 	"anki/logcollector"
 	"anki/token"
+	"anki/voice"
+	"clad/cloud"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -30,29 +32,69 @@ func formatSocketName(socketName, suffix string) string {
 }
 
 func tokenServiceOptions() []token.Option {
-	opts := []token.Option{token.WithServer()}
-	return opts
+	return []token.Option{token.WithServer()}
 }
 
 func jdocsServiceOptions(tokener token.Accessor) []jdocs.Option {
-	opts := []jdocs.Option{jdocs.WithServer()}
-	opts = append(opts, jdocs.WithTokener(tokener))
-	return opts
+	return []jdocs.Option{
+		jdocs.WithServer(),
+		jdocs.WithTokener(tokener),
+	}
 }
 
 func logcollectorServiceOptions(tokener token.Accessor) []logcollector.Option {
-	opts := []logcollector.Option{logcollector.WithServer()}
-	opts = append(opts, logcollector.WithTokener(tokener))
-	opts = append(opts, logcollector.WithHTTPClient(getHTTPClient()))
-	opts = append(opts, logcollector.WithS3UrlPrefix(config.Env.LogFiles))
-	opts = append(opts, logcollector.WithAwsRegion("us-west-2"))
+	return []logcollector.Option{
+		logcollector.WithServer(),
+		logcollector.WithTokener(tokener),
+		logcollector.WithHTTPClient(getHTTPClient()),
+		logcollector.WithS3UrlPrefix(config.Env.LogFiles),
+		logcollector.WithAwsRegion("us-west-2"),
+	}
+}
+
+func voiceServiceOptions(ms, lex bool) []voice.Option {
+	opts := []voice.Option{
+		voice.WithChunkMs(120),
+		voice.WithSaveAudio(true),
+		voice.WithCompression(true),
+	}
+	if ms {
+		opts = append(opts, voice.WithHandler(voice.HandlerMicrosoft))
+	} else if lex {
+		opts = append(opts, voice.WithHandler(voice.HandlerAmazon))
+	}
 	return opts
 }
 
 type testableRobot struct {
+	io      voice.MsgIO
+	process *voice.Process
+
 	tokenClient        *tokenClient
 	jdocsClient        *jdocsClient
 	logcollectorClient *logcollectorClient
+	micClient          *micClient
+}
+
+func newTestableRobot(urlConfigFile string) *testableRobot {
+	testableRobot := new(testableRobot)
+
+	if err := config.SetGlobal(urlConfigFile); err != nil {
+		log.Println("Could not load server config! This is not good!:", err)
+	}
+
+	voice.SetVerbose(true)
+
+	intentResult := make(chan *cloud.Message)
+
+	var receiver *voice.Receiver
+	testableRobot.io, receiver = voice.NewMemPipe()
+
+	testableRobot.process = &voice.Process{}
+	testableRobot.process.AddReceiver(receiver)
+	testableRobot.process.AddIntentWriter(&voice.ChanMsgSender{Ch: intentResult})
+
+	return testableRobot
 }
 
 func (r *testableRobot) connectClients() error {
@@ -72,6 +114,8 @@ func (r *testableRobot) connectClients() error {
 		return err
 	}
 
+	r.micClient = &micClient{r.io}
+
 	return nil
 }
 
@@ -89,15 +133,13 @@ func (r *testableRobot) closeClients() {
 	}
 }
 
-func (r *testableRobot) run(urlConfigFile string) {
-	if err := config.SetGlobal(urlConfigFile); err != nil {
-		log.Println("Could not load server config! This is not good!:", err)
-	}
-
+func (r *testableRobot) run() {
 	tokener := token.GetAccessor()
 
 	var options []cloudproc.Option
 
+	options = append(options, cloudproc.WithVoice(r.process))
+	options = append(options, cloudproc.WithVoiceOptions(voiceServiceOptions(false, false)...))
 	options = append(options, cloudproc.WithTokenOptions(tokenServiceOptions()...))
 	options = append(options, cloudproc.WithJdocs(jdocsServiceOptions(tokener)...))
 	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorServiceOptions(tokener)...))

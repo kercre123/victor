@@ -34,8 +34,8 @@ func newRobotSimulator(options *options) (*robotSimulator, error) {
 	token.UseClientCert = true
 	robot.DefaultCloudDir = *simulator.options.defaultCloudDir
 
-	simulator.robotInstance = &testableRobot{}
-	go simulator.robotInstance.run(*simulator.options.urlConfigFile)
+	simulator.robotInstance = newTestableRobot(*options.urlConfigFile)
+	go simulator.robotInstance.run()
 
 	simulator.robotInstance.waitUntilReady()
 
@@ -156,6 +156,12 @@ func (s *robotSimulator) testTokenRefresh() error {
 	return err
 }
 
+func (s *robotSimulator) testMicConnectionCheck() error {
+	err := s.robotInstance.micClient.connectionCheck()
+	s.logIfNoError(err, "mic_connection_check", "Microphone connection checked\n")
+	return err
+}
+
 func (s *robotSimulator) heartBeat() error {
 	var err error
 	s.logIfNoError(err, "heart_beat", "Heart beat")
@@ -188,6 +194,7 @@ func simulate(options *options) {
 	simulator.addPeriodicAction(options.jdocsInterval, simulator.testJdocsReadAndWriteSettings)
 	simulator.addPeriodicAction(options.logCollectorInterval, simulator.testLogCollector)
 	simulator.addPeriodicAction(options.tokenRefreshInterval, simulator.testTokenRefresh)
+	simulator.addPeriodicAction(options.connectionCheckInterval, simulator.testMicConnectionCheck)
 
 	simulator.start()
 

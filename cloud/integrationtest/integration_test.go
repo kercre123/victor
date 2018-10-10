@@ -33,8 +33,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	token.UseClientCert = true
 	robot.DefaultCloudDir = *s.options.defaultCloudDir
 
-	s.robotInstance = &testableRobot{}
-	go s.robotInstance.run(*s.options.urlConfigFile)
+	s.robotInstance = newTestableRobot(s.options.urlConfigFile)
+	go s.robotInstance.run()
 
 	s.robotInstance.waitUntilReady()
 
@@ -151,6 +151,11 @@ func (s *IntegrationTestSuite) TestTokenRefresh() {
 	jwtResponse, err := s.robotInstance.tokenClient.Jwt()
 	s.logIfNoError(err, "token_jwt", "Token Jwt response=%v\n", jwtResponse)
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestMicConnectionCheck() {
+	err := s.robotInstance.micClient.connectionCheck()
+	s.logIfNoError(err, "mic_connection_check", "Microphone connection checked\n")
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
