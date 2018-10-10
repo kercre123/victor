@@ -32,10 +32,10 @@ static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was 
 static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, ParentPtr parent)
+QuadTreeNode::QuadTreeNode(const Point2f &center, float sideLength, uint8_t level, EQuadrant quadrant, ParentPtr parent)
 : _center(center)
 , _sideLen(sideLength)
-, _boundingBox(center - Point3f(sideLength/2, sideLength/2, 0), center + Point3f(sideLength/2, sideLength/2, 0))
+, _boundingBox(center - Point2f(sideLength * .5f), center + Point2f(sideLength*.5f))
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
@@ -54,7 +54,7 @@ void QuadTreeNode::ResetAddress()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
+void QuadTreeNode::Subdivide()
 {
   if ( !CanSubdivide() ) { return; }
   
@@ -63,10 +63,16 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   const uint8_t cLevel = _level-1;
 
   ParentPtr backPtr = ParentPtr::Just(this);
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXPlusY , backPtr) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXMinusY, backPtr) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXPlusY , backPtr) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXMinusY, backPtr) ); // lo E
+  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()+quarterLen, _center.y()+quarterLen}, halfLen, cLevel, EQuadrant::PlusXPlusY , backPtr) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()+quarterLen, _center.y()-quarterLen}, halfLen, cLevel, EQuadrant::PlusXMinusY, backPtr) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()-quarterLen, _center.y()+quarterLen}, halfLen, cLevel, EQuadrant::MinusXPlusY , backPtr) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()-quarterLen, _center.y()-quarterLen}, halfLen, cLevel, EQuadrant::MinusXMinusY, backPtr) ); // lo E
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::MoveDataToChildren(QuadTreeProcessor& processor)
+{
+  if ( !IsSubdivided() || _content.data->type == EContentType::Unknown ) { return; }
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
@@ -83,9 +89,9 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Merge(const MemoryMapDataPtr newData, QuadTreeProcessor& processor)
+void QuadTreeNode::Join(const MemoryMapDataPtr newData, QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(IsSubdivided(), "QuadTreeNode.Merge.InvalidState");
+  DEV_ASSERT(IsSubdivided(), "QuadTreeNode.Join.InvalidState");
 
   // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
   DestroyNodes(_childrenPtr, processor);
@@ -93,7 +99,7 @@ void QuadTreeNode::Merge(const MemoryMapDataPtr newData, QuadTreeProcessor& proc
   // make sure vector of children is empty to since IsSubdivided() checks this vectors length
   _childrenPtr.clear();
   
-  // set our content to the one we will have after the merge
+  // set our content to the one we will have after the join
   ForceSetDetectedContentType(newData, processor);
 }
 
@@ -104,7 +110,7 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
     return;
   }
 
-  // can't merge if any children are subdivided
+  // can't join if any children are subdivided
   for (const auto& child : _childrenPtr) {
     if ( child->IsSubdivided() ) {
       return;
@@ -126,7 +132,7 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
     nodeData->SetFirstObservedTime(GetData()->GetFirstObservedTime());
     nodeData->SetLastObservedTime(GetData()->GetLastObservedTime());
     
-    Merge( nodeData, processor );
+    Join( nodeData, processor );
   }
 }
 

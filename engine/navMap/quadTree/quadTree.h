@@ -87,9 +87,6 @@ private:
   // Returns true if successfully expanded, false otherwise
   // maxRootLevel: it won't upgrade if the root is already higher level than the specified
   bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor);
-
-  // reset the parameters of the AABB after center or size have changed
-  void ResetBoundingBox();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

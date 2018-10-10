@@ -280,7 +280,7 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
           node.GetSideLen(),
           node.GetCenter().x(),
           node.GetCenter().y(),
-          node.GetCenter().z(),
+          1.f, // no z-height in navMap
           instanceId.str());
       }
 

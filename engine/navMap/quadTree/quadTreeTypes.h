@@ -143,6 +143,10 @@ const char* EDirectionToString(EDirection dir);
 // EDirection to Vec3f
 Vec3f EDirectionToNormalVec3f(EDirection dir);
 
+Vec2f Quadrant2Vec(EQuadrant dir) ;
+
+QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir);
+
 constexpr QuadTreeTypes::EQuadrant GetQuadrantInDirection(EQuadrant from, EDirection dir)
 {
   switch (dir) {

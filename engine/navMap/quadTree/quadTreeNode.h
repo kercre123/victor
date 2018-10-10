@@ -55,7 +55,7 @@ public:
   bool               IsSubdivided() const { return !_childrenPtr.empty(); }
   uint8_t            GetLevel()     const { return _level; }
   float              GetSideLen()   const { return _sideLen; }
-  const Point3f&     GetCenter()    const { return _center; }
+  const Point2f&     GetCenter()    const { return _center; }
   MemoryMapDataPtr   GetData()      const { return _content.data; }
   const NodeContent& GetContent()   const { return _content; }
   const NodeAddress& GetAddress()   const { return _address; }
@@ -97,7 +97,7 @@ protected:
 
   // Leave the constructor as a protected member so only the root node or other Quad tree nodes can create new nodes
   // it will allow subdivision as long as level is greater than 0
-  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, ParentPtr parent);
+  QuadTreeNode(const Point2f &center, float sideLength, uint8_t level, EQuadrant quadrant, ParentPtr parent);
 
   
   // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
@@ -111,6 +111,13 @@ protected:
   // find a node at a particular address
   MaybeNode GetNodeAtAddress(const NodeAddress& addr);
   
+  // subdivide/join children
+  void Subdivide();
+  void Join(const MemoryMapDataPtr newContent, QuadTreeProcessor& processor);
+
+  // copys the data of this node to its children, and resets its own data
+  void MoveDataToChildren(QuadTreeProcessor& processor);
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,9 +138,6 @@ private:
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // subdivide/merge children
-  void Subdivide(QuadTreeProcessor& processor);
-  void Merge(const MemoryMapDataPtr newContent, QuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge(QuadTreeProcessor& processor);
@@ -180,7 +184,7 @@ private:
   ChildrenVector _childrenPtr;
 
   // coordinates of this quad
-  Point3f _center;
+  Point2f _center;
   float   _sideLen;
 
   AxisAlignedQuad _boundingBox;

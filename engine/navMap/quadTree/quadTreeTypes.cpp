@@ -66,6 +66,33 @@ Vec3f EDirectionToNormalVec3f(EDirection dir)
   return Vec3f{0.0f, 0.0f, 0.0f};
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Vec2f Quadrant2Vec(EQuadrant dir) 
+{
+  switch (dir) {
+    case EQuadrant::PlusXPlusY:   { return { 1, 1}; };
+    case EQuadrant::PlusXMinusY:  { return { 1,-1}; };
+    case EQuadrant::MinusXPlusY:  { return {-1, 1}; };
+    case EQuadrant::MinusXMinusY: { return {-1,-1}; };
+    default:                      { return {0, 0}; };
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir) 
+{
+  // NOTE: check sign bit explicitly here to discriminate the difference between -0.f and 0.f.
+  //       This preserves the property that checking a vector reflected through the origin
+  //       results in a quadrant reflected through the origin (this property is not true for
+  //       vertical and horizontal lines when using float comparison operations, since 
+  //       -0.f == 0.f by definition)  
+  if ( signbit( dir.x() ) ) {
+    return signbit( dir.y() ) ? EQuadrant::MinusXMinusY : EQuadrant::MinusXPlusY;
+  } else {
+    return signbit( dir.y() ) ? EQuadrant::PlusXMinusY : EQuadrant::PlusXPlusY;
+  }
+}
+
 } // namespace
 } // namespace
 } // namespace

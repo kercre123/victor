@@ -42,7 +42,7 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTree::QuadTree()
-: QuadTreeNode({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, ParentPtr::Nothing())  // Note the root is created at z=1
+: QuadTreeNode({0,0}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, ParentPtr::Nothing())  // Note the root is created at z=1
 {
   _processor.SetRoot( this );
 }
@@ -84,7 +84,8 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
     // split node if we are unsure if the incoming region will fill the entire area
     if ( !region.ContainsQuad(node.GetBoundingBox()) )
     {
-      node.Subdivide( _processor );
+      node.Subdivide();
+      node.MoveDataToChildren(_processor);
     }
     
     if ( !node.IsSubdivided() )
@@ -239,7 +240,7 @@ bool QuadTree::ExpandToFit(const AxisAlignedQuad& region)
   do
   {
     // find in which direction we are expanding, upgrade root level in that direction (center moves)
-    const Vec2f& direction = region.GetCentroid() - Point2f{GetCenter().x(), GetCenter().y()};
+    const Vec2f& direction = region.GetCentroid() - GetCenter();
     expanded = UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
 
     // check if the region now fits in the expanded root
@@ -307,7 +308,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
   // but top and bottom will remain the same
   _center.x() = _center.x() + (xShift ? (xPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
   _center.y() = _center.y() + (yShift ? (yPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
-  ResetBoundingBox();
+  _boundingBox = AxisAlignedQuad(_center - Point2f(_sideLen * .5f), _center + Point2f(_sideLen * .5f) );
   
   // if the root has children, update them, otherwise no further changes are necessary
   if ( !_childrenPtr.empty() )
@@ -317,14 +318,8 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
     std::swap(oldChildren, _childrenPtr);
     
     // create new children
-    const float chHalfLen = rootHalfLen*0.5f;
+    Subdivide();
       
-    ParentPtr backPtr = ParentPtr::Just(this);
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXPlusY ,  backPtr) ); // up L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXMinusY,  backPtr) ); // up R
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXPlusY , backPtr) ); // lo L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXMinusY, backPtr) ); // lo R
-
     // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
     using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
     static_assert( sizeof(Q2N) < sizeof(size_t), "UnderlyingTypeIsBiggerThanSizeType");
@@ -426,74 +421,51 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(!NEAR_ZERO(direction.x()) || !NEAR_ZERO(direction.y()),
-             "QuadTreeNode.UpgradeRootLevel.InvalidDirection");
-  
   // reached expansion limit
   if ( _level == std::numeric_limits<uint8_t>::max() || _level >= maxRootLevel) {
     return false;
   }
 
-  // save my old children to store in the child that is taking my spot
+  // take this nodes children to store in the new node that is taking my spot
   ChildrenVector oldChildren;
   std::swap(oldChildren, _childrenPtr);
-
-  const bool xPlus = FLT_GE_ZERO(direction.x());
-  const bool yPlus = FLT_GE_ZERO(direction.y());
   
-  // move to its new center
-  const float oldHalfLen = _sideLen * 0.50f;
-  _center.x() = _center.x() + (xPlus ? oldHalfLen : -oldHalfLen);
-  _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
+  // reset this nodes parameters
+  _center += Quadrant2Vec( Vec2Quadrant(direction) ) * _sideLen * 0.5f;
+  _boundingBox = AxisAlignedQuad(_center - Point2f(_sideLen), _center + Point2f(_sideLen) );
+  _sideLen *= 2.0f;
+  ++_level;
 
-  // create new children
-  ParentPtr backPtr = ParentPtr::Just(this);
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXPlusY ,  backPtr) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXMinusY,  backPtr) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXPlusY , backPtr) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXMinusY, backPtr) ); // lo R
+  // since we stole its children before, subdivide this node again
+  Subdivide();
 
   // calculate the child that takes my place by using the opposite direction to expansion
-  size_t childIdx = 0;
-  if      ( !xPlus &&  yPlus ) { childIdx = 1; }
-  else if (  xPlus && !yPlus ) { childIdx = 2; }
-  else if (  xPlus &&  yPlus ) { childIdx = 3; }
-  QuadTreeNode& childTakingMyPlace = *_childrenPtr[childIdx];
-  
-  
+  auto childTakingMyPlace = GetChild( Vec2Quadrant(-direction) );  
+  childTakingMyPlace.FMap( 
+    [&](auto node) { 
+      std::swap(node->_childrenPtr, oldChildren); 
+      node->ForceSetDetectedContentType( _content.data, processor);
+    }   
+  );
+
   // set the new parent in my old children
-  ParentPtr newParent = ParentPtr::Just(&childTakingMyPlace);
+  using namespace Util::MaybeOperators;
+  ParentPtr newParent = [](auto sharedPtr) { return (const QuadTreeNode*) sharedPtr.get(); } *= childTakingMyPlace;
   for ( auto& childPtr : oldChildren ) {
     childPtr->ChangeParent( newParent );
   }
-  
-  // swap children with the temp
-  std::swap(childTakingMyPlace._childrenPtr, oldChildren);
 
-  // set the content type I had in the child that takes my place, then reset my content
-  childTakingMyPlace.ForceSetDetectedContentType( _content.data, processor );
+  // reset my data
   ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
 
   // update address of all children
   Fold([] (QuadTreeNode& node) { node.ResetAddress(); });
   
-  // upgrade my remaining stats
-  _sideLen = _sideLen * 2.0f;
-  ++_level;
-  ResetBoundingBox();
-
-  // log
   PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _level, MM_TO_M(_sideLen));
   
   return true;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline void QuadTree::ResetBoundingBox()
-{
-  Point3f offset(_sideLen/2, _sideLen/2, 0);
-  _boundingBox = AxisAlignedQuad(_center - offset, _center + offset );
-}
   
 
 } // namespace Vector
