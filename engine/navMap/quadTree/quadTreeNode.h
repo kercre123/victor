@@ -47,42 +47,18 @@ public:
   using FoldDirection  = QuadTreeTypes::FoldDirection;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Initialization
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // Crete node
-  // it will allow subdivision as long as level is greater than 0
-  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent);
-  
-  // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
-  // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
-  // assumption that the processor(s) will be destroyed at the same time than nodes are, except in the case of
-  // nodes that are merged into their parents, or when we shift the root, in which cases we do notify the processor.
-  // Alternatively processors would store weak_ptr, but no need for the moment given the above assumption.
-  // ~QuadTreeNode();
-  
-  // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
-  // which is annoying
-  QuadTreeNode(const QuadTreeNode&&) = delete;
-  QuadTreeNode& operator=(const QuadTreeNode&&) = delete;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool    IsRootNode() const              { return _parent == nullptr; }
-  bool    IsSubdivided() const            { return !_childrenPtr.empty(); }
-  uint8_t GetLevel() const                { return _level; }
-  float   GetSideLen() const              { return _sideLen; }
-  const   Point3f& GetCenter() const      { return _center; }
-  MemoryMapDataPtr GetData() const        { return _content.data; }
-  const NodeContent& GetContent() const   { return _content; }
-
-  // Builds a quad from our coordinates
+  bool                   IsRootNode()     const { return _parent == nullptr; }
+  bool                   IsSubdivided()   const { return !_childrenPtr.empty(); }
+  bool                   IsEmptyType()    const { return IsSubdivided() || (GetData()->type == EContentType::Unknown); }
+  uint8_t                GetLevel()       const { return _level; }
+  float                  GetSideLen()     const { return _sideLen; }
+  const Point3f&         GetCenter()      const { return _center; }
+  MemoryMapDataPtr       GetData()        const { return _content.data; }
+  const NodeContent&     GetContent()     const { return _content; }
+  const NodeAddress&     GetAddress()     const { return _address; }
   const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }
-  
-  // return if the node contains any useful data
-  bool IsEmptyType() const { return (IsSubdivided() || (_content.data->type == EContentType::Unknown));  }
-
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
@@ -107,7 +83,27 @@ public:
   // iterationDirection: when there're more than one neighbor in that direction, which one comes first in the list
   // NOTE: this method is expected to NOT clear the vector before adding neighbors
   void AddSmallestNeighbors(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& neighbors) const;
- 
+
+protected:
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Initialization
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // Leave the constructor as a protected member so only the root node or other Quad tree nodes can create new nodes
+  // it will allow subdivision as long as level is greater than 0
+  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent);
+   
+  // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
+  // which is annoying
+  QuadTreeNode(const QuadTreeNode&&) = delete;
+  QuadTreeNode& operator=(const QuadTreeNode&&) = delete;
+  
+  // updates the address incase tree structure changes (expands and shifts)
+  void ResetAddress();
+  
+  // find a node at a particular address
+  const QuadTreeNode* GetNodeAtAddress(const NodeAddress& addr) const;
   
 private:
 
@@ -196,6 +192,7 @@ private:
 
   // quadrant within the parent
   EQuadrant _quadrant;
+  NodeAddress _address;
   
   // information about what's in this quad
   NodeContent _content;
