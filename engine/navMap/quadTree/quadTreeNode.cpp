@@ -32,41 +32,45 @@ static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was 
 static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point2f &center, float sideLength, uint8_t level, EQuadrant quadrant, ParentPtr parent)
-: _center(center)
-, _sideLen(sideLength)
-, _boundingBox(center - Point2f(sideLength * .5f), center + Point2f(sideLength*.5f))
+QuadTreeNode::QuadTreeNode(ParentPtr parent, EQuadrant quadrant)
+: _boundingBox({0,0}, {0,0})
 , _parent(parent)
-, _level(level)
 , _quadrant(quadrant)
-, _address(level)
 , _content(MemoryMapDataPtr())
 {
+  auto initFromParent = [&](auto parentCPtr) { 
+    float halfLen = parentCPtr->GetSideLen() * .25f;
+    _sideLen     = parentCPtr->GetSideLen() * .5f;
+    _center      = parentCPtr->GetCenter() + Quadrant2Vec(_quadrant) * halfLen;
+    _level       = parentCPtr->GetLevel() - 1;
+    _boundingBox = AxisAlignedQuad(_center - Point2f(halfLen), _center + Point2f(halfLen));
+  };
+  
+  _parent.FMap(initFromParent);
   ResetAddress();
+
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::ResetAddress()
 {
-  _parent.FMap( [&](const QuadTreeNode* p) { _address = p->GetAddress(); });
-  _address.SetQuadrant(_level, _quadrant);
+  _parent.FMap( [&](const QuadTreeNode* p) { 
+    _address = NodeAddress(p->GetAddress());
+    _address.push_back(_quadrant);
+   });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Subdivide()
 {
   if ( !CanSubdivide() ) { return; }
-  
-  const float halfLen    = _sideLen * 0.50f;
-  const float quarterLen = halfLen * 0.50f;
-  const uint8_t cLevel = _level-1;
 
   ParentPtr backPtr = ParentPtr::Just(this);
-  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()+quarterLen, _center.y()+quarterLen}, halfLen, cLevel, EQuadrant::PlusXPlusY , backPtr) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()+quarterLen, _center.y()-quarterLen}, halfLen, cLevel, EQuadrant::PlusXMinusY, backPtr) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()-quarterLen, _center.y()+quarterLen}, halfLen, cLevel, EQuadrant::MinusXPlusY , backPtr) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode({_center.x()-quarterLen, _center.y()-quarterLen}, halfLen, cLevel, EQuadrant::MinusXMinusY, backPtr) ); // lo E
+  _childrenPtr.emplace_back( new QuadTreeNode(backPtr, EQuadrant::PlusXPlusY) );   // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(backPtr, EQuadrant::PlusXMinusY) );  // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(backPtr, EQuadrant::MinusXPlusY) );  // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(backPtr, EQuadrant::MinusXMinusY) ); // lo E
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -212,17 +216,12 @@ QuadTreeNode::MaybeNode QuadTreeNode::GetChild(EQuadrant quadrant)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeNode::MaybeNode QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr)
 {
-  // make sure we are in the right place
-  if (addr.GetQuadrant(_level) == _quadrant) {
-    // check if we should recurse down a level
-    if ((_level > 0) && (addr.GetQuadrant(_level - 1) != EQuadrant::Invalid)) {
-      auto nextNode = GetChild(addr.GetQuadrant(_level - 1));
-      return nextNode.Bind( [&addr] (auto& node) { return node->GetNodeAtAddress(addr); } );
-    } else {
-      // this is the node at that address
-      return MaybeNode::Just(shared_from_this());
-    }
-  }
+  if (addr.size() > _address.size()) {
+    auto nextNode = GetChild(addr[_address.size()]);
+    return nextNode.Bind( [&addr] (auto& node) { return node->GetNodeAtAddress(addr); } );
+  } else if (addr == _address) {
+    return MaybeNode::Just(shared_from_this());
+  } 
   return MaybeNode::Nothing();
 }
 

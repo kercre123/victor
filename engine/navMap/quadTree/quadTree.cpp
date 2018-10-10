@@ -42,8 +42,12 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTree::QuadTree()
-: QuadTreeNode({0,0}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, ParentPtr::Nothing())  // Note the root is created at z=1
 {
+  _sideLen  = kQuadTreeInitialRootSideLength;
+  _level    = kQuadTreeInitialMaxDepth;
+  _quadrant = EQuadrant::Root;
+  _address  = {EQuadrant::Root};
+  _boundingBox = AxisAlignedQuad(_center - Point2f(_sideLen*.5f), _center + Point2f(_sideLen*.5));
   _processor.SetRoot( this );
 }
 

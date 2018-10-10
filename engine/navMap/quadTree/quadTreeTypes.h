@@ -111,27 +111,12 @@ enum class EQuadrant : uint8_t {
   Invalid  = 255
 };
 
+// for quickly traversing the QT
+using NodeAddress = std::vector<EQuadrant>;
+
 // movement direction
 enum class EDirection { North, East, South, West };
 
-// a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
-class NodeAddress {
-public:
-  NodeAddress(uint8_t depth) : _addr(depth, EQuadrant::Invalid) {}
-  
-  // update this address with with `quadrant` at address `level`
-  void SetQuadrant(uint8_t level, EQuadrant quadrant) { 
-    if (level <= _addr.size()) { _addr[level] = quadrant; } 
-  }
-  
-  // get `quadrant` at address `level`
-  EQuadrant GetQuadrant(uint8_t level) const  { 
-    return (level <= _addr.size()) ? _addr[level] : EQuadrant::Invalid; 
-  }
-  
-private:
-  std::vector<EQuadrant> _addr;
-};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions

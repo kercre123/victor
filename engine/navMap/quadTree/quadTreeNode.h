@@ -97,7 +97,7 @@ protected:
 
   // Leave the constructor as a protected member so only the root node or other Quad tree nodes can create new nodes
   // it will allow subdivision as long as level is greater than 0
-  QuadTreeNode(const Point2f &center, float sideLength, uint8_t level, EQuadrant quadrant, ParentPtr parent);
+  QuadTreeNode(ParentPtr parent = ParentPtr::Nothing(), EQuadrant quadrant = EQuadrant::Root);
 
   
   // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
