@@ -366,6 +366,38 @@ service ExternalInterface {
     };
   }
 
+  // Causes the robot to forget about all custom (fixed + marker) objects it currently knows about.
+  rpc DeleteAllCustomObjects(DeleteAllCustomObjectsRequest) returns (DeleteAllCustomObjectsResponse) {
+    option (google.api.http) = {
+      post: "/v1/delete_all_custom_objects",
+      body: "*"
+    };
+  }
+
+  // Causes the robot to forget about all custom marker objects it currently knows about.
+  rpc DeleteCustomMarkerObjects(DeleteCustomMarkerObjectsRequest) returns (DeleteCustomMarkerObjectsResponse) {
+    option (google.api.http) = {
+      post: "/v1/delete_custom_marker_objects",
+      body: "*"
+    };
+  }
+
+  // Causes the robot to forget about all fixed custom objects it currently knows about.
+  rpc DeleteFixedCustomObjects(DeleteFixedCustomObjectsRequest) returns (DeleteFixedCustomObjectsResponse) {
+    option (google.api.http) = {
+      post: "/v1/delete_fixed_custom_objects",
+      body: "*"
+    };
+  }
+
+  // Remove all custom marker object definitions, and any instances of them in the world.
+  rpc UndefineAllCustomMarkerObjects(UndefineAllCustomMarkerObjectsRequest) returns (UndefineAllCustomMarkerObjectsResponse) {
+    option (google.api.http) = {
+      post: "/v1/undefine_all_custom_marker_objects",
+      body: "*"
+    };
+  }
+
   // Set each of the lights on the currently connected cube based on two
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
