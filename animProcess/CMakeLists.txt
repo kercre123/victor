@@ -8,6 +8,7 @@ include(flatbuffers)
 include(opencv)
 include(text2speech)
 include(sensory)
+include(sensory_v6_5_1)
 include(robot_core)
 include(avs-device-sdk)
 
@@ -56,6 +57,7 @@ target_link_libraries(victor_anim
   signal_essence
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
+  ${SENSORY_V6_LIBS}
   # platform
   ${PLATFORM_LIBS}
   # Aubio beat detection

@@ -222,6 +222,7 @@ include(flatbuffers)
 include(sodium)
 include(aubio)
 include(sensory)
+include(sensory_v6_5_1)
 include(signalessence)
 include(avs-device-sdk)
 
