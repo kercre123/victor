@@ -59,7 +59,10 @@ namespace {
   CONSOLE_VAR_RANGED( float, kMinObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(10.0f), 0.0f, M_PI_F);
   CONSOLE_VAR_RANGED( float, kMaxObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(80.0f), 0.0f, M_TWO_PI_F);
   const float kProbBumpNominalObject = 0.8f;
-  const float kProbReferenceBeforeBump = 0.5f;
+
+  // BN: disabled because it looks much nicer when he bumps right after the scan, so instead I've got it set
+  // to reference _after_ the bump from within the bump behavior
+  CONSOLE_VAR_RANGED( float, kProbReferenceBeforeBump, "BehaviorExploring", 0.0f, 0.0f, 1.0f);
   
   const float kProbScan = 0.7f;
   
@@ -78,7 +81,7 @@ namespace {
   int kTimeForTurnToPassingObstacles_ms = 15000;
 }
   
-#define SET_STATE(s) do{ _dVars.state = State::s; PRINT_NAMED_INFO("BehaviorExploringExamineObstacle.State", "State = %s", #s); } while(0);
+#define SET_STATE(s) do{ _dVars.state = State::s; SetDebugStateName(#s); } while(0);
   
 using MemoryMapDataConstPtr = MemoryMapTypes::MemoryMapDataConstPtr;
 using EContentTypePackedType = MemoryMapTypes::EContentTypePackedType;
@@ -312,19 +315,19 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
       
       const bool refBehaviorWantsToBeActivated = _iConfig.referenceHumanBehavior->WantsToBeActivated();
       if( refBehaviorWantsToBeActivated && (GetRNG().RandDbl() < kProbReferenceBeforeBump) ) {
-        _dVars.state = State::ReferenceHuman;
+        SET_STATE(ReferenceHuman);
       } else {
-        _dVars.state = State::ReturnToCenterEnd;
+        SET_STATE(ReturnToCenterEnd);
       }
     } else if( _dVars.state == State::FirstTurn ) {
       
       const Radians dAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>() - _dVars.initialPoseAngle_rad;
       _dVars.totalObjectAngle_rad += fabsf( dAngle.ToFloat() );
       
-      _dVars.state = State::ReturnToCenter;
+      SET_STATE(ReturnToCenter);
       
     } else if( _dVars.state == State::ReferenceHuman ) {
-      _dVars.state = State::ReturnToCenterEnd;
+      SET_STATE(ReturnToCenterEnd);
     }
     
       

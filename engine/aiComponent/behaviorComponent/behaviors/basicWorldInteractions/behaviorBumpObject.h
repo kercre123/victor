@@ -33,6 +33,8 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
+  virtual void InitBehavior() override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -42,6 +44,7 @@ private:
   
   void DoFirstBump();
   void DoSecondBumpIfDesired();
+  void DoReferenceHumanIfDesired();
   
   bool WouldBumpPushSomethingOffCliff( float driveDist_mm ) const;
   
@@ -49,6 +52,7 @@ private:
     Invalid=0,
     FirstBump,
     SecondBump,
+    ReferenceHumanAfterBump
   };
 
   struct InstanceConfig {
@@ -58,6 +62,7 @@ private:
     float pEvil;
     float pBumpWhenEvil;
     float pBumpWhenNotEvil;
+    ICozmoBehaviorPtr referenceHumanBehavior;
   };
 
   struct DynamicVariables {

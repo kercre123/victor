@@ -55,7 +55,8 @@ protected:
 private:
   
   void TransitionToDriving();
-  void TransitionToArrived();
+  void TransitionToArrived(const bool forceReferencing = false);
+  void TransitionToHumanSearch();
   
   // helper to decide state once a delegated behavior finishes
   void RegainedControl();
@@ -110,6 +111,7 @@ private:
     Invalid=0,
     Driving,    // driving to point
     Arrived,    // arrived at sample point, looking around
+    SearchForHuman,
     Complete,
   };
 
@@ -125,6 +127,7 @@ private:
     ICozmoBehaviorPtr confirmCubeBehavior;
     
     ICozmoBehaviorPtr referenceHumanBehavior;
+    ICozmoBehaviorPtr searchForHumanBehavior;
     
     std::unique_ptr<PathMotionProfile> customMotionProfile;
     
@@ -151,6 +154,9 @@ private:
     std::string endReason; // for DAS
     
     size_t devWarnIfNotInterruptedByTick;
+
+    float lastSearchForFaceTime_s;
+    float timeDeactivated_s;
   };
 
   InstanceConfig _iConfig;
