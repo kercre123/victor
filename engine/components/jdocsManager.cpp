@@ -47,6 +47,8 @@ namespace
   static const char* kWarnOnCloudVersionLaterKey = "warnOnCloudVersionLater";
   static const char* kErrorOnCloudVersionLaterKey = "errorOnCloudVersionLater";
   static const char* kCloudSavePeriodKey = "cloudSavePeriod_s";
+  static const char* kCloudAbuseRulesKey = "cloudAbuseRules";
+  static const char* kCloudAbuseSavePeriodKey = "cloudAbuseSavePeriod_s";
   static const char* kJdocFormatVersionKey = "jdocFormatVersion";
 
   static const std::string emptyString;
@@ -110,10 +112,23 @@ JdocsManager::~JdocsManager()
   static const bool kIsShuttingDown = true;
   UpdatePeriodicFileSaves(kIsShuttingDown);
 
+  for (auto& jdoc : _jdocs)
+  {
+    // To release the handles
+    jdoc.second._abuseConfig._abuseRules.clear();
+  }
+
   if (_udpClient.IsConnected())
   {
     _udpClient.Disconnect();
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JdocsManager::JdocInfo::CloudAbuseDetectionConfig::CloudAbuseDetectionConfig()
+: _cloudWriteTracker("JdocCloudWriteTracker")
+{
 }
 
 
@@ -157,70 +172,92 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       continue;
     }
 
-    {
-      // Separate scope here to prevent accidental use of jdocInfo below
-      JdocInfo jdocInfo;
-      jdocInfo._jdocVersion = 0;
-      jdocInfo._curFormatVersion = jdocConfig[kJdocFormatVersionKey].asUInt64();
-      // Create new jdocs with the latest format version for this type of jdoc
-      jdocInfo._jdocFormatVersion = jdocInfo._curFormatVersion;
-      jdocInfo._jdocClientMetadata = "";
-      jdocInfo._jdocBody = {};
-      jdocInfo._jdocName = jdocConfig[kDocNameKey].asString();
-      jdocInfo._needsCreation = false;
-      jdocInfo._needsMigration = false;
-      jdocInfo._diskFileDirty = false;
-      jdocInfo._diskSavePeriod_s = currTime_s + jdocConfig[kDiskSavePeriodKey].asInt();
-      jdocInfo._nextDiskSaveTime = jdocInfo._diskSavePeriod_s;
-      jdocInfo._bodyOwnedByJM = jdocConfig[kBodyOwnedByJdocsManagerKey].asBool();
-      jdocInfo._warnOnCloudVersionLater = jdocConfig[kWarnOnCloudVersionLaterKey].asBool();
-      jdocInfo._errorOnCloudVersionLater = jdocConfig[kErrorOnCloudVersionLaterKey].asBool();
-      jdocInfo._cloudDirty = false;
-      jdocInfo._cloudSavePeriod_s = jdocConfig[kCloudSavePeriodKey].asInt();
-      jdocInfo._nextCloudSaveTime = currTime_s + jdocInfo._cloudSavePeriod_s;
-      jdocInfo._cloudDisabled = JdocInfo::CloudDisabled::NotDisabled;
-      jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
-      jdocInfo._overwrittenCB = nullptr;
-      jdocInfo._formatMigrationCB = nullptr;
+    // Create and initialize a JdocInfo struct for this jdoc
+    auto& jdocInfo = _jdocs[jdocType];
 
-      _jdocs[jdocType] = jdocInfo;
+    jdocInfo._jdocVersion = 0;
+    jdocInfo._curFormatVersion = jdocConfig[kJdocFormatVersionKey].asUInt64();
+    // Create new jdocs with the latest format version for this type of jdoc
+    jdocInfo._jdocFormatVersion = jdocInfo._curFormatVersion;
+    jdocInfo._jdocClientMetadata = "";
+    jdocInfo._jdocBody = {};
+    jdocInfo._jdocName = jdocConfig[kDocNameKey].asString();
+    jdocInfo._needsCreation = false;
+    jdocInfo._needsMigration = false;
+    jdocInfo._diskFileDirty = false;
+    jdocInfo._diskSavePeriod_s = jdocConfig[kDiskSavePeriodKey].asInt();
+    jdocInfo._nextDiskSaveTime = currTime_s + jdocInfo._diskSavePeriod_s;
+    jdocInfo._bodyOwnedByJM = jdocConfig[kBodyOwnedByJdocsManagerKey].asBool();
+    jdocInfo._warnOnCloudVersionLater = jdocConfig[kWarnOnCloudVersionLaterKey].asBool();
+    jdocInfo._errorOnCloudVersionLater = jdocConfig[kErrorOnCloudVersionLaterKey].asBool();
+    jdocInfo._cloudDirty = false;
+    jdocInfo._origCloudSavePeriod_s = jdocConfig[kCloudSavePeriodKey].asInt();
+    jdocInfo._cloudSavePeriod_s = jdocInfo._origCloudSavePeriod_s;
+    jdocInfo._nextCloudSaveTime = currTime_s + jdocInfo._cloudSavePeriod_s;
+
+    const auto& cloudAbuseRules = jdocConfig[kCloudAbuseRulesKey];
+    const auto numRules = cloudAbuseRules.size();
+    auto& abuseConfig = jdocInfo._abuseConfig;
+    abuseConfig._abuseLevel = 0;
+    abuseConfig._abuseRules.resize(numRules);
+
+    for (int i = 0; i < numRules; i++)
+    {
+      const auto& ruleConfig = cloudAbuseRules[i];
+      auto& rule = abuseConfig._abuseRules[i];
+
+      if (RecentOccurrenceTracker::ParseConfig(ruleConfig, rule._numberOfTimes, rule._amountOfSeconds))
+      {
+        rule._recentOccurrenceHandle = abuseConfig._cloudWriteTracker.GetHandle(rule._numberOfTimes,
+                                                                                rule._amountOfSeconds);
+        rule._cloudAbuseSavePeriod_s = ruleConfig[kCloudAbuseSavePeriodKey].asInt();
+      }
+      else
+      {
+        LOG_ERROR("JdocsManager.InitDependent.ErrorParsingRule",
+                  "Error parsing cloud abuse rule");
+      }
     }
 
-    auto& jdocItem = _jdocs[jdocType];
-    if (Util::FileUtils::FileExists(jdocItem._jdocFullPath))
+    jdocInfo._cloudDisabled = JdocInfo::CloudDisabled::NotDisabled;
+    jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
+    jdocInfo._overwrittenCB = nullptr;
+    jdocInfo._formatMigrationCB = nullptr;
+
+    if (Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
     {
       if (LoadJdocFile(jdocType))
       {
-        const auto latestFormatVersion = jdocItem._curFormatVersion;
-        if (jdocItem._jdocFormatVersion < latestFormatVersion)
+        const auto latestFormatVersion = jdocInfo._curFormatVersion;
+        if (jdocInfo._jdocFormatVersion < latestFormatVersion)
         {
           LOG_INFO("JdocsManager.InitDependent.FormatVersionMigration",
                    "Jdoc %s loaded from disk has older format version (%llu); migrating to %llu",
-                   jdocItem._jdocName.c_str(), jdocItem._jdocFormatVersion, latestFormatVersion);
-          jdocItem._needsMigration = true;
+                   jdocInfo._jdocName.c_str(), jdocInfo._jdocFormatVersion, latestFormatVersion);
+          jdocInfo._needsMigration = true;
         }
-        else if (jdocItem._jdocFormatVersion > latestFormatVersion)
+        else if (jdocInfo._jdocFormatVersion > latestFormatVersion)
         {
           LOG_ERROR("JdocsManager.InitDependent.FormatVersionError",
                     "Jdoc %s loaded from disk has newer format version (%llu) than robot handles (%llu); should not be possible",
-                    jdocItem._jdocName.c_str(), jdocItem._jdocFormatVersion, latestFormatVersion);
+                    jdocInfo._jdocName.c_str(), jdocInfo._jdocFormatVersion, latestFormatVersion);
           // This is fairly impossible.  So let's just pretend the disk file didn't exist.
           // The corresponding manager will immediately create default data in the format it knows.
           // Then this disk file will be overwritten.
-          jdocItem._needsCreation = true;
+          jdocInfo._needsCreation = true;
         }
       }
       else
       {
         LOG_ERROR("JdocsManager.InitDependent.ErrorReadingJdocFile",
-                  "Error reading jdoc file %s", jdocItem._jdocFullPath.c_str());
-        jdocItem._needsCreation = true;
+                  "Error reading jdoc file %s", jdocInfo._jdocFullPath.c_str());
+        jdocInfo._needsCreation = true;
       }
     }
     else
     {
       LOG_WARNING("JdocsManager.InitDependent.NoJdocFile", "Serialized jdoc file not found; to be created by owning subsystem");
-      jdocItem._needsCreation = true;
+      jdocInfo._needsCreation = true;
     }
   }
 
@@ -567,8 +604,84 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
 
   if (saveToCloudImmediately)
   {
-    static const bool kIsJdocNewInCloud = false;
-    SubmitJdocToCloud(jdocTypeKey, kIsJdocNewInCloud);
+    auto& abuseConfig = jdocItem._abuseConfig;
+    const auto numRules = abuseConfig._abuseRules.size();
+    if (numRules > 0)
+    {
+      abuseConfig._cloudWriteTracker.AddOccurrence();
+
+      // Check for de-escalation except on the lowest level
+      bool deEscalated = false;
+      if (abuseConfig._abuseLevel > 0)
+      {
+        const auto& rule = abuseConfig._abuseRules[abuseConfig._abuseLevel - 1];
+        if (!rule._recentOccurrenceHandle->AreConditionsMet())
+        {
+          deEscalated = true;
+          abuseConfig._abuseLevel--;
+          int newCloudSavePeriod_s;
+          if (abuseConfig._abuseLevel == 0)
+          {
+            // When all levels have cooled off, restore the original cloud save period
+            newCloudSavePeriod_s = jdocItem._origCloudSavePeriod_s;
+          }
+          else
+          {
+            newCloudSavePeriod_s = abuseConfig._abuseRules[abuseConfig._abuseLevel - 1]._cloudAbuseSavePeriod_s;
+          }
+
+          LOG_INFO("JdocsManager.UpdateJdoc.AbuseCooldown",
+                   "Cloud write abuse cooldown; de-escalating to level %i; changing cloud save period from %i to %i seconds",
+                   abuseConfig._abuseLevel, jdocItem._cloudSavePeriod_s, newCloudSavePeriod_s);
+
+          jdocItem._cloudSavePeriod_s = newCloudSavePeriod_s;
+          // Re-set the periodic timer to the new period, UNLESS the timer is set to go off sooner
+          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          if ((jdocItem._nextCloudSaveTime - currTime_s) > jdocItem._cloudSavePeriod_s)
+          {
+            jdocItem._nextCloudSaveTime = currTime_s + static_cast<float>(jdocItem._cloudSavePeriod_s);
+          }
+        }
+      }
+
+      // Check for escalation except on the highest level which cannot be escalated from
+      if (abuseConfig._abuseLevel < numRules && !deEscalated)
+      {
+        // Check all rules that are at or greater than the current abuse level, in reverse order
+        for (int ruleIndex = static_cast<int>(numRules) - 1; ruleIndex >= abuseConfig._abuseLevel; ruleIndex--)
+        {
+          const auto& rule = abuseConfig._abuseRules[ruleIndex];
+          if (rule._recentOccurrenceHandle->AreConditionsMet())
+          {
+            abuseConfig._abuseLevel = ruleIndex + 1;
+
+            LOG_WARNING("JdocsManager.UpdateJdoc.AbuseDetected",
+                        "Cloud write abuse detected; escalating to level %i; changing cloud save period from %i to %i seconds",
+                        abuseConfig._abuseLevel, jdocItem._cloudSavePeriod_s, rule._cloudAbuseSavePeriod_s);
+
+            jdocItem._cloudSavePeriod_s = rule._cloudAbuseSavePeriod_s;
+            // Immediately re-set the periodic cloud save timer to wait for the new period
+            const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+            jdocItem._nextCloudSaveTime = currTime_s + static_cast<float>(jdocItem._cloudSavePeriod_s);
+
+            break;
+          }
+        }
+      }
+    }
+
+    if (abuseConfig._abuseLevel == 0)
+    {
+      static const bool kIsJdocNewInCloud = false;
+      SubmitJdocToCloud(jdocTypeKey, kIsJdocNewInCloud);
+    }
+    else
+    {
+      LOG_INFO("JdocsManager.UpdateJdoc.CloudWritePostponed",
+               "Postponing jdoc submission to cloud due to spam abuse");
+      jdocItem._cloudDirty = true;
+      SaveJdocFile(jdocTypeKey);
+    }
   }
   else
   {
@@ -707,7 +820,18 @@ void JdocsManager::UpdatePeriodicFileSaves(const bool isShuttingDown)
       {
         if (jdoc._cloudDirty || jdoc._cloudDisabled != JdocInfo::CloudDisabled::NotDisabled)
         {
-          cloudDirtyRemaining_s = static_cast<int>(jdoc._nextCloudSaveTime - _currTime_s);
+          if (jdoc._abuseConfig._abuseLevel > 0)
+          {
+            // User had been penalized for causing too many cloud submissions.  Instead of
+            // enforcing the remaining time penalty on startup, let's just submit right
+            // after startup.  (The user can start spamming then anyway.  To prevent that
+            // we would have to start saving abuse level here and restoring it on startup.)
+            cloudDirtyRemaining_s = 1;
+          }
+          else
+          {
+            cloudDirtyRemaining_s = static_cast<int>(jdoc._nextCloudSaveTime - _currTime_s);
+          }
           // Make sure this value is greater than zero because zero means 'not cloud dirty':
           if (cloudDirtyRemaining_s < 1)
           {
