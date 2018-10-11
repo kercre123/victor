@@ -75,12 +75,16 @@ void BehaviorReactToFaceNormal::BehaviorUpdate()
   if ( ! IsActivated() ) {
     return;
   }
+  /*
   const f32 currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   auto timeDiff = currentTime_sec - _dVars->lastReactionTime_ms;
-  if (timeDiff > _iConfig->coolDown_sec) {
-    LOG_INFO("BehaviorReactToFaceNormal.BehaviorUpdate.CooledEnoughTimeForAction", "");
-    TransitionToCheckFaceNormalDirectedAtRobot();
-    _dVars->lastReactionTime_ms = currentTime_sec;
+  */
+  // if (timeDiff > _iConfig->coolDown_sec) {
+  if (true) {
+    // LOG_INFO("BehaviorReactToFaceNormal.BehaviorUpdate.CooledEnoughTimeForAction", "");
+    // TransitionToCheckFaceNormalDirectedAtRobot();
+    TransitionToCheckFaceDirection();
+    //:w_dVars->lastReactionTime_ms = currentTime_sec;
   } else {
     LOG_INFO("BehaviorReactToFaceNormal.BehaviorUpdate.StillCooling", "");
   }
@@ -116,6 +120,38 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceNormalDirectedAtRobot()
     DelegateIfInControl(action, &BehaviorReactToFaceNormal::TransitionToCompleted);
   } else {
     TransitionToCheckFaceNormalDirectedLeftOrRight(); 
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
+{
+  auto faceDirection = GetBEI().GetFaceWorld().GetFaceDirection(500);
+
+  if (faceDirection == Vision::TrackedFace::FaceDirection::AtRobot) {
+    // play place holder animation
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedAtRobot.FaceDirectedAtRobot!!!!!!!", "");
+    CompoundActionSequential* action = new CompoundActionSequential();
+    action->AddAction(new TriggerAnimationAction(AnimationTrigger::ExploringHuhFar));
+    action->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
+    DelegateIfInControl(action, &BehaviorReactToFaceNormal::TransitionToCompleted);
+    // TODO this is really heavy handed replace with a subtler animation
+  } else if (faceDirection == Vision::TrackedFace::FaceDirection::LeftOfRobot) {
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningLLLLLLLeft", "");
+    CompoundActionSequential* turnAction = new CompoundActionSequential();
+    turnAction->AddAction(new TurnInPlaceAction(.7, false));
+    turnAction->AddAction(new WaitAction(1));
+    turnAction->AddAction(new TurnInPlaceAction(-.7, false));
+    turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
+    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+  } else if (faceDirection == Vision::TrackedFace::FaceDirection::RightOfRobot) {
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningRRRRRRRRight", "");
+    CompoundActionSequential* turnAction = new CompoundActionSequential();
+    turnAction->AddAction(new TurnInPlaceAction(-.7, false));
+    turnAction->AddAction(new WaitAction(1));
+    turnAction->AddAction(new TurnInPlaceAction(.7, false));
+    turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
+    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
   }
 }
 

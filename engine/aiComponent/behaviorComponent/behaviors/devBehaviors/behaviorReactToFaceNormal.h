@@ -42,6 +42,7 @@ private:
   // TODO add eye contact "state" or something
   void TransitionToCheckFaceNormalDirectedAtRobot();
   void TransitionToCheckFaceNormalDirectedLeftOrRight();
+  void TransitionToCheckFaceDirection();
   void TransitionToCompleted();
   bool CheckIfShouldStop();
 

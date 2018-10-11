@@ -35,10 +35,12 @@ struct FaceDirectionData
 };
 
 
+
 class FaceNormalDirectedAtRobot
 {
 public:
   FaceNormalDirectedAtRobot();
+
 
   void Update(const TrackedFace& face,
               const TimeStamp_t timeStamp);
@@ -46,6 +48,7 @@ public:
   bool IsFaceDirectedAtRobot() const {return _isFaceDirectedAtRobot;}
   bool IsFaceDirectedLeftOfRobot() const {return _isFaceDirectedLeftOfRobot;}
   bool IsFaceDirectedRightOfRobot() const {return _isFaceDirectedRightOfRobot;}
+  TrackedFace::FaceDirection GetFaceDirection() const {return _faceDirection;}
   Point2f GetFaceDirectionAverage() const {return _faceDirectionAverage;}
   bool GetExpired(const TimeStamp_t currentTime) const;
   std::vector<FaceDirectionData> const& GetFaceDirectionHistory() {return _faceDirectionHistory;}
@@ -56,6 +59,7 @@ private:
   bool DetermineFaceDirectedAtRobot();
   bool DetermineFaceDirectedRightOfRobot();
   bool DetermineFaceDirectedLeftOfRobot();
+  TrackedFace::FaceDirection DetermineFaceDirection();
 
   Point2f ComputeEntireFaceDirectionAverage();
 
@@ -71,6 +75,7 @@ private:
   bool _isFaceDirectedAtRobot = false;
   bool _isFaceDirectedLeftOfRobot = false;
   bool _isFaceDirectedRightOfRobot = false;
+  TrackedFace::FaceDirection _faceDirection;
   bool _initialized = false;
 
   std::vector<FaceDirectionData> _faceDirectionHistory;

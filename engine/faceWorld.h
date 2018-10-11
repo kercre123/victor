@@ -161,6 +161,7 @@ namespace Vector {
     // TOOD add documentation
     bool IsFaceDirectedAtRobot(const u32 withinLast_ms) const;
     int IsFaceDirectedAtLeftRight(const u32 withinLast_ms) const;
+    Vision::TrackedFace::FaceDirection GetFaceDirection(const u32 withinLast_ms) const;
 
 
     // Get the wall times that the given face ID has been observed for named faces. This implementation

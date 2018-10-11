@@ -722,6 +722,7 @@ namespace Vision {
     bool directedAtRobot = false;
     bool directedLeftOfRobot = false;
     bool directedRightOfRobot = false;
+    TrackedFace::FaceDirection faceDirection = TrackedFace::FaceDirection::None;
     if (entry.GetExpired(timeStamp))
     {
       _facesDirectedAtRobot.erase(face.GetID());
@@ -731,10 +732,12 @@ namespace Vision {
       directedAtRobot = entry.IsFaceDirectedAtRobot();
       directedLeftOfRobot = entry.IsFaceDirectedLeftOfRobot();
       directedRightOfRobot = entry.IsFaceDirectedRightOfRobot();
+      faceDirection = entry.GetFaceDirection();
     }
     face.SetDirectedAtRobot(directedAtRobot);
     face.SetDirectedLeftOfRobot(directedLeftOfRobot);
     face.SetDirectedRightOfRobot(directedRightOfRobot);
+    face.SetFaceDirection(faceDirection);
   }
 
   static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, const f32 intraEyeDist,

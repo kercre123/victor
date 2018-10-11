@@ -27,6 +27,8 @@
 
 namespace Anki {
 namespace Vision {
+
+  class FaceNormalDirectedAtRobot;
   
   class TrackedFace
   {
@@ -72,6 +74,15 @@ namespace Vision {
       
       NumFeatures
     };
+
+    enum FaceDirection
+    {
+      None = 0,
+      AtRobot,
+      LeftOfRobot,
+      RightOfRobot
+    };
+
     
     using Feature = std::vector<Point2f>;
     
@@ -148,6 +159,9 @@ namespace Vision {
     bool IsDirectedRightOfRobot() const { return _isDirectedRightOfRobot; }
     void SetDirectedRightOfRobot(const bool directedRightOfRobot);
 
+    TrackedFace::FaceDirection GetFaceDirection() const {return _faceDirection;}
+    void SetFaceDirection(const TrackedFace::FaceDirection faceDirection);
+
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
 
@@ -167,6 +181,8 @@ namespace Vision {
     bool           _isDirectedLeftOfRobot  = false;
     bool           _isDirectedRightOfRobot  = false;
     bool           _isTranslationSet   = false;
+
+    FaceDirection _faceDirection;
 
     std::string    _name;
     
@@ -368,6 +384,11 @@ namespace Vision {
   inline void TrackedFace::SetDirectedRightOfRobot(const bool directedRightOfRobot) {
     _isDirectedRightOfRobot = directedRightOfRobot;
   }
+
+  inline void TrackedFace::SetFaceDirection(const FaceDirection faceDirection) {
+    _faceDirection = faceDirection;
+    PRINT_NAMED_INFO("TrackedFace.SetFaceDirection", "face direction %d", faceDirection);
+ }
   
 } // namespace Vision
 } // namespace Anki

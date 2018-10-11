@@ -1082,6 +1082,7 @@ namespace Vector {
     const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
                                         ( lastImgTime - withinLast_ms ) :
                                         0;
+
     // Loop over all the faces and see if any of them are making eye contact
     for (const auto& entry: _faceEntries)
     {
@@ -1131,6 +1132,31 @@ namespace Vector {
     }
     return 0;
   }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Vision::TrackedFace::FaceDirection FaceWorld::GetFaceDirection(const u32 withinLast_ms) const
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
+
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (ShouldReturnFace(entry.second, recentTime, false))
+      {
+        auto faceDirection = entry.second.face.GetFaceDirection();
+        if (faceDirection != Vision::TrackedFace::FaceDirection::None)
+        {
+          return faceDirection;
+        }
+      }
+    }
+    return Vision::TrackedFace::FaceDirection::None;
+  }
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::InitLoadedKnownFaces(const std::list<Vision::LoadedKnownFace>& loadedFaces)
