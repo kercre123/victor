@@ -61,8 +61,8 @@ class AnimationComponent(util.Component):
         if not self._anim_dict:
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
             result = self.load_animation_list()
-            if isinstance(result, sync.Synchronizer):
-                result.wait_for_completed()
+            if isinstance(result, asyncio.Task):
+                self.loop.run_until_complete(result)
         return list(self._anim_dict.keys())
 
     async def _ensure_loaded(self):
@@ -76,12 +76,9 @@ class AnimationComponent(util.Component):
         """
         if not self._anim_dict:
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
-            result = self.load_animation_list()
-            if asyncio.iscoroutine(result):
-                await result
+            await self.load_animation_list()
 
-    @sync.Synchronizer.wrap
-    @sync.Synchronizer.disable_log
+    @sync.wrap(False)
     async def load_animation_list(self):
         """Request the list of animations from the robot
 
@@ -103,7 +100,7 @@ class AnimationComponent(util.Component):
         self._anim_dict = {a.name: a for a in result.animation_names}
         return result
 
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def play_animation(self, anim: str, loop_count: int = 1, ignore_body_track: bool = False, ignore_head_track: bool = False, ignore_lift_track: bool = False):
         """Starts an animation playing on a robot.
 

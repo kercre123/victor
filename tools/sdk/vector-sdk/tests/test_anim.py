@@ -31,11 +31,7 @@ def main():
         anim_names = robot.anim.anim_list
         if not anim_names:
             sys.exit("Error: no animations loaded")
-        else:
-            for idx, name in enumerate(anim_names):
-                print("(%d: %s)" % (idx, name), end=" ")
-            print()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+        robot.run_until_complete(robot.anim.play_animation("anim_blackjack_victorwin_01"))
 
         print("------ finish testing animations ------")
 

@@ -25,7 +25,7 @@ from .messaging import protocol
 
 class MotorComponent(util.Component):
     """Controls the low-level motor functions."""
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def set_wheel_motors(self,
                                left_wheel_speed: float,
                                right_wheel_speed: float,
@@ -55,7 +55,7 @@ class MotorComponent(util.Component):
                                              right_wheel_mmps2=right_wheel_accel)
         return await self.grpc_interface.DriveWheels(motors)
 
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def set_head_motor(self,
                              speed: float):
         '''Tell Vector's head motor to move with a certain speed.
@@ -73,7 +73,7 @@ class MotorComponent(util.Component):
         set_head_request = protocol.MoveHeadRequest(speed_rad_per_sec=speed)
         return await self.grpc_interface.MoveHead(set_head_request)
 
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def set_lift_motor(self,
                              speed: float):
         '''Tell Vector's lift motor to move with a certain speed.

@@ -102,7 +102,7 @@ class Robot:
         if default_logging:
             util.setup_basic_logging()
         self.logger = util.get_class_logger(__name__, self)
-        self.is_async = False
+        self.force_async = False
         self.is_loop_owner = False
         self._original_loop = None
         self.loop = loop
@@ -569,8 +569,8 @@ class Robot:
         if self.cache_animation_list:
             # Load animations so they are ready to play when requested
             anim_request = self._anim.load_animation_list()
-            if isinstance(anim_request, sync.Synchronizer):
-                anim_request.wait_for_completed()
+            if isinstance(anim_request, asyncio.Task):
+                self.loop.run_until_complete(anim_request)
 
         # Start audio feed
         if self.enable_audio_feed:
@@ -585,7 +585,9 @@ class Robot:
             self.viewer.show_video()
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self._faces.enable_vision_mode(enable=self.enable_vision_mode)
+        vision_mode = self._faces.enable_vision_mode(enable=self.enable_vision_mode)
+        if isinstance(vision_mode, asyncio.Task):
+            self.loop.run_until_complete(vision_mode)
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
@@ -600,13 +602,14 @@ class Robot:
             robot.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
         """
-        if self.is_async:
-            for task in self.pending:
-                task.wait_for_completed()
+        # TODO:  figure out wrangling the pending
+        # if self.force_async:
+        #     for task in self.pending:
+        #         task.wait_for_completed()
 
         vision_mode = self._faces.enable_vision_mode(enable=False)
-        if isinstance(vision_mode, sync.Synchronizer):
-            vision_mode.wait_for_completed()
+        if isinstance(vision_mode, asyncio.Task):
+            self.loop.run_until_complete(vision_mode)
 
         # Stop rendering video
         self.viewer.stop_video()
@@ -635,7 +638,7 @@ class Robot:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
         """Check the current state of the battery.
 
@@ -648,7 +651,7 @@ class Robot:
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.grpc_interface.BatteryState(get_battery_state_request)
 
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def get_version_state(self) -> protocol.VersionStateResponse:
         """Get the versioning information for Vector.
 
@@ -659,7 +662,7 @@ class Robot:
         get_version_state_request = protocol.VersionStateRequest()
         return await self.conn.grpc_interface.VersionState(get_version_state_request)
 
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def get_network_state(self) -> protocol.NetworkStateResponse:
         """Get the network information for Vector.
 
@@ -670,7 +673,7 @@ class Robot:
         get_network_state_request = protocol.NetworkStateRequest()
         return await self.conn.grpc_interface.NetworkState(get_network_state_request)
 
-    @sync.Synchronizer.wrap
+    @sync.wrap()
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
         """Make Vector speak text.
 
@@ -739,7 +742,7 @@ class AsyncRobot(Robot):
     @functools.wraps(Robot.__init__)
     def __init__(self, *args, **kwargs):
         super(AsyncRobot, self).__init__(*args, **kwargs)
-        self.is_async = True
+        self.force_async = True
 
     # TODO Should be private? Better method name? If not private, Add docstring and sample code
     def add_pending(self, task):
@@ -748,3 +751,7 @@ class AsyncRobot(Robot):
     # TODO Should be private? Better method name? If not private, Add docstring and sample code
     def remove_pending(self, task):
         self.pending = [x for x in self.pending if x is not task]
+
+    # TODO: document and clean up
+    def run_until_complete(self, task):
+        return self.loop.run_until_complete(task)

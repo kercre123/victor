@@ -84,6 +84,12 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
     return args
 
 
+class _LogFilter(logging.Filter):
+    def filter(self, record):
+        record.name = record.name.replace("anki_vector.", "")
+        return True
+
+
 def setup_basic_logging(custom_handler: logging.Handler = None,
                         general_log_level: str = None,
                         target: object = None):
@@ -104,9 +110,11 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
 
     handler = custom_handler
     if handler is None:
+        f = _LogFilter()
         handler = logging.StreamHandler(stream=target)
-        formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        formatter = logging.Formatter("%(asctime)-10s %(name)-30s %(levelname)-8s %(message)s", "%H:%M:%S")
         handler.setFormatter(formatter)
+        handler.addFilter(f)
 
     vector_logger = logging.getLogger('anki_vector')
     if not vector_logger.handlers:
@@ -124,7 +132,8 @@ def get_class_logger(module: str, obj: object) -> logging.Logger:
     :param module: The name of the module to which the object belongs.
     :param obj: the object that owns the logger.
     """
-    return logging.getLogger(".".join([module, type(obj).__name__]))
+    obj_type = type(obj)
+    return logging.getLogger(".".join([obj_type.__module__, obj_type.__name__]))
 
 
 class Vector2:
@@ -956,6 +965,14 @@ class Component:
     @property
     def robot(self):
         return self._robot
+
+    @property
+    def loop(self):
+        return self._robot.loop
+
+    @property
+    def force_async(self) -> bool:
+        return self._robot.force_async
 
     @property
     def grpc_interface(self):
