@@ -153,8 +153,9 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
   RemoveTestDataAfter();
 };
 
-// changing version info leads to data reset
-TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
+// DISABLED because we currently want to save info across versions (but didn't when this system was designed,
+// for reasons that may have been lost to time)
+TEST(VariableSnapshotComponent, DISABLED_VersioningInfoDataResetOSBuildVersion)
 {
   using namespace Anki::Vector;
 
@@ -208,8 +209,9 @@ TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
   RemoveTestDataAfter();
 };
 
-// changing version robot build sha leads to data reset
-TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
+// DISABLED because we currently want to save info across versions (but didn't when this system was designed,
+// for reasons that may have been lost to time)
+TEST(VariableSnapshotComponent, DISABLED_VersioningInfoDataResetRobotBuildSha)
 {
   using namespace Anki::Vector;
 

@@ -2,10 +2,9 @@
   "behaviorClass" : "GreetAfterLongTime",
   "behaviorID"    : "GreetAfterLongTime",
 
-  "associatedActiveFeature": "NoFeature",
-
-  // 8 hours
-  "cooldown_s": 28800,
+  // TODO:(bn) add new active feature once we can release an app update for this
+  // For now, rather than "nothing", use "Greeting"
+  "associatedActiveFeature": "VC_Greeting",
 
   "wantsToBeActivatedCondition": {
     "conditionType" : "FeatureGate",

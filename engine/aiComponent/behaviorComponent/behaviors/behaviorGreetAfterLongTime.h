@@ -16,6 +16,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "engine/smartFaceId.h"
+
 #include "coretech/common/engine/robotTimeStamp.h"
 
 #include "osState/wallTime.h"
@@ -31,6 +33,9 @@ class BehaviorGreetAfterLongTime : public ICozmoBehavior
 public:
   virtual ~BehaviorGreetAfterLongTime();
 
+  using LastSeenMapPtr = std::shared_ptr<std::unordered_map<std::string, time_t>>;
+  static void DebugPrintState(const char* debugLabel, const LastSeenMapPtr map);
+
 protected:
 
   // Enforce creation through BehaviorFactory
@@ -40,6 +45,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
   };
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   virtual void InitBehavior() override;
@@ -48,28 +54,36 @@ protected:
   virtual void BehaviorUpdate() override;
 
 private:
-  // plays the desired reaction animation
+
+  void TurnTowardsFace();  
   void PlayReactionAnimation();
 
   // runs checks to decide whether the behavior update should run during this tick
   bool ShouldBehaviorUpdate(time_t&);
 
+  void DebugPrintState(const char* debugLabel) const;
+
+  uint GetCooldownPeriod_s() const;
+
   struct InstanceConfig {
     InstanceConfig();
-
-    // length of time before robot will react strongly to a known face
-    uint cooldownPeriod_s;
+    ICozmoBehaviorPtr driveOffChargerBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    std::shared_ptr<std::unordered_map<std::string, time_t>> lastSeenTimesPtr;
+    LastSeenMapPtr lastSeenTimesPtr;
 
     // last time a face was seen
     RobotTimeStamp_t lastFaceCheckTime_ms;
 
-    // should play reaction flag
-    bool shouldActivateBehavior;
+    // should play reaction flag as long as we can play it before the given (basestation) time
+    float shouldActivateBehaviorUntil_s;
+    SmartFaceID targetFace;
+
+    // for DAS
+    int timeSinceSeenThisFace_s;
+    int thisCooldown_s;
   };
 
   InstanceConfig _iConfig;

@@ -1630,7 +1630,7 @@
   },
   {
     "CladEvent": "GreetAfterLongTime",
-    "AnimName" : "ag_greeting_big_hello"
+    "AnimName" : "ag_greeting_imhome"
   },
   {
     "CladEvent": "ComeHereStart",
