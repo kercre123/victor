@@ -277,7 +277,7 @@ class Vector3:
         return self._x, self._y, self._z
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} x: {self.x:.2} y: {self.y:.2} z: {self.z:.2}>"
+        return f"<{self.__class__.__name__} x: {self.x:.2f} y: {self.y:.2f} z: {self.z:.2f}>"
 
     def __add__(self, other):
         if not isinstance(other, Vector3):
@@ -335,7 +335,7 @@ class Angle:
         return self._radians / math.pi * 180
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} Radians: {self.radians:.2} Degrees: {self.degrees:.2}>"
+        return f"<{self.__class__.__name__} Radians: {self.radians:.2f} Degrees: {self.degrees:.2f}>"
 
     def __add__(self, other):
         if not isinstance(other, Angle):
@@ -621,8 +621,8 @@ class Quaternion:
                         0.0, 0.0, 0.0, 1.0)
 
     def __repr__(self):
-        return (f"<{self.__class__.__name__} q0: {self.q0:.2} q1: {self.q1:.2}"
-                f" q2: {self.q2:.2} q3: {self.q3:.2} {self.angle_z}>")
+        return (f"<{self.__class__.__name__} q0: {self.q0:.2f} q1: {self.q1:.2f}"
+                f" q2: {self.q2:.2f} q3: {self.q3:.2f} {self.angle_z}>")
 
 
 class Position(Vector3):

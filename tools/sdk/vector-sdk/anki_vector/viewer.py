@@ -92,8 +92,9 @@ class ViewerComponent(util.Component):
                     image = self.robot.camera.latest_image.copy()
                     if self.overlays:
                         image = self._apply_overlays(image)
-
-                    cv2.imshow(opencv_window_name, np.array(image))
+                    image = np.array(image)
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    cv2.imshow(opencv_window_name, image)
                     cv2.waitKey(1)
                     latest_image_id = self.robot.camera.latest_image_id
                 await asyncio.sleep(0.1)
@@ -115,7 +116,7 @@ class ViewerComponent(util.Component):
         :param timeout: Render video for the given time. (Renders forever, if timeout not given)
         """
         if not self.render_task or self.render_task.done():
-            self.render_task = self.robot.loop.create_task(self._render_frames(timeout))
+            self.render_task = self.loop.create_task(self._render_frames(timeout))
 
     def stop_video(self) -> None:
         """Stop rendering video of Vector's camera feed
@@ -129,4 +130,4 @@ class ViewerComponent(util.Component):
         """
         if self.render_task:
             self.render_task.cancel()
-            self.robot.loop.run_until_complete(self.render_task)
+            self.loop.run_until_complete(self.render_task)

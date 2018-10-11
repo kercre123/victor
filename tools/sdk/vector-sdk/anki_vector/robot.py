@@ -143,7 +143,7 @@ class Robot:
         self._world: world.World = None
 
         self.behavior_activation_timeout = behavior_activation_timeout
-        self.enable_vision_mode = enable_vision_mode
+        self._enable_vision_mode = enable_vision_mode
         self.cache_animation_list = cache_animation_list
         # Robot state/sensor data
         self._pose: util.Pose = None
@@ -585,9 +585,10 @@ class Robot:
             self.viewer.show_video()
 
         # Enable face detection, to allow Vector to add faces to its world view
-        vision_mode = self._faces.enable_vision_mode(enable=self.enable_vision_mode)
-        if isinstance(vision_mode, asyncio.Task):
-            self.loop.run_until_complete(vision_mode)
+        if self._enable_vision_mode:
+            vision_mode = self._faces.enable_vision_mode(enable=self._enable_vision_mode)
+            if isinstance(vision_mode, asyncio.Task):
+                self.loop.run_until_complete(vision_mode)
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
@@ -607,9 +608,10 @@ class Robot:
         #     for task in self.pending:
         #         task.wait_for_completed()
 
-        vision_mode = self._faces.enable_vision_mode(enable=False)
-        if isinstance(vision_mode, asyncio.Task):
-            self.loop.run_until_complete(vision_mode)
+        if self._enable_vision_mode:
+            vision_mode = self._faces.enable_vision_mode(enable=False)
+            if isinstance(vision_mode, asyncio.Task):
+                self.loop.run_until_complete(vision_mode)
 
         # Stop rendering video
         self.viewer.stop_video()
@@ -743,14 +745,6 @@ class AsyncRobot(Robot):
     def __init__(self, *args, **kwargs):
         super(AsyncRobot, self).__init__(*args, **kwargs)
         self.force_async = True
-
-    # TODO Should be private? Better method name? If not private, Add docstring and sample code
-    def add_pending(self, task):
-        self.pending += [task]
-
-    # TODO Should be private? Better method name? If not private, Add docstring and sample code
-    def remove_pending(self, task):
-        self.pending = [x for x in self.pending if x is not task]
 
     # TODO: document and clean up
     def run_until_complete(self, task):

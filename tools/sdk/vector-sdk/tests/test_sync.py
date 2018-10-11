@@ -9,6 +9,7 @@ Test Synchronizer to make sure it works properly in all combinations:
 * Lastly disconnecting and reconnecting with the same robot
 """
 
+import asyncio
 import os
 import sys
 import time
@@ -31,12 +32,12 @@ def main():
     print("------ Synchronous Robot using with ------")
     with anki_vector.Robot(args.serial) as robot:
         robot.events.subscribe(test_subscriber, Events.robot_state)
-        robot.anim.play_animation("anim_blackjack_victorwin_01")
+        robot.anim.play_animation("anim_pounce_01")
 
     print("------ Synchronous Robot using with ------")
     with anki_vector.Robot(args.serial) as robot:
         robot.events.subscribe_by_name(test_subscriber, event_name='test1')
-        robot.anim.play_animation("anim_blackjack_victorwin_01")
+        robot.anim.play_animation("anim_pounce_01")
         robot.events.unsubscribe_by_name(test_subscriber, event_name='test1')
         robot.events.unsubscribe_by_name(test_subscriber, event_name='test1')
         robot.motors.set_wheel_motors(100.0, -100.0)
@@ -48,7 +49,7 @@ def main():
     robot.events.subscribe_by_name(test_subscriber, event_name='test1')
     try:
         robot.connect()
-        robot.anim.play_animation("anim_blackjack_victorwin_01")
+        robot.anim.play_animation("anim_pounce_01")
         robot.motors.set_wheel_motors(-100.0, 100.0)
     finally:
         robot.disconnect()
@@ -58,18 +59,22 @@ def main():
     print("------ Asynchronous Robot using with ------")
     with anki_vector.AsyncRobot(args.serial) as robot:
         robot.events.subscribe(test_subscriber, Events.robot_state)
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(-100.0, 100.0).wait_for_completed()
+        robot.run_until_complete(
+            asyncio.gather(
+                robot.anim.play_animation("anim_pounce_01"),
+                robot.motors.set_wheel_motors(-100.0, 100.0)))
 
     time.sleep(2)
 
     print("------ Asynchronous Robot using try finally ------")
     robot = anki_vector.AsyncRobot(args.serial)
-    robot.events.subscribe(Events.robot_state, test_subscriber)
+    robot.events.subscribe(test_subscriber, Events.robot_state)
     try:
         robot.connect()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(100.0, -100.0).wait_for_completed()
+        robot.run_until_complete(
+            asyncio.gather(
+                robot.anim.play_animation("anim_pounce_01"),
+                robot.motors.set_wheel_motors(100.0, -100.0)))
     finally:
         robot.disconnect()
 
@@ -79,8 +84,10 @@ def main():
     # Reuse the same robot from a previous connection
     try:
         robot.connect()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(0.0, 0.0).wait_for_completed()
+        robot.run_until_complete(
+            asyncio.gather(
+                robot.anim.play_animation("anim_pounce_01"),
+                robot.motors.set_wheel_motors(0.0, 0.0)))
     finally:
         robot.disconnect()
 
