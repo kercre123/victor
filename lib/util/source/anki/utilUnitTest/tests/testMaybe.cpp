@@ -224,7 +224,29 @@ namespace {
     int x;
     int& operator++() { return ++x; }
     static int inc(int y) { return ++y; }
+    int decr() { return --x; }
+    int sub(int y) { return x-y; }
   };
+
+#define MAKE_FUNCTOR(class, method) \
+  auto method = std::mem_fn(&class::method)
+
+  // auto decr = std::mem_fn(&IntWrapper::decr);
+  MAKE_FUNCTOR(IntWrapper, decr);
+  MAKE_FUNCTOR(IntWrapper, sub);
+
+  using namespace Anki::Util;
+  template <typename Func, typename U, typename RT = typename std::result_of_t<Func&(U&)> >
+  decltype(auto) operator->*(Maybe<U> u, Func&& f) { return u.FMap(f); }
+
+  // template <typename Func, typename U, typename T = typename std::result_of_t<Func&(U&)> >
+  // Maybe<T> operator <<(Func&& f, Maybe<U> u) { return u.FMap(f); }
+
+  // template <typename Func, 
+  //           typename T,
+  //           typename RT = std::result_of_t<Func&(T&)>,
+  //           typename    = std::enable_if_t<TypeOperators::IsMaybe<RT>()>>
+  // RT operator <<(Func&& f, Maybe<T> t) { return t.Bind(f); }
 }
 
 TEST(TestMaybe, FMapFunctionTypes)
@@ -258,6 +280,111 @@ TEST(TestMaybe, FMapFunctionTypes)
   // member function of existing type
   auto f = std::bind(&IntWrapper::operator++, std::placeholders::_1);
   Just<IntWrapper>(2).FMap(f);
+  Just<IntWrapper>(2).FMap(decr);
+
+  IntWrapper(2).decr();
+  decr( IntWrapper(2) );
+  auto safeObj = Just<IntWrapper>(8);
+  safeObj->*decr;
+}
+
+namespace Helper
+{
+  template <int... Is>
+  struct index {};
+
+  template <int N, int... Is>
+  struct gen_seq : gen_seq<N - 1, N - 1, Is...> {};
+
+  template <int... Is>
+  struct gen_seq<0, Is...> : index<Is...> {};
+
+  template <typename Func, typename... Args, int... Is>
+  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>& tup, index<Is...>)
+  {
+    return f(std::get<Is>(tup)...);
+  }
+
+  template <typename Func, typename... Args>
+  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>& tup)
+  {
+    return ForwardTupleArgs(f, tup, gen_seq<sizeof...(Args)>{});
+  }
+}
+
+template <typename Func, typename... Ts> 
+class CurryFunc
+{
+public:
+
+  template <typename ...Args>
+  decltype(auto) operator() (Args... args) const { 
+    auto cat = std::tuple_cat(values, std::tuple<Args...>(std::forward<Args>(args)...));
+    return Helper::ForwardTupleArgs(op, cat); 
+  }
+
+  template <typename OtherFunc, typename... OtherTs> 
+  friend CurryFunc<OtherFunc, OtherTs...> Curry(OtherFunc&& f, OtherTs&&... ts);
+
+  template <typename OtherFunc, typename... OtherTs, typename... Us> 
+  friend CurryFunc<OtherFunc, OtherTs...> Curry(CurryFunc<OtherFunc, OtherTs...>&& cf, Us&&... us);
+
+  void nop() {}
+
+protected:
+  Func op;
+  std::tuple<Ts...> values;
+
+  CurryFunc (Func&& f, Ts&&... ts) 
+  : op(std::forward<Func>(f))
+  , values(std::forward<Ts>(ts)...) {}
+
+  template <typename... MoreTs>
+  void Append(std::tuple<MoreTs...>& tup) {
+    values = std::tuple_cat(values, tup);
+  }
+
+};
+
+template <typename Func, typename... Ts> 
+CurryFunc<Func, Ts...> Curry(Func&& f, Ts&&... ts) { 
+  return CurryFunc<Func, Ts...>(f, std::forward<Ts>(ts)...); 
+}
+
+// TODO: if constructing from another CurryFunc, just merge parameter packs
+template <typename Func, typename... Ts, typename... Us> 
+CurryFunc<Func, Ts...> Curry(CurryFunc<Func, Ts...>&& cf, Us&&... us) { 
+  auto tup = std::tuple<Us...>(std::forward<Us>(us)...);
+  return cf.Append(tup); 
+}
+
+
+TEST(TestMaybe, TestCurry)
+{
+  using namespace Anki::Util;
+
+  auto a = [](double x, double y) { return x + y; };
+  auto b = Curry(a, 5);
+  double c = b(2);
+
+  EXPECT_EQ(c, a(5,2));
+
+  auto trip = [](double x, double y, double z) { return x + y - z; };
+  auto twoArgs = Curry(trip, 5);
+  double done1 = twoArgs(2, 3);
+  auto oneArg = Curry(trip, 5, 2);
+  double done2 = oneArg(3);
+
+
+  EXPECT_EQ( done1, trip(5,2,3) );
+  EXPECT_EQ( done2, trip(5,2,3) );
+  EXPECT_EQ( done2, done1 );
+  EXPECT_EQ( done1, 4 );
+
+  auto nest = Curry(twoArgs, 2);
+  nest.nop();
+  auto done3 = nest(3);
+  EXPECT_EQ( done2, done3 );
 }
 
 TEST(TestMaybe, NothingVoid)
