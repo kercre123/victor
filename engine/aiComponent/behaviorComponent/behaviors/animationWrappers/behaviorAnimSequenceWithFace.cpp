@@ -25,6 +25,7 @@ static const char* kFaceSelectionPenaltiesKey = "faceSelectionPenalties";
 static const char* kRequireFaceForActivationKey = "requireFaceForActivation";
 static const char* kRequireFaceConfirmationKey = "requireFaceConfirmation";
 static const char* kReturnToOriginalPoseKey = "returnToOriginalPose";
+static const char* kSetFastTurnKey = "setFastTurn";
 }
 
 struct BehaviorAnimSequenceWithFace::InstanceConfig
@@ -33,6 +34,7 @@ struct BehaviorAnimSequenceWithFace::InstanceConfig
   bool requireFaceForActivation;
   bool requireFaceConfirmation;
   bool returnToOriginalPose;
+  bool fastTurn;
 };
   
 struct BehaviorAnimSequenceWithFace::DynamicVariables
@@ -58,6 +60,7 @@ BehaviorAnimSequenceWithFace::BehaviorAnimSequenceWithFace(const Json::Value& co
   _iConfig->requireFaceForActivation = config.get( kRequireFaceForActivationKey, false ).asBool();
   _iConfig->requireFaceConfirmation = config.get( kRequireFaceConfirmationKey, false ).asBool();
   _iConfig->returnToOriginalPose = config.get( kReturnToOriginalPoseKey, false ).asBool();
+  _iConfig->fastTurn = config.get( kSetFastTurnKey, false).asBool();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -96,6 +99,7 @@ void BehaviorAnimSequenceWithFace::GetBehaviorJsonKeys(std::set<const char*>& ex
     kRequireFaceForActivationKey,
     kRequireFaceConfirmationKey,
     kReturnToOriginalPoseKey,
+    kSetFastTurnKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -103,6 +107,16 @@ void BehaviorAnimSequenceWithFace::GetBehaviorJsonKeys(std::set<const char*>& ex
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimSequenceWithFace::OnBehaviorActivated()
 {
+
+  if( _iConfig->fastTurn ) {
+    PathMotionProfile profile;
+    profile.pointTurnSpeed_rad_per_sec = 4.0f;
+    profile.pointTurnAccel_rad_per_sec2 = 20.0f;
+    profile.pointTurnDecel_rad_per_sec2 = 40.0f;
+    profile.isCustom = true;
+    SmartSetMotionProfile(profile);
+  }
+  
   _dVars->startAbsAngle_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
   SmartFaceID bestFace = GetBestFace();
   if( bestFace.IsValid() ) {

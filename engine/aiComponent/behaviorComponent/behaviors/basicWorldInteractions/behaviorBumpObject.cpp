@@ -15,13 +15,14 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/navMap/mapComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/drivingAnimationHandler.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/utils/robotPointSamplerHelper.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
-
 
 namespace Anki {
 namespace Vector {
@@ -45,6 +46,8 @@ namespace {
   
   const float kPaddingPushedObject_mm = 30.0f; // distance extending from drive center where an object would fall off a cliff
   const float kCliffWidth_mm = 100.0f;
+
+  CONSOLE_VAR_RANGED( float, kExploringPostBumpReferenceProb, "BehaviorExploring", 1.0f, 0.0f, 1.0f);
   
   static const DrivingAnimationHandler::DrivingAnimations kSlowDrivingAnimations {
     AnimationTrigger::Count,
@@ -85,7 +88,20 @@ BehaviorBumpObject::BehaviorBumpObject(const Json::Value& config)
   _iConfig.pBumpWhenNotEvil = config.get( kProbabilityBumpWhenNotEvilKey, 0.0f ).asFloat();
   _iConfig.pBumpWhenEvil = config.get( kProbabilityBumpWhenEvilKey, 0.0f ).asFloat();
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBumpObject::InitBehavior()
+{
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _iConfig.referenceHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringReferenceHuman) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBumpObject::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  delegates.insert( _iConfig.referenceHumanBehavior.get() );
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBumpObject::WantsToBeActivatedBehavior() const
 {
@@ -168,7 +184,8 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
 {
   // don't do the second bump if it probably wasnt centered well the first time, or not desired
   if( _dVars.unexpectedMovement || !kExploringPushObject ) {
-    return; // which ends the behavior
+    DoReferenceHumanIfDesired();
+    return;
   }
   
   // check if we still see the object
@@ -180,7 +197,8 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
   // don't bother checking if it's too close here, like in WantsToBeActivatedBehavior
   
   if( !(sensorReadingValid && closeEnough) ) {
-    return; // which ends the behavior
+    DoReferenceHumanIfDesired();
+    return;
   }
   
   const float niceDistForward_mm = static_cast<float>(proxDist_mm) + kSecondBumpBuffer_mm;
@@ -193,7 +211,8 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
                           (!evil && (GetRNG().RandDbl() <= _iConfig.pBumpWhenNotEvil));
   
   if( !shouldBump ) {
-    return; // which ends the behavior
+    DoReferenceHumanIfDesired();
+    return;
   }
   
   _dVars.bumpedAgain = (int)evil;
@@ -205,13 +224,15 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
   // otherwise don't do it at all
   if( !evil ) {
     if( WouldBumpPushSomethingOffCliff(niceDistForward_mm) ) {
-      return; // which ends the behavior
+      DoReferenceHumanIfDesired();
+      return;
     } else {
       distForward_mm = niceDistForward_mm;
     }
   } else {
     if( !WouldBumpPushSomethingOffCliff(evilDistForward_mm) ) {
-      return; // which ends the behavior
+      DoReferenceHumanIfDesired();
+      return;
     } else {
       distForward_mm = evilDistForward_mm;
     }
@@ -235,12 +256,27 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
   DelegateIfInControl( action, [this](const ActionResult& res){
     // retreat animation
     auto* retreat = new TriggerLiftSafeAnimationAction{ AnimationTrigger::BumpObjectFastGetOut };
-    DelegateIfInControl( retreat, [](const ActionResult& res){
-      // and then the behavior ends
-    });
+    DelegateIfInControl( retreat, &BehaviorBumpObject::DoReferenceHumanIfDesired);
   });
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBumpObject::DoReferenceHumanIfDesired()
+{
+  if( kExploringPostBumpReferenceProb <= 0.0f ) {
+    // no chance to bump, end behavior now
+    return;
+  }
   
+  const bool refBehaviorWantsToBeActivated = _iConfig.referenceHumanBehavior->WantsToBeActivated();
+  const bool shouldActivate = ( GetRNG().RandDbl() < kExploringPostBumpReferenceProb );
+  if( refBehaviorWantsToBeActivated && shouldActivate ) {
+    _dVars.state = State::ReferenceHumanAfterBump;
+    DelegateIfInControl( _iConfig.referenceHumanBehavior.get() ); // end this behavior once the delegate finishes
+  }
+  // else, the behavior ends now
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBumpObject::BehaviorUpdate()
 {
@@ -253,7 +289,7 @@ void BehaviorBumpObject::BehaviorUpdate()
       uint16_t proxDist_mm = 0;
       if( proxSensor.GetLatestDistance_mm( proxDist_mm ) && (proxDist_mm > 150) ) {
         // robot lost sight of whatever it's pushing
-        CancelDelegates(true); // run callbacks to play the retreat anim
+        CancelDelegates(true); // run callbacks to play the retreat anim / reference behavior if desired
       }
     }
     

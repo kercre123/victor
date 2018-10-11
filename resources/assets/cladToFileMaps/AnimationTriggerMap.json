@@ -469,7 +469,7 @@
   },
   {
     "CladEvent": "ExploringLookAtHuman",
-    "AnimName": "ag_generic_look_stright_01"
+    "AnimName": "ag_referencing_reaction"
   },
   {
     "CladEvent": "ExploringQuickScan",
