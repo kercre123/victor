@@ -252,7 +252,10 @@ namespace {
 void Alexa::Init(const AnimContext* context,
                  const OnStateChangedCallback& onStateChanged,
                  const OnAlertChangedCallback& onAlertChanged,
-                 const OnWeatherCallback& onWeather)
+                 const OnWeatherCallback& onWeather,
+                 const OnAudioPlayedCallback& onAudioPlayed,
+                 const OnAudioPlaybackStarted& onAudioPlaybackStarted,
+                 const OnAudioPlaybackEnded& onAudioPlaybackEnded)
 {
   _context = context;
   _onStateChanged = onStateChanged;
@@ -378,13 +381,19 @@ void Alexa::Init(const AnimContext* context,
                                                   httpContentFetcherFactory);
   m_audioSpeaker->Init(context);
   
+  // receive info on audio being played
+  m_audioSpeaker->SetPlayedAudioCallback( onAudioPlayed );
+  m_audioSpeaker->SetOnPlaybackStarted( onAudioPlaybackStarted );
+  m_audioSpeaker->SetOnPlaybackEnded( onAudioPlaybackEnded );
+  
   // this isnt the constructor, but i seem to still need this
   // https://forum.libcinder.org/topic/solution-calling-shared-from-this-in-the-constructor
   auto wptr = std::shared_ptr<Alexa>( this, [](Alexa*){} );
   
-  // the alerts speaker doesnt change UX! we might need to observe it
+  // the alerts/audio speakers dont change UX so we observe them
   m_alertsSpeaker->setObserver( shared_from_this() );
   m_audioSpeaker->setObserver( shared_from_this() );
+  
   m_alertsSpeaker->DisableSource(2); // dont play source 2 since this is timer stuff
   m_alertsSpeaker->DisableSource(3); // dont play source 3 since this is timer stuff
   
@@ -668,18 +677,27 @@ void Alexa::onPlaybackStarted (SourceId id)
   PRINT_NAMED_WARNING("WHATNOW", "CALLBACK PLAY %d", (int)id);
   _playingSources.insert(id);
   CheckForStateChange();
+  //if( name == "Audio" ) {
+//    OnAudioPlaying();
+  //}
 }
 void Alexa::onPlaybackFinished (SourceId id)
 {
   PRINT_NAMED_WARNING("WHATNOW", "CALLBACK FINISH %d", (int)id);
   _playingSources.erase(id);
   CheckForStateChange();
+  //if( name == "Audio" ) {
+  //  OnAudioStopped();
+  //}
 }
 void Alexa::onPlaybackStopped(SourceId id)
 {
   PRINT_NAMED_WARNING("WHATNOW", "CALLBACK STOPPED %d", (int)id);
   _playingSources.erase(id);
   CheckForStateChange();
+  //if( name == "Audio" ) {
+  //  OnAudioStopped();
+  //}
 }
   
 void Alexa::onPlaybackError( SourceId id,

@@ -28,6 +28,12 @@ namespace Vector {
 namespace {
   #define CONSOLE_GROUP "BeatDetectorComponent"
   
+  CONSOLE_VAR_RANGED(float, kConfidenceThresholdAlexa, CONSOLE_GROUP, 0.05f, 0.01f, 1.f);
+  
+  // If confidence is above this value, it's very likely that a beat is _actually_ being detected
+  CONSOLE_VAR_RANGED(float, kHighConfidenceThresholdAlexa, CONSOLE_GROUP, 0.25f, 0.01f, 20.f);
+  
+  
   // Minimum beat detector confidence to be considered an actual beat
   CONSOLE_VAR_RANGED(float, kConfidenceThreshold, CONSOLE_GROUP, 0.18f, 0.01f, 1.f);
   
@@ -82,7 +88,7 @@ void BeatDetectorComponent::InitDependent(Vector::Robot* robot, const RobotCompM
   _signalHandle = messageHandler->Subscribe(RobotInterface::RobotToEngineTag::beatDetectorState, [this](const AnkiEvent<RobotInterface::RobotToEngine>& event) {
     // Only call callback if we are not currently faking a beat
     if (kFakeBeat_bpm < 0.f) {
-      OnBeat(event.GetData().Get_beatDetectorState().latestBeat);
+      OnBeat(event.GetData().Get_beatDetectorState().latestBeat, event.GetData().Get_beatDetectorState().isAlexa);
     }
   });
 }
@@ -127,9 +133,10 @@ void BeatDetectorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 }
 
 
-void BeatDetectorComponent::OnBeat(const BeatInfo& beat)
+void BeatDetectorComponent::OnBeat(const BeatInfo& beat, bool isAlexa)
 {
   _recentBeats.push_back(beat);
+  _isAlexa = isAlexa;
   
   for (const auto& callbackMapEntry : _onBeatCallbacks) {
     const auto& callback = callbackMapEntry.second;
@@ -140,6 +147,11 @@ void BeatDetectorComponent::OnBeat(const BeatInfo& beat)
 
 bool BeatDetectorComponent::IsPossibleBeatDetected() const
 {
+  // Should always return true if a definite beat is detected
+  if (IsBeatDetected()) {
+    return true;
+  }
+  
   // In order for a possible beat to be considered detected, the following conditions must be true. For the past
   // kPossibleBeatWindow_sec seconds:
   //   - We have a minimum number of beats
@@ -164,14 +176,16 @@ bool BeatDetectorComponent::IsPossibleBeatDetected() const
     return false;
   }
   
+  const auto confidenceThreshold = _isAlexa ? kConfidenceThresholdAlexa : kConfidenceThreshold;
+  
   // Do all the beats in the past kPossibleBeatWindow_sec have a confidence of at least half the threshold?
   const bool allConfidenceHighEnough = std::all_of(earliestBeatIt,
                                                    _recentBeats.end(),
-                                                   [](const BeatInfo& b) {
-                                                     return b.confidence > 0.5f * kConfidenceThreshold;
+                                                   [confidenceThreshold](const BeatInfo& b) {
+                                                     return b.confidence > 0.5f * confidenceThreshold;
                                                    });
   
-  const bool latestConfidenceHighEnough = _recentBeats.back().confidence > kConfidenceThreshold;
+  const bool latestConfidenceHighEnough = _recentBeats.back().confidence > confidenceThreshold;
   
   const auto minMaxTempoItPair = std::minmax_element(earliestBeatIt,
                                                      _recentBeats.end(),
@@ -201,11 +215,14 @@ bool BeatDetectorComponent::IsBeatDetected() const
     return false;
   }
   
-  const bool confidenceHighEnough = (_recentBeats.back().confidence > kHighConfidenceThreshold) ||
+  const auto confidenceThreshold = _isAlexa ? kConfidenceThresholdAlexa : kConfidenceThreshold;
+  const auto highConfidenceThreshold = _isAlexa ? kHighConfidenceThresholdAlexa : kHighConfidenceThreshold;
+  
+  const bool confidenceHighEnough = (_recentBeats.back().confidence > highConfidenceThreshold) ||
                                     std::all_of(_recentBeats.begin(),
                                                 _recentBeats.end(),
-                                                [](const BeatInfo& b) {
-                                                  return b.confidence > kConfidenceThreshold;
+                                                [confidenceThreshold](const BeatInfo& b) {
+                                                  return b.confidence > confidenceThreshold;
                                                 });
   
   const auto minMaxTempoItPair = std::minmax_element(_recentBeats.begin(),

@@ -39,6 +39,7 @@
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include <sched.h>
 #include "webServerProcess/src/webService.h"
+#include "util/time/universalTime.h"
 
 #include "cozmoAnim/alexa.h"
 
@@ -51,6 +52,9 @@ namespace {
 
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
+  
+  CONSOLE_VAR_RANGED(float, kAlexaBPMScaleFactor, "AAA", 0.95f, 0.01f, 1.5f);
+  CONSOLE_VAR_RANGED(float, kAlexaBPMOffset_s, "AAA", 0.0f, -1.0f, 1.0f);
   
   const bool kRunAlexa = true;
   const bool kRunSecondRecognizer = true;
@@ -200,7 +204,15 @@ void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Local
     _alexa->Init(context,
                  std::bind(&MicDataProcessor::OnAlexaStateChanged, this, std::placeholders::_1),
                  std::bind(&MicDataProcessor::SendAlexaAlertsToEngine, this, std::placeholders::_1),
-                 std::bind(&MicDataProcessor::SendAlexaWeatherToEngine, this, std::placeholders::_1));
+                 std::bind(&MicDataProcessor::SendAlexaWeatherToEngine, this, std::placeholders::_1),
+                 std::bind(&MicDataProcessor::OnAlexaAudioPlayed, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+                 [this](){
+                   _alexaAudioPlayTime_s = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
+                 },
+                 [this](){
+                   _alexaAudioPlayTime_s = -1.0f;
+                   _alexaAudioBuffer.clear();
+                 });
   }
 
   // On Debug builds, check that all the files listed in the trigger config actually exist
@@ -514,13 +526,82 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
   {
     {
       ANKI_CPU_PROFILE("BeatDetectorAddSamples");
-      // For beat detection, we only need a single channel of audio. Use the
-      // first quarter of the un-interleaved audio block
-      const bool beatDetected = _beatDetector->AddSamples(_inProcessAudioBlock.data(), kSamplesPerBlock);
-      if (beatDetected) {
-        auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
-        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
-        _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+      bool useAlexa = false;
+      size_t totSize;
+      {
+        std::lock_guard<std::mutex> lock( _alexaAudioMutex );
+        totSize = _alexaAudioBuffer.size();
+        useAlexa = !_alexaAudioBuffer.empty() && (_alexaAudioPlayTime_s >= 0.0f);
+      }
+      
+      if( !useAlexa ) {
+//        // For beat detection, we only need a single channel of audio. Use the
+//        // first quarter of the un-interleaved audio block
+//        const bool beatDetected = _beatDetector->AddSamples(_inProcessAudioBlock.data(), kSamplesPerBlock);
+//        if (beatDetected) {
+//          auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
+//          beatMessage.isAlexa = false;
+//          auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
+//          _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+//        }
+      } else {
+        const float now = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
+        const float timeSince_s = std::max(0.0f, now - _alexaAudioPlayTime_s);
+        int samplesSince = _alexaAudioSampleRate * timeSince_s;
+        int oldSamplesSince = samplesSince;
+        samplesSince = (int)std::min((size_t)samplesSince, totSize);
+        bool beatDetected = false;
+        if( samplesSince > 0 ) {
+          std::lock_guard<std::mutex> lock( _alexaAudioMutex );
+          const int16_t* data = & _alexaAudioBuffer.front();
+          beatDetected = _beatDetector->AddSamples( data, (uint32_t)samplesSince, _alexaAudioSampleRate);
+          PRINT_NAMED_WARNING("WHATNOW", "Samples=%d, Beat detected=%d (oldSamplesSince=%d, timeSince_s=%f, _alexaAudioSampleRate=%d)", samplesSince, beatDetected, oldSamplesSince, timeSince_s, _alexaAudioSampleRate);
+          SavePCM((short*)data, samplesSince);
+          
+          if (beatDetected) {
+            auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
+            beatMessage.latestBeat.time_sec += kAlexaBPMOffset_s;
+            beatMessage.latestBeat.tempo_bpm *= kAlexaBPMScaleFactor;
+            beatMessage.isAlexa = true;
+            auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
+            _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+          }
+
+          _alexaAudioBuffer.pop_front(samplesSince);
+        }
+        _alexaAudioPlayTime_s += (1.0f*samplesSince)/_alexaAudioSampleRate;
+//        size_t totSize;
+//        {
+//          std::lock_guard<std::mutex> lock( _alexaAudioMutex );
+//          totSize = _alexaAudioBuffer.size();
+//          _alexaAudioPlaying
+//        }
+//        ssize_t remainingSize = totSize;
+//        while( remainingSize > 0 ) {
+//          bool beatDetected;
+//          {
+//            std::lock_guard<std::mutex> lock( _alexaAudioMutex );
+//            const int16_t* data = & _alexaAudioBuffer.front();
+//            ssize_t samples = std::min((ssize_t)kSamplesPerBlock, remainingSize);
+//
+//            beatDetected = _beatDetector->AddSamples( data, (uint32_t)samples, _alexaAudioSampleRate);
+//            SavePCM((short*)data,samples);
+//
+//            _alexaAudioBuffer.pop_front(samples);
+//            remainingSize -= samples;
+//
+//          }
+//          static const float hz = 1.0f/_alexaAudioSampleRate;
+//          const float offset_s = remainingSize * hz;
+//          if (beatDetected) {
+//            auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
+//            beatMessage.latestBeat.time_sec -= offset_s;
+//            beatMessage.isAlexa = true;
+//            auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
+//            _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+//          }
+//        }
+        
       }
     }
     
@@ -1181,6 +1262,32 @@ void MicDataProcessor::AlexaAlertsCancelled(const std::vector<int> alertIDs)
 {
   if( _alexa ) {
     _alexa->CancelAlerts(alertIDs);
+  }
+}
+  
+void MicDataProcessor::OnAlexaAudioPlayed(const int16_t* data, int len, int sampleRate)
+{
+  PRINT_NAMED_WARNING("WHATNOW", "OnAlexaAudioPlayed received %d", len );
+  std::lock_guard<std::mutex> lock( _alexaAudioMutex );
+  ANKI_VERIFY(_alexaAudioBuffer.size() < _alexaAudioBuffer.capacity(), "WHATNOW ran out of space","" );
+  // todo: pop off some number of entries, count them, and use the sample rate to adjust the offset
+  _alexaAudioBuffer.push_back( data, len );
+  _alexaAudioSampleRate = sampleRate;
+}
+  
+void MicDataProcessor::SavePCM(short* buff, int size) const
+{
+  static int pcmfd = -1;
+  if (pcmfd < 0) {
+    const char* const path = "/data/data/com.anki.victor/cache/beats.pcm";
+    pcmfd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
+  }
+  
+  if( size > 0 && (buff != nullptr) ) {
+    (void) write(pcmfd, buff, size * sizeof(short));
+  } else {
+    close(pcmfd);
+    pcmfd = -1;
   }
 }
 

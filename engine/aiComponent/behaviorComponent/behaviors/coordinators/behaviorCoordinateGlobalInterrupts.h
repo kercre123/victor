@@ -91,6 +91,7 @@ private:
 
     bool suppressProx;
     
+    int lastReceivedTimer = 0;
     int lastReceivedWeather = 0;
     int lastReceivedSpeak = 0;
   };

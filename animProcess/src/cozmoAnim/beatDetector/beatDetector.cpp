@@ -43,7 +43,7 @@ namespace {
 BeatDetector::BeatDetector()
   : _latestBeat(kInvalidBeatInfo)
 {
-  Start();
+  Start(kAubioTempoBufSize, kAubioTempoHopSize, kAubioTempoSampleRate);
 }
 
 BeatDetector::~BeatDetector()
@@ -51,7 +51,7 @@ BeatDetector::~BeatDetector()
   Stop();
 }
 
-bool BeatDetector::AddSamples(const AudioUtil::AudioSample* const samples, const uint32_t nSamples)
+bool BeatDetector::AddSamples(const AudioUtil::AudioSample* const samples, const uint32_t nSamples, int sampleRate)
 {
   if (!IsRunning()) {
     return false;
@@ -59,24 +59,35 @@ bool BeatDetector::AddSamples(const AudioUtil::AudioSample* const samples, const
   
   const auto now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());
   
-  // If the tempo detector has been running for too long, time to reset it.
-  if (now_sec - _tempoDetectionStartedTime_sec > kTempoDetectorResetTime_sec) {
+  const bool constantsChanged = sampleRate != _lastSampleRate;
+  int hopSize = kAubioTempoHopSize;
+  int buffSize = kAubioTempoBufSize;
+  if( sampleRate >= 40000  ) {
+    hopSize = 512;
+    buffSize = 1024;
+  }
+  
+  if( constantsChanged ) {
+    Start(buffSize, hopSize, sampleRate);
+  } else if (now_sec - _tempoDetectionStartedTime_sec > kTempoDetectorResetTime_sec) {
+    // If the tempo detector has been running for too long, time to reset it.
     PRINT_NAMED_INFO("BeatDetector.AddSamples.ResettingBeatDetector",
                      "Resetting beat detector since it has been %.1f seconds",
                      kTempoDetectorResetTime_sec);
-    Start();
+    Start(kAubioTempoBufSize, kAubioTempoHopSize, kAubioTempoSampleRate);
   }
+  _lastSampleRate = sampleRate;
   
   DEV_ASSERT(_aubioTempoDetector != nullptr, "BeatDetector.AddSamples.NullAubioTempoObject");
   
   // Place new data into the staging buffer
-  DEV_ASSERT(_aubioInputBuffer.capacity() - _aubioInputBuffer.size() >= nSamples, "BeatDetector.AddSamples.AubioInputBufferIsFull");
+  ANKI_VERIFY(_aubioInputBuffer.capacity() - _aubioInputBuffer.size() >= nSamples, "WHATNOW BeatDetector.AddSamples.AubioInputBufferIsFull", "");
   _aubioInputBuffer.push_back(samples, nSamples);
   
   // Feed the aubio tempo detector correct-sized chunks (size kAubioTempoHopSize)
   bool beatDetected = false;
-  while (_aubioInputBuffer.size() >= kAubioTempoHopSize) {
-    for (int i=0 ; i<kAubioTempoHopSize ; i++) {
+  while (_aubioInputBuffer.size() >= hopSize) {
+    for (int i=0 ; i<hopSize ; i++) {
       // Copy from the front of the input buffer, and convert from signed int
       // to floating point [-1.0, 1.0)
       auto sample = static_cast<smpl_t>(_aubioInputBuffer.front()) / (std::numeric_limits<AudioUtil::AudioSample>::max() + 1);
@@ -121,13 +132,13 @@ bool BeatDetector::IsRunning()
   return (_aubioTempoDetector != nullptr);
 }
   
-void BeatDetector::Start()
+void BeatDetector::Start(int aubioTempoBufSize, int aubioTempoHopSize, int aubioTempoSampleRate)
 {
   // Call Stop() to free/reset any existing objects
   Stop();
   
-  _aubioTempoDetector = new_aubio_tempo(kAubioTempoMethod, kAubioTempoBufSize, kAubioTempoHopSize, kAubioTempoSampleRate);
-  _aubioInputVec = new_fvec(kAubioTempoHopSize);
+  _aubioTempoDetector = new_aubio_tempo(kAubioTempoMethod, aubioTempoBufSize, aubioTempoHopSize, aubioTempoSampleRate);
+  _aubioInputVec = new_fvec(aubioTempoHopSize);
   _aubioOutputVec = new_fvec(1);
   
   const auto now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());

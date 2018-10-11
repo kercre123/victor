@@ -55,6 +55,11 @@
    "CladEvent": "AlexaSpeak2Listen",
    "AnimName": "ag_alexaint_back2listen_01"
  },
+ {
+   "CladEvent": "AlexaToWeather",
+   "AnimName": "ag_alexaint_listen2weather_01"
+ },
+ 
   {
     "CladEvent": "AudioOnlyHuh",
     "AnimName": "ag_explorer_huh"

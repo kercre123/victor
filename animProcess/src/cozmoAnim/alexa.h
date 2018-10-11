@@ -8,6 +8,7 @@
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 #include "clad/types/alexaUXState.h"
+//#include "cozmoAnim/alexaSpeakerObserver.h"
 
 namespace alexaClientSDK{
   namespace capabilitiesDelegate {class CapabilitiesDelegate; }
@@ -36,6 +37,7 @@ class KeywordObserver;
   
 class Alexa : private Util::noncopyable
             , public std::enable_shared_from_this<Alexa>
+            //, public AlexaSpeakerObserver
             , public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerObserverInterface
             , public alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface
 {
@@ -44,10 +46,16 @@ public:
   using OnStateChangedCallback = std::function<void(AlexaUXState)>;
   using OnAlertChangedCallback = std::function<void(RobotInterface::AlexaAlerts)>;
   using OnWeatherCallback = std::function<void(RobotInterface::AlexaWeather&&)>;
+  using OnAudioPlayedCallback = std::function<void(const int16_t*,int, int)>;
+  using OnAudioPlaybackStarted = std::function<void(void)>;
+  using OnAudioPlaybackEnded = std::function<void(void)>;
   void Init(const AnimContext* context,
             const OnStateChangedCallback& onStateChanged,
             const OnAlertChangedCallback& onAlertsChanged,
-            const OnWeatherCallback& onWeather);
+            const OnWeatherCallback& onWeather,
+            const OnAudioPlayedCallback& onAudioPlayed,
+            const OnAudioPlaybackStarted& onAudioPlaybackStarted,
+            const OnAudioPlaybackEnded& onAudioPlaybackEnded);
   void Update();
   
   void ButtonPress();
@@ -67,11 +75,13 @@ protected:
   // callbacks that affect ux state
   
   virtual void onDialogUXStateChanged(DialogUXState newState) override;
-  virtual void   onPlaybackStarted (SourceId id) override;
-  virtual void   onPlaybackFinished (SourceId id) override;
-  virtual void   onPlaybackStopped(SourceId id) override;
-  virtual void   onPlaybackError (SourceId id, const alexaClientSDK::avsCommon::utils::mediaPlayer::ErrorType
- &type, std::string error) override;
+  virtual void onPlaybackStarted(SourceId id) override;
+  virtual void onPlaybackFinished(SourceId id) override;
+  virtual void onPlaybackStopped(SourceId id) override;
+  virtual void onPlaybackError(SourceId id,
+                               const alexaClientSDK::avsCommon::utils::mediaPlayer::ErrorType& type,
+                               std::string error) override;
+  // const std::string& name,
   // todo: more methods, like pausing
   
 private:

@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
 namespace Anki {
 namespace Vector {
@@ -40,7 +41,13 @@ BehaviorAlexa::BehaviorAlexa(const Json::Value& config)
     RobotInterface::RobotToEngineTag::alexaUXStateChanged,
     RobotInterface::RobotToEngineTag::alexaWeather,
   });
+  
 }
+  void BehaviorAlexa::InitBehavior()
+  {
+    const auto& BC = GetBEI().GetBehaviorContainer();
+    _iConfig.dttb = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeatCoordinator));
+  }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAlexa::~BehaviorAlexa()
@@ -62,8 +69,7 @@ void BehaviorAlexa::GetBehaviorOperationModifiers(BehaviorOperationModifiers& mo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAlexa::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  // TODO: insert any behaviors this will delegate to into delegates.
-  // TODO: delete this function if you don't need it
+  delegates.insert( _iConfig.dttb.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,9 +116,43 @@ void BehaviorAlexa::BehaviorUpdate()
     return;
   }
   
-  if( _dVars.shouldExit ) {
-    CancelSelf();
+  if( _dVars.shouldExitForWeather && _dVars.state != State::TransitioningToWeather ) {
+    _dVars.state = State::TransitioningToWeather;
+    CancelDelegates(false);
+    auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaToWeather };
+    DelegateIfInControl(action, [this](const ActionResult& res) {
+      CancelSelf();
+    });
     return;
+  } else if( _dVars.state == State::TransitioningToWeather ) {
+    return;
+  }
+  
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool canDance = currTime_s >= _dVars.nextTimeCanDance_s;
+  
+  if( _iConfig.dttb->IsActivated() ) {
+    if( _dVars.uxState == AlexaUXState::Idle ) {
+      CancelDelegates(false);
+    } else {
+      return;
+    }
+  } else if( canDance && !_iConfig.dttb->IsActivated() && _iConfig.dttb->WantsToBeActivated() && _dVars.uxState != AlexaUXState::Idle ) {
+    CancelDelegates(false);
+    DelegateIfInControl( _iConfig.dttb.get(), [this]() {
+      _dVars.nextTimeCanDance_s = 5.0f + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if( _dVars.uxState == AlexaUXState::Speaking ) {
+        TransitionToSpeakingGetIn();
+      } else if( _dVars.uxState == AlexaUXState::Listening ) {
+        TransitionToListeningLoop(); // this should be the getin, but it's only in anim process for now
+      } 
+    });
+    return;
+  }
+  
+  if( _dVars.uxState == AlexaUXState::Idle ) {
+    // could dance immediately next time
+    _dVars.nextTimeCanDance_s = 0.0f;
   }
   
   switch( _dVars.state ) {
@@ -150,6 +190,7 @@ void BehaviorAlexa::BehaviorUpdate()
     case State::SpeakingGetOut:
     case State::ListeningToSpeaking:
     case State::SpeakingToListening:
+    case State::TransitioningToWeather:
       // each of these has a callback to transition to one of the states handled above, or CancelSelf()
       break;
   }
@@ -165,7 +206,7 @@ void BehaviorAlexa::CheckForExit()
   const int kMaxDelay = 80;
   PRINT_NAMED_WARNING("WHATNOW", "CheckForExit %d %d", _dVars.lastReceivedWeather, _dVars.lastReceivedSpeak);
   if( _dVars.lastReceivedWeather < _dVars.lastReceivedSpeak + kMaxDelay ) {
-    _dVars.shouldExit = true;
+    _dVars.shouldExitForWeather = true;
   }
 }
   

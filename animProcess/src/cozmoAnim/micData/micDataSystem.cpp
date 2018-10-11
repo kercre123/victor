@@ -695,7 +695,7 @@ BeatInfo MicDataSystem::GetLatestBeatInfo()
 
 void MicDataSystem::ResetBeatDetector()
 {
-  _micDataProcessor->GetBeatDetector().Start();
+  _micDataProcessor->GetBeatDetector().Reset();
 }
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)

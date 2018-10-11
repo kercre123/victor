@@ -156,13 +156,24 @@ void BehaviorDanceToTheBeatCoordinator::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
   
-  // Begin listening to confirm that a beat is happening
-  const bool wantsToRun = _iConfig.listeningBehavior->WantsToBeActivated();
-  DEV_ASSERT(wantsToRun, "BehaviorDanceToTheBeatCoordinator.OnBehaviorActivated.ListenDoesNotWantToRun");
-  DelegateIfInControl(_iConfig.listeningBehavior.get(),
-                      &BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected);
-  
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
+  
+  if( beatDetector.IsAlexa() ) {
+    const bool wantsToRun = _iConfig.offChargerDancingBehavior->WantsToBeActivated();
+    if (wantsToRun) {
+      DelegateIfInControl(_iConfig.offChargerDancingBehavior.get());
+    }
+  }
+  if( !IsControlDelegated() ) {
+  
+    // Begin listening to confirm that a beat is happening
+    const bool wantsToRun = _iConfig.listeningBehavior->WantsToBeActivated();
+    DEV_ASSERT(wantsToRun, "BehaviorDanceToTheBeatCoordinator.OnBehaviorActivated.ListenDoesNotWantToRun");
+    DelegateIfInControl(_iConfig.listeningBehavior.get(),
+                        &BehaviorDanceToTheBeatCoordinator::CheckIfBeatDetected);
+  }
+  
+  
   DASMSG(dttb_coord_activated, "dttb.coord_activated", "DanceToTheBeat coordinator activated");
   DASMSG_SET(i1, beatDetector.IsPossibleBeatDetected(), "IsPossibleBeatDetected");
   DASMSG_SET(i2, beatDetector.IsBeatDetected(), "IsBeatDetected");

@@ -23,6 +23,7 @@
 #include "clad/cloud/mic.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
+#include "util/container/fixedCircularBuffer.h"
 
 #include <array>
 #include <atomic>
@@ -225,8 +226,16 @@ private:
   void ProcessRawLoop();
   void ProcessTriggerLoop();
   
+  void OnAlexaAudioPlayed(const int16_t* data, int len, int sampleRate);
+  std::mutex _alexaAudioMutex;
+  Util::FixedCircularBuffer<int16_t, 1<<18> _alexaAudioBuffer;
+  int _alexaAudioSampleRate = 16000;
+  float _alexaAudioPlayTime_s = -1.0f;
+  
   void SetActiveMicDataProcessingState(ProcessingState state);
   const char* GetProcessingStateName(ProcessingState state) const;
+  
+  void SavePCM(short* buff, int size) const;
 };
 
 } // namespace MicData

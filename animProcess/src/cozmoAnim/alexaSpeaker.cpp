@@ -12,6 +12,8 @@
 #include "cozmoAnim/minimp3.h"
 #include "cozmoAnim/audioDataBuffer.h"
 
+#include "util/time/universalTime.h"
+
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
@@ -52,6 +54,8 @@ SourceId AlexaSpeaker::m_sourceID=1; // 0 is invalid
     #define LOG(x, ...) PRINT_NAMED_WARNING("WHATNOW", "Speaker_%s: " x, _name.c_str(), ##__VA_ARGS__)
     
     #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
+    
+    CONSOLE_VAR_RANGED(float, kFudgeFactor, "AAA", 0.8f, 0.0f, 1.5f);
   }
 
 
@@ -119,6 +123,8 @@ void AlexaSpeaker::Update()
     } 
   }
   
+  const float now_sec = static_cast<float>(Util::Time::UniversalTime::GetCurrentTimeInSeconds());;
+  
   if( needsToPlay ) {
 
     // post event
@@ -136,7 +142,7 @@ void AlexaSpeaker::Update()
       const auto eventID = ToAudioEventId( event );
       auto* callbackContext = new AudioCallbackContext();
       callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
-      callbackContext->SetExecuteAsync( true );
+      callbackContext->SetExecuteAsync( false ); // main thread
       callbackContext->SetEventCallbackFunc( [this]( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo ) {
         PRINT_NAMED_ERROR("WHATNOW", "Audio finished streaming (callback) %llu %hhu", callbackInfo.gameObjectId, callbackInfo.callbackType);
         CallOnPlaybackFinished( m_playingSource );
@@ -146,9 +152,40 @@ void AlexaSpeaker::Update()
       if (AudioEngine::kInvalidAudioPlayingId == playingID) {
         PRINT_NAMED_ERROR("WHATNOW", "Could not play (post)");
       }
+      
+      _timeStartedPlaying_sec = now_sec;
+      if( _onPlaybackStarted ) {
+        _onPlaybackStarted();
+      }
     }
   }
   
+  if( _onPlayAudio != nullptr && (_numFramesPlayed!=0) ) {
+    std::lock_guard<std::mutex> lock{ _mutex };
+    //const uint32_t numSamplesPlayed = (now_sec > _timeStartedPlaying_sec) ? _currSampleRate * kFudgeFactor * (now_sec - _timeStartedPlaying_sec) : 0;
+    ANKI_VERIFY(_numFramesPlayed >= _lastPlayHead, "WHATNOW", "%u %u", _numFramesPlayed, _lastPlayHead );
+    int sinceLastTime = (int)_playedAudio->size();//_numFramesPlayed -  _lastPlayHead;
+    if( sinceLastTime > 0 ) {
+      int16_t* pcm = &_playedAudio->front();
+      SavePCM2( pcm, sinceLastTime );
+      //PRINT_NAMED_WARNING("WHATNOW", "Calling onPlayAudio with _numFramesPlayed=%d, _lastPlayHead=%d, _currSampleRate=%d", _numFramesPlayed, _lastPlayHead, _currSampleRate );
+      _onPlayAudio( pcm, sinceLastTime, _currSampleRate );
+      _playedAudio->pop_front( sinceLastTime );
+      _lastPlayHead = _numFramesPlayed;
+    }
+//    sinceLastTime = std::min(numSamplesPlayed, sinceLastTime);
+//    if( sinceLastTime > 0 ) {
+//      PRINT_NAMED_WARNING("WHATNOW", "_numFramesPlayed=%d, _lastPlayHead=%d, _timeStartedPlaying_sec=%f, now_sec=%f, numSamplesPlayed=%d, sinceLastTime=%d _currSampleRate=%d", _numFramesPlayed, _lastPlayHead, _timeStartedPlaying_sec, now_sec, numSamplesPlayed, sinceLastTime, _currSampleRate);
+//
+//      ANKI_VERIFY(_playedAudio->size() >= sinceLastTime, "WHATNOW", "");
+//      int16_t* pcm = &_playedAudio->front();
+//      _onPlayAudio( pcm, sinceLastTime, _currSampleRate );
+//      _playedAudio->pop_front( sinceLastTime );
+//
+//    }
+//    _lastPlayHead += sinceLastTime;
+    //_timeStartedPlaying_sec += (1.0f*sinceLastTime) / _currSampleRate;
+  }
 }
   
 void AlexaSpeaker::CallOnPlaybackFinished( SourceId id )
@@ -161,6 +198,11 @@ void AlexaSpeaker::CallOnPlaybackFinished( SourceId id )
       observer->onPlaybackFinished( id );
     }
   });
+  
+  if( _onPlaybackEnded ) {
+    _onPlaybackEnded();
+  }
+  SavePCM2(nullptr);
 }
   
 SourceId  AlexaSpeaker::setSource (std::shared_ptr< avsCommon::avs::attachment::AttachmentReader > attachmentReader,
@@ -247,6 +289,11 @@ bool   AlexaSpeaker::play (SourceId id)
     bool sent=false;
     _offset_ms = 0;
     _first = true;
+    _numFramesPlayed = 0;
+    if( _playedAudio != nullptr ) {
+      _playedAudio->clear();
+    }
+    _lastPlayHead = 0;
     
     _waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
     {
@@ -356,7 +403,7 @@ bool   AlexaSpeaker::play (SourceId id)
       }
       (void) write(_fd, input.data(), numRead * sizeof(uint8_t));
       
-      const int sleepFor_ms = 0.3f * timeDecoded_ms;
+      const int sleepFor_ms = 0.8f * timeDecoded_ms;
       
       if( !flush && sleepFor_ms > 0 ) {
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
@@ -425,6 +472,7 @@ bool   AlexaSpeaker::play (SourceId id)
     SetState(State::Idle);
     //}
     _offset_ms = 0;
+    _numFramesPlayed = 0;
     for( auto& observer : m_observers ) {
       LOG( "calling onPlaybackStopped for source %d", (int)id);
       observer->onPlaybackStopped( id );
@@ -527,7 +575,9 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
         if( _first ) {
           _first = false;
           LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps);
+          
         }
+        _currSampleRate = info.hz;
         
         millis_decoded += 1000 * float(samples) / info.hz;
         
@@ -558,11 +608,21 @@ int AlexaSpeaker::Decode(const StreamingWaveDataPtr& data, bool flush)
         StandardWaveDataContainer waveContainer(info.hz, info.channels, samples);
         waveContainer.CopyWaveData( pcm, samples );
         
+        // if there's a callback setup,
+        if( _playedAudio != nullptr ) {
+          std::lock_guard<std::mutex> lock{ _mutex };
+          if( ANKI_VERIFY(_playedAudio->size() + samples < _playedAudio->capacity(), "WHATNOW", "playedAudio out of room has=%d needsmore=%d", _playedAudio->capacity()-_playedAudio->size(), samples))
+          {
+            _playedAudio->push_back( pcm, samples );
+          }
+        }
+        
         data->AppendStandardWaveData( std::move(waveContainer) );
         
         {
           std::lock_guard<std::mutex> lock{ _mutex };
           const auto numFrames = data->GetNumberOfFramesReceived();
+          _numFramesPlayed = data->GetNumberOfFramesPlayed();
           //LOG( "LOOP: decoded. available frames=%d. decoded %d ms, state=%s", numFrames, (int)millis_decoded, StateToString());
           if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {
             LOG("Setting state=Playable");
@@ -609,6 +669,24 @@ void AlexaSpeaker::SavePCM( short* buff, size_t size )
   if (pcmfd < 0) {
     const auto path = "/data/data/com.anki.victor/cache/speaker_" + _name + std::to_string(m_playingSource) + ".pcm";
     pcmfd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644);
+  }
+  
+  if( size > 0 && (buff != nullptr) ) {
+    (void) write(pcmfd, buff, size * sizeof(short));
+  } else {
+    close(pcmfd);
+    pcmfd = -1;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaSpeaker::SavePCM2( short* buff, size_t size )
+{
+  //LOG( "saving pcm size=%zu", size);
+  static int pcmfd = -1;
+  if (pcmfd < 0) {
+    const auto path = "/data/data/com.anki.victor/cache/beatsSpeaker.pcm";
+    pcmfd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
   }
   
   if( size > 0 && (buff != nullptr) ) {
@@ -672,6 +750,17 @@ void AlexaSpeaker::SetState( State state )
 {
   _state = state;
   LOG("Update: %s", StateToString());
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaSpeaker::SetPlayedAudioCallback( const OnPlayAudio& onPlayAudio )
+{
+  _onPlayAudio = onPlayAudio;
+  if( onPlayAudio != nullptr ) {
+    _playedAudio = std::make_unique<Util::FixedCircularBuffer<int16_t,131072>>();
+  } else {
+    _playedAudio.reset();
+  }
 }
   
 } // namespace Vector

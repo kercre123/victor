@@ -28,6 +28,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/photographyManager.h"
+#include "engine/moodSystem/moodManager.h"
 
 #include "util/helpers/boundedWhile.h"
 
@@ -198,6 +199,11 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated() 
 {
   _iConfig.triggerWordPendingCond->SetActive(GetBEI(), true);
+  
+  // force max stim to keep volume up
+  auto& moodManager = GetBEI().GetMoodManager();
+  moodManager.TriggerEmotionEvent("OnboardingStarted");
+  moodManager.SetEmotionFixed( EmotionType::Stimulated, true );
   
   if( ANKI_DEV_CHEATS ) {
     CreateConsoleVars();

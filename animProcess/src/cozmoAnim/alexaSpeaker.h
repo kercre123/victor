@@ -22,6 +22,8 @@
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
 
+#include "util/container/fixedCircularBuffer.h"
+
 namespace Anki {
   
   namespace Vector {
@@ -99,7 +101,21 @@ public:
   // ErrorObserverInterface
   virtual void onError () override;
   
+  
+  
+  // if set, gets call with a packet of audio that just played
+  using OnPlayAudio = std::function<void(const int16_t*, int, int)>;
+  void SetPlayedAudioCallback( const OnPlayAudio& onPlayAudio );
+  
+  using OnPlaybackStarted = std::function<void(void)>;
+  using OnPlaybackEnded = std::function<void(void)>;
+  void SetOnPlaybackStarted( const OnPlaybackStarted& onPlaybackStarted ) { _onPlaybackStarted = onPlaybackStarted; }
+  void SetOnPlaybackEnded( const OnPlaybackEnded& onPlaybackEnded ) { _onPlaybackEnded = onPlaybackEnded; }
+  
 private:
+  
+  float _timeStartedPlaying_sec = 0.0f;
+  
   bool _source3Enabled = true;
   bool _source2Enabled = true;
   Type _type;
@@ -126,6 +142,7 @@ private:
   
   
   void SavePCM( short* buff, size_t size=0 );
+  void SavePCM2( short* buff, size_t size=0 );
   
   enum class State {
     Idle=0,
@@ -145,9 +162,6 @@ private:
   std::map<SourceId, std::shared_ptr< alexaClientSDK::avsCommon::avs::attachment::AttachmentReader >> m_sourceReaders;
   std::map<SourceId, std::shared_ptr< std::istream >> m_sourceStreams;
   
-  
-  
-  
   /**
    * An internal executor that performs execution of callable objects passed to it sequentially but asynchronously.
    */
@@ -160,6 +174,8 @@ private:
   
   uint64_t _offset_ms = 0;
   bool _first = true;
+  
+  int _currSampleRate = 0;
   
   StreamingWaveDataPtr _waveData;
   
@@ -180,6 +196,13 @@ private:
   /// Used to stream urls into attachments
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> m_urlConverter;
   
+  OnPlayAudio _onPlayAudio;
+  OnPlaybackStarted _onPlaybackStarted;
+  OnPlaybackEnded _onPlaybackEnded;
+  // this still sometimes overflows, so we need to do this another way. maybe by feeding the existing buffer to micdataprocessor
+  std::unique_ptr<Util::FixedCircularBuffer<int16_t,131072>> _playedAudio;
+  uint32_t _lastPlayHead = 0;
+  uint32_t _numFramesPlayed = 0;
 };
 
 } // namespace Vector

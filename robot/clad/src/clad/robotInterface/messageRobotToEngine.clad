@@ -140,7 +140,8 @@ message DisplayedFaceImageRGBChunk {
 
 message BeatDetectorState
 {
-  BeatInfo latestBeat
+  BeatInfo latestBeat,
+  bool isAlexa,
 }
 
 message AlexaUXStateChanged {

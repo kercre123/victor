@@ -35,7 +35,7 @@ public:
   
   // Feed raw audio samples into the beat detector. Returns true if a beat
   // was detected in the input samples.
-  bool AddSamples(const AudioUtil::AudioSample* const samples, const uint32_t nSamples);
+  bool AddSamples(const AudioUtil::AudioSample* const samples, const uint32_t nSamples, int sampleRate = kAubioTempoSampleRate);
   
   // Return info about the most recent detected beat
   BeatInfo GetLatestBeat();
@@ -44,7 +44,9 @@ public:
   bool IsRunning();
   
   // Start or reset beat detection
-  void Start();
+  void Start(int aubioTempoBufSize, int aubioTempoHopSize, int aubioTempoSampleRate);
+  
+  void Reset() { Start(kAubioTempoBufSize, kAubioTempoHopSize, kAubioTempoSampleRate); }
   
   // Stop the beat detector and delete the associated objects
   void Stop();
@@ -72,10 +74,11 @@ private:
   
   BeatInfo _latestBeat;
   std::mutex _latestBeatMutex;
+  int _lastSampleRate = kAubioTempoSampleRate;
   
   // Stages audio data to be piped into the aubio detector at the correct chunk size.
   // Use twice the capacity we actually need just to be safe.
-  Util::FixedCircularBuffer<AudioUtil::AudioSample, 2 * (kAubioTempoHopSize + MicData::kSamplesPerBlock)> _aubioInputBuffer;
+  Util::FixedCircularBuffer<AudioUtil::AudioSample, 16384> _aubioInputBuffer;
 };
 
 } // namespace Vector

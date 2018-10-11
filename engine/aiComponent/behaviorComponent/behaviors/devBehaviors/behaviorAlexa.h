@@ -39,6 +39,8 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   
+  virtual void InitBehavior() override;
+  
   virtual void OnBehaviorEnteredActivatableScope() override;
   
   virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
@@ -71,11 +73,13 @@ private:
     
     ListeningToSpeaking,
     SpeakingToListening,
+    
+    TransitioningToWeather,
   };
 
   struct InstanceConfig {
     InstanceConfig();
-    // TODO: put configuration variables here
+    ICozmoBehaviorPtr dttb;
   };
 
   struct DynamicVariables {
@@ -85,10 +89,11 @@ private:
     AlexaUXState uxState = AlexaUXState::Idle;
     State state = State::ListeningGetIn;
     
-    bool shouldExit = false;
+    bool shouldExitForWeather = false;
     
     int lastReceivedSpeak = 0;
     int lastReceivedWeather = 0;
+    float nextTimeCanDance_s = 0.0f;
   };
 
   InstanceConfig _iConfig;

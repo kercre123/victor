@@ -78,10 +78,13 @@ public:
   
   void SendToWebViz();
   
+  bool IsAlexa() const { return _isAlexa; }
+  
 private:
+  bool _isAlexa = false;
   
   // Called when we receive a beat message from the anim process
-  void OnBeat(const BeatInfo& beat);
+  void OnBeat(const BeatInfo& beat, bool isAlexa = false);
   
   BeatInfo TEST_fakeLowConfidenceBeat(const float tempo_bpm, const float time_sec);
   BeatInfo TEST_fakeHighConfidenceBeat(const float tempo_bpm, const float time_sec);
