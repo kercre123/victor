@@ -1593,7 +1593,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 
   bool anyModeFailures = false;
   
-  if(ShouldProcessVisionMode(VisionMode::DetectingMarkers))
+  if(ShouldProcessVisionMode(VisionMode::DetectingMarkers) &&
+     !ShouldProcessVisionMode(VisionMode::DisableMarkerDetection))
   {
     const bool allowWhileRotatingFast = ShouldProcessVisionMode(VisionMode::MarkerDetectionWhileRotatingFast);
     const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
@@ -1660,7 +1661,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Toc("TotalDetectingMotion");
   }
 
-  if (ShouldProcessVisionMode(VisionMode::BuildingOverheadMap))
+  // Disabling this while VisionMode::BuildingOverheadMap is disabled
+  if (false /*ShouldProcessVisionMode(VisionMode::BuildingOverheadMap)*/)
   {
     if (imageCache.HasColor()) {
       Tic("UpdateOverheadMap");
@@ -1669,7 +1671,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if (lastResult != RESULT_OK) {
         anyModeFailures = true;
       } else {
-        visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
+        //visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
       }
     }
     else {

@@ -22,7 +22,7 @@ namespace Vector {
     ComputingStatistics,
     DetectingPets,
     DetectingLaserPoints,
-    BuildingOverheadMap,
+    //BuildingOverheadMap,      // Disabled to save a VisionMode (and this is deprecated anyway). TODO: Re-enable
     DetectingVisualObstacles,
     Benchmarking,
     SavingImages,
@@ -30,6 +30,11 @@ namespace Vector {
     DetectingIllumination,
     ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
     MirrorMode,                  // Draw images/detections on the robot's face, mirrored
+    
+    // This is a gross thing to do: a mode to disable another mode. TODO: Remove with VIC-6838
+    // If this is "enabled", then it takes precedence over DetectingMarkers mode above and will force that
+    // mode to be skipped.
+    DisableMarkerDetection,
     
     //
     // Vision mode "modifiers" (require one of the above to be enabled to have an effect)

@@ -15,7 +15,7 @@
     "DetectingBlinkAmount"       : false,
     "DetectingLaserPoints"       : false,
     "ComputingStatistics"        : false,
-    "BuildingOverheadMap"        : false,
+    // "BuildingOverheadMap"        : false, // Disabled to save a VisionMode (and this is deprecated anyway). TODO: Re-enable
     "DetectingVisualObstacles"   : false,
     "RunningNeuralNet"           : false,
     "DetectingIllumination"      : true

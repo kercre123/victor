@@ -85,6 +85,11 @@ void BehaviorSayName::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) c
 void BehaviorSayName::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
+  
+  // Avoid marker detection to improve performance
+  // TODO: Remove with VIC-6838
+  modifiers.visionModesForActiveScope->insert( { VisionMode::DisableMarkerDetection, EVisionUpdateFrequency::High } );
+  
   modifiers.behaviorAlwaysDelegates = true;
 }
   
