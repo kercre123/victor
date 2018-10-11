@@ -154,7 +154,7 @@ class EventHandler:
         """Receive a method call when the specified event occurs.
 
         .. code-block:: python
-        
+
             def event_listener(_, msg):
                 print(msg)
 
