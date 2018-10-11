@@ -45,9 +45,6 @@ public:
   void Update(const TrackedFace& face,
               const TimeStamp_t timeStamp);
 
-  bool IsFaceDirectedAtRobot() const {return _isFaceDirectedAtRobot;}
-  bool IsFaceDirectedLeftOfRobot() const {return _isFaceDirectedLeftOfRobot;}
-  bool IsFaceDirectedRightOfRobot() const {return _isFaceDirectedRightOfRobot;}
   TrackedFace::FaceDirection GetFaceDirection() const {return _faceDirection;}
   Point2f GetFaceDirectionAverage() const {return _faceDirectionAverage;}
   bool GetExpired(const TimeStamp_t currentTime) const;
@@ -56,9 +53,6 @@ public:
 private:
   int FindInliers(const Point2f& faceDirectionAverage);
 
-  bool DetermineFaceDirectedAtRobot();
-  bool DetermineFaceDirectedRightOfRobot();
-  bool DetermineFaceDirectedLeftOfRobot();
   TrackedFace::FaceDirection DetermineFaceDirection();
 
   Point2f ComputeEntireFaceDirectionAverage();
@@ -72,9 +66,6 @@ private:
 
   int _currentIndex = 0;
   int _numberOfInliers = 0;
-  bool _isFaceDirectedAtRobot = false;
-  bool _isFaceDirectedLeftOfRobot = false;
-  bool _isFaceDirectedRightOfRobot = false;
   TrackedFace::FaceDirection _faceDirection;
   bool _initialized = false;
 

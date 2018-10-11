@@ -57,7 +57,9 @@ void FaceNormalDirectedAtRobot::Update(const TrackedFace& face,
   // be able to treat them as Cartesian coordinates
 
 
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.YawPitch", "Yaw=%.3f, Pitch=%.3f", RAD_TO_DEG(_face.GetHeadYaw().ToFloat()), RAD_TO_DEG(_face.GetHeadPitch().ToFloat()));
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.YawPitch",
+                   "Yaw=%.3f, Pitch=%.3f", RAD_TO_DEG(_face.GetHeadYaw().ToFloat()),
+                   RAD_TO_DEG(_face.GetHeadPitch().ToFloat()));
   _faceDirectionHistory[_currentIndex].Update(
     Point2f(
       RAD_TO_DEG(_face.GetHeadYaw().ToFloat()),
@@ -66,30 +68,17 @@ void FaceNormalDirectedAtRobot::Update(const TrackedFace& face,
   );
 
   _faceDirectionAverage = ComputeEntireFaceDirectionAverage();
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.AverageYawAndPitch", "average yaw=%.3f, average pitch=%.3f", _faceDirectionAverage.x(), _faceDirectionAverage.y());
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.AverageYawAndPitch",
+                   "average yaw=%.3f, average pitch=%.3f", _faceDirectionAverage.x(),
+                   _faceDirectionAverage.y());
   _numberOfInliers = FindInliers(_faceDirectionAverage);
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.NumberOfInliers", "Number of Inliers = %d", _numberOfInliers);
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.NumberOfInliers",
+                   "Number of Inliers = %d", _numberOfInliers);
   _faceDirectionAverage = RecomputeFaceDirectionAverage();
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.RecomputedAverageYawAndPitch", "average yaw=%.3f, average pitch=%.3f", _faceDirectionAverage.x(), _faceDirectionAverage.y());
-  _isFaceDirectedAtRobot = DetermineFaceDirectedAtRobot();
-  _isFaceDirectedLeftOfRobot = DetermineFaceDirectedLeftOfRobot();
-  _isFaceDirectedRightOfRobot = DetermineFaceDirectedRightOfRobot();
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.RecomputedAverageYawAndPitch",
+                   "average yaw=%.3f, average pitch=%.3f", _faceDirectionAverage.x(),
+                   _faceDirectionAverage.y());
   _faceDirection = DetermineFaceDirection();
-  if (_isFaceDirectedAtRobot) {
-    _isFaceDirectedLeftOfRobot = false;
-    _isFaceDirectedRightOfRobot = false;
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.IsFaceDirectedAtRobot", "Face is directed at robot");
-  }
-  if (_isFaceDirectedLeftOfRobot) {
-    _isFaceDirectedAtRobot = false;
-    _isFaceDirectedRightOfRobot = false;
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.IsFaceDirectedLeftOfRobot", "Face is directed LEFT of robot");
-  }
-  if (_isFaceDirectedRightOfRobot) {
-    _isFaceDirectedAtRobot = false;
-    _isFaceDirectedLeftOfRobot = false;
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.IsFaceDirectedRightOfRobot", "Face is directed RIGHT of robot");
-  }
 
   _currentIndex += 1;
 }
@@ -148,39 +137,23 @@ Point2f FaceNormalDirectedAtRobot::RecomputeFaceDirectionAverage()
   return ComputeFaceDirectionAverage(true);
 }
 
-bool FaceNormalDirectedAtRobot::DetermineFaceDirectedAtRobot()
-{
-  bool faceDirectedAtRobot = false;
-  if (_numberOfInliers > kMinNumberOfInliers) {
-    bool withinDistance = std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotYawAbsThres;
-    withinDistance &= std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotPitchAbsThres;
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedAtRobot.Distance",
-                     "threshold yaw=%.3f, threshold pitch=%.3f",
-                     kFaceDirectedAtRobotYawAbsThres, kFaceDirectedAtRobotPitchAbsThres);
-    if (withinDistance) {
-      faceDirectedAtRobot = true;
-    }
-  }
-  return faceDirectedAtRobot;
-}
-
 TrackedFace::FaceDirection FaceNormalDirectedAtRobot::DetermineFaceDirection()
 {
   if (_numberOfInliers > kMinNumberOfInliers) {
     bool withinDistance = std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotYawAbsThres;
     withinDistance &= std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotPitchAbsThres;
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedAtRobot.Distance",
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirection.Distance",
                      "threshold yaw=%.3f, threshold pitch=%.3f",
                      kFaceDirectedAtRobotYawAbsThres, kFaceDirectedAtRobotPitchAbsThres);
     if (withinDistance) {
       return TrackedFace::FaceDirection::AtRobot;
     }
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedRightOfRobot.Threshold",
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirection.Threshold",
                      "threshold yaw=%.3f", kFaceDirectedRightYawAbsThres);
     if (_faceDirectionAverage.x() > kFaceDirectedRightYawAbsThres) {
       return TrackedFace::FaceDirection::RightOfRobot;
     }
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedLeftOfRobot.Threshold",
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirection.Threshold",
                      "threshold yaw=%.3f", kFaceDirectedLeftYawAbsThres);
     if (_faceDirectionAverage.x() < kFaceDirectedLeftYawAbsThres) {
       return TrackedFace::FaceDirection::LeftOfRobot;
@@ -189,33 +162,6 @@ TrackedFace::FaceDirection FaceNormalDirectedAtRobot::DetermineFaceDirection()
 
   return TrackedFace::FaceDirection::None;
 }
-
-bool FaceNormalDirectedAtRobot::DetermineFaceDirectedRightOfRobot()
-{
-  bool faceDirectedRightOfRobot = false;
-  if (_numberOfInliers > kMinNumberOfInliers) {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedRightOfRobot.Threshold",
-                     "threshold yaw=%.3f", kFaceDirectedRightYawAbsThres);
-    if (_faceDirectionAverage.x() > kFaceDirectedRightYawAbsThres) {
-      faceDirectedRightOfRobot = true;
-    }
-  }
-  return faceDirectedRightOfRobot;
-}
-
-bool FaceNormalDirectedAtRobot::DetermineFaceDirectedLeftOfRobot()
-{
-  bool faceDirectedLeftOfRobot = false;
-  if (_numberOfInliers > kMinNumberOfInliers) {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedLeftOfRobot.Threshold",
-                     "threshold yaw=%.3f", kFaceDirectedLeftYawAbsThres);
-    if (_faceDirectionAverage.x() < kFaceDirectedLeftYawAbsThres) {
-      faceDirectedLeftOfRobot = true;
-    }
-  }
-  return faceDirectedLeftOfRobot;
-}
-
 
 bool FaceNormalDirectedAtRobot::GetExpired(const TimeStamp_t currentTime) const
 {

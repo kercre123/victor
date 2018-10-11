@@ -82,9 +82,8 @@ void BehaviorReactToFaceNormal::BehaviorUpdate()
   // if (timeDiff > _iConfig->coolDown_sec) {
   if (true) {
     // LOG_INFO("BehaviorReactToFaceNormal.BehaviorUpdate.CooledEnoughTimeForAction", "");
-    // TransitionToCheckFaceNormalDirectedAtRobot();
     TransitionToCheckFaceDirection();
-    //:w_dVars->lastReactionTime_ms = currentTime_sec;
+    // _dVars->lastReactionTime_ms = currentTime_sec;
   } else {
     LOG_INFO("BehaviorReactToFaceNormal.BehaviorUpdate.StillCooling", "");
   }
@@ -97,30 +96,6 @@ bool BehaviorReactToFaceNormal::CheckIfShouldStop()
   // It might take a couple of frames to get a stability reading so set a timer here if we
   // need to or something so we don't just wait forever
   return false;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToFaceNormal::TransitionToCheckFaceNormalDirectedAtRobot()
-{
-  // TODO set state
-  // Check with face world to see if face normal directed at robot
-  const bool faceNormDirectedAtRobot = GetBEI().GetFaceWorld().IsFaceDirectedAtRobot(500);
-
-  // TODO we might want to add a delay however that is going to make
-  // things more complicated. So for the first pass I'm not going to
-  // do that
-  if (faceNormDirectedAtRobot) {
-    // play place holder animation
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedAtRobot.FaceDirectedAtRobot!!!!!!!", "");
-    // TODO this is really heavy handed replace with a subtler animation
-    CompoundActionSequential* action = new CompoundActionSequential();
-    action->AddAction(new TriggerAnimationAction(AnimationTrigger::ExploringHuhFar));
-    action->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
-    DelegateIfInControl(action, &BehaviorReactToFaceNormal::TransitionToCompleted);
-  } else {
-    TransitionToCheckFaceNormalDirectedLeftOrRight(); 
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -151,32 +126,6 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
     turnAction->AddAction(new WaitAction(1));
     turnAction->AddAction(new TurnInPlaceAction(.7, false));
     turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
-    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToFaceNormal::TransitionToCheckFaceNormalDirectedLeftOrRight()
-{
-  // TODO set state
-  // Check with face world to see if face normal directed at robot
-  const int faceNormDirectedLeftOrRight = GetBEI().GetFaceWorld().IsFaceDirectedAtLeftRight(500);
-
-  CompoundActionParallel* turnAction = new CompoundActionParallel();
-  turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
-
-  if (faceNormDirectedLeftOrRight == 0) {
-    // Unstable ... do nothing?
-    TransitionToCompleted();
-  } else if (faceNormDirectedLeftOrRight == 1) {
-    // Turn Left
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningLLLLLLLeft", "");
-    turnAction->AddAction(new TurnInPlaceAction(.7, false));
-    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
-  } else {
-    // Turn Right
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningRRRRRRRRight", "");
-    turnAction->AddAction(new TurnInPlaceAction(-.7, false));
     DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
   }
 }

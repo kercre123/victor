@@ -719,9 +719,6 @@ namespace Vision {
     entry.Update(face, timeStamp);
 
     // Check if the face is stale
-    bool directedAtRobot = false;
-    bool directedLeftOfRobot = false;
-    bool directedRightOfRobot = false;
     TrackedFace::FaceDirection faceDirection = TrackedFace::FaceDirection::None;
     if (entry.GetExpired(timeStamp))
     {
@@ -729,14 +726,8 @@ namespace Vision {
     }
     else
     {
-      directedAtRobot = entry.IsFaceDirectedAtRobot();
-      directedLeftOfRobot = entry.IsFaceDirectedLeftOfRobot();
-      directedRightOfRobot = entry.IsFaceDirectedRightOfRobot();
       faceDirection = entry.GetFaceDirection();
     }
-    face.SetDirectedAtRobot(directedAtRobot);
-    face.SetDirectedLeftOfRobot(directedLeftOfRobot);
-    face.SetDirectedRightOfRobot(directedRightOfRobot);
     face.SetFaceDirection(faceDirection);
   }
 
