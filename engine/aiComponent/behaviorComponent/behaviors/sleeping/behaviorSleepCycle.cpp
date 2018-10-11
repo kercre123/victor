@@ -83,7 +83,7 @@ CONSOLE_VAR(bool, kSleepCycle_EnableWiggleWhileSleeping, CONSOLE_GROUP, true);
 CONSOLE_VAR(bool, kSleepCycleForceSleep, CONSOLE_GROUP, false);
 
 CONSOLE_VAR(bool, kSleepCycleForceLightSleep, CONSOLE_GROUP, false);
-  
+
 CONSOLE_FUNC(ForcePersonCheck, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -328,7 +328,7 @@ void BehaviorSleepCycle::OnBehaviorActivated()
   _iConfig.emergencyCondition->SetActive( GetBEI(), true );
 
   // if we just rebooted, and it's night time, then start out asleep
-  const bool shouldStartAsleep = WasNighlyReboot();
+  const bool shouldStartAsleep = WasNightlyReboot();
 
   PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.Activated",
                 "Starting out %s",
@@ -601,7 +601,7 @@ bool BehaviorSleepCycle::ShouldWiggleOntoChargerFromSleep()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSleepCycle::WasNighlyReboot() const
+bool BehaviorSleepCycle::WasNightlyReboot() const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool engineStartedRecently = currTime_s < kSecondsThatMeanRecentBoot;
@@ -701,8 +701,8 @@ bool BehaviorSleepCycle::WakeIfNeeded(const WakeReason& forReason)
                    "Dont have a condition for reason '%s'",
                    EnumToString( forReason ) ) ) {
     if( conditionIt->second->AreConditionsMet( GetBEI() ) ) {
-      const bool defaulVal = false;
-      const bool playAnim = ShouldPlayWakeUpAnimForReason( forReason, defaulVal );
+      const bool defaultVal = false;
+      const bool playAnim = ShouldPlayWakeUpAnimForReason( forReason, defaultVal );
       WakeUp( forReason, playAnim );
       return true;
     }
@@ -829,7 +829,7 @@ void BehaviorSleepCycle::TransitionToCheckingForPerson()
       }
       else {
         PRINT_NAMED_WARNING("BehaviorSleepCycle.PersonCheck.BehaviorWontActivate",
-                            "Behavior '%s' doesnt want to activate",
+                            "Behavior '%s' doesn't want to activate",
                             _iConfig.personCheckBehavior->GetDebugLabel().c_str());
         RespondToPersonCheck();
       }
@@ -927,7 +927,7 @@ void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
     };
 
     // even if requested, skip the get-in if this is a recent reboot (go straight to sleep in this case)
-    const bool skipGetIn = WasNighlyReboot();
+    const bool skipGetIn = WasNightlyReboot();
 
     if( playGetIn && !skipGetIn ) {
       if( _iConfig.goToSleepBehavior->WantsToBeActivated() ) {
@@ -978,7 +978,7 @@ void BehaviorSleepCycle::TransitionToCharger()
     }
     else {
       PRINT_NAMED_WARNING("BehaviorSleepCycle.TransitionToCharger.WontRun",
-                          "Not on charger contacts, but find charger behavior '%s' doesnt want to activate",
+                          "Not on charger contacts, but find charger behavior '%s' doesn't want to activate",
                           _iConfig.findChargerBehavior->GetDebugLabel().c_str());
       TransitionToLightOrDeepSleep();
     }
@@ -1100,7 +1100,7 @@ void BehaviorSleepCycle::MuteForPersonCheck( bool mute )
 
     _dVars.isMuted = mute;
 
-    PRINT_CH_INFO("Behaviors", "BeahviorSleepCycle", "Setting mute: %d", mute);
+    PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle", "Setting mute: %d", mute);
   }
 }
 

@@ -4,7 +4,7 @@
 * Author: Kevin M. Karol
 * Created: 2/22/18
 *
-* Description: Behavior responsible for handling special case needs 
+* Description: Behavior responsible for handling special case needs
 * that require coordination across behavior global interrupts
 *
 * Copyright: Anki, Inc. 2018
@@ -53,7 +53,7 @@ namespace{
                                                                            BEHAVIOR_CLASS(PopAWheelie),
                                                                            BEHAVIOR_CLASS(PounceWithProx),
                                                                            BEHAVIOR_CLASS(RollBlock) }};
-  
+
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressReactToSound = {{ BEHAVIOR_CLASS(BlackJack),
                                                                                    BEHAVIOR_CLASS(FetchCube),
                                                                                    BEHAVIOR_CLASS(FistBump),
@@ -69,9 +69,9 @@ namespace{
 
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressCliff = { BEHAVIOR_CLASS(BlackJack) };
 
-  static const std::set<BehaviorClass> kBeahviorClassesToSuppressTimerAntics = {{ BEHAVIOR_CLASS(BlackJack),
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressTimerAntics = {{ BEHAVIOR_CLASS(BlackJack),
                                                                                   BEHAVIOR_CLASS(CoordinateWeather) }};
-  
+
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenMeetVictor = {{
     BEHAVIOR_ID(ReactToTouchPetting),       // the user will often turn the robot to face them and in the process touch it
     BEHAVIOR_ID(ReactToUnexpectedMovement), // the user will often turn the robot to face them
@@ -117,7 +117,7 @@ BehaviorCoordinateGlobalInterrupts::BehaviorCoordinateGlobalInterrupts(const Jso
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCoordinateGlobalInterrupts::~BehaviorCoordinateGlobalInterrupts()
 {
-  
+
 }
 
 
@@ -126,7 +126,7 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.wakeWordBehavior         = BC.FindBehaviorByID(BEHAVIOR_ID(TriggerWordDetected));
-  
+
   for( const auto& id : kBehaviorIDsToSuppressWhenMeetVictor ) {
     _iConfig.toSuppressWhenMeetVictor.push_back( BC.FindBehaviorByID(id) );
   }
@@ -143,14 +143,14 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TriggerWordDetected),
                                  BEHAVIOR_CLASS(ReactToVoiceCommand),
                                  _iConfig.reactToVoiceCommandBehavior);
-  
+
   _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
   _iConfig.triggerWordPendingCond->Init(GetBEI());
-  
+
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
   _iConfig.meetVictorBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(MeetVictor));
   _iConfig.danceToTheBeatBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeat));
-  
+
   _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AddBehavior(BC, BEHAVIOR_CLASS(BumpObject));
   _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AddBehavior(BC, BEHAVIOR_CLASS(ClearChargerArea));
   _iConfig.reactToUnexpectedMovementBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToUnexpectedMovement));
@@ -165,7 +165,7 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
     _iConfig.behaviorsThatShouldntReactToTouch.AddBehavior(BC, behaviorClass);
   }
 
-  for(const auto& behaviorClass : kBeahviorClassesToSuppressTimerAntics){
+  for(const auto& behaviorClass : kBehaviorClassesToSuppressTimerAntics){
     _iConfig.behaviorsThatShouldSuppressTimerAntics.AddBehavior(BC, behaviorClass);
   }
 
@@ -186,10 +186,10 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated() 
+void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated()
 {
   _iConfig.triggerWordPendingCond->SetActive(GetBEI(), true);
-  
+
   if( ANKI_DEV_CHEATS ) {
     CreateConsoleVars();
   }
@@ -211,7 +211,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   }
 
   // todo: generalize "if X is running then suppress Y"
-  
+
   // suppress during meet victor
   {
     if( _iConfig.meetVictorBehavior->IsActivated() ) {
@@ -220,19 +220,19 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       }
     }
   }
-  
+
   // Suppress behaviors if dancing to the beat
   if( _iConfig.danceToTheBeatBehavior->IsActivated() ) {
     for( const auto& beh : _iConfig.toSuppressWhenDancingToTheBeat ) {
       beh->SetDontActivateThisTick(GetDebugLabel());
     }
   }
-  
+
   // Suppress ReactToObstacle if needed
   if( ShouldSuppressProxReaction() ) {
     _iConfig.reactToObstacleBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
-  
+
   // Suppress behaviors disabled via console vars
   if( ANKI_DEV_CHEATS ) {
     for( const auto& behPair : _iConfig.devActivatableOverrides ) {
@@ -259,7 +259,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
 
   {
     auto& uic = GetBehaviorComp<UserIntentComponent>();
-    
+
     // If we are responding to "take a photo", and the user is not requesting a selfie
     // Disable the react to voice command turn so that Victor takes the photo in his current direction
     // Exception: If storage is full we want to turn towards the user to let them know
@@ -274,7 +274,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
       }
     }
-    
+
     // If we are responding to "go home", disable the voice command turn since we want him to just go directly
     // into looking for the charger / going to the charger. Also disable dancing to the beat, need to get home
     // first.  // TODO:(bn) disable others too?
@@ -290,7 +290,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
         beh->SetDontActivateThisTick(GetDebugLabel() + ": going home");
       }
     }
-    
+
     // If we are responding to "find your cube", disable the voice command turn since we want
     // him to just go directly into looking for the cube
     const bool isFindCubePending = uic.IsUserIntentPending(USER_INTENT(imperative_findcube));
@@ -299,14 +299,14 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
     }
   }
-  
+
   // disable ReactToUnexpectedMovement when intentionally bumping things
   {
     if( _iConfig.behaviorsThatShouldntReactToUnexpectedMovement.AreBehaviorsActivated() ) {
       _iConfig.reactToUnexpectedMovementBehavior->SetDontActivateThisTick(GetDebugLabel());
     }
   }
-  
+
   // Suppress ReactToSoundAwake if needed
   {
     if( _iConfig.behaviorsThatShouldntReactToSoundAwake.AreBehaviorsActivated() ) {
@@ -327,7 +327,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       _iConfig.reactToCliffBehavior->SetDontActivateThisTick(GetDebugLabel());
     }
   }
-  
+
   // tell BehaviorDriveToFace whenever a cliff interruption behavior is active, so that it knows when
   // it is reasonable to resume-i-mean-wants-to-be-activated-sorry-kevin
   {
@@ -344,7 +344,7 @@ bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction()
 {
   // scan through the stack below this behavior and return true if any behavior is active which is listed in
   // kBehaviorClassesToSuppressProx
-  
+
   const auto& behaviorIterator = GetBehaviorComp<ActiveBehaviorIterator>();
 
   // If the behavior stack has changed this tick or last tick, then update, otherwise use the last value
@@ -359,7 +359,7 @@ bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction()
       }
       return true; // Haven't satisfied the condition yet, keep iterating
     };
-    
+
     behaviorIterator.IterateActiveCozmoBehaviorsForward( callback, this );
   }
 
@@ -396,7 +396,7 @@ void BehaviorCoordinateGlobalInterrupts::CreateConsoleVars()
     }
   }
 }
-  
+
 
 
 } // namespace Vector
