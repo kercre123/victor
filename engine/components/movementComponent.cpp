@@ -117,10 +117,10 @@ void MovementComponent::OnRobotDelocalized()
   
 void MovementComponent::NotifyOfRobotState(const Vector::RobotState& robotState)
 {
-  _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
-  _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
-  _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
-  _areWheelsMoving = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::ARE_WHEELS_MOVING);
+  _isMoving     =  static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::IS_MOVING);
+  _isHeadMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS);
+  _isLiftMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS);
+  _areWheelsMoving = static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::ARE_WHEELS_MOVING);
   
   for (auto layerIter = _eyeShiftToRemove.begin(); layerIter != _eyeShiftToRemove.end(); )
   {
@@ -211,9 +211,9 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
   }
   
   // Don't check for unexpected movement under the following conditions
-  if (robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP   ||
-      robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint16_t)RobotStatusFlag::IS_FALLING)
+  if (robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP   ||
+      robotState.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER  ||
+      robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING)
   {
     _unexpectedMovement.Reset();
     return;

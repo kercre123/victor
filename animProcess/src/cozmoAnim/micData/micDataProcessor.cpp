@@ -534,8 +534,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   PolicySetAbsoluteOrientation(robotAngle);
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
-  const bool robotIsMoving = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::IS_MOVING);
-  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
+  const bool robotIsMoving = static_cast<bool>(robotStatus & (uint32_t)RobotStatusFlag::IS_MOVING);
+  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
   const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
   _robotWasMoving = robotIsMoving;
 
