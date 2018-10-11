@@ -132,6 +132,8 @@ public:
 
   // note that these also count a state as "starting" and "ending" when this behavior itself is interrupted
   // (even if we later "resume" the state)
+
+  // TODO:(bn) this should just be -1, min is the positive number _nearest zero_ not the _most negative_ number
   float _lastTimeStarted_s = -std::numeric_limits<float>::min();
   float _lastTimeEnded_s = -std::numeric_limits<float>::min();
 
@@ -393,6 +395,8 @@ void InternalStatesBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) co
 
 void InternalStatesBehavior::OnBehaviorActivated()
 {
+  OnBehaviorActivatedInternal();
+
   if( _useDebugLights ) {
     // force an update
     _debugLightsDirty = true;
@@ -901,15 +905,34 @@ float InternalStatesBehavior::State::GetTimeActive()
   return returnTime;
 }
 
-bool InternalStatesBehavior::StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun) const
+bool InternalStatesBehavior::StateExitCooldownExpired(StateID state,
+                                                      float timeout,
+                                                      InternalStatesBehavior::StateCooldownDefault neverRunDefault) const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool neverRun = valueIfNeverRun && (_states->at(state)._lastTimeEnded_s < 0.0f);
-  if( neverRun || (_states->at(state)._lastTimeEnded_s + timeout <= currTime_s) ) {
-    return true;
+
+  const auto it = _states->find(state);
+  if( it != _states->end() &&
+      it->second._lastTimeEnded_s >= 0.0f) {
+    const float endTime = it->second._lastTimeEnded_s;
+    const bool cooldownExpired = (endTime + timeout <= currTime_s);
+    return cooldownExpired;
   }
   else {
-    return false;
+    // never run
+    switch(neverRunDefault) {
+      case StateCooldownDefault::True:
+        return true;
+
+      case StateCooldownDefault::False:
+        return false;
+
+      case StateCooldownDefault::UseBehaviorStart: {
+        const float endTime = GetTimeActivated_s();
+        const bool cooldownExpired = (endTime + timeout <= currTime_s);
+        return cooldownExpired;
+      }
+    }
   }
 }
 

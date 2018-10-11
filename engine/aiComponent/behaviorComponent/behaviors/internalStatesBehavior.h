@@ -51,12 +51,13 @@ protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void InitBehavior() override;
   virtual void BehaviorUpdate() override;
-  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorActivated() final override;
   virtual void OnBehaviorDeactivated() override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { }
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual void OverrideResumeState( StateID& resumeState ) {}
+  virtual void OnBehaviorActivatedInternal() {}
   
   // for debug/DAS
   virtual void OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const {}
@@ -73,10 +74,19 @@ protected:
   float GetLastTimeStarted(StateID state) const;
   // the the time the state started (in seconds)
   float GetLastTimeEnded(StateID state) const;
-  // returns true if state was exited at least timeout seconds ago. if valueIfNeverRun, this will
-  // return true if state was never exited. if !trueIfNeverRun, then the cooldown timer counts up
-  // from the engine start time
-  bool StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun = true) const;
+
+
+  // returns true if state was exited at least timeout seconds ago.
+
+  enum class StateCooldownDefault {
+    True, // always return "true" if the given state has never run
+    False, // always return "false" if the given state has never run
+    UseBehaviorStart, // if the state has never run, use this behaviors start time instead
+  };
+
+  bool StateExitCooldownExpired(StateID state,
+                                float timeout,
+                                StateCooldownDefault neverRunDefault = StateCooldownDefault::True) const;
   
   // Set up a console var under uniqueVarName that transitions to each state type by name
   void AddConsoleVarTransitions(const char* uniqueVarName, const char* category );

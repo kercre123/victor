@@ -137,8 +137,9 @@ bool BehaviorHighLevelAI::ShouldTransitionIntoExploring() const
   const float cooldown = _specialExploringTransitionCooldownBase_s +
     GetBehaviorComp<UserIntentComponent>()._exploringTransitionExtraCooldown_s;
   
-  const bool valueIfNeverRun = false; // don't run immediately if never run
-  const bool transition = StateExitCooldownExpired(GetStateID("Exploring"), cooldown, valueIfNeverRun);
+  const bool transition = StateExitCooldownExpired(GetStateID("Exploring"),
+                                                   cooldown,
+                                                   InternalStatesBehavior::StateCooldownDefault::UseBehaviorStart);
 
   // // debugging:
   // PRINT_NAMED_WARNING("BehaviorHighLevelAI.ExploringTransition.TEMP",
@@ -263,9 +264,11 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           // for playing, but it recently played with a cube, then it shouldn't try to drive off the charger
           // again.
           const bool valueIfNeverRun = false;
-          const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("ObservingDriveOffCharger"),
-                                                                             _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
-                                                                             valueIfNeverRun);
+          const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(
+            GetStateID("ObservingDriveOffCharger"),
+            _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
+            InternalStatesBehavior::StateCooldownDefault::False);
+
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
           const bool hasntPlayed = timer.HasCooldownExpired(_params.playWithCubeCooldown_s / kTimeMultiplier, valueIfNeverRun);
           
@@ -309,7 +312,13 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
 
   return handles;
 }
-  
+
+void BehaviorHighLevelAI::OnBehaviorActivatedInternal()
+{
+  // update the cooldown timer now in case it's changed since the last run
+  UpdateExploringTransitionCooldown();
+}
+
 void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState )
 {
   // get the most recent post-behavior suggestion that we care about
@@ -335,9 +344,6 @@ void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState )
       GetAIComp<AIWhiteboard>().ClearPostBehaviorSuggestions();
     }
   }
-
-  // also update the cooldown timer now in case it's changes
-  UpdateExploringTransitionCooldown();
 }
 
 void BehaviorHighLevelAI::OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const
