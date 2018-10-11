@@ -25,7 +25,8 @@
 namespace Anki {
 namespace Vector {
 
-CONSOLE_VAR(bool, kResetDataOnNewBuildVersion, "VariableSnapshotComponent", true);
+// BN: set to false so big greeting wouldn't reset... need to re-visit why this was done in the first place
+CONSOLE_VAR(bool, kResetDataOnNewBuildVersion, "VariableSnapshotComponent", false);
 
 // save location for data
 const char* VariableSnapshotComponent::kVariableSnapshotFolder = "variableSnapshotStorage";
