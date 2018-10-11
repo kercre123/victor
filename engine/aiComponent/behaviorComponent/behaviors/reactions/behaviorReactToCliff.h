@@ -56,6 +56,7 @@ private:
   void TransitionToStuckOnEdge();
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
+  void TransitionToVisualExtendCliffs();
   
   // Based on which cliff sensor(s) was tripped, create the appropriate reaction
   CompoundActionSequential* GetCliffReactAction(uint8_t cliffDetectedFlags);
@@ -82,6 +83,14 @@ private:
     bool gotStop;
     bool putDownOnCliff;
     bool wantsToBeActivated;
+
+    // whether the robot has received a cliff event with a valid cliff pose
+    // that serves as the look-at target for any visual observation actions
+    bool hasTargetCliff; 
+    
+    // used to determine where the robot searches for visual edges
+    Pose3d cliffPose;
+
     struct Persistent {
       int numStops;
       float lastStopTime_sec;

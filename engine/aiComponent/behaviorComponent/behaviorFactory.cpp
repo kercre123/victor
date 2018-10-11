@@ -866,7 +866,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPlacedOnSlope(config));
       break;
     }
-      
+    
     case BehaviorClass::ReactToPutDown:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPutDown(config));

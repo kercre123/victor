@@ -546,11 +546,12 @@ namespace Vector {
     }
 
     _streamingAnimation = anim;
-    for(const auto& callback: _newAnimationCallbacks){
-      callback();
-    }
 
     if(_streamingAnimation == nullptr) {
+      // Perform New Animation Callbacks to prepare for procedural animations
+      for (const auto& callback: _newAnimationCallbacks) {
+        callback();
+      }
       return RESULT_OK;
     }
 
@@ -1022,6 +1023,11 @@ namespace Vector {
   Result AnimationStreamer::InitStreamingAnimation(Tag withTag, u32 startAt_ms,
                                                    bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
+    // Perform new animation callbacks
+    for (const auto& callback: _newAnimationCallbacks) {
+      callback();
+    }
+    
     kCurrentManualFrameNumber = 0;
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     Result lastResult = _streamingAnimation->Init(spriteCache);

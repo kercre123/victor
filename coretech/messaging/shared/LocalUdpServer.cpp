@@ -272,3 +272,19 @@ void LocalUdpServer::Disconnect()
 
   _peername.clear();
 }
+
+ssize_t LocalUdpServer::GetIncomingSize() const
+{
+  if (_socket >= 0) {
+    return Anki::Messaging::GetIncomingSize(_socket);
+  }
+  return -1;
+}
+
+ssize_t LocalUdpServer::GetOutgoingSize() const
+{
+  if (_socket >= 0) {
+    return Anki::Messaging::GetOutgoingSize(_socket);
+  }
+  return -1;
+}

@@ -14,7 +14,7 @@
     {                                                                           
       "behaviorName" : "HabitatDoATrickInternal",                                      
       "behaviorClass" : "DispatcherQueue",                                     
-      "behaviors" : [ "FistBump" ],
+      "behaviors" : [ "HabitatVCFistBumpInternal" ],
       "respondToUserIntents" : [
         { 
           "type" : "play_anytrick"
@@ -22,7 +22,16 @@
       ],
       "wantsToBeActivatedCondition" : {
         "conditionType" : "RobotInHabitat"
-      }
+      },
+      "anonymousBehaviors" :[
+        {
+          "behaviorClass": "FistBump",
+          "behaviorName": "HabitatVCFistBumpInternal",
+          "abortIfNoFaceFound": false,
+          "maxTimeToLookForFace_s": 2.0
+        }
+      ],
+      "associatedActiveFeature": "FistBump"
     }
   ]
 }

@@ -17,6 +17,7 @@
 #include "components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorDisplayWallTime.h"
+#include "engine/actions/animActions.h"
 #include "engine/components/settingsManager.h"
 #include "engine/faceWorld.h"
 #include "osState/wallTime.h"
@@ -38,9 +39,9 @@ BehaviorWallTimeCoordinator::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorWallTimeCoordinator::DynamicVariables::DynamicVariables()
 {
-  shouldSayTime = false;
-  utteranceID = 0;
-  utteranceState = UtteranceState::Invalid;
+  utteranceID = kInvalidUtteranceID;
+  utteranceState = UtteranceState::Generating;
+  isShowingTime = false;
 }
 
 
@@ -67,7 +68,7 @@ void BehaviorWallTimeCoordinator::GetAllDelegates(std::set<IBehavior*>& delegate
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWallTimeCoordinator::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.behaviorAlwaysDelegates = false;
+  modifiers.behaviorAlwaysDelegates = true;
   modifiers.wantsToBeActivatedWhenOffTreads = true;
 }
 
@@ -106,8 +107,12 @@ void BehaviorWallTimeCoordinator::OnBehaviorActivated()
 
   if(WallTime::getInstance()->GetApproximateLocalTime(_dVars.time)){
     StartTTSGeneration();
+    // let's look for a face while we're generating TTS
     TransitionToFindFaceInFront();
-  }else{
+  }
+
+  // if we failed to start the "find face" behavior, we need to bail
+  if(!IsControlDelegated()){
     TransitionToICantDoThat();
   }
 }
@@ -115,13 +120,24 @@ void BehaviorWallTimeCoordinator::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWallTimeCoordinator::BehaviorUpdate()
 {
-  if(!IsActivated() || IsControlDelegated()){
+  if(!IsActivated()){
     return;
   }
 
-  if(!_dVars.shouldSayTime || 
-     (_dVars.utteranceState == UtteranceState::Ready)){
-    TransitionToShowWallTime();
+  if (!_dVars.isShowingTime){
+    switch (_dVars.utteranceState)
+    {
+      case UtteranceState::Ready:
+      case UtteranceState::Invalid:
+        // cancel look for face and immediately show wall clock once we're ready
+        // safe to call when nothing is currently delegated
+        CancelDelegates(false);
+        TransitionToShowWallTime();
+        break;
+
+      default:
+        break;
+    }
   }
 }
 
@@ -129,7 +145,9 @@ void BehaviorWallTimeCoordinator::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWallTimeCoordinator::OnBehaviorDeactivated()
 {
-  GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  if (kInvalidUtteranceID != _dVars.utteranceID){
+    GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  }
 }
 
 
@@ -138,9 +156,8 @@ void BehaviorWallTimeCoordinator::TransitionToICantDoThat()
 {
   ANKI_VERIFY(_iConfig.iCantDoThatBehavior->WantsToBeActivated(), 
               "BehaviorWallTimeCoordinator.TransitionToICantDoThat.BehaviorDoesntWantToBeActivated", "");
-  DelegateIfInControl(_iConfig.iCantDoThatBehavior.get(), [this](){
-    CancelSelf();
-  });
+  DelegateIfInControl(_iConfig.iCantDoThatBehavior.get());
+  // annnnnd we're done (behaviorAlwaysDelegates = false)
 }
 
 
@@ -149,13 +166,8 @@ void BehaviorWallTimeCoordinator::TransitionToFindFaceInFront()
 {
   ANKI_VERIFY(_iConfig.lookAtFaceInFront->WantsToBeActivated(),
               "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
-  // We should see a face during this behavior if there's one in front of us to center on
-  Pose3d unused;
-  const RobotTimeStamp_t lastTimeObserved_ms = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
-  DelegateIfInControl(_iConfig.lookAtFaceInFront.get(), [this, lastTimeObserved_ms](){
-    Pose3d unused;
-    const RobotTimeStamp_t nextTimeSeen = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
-    _dVars.shouldSayTime = (nextTimeSeen == lastTimeObserved_ms);
+  DelegateIfInControl(_iConfig.lookAtFaceInFront.get(), [this](){
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::LookAtUserEndearingly));
   });
 }
 
@@ -163,20 +175,24 @@ void BehaviorWallTimeCoordinator::TransitionToFindFaceInFront()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWallTimeCoordinator::TransitionToShowWallTime()
 {
+  _dVars.isShowingTime = true;
+
   auto playUtteranceCallback = [this](){
-    if(_dVars.shouldSayTime){
+    // only play TTS if it was generated, else we're fine with just the clock
+    if ((kInvalidUtteranceID != _dVars.utteranceID) && (_dVars.utteranceState == UtteranceState::Ready)){
       GetBEI().GetTextToSpeechCoordinator().PlayUtterance(_dVars.utteranceID);
+    } else {
+      LOG_ERROR("BehaviorWallTimeCoordinator", "Attempted to play time TTS but generation failed");
     }
   };
-  _iConfig.showWallTime->SetShowClockCallback(playUtteranceCallback);
 
+  _iConfig.showWallTime->SetShowClockCallback(playUtteranceCallback);
   _iConfig.showWallTime->SetOverrideDisplayTime(_dVars.time);
 
   ANKI_VERIFY(_iConfig.showWallTime->WantsToBeActivated(),
               "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
-  DelegateIfInControl(_iConfig.showWallTime.get(), [this](){
-    CancelSelf();
-  });
+  DelegateIfInControl(_iConfig.showWallTime.get());
+  // annnnnd we're done (behaviorAlwaysDelegates = false)
 }
 
 
@@ -198,6 +214,11 @@ void BehaviorWallTimeCoordinator::StartTTSGeneration()
 
   _dVars.utteranceID = GetBEI().GetTextToSpeechCoordinator().CreateUtterance(textOfTime, triggerType, style,
                                                                              1.0f, callback);
+
+  // if we failed to create the tts, we need to let our behavior know since the callback is NOT called in this case
+  if (kInvalidUtteranceID == _dVars.utteranceID){
+    _dVars.utteranceState = UtteranceState::Invalid;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

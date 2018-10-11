@@ -39,9 +39,19 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
+, _address(level)
 , _content(MemoryMapDataPtr())
 {
+  ResetAddress();
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::ResetAddress()
+{
+  _address.clear();
+  if(_parent) { _address = NodeAddress(_parent->GetAddress()); }
+  _address.push_back(_quadrant);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -227,6 +237,19 @@ const QuadTreeNode* QuadTreeNode::GetChild(EQuadrant quadrant) const
     ( nullptr ) :
     ( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant].get() );
   return ret;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const QuadTreeNode* QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr) const
+{
+  if (addr.size() > _address.size()) {
+    auto nextNode = GetChild(addr[_address.size()]);
+    return (nextNode) ? nextNode->GetNodeAtAddress(addr) : nullptr;
+  } else if (addr == _address) {
+    return this;
+  } 
+  return nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

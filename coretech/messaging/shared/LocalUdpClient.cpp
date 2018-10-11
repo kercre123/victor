@@ -201,3 +201,19 @@ ssize_t LocalUdpClient::Recv(char* data, size_t maxSize)
   //LOG_DEBUG("LocalUdpClient.Recv", "Received %zd bytes", bytes_received);
   return bytes_received;
 }
+
+ssize_t LocalUdpClient::GetIncomingSize() const
+{
+  if (_socket >= 0) {
+    return Anki::Messaging::GetIncomingSize(_socket);
+  }
+  return -1;
+}
+
+ssize_t LocalUdpClient::GetOutgoingSize() const
+{
+  if (_socket >= 0) {
+    return Anki::Messaging::GetOutgoingSize(_socket);
+  }
+  return -1;
+}

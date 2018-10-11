@@ -1,5 +1,5 @@
 {
-  "behaviorID": "ReactToNegative",
+  "behaviorID": "ReactToLove",
   "behaviorClass": "AnimSequence",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
@@ -7,15 +7,12 @@
   "respondToUserIntents":
   [
     {
-      "type": "imperative_negative"
-    },
-    {
-      "type": "imperative_scold"
+      "type": "imperative_love"
     }
   ],
 
   "animTriggers":
   [
-    "Feedback_BadRobot"
+    "Feedback_ILoveYou"
   ]
 }

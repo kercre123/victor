@@ -58,9 +58,9 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    bool shouldSayTime;
     uint8_t utteranceID;
     UtteranceState  utteranceState;
+    bool isShowingTime;
     struct tm time;
   };
 
