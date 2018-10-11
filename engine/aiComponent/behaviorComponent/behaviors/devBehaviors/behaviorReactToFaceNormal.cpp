@@ -9,6 +9,7 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
+#include <unistd.h>
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToFaceNormal.h"
 
@@ -31,11 +32,15 @@ namespace Vector {
 
 #define LOG_CHANNEL "Behaviors"
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToFaceNormal::BehaviorReactToFaceNormal(const Json::Value& config)
  : ICozmoBehavior(config)
+, _iConfig(new InstanceConfig)
+, _dVars(new DynamicVariables)
 {
+  _dVars->lastReactionTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  _iConfig->coolDown_sec = 3;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,35 +56,34 @@ void BehaviorReactToFaceNormal::GetBehaviorJsonKeys(std::set<const char*>& expec
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToFaceNormal::WantsToBeActivatedBehavior() const
 {
-  const bool faceFound = GetBEI().GetFaceWorld().HasAnyFaces(500);
-  if (faceFound) {
-    LOG_INFO("BehaviorReactToFaceNormal.WantsToBeActivatedBehavior.FaceFound", "");
-  }
-  return faceFound;
+  // const bool faceFound = GetBEI().GetFaceWorld().HasAnyFaces(500);
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFaceNormal::OnBehaviorActivated()
 {
-  LOG_INFO("BehaviorReactToFaceNormal.OnBehaviorActivated.TransitionToCheckFaceNormalDirectedAtRobot", "");
-  TransitionToCheckFaceNormalDirectedAtRobot();
+  //TransitionToCheckFaceNormalDirectedAtRobot();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFaceNormal::BehaviorUpdate()
 {
-  // Not sure if I need this last
-  /*
-  if (CheckIfShouldStop()) {
-    TransitionToCompleted();
-  }
-
-  if( ! IsActivated() || ! IsControlDelegated()) {
+  //if( !IsActivated() || !IsControlDelegated()) {
+  if ( ! IsActivated() ) {
     return;
   }
-  */
+  const f32 currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  auto timeDiff = currentTime_sec - _dVars->lastReactionTime_ms;
+  if (timeDiff > _iConfig->coolDown_sec) {
+    LOG_INFO("BehaviorReactToFaceNormal.BehaviorUpdate.CooledEnoughTimeForAction", "");
+    TransitionToCheckFaceNormalDirectedAtRobot();
+    _dVars->lastReactionTime_ms = currentTime_sec;
+  } else {
+    LOG_INFO("BehaviorReactToFaceNormal.BehaviorUpdate.StillCooling", "");
+  }
 }
 
 
@@ -95,7 +99,6 @@ bool BehaviorReactToFaceNormal::CheckIfShouldStop()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFaceNormal::TransitionToCheckFaceNormalDirectedAtRobot()
 {
-  LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedAtRobot.AboutToLeftRight", "");
   // TODO set state
   // Check with face world to see if face normal directed at robot
   const bool faceNormDirectedAtRobot = GetBEI().GetFaceWorld().IsFaceDirectedAtRobot(500);
@@ -106,7 +109,11 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceNormalDirectedAtRobot()
   if (faceNormDirectedAtRobot) {
     // play place holder animation
     LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedAtRobot.FaceDirectedAtRobot!!!!!!!", "");
-    TransitionToCompleted();
+    // TODO this is really heavy handed replace with a subtler animation
+    CompoundActionSequential* action = new CompoundActionSequential();
+    action->AddAction(new TriggerAnimationAction(AnimationTrigger::ExploringHuhFar));
+    action->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
+    DelegateIfInControl(action, &BehaviorReactToFaceNormal::TransitionToCompleted);
   } else {
     TransitionToCheckFaceNormalDirectedLeftOrRight(); 
   }
@@ -123,16 +130,16 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceNormalDirectedLeftOrRight()
   turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
 
   if (faceNormDirectedLeftOrRight == 0) {
-    // Unstable ... play some animation
+    // Unstable ... do nothing?
     TransitionToCompleted();
   } else if (faceNormDirectedLeftOrRight == 1) {
     // Turn Left
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningLeft", "");
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningLLLLLLLeft", "");
     turnAction->AddAction(new TurnInPlaceAction(.7, false));
     DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
   } else {
     // Turn Right
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningRight", "");
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedLeftOrRight.TurningRRRRRRRRight", "");
     turnAction->AddAction(new TurnInPlaceAction(-.7, false));
     DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
   }
@@ -141,8 +148,7 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceNormalDirectedLeftOrRight()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFaceNormal::TransitionToCompleted()
 {
-  CancelDelegates(false);
-  LOG_INFO("BehaviorReactToFaceNormal.TransitionToCompleted.Finished","");
+  //CancelDelegates(false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -151,7 +157,7 @@ void BehaviorReactToFaceNormal::GetBehaviorOperationModifiers(BehaviorOperationM
   modifiers.wantsToBeActivatedWhenCarryingObject = false;
   modifiers.wantsToBeActivatedWhenOffTreads = false;
   modifiers.wantsToBeActivatedWhenOnCharger = false;
-  modifiers.behaviorAlwaysDelegates = true;
+  modifiers.behaviorAlwaysDelegates = false;
 
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });

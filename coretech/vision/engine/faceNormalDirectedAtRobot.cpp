@@ -23,7 +23,7 @@ namespace {
   CONSOLE_VAR(f32, kInlierDistanceSq,                 "Vision.EyeContact",  100.f);
   CONSOLE_VAR(u32, kMinNumberOfInliers,               "Vision.EyeContact",  3);
   CONSOLE_VAR(f32, kFaceDirectedAtRobotDistanceSq,    "Vision.EyeContact",  11.f*11.f);
-  CONSOLE_VAR(f32, kFaceDirectedAtRobotYawAbsThres,   "Vision.EyeContact",  5.f);
+  CONSOLE_VAR(f32, kFaceDirectedAtRobotYawAbsThres,   "Vision.EyeContact",  10.f);
   CONSOLE_VAR(f32, kFaceDirectedAtRobotPitchAbsThres, "Vision.EyeContact",  25.f);
   CONSOLE_VAR(f32, kFaceDirectedRightYawAbsThres,      "Vision.EyeContact",  15.f);
   CONSOLE_VAR(f32, kFaceDirectedLeftYawAbsThres,     "Vision.EyeContact", -15.f);
@@ -75,14 +75,18 @@ void FaceNormalDirectedAtRobot::Update(const TrackedFace& face,
   _isFaceDirectedLeftOfRobot = DetermineFaceDirectedLeftOfRobot();
   _isFaceDirectedRightOfRobot = DetermineFaceDirectedRightOfRobot();
   if (_isFaceDirectedAtRobot) {
+    _isFaceDirectedLeftOfRobot = false;
+    _isFaceDirectedRightOfRobot = false;
     PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.IsFaceDirectedAtRobot", "Face is directed at robot");
-  } else {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.IsFaceDirectedAtRobot", "Face is NOT directed at robot");
   }
   if (_isFaceDirectedLeftOfRobot) {
+    _isFaceDirectedAtRobot = false;
+    _isFaceDirectedRightOfRobot = false;
     PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.IsFaceDirectedLeftOfRobot", "Face is directed LEFT of robot");
   }
   if (_isFaceDirectedRightOfRobot) {
+    _isFaceDirectedAtRobot = false;
+    _isFaceDirectedLeftOfRobot = false;
     PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.Update.IsFaceDirectedRightOfRobot", "Face is directed RIGHT of robot");
   }
 
@@ -149,7 +153,9 @@ bool FaceNormalDirectedAtRobot::DetermineFaceDirectedAtRobot()
   if (_numberOfInliers > kMinNumberOfInliers) {
     bool withinDistance = std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotYawAbsThres;
     withinDistance &= std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotPitchAbsThres;
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedAtRobot.Distance", "threshold yaw=%.3f, threshold pitch=%.3f", kFaceDirectedAtRobotYawAbsThres, kFaceDirectedAtRobotPitchAbsThres);
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedAtRobot.Distance",
+                     "threshold yaw=%.3f, threshold pitch=%.3f",
+                     kFaceDirectedAtRobotYawAbsThres, kFaceDirectedAtRobotPitchAbsThres);
     if (withinDistance) {
       faceDirectedAtRobot = true;
     }
@@ -161,7 +167,8 @@ bool FaceNormalDirectedAtRobot::DetermineFaceDirectedRightOfRobot()
 {
   bool faceDirectedRightOfRobot = false;
   if (_numberOfInliers > kMinNumberOfInliers) {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedRightOfRobot.Threshold", "threshold yaw=%.3f", kFaceDirectedRightYawAbsThres);
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedRightOfRobot.Threshold",
+                     "threshold yaw=%.3f", kFaceDirectedRightYawAbsThres);
     if (_faceDirectionAverage.x() > kFaceDirectedRightYawAbsThres) {
       faceDirectedRightOfRobot = true;
     }
@@ -173,7 +180,8 @@ bool FaceNormalDirectedAtRobot::DetermineFaceDirectedLeftOfRobot()
 {
   bool faceDirectedLeftOfRobot = false;
   if (_numberOfInliers > kMinNumberOfInliers) {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedLeftOfRobot.Threshold", "threshold yaw=%.3f", kFaceDirectedLeftYawAbsThres);
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot.DetermineFaceDirectedLeftOfRobot.Threshold",
+                     "threshold yaw=%.3f", kFaceDirectedLeftYawAbsThres);
     if (_faceDirectionAverage.x() < kFaceDirectedLeftYawAbsThres) {
       faceDirectedLeftOfRobot = true;
     }

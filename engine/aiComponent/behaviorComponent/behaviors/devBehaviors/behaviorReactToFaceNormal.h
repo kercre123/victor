@@ -9,7 +9,6 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
-
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToFaceNormal__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToFaceNormal__
 
@@ -54,6 +53,18 @@ private:
     CheckingFaceNormalDirectedLeft,
     CheckingFaceNormalDirectedRight,
   };
+
+  struct InstanceConfig
+  {
+    f32                   coolDown_sec;
+  };
+  struct DynamicVariables
+  {
+    RobotTimeStamp_t      lastReactionTime_ms;
+  };
+
+  std::unique_ptr<InstanceConfig>   _iConfig;
+  std::unique_ptr<DynamicVariables> _dVars;
 
   // TODO shoudl this live some place else?
   State state = State::NotStarted;
