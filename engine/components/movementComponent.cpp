@@ -122,6 +122,21 @@ void MovementComponent::NotifyOfRobotState(const Vector::RobotState& robotState)
   _isLiftMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS);
   _areWheelsMoving = static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::ARE_WHEELS_MOVING);
   
+  // NOTE(GB): In the future, the meaning of `_isMoving` may change, and may not be coupled to
+  // _isHeadMoving, _isLiftMoving, or _areWheelsMoving, so check if we can set each timestamp individually.
+  if (_isMoving) {
+    _lastTimeWasMoving = robotState.timestamp;
+  }
+  if (_isHeadMoving) {
+    _lastTimeHeadWasMoving = robotState.timestamp;
+  }
+  if (_isLiftMoving) {
+    _lastTimeLiftWasMoving = robotState.timestamp;
+  }
+  if (_areWheelsMoving) {
+    _lastTimeWheelsWereMoving = robotState.timestamp;
+  }
+  
   for (auto layerIter = _eyeShiftToRemove.begin(); layerIter != _eyeShiftToRemove.end(); )
   {
     EyeShiftToRemove& layer = layerIter->second;
@@ -1101,6 +1116,11 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
     trackFlags = trackFlags >> 1;
   }
   return ss.str();
+}
+  
+RobotTimeStamp_t MovementComponent::GetLastTimeCameraWasMoving() const
+{
+  return std::max(_lastTimeWheelsWereMoving, _lastTimeHeadWasMoving);
 }
 
   static inline bool WasMovingHelper(Robot& robot, RobotTimeStamp_t atTime, const std::string& debugStr,

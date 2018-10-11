@@ -92,9 +92,17 @@ public:
   bool   WasLiftMoving(RobotTimeStamp_t atTime);
   bool   WereWheelsMoving(RobotTimeStamp_t atTime);
   
+  // Retrieves the timestamp at which one or more motors was last tracked as moving. If no robot
+  // state has ever been received indicating movement, this will return a timestamp of 0!
+  RobotTimeStamp_t GetLastTimeWasMoving() const { return _lastTimeWasMoving; }
+  RobotTimeStamp_t GetLastTimeHeadWasMoving() const { return _lastTimeHeadWasMoving; }
+  RobotTimeStamp_t GetLastTimeLiftWasMoving() const { return _lastTimeLiftWasMoving; }
+  RobotTimeStamp_t GetLastTimeWheelsWereMoving() const { return _lastTimeWheelsWereMoving; }
+  
   // Convenience methods for checking head OR wheels, since either moves the camera
   bool   IsCameraMoving() const { return _isHeadMoving || _areWheelsMoving; }
   bool   WasCameraMoving(RobotTimeStamp_t atTime); // Slightly more efficient than calling WasHeadMoving _and_ WereWheelsMoving
+  RobotTimeStamp_t GetLastTimeCameraWasMoving() const;
 
   uint8_t GetTracksLockedBy(const std::string& who) const;
   uint8_t GetLockedTracks() const;
@@ -268,6 +276,11 @@ private:
   Robot* _robot = nullptr;
   
   MotorActionID _lastMotorActionID = 0;
+  
+  RobotTimeStamp_t _lastTimeWasMoving = 0;
+  RobotTimeStamp_t _lastTimeHeadWasMoving = 0;
+  RobotTimeStamp_t _lastTimeLiftWasMoving = 0;
+  RobotTimeStamp_t _lastTimeWheelsWereMoving = 0;
   
   bool _isMoving = false;
   bool _isHeadMoving = false;
