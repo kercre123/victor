@@ -22,6 +22,11 @@ def main():
         time.sleep(1)  # Avoid overlapping messages
         robot.say_text("hello", use_vector_voice=False)
 
+    with anki_vector.AsyncRobot(args.serial) as robot:
+        robot.run_until_complete(robot.say_text("hello", use_vector_voice=True))
+        time.sleep(1)  # Avoid overlapping messages
+        robot.run_until_complete(robot.say_text("hello", use_vector_voice=False))
+
     print("------ end testing text-to-speech ------")
 
 

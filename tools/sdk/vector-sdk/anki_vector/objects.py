@@ -371,7 +371,7 @@ class LightCube(ObservableObject):
             self._on_object_connection_lost,
             Events.cube_connection_lost)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def set_light_corners(self,
                                 light1: lights.Light,
                                 light2: lights.Light,

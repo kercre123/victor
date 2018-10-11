@@ -22,7 +22,7 @@ parallel (see :class:`AsyncRobot` in robot.py), but also
 simpler use cases where everything executes synchronously.
 """
 
-__all__ = ['wrap']
+__all__ = ['Synchronizer']
 
 import asyncio
 import functools
@@ -32,40 +32,42 @@ import grpc
 from . import exceptions
 
 
-def wrap(log_messaging=True):
-    def synchronous_decorator(func):
-        if not asyncio.iscoroutinefunction(func):
-            raise Exception("how would I sync that which is not async?")  # TODO: better error
+class Synchronizer:
+    @staticmethod
+    def _wait(task, loop):
+        if loop.is_running():
+            for result in asyncio.as_completed([task]):
+                return result
+        return loop.run_until_complete(task)
 
-        @functools.wraps(func)
-        async def log_handler(func, logger, *args, **kwargs):
-            """Log the input and output of messages (and wrap the rpc_errors)"""  # TODO: improve docs
-            result = None
-            if log_messaging:
-                logger.debug(f'Outgoing {func.__name__}{args[1:]}')
-            try:
-                result = await func(*args, **kwargs)
-            except grpc.RpcError as rpc_error:
-                raise exceptions.connection_error(rpc_error) from rpc_error
-            if log_messaging:
-                logger.debug(f'Incoming {type(result).__name__}: {str(result).strip()}')
+    @staticmethod
+    def wrap(log_messaging=True):
+        def synchronous_decorator(func):
+            if not asyncio.iscoroutinefunction(func):
+                raise Exception("how would I sync that which is not async?")  # TODO: better error
+
+            @functools.wraps(func)
+            async def log_handler(func, logger, *args, **kwargs):
+                """Log the input and output of messages (and wrap the rpc_errors)"""  # TODO: improve docs
+                result = None
+                if log_messaging:
+                    logger.debug(f'Outgoing {func.__name__}{args[1:]}')
+                try:
+                    result = await func(*args, **kwargs)
+                except grpc.RpcError as rpc_error:
+                    raise exceptions.connection_error(rpc_error) from rpc_error
+                if log_messaging:
+                    logger.debug(f'Incoming {type(result).__name__}: {str(result).strip()}')
+                return result
+
+            @functools.wraps(func)
+            def result(*args, **kwargs):
+                """Handler that determines sync vs async execution"""  # TODO: improve docs
+                self = args[0]  # Get the self reference from the function call
+                wrapped_func = log_handler(func, self.logger, *args, **kwargs)
+                task = self.loop.create_task(wrapped_func)
+                if self.force_async:
+                    return task
+                return Synchronizer._wait(task, self.loop)
             return result
-
-        @functools.wraps(func)
-        def result(*args, **kwargs):
-            """Handler that determines sync vs async execution"""  # TODO: improve docs
-            self = args[0]  # Get the self reference from the function call
-            wrapped_func = log_handler(func, self.logger, *args, **kwargs)
-            # loop <- where do I get this?
-            task = self.loop.create_task(wrapped_func)
-            # is_async <- where do I get this?
-            if not self.loop.is_running() and not self.force_async:  # TODO: check if loop is running leads to some weird edges
-                # asyncio.gather(task)
-                return self.loop.run_until_complete(task)
-            # else:
-                # self.add_pending(task) # TODO: how can we gather all the results
-            return task
-        return result
-    return synchronous_decorator
-
-# class SynchronizerNew:
+        return synchronous_decorator

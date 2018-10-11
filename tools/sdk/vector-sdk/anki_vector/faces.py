@@ -293,7 +293,7 @@ class Face(objects.ObservableObject):
 class FaceComponent(util.Component):
     """Manage the state of the faces on the robot."""
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def request_enrolled_names(self) -> protocol.RequestEnrolledNamesRequest:
         """Asks the robot for the list of names attached to faces that it can identify.
 
@@ -306,7 +306,7 @@ class FaceComponent(util.Component):
         req = protocol.RequestEnrolledNamesRequest()
         return await self.grpc_interface.RequestEnrolledNames(req)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def update_enrolled_face_by_id(self, face_id: int, old_name: str, new_name: str):
         """Update the name enrolled for a given face.
 
@@ -322,7 +322,7 @@ class FaceComponent(util.Component):
                                                      oldName=old_name, newName=new_name)
         return await self.grpc_interface.UpdateEnrolledFaceByID(req)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def erase_enrolled_face_by_id(self, face_id: int):
         """Erase the enrollment (name) record for the face with this ID.
 
@@ -335,7 +335,7 @@ class FaceComponent(util.Component):
         req = protocol.EraseEnrolledFaceByIDRequest(faceID=face_id)
         return await self.grpc_interface.EraseEnrolledFaceByID(req)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def erase_all_enrolled_faces(self):
         """Erase the enrollment (name) records for all faces.
 
@@ -348,7 +348,7 @@ class FaceComponent(util.Component):
 
     # TODO move out of face component? This is general to objects, not specific to faces? Move to new vision component? Needs sample code.
     # TODO improve list of modes as shown in docs
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def enable_vision_mode(self, enable: bool):
         """Enable facial detection on the robot's camera
 

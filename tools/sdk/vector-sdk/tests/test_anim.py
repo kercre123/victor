@@ -21,19 +21,26 @@ def main():
     print("------ begin testing animations ------")
 
     with anki_vector.Robot(args.serial, cache_animation_list=False) as robot:
-        print("playing animation by name: anim_blackjack_victorwin_01")
-        robot.anim.play_animation("anim_blackjack_victorwin_01")
+        print("------ testing sync animations ------")
+        robot.anim.play_animation("anim_pounce_01")
 
-    with anki_vector.AsyncRobot(args.serial, cache_animation_list=False) as robot:
-        print("------ testing load async animations ------")
-
-        print("receiving all loaded animations")
+    with anki_vector.Robot(args.serial, cache_animation_list=False) as robot:
+        print("------ testing sync load animations ------")
         anim_names = robot.anim.anim_list
         if not anim_names:
             sys.exit("Error: no animations loaded")
-        robot.run_until_complete(robot.anim.play_animation("anim_blackjack_victorwin_01"))
 
-        print("------ finish testing animations ------")
+    with anki_vector.AsyncRobot(args.serial, cache_animation_list=False) as robot:
+        print("------ testing async animations ------")
+        robot.run_until_complete(robot.anim.play_animation("anim_pounce_01"))
+
+    with anki_vector.AsyncRobot(args.serial, cache_animation_list=False) as robot:
+        print("------ testing async load animations ------")
+        anim_names = robot.anim.anim_list
+        if not anim_names:
+            sys.exit("Error: no animations loaded")
+
+    print("------ finish testing animations ------")
 
 
 if __name__ == "__main__":

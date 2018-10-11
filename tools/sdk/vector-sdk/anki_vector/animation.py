@@ -78,7 +78,7 @@ class AnimationComponent(util.Component):
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
             await self.load_animation_list()
 
-    @sync.wrap(False)
+    @sync.Synchronizer.wrap(False)
     async def load_animation_list(self):
         """Request the list of animations from the robot
 
@@ -100,7 +100,7 @@ class AnimationComponent(util.Component):
         self._anim_dict = {a.name: a for a in result.animation_names}
         return result
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def play_animation(self, anim: str, loop_count: int = 1, ignore_body_track: bool = False, ignore_head_track: bool = False, ignore_lift_track: bool = False):
         """Starts an animation playing on a robot.
 

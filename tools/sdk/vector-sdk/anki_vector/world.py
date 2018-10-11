@@ -128,7 +128,7 @@ class World(util.Component):
 
         return result
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def connect_cube(self) -> protocol.ConnectCubeResponse:
         """Attempt to connect to a cube.
 
@@ -152,7 +152,7 @@ class World(util.Component):
 
         return result
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def disconnect_cube(self) -> protocol.DisconnectCubeResponse:
         """Requests a disconnection from the currently connected cube.
 
@@ -163,7 +163,7 @@ class World(util.Component):
         req = protocol.DisconnectCubeRequest()
         return await self.grpc_interface.DisconnectCube(req)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def flash_cube_lights(self) -> protocol.FlashCubeLightsResponse:
         """Flash cube lights
 
@@ -173,7 +173,7 @@ class World(util.Component):
         req = protocol.FlashCubeLightsRequest()
         return await self.grpc_interface.FlashCubeLights(req)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def forget_preferred_cube(self) -> protocol.ForgetPreferredCubeResponse:
         """Forget preferred cube.
 
@@ -188,7 +188,7 @@ class World(util.Component):
         req = protocol.ForgetPreferredCubeRequest()
         return await self.grpc_interface.ForgetPreferredCube(req)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def set_preferred_cube(self, factory_id: str) -> protocol.SetPreferredCubeResponse:
         """Set preferred cube.
 

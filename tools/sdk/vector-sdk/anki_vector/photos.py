@@ -64,11 +64,11 @@ class PhotographComponent(util.Component):
         if not self._photo_info:
             self.logger.debug("Photo list was empty. Lazy-loading photo list now.")
             result = self.load_photo_info()
-            if isinstance(result, asyncio.Task):
-                self.robot.run_until_complete(result)
+            if isinstance(result, sync.Synchronizer):
+                result.wait()
         return self._photo_info
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def load_photo_info(self) -> protocol.PhotosInfoResponse:
         """Request the photo information from the robot.
 
@@ -83,7 +83,7 @@ class PhotographComponent(util.Component):
         self._photo_info = result.photo_infos
         return result
 
-    @sync.wrap(False)
+    @sync.Synchronizer.wrap(False)
     async def get_photo(self, photo_id: int) -> protocol.PhotoResponse:
         """Download a full-resolution photo from the robot's storage.
 
@@ -108,7 +108,7 @@ class PhotographComponent(util.Component):
         req = protocol.PhotoRequest(photo_id=photo_id)
         return await self.grpc_interface.Photo(req)
 
-    @sync.wrap(False)
+    @sync.Synchronizer.wrap(False)
     async def get_thumbnail(self, photo_id: int) -> protocol.ThumbnailResponse:
         """Download a thumbnail of a given photo from the robot's storage.
 

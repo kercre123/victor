@@ -638,7 +638,7 @@ class Robot:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
         """Check the current state of the battery.
 
@@ -651,7 +651,7 @@ class Robot:
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.grpc_interface.BatteryState(get_battery_state_request)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def get_version_state(self) -> protocol.VersionStateResponse:
         """Get the versioning information for Vector.
 
@@ -662,7 +662,7 @@ class Robot:
         get_version_state_request = protocol.VersionStateRequest()
         return await self.conn.grpc_interface.VersionState(get_version_state_request)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def get_network_state(self) -> protocol.NetworkStateResponse:
         """Get the network information for Vector.
 
@@ -673,7 +673,7 @@ class Robot:
         get_network_state_request = protocol.NetworkStateRequest()
         return await self.conn.grpc_interface.NetworkState(get_network_state_request)
 
-    @sync.wrap()
+    @sync.Synchronizer.wrap()
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
         """Make Vector speak text.
 
