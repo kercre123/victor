@@ -129,6 +129,11 @@ namespace Anki {
         const u8 PICKUP_ANIM_TRANSITION_TIME_MS = 100;
         const u8 PICKUP_ANIM_ACCEL_MMPS2 = 100;
 
+        // Whether to delay sending the pickup success message until after the lift is in position
+        bool _sendPickupSuccessAfterLiftUp = false;
+        
+        // During cube pickup, whether or not to raise the lift at the same time that we begin backing up
+        bool _backUpWhileLiftingCube = false;
 
         // Deep roll action params
         // Note: These are mainly for tuning the deep roll and can be removed once it's locked down.
@@ -519,15 +524,22 @@ namespace Anki {
                 Radians a;
                 Localization::GetDriveCenterPose(x, y, a);
 
-                PathFollower::AppendPathSegment_Line(x-(PICKUP_ANIM_STARTING_DIST_MM)*cosf(a.ToFloat()),
-                                                     y-(PICKUP_ANIM_STARTING_DIST_MM)*sinf(a.ToFloat()),
-                                                     x+(PICKUP_ANIM_DIST_MM)*cosf(a.ToFloat()),
-                                                     y+(PICKUP_ANIM_DIST_MM)*sinf(a.ToFloat()),
-                                                     PICKUP_ANIM_SPEED_MMPS,
-                                                     PICKUP_ANIM_ACCEL_MMPS2,
-                                                     PICKUP_ANIM_ACCEL_MMPS2);
+                if (_backUpWhileLiftingCube) {
+                  // If we are to back up while lifting the cube, then skip the "pickup anim". Set the transition time
+                  // to now so that we immediately begin driving backward in the WAITING_TO_MOVE state.
+                  transitionTime_ = HAL::GetTimeStamp();
+                  pickupAnimMode_ = WAITING_TO_MOVE;
+                } else {
+                  PathFollower::AppendPathSegment_Line(x-(PICKUP_ANIM_STARTING_DIST_MM)*cosf(a.ToFloat()),
+                                                       y-(PICKUP_ANIM_STARTING_DIST_MM)*sinf(a.ToFloat()),
+                                                       x+(PICKUP_ANIM_DIST_MM)*cosf(a.ToFloat()),
+                                                       y+(PICKUP_ANIM_DIST_MM)*sinf(a.ToFloat()),
+                                                       PICKUP_ANIM_SPEED_MMPS,
+                                                       PICKUP_ANIM_ACCEL_MMPS2,
+                                                       PICKUP_ANIM_ACCEL_MMPS2);
+                  PathFollower::StartPathTraversal();
+                }
 
-                PathFollower::StartPathTraversal();
                 mode_ = PICKUP_ANIM;
                 break;
               }
@@ -654,7 +666,9 @@ namespace Anki {
                 case DockAction::DA_PICKUP_LOW:
                 case DockAction::DA_PICKUP_HIGH:
                 {
-                  SendPickAndPlaceResultMessage(true, BlockStatus::BLOCK_PICKED_UP);
+                  // For pickup, delay sending the success message until after lift has reached its target height.
+                  // This prevents the camera from immediately re-observing the cube before the lift has raised enough.
+                  _sendPickupSuccessAfterLiftUp = true;
                   carryState_ = CarryState::CARRY_1_BLOCK;
                   break;
                 } // PICKUP
@@ -692,10 +706,21 @@ namespace Anki {
           }
           case BACKOUT:
           {
+            if (_sendPickupSuccessAfterLiftUp && LiftController::IsInPosition()) {
+              SendPickAndPlaceResultMessage(true, BlockStatus::BLOCK_PICKED_UP);
+              _sendPickupSuccessAfterLiftUp = false;
+            }
+            
             if (HAL::GetTimeStamp() > transitionTime_)
             {
               SteeringController::ExecuteDirectDrive(0,0);
 
+              // If we haven't yet sent the pickup success message, do so now
+              if (_sendPickupSuccessAfterLiftUp) {
+                SendPickAndPlaceResultMessage(true, BlockStatus::BLOCK_PICKED_UP);
+                _sendPickupSuccessAfterLiftUp = false;
+              }
+              
               if (HeadController::IsInPosition()) {
                 Reset();
               }
@@ -1023,6 +1048,11 @@ namespace Anki {
         _rollDriveDuration_ms = driveDuration_ms;
         _rollBackupDist_mm = backupDist_mm;
 
+      }
+      
+      void SetBackUpWhileLiftingCube(const bool b)
+      {
+        _backUpWhileLiftingCube = b;
       }
 
     } // namespace PickAndPlaceController

@@ -38,6 +38,7 @@ message DockWithObject
   uint_8     numRetries,
   DockingMethod dockingMethod,
   bool       doLiftLoadCheck,
+  bool       backUpWhileLiftingCube,
 }
 
 message AbortDocking

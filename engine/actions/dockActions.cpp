@@ -26,6 +26,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/robotStatsTracker.h"
@@ -738,7 +739,8 @@ namespace Anki {
                                                     _placementOffsetAngle_rad,
                                                     _numDockingRetries,
                                                     _dockingMethod,
-                                                    _doLiftLoadCheck) == RESULT_OK)
+                                                    _doLiftLoadCheck,
+                                                    _backUpWhileLiftingCube) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
@@ -1374,6 +1376,14 @@ namespace Anki {
         _dockAction = DockAction::DA_PICKUP_HIGH;
         SetType(RobotActionType::PICKUP_OBJECT_HIGH);
       }
+      
+      // If we are either in the habitat or unsure, we should do the version of cube pickup where instead of driving
+      // forward at the same time as raising the lift, we drive backward. This improves the cube pickup success rate
+      // in case the cube is pressed against the wall of the habitat.
+      const auto habitatBeliefState = GetRobot().GetComponent<HabitatDetectorComponent>().GetHabitatBeliefState();
+      const bool possiblyInHabitat = (habitatBeliefState == HabitatBeliefState::InHabitat) ||
+                                     (habitatBeliefState == HabitatBeliefState::Unknown);
+      SetBackUpWhileLiftingCube(possiblyInHabitat);
 
       return ActionResult::SUCCESS;
     } // SelectDockAction()

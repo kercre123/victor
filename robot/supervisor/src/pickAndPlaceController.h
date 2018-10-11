@@ -100,6 +100,11 @@ namespace Anki {
                                const u32 driveDuration_ms,
                                const f32 backupDist_mm);
       
+      // When set, this will cause the robot to begin backing up at the same time that he begins to raise the lift
+      // during cube pickup. This prevents cube pickup from failing when the cube is pressed up against a wall or other
+      // rigid surface.
+      void SetBackUpWhileLiftingCube(const bool b);
+      
     } // namespace PickAndPlaceController
   } // namespace Vector
 } // namespace Anki
