@@ -28,6 +28,9 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/speechRecognizerTHFSimple.h"
+
+#include "cozmoAnim/speechRecognizerTHFSimple_v6.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/environment/locale.h"
@@ -57,7 +60,7 @@ namespace {
   CONSOLE_VAR_RANGED(float, kAlexaBPMOffset_s, "AAA", 0.0f, -1.0f, 1.0f);
   
   const bool kRunAlexa = true;
-  const bool kRunSecondRecognizer = true;
+//  const bool kRunSecondRecognizer = true;
 
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
@@ -143,35 +146,47 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
 , _micDataSystem(micDataSystem)
 , _writeLocationDir(writeLocation)
 , _triggerWordDataDir(triggerWordDataDir)
-, _recognizer(std::make_unique<SpeechRecognizerTHF>())
+//, _recognizer(std::make_unique<SpeechRecognizerTHF>())
+, _recognizer_v6(std::make_unique<SpeechRecognizerTHF_v6>())
 , _micImmediateDirection(std::make_unique<MicImmediateDirection>())
 , _micTriggerConfig(std::make_unique<MicTriggerConfig>())
 , _beatDetector(std::make_unique<BeatDetector>())
 {
   
-  if( kRunSecondRecognizer ) {
-    _recognizer_2 = std::make_unique<SpeechRecognizerTHF>();
-  }
+//  if( kRunSecondRecognizer ) {
+//    _recognizer_2 = std::make_unique<SpeechRecognizerTHF>();
+//  }
   // Init Sensory processing. Note we don't add in a search trigger here, that happens later
-  const std::string& pronunciationFileToUse = "";
-  (void) _recognizer->Init(pronunciationFileToUse);
-  if( _recognizer_2 ) {
-    (void) _recognizer_2->Init(pronunciationFileToUse);
-  }
+//  const std::string& pronunciationFileToUse = "";
+//  (void) _recognizer->Init(pronunciationFileToUse);
+//  if( _recognizer_2 ) {
+//    (void) _recognizer_2->Init(pronunciationFileToUse);
+//  }
 
   // Set up the callback that creates the recording job when the trigger is detected
-  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
-                                   this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-  _recognizer->SetCallback(triggerCallback);
-  if( _recognizer_2 ) {
-    auto triggerCallback2 = std::bind(&MicDataProcessor::TriggerWordVoiceCallback_2,
-                                      this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-    _recognizer_2->SetCallback(triggerCallback2);
-  }
-  _recognizer->Start();
-  if( _recognizer_2 ) {
-    _recognizer_2->Start();
-  }
+//  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
+//                                   this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+//  _recognizer->SetCallback(triggerCallback);
+//  if( _recognizer_2 ) {
+//    auto triggerCallback2 = std::bind(&MicDataProcessor::TriggerWordVoiceCallback_2,
+//                                      this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+//    _recognizer_2->SetCallback(triggerCallback2);
+//  }
+//  _recognizer->Start();
+//  if( _recognizer_2 ) {
+//    _recognizer_2->Start();
+//  }
+  
+  std::string path = Util::FileUtils::FullFilePath({_triggerWordDataDir, "hey_vector_alexa", "spot_Alexav6_HeyVector.snsr"});
+  _recognizer_v6->Init(path);
+  
+  auto triggerCallback_v6 = [this](const char* resultFound, float score, int from_ms, int to_ms) {
+    PRINT_NAMED_WARNING("SpeechRecognizerTHF_v6", "result '%s' score %f", resultFound, score);
+    TriggerWordDetectCallback( TriggerWordDetectSource::Voice, resultFound, score, from_ms, to_ms );
+  };
+  
+  _recognizer_v6->SetCallback(triggerCallback_v6);
+  _recognizer_v6->Start();
 
   // Init the various SE processing
   MMIfInit(0, nullptr);
@@ -249,7 +264,7 @@ void MicDataProcessor::InitVAD()
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
   
-  void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms)
+void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms)
 {
   PRINT_NAMED_WARNING("WHATNOW", "TRIGGER WORD keyword=%s from=%d, to=%d. UXState=%d", keyword.c_str(), from_ms, to_ms, kRunAlexa ? (int)_alexa->GetState() : -1);
   
@@ -271,7 +286,7 @@ void MicDataProcessor::InitVAD()
     }
   }
   
-  const bool isAlexa = keyword == "ALEXA";
+  const bool isAlexa = (keyword.compare("alexa") == 0);
   if( _alexa && isAlexa ) {
     _alexa->TriggerWord(from_ms, to_ms);
     return;
@@ -493,10 +508,11 @@ MicDataProcessor::~MicDataProcessor()
   _processTriggerThread.join();
 
   MMIfDestroy();
-  _recognizer->Stop();
-  if( _recognizer_2 ) {
-    _recognizer_2->Stop();
-  }
+//  _recognizer->Stop();
+//  if( _recognizer_2 ) {
+//    _recognizer_2->Stop();
+//  }
+  _recognizer_v6->Stop();
 }
 
 void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
@@ -1018,113 +1034,111 @@ void MicDataProcessor::ProcessTriggerLoop()
 #endif // ANKI_DEV_CHEATS
 
     // Change which trigger search is used for recognition, if requested
-    {
-      std::lock_guard<std::mutex> lock (_triggerModelMutex);
-      if (_currentTriggerPathsVector != _nextTriggerPathsVector)
-      {
-        ANKI_CPU_PROFILE("SwitchTriggerWordSearchVector");
-        _currentTriggerPathsVector = _nextTriggerPathsVector;
-        _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
-        const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
-        _recognizer->RemoveRecognitionData(singleSlotIndex);
-
-        if (_currentTriggerPathsVector.IsValid())
-        {
-          PRINT_NAMED_WARNING("WHATNOW", "trigger path _dataDir=%s _searchFile=%s _netFile=%s", _currentTriggerPathsVector._dataDir.c_str(), _currentTriggerPathsVector._searchFile.c_str(), _currentTriggerPathsVector._netFile.c_str()  );
-          const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-                                                                          _currentTriggerPathsVector._dataDir,
-                                                                          _currentTriggerPathsVector._netFile});
-          const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-                                                                            _currentTriggerPathsVector._dataDir,
-                                                                            _currentTriggerPathsVector._searchFile});
-          const bool isPhraseSpotted = true;
-          const bool allowsFollowUpRecog = false;
-          const bool success = _recognizer->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
-                                                                      isPhraseSpotted, allowsFollowUpRecog);
-          if (success)
-          {
-            PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.SwitchTriggerSearch",
-                            "Switched speechRecognizer to netFile: %s searchFile %s",
-                            netFilePath.c_str(), searchFilePath.c_str());
-
-            _recognizer->SetRecognizerIndex(singleSlotIndex);
-          }
-          else
-          {
-            _currentTriggerPathsVector = MicTriggerConfig::TriggerDataPaths{};
-            _nextTriggerPathsVector = MicTriggerConfig::TriggerDataPaths{};
-            PRINT_NAMED_ERROR("WHATNOW MicDataProcessor.ProcessTriggerLoop.FailedSwitchTriggerSearch",
-                              "Failed to add speechRecognizer netFile: %s searchFile %s",
-                              netFilePath.c_str(), searchFilePath.c_str());
-          }
-        }
-        else
-        {
-          PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.ClearTriggerSearch",
-                          "Cleared speechRecognizer to have no search");
-        }
-      }
-      
-      
-      
-      
-      
-      if ( _recognizer_2 && _currentTriggerPathsAlexa != _nextTriggerPathsAlexa)
-      {
-        ANKI_CPU_PROFILE("SwitchTriggerWordSearch");
-        _currentTriggerPathsAlexa = _nextTriggerPathsAlexa;
-        _recognizer_2->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
-        const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
-        _recognizer_2->RemoveRecognitionData(singleSlotIndex);
-        
-        if (_currentTriggerPathsAlexa.IsValid())
-        {
-          PRINT_NAMED_WARNING("WHATNOW", "ALEXA trigger path _dataDir=%s _searchFile=%s _netFile=%s SAME=%d", _currentTriggerPathsAlexa._dataDir.c_str(), _currentTriggerPathsAlexa._searchFile.c_str(), _currentTriggerPathsAlexa._netFile.c_str() , _currentTriggerPathsAlexa == _nextTriggerPathsAlexa );
-          const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-            _currentTriggerPathsAlexa._dataDir,
-            _currentTriggerPathsAlexa._netFile});
-          const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-            _currentTriggerPathsAlexa._dataDir,
-            _currentTriggerPathsAlexa._searchFile});
-          const bool isPhraseSpotted = true;
-          const bool allowsFollowUpRecog = false;
-          
-          const bool success = _recognizer_2->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
-                                                                          isPhraseSpotted, allowsFollowUpRecog);
-          if (success)
-          {
-            PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.SwitchTriggerSearch",
-                             "Switched speechRecognizer2 to netFile: %s searchFile %s",
-                             netFilePath.c_str(), searchFilePath.c_str());
-            
-            _recognizer_2->SetRecognizerIndex(singleSlotIndex);
-          }
-          else
-          {
-            _currentTriggerPathsAlexa = MicTriggerConfig::TriggerDataPaths{};
-            _nextTriggerPathsAlexa = MicTriggerConfig::TriggerDataPaths{};
-            PRINT_NAMED_ERROR("MicDataProcessor.ProcessTriggerLoop.FailedSwitchTriggerSearch",
-                              "Failed to add speechRecognizer2 netFile: %s searchFile %s",
-                              netFilePath.c_str(), searchFilePath.c_str());
-          }
-        }
-        else
-        {
-          PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.ClearTriggerSearch",
-                           "Cleared speechRecognizer to have no search");
-        }
-      }
-    }
+//    {
+//      std::lock_guard<std::mutex> lock (_triggerModelMutex);
+//      if (_currentTriggerPathsVector != _nextTriggerPathsVector)
+//      {
+//        ANKI_CPU_PROFILE("SwitchTriggerWordSearchVector");
+//        _currentTriggerPathsVector = _nextTriggerPathsVector;
+//        _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+//        const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
+//        _recognizer->RemoveRecognitionData(singleSlotIndex);
+//
+//        if (_currentTriggerPathsVector.IsValid())
+//        {
+//          PRINT_NAMED_WARNING("WHATNOW", "trigger path _dataDir=%s _searchFile=%s _netFile=%s", _currentTriggerPathsVector._dataDir.c_str(), _currentTriggerPathsVector._searchFile.c_str(), _currentTriggerPathsVector._netFile.c_str()  );
+//          const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+//                                                                          _currentTriggerPathsVector._dataDir,
+//                                                                          _currentTriggerPathsVector._netFile});
+//          const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+//                                                                            _currentTriggerPathsVector._dataDir,
+//                                                                            _currentTriggerPathsVector._searchFile});
+//          const bool isPhraseSpotted = true;
+//          const bool allowsFollowUpRecog = false;
+//          const bool success = _recognizer->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
+//                                                                      isPhraseSpotted, allowsFollowUpRecog);
+//          if (success)
+//          {
+//            PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.SwitchTriggerSearch",
+//                            "Switched speechRecognizer to netFile: %s searchFile %s",
+//                            netFilePath.c_str(), searchFilePath.c_str());
+//
+//            _recognizer->SetRecognizerIndex(singleSlotIndex);
+//          }
+//          else
+//          {
+//            _currentTriggerPathsVector = MicTriggerConfig::TriggerDataPaths{};
+//            _nextTriggerPathsVector = MicTriggerConfig::TriggerDataPaths{};
+//            PRINT_NAMED_ERROR("WHATNOW MicDataProcessor.ProcessTriggerLoop.FailedSwitchTriggerSearch",
+//                              "Failed to add speechRecognizer netFile: %s searchFile %s",
+//                              netFilePath.c_str(), searchFilePath.c_str());
+//          }
+//        }
+//        else
+//        {
+//          PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.ClearTriggerSearch",
+//                          "Cleared speechRecognizer to have no search");
+//        }
+//      }
+//
+//      if ( _recognizer_2 && _currentTriggerPathsAlexa != _nextTriggerPathsAlexa)
+//      {
+//        ANKI_CPU_PROFILE("SwitchTriggerWordSearch");
+//        _currentTriggerPathsAlexa = _nextTriggerPathsAlexa;
+//        _recognizer_2->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+//        const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
+//        _recognizer_2->RemoveRecognitionData(singleSlotIndex);
+//
+//        if (_currentTriggerPathsAlexa.IsValid())
+//        {
+//          PRINT_NAMED_WARNING("WHATNOW", "ALEXA trigger path _dataDir=%s _searchFile=%s _netFile=%s SAME=%d", _currentTriggerPathsAlexa._dataDir.c_str(), _currentTriggerPathsAlexa._searchFile.c_str(), _currentTriggerPathsAlexa._netFile.c_str() , _currentTriggerPathsAlexa == _nextTriggerPathsAlexa );
+//          const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+//            _currentTriggerPathsAlexa._dataDir,
+//            _currentTriggerPathsAlexa._netFile});
+//          const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+//            _currentTriggerPathsAlexa._dataDir,
+//            _currentTriggerPathsAlexa._searchFile});
+//          const bool isPhraseSpotted = true;
+//          const bool allowsFollowUpRecog = false;
+//
+//          const bool success = _recognizer_2->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
+//                                                                          isPhraseSpotted, allowsFollowUpRecog);
+//          if (success)
+//          {
+//            PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.SwitchTriggerSearch",
+//                             "Switched speechRecognizer2 to netFile: %s searchFile %s",
+//                             netFilePath.c_str(), searchFilePath.c_str());
+//
+//            _recognizer_2->SetRecognizerIndex(singleSlotIndex);
+//          }
+//          else
+//          {
+//            _currentTriggerPathsAlexa = MicTriggerConfig::TriggerDataPaths{};
+//            _nextTriggerPathsAlexa = MicTriggerConfig::TriggerDataPaths{};
+//            PRINT_NAMED_ERROR("MicDataProcessor.ProcessTriggerLoop.FailedSwitchTriggerSearch",
+//                              "Failed to add speechRecognizer2 netFile: %s searchFile %s",
+//                              netFilePath.c_str(), searchFilePath.c_str());
+//          }
+//        }
+//        else
+//        {
+//          PRINT_NAMED_INFO("MicDataProcessor.ProcessTriggerLoop.ClearTriggerSearch",
+//                           "Cleared speechRecognizer to have no search");
+//        }
+//      }
+//    }
 
     // Run the trigger detection, which will use the callback defined above
     // Note we skip it if there is no activity as of the latest processed audioblock
     if ((_micImmediateDirection->GetLatestSample().activeState != 0) || kIgnoreVadStateInRecognizer)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
-      _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
-      if( _recognizer_2 ) {
-        _recognizer_2->Update(processedAudio.data(), (unsigned int)processedAudio.size());
-      }
+//      _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+//      if( _recognizer_2 ) {
+//        _recognizer_2->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+//      }
+      
+      _recognizer_v6->Update(processedAudio.data(), (unsigned int)processedAudio.size());
     }
 
     // Now we're done using this audio with the recognizer, so let it go
