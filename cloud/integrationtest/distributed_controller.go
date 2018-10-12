@@ -17,6 +17,7 @@ const (
 type localController interface {
 	start()
 	stop()
+	set(name, value string)
 	quit()
 }
 
@@ -68,6 +69,13 @@ func (c *distributedController) forwardCommands(localController localController)
 			case "stop":
 				c.localController.stop()
 				c.state = Stopped
+			case "set":
+				keyValueParts := strings.Split(args[1], "=")
+				if len(keyValueParts) == 2 {
+					c.localController.set(keyValueParts[0], keyValueParts[1])
+				} else {
+					fmt.Println("Received invalid key/value pair for set command:", args[1])
+				}
 			case "quit":
 				c.pubsub.Close()
 				c.localController.quit()

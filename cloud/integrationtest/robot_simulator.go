@@ -196,11 +196,11 @@ func simulate(options *options) {
 	simulator.addSetupAction(simulator.testPrimaryPairingSequence)
 
 	// After that we periodically run the following actions
-	simulator.addPeriodicAction("heart_beat", options.heartBeatInterval, simulator.heartBeat)
-	simulator.addPeriodicAction("jdocs", options.jdocsInterval, simulator.testJdocsReadAndWriteSettings)
-	simulator.addPeriodicAction("logging", options.logCollectorInterval, simulator.testLogCollector)
-	simulator.addPeriodicAction("token_refresh", options.tokenRefreshInterval, simulator.testTokenRefresh)
-	simulator.addPeriodicAction("mic_connection_check", options.connectionCheckInterval, simulator.testMicConnectionCheck)
+	simulator.addPeriodicAction("heart_beat", options.heartBeatInterval, options.heartBeatStdDev, simulator.heartBeat)
+	simulator.addPeriodicAction("jdocs", options.jdocsInterval, options.jdocsStdDev, simulator.testJdocsReadAndWriteSettings)
+	simulator.addPeriodicAction("logging", options.logCollectorInterval, options.logCollectorStdDev, simulator.testLogCollector)
+	simulator.addPeriodicAction("token_refresh", options.tokenRefreshInterval, options.tokenRefreshStdDev, simulator.testTokenRefresh)
+	simulator.addPeriodicAction("mic_connection_check", options.connectionCheckInterval, options.connectionCheckStdDev, simulator.testMicConnectionCheck)
 
 	if *options.enableDistributedControl {
 		fmt.Println("Listening for external simulation commands")

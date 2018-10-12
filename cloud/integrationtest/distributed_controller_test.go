@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"math"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -40,6 +43,10 @@ func (s *testSimulator) periodicAction2() error {
 	return nil
 }
 
+func (s *testSimulator) periodicAction3() error {
+	return nil
+}
+
 type DistributedControllerTestSuite struct {
 	suite.Suite
 
@@ -60,8 +67,9 @@ func (s *DistributedControllerTestSuite) SetupSuite() {
 
 	s.simulator.addSetupAction(s.simulator.setupAction)
 	s.simulator.addTearDownAction(s.simulator.tearDownAction)
-	s.simulator.addPeriodicAction("action1", time.Millisecond*50, s.simulator.periodicAction1)
-	s.simulator.addPeriodicAction("action2", time.Millisecond*100, s.simulator.periodicAction2)
+	s.simulator.addPeriodicAction("action1", time.Millisecond*50, 0, s.simulator.periodicAction1)
+	s.simulator.addPeriodicAction("action2", time.Millisecond*100, 0, s.simulator.periodicAction2)
+	s.simulator.addPeriodicAction("action3", 0, 0, s.simulator.periodicAction3)
 
 	s.controller.forwardCommands(s.simulator)
 }
@@ -90,6 +98,55 @@ func (s *DistributedControllerTestSuite) TestIDIncrementer() {
 	s.NoError(err)
 
 	s.Equal(id2, id1+1)
+}
+
+func (s *DistributedControllerTestSuite) TestDurationDistribution() {
+	const numSamples = 1000
+
+	action := &action{meanDuration: time.Millisecond * 100, stdDevDuration: time.Millisecond * 50}
+
+	var totalDuration time.Duration
+	for i := 0; i < numSamples; i++ {
+		duration := s.simulator.calculateDuration(action, 0)
+		totalDuration += duration
+		s.True(duration >= 0)
+	}
+
+	s.True(math.Abs(float64(action.meanDuration-totalDuration/numSamples)) < float64(action.stdDevDuration))
+}
+
+func (s *DistributedControllerTestSuite) TestSetKeyValue() {
+	require := require.New(s.T())
+
+	const id = "action3"
+	const duration = "10s"
+
+	expectedDuration, err := time.ParseDuration(duration)
+	require.NoError(err)
+
+	action := s.simulator.periodicActionMap[id]
+	require.NotNil(action)
+
+	s.Equal(time.Duration(0), action.stdDevDuration)
+	s.Equal(time.Duration(0), action.meanDuration)
+
+	// set standard deviation
+	s.controller.sendCommand(fmt.Sprintf("set:%s.stddev=%s", id, duration))
+
+	// allow for round-trip to external Redis
+	time.Sleep(time.Millisecond * 50)
+
+	s.Equal(expectedDuration, action.stdDevDuration)
+	s.Equal(time.Duration(0), action.meanDuration)
+
+	// set (mean) interval duration
+	s.controller.sendCommand(fmt.Sprintf("set:%s.mean=%s", id, duration))
+
+	// allow for round-trip to external Redis
+	time.Sleep(time.Millisecond * 50)
+
+	s.Equal(expectedDuration, action.stdDevDuration)
+	s.Equal(expectedDuration, action.meanDuration)
 }
 
 func (s *DistributedControllerTestSuite) TestStartStop() {
