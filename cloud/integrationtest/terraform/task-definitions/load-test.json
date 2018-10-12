@@ -19,7 +19,7 @@
             },
             {
                 "name": "LOG_KINESIS_ROLE_ARN",
-                "value": "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-development"
+                "value": "${logging_role}"
             },
             {
                 "name": "LOG_SOURCE",
@@ -36,6 +36,10 @@
             {
                 "name": "ENABLE_ACCOUNT_CREATION",
                 "value": "${enable_account_creation}"
+            },
+            {
+                "name": "ENABLE_DISTRIBUTED_CONTROL",
+                "value": "${enable_distributed_control}"
             },
             {
                 "name": "REDIS_ADDRESS",

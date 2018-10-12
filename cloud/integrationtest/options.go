@@ -7,12 +7,17 @@ import (
 	"github.com/jawher/mow.cli"
 )
 
+type uniqueIDProvider interface {
+	provideUniqueTestID() (int, error)
+}
+
 type options struct {
 	envName *string
 
 	testID *int
 
-	enableAccountCreation *bool
+	enableDistributedControl *bool
+	enableAccountCreation    *bool
 
 	redisAddress    *string
 	defaultCloudDir *string
@@ -60,18 +65,25 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  1,
 	})
 
+	options.enableAccountCreation = app.Bool(cli.BoolOpt{
+		Name:   "a account-creation",
+		Desc:   "Enables account creation as part of test",
+		EnvVar: "ENABLE_ACCOUNT_CREATION",
+		Value:  false,
+	})
+
+	options.enableDistributedControl = app.Bool(cli.BoolOpt{
+		Name:   "a account-creation",
+		Desc:   "Enables remote control for starting/stopping",
+		EnvVar: "ENABLE_DISTRIBUTED_CONTROL",
+		Value:  false,
+	})
+
 	options.redisAddress = app.String(cli.StringOpt{
 		Name:   "r redis-endpoint",
 		Desc:   "Redis host and port",
 		EnvVar: "REDIS_ADDRESS",
 		Value:  "localhost:6379",
-	})
-
-	options.numberOfCerts = app.Int(cli.IntOpt{
-		Name:   "n num-certs",
-		Desc:   "The number of provisioned robot certs (0000..NNNN)",
-		EnvVar: "NUMBER_OF_CERTS",
-		Value:  1000,
 	})
 
 	options.defaultCloudDir = app.String(cli.StringOpt{
@@ -94,6 +106,13 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "/var/log/syslog",
 	})
 
+	options.numberOfCerts = app.Int(cli.IntOpt{
+		Name:   "n num-certs",
+		Desc:   "The number of provisioned robot certs (0000..NNNN)",
+		EnvVar: "NUMBER_OF_CERTS",
+		Value:  1000,
+	})
+
 	options.testUserName = app.String(cli.StringOpt{
 		Name:   "u username",
 		Desc:   "Username for test accounts",
@@ -105,13 +124,6 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Desc:   "Password for test accounts",
 		EnvVar: "TEST_USER_PASSWORD",
 		Value:  "ankisecret",
-	})
-
-	options.enableAccountCreation = app.Bool(cli.BoolOpt{
-		Name:   "a account-creation",
-		Desc:   "Enables account creation as part of test",
-		EnvVar: "ENABLE_ACCOUNT_CREATION",
-		Value:  false,
 	})
 
 	heartBeatInterval := app.String(cli.StringOpt{
@@ -158,8 +170,8 @@ func newFromEnvironment(app *cli.Cli) *options {
 	return options
 }
 
-func (o *options) finalizeIdentity() {
-	testID, err := getUniqueTestID(*o.redisAddress)
+func (o *options) finalizeIdentity(idProvider uniqueIDProvider) {
+	testID, err := idProvider.provideUniqueTestID()
 	if err == nil {
 		testID %= *o.numberOfCerts
 		*o.testID = testID

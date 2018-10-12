@@ -16,25 +16,28 @@ import (
 )
 
 type robotSimulator struct {
-	simulator
+	*simulator
 
 	options *options
 
 	robotInstance *testableRobot
 }
 
+var signalChannel chan os.Signal
+
 func init() {
+	signalChannel = make(chan os.Signal, 1)
+
 	scli.InitLogFlags("")
 }
 
 func newRobotSimulator(options *options) (*robotSimulator, error) {
-	simulator := &robotSimulator{options: options}
+	simulator := &robotSimulator{
+		simulator:     newSimulator(),
+		options:       options,
+		robotInstance: newTestableRobot(*options.testID, *options.urlConfigFile),
+	}
 
-	// Enable client certs and set custom key pair dir (for this user)
-	token.UseClientCert = true
-	robot.DefaultCloudDir = *options.defaultCloudDir
-
-	simulator.robotInstance = newTestableRobot(*options.testID, *options.urlConfigFile)
 	go simulator.robotInstance.run()
 
 	simulator.robotInstance.waitUntilReady()
@@ -169,7 +172,6 @@ func (s *robotSimulator) heartBeat() error {
 }
 
 func waitForSignal() {
-	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
 
 	<-signalChannel
@@ -178,7 +180,11 @@ func waitForSignal() {
 }
 
 func simulate(options *options) {
-	options.finalizeIdentity()
+	controller := newDistributedController(*options.redisAddress)
+
+	options.finalizeIdentity(controller)
+
+	robot.DefaultCloudDir = *options.defaultCloudDir
 
 	simulator, err := newRobotSimulator(options)
 	simulator.logIfNoError(err, "main", "New robot created")
@@ -190,13 +196,18 @@ func simulate(options *options) {
 	simulator.addSetupAction(simulator.testPrimaryPairingSequence)
 
 	// After that we periodically run the following actions
-	simulator.addPeriodicAction(options.heartBeatInterval, simulator.heartBeat)
-	simulator.addPeriodicAction(options.jdocsInterval, simulator.testJdocsReadAndWriteSettings)
-	simulator.addPeriodicAction(options.logCollectorInterval, simulator.testLogCollector)
-	simulator.addPeriodicAction(options.tokenRefreshInterval, simulator.testTokenRefresh)
-	simulator.addPeriodicAction(options.connectionCheckInterval, simulator.testMicConnectionCheck)
+	simulator.addPeriodicAction("heart_beat", options.heartBeatInterval, simulator.heartBeat)
+	simulator.addPeriodicAction("jdocs", options.jdocsInterval, simulator.testJdocsReadAndWriteSettings)
+	simulator.addPeriodicAction("logging", options.logCollectorInterval, simulator.testLogCollector)
+	simulator.addPeriodicAction("token_refresh", options.tokenRefreshInterval, simulator.testTokenRefresh)
+	simulator.addPeriodicAction("mic_connection_check", options.connectionCheckInterval, simulator.testMicConnectionCheck)
 
-	simulator.start()
+	if *options.enableDistributedControl {
+		fmt.Println("Listening for external simulation commands")
+		controller.forwardCommands(simulator)
+	} else {
+		simulator.start()
+	}
 
 	waitForSignal()
 
@@ -213,6 +224,9 @@ func main() {
 	app := mcli.App("robot_simulator", "Robot cloud simulation tool")
 
 	options := newFromEnvironment(app)
+
+	// Enable client certs and set custom key pair dir (for this user)
+	token.UseClientCert = true
 
 	app.Action = func() {
 		simulate(options)

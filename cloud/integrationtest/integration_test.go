@@ -16,6 +16,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type testIDProvider struct{}
+
+func (testIDProvider) provideUniqueTestID() (int, error) {
+	return 0, nil
+}
+
 type IntegrationTestSuite struct {
 	suite.Suite
 
@@ -28,6 +34,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app := cli.App("robot_integration_test", "Robot integration test")
 
 	s.options = newFromEnvironment(app)
+
+	var provider testIDProvider
+	s.options.finalizeIdentity(provider)
 
 	// Enable client certs and set custom key pair dir (for this user)
 	token.UseClientCert = true
