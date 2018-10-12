@@ -181,7 +181,8 @@ class Robot:
         try:
             dict_entry = parser[serial]
         except KeyError:
-            raise Exception("Could not find matching robot info for serial. Please check your serial number is correct.")
+            raise Exception('\n\nCould not find matching robot info for serial. Please check your serial number is correct.\n'
+                            'Example: ./01_hello_world --serial {robot_serial_number}')
 
         return dict_entry
 
