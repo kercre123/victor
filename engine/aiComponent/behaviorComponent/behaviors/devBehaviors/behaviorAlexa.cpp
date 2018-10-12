@@ -90,6 +90,8 @@ void BehaviorAlexa::OnBehaviorActivated()
   _dVars = DynamicVariables();
   _dVars.uxState = uxState;
   
+  SmartDisableKeepFaceAlive();
+  
   if( _dVars.uxState == AlexaUXState::Speaking ) {
     TransitionToSpeakingGetIn();
   }
