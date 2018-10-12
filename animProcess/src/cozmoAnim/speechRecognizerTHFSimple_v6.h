@@ -10,8 +10,8 @@
 * Copyright: Anki, Inc. 2016
 *
 */
-#ifndef __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFSimple_H_
-#define __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFSimple_H_
+#ifndef __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFSimple_V6_H_
+#define __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFSimple_V6_H_
 
 #include "audioUtil/speechRecognizer.h"
 
@@ -52,6 +52,9 @@ public:
   virtual void SetRecognizerFollowupIndex(IndexType index) override;
   virtual IndexType GetRecognizerIndex() const override;
   
+  // TEMP
+  void PerformCallBack(const char* callbackArg, float score);
+  
 private:
   struct SpeechRecognizerTHFData;
   std::unique_ptr<SpeechRecognizerTHFData> _impl;
@@ -67,4 +70,4 @@ private:
 } // end namespace Vector
 } // end namespace Anki
 
-#endif // __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFSimple_H_
+#endif // __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFSimple_V6_H_

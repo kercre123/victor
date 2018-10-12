@@ -10,8 +10,8 @@
 * Copyright: Anki, Inc. 2017
 *
 */
-#ifndef __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypesSimple_H_
-#define __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypesSimple_H_
+#ifndef __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypesSimple_V6_H_
+#define __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypesSimple_V6_H_
 
 extern "C" {
 #ifndef bool
@@ -35,7 +35,8 @@ namespace Vector {
 class RecogData_v6
 {
 public:
-  RecogData_v6(recog_t* recog, searchs_t* search, bool isPhraseSpotted, bool allowsFollowupRecog);
+  RecogData_v6();
+//  RecogData_v6(recog_t* recog, searchs_t* search, bool isPhraseSpotted, bool allowsFollowupRecog);
   ~RecogData_v6();
   
   RecogData_v6(RecogData_v6&& other);
@@ -44,18 +45,18 @@ public:
   RecogData_v6(const RecogData_v6& other) = delete;
   RecogData_v6& operator=(const RecogData_v6& other) = delete;
   
-  recog_t* GetRecognizer() const { return _recognizer; }
-  searchs_t* GetSearch() const { return _search; }
+//  recog_t* GetRecognizer() const { return _recognizer; }
+//  searchs_t* GetSearch() const { return _search; }
   
-  static void DestroyData(recog_t*& recognizer, searchs_t*& search);
+//  static void DestroyData(recog_t*& recognizer, searchs_t*& search);
   
   bool IsPhraseSpotted() const { return _isPhraseSpotted; }
   bool AllowsFollowupRecog() const { return _allowsFollowupRecog; }
   
   
 private:
-  recog_t*          _recognizer = nullptr;
-  searchs_t*        _search = nullptr;
+//  recog_t*          _recognizer = nullptr;
+//  searchs_t*        _search = nullptr;
   
   bool              _isPhraseSpotted = false;
   bool              _allowsFollowupRecog = false;
@@ -72,4 +73,4 @@ static RecogDataSP MakeRecogDataSP(Args&& ...args)
 } // end namespace Vector
 } // end namespace Anki
 
-#endif // __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypesSimple_H_
+#endif // __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypesSimple_V6_H_

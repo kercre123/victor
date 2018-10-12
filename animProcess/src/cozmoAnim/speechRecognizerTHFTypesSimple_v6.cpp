@@ -15,54 +15,54 @@
 
 namespace Anki {
 namespace Vector {
-
-RecogData_v6::RecogData_v6(recog_t* recog, searchs_t* search, bool isPhraseSpotted, bool allowsFollowupRecog)
-: _recognizer(recog)
-, _search(search)
-, _isPhraseSpotted(isPhraseSpotted)
-, _allowsFollowupRecog(allowsFollowupRecog)
+RecogData_v6::RecogData_v6()
+//RecogData_v6::RecogData_v6(recog_t* recog, searchs_t* search, bool isPhraseSpotted, bool allowsFollowupRecog)
+//: _recognizer(recog)
+//, _search(search)
+//, _isPhraseSpotted(isPhraseSpotted)
+//, _allowsFollowupRecog(allowsFollowupRecog)
 { }
 
 RecogData_v6::~RecogData_v6()
 {
-  DestroyData(_recognizer, _search);
+//  DestroyData(_recognizer, _search);
 }
 
 RecogData_v6::RecogData_v6(RecogData_v6&& other)
-: _recognizer(other._recognizer)
-, _search(other._search)
+//: _recognizer(other._recognizer)
+//, _search(other._search)
 {
-  other._recognizer = nullptr;
-  other._search = nullptr;
+//  other._recognizer = nullptr;
+//  other._search = nullptr;
 }
 
 RecogData_v6& RecogData_v6::operator=(RecogData_v6&& other) // move assignment
 {
   if(this != &other) // prevent self-move
   {
-    DestroyData(_recognizer, _search);
-    _recognizer = other._recognizer;
-    _search = other._search;
-    other._recognizer = nullptr;
-    other._search = nullptr;
+//    DestroyData(_recognizer, _search);
+//    _recognizer = other._recognizer;
+//    _search = other._search;
+//    other._recognizer = nullptr;
+//    other._search = nullptr;
   }
   return *this;
 }
 
-void RecogData_v6::DestroyData(recog_t*& recognizer, searchs_t*& search)
-{
-  if (recognizer)
-  {
-    thfRecogDestroy(recognizer);
-    recognizer = nullptr;
-  }
-  
-  if (search)
-  {
-    thfSearchDestroy(search);
-    search = nullptr;
-  }
-}
+//void RecogData_v6::DestroyData(recog_t*& recognizer, searchs_t*& search)
+//{
+//  if (recognizer)
+//  {
+//    thfRecogDestroy(recognizer);
+//    recognizer = nullptr;
+//  }
+//  
+//  if (search)
+//  {
+//    thfSearchDestroy(search);
+//    search = nullptr;
+//  }
+//}
   
 } // end namespace Vector
 } // end namespace Anki
