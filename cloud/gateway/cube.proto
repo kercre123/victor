@@ -290,8 +290,8 @@ message CreateFixedCustomObjectRequest {
 }
 
 message CreateFixedCustomObjectResponse {
-  ResponseStatus status = 1;
-  uint32 object_id = 1;
+  ResponseStatus  status    = 1;
+  uint32          object_id = 2;
 }
 
 // Defines a custom object of the given size with the given markers centered on each side
@@ -313,8 +313,8 @@ message DefineCustomBoxRequest {
 }
 
 message DefineCustomBoxResponse {
-  ResponseStatus status = 1;
-  bool success = 1;
+  ResponseStatus  status  = 1;
+  bool            success = 2;
 }
 
 // Defines a custom cube of the given size. The cube will have the same marker centered on all faces.
@@ -329,8 +329,8 @@ message DefineCustomCubeRequest {
 }
 
 message DefineCustomCubeResponse {
-  ResponseStatus status = 1;
-  bool success = 1;
+  ResponseStatus  status  = 1;
+  bool            success = 2;
 }
 
 // Defines a custom wall of the given height and width, with the same marker centered on both sides (front and back).
@@ -347,8 +347,8 @@ message DefineCustomWallRequest {
 }
 
 message DefineCustomWallResponse {
-  ResponseStatus status = 1;
-  bool success = 1;
+  ResponseStatus  status  = 1;
+  bool            success = 2;
 }
 
 message ObjectEvent {
