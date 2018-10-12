@@ -26,6 +26,7 @@
 
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Vector {
@@ -70,7 +71,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 
   _instanceParams.getInAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetInTriggerKey, kDebugStr));
   _instanceParams.getOutAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetOutTriggerKey, kDebugStr));
-  _instanceParams.totalTimeDisplayClock_sec = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
+  _instanceParams.totalTimeDisplayClock_sec = static_cast<float>(JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr));
   JsonTools::GetValueOptional(config, kShouldTurnToFaceKey, _instanceParams.shouldTurnToFace);
   JsonTools::GetValueOptional(config, kShouldPlayAudioKey, _instanceParams.shouldPlayAudioOnClockUpdates);
 
@@ -206,8 +207,7 @@ void BehaviorProceduralClock::TransitionToShowClock()
   }
 
   _lifetimeParams.currentState = BehaviorState::ShowClock;
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-  _lifetimeParams.timeShowClockStarted = timerUtility.GetSystemTime_s();
+  _lifetimeParams.timeShowClockStarted = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   TransitionToShowClockInternal();
 }
@@ -216,8 +216,9 @@ void BehaviorProceduralClock::TransitionToShowClock()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::TransitionToShowClockInternal()
 {
-  for(int i = 0; i < _instanceParams.totalTimeDisplayClock_sec; i++){
-    BuildAndDisplayProceduralClock(i, i*1000);   
+  int numUpdates = std::round(_instanceParams.totalTimeDisplayClock_sec);
+  for(int i = 0; i < numUpdates; i++){
+    BuildAndDisplayProceduralClock(i, i*1000);
   }
 }
 
@@ -242,8 +243,7 @@ void BehaviorProceduralClock::BehaviorUpdate()
   UpdateProceduralClockInternal();
 
   if(_lifetimeParams.currentState == BehaviorState::ShowClock){
-    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
-    const int currentTime_s = timerUtility.GetSystemTime_s();
+    const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock_sec)){
       TransitionToGetOut();
