@@ -6,6 +6,7 @@ asset_project(
                 ('assets', 'RewardedActions/RewardedActions.json'),
                 ('assets', 'cubeFirmware/cube.dfu'),
                 ('externals/anki-thirdparty/sensory', 'hey_vector/**/*.raw'),
+                ('externals/anki-thirdparty/sensory', 'hey_vector_alexa/**/*.snsr'),
                 ('externals/animation-assets', 'animations/**/*.bin'),
                 ('externals/animation-assets', 'animationGroups/**/*.json'),
                 ('externals/animation-assets', 'sprites/**/*.png'),
