@@ -1074,11 +1074,17 @@ namespace Vision {
 
     } else {
       // Busy: tell the caller no
+
+      // Pretty verbose, but potentially useful for some debugging
+      //      PRINT_CH_DEBUG(LOG_CHANNEL, "FaceRecognizer.SetNextFaceToRecognize.Ignoring",
+      //                     "Idle:%d AnythingToDo:%d EnableEnrollment:%d HoldCount:%d",
+      //                     (ProcessingState::Idle == _state), anythingToDo, enableEnrollment,
+      //                     detectionInfo.nHoldCount);
+      
       return false;
     }
   }
-
-
+  
   Result FaceRecognizer::UpdateExistingAlbumEntry(AlbumEntryID_t albumEntry, HFEATURE& hFeature, RecognitionScore score)
   {
     DEV_ASSERT(ProcessingState::FeaturesReady == _state, "FaceRecognizer.UpdateExistingAlbumEntry.FeaturesShouldBeReady");

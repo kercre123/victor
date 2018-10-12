@@ -982,8 +982,47 @@ namespace Vision {
     return RESULT_OK;
   }
 
+  void FaceTracker::Impl::SetCroppingMask(const INT32 nWidth,
+                                          const INT32 nHeight,
+                                          const float cropFactor)
+  {
+    DEV_ASSERT(Util::IsFltGTZero(cropFactor), "FaceTrackerImpl.SetCroppingMask.ZeroCropFactor");
+    
+    INT32 okaoResult = OKAO_NORMAL;
+    
+    RECT rcEdgeMask;
+    rcEdgeMask.left   = -1;
+    rcEdgeMask.top    = -1;
+    rcEdgeMask.bottom = -1;
+    rcEdgeMask.right  = -1;
+    if(Util::IsFltLT(cropFactor, 1.f))
+    {
+      rcEdgeMask.top = 0;
+      rcEdgeMask.bottom = nHeight-1;
+      rcEdgeMask.left = std::max(0, (INT32)std::round(0.5*(1.f-cropFactor) * nWidth));
+      rcEdgeMask.right = (nWidth-1) - rcEdgeMask.left;
+    }
+    
+    okaoResult = OKAO_DT_SetEdgeMask(_okaoDetectorHandle, rcEdgeMask);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.SetCroppingMask.FaceLibSetEdgeMaskFail",
+                          "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
+                          okaoResult, rcEdgeMask.left, rcEdgeMask.top,
+                          rcEdgeMask.right, rcEdgeMask.bottom);
+    }
+    
+    okaoResult = OKAO_DT_MV_SetTrackingEdgeMask(_okaoDetectorHandle, rcEdgeMask);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.SetCroppingMask.FaceLibSetTrackingEdgeMaskFail",
+                          "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
+                          okaoResult, rcEdgeMask.left, rcEdgeMask.top,
+                          rcEdgeMask.right, rcEdgeMask.bottom);
+    }
+    
+  }
 
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
+                                   const float cropFactor,
                                    std::list<TrackedFace>& faces,
                                    std::list<UpdatedFaceID>& updatedIDs)
   {
@@ -1005,11 +1044,13 @@ namespace Vision {
 
     DEV_ASSERT(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
 
-    INT32 okaoResult = OKAO_NORMAL;
-    
-    Tic("FaceDetect");
     const INT32 nWidth  = frameOrig.GetNumCols();
     const INT32 nHeight = frameOrig.GetNumRows();
+    
+    SetCroppingMask(nWidth, nHeight, cropFactor);
+    
+    Tic("FaceDetect");
+    INT32 okaoResult = OKAO_NORMAL;
     RAWIMAGE* dataPtr = const_cast<UINT8*>(frameOrig.GetDataPointer());
     okaoResult = OKAO_DT_Detect_GRAY(_okaoDetectorHandle, dataPtr, nWidth, nHeight,
                                      GRAY_ORDER_Y0Y1Y2Y3, _okaoDetectionResultHandle);

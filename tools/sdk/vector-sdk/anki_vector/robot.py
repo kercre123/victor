@@ -145,6 +145,7 @@ class Robot:
         self.behavior_activation_timeout = behavior_activation_timeout
         self.enable_vision_mode = enable_vision_mode
         self.cache_animation_list = cache_animation_list
+
         # Robot state/sensor data
         self._pose: util.Pose = None
         self._pose_angle_rad: float = None
@@ -232,7 +233,6 @@ class Robot:
             raise exceptions.VectorNotReadyException("CameraComponent is not yet initialized")
         return self._camera
 
-    # TODO sample code
     @property
     def faces(self) -> faces.FaceComponent:
         """A reference to the FaceComponent instance."""
@@ -240,7 +240,6 @@ class Robot:
             raise exceptions.VectorNotReadyException("FaceComponent is not yet initialized")
         return self._faces
 
-    # TODO sample code
     @property
     def motors(self) -> motors.MotorComponent:
         """A reference to the MotorComponent instance."""
@@ -248,7 +247,6 @@ class Robot:
             raise exceptions.VectorNotReadyException("MotorComponent is not yet initialized")
         return self._motors
 
-    # TODO sample code
     @property
     def screen(self) -> screen.ScreenComponent:
         """A reference to the ScreenComponent instance."""
@@ -256,7 +254,6 @@ class Robot:
             raise exceptions.VectorNotReadyException("ScreenComponent is not yet initialized")
         return self._screen
 
-    # TODO sample code
     @property
     def photos(self) -> photos.PhotographComponent:
         """A reference to the PhotographComponent instance."""

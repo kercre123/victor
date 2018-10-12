@@ -100,6 +100,8 @@ namespace Anki {
       
       void SetDoLiftLoadCheck(bool enable) { _doLiftLoadCheck = enable; }
       
+      void SetBackUpWhileLiftingCube(bool enable) { _backUpWhileLiftingCube = enable; }
+      
       void SetNumDockingRetries(u8 numRetries) { _numDockingRetries = numRetries; }
       
       // The offset for the preDock pose as opposed to the offset for the actual docking manuever
@@ -267,6 +269,7 @@ namespace Anki {
       f32                        _preDockPoseDistOffsetX_mm      = 0;
       bool                       _checkForObjectOnTopOf          = false;
       bool                       _doLiftLoadCheck                = false;
+      bool                       _backUpWhileLiftingCube         = false;
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
       bool                       _firstTurnTowardsObject         = true;
       DockingComponent*          _dockingComponentPtr            = nullptr;

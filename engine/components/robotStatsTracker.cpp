@@ -79,7 +79,7 @@ void FlushRobotStatsToDisk( ConsoleFunctionContextRef context )
 
 #define CONSOLE_GROUP "RobotStats"
 
-CONSOLE_VAR( f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 60.0f );
+CONSOLE_VAR( f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 10.0f );
 
 CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
 CONSOLE_FUNC( FlushRobotStatsToDisk, CONSOLE_GROUP );
@@ -139,10 +139,7 @@ void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& 
   });
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const auto currWallTime = WallTime::getInstance()->GetApproximateTime();
-  // start alive tracking counter now
-  _lastTimeAliveUpdated_s = currTime_s;
-  _lastAliveWallTime = currWallTime;
+  _timeOfNextAliveTimeCheck = currTime_s + kRobotStats_AliveUpdatePeriod_s;
 }
 
 void RobotStatsTracker::IncreaseStimulationSeconds(float delta)
@@ -223,19 +220,16 @@ void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  if( _lastTimeAliveUpdated_s + kRobotStats_AliveUpdatePeriod_s <= currTime_s ) {
-    auto currWallTime = WallTime::getInstance()->GetApproximateTime();
-    auto wallTimeSinceUpdate = currWallTime - _lastAliveWallTime;
-    auto deltaSeconds = std::chrono::duration_cast<std::chrono::seconds>(wallTimeSinceUpdate).count();
-    if( deltaSeconds > 0 ) {
-      IncreaseHelper( kLifetimeAliveCategory, "seconds", deltaSeconds );
-    }
-
-    _lastTimeAliveUpdated_s = currTime_s;
-    _lastAliveWallTime = currWallTime;
+  if( currTime_s > _timeOfNextAliveTimeCheck ) {
+    const auto secondsElapsed = static_cast<uint64_t>(kRobotStats_AliveUpdatePeriod_s);
+    IncreaseHelper( kLifetimeAliveCategory, "seconds", secondsElapsed );
+    _timeOfNextAliveTimeCheck += kRobotStats_AliveUpdatePeriod_s;
   }
 
   // Update jdoc if there were change(s) this tick
+  // Note: In this case (robot lifetime stats), the call to UpdateStatsJdoc is very quick
+  // because the body of the jdoc is owned by the JdocsManager, and we are not saving to
+  // disk or submitting to cloud at this time
   if (_dirtyJdoc)
   {
     static const bool kSaveToDiskImmediately = false;

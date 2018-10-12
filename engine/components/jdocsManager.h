@@ -151,6 +151,7 @@ private:
     int                       _origCloudSavePeriod_s; // Original cloud save period (so we can restore if changed)
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
     bool                      _pendingCloudSave;  // True when cloud save is awaiting response from prior cloud save
+    external_interface::JdocResolveMethod _resolveMethod;   // Resolve method to use when cloud has newer version of this jdoc
 
     struct CloudAbuseDetectionConfig
     {

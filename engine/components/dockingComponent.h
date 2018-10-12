@@ -56,6 +56,7 @@ public:
   // - how many firmware side retries should occur
   // - which docking method to use
   // - whether or not to a lift load check
+  // - whether or not to begin raising the lift at the same time as beginning to back up
   Result DockWithObject(const ObjectID objectID,
                         const f32 speed_mmps,
                         const f32 accel_mmps2,
@@ -68,7 +69,8 @@ public:
                         const f32 placementOffsetAngle_rad = 0,
                         const u8 numRetries = 2,
                         const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
-                        const bool doLiftLoadCheck = false);
+                        const bool doLiftLoadCheck = false,
+                        const bool backUpWhileLiftingCube = false);
   
   // Tells the robot to abort docking
   Result AbortDocking() const;
