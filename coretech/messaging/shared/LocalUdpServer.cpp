@@ -143,14 +143,18 @@ void LocalUdpServer::StopListening()
     return;
   }
 
-  LOG_DEBUG("LocalUdpServer.StopListening", "Stopping server listening on socket %d", _socket);
+  LOG_DEBUG("LocalUdpServer.StopListening", 
+            "Stopping server listening on socket %s (%d)", 
+            _sockname.c_str(), _socket);
 
   if (HasClient()) {
     Disconnect();
   }
 
   if (close(_socket) < 0) {
-    LOG_ERROR("LocalUdpServer.StopListening", "Error closing socket %d (%s)", _socket, strerror(errno));
+    LOG_ERROR("LocalUdpServer.StopListening.Fail", 
+              "Error closing socket %s (sock: %d) (%s)", 
+              _sockname.c_str(), _socket, strerror(errno));
   }
   _socket = -1;
 }
@@ -180,7 +184,9 @@ ssize_t LocalUdpServer::Send(const char* data, size_t size)
   if (bytes_sent != size) {
     // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
     // some appropriate interval.
-    LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %zu on %d (%s)", bytes_sent, size, _socket, strerror(errno));
+    LOG_ERROR("LocalUdpServer.Send.Fail", 
+              "Sent %zd bytes instead of %zu on %s (sock: %d) (%s)", 
+              bytes_sent, size, _sockname.c_str(), _socket, strerror(errno));
   }
 
   return bytes_sent;
@@ -199,7 +205,9 @@ ssize_t LocalUdpServer::Recv(char* data, size_t maxSize)
       //LOG_DEBUG("LocalUdpServer.Recv", "No data available");
       return 0;
     } else {
-      LOG_ERROR("LocalUdpServer.Recv", "Receive error on %d (%s)", _socket, strerror(errno));
+      LOG_ERROR("LocalUdpServer.Recv.Fail", 
+                "Receive error on %s (sock: %d) (%s)", 
+                _sockname.c_str(), _socket, strerror(errno));
       return -1;
     }
   }

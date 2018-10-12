@@ -76,6 +76,9 @@ private:
     
     s32   imagesSaved;
 
+    Radians startingBodyAngle_rad;
+    Radians startingHeadAngle_rad;
+    
     std::list<std::string>::const_iterator currentClassIter;
   };
 

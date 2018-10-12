@@ -3,10 +3,10 @@
   "behaviorClass": "DevImageCapture",
 
   // path to save the images on the robot relative to "<reourceCacheDir>/camera/images"
-  "save_path": "pets_and_hands",
+  "save_path": "employee_data",
 
   // class names to cycle through by raising lift, used as subdirs to above path when saving
-  "class_names": ["hand", "cat", "dog"],
+  "class_names": ["hand", "cat", "dog", "person", "background"],
 
   // image quality: [1-100]:JPEG quality, -1: use PNG
   "quality": 90,
@@ -35,8 +35,8 @@
   "multi_image_mode" : {
     "num_images_per_capture" : 5,         // Use value > 1 to enable
     "distance_range_mm"      : [-15, 15], // Amount to move forward/backward with each capture
-    "head_angle_range_deg"   : [-10, 15], // Absolute head angle range
-    "body_angle_range_deg"   : [-10, 10]  // Relative body angle range
+    "head_angle_range_deg"   : [-12, 12], // Head angle range, relative to starting angle
+    "body_angle_range_deg"   : [-12, 12]  // Body angle range, relative to starting angle
   },
   
   // list of strings specifying vision modes to enable while running, 

@@ -104,6 +104,9 @@ BehaviorDevImageCapture::DynamicVariables::DynamicVariables()
 
   isStreaming = false;
   wasLiftUp = false;
+  
+  startingBodyAngle_rad = 0.f;
+  startingHeadAngle_rad = 0.f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -437,17 +440,21 @@ void BehaviorDevImageCapture::MoveToNewPose()
   
   if(Util::IsFltLT(_iConfig.headAngleRange_rad.first, _iConfig.headAngleRange_rad.second))
   {
-    const f32 headAngle_rad = GetRNG().RandDblInRange(_iConfig.headAngleRange_rad.first,
-                                                      _iConfig.headAngleRange_rad.second);
+    const f32 headAngleDelta_rad = GetRNG().RandDblInRange(_iConfig.headAngleRange_rad.first,
+                                                           _iConfig.headAngleRange_rad.second);
+    const f32 headAngle_rad = Util::Clamp((_dVars.startingHeadAngle_rad + headAngleDelta_rad).ToFloat(),
+                                          MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
     turnAction->AddAction(new MoveHeadToAngleAction(headAngle_rad));
     LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.HeadAngle", "%.1fdeg", RAD_TO_DEG(headAngle_rad));
   }
   
   if(Util::IsFltLT(_iConfig.bodyAngleRange_rad.first, _iConfig.bodyAngleRange_rad.second))
   {
-    const f32 bodyAngle_rad = GetRNG().RandDblInRange(_iConfig.bodyAngleRange_rad.first,
-                                                      _iConfig.bodyAngleRange_rad.second);
-    turnAction->AddAction(new TurnInPlaceAction(bodyAngle_rad, false));
+    const f32 bodyAngleDelta_rad = GetRNG().RandDblInRange(_iConfig.bodyAngleRange_rad.first,
+                                                           _iConfig.bodyAngleRange_rad.second);
+    const f32 bodyAngle_rad = (_dVars.startingBodyAngle_rad + bodyAngleDelta_rad).ToFloat();
+    const bool isAbsolute = true; // using absolute because we want to be relative to starting angle, not current
+    turnAction->AddAction(new TurnInPlaceAction(bodyAngle_rad, isAbsolute));
     LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.BodyAngle", "%.1fdeg", RAD_TO_DEG(bodyAngle_rad));
   }
   
@@ -477,6 +484,10 @@ void BehaviorDevImageCapture::MoveToNewPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
 {
+  // Store starting angles for each button press so we can move to new positions relative to that
+  _dVars.startingBodyAngle_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
+  _dVars.startingHeadAngle_rad = GetBEI().GetRobotInfo().GetHeadAngle();
+  
   // To help avoid duplicate images names when combining images from multiple robots on multiple runs of
   // this behavior, use a basename built from the robot's serial number and the milliseconds since epoch.
   // Note that for streaming, a frame number will also be appended by the ImageSaver because all saved

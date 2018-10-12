@@ -140,6 +140,11 @@ void BeatDetectorComponent::OnBeat(const BeatInfo& beat)
 
 bool BeatDetectorComponent::IsPossibleBeatDetected() const
 {
+  // Should always return true if a definite beat is detected
+  if (IsBeatDetected()) {
+    return true;
+  }
+  
   // In order for a possible beat to be considered detected, the following conditions must be true. For the past
   // kPossibleBeatWindow_sec seconds:
   //   - We have a minimum number of beats

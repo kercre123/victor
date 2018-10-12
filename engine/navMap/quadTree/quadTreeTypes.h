@@ -107,7 +107,7 @@ enum class EQuadrant : uint8_t {
 };
 
 // movement direction
-enum class EDirection { North, East, South, West, Invalid };
+enum class EDirection { North, East, South, West };
 
 // a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
 using NodeAddress = std::vector<EQuadrant>;
@@ -119,20 +119,28 @@ enum EClockDirection { CW, CCW };
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// return the opposite direction to the one given (eg: North vs South, West vs East)
-inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);
-
-// return the opposite clock direction to the one given (eg: CW vs CCW)
-inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir);
-
-// iterate directions in the specified rotation/clock direction
-inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir );
-
 // EDirection to String
 const char* EDirectionToString(EDirection dir);
 
 // EDirection to Vec3f
-Vec3f EDirectionToNormalVec3f(EDirection dir);
+Vec2f EDirectionToNormalVec2f(EDirection dir);
+
+// EQuadrant to Vec2f
+Vec2f Quadrant2Vec(EQuadrant dir) ;
+
+// Vec2f to EQuadrant
+QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir);
+
+// step from a quadrant in direction
+constexpr QuadTreeTypes::EQuadrant GetQuadrantInDirection(EQuadrant from, EDirection dir)
+{
+  switch (dir) {
+    case EDirection::North:
+    case EDirection::South: { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 2); };
+    case EDirection::East:    
+    case EDirection::West:  { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 1); };
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
