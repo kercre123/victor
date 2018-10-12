@@ -196,6 +196,11 @@ protected:
   // Helper to make sure times aren't in the future when loaded/initialized
   bool ClipFutureTimesToNow(const std::string& logString);
   
+  // Helper to get the session-only entry's "seen time"
+  // Returns 0 if there is no session-only entry
+  // Returns 0 and throws an error if there is a session-only entry but no time found for it
+  Time GetSessionOnlySeenTime() const;
+  
   FaceID_t            _faceID = UnknownFaceID; // The ID used for recognition
   FaceID_t            _prevID = UnknownFaceID; // The previous ID if the ID just changed (e.g. due to merge)
   
