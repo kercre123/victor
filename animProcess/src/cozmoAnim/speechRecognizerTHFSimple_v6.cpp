@@ -151,9 +151,9 @@ void SpeechRecognizerTHF_v6::RemoveRecognitionData(IndexType index)
   }
 }
   
-void SpeechRecognizerTHF_v6::PerformCallBack(const char* callbackArg, float score)
+void SpeechRecognizerTHF_v6::PerformCallBack(const char* callbackArg, float score, int from_ms, int to_ms)
 {
-  DoCallback(callbackArg, score);
+  DoCallback(callbackArg, score, from_ms, to_ms);
 }
   
   
@@ -207,7 +207,7 @@ resultEvent(SnsrSession s, const char *key, void *privateData)
                       phrase, begin, end);
   
   SpeechRecognizerTHF_v6* inst = (SpeechRecognizerTHF_v6*)privateData;
-  inst->PerformCallBack(phrase, 0.0);
+  inst->PerformCallBack(phrase, 0.0, begin, end);
   
   return SNSR_RC_OK;
 }

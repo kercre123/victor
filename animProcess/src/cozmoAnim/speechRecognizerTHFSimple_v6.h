@@ -53,7 +53,7 @@ public:
   virtual IndexType GetRecognizerIndex() const override;
   
   // TEMP
-  void PerformCallBack(const char* callbackArg, float score);
+  void PerformCallBack(const char* callbackArg, float score, int from_ms, int to_ms);
   
 private:
   struct SpeechRecognizerTHFData;
