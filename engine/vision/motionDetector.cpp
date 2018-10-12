@@ -487,7 +487,7 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
 {
   const f32 scaleMultiplier = (kMotionDetection_UseHalfRes ? 2.f : 1.f);
 
-  const Vision::ImageCache::Size imageSize = Vision::ImageCache::GetSize((s32)scaleMultiplier,
+  const Vision::ImageCacheSize imageSize = Vision::ImageCache::GetSize((s32)scaleMultiplier,
                                                                          Vision::ResizeMethod::NearestNeighbor);
 
   // Call the right helper based on image's color
@@ -495,8 +495,8 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   {
     const Vision::ImageRGB& imageColor = imageCache.GetRGB(imageSize);
     return DetectHelper(imageColor,
-                        imageCache.GetNumRows(Vision::ImageCache::Size::Full),
-                        imageCache.GetNumCols(Vision::ImageCache::Size::Full),
+                        imageCache.GetNumRows(Vision::ImageCacheSize::Full),
+                        imageCache.GetNumCols(Vision::ImageCacheSize::Full),
                         scaleMultiplier,
                         crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
   }
@@ -504,8 +504,8 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   {
     const Vision::Image& imageGray = imageCache.GetGray(imageSize);
     return DetectHelper(imageGray,
-                        imageCache.GetNumRows(Vision::ImageCache::Size::Full),
-                        imageCache.GetNumCols(Vision::ImageCache::Size::Full),
+                        imageCache.GetNumRows(Vision::ImageCacheSize::Full),
+                        imageCache.GetNumCols(Vision::ImageCacheSize::Full),
                         scaleMultiplier,
                         crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
   }

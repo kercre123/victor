@@ -2324,7 +2324,6 @@ namespace Vector {
     const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if(gotImage)
     {
-      buffer.SetDownsampleIfBayer(_shouldDownsampleBayer);
       buffer.SetSensorResolution(cameraService->CameraGetSensorHeight(),
                                  cameraService->CameraGetSensorWidth());
 
@@ -2458,7 +2457,7 @@ namespace Vector {
             break;
 
           case Vision::ImageEncoding::BAYER:
-            expectedNumRows = (_shouldDownsampleBayer ? DEFAULT_CAMERA_RESOLUTION_HEIGHT : CAMERA_SENSOR_RESOLUTION_HEIGHT);
+            expectedNumRows = CAMERA_SENSOR_RESOLUTION_HEIGHT;
             break;
             
           default:
@@ -2488,18 +2487,6 @@ namespace Vector {
   bool VisionComponent::IsWaitingForCaptureFormatChange() const
   {
     return (CaptureFormatState::None != _captureFormatState);
-  }
-
-  void VisionComponent::EnableSensorRes(bool sensorRes)
-  {
-    PRINT_CH_INFO("VisionComponent", "VisionComponent.EnableSensorRes", "%d", sensorRes);
-    _shouldDownsampleBayer = !sensorRes;
-
-    Vision::ImageEncoding currentFormat = GetCurrentImageFormat();
-    if(currentFormat != Vision::ImageEncoding::BAYER)
-    {
-      SetCameraCaptureFormat(Vision::ImageEncoding::BAYER);
-    }
   }
   
 #pragma mark -
@@ -2636,7 +2623,7 @@ namespace Vector {
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
     ImageSaverParams params(payload.path, payload.mode, payload.qualityOnRobot, "",
-                            Vision::ImageCache::Size::Full, 0.f, 1.f, payload.removeRadialDistortion);
+                            Vision::ImageCacheSize::Full, 0.f, 1.f, payload.removeRadialDistortion);
     SetSaveImageParameters(params);
   }
 
@@ -2655,11 +2642,6 @@ namespace Vector {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraCaptureFormat& msg)
   {
-    if(msg.format == Vision::ImageEncoding::BAYER)
-    {
-      EnableSensorRes(msg.enableSensorRes);
-    }
-    
     SetCameraCaptureFormat(msg.format);
   }
 

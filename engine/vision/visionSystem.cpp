@@ -43,6 +43,8 @@
 #include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/petTracker.h"
 
+#include "coretech/vision/engine/neonMacros.h"
+
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -1105,7 +1107,7 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
                                 const MarkerDetectionCLAHE useCLAHE,
                                 Vision::Image& claheImage)
 {
-  const Vision::ImageCache::Size whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
+  const Vision::ImageCacheSize whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
                                                                 Vision::ResizeMethod::Linear);
   
   switch(useCLAHE)
@@ -1392,8 +1394,8 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       bool allCornersInBounds = true;
       for(auto & corner : scaledCorners)
       {
-        const s32 fullNumRows = imageCache.GetNumRows(Vision::ImageCache::Size::Full);
-        const s32 fullNumCols = imageCache.GetNumCols(Vision::ImageCache::Size::Full);
+        const s32 fullNumRows = imageCache.GetNumRows(Vision::ImageCacheSize::Full);
+        const s32 fullNumCols = imageCache.GetNumCols(Vision::ImageCacheSize::Full);
         const int warpIndex = std::floor(corner.y() / (fullNumRows / _rollingShutterCorrector.GetNumDivisions()));
         DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
                        "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
@@ -1454,7 +1456,7 @@ void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vi
   }
 
   Tic("RollingShutterComputePixelShifts");
-  s32 numRows = imageCache.GetNumRows(Vision::ImageCache::Size::Full);
+  s32 numRows = imageCache.GetNumRows(Vision::ImageCacheSize::Full);
   _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData, numRows);
   Toc("RollingShutterComputePixelShifts");
   _lastRollingShutterCorrectionTime = imageCache.GetTimeStamp();

@@ -13,7 +13,7 @@
 #define __Engine_Vision_VisionSystemInput_H__
 
 #include "engine/vision/visionPoseData.h"
-#include "coretech/vision/engine/imageBuffer.h"
+#include "coretech/vision/engine/imageBuffer/imageBuffer.h"
 #include "coretech/vision/engine/imageCache.h"
 
 namespace Anki {

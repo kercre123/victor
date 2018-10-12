@@ -197,7 +197,6 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
   {
     LOG_INFO("PhotographyManager.UpdateDependent.DisablingPhotoMode",
              "Disable was queued. Doing now.");
-    _visionComponent->EnableSensorRes(false);
     _state = State::WaitingForPhotoModeDisable;
     _disableWhenPossible = false;
   }
@@ -234,7 +233,6 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
     return RESULT_FAIL;
   }
 
-  _visionComponent->EnableSensorRes(enable);
   _state = (enable ? State::WaitingForPhotoModeEnable : State::WaitingForPhotoModeDisable);
   
   LOG_INFO("PhotographyManager.EnablePhotoMode.FormatChange",
@@ -300,8 +298,8 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
 
   const bool useSensorRes = UseSensorResolution();
   const auto photoSize = (useSensorRes ?
-                          Vision::ImageCache::Size::Sensor :
-                          Vision::ImageCache::Size::Full);
+                          Vision::ImageCacheSize::Sensor :
+                          Vision::ImageCacheSize::Full);
   
   // Upsampling half-res to full scale for PRDemo until VIC-4077 is fixed
   const float saveScale = (_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo) ? 2.f : 1.f);

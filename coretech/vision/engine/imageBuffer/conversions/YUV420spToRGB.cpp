@@ -1,172 +1,31 @@
 /**
- * File: imageBuffer.h
+ * File: YUV420spToRGB.cpp
  *
  * Author:  Al Chaussee
- * Created: 09/19/2018
+ * Created: 10/4/2018
  *
- * Description: Wrapper around raw image data
+ * Description: Convert YUV420sp to RGB
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
 
-#include "coretech/vision/engine/imageBuffer.h"
+#include "coretech/vision/engine/imageBuffer/conversions/imageConversions.h"
 
-#include "coretech/vision/engine/debayer.h"
 #include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/neonMacros.h"
 
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 
+#include <unistd.h>
+
 namespace Anki {
 namespace Vision {
+namespace ImageConversions {
 
-ImageBuffer::ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding format, TimeStamp_t timestamp, s32 id)
-: _rawData(data)
-, _rawNumRows(numRows)
-, _rawNumCols(numCols)
-, _format(format)
-, _imageId(id)
-, _timestamp(timestamp)
-{
-
-}
-
-void ImageBuffer::GetNumRowsCols(s32& rows, s32& cols) const
-{
-  switch(_format)
-  {
-    case ImageEncoding::BAYER:
-      {
-        if(_downsampleIfBayer)
-        {
-          // Downsampled bayer is half resolution of
-          // original image
-          rows = _rawNumRows/2;
-          cols = _rawNumCols/2;
-        }
-        else
-        {
-          rows = _rawNumRows;
-          cols = _rawNumCols;
-        }
-      }
-      break;
-    case ImageEncoding::RawRGB:
-      {
-        rows = _rawNumRows;
-        cols = _rawNumCols;
-      }
-      break;
-    case ImageEncoding::YUV420sp:
-      {
-        // YUV420sp data is has extra rows for UV
-        rows = (_rawNumRows * (2.f/3.f));
-        cols = _rawNumCols;
-      }
-      break;
-    default:
-      {
-        DEV_ASSERT_MSG(false,
-                       "ImageBuffer.GetNumRowsCols.UnsupportedFormat",
-                       "%s",
-                       EnumToString(_format));
-      }
-      break;
-  }
-}
-  
-s32 ImageBuffer::GetNumCols() const
-{
-  s32 rows = 0;
-  s32 cols = 0;
-  GetNumRowsCols(rows, cols);
-  return cols;
-}
-
-s32 ImageBuffer::GetNumRows() const
-{
-  s32 rows = 0;
-  s32 cols = 0;
-  GetNumRowsCols(rows, cols);
-  return rows;
-}
-
-f32 ImageBuffer::GetScaleFactorFromSensorRes() const
-{
-  // If we are downsampling the image then our "Sensor" resolution and
-  // "Full" resolution will be the same otherwise "Sensor" resolution will
-  // be actual sensor resolution and "Full" will be half that.
-  // Or if the image is already RGB (sim)
-  // TODO: VIC-7267 will likely remove the need for this
-  return (((_format == ImageEncoding::BAYER && _downsampleIfBayer) ||
-           _format == ImageEncoding::RawRGB) ?
-          1.f : 0.5f);
-}
-
-bool ImageBuffer::GetRGB(ImageRGB& rgb) const
-{
-  DEV_ASSERT(_rawData != nullptr, "ImageBuffer.GetRGB.NullData");
-  
-  s32 rows = 0;
-  s32 cols = 0;
-  GetNumRowsCols(rows, cols);
-  switch(_format)
-  {
-    case ImageEncoding::BAYER:
-      {
-        if(_downsampleIfBayer)
-        {
-          rgb.Allocate(rows, cols);
-
-          DownsampleBGGR10ToRGB(_rawData,
-                                _rawNumCols,
-                                _rawNumRows,
-                                rgb);
-        }
-        else
-        {
-          rgb.Allocate(rows, cols);
-
-          DemosaicBGGR10ToRGB(_rawData,
-                              _rawNumRows,
-                              _rawNumCols,
-                              rgb);
-        }
-      }
-      break;
-    case ImageEncoding::RawRGB:
-      {
-        rgb = ImageRGB(rows, cols, _rawData);
-      }
-      break;
-    case ImageEncoding::YUV420sp:
-      {
-        rgb.Allocate(rows, cols);
-        ConvertYUV420spToRGB(_rawData,
-                             rows,
-                             cols,
-                             rgb);
-      }
-      break;
-    default:
-      {
-        DEV_ASSERT_MSG(false,
-                       "ImageBuffer.GetRGB.UnsupportedFormat",
-                       "%s", EnumToString(_format));
-        return false;
-      }
-      break;
-  }
-
-  rgb.SetTimestamp(_timestamp);
-  rgb.SetImageId(_imageId);
-
-  return true;
-}
-
-void ImageBuffer::ConvertYUV420spToRGB(const u8* yuv, s32 rows, s32 cols,
-                                       ImageRGB& rgb)
+void ConvertYUV420spToRGB(const u8* yuv, s32 rows, s32 cols,
+                          ImageRGB& rgb)
 {
   // Expecting even number of rows and colums for 2x2 subsampled YUV data
   DEV_ASSERT((rows % 2 == 0) && (cols % 2 == 0),
@@ -474,89 +333,7 @@ void ImageBuffer::ConvertYUV420spToRGB(const u8* yuv, s32 rows, s32 cols,
   }
 }  
 
-void ImageBuffer::DownsampleBGGR10ToRGB(const u8* bayer_in, s32 bayer_sx, s32 bayer_sy, ImageRGB& rgb)
-{
-  // Output image is half the resolution of the bayer image
-  rgb.Allocate(bayer_sy / 2, bayer_sx / 2);
-
-  // Multiply bayer_sx by (10/8) as bayer_sx is the resolution of the bayer image
-  // but this functions expects the width and height in bytes
-  bayer_mipi_bggr10_downsample(bayer_in, reinterpret_cast<u8*>(rgb.GetRow(0)),
-                               (bayer_sx*10)/8, bayer_sy, 10);
-}
-
-void ImageBuffer::DemosaicBGGR10ToRGB(const u8* bayer_in, s32 rows, s32 cols, ImageRGB& rgb)
-{
-#ifdef __ARM_NEON__
-  // Create a mat to hold the bayer image
-  cv::Mat bayer(rows,
-                cols,
-                CV_8UC1);
-
-  const u8* bufferPtr = bayer_in;
-  // Raw Bayer format from camera is 4 10 bit pixels packed into 5 bytes
-  // The fifth byte is the 2 lsb from each of the 4 pixels
-  // This loop strips the fifth byte and does a saturating shift on
-  // the other 4 bytes as if the fifth byte was all 0
-  // Adopted from code in DownsampleBGGR10ToRGB
-  u8* bayerPtr = static_cast<u8*>(bayer.ptr());
-  for(int i = 0; i < (cols*rows); i+=8)
-  {
-    uint8x8_t data = vld1_u8(bufferPtr);
-    bufferPtr += 5;
-    uint8x8_t data2 = vld1_u8(bufferPtr);
-    bufferPtr += 5;
-    data = vreinterpret_u8_u64(vshl_n_u64(vreinterpret_u64_u8(data), 32));
-    data = vext_u8(data, data2, 4);
-    data = vqshl_n_u8(data, 2);
-    vst1_u8(bayerPtr, data);
-    bayerPtr += 8;
-  }
-
-  // Use opencv to convert bayer BGGR to RGB
-  // The RG in BayerRG come from the second row, second and third columns
-  // of the bayer image
-  // B  G   B  G
-  // G [R] [G] R
-  // And as usual opencv has bugs in their image conversions which
-  // result in swapped R and B channels in the output image compared to
-  // what the conversion enum says
-  cv::cvtColor(bayer, rgb.get_CvMat_(), cv::COLOR_BayerRG2BGR);
-#else
-  // Create a mat to hold the bayer image
-  cv::Mat bayer(rows,
-                cols,
-                CV_8UC1);
-
-  const u8* bufferPtr = bayer_in;
-  // Raw Bayer format from camera is 4 10 bit pixels packed into 5 bytes
-  // The fifth byte is the 2 lsb from each of the 4 pixels
-  // This loop strips the fifth byte and does a saturating shift on
-  // the other 4 bytes as if the fifth byte was all 0
-  u8* bayerPtr = static_cast<u8*>(bayer.ptr());
-  for(int i = 0; i < (cols*rows); i+=4)
-  {
-    u8 a = cv::saturate_cast<u8>(((u16)bufferPtr[0]) << 2);
-    u8 b = cv::saturate_cast<u8>(((u16)bufferPtr[1]) << 2);
-    u8 c = cv::saturate_cast<u8>(((u16)bufferPtr[2]) << 2);
-    u8 d = cv::saturate_cast<u8>(((u16)bufferPtr[3]) << 2);
-    bufferPtr += 5;
-            
-    bayerPtr[0] = a;
-    bayerPtr[1] = b;
-    bayerPtr[2] = c;
-    bayerPtr[3] = d;
-    bayerPtr += 4;
-  }
-
-  // Use opencv to convert bayer BGGR to RGB
-  // The RG in BayerRG come from the second row, second and third columns
-  // of the bayer image
-  // B  G   B  G
-  // G [R] [G] R
-  cv::cvtColor(bayer, rgb.get_CvMat_(), cv::COLOR_BayerRG2RGB);
-#endif
-}
   
+}
 }
 }
