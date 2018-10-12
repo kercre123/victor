@@ -46,6 +46,8 @@ import math
 import os
 import sys
 
+from .messaging import protocol
+
 try:
     from PIL import Image, ImageDraw
 except ImportError:
@@ -137,8 +139,8 @@ class Vector2:
     __slots__ = ('_x', '_y')
 
     def __init__(self, x: float, y: float):
-        self._x = x
-        self._y = y
+        self._x = float(x)
+        self._y = float(y)
 
     def set_to(self, rhs):
         """Copy the x and y components of the given Vector2 instance.
@@ -146,8 +148,8 @@ class Vector2:
         :param rhs: The right-hand-side of this assignment - the
                 source Vector2 to copy into this Vector2 instance.
         """
-        self._x = rhs.x
-        self._y = rhs.y
+        self._x = float(rhs.x)
+        self._y = float(rhs.y)
 
     @property
     def x(self) -> float:
@@ -199,9 +201,9 @@ class Vector3:
     __slots__ = ('_x', '_y', '_z')
 
     def __init__(self, x: float, y: float, z: float):
-        self._x = x
-        self._y = y
-        self._z = z
+        self._x = float(x)
+        self._y = float(y)
+        self._z = float(z)
 
     def set_to(self, rhs):
         """Copy the x, y and z components of the given Vector3 instance.
@@ -390,29 +392,29 @@ class Matrix44:
                  'm03', 'm13', 'm23', 'm33')
 
     def __init__(self,
-                 m00, m10, m20, m30,
-                 m01, m11, m21, m31,
-                 m02, m12, m22, m32,
-                 m03, m13, m23, m33):
-        self.m00 = m00
-        self.m10 = m10
-        self.m20 = m20
-        self.m30 = m30
+                 m00: float, m10: float, m20: float, m30: float,
+                 m01: float, m11: float, m21: float, m31: float,
+                 m02: float, m12: float, m22: float, m32: float,
+                 m03: float, m13: float, m23: float, m33: float):
+        self.m00 = float(m00)
+        self.m10 = float(m10)
+        self.m20 = float(m20)
+        self.m30 = float(m30)
 
-        self.m01 = m01
-        self.m11 = m11
-        self.m21 = m21
-        self.m31 = m31
+        self.m01 = float(m01)
+        self.m11 = float(m11)
+        self.m21 = float(m21)
+        self.m31 = float(m31)
 
-        self.m02 = m02
-        self.m12 = m12
-        self.m22 = m22
-        self.m32 = m32
+        self.m02 = float(m02)
+        self.m12 = float(m12)
+        self.m22 = float(m22)
+        self.m32 = float(m32)
 
-        self.m03 = m03
-        self.m13 = m13
-        self.m23 = m23
-        self.m33 = m33
+        self.m03 = float(m03)
+        self.m13 = float(m13)
+        self.m23 = float(m23)
+        self.m33 = float(m33)
 
     def __repr__(self):
         return ("<%s: "
@@ -432,17 +434,17 @@ class Matrix44:
     def in_row_order(self):
         """tuple of 16 floats: The contents of the matrix in row order."""
         return self.m00, self.m01, self.m02, self.m03,\
-            self.m10, self.m11, self.m12, self.m13,\
-            self.m20, self.m21, self.m22, self.m23,\
-            self.m30, self.m31, self.m32, self.m33
+               self.m10, self.m11, self.m12, self.m13,\
+               self.m20, self.m21, self.m22, self.m23,\
+               self.m30, self.m31, self.m32, self.m33
 
     @property
     def in_column_order(self):
         """tuple of 16 floats: The contents of the matrix in column order."""
         return self.m00, self.m10, self.m20, self.m30,\
-            self.m01, self.m11, self.m21, self.m31,\
-            self.m02, self.m12, self.m22, self.m32,\
-            self.m03, self.m13, self.m23, self.m33
+               self.m01, self.m11, self.m21, self.m31,\
+               self.m02, self.m12, self.m22, self.m32,\
+               self.m03, self.m13, self.m23, self.m33
 
     @property
     def forward_xyz(self):
@@ -527,10 +529,10 @@ class Quaternion:
                 raise TypeError("Unsupported type for angle_z expected Angle")
             q0, q1, q2, q3 = angle_z_to_quaternion(angle_z)
 
-        self._q0 = q0
-        self._q1 = q1
-        self._q2 = q2
-        self._q3 = q3
+        self._q0 = float(q0)
+        self._q1 = float(q1)
+        self._q2 = float(q2)
+        self._q3 = float(q3)
 
     @property
     def q0(self) -> float:
@@ -729,6 +731,17 @@ class Pose:
             position and rotation.
         """
         return self.rotation.to_matrix(*self.position.x_y_z)
+
+    def to_proto_pose_struct(self):
+        return protocol.PoseStruct(
+            x=self._position.x,
+            y=self._position.y,
+            z=self._position.z,
+            q0=self._rotation.q0,
+            q1=self._rotation.q1,
+            q2=self._rotation.q2,
+            q3=self._rotation.q3,
+            origin_id=self._origin_id)
 
 
 class ImageRect:
