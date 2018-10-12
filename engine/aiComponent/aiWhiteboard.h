@@ -42,6 +42,7 @@ namespace Vector {
 class BlockWorldFilter;  
 class ObservableObject;
 class Robot;
+class SayNameProbabilityTable;
 class SmartFaceID;
 enum class OnboardingStages : uint8_t;
 
@@ -115,6 +116,8 @@ public:
   void OnRobotDelocalized();
   // what to do when the robot relocalizes to a cube
   void OnRobotRelocalized();
+  // what to do when the robot wakes up (e.g. reset things)
+  void OnRobotWakeUp();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Possible Objects
@@ -217,6 +220,9 @@ public:
   float GetLastEdgeInformationTime() const { return _edgeInfoTime_sec; }
   float GetLastEdgeClosestDistance() const { return _edgeInfoClosestEdge_mm; }
 
+  // decide whether or not to say a name
+  inline std::shared_ptr<SayNameProbabilityTable>& GetSayNameProbabilityTable() { return _sayNameProbTable; }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracking Game Requests
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -349,6 +355,8 @@ private:
   
   // holds the current onboarding stage to avoid having to listen for it or read it from disk
   OnboardingStages _onboardingStage;
+  
+  std::shared_ptr<SayNameProbabilityTable> _sayNameProbTable;
 };
   
 

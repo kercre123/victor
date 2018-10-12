@@ -96,34 +96,34 @@
     },
     {
       "mode"         : "EstimatingFacialExpression",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {
       "mode"         : "DetectingSmileAmount",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {
       "mode"         : "DetectingGaze",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {
       "mode"         : "DetectingBlinkAmount",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {

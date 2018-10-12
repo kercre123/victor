@@ -55,6 +55,7 @@ namespace Vision {
     void SetRecognitionIsSynchronous(bool isSynchronous);
     
     Result Update(const Vision::Image&        frameOrig,
+                  const float                 cropFactor,
                   std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     
@@ -133,6 +134,8 @@ namespace Vision {
     bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face, const f32 intraEyeDist);
 
     void Reset();
+    
+    void SetCroppingMask(const INT32 nWidth, const INT32 nHeight, const float cropFactor);
     
     // Setting the pose of the face uses the camera's pose as its parent
     Result SetFacePoseFromParts(const s32 nrows, const s32 ncols, TrackedFace& face, f32& intraEyeDist);

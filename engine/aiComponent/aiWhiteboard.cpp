@@ -26,6 +26,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
+#include "engine/sayNameProbabilityTable.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/rotation.h"
@@ -103,6 +104,7 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _returnedToTreadsAtTime_sec(-1.0f)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
+, _sayNameProbTable(new SayNameProbabilityTable(*_robot.GetContext()->GetRandom()))
 {
 }
 
@@ -178,6 +180,13 @@ void AIWhiteboard::OnRobotRelocalized()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::OnRobotWakeUp()
+{
+  PRINT_CH_DEBUG("AIWhiteboard", "AIWhiteBoard.OnRobotWakeUp.ResetSayNameProbTable", "");
+  _sayNameProbTable->Reset();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 {
   const Pose3d& worldOrigin = _robot.GetWorldOrigin();
@@ -206,7 +215,7 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
 {
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
     PRINT_CH_INFO("AIWhiteboard", "PossibleObject.FinishedSearch",
-                      "finished search, so removing possible object");
+                  "finished search, so removing possible object");
   }
   RemovePossibleObjectsMatching(objectType, pose);
 }

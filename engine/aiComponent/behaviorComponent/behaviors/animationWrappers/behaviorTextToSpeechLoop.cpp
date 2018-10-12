@@ -165,6 +165,14 @@ void BehaviorTextToSpeechLoop::SetTextToSay(const std::string& textToSay,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTextToSpeechLoop::ClearTextToSay()
+{
+  if(kInvalidUtteranceID != _dVars.utteranceID) {
+    GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTextToSpeechLoop::WantsToBeActivatedBehavior() const 
 {
   return ((kInvalidUtteranceID != _dVars.utteranceID) || !_iConfig.devTestUtteranceString.empty());
@@ -314,9 +322,7 @@ void BehaviorTextToSpeechLoop::TransitionToGetOut()
 void BehaviorTextToSpeechLoop::TransitionToEmergencyGetOut()
 {
   SET_STATE(EmergencyGetOut);
-  if(kInvalidUtteranceID != _dVars.utteranceID) {
-    GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
-  }
+  ClearTextToSay();
 
   if(AnimationTrigger::Count == _iConfig.emergencyGetOutTrigger){
     CancelSelf();
@@ -363,9 +369,7 @@ void BehaviorTextToSpeechLoop::Interrupt( bool immediate )
     // we've been told to cancel our TTS, but there's no hurry, so ...
     // + cancel TTS immediately so it feels responsive
     // + transition into the get out anim after the next looping anim so that the anims transition properly
-    if(kInvalidUtteranceID != _dVars.utteranceID) {
-      GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
-    }
+    ClearTextToSay();
     _dVars.cancelOnNextLoop = true;;
   }
 }

@@ -882,7 +882,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
 {
   DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
  
-  Vision::Image grayImage;
+  const Vision::Image& grayImage = imageCache.GetGray();
 
   /*
   // Periodic printouts of face tracker timings
@@ -914,23 +914,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     _faceTracker->AccountForRobotMove();
   }
 
-  s32 horizontalOffset = 0; 
-  if (useCropping)
-  {
-    // Crop the original frame
-    const s32 origWidth = imageCache.GetGray().GetNumCols();
-    const s32 origHeight = imageCache.GetGray().GetNumRows();
-    // Divide the crop fraction equally between both sides of the image
-    horizontalOffset = origWidth * ((1.f - kFaceTrackingCropWidthFraction) / 2.f);
-    Rectangle<s32> roiRect(horizontalOffset, 0, origWidth - horizontalOffset, origHeight);
-    imageCache.GetGray().GetROI(roiRect).CopyTo(grayImage);
-  }
-  else
-  {
-    // There is no copy here, grayImage just shared data pointer
-    // with the image in the cache
-     grayImage = imageCache.GetGray();
-  }
+  const f32 cropFactor = (useCropping ? kFaceTrackingCropWidthFraction : 1.f);
 
   if(!detectionRects.empty())
   {
@@ -941,12 +925,12 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
 #     endif
     
-    _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+    _faceTracker->Update(maskedImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs);
   }
   else
   {
     // Nothing already detected, so nothing to black out before looking for faces
-    _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
+    _faceTracker->Update(grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs);
   }
   
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
@@ -954,12 +938,6 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     auto & currentFace = *faceIter;
     
     DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
-
-    if (useCropping)
-    {
-      // Apply horizontal shift to detection rectangle and features to correct for cropping
-      faceIter->Shift(Point2f(horizontalOffset, 0));
-    }
 
     detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
                                 (s32)std::round(faceIter->GetRect().GetY()),

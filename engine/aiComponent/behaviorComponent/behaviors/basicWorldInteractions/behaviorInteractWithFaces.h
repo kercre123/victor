@@ -57,16 +57,7 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingBlinkAmount, EVisionUpdateFrequency::Standard });
-    
-    // Avoid marker detection to improve performance
-    // TODO: Remove with VIC-6838
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DisableMarkerDetection, EVisionUpdateFrequency::Standard });
-  }
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
@@ -93,7 +84,6 @@ private:
     float trackingTimeout_s;
     TimeStamp_t eyeContactWithinLast_ms;
 
-    float chanceSayName;
     float minTrackingTiltAngle_deg;
     float minTrackingPanAngle_deg;
 
