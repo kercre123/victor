@@ -11,6 +11,7 @@
  **/
 
 #include "util/helpers/includeGTest.h"
+#include "util/helpers/noncopyable.h"
 #include "util/helpers/maybe.h"
 #include "util/math/math.h"
 
@@ -219,7 +220,7 @@ namespace {
   template<typename T>
   T Double(T x) { return x*2; }
     
-  struct IntWrapper {
+  struct IntWrapper : private Anki::Util::noncopyable {
     IntWrapper(int a) : x(a) {}
     int x;
     int& operator++() { return ++x; }
@@ -228,25 +229,6 @@ namespace {
     int sub(int y) { return x-y; }
   };
 
-#define MAKE_FUNCTOR(class, method) \
-  auto method = std::mem_fn(&class::method)
-
-  // auto decr = std::mem_fn(&IntWrapper::decr);
-  MAKE_FUNCTOR(IntWrapper, decr);
-  MAKE_FUNCTOR(IntWrapper, sub);
-
-  using namespace Anki::Util;
-  template <typename Func, typename U, typename RT = typename std::result_of_t<Func&(U&)> >
-  decltype(auto) operator->*(Maybe<U> u, Func&& f) { return u.FMap(f); }
-
-  // template <typename Func, typename U, typename T = typename std::result_of_t<Func&(U&)> >
-  // Maybe<T> operator <<(Func&& f, Maybe<U> u) { return u.FMap(f); }
-
-  // template <typename Func, 
-  //           typename T,
-  //           typename RT = std::result_of_t<Func&(T&)>,
-  //           typename    = std::enable_if_t<TypeOperators::IsMaybe<RT>()>>
-  // RT operator <<(Func&& f, Maybe<T> t) { return t.Bind(f); }
 }
 
 TEST(TestMaybe, FMapFunctionTypes)
@@ -278,14 +260,18 @@ TEST(TestMaybe, FMapFunctionTypes)
   Just(2).FMap(e);
 
   // member function of existing type
-  auto f = std::bind(&IntWrapper::operator++, std::placeholders::_1);
-  Just<IntWrapper>(2).FMap(f);
-  Just<IntWrapper>(2).FMap(decr);
+  // MAKE_FUNCTOR(IntWrapper, decr);
+  // auto f = std::bind(&IntWrapper::operator++, std::placeholders::_1);
 
-  IntWrapper(2).decr();
-  decr( IntWrapper(2) );
-  auto safeObj = Just<IntWrapper>(8);
-  safeObj->*decr;
+  // Just<IntWrapper>(2).FMap(f);
+  // Just<IntWrapper>(2).FMap(decr);
+
+  // IntWrapper(2).decr();
+  // decr( IntWrapper(2) );
+  // auto safeObj = Just<IntWrapper>(8);
+
+  // using namespace Anki::Util::MaybeOperators;
+  // safeObj->*decr;
 }
 
 namespace Helper
@@ -300,92 +286,194 @@ namespace Helper
   struct gen_seq<0, Is...> : index<Is...> {};
 
   template <typename Func, typename... Args, int... Is>
-  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>& tup, index<Is...>)
+  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>&& tup, index<Is...>)
   {
-    return f(std::get<Is>(tup)...);
+    return std::forward<Func>(f)(std::get<Is>(tup)...);
   }
 
   template <typename Func, typename... Args>
-  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>& tup)
+  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>&& tup)
   {
-    return ForwardTupleArgs(f, tup, gen_seq<sizeof...(Args)>{});
+    return ForwardTupleArgs(std::forward<Func>(f), std::forward<std::tuple<Args...>>(tup), gen_seq<sizeof...(Args)>{});
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template <typename Func, typename... Ts> 
-class CurryFunc
+class LazyFunctor
 {
-public:
-
-  template <typename ...Args>
-  decltype(auto) operator() (Args... args) const { 
-    auto cat = std::tuple_cat(values, std::tuple<Args...>(std::forward<Args>(args)...));
-    return Helper::ForwardTupleArgs(op, cat); 
-  }
-
-  template <typename OtherFunc, typename... OtherTs> 
-  friend CurryFunc<OtherFunc, OtherTs...> Curry(OtherFunc&& f, OtherTs&&... ts);
-
-  template <typename OtherFunc, typename... OtherTs, typename... Us> 
-  friend CurryFunc<OtherFunc, OtherTs...> Curry(CurryFunc<OtherFunc, OtherTs...>&& cf, Us&&... us);
-
-  void nop() {}
-
 protected:
   Func op;
-  std::tuple<Ts...> values;
+  std::tuple<Ts&&...> values;
 
-  CurryFunc (Func&& f, Ts&&... ts) 
+public:
+
+  LazyFunctor (Func&& f, Ts&&... ts) 
   : op(std::forward<Func>(f))
-  , values(std::forward<Ts>(ts)...) {}
+  , values( std::forward<Ts&&...>(ts...) ) {}
 
-  template <typename... MoreTs>
-  void Append(std::tuple<MoreTs...>& tup) {
-    values = std::tuple_cat(values, tup);
+  // evaluate all args upon derefence
+  decltype(auto) operator*() { 
+    return Helper::ForwardTupleArgs(std::forward<Func>(op), std::forward<decltype(values)>(values)); 
   }
-
 };
 
-template <typename Func, typename... Ts> 
-CurryFunc<Func, Ts...> Curry(Func&& f, Ts&&... ts) { 
-  return CurryFunc<Func, Ts...>(f, std::forward<Ts>(ts)...); 
-}
+template <typename Func> 
+class LazyFunctorNoArgs
+{
+protected:
+  Func op;
 
-// TODO: if constructing from another CurryFunc, just merge parameter packs
-template <typename Func, typename... Ts, typename... Us> 
-CurryFunc<Func, Ts...> Curry(CurryFunc<Func, Ts...>&& cf, Us&&... us) { 
-  auto tup = std::tuple<Us...>(std::forward<Us>(us)...);
-  return cf.Append(tup); 
-}
+public:
+  LazyFunctorNoArgs (Func&& f) 
+  : op(std::forward<Func>(f)) {}
 
+  template <typename... Ts> 
+  decltype(auto) operator() (Ts&&... ts) { 
+    return LazyFunctor<Func, Ts...>(std::forward<Func>(op), std::forward<Ts&&...>(ts...));
+  }
+};
+
+template <typename Func>
+inline decltype(auto) MakeLazy(Func&& f) {
+  return LazyFunctorNoArgs<Func>(std::forward<Func>(f));
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <typename Func, typename T, typename... Ts> 
+class LazyFunctorMember
+{
+protected:
+  Func op;
+  std::tuple<Ts&&...> values;
+
+public:
+
+  LazyFunctorMember (Func&& f, Ts&&... ts) 
+  : op(std::forward<Func>(f))
+  , values( std::forward<Ts&&...>(ts...) ) {}
+
+  decltype(auto) operator() (T&& t) { 
+    return LazyFunctor<Func, T, Ts...>(std::forward<Func>(op), std::forward<T&&, Ts&&...>(t, ts...));
+  }
+
+  // evaluate all args upon derefence
+  // decltype(auto) operator*() { 
+  //   return Helper::ForwardTupleArgs(std::forward<Func>(op), std::forward<decltype(values)>(values)); 
+  // }
+};
+
+template <typename Func, typename T> 
+class LazyFunctorMemberNoArgs
+{
+protected:
+  Func op;
+
+public:
+  LazyFunctorMemberNoArgs (Func&& f) 
+  : op(std::forward<Func>(f)) {}
+
+  template <typename... Ts> 
+  decltype(auto) operator() (Ts&&... ts) { 
+    return LazyFunctorMember<Func, Ts...>(std::forward<Func>(op), std::forward<Ts&&...>(ts...));
+  }
+};
+
+
+template <typename T, typename Func>
+inline decltype(auto) MakeLazyMember(Func&& f) {
+  return LazyFunctorMemberNoArgs<Func, T>(std::forward<Func>(f));
+};
+
+
+TEST(TestMaybe, TestCurryReferencePassing)
+{
+  // testing binding a Maybe
+  using namespace Anki::Util;
+  using namespace Anki::Util::MaybeOperators;
+
+  // auto decr = Curry(std::mem_fn(&IntWrapper::decr));
+  auto decrM = std::mem_fn(&IntWrapper::decr);
+  auto decr = MakeLazy(decrM);
+  // auto decrL = MakeLazy( [](IntWrapper& w) -> int { return w.decr(); } );
+
+  IntWrapper eight(8);
+  eight.decr();
+  EXPECT_EQ(7, eight.x) << "no map";
+
+
+  EXPECT_EQ(6, decrM(eight)) << "mem_fn bad return";
+  EXPECT_EQ(6, eight.x) << "mem_fn bad";
+
+  auto tupleArgs = std::tuple<IntWrapper&&>( std::forward<IntWrapper>(eight) );
+  int retv = Helper::ForwardTupleArgs(std::forward<decltype(decrM)>(decrM), std::forward<decltype(tupleArgs)>(tupleArgs)); 
+  EXPECT_EQ(5, retv) << "ForwardTupleArgs not passing object by reference";
+  EXPECT_EQ(5, eight.x) << "ForwardTupleArgs not passing object by reference";
+
+  // auto just8 = Just<IntWrapper>(8);
+  // auto nada = Nothing<IntWrapper>();
+
+  retv = *decr(eight);
+
+  EXPECT_EQ(4, retv) << "curry bad result";
+  EXPECT_EQ(4, eight.x) << "curry not passing object by reference";
+
+  // int eval = *decr(eight);
+  // EXPECT_EQ(6, eval) << "no map";
+  auto decrMem = MakeLazyMember<IntWrapper>(std::mem_fn(&IntWrapper::decr));
+
+  auto nada = Nothing<IntWrapper>();
+  // auto just10 = Just<IntWrapper>(10);
+
+  // auto retv = just10->*decrMem();
+  nada->*decrMem();
+
+  EXPECT_EQ(6, eight.x) << "no map";
+
+
+  // nada->*sub(5);
+
+  // auto result0 = decrR.ValueOr(0.f);
+  // auto result1 = just8.ValueOr(IntWrapper(0));
+  // auto result2 = nada.ValueOr(IntWrapper(-5));
+
+  // EXPECT_EQ(7, *result0) << "no decr val";
+  // EXPECT_EQ(7, result1.x) << "no map";
+  // EXPECT_EQ(-5, result2.x) << "not nada";
+}
 
 TEST(TestMaybe, TestCurry)
 {
-  using namespace Anki::Util;
+  // using namespace Anki::Util;
 
-  auto a = [](double x, double y) { return x + y; };
-  auto b = Curry(a, 5);
-  double c = b(2);
+  // auto a = [](double x, double y) { return x + y; };
+  // auto b = Curry(a, 5);
+  // auto bp = Curry(a, 5, 2);
+  // auto cp = b(2);
+  // double c = *cp;
+  // double d = *bp;
 
-  EXPECT_EQ(c, a(5,2));
+  // EXPECT_EQ(c, a(5,2));
+  // EXPECT_EQ(d, a(5,2));
 
-  auto trip = [](double x, double y, double z) { return x + y - z; };
-  auto twoArgs = Curry(trip, 5);
-  double done1 = twoArgs(2, 3);
-  auto oneArg = Curry(trip, 5, 2);
-  double done2 = oneArg(3);
+  // auto trip = [](double x, double y, double z) { return x + y - z; };
+  // auto twoArgs = Curry(trip, 5);
+  // double done1 = *twoArgs(2, 3);
+  // auto oneArg = Curry(trip, 5, 2);
+  // double done2 = *oneArg(3);
 
 
-  EXPECT_EQ( done1, trip(5,2,3) );
-  EXPECT_EQ( done2, trip(5,2,3) );
-  EXPECT_EQ( done2, done1 );
-  EXPECT_EQ( done1, 4 );
+  // EXPECT_EQ( done1, trip(5,2,3) );
+  // EXPECT_EQ( done2, trip(5,2,3) );
+  // EXPECT_EQ( done2, done1 );
+  // EXPECT_EQ( done1, 4 );
 
-  auto nest = Curry(twoArgs, 2);
-  nest.nop();
-  auto done3 = nest(3);
-  EXPECT_EQ( done2, done3 );
+
+  // auto nest = Curry(twoArgs, 2);
+  // double done3 = *nest(3); // TODO:: fix this double deref here
+  // EXPECT_EQ( done2, done3 );
 }
+
 
 TEST(TestMaybe, NothingVoid)
 {
