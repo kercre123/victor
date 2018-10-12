@@ -1,3 +1,5 @@
+#include "clad/gateway/shared.clad"
+
 namespace Anki {
 namespace Victor {
 namespace Gateway {
@@ -249,6 +251,111 @@ message AlignWithObject {
     AlignmentType alignmentType
 }
 
+// DeleteCustomMarkerObjects
+// Deletes all instantiations of any custom marker objects defined below.
+// "Fixed" markerless custom objects remain.
+// The definitions remain valid so new ones can still be created.
+// "RobotDeletedCustomMarkerObjects" message will be sent back as confirmation.
+message DeleteCustomMarkerObjects {
+}
+
+// DeleteFixedCustomObjects
+// Deletes all "fixed" (markerless) custom objects created with CreateFixedCustomObject.
+// Custom marker objects will remain.
+// "RobotDeletedFixedCustomObjects" message will be sent back as confirmation.
+message DeleteFixedCustomObjects {
+}
+
+// UndefineAllCustomMarkerObjects
+// All custom marker objects definitions defined with messages below are completely removed
+// and any instantiations of those objects are deleted.
+// "Fixed" (markerless) custom objects remain.
+// "RobotDeletedCustomMarkerObjects" message will be sent back as confirmation.
+message UndefineAllCustomMarkerObjects {
+}
+
+// CreateFixedCustomObject
+// Creates a CustomObject at the specific pose with no markers associated with it
+// Since this object has no markers with which to be observed, it will remain in the
+// specified pose as an obstacle forever (or until deleted with a deletion message above)
+message CreateFixedCustomObject {
+  PoseStruct3d pose,
+  float_32 xSize_mm,
+  float_32 ySize_mm,
+  float_32 zSize_mm,
+}
+
+enum int_16 CustomObjectMarker
+{
+  Circles2,
+  Circles3,
+  Circles4,
+  Circles5,
+
+  Diamonds2,
+  Diamonds3,
+  Diamonds4,
+  Diamonds5,
+
+  Hexagons2,
+  Hexagons3,
+  Hexagons4,
+  Hexagons5,
+
+  Triangles2,
+  Triangles3,
+  Triangles4,
+  Triangles5,
+
+  // Should remain last:
+  Count
+} // enum class CustomObjectMarker
+
+// DefineCustomBox
+// Defines a custom object of the given size with the given markers centered on each side
+// If isUnique=true, there is guaranteed to be no more than one object of this type present in the world
+message DefineCustomBox {
+  ObjectType         customType, // One of CustomTypeN, where N=0..19
+  CustomObjectMarker markerFront,
+  CustomObjectMarker markerBack,
+  CustomObjectMarker markerTop,
+  CustomObjectMarker markerBottom,
+  CustomObjectMarker markerLeft,
+  CustomObjectMarker markerRight,
+  float_32   xSize_mm,
+  float_32   ySize_mm,
+  float_32   zSize_mm,
+  float_32   markerWidth_mm,
+  float_32   markerHeight_mm,
+  bool       isUnique
+}
+
+// DefineCustomCube
+// Defines a custom cube of the given size. The cube will have the same marker centered on all faces.
+// If isUnique=true, there is guaranteed to be no more than one cube of this type present in the world at a time.
+message DefineCustomCube {
+  ObjectType         customType, // One of CustomTypeN, where N=0..19
+  CustomObjectMarker marker,
+  float_32   size_mm,
+  float_32   markerWidth_mm,
+  float_32   markerHeight_mm,
+  bool       isUnique
+}
+
+// DefineCustomWall
+// Defines a custom wall of the given height and width, with the same marker centered on both sides (front and back).
+// The wall's thickness is assumed to be 1cm (and thus there are no markers on its left, right, top, or bottom)
+// If isUnique=true, there is guaranteed to be no more than one wall of this type present in the world at a time.
+message DefineCustomWall {
+  ObjectType         customType, // One of CustomTypeN, where N=0..19
+  CustomObjectMarker marker,
+  float_32   width_mm,
+  float_32   height_mm,
+  float_32   markerWidth_mm,
+  float_32   markerHeight_mm,
+  bool       isUnique
+}
+
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
@@ -276,6 +383,14 @@ union MessageExternalToRobot {
   SetLiftHeight                  SetLiftHeight                  = 0x16,
   SetBackpackLEDs                SetBackpackLEDs                = 0x17,
   AlignWithObject                AlignWithObject                = 0x18,
+
+  DeleteCustomMarkerObjects      DeleteCustomMarkerObjects      = 0x19,
+  DeleteFixedCustomObjects       DeleteFixedCustomObjects       = 0x1A,
+  UndefineAllCustomMarkerObjects UndefineAllCustomMarkerObjects = 0x1B,
+  CreateFixedCustomObject        CreateFixedCustomObject        = 0x1C,
+  DefineCustomBox                DefineCustomBox                = 0x1D,
+  DefineCustomCube               DefineCustomCube               = 0x1E,
+  DefineCustomWall               DefineCustomWall               = 0x1F,
 }
 
 } // Gateway

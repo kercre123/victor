@@ -341,7 +341,7 @@ message DefineCustomWallRequest {
   CustomObjectMarker marker           = 2;
   float              width_mm         = 3;
   float              height_mm        = 4;
-  float              marker_Width_mm  = 5;
+  float              marker_width_mm  = 5;
   float              marker_height_mm = 6;
   bool               is_unique        = 7;
 }
