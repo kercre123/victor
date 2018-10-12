@@ -55,7 +55,7 @@ private:
   BehaviorProceduralClock::GetDigitsFunction BuildTimerFunction() const;
 
   int GetTotalNumberOfUpdates() const {
-    const float floatMs = Util::SecToMilliSec(static_cast<float>(GetTimeDisplayClock_sec()));
+    const float floatMs = Util::SecToMilliSec(GetTimeDisplayClock_sec());
     return floatMs/ANIM_TIME_STEP_MS;
   }
   int GetTotalSecToAdvance() const { return std::abs(_endTime_sec - _startTime_sec);}

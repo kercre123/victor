@@ -42,7 +42,7 @@ public:
     _instanceParams.showClockCallback = callback;
   }
 
-  int GetTimeDisplayClock_sec() const { return _instanceParams.totalTimeDisplayClock_sec;}
+  float GetTimeDisplayClock_sec() const { return _instanceParams.totalTimeDisplayClock_sec;}
 
 
 protected:
@@ -78,7 +78,7 @@ protected:
   // Default behavior is to update the clock once per second for the length of display clock
   virtual void TransitionToShowClockInternal();
 
-  void SetTimeDisplayClock_sec(int displayTime_sec) { _instanceParams.totalTimeDisplayClock_sec = displayTime_sec;}
+  void SetTimeDisplayClock_sec(float displayTime_sec) { _instanceParams.totalTimeDisplayClock_sec = displayTime_sec;}
 
   // Function which builds and displays the proceduralClock - adds the 4 core digits on top
   // of any quadrant images passed into the function
@@ -101,7 +101,7 @@ private:
     AnimationTrigger getOutAnim;
     bool shouldTurnToFace = false;
     Json::Value layout;
-    int totalTimeDisplayClock_sec;
+    float totalTimeDisplayClock_sec;
     bool shouldPlayAudioOnClockUpdates = true;
 
     // Asset properties
@@ -115,7 +115,7 @@ private:
   };
 
   struct LifetimeParams{
-    int timeShowClockStarted = 0;
+    float timeShowClockStarted = 0.0f;
     BehaviorState currentState = BehaviorState::TurnToFace;
     SmartFaceID targetFaceID;
     bool hasBaseImageBeenSent = false;
