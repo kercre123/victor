@@ -26,6 +26,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -84,6 +85,9 @@ CONSOLE_VAR(bool, kSleepCycle_EnableWiggleWhileSleeping, CONSOLE_GROUP, true);
 CONSOLE_VAR(bool, kSleepCycleForceSleep, CONSOLE_GROUP, false);
 
 CONSOLE_VAR(bool, kSleepCycleForceLightSleep, CONSOLE_GROUP, false);
+// The amount of time that the robot must be on the charger but not actually charging
+// because of overheating battery before he is forced to go to sleep.
+CONSOLE_VAR(f32, kSleepCycle_TooLongOnChargerNotChargingDuration_sec, CONSOLE_GROUP, 5 * 60.f);
 
 CONSOLE_FUNC(ForcePersonCheck, CONSOLE_GROUP);
 
@@ -685,6 +689,20 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
       !wokeRecently ) {
     TransitionToCharger();
     SendGoToSleepDasEvent(SleepReason::Sleepy);
+    return true;
+  }
+
+  // Go to sleep if on charger for a certain amount of time while the battery is disconnected
+  // since this means the battery is overheated and needs to go to sleep in order to cooldown.
+  // But only do this during ObservingOnCharger.
+  const auto& battComp = GetBEI().GetRobotInfo().GetBatteryComponent();
+  const bool isCharging = battComp.IsCharging();
+  const float durationDisconnected_sec = battComp.GetBatteryDisconnectedDurationSec();
+  if (isCharging &&
+      durationDisconnected_sec > kSleepCycle_TooLongOnChargerNotChargingDuration_sec &&
+      isObserving) {
+    TransitionToLightOrDeepSleep();
+    SendGoToSleepDasEvent(SleepReason::TooLongOnChargerNotCharging);
     return true;
   }
 
