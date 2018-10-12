@@ -24,6 +24,7 @@ import io
 import json
 import sys
 import time
+from threading import Thread, Lock
 from lib import flask_helpers
 
 try:
@@ -78,6 +79,7 @@ def remap_to_range(x, x_min, x_max, out_min, out_max):
 class RemoteControlVector:
 
     def __init__(self, robot):
+        self.mutex = Lock()
         self.vector = robot
 
         self.drive_forwards = 0
@@ -266,16 +268,20 @@ class RemoteControlVector:
             self.action_queue.pop(0)
         self.action_queue.append(new_action)
 
-    async def dummy_wait(self):
-        await asyncio.sleep(0)
-
     def update(self):
         """Try and execute the next queued action"""
-        self.vector.loop.run_until_complete(self.dummy_wait())
-        if self.action_queue:
-            queued_action, action_args = self.action_queue[0]
-            if queued_action(action_args):
-                self.action_queue.pop(0)
+        try:
+            self.mutex.acquire()
+            if self.action_queue:
+                    queued_action, action_args = self.action_queue[0]
+                    if queued_action(action_args):
+                        self.action_queue.pop(0)
+            elif not self.vector.loop.is_running():
+                self.vector.loop.run_until_complete(asyncio.sleep(0))
+        except:
+            pass
+        finally:
+            self.mutex.release()
 
     def pick_speed(self, fast_speed, mid_speed, slow_speed):
         if self.go_fast:
@@ -380,7 +386,7 @@ def handle_index_page():
                         <h3>Play Animations</h3>
                         <b>0 .. 9</b> : Play Animation mapped to that key<br>
                         <h3>Talk</h3>
-                        <b>Space</b> : Say <input type="text" name="sayText" id="sayTextId" value="""" + flask_app.remote_control_vector.text_to_say + """" onchange=handleTextInput(this)>
+                        <b>Space</b> : Say <input type="text" name="sayText" id="sayTextId" value=\"""" + flask_app.remote_control_vector.text_to_say + """\" onchange=handleTextInput(this)>
                     </td>
                     <td width=30></td>
                     <td valign=top>
@@ -431,7 +437,7 @@ def handle_index_page():
                     xhr.open("POST", "updateVector", true);
                     xhr.send( null );
                 }
-                setInterval(updateVector , 60);
+                setInterval(updateVector , 120);
 
                 function updateButtonEnabledText(button, isEnabled)
                 {
@@ -672,7 +678,7 @@ def handle_updateVector():
 def run():
     args = util.parse_command_args()
 
-    with anki_vector.AsyncRobot(args.serial, enable_camera_feed=True) as robot:
+    with anki_vector.Robot(args.serial, enable_camera_feed=True) as robot:
         flask_app.remote_control_vector = RemoteControlVector(robot)
 
         robot.behavior.drive_off_charger()

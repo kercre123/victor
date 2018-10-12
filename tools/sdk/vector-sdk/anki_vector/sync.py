@@ -36,7 +36,7 @@ class Synchronizer:
     @staticmethod
     def _wait(task, loop):
         if loop.is_running():
-            for result in asyncio.as_completed([task]):
+            for result in asyncio.as_completed([task], loop=loop):
                 return result
         return loop.run_until_complete(task)
 

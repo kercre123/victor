@@ -696,6 +696,13 @@ class Robot:
                                                    duration_scalar=duration_scalar)
         return await self.conn.grpc_interface.SayText(say_text_request)
 
+    # TODO: document and clean up
+    def run_until_complete(self, task):
+        if self.loop.is_running():
+            for result in asyncio.as_completed([task], loop=self.loop):
+                return result
+        return self.loop.run_until_complete(task)
+
 
 class AsyncRobot(Robot):
     """The AsyncRobot object is just like the Robot object, but allows multiple commands
@@ -745,7 +752,3 @@ class AsyncRobot(Robot):
     def __init__(self, *args, **kwargs):
         super(AsyncRobot, self).__init__(*args, **kwargs)
         self.force_async = True
-
-    # TODO: document and clean up
-    def run_until_complete(self, task):
-        return self.loop.run_until_complete(task)

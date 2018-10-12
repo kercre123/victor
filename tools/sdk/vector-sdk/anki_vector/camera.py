@@ -102,13 +102,13 @@ class CameraComponent(util.Component):
     def init_camera_feed(self) -> None:
         """Begin camera feed task."""
         if not self._camera_feed_task or self._camera_feed_task.done():
-            self._camera_feed_task = self.robot.loop.create_task(self._request_and_handle_images())
+            self._camera_feed_task = self.loop.create_task(self._request_and_handle_images())
 
     def close_camera_feed(self) -> None:
         """Cancel camera feed task."""
         if self._camera_feed_task:
             self._camera_feed_task.cancel()
-            self.robot.loop.run_until_complete(self._camera_feed_task)
+            self.robot.run_until_complete(self._camera_feed_task)
 
     def _unpack_image(self, msg: protocol.CameraFeedResponse) -> None:
         """Processes raw data from the robot into a more more useful image structure."""
