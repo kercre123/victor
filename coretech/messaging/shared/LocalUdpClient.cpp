@@ -148,7 +148,9 @@ bool LocalUdpClient::Disconnect()
 {
   if (_socket > -1) {
     if (close(_socket) < 0) {
-      LOG_ERROR("LocalUdpClient.Disconnect", "Error closing socket %d (%s)", _socket, strerror(errno));
+      LOG_ERROR("LocalUdpClient.Disconnect.Fail", 
+                "Error closing socket %s (sock: %d) (%s)", 
+                _sockname.c_str(), _socket, strerror(errno));
     };
     LOG_DEBUG("LocalUdpClient.Disconnect", "Disconnected %d", _socket);
     _socket = -1;
@@ -168,7 +170,9 @@ ssize_t LocalUdpClient::Send(const char* data, size_t size)
   const ssize_t bytes_sent = send(_socket, data, size, 0);
 
   if (bytes_sent != size) {
-    LOG_ERROR("LocalUdpClient.Send", "Send error on %d, disconnecting (%s)", _socket, strerror(errno));
+    LOG_ERROR("LocalUdpClient.Send.Fail", 
+              "Send error on %s (sock: %d), disconnecting (%s)", 
+              _sockname.c_str(), _socket, strerror(errno));
     Disconnect();
     return -1;
   }
@@ -192,7 +196,9 @@ ssize_t LocalUdpClient::Recv(char* data, size_t maxSize)
       //LOG_DEBUG("LocalUdpClient.Recv", "No data available");
       return 0;
     } else {
-      LOG_ERROR("LocalUdpClient.Recv", "Receive error on %d, dropping connection (%s)", _socket, strerror(errno));
+      LOG_ERROR("LocalUdpClient.Recv.Fail", 
+                "Receive error on %s (sock: %d), dropping connection (%s)", 
+                _sockname.c_str(), _socket, strerror(errno));
       Disconnect();
       return -1;
     }
