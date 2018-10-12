@@ -167,6 +167,8 @@ private:
   float _saturationChargeTimeRemaining_sec = 0.f;
   float _lastSaturationChargingEndTime_sec = 0.f;
 
+  bool _resetVoltageFilterWhenBatteryConnected = false;
+
   // The timestamp of the RobotState message with the latest data
   RobotTimeStamp_t _lastMsgTimestamp = 0;
   

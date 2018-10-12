@@ -109,6 +109,9 @@ enum class EQuadrant : uint8_t {
 // movement direction
 enum class EDirection { North, East, South, West, Invalid };
 
+// a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
+using NodeAddress = std::vector<EQuadrant>;
+
 // rotation direction
 enum EClockDirection { CW, CCW };
 

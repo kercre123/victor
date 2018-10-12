@@ -459,6 +459,8 @@ namespace Anki {
         case ANKI_CAM_FORMAT_YUV:
           format = Vision::ImageEncoding::YUV420sp;
           break;
+        default:
+          return false;
       }
 
       if(_curFormat != format)

@@ -408,7 +408,7 @@ void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
 
 void PowerStateManager::NotifyOfRobotState(const RobotState& msg)
 {
-  _inSysconCalmMode = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
+  _inSysconCalmMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
 }
 
 

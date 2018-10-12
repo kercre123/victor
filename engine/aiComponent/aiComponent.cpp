@@ -114,6 +114,12 @@ void AIComponent::OnRobotRelocalized()
 {
   GetComponent<AIWhiteboard>().OnRobotRelocalized();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIComponent::OnRobotWakeUp()
+{
+  GetComponent<AIWhiteboard>().OnRobotWakeUp();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::CheckForSuddenObstacle(Robot& robot)

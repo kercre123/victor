@@ -45,6 +45,7 @@ namespace {
   // How often the filtered voltage reading is updated
   // (i.e. Rate of RobotState messages)
   const float kBatteryVoltsUpdatePeriod_sec =  STATE_MESSAGE_FREQUENCY * ROBOT_TIME_STEP_MS / 1000.f;
+  const float kCalmModeBatteryVoltsUpdatePeriod_sec =  STATE_MESSAGE_FREQUENCY_CALM * ROBOT_TIME_STEP_MS / 1000.f;
 
   // Time constant of the low-pass filter for battery voltage
   const float kBatteryVoltsFilterTimeConstant_sec = 6.0f;
@@ -139,10 +140,30 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
                       || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
                                                   // Anything under 3V doesn't make sense.
 
+  // If in calm mode, RobotState messages are expected to come in at a slower rate
+  // and we therefore need to adjust the sampling rate of the filter.
+  static bool prevSysconCalmMode = false;
+  bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
+  if (currSysconCalmMode && !prevSysconCalmMode) {
+    _batteryVoltsFilter->SetSamplePeriod(kCalmModeBatteryVoltsUpdatePeriod_sec);
+  } else if (!currSysconCalmMode && prevSysconCalmMode) {
+    _batteryVoltsFilter->SetSamplePeriod(kBatteryVoltsUpdatePeriod_sec);
+  }
+  prevSysconCalmMode = currSysconCalmMode;
+
   // If processes start while the battery is disconnected (because it's been on the charger for > 30min),
   // we make sure to set the battery voltage to a less wrong _batteryVoltsRaw.
   // Otherwise, the filtered value is only updated when the battery is connected.
   if (!_battDisconnected || NEAR_ZERO(_batteryVoltsFilt)) {
+    if (_resetVoltageFilterWhenBatteryConnected) {
+      DASMSG(battery_voltage_reset, "battery.voltage_reset", "Indicates that the battery voltage was reset following a change in onCharger state");  
+      DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since placed on charger (sec)");
+      DASMSG_SET(i3, GetBatteryVoltsRaw_mV(), "New battery voltage (mV)");
+      DASMSG_SET(i4, GetBatteryTemperature_C(), "Current temperature (C)");
+      DASMSG_SEND();
+      _batteryVoltsFilter->Reset();
+      _resetVoltageFilterWhenBatteryConnected = false;
+    }
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
   }
 
@@ -343,7 +364,6 @@ float BatteryComponent::GetLowBatteryTimeSec() const
 
 void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
 {
-  static bool delayBatteryFilterReset = false;
 
   // If we are being set on a charger, we can update the instance of the charger in the current world to
   // match the robot. If we don't have an instance, we can add an instance now
@@ -376,15 +396,10 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
 
     // The voltage usually steps up or down by a few hundred millivolts when we start/stop charging, so reset the low
     // pass filter here to more closely track the actual battery voltage, but only if the battery isn't disconnected
-    // otherwise the measured voltage doesn't reflect the actual battery voltage. We also delay the update by one
-    // RobotState message delay to allow the voltage value to settle.
-    delayBatteryFilterReset = true;
-  } else if (delayBatteryFilterReset) {
-    if (!_battDisconnected) {
-      _batteryVoltsFilter->Reset();
-      _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
-    }
-    delayBatteryFilterReset = false;
+    // otherwise the measured voltage doesn't reflect the actual battery voltage. We also delay the update by at least
+    // one RobotState message delay to allow the voltage value to settle, but it will take longer if the battery is
+    // disconnected (because it's too hot) since we don't want to reset the filter to a measurement taken while disconnected.
+    _resetVoltageFilterWhenBatteryConnected = true;
 
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     PRINT_NAMED_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");

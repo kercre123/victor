@@ -54,6 +54,10 @@ namespace
   const char* const kAbsolutePowerThresholdKey          = "micAbsolutePowerThreshold";
   const char* const kMinPowerThresholdKey               = "micMinPowerThreshold";
   const char* const kConfidenceThresholdAtMinPowerKey   = "micConfidenceThresholdAtMinPower";
+  
+  // Time (ms) threshold for considering the lift to have recently been moving.
+  // Used for filtering out slamming noises from the lift when Vector lowers it to the ground.
+  const u32 RECENT_LIFT_MOTION_TIME_LIMIT_MS = 500;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -273,15 +277,17 @@ bool BehaviorReactToSound::CanReactToSound() const
   // of the lift smacking the bottom stop can be loud enough to trigger this
   const float liftLowTol_mm = 25.f;
   const bool isLiftLow = ( GetBEI().GetRobotInfo().GetLiftHeight() < ( LIFT_HEIGHT_LOWDOCK + liftLowTol_mm ) );
-  const bool isLiftMoving = moveComponent.IsLiftMoving();
+  const auto lastTimeLiftWasMoving = moveComponent.GetLastTimeLiftWasMoving();
+  const auto latestRobotTime = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+  const bool wasLiftMovingRecently = (latestRobotTime - lastTimeLiftWasMoving) < RECENT_LIFT_MOTION_TIME_LIMIT_MS;
 
-  // don't turn if we're currenatly already turning to a sound ... add in a small cooldown after a reaction
+  // don't turn if we're currently already turning to a sound ... add in a small cooldown after a reaction
   const bool areWheelsMoving = moveComponent.AreWheelsMoving();
   const EngineTimeStamp_t cooldownTimeStamp = ( _triggerDetectedTime + static_cast<EngineTimeStamp_t>(kRTS_ReReactionCooldown_s * 1000.f ));
   const bool tooSoonSincePrevious = ( GetCurrentTimeMS() < cooldownTimeStamp );
 
   bool canReact = true;
-  canReact &= !( isLiftMoving && isLiftLow );
+  canReact &= !( wasLiftMovingRecently && isLiftLow );
   canReact &= !( IsActivated() && ( areWheelsMoving || tooSoonSincePrevious ) );
 
   return canReact;

@@ -84,7 +84,7 @@ enum uint_32 ActiveFeature {
   TimerRinging,
   TimerSet,
   UnmatchedVoiceIntent,
-  VC_Greeting,
+  BasicVoiceCommand,
   Weather,
   WhatsMyName,
 
@@ -136,7 +136,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   TimerRinging            = verbatim ActiveFeatureType::Utility,
   TimerSet                = verbatim ActiveFeatureType::Utility,
   UnmatchedVoiceIntent    = verbatim ActiveFeatureType::Failure,
-  VC_Greeting             = verbatim ActiveFeatureType::Social,
+  BasicVoiceCommand       = verbatim ActiveFeatureType::Social,
   Weather                 = verbatim ActiveFeatureType::Utility,
   WhatsMyName             = verbatim ActiveFeatureType::Social
 }

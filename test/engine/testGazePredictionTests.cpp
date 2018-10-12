@@ -74,7 +74,8 @@ TEST(EyeContact, GazeEstimationInterface)
     // Do the gaze estimation
     std::list<TrackedFace> faces;
     std::list<UpdatedFaceID> updatedIDs;
-    lastResult = faceTracker.Update(image, faces, updatedIDs);
+    const float cropFactor = 1.f;
+    lastResult = faceTracker.Update(image, cropFactor, faces, updatedIDs);
     // We don't detect a face in the first frame (even though
     // there is one present) but should find one face in the
     // rest of the frames

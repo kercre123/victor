@@ -307,9 +307,11 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, accel %f, decel %f",
-                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
+        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, backUpWhileLiftingCube %d, speed %f, accel %f, decel %f",
+                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.backUpWhileLiftingCube, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
 
+        PickAndPlaceController::SetBackUpWhileLiftingCube(msg.backUpWhileLiftingCube);
+        
         DockingController::SetDockingMethod(msg.dockingMethod);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle

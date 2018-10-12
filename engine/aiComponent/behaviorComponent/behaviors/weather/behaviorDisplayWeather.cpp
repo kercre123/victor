@@ -16,6 +16,7 @@
 
 #include "clad/audio/audioSwitchTypes.h"
 #include "components/textToSpeech/textToSpeechCoordinator.h"
+#include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
@@ -87,9 +88,8 @@ BehaviorDisplayWeather::DynamicVariables::DynamicVariables()
 {
   temperatureImg = nullptr;
   currentIntent = nullptr;
-  utteranceID = 0;
+  utteranceID = kInvalidUtteranceID;
   utteranceState = UtteranceState::Invalid;
-  shouldSayTemperature = false;
   playingWeatherResponse = false;
 }
 
@@ -274,12 +274,13 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::BehaviorUpdate()
 {
-  if(!IsActivated() || IsControlDelegated() || _dVars.playingWeatherResponse){
+  if(!IsActivated() || _dVars.playingWeatherResponse){
     return;
   }
 
-  if(!_dVars.shouldSayTemperature ||
-     (_dVars.utteranceState == UtteranceState::Ready)){
+  if ( _dVars.utteranceState == UtteranceState::Ready
+    || _dVars.utteranceState == UtteranceState::Invalid){
+    CancelDelegates(false);
     TransitionToDisplayWeatherResponse();
     _dVars.playingWeatherResponse = true;
   }
@@ -299,12 +300,8 @@ void BehaviorDisplayWeather::TransitionToFindFaceInFront()
   ANKI_VERIFY(_iConfig->lookAtFaceInFront->WantsToBeActivated(),
               "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
   // We should see a face during this behavior if there's one in front of us to center on
-  Pose3d unused;
-  const RobotTimeStamp_t lastTimeObserved_ms = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
-  DelegateIfInControl(_iConfig->lookAtFaceInFront.get(), [this, lastTimeObserved_ms](){
-    Pose3d unused;
-    const RobotTimeStamp_t nextTimeSeen = GetBEI().GetFaceWorld().GetLastObservedFace(unused);
-    _dVars.shouldSayTemperature = (nextTimeSeen == lastTimeObserved_ms);
+  DelegateIfInControl(_iConfig->lookAtFaceInFront.get(), [this](){
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::LookAtUserEndearingly));
   });
 }
 
@@ -321,13 +318,19 @@ void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
   int outAnimationDuration = 0;
   const bool shouldInterrupt = true;
   const bool emptySpriteBoxesAllowed = false;
-  GetBEI().GetAnimationComponent().PlayCompositeAnimation(_iConfig->animationName,
-                                                          *(_iConfig->compImg.get()),
-                                                          ANIM_TIME_STEP_MS,
-                                                          outAnimationDuration,
-                                                          shouldInterrupt,
-                                                          emptySpriteBoxesAllowed,
-                                                          animationCallback);
+  const Result result = GetBEI().GetAnimationComponent().PlayCompositeAnimation(_iConfig->animationName,
+                                                                                *(_iConfig->compImg.get()),
+                                                                                ANIM_TIME_STEP_MS,
+                                                                                outAnimationDuration,
+                                                                                shouldInterrupt,
+                                                                                emptySpriteBoxesAllowed,
+                                                                                animationCallback);
+
+  // if we fail to play the anim, simply bail
+  if(Result::RESULT_FAIL == result){
+    CancelSelf();
+    return;
+  }
 
   int temperature = 0;
   auto success = _iConfig->intentParser->GetRawTemperature(weatherResponse, temperature);
@@ -348,8 +351,8 @@ void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
   GetBEI().GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::Weather_Temperature,
                                                             _iConfig->timeTempShouldDisappear_ms);
 
-  // Play TTS if appropriate
-  if(_dVars.shouldSayTemperature){
+  // Play TTS
+  if ((kInvalidUtteranceID != _dVars.utteranceID) && (_dVars.utteranceState == UtteranceState::Ready)){
     RobotInterface::TextToSpeechPlay ttsPlay;
     ttsPlay.ttsID = _dVars.utteranceID;
     RobotInterface::EngineToRobot wrapper(std::move(ttsPlay));
@@ -601,6 +604,8 @@ void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::StartTTSGeneration()
 {
+  _dVars.utteranceID = kInvalidUtteranceID;
+  _dVars.utteranceState = UtteranceState::Generating;
 
   auto callback = [this](const UtteranceState& utteranceState)
   {
@@ -623,7 +628,9 @@ void BehaviorDisplayWeather::StartTTSGeneration()
                                                                                  1.0f, callback);
   }
 
-
+  if(kInvalidUtteranceID == _dVars.utteranceID){
+    _dVars.utteranceState = UtteranceState::Invalid;
+  }
 }
 
 

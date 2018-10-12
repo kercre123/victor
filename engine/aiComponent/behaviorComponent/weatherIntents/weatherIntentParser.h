@@ -34,8 +34,7 @@ public:
   bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
                      std::string& textToSay) const;
   bool IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent) const;
-  WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent,
-                                    bool isForPRDemo = false) const;
+  WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent) const;
   tm GetLocalDateTime(const UserIntent_WeatherResponse& weatherIntent) const;
 
   // return raw int temperature in whatever unit it is set

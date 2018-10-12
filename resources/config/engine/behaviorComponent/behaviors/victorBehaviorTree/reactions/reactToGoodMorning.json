@@ -1,38 +1,14 @@
 {
   "behaviorID": "ReactToGoodMorning",
-  "behaviorClass": "FindFaceAndThen",
+  "behaviorClass": "AnimSequence",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
 
-  "timeUntilCancelFaceLooking_s": 2.0,
-  "timeUntilCancelFaceSearch_s": 10.0,
-  "searchForFaceBehavior": "ActiveLookForFaces",
-  "shouldLeaveChargerFirst": true,
-  "driveOffChargerBehavior": "DriveOffChargerStraight",
-
-  "timeUntilCancelFollowup_s": 15.0,
-
-  "useBodyDetector": true,
-  "additionalLookTimeIfSawBody_s": 3.0,
-  "additionalSearchTimeIfSawBody_s": 3.0,
-
-  "animWhenSeesFace": "FoundFace",
-  
   "respondToUserIntents": [
-    {
-      "type": "greeting_goodmorning"
-    }
+    { "type": "greeting_goodmorning" }
   ],
-  "behavior": "InternalReactToGoodMorning",
-  "anonymousBehaviors": [
-    {
-      "behaviorClass": "AnimSequence",
-      "behaviorName": "InternalReactToGoodMorning",
 
-      "animTriggers": [
-        "ReactToGoodMorning"
-      ]
-
-    }
+  "animTriggers":[
+    "ReactToGoodMorning"
   ]
 }

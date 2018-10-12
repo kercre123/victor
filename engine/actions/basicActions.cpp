@@ -35,6 +35,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/sayNameProbabilityTable.h"
 #include "engine/vision/imageSaver.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "util/console/consoleInterface.h"
@@ -49,6 +50,8 @@ namespace Anki {
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
 
     CONSOLE_VAR(u32, kDefaultNumFramesToWait, "WaitForImages", 3);
+    
+    CONSOLE_VAR(f32, kMaxTimeToWaitForRecognition_sec, "TurnTowardsFace", 3.f);
 
     
     TurnInPlaceAction::TurnInPlaceAction(const float angle_rad, const bool isAbsolute)
@@ -2040,7 +2043,13 @@ namespace Anki {
       SetType(RobotActionType::TURN_TOWARDS_FACE);
       SetTracksToLock((u8)AnimTrackFlag::NO_TRACKS);
     }
-
+    
+    TurnTowardsFaceAction::TurnTowardsFaceAction(const SmartFaceID& faceID, Radians maxTurnAngle,
+                                                 std::shared_ptr<SayNameProbabilityTable>& sayNameProbTable)
+    : TurnTowardsFaceAction(faceID, maxTurnAngle, false)
+    {
+      _sayNameProbTable = sayNameProbTable;
+    }
     
     void TurnTowardsFaceAction::SetAction(IActionRunner *action, bool suppressTrackLocking)
     {
@@ -2078,7 +2087,7 @@ namespace Anki {
 
     void TurnTowardsFaceAction::SetSayNameAnimationTrigger(AnimationTrigger trigger)
     {
-      if( ! _sayName ) {
+      if( !MightSayName() ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
                           "setting say name trigger, but we aren't going to say the name. This is useless");
       }
@@ -2090,7 +2099,7 @@ namespace Anki {
 
     void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
     {
-      if( ! _sayName ) {
+      if( !MightSayName() ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
                           "setting anim trigger for unnamed faces, but we aren't going to say the name.");
       }
@@ -2112,7 +2121,7 @@ namespace Anki {
     {
       DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
                  "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
-      if( ! _sayName ) {
+      if( !MightSayName() ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
@@ -2123,7 +2132,7 @@ namespace Anki {
     {
       DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
                  "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
-      if( ! _sayName ) {
+      if( !MightSayName() ) {
         PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
@@ -2134,7 +2143,7 @@ namespace Anki {
     {
       DEV_ASSERT((_noNameTriggerCallback == nullptr) && (_sayNameTriggerCallback == nullptr),
                  "SetAnyFaceTriggerCallback is mutually exclusive with other anim trigger callbacks");
-      DEV_ASSERT(!_sayName, "SetAnyFaceTriggerCallback is mutually exclusive sayname animations");
+      DEV_ASSERT(!MightSayName(), "SetAnyFaceTriggerCallback is mutually exclusive sayname animations");
       _anyFaceTriggerCallback = std::move(callback);
     }
 
@@ -2281,6 +2290,74 @@ namespace Anki {
       _state = State::FineTuning;
     } // CreateFineTuneAction()
     
+    bool TurnTowardsFaceAction::MightSayName() const
+    {
+      if(nullptr != _sayNameProbTable)
+      {
+        // If we even have a say name probability LUT, we _might_ say a name,
+        // depending on the name...
+        return true;
+      }
+      else
+      {
+        return _sayName;
+      }
+    }
+    
+    bool TurnTowardsFaceAction::ShouldSayName(const std::string& name)
+    {
+      if(nullptr != _sayNameProbTable)
+      {
+        return _sayNameProbTable->UpdateShouldSayName(name);
+      }
+      else
+      {
+        return _sayName;
+      }
+    }
+    
+    bool TurnTowardsFaceAction::CreateNameAnimationAction(const Vision::TrackedFace* face)
+    {
+      // return value
+      bool createdActions = false;
+      
+      // info for DAS
+      const bool haveName = face->HasName();
+      bool saidName = false;
+      
+      // Done being recognized, say name or don't
+      if( haveName ) {
+        if( ShouldSayName(face->GetName()) ) {
+          SayTextAction* sayText = new SayTextAction(face->GetName());
+          if( _sayNameTriggerCallback ) {
+            AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
+            if( sayNameAnim != AnimationTrigger::Count ) {
+              sayText->SetAnimationTrigger( sayNameAnim, _animTracksToLock );
+            }
+          }
+          SetAction(sayText);
+          createdActions = true;
+          saidName = true;
+        }
+        // If we aren't supposed to say the name, do nothing.
+        // TODO: If should not say name, provide anim trigger/callback for "name known but not saying"
+      }
+      else if( _noNameTriggerCallback ) {
+        AnimationTrigger noNameAnim = _noNameTriggerCallback(GetRobot(), _obsFaceID);
+        if( noNameAnim != AnimationTrigger::Count ) {
+          SetAction(new TriggerLiftSafeAnimationAction(noNameAnim, 1, true, _animTracksToLock));
+          createdActions = true;
+        }
+      }
+      
+      DASMSG(turn_towards_face_might_say_name, "turn_towards_face.might_say_name",
+             "TurnTowardsFace action requested to say name");
+      DASMSG_SET(i1, haveName, "Face's name was known at end of action");
+      DASMSG_SET(i2, saidName, "When haveName=1, whether we chose to say name");
+      DASMSG_SEND();
+      
+      return createdActions;
+    }
     
     ActionResult TurnTowardsFaceAction::CheckIfDone()
     {
@@ -2348,7 +2425,7 @@ namespace Anki {
              // Create action to say name if enabled and we have a name by now.
             result = _action->Update();
             // play an animation, possibly a TTS animation, based on what callbacks have been provided
-            const bool playAnim = (_sayName || _anyFaceTriggerCallback);
+            const bool playAnim = (MightSayName() || _anyFaceTriggerCallback);
             if((ActionResult::SUCCESS == result) && playAnim)
             {
               const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_obsFaceID);
@@ -2362,30 +2439,46 @@ namespace Anki {
                     result = ActionResult::RUNNING;
                   }
                 }
-                else if( face->GetName().empty() ) {
-                  if( _noNameTriggerCallback ) {
-                    AnimationTrigger noNameAnim = _noNameTriggerCallback(GetRobot(), _obsFaceID);
-                    if( noNameAnim != AnimationTrigger::Count ) {
-                      SetAction(new TriggerLiftSafeAnimationAction(noNameAnim, 1, true, _animTracksToLock));
-                      _state = State::PlayingAnimation;
-                      result = ActionResult::RUNNING;
-                    }
-                  }
-                }
-                else {
-                  // we have a name
-                  SayTextAction* sayText = new SayTextAction(face->GetName());
-                  if( _sayNameTriggerCallback ) {
-                    AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
-                    if( sayNameAnim != AnimationTrigger::Count ) {
-                      sayText->SetAnimationTrigger( sayNameAnim, _animTracksToLock );
-                    }
-                  }
-                  SetAction(sayText);
-                  _state = State::PlayingAnimation;
+                else if( face->GetID() < 0 ) {
+                  // Need to wait for recognition to complete
+                  _startedWaitingForRecognition = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                  _state = State::WaitingForRecognition;
                   result = ActionResult::RUNNING;
                 }
+                else {
+                  const bool actionCreated = CreateNameAnimationAction(face);
+                  if(actionCreated) {
+                    _state = State::PlayingAnimation;
+                    result = ActionResult::RUNNING;
+                  }
+                }
               }
+            }
+          }
+          break;
+        }
+          
+        case State::WaitingForRecognition:
+        {
+          const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_obsFaceID);
+          const f32 currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const bool timedOut = (currentTime_sec - _startedWaitingForRecognition) > kMaxTimeToWaitForRecognition_sec;
+          if( face->GetID() > 0 || timedOut)
+          {
+            // Done being recognized (or timed out), say name or don't
+            const bool actionCreated = CreateNameAnimationAction(face);
+            if(actionCreated) {
+              _state = State::PlayingAnimation;
+              result = ActionResult::RUNNING;
+            }
+            else {
+              result = ActionResult::SUCCESS;
+            }
+            
+            if(timedOut) {
+              DASMSG(turn_towards_face_recognition_timeout, "turn_towards_face.recognition_timeout",
+                     "TurnTowardsFaceAction timed out waiting for recognition to complete");
+              DASMSG_SEND();
             }
           }
           break;

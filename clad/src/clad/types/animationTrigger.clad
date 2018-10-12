@@ -12,7 +12,6 @@ enum int_32 AnimationTrigger
   // Animation triggers, sorted alphabetically
   AlreadyAtFace,
   AudioOnlyHuh,
-  BeQuiet,
 
   BlackJack_Deal,
   BlackJack_GoodLuck,
@@ -155,6 +154,16 @@ enum int_32 AnimationTrigger
   FistBumpLeftHanging,
   FlipDownFromBack,
   FrustratedByFailureMajor,
+
+  // feedback/imperative anims
+  Feedback_GoodRobot,
+  Feedback_BadRobot,
+  Feedback_ShutUp,
+  Feedback_BeQuiet,
+  Feedback_Apology,
+  Feedback_ILoveYou,
+  Feedback_MeanWords,
+
   GoToSleepGetIn,
   GoToSleepOff,
   GoToSleepSleeping,
@@ -305,8 +314,6 @@ enum int_32 AnimationTrigger
   ReactToCubeTapInteractionGetOut,
   ReactToCubeTapInteractionLoop,
   ReactToDarkness,
-  ReactToAffirmative,
-  ReactToNegative,
   ReactToGoodBye,
   ReactToGoodMorning,
   ReactToGoodNight,
@@ -399,7 +406,6 @@ enum int_32 AnimationTrigger
   RollBlockRealign,
   RollBlockRetry,
   RollBlockSuccess,
-  ShutUp,
   SoundOnlyLiftEffortPickup,
   SoundOnlyLiftEffortPlaceHigh,
   SoundOnlyLiftEffortPlaceLow,

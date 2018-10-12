@@ -52,7 +52,8 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
                                         const f32 placementOffsetAngle_rad,
                                         const u8 numRetries,
                                         const DockingMethod dockingMethod,
-                                        const bool doLiftLoadCheck)
+                                        const bool doLiftLoadCheck,
+                                        const bool backUpWhileLiftingCube)
 {
   ActionableObject* object = dynamic_cast<ActionableObject*>(_robot->GetBlockWorld().GetLocatedObjectByID(objectID));
   if(object == nullptr) {
@@ -116,7 +117,8 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
                                                                              dockAction,
                                                                              numRetries,
                                                                              dockingMethod,
-                                                                             doLiftLoadCheck);
+                                                                             doLiftLoadCheck,
+                                                                             backUpWhileLiftingCube);
   
   return sendResult;
 }

@@ -926,7 +926,7 @@ Supervisor {
                             isLocked FALSE
                             autoLock TRUE
                             tensileStrength 1
-                            shearStrength 1
+                            shearStrength 2
                           }
                           %{ end }%
 

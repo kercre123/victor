@@ -17,6 +17,11 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/iSimpleFaceBehavior.h"
 
 namespace Anki {
+  
+namespace Vision {
+  class TrackedFace;
+}
+  
 namespace Vector {
   
 class BehaviorTextToSpeechLoop;
@@ -40,8 +45,9 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
 
+  virtual void BehaviorUpdate() override;
 private:
-
+  
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
     
@@ -54,17 +60,24 @@ private:
     // Text to speak *after* playing dontKnowNameAnimation (empty for none)
     std::string dontKnowText = "eye dont know";
     
+    // Max time to wait for a face in the process of being recognized to come back with a name
+    // before just triggering the "don't know" reaction
+    float waitForRecognitionMaxTime_sec = 1.5f;
+    
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    // TODO: put member variables here
+    bool  waitingForRecognition = true;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
+  void SayName(const std::string& name);
+  void SayDontKnow();
+  void Finish();
 };
 
 } // namespace Vector

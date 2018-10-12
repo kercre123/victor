@@ -394,7 +394,7 @@ message DriveOnChargerResponse {
 enum OnboardingStages
 {
   NotStarted = 0;
-  // TODO: re-enable for 1.1:
+  // TODO: re-enable
   // FinishedComeHere = 1;
   // FinishedMeetVictor = 2;
   Complete = 3;

@@ -195,7 +195,7 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
   
     if(kNeuralNetRunner_SaveImages == 2)
     {
-      const Vision::ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Full);
+      const Vision::ImageRGB& img = imageCache.GetRGB(ImageCacheSize::Full);
       const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "full",
         std::to_string(img.GetTimestamp()) + ".png"});
       img.Save(saveFilename);
@@ -203,7 +203,7 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
 
     // Resize to processing size
     _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
-    const ImageCache::Size kImageSize = ImageCache::Size::Full;
+    const ImageCacheSize kImageSize = ImageCacheSize::Full;
     const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
     const Vision::ImageRGB& imgOrig = imageCache.GetRGB(kImageSize);
     imgOrig.Resize(_imgBeingProcessed, kResizeMethod);

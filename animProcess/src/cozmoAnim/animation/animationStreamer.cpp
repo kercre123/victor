@@ -546,11 +546,12 @@ namespace Vector {
     }
 
     _streamingAnimation = anim;
-    for(const auto& callback: _newAnimationCallbacks){
-      callback();
-    }
 
     if(_streamingAnimation == nullptr) {
+      // Perform New Animation Callbacks to prepare for procedural animations
+      for (const auto& callback: _newAnimationCallbacks) {
+        callback();
+      }
       return RESULT_OK;
     }
 
@@ -1022,6 +1023,11 @@ namespace Vector {
   Result AnimationStreamer::InitStreamingAnimation(Tag withTag, u32 startAt_ms,
                                                    bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
   {
+    // Perform new animation callbacks
+    for (const auto& callback: _newAnimationCallbacks) {
+      callback();
+    }
+    
     kCurrentManualFrameNumber = 0;
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     Result lastResult = _streamingAnimation->Init(spriteCache);
@@ -1044,23 +1050,10 @@ namespace Vector {
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;
 
-      {
-        // If the animation that's about to start streaming will be using
-        // sprite sequences, check weather the sequence will use procedural eyes
-        // or take full control of the screen.
-        auto& spriteTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
-        const bool spriteTrackAllowsEyes = spriteTrack.IsEmpty() ||
-                                           !spriteTrack.CurrentFrameIsValid(_relativeStreamTime_ms) ||
-                                           (spriteTrack.CurrentFrameIsValid(_relativeStreamTime_ms) &&
-                                            spriteTrack.GetCurrentKeyFrame().AllowProceduralEyeOverlays());
-
-        // If procedural eyes will be used, make sure any eye dart (which is persistent) gets removed
-        // so it doesn't affect the animation we are about to start streaming.
-        // Give it a little duration so it doesn't pop.
-        if(spriteTrackAllowsEyes){
-          _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, (3 * ANIM_TIME_STEP_MS));
-        }
-      }
+      // If we are initializing ANY animation at all, we don't want keepalive's mucking with the eye 
+      // display state. If we eventually decide we want to have an animation screen run with keepalive eyes,
+      // this will need to be addressed across the entire keepalive system
+      _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, (3 * ANIM_TIME_STEP_MS));
 
       if (!s_enableKeepFaceAlive){
         // If the animation doesn't have a procedural face track, and Face Keep-alive is false (i.e.,
