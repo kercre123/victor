@@ -133,6 +133,69 @@ func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.M
 	})
 }
 
+func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
+	return &gw_clad.PoseStruct3d{
+		X:        msg.X,
+		Y:        msg.Y,
+		Z:        msg.Z,
+		Q0:       msg.Q0,
+		Q1:       msg.Q1,
+		Q2:       msg.Q2,
+		Q3:       msg.Q3,
+		OriginId: msg.OriginID,
+	}
+}
+
+func ProtoCreateFixedCustomObjectToClad(msg *extint.CreateFixedCustomObjectRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithCreateFixedCustomObject(&gw_clad.CreateFixedCustomObject{
+		Pose:    ProtoPoseToClad(msg.pose),
+		XSizeMm: msg.x_size_mm,
+		YSizeMm: msg.y_size_mm,
+		ZSizeMm: msg.z_size_mm,
+	})
+}
+
+func ProtoDefineCustomBoxToClad(msg *extint.DefineCustomBoxRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomBox(&gw_clad.DefineCustomBox{
+		CustomType:     gw_clad.ObjectType(msg.custom_type - 1),
+		MarkerFront:    gw_clad.CustomObjectMarker(msg.marker_front - 1),
+		MarkerBack:     gw_clad.CustomObjectMarker(msg.marker_back - 1),
+		MarkerTop:      gw_clad.CustomObjectMarker(msg.marker_top - 1),
+		MarkerBottom:   gw_clad.CustomObjectMarker(msg.marker_bottom - 1),
+		MarkerLeft:     gw_clad.CustomObjectMarker(msg.marker_left - 1),
+		MarkerRight:    gw_clad.CustomObjectMarker(msg.marker_right - 1),
+		XSizeMm:        msg.x_size_mm,
+		YSizeMm:        msg.y_size_mm,
+		ZSizeMm:        msg.z_size_mm,
+		MarkerWidthMm:  msg.marker_width_mm,
+		MarkerHeightMm: msg.marker_height_mm,
+		IsUnique:       msg.is_unique,
+	})
+}
+
+func ProtoDefineCustomCubeToClad(msg *extint.DefineCustomCubeRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomCube(&gw_clad.DefineCustomCube{
+		CustomType:     gw_clad.ObjectType(msg.custom_type - 1),
+		Marker:         gw_clad.CustomObjectMarker(msg.marker - 1),
+		SizeMm:         msg.size_mm,
+		MarkerWidthMm:  msg.marker_width_mm,
+		MarkerHeightMm: msg.marker_height_mm,
+		IsUnique:       msg.is_unique,
+	})
+}
+
+func ProtoDefineCustomWallToClad(msg *extint.DefineCustomWallRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomWall(&gw_clad.DefineCustomWall{
+		CustomType:     gw_clad.ObjectType(msg.custom_type - 1),
+		Marker:         gw_clad.CustomObjectMarker(msg.marker - 1),
+		WidthMm:        msg.width_mm,
+		HeightMm:       msg.height_mm,
+		MarkerWidthMm:  msg.marker_width_mm,
+		MarkerHeightMm: msg.marker_height_mm,
+		IsUnique:       msg.is_unique,
+	})
+}
+
 func SliceToArray(msg []uint32) [3]uint32 {
 	var arr [3]uint32
 	copy(arr[:], msg)
@@ -2226,6 +2289,155 @@ func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
 	return cloudResponse, nil
+}
+
+func (service *rpcService) DeleteCustomObjects(ctx context.Context, in *extint.DeleteCustomObjectsRequest) (*extint.DeleteCustomObjectsResponse, error) {
+	if in.mask & extint.DELETION_MASK_ARCHETYPES {
+		f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_RobotDeletedCustomMarkerObjects, 1)
+		defer f()
+
+		_, err := engineCladManager.Write(&gw_clad.NewMessageExternalToRobotWithUndefineAllCustomMarkerObjects(
+			&gw_clad.UndefineAllCustomMarkerObjects{}))
+
+		if err != nil {
+			return nil, err
+		}
+
+		payload, ok := <-responseChan
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
+	}
+	if in.mask & extint.DELETION_MASK_FIXED_CUSTOM_OBJECTS {
+		f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_RobotDeletedFixedCustomObjects, 1)
+		defer f()
+
+		_, err := engineCladManager.Write(&gw_clad.NewMessageExternalToRobotWithDeleteFixedCustomObjects(
+			&gw_clad.DeleteFixedCustomObjects{}))
+
+		if err != nil {
+			return nil, err
+		}
+
+		payload, ok := <-responseChan
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
+	}
+	if in.mask & extint.DELETION_MASK_CUSTOM_MARKER_OBJECTS {
+		f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_RobotDeletedCustomMarkerObjects, 1)
+		defer f()
+
+		_, err := engineCladManager.Write(&gw_clad.NewMessageExternalToRobotWithDeleteCustomMarkerObjects(
+			&gw_clad.DeleteCustomMarkerObjects{}))
+
+		if err != nil {
+			return nil, err
+		}
+
+		payload, ok := <-responseChan
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
+	}
+
+	return &extint.DeleteCustomObjectsResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+	}, nil
+}
+
+func (service *rpcService) CreateFixedCustomObject(ctx context.Context, in *extint.CreateFixedCustomObjectRequest) (*extint.CreateFixedCustomObjectResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(gw_clad.MessageRobotToExternalTag_CreatedFixedCustomObject, 1)
+	defer f()
+
+	_, err := engineCladManager.Write(ProtoCreateFixedCustomObjectToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetCreatedFixedCustomObject()
+
+	return &extint.CreateFixedCustomObjectResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		ObjectId: response.object_id,
+	}, nil
+}
+
+func (service *rpcService) DefineCustomBox(ctx context.Context, in *extint.DefineCustomBoxRequest) (*extint.DefineCustomBoxResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(gw_clad.MessageRobotToExternalTag_DefinedCustomObject, 1)
+	defer f()
+
+	_, err := engineCladManager.Write(ProtoDefineCustomBoxToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetDefinedCustomObject()
+
+	return &extint.DefineCustomBoxResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		Success: response.success,
+	}, nil
+}
+
+func (service *rpcService) DefineCustomCube(ctx context.Context, in *extint.DefineCustomCubeRequest) (*extint.DefineCustomCubeResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(gw_clad.MessageRobotToExternalTag_DefinedCustomObject, 1)
+	defer f()
+
+	_, err := engineCladManager.Write(ProtoDefineCustomCubeToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetDefinedCustomObject()
+
+	return &extint.DefineCustomCubeResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		Success: response.success,
+	}, nil
+}
+
+func (service *rpcService) DefineCustomWall(ctx context.Context, in *extint.DefineCustomWallRequest) (*extint.DefineCustomWallResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(gw_clad.MessageRobotToExternalTag_DefinedCustomObject, 1)
+	defer f()
+
+	_, err := engineCladManager.Write(ProtoDefineCustomWallToClad(in))
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetDefinedCustomObject()
+
+	return &extint.DefineCustomWallResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		Success: response.success,
+	}, nil
 }
 
 func newServer() *rpcService {

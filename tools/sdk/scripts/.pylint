@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
 # Find available symbolic names in:
 # https://docs.pylint.org/features.html
-disable=fixme,missing-docstring,line-too-long,duplicate-code,too-many-instance-attributes,too-many-arguments,logging-format-interpolation,invalid-name,single-string-used-for-slots,too-many-locals,too-many-public-methods,logging-fstring-interpolation,too-many-statements
+disable=fixme,missing-docstring,line-too-long,duplicate-code,too-many-instance-attributes,too-many-arguments,logging-format-interpolation,invalid-name,single-string-used-for-slots,too-many-locals,too-many-public-methods,logging-fstring-interpolation,too-many-statements,too-many-lines
 extension-pkg-whitelist=cv2

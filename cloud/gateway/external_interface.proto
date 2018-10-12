@@ -366,34 +366,42 @@ service ExternalInterface {
     };
   }
 
-  // Causes the robot to forget about all custom (fixed + marker) objects it currently knows about.
-  rpc DeleteAllCustomObjects(DeleteAllCustomObjectsRequest) returns (DeleteAllCustomObjectsResponse) {
+  // Causes the robot to forget about custom objects it currently knows about.
+  rpc DeleteCustomObjects(DeleteCustomObjectsRequest) returns (DeleteCustomObjectsResponse) {
     option (google.api.http) = {
-      post: "/v1/delete_all_custom_objects",
+      post: "/v1/delete_custom_objects",
       body: "*"
     };
   }
 
-  // Causes the robot to forget about all custom marker objects it currently knows about.
-  rpc DeleteCustomMarkerObjects(DeleteCustomMarkerObjectsRequest) returns (DeleteCustomMarkerObjectsResponse) {
+  // Creates a permanent custom object instance in the robot's world, with no connection to the vision system.
+  rpc CreateFixedCustomObject(CreateFixedCustomObjectRequest) returns (CreateFixedCustomObjectResponse) {
     option (google.api.http) = {
-      post: "/v1/delete_custom_marker_objects",
+      post: "/v1/create_fixed_custom_object",
       body: "*"
     };
   }
 
-  // Causes the robot to forget about all fixed custom objects it currently knows about.
-  rpc DeleteFixedCustomObjects(DeleteFixedCustomObjectsRequest) returns (DeleteFixedCustomObjectsResponse) {
+  // Creates a custom rectangular prism with distinct custom markers on each of its 6 faces.
+  rpc DefineCustomBox(DefineCustomBoxRequest) returns (DefineCustomBoxResponse) {
     option (google.api.http) = {
-      post: "/v1/delete_fixed_custom_objects",
+      post: "/v1/define_custom_box",
       body: "*"
     };
   }
 
-  // Remove all custom marker object definitions, and any instances of them in the world.
-  rpc UndefineAllCustomMarkerObjects(UndefineAllCustomMarkerObjectsRequest) returns (UndefineAllCustomMarkerObjectsResponse) {
+  // Creates a custom cube with a single custom marker on all faces.
+  rpc DefineCustomCube(DefineCustomCubeRequest) returns (DefineCustomCubeResponse) {
     option (google.api.http) = {
-      post: "/v1/undefine_all_custom_marker_objects",
+      post: "/v1/define_custom_cube",
+      body: "*"
+    };
+  }
+
+  // Creates a custom rectangular prism with a small constant depth with a custom marker.
+  rpc DefineCustomWall(DefineCustomWallRequest) returns (DefineCustomWallResponse) {
+    option (google.api.http) = {
+      post: "/v1/define_custom_wall",
       body: "*"
     };
   }
