@@ -32,16 +32,20 @@ static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was 
 static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent)
-: _center(center)
-, _sideLen(sideLength)
-, _boundingBox(center - Point3f(sideLength/2, sideLength/2, 0), center + Point3f(sideLength/2, sideLength/2, 0))
+QuadTreeNode::QuadTreeNode(const QuadTreeNode* parent, EQuadrant quadrant)
+: _boundingBox({0,0}, {0,0})
 , _parent(parent)
-, _level(level)
 , _quadrant(quadrant)
-, _address(level)
 , _content(MemoryMapDataPtr())
 {
+  if (_parent) { 
+    float halfLen = _parent->GetSideLen() * .25f;
+    _sideLen      = _parent->GetSideLen() * .5f;
+    _center       = _parent->GetCenter() + Quadrant2Vec(_quadrant) * halfLen;
+    _level        = _parent->GetLevel() - 1;
+    _boundingBox  = AxisAlignedQuad(_center - Point2f(halfLen), _center + Point2f(halfLen));
+  }
+  
   ResetAddress();
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
@@ -55,19 +59,22 @@ void QuadTreeNode::ResetAddress()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
+bool QuadTreeNode::Subdivide()
 {
-  if ( !CanSubdivide() ) { return; }
+  if ( !CanSubdivide() ) { return false; }
   
-  const float halfLen    = _sideLen * 0.50f;
-  const float quarterLen = halfLen * 0.50f;
-  const uint8_t cLevel = _level-1;
+  _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::PlusXPlusY) );   // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::PlusXMinusY) );  // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::MinusXPlusY) );  // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::MinusXMinusY) ); // lo R
 
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXPlusY , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXMinusY, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXPlusY , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXMinusY, this) ); // lo E
+  return true;
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::MoveDataToChildren(QuadTreeProcessor& processor)
+{
+  if ( !IsSubdivided() || _content.data->type == EContentType::Unknown ) { return; }
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
   {
@@ -83,18 +90,17 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Merge(const MemoryMapDataPtr newData, QuadTreeProcessor& processor)
+bool QuadTreeNode::Join(QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(IsSubdivided(), "QuadTreeNode.Merge.InvalidState");
+  if (!IsSubdivided()) { return false; }
 
   // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
   DestroyNodes(_childrenPtr, processor);
 
   // make sure vector of children is empty to since IsSubdivided() checks this vectors length
   _childrenPtr.clear();
-  
-  // set our content to the one we will have after the merge
-  ForceSetDetectedContentType(newData, processor);
+
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -126,7 +132,10 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
     nodeData->SetFirstObservedTime(GetData()->GetFirstObservedTime());
     nodeData->SetLastObservedTime(GetData()->GetLastObservedTime());
     
-    Merge( nodeData, processor );
+    Join( processor );
+    
+    // set our content to the one we will have after the merge
+    ForceSetDetectedContentType(nodeData, processor);
   }
 }
 
@@ -239,6 +248,15 @@ const QuadTreeNode* QuadTreeNode::GetChild(EQuadrant quadrant) const
   return ret;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+QuadTreeNode* QuadTreeNode::GetChild(EQuadrant quadrant)
+{
+  QuadTreeNode* ret =
+    ( _childrenPtr.empty() ) ?
+    ( nullptr ) :
+    ( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant].get() );
+  return ret;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const QuadTreeNode* QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr) const
@@ -289,10 +307,6 @@ void QuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDirection 
         secondChild = isCW ? EQuadrant::PlusXPlusY : EQuadrant::MinusXPlusY;
       }
       break;
-      case EDirection::Invalid:
-      {
-        DEV_ASSERT(false, "QuadTreeNode.AddSmallDescendants.InvalidDirection");
-      }
     }
     
     DEV_ASSERT(firstChild != EQuadrant::Invalid, "QuadTreeNode.AddSmallDescendants.InvalidFirstChild");
