@@ -29,8 +29,9 @@ CozmoMat {
   showMarkers FALSE
   xSize 2.000
 }
-LightCube {
-  translation 0.2 0 0.022
+DEF duck RubberDuck {
+  translation -0.0 0.25 0.02
+  rotation 1 0 0 1.57
 }
 %COZMOBOT% {
   name "CozmoBot_1"

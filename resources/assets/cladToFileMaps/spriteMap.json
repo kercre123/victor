@@ -560,6 +560,30 @@
     "SpriteName" : "blackjack_vector_flipover"
   },
   {
+    "CladEvent" : "Face_Alexa_Ring_Test",
+    "SpriteName" : "face_alexa_ring_test"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Getin",
+    "SpriteName" : "face_alexaint_getin"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_L_Loop",
+    "SpriteName" : "face_alexaint_l_loop"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Listen2speak",
+    "SpriteName" : "face_alexaint_listen2speak"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Speak_Getout",
+    "SpriteName" : "face_alexaint_speak_getout"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Speak_Loop",
+    "SpriteName" : "face_alexaint_speak_loop"
+  },
+  {
     "CladEvent" : "Face_Chargerdocking_Severerequest",
     "SpriteName" : "face_chargerdocking_severerequest"
   },

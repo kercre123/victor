@@ -128,8 +128,11 @@ void BehaviorObservingLookAtFaces::TransitionToTurnTowardsAFace()
   const SmartFaceID face = GetFaceToStareAt();
   if( face.IsValid() ) {
     
-    TurnTowardsFaceAction* action = new TurnTowardsFaceAction(face);
-
+    auto & sayNameTable = GetAIComp<AIWhiteboard>().GetSayNameProbabilityTable();
+    TurnTowardsFaceAction* action = new TurnTowardsFaceAction(face, M_PI_F, sayNameTable);
+    action->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
+    action->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
+    
     DelegateIfInControl(action, [this, face](ActionResult res) {
         if( res == ActionResult::SUCCESS &&
             face.IsValid() ) {

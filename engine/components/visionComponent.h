@@ -310,8 +310,6 @@ struct DockingErrorSignal;
 
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
 
-    void EnableSensorRes(bool sensorRes);
-
     // These methods control which faces are tracked, and turn face
     // recognition on/off. The goal here is to avoid resetting face
     // detection when in an action that tracks a face
@@ -395,8 +393,6 @@ struct DockingErrorSignal;
 
     Vision::ImageEncoding _desiredImageFormat = Vision::ImageEncoding::NoneImageEncoding;
 
-    bool _shouldDownsampleBayer = true;
-    
     // State machine to make sure nothing is using the shared memory from the camera system
     // before we request a different camera capture format as well as to wait
     // until we get a frame from the camera after changing formats before unpausing

@@ -866,7 +866,7 @@ void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()
 
 void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 {
-  const bool buttonIsPressed = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
+  const bool buttonIsPressed = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BUTTON_PRESSED);
   bool buttonPressedEvent;
   bool buttonReleasedEvent;
   bool singlePressDetected;
@@ -877,7 +877,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
                       singlePressDetected, 
                       doublePressDetected);
 
-  const bool isOnCharger = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
+  const bool isOnCharger = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
 
   const ScreenName currScreenName = GetCurrScreenName();
 

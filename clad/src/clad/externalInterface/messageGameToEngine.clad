@@ -423,7 +423,6 @@ message LoadFaceAlbumFromFile {
 
 message SetCameraCaptureFormat {
   Anki::Vision::ImageEncoding format,
-  bool enableSensorRes=0
 }
 
 message SetMemoryMapRenderEnabled {

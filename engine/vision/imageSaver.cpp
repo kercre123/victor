@@ -30,16 +30,16 @@ namespace Vector {
 static const char* kLogChannelName = "VisionSystem";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImageSaverParams::ImageSaverParams(const std::string&       pathIn,
-                                   Mode                     saveModeIn,
-                                   int8_t                   qualityIn,
-                                   const std::string&       basenameIn,
-                                   Vision::ImageCache::Size sizeIn,
-                                   float                    thumbnailScaleIn,
-                                   float                    saveScaleIn,
-                                   bool                     removeDistortionIn,
-                                   uint8_t                  medianFilterSizeIn,
-                                   float                    sharpeningAmountIn)
+ImageSaverParams::ImageSaverParams(const std::string&     pathIn,
+                                   Mode                   saveModeIn,
+                                   int8_t                 qualityIn,
+                                   const std::string&     basenameIn,
+                                   Vision::ImageCacheSize sizeIn,
+                                   float                  thumbnailScaleIn,
+                                   float                  saveScaleIn,
+                                   bool                   removeDistortionIn,
+                                   uint8_t                medianFilterSizeIn,
+                                   float                  sharpeningAmountIn)
 : path(pathIn)
 , basename(basenameIn)
 , mode(saveModeIn)

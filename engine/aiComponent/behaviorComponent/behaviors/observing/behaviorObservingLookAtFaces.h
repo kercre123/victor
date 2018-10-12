@@ -36,6 +36,7 @@ public:
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::CroppedFaceDetection, EVisionUpdateFrequency::Standard });
   }
 
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}

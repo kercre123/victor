@@ -100,7 +100,7 @@ Result Benchmark::Update(ImageCache& imageCache)
     anyFailures |= (result != RESULT_OK); \
   }
   
-  const ImageCache::Size whichSize = ImageCache::GetSize(kVisionBenchmark_ScaleMultiplier, ResizeMethod::NearestNeighbor);
+  const ImageCacheSize whichSize = ImageCache::GetSize(kVisionBenchmark_ScaleMultiplier, ResizeMethod::NearestNeighbor);
   const ImageRGB& image = imageCache.GetRGB(whichSize);
   
   {

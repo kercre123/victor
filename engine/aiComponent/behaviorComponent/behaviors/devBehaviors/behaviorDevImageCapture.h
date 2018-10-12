@@ -50,7 +50,7 @@ private:
     InstanceConfig();
     std::string               imageSavePath;
     int8_t                    imageSaveQuality;
-    Vision::ImageCache::Size  imageSaveSize;
+    Vision::ImageCacheSize  imageSaveSize;
     bool                      useCapTouch;
     bool                      saveSensorData;
     bool                      useShutterSound;

@@ -31,29 +31,29 @@ struct ImageSaverParams
 {
   using Mode = ImageSendMode;
   
-  std::string               path;                     // absolute path for output images (including thumbnails)
-  std::string               basename;                 // leave empty to use frame number
-  Mode                      mode = Mode::Off;
-  int8_t                    quality = -1;             // -1 for .png, [0,100] for .jpg quality
-  Vision::ImageCache::Size  size = Vision::ImageCache::Size::Full;
-  float                     thumbnailScale = 0.f;     // in range [0,1], as fraction of size, 0 to disable
-  float                     saveScale = 1.f;          // > 0, as fraction of size
-  bool                      removeDistortion = false;
-  uint8_t                   medianFilterSize = 0;     // 0 to disable
-  float                     sharpeningAmount = 0.f;   // 0 to disable
+  std::string            path;  // absolute path for output images (including thumbnails)
+  std::string            basename; // leave empty to use frame number
+  Mode                   mode              = Mode::Off;
+  int8_t                 quality           = -1; // -1 for .png, [0,100] for .jpg quality
+  Vision::ImageCacheSize size              = Vision::ImageCacheSize::Full;
+  float                  thumbnailScale    = 0.f; // in range [0,1], as fraction of size, 0 to disable
+  float                  saveScale         = 1.f; // > 0, as fraction of size
+  bool                   removeDistortion  = false;
+  uint8_t                medianFilterSize  = 0; // 0 to disable
+  float                  sharpeningAmount  = 0.f; // 0 to disable
   
   ImageSaverParams() = default;
   
-  explicit ImageSaverParams(const std::string&       path,
-                            Mode                     saveMode,
-                            int8_t                   quality,
-                            const std::string&       basename = "",
-                            Vision::ImageCache::Size size = Vision::ImageCache::Size::Full,
-                            float                    thumbnailScale = 0.f,
-                            float                    saveScale = 1.f,
-                            bool                     removeDistortion = false,
-                            uint8_t                  medianFilterSize = 0,
-                            float                    sharpeningAmount = 0.f);
+  explicit ImageSaverParams(const std::string&     path,
+                            Mode                   saveMode,
+                            int8_t                 quality,
+                            const std::string&     basename         = "",
+                            Vision::ImageCacheSize size             = Vision::ImageCacheSize::Full,
+                            float                  thumbnailScale   = 0.f,
+                            float                  saveScale        = 1.f,
+                            bool                   removeDistortion = false,
+                            uint8_t                medianFilterSize = 0,
+                            float                  sharpeningAmount = 0.f);
   
 };
   

@@ -85,8 +85,7 @@ private:
 
   bool _dirtyJdoc = false;
   JdocsManager* _jdocsManager = nullptr;
-  float _lastTimeAliveUpdated_s = -1.0f;
-  WallTime::TimePoint_t _lastAliveWallTime;
+  float _timeOfNextAliveTimeCheck = 0.0f;
 };
 
 }
