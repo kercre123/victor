@@ -120,7 +120,6 @@ namespace Anki {
         // and the lower lift joint on the forklift assembly.
         f32 currentAngle_rad_ = 0.f;
         f32 desiredAngle_rad_ = 0.f;
-        f32 desiredHeight_ = 0.f;
         f32 currDesiredAngle_rad_ = 0.f;
         f32 prevAngleError_ = 0.f;
         f32 prevHalPos_ = 0.f;
@@ -214,7 +213,6 @@ namespace Anki {
         currentAngle_rad_ = currAngle;
         desiredAngle_rad_ = currentAngle_rad_;
         currDesiredAngle_rad_ = currentAngle_rad_;
-        desiredHeight_ = GetHeightMM();
       }
 
       void EnableInternal()
@@ -416,12 +414,6 @@ namespace Anki {
         }
       }
 
-
-      f32 GetLastCommandedHeightMM()
-      {
-        return desiredHeight_;
-      }
-
       f32 GetHeightMM()
       {
         return ConvertLiftAngleToLiftHeightMM(currentAngle_rad_);
@@ -615,7 +607,6 @@ namespace Anki {
                                      const f32 accel_rad_per_sec2,
                                      bool useVPG) 
       {
-
         f32 angle_rad = ConvertLiftHeightToLiftAngleRad(height_mm);
         SetDesiredAngle_internal(angle_rad, 
                                  acc_start_frac, 
@@ -659,7 +650,7 @@ namespace Anki {
 
       f32 GetDesiredHeight()
       {
-        return desiredHeight_;
+        return ConvertLiftAngleToLiftHeightMM(desiredAngle_rad_);
       }
 
       bool IsInPosition(void) {

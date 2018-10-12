@@ -460,6 +460,10 @@ namespace Anki {
                   case DockAction::DA_PICKUP_HIGH:
                   {
                     SendPickAndPlaceResultMessage(false, BlockStatus::BLOCK_PICKED_UP);
+#ifdef SIMULATOR
+                    // Disengage the 'gripper' here since we have failed to dock with the cube
+                    HAL::DisengageGripper();
+#endif
                     break;
                   } // PICKUP
 
@@ -950,6 +954,12 @@ namespace Anki {
       bool IsCarryingBlock()
       {
         return carryState_ != CarryState::CARRY_NONE;
+      }
+      
+      bool IsPickingUp()
+      {
+        return (action_ == DockAction::DA_PICKUP_LOW) ||
+               (action_ == DockAction::DA_PICKUP_HIGH);
       }
 
       void SetCarryState(CarryState state)

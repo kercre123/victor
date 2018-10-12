@@ -60,6 +60,7 @@ namespace Anki {
 
       bool IsBusy();
       bool IsCarryingBlock();
+      bool IsPickingUp();
 
       void SetCarryState(CarryState state);
       CarryState GetCarryState();
