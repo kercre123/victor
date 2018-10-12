@@ -47,6 +47,7 @@ namespace Anki {
       struct MicData;
     }
     class SpeechRecognizerTHF;
+    class SpeechRecognizerTHF_v6;
   }
   namespace Util {
     class Locale;
@@ -114,7 +115,14 @@ private:
   // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
   bool _inProcessAudioBlockFirstHalf = true;
-  std::unique_ptr<SpeechRecognizerTHF> _recognizer;
+  
+  
+//  std::unique_ptr<SpeechRecognizerTHF> _recognizer;
+  
+  std::unique_ptr<SpeechRecognizerTHF_v6> _recognizer_v6;
+  
+  
+  
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
   uint32_t _vadCountdown = 0;

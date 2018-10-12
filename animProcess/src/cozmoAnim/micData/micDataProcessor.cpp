@@ -28,6 +28,9 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/speechRecognizerTHFSimple.h"
+
+#include "cozmoAnim/speechRecognizerTHFSimple_v6.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -175,20 +178,46 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
 , _micDataSystem(micDataSystem)
 , _writeLocationDir(writeLocation)
 , _triggerWordDataDir(triggerWordDataDir)
-, _recognizer(std::make_unique<SpeechRecognizerTHF>())
+//, _recognizer(std::make_unique<SpeechRecognizerTHF>())
+  
+  
+, _recognizer_v6(std::make_unique<SpeechRecognizerTHF_v6>())
+  
+  
 , _micImmediateDirection(std::make_unique<MicImmediateDirection>())
 , _micTriggerConfig(std::make_unique<MicTriggerConfig>())
 , _beatDetector(std::make_unique<BeatDetector>())
 {
   // Init Sensory processing. Note we don't add in a search trigger here, that happens later
-  const std::string& pronunciationFileToUse = "";
-  (void) _recognizer->Init(pronunciationFileToUse);
-
+//  const std::string& pronunciationFileToUse = "";
+//  (void) _recognizer->Init(pronunciationFileToUse);
+  
   // Set up the callback that creates the recording job when the trigger is detected
-  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
-                                   this, std::placeholders::_1, std::placeholders::_2);
-  _recognizer->SetCallback(triggerCallback);
-  _recognizer->Start();
+//  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
+//                                   this, std::placeholders::_1, std::placeholders::_2);
+//  _recognizer->SetCallback(triggerCallback);
+//  _recognizer->Start();
+  
+  
+  // FIXME:
+  
+  PRINT_NAMED_WARNING("SpeechRecognizerTHF_v6", "_triggerWordDataDir '%s'", _triggerWordDataDir.c_str());
+  
+  std::string path = Util::FileUtils::FullFilePath({_triggerWordDataDir, "hey_vector_alexa", "spot_Alexav6_HeyVector.snsr"});
+  _recognizer_v6->Init(path);
+  // Set up the callback that creates the recording job when the trigger is detected
+//  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
+//                                   this, std::placeholders::_1, std::placeholders::_2);
+  
+  auto triggerCallback_v6 = [this](const char* resultFound, float score) {
+    PRINT_NAMED_WARNING("SpeechRecognizerTHF_v6", "result '%s' score %f", resultFound, score);
+    TriggerWordDetectCallback( TriggerWordDetectSource::Voice, score );
+  };
+  _recognizer_v6->SetCallback(triggerCallback_v6);
+  _recognizer_v6->Start();
+  
+  
+  
 
   // Init the various SE processing
   MMIfInit(0, nullptr);
@@ -423,7 +452,10 @@ MicDataProcessor::~MicDataProcessor()
   _processTriggerThread.join();
 
   MMIfDestroy();
-  _recognizer->Stop();
+//  _recognizer->Stop();
+  
+  
+   _recognizer_v6->Stop();
 }
 
 void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
@@ -857,7 +889,9 @@ void MicDataProcessor::ProcessTriggerLoop()
     if ((_micImmediateDirection->GetLatestSample().activeState != 0) || kIgnoreVadStateInRecognizer)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
-      _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+//      _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+      
+      _recognizer_v6->Update(processedAudio.data(), (unsigned int)processedAudio.size());
     }
 
     // Now we're done using this audio with the recognizer, so let it go
@@ -925,61 +959,61 @@ bool MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
                                               MicTriggerConfig::ModelType modelType,
                                               int searchFileIndex)
 {
-  std::lock_guard<std::mutex> lock (_triggerModelMutex);
-  _nextTriggerPaths = _micTriggerConfig->GetTriggerModelDataPaths(newLocale, modelType, searchFileIndex);
-  bool success = false;
-
-  if (!_nextTriggerPaths.IsValid())
-  {
-    PRINT_NAMED_WARNING("MicDataProcessor.UpdateTriggerForLocale.NoPathsFoundForLocale",
-                        "locale: %s modelType: %d searchFileIndex: %d",
-                        newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
-  }
-
-  if (_currentTriggerPaths != _nextTriggerPaths)
-  {
-    ANKI_CPU_PROFILE("SwitchTriggerWordSearch");
-    _currentTriggerPaths = _nextTriggerPaths;
-    _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
-    const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
-    _recognizer->RemoveRecognitionData(singleSlotIndex);
-    
-    if (_currentTriggerPaths.IsValid())
-    {
-      const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-        _currentTriggerPaths._dataDir,
-        _currentTriggerPaths._netFile});
-      const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-        _currentTriggerPaths._dataDir,
-        _currentTriggerPaths._searchFile});
-      const bool isPhraseSpotted = true;
-      const bool allowsFollowUpRecog = false;
-      success = _recognizer->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
-                                                                   isPhraseSpotted, allowsFollowUpRecog);
-      if (success)
-      {
-        PRINT_NAMED_INFO("MicDataProcessor.UpdateTriggerForLocale.SwitchTriggerSearch",
-                         "Switched speechRecognizer to netFile: %s searchFile %s",
-                         netFilePath.c_str(), searchFilePath.c_str());
-        
-        _recognizer->SetRecognizerIndex(singleSlotIndex);
-      }
-      else
-      {
-        _currentTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
-        _nextTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
-        PRINT_NAMED_ERROR("MicDataProcessor.UpdateTriggerForLocale.FailedSwitchTriggerSearch",
-                          "Failed to add speechRecognizer netFile: %s searchFile %s",
-                          netFilePath.c_str(), searchFilePath.c_str());
-      }
-    }
-    else
-    {
-      PRINT_NAMED_INFO("MicDataProcessor.UpdateTriggerForLocale.ClearTriggerSearch",
-                       "Cleared speechRecognizer to have no search");
-    }
-  }
-  return success;
+//  std::lock_guard<std::mutex> lock (_triggerModelMutex);
+//  _nextTriggerPaths = _micTriggerConfig->GetTriggerModelDataPaths(newLocale, modelType, searchFileIndex);
+//  bool success = false;
+//
+//  if (!_nextTriggerPaths.IsValid())
+//  {
+//    PRINT_NAMED_WARNING("MicDataProcessor.UpdateTriggerForLocale.NoPathsFoundForLocale",
+//                        "locale: %s modelType: %d searchFileIndex: %d",
+//                        newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
+//  }
+//
+//  if (_currentTriggerPaths != _nextTriggerPaths)
+//  {
+//    ANKI_CPU_PROFILE("SwitchTriggerWordSearch");
+//    _currentTriggerPaths = _nextTriggerPaths;
+//    _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+//    const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
+//    _recognizer->RemoveRecognitionData(singleSlotIndex);
+//
+//    if (_currentTriggerPaths.IsValid())
+//    {
+//      const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+//        _currentTriggerPaths._dataDir,
+//        _currentTriggerPaths._netFile});
+//      const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
+//        _currentTriggerPaths._dataDir,
+//        _currentTriggerPaths._searchFile});
+//      const bool isPhraseSpotted = true;
+//      const bool allowsFollowUpRecog = false;
+//      success = _recognizer->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
+//                                                                   isPhraseSpotted, allowsFollowUpRecog);
+//      if (success)
+//      {
+//        PRINT_NAMED_INFO("MicDataProcessor.UpdateTriggerForLocale.SwitchTriggerSearch",
+//                         "Switched speechRecognizer to netFile: %s searchFile %s",
+//                         netFilePath.c_str(), searchFilePath.c_str());
+//
+//        _recognizer->SetRecognizerIndex(singleSlotIndex);
+//      }
+//      else
+//      {
+//        _currentTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
+//        _nextTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
+//        PRINT_NAMED_ERROR("MicDataProcessor.UpdateTriggerForLocale.FailedSwitchTriggerSearch",
+//                          "Failed to add speechRecognizer netFile: %s searchFile %s",
+//                          netFilePath.c_str(), searchFilePath.c_str());
+//      }
+//    }
+//    else
+//    {
+//      PRINT_NAMED_INFO("MicDataProcessor.UpdateTriggerForLocale.ClearTriggerSearch",
+//                       "Cleared speechRecognizer to have no search");
+//    }
+//  }
+  return true;
 }
 
 void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::ProcessingState state)
