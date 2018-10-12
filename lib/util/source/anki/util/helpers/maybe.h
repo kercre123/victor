@@ -68,13 +68,17 @@
 namespace Anki{ 
 namespace Util {
 
+// Helper macro to create a function pointer to a member method, where the first
+// argument is the object to call the member function on
+#define MAKE_FUNCTOR(class, method) \
+  auto method = std::mem_fn(&class::method)
+
 template <typename T> class Maybe;
 
 // convenience operator forwards
 template <typename T> Maybe<T> Nothing() { return Maybe<T>::Nothing(); }
 template <typename T> Maybe<T> Just(T t) { return Maybe<T>::Just( t ); }
 template <typename T> Maybe<T> Just()    { return Maybe<T>::Just();  }
-
 
 // convenience prefix operation forwards
 template <typename Func, typename U, typename T = typename std::result_of_t<Func&(U&)> >
@@ -92,6 +96,9 @@ namespace MaybeOperators {
 
   template <typename Func, typename U, typename RT = typename std::result_of_t<Func&(U&)> >
   RT operator >>=(Func&& f, Maybe<U> u) { return u.Bind(f); }
+
+  template <typename Func, typename U, typename T = typename std::result_of_t<Func&(U&)> >
+  Maybe<T> operator->*(Maybe<U> u, Func&& f) { return u.FMap(f); }
 }
 
 namespace TypeOperators {
@@ -131,7 +138,7 @@ public:
     
   template <typename Func, typename RT = Maybe< TypeOperators::DerefResult<Func&(T&)> >>
   RT FMap(Func&& f) const {
-    return (_valid) ? RT::Just( f, *_data ) : RT::Nothing(); 
+    return (_valid) ? RT::Just( std::forward<Func>(f), *_data ) : RT::Nothing(); 
   }
 
   // bind operation for mapping functions that already return a Maybe
@@ -160,7 +167,7 @@ protected:
 
   // special constructor for forwarding function evaluation to result type construction 
   template <typename Func, typename U> 
-  static Maybe<T> Just(Func&& f, U& d) { return Maybe<T>( std::forward<Func>(f)(d) ); }
+  static Maybe<T> Just(Func&& f, U&& d) { return Maybe<T>( std::forward<Func>(f)(d) ); }
 
   // keep data under a shared_ptr so we can quickly copy this class
   std::shared_ptr<T> _data;
