@@ -22,7 +22,7 @@
  *    While `std::optional` introduced in C++17 aims to provide a type signature
  *    to help the developer with this problem, but does not check if the wrapped data
  *    is valid before dereferencing. As a result, the developer is again obligated to
- *    check std::optional::has_value prior to explicit dereference. 
+ *    check std::optional::has_value aprior to explicit dereference. 
  *    (functions `value`, `operator*`, `operator->` in std:: optional can throw exceptions
  *    if called improperly. Worse still, can be made to execute operations on initialize
  *    memory without throwing an error)
@@ -63,7 +63,7 @@
 #ifndef __UTIL_MAYBE_H__
 #define __UTIL_MAYBE_H__
 
-#include <type_traits>
+#include "util/helpers/lazyFunctor.h"
 
 namespace Anki{ 
 namespace Util {
@@ -76,9 +76,12 @@ namespace Util {
 template <typename T> class Maybe;
 
 // convenience operator forwards
-template <typename T> Maybe<T> Nothing() { return Maybe<T>::Nothing(); }
-template <typename T> Maybe<T> Just(T t) { return Maybe<T>::Just( t ); }
-template <typename T> Maybe<T> Just()    { return Maybe<T>::Just();  }
+template <typename T>             Maybe<T> Nothing() { return Maybe<T>::Nothing(); }
+template <typename T>             Maybe<T> Just()    { return Maybe<T>::Just();  }
+template <typename T>             Maybe<T> Just(T t) { return Maybe<T>::Just( t ); }
+template <typename T, typename U> Maybe<T> Just(U u) { return Maybe<T>::Just( u ); }
+
+
 
 // convenience prefix operation forwards
 template <typename Func, typename U, typename T = typename std::result_of_t<Func&(U&)> >
@@ -97,8 +100,6 @@ namespace MaybeOperators {
   template <typename Func, typename U, typename RT = typename std::result_of_t<Func&(U&)> >
   RT operator >>=(Func&& f, Maybe<U> u) { return u.Bind(f); }
 
-  template <typename Func, typename U, typename T = typename std::result_of_t<Func&(U&)> >
-  Maybe<T> operator->*(Maybe<U> u, Func&& f) { return u.FMap(f); }
 }
 
 namespace TypeOperators {
@@ -127,7 +128,7 @@ public:
   using Type = T;
 
   // static constructor helpers
-  template<typename U>
+  template <typename U>
   static Maybe<T> Just(U val)                  { return Maybe<T>( val ); }
   static Maybe<T> Nothing()                    { return Maybe<T>(); }
 
@@ -156,7 +157,18 @@ public:
     static_assert(IsMaybe, "Attempted to Bind a function that does not return a Maybe type. Did you mean FMap (infix `*=`)?"); 
   }
 
-  template <typename U> T        ValueOr(U defaultVal)  const { return (_valid) ? *_data : defaultVal; }
+  // template <typename Func, typename... Ts, typename RT = Maybe< TypeOperators::DerefResult<Func&(T&)> >>
+  // RT operator->*(LazyUnaryFunctor<T, Func, Ts...>&& f) { 
+  //   return (_valid) ? RT::Just( std::forward<LazyUnaryFunctor<T, Func, Ts...>>(f)(*_data) ) : RT::Nothing(); 
+  // }
+
+  template <typename Func, typename RT = Maybe< TypeOperators::DerefResult<Func&(T&)> >>
+  RT operator->*(Func&& f) { 
+    return (_valid) ? RT::Just( std::forward<Func>(f)(*_data) ) : RT::Nothing(); 
+  }
+
+  template <typename U> T        ValueOr(U  defaultVal)  const { return (_valid) ? *_data : defaultVal; }
+  template <typename U> T        ValueOr(U& defaultVal)  const { return (_valid) ? *_data : defaultVal; }
   template <typename U> Maybe<T> ThisOr(Maybe<U> other) const { return (_valid) ? *this : other.FMap( &TypeOperators::StaticCast<T,U> ); }
 
 protected:

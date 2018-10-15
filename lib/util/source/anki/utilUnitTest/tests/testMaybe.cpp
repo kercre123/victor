@@ -258,188 +258,48 @@ TEST(TestMaybe, FMapFunctionTypes)
   // static member function reference
   auto e = &IntWrapper::inc;
   Just(2).FMap(e);
-
-  // member function of existing type
-  // MAKE_FUNCTOR(IntWrapper, decr);
-  // auto f = std::bind(&IntWrapper::operator++, std::placeholders::_1);
-
-  // Just<IntWrapper>(2).FMap(f);
-  // Just<IntWrapper>(2).FMap(decr);
-
-  // IntWrapper(2).decr();
-  // decr( IntWrapper(2) );
-  // auto safeObj = Just<IntWrapper>(8);
-
-  // using namespace Anki::Util::MaybeOperators;
-  // safeObj->*decr;
 }
 
-namespace Helper
-{
-  template <int... Is>
-  struct index {};
-
-  template <int N, int... Is>
-  struct gen_seq : gen_seq<N - 1, N - 1, Is...> {};
-
-  template <int... Is>
-  struct gen_seq<0, Is...> : index<Is...> {};
-
-  template <typename Func, typename... Args, int... Is>
-  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>&& tup, index<Is...>)
-  {
-    return std::forward<Func>(f)(std::get<Is>(tup)...);
-  }
-
-  template <typename Func, typename... Args>
-  decltype(auto) ForwardTupleArgs(Func&& f, std::tuple<Args...>&& tup)
-  {
-    return ForwardTupleArgs(std::forward<Func>(f), std::forward<std::tuple<Args...>>(tup), gen_seq<sizeof...(Args)>{});
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template <typename Func, typename... Ts> 
-class LazyFunctor
-{
-protected:
-  Func op;
-  std::tuple<Ts&&...> values;
-
-public:
-
-  LazyFunctor (Func&& f, Ts&&... ts) 
-  : op(std::forward<Func>(f))
-  , values( std::forward<Ts&&...>(ts...) ) {}
-
-  // evaluate all args upon derefence
-  decltype(auto) operator*() { 
-    return Helper::ForwardTupleArgs(std::forward<Func>(op), std::forward<decltype(values)>(values)); 
-  }
-};
-
-template <typename Func> 
-class LazyFunctorNoArgs
-{
-protected:
-  Func op;
-
-public:
-  LazyFunctorNoArgs (Func&& f) 
-  : op(std::forward<Func>(f)) {}
-
-  template <typename... Ts> 
-  decltype(auto) operator() (Ts&&... ts) { 
-    return LazyFunctor<Func, Ts...>(std::forward<Func>(op), std::forward<Ts&&...>(ts...));
-  }
-};
-
-template <typename Func>
-inline decltype(auto) MakeLazy(Func&& f) {
-  return LazyFunctorNoArgs<Func>(std::forward<Func>(f));
-};
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template <typename Func, typename T, typename... Ts> 
-class LazyFunctorMember
-{
-protected:
-  Func op;
-  std::tuple<Ts&&...> values;
-
-public:
-
-  LazyFunctorMember (Func&& f, Ts&&... ts) 
-  : op(std::forward<Func>(f))
-  , values( std::forward<Ts&&...>(ts...) ) {}
-
-  decltype(auto) operator() (T&& t) { 
-    return LazyFunctor<Func, T, Ts...>(std::forward<Func>(op), std::forward<T&&, Ts&&...>(t, ts...));
-  }
-
-  // evaluate all args upon derefence
-  // decltype(auto) operator*() { 
-  //   return Helper::ForwardTupleArgs(std::forward<Func>(op), std::forward<decltype(values)>(values)); 
-  // }
-};
-
-template <typename Func, typename T> 
-class LazyFunctorMemberNoArgs
-{
-protected:
-  Func op;
-
-public:
-  LazyFunctorMemberNoArgs (Func&& f) 
-  : op(std::forward<Func>(f)) {}
-
-  template <typename... Ts> 
-  decltype(auto) operator() (Ts&&... ts) { 
-    return LazyFunctorMember<Func, Ts...>(std::forward<Func>(op), std::forward<Ts&&...>(ts...));
-  }
-};
-
-
-template <typename T, typename Func>
-inline decltype(auto) MakeLazyMember(Func&& f) {
-  return LazyFunctorMemberNoArgs<Func, T>(std::forward<Func>(f));
-};
 
 
 TEST(TestMaybe, TestCurryReferencePassing)
 {
   // testing binding a Maybe
   using namespace Anki::Util;
-  using namespace Anki::Util::MaybeOperators;
 
-  // auto decr = Curry(std::mem_fn(&IntWrapper::decr));
-  auto decrM = std::mem_fn(&IntWrapper::decr);
-  auto decr = MakeLazy(decrM);
-  // auto decrL = MakeLazy( [](IntWrapper& w) -> int { return w.decr(); } );
-
-  IntWrapper eight(8);
-  eight.decr();
-  EXPECT_EQ(7, eight.x) << "no map";
-
-
-  EXPECT_EQ(6, decrM(eight)) << "mem_fn bad return";
-  EXPECT_EQ(6, eight.x) << "mem_fn bad";
-
-  auto tupleArgs = std::tuple<IntWrapper&&>( std::forward<IntWrapper>(eight) );
-  int retv = Helper::ForwardTupleArgs(std::forward<decltype(decrM)>(decrM), std::forward<decltype(tupleArgs)>(tupleArgs)); 
-  EXPECT_EQ(5, retv) << "ForwardTupleArgs not passing object by reference";
-  EXPECT_EQ(5, eight.x) << "ForwardTupleArgs not passing object by reference";
-
-  // auto just8 = Just<IntWrapper>(8);
-  // auto nada = Nothing<IntWrapper>();
-
-  retv = *decr(eight);
-
-  EXPECT_EQ(4, retv) << "curry bad result";
-  EXPECT_EQ(4, eight.x) << "curry not passing object by reference";
-
-  // int eval = *decr(eight);
-  // EXPECT_EQ(6, eval) << "no map";
-  auto decrMem = MakeLazyMember<IntWrapper>(std::mem_fn(&IntWrapper::decr));
-
-  auto nada = Nothing<IntWrapper>();
-  // auto just10 = Just<IntWrapper>(10);
-
-  // auto retv = just10->*decrMem();
-  nada->*decrMem();
-
-  EXPECT_EQ(6, eight.x) << "no map";
+    
+  struct IntWrapper2 : private Anki::Util::noncopyable {
+    IntWrapper2() = delete;
+    IntWrapper2(int a) : x(a) {}
+    int x;
+    
+    int decr() { return --x; }
+    int sub(int y) { return x-y; }
+  };
 
 
-  // nada->*sub(5);
+  MAKE_LAZY_MEMBER(IntWrapper2, decr);
+  MAKE_LAZY_MEMBER(IntWrapper2, sub);
+  MAKE_LAZY_MEMBER(IntWrapper2, x);
 
-  // auto result0 = decrR.ValueOr(0.f);
-  // auto result1 = just8.ValueOr(IntWrapper(0));
-  // auto result2 = nada.ValueOr(IntWrapper(-5));
+  Maybe<IntWrapper2> nada   = Nothing<IntWrapper2>();
+  Maybe<IntWrapper2> just10 = Just<IntWrapper2>(10);
 
-  // EXPECT_EQ(7, *result0) << "no decr val";
-  // EXPECT_EQ(7, result1.x) << "no map";
-  // EXPECT_EQ(-5, result2.x) << "not nada";
+  auto retv1 = just10->*decr();
+  auto retv2 = just10->*x();
+  auto retv3 = just10->*sub(5);
+
+  EXPECT_EQ(9, retv1.ValueOr(0));
+  EXPECT_EQ(9, retv2.ValueOr(0));
+  EXPECT_EQ(4, retv3.ValueOr(0));
+
+  auto retv4 = nada->*decr();
+  auto retv5 = nada->*sub(3);
+
+  EXPECT_TRUE(nada.IsNothing());
+  EXPECT_TRUE(retv4.IsNothing());
+  EXPECT_TRUE(retv5.IsNothing());
+
 }
 
 TEST(TestMaybe, TestCurry)
@@ -543,7 +403,7 @@ TEST(TestMaybe, JustVoid)
   EXPECT_EQ(4, resultBind.ValueOr(6)) << "Bind result did not return current value in `ValueOr`";
 
   // to Just<void>
-  auto justInt = Just<int>(5);
+  auto justInt = Just(5);
   auto voidM  = justInt.FMap( [](auto x) { ++x; } );
 
   EXPECT_TRUE(voidM.IsJust());
@@ -553,7 +413,7 @@ TEST(TestMaybe, JustVoid)
 TEST(TestMaybe, ValueOrTypeConversion) 
 {
   using namespace Anki::Util;
-  auto intM = Just<int>(2); 
+  auto intM = Just(2); 
   auto result = intM.ValueOr(.2);
 
   static_assert(std::is_same<decltype(result), int>(), "ValueOr does maintain declaired type" );
@@ -569,8 +429,8 @@ TEST(TestMaybe, ThisOrInternalTypeConversion)
   using namespace Anki::Util;
 
   const float floatVal = -5.6;
-  auto intM = Just<int>(2); 
-  auto floatM = Just<float>(floatVal);
+  auto intM = Just(2); 
+  auto floatM = Just(floatVal);
   auto resultM = intM.ThisOr(floatM);
   auto result = resultM.ValueOr(0);
 
