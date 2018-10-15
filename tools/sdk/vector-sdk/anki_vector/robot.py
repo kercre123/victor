@@ -107,9 +107,7 @@ class Robot:
         self._original_loop = None
         self.loop = loop
         config = config if config is not None else {}
-
-        if serial is not None:
-            config = {**self._read_configuration(serial), **config}
+        config = {**self._read_configuration(serial), **config}
 
         self._name = config["name"]
         self._ip = ip if ip is not None else config["ip"]
@@ -167,8 +165,7 @@ class Robot:
         self._enable_audio_feed = enable_audio_feed
         self._show_viewer = show_viewer
 
-    @staticmethod
-    def _read_configuration(serial: str) -> dict:
+    def _read_configuration(self, serial: str) -> dict:
         """Open the default conf file, and read it into a :class:`configparser.ConfigParser`
 
         :param serial: Vector's serial number
@@ -178,11 +175,23 @@ class Robot:
         parser = configparser.ConfigParser(strict=False)
         parser.read(conf_file)
 
+        sections = parser.sections()
+        if not sections:
+            raise Exception('\n\nCould not find the sdk configuration file. Please run ./configure.py to set up your Vector for SDK usage.')
+        elif serial is None and len(sections) == 1:
+            serial = sections[0]
+            self.logger.warning("No serial number provided. Automatically selecting {}".format(serial))
+        elif serial is None:
+            raise Exception('\n\nFound multiple robot serial numbers. Please provide the serial number of the Robot you want to control.\n'
+                            'Example: ./01_hello_world.py --serial {robot_serial_number}')
+
+        serial = serial.lower()
+        config = {k.lower(): v for k, v in parser.items()}
         try:
-            dict_entry = parser[serial]
+            dict_entry = config[serial]
         except KeyError:
-            raise Exception('\n\nCould not find matching robot info for serial. Please check your serial number is correct.\n'
-                            'Example: ./01_hello_world --serial {robot_serial_number}')
+            raise Exception('\n\nCould not find matching robot info for given serial number: {}. Please check your serial number is correct.\n'
+                            'Example: ./01_hello_world.py --serial {{robot_serial_number}}'.format(serial))
 
         return dict_entry
 
