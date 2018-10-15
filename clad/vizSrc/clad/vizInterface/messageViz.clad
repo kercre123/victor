@@ -343,28 +343,6 @@ message RobotMood
   string    recentEvents[uint_8]
 }
 
-structure BehaviorScoreData
-{
-  float_32   behaviorScore,
-  float_32   totalScore,
-  string     behaviorID
-}
-
-message RobotBehaviorSelectData
-{
-  BehaviorScoreData scoreData[uint_8]
-}
-
-message NewBehaviorSelected
-{
-  string newCurrentBehavior
-}
-
-message NewReactionTriggered
-{
-  string  reactionStrategyTriggered
-}
-
 message BehaviorStackDebug
 {
   string debugStrings[uint_8]
@@ -373,14 +351,6 @@ message BehaviorStackDebug
 message VisionModeDebug
 {
   string debugStrings[uint_8]
-}
-
-message StartRobotUpdate
-{
-}
-
-message EndRobotUpdate
-{
 }
 
 // Display the image previously sent with the given timestamp
@@ -400,31 +370,6 @@ message SaveState
 {
   bool   enabled,
   string path
-}
-
-message ObjectConnectionState
-{
-  uint_32    activeID,
-  ObjectType objectType,
-  bool       connected,
-}
-
-message ObjectMovingState
-{
-  uint_32 activeID,
-  bool    moving,
-}
-
-message ObjectUpAxisState
-{
-  uint_32 activeID,
-  UpAxis  upAxis,
-}
-
-message ObjectAccelState
-{
-  uint_32     objectID,
-  ActiveAccel accel,
 }
 
 // an explicit auto-union that includes all messages in this file

@@ -1274,8 +1274,6 @@ Result Robot::Update()
   return RESULT_OK;
 #endif
 
-  GetContext()->GetVizManager()->SendStartRobotUpdate();
-
   _components->UpdateComponents();
 
   // If anything in updating block world caused a localization update, notify
@@ -1322,8 +1320,6 @@ Result Robot::Update()
   GetContext()->GetVizManager()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
   vizPose, ROBOT_BOUNDING_QUAD_COLOR);
   */
-
-  GetContext()->GetVizManager()->SendEndRobotUpdate();
 
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states

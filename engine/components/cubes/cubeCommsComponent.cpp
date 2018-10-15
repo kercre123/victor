@@ -613,9 +613,6 @@ void CubeCommsComponent::OnCubeConnected(const BleFactoryId& factoryId)
                      objID.GetValue(), activeId, factoryId.c_str());
   }
   
-  // Viz info
-  _robot->GetContext()->GetVizManager()->SendObjectConnectionState(activeId, kValidCubeType, true);
-  
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
     // Send connection message to game
@@ -654,9 +651,6 @@ void CubeCommsComponent::OnCubeDisconnected(const BleFactoryId& factoryId)
   
   // Remove active object from blockworld if it exists, and remove all instances in all origins
   const ObjectID objID = _robot->GetBlockWorld().RemoveConnectedActiveObject(activeId);
-  
-  // Update viz info
-  _robot->GetContext()->GetVizManager()->SendObjectConnectionState(activeId, kValidCubeType, false);
   
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {

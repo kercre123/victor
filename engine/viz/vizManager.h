@@ -405,23 +405,11 @@ namespace Anki {
       void HandleMessage(const T& msg);
       
       void SendRobotMood(VizInterface::RobotMood&& robotMood);
-      void SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData);
-      void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
-      void SendNewReactionTriggered(VizInterface::NewReactionTriggered&& newReactionTriggered);
-      void SendStartRobotUpdate();
-      void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
       void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
       void SendVisionModeDebug(VizInterface::VisionModeDebug&& visionModeDebug);
       void SendVizMessage(VizInterface::MessageViz&& event);
-
-      
-      // ============= ActiveObjectInfo ===========
-      void SendObjectConnectionState(u32 activeID, ObjectType type, bool connected);
-      void SendObjectMovingState(u32 activeID, bool moving);
-      void SendObjectUpAxisState(u32 activeID, UpAxis upAxis);
-      void SendObjectAccelState(u32 activeID, const ActiveAccel& accel);
 
       uint32_t GetMessageCountViz() const { return _messageCountViz; }
       void     ResetMessageCount() { _messageCountViz = 0; }

@@ -39,7 +39,6 @@ namespace Anki {
   namespace Vector {
     
     CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
-    CONSOLE_VAR(bool, kSendBehaviorScoresToViz, "VizDebug", true);
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = std::numeric_limits<u32>::max();
     
@@ -812,39 +811,6 @@ namespace Anki {
       ANKI_CPU_PROFILE("VizManager::SendVisionModeDebug");
       SendMessage(VizInterface::MessageViz(std::move(visionModeDebug)));
     }
-
-    void VizManager::SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData)
-    {
-      if (kSendBehaviorScoresToViz)
-      {
-        ANKI_CPU_PROFILE("VizManager::SendRobotBehaviorSelectData");
-        SendMessage(VizInterface::MessageViz(std::move(robotBehaviorSelectData)));
-      }
-    }
-
-    void VizManager::SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendNewBehaviorSelected");
-      SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
-    }
-      
-    void VizManager::SendNewReactionTriggered(VizInterface::NewReactionTriggered&& newReactionTriggered)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendNewReactionTriggered");
-      SendMessage(VizInterface::MessageViz(std::move(newReactionTriggered)));
-    }
-      
-    void VizManager::SendStartRobotUpdate()
-    {
-      ANKI_CPU_PROFILE("VizManager::SendStartRobotUpdate");
-      SendMessage(VizInterface::MessageViz(VizInterface::StartRobotUpdate()));
-    }
-
-    void VizManager::SendEndRobotUpdate()
-    {
-      ANKI_CPU_PROFILE("VizManager::SendEndRobotUpdate");
-      SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
-    }
     
     void VizManager::SendSaveImages(ImageSendMode mode, std::string path)
     {
@@ -863,31 +829,6 @@ namespace Anki {
       ANKI_CPU_PROFILE("VizManager::SendVizMessage");
       SendMessage(event);
     }
-
-    void VizManager::SendObjectConnectionState(u32 activeID, ObjectType type, bool connected)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectConnectionState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectConnectionState(activeID, type, connected)));
-    }
-    
-    void VizManager::SendObjectMovingState(u32 activeID, bool moving)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectMovingState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectMovingState(activeID, moving)));
-    }
-    
-    void VizManager::SendObjectUpAxisState(u32 activeID, UpAxis upAxis)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectUpAxisState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectUpAxisState(activeID, upAxis)));
-    }
-    
-    void VizManager::SendObjectAccelState(u32 objectID, const ActiveAccel& accel)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectAccelState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectAccelState(objectID, accel)));
-    }
-
   
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,
