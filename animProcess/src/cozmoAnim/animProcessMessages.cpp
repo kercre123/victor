@@ -559,6 +559,11 @@ void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen
   FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);
 }
 
+void Process_updatedAccountSettings(const RobotInterface::UpdatedAccountSettings& msg)
+{
+  _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
+}
+
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
