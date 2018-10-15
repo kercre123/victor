@@ -107,7 +107,8 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
         ICozmoBehaviorPtr newRerunBaseBehavior =
           WrapRequestedBehaviorInDispatcherRerun(bContainer,
                                                  behaviorID,
-                                                 msg.numRuns);
+                                                 msg.numRuns,
+                                                 msg.presetConditions);
         newRerunBaseBehavior->Init(bei);
         bsm.ResetBehaviorStack(newRerunBaseBehavior.get());
         _rerunBehavior = newRerunBaseBehavior;
@@ -312,7 +313,8 @@ void BehaviorComponentMessageHandler::SetupUserIntentEvents()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorComponentMessageHandler::WrapRequestedBehaviorInDispatcherRerun(BehaviorContainer& bContainer,
                                                                                              BehaviorID requestedBehaviorID, 
-                                                                                             const int numRuns)
+                                                                                             const int numRuns,
+                                                                                             bool presetConditions)
 {
   // See if behaviorID has already been created
   ICozmoBehaviorPtr rerunDispatcher = bContainer.FindBehaviorByID(kBehaviorIDForDevMessage);
@@ -320,7 +322,7 @@ ICozmoBehaviorPtr BehaviorComponentMessageHandler::WrapRequestedBehaviorInDispat
     bContainer.RemoveBehaviorFromMap(rerunDispatcher);
   }
 
-  Json::Value config = BehaviorDispatcherRerun::CreateConfig(kBehaviorIDForDevMessage, requestedBehaviorID, numRuns);
+  Json::Value config = BehaviorDispatcherRerun::CreateConfig(kBehaviorIDForDevMessage, requestedBehaviorID, numRuns, presetConditions);
   const bool createdOK = bContainer.CreateAndStoreBehavior(config);
   if( ANKI_VERIFY(createdOK,
                   "BehaviorComponentMessageHandler.CreateRerunWrapper.Fail",
@@ -364,8 +366,9 @@ void BehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterfac
                          name.asString().c_str());
           auto* ei = _robot.GetExternalInterface();
           const int numRuns = 1;
+          const bool presetConditions = data.get("presetConditions", false).asBool();
           using namespace ExternalInterface;
-          ei->Broadcast(MessageGameToEngine(ExecuteBehaviorByID( name.asString(), numRuns )));
+          ei->Broadcast(MessageGameToEngine(ExecuteBehaviorByID( name.asString(), numRuns, presetConditions )));
         }
       };
       

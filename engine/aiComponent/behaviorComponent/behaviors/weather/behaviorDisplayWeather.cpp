@@ -291,7 +291,9 @@ void BehaviorDisplayWeather::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::OnBehaviorDeactivated()
 {
-  GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  if( _dVars.utteranceID != kInvalidUtteranceID ) {
+    GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

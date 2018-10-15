@@ -48,7 +48,6 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
                                           std::to_string(Anki::Vector::CameraCalibrator::INVERTED_BOX).c_str());
   
   Anki::Vector::VisionSystem* visionSystem = new Anki::Vector::VisionSystem(cozmoContext);
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
@@ -156,7 +155,6 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
                                           std::to_string(Anki::Vector::CameraCalibrator::QBERT).c_str());
 
   Anki::Vector::VisionSystem* visionSystem = new Anki::Vector::VisionSystem(cozmoContext);
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
@@ -272,7 +270,6 @@ TEST(VisionSystem, MarkerDetectionTests)
   // NOTE: We don't just use a MarkerDetector here because the VisionSystem also does CLAHE preprocessing which
   //       is part of this test (e.g. for low light performance)
   Vector::VisionSystem visionSystem(cozmoContext);
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(RESULT_OK, result);
 
@@ -658,7 +655,6 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   using namespace Anki;
   
   // Load vision_config.json file and get NeuralNets section
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   const Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
   ASSERT_TRUE(config.isMember("NeuralNets"));
   const Json::Value& neuralNetConfig = config["NeuralNets"];

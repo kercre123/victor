@@ -95,6 +95,8 @@ private:
   TimerUtility& GetTimerUtility() const;
   
   void SetupTimerBehaviorFunctions();
+  
+  bool CheckAndDelegate( IBehavior* behavior, bool runCallbacks = false );
 
   void TransitionToSetTimer();
   void TransitionToPlayAntic();

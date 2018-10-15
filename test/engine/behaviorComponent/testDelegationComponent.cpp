@@ -67,7 +67,7 @@ TEST(DelegationComponent, TestDelegationVariants)
       toDelegate->SetBehaviorContainer(behaviorContainer);
       toDelegate->Init(bei);
       toDelegate->OnEnteredActivatableScope();
-      toDelegate->WantsToBeActivated();
+      const bool wtba __attribute((unused)) = toDelegate->WantsToBeActivated();
       InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get());
 
       ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
@@ -97,7 +97,7 @@ TEST(DelegationComponent, TestDelegationVariants)
       auto& toDelegate = bunchOfCozmoBehaviors.back();
       toDelegate->Init(bei);
       toDelegate->OnEnteredActivatableScope();
-      toDelegate->WantsToBeActivated();
+      const bool wtba __attribute((unused)) = toDelegate->WantsToBeActivated();
       InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get());
 
       ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));

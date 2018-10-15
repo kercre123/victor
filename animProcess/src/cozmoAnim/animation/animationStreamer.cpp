@@ -2227,6 +2227,7 @@ namespace Vector {
       if( ANKI_DEV_CHEATS ) {
         // A list of known issues where animations are used without locking tracks on the charger
         static const std::set<std::string> knownIssues = {
+          "anim_lookatphone_loop_01",
           "anim_onboarding_wakeword_getin_01",
           "PROCEDURAL_ANIM",
         };

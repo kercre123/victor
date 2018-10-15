@@ -166,13 +166,25 @@ namespace Anki {
     }
 
     bool IDockAction::VerifyDockingComponentValid() const{
-      return ANKI_VERIFY(_dockingComponentPtr != nullptr,
-                         "IDockAction.VerifyDockingComponentValid.DockingComponentNotSet","");
+      if( _dockingComponentPtr == nullptr ) {
+        // action may be getting destroyed before init
+        ANKI_VERIFY(!HasRobot(),
+                    "IDockAction.VerifyDockingComponentValid.DockingComponentNotSet","");
+        return false;
+      } else {
+        return true;
+      }
     }
 
     bool IDockAction::VerifyCarryingComponentValid() const{
-      return ANKI_VERIFY(_carryingComponentPtr != nullptr,
-                         "IDockAction.VerifyCarryingComponentValid.CarryingComponentNotSet","");
+      if( _carryingComponentPtr == nullptr ) {
+        // action may be getting destroyed before init
+        ANKI_VERIFY(!HasRobot(),
+                    "IDockAction.VerifyCarryingComponentValid.CarryingComponentNotSet","");
+        return false;
+      } else {
+        return true;
+      }
     }
 
     void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2)

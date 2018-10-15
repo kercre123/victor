@@ -460,7 +460,8 @@ message ExecuteBehaviorByExecutableType {
 
 message ExecuteBehaviorByID {
   string behaviorID,
-  int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
+  int_32 numRuns = -1, // Number of times to run the behavior (-1 is infinite)
+  bool presetConditions = 0, // If true, lets a behavior prepare for force activation
 }
 
 // Special message to make BehaviorLiftLoadTest activatable.
