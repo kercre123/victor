@@ -726,8 +726,6 @@ class LightCube(ObservableObject):
             self._top_face_orientation_rad = msg.top_face_orientation_rad
 
             self._on_observed(pose, image_rect, msg.timestamp)
-        else:
-            self.logger.warning('Observed an object not currently tracked by the world with id {0}'.format(msg.object_id))
 
     def _on_object_connection_lost(self, _, msg):
         if msg.object_id == self._object_id:
