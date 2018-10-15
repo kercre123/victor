@@ -616,6 +616,8 @@ bool BehaviorSleepCycle::WasNighlyReboot() const
 bool BehaviorSleepCycle::GoToSleepIfNeeded()
 {
 
+  return false;
+  
   if( kSleepCycleForceSleep ) {
     TransitionToLightOrDeepSleep();
     SendGoToSleepDasEvent(SleepReason::ConsoleVar);
