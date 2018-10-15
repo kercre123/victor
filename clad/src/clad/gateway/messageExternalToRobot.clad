@@ -251,6 +251,14 @@ message AlignWithObject {
     AlignmentType alignmentType
 }
 
+// SetLiftAngle
+message SetLiftAngle {
+    float_32 angle_rad,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
+}
+
 // DeleteCustomMarkerObjects
 // Deletes all instantiations of any custom marker objects defined below.
 // "Fixed" markerless custom objects remain.
@@ -383,14 +391,14 @@ union MessageExternalToRobot {
   SetLiftHeight                  SetLiftHeight                  = 0x16,
   SetBackpackLEDs                SetBackpackLEDs                = 0x17,
   AlignWithObject                AlignWithObject                = 0x18,
-
-  DeleteCustomMarkerObjects      DeleteCustomMarkerObjects      = 0x19,
-  DeleteFixedCustomObjects       DeleteFixedCustomObjects       = 0x1A,
-  UndefineAllCustomMarkerObjects UndefineAllCustomMarkerObjects = 0x1B,
-  CreateFixedCustomObject        CreateFixedCustomObject        = 0x1C,
-  DefineCustomBox                DefineCustomBox                = 0x1D,
-  DefineCustomCube               DefineCustomCube               = 0x1E,
-  DefineCustomWall               DefineCustomWall               = 0x1F,
+  SetLiftAngle                   SetLiftAngle                   = 0x19,
+  DeleteCustomMarkerObjects      DeleteCustomMarkerObjects      = 0x1A,
+  DeleteFixedCustomObjects       DeleteFixedCustomObjects       = 0x1B,
+  UndefineAllCustomMarkerObjects UndefineAllCustomMarkerObjects = 0x1C,
+  CreateFixedCustomObject        CreateFixedCustomObject        = 0x1D,
+  DefineCustomBox                DefineCustomBox                = 0x1E,
+  DefineCustomCube               DefineCustomCube               = 0x1F,
+  DefineCustomWall               DefineCustomWall               = 0x20,
 }
 
 } // Gateway

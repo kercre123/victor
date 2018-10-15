@@ -1145,6 +1145,11 @@ class FixedCustomObject(util.Component):
                 (self.__class__.__name__, self.pose, self.object_id,
                  self.x_size_mm, self.y_size_mm, self.z_size_mm))
 
+    #### Public Methods ####
+
+    def teardown(self):
+        pass
+
     #### Properties ####
     @property
     def object_id(self) -> int:

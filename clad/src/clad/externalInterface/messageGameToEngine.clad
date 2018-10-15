@@ -924,6 +924,13 @@ autounion MessageGameToEngine
   SetBackpackLEDs                SetBackpackLEDs                = 0x17,
   AlignWithObject                AlignWithObject                = 0x18,
   SetLiftAngle                   SetLiftAngle                   = 0x19,
+  DeleteCustomMarkerObjects      DeleteCustomMarkerObjects      = 0x1A,
+  DeleteFixedCustomObjects       DeleteFixedCustomObjects       = 0x1B,
+  UndefineAllCustomMarkerObjects UndefineAllCustomMarkerObjects = 0x1C,
+  CreateFixedCustomObject        CreateFixedCustomObject        = 0x1D,
+  DefineCustomBox                DefineCustomBox                = 0x1E,
+  DefineCustomCube               DefineCustomCube               = 0x1F,
+  DefineCustomWall               DefineCustomWall               = 0x20,
 }
 
 

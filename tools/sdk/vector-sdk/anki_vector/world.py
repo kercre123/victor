@@ -580,7 +580,8 @@ class World(util.Component):
             z_size_mm,
             response.object_id)
 
-        self._objects[fixed_custom_object.object_id] = fixed_custom_object
+        if fixed_custom_object:
+            self._objects[fixed_custom_object.object_id] = fixed_custom_object
         return fixed_custom_object
 
     #### Private Methods ####
@@ -600,7 +601,8 @@ class World(util.Component):
 
         self.logger.debug('Allocated object_id=%s to CustomObject %s', msg.object_id, custom_object)
 
-        self._custom_objects[msg.object_id] = custom_object
+        if custom_object:
+            self._custom_objects[msg.object_id] = custom_object
         return custom_object
 
     def _allocate_charger(self, msg):
@@ -642,14 +644,16 @@ class World(util.Component):
             face = self.face_factory(self.robot,
                                      pose, image_rect, msg.face_id, msg.name, msg.expression, msg.expression_values,
                                      msg.left_eye, msg.right_eye, msg.nose, msg.mouth, msg.timestamp)
-            self._faces[face.face_id] = face
-            self._objects[face.face_id] = face
+            if face:
+                self._faces[face.face_id] = face
+                self._objects[face.face_id] = face
 
     def _on_object_observed(self, _, msg):
         """Adds a newly observed custom object to the world view."""
         if msg.object_family == protocol.ObjectFamily.Value("LIGHT_CUBE"):
             if msg.object_id not in self._objects:
-                self._objects[msg.object_id] = self.light_cube
+                if self.light_cube:
+                    self._objects[msg.object_id] = self.light_cube
 
         if msg.object_family == protocol.ObjectFamily.Value("CHARGER"):
             if msg.object_id not in self._objects:

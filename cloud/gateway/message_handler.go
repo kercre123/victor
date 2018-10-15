@@ -2353,7 +2353,11 @@ func (service *rpcService) CreateFixedCustomObject(ctx context.Context, in *exti
 	f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_CreatedFixedCustomObject, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoCreateFixedCustomObjectToClad(in))
+	cladData := ProtoCreateFixedCustomObjectToClad(in)
+
+	log.Println("MessageHandler.CreateFixedCustomObject.Payload: %v", cladData)
+
+	_, err := engineCladManager.Write(cladData)
 	if err != nil {
 		return nil, err
 	}
