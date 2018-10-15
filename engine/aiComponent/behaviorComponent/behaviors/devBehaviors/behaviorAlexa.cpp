@@ -41,13 +41,14 @@ BehaviorAlexa::BehaviorAlexa(const Json::Value& config)
     RobotInterface::RobotToEngineTag::alexaUXStateChanged,
     RobotInterface::RobotToEngineTag::alexaWeather,
   });
-  
 }
-  void BehaviorAlexa::InitBehavior()
-  {
-    const auto& BC = GetBEI().GetBehaviorContainer();
-    _iConfig.dttb = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeatCoordinator));
-  }
+
+void BehaviorAlexa::InitBehavior()
+{
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _iConfig.dttb = BC.FindBehaviorByID(BEHAVIOR_ID(DanceToTheBeatCoordinator));
+  _iConfig.weatherBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(WeatherResponses));
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAlexa::~BehaviorAlexa()
@@ -117,16 +118,23 @@ void BehaviorAlexa::BehaviorUpdate()
   if( !IsActivated() ) {
     return;
   }
-  
-  if( _dVars.shouldExitForWeather && _dVars.state != State::TransitioningToWeather ) {
-    _dVars.state = State::TransitioningToWeather;
-    CancelDelegates(false);
-    auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaToWeather };
-    DelegateIfInControl(action, [this](const ActionResult& res) {
-      CancelSelf();
-    });
-    return;
+
+  const bool shouldExitForWeather = (_dVars.shouldExitForWeatherWithinTicks > 0);
+  if( shouldExitForWeather && _dVars.state != State::TransitioningToWeather ) {
+    // give it a few ticks to wtba
+    --_dVars.shouldExitForWeatherWithinTicks;
+    if( _iConfig.weatherBehavior->WantsToBeActivated() ) {
+      _dVars.shouldExitForWeatherWithinTicks = 0;
+      _dVars.state = State::TransitioningToWeather;
+      CancelDelegates(false);
+      auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaToWeather };
+      DelegateIfInControl(action, [this](const ActionResult& res) {
+        CancelSelf();
+      });
+      return;
+    }
   } else if( _dVars.state == State::TransitioningToWeather ) {
+    _dVars.shouldExitForWeatherWithinTicks = 0;
     return;
   }
   
@@ -208,7 +216,7 @@ void BehaviorAlexa::CheckForExit()
   const int kMaxDelay = 80;
   PRINT_NAMED_WARNING("WHATNOW", "CheckForExit %d %d", _dVars.lastReceivedWeather, _dVars.lastReceivedSpeak);
   if( _dVars.lastReceivedWeather < _dVars.lastReceivedSpeak + kMaxDelay ) {
-    _dVars.shouldExitForWeather = true;
+    _dVars.shouldExitForWeatherWithinTicks = 3;
   }
 }
   

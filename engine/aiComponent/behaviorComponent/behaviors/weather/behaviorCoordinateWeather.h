@@ -52,6 +52,8 @@ protected:
   virtual void InitBehavior() override;
 
 private:
+  
+  bool DoesAlexaParse( const RobotInterface::AlexaWeather& weather ) const;
 
   struct InstanceConfig {
     InstanceConfig();

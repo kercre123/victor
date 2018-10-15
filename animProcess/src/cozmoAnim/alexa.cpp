@@ -6,7 +6,7 @@
  4) Build and deploy, then start the robot in DevDoNothing. I've been using the following filter:
        victor_log | grep "WHATNOW\|ALEXA\|vic-anim: 2018\|starved"
  5) On the first run, there should be a log line containing a URL and a code. If you need to log into a developer account, mine is
-    username: ross+1@anki.com
+    username: ross+2@anki.com
     password: anki_tests_amazon
     Alternatively you can create your own account
     https://github.com/alexa/avs-device-sdk/wiki/macOS-Quick-Start-Guide#register-a-product

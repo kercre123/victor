@@ -234,10 +234,32 @@ void BehaviorCoordinateWeather::OnBehaviorActivated()
   }
 
 }
+  
+bool BehaviorCoordinateWeather::DoesAlexaParse( const RobotInterface::AlexaWeather& weather ) const
+{
+  UserIntent_WeatherResponse weatherResponse;
+  weatherResponse.speakableLocationString = "something not empty";
+  weatherResponse.isForecast = false;
+  weatherResponse.condition = weather.condition;
+  weatherResponse.temperature = std::to_string(weather.temperature);
+  weatherResponse.temperatureUnit = "F";
+  weatherResponse.localDateTime = "2018-10-08T" + std::to_string(weather.hour) + ":0000-";
+  
+  
+  const bool isForPRDemo = false;
+  const auto condition = _iConfig.intentParser->GetCondition(weatherResponse,
+                                                             isForPRDemo);
+  const auto iter = _iConfig.weatherBehaviorMap.find(condition);
+  return (iter != _iConfig.weatherBehaviorMap.end());
+}
 
 void BehaviorCoordinateWeather::SetAlexaWeather( const RobotInterface::AlexaWeather& weather )
 {
-  _dVars.alexaWeather = std::make_unique<RobotInterface::AlexaWeather>(weather);
+  if( DoesAlexaParse(weather) ) {
+    _dVars.alexaWeather = std::make_unique<RobotInterface::AlexaWeather>(weather);
+  } else {
+    PRINT_NAMED_WARNING("WHATNOW", "Alexa weather didn't parse: %s", weather.condition.c_str() );
+  }
 }
 
 } // namespace Vector
