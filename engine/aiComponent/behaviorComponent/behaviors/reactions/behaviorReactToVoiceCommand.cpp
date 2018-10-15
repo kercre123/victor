@@ -495,7 +495,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
 
       // we now loop indefinitely and wait for the timeout in the update function
       // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
+      DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
       _dVars.state = EState::ListeningLoop;
     }
   }

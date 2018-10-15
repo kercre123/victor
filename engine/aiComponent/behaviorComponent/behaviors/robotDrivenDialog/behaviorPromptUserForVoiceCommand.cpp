@@ -264,9 +264,9 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
       bool waitingOnGetIn = _iConfig.playListeningGetIn &&
                             GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish();
       if(!waitingOnGetIn){
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_ListeningLoop,
-                                                      0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
-                                                      std::max(kMaxRecordTime_s, 1.0f)),
+        DelegateIfInControl(new ReselectingLoopAnimationAction(AnimationTrigger::VC_ListeningLoop,
+                                                               0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
+                                                               std::max(kMaxRecordTime_s, 1.0f)),
                             &BehaviorPromptUserForVoiceCommand::TransitionToThinking);
       }
     }

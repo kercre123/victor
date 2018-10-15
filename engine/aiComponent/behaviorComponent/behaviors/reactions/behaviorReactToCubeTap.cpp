@@ -363,9 +363,9 @@ void BehaviorReactToCubeTap::TransitionToInteractWithCube()
   if ( _iVars.cubeInteractionDuration > 0.0f )
   {
     CompoundActionSequential* cubeInterAction = new CompoundActionSequential();
-    cubeInterAction->AddAction( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapInteractionLoop,
-                                                            0, true, (u8)AnimTrackFlag::NO_TRACKS,
-                                                            _iVars.cubeInteractionDuration ), true );
+    cubeInterAction->AddAction( new ReselectingLoopAnimationAction( AnimationTrigger::ReactToCubeTapInteractionLoop,
+                                                                    0, true, (u8)AnimTrackFlag::NO_TRACKS,
+                                                                    _iVars.cubeInteractionDuration ), true );
 
     cubeInterAction->AddAction( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapInteractionGetOut ) );
 

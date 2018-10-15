@@ -250,6 +250,10 @@ namespace Anki {
     {
       SetName("PlayAnimation" + _animGroupName);
       // will FAILURE_ABORT on Init if not an event
+      
+      DEV_ASSERT_MSG(numLoops == 1,
+                     "TriggerAnimationAction.Ctor.LoopingDeprecated",
+                     "If looping animations, prefer to use ReselectingLoopAnimationAction");
     }
 
     void TriggerAnimationAction::OnRobotSetInternalAnim()
@@ -398,6 +402,7 @@ namespace Anki {
                                                            _animParams.tracksToLock,
                                                            _animParams.timeout_sec,
                                                            _animParams.strictCooldown} );
+      _subAction->SetRenderInEyeHue(_renderInEyeHue);
       _subAction->SetRobot( &GetRobot() );
     }
     

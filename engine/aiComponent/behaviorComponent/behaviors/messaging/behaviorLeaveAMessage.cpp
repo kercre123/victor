@@ -262,7 +262,7 @@ void BehaviorLeaveAMessage::TransitionToRecordingMessage()
   // play our recording animation here ...
   CompoundActionSequential* messageAnimation = new CompoundActionSequential();
   messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::MessagingMessageGetIn ), true );
-  messageAnimation->AddAction( new TriggerAnimationAction( AnimationTrigger::MessagingMessageLoop, 0 ) );
+  messageAnimation->AddAction( new ReselectingLoopAnimationAction( AnimationTrigger::MessagingMessageLoop ) );
 
   DelegateIfInControl( messageAnimation );
 }
