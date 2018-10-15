@@ -107,23 +107,15 @@ enum class EQuadrant : uint8_t {
 };
 
 // movement direction
-enum class EDirection { North, East, South, West };
+enum class EDirection { PlusX, PlusY, MinusX, MinusY };
 
 // a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
 using NodeAddress = std::vector<EQuadrant>;
 
-// rotation direction
-enum EClockDirection { CW, CCW };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-// EDirection to String
-const char* EDirectionToString(EDirection dir);
-
-// EDirection to Vec3f
-Vec2f EDirectionToNormalVec2f(EDirection dir);
 
 // EQuadrant to Vec2f
 Vec2f Quadrant2Vec(EQuadrant dir) ;
@@ -132,40 +124,34 @@ Vec2f Quadrant2Vec(EQuadrant dir) ;
 QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir);
 
 // step from a quadrant in direction
-constexpr QuadTreeTypes::EQuadrant GetQuadrantInDirection(EQuadrant from, EDirection dir)
+inline constexpr QuadTreeTypes::EQuadrant GetQuadrantInDirection(EQuadrant from, EDirection dir)
 {
+  // bit position 0 is the Y coordinate, bit position 1 is x, so toggle the appropriate bit with an XOR
   switch (dir) {
-    case EDirection::North:
-    case EDirection::South: { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 2); };
-    case EDirection::East:    
-    case EDirection::West:  { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 1); };
+    case EDirection::PlusX:
+    case EDirection::MinusX: { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 2); };
+    case EDirection::PlusY:    
+    case EDirection::MinusY: { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 1); };
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
+inline constexpr QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
 {
-  const EDirection ret = (EDirection)(((std::underlying_type<EDirection>::type)dir + 2) % 4);
+  // directions are defined in CW order, so just move two positions CW and grab the last two bits
+  const EDirection ret = (EDirection)(((std::underlying_type<EDirection>::type)dir + 2) & 0b11);
   return ret;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir)
+inline constexpr bool IsSibling(EQuadrant from, EDirection dir)
 {
-  const EClockDirection ret = (dir == EClockDirection::CW) ? EClockDirection::CCW : EClockDirection::CW;
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir )
-{
-  EDirection next;
-  if ( iterationDir == EClockDirection::CW ) {
-    next = (EDirection)(((std::underlying_type<EClockDirection>::type)dir + 1) % 4);
-  } else {
-    next = dir == EDirection::North ? EDirection::South : (EDirection)((std::underlying_type<EClockDirection>::type)dir-1);
+  // bit position 0 is the Y coordinate, bit position 1 is x, so just compare state of these bits
+  // for each direction
+  switch (dir) {
+    case EDirection::PlusX:  { return  ((std::underlying_type<EQuadrant>::type)from & 0b10); }
+    case EDirection::MinusX: { return !((std::underlying_type<EQuadrant>::type)from & 0b10); }
+    case EDirection::PlusY:  { return  ((std::underlying_type<EQuadrant>::type)from & 0b01); }
+    case EDirection::MinusY: { return !((std::underlying_type<EQuadrant>::type)from & 0b01); }
   }
-  return next;
 }
 
 } // namespace

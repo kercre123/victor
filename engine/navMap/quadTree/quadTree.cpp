@@ -151,6 +151,24 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction transform)
+{
+  // run the transform
+  QuadTreeNode* node = GetNodeAtAddress(address);
+
+  if (node) {
+    MemoryMapDataPtr newData = transform(node->GetData());
+    if ((node->GetData() != newData) && !node->IsSubdivided()) 
+    {
+      node->ForceSetDetectedContentType(newData, _processor);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTree::Transform(NodeTransformFunction transform)
 {
   // run the transform
