@@ -291,7 +291,6 @@ union MessageRobotToExternal {
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
   // empty slot, feel free to use
-  // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
   RobotObservedFace                 RobotObservedFace                  = 0x06, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted

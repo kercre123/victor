@@ -976,7 +976,7 @@ class _CustomObjectType(collections.namedtuple('_CustomObjectType', 'name id')):
         return 'CustomObjectTypes.%s' % self.name
 
 
-class CustomObjectTypes(Enum):
+class CustomObjectTypes():
     '''Defines all available custom object types.
 
     For use with world.define_custom methods such as
@@ -1057,7 +1057,7 @@ class _CustomObjectMarker(collections.namedtuple('_CustomObjectMarker', 'name id
         return 'CustomObjectMarkers.%s' % self.name
 
 
-class CustomObjectMarkers(Enum):
+class CustomObjectMarkers():
     '''Defines all available custom object markers.
 
     For use with world.define_custom methods such as

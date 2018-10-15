@@ -323,7 +323,7 @@ class World(util.Component):
             self._remove_all_fixed_custom_object_instances()
             mask += protocol.CustomObjectDeletionMask.Value("DELETION_MASK_CUSTOM_MARKER_OBJECTS")
 
-        req = protocol.DeleteCustomObjectsRequest(mask)
+        req = protocol.DeleteCustomObjectsRequest(mask=mask)
         await self.grpc_interface.DeleteCustomObjects(req)
 
     @sync.Synchronizer.wrap
@@ -385,19 +385,19 @@ class World(util.Component):
                                                                             marker_width_mm, marker_height_mm,
                                                                             is_unique)
 
-        req = protocol.DefineCustomBoxRequest(customType=custom_object_type.id,
-                                              markerFront=marker_front.id,
-                                              markerBack=marker_back.id,
-                                              markerTop=marker_top.id,
-                                              markerBottom=marker_bottom.id,
-                                              markerLeft=marker_left.id,
-                                              markerRight=marker_right.id,
-                                              xSize_mm=depth_mm,
-                                              ySize_mm=width_mm,
-                                              zSize_mm=height_mm,
-                                              markerWidth_mm=marker_width_mm,
-                                              markerHeight_mm=marker_height_mm,
-                                              isUnique=is_unique)
+        req = protocol.DefineCustomBoxRequest(custom_type=custom_object_type.id,
+                                              marker_front=marker_front.id,
+                                              marker_back=marker_back.id,
+                                              marker_top=marker_top.id,
+                                              marker_bottom=marker_bottom.id,
+                                              marker_left=marker_left.id,
+                                              marker_right=marker_right.id,
+                                              x_size_mm=depth_mm,
+                                              y_size_mm=width_mm,
+                                              z_size_mm=height_mm,
+                                              marker_width_mm=marker_width_mm,
+                                              marker_height_mm=marker_height_mm,
+                                              is_unique=is_unique)
 
         response = await self.grpc_interface.DefineCustomBox(req)
 
@@ -449,12 +449,12 @@ class World(util.Component):
                                                                             marker_width_mm, marker_height_mm,
                                                                             is_unique)
 
-        req = protocol.DefineCustomCubeRequest(customType=custom_object_type.id,
+        req = protocol.DefineCustomCubeRequest(custom_type=custom_object_type.id,
                                                marker=marker.id,
                                                size_mm=size_mm,
-                                               markerWidth_mm=marker_width_mm,
-                                               markerHeight_mm=marker_height_mm,
-                                               isUnique=is_unique)
+                                               marker_width_mm=marker_width_mm,
+                                               marker_height_mm=marker_height_mm,
+                                               is_unique=is_unique)
 
         response = await self.grpc_interface.DefineCustomCube(req)
 
@@ -512,13 +512,13 @@ class World(util.Component):
                                                                             marker_width_mm, marker_height_mm,
                                                                             is_unique)
 
-        req = protocol.DefineCustomWallRequest(customType=custom_object_type.id,
+        req = protocol.DefineCustomWallRequest(custom_type=custom_object_type.id,
                                                marker=marker.id,
                                                width_mm=width_mm,
                                                height_mm=height_mm,
-                                               markerWidth_mm=marker_width_mm,
-                                               markerHeight_mm=marker_height_mm,
-                                               isUnique=is_unique)
+                                               marker_width_mm=marker_width_mm,
+                                               marker_height_mm=marker_height_mm,
+                                               is_unique=is_unique)
 
         response = await self.grpc_interface.DefineCustomWall(req)
 
