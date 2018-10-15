@@ -13,11 +13,10 @@
 #include "engine/vision/cameraCalibrator.h"
 
 #include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/math/rotation.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-
-#include "engine/vision/visionSystem.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/imgproc.hpp"
@@ -56,8 +55,7 @@ namespace {
 static const char* const kLogChannelName = "CameraCalibrator";
 }
     
-CameraCalibrator::CameraCalibrator(VisionSystem& visionSystem)
-: _visionSystem(visionSystem)
+CameraCalibrator::CameraCalibrator()
 {
   
 }
@@ -84,7 +82,6 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
     {
       calibration_out.push_back(*calibration);
     }
-    _visionSystem.SetNextMode(VisionMode::ComputingCalibration, false);
     _isCalibrating = false;
   });
   
@@ -245,7 +242,6 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
     {
       calibration_out.push_back(*calibration);
     }
-    _visionSystem.SetNextMode(VisionMode::ComputingCalibration, false);
     _isCalibrating = false;
   });
   

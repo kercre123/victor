@@ -621,7 +621,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   // Send viz message with current treads states
   const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
   const auto vizManager = GetContext()->GetVizManager();
-  vizManager->SetText(VizManager::OFF_TREADS_STATE,
+  vizManager->SetText(TextLabelType::OFF_TREADS_STATE,
                       NamedColors::GREEN,
                       "OffTreadsState: %s  %s",
                       EnumToString(_offTreadsState),
@@ -708,9 +708,9 @@ void Robot::Delocalize(bool isCarryingObject)
   }
 
   // Update VizText
-  GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-  GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          GetPoseOriginList().GetSize(),
                                          worldOrigin.GetName().c_str());
@@ -772,7 +772,7 @@ void Robot::Delocalize(bool isCarryingObject)
 Result Robot::SetLocalizedTo(const ObservableObject* object)
 {
   if (object == nullptr) {
-    GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+    GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                            "LocalizedTo: Odometry");
     _localizedToID.UnSet();
     _isLocalized = true;
@@ -810,10 +810,10 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   GetAIComponent().OnRobotRelocalized();
 
   // Update VizText
-  GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
-  GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          GetPoseOriginList().GetSize(),
                                          GetWorldOrigin().GetName().c_str());

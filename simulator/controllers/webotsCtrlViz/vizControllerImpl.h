@@ -105,6 +105,7 @@ private:
   void ProcessCameraParams(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVisionModeDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessEnabledVisionModes(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   bool IsMoodDisplayEnabled() const;
   void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);

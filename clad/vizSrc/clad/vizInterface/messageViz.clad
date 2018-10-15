@@ -12,6 +12,7 @@
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/activeObjectAccel.clad"
 #include "clad/types/memoryMap.clad"
+#include "clad/types/visionModes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -129,6 +130,11 @@ message MemoryMapMessageViz
 message MemoryMapMessageVizEnd
 {
   uint_32  originId,
+}
+
+message EnabledVisionModes
+{
+  VisionMode modes[uint_16]
 }
 
 // VizCameraQuad

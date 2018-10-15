@@ -201,9 +201,9 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
     case ImageCacheSize::Full:
       {
         ImageConversions::HalveBGGR10ToRGB(_rawData,
-                                                _rawNumRows,
-                                                _rawNumCols,
-                                                rgb);
+                                           _rawNumRows,
+                                           _rawNumCols,
+                                           rgb);
       }
       return true;
       
@@ -342,9 +342,9 @@ bool ImageBuffer::GetGrayFromBAYER(Image& gray, ImageCacheSize size, ResizeMetho
   // For now the only optimized conversion from Bayer to Gray is for halved gray
   // So do that and then resize image if needed
   ImageConversions::HalveBGGR10ToGray(_rawData,
-                                           _rawNumRows,
-                                           _rawNumCols,
-                                           gray);
+                                      _rawNumRows,
+                                      _rawNumCols,
+                                      gray);
       
   switch(size)
   {

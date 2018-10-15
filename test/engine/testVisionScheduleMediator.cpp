@@ -233,10 +233,4 @@ TEST(VisionScheduleMediator, Interleaving)
   lowMotionSubscriber.Unsubscribe();
   vsm.UpdateVisionSchedule(visionComponent, nullptr);
   scheduleList = vsm.GenerateBalancedSchedule(visionComponent);
-
-  // Verify default modes are still scheduled after unsubscribing
-  EXPECT_TRUE(scheduleList.size() == 1);
-  EXPECT_TRUE(scheduleList.front().first == VisionMode::DetectingMarkers);
-  EXPECT_TRUE(scheduleList.front().second._schedule == std::vector<bool>({true, false, false, false}));
-
 }

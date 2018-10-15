@@ -644,12 +644,12 @@ namespace Anki {
         
         if (isRunning)
         {
-          vizManager->SetText(VizManager::ACTION, NamedColors::GREEN, "Action: %s", _currentAction->GetName().c_str());
+          vizManager->SetText(TextLabelType::ACTION, NamedColors::GREEN, "Action: %s", _currentAction->GetName().c_str());
           cozmoContext->SetSdkStatus(SdkStatusType::Action, std::string(_currentAction->GetName()));
         }
         else
         {
-          vizManager->SetText(VizManager::ACTION, NamedColors::GREEN, "");
+          vizManager->SetText(TextLabelType::ACTION, NamedColors::GREEN, "");
           cozmoContext->SetSdkStatus(SdkStatusType::Action, "");
         }
         

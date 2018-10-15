@@ -738,7 +738,7 @@ namespace Anki {
       va_start(argptr, format);
       vsnprintf(buffer, 255, format, argptr);
       va_end(argptr);
-      SendMessage(VizInterface::MessageViz(VizInterface::SetLabel(labelType, (uint32_t)color, {std::string(buffer)})));
+      SendMessage(VizInterface::MessageViz(VizInterface::SetLabel((uint32_t)labelType, (uint32_t)color, {std::string(buffer)})));
     }
     
     
@@ -810,6 +810,12 @@ namespace Anki {
     {
       ANKI_CPU_PROFILE("VizManager::SendVisionModeDebug");
       SendMessage(VizInterface::MessageViz(std::move(visionModeDebug)));
+    }
+
+    void VizManager::SendEnabledVisionModes(VizInterface::EnabledVisionModes&& modes)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendEnabledVisionModes");
+      SendMessage(VizInterface::MessageViz(std::move(modes)));
     }
     
     void VizManager::SendSaveImages(ImageSendMode mode, std::string path)

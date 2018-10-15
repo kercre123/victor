@@ -22,6 +22,7 @@
 #include "util/helpers/ankiDefines.h"
 #include "coretech/planning/shared/path.h"
 #include "coretech/messaging/shared/UdpClient.h"
+#include "engine/viz/vizTextLabelTypes.h"
 #include "clad/types/cameraParams.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
@@ -58,16 +59,6 @@ namespace Anki {
     {
     public:
       
-      typedef enum : u8 {
-        OFF_TREADS_STATE,
-        ACTION,
-        LOCALIZED_TO,
-        WORLD_ORIGIN,
-        VISION_MODE,
-        BEHAVIOR_STATE,
-        ANIMATION_NAME,
-        NEEDS_STATE
-      } TextLabelType;
       
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
@@ -410,6 +401,7 @@ namespace Anki {
       void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
       void SendVisionModeDebug(VizInterface::VisionModeDebug&& visionModeDebug);
       void SendVizMessage(VizInterface::MessageViz&& event);
+      void SendEnabledVisionModes(VizInterface::EnabledVisionModes&& modes);
 
       uint32_t GetMessageCountViz() const { return _messageCountViz; }
       void     ResetMessageCount() { _messageCountViz = 0; }

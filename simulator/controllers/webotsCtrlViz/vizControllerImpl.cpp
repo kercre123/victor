@@ -18,6 +18,8 @@
 #include "clad/types/animationTypes.h"
 #include "clad/vizInterface/messageViz.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/vision/visionModesHelpers.h"
+#include "engine/viz/vizTextLabelTypes.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "vizControllerImpl.h"
@@ -28,6 +30,8 @@
 #include <webots/Display.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Supervisor.hpp>
+
+#include <iomanip>
 
 namespace Anki {
 namespace Vector {
@@ -90,6 +94,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessBehaviorStackDebug, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::VisionModeDebug,
     std::bind(&VizControllerImpl::ProcessVisionModeDebug, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EnabledVisionModes,
+    std::bind(&VizControllerImpl::ProcessEnabledVisionModes, this, std::placeholders::_1));
 
 
   // Get display devices
@@ -1053,7 +1059,61 @@ void VizControllerImpl::ProcessVisionModeDebug(const AnkiEvent<VizInterface::Mes
 
 }
 
-  
-  
+void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if( _disp == nullptr ) {
+    return;
+  }
+
+  const auto& data = msg.GetData().Get_EnabledVisionModes();
+
+  _disp->setColor(NamedColors::BLACK.As0RGB());
+  const u32 fillY = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + (uint32_t)TextLabelType::VISION_MODE + 1)*10;
+  _disp->fillRectangle(0, fillY, _disp->getWidth(), 10*11);
+
+  std::stringstream ss;
+  const u32 kTextWidth = 15;
+  const u32 kNumModesPerLine = 4;
+  const u32 kCharWidth = 6;
+  const u32 kLineHeight = 10;
+
+  // x,y position to draw each VisionMode at in the display
+  u32 x = 0;
+  u32 y = fillY;
+
+  for(VisionMode m = VisionMode::Idle; m < VisionMode::Count; m++)
+  {
+    // Left align text with kTextWidth+1 padding of spaces (+1 for space between modes)
+    ss << std::setw(kTextWidth + 1) << std::left;
+    std::string s(EnumToString(m));
+    ss << s.substr(0, kTextWidth);
+    
+    // If this mode was processed then draw it in white
+    if(std::find(data.modes.begin(), data.modes.end(), m) != data.modes.end())
+    {
+      _disp->setColor(NamedColors::WHITE.As0RGB());
+    }
+    // Otherwise draw it in gray
+    else
+    {
+      _disp->setColor(0x808080);
+    }
+
+    _disp->drawText(ss.str(), x, y);
+
+    // Increase x by VisionMode text length + 1 (for spacing)
+    x += kCharWidth*(kTextWidth+1);
+
+    // Only draw kNumModesPerLine
+    if((static_cast<u32>(m)+1) % kNumModesPerLine == 0)
+    {
+      x = 0;
+      y += kLineHeight;
+    }
+
+    ss.str(std::string(""));
+  }
+}
+
 } // end namespace Vector
 } // end namespace Anki

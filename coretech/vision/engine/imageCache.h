@@ -91,6 +91,8 @@ public:
   //  * These are non-const because they could compute a resized version on demand.
   const Image&    GetGray(ImageCacheSize size=ImageCacheSize::Full, GetType* getType = nullptr);
   const ImageRGB& GetRGB(ImageCacheSize size=ImageCacheSize::Full,  GetType* getType = nullptr);
+
+  const ImageBuffer& GetBuffer() const { return _buffer; }
   
 private:
 

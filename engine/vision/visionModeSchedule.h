@@ -15,6 +15,8 @@
 
 #include "clad/types/visionModes.h"
 
+#include "coretech/common/shared/types.h"
+
 #include <array>
 #include <list>
 #include <vector>
@@ -30,8 +32,8 @@ public:
   explicit VisionModeSchedule(bool alwaysOnOrOff);
   explicit VisionModeSchedule(int onFrequency, int frameOffset = 0);
 
-  bool IsTimeToProcess() const;
-  void Advance();
+  // Whether or not the schedule is true at index indicating it is time to process
+  bool IsTimeToProcess(u32 index) const;
   
   // Returns whether the schedule will ever run (i.e. is not just "false" for all time)
   bool WillEverRun() const;
@@ -71,10 +73,7 @@ public:
   const VisionModeSchedule& GetScheduleForMode(VisionMode mode) const;
     
   // Returns whether it is time to process a mode
-  bool IsTimeToProcess(VisionMode mode) const;
-  
-  // Advances all schedules to be ready for next query (should be called once per image/tick)
-  void Advance();
+  bool IsTimeToProcess(VisionMode mode, u32 index) const;
   
   // Change the defaults to use for unspecified modes
   static void SetDefaultSchedule(VisionMode mode, VisionModeSchedule&& schedule);

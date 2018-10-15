@@ -24,7 +24,6 @@
 #include "engine/rollingShutterCorrector.h"
 #include "engine/vision/cameraCalibrator.h"
 #include "engine/vision/groundPlaneROI.h"
-#include "engine/vision/visionModeSchedule.h"
 #include "engine/vision/visionPoseData.h"
 #include "engine/vision/visionSystemInput.h"
 
@@ -127,13 +126,10 @@ namespace Vector {
     bool   IsInitialized() const;
     
     Result UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib);
-    
-    Result SetNextMode(VisionMode mode, bool enable);
-    bool   IsModeEnabled(VisionMode whichMode) const { return _mode.IsBitFlagSet(whichMode); }
-    
-    Result PushNextModeSchedule(AllVisionModesSchedule&& schedule);
-    Result PopModeSchedule();
-    
+
+    const Util::BitFlags32<VisionMode>& GetEnabledModes() const { return _modes; }
+    bool   IsModeEnabled(VisionMode whichMode) const { return _modes.IsBitFlagSet(whichMode); }
+        
     // This is main Update() call to be called in a loop from above.
     Result Update(const VisionPoseData& robotState,
                   Vision::ImageCache& imageCache);
@@ -233,12 +229,8 @@ namespace Vector {
     std::pair<bool,Vision::CameraParams> _nextCameraParams; // bool represents if set but not yet sent
     std::unique_ptr<Vision::CameraParamsController> _cameraParamsController;
     
-    Util::BitFlags32<VisionMode> _mode;
-    std::queue<std::pair<VisionMode, bool>> _nextModes;
-    
-    using ModeScheduleStack = std::list<AllVisionModesSchedule>;
-    ModeScheduleStack _modeScheduleStack;
-    std::queue<std::pair<bool,AllVisionModesSchedule>> _nextSchedules;
+    Util::BitFlags32<VisionMode> _modes;
+    Util::BitFlags32<VisionMode> _futureModes;
     
     s32 _frameNumber = 0;
     
@@ -340,11 +332,6 @@ namespace Vector {
     
     void CheckForNeuralNetResults();
     
-    bool ShouldProcessVisionMode(VisionMode mode) const;
-    bool IsModeScheduledToEverRun(VisionMode mode) const;
-    
-    Result EnableMode(VisionMode whichMode, bool enabled);
-
     Result SaveSensorData() const;
     
     // Contrast-limited adaptive histogram equalization (CLAHE)

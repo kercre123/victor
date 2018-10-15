@@ -56,7 +56,6 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/robot/config.h"
 
-#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/boundedWhile.h"
@@ -234,6 +233,8 @@ namespace Vector {
       });
 
     SetLiftCrossBar();
+
+    SetupVisionModeConsoleVars();
   }
 
   void VisionComponent::ReadVisionConfig(const Json::Value& config)
@@ -266,6 +267,8 @@ namespace Vector {
       return;
     }
 
+    _enabledVisionModes = _visionSystem->GetEnabledModes();
+    
     // Load face album and broadcast all known faces
     {
       _faceAlbumName = kDefaultFaceAlbumName;
@@ -384,6 +387,13 @@ namespace Vector {
     Util::SafeDelete(_visionSystem);
 
     CameraService::removeInstance();
+
+    #if REMOTE_CONSOLE_ENABLED
+    for(auto& iter : _visionModeConsoleVars)
+    {
+      Util::SafeDelete(iter.first);
+    }
+    #endif
   } // ~VisionSystem()
 
   RobotTimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp() const
@@ -403,41 +413,13 @@ namespace Vector {
 
   Result VisionComponent::EnableMode(VisionMode mode, bool enable)
   {
-    if(nullptr != _visionSystem) {
-      return _visionSystem->SetNextMode(mode, enable);
-    } else {
-      PRINT_NAMED_ERROR("VisionComponent.EnableMode.NullVisionSystem", "");
-      return RESULT_FAIL;
-    }
-  }
-
-  Result VisionComponent::PushNextModeSchedule(AllVisionModesSchedule&& schedule)
-  {
-    if(nullptr != _visionSystem) {
-      return _visionSystem->PushNextModeSchedule(std::move(schedule));
-    } else {
-      PRINT_NAMED_ERROR("VisionComponent.PushModeSchedule.NullVisionSystem", "");
-      return RESULT_FAIL;
-    }
-  }
-
-  Result VisionComponent::PopCurrentModeSchedule()
-  {
-    if(nullptr != _visionSystem) {
-      return _visionSystem->PopModeSchedule();
-    } else {
-      PRINT_NAMED_ERROR("VisionComponent.PopModeSchedule.NullVisionSystem", "");
-      return RESULT_FAIL;
-    }
+    _enabledVisionModes.SetBitFlag(mode, enable);
+    return RESULT_OK;
   }
 
   bool VisionComponent::IsModeEnabled(VisionMode mode) const
   {
-    if(nullptr != _visionSystem) {
-      return _visionSystem->IsModeEnabled(mode);
-    } else {
-      return false;
-    }
+    return _enabledVisionModes.IsBitFlagSet(mode);
   }
 
   static Result GetImageHistState(const Robot&      robot,
@@ -473,6 +455,8 @@ namespace Vector {
                           "Camera calibration should be set before calling UpdateDependent().");
       return;
     }
+
+    UpdateVisionModeConsoleVars();
 
     // Check and update any results from VisionSystem
     UpdateAllResults();
@@ -648,7 +632,7 @@ namespace Vector {
 
     if(_paused)
     {
-      _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+      _vizManager->SetText(TextLabelType::VISION_MODE, NamedColors::CYAN,
                            "Vision: <PAUSED>");
       // Won't be processing the image because we are paused
       // so we need to release it
@@ -662,7 +646,26 @@ namespace Vector {
     {
       _captureOneImage = false;
       EnableImageCapture(false);
-    }      
+    }
+
+    _visionSystemInput.modesToProcess.ClearFlags();
+    _visionSystemInput.futureModesToProcess.ClearFlags();
+    
+    static u32 scheduleCount = 0;
+    const AllVisionModesSchedule& schedule = _robot->GetVisionScheduleMediator().GetSchedule();
+    for(VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; mode++)
+    {
+      // Only process modes that are enabled and want to run on this frame according to the schedule
+      if(_enabledVisionModes.IsBitFlagSet(mode))
+      {
+        _visionSystemInput.modesToProcess.SetBitFlag(mode,
+                                                     schedule.IsTimeToProcess(mode, scheduleCount));
+
+        _visionSystemInput.futureModesToProcess.SetBitFlag(mode,
+                                                           schedule.GetScheduleForMode(mode).WillEverRun());
+      }
+    }
+    scheduleCount++;
 
     // We are all set to process this image so lock input
     // so VisionSystem can use it
@@ -765,14 +768,18 @@ namespace Vector {
   void VisionComponent::UpdateVisionSystem(const VisionSystemInput& input)
   {
     ANKI_CPU_PROFILE("VC::UpdateVisionSystem");
-        
+    
     Result result = _visionSystem->Update(input);
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
     }
 
-    _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
-                         "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+    // VisionMode::ComputingCalibration is a one-shot mode, turn it off
+    // as soon as it runs
+    if(_enabledVisionModes.IsBitFlagSet(VisionMode::ComputingCalibration))
+    {
+      _enabledVisionModes.SetBitFlag(VisionMode::ComputingCalibration, false);
+    }
   }
   
 
@@ -892,6 +899,20 @@ namespace Vector {
 
       while(true == _visionSystem->CheckMailbox(result))
       {
+        if(_vizManager != nullptr)
+        {
+          // Send processed modes to viz
+          VizInterface::EnabledVisionModes evm;
+          for(VisionMode m = VisionMode::Idle; m < VisionMode::Count; m++)
+          {
+            if(result.modesProcessed.IsBitFlagSet(m))
+            {
+              evm.modes.push_back(m);
+            }
+          }
+          _vizManager->SendEnabledVisionModes(std::move(evm));
+        }
+
         SendImages(result);
         
 #       define ToVisionModeMask(__mode__) result.modesProcessed.GetBitMask(Util::EnumToUnderlying(VisionMode::__mode__))
@@ -2200,18 +2221,12 @@ namespace Vector {
 
   void VisionComponent::EnableAutoExposure(bool enable)
   {
-    if(_visionSystem)
-    {
-      _visionSystem->SetNextMode(VisionMode::AutoExposure, enable);
-    }
+    _enabledVisionModes.SetBitFlag(VisionMode::AutoExposure, enable);
   }
 
   void VisionComponent::EnableWhiteBalance(bool enable)
   {
-    if(_visionSystem)
-    {
-      _visionSystem->SetNextMode(VisionMode::WhiteBalance, enable);
-    }
+    _enabledVisionModes.SetBitFlag(VisionMode::WhiteBalance, enable);
   }
 
   void VisionComponent::SetAndDisableCameraControl(const Vision::CameraParams& params)
@@ -2930,5 +2945,56 @@ namespace Vector {
     EnableImageCapture(true);
     _captureOneImage = true;
   }
+
+  void VisionComponent::SetupVisionModeConsoleVars()
+  {
+    #if REMOTE_CONSOLE_ENABLED
+    for(VisionMode m = VisionMode::Idle; m < VisionMode::Count; m++)
+    {
+      auto& pair = _visionModeConsoleVars[static_cast<u32>(m)];
+      pair.first = new Util::ConsoleVar<bool>(pair.second,
+                                              EnumToString(m),
+                                              "Vision.General.VisionModes",
+                                              false);
+    }
+    #endif
+  }
+
+  void VisionComponent::UpdateVisionModeConsoleVars()
+  {
+    #if REMOTE_CONSOLE_ENABLED
+    // Keep track of previous console var values to know when the new ones change
+    static std::array<bool, static_cast<u32>(VisionMode::Count)> prevConsoleVars;
+    
+    for(int i = 0; i < _visionModeConsoleVars.size(); i++)
+    {
+      auto& pair = _visionModeConsoleVars[i];
+
+      // If the console var value has changed
+      if(pair.second != prevConsoleVars[i])
+      {
+        // Enable/disable the vision mode as well as subscribing/unsubscribing to the vision mode
+        EnableMode(static_cast<VisionMode>(i), pair.second);
+
+        // Need to subscribe/unsubscribe as when you are enabling/disabling VisionModes with the
+        // console var it is very likely not scheduled. The regular subscription mechanism will
+        // remove all subscriptions to all modes for the subscriber as it accepts a full list of
+        // all desired subscriptions. The DevOnly calls allow you to update individual mode
+        // subscriptions for the subscriber.
+        if(prevConsoleVars[i])
+        {
+          _robot->GetVisionScheduleMediator().DevOnly_SelfUnsubscribeVisionMode({static_cast<VisionMode>(i)});
+        }
+        else
+        {
+          _robot->GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode({static_cast<VisionMode>(i)});
+        }
+        
+        prevConsoleVars[i] = pair.second;
+      }
+    }
+    #endif
+  }
+
 } // namespace Vector
 } // namespace Anki
