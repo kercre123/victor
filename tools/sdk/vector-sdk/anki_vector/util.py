@@ -211,9 +211,9 @@ class Vector3:
         :param rhs: The right-hand-side of this assignment - the
                 source Vector3 to copy into this Vector3 instance.
         """
-        self._x = rhs.x
-        self._y = rhs.y
-        self._z = rhs.z
+        self._x = float(rhs.x)
+        self._y = float(rhs.y)
+        self._z = float(rhs.z)
 
     @property
     def x(self) -> float:
@@ -473,9 +473,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m00 = x
-        self.m01 = y
-        self.m02 = z
+        self.m00 = float(x)
+        self.m01 = float(y)
+        self.m02 = float(z)
 
     def set_left(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's left vector.
@@ -484,9 +484,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m10 = x
-        self.m11 = y
-        self.m12 = z
+        self.m10 = float(x)
+        self.m11 = float(y)
+        self.m12 = float(z)
 
     def set_up(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's up vector.
@@ -495,9 +495,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m20 = x
-        self.m21 = y
-        self.m22 = z
+        self.m20 = float(x)
+        self.m21 = float(y)
+        self.m22 = float(z)
 
     def set_pos(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's position vector.
@@ -506,9 +506,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m30 = x
-        self.m31 = y
-        self.m32 = z
+        self.m30 = float(x)
+        self.m31 = float(y)
+        self.m32 = float(z)
 
 
 class Quaternion:
@@ -608,9 +608,9 @@ class Quaternion:
         m21 = (q2q3x2 - q0q1x2)
         m22 = (q0q0 - q1q1 - q2q2 + q3q3)
 
-        return Matrix44(m00, m10, m20, pos_x,
-                        m01, m11, m21, pos_y,
-                        m02, m12, m22, pos_z,
+        return Matrix44(m00, m10, m20, float(pos_x),
+                        m01, m11, m21, float(pos_y),
+                        m02, m12, m22, float(pos_z),
                         0.0, 0.0, 0.0, 1.0)
 
     def __repr__(self):
@@ -749,11 +749,11 @@ class ImageRect:
 
     __slots__ = ('_x_top_left', '_y_top_left', '_width', '_height')
 
-    def __init__(self, x_top_left, y_top_left, width, height):
-        self._x_top_left = x_top_left
-        self._y_top_left = y_top_left
-        self._width = width
-        self._height = height
+    def __init__(self, x_top_left: float, y_top_left: float, width: float, height: float):
+        self._x_top_left = float(x_top_left)
+        self._y_top_left = float(y_top_left)
+        self._width = float(width)
+        self._height = float(height)
 
     @property
     def x_top_left(self) -> float:
@@ -800,7 +800,7 @@ class Distance:
 
         if distance_inches is not None:
             distance_mm = distance_inches * 25.4
-        self._distance_mm = distance_mm
+        self._distance_mm = float(distance_mm)
 
     def __repr__(self):
         return "<%s %.2f mm (%.2f inches)>" % (self.__class__.__name__, self.distance_mm, self.distance_inches)
@@ -862,7 +862,7 @@ class Speed:
     def __init__(self, speed_mmps: float = None):  # pylint: disable=redefined-outer-name
         if speed_mmps is None:
             raise ValueError("Expected speed_mmps keyword argument")
-        self._speed_mmps = speed_mmps
+        self._speed_mmps = float(speed_mmps)
 
     def __repr__(self):
         return "<%s %.2f mmps>" % (self.__class__.__name__, self.speed_mmps)
