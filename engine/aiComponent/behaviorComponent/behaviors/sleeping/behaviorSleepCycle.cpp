@@ -128,9 +128,9 @@ void BehaviorSleepCycle::ParseWakeReasonConditions(const Json::Value& config)
     }
   }
 
-  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasonConditions.Parsed",
-                "Parsed %zu wake reason conditions from json",
-                _iConfig.wakeConditions.size());
+  PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasonConditions.Parsed",
+                 "Parsed %zu wake reason conditions from json",
+                 _iConfig.wakeConditions.size());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -202,9 +202,9 @@ void BehaviorSleepCycle::ParseWakeReasons(const Json::Value& config)
     }
   }
 
-  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.AlwaysWakeReasons",
-                "Parsed %zu 'always wake' reasons",
-                _iConfig.alwaysWakeReasons.size());
+  PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.AlwaysWakeReasons",
+                 "Parsed %zu 'always wake' reasons",
+                 _iConfig.alwaysWakeReasons.size());
 
   for( const auto& stateGroup : config[kWakeFromStatesKey] ) {
     SleepStateID fromState = SleepStateID::Invalid;
@@ -219,10 +219,10 @@ void BehaviorSleepCycle::ParseWakeReasons(const Json::Value& config)
       }
     }
 
-    PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.WakeReasonsFromState",
-                  "Parsed %zu additional reasons to wake from state '%s'",
-                  wakeReasons.size(),
-                  SleepStateIDToString(fromState));
+    PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.WakeReasonsFromState",
+                   "Parsed %zu additional reasons to wake from state '%s'",
+                   wakeReasons.size(),
+                   SleepStateIDToString(fromState));
   }
 }
 

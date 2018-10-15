@@ -1135,9 +1135,9 @@ namespace Vector {
     }
 
     _keepFaceAliveParams[whichParam] = newValue;
-    PRINT_CH_INFO(kLogChannelName,
-                  "AnimationStreamer.SetParam", "%s : %f",
-                  EnumToString(whichParam), newValue);
+    PRINT_CH_DEBUG(kLogChannelName,
+                   "AnimationStreamer.SetParam", "%s : %f",
+                   EnumToString(whichParam), newValue);
   }
 
 
@@ -1998,7 +1998,7 @@ namespace Vector {
 
   void AnimationStreamer::SetDefaultKeepFaceAliveParams()
   {
-    PRINT_CH_INFO(kLogChannelName, "AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
+    PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
 
     for(auto param = Util::EnumToUnderlying(KeepFaceAliveParameter::BlinkSpacingMinTime_ms);
         param != Util::EnumToUnderlying(KeepFaceAliveParameter::NumParameters); ++param) {

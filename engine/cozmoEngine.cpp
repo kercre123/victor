@@ -485,7 +485,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       {
         SetEngineState(EngineState::ConnectingToRobot);
       }
-      LOG_INFO("CozmoEngine.Update.LoadingRatio", "%f", currentLoadingDone);
+      LOG_DEBUG("CozmoEngine.Update.LoadingRatio", "%f", currentLoadingDone);
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
       break;
     }

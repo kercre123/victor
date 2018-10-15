@@ -264,9 +264,9 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
                         _states->size());
   }
 
-  PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.StatesCreated",
-                "Created %zu states",
-                _states->size());
+  PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.StatesCreated",
+                 "Created %zu states",
+                 _states->size());
 
   const std::string& initialStateStr = JsonTools::ParseString(config, kInitialStateKey, "InternalStatesBehavior.StateConfig");
   auto stateIt = _stateNameToID.find(initialStateStr);
@@ -359,9 +359,9 @@ void InternalStatesBehavior::InitBehavior()
     strategy->Init(GetBEI());
   }
 
-  PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.Init",
-                "initialized %zu states",
-                _states->size());
+  PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.Init",
+                 "initialized %zu states",
+                 _states->size());
 }
 
 void InternalStatesBehavior::AddState( State&& state )
@@ -801,11 +801,11 @@ void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
                    _name.c_str(),
                    _getInBehaviorName.c_str());
 
-    PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Defined",
-                  "state '%s' found behavior %p matching name '%s'",
-                  _name.c_str(),
-                  _getInBehavior.get(),
-                  _getInBehaviorName.c_str());
+    PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.GetInBehavior.Defined",
+                   "state '%s' found behavior %p matching name '%s'",
+                   _name.c_str(),
+                   _getInBehavior.get(),
+                   _getInBehaviorName.c_str());
   }
 }
 
