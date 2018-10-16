@@ -124,8 +124,7 @@ namespace Animations {
     if(ANKI_DEV_CHEATS){
       auto allKeyframes = GetCopyOfKeyframes();
       auto safetyCheckIter = allKeyframes.begin();
-      const auto upperBound = allKeyframes.size() + 1;
-      BOUNDED_WHILE(upperBound, safetyCheckIter != allKeyframes.end()) {
+      while(safetyCheckIter != allKeyframes.end()) {
         auto nextIter = safetyCheckIter;
         nextIter++;
         // Ensure tracks don't overlap

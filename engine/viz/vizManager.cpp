@@ -25,7 +25,6 @@
 #include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -281,8 +280,7 @@ namespace Anki {
       auto crnt = poly.begin();
       auto next = (crnt + 1);
       auto end  = poly.end();
-      auto upperBound = poly.size() + 1;
-      BOUNDED_WHILE(upperBound, next != end)
+      while(next != end)
       {
         DrawCameraLine(*crnt, *next, color);
         ++crnt;

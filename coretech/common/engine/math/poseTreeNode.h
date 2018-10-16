@@ -322,7 +322,7 @@ std::shared_ptr<typename PoseBase<PoseNd,TransformNd>::PoseTreeNode> PoseBase<Po
   DEV_ASSERT(!this->IsRoot(), "PoseBase.PoseTreeNode.FindRoot.ThisIsRoot");
 
   std::shared_ptr<PoseTreeNode> root = _parentPtr;
-  BOUNDED_WHILE(1000, (!root->IsRoot()))
+  BOUNDED_WHILE(1000, !root->IsRoot())
   {
     // The only way the current root's _parent is null is if it is a
     // root, which means we should have already exited the while loop.
