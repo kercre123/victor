@@ -916,6 +916,9 @@ void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
   if( !IsControlDelegated() ) {
 
     auto playAsleepBehavior = [this]() {
+      // now that we're asleep, let's remove the "active intent state" in case we were in it
+      GetBehaviorComp<UserIntentComponent>().StopActiveUserIntentFeedback();
+
       if( _iConfig.asleepBehavior->WantsToBeActivated() ) {
         DelegateIfInControl( _iConfig.asleepBehavior.get() );
       }

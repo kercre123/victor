@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -42,6 +43,7 @@ namespace Util {
 namespace Vector {
 
 enum class AnimationTrigger : int32_t;
+class BackpackLightComponent;
 class BehaviorComponentCloudServer;
 class CozmoContext;
 class Robot;
@@ -155,14 +157,23 @@ public:
   // deactivate the intent if you call this function directly. If the given userIntent is pending, this will
   // move it from pending to active (it will no longer be pending) and return a pointer to the full intent
   // data. Otherwise, it will print warnings and return nullptr
-  UserIntentPtr ActivateUserIntent(UserIntentTag userIntent, const std::string& owner);
+  // showFeedback = true will cause Vector to actively display to the user that he is carrying out this intent
+  UserIntentPtr ActivateUserIntent(UserIntentTag userIntent, const std::string& owner, bool showFeedback = true);
 
   // Must be called when a user intent is no longer active (generally meaning that the behavior that was
   // handling the intent has stopped).
   void DeactivateUserIntent(UserIntentTag userIntent);
-  
+
+  // The "active user intent state" is used to convey to the user that Vector is actively carrying out the user's
+  // voice intent, which is triggered by passing in showFeedback = true to ActivateUserIntent(...)
+  // This funciton allows us to stop displaying this feedback to the user, but still keeping the user
+  // intent active (userfull when sleeping, etc)
+  void StopActiveUserIntentFeedback();
+
   // Check if an intent tag is currently active
   bool IsUserIntentActive(UserIntentTag userIntent) const;
+  // Check if ANY intent is currently active
+  bool IsAnyUserIntentActive() const { return static_cast<bool>(GetActiveUserIntent()); }
 
   // If the given intent is active, return the associated data, otherwise return nullptr.
   UserIntentPtr GetUserIntentIfActive(UserIntentTag forIntent) const;
@@ -170,7 +181,7 @@ public:
   // If any intent is active, return the associated data, otherwise return nullptr. In general, most cases
   // should use the above version that checks that the explicit user intent is matching what the caller
   // expects
-  UserIntentPtr GetActiveUserIntent() const;
+  UserIntentPtr GetActiveUserIntent() const { return _activeIntent; }
   
   // You really really really shouldn't use this. You should almost always be able to check against
   // a specific intent, or GetActiveUserIntent(). 
@@ -282,7 +293,27 @@ private:
   std::unique_ptr<UserIntentData> _pendingIntent;
   std::shared_ptr<UserIntentData> _activeIntent;
   std::string _activeIntentOwner;
-  
+
+  // super lightweight class for tracking the "active user state" which is how we display to the user that Vector
+  // is actively responding to their voice intent
+  // kept separate from _activeIntent since they are not necessary 1-to-1, but are very interconnected
+  class ActiveIntentFeedback
+  {
+    public:
+      ActiveIntentFeedback();
+      void Init(Robot* robot);
+
+      // activating/deactivating this state will cause vector to convey to the user that he is responding to an active user intent
+      bool IsActive() const;
+      void Activate(UserIntentTag userIntent);
+      void Deactivate(UserIntentTag userIntent);
+
+    private:
+      BackpackLightComponent* bplComponent;
+      UserIntentTag activatedIntentTag;
+      BackpackLightDataLocator lightsHandle;
+  } _activeIntentFeedback;
+
   // for debugging -- intents should be processed within one tick so track the ticks here
   size_t _pendingTriggerTick = 0;
   size_t _pendingIntentTick = 0;

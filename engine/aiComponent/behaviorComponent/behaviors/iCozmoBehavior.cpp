@@ -83,6 +83,7 @@ static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondit
 static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfCondition";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
+static const char* kDisplayIntentActivity            = "showActiveIntentFeedback";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
@@ -273,6 +274,8 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
       _wantsToBeActivatedConditions.push_back( cond );
     }
   }
+
+  JsonTools::GetValueOptional(config, kDisplayIntentActivity, _displayResponseToUserIntent);
 
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
 
@@ -1608,12 +1611,18 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 {
+  return SmartActivateUserIntent(tag, _displayResponseToUserIntent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag, bool showActiveIntentFeedback)
+{
   auto& uic = GetBehaviorComp<UserIntentComponent>();
 
   // track the tag so that we can automatically deactivate it when this behavior deactivates
   _intentToDeactivate = tag;
 
-  return uic.ActivateUserIntent(tag, GetDebugLabel());
+  return uic.ActivateUserIntent(tag, GetDebugLabel(), showActiveIntentFeedback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
