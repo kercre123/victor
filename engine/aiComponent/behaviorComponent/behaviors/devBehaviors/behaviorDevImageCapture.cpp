@@ -264,6 +264,12 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
+
+  // Enable mirror mode so we can see the what the camera is seeing
+  // This is NOT the normal way to enable a vision mode. Normally one only needs to subscribe to the mode
+  // via the visionModesForActiveScope set. This is a dev behavior and a dev vision mode. This vision mode
+  // is default disabled but still scheduled in order to support mirror mode in the debug face menus.
+  GetBEI().GetVisionComponent().EnableMode(VisionMode::MirrorMode, true);
 }
 
 
@@ -273,6 +279,9 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
+
+  // Disable mirror mode
+  GetBEI().GetVisionComponent().EnableMode(VisionMode::MirrorMode, false);
 }
 
 
