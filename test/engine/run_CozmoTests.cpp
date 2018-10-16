@@ -47,6 +47,33 @@
 Anki::Vector::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test listener that fails the test if it ends with the global error flag set to true
+class ListenerFailOnErrFlag : public ::testing::EmptyTestEventListener {
+private:
+  
+  virtual void OnTestStart(const ::testing::TestInfo& test_info) {
+    _errG = Anki::Util::sGetErrG();
+  }
+  virtual void OnTestEnd(const ::testing::TestInfo& test_info)
+  {
+    if( Anki::Util::sGetErrG() ) {
+      // unset it if this test started without it set. The only way errG will start off set is if another
+      // thread sets it, in which case we preserve errG so that the return value of main() will be nonzero
+      if( !_errG ) {
+        Anki::Util::sUnSetErrG();
+      }
+      
+      GTEST_FAIL() << "Test "
+        << test_info.test_case_name()
+        << "." << test_info.name()
+        << " or a concurrent thread called PRINT_NAMED_ERROR or ANKI_VERIFY";
+    }
+  }
+  
+  bool _errG = false;
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(DataPlatform, ReadWrite)
 {
   ASSERT_TRUE(cozmoContext->GetDataPlatform() != nullptr);
@@ -2341,6 +2368,10 @@ TEST(Localization, UnexpectedMovement)
 
 int main(int argc, char ** argv)
 {
+  // Since some tests are testing for changes to the global error flag in a MT environment, block access to
+  // the flag in some circumstances
+  Anki::Util::_lockErrG = true;
+  
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
   loggerProvider->SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
@@ -2391,8 +2422,7 @@ int main(int argc, char ** argv)
     cachePath = workRoot + "/cache";
   }
 
-  // Suppress break-on-error for duration of these tests
-  Anki::Util::_errBreakOnError = false;
+  Anki::Util::_errBreakOnError = true;
 
   // Initialize CameraService singleton without supervisor
   CameraService::SetSupervisor(nullptr);
@@ -2419,6 +2449,21 @@ int main(int argc, char ** argv)
   //Anki::Util::FileUtils::RemoveDirectory(files);
 
   ::testing::InitGoogleTest(&argc, argv);
+  
+  // add test listener that fails a test whenever the global error flag is set
+  {
+    ::testing::UnitTest& unit_test = *::testing::UnitTest::GetInstance();
+    ::testing::TestEventListeners& listeners = unit_test.listeners();
+    listeners.Append(new ListenerFailOnErrFlag); // get cleaned up by gtest
+  }
 
-  return RUN_ALL_TESTS();
+  // all tests must be successful
+  const bool testFailed = (RUN_ALL_TESTS() != 0);
+  // Tests must not set the global error flag (via calls to PRINT_NAMED_ERROR or ANKI_VERIFY).
+  // ListenerFailOnErrFlag checks for this, but unsets the global error flag so that not all tests
+  // look like they're failing. This final case for testHadError will catch any threads that set
+  // the global error flag
+  const bool testHadError = Anki::Util::sGetErrG();
+  
+  return (testFailed || testHadError);
 }

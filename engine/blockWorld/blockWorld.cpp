@@ -234,8 +234,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     if(RESULT_OK == addResult)
     {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.DefineObject.AddedObjectDefinition",
-                    "Defined %s in Object Library", EnumToString(objType));
+      PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DefineObject.AddedObjectDefinition",
+                     "Defined %s in Object Library", EnumToString(objType));
 
       if(redefiningExistingType)
       {

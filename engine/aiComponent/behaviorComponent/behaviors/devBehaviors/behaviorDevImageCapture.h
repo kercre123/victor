@@ -50,7 +50,7 @@ private:
     InstanceConfig();
     std::string               imageSavePath;
     int8_t                    imageSaveQuality;
-    Vision::ImageCache::Size  imageSaveSize;
+    Vision::ImageCacheSize  imageSaveSize;
     bool                      useCapTouch;
     bool                      saveSensorData;
     bool                      useShutterSound;
@@ -76,6 +76,9 @@ private:
     
     s32   imagesSaved;
 
+    Radians startingBodyAngle_rad;
+    Radians startingHeadAngle_rad;
+    
     std::list<std::string>::const_iterator currentClassIter;
   };
 

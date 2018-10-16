@@ -518,9 +518,15 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
   };
   
   // tick the wants to be activated condition once before delegating
-  _iConfig.searchForChargerBehavior->WantsToBeActivated();
-  
-  DelegateNow(_iConfig.searchForChargerBehavior.get(), std::move(callback));
+  if( ANKI_VERIFY( _iConfig.searchForChargerBehavior->WantsToBeActivated(),
+                   "BehaviorConfirmHabitat.TransitionToLocalizeCharger.DWTBA",
+                   "'%s' doesn't want to activate",
+                   _iConfig.searchForChargerBehavior->GetDebugLabel().c_str() ) )
+  {
+    DelegateNow(_iConfig.searchForChargerBehavior.get(), std::move(callback));
+  } else {
+    CancelSelf();
+  }
 }
 
 void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()

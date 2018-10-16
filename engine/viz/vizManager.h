@@ -22,6 +22,7 @@
 #include "util/helpers/ankiDefines.h"
 #include "coretech/planning/shared/path.h"
 #include "coretech/messaging/shared/UdpClient.h"
+#include "engine/viz/vizTextLabelTypes.h"
 #include "clad/types/cameraParams.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
@@ -57,17 +58,6 @@ namespace Anki {
     class VizManager
     {
     public:
-      
-      typedef enum : u8 {
-        OFF_TREADS_STATE,
-        ACTION,
-        LOCALIZED_TO,
-        WORLD_ORIGIN,
-        VISION_MODE,
-        BEHAVIOR_STATE,
-        ANIMATION_NAME,
-        NEEDS_STATE
-      } TextLabelType;
       
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
@@ -216,9 +206,6 @@ namespace Anki {
                            const Quadrilateral<2,T>& quad,
                            const T zHeight,
                            const ColorRGBA& color);
-      
-      
-      void DisplayCameraImage(const RobotTimeStamp_t timestamp);
       
       // Draw a generic 2D quad in the camera display
       // TopColor is the color of the line connecting the upper left and upper right corners.
@@ -384,15 +371,7 @@ namespace Anki {
                            const u16 bottomRight_x, const u16 bottomRight_y,
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
-      void SendRobotState(const RobotState &msg,
-                          const u16 videoFramePeriodMs,
-                          const u16 imageProcFramePeriodMs,
-                          const u32 numProcAnimFaceKeyframes,
-                          const u8  lockedTracks,
-                          const u8  tracksInUse,
-                          const f32 imuTemperature_degC,
-                          std::array<uint16_t, 4> cliffThresholds,
-                          const float batteryVolts);
+      void SendRobotState(VizInterface::RobotStateMessage&& msg);
       
       void SendCurrentAnimation(const std::string& animName, u8 animTag);
 
@@ -405,23 +384,12 @@ namespace Anki {
       void HandleMessage(const T& msg);
       
       void SendRobotMood(VizInterface::RobotMood&& robotMood);
-      void SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData);
-      void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
-      void SendNewReactionTriggered(VizInterface::NewReactionTriggered&& newReactionTriggered);
-      void SendStartRobotUpdate();
-      void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
       void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
       void SendVisionModeDebug(VizInterface::VisionModeDebug&& visionModeDebug);
       void SendVizMessage(VizInterface::MessageViz&& event);
-
-      
-      // ============= ActiveObjectInfo ===========
-      void SendObjectConnectionState(u32 activeID, ObjectType type, bool connected);
-      void SendObjectMovingState(u32 activeID, bool moving);
-      void SendObjectUpAxisState(u32 activeID, UpAxis upAxis);
-      void SendObjectAccelState(u32 activeID, const ActiveAccel& accel);
+      void SendEnabledVisionModes(VizInterface::EnabledVisionModes&& modes);
 
       uint32_t GetMessageCountViz() const { return _messageCountViz; }
       void     ResetMessageCount() { _messageCountViz = 0; }

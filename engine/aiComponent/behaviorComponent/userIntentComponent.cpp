@@ -41,6 +41,8 @@
 
 #include "json/json.h"
 
+#define LOG_CHANNEL "BehaviorSystem"
+
 namespace Anki {
 namespace Vector {
 
@@ -52,7 +54,7 @@ static const float kTimeToClearWaitingForTriggerWordGetIn_s = 3.0f;
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
 static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
-  
+
   CONSOLE_VAR(bool, kStreamAfterDevWakeWord, "UserIntentComponent", false);
   CONSOLE_VAR(bool, kPlayGetInAfterDevWakeWord, "UserIntentComponent", false);
 
@@ -70,7 +72,7 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
   , _intentMap( new UserIntentMap(userIntentMapConfig, robot.GetContext()) )
   , _context( robot.GetContext() )
 {
-  
+
   // setup cloud intent handler
   const auto& serverName = GetServerName( robot );
   _server.reset( new BehaviorComponentCloudServer( _context, std::bind( &UserIntentComponent::OnCloudData,
@@ -90,7 +92,7 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
     _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
                                                                         triggerWordCallback ) );
   }
-  
+
   // setup app intent handler
   if( robot.HasExternalInterface() ){
     using namespace ExternalInterface;
@@ -101,9 +103,9 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
     };
     _eventHandles.push_back( robot.GetExternalInterface()->Subscribe( MessageGameToEngineTag::AppIntent, onEvent ));
   }
-  
+
   SetupConsoleFuncs();
-  
+
 }
 
 UserIntentComponent::~UserIntentComponent()
@@ -119,8 +121,8 @@ bool UserIntentComponent::IsTriggerWordPending() const
 void UserIntentComponent::ClearPendingTriggerWord()
 {
   if( !_pendingTrigger ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.ClearPendingTrigger.TriggerNotSet",
-                        "Trying to clear trigger but the trigger isn't set. This is likely a bug");
+    LOG_WARNING("UserIntentComponent.ClearPendingTrigger.TriggerNotSet",
+                "Trying to clear trigger but the trigger isn't set. This is likely a bug");
   }
   else {
     _pendingTrigger = false;
@@ -142,29 +144,29 @@ void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream)
     _robot->GetAnimationComponent().NotifyComponentOfAnimationStartedByAnimProcess(
       lastElemIter->response.getInAnimationName, lastElemIter->response.getInAnimationTag);
   }
-  if(!GetEngineShouldRespondToTriggerWord()){
-    PRINT_NAMED_INFO("UserIntentComponent.SetPendingTrigger.TriggerWordDetectionDisabled", 
-                     "Trigger word detection disabled, so ignoring message");
+  if (!GetEngineShouldRespondToTriggerWord()) {
+    LOG_DEBUG("UserIntentComponent.SetPendingTrigger.TriggerWordDetectionDisabled",
+              "Trigger word detection disabled, so ignoring message");
     return;
   }
 
-  if( _pendingTrigger ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetPendingTrigger.AlreadyPending",
-                        "setting a pending trigger word but the last one hasn't been cleared");
+  if (_pendingTrigger) {
+    LOG_WARNING("UserIntentComponent.SetPendingTrigger.AlreadyPending",
+                "setting a pending trigger word but the last one hasn't been cleared");
   }
 
   _pendingTrigger = true;
   _pendingTriggerWillStream = willOpenStream;
   _pendingTriggerTick = BaseStationTimer::getInstance()->GetTickCount();
 
-  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.SetTriggerWordPending",
-                 "Set trigger word pending (%s stream) at tick %zu",
-                 willOpenStream ? "will" : "will not",
-                 _pendingTriggerTick );
+  LOG_INFO("UserIntentComponent.SetTriggerWordPending",
+           "Set trigger word pending (%s stream) at tick %zu",
+           willOpenStream ? "will" : "will not",
+           _pendingTriggerTick );
 
-  if( _wasIntentError ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetTriggerWordPending.ClearingError",
-                        "Previous intent gave us an error, but a new trigger word came in. Clearing the old error");
+  if (_wasIntentError) {
+    LOG_WARNING("UserIntentComponent.SetTriggerWordPending.ClearingError",
+                "Previous intent gave us an error, but a new trigger word came in. Clearing the old error");
     _wasIntentError = false;
   }
 }
@@ -181,27 +183,27 @@ bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent) const
 
 UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner, bool showFeedback)
 {
-  if( !IsUserIntentPending(userIntent) ) {
-    PRINT_NAMED_ERROR("UserIntentComponent.ActivateIntent.NoActive",
-                      "'%s' is attempting to activate intent '%s', but %s is pending",
-                      owner.c_str(),
-                      UserIntentTagToString(userIntent),
-                      _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
+  if (!IsUserIntentPending(userIntent)) {
+    LOG_ERROR("UserIntentComponent.ActivateIntent.NoActive",
+              "'%s' is attempting to activate intent '%s', but %s is pending",
+              owner.c_str(),
+              UserIntentTagToString(userIntent),
+              _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
     return nullptr;
   }
 
-  if( _activeIntent != nullptr ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.ActivateIntent.IntentAlreadyActive",
-                        "%s is Trying to activate user intent '%s', but '%s' is still active",
-                        owner.c_str(),
-                        UserIntentTagToString(userIntent),
-                        UserIntentTagToString(_activeIntent->intent.GetTag()));
+  if (_activeIntent != nullptr) {
+    LOG_WARNING("UserIntentComponent.ActivateIntent.IntentAlreadyActive",
+                "%s is Trying to activate user intent '%s', but '%s' is still active",
+                owner.c_str(),
+                UserIntentTagToString(userIntent),
+                UserIntentTagToString(_activeIntent->intent.GetTag()));
   }
-  
-  PRINT_CH_DEBUG("BehaviorSystem", "UserIntentComponent.ActivateUserIntent",
-                 "%s is activating intent '%s'",
-                 owner.c_str(),
-                 UserIntentTagToString(userIntent));
+
+  LOG_DEBUG("UserIntentComponent.ActivateUserIntent",
+            "%s is activating intent '%s'",
+            owner.c_str(),
+            UserIntentTagToString(userIntent));
 
   _activeIntent = std::move(_pendingIntent);
   _activeIntent->activationID = ++sActivatedIntentID;
@@ -219,27 +221,26 @@ UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, 
 void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
 {
   // we can have nested activate calls, and we want to be able to deactivate "older" activated intents
-  if( userIntent != UserIntentTag::INVALID ) {
+  if (userIntent != UserIntentTag::INVALID) {
     _activeIntentFeedback.Deactivate(userIntent);
   }
-
-  if( !IsUserIntentActive(userIntent) ) {
-    PRINT_NAMED_ERROR("UserIntentComponent.DeactivateUserIntent.NotActive",
-                      "Attempting to deactivate intent '%s' (activated by %s) but '%s' is active",
-                      UserIntentTagToString(userIntent),
-                      _activeIntentOwner.c_str(),
-                      _activeIntent ? UserIntentTagToString(_activeIntent->intent.GetTag()) : "nothing");
+    
+  if (!IsUserIntentActive(userIntent)) {
+    LOG_ERROR("UserIntentComponent.DeactivateUserIntent.NotActive",
+              "Attempting to deactivate intent '%s' (activated by %s) but '%s' is active",
+              UserIntentTagToString(userIntent),
+              _activeIntentOwner.c_str(),
+              _activeIntent ? UserIntentTagToString(_activeIntent->intent.GetTag()) : "nothing");
     return;
   }
-  else {
-    PRINT_CH_DEBUG("BehaviorSystem", "UserIntentComponent.DeactivateUserIntent",
-                   "Deactivating intent '%s' (activated by %s)",
-                   UserIntentTagToString(userIntent),
-                   _activeIntentOwner.c_str());
 
-    _activeIntent.reset();
-    _activeIntentOwner.clear();
-  }
+  LOG_DEBUG("UserIntentComponent.DeactivateUserIntent",
+            "Deactivating intent '%s' (activated by %s)",
+            UserIntentTagToString(userIntent),
+            _activeIntentOwner.c_str());
+  _activeIntent.reset();
+  _activeIntentOwner.clear();
+
 }
 
 void UserIntentComponent::StopActiveUserIntentFeedback()
@@ -340,35 +341,33 @@ UserIntentPtr UserIntentComponent::GetUserIntentIfActive(UserIntentTag forIntent
 
 void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
 {
-  if( IsUserIntentPending(userIntent) ) {
+  if (IsUserIntentPending(userIntent)) {
     _pendingIntent.reset();
   }
-  else {
-    PRINT_NAMED_WARNING("UserIntentComponent.DropUserIntent.NotPending",
-                        "Trying to drop intent '%s' but %s is pending",
-                        UserIntentTagToString(userIntent),
-                        _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
-  }
+
+  LOG_WARNING("UserIntentComponent.DropUserIntent.NotPending",
+              "Trying to drop intent '%s' but %s is pending",
+              UserIntentTagToString(userIntent),
+              _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
+
 }
-  
+
 void UserIntentComponent::DropAnyUserIntent()
 {
-  if( !IsAnyUserIntentPending() ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.DropAnyUserIntent.IntentNotSet",
-                        "Trying to clear a pending intent but the intent isn't set. This is likely a bug");
+  if (!IsAnyUserIntentPending()) {
+    LOG_WARNING("UserIntentComponent.DropAnyUserIntent.IntentNotSet",
+                "Trying to clear a pending intent but the intent isn't set. This is likely a bug");
   }
   _pendingIntent.reset();
 }
 
 bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const
 {
-  if( IsUserIntentPending(userIntent) ) {
+  if (IsUserIntentPending(userIntent)) {
     extraData = _pendingIntent->intent;
     return true;
   }
-  else {
-    return false;
-  }
+  return false;
 }
 
 void UserIntentComponent::SetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source)
@@ -380,35 +379,35 @@ void UserIntentComponent::SetUserIntentPending(UserIntentTag userIntent, const U
   // has type UserIntent_Void. The first byte of the buffer is always the tag, so unpacking the
   // UserIntent from this buffer will succeed if the type is UserIntent_Void. If it fails, it will
   // assert in dev, but have no other repercussions.
-  
+
   uint8_t buffer = Anki::Util::numeric_cast<uint8_t>( userIntent );
   UserIntent intent;
   intent.Unpack( &buffer, 1 ); // hit an assert? your userIntent is not of type UserIntent_Void. use overloaded method
-  
+
   SetUserIntentPending( std::move(intent), source );
-  
+
   static_assert(std::is_same<std::underlying_type<UserIntentTag>::type, uint8_t>::value,
                 "If you change type, the above needs revisiting");
 }
-  
+
 void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source)
 {
-  if( _pendingIntent != nullptr ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetUserIntentPending.AlreadyPending",
-                        "Setting pending user intent to '%s' which will overwrite '%s'",
-                        UserIntentTagToString(userIntent.GetTag()),
-                        UserIntentTagToString(_pendingIntent->intent.GetTag()));
+  if (_pendingIntent != nullptr) {
+    LOG_WARNING("UserIntentComponent.SetUserIntentPending.AlreadyPending",
+                "Setting pending user intent to '%s' which will overwrite '%s'",
+                UserIntentTagToString(userIntent.GetTag()),
+                UserIntentTagToString(_pendingIntent->intent.GetTag()));
   }
-  
-  
-  if( _pendingIntent == nullptr ) {
+
+
+  if (_pendingIntent == nullptr) {
     _pendingIntent.reset( new UserIntentData(userIntent, source) );
   } else {
     _pendingIntent->intent = std::move(userIntent);
     _pendingIntent->source = source;
   }
-  
-  if( ANKI_DEV_CHEATS ) {
+
+  if (ANKI_DEV_CHEATS) {
     SendWebVizIntents();
   }
 
@@ -439,7 +438,7 @@ void UserIntentComponent::DevSetUserIntentPending(UserIntent&& userIntent)
 void UserIntentComponent::SetUserIntentTimeoutEnabled(bool isEnabled)
 {
   // if we're re-enabling the timeout warning, reset the tick count
-  if( isEnabled && !_pendingIntentTimeoutEnabled ) {
+  if (isEnabled && !_pendingIntentTimeoutEnabled) {
     _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
   }
   _pendingIntentTimeoutEnabled = isEnabled;
@@ -452,9 +451,9 @@ bool UserIntentComponent::SetCloudIntentPendingFromExpandedJSON(const std::strin
   Json::Value json;
 
   const bool parsedOK = reader.parse(cloudJsonStr, json, false);
-  if( !parsedOK ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromExpandedJSON.BadJson",
-                        "Could not parse json from cloud string!");
+  if (!parsedOK) {
+    LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromExpandedJSON.BadJson",
+                "Could not parse json from cloud string!");
     return false;
   }
 
@@ -463,77 +462,77 @@ bool UserIntentComponent::SetCloudIntentPendingFromExpandedJSON(const std::strin
 bool UserIntentComponent::SetIntentPendingFromCloudJSONValue(Json::Value json)
 {
   std::string cloudIntent;
-  if( !JsonTools::GetValueOptional(json, kCloudIntentJsonKey, cloudIntent) ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingIntentKey",
-                        "Cloud json missing key '%s'",
-                        kCloudIntentJsonKey);
+  if (!JsonTools::GetValueOptional(json, kCloudIntentJsonKey, cloudIntent)) {
+    LOG_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingIntentKey",
+                "Cloud json missing key '%s'",
+                 kCloudIntentJsonKey);
     return false;
   }
-  
+
   auto& params = json[kParamsKey];
   const bool hasParams = !params.isNull();
-  
+
   Json::Value emptyJson;
   Json::Value& intentJson = hasParams ? params : emptyJson;
-  
+
   UserIntentTag userIntentTag = _intentMap->GetUserIntentFromCloudIntent(cloudIntent);
-  
-  if( hasParams ) {
+
+  if (hasParams) {
     // translate variable names, if necessary
     _intentMap->SanitizeCloudIntentVariables( cloudIntent, params );
   }
-  
+
   ANKI_VERIFY( json["type"].isNull(),
                "UserIntentComponent.SetIntentPendingFromCloudJSONValue.Reserved",
                "cloud intent '%s' contains reserved key 'type'",
                cloudIntent.c_str() );
 
   UserIntent pendingIntent;
-  
+
   // Set up json to look like a union
   intentJson["type"] = UserIntentTagToString(userIntentTag);
   const bool setOK = pendingIntent.SetFromJSON(intentJson);
-  
+
   // the UserIntent will have size 1 if it's a UserIntent_Void, which means the user intent
   // corresponding to this cloud intent should _not_ have data.
   using Tag = std::underlying_type<UserIntentTag>::type;
   const bool expectedParams = (pendingIntent.Size() > sizeof(Tag));
   static_assert( std::is_same<Tag, uint8_t>::value,
                  "If the type changes, you need to rethink this");
-    
-  if( !setOK ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.BadParams",
-                        "could not parse user intent '%s' from cloud intent of type '%s'",
-                        UserIntentTagToString(userIntentTag),
-                        cloudIntent.c_str());
+
+  if (!setOK) {
+    LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.BadParams",
+                "could not parse user intent '%s' from cloud intent of type '%s'",
+                UserIntentTagToString(userIntentTag),
+                cloudIntent.c_str());
     // NOTE: also don't set the pending intent, since the request was malformed
     return false;
-  } else if( !expectedParams && hasParams ) {
+  } else if (!expectedParams && hasParams) {
     // simply ignore the extraneous data but continue
-    PRINT_NAMED_WARNING( "UserIntentComponent.SetIntentPendingFromCloudJSONValue.ExtraData",
-                         "Intent '%s' has unexpected params",
-                         cloudIntent.c_str() );
-  } else if( expectedParams && !hasParams ) {
+    LOG_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.ExtraData",
+                "Intent '%s' has unexpected params",
+                cloudIntent.c_str() );
+  } else if (expectedParams && !hasParams) {
     // missing params, bail
-    PRINT_NAMED_WARNING( "UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingParams",
-                         "Intent '%s' did not contain required params",
-                         cloudIntent.c_str() );
+    LOG_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingParams",
+                "Intent '%s' did not contain required params",
+                cloudIntent.c_str() );
     return false;
   }
-  
-  
-  if( !_whitelistedIntents.empty() ) {
+
+
+  if (!_whitelistedIntents.empty()) {
     // only pass on whitelisted intents
-    if( _whitelistedIntents.find(userIntentTag) == _whitelistedIntents.end() ) {
-      PRINT_NAMED_INFO( "UserIntentComponent.IgnoringNonWhitelist.Cloud", "Ignoring intent %s", UserIntentTagToString(userIntentTag) );
+    if (_whitelistedIntents.find(userIntentTag) == _whitelistedIntents.end()) {
+      LOG_INFO("UserIntentComponent.IgnoringNonWhitelist.Cloud", "Ignoring intent %s", UserIntentTagToString(userIntentTag));
       pendingIntent = UserIntent::Createunmatched_intent({});
     }
   }
-  
+
   _devLastReceivedCloudIntent = cloudIntent;
-  
+
   DevSetUserIntentPending( std::move(pendingIntent), UserIntentSource::Voice );
-  
+
   return true;
 }
 
@@ -553,54 +552,54 @@ void UserIntentComponent::InitDependent( Vector::Robot* robot, const BCCompMap& 
 bool UserIntentComponent::SetCloudIntentPendingFromString(const std::string& cloudStr)
 {
   std::lock_guard<std::mutex> lock{_mutex};
-  
-  if( _pendingCloudIntent.GetTag() != CloudMic::MessageTag::INVALID ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.AlreadyPending",
-                        "A cloud intent was already pending and will be overwritten");
+
+  if (_pendingCloudIntent.GetTag() != CloudMic::MessageTag::INVALID) {
+    LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.AlreadyPending",
+                "A cloud intent was already pending and will be overwritten");
   }
 
   Json::Reader reader(Json::Features::all());
   Json::Value cloudJSON;
   const bool stringOK = reader.parse( cloudStr, cloudJSON, true );
 
-  if( !stringOK ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidString",
-                        "Could not convert string to json '%s'",
-                        cloudStr.c_str());
+  if (!stringOK) {
+    LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidString",
+                "Could not convert string to json '%s'",
+                cloudStr.c_str());
     return false;
   }
 
-  if( cloudJSON["type"].isNull() ) {
-    PRINT_NAMED_INFO("UserIntentComponent.SetCloudIntentPendingFromString.SetResultType",
-                     "No specified type for the cloud message, assuming 'result'");
+  if (cloudJSON["type"].isNull()) {
+    LOG_DEBUG("UserIntentComponent.SetCloudIntentPendingFromString.SetResultType",
+             "No specified type for the cloud message, assuming 'result'");
     cloudJSON["type"] = CloudMic::MessageTagToString(CloudMic::MessageTag::result);
   }
-  
+
   const bool parseOK = _pendingCloudIntent.SetFromJSON( cloudJSON );
 
-  if( !parseOK ) {
-    PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidJSON",
-                        "Could not convert (valid) JSON to clad object '%s'",
-                        cloudStr.c_str());
+  if (!parseOK) {
+    LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidJSON",
+                "Could not convert (valid) JSON to clad object '%s'",
+                cloudStr.c_str());
     return false;
   }
 
   // unfortunately, CLAD SetFromJSON is way _too_ permissive, so let's make sure we actually got a reasonable
   // value
-  switch( _pendingCloudIntent.GetTag() ) {
+  switch (_pendingCloudIntent.GetTag()) {
     case CloudMic::MessageTag::INVALID: {
-      PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidMessage",
-                          "Converted, but didn't have valid tag type: '%s'",
-                          cloudStr.c_str());
+      LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidMessage",
+                  "Converted, but didn't have valid tag type: '%s'",
+                  cloudStr.c_str());
       _pendingCloudIntent = {};
       return false;
     }
 
     case CloudMic::MessageTag::result: {
-      if( _pendingCloudIntent.Get_result().intent.empty() ) {
-        PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidResult",
-                            "Parsed cloud result message, but have no intent: '%s'",
-                            cloudStr.c_str());
+      if (_pendingCloudIntent.Get_result().intent.empty()) {
+        LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromString.InvalidResult",
+                    "Parsed cloud result message, but have no intent: '%s'",
+                    cloudStr.c_str());
         _pendingCloudIntent = {};
         return false;
       }
@@ -613,22 +612,22 @@ bool UserIntentComponent::SetCloudIntentPendingFromString(const std::string& clo
     default: break;  // TODO: add more detailed checks for other types of messages
   }
 
-  // if we get here, message seems OK      
+  // if we get here, message seems OK
 
   Json::FastWriter writer __attribute__((unused));
-    
+
   // convert back to string and print so user can verify everything was set as expected
-  PRINT_NAMED_INFO( "UserIntentComponent.SetCloudIntentPendingFromString.Set",
-                    "Successfully set pending intent: '%s'",
-                    writer.write(_pendingCloudIntent.GetJSON()).c_str());
+  LOG_DEBUG("UserIntentComponent.SetCloudIntentPendingFromString.Set",
+            "Successfully set pending intent: '%s'",
+            writer.write(_pendingCloudIntent.GetJSON()).c_str());
   return true;
 }
 
 void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
-{ 
+{
   {
     std::lock_guard<std::mutex> lock{_mutex};
-    if( _pendingCloudIntent.GetTag() != CloudMic::MessageTag::INVALID ) {
+    if (_pendingCloudIntent.GetTag() != CloudMic::MessageTag::INVALID) {
       switch ( _pendingCloudIntent.GetTag() ) {
         case CloudMic::MessageTag::result:
         {
@@ -641,9 +640,9 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
               Json::Reader reader;
               Json::Value val;
               ok = reader.parse( jsonStr, val, false );
-              if( !ok ) {
-                PRINT_NAMED_WARNING( "UserIntentComponent.UpdatePendingIntent.BadJson",
-                                    "Could not parse json from cloud string: %s", jsonStr.c_str() );
+              if (!ok) {
+                LOG_WARNING("UserIntentComponent.UpdatePendingIntent.BadJson",
+                            "Could not parse json from cloud string: %s", jsonStr.c_str());
               }
               else if ( val.size() > 0 ) {
                 json[kParamsKey] = std::move(val);
@@ -657,9 +656,9 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
           _isStreamOpen = false;
           _pendingTriggerWillStream = false;
 
-          if( _wasIntentError ) {
-            PRINT_NAMED_WARNING("UserIntentComponent.GotCloudIntent.ClearingError",
-                                "Previous intent gave us an error, but a new intent word came in. Clearing the error");
+          if (_wasIntentError) {
+            LOG_WARNING("UserIntentComponent.GotCloudIntent.ClearingError",
+                        "Previous intent gave us an error, but a new intent word came in. Clearing the error");
             _wasIntentError = false;
           }
 
@@ -669,9 +668,9 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
         case CloudMic::MessageTag::streamTimeout:
         case CloudMic::MessageTag::error:
         {
-          PRINT_NAMED_INFO("UserIntentComponent.UpdatePendingIntent.GotError",
-                           "Got cloud error message type %s",
-                           CloudMic::MessageTagToString( _pendingCloudIntent.GetTag() ));
+          LOG_WARNING("UserIntentComponent.UpdatePendingIntent.GotError",
+                      "Got cloud error message type %s",
+                      CloudMic::MessageTagToString( _pendingCloudIntent.GetTag()));
 
           {
             DASMSG( robot_cloud_response_failed, "robot.cloud_response_failed", "Invalid response received from the cloud" );
@@ -688,39 +687,38 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
 
         case CloudMic::MessageTag::streamOpen:
         {
-          PRINT_NAMED_INFO("UserIntentComponent.UpdatePendingIntent.StreamOpen",
-                           "Now streaming to cloud");
+          LOG_DEBUG("UserIntentComponent.UpdatePendingIntent.StreamOpen", "Now streaming to cloud");
           _isStreamOpen = true;
           break;
         }
-        
+
         default:
-          PRINT_NAMED_WARNING("UserIntentComponent.UpdatePendingIntent.SkipOther",
-                        "Skipping non-intent (and non-error) result cloud message: '%s'",
-                        CloudMic::MessageTagToString( _pendingCloudIntent.GetTag() ) );
+          LOG_WARNING("UserIntentComponent.UpdatePendingIntent.SkipOther",
+                      "Skipping non-intent (and non-error) result cloud message: '%s'",
+                      CloudMic::MessageTagToString( _pendingCloudIntent.GetTag() ) );
       }
       _pendingCloudIntent = {};
     }
   }
-  
-  
+
+
   const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // if things pend too long they will queue up and trigger at the wrong time, which will be wrong and
   // confusing. Issue warnings here and clear the pending tick / intent if they aren't handled quickly enough
-  
-  if( _pendingTrigger ) {
+
+  if (_pendingTrigger) {
     const size_t dt = currTick - _pendingTriggerTick;
-    if( dt >= kMaxTicksToWarn ) {
-      PRINT_NAMED_WARNING("UserIntentComponent.Update.PendingTriggerNotCleared",
-                          "Trigger has been pending for %zu ticks",
-                          dt);
+    if (dt >= kMaxTicksToWarn) {
+      LOG_WARNING("UserIntentComponent.Update.PendingTriggerNotCleared",
+                  "Trigger has been pending for %zu ticks",
+                   dt);
     }
-    if( dt >= kMaxTicksToClear ) {      
-      PRINT_NAMED_ERROR("UserIntentComponent.Update.PendingTriggerNotCleared.ForceClear",
-                        "Trigger has been pending for %zu ticks, forcing a clear",
-                        dt);
+    if (dt >= kMaxTicksToClear) {
+      LOG_ERROR("UserIntentComponent.Update.PendingTriggerNotCleared.ForceClear",
+                "Trigger has been pending for %zu ticks, forcing a clear",
+                 dt);
       _pendingTrigger = false;
       _pendingTriggerWillStream = false;
       _waitingForTriggerWordGetInToFinish = false;
@@ -731,12 +729,12 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
     }
   }
 
-  if( _waitingForTriggerWordGetInToFinish ) {
+  if (_waitingForTriggerWordGetInToFinish) {
     const float dt = currTime_s - _waitingForTriggerWordGetInToFinish_setTime_s;
-    if( dt >= kTimeToClearWaitingForTriggerWordGetIn_s ) {
-      PRINT_NAMED_WARNING("UserIntentComponent.Update.WaitingForTriggerWordGetInToFinish.ForceClear",
-                          "Have been waiting for %f seconds for trigger word get in anim to finish, going ahead anyway",
-                          dt);
+    if (dt >= kTimeToClearWaitingForTriggerWordGetIn_s) {
+      LOG_WARNING("UserIntentComponent.Update.WaitingForTriggerWordGetInToFinish.ForceClear",
+                  "Have been waiting for %f seconds for trigger word get in anim to finish, going ahead anyway",
+                  dt);
       _waitingForTriggerWordGetInToFinish = false;
     }
   }
@@ -746,16 +744,16 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
     if( _pendingIntentTimeoutEnabled ) {
       const size_t dt = currTick - _pendingIntentTick;
       if( dt >= kMaxTicksToWarn ) {
-        PRINT_NAMED_WARNING("UserIntentComponent.Update.PendingIntentNotCleared.Warn",
-                            "Intent '%s' has been pending for %zu ticks",
-                            UserIntentTagToString(_pendingIntent->intent.GetTag()),
-                            dt);
+        LOG_WARNING("UserIntentComponent.Update.PendingIntentNotCleared.Warn",
+                    "Intent '%s' has been pending for %zu ticks",
+                    UserIntentTagToString(_pendingIntent->intent.GetTag()),
+                    dt);
       }
       if( dt >= kMaxTicksToClear ) {
-        PRINT_NAMED_ERROR("UserIntentComponent.Update.PendingIntentNotCleared.ForceClear",
-                          "Intent '%s' has been pending for %zu ticks, forcing a clear",
-                          UserIntentTagToString(_pendingIntent->intent.GetTag()),
-                          dt);
+        LOG_ERROR("UserIntentComponent.Update.PendingIntentNotCleared.ForceClear",
+                  "Intent '%s' has been pending for %zu ticks, forcing a clear",
+                  UserIntentTagToString(_pendingIntent->intent.GetTag()),
+                  dt);
 
         DASMSG(intent_dropped, "behavior.voice_command.dropped",
                "Engine got a user intent (e.g. voice command), but no behavior activated it");
@@ -777,7 +775,7 @@ void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType strea
 {
   RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType), playGetInFromAnimProcess};
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
-  if(playGetInFromAnimProcess){
+  if (playGetInFromAnimProcess) {
     _waitingForTriggerWordGetInToFinish = playGetInFromAnimProcess;
     _waitingForTriggerWordGetInToFinish_setTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
@@ -794,26 +792,26 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
 
 }
 
-void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
-                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
+void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger,
+                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
                                                     StreamAndLightEffect streamAndLightEffect)
 {
   std::string animName;
   auto* data_ldr = _robot->GetContext()->GetDataLoader();
-  if( data_ldr->HasAnimationForTrigger(getInAnimTrigger) )
+  if (data_ldr->HasAnimationForTrigger(getInAnimTrigger))
   {
     const auto groupName = data_ldr->GetAnimationForTrigger(getInAnimTrigger);
-    if( !groupName.empty() ) {
+    if (!groupName.empty()) {
       animName = _robot->GetAnimationComponent().GetAnimationNameFromGroup(groupName);
       if(animName.empty()){
-        PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.AnimationNotFound",
-                            "No animation returned for group %s",
-                            groupName.c_str());
+        LOG_WARNING("UserIntentComponent.PushResponseToTriggerWord.AnimationNotFound",
+                    "No animation returned for group %s",
+                    groupName.c_str());
       }
-    }else{
-      PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.GroupNotFound",
-                          "Group not found for trigger %s",
-                          AnimationTriggerToString(getInAnimTrigger));
+    } else {
+      LOG_WARNING("UserIntentComponent.PushResponseToTriggerWord.GroupNotFound",
+                  "Group not found for trigger %s",
+                  AnimationTriggerToString(getInAnimTrigger));
     }
   }
 
@@ -821,7 +819,7 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
 }
 
 
-void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName, 
+void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName,
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
                                                     StreamAndLightEffect streamAndLightEffect)
 {
@@ -842,36 +840,36 @@ void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
     return entry.setID == id;
   };
   auto iter = std::find_if(_responseToTriggerWordMap.begin(), _responseToTriggerWordMap.end(), compareFunc);
-  if(iter == _responseToTriggerWordMap.end()){
-    PRINT_NAMED_WARNING("UserIntentComponent.PopResponseToTriggerWord.idNotInStack",
-                        "request to remove id %s, but it has not set a trigger word response",
-                        id.c_str());
+  if (iter == _responseToTriggerWordMap.end()) {
+    LOG_WARNING("UserIntentComponent.PopResponseToTriggerWord.idNotInStack",
+                "request to remove id %s, but it has not set a trigger word response",
+                id.c_str());
     return;
   }
 
   iter = _responseToTriggerWordMap.erase(iter);
   // Check to see if the top of the stack was removed, and send a new trigger response
-  if(iter == _responseToTriggerWordMap.end()){
-    if(!_responseToTriggerWordMap.empty()){
+  if (iter == _responseToTriggerWordMap.end()) {
+    if (!_responseToTriggerWordMap.empty()) {
       RobotInterface::SetTriggerWordResponse intentionalCopy = _responseToTriggerWordMap.rbegin()->response;
       _robot->SendMessage(RobotInterface::EngineToRobot(std::move(intentionalCopy)));
-    }else{
+    } else {
       RobotInterface::SetTriggerWordResponse blankMessage;
       _robot->SendMessage(RobotInterface::EngineToRobot(std::move(blankMessage)));
     }
 
-    PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.PopResponseToTriggerWord",
-                   "Removed trigger word response id '%s', have %zu left on stack",
-                   id.c_str(),
-                   _responseToTriggerWordMap.size());
+    LOG_DEBUG("UserIntentComponent.PopResponseToTriggerWord",
+              "Removed trigger word response id '%s', have %zu left on stack",
+              id.c_str(),
+              _responseToTriggerWordMap.size());
 
-    if( !_responseToTriggerWordMap.empty() ) {
-      PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.AfterPop",
-        "After pop, top of stack has id '%s' (streaming %s, fake streaming %s, get in '%s')",
-        _responseToTriggerWordMap.rbegin()->setID.c_str(),
-        _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordStartStream ? "enabled" : "disabled",
-        _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordSimulateStream ? "enabled" : "disabled",
-        _responseToTriggerWordMap.rbegin()->response.getInAnimationName.c_str());
+    if (!_responseToTriggerWordMap.empty()) {
+      LOG_DEBUG("UserIntentComponent.AfterPop",
+                "After pop, top of stack has id '%s' (streaming %s, fake streaming %s, get in '%s')",
+                _responseToTriggerWordMap.rbegin()->setID.c_str(),
+                _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordStartStream ? "enabled" : "disabled",
+                _responseToTriggerWordMap.rbegin()->response.shouldTriggerWordSimulateStream ? "enabled" : "disabled",
+                _responseToTriggerWordMap.rbegin()->response.getInAnimationName.c_str());
     }
   }
 }
@@ -880,10 +878,10 @@ void UserIntentComponent::PopResponseToTriggerWord(const std::string& id)
 void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& id,
                                                              const StreamAndLightEffect newEffect)
 {
-  if(_responseToTriggerWordMap.empty()){
-    PRINT_NAMED_WARNING("UserIntentComponent.AlterStreamStateForCurrentResponse.NoResponseToAlter",
-                        "request id '%s'",
-                        id.c_str());
+  if (_responseToTriggerWordMap.empty()) {
+    LOG_WARNING("UserIntentComponent.AlterStreamStateForCurrentResponse.NoResponseToAlter",
+                "request id '%s'",
+                 id.c_str());
     return;
   }
 
@@ -891,8 +889,8 @@ void UserIntentComponent::AlterStreamStateForCurrentResponse(const std::string& 
 
   ApplyStreamAndLightEffect(newEffect, intentionalCopy);
 
-  if(_responseToTriggerWordMap.rbegin()->setID != id ||
-     intentionalCopy != _responseToTriggerWordMap.rbegin()->response){
+  if (_responseToTriggerWordMap.rbegin()->setID != id ||
+     intentionalCopy != _responseToTriggerWordMap.rbegin()->response) {
     PushResponseToTriggerWordInternal(id, std::move(intentionalCopy));
   }
 
@@ -912,7 +910,7 @@ void UserIntentComponent::ApplyStreamAndLightEffect(const StreamAndLightEffect s
   message.shouldTriggerWordSimulateStream = simulatedStreaming;
 }
 
-void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& id, 
+void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& id,
                                                             RobotInterface::SetTriggerWordResponse&& response)
 {
   auto compareFunc = [&id](const TriggerWordResponseEntry& entry){
@@ -920,19 +918,19 @@ void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& i
   };
   auto iter = std::find_if(_responseToTriggerWordMap.begin(), _responseToTriggerWordMap.end(), compareFunc);
 
-  if(iter != _responseToTriggerWordMap.end()){
-    PRINT_NAMED_WARNING("UserIntentComponent.PushResponseToTriggerWord.idAlreadyPushedResponse",
-                        "id %s already in use, removing old entry and adding new response to top of the stack",
-                        id.c_str());
+  if (iter != _responseToTriggerWordMap.end()) {
+    LOG_WARNING("UserIntentComponent.PushResponseToTriggerWord.idAlreadyPushedResponse",
+                "id %s already in use, removing old entry and adding new response to top of the stack",
+                id.c_str());
     _responseToTriggerWordMap.erase(iter);
   }
 
-  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.PushResponseToTriggerWord",
-                 "Pushing trigger word response id '%s' (streaming %s, fake streaming %s, get in '%s')",
-                 id.c_str(),
-                 response.shouldTriggerWordStartStream ? "enabled" : "disabled",
-                 response.shouldTriggerWordSimulateStream ? "enabled" : "disabled",
-                 response.getInAnimationName.c_str());
+  LOG_DEBUG("UserIntentComponent.PushResponseToTriggerWord",
+            "Pushing trigger word response id '%s' (streaming %s, fake streaming %s, get in '%s')",
+            id.c_str(),
+            response.shouldTriggerWordStartStream ? "enabled" : "disabled",
+            response.shouldTriggerWordSimulateStream ? "enabled" : "disabled",
+            response.getInAnimationName.c_str());
 
   RobotInterface::SetTriggerWordResponse intentionalCopy = response;
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(intentionalCopy)) );
@@ -943,35 +941,35 @@ void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& i
 
 void UserIntentComponent::DisableEngineResponseToTriggerWord( const std::string& disablerName,  bool disable )
 {
-  if(disable){
+  if (disable) {
     const auto res = _disableTriggerWordNames.insert(disablerName).second;
-    if(!res){
-      PRINT_NAMED_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.AlreadyDisabled",
-                          "%s is attempting to disable the trigger word response, but it's already locking the trigger word",
-                          disablerName.c_str());
+    if (!res) {
+      LOG_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.AlreadyDisabled",
+                  "%s is attempting to disable the trigger word response, but it's already locking the trigger word",
+                  disablerName.c_str());
     }
-  }else{
+  } else {
     const auto numRemoved = _disableTriggerWordNames.erase(disablerName);
-    if(numRemoved == 0){
-      PRINT_NAMED_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.DisablerNotDisablingTrigger", 
-                          "%s is attempting to enable the trigger word, but it's not disabling it",
-                          disablerName.c_str());
+    if (numRemoved == 0) {
+      LOG_WARNING("UserIntentComponent.DisableEngineResponseToTriggerWord.DisablerNotDisablingTrigger",
+                  "%s is attempting to enable the trigger word, but it's not disabling it",
+                  disablerName.c_str());
     }
   }
 }
-  
+
 void UserIntentComponent::OnCloudData(CloudMic::Message&& data)
 {
-  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.OnCloudData", "'%s'", CloudMic::MessageTagToString(data.GetTag()) );
-  
+  LOG_DEBUG("UserIntentComponent.OnCloudData", "'%s'", CloudMic::MessageTagToString(data.GetTag()) );
+
   std::lock_guard<std::mutex> lock{_mutex};
   _pendingCloudIntent = std::move(data);
 }
-  
+
 void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appIntent )
 {
   UserIntentTag userIntentTag = _intentMap->GetUserIntentFromAppIntent( appIntent.intent );
-  
+
   Json::Value json;
   // todo: eventually AppIntent should be its own union of structures, but
   // currently there's only one intent, with one arg, and it's not possible to transmit
@@ -979,9 +977,9 @@ void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appInt
   // these two lines will need replacing
   json["type"] = UserIntentTagToString(userIntentTag);
   json["param"] = appIntent.param;
-  
+
   _intentMap->SanitizeAppIntentVariables( appIntent.intent, json );
-  
+
   UserIntent intent;
   if( ANKI_VERIFY( intent.SetFromJSON(json),
                    "UserIntentComponent.OnAppIntent.BadJson",
@@ -989,20 +987,20 @@ void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appInt
                    appIntent.intent.c_str() ) )
   {
     _devLastReceivedAppIntent = appIntent.intent;
-    
-    if( !_whitelistedIntents.empty() ) {
+
+    if (!_whitelistedIntents.empty()) {
       // only pass on whitelisted intents
-      if( _whitelistedIntents.find(userIntentTag) == _whitelistedIntents.end() ) {
-        PRINT_NAMED_INFO( "UserIntentComponent.IgnoringNonWhitelist.App", "Ignoring intent %s", UserIntentTagToString(userIntentTag) );
+      if (_whitelistedIntents.find(userIntentTag) == _whitelistedIntents.end()) {
+        LOG_INFO( "UserIntentComponent.IgnoringNonWhitelist.App", "Ignoring intent %s", UserIntentTagToString(userIntentTag) );
         const static UserIntent unmatchedIntent = UserIntent::Createunmatched_intent({});
         intent = unmatchedIntent;
       }
     }
-    
+
     DevSetUserIntentPending( std::move(intent), UserIntentSource::App );
   }
 }
-  
+
 std::string UserIntentComponent::GetServerName(const Robot& robot) const
 {
   // Offset port by robotID so that we can run sims with multiple robots
@@ -1010,12 +1008,12 @@ std::string UserIntentComponent::GetServerName(const Robot& robot) const
            ? ""
            : std::to_string(robot.GetID()));
 }
-  
+
 std::vector<std::string> UserIntentComponent::DevGetCloudIntentsList() const
 {
   return _intentMap->DevGetCloudIntentsList();
 }
-  
+
 std::vector<std::string> UserIntentComponent::DevGetAppIntentsList() const
 {
   return _intentMap->DevGetAppIntentsList();
@@ -1029,10 +1027,10 @@ void UserIntentComponent::HandleTriggerWordEventForDas(const RobotInterface::Tri
   DASMSG_SET(i3, msg.willOpenStream, "Will stream (0=No, 1=Yes)");
   DASMSG_SEND();
 }
-  
+
 void UserIntentComponent::SendWebVizIntents()
 {
-  if( _context != nullptr ) {
+  if (_context != nullptr) {
     if( auto webSender = WebService::WebVizSender::CreateWebVizSender("intents",
                                                                       _context->GetWebService()) ) {
 
@@ -1067,10 +1065,10 @@ void UserIntentComponent::SendWebVizIntents()
     } // if (webSender ...
   }
 }
-  
+
 void UserIntentComponent::SetupConsoleFuncs()
 {
-  if( ANKI_DEV_CHEATS ) {
+  if (ANKI_DEV_CHEATS) {
     // allows developers to enable the trigger word in any behavior. there's no pop operation, so this is
     // just for testing (and all of this might change due to concurrent refactoring)
     auto enableTrigger = [this](ConsoleFunctionContextRef context) {

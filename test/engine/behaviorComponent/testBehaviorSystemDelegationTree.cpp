@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
@@ -208,11 +209,18 @@ TEST(DelegationTree, CheckActiveFeatures)
   // don't require explicitly using NoFeature
   usedFeatures.insert(ActiveFeature::NoFeature);
   
+  auto& bei = tbf.GetBehaviorExternalInterface();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+  
   // tree walk callback
-  auto evaluateTree = [&ss, &tbf, &usedFeatures](bool isLeaf){
+  auto evaluateTree = [&ss, &tbf, &usedFeatures, &uic](bool isLeaf){
     auto currentStack = tbf.GetCurrentBehaviorStack();
     ss << BehaviorStack::StackToBehaviorString(currentStack);
     ss << ", ";
+    
+    if( uic.IsAnyUserIntentPending() ) {
+      uic.DropAnyUserIntent();
+    }
     
     auto& afc = tbf.GetBehaviorComponent().GetComponent<ActiveFeatureComponent>();
 
@@ -294,4 +302,63 @@ TEST(DelegationTree, CheckActiveFeatures)
     EXPECT_TRUE( usedFeatures.find(af) == usedFeatures.end() )
       << "Please remove '" << ActiveFeatureToString(af) << "' from the unused features list (since it's used)";
   }
+}
+
+TEST(DelegationTree, PrepareToBeForceActivated)
+{
+  // doesn't actually test anything. makes a list of those behaviors whose PrepareTobeForceActivated
+  // arent sufficient, and they still don't want to be activated
+  using ListType = std::map<std::string, std::set<std::string>>;
+  ListType failingBehaviors;
+  ListType workingBehaviors;
+  
+  TestBehaviorFramework testFramework(1, nullptr);
+  testFramework.InitializeStandardBehaviorComponent();
+  testFramework.SetDefaultBaseBehavior();
+  
+  auto addToList = [](IBehavior* delegate, ListType& list) {
+    const auto* castPtr = dynamic_cast<const ICozmoBehavior*>(delegate);
+    ASSERT_TRUE( castPtr != nullptr );
+    auto& classes = list[ BehaviorTypesWrapper::BehaviorClassToString(castPtr->GetClass()) ];
+    classes.insert( BehaviorIDToString( castPtr->GetID() ) );
+  };
+  
+  auto evalPriorToDelegation = [&](IBehavior* delegate) {
+    if( !delegate->WantsToBeActivated() ) {
+      addToList( delegate, failingBehaviors );
+    } else {
+      addToList( delegate, workingBehaviors );
+    }
+  };
+  
+  BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
+  IBehavior* bottomOfStack = bsm._behaviorStack->_behaviorStack.front();
+  auto& delegationComponent = testFramework.GetBehaviorExternalInterface().GetDelegationComponent();
+  delegationComponent.CancelDelegates(bottomOfStack);
+  
+  std::map<IBehavior*,std::set<IBehavior*>> delegateMap;
+  std::set<IBehavior*> tmpDelegates;
+  bottomOfStack->GetAllDelegates(tmpDelegates);
+  delegateMap.insert(std::make_pair(bottomOfStack, tmpDelegates));
+  auto normalCallback = [](){};
+  testFramework.FullTreeWalk(delegateMap, normalCallback, evalPriorToDelegation);
+  
+  auto printList = [](const ListType& list){
+    for( const auto& behClassList : list ) {
+      std::cout << behClassList.first << ": ";
+      for( auto& beh : behClassList.second ) {
+        std::cout << beh << ", ";
+      }
+      std::cout << std::endl;
+    }
+  };
+  
+  std::cout << "The following behavior classes (and instances) can be force started:" << std::endl;
+  printList(workingBehaviors);
+  std::cout << std::endl;
+  
+  std::cout << "The following behavior classes (and instances) can NOT be force started:" << std::endl;
+  printList(failingBehaviors);
+  std::cout << std::endl;
+  
 }

@@ -95,7 +95,7 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     UpdateReadingValidity();
 
     // Reading is meaningless in calm mode so just skip map update
-    const bool isCalmPowerMode = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CALM_POWER_MODE);
+    const bool isCalmPowerMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
     if (!isCalmPowerMode) {
       UpdateNavMap();
     }

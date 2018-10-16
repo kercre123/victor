@@ -81,6 +81,11 @@ constexpr const char FIELD_MARKER = '\x1F';
 //
 constexpr const int FIELD_COUNT = 9;
 
+//
+// Return DAS uptime value, aka millisecs since boot
+//
+uint64_t UptimeMS();
+
 } // end namespace DAS
 } // end namespace Util
 } // end namespace Anki

@@ -84,6 +84,8 @@ void EventProviderLoggingAdapter::LogEvent(LogLevel level, const DasMsg & dasMsg
   DAS_KV_HELPER(keyValues, dasMsg, i3);
   DAS_KV_HELPER(keyValues, dasMsg, i4);
 
+  const std::string & uptime_ms = std::to_string(Anki::Util::DAS::UptimeMS());
+  keyValues.emplace_back("uptime_ms", uptime_ms.c_str());
 
   switch(level) {
     case LOG_LEVEL_DEBUG:

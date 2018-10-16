@@ -236,7 +236,7 @@ void BehaviorFindFaceAndThen::OnBehaviorActivated()
   
   if( _iConfig.animWhileSearching != AnimationTrigger::Count ) {
     // add a parallel search anim action
-    auto* animAction = new TriggerLiftSafeAnimationAction{ _iConfig.animWhileSearching, 0 };
+    auto* animAction = new ReselectingLoopAnimationAction{ _iConfig.animWhileSearching };
     _dVars.animWhileSearchingTag = animAction->GetTag();
     GetBEI().GetRobotInfo().GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
   }

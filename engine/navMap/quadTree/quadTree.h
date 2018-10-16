@@ -57,6 +57,7 @@ public:
   // modify content bounded by region. Note that if the region extends outside the current size of the root node,
   // it will not expand the root node
   bool Transform(const FoldableRegion& region, NodeTransformFunction transform);
+  bool Transform(const NodeAddress& address, NodeTransformFunction transform);
   bool Transform(NodeTransformFunction transform);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
@@ -86,9 +87,6 @@ private:
   // Returns true if successfully expanded, false otherwise
   // maxRootLevel: it won't upgrade if the root is already higher level than the specified
   bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor);
-
-  // reset the parameters of the AABB after center or size have changed
-  void ResetBoundingBox();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

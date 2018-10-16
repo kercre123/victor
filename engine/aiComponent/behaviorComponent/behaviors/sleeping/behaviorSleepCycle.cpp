@@ -26,10 +26,12 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/sayNameProbabilityTable.h"
 #include "osState/osState.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/console/consoleInterface.h"
@@ -83,7 +85,10 @@ CONSOLE_VAR(bool, kSleepCycle_EnableWiggleWhileSleeping, CONSOLE_GROUP, true);
 CONSOLE_VAR(bool, kSleepCycleForceSleep, CONSOLE_GROUP, false);
 
 CONSOLE_VAR(bool, kSleepCycleForceLightSleep, CONSOLE_GROUP, false);
-  
+// The amount of time that the robot must be on the charger but not actually charging
+// because of overheating battery before he is forced to go to sleep.
+CONSOLE_VAR(f32, kSleepCycle_TooLongOnChargerNotChargingDuration_sec, CONSOLE_GROUP, 5 * 60.f);
+
 CONSOLE_FUNC(ForcePersonCheck, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -123,9 +128,9 @@ void BehaviorSleepCycle::ParseWakeReasonConditions(const Json::Value& config)
     }
   }
 
-  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasonConditions.Parsed",
-                "Parsed %zu wake reason conditions from json",
-                _iConfig.wakeConditions.size());
+  PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasonConditions.Parsed",
+                 "Parsed %zu wake reason conditions from json",
+                 _iConfig.wakeConditions.size());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -197,9 +202,9 @@ void BehaviorSleepCycle::ParseWakeReasons(const Json::Value& config)
     }
   }
 
-  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.AlwaysWakeReasons",
-                "Parsed %zu 'always wake' reasons",
-                _iConfig.alwaysWakeReasons.size());
+  PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.AlwaysWakeReasons",
+                 "Parsed %zu 'always wake' reasons",
+                 _iConfig.alwaysWakeReasons.size());
 
   for( const auto& stateGroup : config[kWakeFromStatesKey] ) {
     SleepStateID fromState = SleepStateID::Invalid;
@@ -214,10 +219,10 @@ void BehaviorSleepCycle::ParseWakeReasons(const Json::Value& config)
       }
     }
 
-    PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.WakeReasonsFromState",
-                  "Parsed %zu additional reasons to wake from state '%s'",
-                  wakeReasons.size(),
-                  SleepStateIDToString(fromState));
+    PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.WakeReasonsFromState",
+                   "Parsed %zu additional reasons to wake from state '%s'",
+                   wakeReasons.size(),
+                   SleepStateIDToString(fromState));
   }
 }
 
@@ -328,7 +333,7 @@ void BehaviorSleepCycle::OnBehaviorActivated()
   _iConfig.emergencyCondition->SetActive( GetBEI(), true );
 
   // if we just rebooted, and it's night time, then start out asleep
-  const bool shouldStartAsleep = WasNighlyReboot();
+  const bool shouldStartAsleep = WasNightlyReboot();
 
   PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.Activated",
                 "Starting out %s",
@@ -601,7 +606,7 @@ bool BehaviorSleepCycle::ShouldWiggleOntoChargerFromSleep()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSleepCycle::WasNighlyReboot() const
+bool BehaviorSleepCycle::WasNightlyReboot() const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool engineStartedRecently = currTime_s < kSecondsThatMeanRecentBoot;
@@ -687,6 +692,20 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
     return true;
   }
 
+  // Go to sleep if on charger for a certain amount of time while the battery is disconnected
+  // since this means the battery is overheated and needs to go to sleep in order to cooldown.
+  // But only do this during ObservingOnCharger.
+  const auto& battComp = GetBEI().GetRobotInfo().GetBatteryComponent();
+  const bool isCharging = battComp.IsCharging();
+  const float durationDisconnected_sec = battComp.GetBatteryDisconnectedDurationSec();
+  if (isCharging &&
+      durationDisconnected_sec > kSleepCycle_TooLongOnChargerNotChargingDuration_sec &&
+      isObserving) {
+    TransitionToLightOrDeepSleep();
+    SendGoToSleepDasEvent(SleepReason::TooLongOnChargerNotCharging);
+    return true;
+  }
+
   // no reason to sleep, stay awake
   return false;
 }
@@ -701,8 +720,8 @@ bool BehaviorSleepCycle::WakeIfNeeded(const WakeReason& forReason)
                    "Dont have a condition for reason '%s'",
                    EnumToString( forReason ) ) ) {
     if( conditionIt->second->AreConditionsMet( GetBEI() ) ) {
-      const bool defaulVal = false;
-      const bool playAnim = ShouldPlayWakeUpAnimForReason( forReason, defaulVal );
+      const bool defaultVal = false;
+      const bool playAnim = ShouldPlayWakeUpAnimForReason( forReason, defaultVal );
       WakeUp( forReason, playAnim );
       return true;
     }
@@ -770,6 +789,8 @@ void BehaviorSleepCycle::WakeUp(const WakeReason& reason, bool playWakeUp)
   _dVars.lastWakeReason = reason;
 #endif
 
+  GetAIComp<AIWhiteboard>().OnRobotWakeUp();
+  
   auto awakeCallback = [this]() {
     if( _iConfig.awakeDelegate->WantsToBeActivated() ) {
       DelegateNow( _iConfig.awakeDelegate.get() );
@@ -829,7 +850,7 @@ void BehaviorSleepCycle::TransitionToCheckingForPerson()
       }
       else {
         PRINT_NAMED_WARNING("BehaviorSleepCycle.PersonCheck.BehaviorWontActivate",
-                            "Behavior '%s' doesnt want to activate",
+                            "Behavior '%s' doesn't want to activate",
                             _iConfig.personCheckBehavior->GetDebugLabel().c_str());
         RespondToPersonCheck();
       }
@@ -930,7 +951,7 @@ void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
     };
 
     // even if requested, skip the get-in if this is a recent reboot (go straight to sleep in this case)
-    const bool skipGetIn = WasNighlyReboot();
+    const bool skipGetIn = WasNightlyReboot();
 
     if( playGetIn && !skipGetIn ) {
       if( _iConfig.goToSleepBehavior->WantsToBeActivated() ) {
@@ -981,7 +1002,7 @@ void BehaviorSleepCycle::TransitionToCharger()
     }
     else {
       PRINT_NAMED_WARNING("BehaviorSleepCycle.TransitionToCharger.WontRun",
-                          "Not on charger contacts, but find charger behavior '%s' doesnt want to activate",
+                          "Not on charger contacts, but find charger behavior '%s' doesn't want to activate",
                           _iConfig.findChargerBehavior->GetDebugLabel().c_str());
       TransitionToLightOrDeepSleep();
     }
@@ -1103,7 +1124,7 @@ void BehaviorSleepCycle::MuteForPersonCheck( bool mute )
 
     _dVars.isMuted = mute;
 
-    PRINT_CH_INFO("Behaviors", "BeahviorSleepCycle", "Setting mute: %d", mute);
+    PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle", "Setting mute: %d", mute);
   }
 }
 

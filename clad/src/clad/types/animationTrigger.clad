@@ -9,6 +9,8 @@ namespace Vector {
 
 enum int_32 AnimationTrigger
 {
+  InvalidAnimTrigger, // default value of 0 == invalid
+
   // Animation triggers, sorted alphabetically
   AlreadyAtFace,
   AudioOnlyHuh,

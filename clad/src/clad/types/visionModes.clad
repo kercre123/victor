@@ -5,7 +5,7 @@
 namespace Anki {
 namespace Vector {
 
-  enum uint_32 VisionMode
+  enum uint_64 VisionMode
   {
     Idle                   = 0x00,
     
@@ -15,6 +15,7 @@ namespace Vector {
     DetectingMarkers,           // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
     DetectingFaces,
     DetectingMotion,
+    DetectingBrightColors,
     DetectingOverheadEdges,
     ComputingCalibration,
     AutoExposure,        
@@ -30,6 +31,11 @@ namespace Vector {
     DetectingIllumination,
     ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
     MirrorMode,                  // Draw images/detections on the robot's face, mirrored
+    
+    // This is a gross thing to do: a mode to disable another mode. TODO: Remove with VIC-6838
+    // If this is "enabled", then it takes precedence over DetectingMarkers mode above and will force that
+    // mode to be skipped.
+    DisableMarkerDetection,
     
     //
     // Vision mode "modifiers" (require one of the above to be enabled to have an effect)
@@ -56,6 +62,6 @@ namespace Vector {
 
     Count
   }
-      
+
 } // namespace Vector
 } // namespace Anki

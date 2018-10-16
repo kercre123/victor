@@ -83,7 +83,7 @@ namespace {
   const char* kPushResponseKey                     = "pushResponse";
   const char* kNotifyOnWifiErrorsKey               = "notifyOnWifiErrors";
   const char* kNotifyOnCloudErrorsKey              = "notifyOnCloudErrors";
-  
+
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
   // the behavior will always "listen" for at least this long once it hears the wakeword, even if we receive
@@ -108,7 +108,7 @@ namespace {
 // is to use silence or a known mismatch intent (my favorite happens to be "potatoes").
   CONSOLE_VAR( bool, kTriggerWord_FakeError, CONSOLE_GROUP, false );
   CONSOLE_VAR( bool, kTriggerWord_FakeError_HasWifi, CONSOLE_GROUP, false );
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -170,7 +170,7 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
 
   // get the behavior to play after an intent comes in
   JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
-    
+
   std::string animGetIn;
   if( JsonTools::GetValueOptional( config, kAnimListeningGetIn, animGetIn ) && !animGetIn.empty() )
   {
@@ -201,14 +201,14 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   JsonTools::GetValueOptional( config, kExitAfterGetInKey, _iVars.exitAfterGetIn );
 
   JsonTools::GetValueOptional( config, kExitAfterListeningIfNotStreamingKey, _iVars.exitAfterListeningIfNotStreaming );
-  
+
   _iVars.pushResponse = config.get(kPushResponseKey, true).asBool();
 
   if( !config[kNotifyOnWifiErrorsKey].isNull() )
   {
     int numErrorsToTriggerAnim;
     float errorTrackingWindow_s;
-    
+
     ANKI_VERIFY( RecentOccurrenceTracker::ParseConfig(config[kNotifyOnWifiErrorsKey],
                                                       numErrorsToTriggerAnim,
                                                       errorTrackingWindow_s),
@@ -343,11 +343,11 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
   {
     const auto& msg = event.GetData().Get_triggerWordDetected();
     _triggerDirection = msg.direction;
-    
+
     #if DEBUG_TRIGGER_WORD_VERBOSE
     {
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Debug",
-                     "Received TriggerWordDetected event with diretion [%d]", (int)_triggerDirection );
+                     "Received TriggerWordDetected event with direction [%d]", (int)_triggerDirection );
     }
     #endif
   }
@@ -400,7 +400,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 {
-  // in case we were interrupted before we had a chance to turn off backpack ligths, do so now ...
+  // in case we were interrupted before we had a chance to turn off backpack lights, do so now ...
   if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
   {
     BackpackLightComponent& blc = GetBEI().GetBackpackLightComponent();
@@ -441,7 +441,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope() 
+void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope()
 {
   if( _iVars.pushResponse ) {
     GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
@@ -454,7 +454,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
   if(!IsActivated()){
     return;
   }
-  
+
   DEV_ASSERT( ( GetStreamingDuration() >= ( MicData::kStreamingTimeout_ms / 1000.0 ) ),
               "BehaviorReactToVoiceCommand: Behavior streaming timeout is less than mic streaming timeout" );
 
@@ -495,7 +495,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
 
       // we now loop indefinitely and wait for the timeout in the update function
       // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
+      DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
       _dVars.state = EState::ListeningLoop;
     }
   }
@@ -505,7 +505,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     if ( isIntentPending )
     {
       // kill delegates, we'll handle next steps with callbacks
-      // note: passing true to CancelDelegatees doesn't call the callback if we also delegate
+      // note: passing true to CancelDelegates doesn't call the callback if we also delegate
       PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
                     "Stopping listening because an intent is pending");
       CancelDelegates( false );
@@ -584,7 +584,7 @@ void BehaviorReactToVoiceCommand::ComputeReactionDirectionFromStream()
           front.count *= ( timeInNode / nodeDuration );
         }
 
-        // case where the back extends beyond our streamin end time ...
+        // case where the back extends beyond our streaming end time ...
         MicDirectionNode& back = list.back();
         if ( back.timestampEnd > streamEndTime )
         {
@@ -834,7 +834,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
       DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
       return;
     }
-    
+
     // Play a reaction behavior if we were told to ...
     // ** only in the case that we've heard a valid intent **
     UpdateUserIntentStatus();
@@ -943,7 +943,7 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::HandleStreamFailure()
 {
-      
+
   PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error",
                   "Intent processing returned an error (or timeout)" );
   GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
@@ -952,7 +952,7 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
   const bool updateNow = true;
   const bool osHasSSID = !OSState::getInstance()->GetSSID(updateNow).empty();
 
-  // if console vare faking is enabled, then check the console var to determine wifi rather than the true os
+  // if console var faking is enabled, then check the console var to determine wifi rather than the true os
   // state
   const bool hasSSID = kTriggerWord_FakeError ? kTriggerWord_FakeError_HasWifi : osHasSSID;
 
@@ -967,7 +967,7 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
     {
       if( ANKI_VERIFY(_iVars.noCloudBehavior != nullptr,
                       "BehaviorReactToVoiceCommand.Intent.Error.MissingNoCloudBehavior",
-                      "Bad config, no beahvior specified") ) {
+                      "Bad config, no behavior specified") ) {
         errorBehavior = _iVars.noCloudBehavior;
       }
     }
@@ -981,7 +981,7 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
     {
       if( ANKI_VERIFY(_iVars.noWifiBehavior != nullptr,
                       "BehaviorReactToVoiceCommand.Intent.Error.noWifiBehavior",
-                      "Bad config, no beahvior specified") ) {
+                      "Bad config, no behavior specified") ) {
         errorBehavior = _iVars.noWifiBehavior;
       }
     }
@@ -1059,6 +1059,6 @@ double BehaviorReactToVoiceCommand::GetListeningTimeout() const
 
   return timeout;
 }
-  
+
 } // namespace Vector
 } // namespace Anki

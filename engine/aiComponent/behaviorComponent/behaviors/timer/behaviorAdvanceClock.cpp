@@ -105,7 +105,7 @@ void BehaviorAdvanceClock::TransitionToShowClockInternal()
     audioMessage.audioEvent = AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Vic_Sfx__Timer_Run_Down_Loop_Stop;
 
     RobotInterface::EngineToRobot wrapper(std::move(audioMessage));
-    GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), Util::SecToMilliSec(static_cast<float>(GetTimeDisplayClock_sec())));
+    GetBEI().GetAnimationComponent().AlterStreamingAnimationAtTime(std::move(wrapper), Util::SecToMilliSec(GetTimeDisplayClock_sec()));
   }
 }
 

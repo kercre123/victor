@@ -78,6 +78,7 @@ private:
 
   void DoJdocFormatMigration();
 
+  Robot*                    _robot = nullptr;
   Json::Value               _currentAccountSettings;
   const Json::Value*        _accountSettingsConfig;
   bool                      _applyAccountSettingsNextTick = false;

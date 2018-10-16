@@ -107,54 +107,51 @@ enum class EQuadrant : uint8_t {
 };
 
 // movement direction
-enum class EDirection { North, East, South, West, Invalid };
+enum class EDirection { PlusX, PlusY, MinusX, MinusY };
 
-// rotation direction
-enum EClockDirection { CW, CCW };
+// a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
+using NodeAddress = std::vector<EQuadrant>;
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// return the opposite direction to the one given (eg: North vs South, West vs East)
-inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);
+// EQuadrant to Vec2f
+Vec2f Quadrant2Vec(EQuadrant dir) ;
 
-// return the opposite clock direction to the one given (eg: CW vs CCW)
-inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir);
+// Vec2f to EQuadrant
+QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir);
 
-// iterate directions in the specified rotation/clock direction
-inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir );
-
-// EDirection to String
-const char* EDirectionToString(EDirection dir);
-
-// EDirection to Vec3f
-Vec3f EDirectionToNormalVec3f(EDirection dir);
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
+// step from a quadrant in direction
+inline constexpr QuadTreeTypes::EQuadrant GetQuadrantInDirection(EQuadrant from, EDirection dir)
 {
-  const EDirection ret = (EDirection)(((std::underlying_type<EDirection>::type)dir + 2) % 4);
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir)
-{
-  const EClockDirection ret = (dir == EClockDirection::CW) ? EClockDirection::CCW : EClockDirection::CW;
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir )
-{
-  EDirection next;
-  if ( iterationDir == EClockDirection::CW ) {
-    next = (EDirection)(((std::underlying_type<EClockDirection>::type)dir + 1) % 4);
-  } else {
-    next = dir == EDirection::North ? EDirection::South : (EDirection)((std::underlying_type<EClockDirection>::type)dir-1);
+  // bit position 0 is the Y coordinate, bit position 1 is x, so toggle the appropriate bit with an XOR
+  switch (dir) {
+    case EDirection::PlusX:
+    case EDirection::MinusX: { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 2); };
+    case EDirection::PlusY:    
+    case EDirection::MinusY: { return (EQuadrant) ((std::underlying_type<EQuadrant>::type) from ^ 1); };
   }
-  return next;
+}
+
+inline constexpr QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
+{
+  // directions are defined in CW order, so just move two positions CW and grab the last two bits
+  const EDirection ret = (EDirection)(((std::underlying_type<EDirection>::type)dir + 2) & 0b11);
+  return ret;
+}
+
+inline constexpr bool IsSibling(EQuadrant from, EDirection dir)
+{
+  // bit position 0 is the Y coordinate, bit position 1 is x, so just compare state of these bits
+  // for each direction
+  switch (dir) {
+    case EDirection::PlusX:  { return  ((std::underlying_type<EQuadrant>::type)from & 0b10); }
+    case EDirection::MinusX: { return !((std::underlying_type<EQuadrant>::type)from & 0b10); }
+    case EDirection::PlusY:  { return  ((std::underlying_type<EQuadrant>::type)from & 0b01); }
+    case EDirection::MinusY: { return !((std::underlying_type<EQuadrant>::type)from & 0b01); }
+  }
 }
 
 } // namespace

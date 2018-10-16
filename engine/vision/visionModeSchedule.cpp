@@ -55,20 +55,10 @@ VisionModeSchedule::VisionModeSchedule(int onFrequency, int frameOffset)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VisionModeSchedule::IsTimeToProcess() const
+bool VisionModeSchedule::IsTimeToProcess(u32 index) const
 {
-  const bool isTimeToProcess = _schedule[_index];
+  const bool isTimeToProcess = _schedule[index % _schedule.size()];
   return isTimeToProcess;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionModeSchedule::Advance()
-{
-  ++_index;
-  if(_index == _schedule.size())
-  {
-    _index = 0;
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -113,7 +103,7 @@ AllVisionModesSchedule::AllVisionModesSchedule(const std::list<std::pair<VisionM
 AllVisionModesSchedule::ScheduleArray AllVisionModesSchedule::InitDefaultSchedules()
 {
   ScheduleArray defaultInitialArray;
-  std::fill(defaultInitialArray.begin(), defaultInitialArray.end(), VisionModeSchedule(true));
+  std::fill(defaultInitialArray.begin(), defaultInitialArray.end(), VisionModeSchedule(false));
   return defaultInitialArray;
 }
   
@@ -130,21 +120,12 @@ const VisionModeSchedule& AllVisionModesSchedule::GetScheduleForMode(VisionMode 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AllVisionModesSchedule::IsTimeToProcess(VisionMode mode) const
+bool AllVisionModesSchedule::IsTimeToProcess(VisionMode mode, u32 index) const
 {
-  const bool isTimeToProcess = GetScheduleForMode(mode).IsTimeToProcess();
+  const bool isTimeToProcess = GetScheduleForMode(mode).IsTimeToProcess(index);
   return isTimeToProcess;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AllVisionModesSchedule::Advance()
-{
-  for(auto & schedule : _schedules)
-  {
-    schedule.Advance();
-  }
-}
-  
+ 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AllVisionModesSchedule::SetDefaultSchedule(VisionMode mode, VisionModeSchedule&& schedule)
 {

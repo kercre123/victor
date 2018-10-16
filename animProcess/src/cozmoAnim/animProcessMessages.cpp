@@ -553,10 +553,15 @@ void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
 }
-  
+
 void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen& msg)
 {
   FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);
+}
+
+void Process_updatedAccountSettings(const RobotInterface::UpdatedAccountSettings& msg)
+{
+  _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
 }
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
@@ -727,8 +732,13 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
 
   // Amount of time for which we must be disconnected from the engine in order
-  // to display the NO_ENGINE_COMMS fault code
-  static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
+  // to display the NO_ENGINE_COMMS fault code. For developer builds, fail fast
+  // to capture a crash report of engine's current state.
+  #if defined(VICOS) && ANKI_DEV_CHEATS
+  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::MilliSecToNanoSec(2.f * ANIM_TIME_STEP_MS);
+  #else
+  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(5.f);
+  #endif
 
   // Check for changes in connection state to engine and send RobotAvailable
   // message when engine connects
@@ -745,11 +755,11 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   } else if (wasConnected && !isConnected) {
     // We've just become unconnected. Start a timer to display the fault
     // code on the face at the desired time.
-    displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_nanosec;
+    displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_ns;
 
     PRINT_NAMED_WARNING("AnimProcessMessages.MonitorConnectionState.DisconnectedFromEngine",
                         "We have become disconnected from engine process. Displaying a fault code in %.1f seconds.",
-                        Util::NanoSecToSec(kDisconnectedTimeout_nanosec));
+                        Util::NanoSecToSec(kDisconnectedTimeout_ns));
 
     wasConnected = false;
   }

@@ -26,6 +26,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/robotStatsTracker.h"
@@ -59,7 +60,7 @@ namespace Anki {
 
     // Which docking method actions should use
     CONSOLE_VAR(u32, kDefaultDockingMethod,"DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
-    CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
+    CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING_BEELINE);
     CONSOLE_VAR(u32, kRollDockingMethod,   "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
     CONSOLE_VAR(u32, kStackDockingMethod,  "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
 
@@ -165,13 +166,25 @@ namespace Anki {
     }
 
     bool IDockAction::VerifyDockingComponentValid() const{
-      return ANKI_VERIFY(_dockingComponentPtr != nullptr,
-                         "IDockAction.VerifyDockingComponentValid.DockingComponentNotSet","");
+      if( _dockingComponentPtr == nullptr ) {
+        // action may be getting destroyed before init
+        ANKI_VERIFY(!HasRobot(),
+                    "IDockAction.VerifyDockingComponentValid.DockingComponentNotSet","");
+        return false;
+      } else {
+        return true;
+      }
     }
 
     bool IDockAction::VerifyCarryingComponentValid() const{
-      return ANKI_VERIFY(_carryingComponentPtr != nullptr,
-                         "IDockAction.VerifyCarryingComponentValid.CarryingComponentNotSet","");
+      if( _carryingComponentPtr == nullptr ) {
+        // action may be getting destroyed before init
+        ANKI_VERIFY(!HasRobot(),
+                    "IDockAction.VerifyCarryingComponentValid.CarryingComponentNotSet","");
+        return false;
+      } else {
+        return true;
+      }
     }
 
     void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2)
@@ -738,7 +751,8 @@ namespace Anki {
                                                     _placementOffsetAngle_rad,
                                                     _numDockingRetries,
                                                     _dockingMethod,
-                                                    _doLiftLoadCheck) == RESULT_OK)
+                                                    _doLiftLoadCheck,
+                                                    _backUpWhileLiftingCube) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
@@ -1374,6 +1388,14 @@ namespace Anki {
         _dockAction = DockAction::DA_PICKUP_HIGH;
         SetType(RobotActionType::PICKUP_OBJECT_HIGH);
       }
+      
+      // If we are either in the habitat or unsure, we should do the version of cube pickup where instead of driving
+      // forward at the same time as raising the lift, we drive backward. This improves the cube pickup success rate
+      // in case the cube is pressed against the wall of the habitat.
+      const auto habitatBeliefState = GetRobot().GetComponent<HabitatDetectorComponent>().GetHabitatBeliefState();
+      const bool possiblyInHabitat = (habitatBeliefState == HabitatBeliefState::InHabitat) ||
+                                     (habitatBeliefState == HabitatBeliefState::Unknown);
+      SetBackUpWhileLiftingCube(possiblyInHabitat);
 
       return ActionResult::SUCCESS;
     } // SelectDockAction()

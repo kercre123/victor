@@ -192,7 +192,8 @@ void BehaviorAnimGetInLoop::OnBehaviorDeactivated()
     _iConfig.endLoopCondition->SetActive(GetBEI(), false);
   }
 
-  if((_dVars.stage == BehaviorStage::Loop) &&
+  if((_dVars.stage == BehaviorStage::Loop || 
+      _dVars.stage == BehaviorStage::GetIn) &&
      (_iConfig.emergencyGetOutTrigger != AnimationTrigger::Count)){
     PlayEmergencyGetOut(_iConfig.emergencyGetOutTrigger);
   }

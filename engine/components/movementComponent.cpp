@@ -117,10 +117,25 @@ void MovementComponent::OnRobotDelocalized()
   
 void MovementComponent::NotifyOfRobotState(const Vector::RobotState& robotState)
 {
-  _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
-  _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
-  _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
-  _areWheelsMoving = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::ARE_WHEELS_MOVING);
+  _isMoving     =  static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::IS_MOVING);
+  _isHeadMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS);
+  _isLiftMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS);
+  _areWheelsMoving = static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::ARE_WHEELS_MOVING);
+  
+  // NOTE(GB): In the future, the meaning of `_isMoving` may change, and may not be coupled to
+  // _isHeadMoving, _isLiftMoving, or _areWheelsMoving, so check if we can set each timestamp individually.
+  if (_isMoving) {
+    _lastTimeWasMoving = robotState.timestamp;
+  }
+  if (_isHeadMoving) {
+    _lastTimeHeadWasMoving = robotState.timestamp;
+  }
+  if (_isLiftMoving) {
+    _lastTimeLiftWasMoving = robotState.timestamp;
+  }
+  if (_areWheelsMoving) {
+    _lastTimeWheelsWereMoving = robotState.timestamp;
+  }
   
   for (auto layerIter = _eyeShiftToRemove.begin(); layerIter != _eyeShiftToRemove.end(); )
   {
@@ -211,9 +226,9 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
   }
   
   // Don't check for unexpected movement under the following conditions
-  if (robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP   ||
-      robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint16_t)RobotStatusFlag::IS_FALLING)
+  if (robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP   ||
+      robotState.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER  ||
+      robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING)
   {
     _unexpectedMovement.Reset();
     return;
@@ -1101,6 +1116,11 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
     trackFlags = trackFlags >> 1;
   }
   return ss.str();
+}
+  
+RobotTimeStamp_t MovementComponent::GetLastTimeCameraWasMoving() const
+{
+  return std::max(_lastTimeWheelsWereMoving, _lastTimeHeadWasMoving);
 }
 
   static inline bool WasMovingHelper(Robot& robot, RobotTimeStamp_t atTime, const std::string& debugStr,

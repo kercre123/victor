@@ -277,8 +277,6 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
         robot->GetCarryingComponent().SetCarriedObjectAsUnattached();
       }
 
-      robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-
       break;
     }
     case BlockStatus::BLOCK_PICKED_UP:

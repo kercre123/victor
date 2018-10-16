@@ -13,6 +13,17 @@
       "standard"     : 2,
       "relativeCost" : 16
     },
+    
+    // TODO: Remove with VIC-6838
+    {
+      "mode"         : "DisableMarkerDetection",
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
+    },
+    
     {
       "mode"         : "FullFrameMarkerDetection",
       // Only a schedule of "1" makes sense because this mode modifier piggybacks on DetectingMarkers's schedule
@@ -76,6 +87,14 @@
       "relativeCost" : 4
     },
     {
+      "mode"         : "DetectingBrightColors",
+      "low"          : 4,
+      "med"          : 2,
+      "high"         : 1,
+      "standard"     : 2,
+      "relativeCost" : 4
+    },
+    {
       "mode"         : "DetectingOverheadEdges",
       "low"          : 4,
       "med"          : 2,
@@ -85,34 +104,34 @@
     },
     {
       "mode"         : "EstimatingFacialExpression",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {
       "mode"         : "DetectingSmileAmount",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {
       "mode"         : "DetectingGaze",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {
       "mode"         : "DetectingBlinkAmount",
-      "low"          : 4,
-      "med"          : 2,
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
-      "standard"     : 2,
+      "standard"     : 1,
       "relativeCost" : 1
     },
     {
@@ -131,14 +150,17 @@
       "standard"     : 2,
       "relativeCost" : 1
     },
-    {
-      "mode"         : "BuildingOverheadMap",
-      "low"          : 4,
-      "med"          : 2,
-      "high"         : 1,
-      "standard"     : 2,
-      "relativeCost" : 1
-    },
+    
+    // TODO: Restore once we solve VisionModes and put this vision mode back
+    //    {
+    //      "mode"         : "BuildingOverheadMap",
+    //      "low"          : 4,
+    //      "med"          : 2,
+    //      "high"         : 1,
+    //      "standard"     : 2,
+    //      "relativeCost" : 1
+    //    },
+    
     {
       "mode"         : "SavingImages",
       "low"          : 1,

@@ -16,7 +16,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/components/movementComponent.h"
 //#include "engine/components/trackLayerComponent.h"
-#include "engine/components/visionComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"

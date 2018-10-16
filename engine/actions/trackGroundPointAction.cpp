@@ -130,11 +130,7 @@ ActionResult TrackGroundPointAction::InitInternal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TrackGroundPointAction::~TrackGroundPointAction()
 {
-  PRINT_CH_DEBUG(kLogChannelName, "TrackGroundPointAction.Destructor",
-                 "Popping vision mode schedule");
-  if(HasRobot()){
-    GetRobot().GetVisionComponent().PopCurrentModeSchedule();
-  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

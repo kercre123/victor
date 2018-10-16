@@ -109,7 +109,7 @@ void BehaviorOnboardingLookAtPhone::MoveHeadUp()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone::RunLoopAction()
 {
-  auto* loopAction = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop, 0 };
+  auto* loopAction = new ReselectingLoopAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop };
   loopAction->SetRenderInEyeHue( false );
   DelegateIfInControl( loopAction ); // loop forever, waiting for a message
 }

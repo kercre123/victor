@@ -18,6 +18,8 @@
 #include "clad/types/animationTypes.h"
 #include "clad/vizInterface/messageViz.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/vision/visionModesHelpers.h"
+#include "engine/viz/vizTextLabelTypes.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "vizControllerImpl.h"
@@ -29,13 +31,13 @@
 #include <webots/ImageRef.hpp>
 #include <webots/Supervisor.hpp>
 
+#include <iomanip>
+
 namespace Anki {
 namespace Vector {
 
 
 static const size_t kEmotionBuffersCapacity  = 300; // num ticks of emotion score values to store
-static const size_t kBehaviorBuffersCapacity = 300; // num ticks of behavior score values to store
-static const size_t kCubeAccelBuffersCapacity = 300; // num ticks of cube accel values to store
   
   
 VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
@@ -46,11 +48,6 @@ VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
     _emotionBuffers[i].Reset(kEmotionBuffersCapacity);
   }
   _emotionEventBuffer.Reset(kEmotionBuffersCapacity);
-  _behaviorEventBuffer.Reset(kBehaviorBuffersCapacity);
-  
-  for (int i = 0; i < 3; ++i) {
-    _cubeAccelBuffers[i].Reset(kCubeAccelBuffersCapacity);
-  }
 }
   
 
@@ -75,8 +72,6 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizCameraOvalMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraText,
     std::bind(&VizControllerImpl::ProcessVizCameraTextMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::DisplayImage,
-    std::bind(&VizControllerImpl::ProcessVizDisplayImageMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ImageChunk,
     std::bind(&VizControllerImpl::ProcessVizImageChunkMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::TrackerQuad,
@@ -87,45 +82,26 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizCurrentAnimation, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotMood,
     std::bind(&VizControllerImpl::ProcessVizRobotMoodMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::RobotBehaviorSelectData,
-    std::bind(&VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::NewBehaviorSelected,
-    std::bind(&VizControllerImpl::ProcessVizNewBehaviorSelectedMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::NewReactionTriggered,
-    std::bind(&VizControllerImpl::ProcessVizNewReactionTriggeredMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::StartRobotUpdate,
-    std::bind(&VizControllerImpl::ProcessVizStartRobotUpdate, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::EndRobotUpdate,
-    std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveImages,
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveState,
     std::bind(&VizControllerImpl::ProcessSaveState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraParams,
     std::bind(&VizControllerImpl::ProcessCameraParams, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::ObjectConnectionState,
-    std::bind(&VizControllerImpl::ProcessObjectConnectionState, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::ObjectMovingState,
-    std::bind(&VizControllerImpl::ProcessObjectMovingState, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::ObjectUpAxisState,
-    std::bind(&VizControllerImpl::ProcessObjectUpAxisState, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::ObjectAccelState,
-    std::bind(&VizControllerImpl::ProcessObjectAccelState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::BehaviorStackDebug,
     std::bind(&VizControllerImpl::ProcessBehaviorStackDebug, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::VisionModeDebug,
     std::bind(&VizControllerImpl::ProcessVisionModeDebug, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EnabledVisionModes,
+    std::bind(&VizControllerImpl::ProcessEnabledVisionModes, this, std::placeholders::_1));
 
 
   // Get display devices
   _disp = _vizSupervisor.getDisplay("cozmo_viz_display");
   _dockDisp = _vizSupervisor.getDisplay("cozmo_docking_display");
   _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
-  _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
   _visionModeDisp = _vizSupervisor.getDisplay("victor_vision_mode_display");
-  _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
-  _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
   // Find all the debug image displays in the proto. Use the first as the camera feed and the rest for debug images.
   {
@@ -166,12 +142,8 @@ void VizControllerImpl::Init()
 
   _disp->setFont("Lucida Console", 8, true);
   _moodDisp->setFont("Lucida Console", 8, true);
-  _activeObjectDisp->setFont("Lucida Console", 8, true);
   _bsmStackDisp->setFont("Lucida Console", 8, true);
   _visionModeDisp->setFont("Lucida Console", 8, true);
-
-  DrawText(_activeObjectDisp, 0, (u32)Anki::NamedColors::WHITE, "Slot | Moving | UpAxis");
-  
   
   // === Look for CozmoBot in scene tree ===
 
@@ -623,6 +595,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
         }
       }
       
+      DisplayBufferedCameraImage(encodedImage.GetTimeStamp());
     }
   }
   else
@@ -655,17 +628,14 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
   
 }
   
-void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+void VizControllerImpl::DisplayBufferedCameraImage(const RobotTimeStamp_t timestamp)
 {
-  const auto& payload = msg.GetData().Get_DisplayImage();
-  
-  auto encImgIter = _encodedImages.find(payload.timestamp);
+  auto encImgIter = _encodedImages.find(timestamp);
   if(encImgIter == _encodedImages.end())
   {
     return;
   }
   
-  const RobotTimeStamp_t timestamp = encImgIter->first;
   const EncodedImage& encodedImage = _bufferedImages[encImgIter->second];
   DEV_ASSERT_MSG(timestamp == encodedImage.GetTimeStamp(),
                  "VizControllerImpl.ProcessVizDisplayImage.TimeStampMisMatch",
@@ -806,6 +776,14 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (int)payload.state.rwheel_speed_mmps);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
+  const auto currTreadState = payload.offTreadsState;
+  const auto nextTreadState = payload.awaitingConfirmationTreadState;
+  const bool onTreads = (currTreadState == OffTreadsState::OnTreads);
+  sprintf(txt, "OffTreadsState: %s  %s",
+          EnumToString(currTreadState),
+          (currTreadState != nextTreadState) ? EnumToString(nextTreadState) : "");
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_OFF_TREADS_STATE, onTreads ? Anki::NamedColors::GREEN : Anki::NamedColors::RED, txt);
+  
   sprintf(txt, "Touch: %u", 
     payload.state.backpackTouchSensorRaw
   );
@@ -905,7 +883,7 @@ static const int kTextOffsetY  = -3;
 bool VizControllerImpl::IsMoodDisplayEnabled() const
 {
   // maybe check settings or pixel size too?
-  return ((_behaviorDisp != nullptr) && (_emotionBuffers[0].capacity() > 0));
+  return (_emotionBuffers[0].capacity() > 0);
 }
 
 
@@ -1048,472 +1026,6 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
   }
 }
 
-  
-// ========== BehaviorSelection Display ==========
-  
-  
-bool VizControllerImpl::IsBehaviorDisplayEnabled() const
-{
-  // maybe check settings or pixel size too?
-  return ((_behaviorDisp != nullptr) && (_behaviorEventBuffer.capacity() > 0));
-}
-
-  
-void VizControllerImpl::PreUpdateBehaviorDisplay()
-{
-  if (!IsBehaviorDisplayEnabled())
-  {
-    return;
-  }
-  
-  // Advance all previoiusly active behaviors by one dummy tick - any active ones will be updated with correct value later
-  
-  for (auto it = _behaviorScoreBuffers.begin(); it != _behaviorScoreBuffers.end(); )
-  {
-    BehaviorScoreBuffer& behaviorScoreBuffer = it->second;
-    const BehaviorScoreEntry& lastEntry = behaviorScoreBuffer.back();
-    
-    if (lastEntry._numEntriesSinceReal > behaviorScoreBuffer.capacity())
-    {
-      // This buffer is now entirely full of dummy entries - remove the buffer (behavior is no longer valid)
-      it = _behaviorScoreBuffers.erase(it);
-    }
-    else
-    {
-      behaviorScoreBuffer.push_back( BehaviorScoreEntry(lastEntry._value, lastEntry._numEntriesSinceReal + 1) );
-      ++it;
-    }
-  }
-  
-  _behaviorEventBuffer.push_back(std::vector<BehaviorID>()); // empty entry, expanded in other message
-}
-
-  
-VizControllerImpl::BehaviorScoreBuffer& VizControllerImpl::FindOrAddScoreBuffer(BehaviorID behaviorID)
-{
-  BehaviorScoreBufferMap::iterator it = _behaviorScoreBuffers.find(behaviorID);
-  if (it != _behaviorScoreBuffers.end())
-  {
-    return it->second;
-  }
-  
-  // Not found - add one and return that
-  
-  it = _behaviorScoreBuffers.insert(BehaviorScoreBufferMap::value_type(
-                                       behaviorID,
-                                       BehaviorScoreBuffer(kBehaviorBuffersCapacity))).first;
-  return it->second;
-}
-
-
-void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  if (!IsBehaviorDisplayEnabled())
-  {
-    return;
-  }
-  
-  const VizInterface::NewBehaviorSelected& selectData = msg.GetData().Get_NewBehaviorSelected();
-  
-  if (_behaviorEventBuffer.size() > 0)
-  {
-    std::vector<BehaviorID>& latestEvents =_behaviorEventBuffer.back();
-    latestEvents.push_back(BehaviorTypesWrapper::BehaviorIDFromString(selectData.newCurrentBehavior));
-  }
-}
-
-void VizControllerImpl::ProcessVizNewReactionTriggeredMessage(const AnkiEvent<VizInterface::MessageViz> &msg)
-{
-  if (!IsBehaviorDisplayEnabled())
-  {
-      return;
-  }
-   
-  const VizInterface::NewReactionTriggered& selectData = msg.GetData().Get_NewReactionTriggered();
-    
-  if (_reactionEventBuffer.size() > 0)
-  {
-    std::vector<std::string>& latestEvents = _reactionEventBuffer.back();
-    
-    if (!selectData.reactionStrategyTriggered.empty())
-    {
-      latestEvents.push_back(selectData.reactionStrategyTriggered);
-    }
-  }
-}
-
-void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  if (!IsBehaviorDisplayEnabled())
-  {
-    return;
-  }
-  
-  const VizInterface::RobotBehaviorSelectData& selectData = msg.GetData().Get_RobotBehaviorSelectData();
-  
-  // Build a sorted vector of NamedScoreBuffer containing all the behaviors currently being graphed, so that they're in
-  // order of the most recent value, top-to-bottom in the graph
-  
-  for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
-  {
-    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(
-      BehaviorTypesWrapper::BehaviorIDFromString(scoreData.behaviorID));
-    if (!scoreBuffer.empty())
-    {
-      // Remove the dummy entry we added during preUpdate
-      scoreBuffer.pop_back();
-    }
-    scoreBuffer.push_back( BehaviorScoreEntry(scoreData.totalScore) );
-  }
-}
-  
-  
-void VizControllerImpl::DrawBehaviorDisplay()
-{
-  if (!IsBehaviorDisplayEnabled())
-  {
-    return;
-  }
-  
-  // Build a sorted vector of NamedScoreBuffer containing all the active behaviors, so that they're in
-  // order of the most recent value, top-to-bottom in the graph
-  
-  struct NamedScoreBuffer
-  {
-    BehaviorScoreBuffer*  _scoreBuffer;
-    BehaviorID            _id;
-    uint32_t              _color;
-  };
-  
-  std::vector<NamedScoreBuffer> activeScoreBuffers;
-  
-  size_t maxBufferValues = 0;
-  
-  {
-    uint32_t colorIndex = 0;
-    
-    for (auto& kv : _behaviorScoreBuffers)
-    {
-      BehaviorScoreBuffer& behaviorScoreBuffer = kv.second;
-      
-      maxBufferValues = MAX(maxBufferValues, behaviorScoreBuffer.size());
-      activeScoreBuffers.push_back({&behaviorScoreBuffer,
-                                    kv.first,
-                                    ColorRGBA::CreateFromColorIndex(colorIndex).As0RGB()});
-      ++colorIndex;
-    }
-    
-    maxBufferValues = MAX(maxBufferValues, _behaviorEventBuffer.size());
-    
-    std::sort(activeScoreBuffers.begin(), activeScoreBuffers.end(),
-              [](const NamedScoreBuffer& lhs, const NamedScoreBuffer& rhs)
-              {
-                return lhs._scoreBuffer->back()._value > rhs._scoreBuffer->back()._value;
-              } );
-  }
-  
-  // Draw everything
-  
-  const int windowWidth  = _behaviorDisp->getWidth();
-  const int windowHeight = _behaviorDisp->getHeight();
-  
-  // Calculate y coordinate range and scaling for graph points
-  
-  const int yValueFor0 = windowHeight - 16;
-  const int yValueFor1 = 16;
-  float yScalar = (yValueFor1 - yValueFor0);
-  
-  // Clear Window
-  
-  _behaviorDisp->setColor(0x000000);
-  _behaviorDisp->fillRectangle(0, 0, windowWidth, windowHeight);
-  
-  // Draw Graph Axis labels
-  
-  _behaviorDisp->setColor(0xffffff);
-  _behaviorDisp->drawText("1.0", 0, yValueFor1 + kTextOffsetY);
-  _behaviorDisp->drawText("0.0", 0, yValueFor0 + kTextOffsetY);
-  
-  if (activeScoreBuffers.empty() || (activeScoreBuffers[0]._scoreBuffer->capacity() == 0))
-  {
-    return;
-  }
-  
-  // Calculate line spacing and top/bottom range
-  
-  const int labelOffset = 170;
-  const float xStep = float(windowWidth-labelOffset) / float(activeScoreBuffers[0]._scoreBuffer->capacity());
-  
-  const int textSpacingY = kTextSpacingY;
-  
-  const int kTopTextY    = (kTextSpacingY/2);
-  const int kBottomTextY = windowHeight - (kTextSpacingY/2);
-  
-  int lastTextY = kTopTextY - textSpacingY;
-  
-  // Draw all the events
-  {
-    int eventY = kTopTextY;
-    
-    _behaviorDisp->setColor(0xffffff);
-    float xValF = 0.0f;
-
-    size_t bufferSize = std::min( maxBufferValues, _behaviorEventBuffer.size());
-    for (size_t j=0; j < bufferSize; ++j)
-    {
-      const std::vector<BehaviorID>& eventsThisTick = _behaviorEventBuffer[j];
-      
-      if (eventsThisTick.size() > 0)
-      {
-        const int xVal = (int)(xValF);
-        
-        for (BehaviorID eventID : eventsThisTick)
-        {
-          _behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
-          _behaviorDisp->drawText(BehaviorTypesWrapper::BehaviorIDToString(eventID), xVal, eventY + kTextOffsetY);
-          
-          eventY += kTextSpacingY;
-          if (eventY > kBottomTextY)
-          {
-            eventY = kTopTextY;
-          }
-        }
-      }
-      
-      xValF += xStep;
-    }
-  }
-  
-  int numLinesLeft = 0; // number of still active behaviors to display - first find most recently updated
-                        // (and how many match that) - these are considered still active
-  uint32_t minTicksSinceRealValue = UINT32_MAX;
-  for (const NamedScoreBuffer& namedScoreBuffer : activeScoreBuffers)
-  {
-    const BehaviorScoreEntry& latestScoreEntry = namedScoreBuffer._scoreBuffer->back();
-    if (latestScoreEntry._numEntriesSinceReal < minTicksSinceRealValue)
-    {
-      // new result for "most recently updated"
-      minTicksSinceRealValue = latestScoreEntry._numEntriesSinceReal;
-      numLinesLeft = 1;
-    }
-    else if (latestScoreEntry._numEntriesSinceReal == minTicksSinceRealValue)
-    {
-      // is as recently updated as current winner
-      ++numLinesLeft;
-    }
-  }
-  
-  for (const NamedScoreBuffer& namedScoreBuffer : activeScoreBuffers)
-  {
-    const BehaviorScoreBuffer& scoreBuffer = *namedScoreBuffer._scoreBuffer;
-    
-    const uint32_t numEntriesSinceRealValue = scoreBuffer.back()._numEntriesSinceReal;
-    const bool drawAllValues = (numEntriesSinceRealValue <= minTicksSinceRealValue);
-    
-    _behaviorDisp->setColor(namedScoreBuffer._color);
-    
-    const size_t numValues = scoreBuffer.size();
-    const size_t numValuesToDraw = drawAllValues ? numValues :
-                                   (numValues > numEntriesSinceRealValue) ? (numValues - numEntriesSinceRealValue) : 0;
-    if (numValuesToDraw == 0)
-    {
-      continue;
-    }
-    
-    // Draw a line graph connecting all of the sample points
-    
-    float xValF = (xStep * float(maxBufferValues - numValues)); // start indented if behavior has fewer values than the max
-    int lastX = 0;
-    int lastY = 0;
-    
-    for (size_t j=0; j < numValuesToDraw; ++j)
-    {
-      const BehaviorScoreEntry& scoreEntry = scoreBuffer[j];
-      const float scoreVal = scoreEntry._value;
-      
-      const int xVal = (int)(xValF);
-      const int yVal = yValueFor0 + (int)(yScalar * scoreVal);
-      
-      if (j > 0)
-      {
-        const bool isReusingValue = (scoreEntry._numEntriesSinceReal > 0);
-        _behaviorDisp->setAlpha( isReusingValue ? 0.25 : 1.0 );
-        _behaviorDisp->drawLine(lastX, lastY, xVal, yVal);
-      }
-      
-      xValF += xStep;
-      lastX = xVal;
-      lastY = yVal;
-    }
-    
-    _behaviorDisp->setAlpha(1.0);
-    
-    // Only draw labels for most recently scored behaviors where we're drawing all values
-    if (drawAllValues)
-    {
-      // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
-      // and at least 1 line down from the last category, clamped to the top/bottom range
-      
-      const int textX = MIN(lastX, windowWidth-labelOffset);
-      --numLinesLeft;
-      const int maxTextY = kBottomTextY - (kTextSpacingY * numLinesLeft);
-      const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
-      lastTextY = textY;
-      
-      char valueString[32];
-      snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back()._value);
-      const char * idStr = BehaviorTypesWrapper::BehaviorIDToString(namedScoreBuffer._id);
-      std::string text = std::string(valueString) + (idStr == nullptr ? "<null>" : idStr);
-      
-      _behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
-    }
-  }
-}
-
-// ========== Cube display ==========
-  
-void VizControllerImpl::UpdateActiveObjectInfoText(u32 activeID)
-{
-  auto it = _activeObjectInfoMap.find(activeID);
-  if (it != _activeObjectInfoMap.end()) {
-    u32 color = it->second.connected ? Anki::NamedColors::GREEN : Anki::NamedColors::RED;
-    
-    char text[64];
-    sprintf(text, " %d       %s      %s",
-            it->first,
-            it->second.moving ? "X" : " ",
-            EnumToString(it->second.upAxis));
-
-    DrawText(_activeObjectDisp, it->first + 1, color, text);
-  }
-}
-  
-void VizControllerImpl::ProcessObjectConnectionState(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const VizInterface::ObjectConnectionState& m = msg.GetData().Get_ObjectConnectionState();
-  _activeObjectInfoMap[m.activeID].connected = m.connected;
-  UpdateActiveObjectInfoText(m.activeID);
-}
-
-void VizControllerImpl::ProcessObjectMovingState(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const VizInterface::ObjectMovingState& m = msg.GetData().Get_ObjectMovingState();
-  _activeObjectInfoMap[m.activeID].moving = m.moving;
-  UpdateActiveObjectInfoText(m.activeID);
-}
-
-void VizControllerImpl::ProcessObjectUpAxisState(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const VizInterface::ObjectUpAxisState& m = msg.GetData().Get_ObjectUpAxisState();
-  _activeObjectInfoMap[m.activeID].upAxis = m.upAxis;
-  UpdateActiveObjectInfoText(m.activeID);
-}
-  
-void VizControllerImpl::ProcessObjectAccelState(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  // Grab message:
-  const VizInterface::ObjectAccelState& payload = msg.GetData().Get_ObjectAccelState();
-  const ActiveAccel& acc = payload.accel;
-  const s32 objectId = static_cast<s32>(payload.objectID);
-  
-  // Grab the Webots field indicating which ObjectID to plot:
-  webots::Node* root = _vizSupervisor.getSelf();
-  webots::Field* accelPlotObjectIdField = root->getField("accelPlotObjectId");
-  ANKI_VERIFY(accelPlotObjectIdField != nullptr, "WebotsCtrlViz.MissingAccelPlotObjectIdField", "");
-  const s32 objectIdToPlot = accelPlotObjectIdField->getSFInt32();
-  
-  // If the message's objectID doesn't match the "ObjectID to plot" from
-  //  the 'CozmoVizDisplay' tree, then disregard this message.
-  if (objectIdToPlot != objectId) {
-    return;
-  }
-  
-  // If we're plotting data from a new objectID, clear the buffers:
-  static s32 prevObjectId = objectId;
-  if (prevObjectId != objectId) {
-    for (auto& buf : _cubeAccelBuffers) {
-      buf.clear();
-    }
-    prevObjectId = objectId;
-  }
-  
-  const int windowWidth  = _cubeAccelDisp->getWidth();
-  const int windowHeight = _cubeAccelDisp->getHeight();
-  
-  // Calculate y coordinate range and scaling for graph points
-  
-  const int   labelOffsetX  = 80; // Minimum indentation from right for the catagory label (e.g. "<val> <Axis>")
-  const float xStep         = float(windowWidth-labelOffsetX) / _cubeAccelBuffers[0].capacity();
-  
-  const int   yValueFor1    = 20;
-  const int   yValueForNeg1 = windowHeight - yValueFor1;
-  const float yValueFor0    = float(yValueForNeg1 + yValueFor1) * 0.5f;
-  const float yScalar       = (float(yValueFor1) - yValueFor0) / 64.f;  // 32 ~= 1g
-  
-  // Clear Window
-  
-  _cubeAccelDisp->setColor(0x000000);
-  _cubeAccelDisp->fillRectangle(0, 0, windowWidth, windowHeight);
-  
-  // Draw Graph Axis labels
-  std::string title = "Cube accel (object ID " + std::to_string(objectId) + ")";
-  _cubeAccelDisp->setColor(0xffffff);
-  _cubeAccelDisp->drawText(title.c_str(), 0, 5);
-  _cubeAccelDisp->drawText("2g",  0, yValueFor1 + kTextOffsetY);
-  _cubeAccelDisp->drawText("-2g", 0, yValueForNeg1 + kTextOffsetY);
-  
-  // Calculate line spacing and top/bottom range
-  const int kTopTextY    = (kTextSpacingY/2);
-  const int kBottomTextY = windowHeight - (kTextSpacingY/2);
-  
-  int lastTextY = kTopTextY - kTextSpacingY;
-  
-  _cubeAccelBuffers[0].push_back( acc.x );
-  _cubeAccelBuffers[1].push_back( acc.y );
-  _cubeAccelBuffers[2].push_back( acc.z );
-  
-  // Draw each accel graph
-  for (int i=0; i < _cubeAccelBuffers.size(); ++i)
-  {
-    _cubeAccelDisp->setColor( ColorRGBA::CreateFromColorIndex(i).As0RGB() );
-    
-    float xValF = 0.0f;
-    int lastX = 0;
-    int lastY = 0;
-    
-    // Draw a line graph connecting all of the sample points
-    
-    for (size_t j=0; j < _cubeAccelBuffers[i].size(); ++j)
-    {
-      const float accValue = _cubeAccelBuffers[i][j];
-      const int xVal = (int)(xValF);
-      const int yVal = (int)(yValueFor0 + (yScalar * accValue));
-      
-      if (j > 0)
-      {
-        _cubeAccelDisp->drawLine(lastX, lastY, xVal, yVal);
-      }
-      
-      xValF += xStep;
-      lastX = xVal;
-      lastY = yVal;
-    }
-    
-    // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
-    // and at least 1 line down from the last category, clamped to the top/bottom range
-    
-    const int textX = MIN(lastX, windowWidth-labelOffsetX);
-    const int maxTextY = kBottomTextY - (kTextSpacingY * int(_cubeAccelBuffers.size()-(i+1)));
-    const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
-    lastTextY = textY;
-    
-    char valueString[32];
-    snprintf(valueString, sizeof(valueString), "%7.1f: ", _cubeAccelBuffers[i].back());
-    std::string text = std::string(valueString) + (i==0 ? "X" : (i==1 ? "Y" : "Z"));
-    _cubeAccelDisp->drawText(text, textX, textY + kTextOffsetY);
-  }
-
-}
 
 void VizControllerImpl::ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
@@ -1551,21 +1063,61 @@ void VizControllerImpl::ProcessVisionModeDebug(const AnkiEvent<VizInterface::Mes
 
 }
 
-// ========== Start/End of Robot Updates ==========
-  
+void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if( _disp == nullptr ) {
+    return;
+  }
 
-void VizControllerImpl::ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  PreUpdateBehaviorDisplay();
+  const auto& data = msg.GetData().Get_EnabledVisionModes();
+
+  _disp->setColor(NamedColors::BLACK.As0RGB());
+  const u32 fillY = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + (uint32_t)TextLabelType::VISION_MODE + 1)*10;
+  _disp->fillRectangle(0, fillY, _disp->getWidth(), 10*11);
+
+  std::stringstream ss;
+  const u32 kTextWidth = 15;
+  const u32 kNumModesPerLine = 4;
+  const u32 kCharWidth = 6;
+  const u32 kLineHeight = 10;
+
+  // x,y position to draw each VisionMode at in the display
+  u32 x = 0;
+  u32 y = fillY;
+
+  for(VisionMode m = VisionMode::Idle; m < VisionMode::Count; m++)
+  {
+    // Left align text with kTextWidth+1 padding of spaces (+1 for space between modes)
+    ss << std::setw(kTextWidth + 1) << std::left;
+    std::string s(EnumToString(m));
+    ss << s.substr(0, kTextWidth);
+    
+    // If this mode was processed then draw it in white
+    if(std::find(data.modes.begin(), data.modes.end(), m) != data.modes.end())
+    {
+      _disp->setColor(NamedColors::WHITE.As0RGB());
+    }
+    // Otherwise draw it in gray
+    else
+    {
+      _disp->setColor(0x808080);
+    }
+
+    _disp->drawText(ss.str(), x, y);
+
+    // Increase x by VisionMode text length + 1 (for spacing)
+    x += kCharWidth*(kTextWidth+1);
+
+    // Only draw kNumModesPerLine
+    if((static_cast<u32>(m)+1) % kNumModesPerLine == 0)
+    {
+      x = 0;
+      y += kLineHeight;
+    }
+
+    ss.str(std::string(""));
+  }
 }
-  
-  
-void VizControllerImpl::ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  // This signals end of the Robot::Update() and is where we tick and update the drawing for live graph windows etc.
-  DrawBehaviorDisplay();
-}
-  
-  
+
 } // end namespace Vector
 } // end namespace Anki

@@ -7,8 +7,7 @@ These instructions build the SDK and its documentation and produce a compressed 
 
 # Pre-Requisites
 
-* You have ota'd your robot to the shipping version of the OS (e.g., likely Victor OS 1.0.1 for initial release).
-  ** Ask build / release team (Udo) if unsure which build number will be used.
+* You have ota'd your robot to Victor OS 1.0.1 or later. (TODO: test multiple OS versions? Test latest OS?)
 * Uninstall any existing representation of the SDK from your computer.
 * You have Python 3.6.1 or later already installed.
 * Decide what version you want to increase the Python SDK to.
@@ -29,7 +28,30 @@ These instructions build the SDK and its documentation and produce a compressed 
     cd victor
     rm -rf tools/sdk/vector-sdk/tests
 
-4. On victor master branch, from `victor/cloud/gateway/external_interface.proto`, manually delete rpc messages for `UploadDebugLogs`, `CheckCloudConnection`, and `UpdateSettings`. Do not commit this.
+4. On victor master branch, remove proto messages that we don't want to expose. Do not commit these changes.
+
+  a. From `cloud/gateway/external_interface.proto`, remove:
+        `UploadDebugLogs`
+        `CheckCloudConnection`
+        `UpdateUserEntitlements`
+
+  b. From `cloud/gateway/messages.proto`, remove:
+        `UploadDebugLogsRequest`
+        `UploadDebugLogsResponse`
+        `CheckCloudRequest`
+        `CheckCloudResponse`
+
+  c. From `cloud/gateway/settings.proto`, remove:
+        `enum UserEntitlement`
+        `message UserEntitlementsConfig`
+        `UpdateUserEntitlementsRequest`
+        `UpdateUserEntitlementsResponse`
+
+  d. From `cloud/gateway/shared.proto`, remove:
+        `UpdateUserEntitlementsRequest`
+        `UpdateUserEntitlementsResponse`
+        `CheckCloudRequest`
+        `CheckCloudResponse`
 
 5. Run `victor/tools/sdk/scripts/update_proto.sh`
 

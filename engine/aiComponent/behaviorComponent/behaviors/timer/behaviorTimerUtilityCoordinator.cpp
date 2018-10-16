@@ -568,13 +568,28 @@ void BehaviorTimerUtilityCoordinator::CheckShouldPlayAntic()
     }
   }
 }
+  
+bool BehaviorTimerUtilityCoordinator::CheckAndDelegate( IBehavior* behavior, bool runCallbacks )
+{
+  CancelDelegates( runCallbacks );
+  if( ANKI_VERIFY( behavior->WantsToBeActivated(),
+                  "BehaviorTimerUtilityCoordinator.CheckAndDelegate.DWTBA",
+                  "Behavior '%s' doesn't want to be activated",
+                  behavior->GetDebugLabel().c_str() ) )
+  {
+    DelegateIfInControl( behavior );
+    return true;
+  } else {
+    // depending on what callers do, this may cause the behavior to end
+    return false;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToSetTimer()
 {
   _iParams.anticTracker->PlayingAntic(GetBEI());
-  _iParams.setTimerBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.setTimerBehavior.get());
+  CheckAndDelegate( _iParams.setTimerBehavior.get() );
 }
 
 
@@ -582,16 +597,14 @@ void BehaviorTimerUtilityCoordinator::TransitionToSetTimer()
 void BehaviorTimerUtilityCoordinator::TransitionToPlayAntic()
 {
   _iParams.anticTracker->PlayingAntic(GetBEI());
-  _iParams.anticBaseBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.anticBaseBehavior.get());
+  CheckAndDelegate( _iParams.anticBaseBehavior.get() );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToShowTimeRemaining()
 {
-  _iParams.timerAlreadySetBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.timerAlreadySetBehavior.get());
+  CheckAndDelegate( _iParams.timerAlreadySetBehavior.get() );
 }
 
 
@@ -599,8 +612,7 @@ void BehaviorTimerUtilityCoordinator::TransitionToShowTimeRemaining()
 void BehaviorTimerUtilityCoordinator::TransitionToRinging()
 {
   GetTimerUtility().ClearTimer();
-  _iParams.timerRingingBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.timerRingingBehavior.get());
+  CheckAndDelegate( _iParams.timerRingingBehavior.get() );
   _lParams.touchReleasedSinceStartedRinging = false;
   _lParams.robotPlacedDownSinceStartedRinging = false;
   _lParams.timeRingingStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -610,32 +622,28 @@ void BehaviorTimerUtilityCoordinator::TransitionToRinging()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToTimerAlreadySet()
 {
-  _iParams.timerAlreadySetBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.timerAlreadySetBehavior.get());
+  CheckAndDelegate( _iParams.timerAlreadySetBehavior.get() );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToNoTimerToCancel()
 {
-  _iParams.iCantDoThatBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.iCantDoThatBehavior.get());
+  CheckAndDelegate( _iParams.iCantDoThatBehavior.get() );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToCancelTimer()
 {
-  _iParams.cancelTimerBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.cancelTimerBehavior.get());
+  CheckAndDelegate( _iParams.cancelTimerBehavior.get() );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToInvalidTimerRequest()
 {
-  _iParams.iCantDoThatBehavior->WantsToBeActivated();
-  DelegateNow(_iParams.iCantDoThatBehavior.get());
+  CheckAndDelegate( _iParams.iCantDoThatBehavior.get() );
 }
 
 

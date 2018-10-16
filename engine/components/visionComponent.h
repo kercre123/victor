@@ -36,6 +36,7 @@
 #include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -129,14 +130,6 @@ struct DockingErrorSignal;
     
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);
-    
-    // Push new schedule which takes affect on next image and can be popped using
-    // PopCurrentModeSchedule() below.
-    Result PushNextModeSchedule(AllVisionModesSchedule&& schedule);
-    
-    // Return to the schedule prior to the last push.
-    // Note that you cannot popup the last remaining (original) schedule.
-    Result PopCurrentModeSchedule();
     
     // Check whether a specific vision mode is enabled
     bool   IsModeEnabled(VisionMode mode) const;
@@ -310,8 +303,6 @@ struct DockingErrorSignal;
 
     bool HasStartedCapturingImages() const { return _hasStartedCapturingImages; }
 
-    void EnableSensorRes(bool sensorRes);
-
     // These methods control which faces are tracked, and turn face
     // recognition on/off. The goal here is to avoid resetting face
     // detection when in an action that tracks a face
@@ -338,7 +329,7 @@ struct DockingErrorSignal;
     std::vector<Point3f> _liftCrossBarSource;
     
     // helper method --- unpacks bitflags representation into a set of vision modes
-    std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;
+    std::set<VisionMode> GetVisionModesFromFlags(u64 bitflags) const;
 
     bool _isInitialized = false;
     bool _hasStartedCapturingImages = false;
@@ -373,6 +364,8 @@ struct DockingErrorSignal;
     // and can not be modified by VisionComponent
     VisionSystemInput _visionSystemInput = {};
 
+    Util::BitFlags64<VisionMode> _enabledVisionModes;
+
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;
     
@@ -395,8 +388,6 @@ struct DockingErrorSignal;
 
     Vision::ImageEncoding _desiredImageFormat = Vision::ImageEncoding::NoneImageEncoding;
 
-    bool _shouldDownsampleBayer = true;
-    
     // State machine to make sure nothing is using the shared memory from the camera system
     // before we request a different camera capture format as well as to wait
     // until we get a frame from the camera after changing formats before unpausing
@@ -435,6 +426,12 @@ struct DockingErrorSignal;
     bool _enableImageCapture = true;
 
     bool _captureOneImage = false;
+
+    #if REMOTE_CONSOLE_ENABLED
+    // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes
+    using VisionModeConsoleVarPair = std::pair<Util::ConsoleVar<bool>*, bool>;
+    std::array<VisionModeConsoleVarPair, static_cast<u32>(VisionMode::Count)>  _visionModeConsoleVars;
+    #endif
     
     void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
@@ -468,6 +465,12 @@ struct DockingErrorSignal;
     void SetLiftCrossBar();
 
     Vision::ImageEncoding GetCurrentImageFormat() const;
+
+    // Dynamically creates console vars for all the vision modes
+    void SetupVisionModeConsoleVars();
+
+    // Watches vision mode console vars and does things when they change
+    void UpdateVisionModeConsoleVars();
     
   }; // class VisionComponent
   

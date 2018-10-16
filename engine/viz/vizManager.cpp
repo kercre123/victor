@@ -39,7 +39,6 @@ namespace Anki {
   namespace Vector {
     
     CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
-    CONSOLE_VAR(bool, kSendBehaviorScoresToViz, "VizDebug", true);
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = std::numeric_limits<u32>::max();
     
@@ -253,11 +252,6 @@ namespace Anki {
       return vizID;
     }
     
-    void VizManager::DisplayCameraImage(const RobotTimeStamp_t timestamp)
-    {
-      SendMessage(VizInterface::MessageViz(VizInterface::DisplayImage((TimeStamp_t)timestamp)));
-    }
-    
     void VizManager::DrawCameraOval(const Point2f &center,
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)
@@ -279,7 +273,11 @@ namespace Anki {
     void VizManager::DrawCameraPoly(const Poly2f& poly, const ColorRGBA& color, const bool isClosed)
     {
       ANKI_CPU_PROFILE("VizManager::DrawCameraPoly");
-      
+      if (poly.size() < 2){
+        PRINT_NAMED_WARNING("VizManager.DrawCameraPoly.NotEnoughPoints",
+                            "Polygon provided needs two or more points but has %zd",poly.size());
+        return;
+      }
       auto crnt = poly.begin();
       auto next = (crnt + 1);
       auto end  = poly.end();
@@ -290,7 +288,6 @@ namespace Anki {
         ++crnt;
         ++next;
       }
-      
       if(isClosed)
       {
         DrawCameraLine(*crnt, *(poly.begin()), color);
@@ -739,7 +736,7 @@ namespace Anki {
       va_start(argptr, format);
       vsnprintf(buffer, 255, format, argptr);
       va_end(argptr);
-      SendMessage(VizInterface::MessageViz(VizInterface::SetLabel(labelType, (uint32_t)color, {std::string(buffer)})));
+      SendMessage(VizInterface::MessageViz(VizInterface::SetLabel((uint32_t)labelType, (uint32_t)color, {std::string(buffer)})));
     }
     
     
@@ -774,19 +771,10 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::CameraParams(std::move(params))));
     }
 
-    void VizManager::SendRobotState(const RobotState &msg,
-                                    const u16 videoFramePeriodMs,
-                                    const u16 imageProcFramePeriodMs,
-                                    const u32 numProcAnimFaceKeyframes,
-                                    const u8  lockedTracks,
-                                    const u8  tracksInUse,                                    
-                                    const f32 imuTemperature_degC,
-                                    std::array<uint16_t, 4> cliffThresholds,
-                                    const float batteryVolts
-                                    )
+    void VizManager::SendRobotState(VizInterface::RobotStateMessage&& msg)
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFramePeriodMs, imageProcFramePeriodMs, lockedTracks, tracksInUse, batteryVolts)));
+      SendMessage(VizInterface::MessageViz(std::move(msg)));
     }
 
     void VizManager::SendCurrentAnimation(const std::string& animName, u8 animTag)
@@ -813,37 +801,10 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(std::move(visionModeDebug)));
     }
 
-    void VizManager::SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData)
+    void VizManager::SendEnabledVisionModes(VizInterface::EnabledVisionModes&& modes)
     {
-      if (kSendBehaviorScoresToViz)
-      {
-        ANKI_CPU_PROFILE("VizManager::SendRobotBehaviorSelectData");
-        SendMessage(VizInterface::MessageViz(std::move(robotBehaviorSelectData)));
-      }
-    }
-
-    void VizManager::SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendNewBehaviorSelected");
-      SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
-    }
-      
-    void VizManager::SendNewReactionTriggered(VizInterface::NewReactionTriggered&& newReactionTriggered)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendNewReactionTriggered");
-      SendMessage(VizInterface::MessageViz(std::move(newReactionTriggered)));
-    }
-      
-    void VizManager::SendStartRobotUpdate()
-    {
-      ANKI_CPU_PROFILE("VizManager::SendStartRobotUpdate");
-      SendMessage(VizInterface::MessageViz(VizInterface::StartRobotUpdate()));
-    }
-
-    void VizManager::SendEndRobotUpdate()
-    {
-      ANKI_CPU_PROFILE("VizManager::SendEndRobotUpdate");
-      SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
+      ANKI_CPU_PROFILE("VizManager::SendEnabledVisionModes");
+      SendMessage(VizInterface::MessageViz(std::move(modes)));
     }
     
     void VizManager::SendSaveImages(ImageSendMode mode, std::string path)
@@ -863,31 +824,6 @@ namespace Anki {
       ANKI_CPU_PROFILE("VizManager::SendVizMessage");
       SendMessage(event);
     }
-
-    void VizManager::SendObjectConnectionState(u32 activeID, ObjectType type, bool connected)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectConnectionState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectConnectionState(activeID, type, connected)));
-    }
-    
-    void VizManager::SendObjectMovingState(u32 activeID, bool moving)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectMovingState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectMovingState(activeID, moving)));
-    }
-    
-    void VizManager::SendObjectUpAxisState(u32 activeID, UpAxis upAxis)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectUpAxisState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectUpAxisState(activeID, upAxis)));
-    }
-    
-    void VizManager::SendObjectAccelState(u32 objectID, const ActiveAccel& accel)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectAccelState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectAccelState(objectID, accel)));
-    }
-
   
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,

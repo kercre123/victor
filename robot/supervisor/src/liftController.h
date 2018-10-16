@@ -83,9 +83,6 @@ namespace Anki {
       // False if speed is 0 for more than LIFT_STOP_TIME.
       bool IsMoving();
       
-      // Returns the last height that was commanded via SetDesiredHeight()
-      f32 GetLastCommandedHeightMM();
-      
       // Get current height of the lift
       f32 GetHeightMM();
       

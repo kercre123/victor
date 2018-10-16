@@ -56,6 +56,7 @@ enum class VizTextLabelType : unsigned int
   TEXT_LABEL_CLIFF,
   TEXT_LABEL_DIST,
   TEXT_LABEL_SPEEDS,
+  TEXT_LABEL_OFF_TREADS_STATE,
   TEXT_LABEL_TOUCH,
   TEXT_LABEL_BATTERY,
   TEXT_LABEL_ANIM,
@@ -97,57 +98,29 @@ private:
   void ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraOvalMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraTextMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizDisplayImageMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCurrentAnimation(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessCameraParams(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessObjectConnectionState(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessObjectMovingState(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessObjectUpAxisState(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessObjectAccelState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVisionModeDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessEnabledVisionModes(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   bool IsMoodDisplayEnabled() const;
   void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   
-  bool IsBehaviorDisplayEnabled() const;
-  void PreUpdateBehaviorDisplay();
-  void ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizNewReactionTriggeredMessage(const AnkiEvent<VizInterface::MessageViz> &msg);
-  void DrawBehaviorDisplay();
-
-  void ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
-  
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
+  void DisplayBufferedCameraImage(const RobotTimeStamp_t timestamp);
   void DisplayCameraInfo(const RobotTimeStamp_t timestamp);
   
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
   
   using CubeAccelBuffer = Util::CircularBuffer<float>;
-
   
-  struct BehaviorScoreEntry
-  {
-    explicit BehaviorScoreEntry(float inValue = 0.0f, uint32_t numEntriesSinceReal = 0) :_value(inValue), _numEntriesSinceReal(numEntriesSinceReal) { }
-    float     _value;
-    uint32_t  _numEntriesSinceReal;
-  };
-  using BehaviorScoreBuffer = Util::CircularBuffer<BehaviorScoreEntry>;
-  
-  using BehaviorScoreBufferMap = std::map<BehaviorID, BehaviorScoreBuffer>;
-  using BehaviorEventBuffer = Util::CircularBuffer< std::vector<BehaviorID> >;
-  using ReactionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
-  
-  BehaviorScoreBuffer& FindOrAddScoreBuffer(BehaviorID behaviorID);
-
   void Subscribe(const VizInterface::MessageVizTag& tagType, std::function<void(const AnkiEvent<VizInterface::MessageViz>&)> messageHandler) {
     _eventMgr.SubscribeForever(static_cast<uint32_t>(tagType), messageHandler);
   }
@@ -162,9 +135,6 @@ private:
   
   // For displaying mood data
   webots::Display* _moodDisp;
-  
-  // For displaying behavior selection data
-  webots::Display* _behaviorDisp;
 
   // For the behavior stack
   webots::Display* _bsmStackDisp;
@@ -174,12 +144,6 @@ private:
 
   // For displaying images
   webots::Display* _camDisp;
-  
-  // For displaying active object data
-  webots::Display* _activeObjectDisp;
-  
-  // For displaying accelerometer data from one cube
-  webots::Display* _cubeAccelDisp;
 
   // Image reference for display in camDisp
   webots::ImageRef* _camImg = nullptr;
@@ -226,20 +190,6 @@ private:
   // Circular buffers of data to show last N ticks of a value
   EmotionBuffer           _emotionBuffers[(size_t)EmotionType::Count];
   EmotionEventBuffer      _emotionEventBuffer;
-  BehaviorScoreBufferMap  _behaviorScoreBuffers;
-  BehaviorEventBuffer     _behaviorEventBuffer;
-  ReactionEventBuffer     _reactionEventBuffer;
-  std::array<CubeAccelBuffer,3> _cubeAccelBuffers;
-  
-  struct ActiveObjectInfo
-  {
-    bool connected;
-    bool moving;
-    UpAxis upAxis;
-  };
-  std::map<u32, ActiveObjectInfo> _activeObjectInfoMap;
-  
-  void UpdateActiveObjectInfoText(u32 activeID);
 
   std::string _currAnimName = "";
   u8          _currAnimTag = 0;

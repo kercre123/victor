@@ -617,16 +617,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     inAirTooLongReportTime_ms = 0;
   }
 
-
-  // Send viz message with current treads states
-  const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
-  const auto vizManager = GetContext()->GetVizManager();
-  vizManager->SetText(VizManager::OFF_TREADS_STATE,
-                      NamedColors::GREEN,
-                      "OffTreadsState: %s  %s",
-                      EnumToString(_offTreadsState),
-                      awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
-
   return offTreadsStateChanged;
 }
 
@@ -708,9 +698,9 @@ void Robot::Delocalize(bool isCarryingObject)
   }
 
   // Update VizText
-  GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-  GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          GetPoseOriginList().GetSize(),
                                          worldOrigin.GetName().c_str());
@@ -772,7 +762,7 @@ void Robot::Delocalize(bool isCarryingObject)
 Result Robot::SetLocalizedTo(const ObservableObject* object)
 {
   if (object == nullptr) {
-    GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+    GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                            "LocalizedTo: Odometry");
     _localizedToID.UnSet();
     _isLocalized = true;
@@ -810,10 +800,10 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   GetAIComponent().OnRobotRelocalized();
 
   // Update VizText
-  GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
-  GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          GetPoseOriginList().GetSize(),
                                          GetWorldOrigin().GetName().c_str());
@@ -1160,17 +1150,18 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const u16 imageProcPeriod_ms  = Util::numeric_cast<u16>( GetVisionComponent().GetProcessingPeriod_ms() );
 
   // Send state to visualizer for displaying
-  GetContext()->GetVizManager()->SendRobotState(
-    stateMsg,
-    imageFramePeriod_ms,
-    imageProcPeriod_ms,
-    GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
-    GetMoveComponent().GetLockedTracks(),
-    GetAnimationComponent().GetAnimState_TracksInUse(),
-    _robotImuTemperature_degC,
-    GetCliffSensorComponent().GetCliffDetectThresholds(),
-    GetBatteryComponent().GetBatteryVolts()
-    );
+  VizInterface::RobotStateMessage vizState(stateMsg,
+                                           _robotImuTemperature_degC,
+                                           GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
+                                           GetCliffSensorComponent().GetCliffDetectThresholds(),
+                                           imageFramePeriod_ms,
+                                           imageProcPeriod_ms,
+                                           GetMoveComponent().GetLockedTracks(),
+                                           GetAnimationComponent().GetAnimState_TracksInUse(),
+                                           GetBatteryComponent().GetBatteryVolts(),
+                                           _offTreadsState,
+                                           _awaitingConfirmationTreadState);
+  GetContext()->GetVizManager()->SendRobotState(std::move(vizState));
 
   return lastResult;
 
@@ -1274,8 +1265,6 @@ Result Robot::Update()
   return RESULT_OK;
 #endif
 
-  GetContext()->GetVizManager()->SendStartRobotUpdate();
-
   _components->UpdateComponents();
 
   // If anything in updating block world caused a localization update, notify
@@ -1322,8 +1311,6 @@ Result Robot::Update()
   GetContext()->GetVizManager()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
   vizPose, ROBOT_BOUNDING_QUAD_COLOR);
   */
-
-  GetContext()->GetVizManager()->SendEndRobotUpdate();
 
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states

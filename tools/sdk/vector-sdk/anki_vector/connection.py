@@ -23,8 +23,8 @@ import asyncio
 from enum import Enum
 from concurrent import futures
 
-import aiogrpc
 import grpc
+import aiogrpc
 
 from . import exceptions, util
 from .messaging import client, protocol
@@ -33,13 +33,13 @@ from .messaging import client, protocol
 class CONTROL_PRIORITY_LEVEL(Enum):
     """Enum used to specify the priority level for the program."""
 
-    #: Runs below Mandatory Physical Reactions such as tucking Vector's head and lift during a fall,
+    #: Runs below Mandatory Physical Reactions such as tucking Vector's head and arms during a fall,
     #: yet above Trigger-Word Detection.
     TOP_PRIORITY_AI = protocol.ControlRequest.TOP_PRIORITY_AI  # pylint: disable=no-member
 
 
 class _ControlEventManager:
-    """This manages every :class:`asyncio.Event` that handle the behavior control
+    """This manages every :class:`asyncio.Event` that handles the behavior control
     system.
 
     These include three events: granted, lost, and request.
@@ -279,8 +279,6 @@ class Connection:
                     self._control_events.update(False)
         except futures.CancelledError:
             self._logger.debug('Behavior handler task was cancelled. This is expected during disconnection.')
-        except Exception as e:  # pylint: disable=broad-except
-            self._logger.error(e)  # TODO: better handle errors due to auth failure (and remove pylint disable)
 
     def close(self):
         """Cleanup the connection, and shutdown all the even handlers.

@@ -8,10 +8,12 @@
 #include "clad/types/cameraParams.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
+#include "clad/types/offTreadsStates.clad"
 #include "clad/types/vizTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/activeObjectAccel.clad"
 #include "clad/types/memoryMap.clad"
+#include "clad/types/visionModes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -19,15 +21,17 @@ namespace VizInterface {
 
 message RobotStateMessage
 {
-  RobotState state,
-  float_32 imuTemperature_degC,
-  uint_32  numProcAnimFaceKeyframes,
-  uint_16  cliffThresholds[4],
-  uint_16  videoFramePeriodMs,
-  uint_16  imageProcPeriodMs,
-  uint_8   lockedAnimTracks,
-  uint_8   animTracksInUse,
-  float_32 batteryVolts,
+  RobotState     state,
+  float_32       imuTemperature_degC,
+  uint_32        numProcAnimFaceKeyframes,
+  uint_16        cliffThresholds[4],
+  uint_16        videoFramePeriodMs,
+  uint_16        imageProcPeriodMs,
+  uint_8         lockedAnimTracks,
+  uint_8         animTracksInUse,
+  float_32       batteryVolts,
+  OffTreadsState offTreadsState,
+  OffTreadsState awaitingConfirmationTreadState,
 }
 
 message CurrentAnimation
@@ -129,6 +133,11 @@ message MemoryMapMessageViz
 message MemoryMapMessageVizEnd
 {
   uint_32  originId,
+}
+
+message EnabledVisionModes
+{
+  VisionMode modes[uint_16]
 }
 
 // VizCameraQuad
@@ -343,28 +352,6 @@ message RobotMood
   string    recentEvents[uint_8]
 }
 
-structure BehaviorScoreData
-{
-  float_32   behaviorScore,
-  float_32   totalScore,
-  string     behaviorID
-}
-
-message RobotBehaviorSelectData
-{
-  BehaviorScoreData scoreData[uint_8]
-}
-
-message NewBehaviorSelected
-{
-  string newCurrentBehavior
-}
-
-message NewReactionTriggered
-{
-  string  reactionStrategyTriggered
-}
-
 message BehaviorStackDebug
 {
   string debugStrings[uint_8]
@@ -373,21 +360,6 @@ message BehaviorStackDebug
 message VisionModeDebug
 {
   string debugStrings[uint_8]
-}
-
-message StartRobotUpdate
-{
-}
-
-message EndRobotUpdate
-{
-}
-
-// Display the image previously sent with the given timestamp
-// Will delete anything older as well
-message DisplayImage
-{
-  uint_32 timestamp
 }
 
 message SaveImages
@@ -400,31 +372,6 @@ message SaveState
 {
   bool   enabled,
   string path
-}
-
-message ObjectConnectionState
-{
-  uint_32    activeID,
-  ObjectType objectType,
-  bool       connected,
-}
-
-message ObjectMovingState
-{
-  uint_32 activeID,
-  bool    moving,
-}
-
-message ObjectUpAxisState
-{
-  uint_32 activeID,
-  UpAxis  upAxis,
-}
-
-message ObjectAccelState
-{
-  uint_32     objectID,
-  ActiveAccel accel,
 }
 
 // an explicit auto-union that includes all messages in this file

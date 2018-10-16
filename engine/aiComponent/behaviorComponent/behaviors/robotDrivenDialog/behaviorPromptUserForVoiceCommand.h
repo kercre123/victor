@@ -79,6 +79,8 @@ private:
   // Accessory helpers
   void CheckForPendingIntents();
 
+  const std::string& GetVocalPromptString() const;
+
   struct InstanceConfig {
     InstanceConfig();
 
@@ -111,6 +113,7 @@ private:
     EState                    state;
     EIntentStatus             intentStatus;
     uint8_t                   repromptCount;
+    std::string               vocalPromptString; // only used if !_iConfig.wasPromptSetFromJson
   };
 
   InstanceConfig _iConfig;

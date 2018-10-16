@@ -27,7 +27,10 @@ class BehaviorDispatcherRerun : public ICozmoBehavior
 public:
   virtual ~BehaviorDispatcherRerun();
   
-  static Json::Value CreateConfig(BehaviorID newConfigID, BehaviorID delegateID, const int numRuns);  
+  static Json::Value CreateConfig(BehaviorID newConfigID,
+                                  BehaviorID delegateID,
+                                  const int numRuns,
+                                  bool presetConditions);  
 
   virtual bool WantsToBeActivatedBehavior() const override{return true;}
   
@@ -55,7 +58,8 @@ protected:
 private:
   struct InstanceConfig {
     InstanceConfig();
-    int numRuns; 
+    int numRuns;
+    bool presetConditions;
     
     BehaviorID        delegateID;
     ICozmoBehaviorPtr delegatePtr;

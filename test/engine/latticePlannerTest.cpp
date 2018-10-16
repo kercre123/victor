@@ -655,7 +655,7 @@ TEST_F(LatticePlannerTest, MotionProfileBackwardsForwards)
     seg.GetStartPoint(x, y);
     f32 x1, y1, a1;
     seg.GetEndPose(x1, y1, a1);
-    PRINT_NAMED_ERROR("", "%f %f %f %f %f", x, y, x1, y1, RAD_TO_DEG(a1));
+    PRINT_NAMED_INFO("", "%f %f %f %f %f", x, y, x1, y1, RAD_TO_DEG(a1));
     ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
   }
 }

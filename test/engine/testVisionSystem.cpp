@@ -1,3 +1,4 @@
+
 /**
  * File: testVisionSystem.cpp
  *
@@ -48,7 +49,6 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
                                           std::to_string(Anki::Vector::CameraCalibrator::INVERTED_BOX).c_str());
   
   Anki::Vector::VisionSystem* visionSystem = new Anki::Vector::VisionSystem(cozmoContext);
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
@@ -60,21 +60,7 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
                                                                                              0.f));
   result = visionSystem->UpdateCameraCalibration(calib);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  // Turn on _only_ marker detection and camera calibration
-  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::Idle, true);
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::DetectingMarkers, true);
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::ComputingCalibration, true);
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  // Make sure we run on every frame
-  result = visionSystem->PushNextModeSchedule(Anki::Vector::AllVisionModesSchedule({{Anki::Vector::VisionMode::DetectingMarkers, Anki::Vector::VisionModeSchedule(1)}}));
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
+    
   Anki::Vision::ImageCache imageCache;
   
   Anki::Vision::ImageRGB img;
@@ -87,9 +73,13 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   imageCache.Reset(img);
+
+  Anki::Vector::VisionSystemInput input;
+  input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::DetectingMarkers, true);
+  input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::ComputingCalibration, true);
+  input.imageBuffer = imageCache.GetBuffer();
   
-  Anki::Vector::VisionPoseData robotState; // not needed just to detect markers
-  result = visionSystem->Update(robotState, imageCache);
+  result = visionSystem->Update(input);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   Anki::Vector::VisionProcessingResult processingResult;
@@ -156,7 +146,6 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
                                           std::to_string(Anki::Vector::CameraCalibrator::QBERT).c_str());
 
   Anki::Vector::VisionSystem* visionSystem = new Anki::Vector::VisionSystem(cozmoContext);
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
@@ -168,21 +157,7 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
                                                                                              0.f));
   result = visionSystem->UpdateCameraCalibration(calib);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  // Turn on _only_ marker detection and camera calibration
-  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::Idle, true);
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::DetectingMarkers, true);
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  result = visionSystem->SetNextMode(Anki::Vector::VisionMode::ComputingCalibration, true);
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
-  // Make sure we run on every frame
-  result = visionSystem->PushNextModeSchedule(Anki::Vector::AllVisionModesSchedule({{Anki::Vector::VisionMode::DetectingMarkers, Anki::Vector::VisionModeSchedule(1)}}));
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-  
+    
   Anki::Vision::ImageCache imageCache;
   
   Anki::Vision::ImageRGB img;
@@ -195,9 +170,13 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   
   imageCache.Reset(img);
   
-  Anki::Vector::VisionPoseData robotState; // not needed just to detect markers
-  result = visionSystem->Update(robotState, imageCache);
-  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  Anki::Vector::VisionSystemInput input;
+  input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::DetectingMarkers, true);
+  input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::ComputingCalibration, true);
+  input.imageBuffer = imageCache.GetBuffer();
+  
+  result = visionSystem->Update(input);
+    ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   Anki::Vector::VisionProcessingResult processingResult;
   bool resultAvailable = visionSystem->CheckMailbox(processingResult);
@@ -272,7 +251,6 @@ TEST(VisionSystem, MarkerDetectionTests)
   // NOTE: We don't just use a MarkerDetector here because the VisionSystem also does CLAHE preprocessing which
   //       is part of this test (e.g. for low light performance)
   Vector::VisionSystem visionSystem(cozmoContext);
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(RESULT_OK, result);
 
@@ -280,28 +258,6 @@ TEST(VisionSystem, MarkerDetectionTests)
   // to make vision system happy. All that matters is the image dimensions be correct.
   auto calib = std::make_shared<Vision::CameraCalibration>(240,320,290.f,290.f,160.f,120.f,0.f);
   result = visionSystem.UpdateCameraCalibration(calib);
-  ASSERT_EQ(RESULT_OK, result);
-
-  // Turn on _only_ marker detection
-  result = visionSystem.SetNextMode(Vector::VisionMode::Idle, true);
-  ASSERT_EQ(RESULT_OK, result);
-
-  result = visionSystem.SetNextMode(Vector::VisionMode::DetectingMarkers, true);
-  ASSERT_EQ(RESULT_OK, result);
-  
-  result = visionSystem.SetNextMode(Vector::VisionMode::FullFrameMarkerDetection, true);
-  ASSERT_EQ(RESULT_OK, result);
-
-  // Enable marker detection while rotating fast (which also allows us to do marker detection
-  // without IMU data, as is the case here)
-  result = visionSystem.SetNextMode(Vector::VisionMode::MarkerDetectionWhileRotatingFast, true);
-  ASSERT_EQ(RESULT_OK, result);
-  
-  // Make sure we run on every frame
-  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({
-    {Vector::VisionMode::DetectingMarkers, Vector::VisionModeSchedule(1)},
-    {Vector::VisionMode::FullFrameMarkerDetection, Vector::VisionModeSchedule(1)},
-  }));
   ASSERT_EQ(RESULT_OK, result);
 
   // Grab all the test images from "resources/test/lowLightMarkerDetectionTests"
@@ -400,9 +356,17 @@ TEST(VisionSystem, MarkerDetectionTests)
 
       imageCache.Reset(img);
 
+      Anki::Vector::VisionSystemInput input;
+      input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::DetectingMarkers, true);
+      input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::FullFrameMarkerDetection, true);
+      input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::MarkerDetectionWhileRotatingFast, true);
+      input.imageBuffer = imageCache.GetBuffer();
+  
       Vector::VisionPoseData robotState; // not needed just to detect markers
       robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
-      result = visionSystem.Update(robotState, imageCache);
+      input.poseData = robotState;
+      
+      result = visionSystem.Update(input);
       ASSERT_EQ(RESULT_OK, result);
 
       Vector::VisionProcessingResult processingResult;
@@ -497,16 +461,6 @@ TEST(VisionSystem, ImageQuality)
   result = visionSystem.UpdateCameraCalibration(calib);
   ASSERT_EQ(RESULT_OK, result);
 
-  // Turn on _only_ image quality check
-  result = visionSystem.SetNextMode(Vector::VisionMode::Idle, true);
-  ASSERT_EQ(RESULT_OK, result);
-
-  result = visionSystem.SetNextMode(Vector::VisionMode::AutoExposure, true);
-  ASSERT_EQ(RESULT_OK, result);
-
-  result = visionSystem.PushNextModeSchedule(Vector::AllVisionModesSchedule({{Vector::VisionMode::AutoExposure, Vector::VisionModeSchedule(1)}}));
-  ASSERT_EQ(RESULT_OK, result);
-
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                                                    "test/imageQualityTests");
 
@@ -559,9 +513,15 @@ TEST(VisionSystem, ImageQuality)
 
       imageCache.Reset(img);
 
+      Anki::Vector::VisionSystemInput input;
+      input.modesToProcess.SetBitFlag(Anki::Vector::VisionMode::AutoExposure, true);
+      input.imageBuffer = imageCache.GetBuffer();
+      
       Vector::VisionPoseData robotState; // not needed for image quality check
       robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
-      result = visionSystem.Update(robotState, imageCache);
+      input.poseData = robotState;
+
+      result = visionSystem.Update(input);
       ASSERT_EQ(RESULT_OK, result);
 
       Vector::VisionProcessingResult processingResult;
@@ -658,7 +618,6 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   using namespace Anki;
   
   // Load vision_config.json file and get NeuralNets section
-  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   const Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
   ASSERT_TRUE(config.isMember("NeuralNets"));
   const Json::Value& neuralNetConfig = config["NeuralNets"];

@@ -24,6 +24,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "gtest/gtest.h"
+#include "test/engine/callWithoutError.h"
 
 #include "clad/types/variableSnapshotIds.h"
 
@@ -269,23 +270,17 @@ TEST(VariableSnapshotComponent, NullPointerError)
   using namespace Anki::Vector;
 
   {
-    auto errGState = Anki::Util::_errG;
-
     // make a robot
     auto robot0 = std::make_unique<Robot>(kRobotId, cozmoContext);
 
     // get and load data
-    RemoveTestDataPrior(robot0);auto& variableSnapshotComp    
-     = robot0->GetVariableSnapshotComponent();
+    RemoveTestDataPrior(robot0);
+    auto& variableSnapshotComp = robot0->GetVariableSnapshotComponent();
 
-    Anki::Util::_errG = false;
-    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, nullptr);
-    
-    // should error here
-    EXPECT_TRUE( Anki::Util::_errG );
-
-    // set _errG back to its initial value
-    Anki::Util::_errG = errGState;
+    const bool err = CallWithoutError( [&](){
+      variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, nullptr);
+    });
+    EXPECT_TRUE( err );
   }
 
   RemoveTestDataAfter();

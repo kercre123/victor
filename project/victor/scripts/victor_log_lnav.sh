@@ -77,9 +77,9 @@ if [ -f "$LOG_FILE" ]; then
   rm ${LOG_FILE}
 fi
 
-# Calling full ssh logcat command here. 
+# Calling full ssh log command here.
 # Doing it via robot_sh makes $! return the wrong pid for some reason.
-ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} logcat > ${LOG_FILE} &
+ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} /bin/tail -F /var/log/messages > ${LOG_FILE} &
 
 # Get PID so we can kill the backgrounded task at the end
 LOGGING_PID=$!

@@ -1,5 +1,9 @@
 [
   {
+    "CladEvent": "InvalidAnimTrigger",
+    "AnimName": "ag_communication_cantdothat"
+  },
+  {
     "CladEvent": "DEPRECATED_AcknowledgeFaceNamed",
     "AnimName": "ag_freeplay_reacttoface_sayname"
   },
@@ -513,7 +517,7 @@
   },
   {
     "CladEvent": "FetchCubeSuccess",
-    "AnimName": "ag_greeting_big_hello"
+    "AnimName": "ag_greeting_imhome"
   },
   {
     "CladEvent": "FindCubeReactToCube",
@@ -1660,7 +1664,7 @@
   },
   {
     "CladEvent": "GreetAfterLongTime",
-    "AnimName" : "ag_greeting_big_hello"
+    "AnimName" : "ag_greeting_imhome"
   },
   {
     "CladEvent": "ComeHereStart",
@@ -1672,7 +1676,7 @@
   },
   {
     "CladEvent": "PRDemoGreeting",
-    "AnimName": "ag_greeting_big_hello"
+    "AnimName": "ag_greeting_imhome"
   },
   {
     "CladEvent": "VC_SleepingToListeningGetIn",

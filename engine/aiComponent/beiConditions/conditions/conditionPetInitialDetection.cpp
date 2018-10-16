@@ -23,32 +23,32 @@ namespace Vector {
 
 namespace {
 static const int kReactToPetNumTimesObserved = 3;
-}    
-  
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionPetInitialDetection::ConditionPetInitialDetection(const Json::Value& config)
 : IBEICondition(config)
 {
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ConditionPetInitialDetection::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{ 
+{
   // Check for new pets
   const auto & petWorld = behaviorExternalInterface.GetPetWorld();
   const auto & pets = petWorld.GetAllKnownPets();
-  
+
   for (const auto & it : pets) {
     const auto petID = it.first;
     if (_reactedTo.find(petID) != _reactedTo.end()) {
-      LOG_DEBUG("ReactStratPetInitialDetect.ShouldSwitch.AlreadyReacted", "Already reacted to petID %d", petID);
+      LOG_DEBUG("ConditionPetInitialDetection.AreConditionsMet.AlreadyReacted", "Already reacted to petID %d", petID);
       continue;
     }
     const auto & pet = it.second;
     const auto numTimesObserved = pet.GetNumTimesObserved();
     if (numTimesObserved < kReactToPetNumTimesObserved) {
-      LOG_DEBUG("ReactStratPetInitialDetect.ShouldSwitch.NumTimesObserved",
+      LOG_DEBUG("ConditionPetInitialDetection.AreConditionsMet.NumTimesObserved",
                 "PetID %d does not meet observation threshold (%d < %d)",
                 petID, numTimesObserved, kReactToPetNumTimesObserved);
       continue;
@@ -56,7 +56,7 @@ bool ConditionPetInitialDetection::AreConditionsMetInternal(BehaviorExternalInte
     _reactedTo.insert(petID);
     return true;
   }
-  
+
   return false;
 }
 

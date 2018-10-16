@@ -389,11 +389,11 @@ message EnableVisionMode {
 }
 
 message DevSubscribeVisionModes {
-  uint_32 bitFlags
+  uint_64 bitFlags
 }
 
 message DevUnsubscribeVisionModes {
-  uint_32 bitFlags
+  uint_64 bitFlags
 }
 
 // Rename given ID+oldName pair to use newName. For safety if current face with given ID
@@ -423,7 +423,6 @@ message LoadFaceAlbumFromFile {
 
 message SetCameraCaptureFormat {
   Anki::Vision::ImageEncoding format,
-  bool enableSensorRes=0
 }
 
 message SetMemoryMapRenderEnabled {
@@ -461,7 +460,8 @@ message ExecuteBehaviorByExecutableType {
 
 message ExecuteBehaviorByID {
   string behaviorID,
-  int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
+  int_32 numRuns = -1, // Number of times to run the behavior (-1 is infinite)
+  bool presetConditions = 0, // If true, lets a behavior prepare for force activation
 }
 
 // Special message to make BehaviorLiftLoadTest activatable.
