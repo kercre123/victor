@@ -10,6 +10,7 @@ enum uint_32 BusType
   Invalid = 0,
   Master_Audio_Bus = 3803692087,
   Master_Secondary_Bus = 805203703,
+  Victor_Alexa_External = 863136578,
   Victor_Robot = 3435543205,
   Victor_Robot_External = 1731724381,
   Victor_Robot_Sfx_Character_Buses = 2278572386,
