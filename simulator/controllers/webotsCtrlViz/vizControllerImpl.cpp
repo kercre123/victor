@@ -80,8 +80,6 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizRobotStateMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CurrentAnimation,
     std::bind(&VizControllerImpl::ProcessVizCurrentAnimation, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::RobotMood,
-    std::bind(&VizControllerImpl::ProcessVizRobotMoodMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveImages,
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveState,
@@ -99,7 +97,6 @@ void VizControllerImpl::Init()
   // Get display devices
   _disp = _vizSupervisor.getDisplay("cozmo_viz_display");
   _dockDisp = _vizSupervisor.getDisplay("cozmo_docking_display");
-  _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
   _visionModeDisp = _vizSupervisor.getDisplay("victor_vision_mode_display");
 
@@ -141,7 +138,6 @@ void VizControllerImpl::Init()
   }
 
   _disp->setFont("Lucida Console", 8, true);
-  _moodDisp->setFont("Lucida Console", 8, true);
   _bsmStackDisp->setFont("Lucida Console", 8, true);
   _visionModeDisp->setFont("Lucida Console", 8, true);
   
@@ -870,160 +866,6 @@ void VizControllerImpl::ProcessVizCurrentAnimation(const AnkiEvent<VizInterface:
   const auto& payload = msg.GetData().Get_CurrentAnimation();
   _currAnimName = payload.animName;
   _currAnimTag = payload.tag;
-}
-  
-  
-static const int kTextSpacingY = 10;
-static const int kTextOffsetY  = -3;
-  
-  
-// ========== Mood Display ==========
-  
-  
-bool VizControllerImpl::IsMoodDisplayEnabled() const
-{
-  // maybe check settings or pixel size too?
-  return (_emotionBuffers[0].capacity() > 0);
-}
-
-
-void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  if (!IsMoodDisplayEnabled())
-  {
-    return;
-  }
-  
-  const VizInterface::RobotMood& robotMood = msg.GetData().Get_RobotMood();
-  assert(robotMood.emotion.size() == (size_t)EmotionType::Count);
-  
-  const int windowWidth  = _moodDisp->getWidth();
-  const int windowHeight = _moodDisp->getHeight();
-
-  // Calculate y coordinate range and scaling for graph points
-  
-  const int   labelOffsetX  = 120; // Minimum indentation from right for the catagory label (e.g. "Happy X.XX")
-  const float xStep         = float(windowWidth-labelOffsetX) / float(_emotionBuffers[0].capacity());
-  
-  const int   yValueFor1    = 16;
-  const int   yValueForNeg1 = windowHeight - yValueFor1;
-  const float yValueFor0    = float(yValueForNeg1 + yValueFor1) * 0.5f;
-  const float yScalar       = float(yValueFor1) - yValueFor0; // y-is-down so larger y value = lower graph value
-  
-  // Clear Window
-  
-  _moodDisp->setColor(0x000000);
-  _moodDisp->fillRectangle(0, 0, windowWidth, windowHeight);
-  
-  // Draw Graph Axis labels
-
-  _moodDisp->setColor(0xffffff);
-  _moodDisp->drawText("1.0",  0, yValueFor1 + kTextOffsetY);
-  _moodDisp->drawText("-1.0", 0, yValueForNeg1 + kTextOffsetY);
-  
-  // Sort emotion indices based on the most recent value, sorting from largest to smallest value
-  // so that we can draw in order (important for label positioning on right as we prvent labels drawing on top of each other)
-  
-  int sortedEmoIndices[(uint32_t)EmotionType::Count];
-  for (uint32_t eT=0; eT < (uint32_t)EmotionType::Count; ++eT)
-  {
-    sortedEmoIndices[eT] = eT;
-  }
-  std::sort(std::begin(sortedEmoIndices), std::end(sortedEmoIndices),
-            [robotMood](const int& lhs, const int& rhs)
-            {
-              return robotMood.emotion[lhs] > robotMood.emotion[rhs];
-            } );
-  
-  // Calculate line spacing and top/bottom range
-  
-  const int kTopTextY    = (kTextSpacingY/2);
-  const int kBottomTextY = windowHeight - (kTextSpacingY/2);
-  
-  int lastTextY = kTopTextY - kTextSpacingY;
-  
-  _emotionEventBuffer.push_back( robotMood.recentEvents );
-  
-  // Draw all the events
-  
-  {
-    int eventY = kTopTextY;
-    
-    _moodDisp->setColor(0xffffff);
-    float xValF = 0.0f;
-    
-    for (size_t j=0; j < _emotionEventBuffer.size(); ++j)
-    {
-      const std::vector<std::string>& eventsThisTick = _emotionEventBuffer[j];
-      
-      if (eventsThisTick.size() > 0)
-      {
-        const int xVal = (int)(xValF);
-        
-        for (const std::string& eventText : eventsThisTick)
-        {
-          _moodDisp->drawLine(xVal, eventY, xVal, eventY + 30);
-          _moodDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
-          
-          eventY += kTextSpacingY;
-          if (eventY > kBottomTextY)
-          {
-            eventY = kTopTextY;
-          }
-        }
-      }
-      
-      xValF += xStep;
-    }
-  }
-  
-  // Draw each emotion graph in order, from top to bottom
-  
-  for (size_t i=0; i < (size_t)EmotionType::Count; ++i)
-  {
-    const uint32_t eT = sortedEmoIndices[i];
-    EmotionType emotionType = (EmotionType)eT;
-    Util::CircularBuffer<float>& emotionBuffer = _emotionBuffers[eT];
-    const float latestValue = robotMood.emotion[eT];
-    emotionBuffer.push_back(latestValue);
-  
-    _moodDisp->setColor( ColorRGBA::CreateFromColorIndex(eT).As0RGB() );
-    
-    float xValF = 0.0f;
-    int lastX = 0;
-    int lastY = 0;
-    
-    // Draw a line graph connecting all of the sample points
-    
-    for (size_t j=0; j < emotionBuffer.size(); ++j)
-    {
-      const float emotionValue = emotionBuffer[j];
-      const int xVal = (int)(xValF);
-      const int yVal = (int)(yValueFor0 + (yScalar * emotionValue));
-      
-      if (j > 0)
-      {
-        _moodDisp->drawLine(lastX, lastY, xVal, yVal);
-      }
-      
-      xValF += xStep;
-      lastX = xVal;
-      lastY = yVal;
-    }
-    
-    // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
-    // and at least 1 line down from the last category, clamped to the top/bottom range
-    
-    const int textX = MIN(lastX, windowWidth-labelOffsetX);
-    const int maxTextY = kBottomTextY - (kTextSpacingY * int(size_t(EmotionType::Count)-(i+1)));
-    const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
-    lastTextY = textY;
-    
-    char valueString[32];
-    snprintf(valueString, sizeof(valueString), "%1.2f: ", latestValue);
-    std::string text = std::string(valueString) + EmotionTypeToString(emotionType);
-    _moodDisp->drawText(text, textX, textY + kTextOffsetY);
-  }
 }
 
 

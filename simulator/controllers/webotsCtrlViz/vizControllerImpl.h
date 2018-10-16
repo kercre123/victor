@@ -107,9 +107,6 @@ private:
   void ProcessVisionModeDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessEnabledVisionModes(const AnkiEvent<VizInterface::MessageViz>& msg);
   
-  bool IsMoodDisplayEnabled() const;
-  void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
@@ -132,9 +129,6 @@ private:
 
   // For displaying docking data
   webots::Display* _dockDisp;
-  
-  // For displaying mood data
-  webots::Display* _moodDisp;
 
   // For the behavior stack
   webots::Display* _bsmStackDisp;

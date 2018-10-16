@@ -64,30 +64,6 @@ Supervisor {
       width 400
       height 300
     }
-    
-    Display {
-      # Hide display plane far away
-      translation 1000 0.1 0
-
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
-      name "cozmo_mood_display"
-      width 450
-      height 150
-    }
-
 
     # Create camera display, plus N debug displays (0 == camera display, by convention)
     %{ for iDisplay=0,fields.numDebugImageDisplays.value do }%
