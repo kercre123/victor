@@ -39,13 +39,13 @@ struct VisionSystemInput
   Vision::ResizeMethod resizeMethod = Vision::ResizeMethod::Linear;
 
   // Which VisionModes to process
-  Util::BitFlags32<VisionMode> modesToProcess;
+  Util::BitFlags64<VisionMode> modesToProcess;
 
   // Which VisionModes we will likely be processing in the future
   // TODO VIC-9525 Add VisionModeClass, the AutoExposure class can have
   // arguments for whether or not to clear metering regions which is the
   // current purpose of futureModesToProcess.
-  Util::BitFlags32<VisionMode> futureModesToProcess;
+  Util::BitFlags64<VisionMode> futureModesToProcess;
 };
 
 }

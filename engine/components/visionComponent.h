@@ -329,7 +329,7 @@ struct DockingErrorSignal;
     std::vector<Point3f> _liftCrossBarSource;
     
     // helper method --- unpacks bitflags representation into a set of vision modes
-    std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;
+    std::set<VisionMode> GetVisionModesFromFlags(u64 bitflags) const;
 
     bool _isInitialized = false;
     bool _hasStartedCapturingImages = false;
@@ -364,7 +364,7 @@ struct DockingErrorSignal;
     // and can not be modified by VisionComponent
     VisionSystemInput _visionSystemInput = {};
 
-    Util::BitFlags32<VisionMode> _enabledVisionModes;
+    Util::BitFlags64<VisionMode> _enabledVisionModes;
 
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;

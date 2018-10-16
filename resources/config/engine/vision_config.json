@@ -12,6 +12,7 @@
     "DetectingFaces"                   : true,
     "DetectingMotion"                  : true,
     "DetectingOverheadEdges"           : true,
+    "DetectingBrightColors"            : true,
     "ComputingCalibration"             : false,
     "AutoExposure"                     : true,
     "WhiteBalance"                     : true,

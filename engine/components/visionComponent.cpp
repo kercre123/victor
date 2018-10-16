@@ -1226,8 +1226,8 @@ namespace Vector {
         iter = _salientPointsToDraw.erase(iter);
       }
     }
-
-    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet))
+    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet)
+        || procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingBrightColors))
     {
       if(!usingFixedDrawTime)
       {
@@ -1259,10 +1259,27 @@ namespace Vector {
       const auto& object = salientPointToDraw.second;
 
       const Poly2f poly(object.shape);
-      const ColorRGBA color = (object.description.empty() ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++));
+      ColorRGBA color(NamedColors::RED);
+      std::string caption = "";
+
+      switch(object.salientType)
+      {
+        case Vision::SalientPointType::BrightColors:
+        {
+          color = (object.color_rgba == 0) ? NamedColors::BLACK : ColorRGBA(object.color_rgba);
+          caption = object.description + "[" + std::to_string((s32)std::round(object.score))
+                    + "] t:" + std::to_string(object.timestamp);
+          break;
+        }
+        default:
+        {
+          color = (object.description.empty()) ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++);
+          caption = object.description + "[" + std::to_string((s32)std::round(100.f*object.score))
+                      + "] t:" + std::to_string(object.timestamp);
+          break;
+        }
+      }
       _vizManager->DrawCameraPoly(poly, color);
-      const std::string caption(object.description + "[" + std::to_string((s32)std::round(100.f*object.score))
-                                + "] t:" + std::to_string(object.timestamp));
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
     }
 
@@ -1577,7 +1594,7 @@ namespace Vector {
     external_interface::ImageChunk* imageChunk = nullptr;
     external_interface::GatewayWrapper wrapper;
 
-    DEV_ASSERT(sdkRequestingImage || vizConnected, "VisionComponent.CompressAndSendImage.CompressWithoutBroadcasting");
+    //DEV_ASSERT(sdkRequestingImage || vizConnected, "VisionComponent.CompressAndSendImage.CompressWithoutBroadcasting");
 
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
@@ -2660,9 +2677,9 @@ namespace Vector {
     SetCameraCaptureFormat(msg.format);
   }
 
-  std::set<VisionMode> VisionComponent::GetVisionModesFromFlags(u32 bitflags) const
+  std::set<VisionMode> VisionComponent::GetVisionModesFromFlags(u64 bitflags) const
   {
-    Util::BitFlags32<VisionMode> flags;
+    Util::BitFlags64<VisionMode> flags;
     flags.SetFlags(bitflags);
     std::set<VisionMode> visionModes;
     for(uint32_t i=0; i<VisionModeNumEntries; ++i) {

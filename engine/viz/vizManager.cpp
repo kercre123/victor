@@ -273,7 +273,11 @@ namespace Anki {
     void VizManager::DrawCameraPoly(const Poly2f& poly, const ColorRGBA& color, const bool isClosed)
     {
       ANKI_CPU_PROFILE("VizManager::DrawCameraPoly");
-      
+      if (poly.size() < 2){
+        PRINT_NAMED_WARNING("VizManager.DrawCameraPoly.NotEnoughPoints",
+                            "Polygon provided needs two or more points but has %zd",poly.size());
+        return;
+      }
       auto crnt = poly.begin();
       auto next = (crnt + 1);
       auto end  = poly.end();
@@ -284,7 +288,6 @@ namespace Anki {
         ++crnt;
         ++next;
       }
-      
       if(isClosed)
       {
         DrawCameraLine(*crnt, *(poly.begin()), color);

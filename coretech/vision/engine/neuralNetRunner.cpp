@@ -254,10 +254,6 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
 {
-  // Always clear the output list, so it's definitely only populated once the
-  // future is ready below
-  salientPoints.clear();
-
   if(_future.valid())
   {
     // Check the future's status and keep waiting until it's ready.

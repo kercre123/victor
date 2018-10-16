@@ -29,6 +29,7 @@
 
 #include "coretech/common/engine/matlabInterface.h"
 #include "coretech/common/engine/robotTimeStamp.h"
+#include "coretech/vision/engine/brightColorDetector.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/imageCache.h"
@@ -56,6 +57,7 @@ namespace Anki {
  
 namespace Vision {
   class Benchmark;
+  class BrightColorDetector;
   class CameraParamsController;
   class FaceTracker;
   class ImageCache;
@@ -85,7 +87,7 @@ namespace Vector {
   struct VisionProcessingResult
   {
     RobotTimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
-    Util::BitFlags32<VisionMode> modesProcessed;
+    Util::BitFlags64<VisionMode> modesProcessed;
     
     Vision::ImageQuality imageQuality;
     Vision::CameraParams cameraParams;
@@ -127,7 +129,7 @@ namespace Vector {
     
     Result UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib);
 
-    const Util::BitFlags32<VisionMode>& GetEnabledModes() const { return _modes; }
+    const Util::BitFlags64<VisionMode>& GetEnabledModes() const { return _modes; }
     bool   IsModeEnabled(VisionMode whichMode) const { return _modes.IsBitFlagSet(whichMode); }
         
     // This is main Update() call to be called in a loop from above.
@@ -144,7 +146,7 @@ namespace Vector {
     const std::vector<Pose3d>& GetCalibrationPoses() const { return _cameraCalibrator->GetCalibrationPoses();}
 
     // VisionMode <-> String Lookups
-    std::string GetModeName(Util::BitFlags32<VisionMode> mode) const;
+    std::string GetModeName(Util::BitFlags64<VisionMode> mode) const;
     std::string GetCurrentModeName() const;
     VisionMode  GetModeFromString(const std::string& str) const;
     
@@ -229,8 +231,8 @@ namespace Vector {
     std::pair<bool,Vision::CameraParams> _nextCameraParams; // bool represents if set but not yet sent
     std::unique_ptr<Vision::CameraParamsController> _cameraParamsController;
     
-    Util::BitFlags32<VisionMode> _modes;
-    Util::BitFlags32<VisionMode> _futureModes;
+    Util::BitFlags64<VisionMode> _modes;
+    Util::BitFlags64<VisionMode> _futureModes;
     
     s32 _frameNumber = 0;
     
@@ -250,6 +252,7 @@ namespace Vector {
     std::unique_ptr<Vision::FaceTracker>            _faceTracker;
     std::unique_ptr<Vision::PetTracker>             _petTracker;
     std::unique_ptr<Vision::MarkerDetector>         _markerDetector;
+    std::unique_ptr<Vision::BrightColorDetector>    _brightColorDetector;
     std::unique_ptr<LaserPointDetector>             _laserPointDetector;
     std::unique_ptr<MotionDetector>                 _motionDetector;
     std::unique_ptr<OverheadEdgesDetector>          _overheadEdgeDetector;
@@ -320,6 +323,9 @@ namespace Vector {
     
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
+
+    // Uses color
+    Result DetectBrightColors(Vision::ImageCache& imageCache);
 
     // Uses grayscale
     Result DetectIllumination(Vision::ImageCache& imageCache);

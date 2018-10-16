@@ -389,11 +389,11 @@ message EnableVisionMode {
 }
 
 message DevSubscribeVisionModes {
-  uint_32 bitFlags
+  uint_64 bitFlags
 }
 
 message DevUnsubscribeVisionModes {
-  uint_32 bitFlags
+  uint_64 bitFlags
 }
 
 // Rename given ID+oldName pair to use newName. For safety if current face with given ID

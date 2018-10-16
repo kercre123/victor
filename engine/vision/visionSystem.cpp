@@ -331,7 +331,7 @@ Result VisionSystem::Init(const Json::Value& config)
   }
 
   // VisionModes are default enabled (except Idle)
-  _modes.SetFlags(std::numeric_limits<u32>::max());
+  _modes.SetFlags(std::numeric_limits<u64>::max());
   _modes.SetBitFlag(VisionMode::Idle, false);
   
   const Json::Value& configModes = config["InitialVisionModes"];
@@ -889,6 +889,15 @@ Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
   
 } // DetectMotion()
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result VisionSystem::DetectBrightColors(Vision::ImageCache& imageCache)
+{
+  DEV_ASSERT(imageCache.HasColor(), "VisionSystem.DetectBrightColors.NoColor");
+  const Vision::ImageRGB& image = imageCache.GetRGB();
+  Result result = _brightColorDetector->Detect(image, _currentResult.salientPoints);
+  return result;
+} // DetectBrightColors()
+
 Result VisionSystem::UpdateOverheadMap(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.UpdateOverheadMap.NoColor");
@@ -938,7 +947,7 @@ std::string VisionSystem::GetCurrentModeName() const {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string VisionSystem::GetModeName(Util::BitFlags32<VisionMode> mode) const
+std::string VisionSystem::GetModeName(Util::BitFlags64<VisionMode> mode) const
 {
   std::string retStr("");
   for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
@@ -1496,7 +1505,21 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     Toc("TotalDetectingMotion");
   }
-
+  if(IsModeEnabled(VisionMode::DetectingBrightColors)){
+    if (imageCache.HasColor()){
+      Tic("TotalDetectingBrightColors");
+      lastResult = DetectBrightColors(imageCache);
+      Toc("TotalDetectingBrightColors");
+      if (lastResult != RESULT_OK){
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectBrightColorsFailed","");
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.SetBitFlag(VisionMode::DetectingBrightColors, true);
+      }
+    } else {
+      PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process bright colors. No color image!");
+    }
+  }
   // Disabling this while VisionMode::BuildingOverheadMap is disabled
   if (false /*IsModeEnabled(VisionMode::BuildingOverheadMap)*/)
   {
