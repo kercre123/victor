@@ -155,6 +155,14 @@
    "APIValue": "Rainy",
    "CladType": "Rain"
  },
+ {
+   "APIValue": "Partly cloudy with rain",
+   "CladType": "Rain"
+ },
+ {
+   "APIValue": "Clear night",
+   "CladType": "Stars"
+ },
     {
         "APIValue": "Heavy Rain", 
         "CladType": "Rain"
