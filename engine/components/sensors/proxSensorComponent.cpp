@@ -53,9 +53,9 @@ namespace {
 
   // for checking if the state has changed since the last measurement
   const Point3f kRobotTranslationTolerance_mm{0.1f, 0.1f, 0.1f};
-  const float   kMeasurementTolerance = .05f;  // percentage based tolerance
+  // const float   kMeasurementTolerance = .05f;  // percentage based tolerance
   const Radians kRobotRotationTolerance_rad = 0.01f;
-  const u8      kNumMeasurementsAtPose = 32;
+  // const u8      kNumMeasurementsAtPose = 32;
 } // end anonymous namespace
 
 // enable/disable prox sensor data
@@ -234,107 +234,107 @@ bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose) co
 
 void ProxSensorComponent::UpdateNavMap()
 {
-  if (_latestDataRaw.spadCount == 0)
-  {
-    PRINT_NAMED_WARNING("ProxSensorComponent.UpdateNavMap", "Invalid sensor reading, SpadCount == 0");
-    return;
-  }
+  // if (_latestDataRaw.spadCount == 0)
+  // {
+  //   PRINT_NAMED_WARNING("ProxSensorComponent.UpdateNavMap", "Invalid sensor reading, SpadCount == 0");
+  //   return;
+  // }
 
-  const float quality       = _latestData.signalQuality;
-  const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
-  const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
-                               !_latestData.isLiftInFOV);                           // the sensor is not seeing the lift
-  const bool tiltedForward  = _robot->GetPitchAngle() < kMaxForwardTilt_rad;        // if the robot is titled too far forward (- rad) 
+  // const float quality       = _latestData.signalQuality;
+  // const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
+  // const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
+  //                              !_latestData.isLiftInFOV);                           // the sensor is not seeing the lift
+  // const bool tiltedForward  = _robot->GetPitchAngle() < kMaxForwardTilt_rad;        // if the robot is titled too far forward (- rad) 
 
-  if ((objectDetected || noObject) && !tiltedForward)
-  {  
+  // if ((objectDetected || noObject) && !tiltedForward)
+  // {  
     // check if the robot has moved or the sensor reading has changed significantly
-    const Pose3d  robotPose = _robot->GetPose();
-    const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;
-    if ( !robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
-        (!noObject && FLT_GT(changePct, kMeasurementTolerance)) ) { 
-      _measurementsAtPose = 0; 
-      _previousRobotPose = robotPose; 
-      _previousMeasurement = _latestData.distance_mm;
-    }
+  //   const Pose3d  robotPose = _robot->GetPose();
+  //   const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;
+  //   if ( !robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
+  //       (!noObject && FLT_GT(changePct, kMeasurementTolerance)) ) { 
+  //     _measurementsAtPose = 0; 
+  //     _previousRobotPose = robotPose; 
+  //     _previousMeasurement = _latestData.distance_mm;
+  //   }
  
-    if (++_measurementsAtPose >= kNumMeasurementsAtPose) { return; }
+  //   if (++_measurementsAtPose >= kNumMeasurementsAtPose) { return; }
 
-    // Clear out any obstacles between the robot and ray if we have good signal strength 
-    RobotTimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+  //   // Clear out any obstacles between the robot and ray if we have good signal strength 
+  //   RobotTimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
 
-    // build line for ray cast by getting the robot pose, casting forward by sensor reading
-    const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
-                                       : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
+  //   // build line for ray cast by getting the robot pose, casting forward by sensor reading
+  //   const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
+  //                                      : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
 
-    // just assume robot center rather the actual sensor pose
-    const Pose3d  objectPos = robotPose * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
-    const Rotation3d id = Rotation3d(0.f, Z_AXIS_3D());
+  //   // just assume robot center rather the actual sensor pose
+  //   const Pose3d  objectPos = robotPose * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
+  //   const Rotation3d id = Rotation3d(0.f, Z_AXIS_3D());
 
-    // we would like to clear the whole sensor cone as defined by the aperture, but it creates really large
-    // obstacles if it detects something far away. To prevent planning failures, we would like to clamp
-    // the max obstacle width to one half robot width, but that can result in stretching the of the clear region
-    // cone, which causes some map artifacts. To get around this, define the clear region as the intersection
-    // of the sensor cone and a straight beam with obstacle width (which is clamped to robot width).
+  //   // we would like to clear the whole sensor cone as defined by the aperture, but it creates really large
+  //   // obstacles if it detects something far away. To prevent planning failures, we would like to clamp
+  //   // the max obstacle width to one half robot width, but that can result in stretching the of the clear region
+  //   // cone, which causes some map artifacts. To get around this, define the clear region as the intersection
+  //   // of the sensor cone and a straight beam with obstacle width (which is clamped to robot width).
 
-    //           +-------------+
-    //           |             |    ....-----------------------p1--p4
-    //           |    robot    |::::                            |xx| (obstacle)
-    //           |             |    ''''-----------------------p2--p3
-    //           +-------------+
+  //   //           +-------------+
+  //   //           |             |    ....-----------------------p1--p4
+  //   //           |    robot    |::::                            |xx| (obstacle)
+  //   //           |             |    ''''-----------------------p2--p3
+  //   //           +-------------+
 
-    // sensor points
-    const float sensorBeamHalfWidth_mm = offsetx_mm.x() * kSensorAperture *.5f;
-    const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.25);
+  //   // sensor points
+  //   const float sensorBeamHalfWidth_mm = offsetx_mm.x() * kSensorAperture *.5f;
+  //   const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.25);
 
-    // use a slightly larger padding for clear than for obstacle to clean up floating point rounding errors
-    const Vec3f sensorOffset1(-kObsPadding_x_mm,  -sensorBeamHalfWidth_mm - kObsPadding_y_mm - .5, 0);   
-    const Vec3f sensorOffset2(-kObsPadding_x_mm,   sensorBeamHalfWidth_mm + kObsPadding_y_mm + .5, 0);
+  //   // use a slightly larger padding for clear than for obstacle to clean up floating point rounding errors
+  //   const Vec3f sensorOffset1(-kObsPadding_x_mm,  -sensorBeamHalfWidth_mm - kObsPadding_y_mm - .5, 0);   
+  //   const Vec3f sensorOffset2(-kObsPadding_x_mm,   sensorBeamHalfWidth_mm + kObsPadding_y_mm + .5, 0);
 
-    const Vec3f clampOffset1(-offsetx_mm.x(),  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
-    const Vec3f clampOffset2(-offsetx_mm.x(),   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
+  //   const Vec3f clampOffset1(-offsetx_mm.x(),  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
+  //   const Vec3f clampOffset2(-offsetx_mm.x(),   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
 
-    const Point2f sensorCorner1 = (objectPos.GetTransform() * Transform3d(id, sensorOffset1)).GetTranslation();
-    const Point2f sensorCorner2 = (objectPos.GetTransform() * Transform3d(id, sensorOffset2)).GetTranslation(); 
+  //   const Point2f sensorCorner1 = (objectPos.GetTransform() * Transform3d(id, sensorOffset1)).GetTranslation();
+  //   const Point2f sensorCorner2 = (objectPos.GetTransform() * Transform3d(id, sensorOffset2)).GetTranslation(); 
 
-    const Point2f clampCorner1  = (objectPos.GetTransform() * Transform3d(id, clampOffset1)).GetTranslation();
-    const Point2f clampCorner2  = (objectPos.GetTransform() * Transform3d(id, clampOffset2)).GetTranslation(); 
+  //   const Point2f clampCorner1  = (objectPos.GetTransform() * Transform3d(id, clampOffset1)).GetTranslation();
+  //   const Point2f clampCorner2  = (objectPos.GetTransform() * Transform3d(id, clampOffset2)).GetTranslation(); 
 
-    // obstacle points
-    const Vec3f obstacleOffset1(-kObsPadding_x_mm,  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
-    const Vec3f obstacleOffset2(-kObsPadding_x_mm,   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
-    const Vec3f obstacleOffset3(kObsPadding_x_mm * 2, 0, 0);
+  //   // obstacle points
+  //   const Vec3f obstacleOffset1(-kObsPadding_x_mm,  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
+  //   const Vec3f obstacleOffset2(-kObsPadding_x_mm,   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
+  //   const Vec3f obstacleOffset3(kObsPadding_x_mm * 2, 0, 0);
 
-    const Point2f obstacleP1 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1)).GetTranslation();
-    const Point2f obstacleP2 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2)).GetTranslation(); 
-    const Point2f obstacleP3 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2 + obstacleOffset3)).GetTranslation();
-    const Point2f obstacleP4 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1 + obstacleOffset3)).GetTranslation();
+  //   const Point2f obstacleP1 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1)).GetTranslation();
+  //   const Point2f obstacleP2 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2)).GetTranslation(); 
+  //   const Point2f obstacleP3 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2 + obstacleOffset3)).GetTranslation();
+  //   const Point2f obstacleP4 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1 + obstacleOffset3)).GetTranslation();
 
-    // clear sensor beam
-    // NOTE: making an intersection of a quad and a triangle here results in a 50%-100% speedup over using a
-    //       five sided polygon, so use that if we can't insert a triangle FP.
-    FastPolygon sensorCone({sensorCorner1, sensorCorner2, robotPose.GetTranslation()});
+  //   // clear sensor beam
+  //   // NOTE: making an intersection of a quad and a triangle here results in a 50%-100% speedup over using a
+  //   //       five sided polygon, so use that if we can't insert a triangle FP.
+  //   FastPolygon sensorCone({sensorCorner1, sensorCorner2, robotPose.GetTranslation()});
 
-    if (sensorBeamHalfWidth_mm < ROBOT_BOUNDING_Y *.25) {
-      // if the sensorBeamHalfWidth_mm is less than the max obstacle size, we can just use the sensorCone
-      _robot->GetMapComponent().ClearRegion( sensorCone,  lastTimestamp);
-    } else {
-      _robot->GetMapComponent().ClearRegion( 
-        MakeIntersection2f( sensorCone, FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) ),  
-        lastTimestamp);
-    }
+  //   if (sensorBeamHalfWidth_mm < ROBOT_BOUNDING_Y *.25) {
+  //     // if the sensorBeamHalfWidth_mm is less than the max obstacle size, we can just use the sensorCone
+  //     _robot->GetMapComponent().ClearRegion( sensorCone,  lastTimestamp);
+  //   } else {
+  //     _robot->GetMapComponent().ClearRegion( 
+  //       MakeIntersection2f( sensorCone, FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) ),  
+  //       lastTimestamp);
+  //   }
 
-    // Add proxObstacle if detected and close to robot, and lift is not interfering
-    if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject && !IsLiftInFOV()) {
-      const FastPolygon quad({obstacleP1, obstacleP2, obstacleP3, obstacleP4});
-      Radians angle = _robot->GetPose().GetRotationAngle<'Z'>();
+  //   // Add proxObstacle if detected and close to robot, and lift is not interfering
+  //   if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject && !IsLiftInFOV()) {
+  //     const FastPolygon quad({obstacleP1, obstacleP2, obstacleP3, obstacleP4});
+  //     Radians angle = _robot->GetPose().GetRotationAngle<'Z'>();
       
-      MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED,
-                                          Pose2d{angle, objectPos.GetWithRespectToRoot().GetTranslation().x(), objectPos.GetWithRespectToRoot().GetTranslation().y()},
-                                          lastTimestamp);
-      _robot->GetMapComponent().AddProxData(quad, proxData);
-    }
-  }
+  //     MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED,
+  //                                         Pose2d{angle, objectPos.GetWithRespectToRoot().GetTranslation().x(), objectPos.GetWithRespectToRoot().GetTranslation().y()},
+  //                                         lastTimestamp);
+  //     _robot->GetMapComponent().AddProxData(quad, proxData);
+  //   }
+  // }
 }
 
 

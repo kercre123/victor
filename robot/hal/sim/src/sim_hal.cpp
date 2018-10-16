@@ -61,6 +61,7 @@
 #include <webots/Display.hpp>
 #include <webots/Gyro.hpp>
 #include <webots/DistanceSensor.hpp>
+#include <webots/RangeFinder.hpp>
 #include <webots/Accelerometer.hpp>
 #include <webots/Receiver.hpp>
 #include <webots/Connector.hpp>
@@ -138,6 +139,9 @@ namespace Anki {
       // Prox sensors
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *cliffSensors_[HAL::CLIFF_COUNT];
+
+      // Range sensor
+      webots::RangeFinder *rangeCamera_;
 
       // Charge contact
       webots::Connector* chargeContact_;
@@ -390,6 +394,10 @@ namespace Anki {
       // Proximity sensor
       proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
       proxCenter_->enable(ROBOT_TIME_STEP_MS);
+
+      // RangeFinder sensor
+      rangeCamera_ = webotRobot_.getRangeFinder("forwardRangeSensor");
+      rangeCamera_->enable(ROBOT_TIME_STEP_MS);
 
       // Cliff sensors
       cliffSensors_[HAL::CLIFF_FL] = webotRobot_.getDistanceSensor("cliffSensorFL");
@@ -788,6 +796,27 @@ namespace Anki {
       }
 
       return proxData;
+    }
+
+    RangeSensorData HAL::GetRawRangeData()
+    {
+      RangeSensorData rangeData;
+      // if (PowerGetMode() == POWER_MODE_ACTIVE) {
+        rangeData.width  = static_cast<u16>( rangeCamera_->getWidth() );
+        rangeData.height = static_cast<u16>( rangeCamera_->getHeight() );
+        const float* image = rangeCamera_->getRangeImage();
+        int i = 0;
+        for (int y = 0; y < rangeData.height; ++y ) {
+          for (int x = 0; x < rangeData.width; ++x ) {
+            float depth = rangeCamera_->rangeImageGetDepth(image, rangeData.width, x, y);
+            // PRINT_NAMED_WARNING("HAL.RangeData", "(%d, %d), %f", x, y, depth);
+            rangeData.depth[i++] = depth; 
+          }
+        }
+
+      // }
+
+      return rangeData;
     }
 
     u16 HAL::GetButtonState(const ButtonID button_id)

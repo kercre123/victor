@@ -71,6 +71,7 @@ enum class RobotComponentID {
   PowerStateManager,
   ProxSensor,
   PublicStateBroadcaster,
+  RangeSensor,
   SDK,
   SettingsCommManager,
   SettingsManager,

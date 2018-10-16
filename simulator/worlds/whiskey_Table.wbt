@@ -1,0 +1,78 @@
+#VRML_SIM R2018a utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.05695634404152893 0.23610801927124972 0.9700561726566302 3.6013209308107523
+  position -0.16158609779202726 0.14338107938490413 1.419264939182589
+}
+Can {
+  translation -0.12472999999999997 0.23639399675867195 0.31109013904641514
+  rotation 1 8.10425888841701e-18 3.6328818133060586e-18 1.5708000040818093
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+LightCube {
+  translation 0.03400507570787992 0.11684182942438892 0.27199407713756335
+  rotation 1 1.5063206273950684e-11 3.912547707946926e-12 3.674075451969183e-6
+  filterLogs TRUE
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  xSize 0.05
+  ySize 0.05
+}
+LightCube {
+  name "LightCube2"
+  translation 0.24972201112716666 0.19579030925523927 0.2719942684640895
+  rotation 1.590375915086947e-5 -1.8370377256949119e-6 0.999999999871848 0.22999999999999987
+  filterLogs TRUE
+  objectType "Block_LIGHTCUBE2"
+}
+Table {
+  rotation 1 0 0 1.5708
+  size 1.5 0.25 1
+}
+WhiskeyBot {
+  translation -0.04670953010407708 -0.3673826834044211 0.26542980608063277
+  rotation 5.271641791508019e-5 -0.999999996302342 6.794332523798435e-5 -0.022062726901654686
+  filterLogs TRUE
+  colorizeStderrOutput TRUE
+}
+VictorCharger {
+  translation -0.2829531725031935 0.00014858414269394919 0.24703702404955225
+  rotation -0.059856483421741824 0.05985708342157565 0.9964107240273186 4.7088
+}
+WebotsKeyboardController {
+  emotionVal 0.1
+  consoleVarName "DevDispatchAfterShake"
+  consoleVarValue "1"
+  filterLogs TRUE
+  translation 0.5749999999031083 0.3093782216791491 0.3200000000000001
+  rotation 0 0 1 0.5235987739999998
+  randomSeed -1
+}
+CozmoVizDisplay {
+  filterLogs TRUE
+}
+PaperBoat {
+  translation -0.6249747470001085 0.34928932254058326 0.25999999832519344
+  rotation 0.8628562096799277 0.3574067449292088 0.3574067432154801 1.7177715124642305
+  scale 0.5
+}

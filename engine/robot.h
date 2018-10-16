@@ -121,6 +121,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class ImuComponent;
 class AnimationComponent;
@@ -250,6 +251,7 @@ public:
   INLINE_GETTERS(DrivingAnimationHandler)
   INLINE_GETTERS(FaceWorld)
   INLINE_GETTERS(HabitatDetectorComponent)
+  INLINE_GETTERS(ImuComponent)
   INLINE_GETTERS(MapComponent)
   INLINE_GETTERS(MicComponent)
   INLINE_GETTERS(MoodManager)
@@ -260,8 +262,8 @@ public:
   INLINE_GETTERS(PhotographyManager)
   INLINE_GETTERS(PowerStateManager)
   INLINE_GETTERS(ProxSensorComponent)
-  INLINE_GETTERS(ImuComponent)
   INLINE_GETTERS(PublicStateBroadcaster)
+  INLINE_GETTERS(RangeSensorComponent)
   INLINE_GETTERS(RobotHealthReporter)
   INLINE_GETTERS(RobotToEngineImplMessaging)
   INLINE_GETTERS(SDKComponent)

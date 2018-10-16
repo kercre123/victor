@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.23013514393218407 0.46228201236631994 0.8563487353700352 3.947560634368608
-  position -1.8245716775419583 1.2809454025876654 1.5771613409945828
+  orientation -0.023317223243780497 0.4967452822257902 0.867583097856695 3.223002660679953
+  position -0.08178766039566371 0.8537587456883063 0.5476882546133239
 }
 Background {
   skyColor [
@@ -26,7 +26,6 @@ DirectionalLight {
   intensity 0.5
 }
 CozmoMat {
-  showMarkers FALSE
 }
 VictorCharger {
   translation -0.0650650263404583 -0.3833437665763433 1.2212453270876722e-15
@@ -36,10 +35,8 @@ Face {
 }
 LightCube {
   name "LightCube1"
-  translation 0.0884345 0.0833803 0.022
+  translation 0.11461349917575944 -0.17869539046221755 0.022
   rotation 0 0 1 0.523599
-  objectType "Block_LIGHTCUBE1"
-  filterLogs FALSE
   colorizeStderrOutput TRUE
 }
 WhiskeyBot {
@@ -47,12 +44,10 @@ WhiskeyBot {
   colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
-  translation 0.288125 0.0208444 0.08
-  filterLogs FALSE
   colorizeStderrOutput TRUE
+  translation -0.15829228251412147 -0.04079211491188427 0.07999999999999789
 }
 CozmoVizDisplay {
   streamResolution "NHD"
-  filterLogs FALSE
   colorizeStderrOutput TRUE
 }

@@ -60,5 +60,11 @@ structure ProxSensorDataRaw {
   uint_8      padding,
 }
 
+structure RangeSensorData {
+  uint_16  width,
+  uint_16  height,
+  float_32 depth[16],
+}
+
 } // namespace Vector
 } // namespace Anki

@@ -131,8 +131,8 @@ private:
   ProxSensorDataRaw _latestDataRaw;
   ProxSensorData    _latestData;
   Pose3d            _previousRobotPose;
-  float             _previousMeasurement;
-  u8                _measurementsAtPose;
+  // float             _previousMeasurement;
+  // u8                _measurementsAtPose;
 
   // The timestamp of the RobotState message with the
   // latest distance sensor data
