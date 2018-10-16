@@ -731,6 +731,13 @@ namespace Vision {
     face.SetFaceDirection(faceDirection);
   }
 
+  void FaceTracker::Impl::FaceDirection3d(const TrackedFace& face,
+                                          const TimeStamp_t& timeStamp)
+  {
+    auto& entry = _facesDirectedAtRobot3d[face.GetID()];
+    entry.Update(face, timeStamp);
+  }
+
   static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, const f32 intraEyeDist,
                               const CameraCalibration& scaledCalib)
   {
@@ -1218,6 +1225,7 @@ namespace Vision {
 
         // TODO this shoudl be wrapped in a conditional ... maybe? who knows
         FaceDirection(face, frameOrig.GetTimestamp());
+        FaceDirection3d(face, frameOrig.GetTimestamp());
 
         //
         // Face Recognition:
