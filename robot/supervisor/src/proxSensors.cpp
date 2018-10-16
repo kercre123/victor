@@ -360,7 +360,7 @@ namespace Anki {
         } else if (level < CLIFF_SENSOR_THRESHOLD_MIN) {
           AnkiWarn("ProxSensors.SetCliffDetectThreshold.TooLow", "cliff sensor %d, threshold %d", ind, level);
         }else {
-          AnkiInfo("ProxSensors.SetCliffDetectThreshold.NewLevel", "cliff sensor %d, threshold %d", ind, level);
+          AnkiDebug("ProxSensors.SetCliffDetectThreshold.NewLevel", "cliff sensor %d, threshold %d", ind, level);
           _cliffDetectThresh[ind] = level;
         }
       }

@@ -59,7 +59,7 @@ namespace {
   
   // Also reduce the AllowedDelta if the robot could be driving over something (i.e. its pitch angle
   // is sufficiently far from zero)
-  const Radians kRobotPitchThresholdPossibleCliff_rad = DEG_TO_RAD(5.f);
+  const Radians kRobotPitchThresholdPossibleCliff_rad = DEG_TO_RAD(7.f);
   
 }
 
@@ -175,9 +175,9 @@ void CliffSensorComponent::SendCliffDetectThresholdsToRobot()
     return;
   }
   
-  PRINT_NAMED_INFO("CliffSensorComponent.SendCliffDetectThresholdsToRobot.SendThresholds",
-                   "New cliff thresholds being sent to robot: %d %d %d %d",
-                   _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);
+  PRINT_NAMED_DEBUG("CliffSensorComponent.SendCliffDetectThresholdsToRobot.SendThresholds",
+                    "New cliff thresholds being sent to robot: %d %d %d %d",
+                    _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);
   
   _robot->SendRobotMessage<SetCliffDetectThresholds>(_cliffDetectThresholds);
   
@@ -202,11 +202,11 @@ void CliffSensorComponent::SetCliffDetectThreshold(unsigned int ind, uint16_t ne
   
   auto& curThresh = _cliffDetectThresholds[ind];
   if (curThresh != newThresh) {
-    PRINT_NAMED_INFO("CliffSensorComponent.SetCliffDetectThreshold.NewThreshold",
-                     "New cliff threshold for %s (old: %d, new %d). Message to robot queued.",
-                     EnumToString(static_cast<CliffSensor>(ind)),
-                     curThresh,
-                     newThresh);
+    PRINT_NAMED_DEBUG("CliffSensorComponent.SetCliffDetectThreshold.NewThreshold",
+                      "New cliff threshold for %s (old: %d, new %d). Message to robot queued.",
+                      EnumToString(static_cast<CliffSensor>(ind)),
+                      curThresh,
+                      newThresh);
     curThresh = newThresh;
     QueueCliffThresholdUpdate();
   }
