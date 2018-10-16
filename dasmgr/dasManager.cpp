@@ -303,12 +303,11 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
     pos = end+1;
   }
 
-  if (values.size() != Anki::Util::DAS::FIELD_COUNT) {
+  if (values.size() < Anki::Util::DAS::FIELD_COUNT) {
     LOG_ERROR("DASManager.ConvertLogEntry", "Unable to parse %s from %s (%zu != %d)",
               logEntry.message, logEntry.tag, values.size(), Anki::Util::DAS::FIELD_COUNT);
     return "";
   }
-
 
   const auto & name = values[DAS_NAME];
   if (name.empty()) {
@@ -389,16 +388,20 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
   }
 
   static const std::vector<std::string> keys =
-    {"event", "s1", "s2", "s3", "s4", "i1", "i2", "i3", "i4"};
+    {"event", "s1", "s2", "s3", "s4", "i1", "i2", "i3", "i4", "uptime_ms"};
 
-  for (unsigned int i = 0 ; i < keys.size(); i++) {
-    if (!values[i].empty()) {
-      ostr << ',';
-      if (keys[i][0] == 'i') {
-        serialize(ostr, keys[i], std::atoll(values[i].c_str()));
-      } else {
-        serialize(ostr, keys[i], values[i]);
-      }
+  const size_t n = std::min(keys.size(), values.size());
+  for (unsigned int i = 0 ; i < n; ++i) {
+    const std::string & value = values[i];
+    if (value.empty()) {
+      continue;
+    }
+    const std::string & key = keys[i];
+    ostr << ',';
+    if (key[0] == 'i' || key[0] == 'u') {
+      serialize(ostr, key, std::atoll(value.c_str()));
+    } else {
+      serialize(ostr, key, value);
     }
   }
 
