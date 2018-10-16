@@ -87,6 +87,8 @@ protected:
 private:
   void CheckForStateChange();
   
+  void SendDirectiveToWebViz( const std::string& data ) const;
+  
   void OnDirective(const std::string& directive, const std::string& payload);
   
   OnStateChangedCallback _onStateChanged;

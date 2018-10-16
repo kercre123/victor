@@ -6,7 +6,7 @@
  4) Build and deploy, then start the robot in DevDoNothing. I've been using the following filter:
        victor_log | grep "WHATNOW\|ALEXA\|vic-anim: 2018\|starved"
  5) On the first run, there should be a log line containing a URL and a code. If you need to log into a developer account, mine is
-    username: ross+2@anki.com
+    username: ross+1@anki.com
     password: anki_tests_amazon
     Alternatively you can create your own account
     https://github.com/alexa/avs-device-sdk/wiki/macOS-Quick-Start-Guide#register-a-product
@@ -30,6 +30,8 @@
 #include "cozmoAnim/alexaWeatherParser.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "cozmoAnim/animContext.h"
+#include "webServerProcess/src/webService.h"
 
 #include <ACL/Transport/HTTP2TransportFactory.h>
 #include <AVSCommon/AVS/Initialization/AlexaClientSDKInit.h>
@@ -110,9 +112,11 @@ namespace {
       // Unique device serial number. e.g. 123456
       "deviceSerialNumber":"<SERIAL_NUMBER>", // this gets replaced
       // The Client ID of the Product from developer.amazon.com
-      "clientId": "amzn1.application-oa2-client.ada3c4fa4e2b4e5f93e48771c449c522",
+      "clientId": "amzn1.application-oa2-client.35a58ee8f3444563aed328cb189da216",
       // Product ID from developer.amazon.com
-      "productId": "test_product_2"
+      "productId": "test_product_1"
+      // for test_product_1: amzn1.application-oa2-client.35a58ee8f3444563aed328cb189da216
+      // for test_product_2: amzn1.application-oa2-client.ada3c4fa4e2b4e5f93e48771c449c522
     },
     "capabilitiesDelegate":{
       // The endpoint to connect in order to send device capabilities.
@@ -730,6 +734,29 @@ void Alexa::OnDirective(const std::string& directive, const std::string& payload
     // this contains weather, and maybe more
     if( _weatherParser && payload.find("WeatherTemplate") != std::string::npos ) {
       _weatherParser->Parse(payload);
+    }
+  }
+ 
+  SendDirectiveToWebViz( directive );
+  
+}
+  
+void Alexa::SendDirectiveToWebViz( const std::string& directive ) const
+{
+  if( _context != nullptr ) {
+    auto* webService = _context->GetWebService();
+    if( webService != nullptr ) {
+      if (webService->IsWebVizClientSubscribed("micdata")) {
+        Json::Reader reader;
+        Json::Value root;
+        
+        bool success = reader.parse(directive, root);
+        if( success ) {
+          Json::Value data;
+          data["directive"] = root;
+          webService->SendToWebViz("micdata", data);
+        }
+      }
     }
   }
 }
