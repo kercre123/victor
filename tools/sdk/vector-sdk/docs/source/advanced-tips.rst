@@ -10,7 +10,7 @@ Set ANKI_ROBOT_SERIAL
 ^^^^^^^^^^^^^^^^^^^^^
 
 In order to avoid entering Vector's serial number for each program run,
-you can create enviroment variable ``ANKI_ROBOT_SERIAL``
+you can create environment variable ``ANKI_ROBOT_SERIAL``
 and set it to Vector's serial number::
 
     export ANKI_ROBOT_SERIAL=00e20100
