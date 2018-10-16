@@ -128,6 +128,7 @@ void BehaviorAlexa::BehaviorUpdate()
       _dVars.state = State::TransitioningToWeather;
       CancelDelegates(false);
       auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaToWeather };
+      action->SetRenderInEyeHue( false );
       DelegateIfInControl(action, [this](const ActionResult& res) {
         CancelSelf();
       });
