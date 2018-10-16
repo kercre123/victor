@@ -433,15 +433,6 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
     return;
   }
 
-  // Create the directory that will hold the json
-  const auto & storagePath = _dasConfig.GetStoragePath();
-  if (!Util::FileUtils::CreateDirectory(storagePath, false, true, S_IRWXU)) {
-    LOG_ERROR("DASManager.ProcessLogEntry.CreateStoragePathFailure",
-              "Failed to create storage path %s",
-              storagePath.c_str());
-    return;
-  }
-
   // Append the JSON object to the array stored in the logfile
   if (!_logFile.is_open()) {
     _logFile.open(_logFilePath, std::ios::out | std::ofstream::binary | std::ofstream::ate);
@@ -761,8 +752,19 @@ Result DASManager::Run(const bool & shutdown)
     LOG_ERROR("DASManager.Run.InvalidURL", "Invalid URL");
     return RESULT_FAIL_INVALID_PARAMETER;
   }
-  if (_dasConfig.GetStoragePath().empty()) {
+
+  // Validate storage path
+  const auto & storagePath = _dasConfig.GetStoragePath();
+  if (storagePath.empty()) {
     LOG_ERROR("DASManager.Run.InvalidStoragePath", "Invalid Storage Path");
+    return RESULT_FAIL_INVALID_PARAMETER;
+  }
+
+  // Create the directory that will hold the json
+  if (!Util::FileUtils::CreateDirectory(storagePath, false, true, S_IRWXU)) {
+    LOG_ERROR("DASManager.Run.CreateStoragePathFailure",
+              "Failed to create storage path %s",
+              storagePath.c_str());
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
