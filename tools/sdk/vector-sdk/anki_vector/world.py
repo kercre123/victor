@@ -203,6 +203,12 @@ class World(util.Component):
 
     def close(self):
         """The world will tear down all its faces and objects."""
+
+        # delete_custom_objects is called before the _objects are torn down to make sure the
+        # engine recieves cues to remove the internal representations of these objects before
+        # we release the SDK side representations
+        self.delete_custom_objects()
+
         for obj in self._objects.values():
             obj.teardown()
 
