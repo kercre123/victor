@@ -4,6 +4,20 @@
 Advanced Tips
 #############
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Moving Vector Between WiFi Networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When you move Vector from one WiFi network to another (using the Vector App),
+you will also need to make some changes to your SDK setup. To assist in this
+migration, ``configure.py`` provides a ``-u`` parameter to quickly
+reconnect to Vector.
+
+To update your connection, you will need to find the IP address on
+Vector's face, and the serial number of the robot you are updating.
+Then from your terminal run::
+
+    python3 configure.py -u "<your_new_ip>" -s "<your_robot_serial_number>"
 
 ^^^^^^^^^^^^^^^^^^^^^
 Set ANKI_ROBOT_SERIAL
