@@ -25,8 +25,8 @@ namespace {
   CONSOLE_VAR(f32, kFaceDirectedAtRobotDistanceSq,    "Vision.EyeContact",  11.f*11.f);
   CONSOLE_VAR(f32, kFaceDirectedAtRobotYawAbsThres,   "Vision.EyeContact",  10.f);
   CONSOLE_VAR(f32, kFaceDirectedAtRobotPitchAbsThres, "Vision.EyeContact",  25.f);
-  CONSOLE_VAR(f32, kFaceDirectedRightYawAbsThres,      "Vision.EyeContact",  15.f);
-  CONSOLE_VAR(f32, kFaceDirectedLeftYawAbsThres,     "Vision.EyeContact", -15.f);
+  CONSOLE_VAR(f32, kFaceDirectedRightYawAbsThres,     "Vision.EyeContact",  15.f);
+  CONSOLE_VAR(f32, kFaceDirectedLeftYawAbsThres,      "Vision.EyeContact", -15.f);
   CONSOLE_VAR(u32, kExpireThreshold,                  "Vision.EyeContact",  50);
 }
 
