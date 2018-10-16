@@ -25,7 +25,6 @@ source ${SCRIPT_PATH}/victor_env.sh
 : ${DEVTOOLS_INSTALL_ROOT:="/anki-devtools"}
 : ${DEVICE_RSYNC_BIN_DIR:="${DEVTOOLS_INSTALL_ROOT}/bin"}
 : ${DEVICE_RSYNC_CONF_DIR:="/run/systemd/system"}
-: ${MIN_OS_VERSION:=0.14.1681}
 
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
