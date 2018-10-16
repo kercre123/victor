@@ -85,7 +85,26 @@ struct BehaviorOperationModifiers{
     visionModesForActivatableScope = std::make_unique<std::set<VisionModeRequest>>();
     visionModesForActiveScope = std::make_unique<std::set<VisionModeRequest>>();
   }
-
+  
+  // Alters the default value of the behavior operation modifiers via the behavior's
+  // JSON configuration map. Returns a set of tags of which defaults were set.
+  std::set<std::string> SetDefaultBehaviorOperationModifiers(const Json::Value& config, const std::string& debugLabel);
+  
+  // Set of keys for operation modifiers that cannot be set via JSON
+  const std::set<std::string> illegalKeys = {"behaviorAlwaysDelegates"};
+  
+  // Allows for lookup of modifier flags via an associated string name
+  const std::unordered_map<std::string, bool*> stringToModifiersFlagMap = {
+    {"wantsToBeActivatedWhenCarryingObject", &wantsToBeActivatedWhenCarryingObject},
+    {"wantsToBeActivatedWhenOffTreads", &wantsToBeActivatedWhenOffTreads},
+    {"wantsToBeActivatedWhenOnCharger", &wantsToBeActivatedWhenOnCharger},
+    {"behaviorAlwaysDelegates", &behaviorAlwaysDelegates},
+    {"connectToCubeInBackground", &connectToCubeInBackground},
+    {"ensuresCubeConnectionAtDelegation", &ensuresCubeConnectionAtDelegation}
+  };
+  
+  bool ModifierFlagValueFromString(const std::string& str, bool& output) const;
+  
   // WantsToBeActivated modifiers
   bool wantsToBeActivatedWhenCarryingObject = false;
   bool wantsToBeActivatedWhenOffTreads = false;
@@ -110,7 +129,9 @@ struct BehaviorOperationModifiers{
     RequiredLazy, // Run only if already connected. Always subscribe if activated.
     RequiredManaged // Run only if already connected. Always subscribe if activated. Requires Ancestor to manage connection.
   } cubeConnectionRequirements = CubeConnectionRequirements::None;
-
+  
+  bool CubeConnectionRequirementFromString(const std::string& str, CubeConnectionRequirements& enumOutput) const;
+  
   // Background connections will open and hold a cube connection open, but will not trigger connection/status lights.
   // If a non-background subscription is made, the connection will convert to foreground until all foreground 
   // subscriptions are gone, whereupon we will indicate disconnection to the user and convert back to a background
@@ -545,6 +566,7 @@ private:
   u32 _lastActionTag = 0;
   std::vector<IBEIConditionPtr> _wantsToBeActivatedConditions;
   std::vector<IBEIConditionPtr> _wantsToCancelSelfConditions;
+  
   BehaviorOperationModifiers _operationModifiers;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
