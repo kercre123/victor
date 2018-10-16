@@ -59,7 +59,6 @@ namespace Anki {
     {
     public:
       
-      
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
       
@@ -207,9 +206,6 @@ namespace Anki {
                            const Quadrilateral<2,T>& quad,
                            const T zHeight,
                            const ColorRGBA& color);
-      
-      
-      void DisplayCameraImage(const RobotTimeStamp_t timestamp);
       
       // Draw a generic 2D quad in the camera display
       // TopColor is the color of the line connecting the upper left and upper right corners.
@@ -375,15 +371,7 @@ namespace Anki {
                            const u16 bottomRight_x, const u16 bottomRight_y,
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
-      void SendRobotState(const RobotState &msg,
-                          const u16 videoFramePeriodMs,
-                          const u16 imageProcFramePeriodMs,
-                          const u32 numProcAnimFaceKeyframes,
-                          const u8  lockedTracks,
-                          const u8  tracksInUse,
-                          const f32 imuTemperature_degC,
-                          std::array<uint16_t, 4> cliffThresholds,
-                          const float batteryVolts);
+      void SendRobotState(VizInterface::RobotStateMessage&& msg);
       
       void SendCurrentAnimation(const std::string& animName, u8 animTag);
 

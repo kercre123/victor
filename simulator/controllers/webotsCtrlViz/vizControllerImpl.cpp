@@ -72,8 +72,6 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizCameraOvalMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraText,
     std::bind(&VizControllerImpl::ProcessVizCameraTextMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::DisplayImage,
-    std::bind(&VizControllerImpl::ProcessVizDisplayImageMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ImageChunk,
     std::bind(&VizControllerImpl::ProcessVizImageChunkMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::TrackerQuad,
@@ -597,6 +595,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
         }
       }
       
+      DisplayBufferedCameraImage(encodedImage.GetTimeStamp());
     }
   }
   else
@@ -629,17 +628,14 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
   
 }
   
-void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+void VizControllerImpl::DisplayBufferedCameraImage(const RobotTimeStamp_t timestamp)
 {
-  const auto& payload = msg.GetData().Get_DisplayImage();
-  
-  auto encImgIter = _encodedImages.find(payload.timestamp);
+  auto encImgIter = _encodedImages.find(timestamp);
   if(encImgIter == _encodedImages.end())
   {
     return;
   }
   
-  const RobotTimeStamp_t timestamp = encImgIter->first;
   const EncodedImage& encodedImage = _bufferedImages[encImgIter->second];
   DEV_ASSERT_MSG(timestamp == encodedImage.GetTimeStamp(),
                  "VizControllerImpl.ProcessVizDisplayImage.TimeStampMisMatch",
@@ -780,6 +776,14 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (int)payload.state.rwheel_speed_mmps);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
+  const auto currTreadState = payload.offTreadsState;
+  const auto nextTreadState = payload.awaitingConfirmationTreadState;
+  const bool onTreads = (currTreadState == OffTreadsState::OnTreads);
+  sprintf(txt, "OffTreadsState: %s  %s",
+          EnumToString(currTreadState),
+          (currTreadState != nextTreadState) ? EnumToString(nextTreadState) : "");
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_OFF_TREADS_STATE, onTreads ? Anki::NamedColors::GREEN : Anki::NamedColors::RED, txt);
+  
   sprintf(txt, "Touch: %u", 
     payload.state.backpackTouchSensorRaw
   );

@@ -2849,11 +2849,6 @@ namespace Vector {
        result.modesProcessed.IsBitFlagSet(VisionMode::ImageViz))
     {
       CompressAndSendImage(result.displayImg, kImageCompressQuality, "camera");
-
-      // TODO: VIC-7244 Remove as no longer needed
-      // The assumption is that all the chunks of this encoded image have already been sent to
-      // the viz manager (e.g. forwarded by the robot message handler)
-      _vizManager->DisplayCameraImage(result.timestamp);
     }
 
   }

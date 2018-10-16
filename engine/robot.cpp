@@ -617,16 +617,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     inAirTooLongReportTime_ms = 0;
   }
 
-
-  // Send viz message with current treads states
-  const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
-  const auto vizManager = GetContext()->GetVizManager();
-  vizManager->SetText(TextLabelType::OFF_TREADS_STATE,
-                      NamedColors::GREEN,
-                      "OffTreadsState: %s  %s",
-                      EnumToString(_offTreadsState),
-                      awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
-
   return offTreadsStateChanged;
 }
 
@@ -1160,17 +1150,18 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const u16 imageProcPeriod_ms  = Util::numeric_cast<u16>( GetVisionComponent().GetProcessingPeriod_ms() );
 
   // Send state to visualizer for displaying
-  GetContext()->GetVizManager()->SendRobotState(
-    stateMsg,
-    imageFramePeriod_ms,
-    imageProcPeriod_ms,
-    GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
-    GetMoveComponent().GetLockedTracks(),
-    GetAnimationComponent().GetAnimState_TracksInUse(),
-    _robotImuTemperature_degC,
-    GetCliffSensorComponent().GetCliffDetectThresholds(),
-    GetBatteryComponent().GetBatteryVolts()
-    );
+  VizInterface::RobotStateMessage vizState(stateMsg,
+                                           _robotImuTemperature_degC,
+                                           GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
+                                           GetCliffSensorComponent().GetCliffDetectThresholds(),
+                                           imageFramePeriod_ms,
+                                           imageProcPeriod_ms,
+                                           GetMoveComponent().GetLockedTracks(),
+                                           GetAnimationComponent().GetAnimState_TracksInUse(),
+                                           GetBatteryComponent().GetBatteryVolts(),
+                                           _offTreadsState,
+                                           _awaitingConfirmationTreadState);
+  GetContext()->GetVizManager()->SendRobotState(std::move(vizState));
 
   return lastResult;
 

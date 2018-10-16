@@ -8,6 +8,7 @@
 #include "clad/types/cameraParams.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
+#include "clad/types/offTreadsStates.clad"
 #include "clad/types/vizTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/activeObjectAccel.clad"
@@ -20,15 +21,17 @@ namespace VizInterface {
 
 message RobotStateMessage
 {
-  RobotState state,
-  float_32 imuTemperature_degC,
-  uint_32  numProcAnimFaceKeyframes,
-  uint_16  cliffThresholds[4],
-  uint_16  videoFramePeriodMs,
-  uint_16  imageProcPeriodMs,
-  uint_8   lockedAnimTracks,
-  uint_8   animTracksInUse,
-  float_32 batteryVolts,
+  RobotState     state,
+  float_32       imuTemperature_degC,
+  uint_32        numProcAnimFaceKeyframes,
+  uint_16        cliffThresholds[4],
+  uint_16        videoFramePeriodMs,
+  uint_16        imageProcPeriodMs,
+  uint_8         lockedAnimTracks,
+  uint_8         animTracksInUse,
+  float_32       batteryVolts,
+  OffTreadsState offTreadsState,
+  OffTreadsState awaitingConfirmationTreadState,
 }
 
 message CurrentAnimation
@@ -357,13 +360,6 @@ message BehaviorStackDebug
 message VisionModeDebug
 {
   string debugStrings[uint_8]
-}
-
-// Display the image previously sent with the given timestamp
-// Will delete anything older as well
-message DisplayImage
-{
-  uint_32 timestamp
 }
 
 message SaveImages

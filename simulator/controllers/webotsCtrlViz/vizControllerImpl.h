@@ -56,6 +56,7 @@ enum class VizTextLabelType : unsigned int
   TEXT_LABEL_CLIFF,
   TEXT_LABEL_DIST,
   TEXT_LABEL_SPEEDS,
+  TEXT_LABEL_OFF_TREADS_STATE,
   TEXT_LABEL_TOUCH,
   TEXT_LABEL_BATTERY,
   TEXT_LABEL_ANIM,
@@ -97,7 +98,6 @@ private:
   void ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraOvalMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraTextMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizDisplayImageMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -113,6 +113,7 @@ private:
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
+  void DisplayBufferedCameraImage(const RobotTimeStamp_t timestamp);
   void DisplayCameraInfo(const RobotTimeStamp_t timestamp);
   
   using EmotionBuffer = Util::CircularBuffer<float>;

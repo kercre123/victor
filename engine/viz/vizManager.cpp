@@ -252,11 +252,6 @@ namespace Anki {
       return vizID;
     }
     
-    void VizManager::DisplayCameraImage(const RobotTimeStamp_t timestamp)
-    {
-      SendMessage(VizInterface::MessageViz(VizInterface::DisplayImage((TimeStamp_t)timestamp)));
-    }
-    
     void VizManager::DrawCameraOval(const Point2f &center,
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)
@@ -773,19 +768,10 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::CameraParams(std::move(params))));
     }
 
-    void VizManager::SendRobotState(const RobotState &msg,
-                                    const u16 videoFramePeriodMs,
-                                    const u16 imageProcFramePeriodMs,
-                                    const u32 numProcAnimFaceKeyframes,
-                                    const u8  lockedTracks,
-                                    const u8  tracksInUse,                                    
-                                    const f32 imuTemperature_degC,
-                                    std::array<uint16_t, 4> cliffThresholds,
-                                    const float batteryVolts
-                                    )
+    void VizManager::SendRobotState(VizInterface::RobotStateMessage&& msg)
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFramePeriodMs, imageProcFramePeriodMs, lockedTracks, tracksInUse, batteryVolts)));
+      SendMessage(VizInterface::MessageViz(std::move(msg)));
     }
 
     void VizManager::SendCurrentAnimation(const std::string& animName, u8 animTag)

@@ -30,7 +30,6 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/fullRobotPose.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/shared/types.h"
@@ -48,7 +47,6 @@
 #include "util/entityComponent/entity.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
-#include "util/stats/recentStatsAccumulator.h"
 
 #include <queue>
 #include <time.h>
