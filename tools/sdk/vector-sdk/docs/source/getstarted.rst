@@ -51,9 +51,7 @@ Let's test your new setup by running a very simple program. This program instruc
 The Program
 """""""""""
 
-1. Please find your robot serial number (ex. 00e20100) located on the underside of Vector, or accessible from Vector's debug screen.
-
-2. Run the program using the same Terminal (macOS/Linux) / Command Prompt (Windows) window mentioned above: 
+1. Run the program using the same Terminal (macOS/Linux) / Command Prompt (Windows) window mentioned above: 
 
 First, change to the ``tutorials`` sub-directory of the ``examples`` directory.
 
@@ -69,19 +67,23 @@ Then, run the program.
 
     a. For macOS and Linux systems, type the following and press **Enter**::
 
-        ./01_hello_world.py --serial {robot_serial_number}
+        ./01_hello_world.py
 
     The same can also be achieved on macOS/Linux with:
 	
-        python3 01_hello_world.py --serial {robot_serial_number}
+        python3 01_hello_world.py
 
     b. For Windows systems, type the following and press **Enter**::
 
-        py 01_hello_world.py --serial {robot_serial_number}
+        py 01_hello_world.py
 
-3. If done correctly, Vector will say "Hello, World!"
+2. If done correctly, Vector will say "Hello, World!"
 
 .. warning:: If Vector does not perform as expected, look at the first Terminal window and make sure no error messages appeared. If you continue to have issues, please seek help in the Forums.
+
+.. note:: If you have more than one Vector configured on your device, you can pass the serial number of the Vector you want to use at the command line:
+    ``./01_hello_world.py --serial {robot_serial_number}``
+
 
 You are now all set up to run Python programs on Vector.
 
