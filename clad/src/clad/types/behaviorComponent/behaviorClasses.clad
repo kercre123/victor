@@ -95,6 +95,7 @@ enum uint_8 BehaviorClass {
   PowerSaveStressTest,
   PowerSaveTest,
   ReactToBody,
+  ReactToBrightColor,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,

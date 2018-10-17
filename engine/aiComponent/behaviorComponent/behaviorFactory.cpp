@@ -70,6 +70,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveStressTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorPowerSaveTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToBody.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToBrightColor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDistanceSensor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
@@ -543,6 +544,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToBody:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBody(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToBrightColor:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBrightColor(config));
       break;
     }
     

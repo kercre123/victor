@@ -1,0 +1,9 @@
+{
+  "behaviorID" :   "ReactToBrightColor",
+  "behaviorClass": "ReactToBrightColor",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType":      "SalientPointDetected",
+    "targetSalientPoint": "BrightColors"
+  }
+}
