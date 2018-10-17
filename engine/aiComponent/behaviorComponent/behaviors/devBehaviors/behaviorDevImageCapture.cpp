@@ -464,7 +464,11 @@ void BehaviorDevImageCapture::MoveToNewPose()
     const f32 bodyAngle_rad = (_dVars.startingBodyAngle_rad + bodyAngleDelta_rad).ToFloat();
     const bool isAbsolute = true; // using absolute because we want to be relative to starting angle, not current
     turnAction->AddAction(new TurnInPlaceAction(bodyAngle_rad, isAbsolute));
-    LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.BodyAngle", "%.1fdeg", RAD_TO_DEG(bodyAngle_rad));
+    LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.BodyAngle",
+              "Start:%.1fdeg Current:%.1fdeg Delta:%.1fdeg NewAngle:%.1fdeg",
+              _dVars.startingBodyAngle_rad.getDegrees(),
+              GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>().getDegrees(),
+              RAD_TO_DEG(bodyAngleDelta_rad), RAD_TO_DEG(bodyAngle_rad));
   }
   
   CompoundActionSequential* action = new CompoundActionSequential();
@@ -493,10 +497,6 @@ void BehaviorDevImageCapture::MoveToNewPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
 {
-  // Store starting angles for each button press so we can move to new positions relative to that
-  _dVars.startingBodyAngle_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
-  _dVars.startingHeadAngle_rad = GetBEI().GetRobotInfo().GetHeadAngle();
-  
   // To help avoid duplicate images names when combining images from multiple robots on multiple runs of
   // this behavior, use a basename built from the robot's serial number and the milliseconds since epoch.
   // Note that for streaming, a frame number will also be appended by the ImageSaver because all saved
@@ -532,6 +532,13 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
     
     DelegateIfInControl(waitAction, [this]() {
       _dVars.imagesSaved++;
+      if(_dVars.imagesSaved == 1)
+      {
+        // After the first image is taken, store starting angles for each button press so we can move to
+        // new positions relative to that
+        _dVars.startingBodyAngle_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
+        _dVars.startingHeadAngle_rad = GetBEI().GetRobotInfo().GetHeadAngle();
+      }
       if(_dVars.imagesSaved < _iConfig.numImagesPerCapture)
       {
         MoveToNewPose();
