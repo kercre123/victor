@@ -304,12 +304,14 @@ private:
       void Init(Robot* robot);
 
       // activating/deactivating this state will cause vector to convey to the user that he is responding to an active user intent
-      bool IsActive() const;
       void Activate(UserIntentTag userIntent);
       void Deactivate(UserIntentTag userIntent);
 
     private:
-      BackpackLightComponent* bplComponent;
+      bool IsEnabled() const;
+      bool IsActive() const;
+
+      Robot* robot;
       UserIntentTag activatedIntentTag;
       BackpackLightDataLocator lightsHandle;
   } _activeIntentFeedback;

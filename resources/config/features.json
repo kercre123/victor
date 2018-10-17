@@ -66,6 +66,10 @@
   {
     "feature": "ReactToIllumination",
     "enabled": true
+  },
+  {
+    "feature": "ActiveIntentFeedback",
+    "enabled": true
   }
 ]
 

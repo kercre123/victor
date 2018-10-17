@@ -470,6 +470,7 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kWantsToCancelSelfConfigKey,
     kRespondToUserIntentsKey,
     kRespondToTriggerWordKey,
+    kDisplayIntentActivity,
     kEmotionEventOnActivatedKey,
     kResetTimersKey,
     kAnonymousBehaviorMapKey,

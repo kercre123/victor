@@ -153,6 +153,7 @@ static const char* kFeatureEnumString =
   "AttentionTransfer,"
   "UserDefinedBehaviorTree,"
   "PopAWheelie,"
+  "ActiveIntentFeedback,"
   "PRDemo";
 
 CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, kFeatureEnumString );

@@ -23,6 +23,7 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/utils/cozmoFeatureGate.h"
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 
@@ -252,7 +253,7 @@ void UserIntentComponent::StopActiveUserIntentFeedback()
 #define USE_CUSTOM_BP_ANIM 0
 
 UserIntentComponent::ActiveIntentFeedback::ActiveIntentFeedback() :
-  bplComponent(nullptr),
+  robot(nullptr),
   activatedIntentTag(UserIntentTag::INVALID)
 {
 
@@ -260,12 +261,16 @@ UserIntentComponent::ActiveIntentFeedback::ActiveIntentFeedback() :
 
 void UserIntentComponent::ActiveIntentFeedback::Init(Robot* robot)
 {
-  bplComponent = &robot->GetBackpackLightComponent();
-  DEV_ASSERT( bplComponent != nullptr, "UserIntentComponent.ActiveIntentFeedback.Init: Invalid BackpackLightComponent" );
+  this->robot = robot;
+  DEV_ASSERT( this->robot != nullptr, "UserIntentComponent.ActiveIntentFeedback.Init: Invalid Robot pointer" );
 }
 
 void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userIntent)
 {
+  if (!IsEnabled()) {
+    return;
+  }
+
   // don't activate if we're currently actiavted
   // some behavior have nested "intent activations" and we only care about the first one
   if (!IsActive())
@@ -283,11 +288,13 @@ void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userInten
         .offset                 = {{0,0,0}}
       };
 
-      bplComponent->StartLoopingBackpackAnimation( kActiveStateLights, lightsHandle );
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.StartLoopingBackpackAnimation( kActiveStateLights, lightsHandle );
     }
     #else
     {
-      bplComponent->SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
     }
     #endif
 
@@ -300,6 +307,10 @@ void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userInten
 
 void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userIntent)
 {
+  if (!IsEnabled()) {
+    return;
+  }
+
   // only deactivate if a) we're currently active, and b) this is the same intent that activated us
   // UserIntentTag::INVALID intent will force deactivation
   if (IsActive() && ((userIntent == activatedIntentTag) || (userIntent == UserIntentTag::INVALID)))
@@ -308,12 +319,14 @@ void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userInt
     {
       if ( lightsHandle.IsValid() )
       {
-        bplComponent->StopLoopingBackpackAnimation( lightsHandle );
+        BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+        bplComponent.StopLoopingBackpackAnimation( lightsHandle );
       }
     }
     #else
     {
-      bplComponent->ClearAllBackpackLightConfigs();
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.ClearAllBackpackLightConfigs();
     }
     #endif
 
@@ -321,6 +334,11 @@ void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userInt
 
     activatedIntentTag = UserIntentTag::INVALID;
   }
+}
+
+bool UserIntentComponent::ActiveIntentFeedback::IsEnabled() const
+{
+  return robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ActiveIntentFeedback);
 }
 
 bool UserIntentComponent::ActiveIntentFeedback::IsActive() const
