@@ -741,7 +741,7 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
                                                       kFaceTrackingMaxPoseChange_mm);
   if(hasHeadMoved || hasBodyMoved)
   {
-    PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
+    PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.ResetFaceTracker",
                       "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
     _faceTracker->AccountForRobotMove();
   }
@@ -968,7 +968,7 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
   }
   
   if(_lastClaheTileSize != kClaheTileSize) {
-    PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheTileSizeUpdated",
+    PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.ClaheTileSizeUpdated",
                       "%d -> %d", _lastClaheTileSize, kClaheTileSize);
     
     _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
@@ -976,7 +976,7 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
   }
   
   if(_lastClaheClipLimit != kClaheClipLimit) {
-    PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheClipLimitUpdated",
+    PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.ClaheClipLimitUpdated",
                       "%d -> %d", _lastClaheClipLimit, kClaheClipLimit);
     
     _clahe->setClipLimit(kClaheClipLimit);

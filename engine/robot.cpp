@@ -83,7 +83,7 @@
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
-#define LOG_CHANNEL "RobotState"
+#define LOG_CHANNEL "Robot"
 
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
 
@@ -143,7 +143,7 @@ static void AddAnimation(ConsoleFunctionContextRef context)
           CannedAnimationLoader animLoader(platform, spritePaths, spriteSequenceContainer, loadingCompleteRatio, abortLoad);
 
           animLoader.LoadAnimationIntoContainer(animationPath.c_str(), animContainer);
-          PRINT_NAMED_INFO("Robot.AddAnimation", "Loaded animation from %s", animationPath.c_str());
+          LOG_INFO("Robot.AddAnimation", "Loaded animation from %s", animationPath.c_str());
         }
       }
     }
@@ -409,7 +409,7 @@ Robot::~Robot()
   _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
   _components->RemoveComponent(RobotComponentID::PathPlanning);
 
-  PRINT_NAMED_INFO("robot.destructor", "%d", GetID());
+  LOG_INFO("robot.destructor", "%d", GetID());
 }
 
 
@@ -526,7 +526,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // Falling seems worthy of a DAS event
     if (_awaitingConfirmationTreadState == OffTreadsState::Falling) {
       _fallingStartedTime_ms = GetLastMsgTimestamp();
-      PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStarted",
+      LOG_INFO("Robot.CheckAndUpdateTreadsState.FallingStarted",
                        "t=%dms",
                        (TimeStamp_t)_fallingStartedTime_ms);
 
@@ -536,7 +536,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     } else if (_offTreadsState == OffTreadsState::Falling) {
       // This is not an exact measurement of fall time since it includes some detection delays on the robot side
       // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands
-      PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStopped",
+      LOG_INFO("Robot.CheckAndUpdateTreadsState.FallingStopped",
                        "t=%dms, duration=%dms",
                        (TimeStamp_t)GetLastMsgTimestamp(), (TimeStamp_t)(GetLastMsgTimestamp() - _fallingStartedTime_ms));
       _fallingStartedTime_ms = 0;
@@ -666,7 +666,7 @@ void Robot::Delocalize(bool isCarryingObject)
                  worldOriginID, worldOrigin.GetID());
 
   // Log delocalization, new origin name, and num origins to DAS
-  PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
+  LOG_INFO("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
                    GetID(), worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
 
   GetComponent<FullRobotPose>().GetPose().SetRotation(0, Z_AXIS_3D());
@@ -1133,7 +1133,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetComponent<RobotGyroDriftDetector>().DetectBias(msg);
 
   /*
-    PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
+    LOG_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
     "Robot %d's pose updated to (%.3f, %.3f, %.3f) @ %.1fdeg based on "
     "msg at time=%d, frame=%d saying (%.3f, %.3f) @ %.1fdeg\n",
     _ID, GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y(), GetComponent<FullRobotPose>().GetPose().GetTranslation().z(),
@@ -1578,10 +1578,10 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   }
 
   /* Useful for Debug:
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.MatSeenChain",
+     LOG_INFO("Robot.LocalizeToMat.MatSeenChain",
      "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
 
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
+     LOG_INFO("Robot.LocalizeToMat.ExistingMatChain",
      "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
   */
 
@@ -1662,7 +1662,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   const Pose3d& origOrigin = GetPoseOriginList().GetCurrentOrigin();
   if (!existingObject->GetPose().HasSameRootAs(origOrigin))
   {
-    PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
+    LOG_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
                      "Robot %d's current origin is %s, about to localize to origin %s.",
                      GetID(), origOrigin.GetName().c_str(),
                      existingObject->GetPose().FindRoot().GetName().c_str());
@@ -1727,7 +1727,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
 
   // Overly-verbose. Use for debugging localization issues
   /*
-    PRINT_NAMED_INFO("Robot.LocalizeToObject",
+    LOG_INFO("Robot.LocalizeToObject",
     "Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f), frameID=%d\n",
     ObjectTypeToString(existingObject->GetType()),
     existingObject->GetID().GetValue(), GetID(),
@@ -1768,10 +1768,10 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   }
 
   /* Useful for Debug:
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.MatSeenChain",
+     LOG_INFO("Robot.LocalizeToMat.MatSeenChain",
      "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
 
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
+     LOG_INFO("Robot.LocalizeToMat.ExistingMatChain",
      "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
   */
 
@@ -1990,7 +1990,7 @@ Result Robot::SetPosePostRollOffCharger()
     return lastResult;
   }
 
-  PRINT_NAMED_INFO("Robot.SetPosePostRollOffCharger.NewRobotPose",
+  LOG_INFO("Robot.SetPosePostRollOffCharger.NewRobotPose",
                    "Updated robot pose to be in front of the charger, as if it had just rolled off.");
   return RESULT_OK;
 }

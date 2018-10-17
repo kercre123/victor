@@ -340,9 +340,9 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   std::string s = ss.str();
   if(!s.empty())
   {
-    PRINT_NAMED_INFO("CameraCalibrator.ComputeCalibrationFromSingleTarget.MarkersNotSeen",
-                     "Expected to see the following markers but didnt %s",
-                     s.c_str());
+    PRINT_CH_INFO(kLogChannelName, "CameraCalibrator.ComputeCalibrationFromSingleTarget.MarkersNotSeen",
+                                   "Expected to see the following markers but didnt %s",
+                                   s.c_str());
   }
   
   ss.str(std::string());

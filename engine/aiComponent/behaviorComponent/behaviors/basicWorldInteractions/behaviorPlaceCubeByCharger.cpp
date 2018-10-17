@@ -217,7 +217,7 @@ void BehaviorPlaceCubeByCharger::AttemptToPickUpCube()
                           if (GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject()) {
                             // Succeeded in picking up cube
                             if(!RobotKnowsWhereChargerIs()){
-                              PRINT_NAMED_INFO("BehaviorPlaceCubeByCharger.RobotDoesntKnowWhereChargerIs",
+                              PRINT_CH_INFO("Behaviors", "BehaviorPlaceCubeByCharger.RobotDoesntKnowWhereChargerIs",
                                               "No charger found yet, searching for charger");
                               TransitionToSearchForCharger();
                             }
@@ -231,7 +231,7 @@ void BehaviorPlaceCubeByCharger::AttemptToPickUpCube()
                             }
                             else{
                               AttemptToPickUpCube();
-                              PRINT_NAMED_INFO("BehaviorPlaceCubeByCharger.RetryPickUpCube","");
+                              PRINT_CH_INFO("Behaviors", "BehaviorPlaceCubeByCharger.RetryPickUpCube","");
                             }
                           }
                         });
@@ -386,12 +386,12 @@ void BehaviorPlaceCubeByCharger::TransitionToPutCubeDown()
     [this](ActionResult result) {
       const auto& robotInfo = GetBEI().GetRobotInfo();
       if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
-        PRINT_NAMED_INFO("BehaviorPlaceCubeByCharger.ObjectStillHeld",
+        PRINT_CH_INFO("Behaviors", "BehaviorPlaceCubeByCharger.ObjectStillHeld",
                          "Robot still thinks its carrying an object after the anim finished");
         TransitionToLookDownAtBlock();
       }
       else{
-        PRINT_NAMED_INFO("BehaviorPlaceCubeByCharger.PutDownSuccessfull",
+        PRINT_CH_INFO("Behaviors", "BehaviorPlaceCubeByCharger.PutDownSuccessfull",
                          "Robot put down cube successfully, transition to get out");
         TransitionToGetOut();
       }

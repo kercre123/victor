@@ -32,6 +32,8 @@
 
 #include "coretech/common/engine/math/polygon_impl.h"
 
+#define LOG_CHANNEL "CliffSensor"
+
 namespace Anki {
 namespace Vector {
   
@@ -101,7 +103,7 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 
   // Check if StopOnWhite should be auto disabled due to pickup
   if (_stopOnWhiteEnabled && _robot->IsPickedUp()) {
-    PRINT_NAMED_INFO("CliffSensorComponent.NotifyOfRobotStateInternal.AutoDisableStopOnWhiteDueToPickup", "");
+    LOG_INFO("CliffSensorComponent.NotifyOfRobotStateInternal.AutoDisableStopOnWhiteDueToPickup", "");
     EnableStopOnWhite(false);
   }
 }
@@ -175,7 +177,7 @@ void CliffSensorComponent::SendCliffDetectThresholdsToRobot()
     return;
   }
   
-  PRINT_NAMED_DEBUG("CliffSensorComponent.SendCliffDetectThresholdsToRobot.SendThresholds",
+  LOG_DEBUG("CliffSensorComponent.SendCliffDetectThresholdsToRobot.SendThresholds",
                     "New cliff thresholds being sent to robot: %d %d %d %d",
                     _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);
   
@@ -202,7 +204,7 @@ void CliffSensorComponent::SetCliffDetectThreshold(unsigned int ind, uint16_t ne
   
   auto& curThresh = _cliffDetectThresholds[ind];
   if (curThresh != newThresh) {
-    PRINT_NAMED_DEBUG("CliffSensorComponent.SetCliffDetectThreshold.NewThreshold",
+    LOG_DEBUG("CliffSensorComponent.SetCliffDetectThreshold.NewThreshold",
                       "New cliff threshold for %s (old: %d, new %d). Message to robot queued.",
                       EnumToString(static_cast<CliffSensor>(ind)),
                       curThresh,
@@ -328,7 +330,7 @@ void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
     if (stopOnWhite && _robot->IsPickedUp()) {
       PRINT_NAMED_WARNING("CliffSensorComponent.EnableStopOnWhite.IgnoredDueToPickup", "");
     } else {
-      PRINT_NAMED_INFO("CliffSensorComponent.EnableStopOnWhite", "%d", stopOnWhite);
+      LOG_INFO("CliffSensorComponent.EnableStopOnWhite", "%d", stopOnWhite);
       _stopOnWhiteEnabled = stopOnWhite;
       _robot->SendRobotMessage<RobotInterface::EnableStopOnWhite>(stopOnWhite);
     }

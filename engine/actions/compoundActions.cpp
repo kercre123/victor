@@ -331,7 +331,7 @@ namespace Anki {
         # endif
         return ActionResult::SUCCESS;
       } else if(currentTime_secs >= _waitUntilTime) {
-        PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
+        PRINT_CH_INFO("Actions", "CompoundActionSequential.Update.NextAction",
                          "Moving to action %s [%d]",
                          (*_currentAction)->GetName().c_str(),
                          (*_currentAction)->GetTag());
@@ -380,7 +380,7 @@ namespace Anki {
       
       Result derivedUpdateResult = UpdateDerived();
       if(RESULT_OK != derivedUpdateResult) {
-        PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal.UpdateDerivedFailed", "");
+        PRINT_CH_INFO("Actions", "CompoundActionSequential.UpdateInternal.UpdateDerivedFailed", "");
         return ActionResult::UPDATE_DERIVED_FAILED;
       }
       
@@ -421,7 +421,7 @@ namespace Anki {
               // A constituent action failed . Reset all the constituent actions
               // and try again as long as there are retries remaining
               if(RetriesRemain()) {
-                PRINT_NAMED_INFO("CompoundActionSequential.Update.Retrying",
+                PRINT_CH_INFO("Actions", "CompoundActionSequential.Update.Retrying",
                                  "%s triggered retry", (*_currentAction)->GetName().c_str());
                 Reset();
                 return ActionResult::RUNNING;

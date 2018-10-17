@@ -83,10 +83,10 @@ EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
                                    std::min(DUBINS_START_RADIUS_MM, dubinsRadius),
                                    std::min(DUBINS_END_RADIUS_MM, dubinsRadius),
                                    DUBINS_TARGET_SPEED_MMPS, DUBINS_ACCEL_MMPS2, DUBINS_DECEL_MMPS2) == 0) {
-    PRINT_NAMED_INFO("GetPlan.NoPathFound",
-                     "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)",
-                     startPt.x(), startPt.y(), startAngle,
-                     targetPt.x(), targetPt.y(), targetAngle);
+    PRINT_CH_INFO("Planner", "GetPlan.NoPathFound",
+                  "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)",
+                  startPt.x(), startPt.y(), startAngle,
+                  targetPt.x(), targetPt.y(), targetAngle);
     return EComputePathStatus::Error;
   }
   else {

@@ -210,7 +210,7 @@ void BehaviorConfirmHabitat::GetBehaviorJsonKeys(std::set<const char*>& expected
 
 void BehaviorConfirmHabitat::OnBehaviorActivated()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.Activated","");
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.Activated","");
   
   // disable stop-on-white until we finished looking for the charger
   GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
@@ -220,7 +220,7 @@ void BehaviorConfirmHabitat::OnBehaviorActivated()
 
 void BehaviorConfirmHabitat::OnBehaviorDeactivated()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.Deactivated","");
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.Deactivated","");
   GetBEI().GetCliffSensorComponent().EnableStopOnWhite(false);
   _dVars = DynamicVariables();
 }
@@ -351,7 +351,7 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
       // check if we've seen the charger yet, or exceeded search turn angle
       const bool chargerSeen = GetChargerIfObserved() != nullptr;
       if(chargerSeen) {
-        PRINT_NAMED_INFO("ConfirmHabitat.BehaviorUpdate.LocalizeCharger.FoundCharger", "");
+        PRINT_CH_INFO("Behaviors", "ConfirmHabitat.BehaviorUpdate.LocalizeCharger.FoundCharger", "");
         _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
         TransitionToSeekLineFromCharger();
       } else {
@@ -369,7 +369,7 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
          habitatDetector.GetHabitatLineRelPose() != HabitatLineRelPose::AllGrey) {
         _dVars._phase = ConfirmHabitatPhase::LineDocking;
       } else {
-        PRINT_NAMED_INFO("ConfirmHabitat.BehaviorUpdate.SeekLine.NotStoppedOnWhite","");
+        PRINT_CH_INFO("Behaviors", "ConfirmHabitat.BehaviorUpdate.SeekLine.NotStoppedOnWhite","");
         _dVars._phase = ConfirmHabitatPhase::RandomWalk;
         TransitionToRandomWalk();
       }
@@ -394,7 +394,7 @@ void BehaviorConfirmHabitat::BehaviorUpdate()
       switch(habitatDetector.GetHabitatLineRelPose()) {
         case HabitatLineRelPose::AllGrey:
         {
-          PRINT_NAMED_INFO("ConfirmHabitat.BehaviorUpdate.LineDocking.LineLost","");
+          PRINT_CH_INFO("Behaviors", "ConfirmHabitat.BehaviorUpdate.LineDocking.LineLost","");
           _dVars._phase = ConfirmHabitatPhase::RandomWalk;
           TransitionToRandomWalk();
           break;
@@ -462,7 +462,7 @@ void BehaviorConfirmHabitat::DelegateActionHelper(IActionRunner* action, RobotCo
           case ActionResult::SUCCESS: { break; }
           default:
           {
-            PRINT_NAMED_INFO("ConfirmHabitat.DelegateActionHelper.UnhandledActionResult","%s",EnumToString(msg.result));
+            PRINT_CH_INFO("Behaviors", "ConfirmHabitat.DelegateActionHelper.UnhandledActionResult","%s",EnumToString(msg.result));
           }
         }
       };
@@ -475,7 +475,7 @@ void BehaviorConfirmHabitat::DelegateActionHelper(IActionRunner* action, RobotCo
 
 void BehaviorConfirmHabitat::TransitionToReactToHabitat()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToReactToHabitat","");
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToReactToHabitat","");
 
   CompoundActionSequential* action = new CompoundActionSequential();
 
@@ -501,18 +501,18 @@ void BehaviorConfirmHabitat::TransitionToReactToHabitat()
 
 void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger","");
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToLocalizeCharger","");
   
   BehaviorSimpleCallback callback = [this](void)->void {
     // enable stop-on-white after we attempted to look for the charger
     GetBEI().GetCliffSensorComponent().EnableStopOnWhite(true);
     
     if(GetChargerIfObserved() != nullptr) {
-      PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger.ChargerFound","");
+      PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToLocalizeCharger.ChargerFound","");
       _dVars._phase = ConfirmHabitatPhase::SeekLineFromCharger;
       TransitionToSeekLineFromCharger();
     } else {
-      PRINT_NAMED_INFO("ConfirmHabitat.TransitionToLocalizeCharger.ChargerNotFound","");
+      PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToLocalizeCharger.ChargerNotFound","");
       _dVars._phase = ConfirmHabitatPhase::RandomWalk;
     }
   };
@@ -531,7 +531,7 @@ void BehaviorConfirmHabitat::TransitionToLocalizeCharger()
 
 void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite","%s",_dVars._cliffAlignRetry ? "Retry" : "");
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToCliffAlignWhite","%s",_dVars._cliffAlignRetry ? "Retry" : "");
   
   IActionRunner* action = new CliffAlignToWhiteAction();
   DEV_ASSERT_MSG(action != nullptr, "ConfirmHabitat.TransitionToCliffAlignWhite.NullActionPtr", "");
@@ -574,7 +574,7 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
       }
       case ActionResult::CLIFF_ALIGN_FAILED_NO_TURNING:
       {
-        PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite.Failed","");
+        PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToCliffAlignWhite.Failed","");
 
         const auto& habitatDetector = GetBEI().GetHabitatDetectorComponent();
         auto linePose = habitatDetector.GetHabitatLineRelPose();
@@ -603,7 +603,7 @@ void BehaviorConfirmHabitat::TransitionToCliffAlignWhite()
       }
       default:
       {
-        PRINT_NAMED_INFO("ConfirmHabitat.TransitionToCliffAlignWhite.UnhandledActionResult",
+        PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToCliffAlignWhite.UnhandledActionResult",
                          "%s",EnumToString(msg.result));
       }
     }
@@ -641,7 +641,7 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(HabitatLineRelPose lineRel
 
 void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags)
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToWhiteReactionAnim", "%d", (int)whiteDetectedFlags);
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToWhiteReactionAnim", "%d", (int)whiteDetectedFlags);
 
   const float currTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool doWhiteReactionAnim = currTime_sec > _dVars._nextWhiteReactionAnimTime_sec;
@@ -662,7 +662,7 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
         // since Vector doesn't have eyes at the back
         // of his head, reacting to back cliffs does not
         // read properly to the user. Do nothing here.
-        PRINT_NAMED_INFO("ConfirmHabitat.TransitionToReactToWhite.BackCliffDetectingWhiteNoReact","");
+        PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToReactToWhite.BackCliffDetectingWhiteNoReact","");
         delete action;
         return;
       }
@@ -696,7 +696,7 @@ void BehaviorConfirmHabitat::TransitionToReactToWhite(uint8_t whiteDetectedFlags
 
 void BehaviorConfirmHabitat::TransitionToBackupTurnForward(int backDist_mm, f32 angle, int forwardDist_mm)
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToBackupTurnForward","%d %4.2f %d", backDist_mm, angle, forwardDist_mm);
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToBackupTurnForward","%d %4.2f %d", backDist_mm, angle, forwardDist_mm);
   CompoundActionSequential* action = new CompoundActionSequential(std::list<IActionRunner*>{
     // note: temporarily disable stop on white
     // this allows the robot to get out of tight spots
@@ -729,7 +729,7 @@ void BehaviorConfirmHabitat::TransitionToBackupTurnForward(int backDist_mm, f32 
 
 void BehaviorConfirmHabitat::TransitionToTurnBackupForward(f32 angle, int backDist_mm, int forwardDist_mm)
 {
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToTurnBackupForward","");
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToTurnBackupForward","");
   CompoundActionSequential* action = new CompoundActionSequential(std::list<IActionRunner*>{
     // note: temporarily disable stop on white
     // this allows the robot to get out of tight spots
@@ -779,7 +779,7 @@ void BehaviorConfirmHabitat::TransitionToRandomWalk()
     GetBEI().GetMapComponent().SetUseProxObstaclesInPlanning(true);
   };
   DelegateActionHelper(action, std::move(callback));
-  PRINT_NAMED_INFO("ConfirmHabitat.TransitionToRandomWalk", "ActionNum=%d",index);
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.TransitionToRandomWalk", "ActionNum=%d",index);
 }
 
 void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
@@ -795,7 +795,7 @@ void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
   // the origin of the charger located at the tip of the ramp
   // with the x-axis oriented towards the label
   const Pose3d& chargerPose = charger->GetPose();
-  PRINT_NAMED_INFO("ConfirmHabitat.SeekLineFromCharger","");
+  PRINT_CH_INFO("Behaviors", "ConfirmHabitat.SeekLineFromCharger","");
 
   // these poses are computed relative to the charger
   // the values selected define a position slightly beyond
@@ -854,7 +854,7 @@ void BehaviorConfirmHabitat::HandleWhileActivated(const EngineToGameEvent& event
     }
     case EngineToGameTag::UnexpectedMovement:
     {
-      PRINT_NAMED_INFO("ConfirmHabitat.HandleWhiteActivated.UnexpectedMovement","");
+      PRINT_CH_INFO("Behaviors", "ConfirmHabitat.HandleWhiteActivated.UnexpectedMovement","");
       if(_dVars._phase == ConfirmHabitatPhase::RandomWalk && IsControlDelegated() ) {
         CancelDelegates();
         // we ran into an obstacle:
@@ -891,7 +891,7 @@ void BehaviorConfirmHabitat::AlwaysHandleInScope(const EngineToGameEvent& event)
       if(reason == StopReason::WHITE && belief == HabitatBeliefState::Unknown) {
         if(IsActivated()) {
           if(!CheckIfFrontCliffsAreInLogoRegion()) {
-            PRINT_NAMED_INFO("ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite","");
+            PRINT_CH_INFO("Behaviors", "ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite","");
             TransitionToReactToWhite(event.GetData().Get_RobotStopped().whiteDetectedFlags);
           } else {
             // we are confident we are stopped on top of the logo
@@ -905,7 +905,7 @@ void BehaviorConfirmHabitat::AlwaysHandleInScope(const EngineToGameEvent& event)
               }
             }
             // rotates away from the logo
-            PRINT_NAMED_INFO("ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite.InLogoRegion","");
+            PRINT_CH_INFO("Behaviors", "ConfirmHabitat.AlwaysHandleInScope.StoppedOnWhite.InLogoRegion","");
             TransitionToTurnBackupForward(sign*M_PI_2, 0, 0);
           }
         }

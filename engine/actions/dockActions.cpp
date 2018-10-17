@@ -1458,7 +1458,7 @@ namespace Anki {
               if (VerifyCarryingComponentValid() &&
                   (currentTime > _firstVerifyCallTime + kMaxObjectStillMovingAfterRobotStopTime_ms)) {
                 _carryingComponentPtr->SetCarriedObjectAsUnattached(true);
-                PRINT_NAMED_INFO("PickupObjectAction.Verify.ObjectStillMoving", "");
+                PRINT_CH_INFO("Actions", "PickupObjectAction.Verify.ObjectStillMoving", "");
                 return ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING;
               }
               return ActionResult::RUNNING;
@@ -1469,7 +1469,7 @@ namespace Anki {
             else if (VerifyCarryingComponentValid() &&
                      (_firstVerifyCallTime > lastMovingTime + (_dockAction == DockAction::DA_PICKUP_LOW ? kMaxObjectHasntMovedBeforeRobotStopTime_ms : kMaxObjectHasntMovedBeforeRobotStopTimeForHighPickup_ms))) {
               _carryingComponentPtr->SetCarriedObjectAsUnattached(true);
-              PRINT_NAMED_INFO("PickupObjectAction.Verify.ObjectDidntMoveAsExpected", "lastMovedTime %d, firstTime: %d", (TimeStamp_t)lastMovingTime, (TimeStamp_t)_firstVerifyCallTime);
+              PRINT_CH_INFO("Actions", "PickupObjectAction.Verify.ObjectDidntMoveAsExpected", "lastMovedTime %d, firstTime: %d", (TimeStamp_t)lastMovingTime, (TimeStamp_t)_firstVerifyCallTime);
               return ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING;
             }
           }

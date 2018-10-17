@@ -47,6 +47,8 @@
 
 #include <numeric>
 
+#define LOG_CHANNEL "MapComponent"
+
 // Giving this its own local define, in case we want to control it independently of DEV_CHEATS / NDEBUG, etc.
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
@@ -671,8 +673,7 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
   {
     const bool isZombie = _robot->GetBlockWorld().IsZombiePoseOrigin( iter->first );
     if ( isZombie ) {
-      // PRINT_CH_DEBUG("MapComponent", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
-      PRINT_NAMED_INFO("MapComponent.memory_map.deleting_zombie_map", "%d", worldOriginID );
+      LOG_INFO("MapComponent.memory_map.deleting_zombie_map", "%d", worldOriginID );
       iter = _navMaps.erase(iter);
       
       // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
@@ -682,8 +683,7 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
         posesPerOriginForObject.erase( zombieOriginID );
       }
     } else {
-      //PRINT_CH_DEBUG("MapComponent", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
-      PRINT_NAMED_INFO("MapComponent.memory_map.keeping_alive_map", "%d", worldOriginID );
+      LOG_INFO("MapComponent.memory_map.keeping_alive_map", "%d", worldOriginID );
       ++iter;
     }
   }
@@ -706,7 +706,7 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
     
     
     // create a new memory map in the given origin
-    PRINT_NAMED_INFO("MapComponent.CreateLocalizedMemoryMap", "Setting current origin to %i", worldOriginID);
+    LOG_INFO("MapComponent.CreateLocalizedMemoryMap", "Setting current origin to %i", worldOriginID);
     INavMap* navMemoryMap = NavMapFactory::CreateMemoryMap();
     MapInfo mapInfo;
     mapInfo.map = std::shared_ptr<INavMap>(navMemoryMap);

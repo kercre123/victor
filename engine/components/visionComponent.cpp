@@ -79,6 +79,8 @@
 
 #include "opencv2/highgui/highgui.hpp"
 
+#define LOG_CHANNEL "VisionComponent"
+
 namespace Anki {
 namespace Vector {
 
@@ -124,14 +126,14 @@ namespace Vector {
   
   void DebugEraseAllEnrolledFaces(ConsoleFunctionContextRef context)
   {
-    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","DebugEraseAllEnrolledFaces function called");
+    LOG_INFO("VisionComponent.ConsoleFunc","DebugEraseAllEnrolledFaces function called");
     s_VisionComponent->EraseAllFaces();
   }
   CONSOLE_FUNC(DebugEraseAllEnrolledFaces, "Vision.General");
 
   void DebugCaptureOneImage(ConsoleFunctionContextRef context)
   {
-    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","Capture one image");
+    LOG_INFO("VisionComponent.ConsoleFunc","Capture one image");
     s_VisionComponent->CaptureOneFrame();
   }
   CONSOLE_FUNC(DebugCaptureOneImage, "Vision.General");
@@ -139,7 +141,7 @@ namespace Vector {
   void DebugToggleCameraEnabled(ConsoleFunctionContextRef context)
   {
     static bool enable = false;
-    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","Camera %s", (enable ? "enabled" : "disabled"));
+    LOG_INFO("VisionComponent.ConsoleFunc","Camera %s", (enable ? "enabled" : "disabled"));
     s_VisionComponent->EnableImageCapture(enable);
     enable = !enable;
   }
@@ -335,14 +337,14 @@ namespace Vector {
 
   void VisionComponent::SetIsSynchronous(bool isSynchronous) {
     if(isSynchronous && !_isSynchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetSynchronousMode.SwitchToSync", "");
+      LOG_INFO("VisionComponent.SetSynchronousMode.SwitchToSync", "");
       if(_running) {
         Stop();
       }
       _isSynchronous = true;
     }
     else if(!isSynchronous && _isSynchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetSynchronousMode.SwitchToAsync", "");
+      LOG_INFO("VisionComponent.SetSynchronousMode.SwitchToAsync", "");
       _isSynchronous = false;
       Start();
     }
@@ -358,12 +360,12 @@ namespace Vector {
     }
 
     if(_running) {
-      PRINT_NAMED_INFO("VisionComponent.Start.Restarting",
+      LOG_INFO("VisionComponent.Start.Restarting",
                        "Thread already started, calling Stop() and then restarting (paused:%d).",
                        _paused);
       Stop();
     } else {
-      PRINT_NAMED_INFO("VisionComponent.Start",
+      LOG_INFO("VisionComponent.Start",
                        "Starting vision processing thread (paused:%d)",
                        _paused);
     }
@@ -770,7 +772,7 @@ namespace Vector {
       }
     }
 
-    //      PRINT_NAMED_DEBUG("VisionComponent.LookupGroundPlaneHomography.HeadAngleDiff",
+    //      LOG_DEBUG("VisionComponent.LookupGroundPlaneHomography.HeadAngleDiff",
     //                        "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
     //                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
     //                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
@@ -800,7 +802,7 @@ namespace Vector {
 
   void VisionComponent::Processor()
   {
-    PRINT_NAMED_INFO("VisionComponent.Processor",
+    LOG_INFO("VisionComponent.Processor",
                      "Starting Robot VisionComponent::Processor thread...");
 
     DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
@@ -1142,7 +1144,7 @@ namespace Vector {
     for(auto & faceDetection : procResult.faces)
     {
       /*
-       PRINT_NAMED_INFO("VisionComponent.Update",
+       LOG_INFO("VisionComponent.Update",
                         "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
                         "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
                         faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
@@ -1158,7 +1160,7 @@ namespace Vector {
 
       // Check this before potentially ignoring the face detection for faceWorld's purposes below
       if(faceDetection.GetNumEnrollments() > 0) {
-        PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
+        LOG_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
                           "Count=%d", faceDetection.GetNumEnrollments());
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
@@ -1420,7 +1422,7 @@ namespace Vector {
             break;
         }
 
-        PRINT_NAMED_INFO("robot.vision.image_quality", "%s", EnumToString(errorCode));
+        LOG_INFO("robot.vision.image_quality", "%s", EnumToString(errorCode));
 
         PRINT_CH_DEBUG("VisionComponent",
                        "VisionComponent.UpdateImageQuality.BroadcastingImageQualityChange",
@@ -1755,7 +1757,7 @@ namespace Vector {
                      calibPoses.size(), calibImages.size());
 
       if(!calibImages[whichPose].dotsFound) {
-        PRINT_NAMED_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
+        LOG_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
                          "Dots not found in image %zu, no pose available",
                          whichPose);
       } else {
@@ -2697,7 +2699,7 @@ namespace Vector {
             }
             ss << payload.distCoeffs.back() << "]";
 
-            PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.Recvd",
+            LOG_INFO("VisionComponent.ReadCameraCalibration.Recvd",
                              "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f, distCoeffs: %s)",
                              payload.ncols, payload.nrows,
                              payload.focalLength_x, payload.focalLength_y,
@@ -2872,14 +2874,14 @@ namespace Vector {
     //     {
     //       _storeNextImageForCalibration = false;
     //       if (IsModeEnabled(VisionMode::ComputingCalibration)) {
-    //         PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+    //         LOG_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
     //       } else {
     //         Lock();
     //         Result result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
     //         Unlock();
 
     //         if(RESULT_OK != result) {
-    //           PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+    //           LOG_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
     //         }
     //       }
     //     } // if(_storeNextImageForCalibration)
@@ -2899,7 +2901,7 @@ namespace Vector {
 
     //   }
     //   else {
-    //     PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+    //     LOG_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
     //   }
     // } // if (_storeNextImageForCalibration || _doFactoryDotTest)
   }
@@ -2911,7 +2913,7 @@ namespace Vector {
 
   void VisionComponent::EnableImageCapture(bool enable)
   {
-    PRINT_NAMED_INFO("VisionComponent.EnableImageCapture",
+    LOG_INFO("VisionComponent.EnableImageCapture",
                      "%s image capture",
                      (enable ? "Enabling" : "Disabling"));
 

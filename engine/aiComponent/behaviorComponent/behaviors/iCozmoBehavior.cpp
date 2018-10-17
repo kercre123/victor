@@ -1263,7 +1263,7 @@ void ICozmoBehavior::UpdateInternal()
     // Check whether we should cancel the behavior if control is no longer delegated
     if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
       shouldCancelSelf = true;
-      PRINT_NAMED_INFO((baseDebugStr + "ControlNotDelegated").c_str(),
+      PRINT_CH_INFO("Behaviors", (baseDebugStr + "ControlNotDelegated").c_str(),
                        "Behavior %s always delegates, so cancel self",
                        GetDebugLabel().c_str());
     }
@@ -1272,7 +1272,7 @@ void ICozmoBehavior::UpdateInternal()
     for(auto& condition: _wantsToCancelSelfConditions){
       if(condition->AreConditionsMet(GetBEI())){
         shouldCancelSelf = true;
-        PRINT_NAMED_INFO((baseDebugStr + "WantsToCancelSelfCondition").c_str(),
+        PRINT_CH_INFO("Behaviors", (baseDebugStr + "WantsToCancelSelfCondition").c_str(),
                          "Condition %s wants behavior %s to cancel itself",
                          condition->GetDebugLabel().c_str(),
                          GetDebugLabel().c_str());
@@ -1650,7 +1650,7 @@ bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
     _customLightObjects.push_back(objectID);
     return true;
   }else{
-    PRINT_NAMED_INFO("ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
+    PRINT_CH_INFO("Behaviors", "ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
                      "A custom light pattern has already been set on object %d", objectID.GetValue());
     return false;
   }
@@ -1670,7 +1670,7 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
     _customLightObjects.erase(objectIter);
     return true;
   }else{
-    PRINT_NAMED_INFO("ICozmoBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
+    PRINT_CH_INFO("Behaviors", "ICozmoBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
                         "No custom light pattern is set for object %d", objectID.GetValue());
     return false;
   }

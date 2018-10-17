@@ -592,7 +592,7 @@ void BehaviorExploring::TransitionToDriving()
           SampleAndDrive();
         }
       } else {
-        PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath",
+        PRINT_CH_INFO("Behaviors", "BehaviorExploring.TransitionToDriving.NoPath",
                          "Could not plan a path after %d attempts",
                          _dVars.numDriveAttemps);
         _dVars.endReason = "CouldNotPlan";
@@ -780,7 +780,7 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INa
     }
     
     if( numAcceptedPoses >= kNumPositionsForSearch ) {
-      PRINT_NAMED_INFO("BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
+      PRINT_CH_INFO("Behaviors", "BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
                        "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
       break;
     }

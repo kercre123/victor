@@ -62,9 +62,9 @@ void CubeAccelComponent::UpdateDependent(const RobotCompMap& dependentComps)
     auto& listenerSet = mapEntry.second;
     for (auto iter = listenerSet.begin() ; iter != listenerSet.end() ; ) {
       if (iter->use_count() <= 1) {
-        PRINT_NAMED_INFO("CubeAccelComponent.UpdateDependent.RemovingListener",
-                         "Removing listener for objectID %d since no one is using it",
-                         objId.GetValue());
+        LOG_INFO("CubeAccelComponent.UpdateDependent.RemovingListener",
+                 "Removing listener for objectID %d since no one is using it",
+                 objId.GetValue());
         iter = listenerSet.erase(iter);
       } else {
         ++iter;

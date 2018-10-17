@@ -39,7 +39,7 @@ const char* kDevTestUtteranceKey         = "DEV_TEST_UTTERANCE";
 
 #define SET_STATE(s) do{ \
                           _dVars.state = State::s; \
-                          PRINT_NAMED_INFO("BehaviorTextToSpeechLoop.State", "State = %s", #s); \
+                          PRINT_CH_INFO("Behaviors", "BehaviorTextToSpeechLoop.State", "State = %s", #s); \
                         } while(0);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -257,7 +257,7 @@ void BehaviorTextToSpeechLoop::BehaviorUpdate()
        !_dVars.hasSentPlayCommand){
       PlayUtterance();
     } else if (UtteranceState::Finished == _dVars.utteranceState){
-      PRINT_NAMED_INFO("BehaviorTextToSpeechLoop.Update.UtteranceCompleted",
+      PRINT_CH_INFO("Behaviors", "BehaviorTextToSpeechLoop.Update.UtteranceCompleted",
                        "Utterance %d finished playing",
                        _dVars.utteranceID);
       CancelDelegates(false);

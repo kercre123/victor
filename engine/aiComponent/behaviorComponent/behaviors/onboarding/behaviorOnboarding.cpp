@@ -916,7 +916,7 @@ void BehaviorOnboarding::TerminateOnboarding()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboarding::RequestContinue( int step )
 {
-  PRINT_NAMED_INFO("BehaviorOnboarding.RequestContinue.OnboardingStatus", "App requesting %d, expecting %d", step, _dVars.lastExpectedStep);
+  PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.RequestContinue.OnboardingStatus", "App requesting %d, expecting %d", step, _dVars.lastExpectedStep);
   if( (_dVars.state == BehaviorState::Interrupted)
       || (_dVars.state == BehaviorState::InterruptedButComplete)
       || (_dVars.state == BehaviorState::StageNotStarted) )
@@ -1202,7 +1202,7 @@ void BehaviorOnboarding::SetRobotExpectingStep( int step )
   
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( (gi != nullptr) && (_dVars.lastExpectedStep != step) ) {
-    PRINT_NAMED_INFO("BehaviorOnboarding.SetRobotExpectingStep.OnboardingStatus", "Robot expecting step %d", step);
+    PRINT_CH_INFO("Behaviors", "BehaviorOnboarding.SetRobotExpectingStep.OnboardingStatus", "Robot expecting step %d", step);
     external_interface::OnboardingSteps stepEnum{ static_cast<external_interface::OnboardingSteps>(step) };
     auto* onboardingExpectedStep = new external_interface::OnboardingRobotExpectingStep{ stepEnum };
     gi->Broadcast( ExternalMessageRouter::Wrap(onboardingExpectedStep) );

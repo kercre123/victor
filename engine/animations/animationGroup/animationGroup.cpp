@@ -118,7 +118,7 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                                                     float headAngleRad,
                                                     bool strictCooldown) const
 {
-  PRINT_NAMED_DEBUG("AnimationGroup.GetAnimation", "getting animation from group '%s', simple mood = '%s'",
+  PRINT_CH_DEBUG("Animations", "AnimationGroup.GetAnimation", "getting animation from group '%s', simple mood = '%s'",
                     _name.c_str(),
                     SimpleMoodTypeToString(mood));
       

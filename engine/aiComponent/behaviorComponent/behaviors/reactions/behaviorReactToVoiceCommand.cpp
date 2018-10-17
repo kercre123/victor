@@ -843,7 +843,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     {
       if( IsTurnEnabled() ) {
         const MicDirectionIndex triggerDirection = GetReactionDirection();
-        PRINT_NAMED_INFO("BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
         _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
         PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",

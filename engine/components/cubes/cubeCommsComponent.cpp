@@ -42,6 +42,8 @@
 #include "webServerProcess/src/webService.h"
 #include "webServerProcess/src/webVizSender.h"
 
+#define LOG_CHANNEL "CubeComms"
+
 namespace Anki {
 namespace Vector {
 
@@ -152,7 +154,7 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
   // pending disconnection completes.
   if (_startScanWhenUnconnected) {
     if (GetCubeConnectionState() == CubeConnectionState::UnconnectedIdle) {
-      PRINT_NAMED_INFO("CubeCommsComponent.UpdateDependent.StartingScan",
+      LOG_INFO("CubeCommsComponent.UpdateDependent.StartingScan",
                        "Cube has fully disconnected and a scan was scheculed. "
                        "Starting a scan for cubes, which should result in a cube connection");
       _startScanWhenUnconnected = false;
@@ -190,7 +192,7 @@ bool CubeCommsComponent::RequestConnectToCube(const ConnectionCallback& connecte
   if (_disconnectFromCubeTime_sec > 0.f) {
     _disconnectFromCubeTime_sec = -1.f;
     DEV_ASSERT(IsConnectedToCube(), "CubeCommsComponent.RequestConnectToCube.ShouldBeConnectedIfDisconnectScheduled");
-    PRINT_NAMED_INFO("CubeCommsComponent.RequestConnectToCube.CancellingScheduledDisconnect",
+    LOG_INFO("CubeCommsComponent.RequestConnectToCube.CancellingScheduledDisconnect",
                      "We are already connected to this cube, but a disconnection was scheduled. Cancelling the scheduled disconnection.");
     if (connectedCallback != nullptr) {
       connectedCallback(true);
@@ -230,7 +232,7 @@ bool CubeCommsComponent::RequestConnectToCube(const ConnectionCallback& connecte
     }
     case CubeConnectionState::PendingDisconnect:
     {
-      PRINT_NAMED_INFO("CubeCommsComponent.RequestConnectToCube.ScanScheduled",
+      LOG_INFO("CubeCommsComponent.RequestConnectToCube.ScanScheduled",
                        "We are currently pending a disconnection from a cube, so we will attempt to scan/connect to "
                        "cubes once we are finished disconnecting from the current one");
       // Plan to start scanning when we fully disconnect from the cube
@@ -272,7 +274,7 @@ bool CubeCommsComponent::RequestDisconnectFromCube(const float gracePeriod_sec, 
   } else {
     const auto now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _disconnectFromCubeTime_sec = now_sec + gracePeriod_sec;
-    PRINT_NAMED_INFO("CubeCommsComponent.RequestDisconnectFromCube.DisconnectScheduled",
+    LOG_INFO("CubeCommsComponent.RequestDisconnectFromCube.DisconnectScheduled",
                      "Disconnect scheduled to occur in %.2f seconds. Cube will remain connected in the interim.",
                      gracePeriod_sec);
   }
@@ -379,7 +381,7 @@ bool CubeCommsComponent::StartScanningForCubes(const bool autoConnectAfterScan)
   
   _connectAfterScan = autoConnectAfterScan;
   
-  PRINT_NAMED_INFO("CubeCommsComponent.StartScanningForCubes.StartScan",
+  LOG_INFO("CubeCommsComponent.StartScanningForCubes.StartScan",
                    "Beginning scan for cubes (duration %.2f seconds). Will %sattempt to connect to a cube after scan.",
                    kDefaultDiscoveryTime_sec,
                    _connectAfterScan ? "" : "NOT ");
@@ -400,7 +402,7 @@ void CubeCommsComponent::StopScanningForCubes()
                         CubeConnectionStateToString(GetCubeConnectionState()));
   }
   
-  PRINT_NAMED_INFO("CubeCommsComponent.StopScanningForCubes.StopScan",
+  LOG_INFO("CubeCommsComponent.StopScanningForCubes.StopScan",
                    "Stopping scan for cubes.");
   
   _cubeBleClient->StopScanning();
@@ -542,7 +544,7 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
   
   // If this is our preferred cube, then we can stop scanning right away
   if (msg.factory_id == _preferredCubeFactoryId) {
-    PRINT_NAMED_INFO("CubeCommsComponent.HandleObjectAvailable.EndingScanEarly",
+    LOG_INFO("CubeCommsComponent.HandleObjectAvailable.EndingScanEarly",
                      "Ending cube scan early since we have heard from our preferred cube '%s'",
                      _preferredCubeFactoryId.c_str());
     StopScanningForCubes();
@@ -585,7 +587,7 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
 
 void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factoryId, const bool connected)
 {
-  PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Recvd", "FactoryID %s, connected %d",
+  LOG_INFO("CubeCommsComponent.HandleConnectionStateChange.Recvd", "FactoryID %s, connected %d",
                    factoryId.c_str(), connected);
   
   if (connected) {
@@ -608,7 +610,7 @@ void CubeCommsComponent::OnCubeConnected(const BleFactoryId& factoryId)
   // Add active object to blockworld
   const ObjectID objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, factoryId, kValidCubeType);
   if (objID.IsSet()) {
-    PRINT_NAMED_INFO("CubeCommsComponent.OnCubeConnected.Connected",
+    LOG_INFO("CubeCommsComponent.OnCubeConnected.Connected",
                      "Object %d (activeID %d, factoryID %s)",
                      objID.GetValue(), activeId, factoryId.c_str());
   }
@@ -673,7 +675,7 @@ void CubeCommsComponent::OnCubeDisconnected(const BleFactoryId& factoryId)
 void CubeCommsComponent::HandleScanForCubesFinished()
 {
   if (_cubeScanResults.empty()) {
-    PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.NoCubesFound",
+    LOG_INFO("CubeCommsComponent.HandleScanForCubesFinished.NoCubesFound",
                      "List of available cubes is empty - no advertising cubes were found during scanning. Sad!");
     for (const auto& callback : _connectedCallbacks) {
       callback(false);
@@ -682,7 +684,7 @@ void CubeCommsComponent::HandleScanForCubesFinished()
     return;
   }
   
-  PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
+  LOG_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
                    "Done scanning for cubes. Number of available cubes %zu",
                    _cubeScanResults.size());
 
@@ -691,7 +693,7 @@ void CubeCommsComponent::HandleScanForCubesFinished()
   DASMSG_SEND();
   
   if (!_connectAfterScan) {
-    PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.IgnoringScanResults",
+    LOG_INFO("CubeCommsComponent.HandleScanForCubesFinished.IgnoringScanResults",
                      "Scanning has completed but _connectAfterScan is false, so we will not attempt to connect to a cube");
     return;
   }
@@ -715,7 +717,7 @@ void CubeCommsComponent::HandleScanForCubesFinished()
   
   DEV_ASSERT(!cubeToConnectTo.empty(), "CubeCommsComponent.HandleScanForCubesFinished.NoCubeChosen");
   
-  PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.AttemptingConnection",
+  LOG_INFO("CubeCommsComponent.HandleScanForCubesFinished.AttemptingConnection",
                    "Attempting to connect to cube with factoryID %s because %s. Signal strength %d.",
                    cubeToConnectTo.c_str(),
                    (cubeToConnectTo == _preferredCubeFactoryId) ?

@@ -504,7 +504,7 @@ namespace Anki {
         - firstTurnDir * GetRNG().RandDblInRange(_minSearchAngle_rads, _maxSearchAngle_rads);
       float afterSecondTurnWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
 
-      PRINT_NAMED_DEBUG("SearchForNearbyObjectAction.Init",
+      PRINT_CH_DEBUG("Actions", "SearchForNearbyObjectAction.Init",
                         "Action will wait %f, turn %fdeg, wait %f, turn %fdeg, wait %f",
                         initialWait_s,
                         RAD_TO_DEG(firstAngle_rads),
@@ -846,7 +846,7 @@ namespace Anki {
       bool headComplete = !_calibHead || (_headCalibStarted && !headCalibrating);
       bool liftComplete = !_calibLift || (_liftCalibStarted && !liftCalibrating);
       if (headComplete && liftComplete) {
-        PRINT_NAMED_INFO("CalibrateMotorAction.CheckIfDone.Done", "");
+        PRINT_CH_INFO("Actions", "CalibrateMotorAction.CheckIfDone.Done", "");
         result = ActionResult::SUCCESS;
       }
 
@@ -2088,7 +2088,7 @@ namespace Anki {
     void TurnTowardsFaceAction::SetSayNameAnimationTrigger(AnimationTrigger trigger)
     {
       if( !MightSayName() ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
                           "setting say name trigger, but we aren't going to say the name. This is useless");
       }
       auto callback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
@@ -2100,7 +2100,7 @@ namespace Anki {
     void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
     {
       if( !MightSayName() ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
                           "setting anim trigger for unnamed faces, but we aren't going to say the name.");
       }
       auto callback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
@@ -2122,7 +2122,7 @@ namespace Anki {
       DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
                  "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
       if( !MightSayName() ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerCallbackWithoutSayingName",
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetSayNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
       _sayNameTriggerCallback = std::move(callback);
@@ -2133,7 +2133,7 @@ namespace Anki {
       DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
                  "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
       if( !MightSayName() ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerCallbackWithoutSayingName",
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetNoNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
       _noNameTriggerCallback = std::move(callback);
@@ -2237,7 +2237,7 @@ namespace Anki {
               if(distSq < _closestDistSq) {
                 GetRobot().GetFaceWorld().UpdateSmartFaceToID(faceID, _obsFaceID);
                 _closestDistSq = distSq;
-                PRINT_NAMED_DEBUG("TurnTowardsFaceAction.ObservedFaceCallback",
+                PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.ObservedFaceCallback",
                                   "Observed ID=%s at distSq=%.1f",
                                   _obsFaceID.GetDebugStr().c_str(), _closestDistSq);
               }
@@ -2256,7 +2256,7 @@ namespace Anki {
         
     void TurnTowardsFaceAction::CreateFineTuneAction()
     {
-      PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CreateFinalAction.SawFace",
+      PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.CreateFinalAction.SawFace",
                         "Observed ID=%s. Will fine tune.", _obsFaceID.GetDebugStr().c_str());
 
       if(_obsFaceID.IsValid() ) {
@@ -2380,7 +2380,7 @@ namespace Anki {
             // Initial (blind) turning to pose finished...
             if(!_obsFaceID.IsValid()) {
               // ...didn't see a face yet, wait a couple of images to see if we do
-              PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CheckIfDone.NoFaceObservedYet",
+              PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.CheckIfDone.NoFaceObservedYet",
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
               DEV_ASSERT(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
@@ -2592,7 +2592,7 @@ namespace Anki {
       // Disable saving if needed
       if(ANKI_DEV_CHEATS && nullptr != _saveParams)
       {
-        PRINT_NAMED_INFO("WaitForImagesAction.Destructor.DisablingSave", "Saved %d images to %s",
+        PRINT_CH_INFO("Actions", "WaitForImagesAction.Destructor.DisablingSave", "Saved %d images to %s",
                          _numFramesToWaitFor, _saveParams->path.c_str());
         _saveParams->mode = ImageSaverParams::Mode::Off;
         GetRobot().GetVisionComponent().SetSaveImageParameters(*_saveParams);
@@ -2624,7 +2624,7 @@ namespace Anki {
           if (VisionMode::Count == _visionMode)
           {
             ++_numModeFramesSeen;
-            PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d for any mode",
+            PRINT_CH_DEBUG("Actions", "WaitForImagesAction.Callback", "Frame %d of %d for any mode",
                               _numModeFramesSeen, _numFramesToWaitFor);
           }
           else
@@ -2634,7 +2634,7 @@ namespace Anki {
               if (mode == _visionMode)
               {
                 ++_numModeFramesSeen;
-                PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d for mode %s",
+                PRINT_CH_DEBUG("Actions", "WaitForImagesAction.Callback", "Frame %d of %d for mode %s",
                                   _numModeFramesSeen, _numFramesToWaitFor, EnumToString(mode));
                 break;
               }
@@ -2647,7 +2647,7 @@ namespace Anki {
       
       if(ANKI_DEV_CHEATS && nullptr != _saveParams)
       {
-        PRINT_NAMED_DEBUG("WaitForImagesAction.Init.SetSaveParams", "Mode:%s Path:%s Quality:%d",
+        PRINT_CH_DEBUG("Actions", "WaitForImagesAction.Init.SetSaveParams", "Mode:%s Path:%s Quality:%d",
                           EnumToString(_saveParams->mode),
                           _saveParams->path.c_str(),
                           _saveParams->quality);

@@ -416,7 +416,7 @@ void BehaviorFetchCube::AttemptToPickUpCube()
                             }
                             else{
                               AttemptToPickUpCube();
-                              PRINT_NAMED_INFO("BehaviorFetchCube.RetryPickUpCube","");
+                              PRINT_CH_INFO("Behaviors", "BehaviorFetchCube.RetryPickUpCube","");
                             }
                           }
                         });
@@ -433,7 +433,7 @@ void BehaviorFetchCube::TransitionToTakeCubeSomewhere()
   _dVars.attemptsAtCurrentAction = 1;
 
   if(ComputeFaceBasedTargetPose()){
-    PRINT_NAMED_INFO("BehaviorFetchCube.TakeCubeToUser","");
+    PRINT_CH_INFO("Behaviors", "BehaviorFetchCube.TakeCubeToUser","");
   }
   else{
     auto& rng = GetBEI().GetRobotInfo().GetRNG();
@@ -453,11 +453,11 @@ void BehaviorFetchCube::TransitionToTakeCubeSomewhere()
       cubePlacementPose.SetTranslation(kCubeRelChargerTargetPos);
       cubePlacementPose.SetParent(charger->GetPose());
       _dVars.destination = cubePlacementPose;
-      PRINT_NAMED_INFO("BehaviorFetchCube.TakeCubeToCharger","");
+      PRINT_CH_INFO("Behaviors", "BehaviorFetchCube.TakeCubeToCharger","");
     }
     else if(goToStart){
       _dVars.destination = _dVars.poseAtStartOfBehavior;
-      PRINT_NAMED_INFO("BehaviorFetchCube.TakeCubeToStartLocale","");
+      PRINT_CH_INFO("Behaviors", "BehaviorFetchCube.TakeCubeToStartLocale","");
     }
     else{
       // Charger was unavailable... and we don't have a startPose
@@ -486,7 +486,7 @@ void BehaviorFetchCube::AttemptToTakeCubeSomewhere()
                           }
                           else{
                             AttemptToTakeCubeSomewhere();
-                            PRINT_NAMED_INFO("BehaviorFetchCube.RetryTakeCubeSomewhere","");
+                            PRINT_CH_INFO("Behaviors", "BehaviorFetchCube.RetryTakeCubeSomewhere","");
                           }
                         }
                         else {

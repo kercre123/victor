@@ -411,7 +411,7 @@ void CubeSpinnerGame::LockNow()
   const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   if((_currentGame.lastTimeLightLocked_ms + kDedupTimeAfterLock_ms) > currTime_ms){
-    PRINT_NAMED_INFO("CubeSpinnerGame.LockNow.DuplicateLock", "Received duplicate lock call before timeout");
+    PRINT_CH_INFO("Behaviors", "CubeSpinnerGame.LockNow.DuplicateLock", "Received duplicate lock call before timeout");
     return;
   }
 

@@ -55,7 +55,7 @@ namespace {
 
 #define SET_STATE(s) do{ \
                           _dVars.state = EState::s; \
-                          PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.State", "State = %s", #s); \
+                          PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.State", "State = %s", #s); \
                         } while(0);
                         
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -403,14 +403,14 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
 
     if(_iConfig.vocalRepromptString.empty()){
       // If we don't have any Reprompt anims or vocalizations, just reuse the prompting state
-      PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.RepromptGeneric",
+      PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.RepromptGeneric",
                        "Reprompting user %d of %d times with original prompt action",
                        _dVars.repromptCount,
                        _iConfig.maxNumReprompts);
       TransitionToPrompting();
       return;
     } else {
-      PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.RepromptSpecialized",
+      PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.RepromptSpecialized",
                       "Reprompting user %d of %d times with specialized reprompt action.",
                       _dVars.repromptCount,
                       _iConfig.maxNumReprompts);
