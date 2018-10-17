@@ -128,7 +128,7 @@ func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.Messa
 
 func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithEnableVisionMode(&gw_clad.EnableVisionMode{
-		Mode:   gw_clad.VisionMode(msg.Mode),
+		Mode:   gw_clad.VisionMode(msg.Mode - 1), // Outside interface still has Idle=0; Engine does not. Remap. Gross.
 		Enable: msg.Enable,
 	})
 }
@@ -1312,6 +1312,9 @@ func (service *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *e
 }
 
 func (service *rpcService) EnableVisionMode(ctx context.Context, in *extint.EnableVisionModeRequest) (*extint.EnableVisionModeResponse, error) {
+	if in.Mode == extint.VisionMode_VISION_MODE_UNKNOWN {
+		return nil, grpc.Errorf(codes.InvalidArgument, "Unknown vision mode")
+	}
 	_, err := engineCladManager.Write(ProtoEnableVisionModeToClad(in))
 	if err != nil {
 		return nil, err

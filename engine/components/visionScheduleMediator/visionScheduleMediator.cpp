@@ -18,6 +18,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/vision/visionModeSet.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "webServerProcess/src/webService.h"
 
@@ -63,7 +64,6 @@ void VisionScheduleMediator::Init(const Json::Value& config)
   {
     std::string modeName = ParseString(modeSettings, "mode", debugName);
     VisionMode visionMode = VisionModeFromString(modeName);
-    DEV_ASSERT(visionMode != VisionMode::Idle, "VisionScheduleMediator.InvalidVisionModeInJsonConfig");
 
     VisionModeData newModeData = { .low = ParseUint8(modeSettings, "low", debugName),
                                    .med = ParseUint8(modeSettings, "med", debugName),
@@ -164,7 +164,7 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
 }
 
   
-void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const std::set<VisionMode>& modes)
+void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const VisionModeSet& modes)
 {
   for(const VisionMode& mode : modes) {
     auto got = _modeDataMap.find(mode);
@@ -177,7 +177,7 @@ void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const std::set<Visi
 
 }
   
-void VisionScheduleMediator::DevOnly_SelfUnsubscribeVisionMode(const std::set<VisionMode>& modes)
+void VisionScheduleMediator::DevOnly_SelfUnsubscribeVisionMode(const VisionModeSet& modes)
 {
   for(const VisionMode& mode : modes) {
     auto got = _modeDataMap.find(mode);
@@ -376,7 +376,7 @@ void VisionScheduleMediator::SendDebugVizMessages(const CozmoContext* context)
   Json::Value& fullSchedule = webVizData["fullSchedule"]; 
 
   // Debug display strings for schedules of all vision modes
-  for(VisionMode whichMode = VisionMode::Idle; whichMode < VisionMode::Count; ++whichMode)
+  for(VisionMode whichMode = VisionMode(0); whichMode < VisionMode::Count; ++whichMode)
   {
     char schedule[kMaxUpdatePeriod + 1] = {0};
       

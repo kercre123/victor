@@ -35,6 +35,7 @@ namespace Vector{
 // Forward declaration:
 class CozmoContext;
 class VisionComponent;
+class VisionModeSet;
 class IVisionModeSubscriber;
 
 class VisionScheduleMediator : public IDependencyManagedComponent<RobotComponentID>,
@@ -89,8 +90,8 @@ public:
   // VSM will subscribe itself to the passed in modes, which will allow
   // vision modes to be enabled from non-engine processes (i.e. from
   // webotsCtrlBuildServerTest)
-  void DevOnly_SelfSubscribeVisionMode(const std::set<VisionMode>& modes);
-  void DevOnly_SelfUnsubscribeVisionMode(const std::set<VisionMode>& modes);
+  void DevOnly_SelfSubscribeVisionMode(const VisionModeSet& modes);
+  void DevOnly_SelfUnsubscribeVisionMode(const VisionModeSet& modes);
 
 private:
 

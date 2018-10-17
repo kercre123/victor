@@ -927,7 +927,7 @@ void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::
   u32 x = 0;
   u32 y = fillY;
 
-  for(VisionMode m = VisionMode::Idle; m < VisionMode::Count; m++)
+  for(VisionMode m = VisionMode(0); m < VisionMode::Count; m++)
   {
     // Left align text with kTextWidth+1 padding of spaces (+1 for space between modes)
     ss << std::setw(kTextWidth + 1) << std::left;

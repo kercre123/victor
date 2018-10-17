@@ -31,6 +31,8 @@ public:
   explicit VisionModeSchedule(std::vector<bool>&& initSchedule);
   explicit VisionModeSchedule(bool alwaysOnOrOff);
   explicit VisionModeSchedule(int onFrequency, int frameOffset = 0);
+  
+  Result SetFromJSON(const Json::Value& jsonSchedule);
 
   // Whether or not the schedule is true at index indicating it is time to process
   bool IsTimeToProcess(u32 index) const;
@@ -75,6 +77,7 @@ public:
   bool IsTimeToProcess(VisionMode mode, u32 index) const;
 
   // Change the defaults to use for unspecified modes
+  static Result SetDefaultSchedulesFromJSON(const Json::Value& config);
   static void SetDefaultSchedule(VisionMode mode, VisionModeSchedule&& schedule);
 
 private:

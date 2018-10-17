@@ -32,7 +32,6 @@
 #include "engine/vision/overheadEdgesDetector.h"
 #include "engine/vision/overheadMap.h"
 #include "engine/vision/visionModesHelpers.h"
-#include "engine/vision/visionModeSchedule.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "coretech/vision/engine/benchmark.h"
@@ -330,64 +329,14 @@ Result VisionSystem::Init(const Json::Value& config)
     return RESULT_FAIL;
   }
 
-  // VisionModes are default enabled (except Idle)
-  _modes.SetFlags(std::numeric_limits<u64>::max());
-  _modes.SetBitFlag(VisionMode::Idle, false);
+  // VisionModes are default enabled
+  _modes.InsertAllModes();
   
   const Json::Value& configModes = config["InitialVisionModes"];
   for(auto & modeName : configModes.getMemberNames())
   {
     VisionMode mode = GetModeFromString(modeName);
-    if(mode == VisionMode::Idle) {
-      PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
-                          "Ignoring initial Idle mode for string '%s' in vision config",
-                          modeName.c_str());
-    } else {
-      _modes.SetBitFlag(mode, configModes[modeName].asBool());
-    }
-  }
-  
-  if(!config.isMember("InitialModeSchedules"))
-  {
-    PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialModeSchedulesConfigField", "");
-    return RESULT_FAIL;
-  }
-  
-  const Json::Value& modeSchedulesConfig = config["InitialModeSchedules"];
-  
-  for(s32 modeIndex = 0; modeIndex < (s32)VisionMode::Count; ++modeIndex)
-  {
-    const VisionMode mode = (VisionMode)modeIndex;
-    const char* modeStr = EnumToString(mode);
-    
-    if(modeSchedulesConfig.isMember(modeStr))
-    {
-      const Json::Value& jsonSchedule = modeSchedulesConfig[modeStr];
-      if(jsonSchedule.isArray())
-      {
-        std::vector<bool> schedule;
-        schedule.reserve(jsonSchedule.size());
-        for(auto jsonIter = jsonSchedule.begin(); jsonIter != jsonSchedule.end(); ++jsonIter)
-        {
-          schedule.push_back(jsonIter->asBool());
-        }
-        AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(std::move(schedule)));
-      }
-      else if(jsonSchedule.isInt())
-      {
-        AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asInt()));
-      }
-      else if(jsonSchedule.isBool())
-      {
-        AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asBool()));
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("VisionSystem.Init.UnrecognizedModeScheduleValue",
-                          "Mode:%s Expecting int, bool, or array of bools", modeStr);
-        return RESULT_FAIL;
-      }
-    }
+    _modes.Enable(mode, configModes[modeName].asBool());
   }
   
   _clahe->setClipLimit(kClaheClipLimit);
@@ -575,7 +524,7 @@ void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRe
   while(iter != _meteringRegions.end())
   {
     const VisionMode mode = iter->first;
-    if(iter->second.empty() || !_futureModes.IsBitFlagSet(mode)) {
+    if(iter->second.empty() || !_futureModes.Contains(mode)) {
       iter = _meteringRegions.erase(iter);
     }
     else if(meterFromChargerOnly && (mode != VisionMode::DetectingMarkers)) {
@@ -943,28 +892,8 @@ Result VisionSystem::DetectIllumination(Vision::ImageCache& imageCache)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string VisionSystem::GetCurrentModeName() const {
-  return VisionSystem::GetModeName(_modes);
+  return _modes.ToString();
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string VisionSystem::GetModeName(Util::BitFlags64<VisionMode> mode) const
-{
-  std::string retStr("");
-  for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
-  {
-    if (mode.IsBitFlagSet(modeIter))
-    {
-      if(!retStr.empty())
-      {
-        retStr += "+";
-      }
-      retStr += EnumToString(modeIter);
-    }
-  }
-  
-  return retStr;
-  
-} // GetModeName()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionMode VisionSystem::GetModeFromString(const std::string& str) const
@@ -1317,7 +1246,7 @@ void VisionSystem::CheckForNeuralNetResults()
   const bool resultReady = _neuralNetRunner->GetDetections(_currentResult.salientPoints);
   if(resultReady)
   {
-    _currentResult.modesProcessed.SetBitFlag(VisionMode::RunningNeuralNet, true);
+    _currentResult.modesProcessed.Insert(VisionMode::RunningNeuralNet);
   }
 }
 
@@ -1373,7 +1302,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   std::swap(result, _currentResult);
   
   auto& visionModesProcessed = _currentResult.modesProcessed;
-  visionModesProcessed.ClearFlags();
+  visionModesProcessed.Clear();
   
   // Store the new robot state and keep a copy of the previous one
   UpdatePoseData(poseData);
@@ -1387,9 +1316,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     _cameraParamsController->UpdateCurrentCameraParams(_currentCameraParams);
   }
   
-  if(IsModeEnabled(VisionMode::Idle))
+  if(_modes.IsEmpty())
   {
-    visionModesProcessed.SetBitFlag(VisionMode::Idle, true);
     // Push the empty result and bail
     _mutex.lock();
     _results.push(_currentResult);
@@ -1418,7 +1346,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   {
     Tic("TotalComputingStatistics");
     _currentResult.imageMean = ComputeMean(imageCache, kImageMeanSampleInc);
-    visionModesProcessed.SetBitFlag(VisionMode::ComputingStatistics, true);
+    visionModesProcessed.Insert(VisionMode::ComputingStatistics);
     Toc("TotalComputingStatistics");
   }
 
@@ -1446,8 +1374,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         anyModeFailures = true;
       } else {
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
-        visionModesProcessed.SetBitFlag(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
+        visionModesProcessed.Insert(VisionMode::DetectingMarkers);
+        visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
       }
       Toc("TotalDetectingMarkers");
     }
@@ -1477,13 +1405,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces            , true);
-      visionModesProcessed.SetBitFlag(VisionMode::CroppedFaceDetection      , useCropping);
-      visionModesProcessed.SetBitFlag(VisionMode::EstimatingFacialExpression, estimatingFacialExpression);
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingSmileAmount      , detectingSmile);
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingGaze             , detectingGaze);
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingBlinkAmount      , detectingBlink);
-      }
+      visionModesProcessed.Insert(VisionMode::DetectingFaces);
+      visionModesProcessed.Enable(VisionMode::CroppedFaceDetection,          useCropping);
+      visionModesProcessed.Enable(VisionMode::EstimatingFacialExpression,    estimatingFacialExpression);
+      visionModesProcessed.Enable(VisionMode::DetectingSmileAmount,          detectingSmile);
+      visionModesProcessed.Enable(VisionMode::DetectingGaze,                 detectingGaze);
+      visionModesProcessed.Enable(VisionMode::DetectingBlinkAmount,          detectingBlink);
+    }
     Toc("TotalDetectingFaces");
   }
   
@@ -1494,7 +1422,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
+      visionModesProcessed.Insert(VisionMode::DetectingPets);
     }
     Toc("TotalDetectingPets");
   }
@@ -1506,7 +1434,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
+      visionModesProcessed.Insert(VisionMode::DetectingMotion);
     }
     Toc("TotalDetectingMotion");
   }
@@ -1519,14 +1447,14 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectBrightColorsFailed","");
         anyModeFailures = true;
       } else {
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingBrightColors, true);
+        visionModesProcessed.Insert(VisionMode::DetectingBrightColors);
       }
     } else {
       PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process bright colors. No color image!");
     }
   }
   // Disabling this while VisionMode::BuildingOverheadMap is disabled
-  if (false /*IsModeEnabled(VisionMode::BuildingOverheadMap)*/)
+  if (IsModeEnabled(VisionMode::BuildingOverheadMap))
   {
     if (imageCache.HasColor()) {
       Tic("UpdateOverheadMap");
@@ -1535,7 +1463,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if (lastResult != RESULT_OK) {
         anyModeFailures = true;
       } else {
-        //visionModesProcessed.SetBitFlag(VisionMode::BuildingOverheadMap, true);
+        visionModesProcessed.Insert(VisionMode::BuildingOverheadMap);
       }
     }
     else {
@@ -1552,7 +1480,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if (lastResult != RESULT_OK) {
         anyModeFailures = true;
       } else {
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
+        visionModesProcessed.Insert(VisionMode::DetectingVisualObstacles);
       }
     }
     else {
@@ -1570,7 +1498,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
+      visionModesProcessed.Insert(VisionMode::DetectingOverheadEdges);
     }
     Toc("TotalDetectingOverheadEdges");
   }
@@ -1588,8 +1516,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       case CameraCalibrator::CalibTargetType::QBERT:
       case CameraCalibrator::CalibTargetType::INVERTED_BOX:
       {
-        // Marker detection needs to have run before trying to do single taret calibration
-        DEV_ASSERT(visionModesProcessed.IsBitFlagSet(VisionMode::DetectingMarkers),
+        // Marker detection needs to have run before trying to do single target calibration
+        DEV_ASSERT(visionModesProcessed.Contains(VisionMode::DetectingMarkers),
                    "VisionSystem.Update.ComputingCalibration.MarkersNotDetected");
         
         CameraCalibrator::CalibTargetType targetType = static_cast<CameraCalibrator::CalibTargetType>(kCalibTargetType);
@@ -1604,7 +1532,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
+      visionModesProcessed.Insert(VisionMode::ComputingCalibration);
     }
   }
   
@@ -1619,7 +1547,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
         anyModeFailures = true;
       } else {
-        visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
+        visionModesProcessed.Insert(VisionMode::DetectingLaserPoints);
       }
       Toc("TotalDetectingLaserPoints");
     }
@@ -1651,7 +1579,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectIlluminationFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingIllumination, true);
+      visionModesProcessed.Insert(VisionMode::DetectingIllumination);
     }
   }
 
@@ -1671,8 +1599,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.UpdateCameraParamsFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::AutoExposure, isAutoExposing);
-      visionModesProcessed.SetBitFlag(VisionMode::WhiteBalance, isWhiteBalancing);
+      visionModesProcessed.Enable(VisionMode::AutoExposure, isAutoExposing);
+      visionModesProcessed.Enable(VisionMode::WhiteBalance, isWhiteBalancing);
     }
   }
   
@@ -1686,7 +1614,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
       // Continue processing, since this should be independent of other modes
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::Benchmarking, true);
+      visionModesProcessed.Insert(VisionMode::Benchmarking);
     }
   }
   
@@ -1711,14 +1639,14 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       // Continue processing, since this should be independent of other modes
     }
     else {
-      visionModesProcessed.SetBitFlag(VisionMode::SavingImages, true);
+      visionModesProcessed.Insert(VisionMode::SavingImages);
     }
   }
 
   if(IsModeEnabled(VisionMode::ImageViz))
   {
     _currentResult.displayImg = imageCache.GetRGB();
-    visionModesProcessed.SetBitFlag(VisionMode::ImageViz, true);
+    visionModesProcessed.Insert(VisionMode::ImageViz);
   }
 
   if(kDisplayUndistortedImages)
@@ -1740,7 +1668,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     {
       PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
     } else {
-      visionModesProcessed.SetBitFlag(VisionMode::MirrorMode, true);
+      visionModesProcessed.Insert(VisionMode::MirrorMode);
     }
   }
   

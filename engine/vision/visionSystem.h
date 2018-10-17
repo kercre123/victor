@@ -24,6 +24,7 @@
 #include "engine/rollingShutterCorrector.h"
 #include "engine/vision/cameraCalibrator.h"
 #include "engine/vision/groundPlaneROI.h"
+#include "engine/vision/visionModeSet.h"
 #include "engine/vision/visionPoseData.h"
 #include "engine/vision/visionSystemInput.h"
 
@@ -87,7 +88,7 @@ namespace Vector {
   struct VisionProcessingResult
   {
     RobotTimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
-    Util::BitFlags64<VisionMode> modesProcessed;
+    VisionModeSet modesProcessed;
     
     Vision::ImageQuality imageQuality;
     Vision::CameraParams cameraParams;
@@ -128,10 +129,10 @@ namespace Vector {
     bool   IsInitialized() const;
     
     Result UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib);
-
-    const Util::BitFlags64<VisionMode>& GetEnabledModes() const { return _modes; }
-    bool   IsModeEnabled(VisionMode whichMode) const { return _modes.IsBitFlagSet(whichMode); }
-        
+    
+    const VisionModeSet& GetEnabledModes() const { return _modes; }
+    bool  IsModeEnabled(VisionMode whichMode) const { return _modes.Contains(whichMode); }
+    
     // This is main Update() call to be called in a loop from above.
     Result Update(const VisionPoseData& robotState,
                   Vision::ImageCache& imageCache);
@@ -146,7 +147,6 @@ namespace Vector {
     const std::vector<Pose3d>& GetCalibrationPoses() const { return _cameraCalibrator->GetCalibrationPoses();}
 
     // VisionMode <-> String Lookups
-    std::string GetModeName(Util::BitFlags64<VisionMode> mode) const;
     std::string GetCurrentModeName() const;
     VisionMode  GetModeFromString(const std::string& str) const;
     
@@ -231,8 +231,8 @@ namespace Vector {
     std::pair<bool,Vision::CameraParams> _nextCameraParams; // bool represents if set but not yet sent
     std::unique_ptr<Vision::CameraParamsController> _cameraParamsController;
     
-    Util::BitFlags64<VisionMode> _modes;
-    Util::BitFlags64<VisionMode> _futureModes;
+    VisionModeSet _modes;
+    VisionModeSet _futureModes;
     
     s32 _frameNumber = 0;
     
