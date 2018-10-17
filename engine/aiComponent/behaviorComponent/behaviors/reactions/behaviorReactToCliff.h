@@ -56,6 +56,7 @@ private:
   void TransitionToStuckOnEdge();
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
+  void TransitionToHeadCalibration();
   void TransitionToVisualExtendCliffs();
   
   // Based on which cliff sensor(s) was tripped, create the appropriate reaction
@@ -81,7 +82,6 @@ private:
     DynamicVariables();
     bool quitReaction;
     bool gotStop;
-    bool putDownOnCliff;
     bool wantsToBeActivated;
 
     // whether the robot has received a cliff event with a valid cliff pose
@@ -94,6 +94,7 @@ private:
     struct Persistent {
       int numStops;
       float lastStopTime_sec;
+      bool  putDownOnCliff;
       float lastPutDownOnCliffTime_sec;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
