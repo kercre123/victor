@@ -434,17 +434,17 @@ class Matrix44:
     def in_row_order(self):
         """tuple of 16 floats: The contents of the matrix in row order."""
         return self.m00, self.m01, self.m02, self.m03,\
-               self.m10, self.m11, self.m12, self.m13,\
-               self.m20, self.m21, self.m22, self.m23,\
-               self.m30, self.m31, self.m32, self.m33
+            self.m10, self.m11, self.m12, self.m13,\
+            self.m20, self.m21, self.m22, self.m23,\
+            self.m30, self.m31, self.m32, self.m33
 
     @property
     def in_column_order(self):
         """tuple of 16 floats: The contents of the matrix in column order."""
         return self.m00, self.m10, self.m20, self.m30,\
-               self.m01, self.m11, self.m21, self.m31,\
-               self.m02, self.m12, self.m22, self.m32,\
-               self.m03, self.m13, self.m23, self.m33
+            self.m01, self.m11, self.m21, self.m31,\
+            self.m02, self.m12, self.m22, self.m32,\
+            self.m03, self.m13, self.m23, self.m33
 
     @property
     def forward_xyz(self):
@@ -681,10 +681,10 @@ class Pose:
     def define_pose_relative_this(self, new_pose):
         """Creates a new pose such that new_pose's origin is now at the location of this pose.
 
-        :param new_pose: The pose which origin is being changed. Type is Pose.
+        :param anki_vector.util.Pose new_pose: The pose which origin is being changed.
 
         Returns:
-            A :class:`anki_vector.util.pose` object for which the origin was this pose's origin.
+            A :class:`anki_vector.util.Pose` object for which the origin was this pose's origin.
         """
         if not isinstance(new_pose, Pose):
             raise TypeError("Unsupported type for new_origin, must be of type Pose")
@@ -718,21 +718,22 @@ class Pose:
         :param other_pose: The other pose to compare against. Type is Pose.
 
         Returns:
-            bool: True if the two poses are comparable, False otherwise.
+            True if the two poses are comparable, False otherwise.
         """
         return (self.is_valid and other_pose.is_valid and
                 (self.origin_id == other_pose.origin_id))
 
-    def to_matrix(self):
+    def to_matrix(self) -> Matrix44:
         """Convert the Pose to a Matrix44.
 
         Returns:
-            :class:`anki_vector.util.Matrix44`: A matrix representing this Pose's
-            position and rotation.
+            A matrix representing this Pose's position and rotation.
         """
         return self.rotation.to_matrix(*self.position.x_y_z)
 
-    def to_proto_pose_struct(self):
+    def to_proto_pose_struct(self) -> protocol.PoseStruct:
+        """Converts the Pose into the robot's messaging pose format.
+        """
         return protocol.PoseStruct(
             x=self._position.x,
             y=self._position.y,

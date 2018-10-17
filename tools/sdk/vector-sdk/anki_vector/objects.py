@@ -41,7 +41,6 @@ __all__ = ['LIGHT_CUBE_1_TYPE', 'OBJECT_VISIBILITY_TIMEOUT',
            'FixedCustomObject', 'LightCube', 'ObservableObject']
 
 import collections
-from enum import Enum
 import math
 import time
 
@@ -733,13 +732,13 @@ class LightCube(ObservableObject):
 
 
 class Charger(ObservableObject):
-    '''Vector's charger object, which the robot can observe and drive toward.
+    """Vector's charger object, which the robot can observe and drive toward.
     We get an :class:`anki_vector.objects.EvtObjectObserved` message when the
     robot sees the charger.
 
     See parent class :class:`ObservableObject` for additional properties
     and methods.
-    '''
+    """
 
     def __init__(self, robot, object_id: int, **kw):
         super().__init__(robot, **kw)
@@ -797,7 +796,7 @@ class Charger(ObservableObject):
 
 
 class CustomObjectArchetype():
-    '''An object archetype defined by the SDK. It is bound to a specific objectType e.g ``CustomType00``.
+    """An object archetype defined by the SDK. It is bound to a specific objectType e.g ``CustomType00``.
 
     This defined object is given a size in the x,y and z axis. The dimensions
     of the markers on the object are also defined.
@@ -807,7 +806,7 @@ class CustomObjectArchetype():
     :meth:`~anki_vector.world.World.define_custom_box`,
     :meth:`~anki_vector.world.World.define_custom_cube`, or
     :meth:`~anki_vector.world.World.define_custom_wall`.
-    '''
+    """
 
     def __init__(self,
                  object_type: protocol.ObjectType,
@@ -830,37 +829,37 @@ class CustomObjectArchetype():
 
     @property
     def object_type(self) -> protocol.ObjectType:
-        '''id of this archetype on the robot'''
+        """id of this archetype on the robot"""
         return self._object_type
 
     @property
     def x_size_mm(self) -> float:
-        '''Size of this object in its X axis, in millimeters.'''
+        """Size of this object in its X axis, in millimeters."""
         return self._x_size_mm
 
     @property
     def y_size_mm(self) -> float:
-        '''Size of this object in its Y axis, in millimeters.'''
+        """Size of this object in its Y axis, in millimeters."""
         return self._y_size_mm
 
     @property
     def z_size_mm(self) -> float:
-        '''Size of this object in its Z axis, in millimeters.'''
+        """Size of this object in its Z axis, in millimeters."""
         return self._z_size_mm
 
     @property
     def marker_width_mm(self) -> float:
-        '''Width in millimeters of the marker on this object.'''
+        """Width in millimeters of the marker on this object."""
         return self._marker_width_mm
 
     @property
     def marker_height_mm(self) -> float:
-        '''Height in millimeters of the marker on this object.'''
+        """Height in millimeters of the marker on this object."""
         return self._marker_height_mm
 
     @property
     def is_unique(self) -> bool:
-        '''True if there should only be one of this object type in the world.'''
+        """True if there should only be one of this object type in the world."""
         return self._is_unique
 
     #### Private Methods ####
@@ -874,16 +873,16 @@ class CustomObjectArchetype():
 
 
 class CustomObject(ObservableObject):
-    '''An object defined by the SDK observed by the robot.  The object will
+    """An object defined by the SDK observed by the robot.  The object will
     reference a :class:`CustomObjectArchetype`, with additional instance data.
 
-    These objects are created automatically by the engine when Cozmo observes
-    an object with custom markers. For Cozmo to see one of these you must first
+    These objects are created automatically by the engine when Vector observes
+    an object with custom markers. For Vector to see one of these you must first
     define an archetype with custom markers, via one of the following methods:
     :meth:`~anki_vector.world.World.define_custom_box`.
     :meth:`~anki_vector.world.World.define_custom_cube`, or
     :meth:`~anki_vector.world.World.define_custom_wall`
-    '''
+    """
 
     def __init__(self,
                  robot,
@@ -901,7 +900,7 @@ class CustomObject(ObservableObject):
     #### Public Methods ####
 
     def teardown(self):
-        """All faces will be torn down by the world when no longer needed."""
+        """All objects will be torn down by the world when no longer needed."""
 
         self.robot.events.unsubscribe(
             self._on_object_observed,
@@ -922,7 +921,7 @@ class CustomObject(ObservableObject):
         if self._object_id is not None:
             # We cannot currently rely on robot ensuring that object ID remains static
             # E.g. in the case of a cube disconnecting and reconnecting it's removed
-            # and then re-added to blockworld which results in a new ID.
+            # and then re-added to robot's internal world model which results in a new ID.
             self.logger.warning("Changing object_id for %s from %s to %s", self.__class__, self._object_id, value)
         else:
             self.logger.debug("Setting object_id for %s to %s", self.__class__, value)
@@ -930,12 +929,12 @@ class CustomObject(ObservableObject):
 
     @property
     def archetype(self) -> CustomObjectArchetype:
-        '''Archetype defining this custom object's properties.'''
+        """Archetype defining this custom object's properties."""
         return self._archetype
 
     @property
     def descriptive_name(self) -> str:
-        '''A descriptive name for this CustomObject instance.'''
+        """A descriptive name for this CustomObject instance."""
         # Specialization of ObservableObject's method to include the object type.
         return "%s id=%d" % (self.archetype.object_type.name, self.object_id)
 
@@ -974,74 +973,74 @@ class _CustomObjectType(collections.namedtuple('_CustomObjectType', 'name id')):
         return 'CustomObjectTypes.%s' % self.name
 
 
-class CustomObjectTypes():
-    '''Defines all available custom object types.
+class CustomObjectTypes():  # pylint: disable=too-few-public-methods
+    """Defines all available custom object types.
 
     For use with world.define_custom methods such as
     :meth:`anki_vector.world.World.define_custom_box`,
     :meth:`anki_vector.world.World.define_custom_cube`, and
     :meth:`anki_vector.world.World.define_custom_wall`
-    '''
+    """
 
     #: CustomType00 - the first custom object type
-    CustomType00 = _CustomObjectType("CustomType00", protocol.ObjectType.Value("CUSTOM_TYPE_00"))
+    CustomType00 = _CustomObjectType("CustomType00", protocol.CustomType.Value("CUSTOM_TYPE_00"))
 
     #:
-    CustomType01 = _CustomObjectType("CustomType01", protocol.ObjectType.Value("CUSTOM_TYPE_01"))
+    CustomType01 = _CustomObjectType("CustomType01", protocol.CustomType.Value("CUSTOM_TYPE_01"))
 
     #:
-    CustomType02 = _CustomObjectType("CustomType02", protocol.ObjectType.Value("CUSTOM_TYPE_02"))
+    CustomType02 = _CustomObjectType("CustomType02", protocol.CustomType.Value("CUSTOM_TYPE_02"))
 
     #:
-    CustomType03 = _CustomObjectType("CustomType03", protocol.ObjectType.Value("CUSTOM_TYPE_03"))
+    CustomType03 = _CustomObjectType("CustomType03", protocol.CustomType.Value("CUSTOM_TYPE_03"))
 
     #:
-    CustomType04 = _CustomObjectType("CustomType04", protocol.ObjectType.Value("CUSTOM_TYPE_04"))
+    CustomType04 = _CustomObjectType("CustomType04", protocol.CustomType.Value("CUSTOM_TYPE_04"))
 
     #:
-    CustomType05 = _CustomObjectType("CustomType05", protocol.ObjectType.Value("CUSTOM_TYPE_05"))
+    CustomType05 = _CustomObjectType("CustomType05", protocol.CustomType.Value("CUSTOM_TYPE_05"))
 
     #:
-    CustomType06 = _CustomObjectType("CustomType06", protocol.ObjectType.Value("CUSTOM_TYPE_06"))
+    CustomType06 = _CustomObjectType("CustomType06", protocol.CustomType.Value("CUSTOM_TYPE_06"))
 
     #:
-    CustomType07 = _CustomObjectType("CustomType07", protocol.ObjectType.Value("CUSTOM_TYPE_07"))
+    CustomType07 = _CustomObjectType("CustomType07", protocol.CustomType.Value("CUSTOM_TYPE_07"))
 
     #:
-    CustomType08 = _CustomObjectType("CustomType08", protocol.ObjectType.Value("CUSTOM_TYPE_08"))
+    CustomType08 = _CustomObjectType("CustomType08", protocol.CustomType.Value("CUSTOM_TYPE_08"))
 
     #:
-    CustomType09 = _CustomObjectType("CustomType09", protocol.ObjectType.Value("CUSTOM_TYPE_09"))
+    CustomType09 = _CustomObjectType("CustomType09", protocol.CustomType.Value("CUSTOM_TYPE_09"))
 
     #:
-    CustomType10 = _CustomObjectType("CustomType10", protocol.ObjectType.Value("CUSTOM_TYPE_10"))
+    CustomType10 = _CustomObjectType("CustomType10", protocol.CustomType.Value("CUSTOM_TYPE_10"))
 
     #:
-    CustomType11 = _CustomObjectType("CustomType11", protocol.ObjectType.Value("CUSTOM_TYPE_11"))
+    CustomType11 = _CustomObjectType("CustomType11", protocol.CustomType.Value("CUSTOM_TYPE_11"))
 
     #:
-    CustomType12 = _CustomObjectType("CustomType12", protocol.ObjectType.Value("CUSTOM_TYPE_12"))
+    CustomType12 = _CustomObjectType("CustomType12", protocol.CustomType.Value("CUSTOM_TYPE_12"))
 
     #:
-    CustomType13 = _CustomObjectType("CustomType13", protocol.ObjectType.Value("CUSTOM_TYPE_13"))
+    CustomType13 = _CustomObjectType("CustomType13", protocol.CustomType.Value("CUSTOM_TYPE_13"))
 
     #:
-    CustomType14 = _CustomObjectType("CustomType14", protocol.ObjectType.Value("CUSTOM_TYPE_14"))
+    CustomType14 = _CustomObjectType("CustomType14", protocol.CustomType.Value("CUSTOM_TYPE_14"))
 
     #:
-    CustomType15 = _CustomObjectType("CustomType15", protocol.ObjectType.Value("CUSTOM_TYPE_15"))
+    CustomType15 = _CustomObjectType("CustomType15", protocol.CustomType.Value("CUSTOM_TYPE_15"))
 
     #:
-    CustomType16 = _CustomObjectType("CustomType16", protocol.ObjectType.Value("CUSTOM_TYPE_16"))
+    CustomType16 = _CustomObjectType("CustomType16", protocol.CustomType.Value("CUSTOM_TYPE_16"))
 
     #:
-    CustomType17 = _CustomObjectType("CustomType17", protocol.ObjectType.Value("CUSTOM_TYPE_17"))
+    CustomType17 = _CustomObjectType("CustomType17", protocol.CustomType.Value("CUSTOM_TYPE_17"))
 
     #:
-    CustomType18 = _CustomObjectType("CustomType18", protocol.ObjectType.Value("CUSTOM_TYPE_18"))
+    CustomType18 = _CustomObjectType("CustomType18", protocol.CustomType.Value("CUSTOM_TYPE_18"))
 
     #: CustomType19 - the last custom object type
-    CustomType19 = _CustomObjectType("CustomType19", protocol.ObjectType.Value("CUSTOM_TYPE_19"))
+    CustomType19 = _CustomObjectType("CustomType19", protocol.CustomType.Value("CUSTOM_TYPE_19"))
 
 
 class _CustomObjectMarker(collections.namedtuple('_CustomObjectMarker', 'name id')):
@@ -1055,14 +1054,14 @@ class _CustomObjectMarker(collections.namedtuple('_CustomObjectMarker', 'name id
         return 'CustomObjectMarkers.%s' % self.name
 
 
-class CustomObjectMarkers():
-    '''Defines all available custom object markers.
+class CustomObjectMarkers():  # pylint: disable=too-few-public-methods
+    """Defines all available custom object markers.
 
     For use with world.define_custom methods such as
     :meth:`anki_vector.world.World.define_custom_box`,
     :meth:`anki_vector.world.World.define_custom_cube`, and
     :meth:`anki_vector.world.World.define_custom_wall`
-    '''
+    """
 
     #: .. image:: ../images/custom_markers/SDK_2Circles.png
     Circles2 = _CustomObjectMarker("Circles2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_2"))
@@ -1114,7 +1113,7 @@ class CustomObjectMarkers():
 
 
 class FixedCustomObject(util.Component):
-    '''A fixed object defined by the SDK. It is given a pose and x,y,z sizes.
+    """A fixed object defined by the SDK. It is given a pose and x,y,z sizes.
 
     This object cannot be observed by the robot so its pose never changes.
     The position is static in Vector's world view; once instantiated, these
@@ -1122,7 +1121,7 @@ class FixedCustomObject(util.Component):
     know to plot a path around them even when they don't have any markers.
 
     To create these use :meth:`~anki_vector.world.World.create_custom_fixed_object`
-    '''
+    """
 
     def __init__(self,
                  robot,
@@ -1151,10 +1150,10 @@ class FixedCustomObject(util.Component):
     #### Properties ####
     @property
     def object_id(self) -> int:
-        '''The internal ID assigned to the object.
+        """The internal ID assigned to the object.
 
         This value can only be assigned once as it is static in the engine.
-        '''
+        """
         return self._object_id
 
     @object_id.setter
@@ -1166,20 +1165,20 @@ class FixedCustomObject(util.Component):
 
     @property
     def pose(self) -> util.Pose:
-        '''The pose of the object in the world.'''
+        """The pose of the object in the world."""
         return self._pose
 
     @property
     def x_size_mm(self) -> float:
-        '''The length of the object in its X axis, in millimeters.'''
+        """The length of the object in its X axis, in millimeters."""
         return self._x_size_mm
 
     @property
     def y_size_mm(self) -> float:
-        '''The length of the object in its Y axis, in millimeters.'''
+        """The length of the object in its Y axis, in millimeters."""
         return self._y_size_mm
 
     @property
     def z_size_mm(self) -> float:
-        '''The length of the object in its Z axis, in millimeters.'''
+        """The length of the object in its Z axis, in millimeters."""
         return self._z_size_mm

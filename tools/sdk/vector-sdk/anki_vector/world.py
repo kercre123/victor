@@ -22,6 +22,8 @@ see with its camera.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['World']
 
+from typing import Iterable
+
 from . import faces
 from . import objects
 from . import sync
@@ -64,7 +66,7 @@ class World(util.Component):
         self._light_cube = {objects.LIGHT_CUBE_1_TYPE: self.light_cube_factory(robot=robot)}
         self._custom_objects = {}
 
-        #: :class:`anki_vector.objects.Charger`: Cozmo's charger.
+        #: :class:`anki_vector.objects.Charger`: Vector's charger.
         #: ``None`` if no charger connected or known about yet.
         self._charger = None  # type: anki_vector.objects.Charger
 
@@ -88,21 +90,9 @@ class World(util.Component):
 
         .. code-block:: python
 
-            # Print the visible face's attributes
-            for face in robot.world.visible_faces:
-                print("Face attributes:")
-                print(f"Face id: {face.face_id}")
-                print(f"Updated face id: {face.updated_face_id}")
-                print(f"Name: {face.name}")
-                print(f"Expression: {face.expression}")
-                print(f"Timestamp: {face.timestamp}")
-                print(f"Pose: {face.pose}")
-                print(f"Image Rect: {face.face_rect}")
-                print(f"Expression score: {face.expression_score}")
-                print(f"Left eye: {face.left_eye}")
-                print(f"Right eye: {face.right_eye}")
-                print(f"Nose: {face.nose}")
-                print(f"Mouth: {face.mouth}")
+            # Print the all objects' class details
+            for obj in robot.world.all_objects:
+                print(obj)
 
         Returns:
             A generator yielding :class:`anki_vector.faces.Face`, :class:`anki_vector.faces.LightCube`,
@@ -113,7 +103,7 @@ class World(util.Component):
             yield obj
 
     @property
-    def visible_faces(self):
+    def visible_faces(self) -> Iterable[faces.Face]:
         """generator: yields each face that Vector can currently see.
 
         .. code-block:: python
@@ -142,11 +132,11 @@ class World(util.Component):
                 yield face
 
     @property
-    def visible_custom_objects(self):
+    def visible_custom_objects(self) -> Iterable[objects.CustomObject]:
         """generator: yields each custom object that Vector can currently see.
 
         Returns:
-            A generator yielding :class:`anki_vector.objects.CustomObject` instances
+            A generator yielding CustomObject instances
         """
         for obj in self._custom_objects.values():
             if obj.is_visible:
@@ -312,42 +302,47 @@ class World(util.Component):
                                     delete_custom_marker_objects: bool = True,
                                     delete_fixed_custom_objects: bool = True,
                                     delete_custom_object_archetypes: bool = True):
-        """Causes the robot to forget about custom objects it currently knows about."""
+        """Causes the robot to forget about custom objects it currently knows about.
 
-        mask = 0
+        .. code-block:: python
+
+            robot.world.delete_custom_objects()
+        """
+
         if delete_custom_object_archetypes:
             self._custom_object_archetypes.clear()
-            mask += protocol.CustomObjectDeletionMask.Value("DELETION_MASK_ARCHETYPES")
+            req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_ARCHETYPES"))
+            await self.grpc_interface.DeleteCustomObjects(req)
+
             # Without their referenced archetypes removed, custom marker objects become nonsensical
             delete_custom_marker_objects = True
 
         if delete_custom_marker_objects:
             self._remove_all_custom_marker_object_instances()
-            mask += protocol.CustomObjectDeletionMask.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS")
+            req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_CUSTOM_MARKER_OBJECTS"))
+            await self.grpc_interface.DeleteCustomObjects(req)
 
         if delete_fixed_custom_objects:
             self._remove_all_fixed_custom_object_instances()
-            mask += protocol.CustomObjectDeletionMask.Value("DELETION_MASK_CUSTOM_MARKER_OBJECTS")
-
-        req = protocol.DeleteCustomObjectsRequest(mask=mask)
-        await self.grpc_interface.DeleteCustomObjects(req)
+            req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS"))
+            await self.grpc_interface.DeleteCustomObjects(req)
 
     @sync.Synchronizer.wrap
     async def define_custom_box(self,
                                 custom_object_type: objects.CustomObjectTypes,
-                                marker_front:       objects.CustomObjectMarkers,
-                                marker_back:        objects.CustomObjectMarkers,
-                                marker_top:         objects.CustomObjectMarkers,
-                                marker_bottom:      objects.CustomObjectMarkers,
-                                marker_left:        objects.CustomObjectMarkers,
-                                marker_right:       objects.CustomObjectMarkers,
-                                depth_mm:           float,
-                                width_mm:           float,
-                                height_mm:          float,
-                                marker_width_mm:    float,
-                                marker_height_mm:   float,
-                                is_unique:          bool = True) -> objects.CustomObject:
-        '''Defines a cuboid of custom size and binds it to a specific custom object type.
+                                marker_front: objects.CustomObjectMarkers,
+                                marker_back: objects.CustomObjectMarkers,
+                                marker_top: objects.CustomObjectMarkers,
+                                marker_bottom: objects.CustomObjectMarkers,
+                                marker_left: objects.CustomObjectMarkers,
+                                marker_right: objects.CustomObjectMarkers,
+                                depth_mm: float,
+                                width_mm: float,
+                                height_mm: float,
+                                marker_width_mm: float,
+                                marker_height_mm: float,
+                                is_unique: bool = True) -> objects.CustomObject:
+        """Defines a cuboid of custom size and binds it to a specific custom object type.
 
         The engine will now detect the markers associated with this object and send an
         object_observed message when they are seen. The markers must be placed in the center
@@ -369,6 +364,18 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object.
             (and therefore only 1 of each of any of these markers) in the world.
 
+        .. code-block:: python
+
+            robot.world.define_custom_box(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
+                                          marker_front=  anki_vector.objects.CustomObjectMarkers.Circles2,
+                                          marker_back=   anki_vector.objects.CustomObjectMarkers.Circles3,
+                                          marker_top=    anki_vector.objects.CustomObjectMarkers.Circles4,
+                                          marker_bottom= anki_vector.objects.CustomObjectMarkers.Circles5,
+                                          marker_left=   anki_vector.objects.CustomObjectMarkers.Triangles2,
+                                          marker_right=  anki_vector.objects.CustomObjectMarkers.Triangles3,
+                                          depth_mm=20.0, width_mm=20.0, height_mm=20.0,
+                                          marker_width_mm=10.0, marker_height_mm=10.0)
+
         Returns:
             CustomObject instance with the specified dimensions.
             This is None if the definition failed internally.
@@ -377,7 +384,7 @@ class World(util.Component):
         Raises:
             TypeError if the custom_object_type is of the wrong type.
             ValueError if the 6 markers aren't unique.
-        '''
+        """
         if not isinstance(custom_object_type, objects._CustomObjectType):  # pylint: disable=protected-access
             raise TypeError("Unsupported object_type, requires CustomObjectType")
 
@@ -387,30 +394,31 @@ class World(util.Component):
             raise ValueError("all markers must be unique for a custom box")
 
         custom_object_archetype = objects.CustomObjectArchetype(custom_object_type,
-                                                                            depth_mm, width_mm, height_mm,
-                                                                            marker_width_mm, marker_height_mm,
-                                                                            is_unique)
+                                                                depth_mm, width_mm, height_mm,
+                                                                marker_width_mm, marker_height_mm,
+                                                                is_unique)
 
-        req = protocol.DefineCustomBoxRequest(custom_type=custom_object_type.id,
-                                              marker_front=marker_front.id,
-                                              marker_back=marker_back.id,
-                                              marker_top=marker_top.id,
-                                              marker_bottom=marker_bottom.id,
-                                              marker_left=marker_left.id,
-                                              marker_right=marker_right.id,
-                                              x_size_mm=depth_mm,
-                                              y_size_mm=width_mm,
-                                              z_size_mm=height_mm,
-                                              marker_width_mm=marker_width_mm,
-                                              marker_height_mm=marker_height_mm,
-                                              is_unique=is_unique)
+        definition = protocol.CustomBoxDefinition(marker_front=marker_front.id,
+                                                  marker_back=marker_back.id,
+                                                  marker_top=marker_top.id,
+                                                  marker_bottom=marker_bottom.id,
+                                                  marker_left=marker_left.id,
+                                                  marker_right=marker_right.id,
+                                                  x_size_mm=depth_mm,
+                                                  y_size_mm=width_mm,
+                                                  z_size_mm=height_mm,
+                                                  marker_width_mm=marker_width_mm,
+                                                  marker_height_mm=marker_height_mm)
+
+        req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
+                                                 is_unique=is_unique,
+                                                 custom_object_definition=definition)
 
         response = await self.grpc_interface.DefineCustomBox(req)
 
         if response.success:
             type_id = custom_object_archetype.object_type.id
             self._custom_object_archetypes[type_id] = custom_object_archetype
-            self.logger.info("Defined: %s", custom_object_archetype)
             return custom_object_archetype
 
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
@@ -419,11 +427,11 @@ class World(util.Component):
     @sync.Synchronizer.wrap
     async def define_custom_cube(self,
                                  custom_object_type: objects.CustomObjectTypes,
-                                 marker:             objects.CustomObjectMarkers,
-                                 size_mm:            float,
-                                 marker_width_mm:    float,
-                                 marker_height_mm:   float,
-                                 is_unique:          bool = True) -> objects.CustomObject:
+                                 marker: objects.CustomObjectMarkers,
+                                 size_mm: float,
+                                 marker_width_mm: float,
+                                 marker_height_mm: float,
+                                 is_unique: bool = True) -> objects.CustomObject:
         """Defines a cube of custom size and binds it to a specific custom object type.
 
         The engine will now detect the markers associated with this object and send an
@@ -438,6 +446,13 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object
             (and therefore only 1 of each of any of these markers) in the world.
 
+        .. code-block:: python
+
+            robot.world.define_custom_cube(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
+                                           marker=anki_vector.objects.CustomObjectMarkers.Circles2,
+                                           size_mm=20.0,
+                                           marker_width_mm=10.0, marker_height_mm=10.0)
+
         Returns:
             CustomObject instance with the specified dimensions.
             This is None if the definition failed internally.
@@ -451,23 +466,24 @@ class World(util.Component):
             raise TypeError("Unsupported object_type, requires CustomObjectType")
 
         custom_object_archetype = objects.CustomObjectArchetype(custom_object_type,
-                                                                            size_mm, size_mm, size_mm,
-                                                                            marker_width_mm, marker_height_mm,
-                                                                            is_unique)
+                                                                size_mm, size_mm, size_mm,
+                                                                marker_width_mm, marker_height_mm,
+                                                                is_unique)
 
-        req = protocol.DefineCustomCubeRequest(custom_type=custom_object_type.id,
-                                               marker=marker.id,
-                                               size_mm=size_mm,
-                                               marker_width_mm=marker_width_mm,
-                                               marker_height_mm=marker_height_mm,
-                                               is_unique=is_unique)
+        definition = protocol.CustomCubeDefinition(marker=marker.id,
+                                                   size_mm=size_mm,
+                                                   marker_width_mm=marker_width_mm,
+                                                   marker_height_mm=marker_height_mm)
+
+        req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
+                                                 is_unique=is_unique,
+                                                 custom_object_definition=definition)
 
         response = await self.grpc_interface.DefineCustomCube(req)
 
         if response.success:
             type_id = custom_object_archetype.object_type.id
             self._custom_object_archetypes[type_id] = custom_object_archetype
-            self.logger.info("Defined: %s", custom_object_archetype)
             return custom_object_archetype
 
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
@@ -476,12 +492,12 @@ class World(util.Component):
     @sync.Synchronizer.wrap
     async def define_custom_wall(self,
                                  custom_object_type: objects.CustomObjectTypes,
-                                 marker:             objects.CustomObjectMarkers,
-                                 width_mm:           float,
-                                 height_mm:          float,
-                                 marker_width_mm:    float,
-                                 marker_height_mm:   float,
-                                 is_unique:          bool = True) -> objects.CustomObject:
+                                 marker: objects.CustomObjectMarkers,
+                                 width_mm: float,
+                                 height_mm: float,
+                                 marker_width_mm: float,
+                                 marker_height_mm: float,
+                                 is_unique: bool = True) -> objects.CustomObject:
         """Defines a wall of custom width and height, with a fixed depth of 10mm, and binds it to a specific custom object type.
 
         The engine will now detect the markers associated with this object and send an
@@ -499,6 +515,13 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object
                 (and therefore only 1 of each of any of these markers) in the world.
 
+        .. code-block:: python
+
+        robot.world.define_custom_wall(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
+                                       marker=anki_vector.objects.CustomObjectMarkers.Circles2,
+                                       width_mm=20.0, height_mm=20.0,
+                                       marker_width_mm=10.0, marker_height_mm=10.0)
+
         Returns:
             CustomObject instance with the specified dimensions.
             This is None if the definition failed internally.
@@ -514,24 +537,25 @@ class World(util.Component):
         thickness_mm = protocol.ObjectConstants.Value("FIXED_CUSTOM_WALL_THICKNESS_MM")
 
         custom_object_archetype = objects.CustomObjectArchetype(custom_object_type,
-                                                                            thickness_mm, width_mm, height_mm,
-                                                                            marker_width_mm, marker_height_mm,
-                                                                            is_unique)
+                                                                thickness_mm, width_mm, height_mm,
+                                                                marker_width_mm, marker_height_mm,
+                                                                is_unique)
 
-        req = protocol.DefineCustomWallRequest(custom_type=custom_object_type.id,
-                                               marker=marker.id,
-                                               width_mm=width_mm,
-                                               height_mm=height_mm,
-                                               marker_width_mm=marker_width_mm,
-                                               marker_height_mm=marker_height_mm,
-                                               is_unique=is_unique)
+        definition = protocol.CustomWallDefinition(marker=marker.id,
+                                                   width_mm=width_mm,
+                                                   height_mm=height_mm,
+                                                   marker_width_mm=marker_width_mm,
+                                                   marker_height_mm=marker_height_mm)
+
+        req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
+                                                 is_unique=is_unique,
+                                                 custom_object_definition=definition)
 
         response = await self.grpc_interface.DefineCustomWall(req)
 
         if response.success:
             type_id = custom_object_archetype.object_type.id
             self._custom_object_archetypes[type_id] = custom_object_archetype
-            self.logger.info("Defined: %s", custom_object_archetype)
             return custom_object_archetype
 
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
@@ -545,7 +569,7 @@ class World(util.Component):
                                          z_size_mm: float,
                                          relative_to_robot: bool = False,
                                          use_robot_origin: bool = True) -> objects.FixedCustomObject:
-        '''Defines a cuboid of custom size and places it in the world. It cannot be observed.
+        """Defines a cuboid of custom size and places it in the world. It cannot be observed.
 
         :param pose: The pose of the object we are creating.
         :param x_size_mm: size of the object (in millimeters) in the x axis.
@@ -553,11 +577,17 @@ class World(util.Component):
         :param z_size_mm: size of the object (in millimeters) in the z axis.
         :param relative_to_robot: whether or not the pose given assumes the robot's pose as its origin.
         :param use_robot_origin: whether or not to override the origin_id in the given pose to be
-                                 the origin_id of Cozmo.
+                                 the origin_id of Vector.
+
+        .. code-block:: python
+
+        robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                               x_size_mm=10, y_size_mm=100, z_size_mm=100,
+                                               relative_to_robot=True)
 
         Returns:
             FixedCustomObject instance with the specified dimensions and pose.
-        '''
+        """
         # Override the origin of the pose to be the same as the robot's. This will make sure they are in
         # the same space in the engine every time.
         if use_robot_origin:

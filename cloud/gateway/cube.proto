@@ -123,30 +123,40 @@ enum ObjectType
 
   BLOCK_LIGHTCUBE1 = 2;
 
-  CUSTOM_TYPE_00 = 15;
-  CUSTOM_TYPE_01 = 16;
-  CUSTOM_TYPE_02 = 17;
-  CUSTOM_TYPE_03 = 18;
-  CUSTOM_TYPE_04 = 19;
-  CUSTOM_TYPE_05 = 20;
-  CUSTOM_TYPE_06 = 21;
-  CUSTOM_TYPE_07 = 22;
-  CUSTOM_TYPE_08 = 23;
-  CUSTOM_TYPE_09 = 24;
-  CUSTOM_TYPE_10 = 25;
-  CUSTOM_TYPE_11 = 26;
-  CUSTOM_TYPE_12 = 27;
-  CUSTOM_TYPE_13 = 28;
-  CUSTOM_TYPE_14 = 29;
-  CUSTOM_TYPE_15 = 30;
-  CUSTOM_TYPE_16 = 31;
-  CUSTOM_TYPE_17 = 32;
-  CUSTOM_TYPE_18 = 33;
-  CUSTOM_TYPE_19 = 34;
-
   // There are 38 object types in the internal clad definition, though only
   // some are surfaced here
   OBJECT_TYPE_COUNT = 38;
+}
+
+// This is an int_32 on the clad side.
+enum CustomType
+{
+  option allow_alias = true;
+
+  INVALID_CUSTOM_TYPE = 0;
+
+  CUSTOM_TYPE_00 = 1;
+  CUSTOM_TYPE_01 = 2;
+  CUSTOM_TYPE_02 = 3;
+  CUSTOM_TYPE_03 = 4;
+  CUSTOM_TYPE_04 = 5;
+  CUSTOM_TYPE_05 = 6;
+  CUSTOM_TYPE_06 = 7;
+  CUSTOM_TYPE_07 = 8;
+  CUSTOM_TYPE_08 = 9;
+  CUSTOM_TYPE_09 = 10;
+  CUSTOM_TYPE_10 = 11;
+  CUSTOM_TYPE_11 = 12;
+  CUSTOM_TYPE_12 = 13;
+  CUSTOM_TYPE_13 = 14;
+  CUSTOM_TYPE_14 = 15;
+  CUSTOM_TYPE_15 = 16;
+  CUSTOM_TYPE_16 = 17;
+  CUSTOM_TYPE_17 = 18;
+  CUSTOM_TYPE_18 = 19;
+  CUSTOM_TYPE_19 = 20;
+
+  CUSTOM_TYPE_COUNT = 20;
 }
 
 enum ObjectFamily {
@@ -263,16 +273,16 @@ enum CustomObjectMarker {
   CUSTOM_MARKER_COUNT       = 16;
 }
 
-enum CustomObjectDeletionMask {
+enum CustomObjectDeletionMode {
   DELETION_MASK_UNKNOWN               = 0;
   DELETION_MASK_FIXED_CUSTOM_OBJECTS  = 1;
   DELETION_MASK_CUSTOM_MARKER_OBJECTS = 2;
-  DELETION_MASK_ARCHETYPES            = 4;
+  DELETION_MASK_ARCHETYPES            = 3;
 }
 
-// Deletes all custom objects matching a given deletion mask.
+// Deletes all custom objects matching a given deletion mode.
 message DeleteCustomObjectsRequest {
-  uint32  mask = 1;
+  CustomObjectDeletionMode mode = 1;
 }
 
 message DeleteCustomObjectsResponse {
@@ -296,60 +306,57 @@ message CreateFixedCustomObjectResponse {
 
 // Defines a custom object of the given size with the given markers centered on each side
 // If isUnique=true, there is guaranteed to be no more than one object of this type present in the world
-message DefineCustomBoxRequest {
-  ObjectType         custom_type      = 1; // One of CustomTypeN, where N=0..19
-  CustomObjectMarker marker_front     = 2;
-  CustomObjectMarker marker_back      = 3;
-  CustomObjectMarker marker_top       = 4;
-  CustomObjectMarker marker_bottom    = 5;
-  CustomObjectMarker marker_left      = 6;
-  CustomObjectMarker marker_right     = 7;
-  float              x_size_mm        = 8;
-  float              y_size_mm        = 9;
-  float              z_size_mm        = 10;
-  float              marker_width_mm  = 11;
-  float              marker_height_mm = 12;
-  bool               is_unique        = 13;
-}
-
-message DefineCustomBoxResponse {
-  ResponseStatus  status  = 1;
-  bool            success = 2;
+message CustomBoxDefinition {
+  CustomObjectMarker marker_front     = 1;
+  CustomObjectMarker marker_back      = 2;
+  CustomObjectMarker marker_top       = 3;
+  CustomObjectMarker marker_bottom    = 4;
+  CustomObjectMarker marker_left      = 5;
+  CustomObjectMarker marker_right     = 6;
+  float              x_size_mm        = 7;
+  float              y_size_mm        = 8;
+  float              z_size_mm        = 9;
+  float              marker_width_mm  = 10;
+  float              marker_height_mm = 11;
 }
 
 // Defines a custom cube of the given size. The cube will have the same marker centered on all faces.
 // If isUnique=true, there is guaranteed to be no more than one cube of this type present in the world at a time.
-message DefineCustomCubeRequest {
-  ObjectType         custom_type      = 1; // One of CustomTypeN, where N=0..19
-  CustomObjectMarker marker           = 2;
-  float              size_mm          = 3;
-  float              marker_width_mm  = 4;
-  float              marker_height_mm = 5;
-  bool               is_unique        = 6;
-}
-
-message DefineCustomCubeResponse {
-  ResponseStatus  status  = 1;
-  bool            success = 2;
+message CustomCubeDefinition {
+  CustomObjectMarker marker           = 1;
+  float              size_mm          = 2;
+  float              marker_width_mm  = 3;
+  float              marker_height_mm = 4;
 }
 
 // Defines a custom wall of the given height and width, with the same marker centered on both sides (front and back).
 // The wall's thickness is assumed to be 1cm (and thus there are no markers on its left, right, top, or bottom)
 // If isUnique=true, there is guaranteed to be no more than one wall of this type present in the world at a time.
-message DefineCustomWallRequest {
-  ObjectType         custom_type      = 1; // One of CustomTypeN, where N=0..19
-  CustomObjectMarker marker           = 2;
-  float              width_mm         = 3;
-  float              height_mm        = 4;
-  float              marker_width_mm  = 5;
-  float              marker_height_mm = 6;
-  bool               is_unique        = 7;
+message CustomWallDefinition {
+  CustomObjectMarker marker           = 1;
+  float              width_mm         = 2;
+  float              height_mm        = 3;
+  float              marker_width_mm  = 4;
+  float              marker_height_mm = 5;
 }
 
-message DefineCustomWallResponse {
+
+message DefineCustomObjectRequest {
+  CustomType             custom_type = 1;
+  bool                   is_unique   = 2;
+
+  oneof custom_object_definition {
+    CustomBoxDefinition  custom_box  = 3;
+    CustomCubeDefinition custom_cube = 4;
+    CustomWallDefinition custom_wall = 5;
+  }
+}
+
+message DefineCustomObjectResponse {
   ResponseStatus  status  = 1;
   bool            success = 2;
 }
+
 
 message ObjectEvent {
   oneof object_event_type {

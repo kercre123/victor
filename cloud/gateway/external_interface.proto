@@ -382,26 +382,10 @@ service ExternalInterface {
     };
   }
 
-  // Creates a custom rectangular prism with distinct custom markers on each of its 6 faces.
-  rpc DefineCustomBox(DefineCustomBoxRequest) returns (DefineCustomBoxResponse) {
+  // Creates a custom object with distinct custom marker(s).
+  rpc DefineCustomObject(DefineCustomObjectRequest) returns (DefineCustomObjectResponse) {
     option (google.api.http) = {
-      post: "/v1/define_custom_box",
-      body: "*"
-    };
-  }
-
-  // Creates a custom cube with a single custom marker on all faces.
-  rpc DefineCustomCube(DefineCustomCubeRequest) returns (DefineCustomCubeResponse) {
-    option (google.api.http) = {
-      post: "/v1/define_custom_cube",
-      body: "*"
-    };
-  }
-
-  // Creates a custom rectangular prism with a small constant depth with a custom marker.
-  rpc DefineCustomWall(DefineCustomWallRequest) returns (DefineCustomWallResponse) {
-    option (google.api.http) = {
-      post: "/v1/define_custom_wall",
+      post: "/v1/define_custom_object",
       body: "*"
     };
   }
