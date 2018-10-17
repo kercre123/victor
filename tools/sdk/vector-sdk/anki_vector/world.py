@@ -309,10 +309,12 @@ class World(util.Component):
             robot.world.delete_custom_objects()
         """
 
+        last_blocking_call = None
+
         if delete_custom_object_archetypes:
             self._custom_object_archetypes.clear()
             req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_ARCHETYPES"))
-            await self.grpc_interface.DeleteCustomObjects(req)
+            last_blocking_call = await self.grpc_interface.DeleteCustomObjects(req)
 
             # Without their referenced archetypes removed, custom marker objects become nonsensical
             delete_custom_marker_objects = True
@@ -320,12 +322,14 @@ class World(util.Component):
         if delete_custom_marker_objects:
             self._remove_all_custom_marker_object_instances()
             req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_CUSTOM_MARKER_OBJECTS"))
-            await self.grpc_interface.DeleteCustomObjects(req)
+            last_blocking_call = await self.grpc_interface.DeleteCustomObjects(req)
 
         if delete_fixed_custom_objects:
             self._remove_all_fixed_custom_object_instances()
             req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS"))
-            await self.grpc_interface.DeleteCustomObjects(req)
+            last_blocking_call = await self.grpc_interface.DeleteCustomObjects(req)
+
+        return last_blocking_call
 
     @sync.Synchronizer.wrap
     async def define_custom_box(self,
@@ -412,9 +416,9 @@ class World(util.Component):
 
         req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
                                                  is_unique=is_unique,
-                                                 custom_object_definition=definition)
+                                                 custom_box=definition)
 
-        response = await self.grpc_interface.DefineCustomBox(req)
+        response = await self.grpc_interface.DefineCustomObject(req)
 
         if response.success:
             type_id = custom_object_archetype.object_type.id
@@ -477,9 +481,9 @@ class World(util.Component):
 
         req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
                                                  is_unique=is_unique,
-                                                 custom_object_definition=definition)
+                                                 custom_cube=definition)
 
-        response = await self.grpc_interface.DefineCustomCube(req)
+        response = await self.grpc_interface.DefineCustomObject(req)
 
         if response.success:
             type_id = custom_object_archetype.object_type.id
@@ -549,9 +553,9 @@ class World(util.Component):
 
         req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
                                                  is_unique=is_unique,
-                                                 custom_object_definition=definition)
+                                                 custom_wall=definition)
 
-        response = await self.grpc_interface.DefineCustomWall(req)
+        response = await self.grpc_interface.DefineCustomObject(req)
 
         if response.success:
             type_id = custom_object_archetype.object_type.id

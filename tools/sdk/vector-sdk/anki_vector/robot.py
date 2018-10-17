@@ -27,7 +27,7 @@ from pathlib import Path
 from . import (animation, audio, behavior, camera,
                connection, events, exceptions, faces, motors,
                screen, photos, proximity, sync, util,
-               viewer, world)
+               viewer, vision, world)
 from .messaging import protocol
 
 # Constants
@@ -141,6 +141,7 @@ class Robot:
         self._photos: photos.PhotographComponent = None
         self._proximity: proximity.ProximityComponent = None
         self._viewer: viewer.ViewerComponent = None
+        self._vision: vision.VisionComponent = None
         self._world: world.World = None
 
         self.behavior_activation_timeout = behavior_activation_timeout
@@ -309,6 +310,17 @@ class Robot:
         if self._viewer is None:
             raise exceptions.VectorNotReadyException("ViewerComponent is not yet initialized")
         return self._viewer
+
+    @property
+    def vision(self) -> vision.VisionComponent:
+        """Component containing functionality related to vision based object detection.
+
+        .. testcode::
+
+            import anki_vector
+            robot.vision.enable_vision_mode(true)
+        """
+        return self._vision
 
     @property
     def world(self) -> world.World:
@@ -601,6 +613,7 @@ class Robot:
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
         self._viewer = viewer.ViewerComponent(self)
+        self._vision = vision.VisionComponent(self)
         self._world = world.World(self)
 
         if self.cache_animation_list:
@@ -622,7 +635,7 @@ class Robot:
             self.viewer.show_video()
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self._faces.enable_vision_mode(enable=self.enable_vision_mode)
+        self.vision.enable_vision_mode(enable=self.enable_vision_mode)
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
@@ -642,7 +655,7 @@ class Robot:
             for task in self.pending:
                 task.wait_for_completed()
 
-        vision_mode = self._faces.enable_vision_mode(enable=False)
+        vision_mode = self.vision.enable_vision_mode(enable=False)
         if isinstance(vision_mode, sync.Synchronizer):
             vision_mode.wait_for_completed()
 

@@ -627,8 +627,10 @@ message LatestAttentionTransferResponse {
 }
 
 enum VisionMode {
-  VISION_MODE_UNKNOWN = 0;
-  VISION_MODE_DETECTING_FACES = 2;
+  VISION_MODE_UNKNOWN                     = 0;
+  VISION_MODE_DETECTING_MARKERS           = 1;
+  VISION_MODE_DETECTING_FACES             = 2;
+  VISION_MODE_FULL_FRAME_MARKER_DETECTION = 22;
 }
 
 message EnableVisionModeRequest {
