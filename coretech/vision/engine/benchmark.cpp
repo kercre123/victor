@@ -28,7 +28,7 @@ namespace {
   
 CONSOLE_VAR(s32,  kVisionBenchmark_PrintFrequency_ms, CONSOLE_GROUP, 3000);
 CONSOLE_VAR(bool, kVisionBenchmark_DisplayImages,     CONSOLE_GROUP, false); // Only works if running synchronously
-CONSOLE_VAR(s32,  kVisionBenchmark_ScaleMultiplier,   CONSOLE_GROUP, 1);
+CONSOLE_VAR(s32,  kVisionBenchmark_ScaleMultiplier,   CONSOLE_GROUP, 2);
   
 // Toggle corresponding modes at runtime
 #if REMOTE_CONSOLE_ENABLED

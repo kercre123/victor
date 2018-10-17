@@ -27,7 +27,7 @@ protected:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorAnimSequence(const Json::Value& config, bool triggerRequired = true);
+  BehaviorAnimSequence(const Json::Value& config);
   
 public:
   
@@ -36,10 +36,8 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void AddListener(ISubtaskListener* listener) override;
 
-  
   // Begin playing the animations
   void StartPlayingAnimations();
-  void SetAnimSequence(const std::vector<AnimationTrigger>& animations){_iConfig.animTriggers = animations;}
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
@@ -61,6 +59,7 @@ protected:
 
   // Returns an action that will play all animations in the class the appropriate number of times for one loop
   IActionRunner* GetAnimationAction();
+  
   // Returns true if multiple animations will be played as a loop _numLoops times
   // Returns false if a single animation will play _numLoops times
   bool IsSequenceLoop();

@@ -47,11 +47,20 @@ extern ILoggerProvider* gLoggerProvider;
 extern ChannelFilter gChannelFilter;
 extern IEventProvider* gEventProvider;
 
-// Global error flag so we can check if PRINT_ERROR was called for unit testing
-extern bool _errG;
+// Accessors for global error flag for unit testing
+void sSetErrG();            // Sets errG to true
+void sUnSetErrG();          // Sets errG to false
+bool sGetErrG();            // Gets the value of errG
+// Only useful if access to the global error flag involves some locking mechanism
+void sPushErrG(bool value); // Sets errG to value and locks access by other threads until PopErrG is called
+void sPopErrG();            // Restores errG to its value before calling sPushErrG and enables access to errG by other threads
 
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
+  
+// If true, access to the global error flag uses a mutex device. Changing this value while logging could
+// lead to a mutex lock, so don't.
+extern bool _lockErrG;
 
 //
 // "Event level" logging is no longer a thing. Do not use it.
@@ -169,7 +178,7 @@ constexpr const char * LOG_UNFILTERED = "Unfiltered";
 //
 #define PRINT_NAMED_ERROR(name, format, ...) do { \
   ::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); \
-  ::Anki::Util::_errG=true; \
+  ::Anki::Util::sSetErrG(); \
   if (::Anki::Util::_errBreakOnError) { \
     ::Anki::Util::sDebugBreakOnError(); \
   } \

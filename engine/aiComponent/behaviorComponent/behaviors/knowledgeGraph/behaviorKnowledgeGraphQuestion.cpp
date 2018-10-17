@@ -149,7 +149,7 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
       _dVars.state = EState::WaitingToStream;
 
       // Need to loop this forever and we'll just cancel it on our own after a timeout
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphListening, 0 ) );
+      DelegateIfInControl( new ReselectingLoopAnimationAction( AnimationTrigger::KnowledgeGraphListening ) );
     };
 
     // open up streaming after we play our get-in to avoid motor noise

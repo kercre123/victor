@@ -629,6 +629,12 @@ message TriggerBackpackAnimation {
   BackpackAnimationTrigger trigger,
 }
 
+// Currently this is only providing one setting for Mic System, if we need more Account Settings in Anim Process
+// expand on this message and update the Process_updatedAccountSettings() method
+message UpdatedAccountSettings {
+  bool enableDataCollection
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -787,7 +793,9 @@ union EngineToRobot
 
   EngineFullyLoaded engineFullyLoaded = 0xAD,
 
-  CheckCloudConnectivity checkCloudConnectivity = 0xAE,  
+  CheckCloudConnectivity checkCloudConnectivity = 0xAE,
+
+  UpdatedAccountSettings updatedAccountSettings = 0xAF,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

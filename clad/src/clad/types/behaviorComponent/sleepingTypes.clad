@@ -80,6 +80,10 @@ enum uint_8 SleepReason {
   // decided autonomously (stim level, sleep debt)
   Sleepy,
 
+  // Too long on charger without charging
+  // (because the battery is hot)
+  TooLongOnChargerNotCharging,
+
   // e.g. low battery or high temp
   Emergency,
 

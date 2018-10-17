@@ -100,8 +100,74 @@ static const char* kAnonymousBehaviorName            = "behaviorName";
 
 static const char* kBehaviorDebugLabel               = "debugLabel";
 static const char* kTracksLockedWhileActivatedID     = "tracksLockedWhileActivated";
+  
+// Keys for loading in behavior modifiers
+static const char* kBehaviorModifiersMapKey              = "behaviorModifiers";
+static const char* kCubeConnectionRequirements           = "cubeConnectionRequirements";
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::set<std::string> BehaviorOperationModifiers::SetDefaultBehaviorOperationModifiers(const Json::Value& config, const std::string& debugLabel)
+{
+  const std::string debugStr = debugLabel + ".BehaviorOperationModifiers.SetDefaultFromJson";
+  std::set<std::string> newModifierDefaults;
+  // TODO(GB): Allow user to set vision mode operation modifiers via JSON as well.
+  visionModesForActivatableScope = std::make_unique<std::set<VisionModeRequest>>();
+  visionModesForActiveScope = std::make_unique<std::set<VisionModeRequest>>();
+  
+  for (const auto& entry : stringToModifiersFlagMap) {
+    if (illegalKeys.find(entry.first) != illegalKeys.end()) {
+      ANKI_VERIFY(!config.isMember(entry.first), (debugStr + ".IllegalKey").c_str(),
+                  "Key %s cannot be set via JSON, default remains set to %d",
+                  entry.first.c_str(), *(entry.second));
+      continue;
+    }
+    if (JsonTools::GetValueOptional(config, entry.first, *(entry.second))) {
+      newModifierDefaults.emplace(entry.first);
+    }
+  }
+  
+  if(config.isMember(kCubeConnectionRequirements)){
+    const std::string cubeConnectReqStr = config[kCubeConnectionRequirements].asString();
+    if (ANKI_VERIFY(CubeConnectionRequirementFromString(cubeConnectReqStr, cubeConnectionRequirements),
+                    (debugStr + ".InvalidCubeConnectionRequirement").c_str(),
+                    "Invalid type of cube connection requirement: %s",
+                    cubeConnectReqStr.c_str())) {
+      newModifierDefaults.emplace(kCubeConnectionRequirements);
+    }
+  }
+  return newModifierDefaults;
+}
+ 
+bool BehaviorOperationModifiers::ModifierFlagValueFromString(const std::string &str, bool &output) const
+{
+  auto it = stringToModifiersFlagMap.find(str);
+  if(it == stringToModifiersFlagMap.end()) {
+    return false;
+  }
+  
+  output = *(it->second);
+  return true;
+}
+
+bool BehaviorOperationModifiers::CubeConnectionRequirementFromString(const std::string &str, CubeConnectionRequirements &enumOutput) const
+{
+  static const std::unordered_map<std::string, CubeConnectionRequirements> stringToEnumMap = {
+    {"None", CubeConnectionRequirements::None},
+    {"OptionalLazy", CubeConnectionRequirements::OptionalLazy},
+    {"OptionalActive", CubeConnectionRequirements::OptionalActive},
+    {"RequiredLazy", CubeConnectionRequirements::RequiredLazy},
+    {"RequiredManaged", CubeConnectionRequirements::RequiredManaged}
+  };
+  
+  auto it = stringToEnumMap.find(str);
+  if(it == stringToEnumMap.end()) {
+    return false;
+  }
+  
+  enumOutput = it->second;
+  return true;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Json::Value ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID)
@@ -239,6 +305,11 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   }
 
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
+  
+  // Load any changes to the default values of behavior modifiers from the JSON config
+  if (config.isMember(kBehaviorModifiersMapKey)){
+    _operationModifiers.SetDefaultBehaviorOperationModifiers(config[kBehaviorModifiersMapKey], GetDebugLabel());
+  }
 
   // Add WantsToBeActivated conditions
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
@@ -391,6 +462,7 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kRequiredDriveOffChargerKey,
     kRequiredParentSwitchKey,
     kAlwaysStreamlineKey,
+    kBehaviorModifiersMapKey,
     kWantsToBeActivatedCondConfigKey,
     kWantsToCancelSelfConfigKey,
     kRespondToUserIntentsKey,
@@ -550,7 +622,6 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
 {
   // N.B. this can't happen in Init because some behaviors actually rely on other behaviors having been
   // initialized to properly handler GetBehaviorOperationModifiers
-
   GetBehaviorOperationModifiers(_operationModifiers);
 }
 
@@ -1192,7 +1263,7 @@ void ICozmoBehavior::UpdateInternal()
     // Check whether we should cancel the behavior if control is no longer delegated
     if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
       shouldCancelSelf = true;
-      PRINT_NAMED_INFO((baseDebugStr + "ControlNotDelegated").c_str(),
+      PRINT_CH_INFO("Behaviors", (baseDebugStr + "ControlNotDelegated").c_str(),
                        "Behavior %s always delegates, so cancel self",
                        GetDebugLabel().c_str());
     }
@@ -1201,7 +1272,7 @@ void ICozmoBehavior::UpdateInternal()
     for(auto& condition: _wantsToCancelSelfConditions){
       if(condition->AreConditionsMet(GetBEI())){
         shouldCancelSelf = true;
-        PRINT_NAMED_INFO((baseDebugStr + "WantsToCancelSelfCondition").c_str(),
+        PRINT_CH_INFO("Behaviors", (baseDebugStr + "WantsToCancelSelfCondition").c_str(),
                          "Condition %s wants behavior %s to cancel itself",
                          condition->GetDebugLabel().c_str(),
                          GetDebugLabel().c_str());
@@ -1579,7 +1650,7 @@ bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
     _customLightObjects.push_back(objectID);
     return true;
   }else{
-    PRINT_NAMED_INFO("ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
+    PRINT_CH_INFO("Behaviors", "ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
                      "A custom light pattern has already been set on object %d", objectID.GetValue());
     return false;
   }
@@ -1599,7 +1670,7 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
     _customLightObjects.erase(objectIter);
     return true;
   }else{
-    PRINT_NAMED_INFO("ICozmoBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
+    PRINT_CH_INFO("Behaviors", "ICozmoBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
                         "No custom light pattern is set for object %d", objectID.GetValue());
     return false;
   }

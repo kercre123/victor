@@ -211,7 +211,7 @@ void BehaviorPlaypenPickupCube::TransitionToPlaceCube()
   Radians robotAngleAfterBackup = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
   f32 angleChange_rad = std::fabsf((robotAngleAfterBackup - _robotAngleAtPickup).ToFloat());
   
-  PRINT_NAMED_INFO("BehaviorPlaypenPickupCube.TransitionToPlaceCube.AngleChangeDuringBackup",
+  PRINT_CH_INFO("Behaviors", "BehaviorPlaypenPickupCube.TransitionToPlaceCube.AngleChangeDuringBackup",
                    "%f deg", RAD_TO_DEG(angleChange_rad));
   
   if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)
@@ -247,7 +247,7 @@ void BehaviorPlaypenPickupCube::TransitionToBackup()
     Radians robotAngleAfterBackAndForth = robot.GetPose().GetRotation().GetAngleAroundZaxis();
     f32 angleChange_rad = std::fabsf((robotAngleAfterBackAndForth - _robotAngleAtPickup).ToFloat());
     
-    PRINT_NAMED_INFO("BehaviorPlaypenPickupCube.TransitionToBackup.AngleChangeDuringBackAndForth",
+    PRINT_CH_INFO("Behaviors", "BehaviorPlaypenPickupCube.TransitionToBackup.AngleChangeDuringBackAndForth",
                      "%f deg", RAD_TO_DEG(angleChange_rad));
     
     if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)

@@ -71,7 +71,7 @@ namespace Vector {
     const ActionResult compoundResult = _compoundAction->Update();
     if(ActionResult::RUNNING != compoundResult)
     {
-      PRINT_NAMED_INFO("IVisuallyVerifyAction.CheckIfDone.TimedOut",
+      PRINT_CH_INFO("Actions", "IVisuallyVerifyAction.CheckIfDone.TimedOut",
                        "%s: Did not see object before processing %d images",
                        GetName().c_str(), GetNumImagesToWaitFor());
       
@@ -170,7 +170,7 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
           observedMarkerNames += " ";
         }
         
-        PRINT_NAMED_INFO("VisuallyVerifyObjectAction.HaveSeenObject.WrongMarker",
+        PRINT_CH_INFO("Actions", "VisuallyVerifyObjectAction.HaveSeenObject.WrongMarker",
                          "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
                          GetTag(), _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
       }

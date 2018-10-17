@@ -49,24 +49,27 @@ class Robot:
     1. Using :code:`with`: it works just like opening a file, and will close when
     the :code:`with` block's indentation ends.
 
-    .. code-block:: python
 
+    .. testcode::
+
+        import anki_vector
         # Create the robot connection
         with anki_vector.Robot("my_robot_serial_number") as robot:
             # Run your commands
-            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.anim.play_animation("anim_blackjack_victorwin_01")
 
     2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
     it allows the robot's connection to continue in the context in which it started.
 
-    .. code-block:: python
+    .. testcode::
 
+        import anki_vector
         # Create a Robot object
-        robot = Robot("my_robot_serial_number")
+        robot = anki_vector.Robot("my_robot_serial_number")
         # Connect to the Robot
         robot.connect()
-        # Run your commands (for example play animation)
-        robot.play_animation("anim_blackjack_victorwin_01")
+        # Run your commands
+        robot.anim.play_animation("anim_blackjack_victorwin_01")
         # Disconnect from Vector
         robot.disconnect()
 
@@ -107,9 +110,7 @@ class Robot:
         self._original_loop = None
         self.loop = loop
         config = config if config is not None else {}
-
-        if serial is not None:
-            config = {**self._read_configuration(serial), **config}
+        config = {**self._read_configuration(serial), **config}
 
         self._name = config["name"]
         self._ip = ip if ip is not None else config["ip"]
@@ -167,8 +168,7 @@ class Robot:
         self._enable_audio_feed = enable_audio_feed
         self._show_viewer = show_viewer
 
-    @staticmethod
-    def _read_configuration(serial: str) -> dict:
+    def _read_configuration(self, serial: str) -> dict:
         """Open the default conf file, and read it into a :class:`configparser.ConfigParser`
 
         :param serial: Vector's serial number
@@ -178,10 +178,23 @@ class Robot:
         parser = configparser.ConfigParser(strict=False)
         parser.read(conf_file)
 
+        sections = parser.sections()
+        if not sections:
+            raise Exception('\n\nCould not find the sdk configuration file. Please run ./configure.py to set up your Vector for SDK usage.')
+        elif serial is None and len(sections) == 1:
+            serial = sections[0]
+            self.logger.warning("No serial number provided. Automatically selecting {}".format(serial))
+        elif serial is None:
+            raise Exception('\n\nFound multiple robot serial numbers. Please provide the serial number of the Robot you want to control.\n'
+                            'Example: ./01_hello_world.py --serial {robot_serial_number}')
+
+        serial = serial.lower()
+        config = {k.lower(): v for k, v in parser.items()}
         try:
-            dict_entry = parser[serial]
+            dict_entry = config[serial]
         except KeyError:
-            raise Exception("Could not find matching robot info for serial. Please check your serial number is correct.")
+            raise Exception('\n\nCould not find matching robot info for given serial number: {}. Please check your serial number is correct.\n'
+                            'Example: ./01_hello_world.py --serial {{robot_serial_number}}'.format(serial))
 
         return dict_entry
 
@@ -229,6 +242,7 @@ class Robot:
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
+        # TODO When latest_image is ready, convert `.. code-block:: python` to `.. testcode::`
         if self._camera is None:
             raise exceptions.VectorNotReadyException("CameraComponent is not yet initialized")
         return self._camera
@@ -265,8 +279,9 @@ class Robot:
     def proximity(self) -> proximity.ProximityComponent:
         """Component containing state related to object proximity detection.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             proximity_data = robot.proximity.last_valid_sensor_reading
             if proximity_data is not None:
                 print(proximity_data.distance)
@@ -278,12 +293,15 @@ class Robot:
         """:class:`anki_vector.viewer.ViewerComponent`: The viewer instance used to render
         Vector's camera feed.
 
-        .. code-block:: python
+        .. testcode::
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            import asyncio
+            import anki_vector
+
+            with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
                 # Render video for 10 seconds
                 robot.viewer.show_video()
-                robot.loop.run_until_complete(utilities.delay_close(10))
+                robot.loop.run_until_complete(asyncio.sleep(5))
 
                 # Disable video render and camera feed for 5 seconds
                 robot.viewer.stop_video()
@@ -303,8 +321,9 @@ class Robot:
     def pose(self) -> util.Pose:
         """:class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_robot_pose = robot.pose
         """
         return self._pose
@@ -313,8 +332,9 @@ class Robot:
     def pose_angle_rad(self) -> float:
         """Vector's pose angle (heading in X-Y plane).
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_pose_angle_rad = robot.pose_angle_rad
         """
         return self._pose_angle_rad
@@ -323,8 +343,9 @@ class Robot:
     def pose_pitch_rad(self) -> float:
         """Vector's pose pitch (angle up/down).
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_pose_pitch_rad = robot.pose_pitch_rad
         """
         return self._pose_pitch_rad
@@ -333,8 +354,9 @@ class Robot:
     def left_wheel_speed_mmps(self) -> float:
         """Vector's left wheel speed in mm/sec
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_left_wheel_speed_mmps = robot.left_wheel_speed_mmps
         """
         return self._left_wheel_speed_mmps
@@ -343,8 +365,9 @@ class Robot:
     def right_wheel_speed_mmps(self) -> float:
         """Vector's right wheel speed in mm/sec
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_right_wheel_speed_mmps = robot.right_wheel_speed_mmps
         """
         return self._right_wheel_speed_mmps
@@ -353,8 +376,9 @@ class Robot:
     def head_angle_rad(self) -> float:
         """Vector's head angle (up/down).
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_head_angle_rad = robot.head_angle_rad
         """
         return self._head_angle_rad
@@ -363,8 +387,9 @@ class Robot:
     def lift_height_mm(self) -> float:
         """Height of Vector's lift from the ground.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_lift_height_mm = robot.lift_height_mm
         """
         return self._lift_height_mm
@@ -373,8 +398,9 @@ class Robot:
     def accel(self) -> util.Vector3:
         """:class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_accel = robot.accel
         """
         return self._accel
@@ -383,8 +409,9 @@ class Robot:
     def gyro(self) -> util.Vector3:
         """The current gyroscope reading (x, y, z)
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_gyro = robot.gyro
         """
         return self._gyro
@@ -393,8 +420,9 @@ class Robot:
     def carrying_object_id(self) -> int:
         """The ID of the object currently being carried (-1 if none)
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_carrying_object_id = robot.carrying_object_id
         """
         return self._carrying_object_id
@@ -403,8 +431,9 @@ class Robot:
     def head_tracking_object_id(self) -> int:
         """The ID of the object the head is tracking to (-1 if none)
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_head_tracking_object_id = robot.head_tracking_object_id
         """
         return self._head_tracking_object_id
@@ -413,8 +442,9 @@ class Robot:
     def localized_to_object_id(self) -> int:
         """The ID of the object that the robot is localized to (-1 if none)
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_localized_to_object_id = robot.localized_to_object_id
         """
         return self._localized_to_object_id
@@ -424,8 +454,9 @@ class Robot:
     def last_image_time_stamp(self) -> int:
         """The robot's timestamp for the last image seen.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_last_image_time_stamp = robot.last_image_time_stamp
         """
         return self._last_image_time_stamp
@@ -456,8 +487,9 @@ class Robot:
            IS_MOTION_DETECTED      = 0x20000
            IS_BATTERY_OVERHEATED   = 0x40000
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             current_status = robot.status
         """
         return self._status
@@ -471,11 +503,15 @@ class Robot:
 
         .. code-block:: python
 
+            import asyncio
+            import anki_vector
+
             with anki_vector.Robot("my_robot_serial_number", enable_audio_feed=True) as robot:
-                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.loop.run_until_complete(asyncio.sleep(5))
                 robot.enable_audio_feed = False
-                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.loop.run_until_complete(asyncio.sleep(5))
         """
+        # TODO When audio is ready, convert `.. code-block:: python` to `.. testcode::`
         return self._enable_audio_feed
 
     @enable_audio_feed.setter
@@ -491,12 +527,15 @@ class Robot:
         :getter: Returns whether the camera feed is enabled
         :setter: Enable/disable the camera feed
 
-        .. code-block:: python
+        .. testcode::
+
+            import asyncio
+            import anki_vector
 
             with anki_vector.Robot("my_robot_serial_number", enable_camera_feed=True) as robot:
-                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.loop.run_until_complete(asyncio.sleep(5))
                 robot.enable_camera_feed = False
-                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.loop.run_until_complete(asyncio.sleep(5))
         """
         return self._enable_camera_feed
 
@@ -530,11 +569,12 @@ class Robot:
     def connect(self, timeout: int = 10) -> None:
         """Start the connection to Vector.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot = Robot("my_robot_serial_number")
+            import anki_vector
+            robot = anki_vector.Robot("my_robot_serial_number")
             robot.connect()
-            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.anim.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
 
         :param timeout: The time to allow for a connection before a
@@ -590,11 +630,12 @@ class Robot:
     def disconnect(self) -> None:
         """Close the connection with Vector.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot = Robot("my_robot_serial_number")
+            import anki_vector
+            robot = anki_vector.Robot("my_robot_serial_number")
             robot.connect()
-            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.anim.play_animation("anim_blackjack_victorwin_01")
             robot.disconnect()
         """
         if self.is_async:
@@ -636,8 +677,9 @@ class Robot:
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
         """Check the current state of the battery.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             battery_state = robot.get_battery_state()
             if battery_state:
                 print("Vector's Battery Voltage: {0}".format(battery_state.battery_volts))
@@ -649,8 +691,9 @@ class Robot:
     async def get_version_state(self) -> protocol.VersionStateResponse:
         """Get the versioning information for Vector.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             version_state = robot.get_version_state()
         """
         get_version_state_request = protocol.VersionStateRequest()
@@ -660,8 +703,9 @@ class Robot:
     async def get_network_state(self) -> protocol.NetworkStateResponse:
         """Get the network information for Vector.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             network_state = robot.get_version_state()
         """
         get_network_state_request = protocol.NetworkStateRequest()
@@ -671,8 +715,9 @@ class Robot:
     async def say_text(self, text: str, use_vector_voice: bool = True, duration_scalar: float = 1.0) -> protocol.SayTextResponse:
         """Make Vector speak text.
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             robot.say_text("Hello World")
 
         :param text: The words for Vector to say.
@@ -697,24 +742,26 @@ class AsyncRobot(Robot):
     1. Using :code:`with`: it works just like opening a file, and will close when
     the :code:`with` block's indentation ends.
 
-    .. code-block:: python
+    .. testcode::
 
+        import anki_vector
         # Create the robot connection
-        with AsyncRobot("my_robot_serial_number") as robot:
+        with anki_vector.AsyncRobot("my_robot_serial_number") as robot:
             # Run your commands
-            robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+            robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
 
     2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
     it allows the robot's connection to continue in the context in which it started.
 
-    .. code-block:: python
+    .. testcode::
 
+        import anki_vector
         # Create a Robot object
-        robot = AsyncRobot("my_robot_serial_number")
+        robot = anki_vector.AsyncRobot("my_robot_serial_number")
         # Connect to Vector
         robot.connect()
         # Run your commands
-        robot.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
         # Disconnect from Vector
         robot.disconnect()
 

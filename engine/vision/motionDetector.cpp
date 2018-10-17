@@ -495,8 +495,8 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   {
     const Vision::ImageRGB& imageColor = imageCache.GetRGB(imageSize);
     return DetectHelper(imageColor,
-                        imageCache.GetNumRows(Vision::ImageCacheSize::Full),
-                        imageCache.GetNumCols(Vision::ImageCacheSize::Full),
+                        imageCache.GetNumRows(Vision::ImageCacheSize::Half),
+                        imageCache.GetNumCols(Vision::ImageCacheSize::Half),
                         scaleMultiplier,
                         crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
   }
@@ -504,8 +504,8 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   {
     const Vision::Image& imageGray = imageCache.GetGray(imageSize);
     return DetectHelper(imageGray,
-                        imageCache.GetNumRows(Vision::ImageCacheSize::Full),
-                        imageCache.GetNumCols(Vision::ImageCacheSize::Full),
+                        imageCache.GetNumRows(Vision::ImageCacheSize::Half),
+                        imageCache.GetNumCols(Vision::ImageCacheSize::Half),
                         scaleMultiplier,
                         crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
   }

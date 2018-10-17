@@ -21,6 +21,8 @@
 #include "util/logging/logging.h"
 #include <cmath>
 
+#define LOG_CHANNEL "Planner"
+
 // minimum amount of radians for which to try to execute a point turn
 #define MINIMAL_ANGLE_PLANNER_THETA_THRESHOLD 0.01
 
@@ -144,7 +146,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
                      MINIMAL_ANGLE_PLANNER_ACCEL,
                      MINIMAL_ANGLE_PLANNER_DECEL);
 
-    PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Backup", "%f", -backupDistance);
+    LOG_INFO("MinimalAnglePlanner.Plan.Backup", "%f", -backupDistance);
 
     curr = backupIntermediatePose;
   }
@@ -171,7 +173,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
                             POINT_TURN_ANGLE_TOL,
                             true);
 
-      PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Turn0", "%f", deltaTheta.ToFloat());
+      LOG_INFO("MinimalAnglePlanner.Plan.Turn0", "%f", deltaTheta.ToFloat());
 
       curr.SetRotation( turn0Angle );
     }
@@ -186,7 +188,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
                      MINIMAL_ANGLE_PLANNER_ACCEL,
                      MINIMAL_ANGLE_PLANNER_DECEL);
 
-    PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Straight", "%f", straightDist);
+    LOG_INFO("MinimalAnglePlanner.Plan.Straight", "%f", straightDist);
 
     curr = nextPose;
   }
@@ -203,12 +205,12 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
                           POINT_TURN_ANGLE_TOL,
                           true);
 
-    PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Turn1", "%f", deltaTheta.ToFloat());
+    LOG_INFO("MinimalAnglePlanner.Plan.Turn1", "%f", deltaTheta.ToFloat());
 
     curr.SetRotation( _finalTargetAngle );
   }
 
-  PRINT_NAMED_INFO("MinimalAnglePlanner.FinalPosition", "(%f, %f, %fdeg)",
+  LOG_INFO("MinimalAnglePlanner.FinalPosition", "(%f, %f, %fdeg)",
                    curr.GetX(), curr.GetY(), curr.GetAngle().getDegrees() );
 
   _hasValidPath = true;

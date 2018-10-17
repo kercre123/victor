@@ -27,6 +27,8 @@
 
 #include "util/logging/DAS.h"
 
+#define LOG_CHANNEL "TouchSensor"
+
 namespace Anki {
 namespace Vector {
   
@@ -135,7 +137,7 @@ void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, boo
   if(!IsCalibrated() && isBaselineStable) {
     ++_numStableBaselineReadings;
     if(_numStableBaselineReadings > kBaselineMinReadingsCountForStability) {
-      PRINT_NAMED_INFO("TouchSensorComponent.UpdateBaseline.Calibrated", "%4.2f", _baseline);
+      LOG_INFO("TouchSensorComponent.UpdateBaseline.Calibrated", "%4.2f", _baseline);
       _isCalibrated = true;
     }
   } else if(!IsCalibrated() && !isBaselineStable) {
@@ -219,7 +221,7 @@ void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, boo
       _numPostChargerModeReadings++;
       if(_numPostChargerModeReadings > kChargerModeCheckTimeout) {
         // did not receive enough evidence that we should overwrite the current baseline
-        PRINT_NAMED_INFO("TouchBaselineCalibrator.UpdateBaseline.NoBaselineChangeDueToChargerModeSwitch","%d",_numTicksLargeDifferenceInBaselines);
+        LOG_INFO("TouchBaselineCalibrator.UpdateBaseline.NoBaselineChangeDueToChargerModeSwitch","%d",_numTicksLargeDifferenceInBaselines);
         DASMSG(touch_charger_mode_check_no_baseline_change,
                "touch_sensor.charger_mode_check.no_baseline_change",
                "send when robot determines no change in the baseline needed");
@@ -231,7 +233,7 @@ void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, boo
         _numTicksLargeDifferenceInBaselines += fabsf(_baseline - _postChargerModeChangeBaseline) > kChargerModeCheckAllowedDifference;
         if(_numTicksLargeDifferenceInBaselines > kChargerModeCheckMinLargeDiffCount) {
           // received enough evidence since initializing the proposal baseline to overwrite
-          PRINT_NAMED_INFO("TouchBaselineCalibrator.UpdateBaseline.BaselineChangedDueToChargerModeSwitch","%4.2f, %4.2f", _baseline, _postChargerModeChangeBaseline);
+          LOG_INFO("TouchBaselineCalibrator.UpdateBaseline.BaselineChangedDueToChargerModeSwitch","%4.2f, %4.2f", _baseline, _postChargerModeChangeBaseline);
           DASMSG(touch_charger_mode_check_baseline_changed,
                  "touch_sensor.charger_mode_check.baseline_changed",
                  "send when robot determines baseline should be changed");
@@ -253,7 +255,7 @@ void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, boo
     if(readingTooLow && _durationForFastCalibration==0) {
       _numTicksReadingsTooLowFromBaseline++;
       if(_numTicksReadingsTooLowFromBaseline > kMinTooLowReadingsForFastCalib) {
-        PRINT_NAMED_INFO("TouchBaselineCalibrator.UpdateBaseline.FastCalibrationDueToLowSignal","%4.2f",_baseline);
+        LOG_INFO("TouchBaselineCalibrator.UpdateBaseline.FastCalibrationDueToLowSignal","%4.2f",_baseline);
         DASMSG(touch_baseline_reading_difference_too_low,
                "touch_sensor.baseline_reading_difference_monitor_too_low",
                "send when robot detects the current signal input is deviating below the baseline too much for too long");
@@ -468,7 +470,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   if(wasOnCharger != _isOnCharger &&
      !_baselineCalibrator.IsChargerModeCheckRunning() &&
      !_baselineCalibrator.IsInFastCalibrationMode()) {
-    PRINT_NAMED_INFO("TouchSensorComponent.NotifyOfRobotStateInternal.BaselineChargerModeCheckActivated","");
+    LOG_INFO("TouchSensorComponent.NotifyOfRobotStateInternal.BaselineChargerModeCheckActivated","");
     DASMSG(touch_charger_mode_check_activate,
            "touch_sensor.activate_charger_mode_check",
            "send when robot is checking the baseline because of a charger state change");

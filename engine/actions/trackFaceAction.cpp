@@ -108,7 +108,7 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
 
   if(DEBUG_TRACKING_ACTIONS)
   {
-    PRINT_NAMED_INFO("TrackFaceAction.UpdateTracking.HeadPose",
+    PRINT_CH_INFO("Actions", "TrackFaceAction.UpdateTracking.HeadPose",
                      "Translation w.r.t. robot = (%.1f, %.1f, %.1f) [t=%d]",
                      xDist, yDist, zDist, face->GetTimeStamp());
   }

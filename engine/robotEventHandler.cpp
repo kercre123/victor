@@ -65,6 +65,8 @@
 #include "generated/proto/external_interface/shared.pb.h"
 #include "generated/proto/external_interface/messages.pb.h"
 
+#define LOG_CHANNEL "RobotEventHandler"
+
 namespace Anki {
 namespace Vector {
 
@@ -1386,7 +1388,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& 
   }
 
   if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
+    LOG_INFO("RobotEventHandler.HandleEnableLiftPower.LiftLocked",
                      "Ignoring ExternalInterface::EnableLiftPower while lift is locked.");
   } else {
     robot->GetMoveComponent().EnableLiftPower(msg.enable);
@@ -1401,7 +1403,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor
 
   if (nullptr != robot)
   {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleMessage.EnableCliffSensor","Setting to %s", msg.enable ? "true" : "false");
+    LOG_INFO("RobotEventHandler.HandleMessage.EnableCliffSensor","Setting to %s", msg.enable ? "true" : "false");
     robot->GetCliffSensorComponent().SetEnableCliffSensor(msg.enable);
   }
 }
@@ -1414,7 +1416,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableStopOnCliff
 
   if (nullptr != robot)
   {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleMessage.EnableStopOnCliff","Setting to %s", msg.enable ? "true" : "false");
+    LOG_INFO("RobotEventHandler.HandleMessage.EnableStopOnCliff","Setting to %s", msg.enable ? "true" : "false");
     robot->SendRobotMessage<RobotInterface::EnableStopOnCliff>(msg.enable);
   }
 }
@@ -1431,7 +1433,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
                         "Failed to find robot to delocalize.");
 
   } else if(!robot->IsPhysical()) {
-    PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
+    LOG_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
                      "Forcibly delocalizing robot %d", robot->GetID());
 
     robot->SendRobotMessage<RobotInterface::ForceDelocalizeSimulatedRobot>();
@@ -1510,7 +1512,7 @@ void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
     calib.Pack(calibVec.data(), calib.Size());
     robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, calibVec.data(), calibVec.size());
 
-    PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
+    LOG_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
                      "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
                      calib.focalLength_x, calib.focalLength_y, calib.center_x, calib.center_y, calib.nrows, calib.ncols);
   }
@@ -1528,7 +1530,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted&
   else
   {
     robot->AbortAnimation();
-    PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
+    LOG_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
   }
 }
 
@@ -1582,7 +1584,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
     else
     {
       robot->SyncRobot();
-      PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncRobot", "");
+      LOG_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncRobot", "");
 
       robot->GetAnimationComponent().Init();
     }
@@ -1885,7 +1887,7 @@ public:
   {
     const MessageType& convertedMessage = converter(event);
     IActionRunner* internalAction = GetActionHelper(robot, convertedMessage);
-    PRINT_NAMED_INFO("RobotEventHandler.GatewayActionRunner.Invoke.ParsedMessage", "%s", internalAction->GetName().c_str());
+    LOG_INFO("RobotEventHandler.GatewayActionRunner.Invoke.ParsedMessage", "%s", internalAction->GetName().c_str());
 
     int numRetries = convertedMessage.num_retries();
     int idTag = convertedMessage.id_tag();

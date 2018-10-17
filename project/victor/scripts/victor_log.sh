@@ -22,4 +22,4 @@ source ${SCRIPT_PATH}/host_robot_ip_override.sh ""
 
 robot_set_host
 
-robot_sh logcat ${params} mm-camera:S mm-camera-intf:S mm-camera-eztune:S mm-camera-sensor:S mm-camera-img:S cnss-daemon:S cozmoengined:S ServiceManager:S chatty:S
+robot_sh /bin/tail -F /var/log/messages

@@ -77,13 +77,7 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
     if parser is None:
         parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--serial", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
-    args = parser.parse_args()
-
-    if args.serial is None:
-        parser.error('The "serial" argument is required '
-                     'or it may be set with the environment variable '
-                     '"ANKI_ROBOT_SERIAL"')
-    return args
+    return parser.parse_args()
 
 
 def setup_basic_logging(custom_handler: logging.Handler = None,

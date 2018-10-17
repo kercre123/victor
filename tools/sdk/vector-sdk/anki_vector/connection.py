@@ -23,8 +23,8 @@ import asyncio
 from enum import Enum
 from concurrent import futures
 
-import aiogrpc
 import grpc
+import aiogrpc
 
 from . import exceptions, util
 from .messaging import client, protocol

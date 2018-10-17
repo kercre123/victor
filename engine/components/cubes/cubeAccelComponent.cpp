@@ -62,9 +62,9 @@ void CubeAccelComponent::UpdateDependent(const RobotCompMap& dependentComps)
     auto& listenerSet = mapEntry.second;
     for (auto iter = listenerSet.begin() ; iter != listenerSet.end() ; ) {
       if (iter->use_count() <= 1) {
-        PRINT_NAMED_INFO("CubeAccelComponent.UpdateDependent.RemovingListener",
-                         "Removing listener for objectID %d since no one is using it",
-                         objId.GetValue());
+        LOG_INFO("CubeAccelComponent.UpdateDependent.RemovingListener",
+                 "Removing listener for objectID %d since no one is using it",
+                 objId.GetValue());
         iter = listenerSet.erase(iter);
       } else {
         ++iter;
@@ -218,7 +218,6 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
     const bool wasMoving = connectedObj->IsMoving();
     if (wasMoving != isMoving) {
       connectedObj->SetIsMoving(isMoving, timestamp);
-      _robot->GetContext()->GetVizManager()->SendObjectMovingState(connectedObj->GetActiveID(), connectedObj->IsMoving());
     }
   }
   
@@ -287,9 +286,6 @@ void CubeAccelComponent::ObjectUpAxisChangedCallback(const ObjectID objectId, co
            "ObjectID: %d, UpAxis: %s",
            objectId.GetValue(),
            EnumToString(upAxis));
-  
-  // Viz update
-  _robot->GetContext()->GetVizManager()->SendObjectUpAxisState(objectId, upAxis);
   
   // Broadcast message
   using namespace ExternalInterface;

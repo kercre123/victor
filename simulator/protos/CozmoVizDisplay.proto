@@ -10,7 +10,7 @@ PROTO CozmoVizDisplay
   field SFBool colorizeStderrOutput FALSE
   field SFInt32 accelPlotObjectId 0
   field SFInt32 numBehaviorStackLines 18
-  field SFInt32 numVisionModeLines 8
+  field SFInt32 numVisionModeLines 32
 
   field SFInt32 numDebugImageDisplays 0 # Vision debug displays in addition to the camera
 ]
@@ -63,100 +63,6 @@ Supervisor {
       name "cozmo_viz_display"
       width 400
       height 300
-    }
-    
-    Display {
-      # Hide display plane far away
-      translation 1000 0.1 0
-
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
-      name "cozmo_mood_display"
-      width 450
-      height 150
-    }
-
-    DEF ACTIVE_OBJECT_DISPLAY Display {
-      # Hide display plane far away
-      translation 1000 0.1 0
-
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
-      name "cozmo_active_object_display"
-      width 400
-      height 100
-    }
-
-
-    DEF CUBE_ACCEL_DISPLAY Display {
-      # Hide display plane far away
-      translation 1000 0.1 0
-
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
-      name "cozmo_cube_accel_display"
-      width 450
-      height 150
-    }
-
-    
-    Display {
-      # Hide display plane far away
-      translation 1000 0.1 0
-
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
-      name "cozmo_behavior_display"
-      width 450
-      height 150
     }
 
     # Create camera display, plus N debug displays (0 == camera display, by convention)

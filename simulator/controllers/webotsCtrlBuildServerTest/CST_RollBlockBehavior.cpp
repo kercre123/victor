@@ -113,7 +113,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2) {
         SendMessage(ExternalInterface::MessageGameToEngine(
                       ExternalInterface::ExecuteBehaviorByID(
-                        BehaviorTypesWrapper::BehaviorIDToString(kBehaviorID), -1)));
+                        BehaviorTypesWrapper::BehaviorIDToString(kBehaviorID), -1, false)));
         
         _behaviorStartedTime = GetSupervisor()->getTime();
         SET_TEST_STATE(DontStartBehavior);

@@ -924,16 +924,14 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   
   // Verify that expected animation completed and execute callback
   bool atLeastOneCallback = false;
-  const auto upperBound = _callbackMap.size() + 1;
-  BOUNDED_WHILE(upperBound, _callbackMap.find(payload.tag) != _callbackMap.end()){
-    auto it = _callbackMap.find(payload.tag);
-    if (it != _callbackMap.end()) {
-      atLeastOneCallback = true;
-      PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
-      it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed,
-                                 payload.streamTimeAnimEnded);
-      _callbackMap.erase(it);
-    }
+  auto it = _callbackMap.find(payload.tag);
+  while(it != _callbackMap.end()){
+    atLeastOneCallback = true;
+    PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+    it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed,
+                               payload.streamTimeAnimEnded);
+    _callbackMap.erase(it);
+    it = _callbackMap.find(payload.tag);
   }
 
   // Special callback for the trigger word response that persists

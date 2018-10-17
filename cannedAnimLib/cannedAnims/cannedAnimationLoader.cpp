@@ -145,8 +145,10 @@ void CannedAnimationLoader::AddToLoadingRatio(float delta)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CannedAnimationLoader::LoadAnimationsInternal(const AnimDirInfo& info, CannedAnimationContainer* container)
 {
+#if ALLOW_DEBUG_LOGGING
   const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-
+#endif
+  
   // Disable super-verbose warnings about clipping face parameters in json files
   // To help find bad/deprecated animations, try removing this.
   ProceduralFace::EnableClippingWarning(false);
@@ -167,18 +169,20 @@ void CannedAnimationLoader::LoadAnimationsInternal(const AnimDirInfo& info, Cann
 
   ProceduralFace::EnableClippingWarning(true);
 
+#if ALLOW_DEBUG_LOGGING
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   const double loadTime = endTime - startTime;
 
-  LOG_INFO("CannedAnimationLoader.LoadAnimationsInternal.LoadTime",
-           "Time to load animations = %.2f ms",
-           loadTime);
+  LOG_DEBUG("CannedAnimationLoader.LoadAnimationsInternal.LoadTime",
+            "Time to load animations = %.2f ms",
+            loadTime);
 
   const auto & animNames = container->GetAnimationNames();
 
-  LOG_INFO("CannedAnimationLoader.LoadAnimations.CannedAnimationsCount",
-           "Total number of canned animations available = %zu",
-           animNames.size());
+  LOG_DEBUG("CannedAnimationLoader.LoadAnimations.CannedAnimationsCount",
+            "Total number of canned animations available = %zu",
+            animNames.size());
+#endif
 }
 
 

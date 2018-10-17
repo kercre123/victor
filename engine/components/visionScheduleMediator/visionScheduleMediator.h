@@ -35,6 +35,7 @@ namespace Vector{
 // Forward declaration:
 class CozmoContext;
 class VisionComponent;
+class VisionModeSet;
 class IVisionModeSubscriber;
 
 class VisionScheduleMediator : public IDependencyManagedComponent<RobotComponentID>,
@@ -67,9 +68,7 @@ public:
   void Init(const Json::Value& config);
 
   // Set up baseline subscriptions to manage VisionMode defaults via the VSM
-  void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {
-    baselineSubscriptions.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
-  }
+  void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {}
 
   // Subscribe at "standard" update frequency to a set of VisionModes. This call REPLACES existing subscriptions for
   // the pertinent subscriber
@@ -82,6 +81,8 @@ public:
   // Remove all existing subscriptions for the pertinent subscriber
   void ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber);
 
+  const AllVisionModesSchedule& GetSchedule() const { return _schedule; }
+  
   // in debug builds, send viz messages to webots
   void SendDebugVizMessages(const CozmoContext* context);
   
@@ -89,8 +90,8 @@ public:
   // VSM will subscribe itself to the passed in modes, which will allow
   // vision modes to be enabled from non-engine processes (i.e. from
   // webotsCtrlBuildServerTest)
-  void DevOnly_SelfSubscribeVisionMode(const std::set<VisionMode>& modes);
-  void DevOnly_SelfUnsubscribeVisionMode(const std::set<VisionMode>& modes);
+  void DevOnly_SelfSubscribeVisionMode(const VisionModeSet& modes);
+  void DevOnly_SelfUnsubscribeVisionMode(const VisionModeSet& modes);
 
 private:
 
@@ -106,11 +107,11 @@ private:
     uint8_t updatePeriod = 0;
     uint8_t offset = 0;
     std::unordered_map<IVisionModeSubscriber*, int> requestMap;
-    using record = std::pair<IVisionModeSubscriber*, int>;
-    static bool CompareRecords(record i, record j) { return i.second < j.second; }
+    using Record = std::pair<IVisionModeSubscriber*, int>;
+    static bool CompareRecords(Record i, Record j) { return i.second < j.second; }
     int GetMinUpdatePeriod() const { 
-      record minRecord = *min_element( requestMap.begin(), requestMap.end(), &VisionModeData::CompareRecords);
-      return minRecord.second;
+      auto minRecord = min_element( requestMap.begin(), requestMap.end(), &VisionModeData::CompareRecords);
+      return (minRecord == requestMap.end() ? 0 : minRecord->second);
     }
   };
 
@@ -131,9 +132,10 @@ private:
 
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
   bool _subscriptionRecordIsDirty = false;
-  bool _hasScheduleOnStack = false;
   uint8_t _framesSinceSendingDebugViz = 0;
 
+  // Final fully balanced schedule that VisionComponent will use
+  AllVisionModesSchedule _schedule;
 }; // class VisionScheduleMediator
 
 }// namespace Vector

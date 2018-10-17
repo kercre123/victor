@@ -177,7 +177,7 @@ void MoodManager::LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionE
     const auto& eventJson = fileJsonPair.second;
     if (!eventJson.empty() && LoadEmotionEvents(eventJson))
     {
-      //PRINT_NAMED_DEBUG("MoodManager.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
+      //PRINT_CH_DEBUG("Mood", "MoodManager.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
     }
     else
     {
@@ -319,9 +319,6 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   _lastUpdateTime = currentTime;
 
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( VizInterface::RobotMood robotMood );
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.reserve((size_t)EmotionType::Count) );
-
   float stimulatedValue = 0.0f;
   float stimulatedRate = 0.0f;
   float stimulatedAccel = 0.0f;
@@ -338,8 +335,6 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     if( !IsEmotionFixed( emotionType ) ) {
       emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta, rate, accel);
     }
-
-    SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
 
     if( emotionType == EmotionType::Stimulated ) {
       stimulatedValue = emotion.GetValue();
@@ -404,19 +399,6 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     _lastSimpleMoodStartTime_s = currTime_s;
     _lastSimpleMood = simpleMood;
   }
-
-  #if SEND_MOOD_TO_VIZ_DEBUG
-  robotMood.recentEvents = std::move(_eventNames);
-  _eventNames.clear();
-
-  // Can have null robot for unit tests
-  if ((nullptr != _robot) &&
-      _robot->HasComponent<ContextWrapper>() &&
-      kSendMoodToViz)
-  {
-    _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));
-  }
-  #endif //SEND_MOOD_TO_VIZ_DEBUG
 }
 
 void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent)
@@ -712,8 +694,6 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
         SendEmotionsToAudio(_robot->GetComponent<Audio::EngineRobotAudioClient>());
       }
 
-      SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(eventName.c_str()) );
-
       DASMSG(mood_event, "mood.event", "An emotion event triggered");
       DASMSG_SET(s1, eventName, "name of the emotion event (json defined)");
       if( eventEmotionDeltas.find( EmotionType::Stimulated ) != eventEmotionDeltas.end() ) {
@@ -749,7 +729,6 @@ void MoodManager::AddToEmotion(EmotionType emotionType, float baseValue, const c
     const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
     const float penalizedDeltaValue = baseValue * repetitionPenalty;
     GetEmotion(emotionType).Add(penalizedDeltaValue);
-    SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
   } else {
     PRINT_CH_INFO("Mood", "MoodManager.AddToFixedEmotion",
                   "Skipping AddToEmotion since emotion '%s' is fixed",
@@ -775,9 +754,7 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
     GetEmotion(emotionType2).Add(penalizedDeltaValue2);
   }
 
-  if( modified ) {
-    SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
-  } else {
+  if( !modified ) {
     PRINT_CH_INFO("Mood", "MoodManager.AddToFixedEmotions2",
                   "AddToEmotions use with emotions '%s' and '%s' that are fixed= %d,%d",
                   EmotionTypeToString(emotionType1), EmotionTypeToString(emotionType2),
@@ -810,9 +787,7 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
     GetEmotion(emotionType3).Add(penalizedDeltaValue3);
   }
 
-  if( modified ) {
-    SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
-  } else {
+  if( !modified ) {
     PRINT_CH_INFO("Mood", "MoodManager.AddToFixedEmotions3",
                   "AddToEmotions use with emotions '%s','%s','%s' that are fixed = %d,%d,%d",
                   EmotionTypeToString(emotionType1), EmotionTypeToString(emotionType2), EmotionTypeToString(emotionType3),
@@ -824,7 +799,6 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
 void MoodManager::SetEmotion(EmotionType emotionType, float value)
 {
   GetEmotion(emotionType).SetValue(value);
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent("SetEmotion") );
   if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
     SendMoodToWebViz(_robot->GetContext(), "SetEmotion");
   }
@@ -987,16 +961,6 @@ void MoodManager::SubscribeToWebViz()
   _signalHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe( onSubscribedBehaviors ) );
   _signalHandles.emplace_back( webService->OnWebVizData( kWebVizModuleName ).ScopedSubscribe( onDataBehaviors ) );
 }
-
-#if SEND_MOOD_TO_VIZ_DEBUG
-void MoodManager::AddEvent(const char* eventName)
-{
-  if (_eventNames.empty() || (_eventNames.back() != eventName))
-  {
-    _eventNames.push_back(eventName);
-  }
-}
-#endif // SEND_MOOD_TO_VIZ_DEBUG
 
 
 } // namespace Vector

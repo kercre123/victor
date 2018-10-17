@@ -26,6 +26,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -84,6 +85,9 @@ CONSOLE_VAR(bool, kSleepCycle_EnableWiggleWhileSleeping, CONSOLE_GROUP, true);
 CONSOLE_VAR(bool, kSleepCycleForceSleep, CONSOLE_GROUP, false);
 
 CONSOLE_VAR(bool, kSleepCycleForceLightSleep, CONSOLE_GROUP, false);
+// The amount of time that the robot must be on the charger but not actually charging
+// because of overheating battery before he is forced to go to sleep.
+CONSOLE_VAR(f32, kSleepCycle_TooLongOnChargerNotChargingDuration_sec, CONSOLE_GROUP, 5 * 60.f);
 
 CONSOLE_FUNC(ForcePersonCheck, CONSOLE_GROUP);
 
@@ -124,9 +128,9 @@ void BehaviorSleepCycle::ParseWakeReasonConditions(const Json::Value& config)
     }
   }
 
-  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasonConditions.Parsed",
-                "Parsed %zu wake reason conditions from json",
-                _iConfig.wakeConditions.size());
+  PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasonConditions.Parsed",
+                 "Parsed %zu wake reason conditions from json",
+                 _iConfig.wakeConditions.size());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -198,9 +202,9 @@ void BehaviorSleepCycle::ParseWakeReasons(const Json::Value& config)
     }
   }
 
-  PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.AlwaysWakeReasons",
-                "Parsed %zu 'always wake' reasons",
-                _iConfig.alwaysWakeReasons.size());
+  PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.AlwaysWakeReasons",
+                 "Parsed %zu 'always wake' reasons",
+                 _iConfig.alwaysWakeReasons.size());
 
   for( const auto& stateGroup : config[kWakeFromStatesKey] ) {
     SleepStateID fromState = SleepStateID::Invalid;
@@ -215,10 +219,10 @@ void BehaviorSleepCycle::ParseWakeReasons(const Json::Value& config)
       }
     }
 
-    PRINT_CH_INFO("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.WakeReasonsFromState",
-                  "Parsed %zu additional reasons to wake from state '%s'",
-                  wakeReasons.size(),
-                  SleepStateIDToString(fromState));
+    PRINT_CH_DEBUG("Behaviors", "BehaviorSleepCycle.ParseWakeReasons.WakeReasonsFromState",
+                   "Parsed %zu additional reasons to wake from state '%s'",
+                   wakeReasons.size(),
+                   SleepStateIDToString(fromState));
   }
 }
 
@@ -685,6 +689,20 @@ bool BehaviorSleepCycle::GoToSleepIfNeeded()
       !wokeRecently ) {
     TransitionToCharger();
     SendGoToSleepDasEvent(SleepReason::Sleepy);
+    return true;
+  }
+
+  // Go to sleep if on charger for a certain amount of time while the battery is disconnected
+  // since this means the battery is overheated and needs to go to sleep in order to cooldown.
+  // But only do this during ObservingOnCharger.
+  const auto& battComp = GetBEI().GetRobotInfo().GetBatteryComponent();
+  const bool isCharging = battComp.IsCharging();
+  const float durationDisconnected_sec = battComp.GetBatteryDisconnectedDurationSec();
+  if (isCharging &&
+      durationDisconnected_sec > kSleepCycle_TooLongOnChargerNotChargingDuration_sec &&
+      isObserving) {
+    TransitionToLightOrDeepSleep();
+    SendGoToSleepDasEvent(SleepReason::TooLongOnChargerNotCharging);
     return true;
   }
 

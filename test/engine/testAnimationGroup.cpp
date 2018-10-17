@@ -20,6 +20,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/animations/animationGroup/animationGroup.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
+#include "test/engine/callWithoutError.h"
 
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/logging/logging.h"
@@ -246,7 +247,10 @@ TEST(AnimationGroupContainer, AnimationGroupContainerDeserialization)
   EXPECT_FALSE(group == nullptr);
   
   // now test we can't retrieve a group that doesn't exist
-  group = container.GetAnimationGroup("a");
+  const bool err = CallWithoutError( [&](){
+    group = container.GetAnimationGroup("a");
+  });
+  EXPECT_TRUE( err );
 
   EXPECT_TRUE(group == nullptr);
 }
@@ -425,9 +429,13 @@ TEST(AnimationGroup, GetNoAnimationName)
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kNoAnimationJson);
   
-  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
+  const bool err = CallWithoutError( [&](){
+    const std::string& name = group.GetAnimationName(moodManager, groupContainer);
+    EXPECT_EQ(kEmpty, name);
+  });
+  EXPECT_TRUE( err );
   
-  EXPECT_EQ(kEmpty, name);
+  
 }
 
 TEST(AnimationGroup, GetNoDefaultAnimationName)
@@ -437,9 +445,11 @@ TEST(AnimationGroup, GetNoDefaultAnimationName)
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationHighStimJson);
   
-  const std::string& name = group.GetAnimationName(moodManager, groupContainer);
-  
-  EXPECT_EQ(kEmpty, name);
+  const bool err = CallWithoutError( [&](){
+    const std::string& name = group.GetAnimationName(moodManager, groupContainer);
+    EXPECT_EQ(kEmpty, name);
+  });
+  EXPECT_TRUE( err );
 }
 
 // run a maximum of 100 times. It should be a 50-50 chance of getting
@@ -490,10 +500,14 @@ TEST(AnimationGroup, GetNeitherAnimationNameOfTwo)
   MoodManager moodManager;
   
   bool foundMajorWin = false, foundMajorWinBeatBox = false;
-  TestTwoAnimations100Times(kTwoAnimationsHighFrustratedMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
+  const bool err = CallWithoutError( [&](){
+    TestTwoAnimations100Times(kTwoAnimationsHighFrustratedMoodsJson, moodManager, groupContainer, foundMajorWin, foundMajorWinBeatBox);
+  });
+  EXPECT_TRUE( err );
   
-  EXPECT_TRUE(!foundMajorWin);
-  EXPECT_TRUE(!foundMajorWinBeatBox);
+  EXPECT_FALSE(foundMajorWin);
+  EXPECT_FALSE(foundMajorWinBeatBox);
+  
 }
 
 

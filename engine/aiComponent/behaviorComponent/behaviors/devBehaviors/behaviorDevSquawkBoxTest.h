@@ -62,6 +62,7 @@ private:
   void MoveHead();
   void MoveTreads();
   void SetHeadAngle(float angleRadians);
+  std::string SetLoopingAnimationState();
   
   struct InstanceConfig {
     InstanceConfig();

@@ -254,7 +254,7 @@ void BehaviorDevBatteryLogging::InitLog()
       << "CPU_activeTime), "
       << "CPU_idleTime)\n";
 
-  PRINT_NAMED_INFO("BehaviorDevBatteryLogging.InitLog.StartingLog", "%s", _logFile.c_str());
+  PRINT_CH_INFO("Behaviors", "BehaviorDevBatteryLogging.InitLog.StartingLog", "%s", _logFile.c_str());
 }
 
 

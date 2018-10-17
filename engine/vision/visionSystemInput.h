@@ -12,9 +12,13 @@
 #ifndef __Engine_Vision_VisionSystemInput_H__
 #define __Engine_Vision_VisionSystemInput_H__
 
+#include "engine/vision/visionModeSet.h"
 #include "engine/vision/visionPoseData.h"
+
 #include "coretech/vision/engine/imageBuffer/imageBuffer.h"
 #include "coretech/vision/engine/imageCache.h"
+
+#include "clad/types/visionModes.h"
 
 namespace Anki {
 namespace Vector {
@@ -32,6 +36,15 @@ struct VisionSystemInput
 
   // Resize method for ImageCache to use
   Vision::ResizeMethod resizeMethod = Vision::ResizeMethod::Linear;
+
+  // Which VisionModes to process
+  VisionModeSet modesToProcess;
+
+  // Which VisionModes we will likely be processing in the future
+  // TODO VIC-9525 Add VisionModeClass, the AutoExposure class can have
+  // arguments for whether or not to clear metering regions which is the
+  // current purpose of futureModesToProcess.
+  VisionModeSet futureModesToProcess;
 };
 
 }

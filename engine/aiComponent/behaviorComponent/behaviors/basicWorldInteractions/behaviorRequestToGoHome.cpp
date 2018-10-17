@@ -231,11 +231,11 @@ void BehaviorRequestToGoHome::TransitionToRequestWaitLoopAnim()
 {
   const auto animTimeout = _dVars.currRequestParamsPtr->idleWaitTime_sec;
   const auto& animTrigger = _dVars.currRequestParamsPtr->waitLoopAnimTrigger;
-  auto* action = new TriggerAnimationAction(animTrigger,
-                                            0,    // numLoops
-                                            true, // interrupt running
-                                            (u8)AnimTrackFlag::NO_TRACKS,
-                                            animTimeout);
+  auto* action = new ReselectingLoopAnimationAction(animTrigger,
+                                                    0,    // numLoops
+                                                    true, // interrupt running
+                                                    (u8)AnimTrackFlag::NO_TRACKS,
+                                                    animTimeout);
   
   DelegateIfInControl(action, &BehaviorRequestToGoHome::TransitionToRequestGetoutAnim);
 }

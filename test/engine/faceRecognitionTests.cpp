@@ -385,7 +385,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     robot.GetVisionComponent().InitDependent(&robot, dependentComps);
     
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
-    robot.GetVisionComponent().EnableMode(VisionMode::Idle, true);
+    robot.GetVisionComponent().DisableAllModes();
     robot.GetVisionComponent().EnableMode(VisionMode::DetectingFaces, true);
     robot.GetVisionComponent().Enable(true);
     

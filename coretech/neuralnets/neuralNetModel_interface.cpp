@@ -102,7 +102,7 @@ void INeuralNetModel::ClassificationOutputHelper(const T* outputData, TimeStamp_
     Vision::SalientPoint salientPoint(timestamp, 0.5f, 0.5f, maxScore, 1.f,
                                       Vision::SalientPointType::Object,
                                       (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
-                                      imgPoly.ToCladPoint2dVector());
+                                      imgPoly.ToCladPoint2dVector(),0);
     
     if(_params.verbose)
     {
@@ -249,7 +249,8 @@ void INeuralNetModel::LocalizedBinaryOutputHelper(const T* outputData, TimeStamp
                                         area * (widthScale*heightScale), // convert to area fraction
                                         type,
                                         EnumToString(type),
-                                        shape.ToCladPoint2dVector());
+                                        shape.ToCladPoint2dVector(),
+                                        0);
       
       if(_params.verbose)
       {
@@ -316,7 +317,8 @@ void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t t
                                     x, y, max,
                                     1.f * (kWidthScale*kHeightScale),
                                     type, EnumToString(type),
-                                    Poly2f{}.ToCladPoint2dVector());
+                                    Poly2f{}.ToCladPoint2dVector(),
+                                    0);
 
   salientPoints.push_back(std::move(salientPoint));
 }

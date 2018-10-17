@@ -115,7 +115,7 @@ const char* const kMaxHeadTiltKey = "max_head_tilt";
 BehaviorDevEventSequenceCapture::InstanceConfig::InstanceConfig()
 {
   useCapTouch = false;
-  imageSaveSize = Vision::ImageCacheSize::Full;
+  imageSaveSize = Vision::ImageCacheSize::Half;
 }
 
 BehaviorDevEventSequenceCapture::DynamicVariables::DynamicVariables()

@@ -48,8 +48,10 @@ class ViewerComponent(util.Component):
 
     .. code-block:: python
 
+        import asyncio
+
         with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
-            robot.loop.run_until_complete(utilities.delay_close(5))
+            robot.loop.run_until_complete(asyncio.sleep(5))
 
     :param robot: A reference to the owner Robot object. (May be :class:`None`)
     """
@@ -106,11 +108,16 @@ class ViewerComponent(util.Component):
         """Render a video stream using the images obtained from
         Vector's camera feed.
 
+        Be sure to create your Robot object with the camera feed enabled
+        by using "show_viewer=True".
+
         .. code-block:: python
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            import asyncio
+
+            with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
                 robot.viewer.show_video()
-                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.loop.run_until_complete(asyncio.sleep(5))
 
         :param timeout: Render video for the given time. (Renders forever, if timeout not given)
         """
@@ -122,10 +129,11 @@ class ViewerComponent(util.Component):
 
         .. code-block:: python
 
+            import asyncio
             with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
-                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.loop.run_until_complete(asyncio.sleep(5))
                 robot.viewer.stop_video()
-                robot.loop.run_until_complete(utilities.delay_close(5))
+                robot.loop.run_until_complete(asyncio.sleep(5))
         """
         if self.render_task:
             self.render_task.cancel()

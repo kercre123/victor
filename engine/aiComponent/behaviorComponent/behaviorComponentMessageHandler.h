@@ -61,7 +61,8 @@ private:
   
   ICozmoBehaviorPtr WrapRequestedBehaviorInDispatcherRerun(BehaviorContainer& bContainer, 
                                                            BehaviorID requestedBehaviorID, 
-                                                           const int numRuns);
+                                                           const int numRuns,
+                                                           bool presetConditions);
   
   // subscribes to webviz OnSubscribed and OnData
   void SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm);

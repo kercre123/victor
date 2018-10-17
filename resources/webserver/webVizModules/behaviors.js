@@ -108,8 +108,8 @@
     svgGroups.zoomGroup.selectAll('.miniTimeBar').remove();
   }
 
-  function sendBehavior(behaviorName) {
-    var payload = {'behaviorName': behaviorName};
+  function sendBehavior(behaviorName, presetConditions) {
+    var payload = {'behaviorName': behaviorName, 'presetConditions': presetConditions};
     sendData( payload );
     clearDisplay();
   }
@@ -123,12 +123,14 @@
       dropDown = $('<select></select>', {id: 'behaviorDropdown'}).appendTo(container);
       dropDown.change(function() {
         if( this.value ) {
-          sendBehavior(this.value);
+          sendBehavior(this.value, false); // just default to false so they try it normally
         }
       });
       $('<button type"button" id="resend">Resend</button>').click( function() {
-        sendBehavior($('#behaviorDropdown')[0].value);
+        sendBehavior($('#behaviorDropdown')[0].value, $('#presetConditions').is(':checked'));
       }).appendTo(container);
+      $('<input type="checkbox" id="presetConditions" />').appendTo(container);
+      $('<label for="presetConditions">Force</label>').appendTo(container);
       $('<input type="checkbox" id="showActivatable" />').appendTo(container)
         .change( function() {
           showInactive = $(this).is(':checked');

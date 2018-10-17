@@ -16,8 +16,9 @@
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
@@ -33,50 +34,42 @@ namespace {
   CONSOLE_VAR_RANGED(float, kLiftMovementDuration_s, CONSOLE_NAME, 0.5f, 0.1f, 2.5f);
   CONSOLE_VAR_RANGED(float, kHeadMovementDuration_s, CONSOLE_NAME, 0.5f, 0.1f, 2.5f);
   CONSOLE_VAR_RANGED(float, kTreadMovementSpeed_mmps, CONSOLE_NAME, 200.0f, 20.0f, MAX_WHEEL_SPEED_MMPS);
+  CONSOLE_VAR_ENUM(uint8_t, kLoopingAnimationState, CONSOLE_NAME, 0, "NONE, Move Head, Move Lift");
   
   #define MOTOR_ACTION_ASSERT ASSERT_NAMED(_robot != nullptr, "BehaviorDevSquawkBoxTest._robot.IsNull")
-  const char* kNotActiveErrorMsg = "Error: DevSquawkBoxBehavior is NOT Active!";
+  #define CONSOLE_FUNC_IS_ACTIVE_CHECK() \
+    if (!IsActivated()) { \
+      context->channel->WriteLog("Error: DevSquawkBoxBehavior is NOT Active!"); \
+      return; \
+    }
 }
-
 
 void BehaviorDevSquawkBoxTest::SetupConsoleFuncs()
 {
   if( ANKI_DEV_CHEATS ) {
     auto toggleLiftOnOff = [this](ConsoleFunctionContextRef context) {
-      if (!IsActivated()) {
-        context->channel->WriteLog("%s", kNotActiveErrorMsg);
-        return;
-      }
+      CONSOLE_FUNC_IS_ACTIVE_CHECK();
       _dVars._isLiftMoving = !_dVars._isLiftMoving;
       MoveLift();
       const auto* msg = _dVars._isLiftMoving ? "Start Lift Movement" : "Stop Lift Movment";
       context->channel->WriteLog(" %s", msg);
     };
     auto toggleHeadOnOff = [this](ConsoleFunctionContextRef context) {
-      if (!IsActivated()) {
-        context->channel->WriteLog("%s", kNotActiveErrorMsg);
-        return;
-      }
+      CONSOLE_FUNC_IS_ACTIVE_CHECK();
       _dVars._isHeadMoving = !_dVars._isHeadMoving;
       MoveHead();
       const auto* msg = _dVars._isHeadMoving ? "Start Head Movement" : "Stop Head Movment";
       context->channel->WriteLog(" %s", msg);
     };
     auto toggleTreadOnOff = [this](ConsoleFunctionContextRef context) {
-      if (!IsActivated()) {
-        context->channel->WriteLog("%s", kNotActiveErrorMsg);
-        return;
-      }
+      CONSOLE_FUNC_IS_ACTIVE_CHECK();
       _dVars._isMovingTreads = !_dVars._isMovingTreads;
       MoveTreads();
       const auto* msg = _dVars._isMovingTreads ? "Start Tread Movement" : "Stop Tread Movment";
       context->channel->WriteLog(" %s", msg);
     };
     auto setHeadAngle = [this](ConsoleFunctionContextRef context) {
-      if (!IsActivated()) {
-        context->channel->WriteLog("%s", kNotActiveErrorMsg);
-        return;
-      }
+      CONSOLE_FUNC_IS_ACTIVE_CHECK();
       // Check if angle is within head angle range
       const float angleDeg = ConsoleArg_Get_Float(context, "angleDeg");
       const float angleRad = Util::Clamp(DEG_TO_RAD(angleDeg), MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
@@ -91,10 +84,21 @@ void BehaviorDevSquawkBoxTest::SetupConsoleFuncs()
       }
       context->channel->WriteLog(msg, RAD_TO_DEG(angleRad));
     };
+    auto setAnimationState = [this](ConsoleFunctionContextRef context) {
+      CONSOLE_FUNC_IS_ACTIVE_CHECK();
+      auto animName = SetLoopingAnimationState();
+      
+      const char* msg = "Start Looping Animation '%s'";
+      if (animName.empty()) {
+        msg =  "Stop Looping Animation %s";
+      }
+      context->channel->WriteLog(msg, animName.c_str());
+    };
     _consoleFuncs.emplace_front( "ToggleLiftOnOff", std::move(toggleLiftOnOff), CONSOLE_NAME, "" );
     _consoleFuncs.emplace_front( "ToggleHeadOnOff", std::move(toggleHeadOnOff), CONSOLE_NAME, "" );
     _consoleFuncs.emplace_front( "ToggleTreadsOnOff", std::move(toggleTreadOnOff), CONSOLE_NAME, "" );
     _consoleFuncs.emplace_front( "SetHeadAngle", std::move(setHeadAngle), CONSOLE_NAME, "float angleDeg" );
+    _consoleFuncs.emplace_front( "SetLoopingAnimationState", std::move(setAnimationState), CONSOLE_NAME, "" );
   }
 }
 
@@ -174,7 +178,7 @@ void BehaviorDevSquawkBoxTest::HandleWhileActivated(const RobotToEngineEvent& ev
 {
   if (event.GetData().GetTag() == RobotInterface::RobotToEngineTag::triggerWordDetected) {
     const auto& msg = event.GetData().Get_triggerWordDetected();
-    PRINT_NAMED_INFO("nameBehaviorDevSquawkBoxTest.HandleWhileActivated.RobotToEngineEvent",
+    PRINT_CH_INFO("Behaviors", "nameBehaviorDevSquawkBoxTest.HandleWhileActivated.RobotToEngineEvent",
                      "Trigger word detected, score %d", msg.triggerScore);
   }
 }
@@ -291,6 +295,27 @@ void BehaviorDevSquawkBoxTest::SetHeadAngle(float angleRadians)
   _robot->GetActionList().AddConcurrentAction(compoundSeq);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorDevSquawkBoxTest::SetLoopingAnimationState()
+{
+  std::string animName;
+  switch (kLoopingAnimationState) {
+    case 1:
+      animName = "anim_qa_head_updown";
+      break;
+      
+    case 2:
+      animName = "anim_qa_lift_updown";
+      break;
+      
+    default:
+      break;
+  }
+  auto* action = new PlayAnimationAction(animName, 0);
+  _robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
+  
+  return animName;
+}
 
 }
 }

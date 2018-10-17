@@ -57,7 +57,7 @@ const float kFaceAngleForTurn_rad = DEG_TO_RAD(60.0f);
   
 #define SET_STATE(s) do{ \
                           _dVars.state = State::s; \
-                          PRINT_NAMED_INFO("BehaviorDriveOffCharger.State", "State = %s", #s); \
+                          PRINT_CH_INFO("Behaviors", "BehaviorDriveOffCharger.State", "State = %s", #s); \
                         } while(0);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

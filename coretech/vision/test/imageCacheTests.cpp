@@ -25,45 +25,37 @@ GTEST_TEST(ImageCache, CachedGetters)
   cache.Reset(imgGray);
   
   ASSERT_EQ(false, cache.HasColor());
-  ASSERT_EQ(nrows/2, cache.GetNumRows(ImageCacheSize::Full));
-  ASSERT_EQ(ncols/2, cache.GetNumCols(ImageCacheSize::Full));
-  ASSERT_EQ(nrows, cache.GetNumRows(ImageCacheSize::Sensor));
-  ASSERT_EQ(ncols, cache.GetNumCols(ImageCacheSize::Sensor));
+  ASSERT_EQ(nrows, cache.GetNumRows(ImageCacheSize::Full));
+  ASSERT_EQ(ncols, cache.GetNumCols(ImageCacheSize::Full));
+  ASSERT_EQ(nrows/2, cache.GetNumRows(ImageCacheSize::Half));
+  ASSERT_EQ(ncols/2, cache.GetNumCols(ImageCacheSize::Half));
+  ASSERT_EQ(nrows/4, cache.GetNumRows(ImageCacheSize::Quarter));
+  ASSERT_EQ(ncols/4, cache.GetNumCols(ImageCacheSize::Quarter));
+  ASSERT_EQ(nrows/8, cache.GetNumRows(ImageCacheSize::Eighth));
+  ASSERT_EQ(ncols/8, cache.GetNumCols(ImageCacheSize::Eighth));
   
   ImageCache::GetType getType;
   
   // Cached gray image should share data pointer with original
-  const Vision::Image& getResult = cache.GetGray(ImageCacheSize::Sensor, &getType);
+  const Vision::Image& getResult = cache.GetGray(ImageCacheSize::Full, &getType);
   ASSERT_EQ(imgGray.GetDataPointer(), getResult.GetDataPointer());
   
   // Getting sensor-size should not have required any resizing/computation
   ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
   
   // Compute new resized entry
-  const Vision::Image& halfSize = cache.GetGray(ImageCacheSize::Half_NN, &getType);
+  const Vision::Image& halfSize = cache.GetGray(ImageCacheSize::Half, &getType);
   ASSERT_EQ(nrows/2, halfSize.GetNumRows());
   ASSERT_EQ(ncols/2, halfSize.GetNumCols());
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
-  
-  // Compute double sized entry
-  const Vision::Image& doubleSize = cache.GetGray(ImageCacheSize::Double_NN, &getType);
-  ASSERT_EQ(nrows*2, doubleSize.GetNumRows());
-  ASSERT_EQ(ncols*2, doubleSize.GetNumCols());
-  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
-  
+    
   // Second request should be cached
-  const Vision::Image& halfSize2 = cache.GetGray(ImageCacheSize::Half_NN, &getType);
+  const Vision::Image& halfSize2 = cache.GetGray(ImageCacheSize::Half, &getType);
   ASSERT_EQ(&halfSize, &halfSize2);
   ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
-  
-  // Request with different resize method should compute
-  const Vision::Image& halfSize3 = cache.GetGray(ImageCacheSize::Half_Linear, &getType);
-  ASSERT_EQ(nrows/2, halfSize3.GetNumRows());
-  ASSERT_EQ(ncols/2, halfSize3.GetNumCols());
-  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
-  
+    
   // Get full-scale color version (should require computation)
-  const Vision::ImageRGB& colorVersion = cache.GetRGB(ImageCacheSize::Sensor, &getType);
+  const Vision::ImageRGB& colorVersion = cache.GetRGB(ImageCacheSize::Full, &getType);
   ASSERT_EQ(nrows, colorVersion.GetNumRows());
   ASSERT_EQ(ncols, colorVersion.GetNumCols());
   ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
@@ -75,18 +67,18 @@ GTEST_TEST(ImageCache, CachedGetters)
   ASSERT_EQ(false, cache.HasColor());
   
   // Second request for color should be cached
-  const Vision::ImageRGB& colorVersion2 = cache.GetRGB(ImageCacheSize::Sensor, &getType);
+  const Vision::ImageRGB& colorVersion2 = cache.GetRGB(ImageCacheSize::Full, &getType);
   ASSERT_EQ(&colorVersion, &colorVersion2);
   ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
   
   // Request for quarter size color should create new entry
-  const Vision::ImageRGB& qtrSizeColor = cache.GetRGB(ImageCacheSize::Quarter_Linear, &getType);
+  const Vision::ImageRGB& qtrSizeColor = cache.GetRGB(ImageCacheSize::Quarter, &getType);
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
   ASSERT_EQ(nrows/4, qtrSizeColor.GetNumRows());
   ASSERT_EQ(ncols/4, qtrSizeColor.GetNumCols());
   
   // Asking for quarter size gray should compute it from the color one we just created
-  const Vision::Image& qtrSizeGray = cache.GetGray(ImageCacheSize::Quarter_Linear, &getType);
+  const Vision::Image& qtrSizeGray = cache.GetGray(ImageCacheSize::Quarter, &getType);
   ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
   ASSERT_EQ(nrows/4, qtrSizeGray.GetNumRows());
   ASSERT_EQ(ncols/4, qtrSizeGray.GetNumCols());
@@ -94,7 +86,7 @@ GTEST_TEST(ImageCache, CachedGetters)
   // Resetting with a new image and asking for half size should resize into an existing entry and use same data
   Vision::Image newImg(nrows,ncols);
   cache.Reset(newImg);
-  const Vision::Image& newHalfSize = cache.GetGray(ImageCacheSize::Half_NN, &getType);
+  const Vision::Image& newHalfSize = cache.GetGray(ImageCacheSize::Half, &getType);
   ASSERT_EQ(ImageCache::GetType::ResizeIntoExisting, getType);
   ASSERT_EQ(newHalfSize.GetDataPointer(), halfSize.GetDataPointer());
   
@@ -104,7 +96,7 @@ GTEST_TEST(ImageCache, CachedGetters)
   newColorImg(0,0) = colorPixel;
   cache.Reset(newColorImg);
   ASSERT_EQ(true, cache.HasColor());
-  const Vision::Image& newGray = cache.GetGray(ImageCacheSize::Sensor, &getType);
+  const Vision::Image& newGray = cache.GetGray(ImageCacheSize::Full, &getType);
   ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
   ASSERT_EQ(nrows, newGray.GetNumRows());
   ASSERT_EQ(ncols, newGray.GetNumCols());
@@ -120,7 +112,7 @@ GTEST_TEST(ImageCache, CachedGetters)
   // new allocation and not a resize into existing memory, since we called ReleaseMemory
   cache.Reset(newColorImg);
   ASSERT_EQ(true, cache.HasColor());
-  cache.GetRGB(ImageCacheSize::Half_NN, &getType);
+  cache.GetRGB(ImageCacheSize::Half, &getType);
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
 }
 
@@ -138,14 +130,14 @@ GTEST_TEST(ImageCache, PriorityResizeRGB)
   // We do not want to compute color data from an existing cached gray entry at the same size
   // if there's color data to resize from instead
   ImageCache::GetType getType;
-  const Image imgGray = cache.GetGray(ImageCacheSize::Full, &getType);
+  const Image imgGray = cache.GetGray(ImageCacheSize::Half, &getType);
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
 
-  const ImageRGB imgRGB = cache.GetRGB(ImageCacheSize::Full, &getType);
+  const ImageRGB imgRGB = cache.GetRGB(ImageCacheSize::Half, &getType);
   ASSERT_EQ(ImageCache::GetType::ResizeIntoExisting, getType);
   
   // the grayscale image should not have been invalidated by the request for RGB
-  const Image imgGray2 = cache.GetGray(ImageCacheSize::Full, &getType);
+  const Image imgGray2 = cache.GetGray(ImageCacheSize::Half, &getType);
   ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
 }
 
@@ -158,19 +150,19 @@ GTEST_TEST(ImageCache, ImageBuffer)
   u8 bayerData[6][40] = {{0}};
 
   bayerData[2][5] = 255; //b
-  bayerData[2][6] = 0; //g
-  bayerData[3][5] = 0;  //g
-  bayerData[3][6] = 0; //r
+  bayerData[2][6] = 0;   //g
+  bayerData[3][5] = 0;   //g
+  bayerData[3][6] = 0;   //r
 
-  bayerData[2][15] = 0; //b
-  bayerData[2][16] = 255;//g
+  bayerData[2][15] = 0;   //b
+  bayerData[2][16] = 255; //g
   bayerData[3][15] = 255; //g
-  bayerData[3][16] = 0;//r
+  bayerData[3][16] = 0;   //r
 
-  bayerData[2][25] = 0; //b
-  bayerData[2][26] = 0;//g
-  bayerData[3][25] = 0; //g
-  bayerData[3][26] = 255;//r
+  bayerData[2][25] = 0;   //b
+  bayerData[2][26] = 0;   //g
+  bayerData[3][25] = 0;   //g
+  bayerData[3][26] = 255; //r
 
   
   const s32 nrows = 6;
@@ -182,7 +174,7 @@ GTEST_TEST(ImageCache, ImageBuffer)
   cache.Reset(buffer);
 
   ImageCache::GetType getType;
-  ImageRGB imgRGB = cache.GetRGB(ImageCacheSize::Sensor, &getType);
+  ImageRGB imgRGB = cache.GetRGB(ImageCacheSize::Full, &getType);
   // Reseting imageCache with ImageBuffer means anything at Sensor size
   // will be computed from the existing ImageBuffer which is raw data at
   // Sensor res
@@ -199,7 +191,7 @@ GTEST_TEST(ImageCache, ImageBuffer)
   ASSERT_EQ(imgRGB.get_CvMat_()[3][12], PixelRGB(0, 255, 0));
   ASSERT_EQ(imgRGB.get_CvMat_()[3][21], PixelRGB(255, 0, 0));
 
-  Image imgGray = cache.GetGray(ImageCacheSize::Sensor, &getType);
+  Image imgGray = cache.GetGray(ImageCacheSize::Full, &getType);
   // Computed from gray directly from raw data entry
   ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
   ASSERT_EQ(imgGray.GetNumRows(),   nrows);
@@ -209,7 +201,7 @@ GTEST_TEST(ImageCache, ImageBuffer)
 
   
   // Requesting Full should result in halved bayer data
-  imgRGB = cache.GetRGB(ImageCacheSize::Full, &getType);
+  imgRGB = cache.GetRGB(ImageCacheSize::Half, &getType);
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
   ASSERT_EQ(imgRGB.GetNumRows(),   nrows/2);
   ASSERT_EQ(imgRGB.GetNumCols(),   ncols/2);

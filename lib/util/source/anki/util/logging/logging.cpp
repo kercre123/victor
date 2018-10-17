@@ -67,7 +67,15 @@ bool _errG = false;
 
 // Do we break on any error?
 bool _errBreakOnError = true;
-
+  
+// If true, access to _errG uses a mutex device
+bool _lockErrG = false;
+  
+// Cached _errG during sPushErrG and sPopErrG
+std::vector<bool> sOldErrG;
+  
+std::recursive_mutex sErrGMutex;
+  
 const size_t kMaxStringBufferSize = 1024;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -414,10 +422,12 @@ bool sVerifyFailedReturnFalse(const char* name, const char* format, ...)
   va_start(args, format);
   sErrorV(name, {}, format, args);
   va_end(args);
-  _errG=true;
+  sSetErrG();
   sDumpCallstack("VERIFY");
   sLogFlush();
-  sDebugBreak();
+  if (_errBreakOnError) {
+    sDebugBreak();
+  }
   return false;
 }
 
@@ -529,6 +539,74 @@ void sAbort()
   abort();
 
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void sSetErrG()
+{
+  // locking here is to block access during a call to sPushErrG/sPopErrG
+  if (_lockErrG) {
+    sErrGMutex.lock();
+  }
+  _errG = true;
+  if (_lockErrG) {
+    sErrGMutex.unlock();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void sUnSetErrG()
+{
+  // locking here is to block access during a call to sPushErrG/sPopErrG
+  if (_lockErrG) {
+    sErrGMutex.lock();
+  }
+  _errG = false;
+  if (_lockErrG) {
+    sErrGMutex.unlock();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+bool sGetErrG()
+{
+  // locking here is to block access during a call to sPushErrG/sPopErrG
+  if (_lockErrG) {
+    sErrGMutex.lock();
+  }
+  const bool errG = _errG;
+  if (_lockErrG) {
+    sErrGMutex.unlock();
+  }
+  return errG;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void sPushErrG(bool value)
+{
+  if (_lockErrG) {
+    sErrGMutex.lock();
+  }
+  sOldErrG.push_back( _errG );
+  _errG = value;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void sPopErrG()
+{
+  DEV_ASSERT( !sOldErrG.empty(), "sPopErrG.PushWasntCalled" );
+  _errG = sOldErrG.back();
+  sOldErrG.pop_back();
+  
+  if (_lockErrG) {
+    sErrGMutex.unlock();
+  }
+}
+
 
 } // namespace Util
 } // namespace Anki

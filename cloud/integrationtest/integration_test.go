@@ -1,4 +1,4 @@
-package integrationtest
+package main
 
 // This integration test suite instantiates a robot instance in order to run some interaction
 // flows (that can also be used for load testing).
@@ -8,59 +8,33 @@ import (
 	"anki/token"
 	"ankidev/accounts"
 	"clad/cloud"
-	"fmt"
 	"testing"
 
-	"github.com/anki/sai-go-cli/config"
-	"github.com/anki/sai-go-util/envconfig"
-	"github.com/anki/sai-go-util/http/apiclient"
-	"github.com/anki/sai-go-util/log"
-	"github.com/anki/sai-token-service/model"
-	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/go-redis/redis"
+	stoken "github.com/anki/sai-token-service/client/token"
+	cli "github.com/jawher/mow.cli"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
-func init() {
-	alog.ToStdout()
-}
-
-// Copied from "anki/token/jwt" (unexported)
-func parseToken(token string) (*model.Token, error) {
-	t, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
-	if err != nil {
-		return nil, err
-	}
-	tok, err := model.FromJwtToken(t)
-	if err != nil {
-		return nil, err
-	}
-	return tok, nil
-}
-
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	envName string
-
-	urlConfigFile         string
-	testLogFile           string
-	enableAccountCreation bool
-	numberOfCerts         int64
-
-	testID           int64
-	testUserName     string
-	testUserPassword string
+	options *options
 
 	robotInstance *testableRobot
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	s.configureFromEnvironment()
+	app := cli.App("robot_integration_test", "Robot integration test")
+
+	s.options = newFromEnvironment(app)
+
+	// Enable client certs and set custom key pair dir (for this user)
+	token.UseClientCert = true
+	robot.DefaultCloudDir = *s.options.defaultCloudDir
 
 	s.robotInstance = &testableRobot{}
-	go s.robotInstance.run(s.urlConfigFile)
+	go s.robotInstance.run(*s.options.urlConfigFile)
 
 	s.robotInstance.waitUntilReady()
 
@@ -73,91 +47,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 func (s *IntegrationTestSuite) logIfNoError(err error, action, format string, a ...interface{}) {
-	testName := s.T().Name()
-
-	if err != nil {
-		alog.Error{
-			"test_name":      testName,
-			"action":         action,
-			"test_user_name": s.testUserName,
-			"status":         "error",
-			"error":          err,
-		}.Log()
-	} else {
-		alog.Info{
-			"test_name":      testName,
-			"action":         action,
-			"test_user_name": s.testUserName,
-			"status":         "ok",
-			"message":        fmt.Sprintf(format, a...),
-		}.Log()
-	}
-}
-
-func (s *IntegrationTestSuite) getUniqueTestID(address string) int64 {
-	client := redis.NewClient(&redis.Options{Addr: address})
-
-	testID, err := client.Incr("test_id").Result()
-	require.NoError(s.T(), err)
-
-	testID %= s.numberOfCerts
-	return testID
-}
-
-func (s *IntegrationTestSuite) configureFromEnvironment() {
-	// set some sensible configuration defaults
-	s.envName = "dev"
-
-	s.testUserPassword = "ankisecret"
-	s.testLogFile = "/var/log/syslog"
-	s.urlConfigFile = "integrationtest/server_config.json"
-	s.enableAccountCreation = false
-	s.numberOfCerts = 1000
-
-	var redisAddress = "localhost:6379"
-	envconfig.DefaultConfig.String(&redisAddress, "REDIS_ADDRESS", "", "Redis host and port")
-	s.testID = s.getUniqueTestID(redisAddress)
-
-	// Enable client certs and set custom key pair dir (for this user)
-	token.UseClientCert = true
-	robot.DefaultCloudDir = fmt.Sprintf("/device_certs/%04d", s.testID)
-
-	// override settings from environment variables where needed
-	envconfig.DefaultConfig.String(&s.envName, "ENVIRONMENT", "", "Test environment")
-	envconfig.DefaultConfig.Int64(&s.testID, "TEST_ID", "", "Test ID (used for identifying user)")
-	envconfig.DefaultConfig.String(&s.testUserPassword, "TEST_USER_PASSWORD", "", "Password for test accounts")
-	envconfig.DefaultConfig.String(&s.testLogFile, "TEST_LOG_FILE", "", "File used in logcollector upload")
-	envconfig.DefaultConfig.String(&s.urlConfigFile, "URL_CONFIG_FILE", "", "Config file for Service URLs")
-	envconfig.DefaultConfig.String(&robot.DefaultCloudDir, "CERT_DIR", "", "Key pair directory for client certs")
-	envconfig.DefaultConfig.Bool(&s.enableAccountCreation, "ENABLE_ACCOUNT_CREATION", "", "Enables account creation as part of test")
-	envconfig.DefaultConfig.Int64(&s.numberOfCerts, "NUMBER_OF_CERTS", "", "The number of provisioned robot certs (0000..NNNN")
-
-	// Create credentials for test user
-	s.testUserName = fmt.Sprintf("test.%04d@anki.com", s.testID)
-}
-
-func (s *IntegrationTestSuite) getCredentials() (*model.Token, error) {
-	jwtResponse, err := s.robotInstance.tokenClient.Jwt()
-	if err != nil {
-		return nil, err
-	}
-
-	return parseToken(jwtResponse.JwtToken)
-}
-
-func (s *IntegrationTestSuite) createTestAccount() (apiclient.Json, error) {
-	if _, err := config.Load("", true, s.envName, "default"); err != nil {
-		return nil, err
-	}
-
-	if ok, err := accounts.CheckUsername(s.envName, s.testUserName); err != nil {
-		return nil, err
-	} else if !ok {
-		fmt.Printf("Email %s already has an account\n", s.testUserName)
-		return nil, nil
-	}
-
-	return accounts.DoCreate(s.envName, s.testUserName, s.testUserPassword)
+	logIfNoError(err, *s.options.testUserName, action, format, a...)
 }
 
 func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
@@ -170,15 +60,15 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 	// not part of the test setup.
 
 	// Step 0: Create a new user test account
-	if s.enableAccountCreation {
-		json, err := s.createTestAccount()
+	if *s.options.enableAccountCreation {
+		json, err := createTestAccount(*s.options.envName, *s.options.testUserName, *s.options.testUserPassword)
 		s.logIfNoError(err, "create_account", "Created account %v\n", json)
 		require.NoError(err)
 	}
 
 	// Step 1 & 2: User Authentication request to Accounts (user logs into Chewie)
 	// Note: this is currently hardwired to the dev environment
-	session, _, err := accounts.DoLogin(s.envName, s.testUserName, s.testUserPassword)
+	session, _, err := accounts.DoLogin(*s.options.envName, *s.options.testUserName, *s.options.testUserPassword)
 	if session != nil {
 		s.logIfNoError(err, "account_login", "Logged in user %q obtained session %q\n", session.UserID, session.Token)
 	} else {
@@ -198,7 +88,7 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 	require.NoError(err)
 	s.Equal(cloud.TokenError_NoError, authResponse.Error)
 
-	token, err := parseToken(authResponse.JwtToken)
+	token, err := stoken.NewValidator().TokenFromString(authResponse.JwtToken)
 	require.NoError(err)
 
 	// Steps 11 & 12: Gateway sends a request for current client hashes stored in JDOCS
@@ -217,7 +107,7 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 }
 
 func (s *IntegrationTestSuite) TestLogCollector() {
-	s3Url, err := s.robotInstance.logcollectorClient.upload(s.testLogFile)
+	s3Url, err := s.robotInstance.logcollectorClient.upload(*s.options.testLogFile)
 	s.NoError(err)
 
 	s.logIfNoError(err, "log_upload", "File uploaded, url=%q (err=%v)\n", s3Url, err)
@@ -225,10 +115,10 @@ func (s *IntegrationTestSuite) TestLogCollector() {
 	s.NotEmpty(s3Url)
 }
 
-func (s *IntegrationTestSuite) JdocsReadAndWriteSettings() {
+func (s *IntegrationTestSuite) TestJdocsReadAndWriteSettings() {
 	require := require.New(s.T())
 
-	token, err := s.getCredentials()
+	token, err := getCredentials(s.robotInstance.tokenClient)
 	require.NoError(err)
 
 	readResponse, err := s.robotInstance.jdocsClient.Read(&cloud.ReadRequest{

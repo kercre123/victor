@@ -168,6 +168,8 @@ namespace Anki {
       // once called, the action will end as soon as the current loop finishes, and Init() must be called to reset
       void StopAfterNextLoop();
       
+      void SetRenderInEyeHue(bool renderInEyeHue) { _renderInEyeHue = renderInEyeHue; }
+      
     protected:
       
       virtual ActionResult Init() override;
@@ -196,6 +198,7 @@ namespace Anki {
       u32        _numLoopsRemaining;
       bool       _completeImmediately;
       std::unique_ptr<TriggerLiftSafeAnimationAction> _subAction;
+      bool       _renderInEyeHue = true;
       
     };
 

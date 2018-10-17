@@ -127,29 +127,7 @@ message SetFaceToEnroll {
 }
 
 enum uint_32 VisionMode {
-    Idle                   = 0x00,
-    DetectingMarkers,
-    DetectingFaces,
-    DetectingMotion,
-    DetectingOverheadEdges,
-    ComputingCalibration,
-    AutoExposure,
-    WhiteBalance,
-    ComputingStatistics,
-    DetectingPets,
-    EstimatingFacialExpression,  // No effect if DetectingFaces not enabled
-    DetectingSmileAmount,        //  "
-    DetectingGaze,               //  "
-    DetectingBlinkAmount,        //  "
-    LimitedExposure,
-    DetectingLaserPoints,
-    BuildingOverheadMap,
-    DetectingVisualObstacles,
-    Benchmarking,
-    SavingImages,
-    RunningNeuralNet, 
-    DetectingIllumination,
-    Count
+    DetectingFaces = 0x01 // TODO: Stop exposing VisionModes directly in the SDK 
 }
 
 message EnableVisionMode {

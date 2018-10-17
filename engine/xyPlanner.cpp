@@ -23,6 +23,7 @@
 
 #include <chrono>
 
+#define LOG_CHANNEL "Planner"
 
 namespace Anki {
 namespace Vector {
@@ -62,10 +63,10 @@ XYPlanner::~XYPlanner()
   if( _plannerThread != nullptr ) {
     _stopThread = true;
     _threadRequest.notify_all(); // noexcept
-    PRINT_CH_DEBUG("Planner", "XYPlanner.DestroyThread.Join", "");
+    LOG_DEBUG("XYPlanner.DestroyThread.Join", "");
     try {
       _plannerThread->join();
-      PRINT_CH_DEBUG("Planner", "XYPlanner.DestroyThread.Joined", "");
+      LOG_DEBUG("XYPlanner.DestroyThread.Joined", "");
     }
     catch (std::runtime_error& err) {
       PRINT_NAMED_ERROR("XYPlanner.Destroy.Exception", "locking the context mutex threw: %s", err.what());
@@ -184,7 +185,7 @@ void XYPlanner::StartPlanner()
   const Point2f plannerStart = FindNearestSafePoint( GetNearestGridPoint(_start.GetTranslation()) );
   
   for (const auto& s : plannerGoals) {
-    PRINT_NAMED_INFO("XYPlanner.StartPlanner", "Plan from %s to %s (%.1f mm)", 
+    LOG_INFO("XYPlanner.StartPlanner", "Plan from %s to %s (%.1f mm)",
       plannerStart.ToString().c_str(), s.ToString().c_str(), (plannerStart - s).Length() );
   }
 
@@ -223,10 +224,10 @@ void XYPlanner::StartPlanner()
   // profile time it takes to smooth a plan into a valid robot path
   auto smoothTime_ms = duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - planTime);
   auto planTime_ms = duration_cast<std::chrono::milliseconds>(planTime - startTime);
-  PRINT_NAMED_INFO("XYPlanner.StartPlanner", "planning took %s ms, smoothing took %s ms (%zu expansions)", 
-                   std::to_string(planTime_ms.count()).c_str(), 
-                   std::to_string(smoothTime_ms.count()).c_str(),
-                   config.GetNumExpansions() );
+  LOG_INFO("XYPlanner.StartPlanner", "planning took %s ms, smoothing took %s ms (%zu expansions)",
+           std::to_string(planTime_ms.count()).c_str(),
+           std::to_string(smoothTime_ms.count()).c_str(),
+           config.GetNumExpansions() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -407,7 +408,7 @@ Point2f XYPlanner::FindNearestSafePoint(const Point2f& p) const
   if (plan.empty()) {
     PRINT_NAMED_WARNING("XYPlanner.FindNearestSafePoint", "Could not find any collision free point near %s", p.ToString().c_str());
   } else if (plan.size() > 1) {
-    PRINT_NAMED_INFO("XYPlanner.FindNearestSafePoint", "had to move start state to %s", plan.back().ToString().c_str());
+    LOG_INFO("XYPlanner.FindNearestSafePoint", "had to move start state to %s", plan.back().ToString().c_str());
   }
 
   return plan.empty() ? p : plan.back();

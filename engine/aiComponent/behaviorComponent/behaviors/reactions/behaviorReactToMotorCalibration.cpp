@@ -40,7 +40,7 @@ bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMotorCalibration::OnBehaviorActivated()
 {
-  PRINT_NAMED_INFO("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
+  PRINT_CH_INFO("Behaviors", "BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
   auto& robotInfo = GetBEI().GetRobotInfo();
 
   // Start a hang action just to keep this behavior alive until the calibration complete message is received

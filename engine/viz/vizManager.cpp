@@ -25,7 +25,6 @@
 #include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -39,7 +38,6 @@ namespace Anki {
   namespace Vector {
     
     CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
-    CONSOLE_VAR(bool, kSendBehaviorScoresToViz, "VizDebug", true);
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = std::numeric_limits<u32>::max();
     
@@ -253,11 +251,6 @@ namespace Anki {
       return vizID;
     }
     
-    void VizManager::DisplayCameraImage(const RobotTimeStamp_t timestamp)
-    {
-      SendMessage(VizInterface::MessageViz(VizInterface::DisplayImage((TimeStamp_t)timestamp)));
-    }
-    
     void VizManager::DrawCameraOval(const Point2f &center,
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)
@@ -279,18 +272,20 @@ namespace Anki {
     void VizManager::DrawCameraPoly(const Poly2f& poly, const ColorRGBA& color, const bool isClosed)
     {
       ANKI_CPU_PROFILE("VizManager::DrawCameraPoly");
-      
+      if (poly.size() < 2){
+        PRINT_NAMED_WARNING("VizManager.DrawCameraPoly.NotEnoughPoints",
+                            "Polygon provided needs two or more points but has %zd",poly.size());
+        return;
+      }
       auto crnt = poly.begin();
       auto next = (crnt + 1);
       auto end  = poly.end();
-      auto upperBound = poly.size() + 1;
-      BOUNDED_WHILE(upperBound, next != end)
+      while(next != end)
       {
         DrawCameraLine(*crnt, *next, color);
         ++crnt;
         ++next;
       }
-      
       if(isClosed)
       {
         DrawCameraLine(*crnt, *(poly.begin()), color);
@@ -739,7 +734,7 @@ namespace Anki {
       va_start(argptr, format);
       vsnprintf(buffer, 255, format, argptr);
       va_end(argptr);
-      SendMessage(VizInterface::MessageViz(VizInterface::SetLabel(labelType, (uint32_t)color, {std::string(buffer)})));
+      SendMessage(VizInterface::MessageViz(VizInterface::SetLabel((uint32_t)labelType, (uint32_t)color, {std::string(buffer)})));
     }
     
     
@@ -774,31 +769,16 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::CameraParams(std::move(params))));
     }
 
-    void VizManager::SendRobotState(const RobotState &msg,
-                                    const u16 videoFramePeriodMs,
-                                    const u16 imageProcFramePeriodMs,
-                                    const u32 numProcAnimFaceKeyframes,
-                                    const u8  lockedTracks,
-                                    const u8  tracksInUse,                                    
-                                    const f32 imuTemperature_degC,
-                                    std::array<uint16_t, 4> cliffThresholds,
-                                    const float batteryVolts
-                                    )
+    void VizManager::SendRobotState(VizInterface::RobotStateMessage&& msg)
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFramePeriodMs, imageProcFramePeriodMs, lockedTracks, tracksInUse, batteryVolts)));
+      SendMessage(VizInterface::MessageViz(std::move(msg)));
     }
 
     void VizManager::SendCurrentAnimation(const std::string& animName, u8 animTag)
     {
       ANKI_CPU_PROFILE("VizManager::SendCurrentAnimation");
       SendMessage(VizInterface::MessageViz(VizInterface::CurrentAnimation(animTag, animName)));  
-    }
-    
-    void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendRobotMood");
-      SendMessage(VizInterface::MessageViz(std::move(robotMood)));
     }
 
     void VizManager::SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug)
@@ -813,37 +793,10 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(std::move(visionModeDebug)));
     }
 
-    void VizManager::SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData)
+    void VizManager::SendEnabledVisionModes(VizInterface::EnabledVisionModes&& modes)
     {
-      if (kSendBehaviorScoresToViz)
-      {
-        ANKI_CPU_PROFILE("VizManager::SendRobotBehaviorSelectData");
-        SendMessage(VizInterface::MessageViz(std::move(robotBehaviorSelectData)));
-      }
-    }
-
-    void VizManager::SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendNewBehaviorSelected");
-      SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
-    }
-      
-    void VizManager::SendNewReactionTriggered(VizInterface::NewReactionTriggered&& newReactionTriggered)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendNewReactionTriggered");
-      SendMessage(VizInterface::MessageViz(std::move(newReactionTriggered)));
-    }
-      
-    void VizManager::SendStartRobotUpdate()
-    {
-      ANKI_CPU_PROFILE("VizManager::SendStartRobotUpdate");
-      SendMessage(VizInterface::MessageViz(VizInterface::StartRobotUpdate()));
-    }
-
-    void VizManager::SendEndRobotUpdate()
-    {
-      ANKI_CPU_PROFILE("VizManager::SendEndRobotUpdate");
-      SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
+      ANKI_CPU_PROFILE("VizManager::SendEnabledVisionModes");
+      SendMessage(VizInterface::MessageViz(std::move(modes)));
     }
     
     void VizManager::SendSaveImages(ImageSendMode mode, std::string path)
@@ -864,57 +817,6 @@ namespace Anki {
       SendMessage(event);
     }
 
-    void VizManager::SendObjectConnectionState(u32 activeID, ObjectType type, bool connected)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectConnectionState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectConnectionState(activeID, type, connected)));
-    }
-    
-    void VizManager::SendObjectMovingState(u32 activeID, bool moving)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectMovingState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectMovingState(activeID, moving)));
-    }
-    
-    void VizManager::SendObjectUpAxisState(u32 activeID, UpAxis upAxis)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectUpAxisState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectUpAxisState(activeID, upAxis)));
-    }
-    
-    void VizManager::SendObjectAccelState(u32 objectID, const ActiveAccel& accel)
-    {
-      ANKI_CPU_PROFILE("VizManager::SendObjectAccelState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectAccelState(objectID, accel)));
-    }
-
-  
-    /*
-    void VizManager::SendGreyImage(const RobotID_t robotID,
-                                   const u8* data,
-                                   const Vision::CameraResolution res,
-                                   const TimeStamp_t timestamp)
-    {
-      if(!_sendImages) {
-        return;
-      }
-      
-      const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
-      SendImage(robotID, data, dataLength, res, timestamp, Vision::IE_RAW_GRAY);
-    }
-    
-    
-    void VizManager::SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp)
-    {
-      if(!_sendImages) {
-        return;
-      }
-      
-      const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height * 3;
-      SendImage(robotID, data, dataLength, res, timestamp, Vision::IE_RAW_RGB);
-    }
-    */
-
     
     void VizManager::SendImageChunk(const RobotID_t robotID, const ImageChunk& robotImageChunk)
     {
@@ -925,107 +827,7 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(ImageChunk(robotImageChunk)));
     }
     
-/*
-    void VizManager::SendImage(const RobotID_t robotID,
-                               const u8* data,
-                               const u32 dataLength,
-                               const Vision::CameraResolution res,
-                               const TimeStamp_t timestamp,
-                               const Vision::ImageEncoding_t encoding)
-    {
-      if(!_sendImages) {
-        return;
-      }
-
-      ImageChunk v;
-      v.resolution = res;
-      v.imgId = ++(_imgID[robotID]);
-      v.chunkId = 0;
-      f32 chunkCount = ceilf((f32)dataLength / MAX_VIZ_IMAGE_CHUNK_SIZE);
-      if(chunkCount > static_cast<f32>(std::numeric_limits<u8>::max())) {
-        PRINT_NAMED_ERROR("VizManager.SendImage", "Too many chunks (>255) required to send image of %d bytes.\n", dataLength);
-        return;
-      }
-      v.chunkCount = static_cast<u8>(chunkCount);
-      v.chunkSize = MAX_VIZ_IMAGE_CHUNK_SIZE;
-      v.encoding = encoding;
-      
-      s32 bytesToSend = dataLength;
-      
-      while (bytesToSend > 0) {
-        if (bytesToSend < MAX_VIZ_IMAGE_CHUNK_SIZE) {
-          v.chunkSize = bytesToSend;
-          assert(v.chunkId == v.chunkCount-1);
-        }
-        bytesToSend -= v.chunkSize;
-        
-        
-        memcpy(v.data, &data[v.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE], v.chunkSize);
-        // printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d of %d, first/lastByte=%d/%d\n",
-        //       v.imgId, v.chunkId, v.chunkSize, bytesToSend, dataLength, v.data[0], v.data[v.chunkSize-1]);
-        SendMessage(VizInterface::MessageViz(std::move(v)));
-
-
-        ++v.chunkId;
-      }
-*/
-/*
-      if (_saveImageMode != SAVE_OFF) {
-        
-        // Make sure image capture folder exists
-        if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("VizManager.SendGreyImage.CreateDirFailed","\n");
-          }
-        }
-        
-        const char *ext = "";
-        switch(encoding) {
-          case Vision::IE_RAW_GRAY:
-            ext = "pgm";
-            break;
-          case Vision::IE_RAW_RGB:
-            ext = "ppm";
-            break;
-          case Vision::IE_JPEG_COLOR:
-          case Vision::IE_JPEG_GRAY:
-            ext = "jpg";
-            break;
-          default:
-            ext = "raw";
-        }
-        // Create image file
-        char imgCaptureFilename[64];
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img_%d.%s",
-                 AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, timestamp, ext);
-        
-        switch(encoding)
-        {
-          case Vision::IE_RAW_RGB:
-            Vision::WritePPM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
-            break;
-          case Vision::IE_RAW_GRAY:
-            Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
-            break;
-          default:
-            // Just dump already-encoded data to file:
-            FILE * fp = fopen(imgCaptureFilename, "w");
-            fwrite(data, dataLength, sizeof(u8), fp);
-            fclose(fp);
-        }
-        
-        PRINT_INFO("Saved image to %s\n", imgCaptureFilename);
-
-        // Turn off save mode if we were in one-shot mode
-        if (_saveImageMode == SAVE_ONE_SHOT) {
-          _saveImageMode = SAVE_OFF;
-        }
-      }
- *//*
-
-    } // SendImage()
-*/
-
+    
     void VizManager::SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                                      const u16 topRight_x, const u16 topRight_y,
                                      const u16 bottomRight_x, const u16 bottomRight_y,

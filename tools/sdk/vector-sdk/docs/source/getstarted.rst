@@ -21,11 +21,21 @@ Please visit our `Anki SDK Forums <https://forums.anki.com/>`_ where you can:
 * Be a part of the Vector SDK Community!
 
 
+-------------
+Prerequisites
+-------------
+
+* You have completed the Installation steps, found here: :ref:`initial`
+* You have updated Vector to OS 1.0.1 or later. Check the OS version by putting Vector on the charger, double-tapping his backpack button, and raising and lowering his arms once.
+* The Vector companion app is *not* currently connected to Vector.
+* Vector is connected to the same network as your computer.
+* You can see Vector's eyes on his screen.
+
 -------------------
 Starting Up the SDK
 -------------------
 
-1. On the computer, open Terminal (macOS/Linux) or Command Prompt (Windows) and navigate into your ``vector_python_sdk_0.4.0`` folder by typing ``cd vector_python_sdk_0.4.0``, and press **Enter**.
+On the computer, open Terminal (macOS/Linux) or Command Prompt (Windows) and navigate into your ``vector_python_sdk_0.4.0`` folder by typing ``cd vector_python_sdk_0.4.0``, and press **Enter**.
 
 ----------------
 Example Program

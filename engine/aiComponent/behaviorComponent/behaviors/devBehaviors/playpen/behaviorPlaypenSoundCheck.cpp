@@ -96,7 +96,7 @@ void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& ev
     for(u8 i = 0; i < payload.result.size(); ++i)
     {
       const auto& fftResult = payload.result[i];
-      PRINT_NAMED_INFO("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.Result", 
+      PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDriftCheck.HandleAudioFFTResult.Result", 
                        "FFT result for channel %u : %u",
                        i, fftResult);
 
@@ -134,7 +134,7 @@ void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& ev
 
     if(!robot.IsPhysical())
     {
-      PRINT_NAMED_DEBUG("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.SimulatedRobot",
+      PRINT_CH_DEBUG("Behaviors", "BehaviorPlaypenDriftCheck.HandleAudioFFTResult.SimulatedRobot",
                         "Ignoring sound check result for simulated robot");
       return;
     }

@@ -93,7 +93,7 @@ void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
 
 void ISocketComms::SetPingTimeoutForDisconnect(uint32_t ms, DisconnectCallback cb)
 {
-  PRINT_CH_INFO("UiComms", "SetPingTimeoutForDisconnect", "%d ms", ms);
+  PRINT_CH_DEBUG("UiComms", "SetPingTimeoutForDisconnect", "%d ms", ms);
   _pingTimeoutForDisconnect_ms = ms;
   _disconnectCb = cb;
 }
