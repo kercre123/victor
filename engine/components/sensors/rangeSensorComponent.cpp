@@ -31,41 +31,21 @@ namespace Vector {
 namespace {
   const std::string kLogDirName = "rangeSensor";
 
-
+  // make sure these match definitions in the proto
   const Point3f kSensorTranslation_mm = Point3f(18.84, 0.f, -7.96);
-  const Point3f kHeadTranslation_mm   = Point3f(-13.f, 0.f, 34.5f);
 
   const f32     kSideFov_rad          = DEG_TO_RAD(38);
   const f32     kTilt_rad             = DEG_TO_RAD(30);
-  const f32     kRayDirections[4]     = {tan(kSideFov_rad/2.f), tan(kSideFov_rad/6.f), -tan(kSideFov_rad/6.f), -tan(kSideFov_rad/2.f) };
-
-  // const Point2i resolution = {4, 4};
-
-  // const Pose3d kSensorPose1(DEG_TO_RAD(-30), Y_AXIS_3D(), Point3f(0.008, 0.006. -0.01));
-  // const Rotation3d kRayOffsets[16];
+  const f32     kRayDirections[4]     = {tan(kSideFov_rad/2.f), tan(kSideFov_rad/6.f), -tan(kSideFov_rad/6.f), -tan(kSideFov_rad/2.f) }; // chunk the FOV into 4 rays
 
   Rotation3d Get_YRotation_rad(size_t row) {
     return Rotation3d(kRayDirections[row] + kTilt_rad, Y_AXIS_3D());
-    // switch(row) {
-    //   case 0:  return Rotation3d( 0.165806        + kTilt_rad, Y_AXIS_3D());
-    //   case 1:  return Rotation3d( 0.0552687602281 + kTilt_rad, Y_AXIS_3D());
-    //   case 2:  return Rotation3d(-0.0552687602281 + kTilt_rad, Y_AXIS_3D());
-    //   case 3:  return Rotation3d(-0.165806        + kTilt_rad, Y_AXIS_3D());
-    //   default: return Rotation3d(0.f, Y_AXIS_3D());
-    // }
   }  
 
   Vec3f Get_XVector(size_t col){ 
     Point3f retv = Point3f(1.f, kRayDirections[col], 0.f);
     retv.MakeUnitLength();
     return retv;
-    // switch(col) {
-    //   case 0:  return Point3f(0.986286, 2 *  0.165048,  0.f);
-    //   case 1:  return Point3f(0.998473, 2 *  0.0552406, 0.f);
-    //   case 2:  return Point3f(0.998473, 2 * -0.0552406, 0.f);
-    //   case 3:  return Point3f(0.986286, 2 * -0.165048,  0.f);
-    //   default: return {1.f, 0.f, 0.f};
-    // }
   } 
 
   Point3f GetRayUnitVector(size_t idx) { 
@@ -76,6 +56,24 @@ namespace {
     retv.MakeUnitLength();
     return retv;
   }
+
+  /**
+ * Determines the point of intersection between a plane defined by a point and a normal vector and a line defined by a point and a direction vector.
+ *
+ * @param linePoint     A point on the line.
+ * @param lineDirection The direction vector of the line.
+ * @return The point of intersection between the line and the plane, null if the line is parallel to the plane.
+ */
+//   Point3f groundIntersection(Point3f linePoint, Point3f lineDirection) {
+//     if ( NEAR_ZERO(DotProduct(Z_AXIS_3D(), lineDirection)) ) {
+//         return {0,0,0};
+//     }
+
+//     lineDirection.MakeUnitLength();
+//     float t = DotProduct(Z_AXIS_3D(), linePoint) / DotProduct(Z_AXIS_3D(), lineDirection);
+//     return linePoint + lineDirection * t;
+// }
+
 } // end anonymous namespace
 
 
@@ -102,11 +100,19 @@ void RangeSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 
   Pose3d relativeHeadPose = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle());
   relativeHeadPose.RotateBy(kDefaultHeadCamRotation.Invert());
-  // Pose3d relativeHeadPose = _robot->GetComponent<FullRobotPose>().GetNeckPose();
-
-
   Pose3d headPoseInWorld = relativeHeadPose.GetWithRespectToRoot();
 
+
+  // try and calcuate sensor pose relative to the neck, though we need to manually add head angle
+  // Pose3d neckPose  = _robot->GetComponent<FullRobotPose>().GetNeckPose().GetWithRespectToRoot();
+  // float  neckAngle = _robot->GetComponent<FullRobotPose>().GetHeadAngle();
+
+  // Transform3d sensorToBody = Transform3d(Rotation3d(-neckAngle, Y_AXIS_3D()), kSensorTranslation_mm) * neckPose.GetTransform();
+  // Pose3d headPoseInWorld = relativeHeadPose.GetWithRespectToRoot();
+
+
+
+  // check head pose in world coordinates, and verify Roation by comparing to XYZ axis
   // PRINT_NAMED_WARNING("RangeSensorData.ParseIt", "head position %s", headPoseInWorld.GetTranslation().ToString().c_str());
 
   // PRINT_NAMED_WARNING("RangeSensorData.ParseIt", "head positionX %s", (headPoseInWorld.GetTransform() * X_AXIS_3D() - headPoseInWorld.GetTranslation()).ToString().c_str());
@@ -116,31 +122,44 @@ void RangeSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 
   std::vector<Point2f> groundPoints, cliffPoints;
   for (int i = 0; i < 16; ++i) {
-    Point3f pointInHeadFrame = GetRayUnitVector(i) * msg.rangeData.depth[i] * 1000 ;
-    Point3f pointInWorldFrame = headPoseInWorld.GetTransform() * pointInHeadFrame;
+    Point3f pointInSensorFrame = GetRayUnitVector(i) * msg.rangeData.depth[i] * 1000 ;
+    Point3f pointInWorldFrame = headPoseInWorld.GetTransform() * pointInSensorFrame;
+
+    // from head pose
+    // Point3f pointInWorldFrame = sensorToBody * pointInSensorFrame;
+
+    
     
     // PRINT_NAMED_WARNING("RangeSensorData.ParseIt", "Found range pixel %d at %s (head frame)", i, pointInHeadFrame.ToString().c_str());
     // PRINT_NAMED_WARNING("RangeSensorData.ParseIt", "Found range pixel %d at %s (world frame)", i, pointInWorldFrame.ToString().c_str());
 
-    if ( NEAR(pointInWorldFrame.z(), 0.f, 20.f) && (msg.rangeData.depth[i] < 200)) { 
+    if ( NEAR(pointInWorldFrame.z(), 0.f, 25.f) && (msg.rangeData.depth[i] < 200)) { 
       groundPoints.emplace_back(pointInWorldFrame); 
     } 
 
-    if ( FLT_LT(pointInWorldFrame.z(), -100.f) ) { 
-      PRINT_NAMED_WARNING("RangeSensorData.ParseIt", "Found range pixel %d at %s (world frame)", i, pointInWorldFrame.ToString().c_str());
-      cliffPoints.emplace_back(pointInWorldFrame); 
-    } 
+    // add point to cliff set if the ground plane intesection is close enough to the robot
+    // if ( FLT_LT(pointInWorldFrame.z(), -100.f) ) { 
+    //   // PRINT_NAMED_WARNING("RangeSensorData.ParseIt", "Found range pixel %d at %s (world frame)", i, pointInWorldFrame.ToString().c_str());
+    //   // add cliff only if it would have intersected with the ground plane within 300mm
+    //   Point3f groundPoint = groundIntersection(sensorToBody.GetTranslation(), GetRayUnitVector(i));
+    //   if ((groundPoint - sensorToBody.GetTranslation()).Length() < 300.f) {
+    //     cliffPoints.emplace_back(pointInWorldFrame);  
+    //   }
+    // } 
   }
 
+  // populate driveable space via convex hull of good points
   if (groundPoints.size() > 2) {
     ConvexPolygon ground = ConvexPolygon::ConvexHull( std::move(groundPoints) );
     _robot->GetMapComponent().ClearRegion( FastPolygon(ground),  msg.timestamp);
   }
 
+  // populate drivable space via point inserts with radius
   // for (const auto& p: groundPoints) {
-  //   _robot->GetMapComponent().ClearRegion( FastPolygon({p}),  msg.timestamp);
+  //   _robot->GetMapComponent().ClearRegion( Ball2f(p, 5.f),  msg.timestamp);
   // }
-
+  
+  // populate cliffs as point inserts with radius
   // for (const auto& p: cliffPoints) {
   //   _robot->GetMapComponent().InsertData( Ball2f(p, 5.f),  MemoryMapData_Cliff( _robot->GetPose(), msg.timestamp));
   // }

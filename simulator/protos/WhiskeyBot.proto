@@ -302,29 +302,44 @@ Supervisor {
                   translation 0.0058 -0.0135 0
                 }
 
+                # singular sensor
                 RangeFinder {
                   name "forwardRangeSensor"
-                  translation   .01884 .0 -0.00796
+                  translation   .01884 .0 -0.00796  # relative to neck position
                   rotation      0 1 0 -1.0472    # 30 dregees down
 
                   width         4
                   height        4
                   minRange      0.01     # [near, maxRange]
                   maxRange      1      # [minRange, inf)
-                  fieldOfView   .6632        # set to 38 degrees 
+                  fieldOfView   .6632       # set to 38 degrees 
                   resolution    .001
                 }
 
+                # side by side sensors
                 # RangeFinder {
                 #   name "forwardRangeSensor2"
-                #   translation   .008 -.006 -.01
-                #   rotation      0 0 0 -1.483       # 5 degrees down
+                #   translation   .01884 .0 -0.00796  # relative to neck position
+                #   rotation     -0.14595 -0.982933 -0.111991 1.32566
 
                 #   width         4
                 #   height        4
-                #   maxRange      .5
+                #   maxRange      1
                 #   fieldOfView   .331613        # set to 19 degrees 
                 #   rangeNoise    0.0
+                # }
+
+                # RangeFinder {
+                #   name "forwardRangeSensor"
+                #   translation   .01884 .0 -0.00796  # relative to neck position
+                #   rotation     0.14595 -0.982933 0.111991 1.32566
+
+                #   width         4
+                #   height        4
+                #   minRange      0.01     # [near, maxRange]
+                #   maxRange      1      # [minRange, inf)
+                #   fieldOfView   .331613       # set to 19 degrees 
+                #   resolution    .001
                 # }
 
                 %{ end }%  #vizMode
