@@ -752,7 +752,7 @@ class Charger(ObservableObject):
     #### Public Methods ####
 
     def teardown(self):
-        """All faces will be torn down by the world when no longer needed."""
+        """All objects will be torn down by the world when the world closes."""
 
         self.robot.events.unsubscribe(
             self._on_object_observed,
