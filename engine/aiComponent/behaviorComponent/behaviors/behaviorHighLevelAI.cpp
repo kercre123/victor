@@ -113,12 +113,15 @@ void BehaviorHighLevelAI::UpdateExploringTransitionCooldown()
   else if( alive_h < 72.0f ) {
     _specialExploringTransitionCooldownBase_s = 90.0f;
   }
+  else if( alive_h < 120.0f ) {
+    _specialExploringTransitionCooldownBase_s = 120.0f;
+  }
   else if( alive_h < 168.0f ) {
-    _specialExploringTransitionCooldownBase_s = 500.0f;
+    _specialExploringTransitionCooldownBase_s = 240.0;
   }
   else {
-    // disable this hack after a week (the normal Exploring transition based on stim will still happen)
-    _specialExploringTransitionCooldownBase_s = -1.0f;
+    // Explore every 5 minutes after a week, forever!
+    _specialExploringTransitionCooldownBase_s = 300.0f;
   }
 
   // // debugging

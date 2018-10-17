@@ -323,7 +323,7 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
     case UserIntentTag::imperative_quiet:
     case UserIntentTag::imperative_shutup:
     case UserIntentTag::system_charger:
-      _exploringTransitionExtraCooldown_s += 10 * 60.0f;
+      _exploringTransitionExtraCooldown_s += 15 * 60.0f;
       break;
 
     case UserIntentTag::system_sleep:
