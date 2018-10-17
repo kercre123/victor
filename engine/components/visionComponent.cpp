@@ -2655,7 +2655,7 @@ namespace Vector {
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
     ImageSaverParams params(payload.path, payload.mode, payload.qualityOnRobot, "",
-                            Vision::ImageCacheSize::Full, 0.f, 1.f, payload.removeRadialDistortion);
+                            Vision::ImageCacheSize::Half, 0.f, 1.f, payload.removeRadialDistortion);
     SetSaveImageParameters(params);
   }
 

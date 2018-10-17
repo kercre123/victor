@@ -71,6 +71,11 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
   result = img.Load(testImgPath);
   
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
+
+  // When this test was originally written, marker detector would run on the same sized image that ImageCache
+  // was reset with. This is no longer the case. Now ImageCache is reset with a Full sized image and
+  // marker detector always runs at half the original image's resolution so we need to scale these images by 2.
+  img.Resize(2.f, Anki::Vision::ResizeMethod::Linear);
   
   imageCache.Reset(img);
 
@@ -167,6 +172,11 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   result = img.Load(testImgPath);
   
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
+
+  // When this test was originally written, marker detector would run on the same sized image that ImageCache
+  // was reset with. This is no longer the case. Now ImageCache is reset with a Full sized image and
+  // marker detector always runs at half the original image's resolution so we need to scale these images by 2.
+  img.Resize(2.f, Anki::Vision::ResizeMethod::Linear);
   
   imageCache.Reset(img);
   
@@ -354,6 +364,12 @@ TEST(VisionSystem, MarkerDetectionTests)
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
 
+      // When this test was originally written, marker detector would run on the same sized image that ImageCache
+      // was reset with. This is no longer the case. Now ImageCache is reset with a Full sized image and
+      // marker detector always runs at half the original image's resolution so we need to scale these images by 2.
+      // Note: This resizes with Cubic instead of Linear because the tests fail when the images are resized with Linear
+      img.Resize(2.f, Vision::ResizeMethod::Cubic);
+      
       imageCache.Reset(img);
 
       Anki::Vector::VisionSystemInput input;
@@ -511,6 +527,11 @@ TEST(VisionSystem, ImageQuality)
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, test.subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
 
+      // When this test was originally written, marker detector would run on the same sized image that ImageCache
+      // was reset with. This is no longer the case. Now ImageCache is reset with a Full sized image and
+      // marker detector always runs at half the original image's resolution so we need to scale these images by 2.
+      img.Resize(2.f, Vision::ResizeMethod::Linear);
+      
       imageCache.Reset(img);
 
       Anki::Vector::VisionSystemInput input;
@@ -569,6 +590,12 @@ GTEST_TEST(LaserPointDetector, LaserDetect)
     Vision::ImageCache imageCache;
     Result result = testImg.Load(imageName);
     ASSERT_EQ(RESULT_OK, result);
+
+    // When this test was originally written, marker detector would run on the same sized image that ImageCache
+    // was reset with. This is no longer the case. Now ImageCache is reset with a Full sized image and
+    // marker detector always runs at half the original image's resolution so we need to scale these images by 2.
+    testImg.Resize(2.f, Vision::ResizeMethod::Linear);
+    
     imageCache.Reset(testImg);
 
     // Create LaserPointDetector and test on image

@@ -83,7 +83,7 @@ const char* const kBodyAngleRangeKey = "body_angle_range_deg";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
   : imageSaveQuality(-1)
-  , imageSaveSize(Vision::ImageCacheSize::Full)
+  , imageSaveSize(Vision::ImageCacheSize::Half)
   , useCapTouch(false)
   , saveSensorData(false)
   , useShutterSound(true)

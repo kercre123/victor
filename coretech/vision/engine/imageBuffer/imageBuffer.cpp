@@ -14,6 +14,7 @@
 
 #include "coretech/vision/engine/imageBuffer/conversions/imageConversions.h"
 #include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/neonMacros.h"
 
 #include "opencv2/core.hpp"
@@ -187,9 +188,7 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
 {
   switch(size)
   {
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
+    case ImageCacheSize::Full:
       {
         ImageConversions::DemosaicBGGR10ToRGB(_rawData,
                                               _rawNumRows,
@@ -198,7 +197,7 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
       }
       return true;
       
-    case ImageCacheSize::Full:
+    case ImageCacheSize::Half:
       {
         ImageConversions::HalveBGGR10ToRGB(_rawData,
                                            _rawNumRows,
@@ -207,9 +206,7 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
       }
       return true;
       
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
+    case ImageCacheSize::Quarter:
       {
         // ImageCacheSizes smaller than Full are defined relative to Full
         // So Half of Full ends up being quarter sized bayer
@@ -220,9 +217,7 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
       }
       return true;
       
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
+    case ImageCacheSize::Eighth:
       {
         // Get closest conversion we know how to do and then
         // resize to the correct size
@@ -241,34 +236,14 @@ bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMet
   // Wrap ImageRGB around raw rgb data and we will resize it to the "size"
   ImageRGB orig(_rawNumRows, _rawNumCols, _rawData);
 
-  f32 scaleFactor = 0.f;
-  switch(size)
-  {
-    // ImageBuffer set with RawRGB data is special in that
-    // the raw data is at Full size so scaleFactor accounts for that
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Full:
-      rgb = orig;
-      return true;
-      
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      scaleFactor = 2.0f;
-      break;
-      
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      scaleFactor = 0.5f;
-      break;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      scaleFactor = 0.25f;
-      break;
-  }
+  f32 scaleFactor = ImageCacheSizeToScaleFactor(size);
 
+  if(Util::IsNear(scaleFactor, 1.f))
+  {
+    rgb = orig;
+    return true;
+  }
+  
   const s32 desiredNumRows = _rawNumRows * scaleFactor;
   const s32 desiredNumCols = _rawNumCols * scaleFactor;
   rgb.Allocate(desiredNumRows, desiredNumCols);
@@ -280,34 +255,7 @@ bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMet
 
 bool ImageBuffer::GetRGBFromYUV420sp(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const
 {
-  f32 scaleFactor = 0.f;
-  switch(size)
-  {
-    case ImageCacheSize::Sensor:
-      scaleFactor = 1.0f;
-      break;
-      
-    case ImageCacheSize::Full:
-      scaleFactor = 0.5f;
-      break;
-      
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      scaleFactor = 1.0f;
-      break;
-      
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      scaleFactor = 0.25f;
-      break;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      scaleFactor = 0.125f;
-      break;
-  }
+  const f32 scaleFactor = ImageCacheSizeToScaleFactor(size);
 
   s32 rows = 0;
   s32 cols = 0;
@@ -348,24 +296,20 @@ bool ImageBuffer::GetGrayFromBAYER(Image& gray, ImageCacheSize size, ResizeMetho
       
   switch(size)
   {
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
+    // TODO VIC-9781 Add method to convert directly to Full sized Gray
+    // instead of halving and resizing
+    case ImageCacheSize::Full:
       gray.Resize(2.0f, method);
       return true;
       
-    case ImageCacheSize::Full:
+    case ImageCacheSize::Half:
       return true;
       
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
+    case ImageCacheSize::Quarter:
       gray.Resize(0.5f, method);
       return true;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
+
+    case ImageCacheSize::Eighth:
       gray.Resize(0.25f, method);
       return true;
   }
@@ -404,32 +348,12 @@ bool ImageBuffer::GetGrayFromRawGray(Image& gray, ImageCacheSize size, ResizeMet
   // Wrap Image around raw gray data and we will resize it to the "size"
   Image orig(_rawNumRows, _rawNumCols, _rawData);
 
-  f32 scaleFactor = 0.f;
-  switch(size)
+  const f32 scaleFactor = ImageCacheSizeToScaleFactor(size);
+
+  if(Util::IsNear(scaleFactor, 1.f))
   {
-    // ImageBuffer set with RawGray data is special in that
-    // the raw data is at Full size so scaleFactor accounts for that
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Full:
-      gray = orig;
-      return true;
-      
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      scaleFactor = 2.0f;
-      break;
-      
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      scaleFactor = 0.5f;
-      break;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      scaleFactor = 0.25f;
-      break;
+    gray = orig;
+    return true;
   }
 
   const s32 desiredNumRows = _rawNumRows * scaleFactor;

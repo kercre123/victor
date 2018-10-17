@@ -78,7 +78,7 @@ CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
 CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
 CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
 CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
-CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
+CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 2);
 CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   10.f);
 CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   30.f);
 
@@ -978,7 +978,7 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
                                 Vision::Image& claheImage)
 {
   const Vision::ImageCacheSize whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
-                                                                Vision::ResizeMethod::Linear);
+                                                              Vision::ResizeMethod::Linear);
   
   switch(useCLAHE)
   {
@@ -1202,7 +1202,6 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                "VisionSystem.DetectMarkersWithCLAHE.DifferingImageSizes");
     
     const Vision::Image& imgROI = imgPtr->GetROI(cropRect);
-    
     lastResult = _markerDetector->Detect(imgROI, _currentResult.observedMarkers);
     if(RESULT_OK != lastResult) {
       break;
@@ -1243,7 +1242,13 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       {
         corner.x() += cropRect.GetX();
         corner.y() += cropRect.GetY();
-        corner *= kMarkerDetector_ScaleMultiplier;
+
+        // By default we display images at the default image cache size so we need to scale the marker
+        // corners to that size
+        const f32 scaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetSize(kMarkerDetector_ScaleMultiplier,
+                                                                                            Vision::ResizeMethod::Linear));
+        const f32 defaultScaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetDefaultImageCacheSize());
+        corner *= (defaultScaleMultiplier / scaleMultiplier);
       }
       
       marker.SetImageCorners(scaledCorners);
@@ -1264,8 +1269,8 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       bool allCornersInBounds = true;
       for(auto & corner : scaledCorners)
       {
-        const s32 fullNumRows = imageCache.GetNumRows(Vision::ImageCacheSize::Full);
-        const s32 fullNumCols = imageCache.GetNumCols(Vision::ImageCacheSize::Full);
+        const s32 fullNumRows = imageCache.GetNumRows(Vision::ImageCacheSize::Half);
+        const s32 fullNumCols = imageCache.GetNumCols(Vision::ImageCacheSize::Half);
         const int warpIndex = std::floor(corner.y() / (fullNumRows / _rollingShutterCorrector.GetNumDivisions()));
         DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
                        "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
@@ -1326,7 +1331,7 @@ void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vi
   }
 
   Tic("RollingShutterComputePixelShifts");
-  s32 numRows = imageCache.GetNumRows(Vision::ImageCacheSize::Full);
+  s32 numRows = imageCache.GetNumRows(Vision::ImageCacheSize::Half);
   _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData, numRows);
   Toc("RollingShutterComputePixelShifts");
   _lastRollingShutterCorrectionTime = imageCache.GetTimeStamp();
