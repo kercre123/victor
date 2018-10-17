@@ -149,8 +149,8 @@ DEPLOY_VERSION=$(cat ${STAGING_DIR}/anki/etc/version)
 VER_CMP=$(compare_anki_version $DEPLOY_VERSION $CUR_OS_VERSION)
 
 if [ ${VER_CMP} -eq 1 ]; then
-  # deploy > os : 
-  echo "Target deploy version (${DEPLOY_VERSION} is newer than Robot OS version (${CUR_OS_VERSION})."
+  # deploy > os :
+  echo "Target deploy version (${DEPLOY_VERSION}) is newer than Robot OS version (${CUR_OS_VERSION})."
 elif [ ${VER_CMP} -eq -1 ]; then
   # deploy < os
   echo "Target deploy version (${DEPLOY_VERSION}) is older than Robot OS version (${CUR_OS_VERSION})."
@@ -160,6 +160,7 @@ if [ ${VER_CMP} -ne 0 ]; then
   if [ $FORCE_DEPLOY -eq 1 ]; then
     echo "Ignoring OS version mismatch"
   else
+    echo "OS version mismatch. Use -f to force."
     cleanup
     exit 1
   fi
@@ -202,9 +203,9 @@ fi
 set -e
 
 #
-# Stop any victor services. If services are allowed to run during deployment, exe and shared library 
+# Stop any victor services. If services are allowed to run during deployment, exe and shared library
 # files can't be released.  This may tie up enough disk space to prevent deployment of replacement files.
-# 
+#
 logv "stop victor services"
 robot_sh "/bin/systemctl stop victor.target"
 
@@ -220,7 +221,7 @@ pushd ${STAGING_DIR} > /dev/null 2>&1
 #
 RSYNC_ARGS="-rlptD -uzvP --chmod=ug+rw --chown=:2901 --inplace --delete"
 if [ $FORCE_DEPLOY -eq 1 ]; then
-  # Ignore times, delete before transfer, and force deletion of directories 
+  # Ignore times, delete before transfer, and force deletion of directories
   RSYNC_ARGS="-rlptD -IzvP --chmod=ug+rw --chown=:2901 --inplace --delete --delete-before --force"
 fi
 
