@@ -338,7 +338,8 @@ void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userInt
 
 bool UserIntentComponent::ActiveIntentFeedback::IsEnabled() const
 {
-  return robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ActiveIntentFeedback);
+  return ( (nullptr != robot)
+        && robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ActiveIntentFeedback) );
 }
 
 bool UserIntentComponent::ActiveIntentFeedback::IsActive() const
