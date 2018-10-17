@@ -105,13 +105,13 @@ void BehaviorHighLevelAI::UpdateExploringTransitionCooldown()
     _specialExploringTransitionCooldownBase_s = 10.0f;
   }
   else if( alive_h < 24.0f ) {
-    _specialExploringTransitionCooldownBase_s = 30.0f;
+    _specialExploringTransitionCooldownBase_s = 20.0f;
   }
   else if( alive_h < 48.0f ) {
-    _specialExploringTransitionCooldownBase_s = 60.0f;
+    _specialExploringTransitionCooldownBase_s = 40.0f;
   }
   else if( alive_h < 72.0f ) {
-    _specialExploringTransitionCooldownBase_s = 120.0f;
+    _specialExploringTransitionCooldownBase_s = 90.0f;
   }
   else if( alive_h < 168.0f ) {
     _specialExploringTransitionCooldownBase_s = 500.0f;

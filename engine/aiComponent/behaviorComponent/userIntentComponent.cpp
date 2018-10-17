@@ -322,16 +322,20 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
   switch( _pendingIntent->intent.GetTag() ) {
     case UserIntentTag::imperative_quiet:
     case UserIntentTag::imperative_shutup:
+    case UserIntentTag::system_charger:
       _exploringTransitionExtraCooldown_s += 10 * 60.0f;
       break;
 
     case UserIntentTag::system_sleep:
     case UserIntentTag::greeting_goodnight:
     case UserIntentTag::global_stop:
-    case UserIntentTag::system_charger:
       _exploringTransitionExtraCooldown_s += 5 * 60.0f;
       break;
 
+    case UserIntentTag::meet_victor:
+      _exploringTransitionExtraCooldown_s += 2 * 60.0f;
+      break;
+      
     case UserIntentTag::explore_start:
       _exploringTransitionExtraCooldown_s = 0.0f;
       break;
