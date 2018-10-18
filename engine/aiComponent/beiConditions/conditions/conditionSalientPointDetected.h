@@ -14,10 +14,12 @@
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_ConditionPersonDetected_H__
 
 #include "clad/types/salientPointTypes.h"
+#include "clad/types/visionModes.h"
 #include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
 
+#include <list>
 
 namespace Anki {
 namespace Vector {
@@ -35,6 +37,7 @@ protected:
   void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override;
 
   Vision::SalientPointType _targetSalientPointType;
+  std::list<VisionMode> _requiredVisionModes;
 };
 
 } // namespace Anki

@@ -4,6 +4,7 @@
 
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",
-    "targetSalientPoint": "BrightColors"
+    "targetSalientPoint": "BrightColors",
+    "requiredVisionModes": ["DetectingBrightColors"]
   }
 }

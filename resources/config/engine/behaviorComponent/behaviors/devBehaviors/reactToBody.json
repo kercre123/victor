@@ -39,7 +39,8 @@
     "dedupInterval_ms":    5000,
     "subCondition":        {
       "conditionType": "SalientPointDetected",
-      "targetSalientPoint": "Person"
+      "targetSalientPoint": "Person",
+      "requiredVisionModes": ["RunningNeuralNet"]
     }
   }
 }

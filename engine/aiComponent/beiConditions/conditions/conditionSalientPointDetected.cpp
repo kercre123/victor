@@ -17,8 +17,17 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
 #include "engine/aiComponent/salientPointsComponent.h"
 
+#include <algorithm>
+#include <iterator>
+
 namespace Anki {
 namespace Vector {
+
+namespace {
+
+const char* const kRequiredVisionModesKey = "requiredVisionModes";
+
+} /* anonymous namespace */
 
 ConditionSalientPointDetected::ConditionSalientPointDetected(const Json::Value& config)
     : IBEICondition(config)
@@ -30,6 +39,39 @@ ConditionSalientPointDetected::ConditionSalientPointDetected(const Json::Value& 
               "ConditionSalientPointDetected.Config.IncorrectString",
               "%s is not a valid SalientPointType",
               targetSalientPoint.c_str());
+
+  if(config.isMember(kRequiredVisionModesKey))
+  {
+    auto const & visionModes = config[kRequiredVisionModesKey];
+
+    auto setVisionModeHelper = [this](const Json::Value& jsonVisionMode)
+    {
+      const std::string& visionModeStr = jsonVisionMode.asString();
+      VisionMode visionMode;
+      const bool success = VisionModeFromString(visionModeStr, visionMode);
+      if(success)
+      {
+         _requiredVisionModes.push_back(visionMode);
+      }
+      else
+      {
+        LOG_WARNING("ConditionSalientPointDetected.Constructor.InvalidVisionMode", "%s", visionModeStr.c_str());
+      }
+    };
+
+    if(visionModes.isArray())
+    {
+      std::for_each(visionModes.begin(), visionModes.end(), setVisionModeHelper);
+    }
+    else if(visionModes.isString())
+    {
+      setVisionModeHelper(visionModes);
+    }
+    else
+    {
+      LOG_WARNING("ConditionSalientPointDetected.Constructor.InvalidVisionModeEntry", "");
+    }
+  }
 
 }
 
@@ -55,7 +97,10 @@ bool ConditionSalientPointDetected::AreConditionsMetInternal(BehaviorExternalInt
 void
 Anki::Vector::ConditionSalientPointDetected::GetRequiredVisionModes(std::set<Anki::Vector::VisionModeRequest>& requiredVisionModes) const
 {
-  requiredVisionModes.insert( {VisionMode::DetectingPeople, EVisionUpdateFrequency::Low} );
+  // TODO: Allow for update frequency to be set via configuration
+  std::transform(_requiredVisionModes.begin(), _requiredVisionModes.end(),
+                 std::inserter(requiredVisionModes, requiredVisionModes.end()),
+                 [](VisionMode mode) -> VisionModeRequest { return {mode, EVisionUpdateFrequency::Low}; });
 }
 
 } // namespace Vector
