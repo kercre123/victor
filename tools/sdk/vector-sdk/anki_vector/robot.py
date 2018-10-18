@@ -318,7 +318,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            robot.vision.enable_vision_mode(true)
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.vision.enable_vision_mode(true)
         """
         return self._vision
 
@@ -336,7 +337,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_robot_pose = robot.pose
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_robot_pose = robot.pose
         """
         return self._pose
 
@@ -347,7 +349,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_pose_angle_rad = robot.pose_angle_rad
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_pose_angle_rad = robot.pose_angle_rad
         """
         return self._pose_angle_rad
 
@@ -358,7 +361,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_pose_pitch_rad = robot.pose_pitch_rad
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_pose_pitch_rad = robot.pose_pitch_rad
         """
         return self._pose_pitch_rad
 
@@ -369,7 +373,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_left_wheel_speed_mmps = robot.left_wheel_speed_mmps
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_left_wheel_speed_mmps = robot.left_wheel_speed_mmps
         """
         return self._left_wheel_speed_mmps
 
@@ -380,7 +385,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_right_wheel_speed_mmps = robot.right_wheel_speed_mmps
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_right_wheel_speed_mmps = robot.right_wheel_speed_mmps
         """
         return self._right_wheel_speed_mmps
 
@@ -391,7 +397,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_head_angle_rad = robot.head_angle_rad
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_head_angle_rad = robot.head_angle_rad
         """
         return self._head_angle_rad
 
@@ -402,7 +409,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_lift_height_mm = robot.lift_height_mm
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_lift_height_mm = robot.lift_height_mm
         """
         return self._lift_height_mm
 
@@ -413,7 +421,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_accel = robot.accel
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_accel = robot.accel
         """
         return self._accel
 
@@ -424,7 +433,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_gyro = robot.gyro
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_gyro = robot.gyro
         """
         return self._gyro
 
@@ -435,7 +445,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_carrying_object_id = robot.carrying_object_id
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_carrying_object_id = robot.carrying_object_id
         """
         return self._carrying_object_id
 
@@ -446,7 +457,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_head_tracking_object_id = robot.head_tracking_object_id
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_head_tracking_object_id = robot.head_tracking_object_id
         """
         return self._head_tracking_object_id
 
@@ -457,7 +469,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_localized_to_object_id = robot.localized_to_object_id
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_localized_to_object_id = robot.localized_to_object_id
         """
         return self._localized_to_object_id
 
@@ -469,7 +482,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_last_image_time_stamp = robot.last_image_time_stamp
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_last_image_time_stamp = robot.last_image_time_stamp
         """
         return self._last_image_time_stamp
 
@@ -502,7 +516,8 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            current_status = robot.status
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                current_status = robot.status
         """
         return self._status
 

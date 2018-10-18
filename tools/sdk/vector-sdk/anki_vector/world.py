@@ -88,11 +88,13 @@ class World(util.Component):
     def all_objects(self):
         """generator: yields each object in the world.
 
-        .. code-block:: python
+        .. testcode::
 
             # Print the all objects' class details
-            for obj in robot.world.all_objects:
-                print(obj)
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.all_objects:
+                    print(obj)
 
         Returns:
             A generator yielding :class:`anki_vector.faces.Face`, :class:`anki_vector.faces.LightCube`,
@@ -106,23 +108,25 @@ class World(util.Component):
     def visible_faces(self) -> Iterable[faces.Face]:
         """generator: yields each face that Vector can currently see.
 
-        .. code-block:: python
+        .. testcode::
 
             # Print the visible face's attributes
-            for face in robot.world.visible_faces:
-                print("Face attributes:")
-                print(f"Face id: {face.face_id}")
-                print(f"Updated face id: {face.updated_face_id}")
-                print(f"Name: {face.name}")
-                print(f"Expression: {face.expression}")
-                print(f"Timestamp: {face.timestamp}")
-                print(f"Pose: {face.pose}")
-                print(f"Image Rect: {face.face_rect}")
-                print(f"Expression score: {face.expression_score}")
-                print(f"Left eye: {face.left_eye}")
-                print(f"Right eye: {face.right_eye}")
-                print(f"Nose: {face.nose}")
-                print(f"Mouth: {face.mouth}")
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for face in robot.world.visible_faces:
+                    print("Face attributes:")
+                    print(f"Face id: {face.face_id}")
+                    print(f"Updated face id: {face.updated_face_id}")
+                    print(f"Name: {face.name}")
+                    print(f"Expression: {face.expression}")
+                    print(f"Timestamp: {face.timestamp}")
+                    print(f"Pose: {face.pose}")
+                    print(f"Image Rect: {face.face_rect}")
+                    print(f"Expression score: {face.expression_score}")
+                    print(f"Left eye: {face.left_eye}")
+                    print(f"Right eye: {face.right_eye}")
+                    print(f"Nose: {face.nose}")
+                    print(f"Mouth: {face.mouth}")
 
         Returns:
             A generator yielding :class:`anki_vector.faces.Face` instances.
@@ -132,8 +136,32 @@ class World(util.Component):
                 yield face
 
     @property
+    def custom_object_archetypes(self) -> Iterable[objects.CustomObjectArchetype]:
+        """generator: yields each custom object archetype that Vector will look for.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.custom_object_archetypes:
+                    print(obj)
+
+        Returns:
+            A generator yielding CustomObjectArchetype instances
+        """
+        for obj in self._custom_object_archetypes.values():
+            yield obj
+
+    @property
     def visible_custom_objects(self) -> Iterable[objects.CustomObject]:
         """generator: yields each custom object that Vector can currently see.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.visible_custom_objects:
+                    print(obj)
 
         Returns:
             A generator yielding CustomObject instances
@@ -146,11 +174,14 @@ class World(util.Component):
     def connected_light_cube(self) -> objects.LightCube:
         """A light cube connected to Vector, if any.
 
-        .. code-block:: python
 
-            robot.world.connect_cube()
-            if robot.world.connected_light_cube:
-                dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
         """
         result = None
         cube = self._light_cube.get(objects.LIGHT_CUBE_1_TYPE)
@@ -163,10 +194,14 @@ class World(util.Component):
     def light_cube(self) -> objects.LightCube:
         """Returns the vector light cube object, regardless of its connection status.
 
-        .. code-block:: python
 
-            cube = robot.world.light_cube
-            print('LightCube {0} connected.'.format("is" if cube.is_connected else "isn't"))
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                cube = robot.world.light_cube
+                if cube:
+                    print('LightCube {0} connected.'.format("is" if cube.is_connected else "isn't"))
 
         Raises:
             :class:`ValueError` if the cube_id is invalid.
@@ -180,6 +215,12 @@ class World(util.Component):
     @property
     def charger(self) -> objects.Charger:
         """Returns the most recently observed vector charger object, or None if no chargers have been observed.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                print('most recently observed charger: {0}.'.format(robot.world.charger))
 
         Raises:
             :class:`ValueError` if the cube_id is invalid.
@@ -211,11 +252,21 @@ class World(util.Component):
             Events.robot_observed_object)
 
     def get_object(self, object_id: int):
-        """Fetches an object instance with the given id."""
+        """Fetches an object instance with the given id.
+
+        .. code-block:: python
+
+            my_obj = robot.world.get_object(valid_object_id)
+        """
         return self._objects.get(object_id)
 
     def get_face(self, face_id: int) -> faces.Face:
-        """Fetches a Face instance with the given id."""
+        """Fetches a Face instance with the given id.
+
+        .. code-block:: python
+
+            my_face = robot.world.get_face(previously_observed_face_id)
+        """
         return self._faces.get(face_id)
 
     @sync.Synchronizer.wrap
@@ -224,9 +275,11 @@ class World(util.Component):
 
         If a cube is currently connected, this will do nothing.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.world.connect_cube()
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.connect_cube()
         """
         req = protocol.ConnectCubeRequest()
         result = await self.grpc_interface.ConnectCube(req)
@@ -246,9 +299,11 @@ class World(util.Component):
     async def disconnect_cube(self) -> protocol.DisconnectCubeResponse:
         """Requests a disconnection from the currently connected cube.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.world.disconnect_cube()
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.disconnect_cube()
         """
         req = protocol.DisconnectCubeRequest()
         return await self.grpc_interface.DisconnectCube(req)
@@ -259,6 +314,12 @@ class World(util.Component):
 
         Plays the default cube connection animation on the currently
         connected cube's lights.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.flash_cube_lights()
         """
         req = protocol.FlashCubeLightsRequest()
         return await self.grpc_interface.FlashCubeLights(req)
@@ -271,9 +332,11 @@ class World(util.Component):
         connect to the cube with the highest RSSI (signal strength) next
         time a connection is requested.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.world.forget_preferred_cube()
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.forget_preferred_cube()
         """
         req = protocol.ForgetPreferredCubeRequest()
         return await self.grpc_interface.ForgetPreferredCube(req)
@@ -286,11 +349,13 @@ class World(util.Component):
         will always attempt to connect to this cube if it is available.
         This is only used in simulation (for now).
 
-        .. code-block:: python
+        .. testcode::
 
-            connected_cube = robot.world.connected_light_cube
-            if connected_cube:
-                robot.world.set_preferred_cube(connected_cube.factory_id)
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                connected_cube = robot.world.connected_light_cube
+                if connected_cube:
+                    robot.world.set_preferred_cube(connected_cube.factory_id)
 
         :param factory_id: The unique hardware id of the physical cube.
         """
@@ -304,9 +369,11 @@ class World(util.Component):
                                     delete_custom_object_archetypes: bool = True):
         """Causes the robot to forget about custom objects it currently knows about.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.world.delete_custom_objects()
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.delete_custom_objects()
         """
 
         last_blocking_call = None
@@ -368,17 +435,19 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object.
             (and therefore only 1 of each of any of these markers) in the world.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.world.define_custom_box(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
-                                          marker_front=  anki_vector.objects.CustomObjectMarkers.Circles2,
-                                          marker_back=   anki_vector.objects.CustomObjectMarkers.Circles3,
-                                          marker_top=    anki_vector.objects.CustomObjectMarkers.Circles4,
-                                          marker_bottom= anki_vector.objects.CustomObjectMarkers.Circles5,
-                                          marker_left=   anki_vector.objects.CustomObjectMarkers.Triangles2,
-                                          marker_right=  anki_vector.objects.CustomObjectMarkers.Triangles3,
-                                          depth_mm=20.0, width_mm=20.0, height_mm=20.0,
-                                          marker_width_mm=10.0, marker_height_mm=10.0)
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.define_custom_box(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
+                                              marker_front=  anki_vector.objects.CustomObjectMarkers.Circles2,
+                                              marker_back=   anki_vector.objects.CustomObjectMarkers.Circles3,
+                                              marker_top=    anki_vector.objects.CustomObjectMarkers.Circles4,
+                                              marker_bottom= anki_vector.objects.CustomObjectMarkers.Circles5,
+                                              marker_left=   anki_vector.objects.CustomObjectMarkers.Triangles2,
+                                              marker_right=  anki_vector.objects.CustomObjectMarkers.Triangles3,
+                                              depth_mm=20.0, width_mm=20.0, height_mm=20.0,
+                                              marker_width_mm=10.0, marker_height_mm=10.0)
 
         Returns:
             CustomObject instance with the specified dimensions.
@@ -421,7 +490,7 @@ class World(util.Component):
         response = await self.grpc_interface.DefineCustomObject(req)
 
         if response.success:
-            type_id = custom_object_archetype.object_type.id
+            type_id = custom_object_archetype.custom_type.id
             self._custom_object_archetypes[type_id] = custom_object_archetype
             return custom_object_archetype
 
@@ -450,12 +519,15 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object
             (and therefore only 1 of each of any of these markers) in the world.
 
-        .. code-block:: python
 
-            robot.world.define_custom_cube(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
-                                           marker=anki_vector.objects.CustomObjectMarkers.Circles2,
-                                           size_mm=20.0,
-                                           marker_width_mm=10.0, marker_height_mm=10.0)
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.define_custom_cube(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
+                                               marker=anki_vector.objects.CustomObjectMarkers.Circles2,
+                                               size_mm=20.0,
+                                               marker_width_mm=10.0, marker_height_mm=10.0)
 
         Returns:
             CustomObject instance with the specified dimensions.
@@ -486,7 +558,7 @@ class World(util.Component):
         response = await self.grpc_interface.DefineCustomObject(req)
 
         if response.success:
-            type_id = custom_object_archetype.object_type.id
+            type_id = custom_object_archetype.custom_type.id
             self._custom_object_archetypes[type_id] = custom_object_archetype
             return custom_object_archetype
 
@@ -519,12 +591,15 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object
                 (and therefore only 1 of each of any of these markers) in the world.
 
-        .. code-block:: python
 
-        robot.world.define_custom_wall(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
-                                       marker=anki_vector.objects.CustomObjectMarkers.Circles2,
-                                       width_mm=20.0, height_mm=20.0,
-                                       marker_width_mm=10.0, marker_height_mm=10.0)
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.define_custom_wall(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
+                                               marker=anki_vector.objects.CustomObjectMarkers.Circles2,
+                                               width_mm=20.0, height_mm=20.0,
+                                               marker_width_mm=10.0, marker_height_mm=10.0)
 
         Returns:
             CustomObject instance with the specified dimensions.
@@ -558,7 +633,7 @@ class World(util.Component):
         response = await self.grpc_interface.DefineCustomObject(req)
 
         if response.success:
-            type_id = custom_object_archetype.object_type.id
+            type_id = custom_object_archetype.custom_type.id
             self._custom_object_archetypes[type_id] = custom_object_archetype
             return custom_object_archetype
 
@@ -583,11 +658,14 @@ class World(util.Component):
         :param use_robot_origin: whether or not to override the origin_id in the given pose to be
                                  the origin_id of Vector.
 
-        .. code-block:: python
 
-        robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
-                                               x_size_mm=10, y_size_mm=100, z_size_mm=100,
-                                               relative_to_robot=True)
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                                       x_size_mm=10, y_size_mm=100, z_size_mm=100,
+                                                       relative_to_robot=True)
 
         Returns:
             FixedCustomObject instance with the specified dimensions and pose.

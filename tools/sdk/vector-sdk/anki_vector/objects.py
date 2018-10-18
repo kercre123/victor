@@ -763,6 +763,13 @@ class Charger(ObservableObject):
     def object_id(self) -> int:
         """The internal ID assigned to the object.
 
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                if robot.world.charger:
+                    charger_object_id = robot.world.charger.object_id
+
         This value can only be assigned once as it is static on the robot.
         """
         return self._object_id
@@ -809,7 +816,7 @@ class CustomObjectArchetype():
     """
 
     def __init__(self,
-                 object_type: protocol.ObjectType,
+                 custom_type: protocol.CustomType,
                  x_size_mm: float,
                  y_size_mm: float,
                  z_size_mm: float,
@@ -817,7 +824,7 @@ class CustomObjectArchetype():
                  marker_height_mm: float,
                  is_unique: bool):
 
-        self._object_type = object_type
+        self._custom_type = custom_type
         self._x_size_mm = x_size_mm
         self._y_size_mm = y_size_mm
         self._z_size_mm = z_size_mm
@@ -828,33 +835,81 @@ class CustomObjectArchetype():
     #### Properties ####
 
     @property
-    def object_type(self) -> protocol.ObjectType:
-        """id of this archetype on the robot"""
-        return self._object_type
+    def custom_type(self) -> protocol.CustomType:
+        """id of this archetype on the robot
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.custom_object_archetypes:
+                    print('custom object archetype defined with type: {0}'.format(obj.custom_type))
+        """
+        return self._custom_type
 
     @property
     def x_size_mm(self) -> float:
-        """Size of this object in its X axis, in millimeters."""
+        """Size of this object in its X axis, in millimeters.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.custom_object_archetypes:
+                    print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
+        """
         return self._x_size_mm
 
     @property
     def y_size_mm(self) -> float:
-        """Size of this object in its Y axis, in millimeters."""
+        """Size of this object in its Y axis, in millimeters.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.custom_object_archetypes:
+                    print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
+        """
         return self._y_size_mm
 
     @property
     def z_size_mm(self) -> float:
-        """Size of this object in its Z axis, in millimeters."""
+        """Size of this object in its Z axis, in millimeters.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.custom_object_archetypes:
+                    print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
+        """
         return self._z_size_mm
 
     @property
     def marker_width_mm(self) -> float:
-        """Width in millimeters of the marker on this object."""
+        """Width in millimeters of the marker on this object.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.custom_object_archetypes:
+                    print('custom object archetype defined with marker size: {0}mm x {1}mm'.format(obj.marker_width_mm, obj.marker_height_mm))
+        """
         return self._marker_width_mm
 
     @property
     def marker_height_mm(self) -> float:
-        """Height in millimeters of the marker on this object."""
+        """Height in millimeters of the marker on this object.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                for obj in robot.world.custom_object_archetypes:
+                    print('custom object archetype defined with marker size: {0}mm x {1}mm'.format(obj.marker_width_mm, obj.marker_height_mm))
+        """
         return self._marker_height_mm
 
     @property
@@ -864,11 +919,13 @@ class CustomObjectArchetype():
 
     #### Private Methods ####
 
-    def _repr_values(self):
-        return ('object_type={self.object_type} '
+    def __repr__(self):
+        return ('custom_type={self.custom_type} '
                 'x_size_mm={self.x_size_mm:.1f} '
                 'y_size_mm={self.y_size_mm:.1f} '
                 'z_size_mm={self.z_size_mm:.1f} '
+                'marker_width_mm={self.marker_width_mm:.1f} '
+                'marker_height_mm={self.marker_height_mm:.1f} '
                 'is_unique={self.is_unique}'.format(self=self))
 
 
@@ -913,6 +970,21 @@ class CustomObject(ObservableObject):
         """The internal ID assigned to the object.
 
         This value can only be assigned once as it is static on the robot.
+
+        .. code-block:: python
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+                robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
+                                               marker=CustomObjectMarkers.Circles2,
+                                               size_mm=20.0,
+                                               marker_width_mm=10.0, marker_height_mm=10.0)
+
+                # have the robot observe a custom object in the real world with the Circles2 marker
+
+                for obj in robot.world.visible_custom_objects:
+                    print('custom object seen with id: {0}'.format(obj.object_id))
         """
         return self._object_id
 
@@ -929,12 +1001,44 @@ class CustomObject(ObservableObject):
 
     @property
     def archetype(self) -> CustomObjectArchetype:
-        """Archetype defining this custom object's properties."""
+        """Archetype defining this custom object's properties.
+
+        .. code-block:: python
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+                robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
+                                               marker=CustomObjectMarkers.Circles2,
+                                               size_mm=20.0,
+                                               marker_width_mm=10.0, marker_height_mm=10.0)
+
+                # have the robot observe a custom object in the real world with the Circles2 marker
+
+                for obj in robot.world.visible_custom_objects:
+                    print('custom object seen with archetype: {0}'.format(obj.archetype))
+        """
         return self._archetype
 
     @property
     def descriptive_name(self) -> str:
-        """A descriptive name for this CustomObject instance."""
+        """A descriptive name for this CustomObject instance.
+
+        .. code-block:: python
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+                robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
+                                               marker=CustomObjectMarkers.Circles2,
+                                               size_mm=20.0,
+                                               marker_width_mm=10.0, marker_height_mm=10.0)
+
+                # have the robot observe a custom object in the real world with the Circles2 marker
+
+                for obj in robot.world.visible_custom_objects:
+                    print('custom object seen with name: {0}'.format(obj.descriptive_name))
+        """
         # Specialization of ObservableObject's method to include the object type.
         return "%s id=%d" % (self.archetype.object_type.name, self.object_id)
 
@@ -980,6 +1084,15 @@ class CustomObjectTypes():  # pylint: disable=too-few-public-methods
     :meth:`anki_vector.world.World.define_custom_box`,
     :meth:`anki_vector.world.World.define_custom_cube`, and
     :meth:`anki_vector.world.World.define_custom_wall`
+
+    .. testcode::
+
+        import anki_vector
+        with anki_vector.Robot("my_robot_serial_number") as robot:
+            robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
+                                           marker=CustomObjectMarkers.Circles2,
+                                           size_mm=20.0,
+                                           marker_width_mm=10.0, marker_height_mm=10.0)
     """
 
     #: CustomType00 - the first custom object type
@@ -1061,6 +1174,15 @@ class CustomObjectMarkers():  # pylint: disable=too-few-public-methods
     :meth:`anki_vector.world.World.define_custom_box`,
     :meth:`anki_vector.world.World.define_custom_cube`, and
     :meth:`anki_vector.world.World.define_custom_wall`
+
+    .. testcode::
+
+        import anki_vector
+        with anki_vector.Robot("my_robot_serial_number") as robot:
+            robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
+                                           marker=CustomObjectMarkers.Circles2,
+                                           size_mm=20.0,
+                                           marker_width_mm=10.0, marker_height_mm=10.0)
     """
 
     #: .. image:: ../images/custom_markers/SDK_2Circles.png
@@ -1121,6 +1243,13 @@ class FixedCustomObject(util.Component):
     know to plot a path around them even when they don't have any markers.
 
     To create these use :meth:`~anki_vector.world.World.create_custom_fixed_object`
+
+    .. testcode::
+
+        import anki_vector
+        with anki_vector.Robot("my_robot_serial_number") as robot:
+            robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                                   10, 100, 100, relative_to_robot=True)
     """
 
     def __init__(self,
@@ -1153,6 +1282,14 @@ class FixedCustomObject(util.Component):
         """The internal ID assigned to the object.
 
         This value can only be assigned once as it is static in the engine.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                                                  10, 100, 100, relative_to_robot=True)
+                print('fixed custom object id: {0}'.format(obj.object_id))
         """
         return self._object_id
 
@@ -1165,20 +1302,56 @@ class FixedCustomObject(util.Component):
 
     @property
     def pose(self) -> util.Pose:
-        """The pose of the object in the world."""
+        """The pose of the object in the world.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                                                  10, 100, 100, relative_to_robot=True)
+                print('fixed custom object id: {0}'.format(obj.pose))
+        """
         return self._pose
 
     @property
     def x_size_mm(self) -> float:
-        """The length of the object in its X axis, in millimeters."""
+        """The length of the object in its X axis, in millimeters.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                                                  10, 100, 100, relative_to_robot=True)
+                print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
+        """
         return self._x_size_mm
 
     @property
     def y_size_mm(self) -> float:
-        """The length of the object in its Y axis, in millimeters."""
+        """The length of the object in its Y axis, in millimeters.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                                                  10, 100, 100, relative_to_robot=True)
+                print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
+        """
         return self._y_size_mm
 
     @property
     def z_size_mm(self) -> float:
-        """The length of the object in its Z axis, in millimeters."""
+        """The length of the object in its Z axis, in millimeters.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
+                                                                  10, 100, 100, relative_to_robot=True)
+                print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
+        """
         return self._z_size_mm
