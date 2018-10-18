@@ -122,17 +122,17 @@ Supervisor {
         
 
         # if you modify the length, you need to update FORWARD_RANGE_SENSOR_MIN/MAX_DISTANCE_MM
-        DistanceSensor {
-          name "forwardProxSensor"
-          translation 0.01 0 0
-          rotation 0 1 0 -0.10472
-          type "generic"
-          lookupTable [ 0.015    25  .0,
-                        0.400   410  .0,
-                        1.200  1210  .0] # offset for its own translation
-          numberOfRays 1
-          aperture 0.218
-        }
+        #DistanceSensor {
+        #  name "forwardProxSensor"
+        #  translation 0.01 0 0
+        #  rotation 0 1 0 -0.10472
+        #  type "generic"
+        #  lookupTable [ 0.015    25  .0,
+        #                0.400   410  .0,
+        #                1.200  1210  .0] # offset for its own translation
+        #  numberOfRays 1
+        #  aperture 0.218
+        #}
 
         %{ end }%  # vizMode
 
@@ -283,7 +283,50 @@ Supervisor {
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
                 }
-                
+
+                Transform {
+                  translation 0.01884 0 -0.00796
+                  rotation 0 1 0 -1.5708046928
+
+
+
+                 children [
+                 Transform {
+                    rotation 1 0 0 -0.2181661565
+                    children [
+                   RangeFinder {
+                     name "rightProxSensor"
+                     translation 0 -0.005 0
+                     rotation 0 0 1 -1.5708046928
+                     fieldOfView 0.3316
+                     width 4
+                     height 4
+                     near 0.001
+                     minRange 0.0011
+                     maxRange 1
+                     }
+                     ]
+                     }
+
+                     Transform {
+                    rotation 1 0 0 0.2181661565
+                     children [
+                   RangeFinder {
+                     name "leftProxSensor"
+                     translation 0 0.005 0
+                     rotation 0 0 1 -1.5708046928
+                     fieldOfView 0.3316
+                     width 4
+                     height 4
+                     near 0.001
+                     minRange 0.0011
+                     maxRange 1
+                     }
+                     ]
+                     }
+                  ]
+                }
+
                 # Vic-gateway process:
                 Gateway {
                 }

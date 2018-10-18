@@ -61,6 +61,7 @@
 #include <webots/Display.hpp>
 #include <webots/Gyro.hpp>
 #include <webots/DistanceSensor.hpp>
+#include <webots/RangeFinder.hpp>
 #include <webots/Accelerometer.hpp>
 #include <webots/Receiver.hpp>
 #include <webots/Connector.hpp>
@@ -136,9 +137,12 @@ namespace Anki {
       webots::Accelerometer* accel_;
 
       // Prox sensors
-      webots::DistanceSensor *proxCenter_;
+      //webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *cliffSensors_[HAL::CLIFF_COUNT];
 
+      webots::RangeFinder *prox_;
+      webots::RangeFinder *proxl_;
+      
       // Charge contact
       webots::Connector* chargeContact_;
       bool wasOnCharger_ = false;
@@ -388,8 +392,12 @@ namespace Anki {
       accel_->enable(ROBOT_TIME_STEP_MS);
 
       // Proximity sensor
-      proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
-      proxCenter_->enable(ROBOT_TIME_STEP_MS);
+      //proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
+      //proxCenter_->enable(ROBOT_TIME_STEP_MS);
+      prox_ = webotRobot_.getRangeFinder("rightProxSensor");
+      prox_->enable(ROBOT_TIME_STEP_MS);
+      proxl_ = webotRobot_.getRangeFinder("leftProxSensor");
+      proxl_->enable(ROBOT_TIME_STEP_MS);
 
       // Cliff sensors
       cliffSensors_[HAL::CLIFF_FL] = webotRobot_.getDistanceSensor("cliffSensorFL");
@@ -772,8 +780,8 @@ namespace Anki {
     ProxSensorDataRaw HAL::GetRawProxData()
     {
       ProxSensorDataRaw proxData;
-      if (PowerGetMode() == POWER_MODE_ACTIVE) {
-        proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
+      if (false && PowerGetMode() == POWER_MODE_ACTIVE) {
+        //proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
         // Note: These fields are spoofed with simple defaults for now, but should be computed
         // to reflect the actual behavior of the sensor once we do some more testing with it.
         proxData.signalIntensity  = 25.f;
@@ -790,6 +798,24 @@ namespace Anki {
       return proxData;
     }
 
+    RangeDataRaw HAL::GetRawRangeData()
+    {
+      RangeDataRaw rangeData;
+      const float* rightImage = prox_->getRangeImage();
+      const float* leftImage = proxl_->getRangeImage();
+
+      for(int i = 0; i < prox_->getWidth(); i++)
+      {
+        for(int j = 0; j < 4; j++)
+        {
+          int index = i*8 + j;
+          rangeData.data[index] = leftImage[i*4 + j];
+          rangeData.data[index + 4] = rightImage[i*4 + j];
+        }
+      }
+      return rangeData;
+    }
+    
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
       switch(button_id) {
