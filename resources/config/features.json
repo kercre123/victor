@@ -69,7 +69,7 @@
   },
   {
     "feature": "ActiveIntentFeedback",
-    "enabled": true
+    "enabled": false
   }
 ]
 
