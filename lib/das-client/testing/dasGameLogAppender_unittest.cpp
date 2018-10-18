@@ -9,6 +9,7 @@
 #pragma GCC diagnostic pop
 #include "dasGameLogAppender.h"
 #include "dasGlobals.h"
+#include "portableTypes.h"
 #include "DASPrivate.h"
 #include "stringUtils.h"
 #include "testUtils.h"

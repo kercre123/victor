@@ -20,6 +20,7 @@ enum uint_8 FeatureType {
   AttentionTransfer,
   UserDefinedBehaviorTree,
   PopAWheelie,
+  ActiveIntentFeedback,
   
   TestFeature,
   PRDemo,

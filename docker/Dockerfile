@@ -8,9 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     dos2unix \
     flex \
-    g++-multilib \
     gawk \
-    gcc-multilib \
     genisoimage \
     git-core \
     gnupg \
@@ -19,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     lib32z-dev \
     libc6-dev \
     libc6-dev-i386 \
+    libcurl4-gnutls-dev \
     libgl1-mesa-dev \
     libsndfile-dev \
     libssl-dev \
@@ -28,14 +27,23 @@ RUN apt-get update && apt-get install -y \
     p7zip-full \
     python-markdown \
     ruby \
+    software-properties-common \
     subversion \
     texinfo \
     tofrodos \
     wget \
+    uuid-dev \
     x11proto-core-dev \
     xsltproc \
     zip \
     zlib1g-dev
+
+RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+RUN apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main"
+RUN apt-get update && apt-get install -y clang-7 \
+    libc++abi-7-dev \
+    libc++-7-dev 
+RUN ln -sf /usr/bin/clang++-7 /usr/bin/clang++
 
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
 RUN apt-get update && apt-get install -y nodejs

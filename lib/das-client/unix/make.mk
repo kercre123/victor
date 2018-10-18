@@ -22,6 +22,7 @@ DAS_SRC_FILES := \
 
 vpath %.cpp $(DAS_SRC_DIR) $(DAS_TESTING_DIR)
 
+CXX := clang++
 CXXFLAGS += -g
 CXXFLAGS += -I$(DAS_INC_DIR)
 CXXFLAGS += -I$(DAS_INC_DIR)/DAS
@@ -41,6 +42,7 @@ CXXFLAGS += -Wno-parentheses-equality
 CXXFLAGS += -Wno-static-in-inline
 CXXFLAGS += -std=c++14
 CXXFLAGS += -pthread
+CXXFLAGS += -stdlib=libc++
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
@@ -57,7 +59,7 @@ DAS_OBJ_FILES := $(patsubst %.cpp, %.o, $(DAS_SRC_FILES))
 DAS_DEP_FILES := $(patsubst %.cpp, %.d, $(DAS_SRC_FILES))
 
 dasDemoApp: dasDemoApp.cpp dasLib.a $(DAS_INC_DIR)/DAS/DAS.h
-	$(CXX) $(CXXFLAGS) -o dasDemoApp dasDemoApp.cpp dasLib.a $(CXXLIBS)
+	$(CXX) $(CXXFLAGS) -o dasDemoApp dasDemoApp.cpp dasLib.a $(CXXLIBS) $(LDFLAGS)
 
 dasLib.a: $(DAS_OBJ_FILES)
 	$(AR) $(ARFLAGS) $@ $^
@@ -86,8 +88,8 @@ gtest.a : gtest-all.o
 gtest_main.a : gtest-all.o gtest_main.o
 	$(AR) $(ARFLAGS) $@ $^
 
-das_unittest : dasLib.a $(DAS_TEST_OBJ_FILES) gtest_main.a
-	$(CXX) -g  $^ -o $@ $(CXXLIBS)
+das_unittest : $(DAS_TEST_OBJ_FILES) dasLib.a gtest_main.a
+	$(CXX) -g $^ -o $@ $(CXXLIBS) $(LDFLAGS)
 
 %.d : %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MM -MT '$(patsubst %.cpp,%.o, $(notdir $<))' $< -MF $@
@@ -95,9 +97,9 @@ das_unittest : dasLib.a $(DAS_TEST_OBJ_FILES) gtest_main.a
 %.o : %.cpp %.d make.mk Makefile Makefile_sqs
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
-
 clean:
-	rm -rf dasDemoApp dasLib.a *.o *.d dasDemoApp.dSYM dasLogs gameLogs das_unittest gtest.a gtest_main.a
+	rm -rf dasDemoApp dasLib.a *.o *.d $(JSONCPP_SRC_DIR)/*.o $(JSONCPP_SRC_DIR)/*.d \
+	../src/*.o ../src/*.d dasDemoApp.dSYM dasLogs gameLogs das_unittest gtest.a gtest_main.a
 
 NODEPS:=clean
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))

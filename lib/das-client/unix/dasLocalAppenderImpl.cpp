@@ -13,10 +13,13 @@
 #include "dasLocalAppenderImpl.h"
 #include "dasLogMacros.h"
 #include "DASPrivate.h"
+#include "portableTypes.h"
 #include <cstdint>
 #include <ctime>
 #include <atomic>
 #include <chrono>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 
 static std::atomic<uint64_t> sequence_number{0};
@@ -37,7 +40,7 @@ void DasLocalAppenderImpl::append(DASLogLevel level, const char* eventName, cons
   std::string logLevelName;
   getDASLogLevelName(level, logLevelName);
   getDASTimeString(timeStr);
-  fprintf(stdout, "%llu (t:%02u) [%s] %s - %s = %s %s\n",
+  fprintf(stdout, "%" PRIu64 " (t:%02u) [%s] %s - %s = %s %s\n",
           curSequenceNumber, threadId, timeStr.c_str(), logLevelName.c_str(), eventName,
           eventValue, globalsAndDataInfo);
 }
