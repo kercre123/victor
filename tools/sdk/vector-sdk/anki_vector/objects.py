@@ -738,6 +738,13 @@ class Charger(ObservableObject):
 
     See parent class :class:`ObservableObject` for additional properties
     and methods.
+
+    .. testcode::
+
+        import anki_vector
+        with anki_vector.Robot("my_robot_serial_number") as robot:
+            if robot.world.charger:
+                print('Robot is aware of charger: {0}'.format(robot.world.charger))
     """
 
     def __init__(self, robot, object_id: int, **kw):
