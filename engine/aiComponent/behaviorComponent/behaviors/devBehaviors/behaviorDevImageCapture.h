@@ -51,6 +51,7 @@ private:
     InstanceConfig();
     std::string            imageSavePath;
     std::string            imageSavePrefix;
+    std::string            serialNumber;
     int8_t                 imageSaveQuality;
     Vision::ImageCacheSize imageSaveSize;
     bool                   useSavePrefix;

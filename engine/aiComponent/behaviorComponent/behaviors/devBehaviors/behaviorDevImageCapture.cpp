@@ -29,7 +29,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/vision/imageSaver.h"
-
+#include "osState/osState.h"
 #include "util/fileUtils/fileUtils.h"
 
 #define LOG_CHANNEL "Behaviors"
@@ -216,6 +216,9 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
     }
   }
 
+  // Grab the serial number to use in the filename:
+  auto *osstate = OSState::getInstance();
+  _iConfig.serialNumber = osstate->GetSerialNumberAsString();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -529,9 +532,8 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
   // images will share the same basename (since they comes from the same button press).
   using namespace std::chrono;
   const auto time_sec = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
-  const auto robotESN = GetBEI().GetRobotInfo().GetHeadSerialNumber();
   std::string basename = (_iConfig.imageSavePrefix
-                          + std::to_string(robotESN) + "_"
+                          + _iConfig.serialNumber + "_"
                           + std::to_string(time_sec));
   if(_iConfig.numImagesPerCapture > 1)
   {
