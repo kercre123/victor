@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2017-12-12
  *
- * Description: Dev behavior to use the touch sensor to enable / disable image capture
+ * Description: Dev behavior to use the touch sensor or backpack button to enable / disable image capture
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -40,6 +40,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
@@ -49,8 +50,10 @@ private:
   struct InstanceConfig {
     InstanceConfig();
     std::string            imageSavePath;
+    std::string            imageSavePrefix;
     int8_t                 imageSaveQuality;
     Vision::ImageCacheSize imageSaveSize;
+    bool                   useSavePrefix;
     bool                   useCapTouch;
     bool                   saveSensorData;
     bool                   useShutterSound;

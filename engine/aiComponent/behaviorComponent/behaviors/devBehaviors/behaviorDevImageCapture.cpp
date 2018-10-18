@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2017-12-12
  *
- * Description: Dev behavior to use the touch sensor to enable / disable image capture
+ * Description: Dev behavior to use the touch sensor or backpack button to enable / disable image capture
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -71,6 +71,7 @@ const char* const kUseShutterSoundKey = "use_shutter_sound";
 const char* const kSaveSensorDataKey = "save_sensor_data";
 const char* const kClassNamesKey = "class_names";
 const char* const kVisionModesKey = "vision_modes";
+const char* const kUseSavePrefixKey = "use_save_prefix";
   
 const char* const kMultiImageModeKey = "multi_image_mode";
 const char* const kNumImagesPerCaptureKey = "num_images_per_capture";
@@ -84,6 +85,7 @@ const char* const kBodyAngleRangeKey = "body_angle_range_deg";
 BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
   : imageSaveQuality(-1)
   , imageSaveSize(Vision::ImageCacheSize::Half)
+  , useSavePrefix(false)
   , useCapTouch(false)
   , saveSensorData(false)
   , useShutterSound(true)
@@ -92,6 +94,7 @@ BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
   , headAngleRange_rad{0,0}
   , bodyAngleRange_rad{0,0}
 {
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -138,6 +141,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
 {
   _iConfig.imageSavePath = JsonTools::ParseString(config, kSavePathKey, "BehaviorDevImageCapture");
   _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, kImageSaveQualityKey, "BehaviorDevImageCapture");
+  JsonTools::GetValueOptional(config, kUseSavePrefixKey, _iConfig.useSavePrefix);
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevImageCapture");
   _iConfig.useShutterSound = JsonTools::ParseBool(config, kUseShutterSoundKey, "BehaviorDevImageCapture");
   std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevImageCapture");
@@ -211,14 +215,34 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
       LOG_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionModeEntry", "");
     }
   }
-}
 
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::InitBehavior()
+{
+  if(_iConfig.useSavePrefix)
+  {
+    // If we have a special saving prefix string in persistent data, use that.
+    // This is how we work around the fact that times may not be right and could
+    // thus be non-unique if the robot eventually talks to a time server somewhere
+    // and updates itself after having already saved images.
+    const auto context = GetBEI().GetRobotInfo().GetContext();
+    const std::string prefixFileName = context->GetDataPlatform()->GetPersistentPath("devImageCapturePrefix.txt");
+    if(Util::FileUtils::FileExists(prefixFileName))
+    {
+      _iConfig.imageSavePrefix = Util::FileUtils::ReadFile(prefixFileName);
+      _iConfig.imageSavePrefix += "_";
+      LOG_INFO("BehaviorDevImageCapture.Constructor.UsingPrefix.", "%s", _iConfig.imageSavePrefix.c_str());
+    }
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
@@ -248,6 +272,7 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kClassNamesKey,
     kVisionModesKey,
     kMultiImageModeKey,
+    kUseSavePrefixKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -502,9 +527,12 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
   // Note that for streaming, a frame number will also be appended by the ImageSaver because all saved
   // images will share the same timestamp (since it comes from when the button was pressed).
   using namespace std::chrono;
-  const auto time_ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+  const auto time_sec = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
   const auto robotESN = GetBEI().GetRobotInfo().GetHeadSerialNumber();
-  const std::string basename = std::to_string(robotESN) + "_" + std::to_string(time_ms);
+  const std::string basename = (_iConfig.imageSavePrefix
+                                + std::to_string(robotESN) + "_"
+                                + std::to_string(time_sec) + "_"
+                                + std::to_string(_dVars.imagesSaved));
   
   // Tell VisionComponent to save an image
   const ImageSaverParams params(GetSavePath(),

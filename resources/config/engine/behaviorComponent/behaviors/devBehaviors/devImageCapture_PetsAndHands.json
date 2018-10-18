@@ -4,6 +4,9 @@
 
   // path to save the images on the robot relative to "<reourceCacheDir>/camera/images"
   "save_path": "employee_data",
+  
+  // use a special persistent save prefix stored in "<persistentDir>/devImageCapturePrefix.txt"
+  "use_save_prefix": true,
 
   // class names to cycle through by raising lift, used as subdirs to above path when saving
   "class_names": ["hand", "cat", "dog", "person", "background"],
