@@ -3,6 +3,7 @@
   "behaviorClass": "ReactToBrightColor",
 
   "eyeColorBehavior": "ChangeEyeColor",
+  "numHues": 6,
 
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",
