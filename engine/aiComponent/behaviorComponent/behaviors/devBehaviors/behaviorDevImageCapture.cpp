@@ -503,9 +503,8 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
   // images will share the same timestamp (since it comes from when the button was pressed).
   using namespace std::chrono;
   const auto time_ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-  const auto epochTimestamp = static_cast<int>(time_ms);
   const auto robotESN = GetBEI().GetRobotInfo().GetHeadSerialNumber();
-  const std::string basename = std::to_string(robotESN) + "_" + std::to_string(epochTimestamp);
+  const std::string basename = std::to_string(robotESN) + "_" + std::to_string(time_ms);
   
   // Tell VisionComponent to save an image
   const ImageSaverParams params(GetSavePath(),
