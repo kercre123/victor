@@ -17,11 +17,13 @@
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/utils/cozmoFeatureGate.h"
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 
@@ -180,7 +182,7 @@ bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent) const
   return (_pendingIntent != nullptr) && (_pendingIntent->intent.GetTag() == userIntent);
 }
 
-UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner)
+UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner, bool showFeedback)
 {
   if (!IsUserIntentPending(userIntent)) {
     LOG_ERROR("UserIntentComponent.ActivateIntent.NoActive",
@@ -210,11 +212,20 @@ UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, 
   // track the owner for easier debugging
   _activeIntentOwner = owner;
 
+  if( showFeedback ){
+    _activeIntentFeedback.Activate(userIntent);
+  }
+
   return _activeIntent;
 }
 
 void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
 {
+  // we can have nested activate calls, and we want to be able to deactivate "older" activated intents
+  if (userIntent != UserIntentTag::INVALID) {
+    _activeIntentFeedback.Deactivate(userIntent);
+  }
+    
   if (!IsUserIntentActive(userIntent)) {
     LOG_ERROR("UserIntentComponent.DeactivateUserIntent.NotActive",
               "Attempting to deactivate intent '%s' (activated by %s) but '%s' is active",
@@ -233,6 +244,109 @@ void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
 
 }
 
+void UserIntentComponent::StopActiveUserIntentFeedback()
+{
+  _activeIntentFeedback.Deactivate(UserIntentTag::INVALID);
+}
+
+// todo: remove this when we decide what we're doing with the lights
+#define USE_CUSTOM_BP_ANIM 0
+
+UserIntentComponent::ActiveIntentFeedback::ActiveIntentFeedback() :
+  robot(nullptr),
+  activatedIntentTag(UserIntentTag::INVALID)
+{
+
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Init(Robot* robot)
+{
+  this->robot = robot;
+  DEV_ASSERT( this->robot != nullptr, "UserIntentComponent.ActiveIntentFeedback.Init: Invalid Robot pointer" );
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userIntent)
+{
+  if (!IsEnabled()) {
+    return;
+  }
+
+  // don't activate if we're currently actiavted
+  // some behavior have nested "intent activations" and we only care about the first one
+  if (!IsActive())
+  {
+    #if USE_CUSTOM_BP_ANIM
+    {
+      static const BackpackLightAnimation::BackpackAnimation kActiveStateLights =
+      {
+        .onColors               = {{NamedColors::WHITE,NamedColors::WHITE,NamedColors::WHITE}},
+        .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+        .onPeriod_ms            = {{1000,1000,1000}},
+        .offPeriod_ms           = {{250,250,250}},
+        .transitionOnPeriod_ms  = {{500,500,500}},
+        .transitionOffPeriod_ms = {{500,500,500}},
+        .offset                 = {{0,0,0}}
+      };
+
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.StartLoopingBackpackAnimation( kActiveStateLights, lightsHandle );
+    }
+    #else
+    {
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
+    }
+    #endif
+
+    // todo: send "start" audio event
+
+    // store who activated the state so only it may deactivate it
+    activatedIntentTag = userIntent;
+  }
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userIntent)
+{
+  if (!IsEnabled()) {
+    return;
+  }
+
+  // only deactivate if a) we're currently active, and b) this is the same intent that activated us
+  // UserIntentTag::INVALID intent will force deactivation
+  if (IsActive() && ((userIntent == activatedIntentTag) || (userIntent == UserIntentTag::INVALID)))
+  {
+    #if USE_CUSTOM_BP_ANIM
+    {
+      if ( lightsHandle.IsValid() )
+      {
+        BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+        bplComponent.StopLoopingBackpackAnimation( lightsHandle );
+      }
+    }
+    #else
+    {
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.ClearAllBackpackLightConfigs();
+    }
+    #endif
+
+    // todo: send "stop" audio event
+
+    activatedIntentTag = UserIntentTag::INVALID;
+  }
+}
+
+bool UserIntentComponent::ActiveIntentFeedback::IsEnabled() const
+{
+  return ( (nullptr != robot)
+        && robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ActiveIntentFeedback) );
+}
+
+bool UserIntentComponent::ActiveIntentFeedback::IsActive() const
+{
+  return activatedIntentTag != UserIntentTag::INVALID;
+}
+
 bool UserIntentComponent::IsUserIntentActive(UserIntentTag userIntent) const
 {
   return ( _activeIntent != nullptr ) && ( _activeIntent->intent.GetTag() == userIntent );
@@ -242,11 +356,6 @@ UserIntentPtr UserIntentComponent::GetUserIntentIfActive(UserIntentTag forIntent
 {
   auto ret = IsUserIntentActive(forIntent) ? _activeIntent : nullptr;
   return ret;
-}
-
-UserIntentPtr UserIntentComponent::GetActiveUserIntent() const
-{
-  return _activeIntent;
 }
 
 void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
@@ -455,6 +564,8 @@ void UserIntentComponent::InitDependent( Vector::Robot* robot, const BCCompMap& 
   };
 
   _tagForTriggerWordGetInCallbacks = _robot->GetAnimationComponent().SetTriggerWordGetInCallback(callback);
+
+  _activeIntentFeedback.Init(robot);
 }
 
 bool UserIntentComponent::SetCloudIntentPendingFromString(const std::string& cloudStr)

@@ -39,10 +39,6 @@
 #define PRINT_INFO( format, ... ) \
   PRINT_CH_INFO( "KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__ )
 
-// notes:
-// + need to check if Houndify connection is valid and respond accordingly if it is not
-// * move "interruptions" into BehaviorTextToSpeechLoop since it's common use case
-// * use BehaviorPromptUserForVoiceCommand for the question/response
 
 namespace Anki {
 namespace Vector {
