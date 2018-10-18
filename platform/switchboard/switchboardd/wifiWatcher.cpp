@@ -87,8 +87,19 @@ void WifiWatcher::ConnectIfNoWifi() {
                                       nullptr);
 
       if(connectResult == Anki::Wifi::ConnectWifiResult::CONNECT_SUCCESS) {
+        // reset error counter
+        _connectErrorCount = 0;
+
         Log::Write("WifiWatcher: Switchboard autoconnected to wifi successfully.");
       } else {
+        if(++_connectErrorCount >= kMaxErrorBeforeRestart) {
+          // restart wpa_supplicant/connman
+          Anki::Wifi::RecoverNetworkServices();
+
+          // reset error counter
+          _connectErrorCount = 0;
+        }
+        
         Log::Write("WifiWatcher: Switchboard failed to autoconnect.");
       }
       break;

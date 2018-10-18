@@ -41,7 +41,9 @@ private:
   } _timer;
 
   const uint8_t kWifiTick_s = 15;
-
+  const uint8_t kMaxErrorBeforeRestart = 5;
+  
+  uint8_t _connectErrorCount = 0;
   bool _enabled = true;
 };
 
