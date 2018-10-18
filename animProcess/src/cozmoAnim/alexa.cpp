@@ -32,6 +32,7 @@
 #include "util/logging/logging.h"
 #include "cozmoAnim/animContext.h"
 #include "webServerProcess/src/webService.h"
+   #include "util/logging/DAS.h"
 
 #include <ACL/Transport/HTTP2TransportFactory.h>
 #include <AVSCommon/AVS/Initialization/AlexaClientSDKInit.h>
@@ -740,23 +741,38 @@ void Alexa::OnDirective(const std::string& directive, const std::string& payload
   SendDirectiveToWebViz( directive );
   
 }
+
+void ShittyDebug(const char* str)
+{
+              DASMSG(shitty_debug,
+               "shitty_debug",
+               "blah blah2");
+              DASMSG_SET(s1, str, "debug");
+              DASMSG_SEND();
+}
   
 void Alexa::SendDirectiveToWebViz( const std::string& directive ) const
 {
+  ShittyDebug("received webviz directive");
+
   if( _context != nullptr ) {
+    ShittyDebug("has context");
     auto* webService = _context->GetWebService();
     if( webService != nullptr ) {
-      if (webService->IsWebVizClientSubscribed("micdata")) {
-        Json::Reader reader;
+      ShittyDebug("has webservice");
+      //if (webService->IsWebVizClientSubscribed("micdata")) {
+        ShittyDebug("skipping client");
+        Json::Reader reader(Json::Features::all());
         Json::Value root;
         
         bool success = reader.parse(directive, root);
         if( success ) {
+          ShittyDebug("parsed");
           Json::Value data;
           data["directive"] = root;
           webService->SendToWebViz("micdata", data);
         }
-      }
+      //}
     }
   }
 }

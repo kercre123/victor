@@ -13,6 +13,7 @@
 #include "cozmoAnim/alexaLogger.h"
 
 #include "util/logging/logging.h"
+ #include "util/logging/DAS.h"
 
 //#include <iostream>
 #include <sstream>
@@ -284,6 +285,14 @@ namespace Vector {
           m_authCheckCounter = 0;
           CONSOLE_LOG("NOT YET AUTHORIZED");
           std::ostringstream oss;
+
+            DASMSG(alexa_code,
+               "alexa_code",
+               "blah blah");
+              DASMSG_SET(s1, url.c_str(), "URL");
+              DASMSG_SET(s2, code.c_str(), "code");
+              DASMSG_SEND();
+
           oss << "To authorize, browse to: '" << url << "' and enter the code: " << code;
           CONSOLE_LOG(oss.str());
         });
