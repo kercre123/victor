@@ -15,6 +15,7 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Vector {
@@ -38,17 +39,26 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
+  virtual void InitBehavior() override;
 
 private:
 
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
-    // TODO: put configuration variables here
+    std::string eyeColorBehaviorStr;
+    ICozmoBehaviorPtr eyeColorBehavior;
   };
 
   struct DynamicVariables {
+    struct Persistent {
+      RobotTimeStamp_t lastSeenTimeStamp;
+    } persistent;
+
     DynamicVariables();
-    // TODO: put member variables here
+    void Reset(bool keepPersistent);
+
+    //! The previous eye color to transition back to
+    u32 prevEyeColor;
   };
 
   InstanceConfig _iConfig;

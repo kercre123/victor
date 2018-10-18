@@ -2,6 +2,8 @@
   "behaviorID" :   "ReactToBrightColor",
   "behaviorClass": "ReactToBrightColor",
 
+  "eyeColorBehavior": "ChangeEyeColor",
+
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",
     "targetSalientPoint": "BrightColors",
