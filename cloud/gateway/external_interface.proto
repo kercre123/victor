@@ -438,4 +438,11 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  rpc GetFeatureFlag(FeatureFlagRequest) returns (FeatureFlagResponse) {
+    option (google.api.http) = {
+      post: "/v1/feature_flag",
+      body: "*"
+    };
+  }
 }

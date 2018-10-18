@@ -125,7 +125,6 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
 {
   quitReaction = false;
   gotStop = false;
-  putDownOnCliff = false;
   wantsToBeActivated = false;
   hasTargetCliff = false;
 
@@ -136,6 +135,7 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
   persistent.numStops = 0;
   persistent.lastStopTime_sec = 0.f;
+  persistent.putDownOnCliff = false;
   persistent.lastPutDownOnCliffTime_sec = 0.f;
 }
   
@@ -163,7 +163,7 @@ void BehaviorReactToCliff::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _dVars.gotStop || _dVars.wantsToBeActivated || _dVars.putDownOnCliff;
+  return _dVars.gotStop || _dVars.wantsToBeActivated || _dVars.persistent.putDownOnCliff;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,10 +226,8 @@ void BehaviorReactToCliff::OnBehaviorActivated()
   };
 
   // skip the "huh" animation if in severe energy or repair
-  auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
-
   WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(waitForStopLambda);
-  DelegateIfInControl(waitForStopAction, callbackFunc);
+  DelegateIfInControl(waitForStopAction, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -328,13 +326,31 @@ void BehaviorReactToCliff::TransitionToBackingUp()
                                          "%x", 
                                          cliffComponent.GetCliffDetectedFlags());
                         TransitionToStuckOnEdge();
+                      } else if (_dVars.persistent.putDownOnCliff) {
+                          TransitionToHeadCalibration();
                       } else {
                         TransitionToVisualExtendCliffs();
                       }
                   });
+  } if (_dVars.persistent.putDownOnCliff) {
+    TransitionToHeadCalibration();
   } else {
     TransitionToVisualExtendCliffs();
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::TransitionToHeadCalibration()
+{
+  DEBUG_SET_STATE(CalibratingHead);
+  // The `putDownOnCliff` flag is what triggers the calling of this method.
+  // To avoid causing a loop, reset it here, since we're about to calibrate the head motor.
+  _dVars.persistent.putDownOnCliff = false;
+  // Force the head to recalibrate since it's possible that Vector may have been put down too aggressively,
+  // resulting in gear slippage for the motor.
+  DelegateIfInControl(new CalibrateMotorAction(true, false,
+                                               EnumToString(MotorCalibrationReason::BehaviorReactToCliff)),
+                      &BehaviorReactToCliff::TransitionToVisualExtendCliffs);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -345,6 +361,7 @@ void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
     return;
   }
   
+  DEBUG_SET_STATE(VisuallyExtendingCliffs);
   Pose3d leftHandSide, rightHandSide;
 
   bool didComputeLookAtPoses = false;
@@ -429,16 +446,16 @@ void BehaviorReactToCliff::BehaviorUpdate()
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.IgnoreLastStopEvent", "");
       }
     }
-    if (_dVars.putDownOnCliff) {
+    if (_dVars.persistent.putDownOnCliff) {
       const auto& timeSinceLastPutDownOnCliff_sec = currentTime_sec - _dVars.persistent.lastPutDownOnCliffTime_sec;
       if (timeSinceLastPutDownOnCliff_sec > _iConfig.eventFlagTimeout_sec) {
-        _dVars.putDownOnCliff = false;
+        _dVars.persistent.putDownOnCliff = false;
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.IgnoreLastPossiblePutDownOnCliffEvent", "");
       }
     }
     // Set wantsToBeActivated to effectively give the activation conditions
     // an extra tick to be evaluated.
-    _dVars.wantsToBeActivated = _dVars.gotStop || _dVars.putDownOnCliff;
+    _dVars.wantsToBeActivated = _dVars.gotStop || _dVars.persistent.putDownOnCliff;
     _dVars.gotStop = false;
     return;
   }
@@ -510,10 +527,10 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       
       if (treadsState == OffTreadsState::OnTreads && cliffsDetected) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.AlwaysHandleInScope", "Possibly put down on cliff");
-        _dVars.putDownOnCliff = true;
+        _dVars.persistent.putDownOnCliff = true;
         _dVars.persistent.lastPutDownOnCliffTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       } else {
-        _dVars.putDownOnCliff = false;
+        _dVars.persistent.putDownOnCliff = false;
       }
       break;
     }

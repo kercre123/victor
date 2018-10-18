@@ -194,7 +194,6 @@ class World(util.Component):
     def light_cube(self) -> objects.LightCube:
         """Returns the vector light cube object, regardless of its connection status.
 
-
         .. testcode::
 
             import anki_vector
@@ -254,9 +253,12 @@ class World(util.Component):
     def get_object(self, object_id: int):
         """Fetches an object instance with the given id.
 
-        .. code-block:: python
+        .. testcode::
 
-            my_obj = robot.world.get_object(valid_object_id)
+            import anki_vector
+
+            with anki_vector.Robot("my_robot_serial_number") as robot:
+                my_obj = robot.world.get_object(valid_object_id)
         """
         return self._objects.get(object_id)
 

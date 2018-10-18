@@ -14,7 +14,11 @@
 
 #include "clad/types/featureGateTypes.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "json/json.h"
+#include "proto/external_interface/messages.pb.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -153,6 +157,7 @@ static const char* kFeatureEnumString =
   "AttentionTransfer,"
   "UserDefinedBehaviorTree,"
   "PopAWheelie,"
+  "TestFeature,"
   "PRDemo";
 
 CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, kFeatureEnumString );
@@ -237,6 +242,32 @@ void CozmoFeatureGate::SetFeatureEnabled(FeatureType feature, bool enabled)
   std::string featureEnumName{FeatureTypeToString(feature)};
   std::transform(featureEnumName.begin(), featureEnumName.end(), featureEnumName.begin(), ::tolower);
   _features[featureEnumName] = enabled;
+}
+  
+void CozmoFeatureGate::Init(const CozmoContext* context, const std::string& jsonContents)
+{
+  Base::Init( jsonContents );
+  
+  if( context != nullptr ) {
+    // register for app messages requesting feature gates
+    auto* gi = context->GetGatewayInterface();
+    if( gi != nullptr ) {
+      auto handleFeatureFlagRequest = [this, gi](const AnkiEvent<external_interface::GatewayWrapper>& msg) {
+        if( msg.GetData().GetTag() == external_interface::GatewayWrapperTag::kFeatureFlagRequest ) {
+          const std::string& featureName = msg.GetData().feature_flag_request().feature_name();
+          FeatureType featureType = FeatureType::Invalid;
+          const bool valid = FeatureTypeFromString( featureName, featureType ) && (featureType != FeatureType::Invalid);
+          const bool enabled = valid ? IsFeatureEnabled( featureType ) : false;
+          auto* featureFlagResponse = new external_interface::FeatureFlagResponse;
+          featureFlagResponse->set_valid_feature( valid );
+          featureFlagResponse->set_feature_enabled( enabled );
+          gi->Broadcast( ExternalMessageRouter::WrapResponse(featureFlagResponse) );
+        }
+      };
+      _signalHandles.push_back( gi->Subscribe( external_interface::GatewayWrapperTag::kFeatureFlagRequest, handleFeatureFlagRequest ) );
+    }
+    
+  }
 }
 
 }

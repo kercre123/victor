@@ -60,6 +60,10 @@
     "enabled": true
   },
   {
+    "feature": "TestFeature",
+    "enabled": false
+  },
+  {
     "feature": "PRDemo",
     "enabled": false
   },

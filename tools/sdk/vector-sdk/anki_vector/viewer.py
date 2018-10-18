@@ -46,7 +46,9 @@ class ViewerComponent(util.Component):
     """This component is used to render a video using the images
     obtained from Vector's camera.
 
-    .. code-block:: python
+    .. testcode::
+
+        import anki_vector
 
         import asyncio
 
@@ -111,8 +113,9 @@ class ViewerComponent(util.Component):
         Be sure to create your Robot object with the camera feed enabled
         by using "show_viewer=True".
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             import asyncio
 
             with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
@@ -127,9 +130,11 @@ class ViewerComponent(util.Component):
     def stop_video(self) -> None:
         """Stop rendering video of Vector's camera feed
 
-        .. code-block:: python
+        .. testcode::
 
+            import anki_vector
             import asyncio
+
             with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
                 robot.loop.run_until_complete(asyncio.sleep(5))
                 robot.viewer.stop_video()

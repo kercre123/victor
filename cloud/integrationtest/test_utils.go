@@ -6,33 +6,10 @@ import (
 
 	"github.com/anki/sai-go-cli/config"
 	"github.com/anki/sai-go-util/http/apiclient"
-	"github.com/anki/sai-go-util/log"
 	"github.com/anki/sai-token-service/client/token"
 	"github.com/anki/sai-token-service/model"
 	"github.com/go-redis/redis"
 )
-
-func init() {
-	alog.ToStdout()
-}
-
-func logIfNoError(err error, userName, action, format string, a ...interface{}) {
-	if err != nil {
-		alog.Error{
-			"action":         action,
-			"test_user_name": userName,
-			"status":         "error",
-			"error":          err,
-		}.Log()
-	} else {
-		alog.Info{
-			"action":         action,
-			"test_user_name": userName,
-			"status":         "ok",
-			"message":        fmt.Sprintf(format, a...),
-		}.Log()
-	}
-}
 
 func getCredentials(tokenClient *tokenClient) (*model.Token, error) {
 	jwtResponse, err := tokenClient.Jwt()

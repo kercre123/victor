@@ -64,11 +64,15 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
     is specified, we next attempt to read the robot serial number from environment variable ANKI_ROBOT_SERIAL.
     If ANKI_ROBOT_SERIAL is specified, the value will be used as the robot's serial number.
 
-    .. code-block:: python
+    .. testcode::
+
+        import anki_vector
+
+        import argparse
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--new_param")
-        args = util.parse_command_args(parser)
+        args = anki_vector.util.parse_command_args(parse)
 
     :param parser: To add new command line arguments,
          pass an argparse parser with the new options
@@ -84,10 +88,6 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
                         general_log_level: str = None,
                         target: object = None):
     """Helper to perform basic setup of the Python logger.
-
-    .. code-block:: python
-
-        util.setup_basic_logging()
 
     :param custom_handler: provide an external logger for custom logging locations
     :param general_log_level: 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
@@ -113,9 +113,11 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
 def get_class_logger(module: str, obj: object) -> logging.Logger:
     """Helper to create logger for a given class (and module).
 
-    .. code-block:: python
+    .. testcode::
 
-        logger = util.get_class_logger(module_name, my_object)
+        import anki_vector
+
+        logger = anki_vector.util.get_class_logger("module_name", "object_name")
 
     :param module: The name of the module to which the object belongs.
     :param obj: the object that owns the logger.
@@ -640,10 +642,13 @@ class Pose:
 
     Only poses of the same origin_id can safely be compared or operated on.
 
-    .. code-block:: python
+    .. testcode::
 
-        pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
-        robot.behavior.go_to_pose(pose)
+        import anki_vector
+
+        with anki_vector.Robot("my_robot_serial_number") as robot:
+            pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
+            robot.behavior.go_to_pose(pose)
     """
     __slots__ = ('_position', '_rotation', '_origin_id')
 

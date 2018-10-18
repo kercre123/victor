@@ -78,7 +78,7 @@ void BehaviorReactToPutDown::TransitionToPlayingPutDownAnimation()
   
   // Send DAS event for activation.
   {
-    DASMSG(behavior_cliffreaction, "Behavior.PutDownReaction", "The robot reacted to being put down.");
+    DASMSG(behavior_putdownreaction, "Behavior.PutDownReaction", "The robot reacted to being put down.");
     DASMSG_SEND();
   }
     

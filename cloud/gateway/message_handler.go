@@ -2411,6 +2411,30 @@ func (service *rpcService) DefineCustomObject(ctx context.Context, in *extint.De
 	}, nil
 }
 
+// FeatureFlag is used to check what features are enabled on the robot
+func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.FeatureFlagRequest) (*extint.FeatureFlagResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FeatureFlagRequest{
+			FeatureFlagRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetFeatureFlagResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 func newServer() *rpcService {
 	return new(rpcService)
 }

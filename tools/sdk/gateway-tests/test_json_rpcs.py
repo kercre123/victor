@@ -218,3 +218,17 @@ def test_update_and_restart(vector_connection):
 
 def test_check_cloud_connection(vector_connection):
     vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())
+
+@pytest.mark.parametrize("data,result", [
+    ('{"feature_name":"TestFeature"}',1),
+    ('{"feature_name":"NotAFeature"}',0)
+])
+def test_feature_flag(vector_connection, data, result):
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+        data = json.loads(response.content)
+        assert "valid_feature" in data
+        assert "feature_enabled" in data
+        assert data["valid_feature"] == result
+        assert data["feature_enabled"] == 0
+    vector_connection.send_raw("v1/feature_flag", data, p.FeatureFlagResponse(), callback=callback)

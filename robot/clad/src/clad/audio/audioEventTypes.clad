@@ -18,6 +18,7 @@ enum uint_32 Dev_Robot
   External_Source = 2539447680,
   Freq_Sweep_20Sec = 4128432838,
   Freq_Sweep_5Sec = 253187573,
+  Fx_Test_Sequence = 1735763806,
   Invalid = 0,  // Use this to check for Invalid events
   Mozart = 627442460,
   Pink_1Sec = 3980968688,
@@ -30,6 +31,7 @@ enum uint_32 Dev_Robot
   Tone_1K_5Sec = 1034417959,
   Tone_30_Frames_01 = 2834616264,
   Tone_440Hz_5Sec = 1471825745,
+  White_5Sec = 4289674931,
 }
 
 enum uint_32 Dev_Robot_Factory
@@ -66,6 +68,7 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__External_Source = 2539447680,
   Play__Dev_Robot__Freq_Sweep_20Sec = 4128432838,
   Play__Dev_Robot__Freq_Sweep_5Sec = 253187573,
+  Play__Dev_Robot__Fx_Test_Sequence = 1735763806,
   Play__Dev_Robot__Mozart = 627442460,
   Play__Dev_Robot__Pink_1Sec = 3980968688,
   Play__Dev_Robot__Pink_5Sec = 988519260,
@@ -77,6 +80,7 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Tone_1K_5Sec = 1034417959,
   Play__Dev_Robot__Tone_30_Frames_01 = 2834616264,
   Play__Dev_Robot__Tone_440Hz_5Sec = 1471825745,
+  Play__Dev_Robot__White_5Sec = 4289674931,
   Play__Robot_Sfx__Fist_Bump = 1216170354,
   Play__Robot_Vic_Scene__Anim_Abort = 3575715931,
   Play__Robot_Vic_Scene__Low_Power_Mode_Off = 2023173047,
@@ -105,6 +109,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Sfx__Concentrate_Loop_Play = 1251262896,
   Play__Robot_Vic_Sfx__Concentrate_Success = 3430886582,
   Play__Robot_Vic_Sfx__Cube_Search_Ping = 1354807363,
+  Play__Robot_Vic_Sfx__Distress_Alert = 1531247580,
   Play__Robot_Vic_Sfx__Dsp_Loop_Play = 4074272165,
   Play__Robot_Vic_Sfx__Emote_Curious_Long = 168487306,
   Play__Robot_Vic_Sfx__Emote_Curious_Long_Stim = 4206946690,
@@ -513,6 +518,7 @@ enum uint_32 Robot_Vic_Sfx
   Concentrate_Loop_Stop = 1731537112,
   Concentrate_Success = 3430886582,
   Cube_Search_Ping = 1354807363,
+  Distress_Alert = 1531247580,
   Dsp_Loop_Play = 4074272165,
   Dsp_Loop_Stop = 816586909,
   Emote_Curious_Long = 168487306,
