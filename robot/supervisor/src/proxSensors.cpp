@@ -129,7 +129,12 @@ namespace Anki {
 #endif
         return proxData;
       }
-      
+
+      RangeDataRaw GetRangeData()
+      {
+        return HAL::GetRawRangeData();
+      }
+
       // Stops robot if cliff detected as wheels are driving forward.
       // Delays cliff event to allow pickup event to cancel it in case the
       // reason for the cliff was actually a pickup.

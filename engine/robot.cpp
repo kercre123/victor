@@ -1,4 +1,3 @@
-
 //
 //  robot.cpp
 //  Products_Cozmo
@@ -878,6 +877,106 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     if(_touchSensorFiltDeque.size() > 6000)
     {
       _touchSensorFiltDeque.pop_front();
+    }
+  }
+
+  
+
+  Pose3d co = GetCameraPose(msg.headAngle);
+  Pose3d c(DEG_TO_RAD(-4), Y_AXIS_3D(), {0, 0, 0}, co);
+  c.RotateBy(Rotation3d(DEG_TO_RAD(-90), Y_AXIS_3D()));
+  c.RotateBy(Rotation3d(DEG_TO_RAD(90)/* - msg.headAngle*/, Z_AXIS_3D()));
+  //c.RotateBy(Rotation3d(-msg.headAngle, Y_AXIS_3D()));
+  
+  
+  Pose3d lp(DEG_TO_RAD(-12.5), Z_AXIS_3D(), {0, 0, 0}, c, "leftProx");
+  Pose3d rp(DEG_TO_RAD(12.5), Z_AXIS_3D(), {0, 0, 0}, c, "rightProx");
+  Pose3d o = lp.GetWithRespectToRoot();
+  o.Print();
+  for(int r = 0; r < 4; r++)
+  {
+    f32 pitch = 0;
+    if(r == 0)
+    {
+      pitch = DEG_TO_RAD(7.125);
+    }
+    else if(r == 1)
+    {
+      pitch = DEG_TO_RAD(2.375);
+    }
+    else if(r == 2)
+    {
+      pitch = DEG_TO_RAD(-2.375);
+    }
+    else if(r == 3)
+    {
+      pitch = DEG_TO_RAD(-7.125);
+    }
+
+
+    for(int c = 0; c < 8; c++)
+    {
+      // YAW
+      if(c < 4)
+      {
+        f32 angleFromCenter = 0;
+        if(c == 0)
+        {
+          angleFromCenter = DEG_TO_RAD(7.125);
+        }
+        else if(c == 1)
+        {
+          angleFromCenter = DEG_TO_RAD(2.375);
+        }
+        else if(c == 2)
+        {
+          angleFromCenter = DEG_TO_RAD(-2.375);
+        }
+        else if(c == 3)
+        {
+          angleFromCenter = DEG_TO_RAD(-7.125);
+        }
+        const f32 y = sin(angleFromCenter) * msg.rangeData.data[4+c + (r*8)] *1000;
+        //const f32 x = cos(angleFromCenter) * msg.rangeData.data[4+c + (r*8)] * 1000;
+        const f32 z = sin(pitch) * msg.rangeData.data[4+c + (r*8)] * 1000;
+
+        Pose3d p(0, Z_AXIS_3D(), {msg.rangeData.data[4+c + (r*8)] * 1000, y, z}, lp, "point");
+        Pose3d root = p.GetWithRespectToRoot();
+        GetContext()->GetVizManager()->DrawCuboid(r*8 + c,
+                                                  {3, 3, 3},
+                                                  root);
+      }
+      else
+      {
+        int c2 = c - 4;
+        f32 angleFromCenter = 0;
+        if(c2 == 0)
+        {
+          angleFromCenter = DEG_TO_RAD(7.125);
+        }
+        else if(c2 == 1)
+        {
+          angleFromCenter = DEG_TO_RAD(2.375);
+        }
+        else if(c2 == 2)
+        {
+          angleFromCenter = DEG_TO_RAD(-2.375);
+        }
+        else if(c2 == 3)
+        {
+          angleFromCenter = DEG_TO_RAD(-7.125);
+        }
+        const f32 y = sin(angleFromCenter) * msg.rangeData.data[c2 + (r*8)] *1000;
+        //const f32 x = cos(angleFromCenter) * msg.rangeData.data[c2 + (r*8)] * 1000;
+        const f32 z = sin(pitch) * msg.rangeData.data[c2 + (r*8)] * 1000;
+        
+        Pose3d p(0, Z_AXIS_3D(), {msg.rangeData.data[c2 + (r*8)] * 1000, y, z}, rp, "point");
+        Pose3d root = p.GetWithRespectToRoot();
+        GetContext()->GetVizManager()->DrawCuboid(r*8 + c,
+                                                  {3, 3, 3},
+                                                  root);
+
+      }
     }
   }
   
@@ -2813,6 +2912,7 @@ RobotState Robot::GetDefaultRobotState()
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          5.f, // float batteryVoltage
                          0.f, // float chargerVoltage
+                         RangeDataRaw(),
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,

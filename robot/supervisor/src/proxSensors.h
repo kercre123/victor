@@ -24,7 +24,7 @@ namespace Anki {
   namespace Cozmo {
     
     namespace ProxSensors {
-
+      
       // Since this re-enables 'cliff detect' and 'stop on cliff'
       // it should only be called when the robot disconnects,
       // otherwise you could desync stopOnCliff state with engine.
@@ -48,6 +48,8 @@ namespace Anki {
 
       // Get corrected ToF distance sensor data
       ProxSensorData GetProxData();
+
+      RangeDataRaw GetRangeData();
 
     } // namespace ProxSensors
   } // namespace Cozmo
