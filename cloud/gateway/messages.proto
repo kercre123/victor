@@ -540,6 +540,16 @@ message WakeWordEnd {
   string intent_json = 2;
 }
 
+message FeatureFlagRequest {
+  string feature_name = 1;
+}
+
+message FeatureFlagResponse {
+  ResponseStatus status = 1;
+  bool valid_feature = 2;
+  bool feature_enabled = 3;
+}
+
 message PhotoInfo {
   uint32 photo_id = 1;
   uint32 timestamp_utc = 2;

@@ -21,7 +21,8 @@ enum uint_8 FeatureType {
   UserDefinedBehaviorTree,
   PopAWheelie,
   
-  PRDemo
+  TestFeature,
+  PRDemo,
 }
 
 structure FeatureToggle {

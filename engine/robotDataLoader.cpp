@@ -1048,7 +1048,7 @@ void RobotDataLoader::LoadRobotConfigs()
   {
     const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/features.json")};
     const std::string fileContents{Util::FileUtils::ReadFile(filename)};
-    _context->GetFeatureGate()->Init(fileContents);
+    _context->GetFeatureGate()->Init(_context, fileContents);
   }
 
   // A/B testing definition

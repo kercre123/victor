@@ -194,6 +194,10 @@ message GatewayWrapper {
     AudioSendModeChanged          audio_send_mode_changed            = 171;
     AudioChunk                    audio_chunk                        = 172;
 
+    // ------------ Feature flags ------------
+    FeatureFlagRequest            feature_flag_request               = 180;
+    FeatureFlagResponse           feature_flag_response              = 181;
+
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }
