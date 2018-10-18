@@ -20,6 +20,8 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <cstring>
+#include <algorithm>
 
 namespace Anki
 {
