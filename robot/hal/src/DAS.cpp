@@ -8,6 +8,29 @@
 #include "anki/cozmo/robot/DAS.h"
 #include <android/log.h>
 
+#include <time.h>
+
+//
+// Robot DAS doesn't link with ankiutils, so we have to duplicate parts of Anki::Util::DAS
+//
+
+#if defined(CLOCK_BOOTTIME)
+#define CLOCK CLOCK_BOOTTIME
+#else
+#define CLOCK CLOCK_MONOTONIC
+#endif
+
+namespace {
+  uint64_t UptimeMS()
+  {
+    struct timespec ts;
+    if (clock_gettime(CLOCK, &ts) == 0) {
+      return (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+    }
+    return 0;
+  }
+}
+
 namespace Anki {
 namespace Vector {
 namespace RobotInterface {
@@ -29,7 +52,7 @@ void DasLogEvent(int prio, const DasMsg & dasMsg)
   //const char * PROFILE_ID = ""; (provided by aggregator)
   //const char * FEATURE_TYPE = ""; (provided by aggregator)
   //const char * FEATURE_RUN_ID = ""; (provided by aggregator)
-  
+
   // Format fields into a compact CSV format.
   // Leading @ serves as a hint that this row is in compact CSV format.
   //
@@ -38,11 +61,12 @@ void DasLogEvent(int prio, const DasMsg & dasMsg)
   static_assert(Anki::Vector::RobotInterface::DAS::EVENT_MARKER == '@', "DAS event marker does not match declarations");
   static_assert(Anki::Vector::RobotInterface::DAS::FIELD_MARKER == '\x1F', "DAS field marker does not match declarations");
   static_assert(Anki::Vector::RobotInterface::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
-  
-  __android_log_print(prio, "vic-robot", "@%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s",
-                      dasMsg.event.c_str(), 
+
+  __android_log_print(prio, "vic-robot", "@%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%llu",
+                      dasMsg.event.c_str(),
                       dasMsg.s1.c_str(), dasMsg.s2.c_str(), dasMsg.s3.c_str(), dasMsg.s4.c_str(),
-                      dasMsg.i1.c_str(), dasMsg.i2.c_str(), dasMsg.i3.c_str(), dasMsg.i4.c_str());
+                      dasMsg.i1.c_str(), dasMsg.i2.c_str(), dasMsg.i3.c_str(), dasMsg.i4.c_str(),
+                      UptimeMS());
 }
 
 
@@ -69,4 +93,3 @@ void sLogDebug(const DasMsg & dasMessage)
 } // namespace RobotInterface
 } // namespace Vector
 } // namespace Anki
-

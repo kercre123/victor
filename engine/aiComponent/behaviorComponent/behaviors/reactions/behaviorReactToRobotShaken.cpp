@@ -152,7 +152,7 @@ void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
                     EReactionToString(_reactionPlayed));
 
   // Log human-readable completion info:
-  PRINT_NAMED_INFO("BehaviorReactToRobotShaken.DizzyReaction",
+  PRINT_CH_INFO("Behaviors", "BehaviorReactToRobotShaken.DizzyReaction",
                    "shakenDuration = %.3fs, maxShakingAccelMag = %.1f, reactionPlayed = '%s'",
                    _shakenDuration_s,
                    _maxShakingAccelMag,

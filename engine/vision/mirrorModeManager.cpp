@@ -136,7 +136,7 @@ void MirrorModeManager::DrawAutoExposure(const VisionProcessingResult& procResul
   // Draw exposure and gain in the lower left of the screen
   // Use a static to keep the last params displayed even when AE wasn't run (since it doesn't run every frame)
   static std::string exposureStr = "";
-  if(procResult.modesProcessed.IsBitFlagSet(VisionMode::AutoExposure))
+  if(procResult.modesProcessed.Contains(VisionMode::AutoExposure))
   {
     const Vision::CameraParams& params = procResult.cameraParams;
     std::stringstream ss;

@@ -635,7 +635,7 @@ Result CozmoEngine::InitInternal()
   u32 numLogs = factoryTestLogger.GetNumLogs(_context->GetDataPlatform());
   if (numLogs >= MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING) {
     if (factoryTestLogger.ArchiveLogs(_context->GetDataPlatform())) {
-      PRINT_NAMED_INFO("CozmoEngine.InitInternal.ArchivedFactoryLogs", "%d logs archived", numLogs);
+      LOG_INFO("CozmoEngine.InitInternal.ArchivedFactoryLogs", "%d logs archived", numLogs);
     } else {
       PRINT_NAMED_WARNING("CozmoEngine.InitInternal.ArchivedFactoryLogsFailed", "");
     }
@@ -732,7 +732,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::RedirectViz& msg)
     std::ostringstream ss;
     ss << (int)ipBytes[0] << "." << (int)ipBytes[1] << "." << (int)ipBytes[2] << "." << (int)ipBytes[3];
     std::string ipAddr = ss.str();
-    PRINT_NAMED_INFO("CozmoEngine.RedirectViz.ipAddr", "%s", ipAddr.c_str());
+    LOG_INFO("CozmoEngine.RedirectViz.ipAddr", "%s", ipAddr.c_str());
 
     _context->GetVizManager()->Disconnect();
     _context->GetVizManager()->Connect(ipAddr.c_str(), (uint16_t)VizConstants::VIZ_SERVER_PORT);

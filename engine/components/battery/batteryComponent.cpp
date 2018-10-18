@@ -38,6 +38,8 @@
 
 #include <unistd.h>
 
+#define LOG_CHANNEL "Battery"
+
 namespace Anki {
 namespace Vector {
 
@@ -317,7 +319,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   }
 
   if (level != _batteryLevel) {
-    PRINT_NAMED_INFO("BatteryComponent.BatteryLevelChanged",
+    LOG_INFO("BatteryComponent.BatteryLevelChanged",
                      "New battery level %s (previously %s for %f seconds)",
                      BatteryLevelToString(level),
                      BatteryLevelToString(_batteryLevel),
@@ -418,7 +420,7 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     _resetVoltageFilterWhenBatteryConnected = true;
 
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    PRINT_NAMED_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
+    LOG_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
     // Broadcast to game
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
@@ -525,7 +527,7 @@ void BatteryComponent::UpdateOnChargerPlatform()
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
 
-    PRINT_NAMED_INFO("BatteryComponent.UpdateOnChargerPlatform.OnChargerPlatformChange",
+    LOG_INFO("BatteryComponent.UpdateOnChargerPlatform.OnChargerPlatformChange",
                      "robot is now %s the charger platform",
                      _isOnChargerPlatform ? "ON" : "OFF");
 

@@ -45,7 +45,7 @@ void BehaviorReactToPlacedOnSlope::OnBehaviorActivated()
   if (hasBehaviorRunRecently && _endedOnInclineLastTime) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
     // Don't run the animation. Instead, run a motor cal since his head may be out of calibration.
-    PRINT_NAMED_INFO("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
     DelegateIfInControl(new CalibrateMotorAction(true, false));
     _endedOnInclineLastTime = false;
   } else {

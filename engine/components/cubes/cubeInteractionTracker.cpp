@@ -34,11 +34,13 @@
 
 #include "webServerProcess/src/webVizSender.h"
 
+#define LOG_CHANNEL "CubeInteractionTracker"
+
 #define SET_STATE(s) do { \
                           _trackerState = ECITState::s; \
                           _debugStateString = #s; \
                           SendDataToWebViz(); \
-                          PRINT_NAMED_INFO("CubeInteractionTracker.SetState", \
+                          LOG_INFO("CubeInteractionTracker.SetState", \
                                            "Tracker state set to %s", \
                                            #s); \
                         } while(0);
@@ -290,7 +292,7 @@ void CubeInteractionTracker::UpdateIsHeldEstimate(const RobotCompMap& dependentC
   }
 
   if( !_targetStatus.isHeld && (_targetStatus.probabilityIsHeld > kHeldProbabilityThreshold) ) {
-    PRINT_NAMED_INFO("CubeInteractionTracker.UserPickedUpCube",
+    LOG_INFO("CubeInteractionTracker.UserPickedUpCube",
                       "The model indicates that the user is now holding a cube");
     _targetStatus.isHeld = true;
     // If the user is holding a connected cube, maintain the connection state until they put it down
@@ -303,7 +305,7 @@ void CubeInteractionTracker::UpdateIsHeldEstimate(const RobotCompMap& dependentC
     }
   } 
   else if( _targetStatus.isHeld && (_targetStatus.probabilityIsHeld < kNotHeldProbabilityThreshold) ){
-    PRINT_NAMED_INFO("CubeInteractionTracker.UserPutDownCube",
+    LOG_INFO("CubeInteractionTracker.UserPutDownCube",
                       "The model indicates that the user is no longer holding a cube");
     _targetStatus.isHeld = false;
     _targetStatus.lastHeldTime_s = _currentTimeThisTick_s;
@@ -468,7 +470,7 @@ void CubeInteractionTracker::UpdateTargetMotion(const RobotCompMap& dependentCom
               _targetStatus.movedFarThisFrame = true;
               _targetStatus.movedFarRecently = true;
               _targetStatus.lastMovedFarTime_s = _currentTimeThisTick_s;
-              PRINT_NAMED_INFO("CubeInteractionTracker.TargetMovedFar",
+              LOG_INFO("CubeInteractionTracker.TargetMovedFar",
                                 "Target moved %f mm since last seen. Assuming currently held.",
                                 moved_mm);
             } 

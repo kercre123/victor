@@ -16,6 +16,9 @@
  **/
 
 #include "camera/cameraService.h"
+
+#include "coretech/common/engine/array2d_impl.h"
+
 #include "util/logging/logging.h"
 
 #include "util/container/fixedCircularBuffer.h"
@@ -67,6 +70,7 @@ namespace Anki {
       Util::FixedCircularBuffer<std::pair<TimeStamp_t, std::vector<u8>>, nBufferEntries> webotsImageBuffer_;
       
       std::vector<u8> imageBuffer_;
+      Vision::ImageRGB rgb_; // Wrapper around imageBuffer_
       TimeStamp_t cameraStartTime_ms_;
       TimeStamp_t lastImageCapturedTime_ms_;
 
@@ -121,6 +125,8 @@ namespace Anki {
     : _imageSensorCaptureHeight(DEFAULT_CAMERA_RESOLUTION_HEIGHT)
     , _imageSensorCaptureWidth(DEFAULT_CAMERA_RESOLUTION_WIDTH)
     {
+      imageBuffer_.resize(CAMERA_SENSOR_RESOLUTION_WIDTH * CAMERA_SENSOR_RESOLUTION_HEIGHT * 3);
+            
       if (nullptr != _engineSupervisor) {
 
         // Is the step time defined in the world file >= than the robot time? It should be!
@@ -362,7 +368,7 @@ namespace Anki {
         auto& thisImage = webotsImageBuffer_.push_back();
         thisImage.first = currentImageTime_ms;
         auto& imageVec = thisImage.second;
-        imageVec.resize(headCamInfo_.nrows * headCamInfo_.ncols * 3);
+        imageVec.resize(CAMERA_SENSOR_RESOLUTION_WIDTH * CAMERA_SENSOR_RESOLUTION_HEIGHT * 3);
         
         const u8* image = headCam_->getImage();
         DEV_ASSERT(image != NULL, "cameraService_mac.CameraGetFrame.NullImagePointer");
@@ -373,7 +379,7 @@ namespace Anki {
         // Copy from the webots 'image' into imageVec, converting from BGRA to RGB along the way
         u8* frame = imageVec.data();
         u8* pixel = frame;
-        for (s32 i=0 ; i < headCamInfo_.nrows * headCamInfo_.ncols ; i++) {
+        for (s32 i=0 ; i < headCamInfo_.nrows * headCamInfo_.ncols; i++) {
           pixel[2] = *image++; // blue
           pixel[1] = *image++; // green
           pixel[0] = *image++; // red
@@ -385,7 +391,7 @@ namespace Anki {
         {
           ApplyLensDistortion(frame, headCamInfo_);
         }
-        
+
         if (BLUR_CAPTURED_IMAGES)
         {
           // Add some blur to simulated images
@@ -428,9 +434,19 @@ namespace Anki {
         }
       }
 
-      buffer = Vision::ImageBuffer(imageBuffer_.data(),
-                                   headCamInfo_.nrows,
-                                   headCamInfo_.ncols,
+      // Wrap imageBuffer_ in an ImageRGB so we can easily resize it
+      // On physical robot images are captured at 1280x720, on simulated robot
+      // images are captured at 640x360 so we need to scale the image by 2
+      // to make it match the physical robot
+      rgb_ = Vision::ImageRGB(headCamInfo_.nrows,
+                              headCamInfo_.ncols,
+                              imageBuffer_.data());
+
+      rgb_.Resize(2.f, Vision::ResizeMethod::NearestNeighbor);
+
+      buffer = Vision::ImageBuffer(const_cast<u8*>(reinterpret_cast<const u8*>(rgb_.GetDataPointer())),
+                                   CAMERA_SENSOR_RESOLUTION_HEIGHT,
+                                   CAMERA_SENSOR_RESOLUTION_WIDTH,
                                    Vision::ImageEncoding::RawRGB,
                                    outputTimestamp,
                                    _imageFrameID);

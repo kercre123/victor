@@ -16,7 +16,6 @@
 
 #include "coretech/common/shared/types.h"
 #include "engine/moodSystem/emotion.h"
-#include "engine/moodSystem/moodDebug.h"
 
 #include "clad/types/actionResults.h"
 #include "clad/types/actionTypes.h"
@@ -25,7 +24,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/moodSystem/emotion.h"
-#include "engine/moodSystem/moodDebug.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotDataLoader.h"
 
@@ -229,8 +227,6 @@ private:
   
   void SendStimToApp(float velocity, float accel);
 
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
-
   void SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent = "");
   void SubscribeToWebViz();
     
@@ -238,7 +234,6 @@ private:
   
   Emotion         _emotions[(size_t)EmotionType::Count];
   MoodEventTimes  _moodEventTimes;
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
   Robot*          _robot = nullptr;
   float           _lastUpdateTime;
   

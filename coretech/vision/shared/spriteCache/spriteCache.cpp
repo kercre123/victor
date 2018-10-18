@@ -15,7 +15,6 @@
 
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 
-#include "util/helpers/boundedWhile.h"
 #include "util/math/math.h"
 
 namespace Anki {
@@ -154,8 +153,7 @@ void SpriteCache::Update(BaseStationTime_t currTime_nanosec)
   _lastUpdateTime_nanosec = currTime_nanosec;
 
   auto iter = _cacheTimeoutMap.begin();
-  const auto upperBound = _cacheTimeoutMap.size() + 1;
-  BOUNDED_WHILE(upperBound, iter != _cacheTimeoutMap.end()){
+  while(iter != _cacheTimeoutMap.end()){
     if(iter->first != 0){
       if(iter->first < _lastUpdateTime_nanosec){
         iter->second->ClearCachedSprite();

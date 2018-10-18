@@ -23,7 +23,6 @@
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
@@ -495,8 +494,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
       // Apply any composite image updates queued
       auto iter = _compositeImageUpdateMap.begin();
-      const auto mapBound = _compositeImageUpdateMap.size() + 1;
-      BOUNDED_WHILE(mapBound, iter != _compositeImageUpdateMap.end()){
+      while(iter != _compositeImageUpdateMap.end()){
         if(iter->first <= timeSinceAnimStart_ms){
           auto updateSpec = iter->second;
           ApplyCompositeImageUpdate(timeSinceAnimStart_ms, std::move(updateSpec));

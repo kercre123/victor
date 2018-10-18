@@ -735,7 +735,7 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   // to display the NO_ENGINE_COMMS fault code. For developer builds, fail fast
   // to capture a crash report of engine's current state.
   #if defined(VICOS) && ANKI_DEV_CHEATS
-  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::MilliSecToNanoSec(2.f * ANIM_TIME_STEP_MS);
+  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::MilliSecToNanoSec(8.f * ANIM_TIME_STEP_MS);
   #else
   static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(5.f);
   #endif

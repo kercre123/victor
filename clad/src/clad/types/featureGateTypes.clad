@@ -22,7 +22,8 @@ enum uint_8 FeatureType {
   PopAWheelie,
   ActiveIntentFeedback,
   
-  PRDemo
+  TestFeature,
+  PRDemo,
 }
 
 structure FeatureToggle {

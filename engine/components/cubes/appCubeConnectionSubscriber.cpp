@@ -27,6 +27,8 @@
 
 #include "util/logging/logging.h"
 
+#define LOG_CHANNEL "AppCubeConnectionSubscriber"
+
 namespace {
   const float kCubeConnectionTimeout_s = 60.0f;
 }
@@ -85,7 +87,7 @@ void AppCubeConnectionSubscriber::ConnectedCallback(CubeConnectionType connectio
   switch(connectionType){
     case CubeConnectionType::Interactable:
     {
-      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectionAttemptSuccess",
+      LOG_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectionAttemptSuccess",
                       "Connection attempt succeeded. Sending message to gateway");
 
       auto* connectResultMsg = new external_interface::ConnectCubeResponse;
@@ -101,7 +103,7 @@ void AppCubeConnectionSubscriber::ConnectedCallback(CubeConnectionType connectio
     }
     case CubeConnectionType::Background: 
     {
-      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectedBackground",
+      LOG_INFO("AppCubeConnectionSubscriber.ConnectedCallback.ConnectedBackground",
                        "Cube was already connected in background. Waiting for transition to Interactable connection.");
       break;
     }
@@ -116,7 +118,7 @@ void AppCubeConnectionSubscriber::ConnectedCallback(CubeConnectionType connectio
 
 void AppCubeConnectionSubscriber::ConnectionFailedCallback()
 {
-  PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectionFailedCallback.ConnectionAttemptFailed",
+  LOG_INFO("AppCubeConnectionSubscriber.ConnectionFailedCallback.ConnectionAttemptFailed",
                    "Connection attempt failed. Sending message to gateway");
 
   auto* connectResultMsg = new external_interface::ConnectCubeResponse;
@@ -127,7 +129,7 @@ void AppCubeConnectionSubscriber::ConnectionFailedCallback()
 
 void AppCubeConnectionSubscriber::ConnectionLostCallback()
 {
-  PRINT_NAMED_INFO("AppCubeConnectionSubscriber.ConnectionLostCallback.LostConnection",
+  LOG_INFO("AppCubeConnectionSubscriber.ConnectionLostCallback.LostConnection",
                    "Lost connection to cube. Sending message to gateway");
 
   auto* message = new external_interface::CubeConnectionLost;
@@ -145,7 +147,7 @@ void AppCubeConnectionSubscriber::HandleAppRequest(const AppToEngineEvent& event
   switch(event.GetData().GetTag()) {
     case GatewayWrapperTag::kConnectCubeRequest:
     {
-      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.HandleAppRequest.SubscribeRequest",
+      LOG_INFO("AppCubeConnectionSubscriber.HandleAppRequest.SubscribeRequest",
                        "Received a request for cube connection from gateway. Subscribing to interactable connection "
                        "for %f seconds",
                        kCubeConnectionTimeout_s);
@@ -155,7 +157,7 @@ void AppCubeConnectionSubscriber::HandleAppRequest(const AppToEngineEvent& event
     }
     case GatewayWrapperTag::kDisconnectCubeRequest:
     {
-      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.HandleAppRequest.UnsubscribeRequest",
+      LOG_INFO("AppCubeConnectionSubscriber.HandleAppRequest.UnsubscribeRequest",
                        "App is done with the cube connection. Requesting to unsubscribe");
       if (!ccc.UnsubscribeFromCubeConnection(this)) {
         PRINT_NAMED_WARNING("AppCubeConnectionSubscriber.HandleAppRequest.UnsubscribeFailed",
@@ -165,7 +167,7 @@ void AppCubeConnectionSubscriber::HandleAppRequest(const AppToEngineEvent& event
     }
     case GatewayWrapperTag::kFlashCubeLightsRequest:
     {
-      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.HandleAppRequest.FlashCubeLightsRequest",
+      LOG_INFO("AppCubeConnectionSubscriber.HandleAppRequest.FlashCubeLightsRequest",
                        "Received a request from gateway to flash cube lights.");
       if (ccc.IsConnectedToCube()) {
         // Renew the subscription to reset the timeout
@@ -185,14 +187,14 @@ void AppCubeConnectionSubscriber::HandleAppRequest(const AppToEngineEvent& event
     }
     case GatewayWrapperTag::kForgetPreferredCubeRequest:
     {
-      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.HandleAppRequest.ForgetPreferredCubeRequest",
+      LOG_INFO("AppCubeConnectionSubscriber.HandleAppRequest.ForgetPreferredCubeRequest",
                        "Received a request from gateway to forget our preferred cube.");
       _robot->GetCubeCommsComponent().ForgetPreferredCube();
       break;
     }
     case GatewayWrapperTag::kSetPreferredCubeRequest:
     {
-      PRINT_NAMED_INFO("AppCubeConnectionSubscriber.HandleAppRequest.SetPreferredCubeRequest",
+      LOG_INFO("AppCubeConnectionSubscriber.HandleAppRequest.SetPreferredCubeRequest",
                        "Received a request from gateway to set our preferred cube.");
       const auto& factoryId = event.GetData().set_preferred_cube_request().factory_id();
       _robot->GetCubeCommsComponent().SetPreferredCube(factoryId);

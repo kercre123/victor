@@ -67,7 +67,7 @@
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
-#  define PRINT_LOCALIZATION_INFO(...) PRINT_NAMED_INFO("Localization", __VA_ARGS__)
+#  define PRINT_LOCALIZATION_INFO(...) PRINT_CH_INFO("BlockWorld", "Localization", __VA_ARGS__)
 #else
 #  define PRINT_LOCALIZATION_INFO(...)
 #endif
@@ -325,8 +325,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     DEV_ASSERT(_definedObjectTypeCount[ObjectFamily::CustomObject] == 0,
                "BlockWorld.UndefineAllCustomObjects.NonZeroObjectCount");
 
-    PRINT_NAMED_INFO("BlockWorld.HandleMessage.UndefineAllCustomObjects",
-                     "%d objects removed from library", numRemoved);
+    PRINT_CH_INFO("BlockWorld", "BlockWorld.HandleMessage.UndefineAllCustomObjects",
+                  "%d objects removed from library", numRemoved);
   }
 
   template<>

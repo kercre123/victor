@@ -160,7 +160,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   
   if(isRetry) {
     ++_dVars.numPopAWheelieActionRetries;
-    PRINT_NAMED_INFO("BehaviorPopAWheelie.TransitionToPerformingAction.Retrying",
+    PRINT_CH_INFO("Behaviors", "BehaviorPopAWheelie.TransitionToPerformingAction.Retrying",
                      "Retry %d of %d", _dVars.numPopAWheelieActionRetries, _iConfig.numRetries);
   } else {
     _dVars.numPopAWheelieActionRetries = 0;
@@ -217,7 +217,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                   {
                     // assume that failure is because we didn't visually verify (although it could be due to an
                     // error)
-                    PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedAbort",
+                    PRINT_CH_INFO("Behaviors", "BehaviorPopAWheelie.FailedAbort",
                                      "Failed to pop with %s, searching for block",
                                      EnumToString(msg.result));
                     
@@ -231,7 +231,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                   default:
                   {
                     // other failure, just end
-                    PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedPopAction",
+                    PRINT_CH_INFO("Behaviors", "BehaviorPopAWheelie.FailedPopAction",
                                      "action failed with %s, behavior ending",
                                      EnumToString(msg.result));
                   }

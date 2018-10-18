@@ -1,5 +1,5 @@
 /**
-* File: spriteSequenceLoader .h
+* File: spriteSequenceLoader.cpp
 *
 * Authors: Kevin M. Karol
 * Created: 4/10/18
@@ -18,7 +18,6 @@
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "util/dispatchWorker/dispatchWorker.h"
-#include "util/helpers/boundedWhile.h"
 
 #include <set>
 #include <sys/stat.h>
@@ -104,9 +103,10 @@ void SpriteSequenceLoader::LoadSequence(Vision::SpriteCache* cache,
   std::sort(fileNames.begin(), fileNames.end());
   auto specIter = fileNames.end();
   auto fileIter = fileNames.begin();
-  BOUNDED_WHILE(fileNames.size() + 1, fileIter != fileNames.end()){
+  while(fileIter != fileNames.end()){
     size_t dotPos = fileIter->find_last_of(".");
     if(dotPos == std::string::npos) {
+      fileIter++;
       continue;
     }
 

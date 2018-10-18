@@ -6,6 +6,34 @@
                 "value": "loadtest"
             },
             {
+                "name": "AWS_REGION",
+                "value": "${region}"
+            },
+            {
+                "name": "LOG_TYPE",
+                "value": "kinesis"
+            },
+            {
+                "name": "LOG_KINESIS_STREAM",
+                "value": "splunk_logs_development"
+            },
+            {
+                "name": "LOG_KINESIS_ROLE_ARN",
+                "value": "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-development"
+            },
+            {
+                "name": "LOG_SOURCE",
+                "value": "sai_loadtest"
+            },
+            {
+                "name": "LOG_SOURCETYPE",
+                "value": "sai_go_general"
+            },
+            {
+                "name": "LOG_INDEX",
+                "value": "sai_loadtest"
+            },
+            {
                 "name": "ENABLE_ACCOUNT_CREATION",
                 "value": "${enable_account_creation}"
             },

@@ -134,6 +134,9 @@ struct DockingErrorSignal;
     // Check whether a specific vision mode is enabled
     bool   IsModeEnabled(VisionMode mode) const;
     
+    // Same as calling EnableMode(<mode>, false) for all modes
+    Result DisableAllModes();
+    
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileRotatingFast(bool enable);
@@ -328,9 +331,6 @@ struct DockingErrorSignal;
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
     
-    // helper method --- unpacks bitflags representation into a set of vision modes
-    std::set<VisionMode> GetVisionModesFromFlags(u64 bitflags) const;
-
     bool _isInitialized = false;
     bool _hasStartedCapturingImages = false;
     
@@ -364,7 +364,7 @@ struct DockingErrorSignal;
     // and can not be modified by VisionComponent
     VisionSystemInput _visionSystemInput = {};
 
-    Util::BitFlags64<VisionMode> _enabledVisionModes;
+    VisionModeSet _enabledVisionModes;
 
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;

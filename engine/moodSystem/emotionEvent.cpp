@@ -119,8 +119,6 @@ bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
 
   // if the graph isn't specified, the passed in default will be used instead
   
-  // PRINT_NAMED_DEBUG("EmotionEvent.ReadFromJson", "Loaded event '%s'", _name.c_str());
-  
   return true;
 }
 

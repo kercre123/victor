@@ -19,7 +19,6 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -47,8 +46,7 @@ StreamingAnimationModifier::~StreamingAnimationModifier()
 void StreamingAnimationModifier::ApplyMessagesHelper(AnimationStreamer* streamer, TimeStamp_t streamTime_ms)
 {
   auto it = _streamTimeToMessageMap.begin();
-  const auto upperBound = _streamTimeToMessageMap.size() + 1;
-  BOUNDED_WHILE(upperBound, it != _streamTimeToMessageMap.end()){
+  while(it != _streamTimeToMessageMap.end()){
     if(it->first <= streamTime_ms){
       ApplyMessageToStreamer(streamer, it->second);
       it = _streamTimeToMessageMap.erase(it);

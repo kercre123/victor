@@ -54,8 +54,6 @@ CONSOLE_VAR(float, kBW_MaxHeightForPossibleObject_mm, "AIWhiteboard", 30.0f);
 // debug render
 CONSOLE_VAR(bool, kBW_DebugRenderPossibleObjects, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleObjectsZ, "AIWhiteboard", 35.0f);
-CONSOLE_VAR(bool, kBW_DebugRenderBeacons, "AIWhiteboard", true);
-CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 
 CONSOLE_VAR(int, kMaxObservationAgeToEatCube_ms, "AIWhiteboard", 3000);
   
@@ -83,7 +81,7 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectActionFailure action)
   switch(action) {
     case ObjectActionFailure::PickUpObject :     { return 1; }
     case ObjectActionFailure::StackOnObject:     { return 1; }
-    case ObjectActionFailure::PlaceObjectAt:     { return 10;} // this can affect behaviorExploreBringCubeToBeacon's kLocationFailureDist_mm (read note there)
+    case ObjectActionFailure::PlaceObjectAt:     { return 10;}
     case ObjectActionFailure::RollOrPopAWheelie: { return 1; }
   };
   
@@ -100,8 +98,6 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectActionFailure action)
 AIWhiteboard::AIWhiteboard(Robot& robot)
 : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::Whiteboard)
 , _robot(robot)
-, _gotOffChargerAtTime_sec(-1.0f)
-, _returnedToTreadsAtTime_sec(-1.0f)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 , _sayNameProbTable(new SayNameProbabilityTable(*_robot.GetContext()->GetRandom()))
@@ -125,7 +121,6 @@ void AIWhiteboard::InitDependent(Vector::Robot* robot, const AICompMap& dependen
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
   }
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
@@ -165,9 +160,6 @@ void AIWhiteboard::OnRobotDelocalized()
   RemovePossibleObjectsFromZombieMaps();
 
   UpdatePossibleObjectRender();
-  
-  // TODO rsam we probably want to rematch beacons when robot relocalizes.
-  ClearAllBeacons();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -175,8 +167,6 @@ void AIWhiteboard::OnRobotRelocalized()
 {
   // just need to update render, otherwise they render wrt old origin
   UpdatePossibleObjectRender();
-
-  UpdateBeaconRender();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -220,173 +210,6 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
   RemovePossibleObjectsMatching(objectType, pose);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const
-{
-  if(ANKI_DEVELOPER_CODE)
-  {
-    // all beacons should be in this world
-    for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
-                 "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
-    }
-  }
-
-  outObjectList.clear();
-  if ( !_beacons.empty() )
-  {
-    // if the robot is currently carrying a cube, insert only that one right away, regardless of whether it's inside or
-    // outisde the beacon, since we would always want to drop it. Any other cube would be unusable until we drop this one
-    if ( _robot.GetCarryingComponent().IsCarryingObject() )
-    {
-      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingComponent().GetCarryingObject() );
-      if ( nullptr != carryingObject ) {
-        outObjectList.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
-      } else {
-        // this can be blocking under certain scenarios, since we can think we are carrying a cube, but it is not in
-        // the blockworld
-        PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons.NullCarryingObject",
-                          "Could not get carrying object pointer (ID=%d)",
-                          _robot.GetCarryingComponent().GetCarryingObject().GetValue());
-      }
-    }
-    else
-    {
-      // ask for all cubes we know, and if any is not inside a beacon, add to the list
-      BlockWorldFilter filter;
-      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      filter.AddFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
-        // check if the robot can pick up this object
-        const bool canPickUp = _robot.GetDockingComponent().CanPickUpObject(*blockPtr);
-        if ( canPickUp )
-        {
-          bool isBlockInAnyBeacon = false;
-          // check if the object is within any beacon
-          for ( const auto& beacon : _beacons ) {
-            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-            if ( isBlockInAnyBeacon ) {
-              break;
-            }
-          }
-          
-          // this block should be carried to a beacon
-          if ( !isBlockInAnyBeacon ) {
-            outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
-          }
-        }
-        return false; // have to return true/false, even though not used
-      });
-      
-      _robot.GetBlockWorld().FilterLocatedObjects(filter);
-    }
-  }
-
-  // do we have any usable cubes out of beacons?
-  bool hasBlocksOutOfBeacons = !outObjectList.empty();
-  return hasBlocksOutOfBeacons;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& outObjectList) const
-{
-  #if ANKI_DEVELOPER_CODE
-  {
-    // passed beacon should be a beacon in our list, not null and in the current origin
-    bool beaconIsValid = false;
-    for ( const auto& beaconIt : _beacons ) {
-      beaconIsValid = beaconIsValid || (beacon == &beaconIt);
-    }
-    DEV_ASSERT(beaconIsValid, "AIWhiteboard.FindCubesInBeacon.NotABeacon");
-    DEV_ASSERT(beacon, "AIWhiteboard.FindCubesInBeacon.NullBeacon");
-    DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon->GetPose() ),
-               "AIWhiteboard.FindCubesInBeacon.BeaconNotInOrigin");
-  }
-  #endif
-  
-  outObjectList.clear();
-  
-  {
-    // ask for all cubes we know about inside the beacon
-    BlockWorldFilter filter;
-    filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    filter.AddFilterFcn([this, &outObjectList, beacon](const ObservableObject* blockPtr)
-    {
-      if(!_robot.GetCarryingComponent().IsCarryingObject(blockPtr->GetID()) )
-      {
-        const bool isBlockInBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose());
-        if ( isBlockInBeacon ) {
-          outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
-        }
-      }
-      return false; // have to return true/false, even though not used
-    });
-    
-    _robot.GetBlockWorld().FilterLocatedObjects(filter);
-  }
-  
-  return !outObjectList.empty();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::AreAllCubesInBeacons() const
-{
-  #if ANKI_DEVELOPER_CODE
-  {
-    // all beacons should be in this world
-    for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose().FindRoot() ),
-                 "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
-    }
-  }
-  #endif
-
-  bool allInBeacon = false;
-  if ( !_beacons.empty() )
-  {
-    // robot can't be carrying an object, otherwise they are not in beacons
-    if ( !_robot.GetCarryingComponent().IsCarryingObject() )
-    {
-      size_t locatedCubesInBeacon = 0;
-      size_t allDefinedCubes = 0;
-      
-      // ask located cubes which ones are in a beacon. Note some cubes might be in the beacon already, but
-      // if Cozmo doesn't know about them he won't count them before detecting them.
-      {
-        BlockWorldFilter filter;
-        filter.SetAllowedFamilies({ ObjectFamily::LightCube });
-        filter.AddFilterFcn([this, &locatedCubesInBeacon](const ObservableObject* blockPtr)
-        {
-          bool isBlockInAnyBeacon = false;
-          if (blockPtr->IsPoseStateKnown()){
-            // check if the object is within any beacon
-            for ( const auto& beacon : _beacons ) {
-              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-              if ( isBlockInAnyBeacon ) {
-                break;
-              }
-            }
-          }
-        
-          // if the block is in a beacon, count as located
-          if ( isBlockInAnyBeacon ) {
-            ++locatedCubesInBeacon;
-          }
-          return false; // have to return true/false, even though not used
-        });
-        
-        _robot.GetBlockWorld().FilterLocatedObjects(filter);
-      }
-      
-      // Find out how many defined cubes we have and compare
-      allDefinedCubes = _robot.GetBlockWorld().GetNumDefinedObjects(ObjectFamily::LightCube);
-      
-      allInBeacon = (allDefinedCubes == locatedCubesInBeacon);
-    }
-  }
-
-  // return the result of the filter
-  return allInBeacon;
-}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectActionFailure action)
 {
@@ -653,54 +476,6 @@ void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObj
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::AddBeacon( const Pose3d& beaconPos, const float radius )
-{
-  _beacons.emplace_back( beaconPos, radius );
-
-  // update render
-  UpdateBeaconRender();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::ClearAllBeacons()
-{
-  _beacons.clear();
-  
-  // update render
-  UpdateBeaconRender();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::FailedToFindLocationInBeacon(AIBeacon* beacon)
-{
-  // set time stamp in the beacon
-  beacon->FailedToFindLocation();
-  
-  // update render
-  UpdateBeaconRender();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const AIBeacon* AIWhiteboard::GetActiveBeacon() const
-{
-  if ( _beacons.empty() ) {
-    return nullptr;
-  }
-  
-  return &_beacons[0];
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AIBeacon* AIWhiteboard::GetActiveBeacon()
-{
-  if ( _beacons.empty() ) {
-    return nullptr;
-  }
-  
-  return &_beacons[0];
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::RemovePossibleObjectsMatching(ObjectType objectType, const Pose3d& pose)
 {
   // iterate all current possible objects
@@ -794,16 +569,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   }
 
   ConsiderNewPossibleObject(possibleObject.objectType, obsPose);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void AIWhiteboard::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
-{
-  const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
-  if ( onTreads ) {
-    _returnedToTreadsAtTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
 }
 
 
@@ -933,37 +698,6 @@ void AIWhiteboard::UpdatePossibleObjectRender()
         _robot.GetContext()->GetVizManager()->DrawSegment("AIWhiteboard.PossibleObjects",
             thisPose.GetTranslation() + zRenderOffset, directionEndPoint + zRenderOffset, NamedColors::YELLOW, false);
       }
-    }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::UpdateBeaconRender()
-{
-  // re-draw all beacons since they all use the same id
-  if ( kBW_DebugRenderBeacons )
-  {
-    static const std::string renderId("AIWhiteboard.UpdateBeaconRender");
-    _robot.GetContext()->GetVizManager()->EraseSegments(renderId);
-  
-    // iterate all beacons and render
-    for( const auto& beacon : _beacons )
-    {
-      // currently we don't support beacons from older origins (rsam: I will soon)
-      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
-                 "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
-      
-      // note that since we don't know what timeout behaviors use, we can only say that it ever failed
-      const ColorRGBA& color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
-      
-      Vec3f center = beacon.GetPose().GetWithRespectToRoot().GetTranslation();
-      center.z() += kBW_DebugRenderBeaconZ;
-      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius(), color, false);
-      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius()-0.5f, color, false); // double line
-      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius()-1.0f, color, false); // triple line (jane's request)
     }
   }
 }

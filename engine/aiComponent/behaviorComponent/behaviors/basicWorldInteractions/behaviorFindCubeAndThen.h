@@ -22,6 +22,8 @@
 namespace Anki {
 namespace Vector {
 
+class BlockWorldFilter;
+
 class BehaviorFindCubeAndThen : public ICozmoBehavior
 {
 

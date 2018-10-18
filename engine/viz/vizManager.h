@@ -50,7 +50,6 @@ namespace Anki {
   namespace VizInterface {
   class MessageViz;
   enum class MessageVizTag : uint8_t;
-  struct RobotMood;
   } // end namespace VizInterface
     
     class IExternalInterface;
@@ -354,15 +353,6 @@ namespace Anki {
       void SendCameraParams(const Vision::CameraParams& params);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
-      /*
-      void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp);
-      void SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp);
-
-      void SendImage(const RobotID_t robotID, const u8* data, const u32 dataLength,
-                     const Vision::CameraResolution res,
-                     const TimeStamp_t timestamp,
-                     const Vision::ImageEncoding_t encoding);
-      */
 
       void SendImageChunk(const RobotID_t robotID, const ImageChunk& robotImageChunk);
       
@@ -383,7 +373,6 @@ namespace Anki {
       template <typename T>
       void HandleMessage(const T& msg);
       
-      void SendRobotMood(VizInterface::RobotMood&& robotMood);
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
       void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
@@ -404,11 +393,6 @@ namespace Anki {
       UdpClient          _vizClient;
 
       uint32_t           _messageCountViz = 0;
-
-      /*
-      // Image sending
-      std::map<RobotID_t, u8> _imgID;
-      */
 
       bool               _sendImages;
       

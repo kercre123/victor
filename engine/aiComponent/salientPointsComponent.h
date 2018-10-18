@@ -21,7 +21,6 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 #include "coretech/common/engine/robotTimeStamp.h"
-#include "engine/aiComponent/aiBeacon.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"

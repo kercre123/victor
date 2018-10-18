@@ -57,8 +57,8 @@ namespace{
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
 #define BEHAVIOR_VERBOSE_PRINT(_BEHAVIORDEF, ...) do { \
-if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
-else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
+if ((_BEHAVIORDEF)) { PRINT_CH_INFO("Behaviors",  __VA_ARGS__ ); } \
+else { PRINT_CH_DEBUG("Behaviors",  __VA_ARGS__ ); } \
 } while(0) \
 
 CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest", 30);
@@ -946,7 +946,7 @@ void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& ev
     }
       
     default:
-      PRINT_NAMED_INFO("BehaviorDockingTest.HandleWhileRunning.InvalidTag",
+      PRINT_CH_INFO("Behaviors", "BehaviorDockingTest.HandleWhileRunning.InvalidTag",
                         "Received unexpected event with tag %hhu.", event.GetData().GetTag());
       break;
   }
@@ -1037,7 +1037,7 @@ void BehaviorDockingTestSimple::HandleObservedObject(Robot& robot,
       }
       else
       {
-        PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
+        PRINT_CH_INFO("Behaviors", "BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
         _dVars.yellForHelp = true;
         END_TEST_IN_HANDLER(ActionResult::ABORT, "SawMoreThanOneMarkerOnInit");
       }
@@ -1054,7 +1054,7 @@ void BehaviorDockingTestSimple::HandleObservedObject(Robot& robot,
       }
       else
       {
-        PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
+        PRINT_CH_INFO("Behaviors", "BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
         _dVars.yellForHelp = true;
         END_TEST_IN_HANDLER(ActionResult::ABORT, "SawMoreThanOneMarkerOnInit");
       }

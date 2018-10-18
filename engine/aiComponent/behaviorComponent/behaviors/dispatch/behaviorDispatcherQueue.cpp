@@ -16,7 +16,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "json/json.h"
-#include "util/helpers/boundedWhile.h"
 
 namespace Anki {
 namespace Vector {
@@ -85,7 +84,7 @@ ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
   const auto& dispatches = GetAllPossibleDispatches();
 
   // iterate until we find a behavior that wants to be activated
-  BOUNDED_WHILE( 1000, _dVars.currIdx < dispatches.size() ) {
+  while( _dVars.currIdx < dispatches.size() ) {
     if( dispatches[_dVars.currIdx]->WantsToBeActivated() ) {
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SelectBehavior",
                     "Selecting behavior %zu '%s'",

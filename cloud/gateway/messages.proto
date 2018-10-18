@@ -540,6 +540,16 @@ message WakeWordEnd {
   string intent_json = 2;
 }
 
+message FeatureFlagRequest {
+  string feature_name = 1;
+}
+
+message FeatureFlagResponse {
+  ResponseStatus status = 1;
+  bool valid_feature = 2;
+  bool feature_enabled = 3;
+}
+
 message PhotoInfo {
   uint32 photo_id = 1;
   uint32 timestamp_utc = 2;
@@ -627,29 +637,8 @@ message LatestAttentionTransferResponse {
 }
 
 enum VisionMode {
-  VISION_MODE_IDLE = 0;
-  VISION_MODE_DETECTING_MARKERS = 1;
+  VISION_MODE_UNKNOWN = 0;
   VISION_MODE_DETECTING_FACES = 2;
-  VISION_MODE_DETECTING_MOTION = 3;
-  VISION_MODE_DETECTING_OVERHEAD_EDGES = 4;
-  VISION_MODE_COMPUTING_CALIBRATION = 5;
-  VISION_MODE_AUTO_EXPOSURE = 6;
-  VISION_MODE_WHITE_BALANCE = 7;
-  VISION_MODE_COMPUTING_STATISTICS = 8;
-  VISION_MODE_DETECTING_PETS = 9;
-  VISION_MODE_ESTIMATING_FACIAL_EXPRESSION = 10;  // No effect if DetectingFaces not enabled
-  VISION_MODE_DETECTING_SMILE_AMOUNT = 11;        // No effect if DetectingFaces not enabled
-  VISION_MODE_DETECTING_GAZE = 12;                // No effect if DetectingFaces not enabled
-  VISION_MODE_DETECTING_BLINK_AMOUNT = 13;        // No effect if DetectingFaces not enabled
-  VISION_MODE_LIMITED_EXPOSURE = 14;
-  VISION_MODE_DETECTING_LASER_POINTS = 15;
-  VISION_MODE_BUILDING_OVERHEAD_MAP = 16;
-  VISION_MODE_DETECTING_VISUAL_OBSTACLES = 17;
-  VISION_MODE_BENCHMARKING = 18;
-  VISION_MODE_SAVING_IMAGES = 19;
-  VISION_MODE_RUNNING_NEURAL_NET = 20; 
-  VISION_MODE_DETECTING_ILLUMINATION = 21;
-  VISION_MODE_COUNT = 22;
 }
 
 message EnableVisionModeRequest {

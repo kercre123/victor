@@ -346,12 +346,6 @@ message FaceDetection
   bool    visualize
 }
 
-message RobotMood
-{
-  float_32  emotion[uint_8],
-  string    recentEvents[uint_8]
-}
-
 message BehaviorStackDebug
 {
   string debugStrings[uint_8]

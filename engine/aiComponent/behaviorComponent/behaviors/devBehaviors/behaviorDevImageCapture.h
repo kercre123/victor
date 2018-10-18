@@ -48,16 +48,16 @@ protected:
 private:
   struct InstanceConfig {
     InstanceConfig();
-    std::string               imageSavePath;
-    int8_t                    imageSaveQuality;
-    Vision::ImageCacheSize  imageSaveSize;
-    bool                      useCapTouch;
-    bool                      saveSensorData;
-    bool                      useShutterSound;
-    s32                       numImagesPerCapture;
-    std::pair<f32,f32>        distanceRange_mm;
-    std::pair<f32,f32>        headAngleRange_rad;
-    std::pair<f32,f32>        bodyAngleRange_rad;
+    std::string            imageSavePath;
+    int8_t                 imageSaveQuality;
+    Vision::ImageCacheSize imageSaveSize;
+    bool                   useCapTouch;
+    bool                   saveSensorData;
+    bool                   useShutterSound;
+    s32                    numImagesPerCapture;
+    std::pair<f32,f32>     distanceRange_mm;
+    std::pair<f32,f32>     headAngleRange_rad;
+    std::pair<f32,f32>     bodyAngleRange_rad;
     
     std::list<std::string> classNames;
     std::list<VisionMode>  visionModesBesidesSaving;

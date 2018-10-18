@@ -178,7 +178,7 @@ void BehaviorDevSquawkBoxTest::HandleWhileActivated(const RobotToEngineEvent& ev
 {
   if (event.GetData().GetTag() == RobotInterface::RobotToEngineTag::triggerWordDetected) {
     const auto& msg = event.GetData().Get_triggerWordDetected();
-    PRINT_NAMED_INFO("nameBehaviorDevSquawkBoxTest.HandleWhileActivated.RobotToEngineEvent",
+    PRINT_CH_INFO("Behaviors", "nameBehaviorDevSquawkBoxTest.HandleWhileActivated.RobotToEngineEvent",
                      "Trigger word detected, score %d", msg.triggerScore);
   }
 }

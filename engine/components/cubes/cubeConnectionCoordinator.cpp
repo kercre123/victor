@@ -31,6 +31,8 @@
 
 #include "webServerProcess/src/webService.h"
 
+#define LOG_CHANNEL "CubeConnectionCoordinator"
+
 #define SET_STATE(s) do { \
                           SetState(ECoordinatorState::s); \
                           _debugStateString = #s; \
@@ -211,7 +213,7 @@ void CubeConnectionCoordinator::SubscribeToCubeConnection(ICubeConnectionSubscri
   // Prevent duplicate subscriptions
   SubscriptionIterator it;
   if(FindRecordBySubscriber(subscriber, it)){
-    PRINT_NAMED_INFO("CubeConnectionCoordinator.UpdateSubscription",
+    LOG_INFO("CubeConnectionCoordinator.UpdateSubscription",
                      "Recieved new subscription for existing record, replacing record");
     UnsubscribeFromCubeConnection(subscriber);
   } 
@@ -264,7 +266,7 @@ bool CubeConnectionCoordinator::UnsubscribeFromCubeConnection(ICubeConnectionSub
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(!it->isBackgroundConnection){
     if(--_nonBackgroundSubscriberCount == 0){
-      PRINT_NAMED_INFO("CubeConnectionCoordinator.NoInteractableSubscribers",
+      LOG_INFO("CubeConnectionCoordinator.NoInteractableSubscribers",
                         "No remaining interactable subscribers, transitioning to background in %f seconds",
                         kStandbyTimeout_s);
       _timeToEndStandby_s = currentTime_s + kStandbyTimeout_s;
@@ -375,7 +377,7 @@ void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCom
   SET_STATE(ConnectedSwitchingToBackground);
   _timeToSwitchToBackground_s = 0;
 
-  PRINT_NAMED_INFO("CubeConnectionCoordinator.SwitchingToBackgroundConnection",
+  LOG_INFO("CubeConnectionCoordinator.SwitchingToBackgroundConnection",
                    "Switching to background connection upon cube light anim completion");
 
   // Play disconnect light animation
@@ -409,7 +411,7 @@ void CubeConnectionCoordinator::CancelSwitchToBackground(const RobotCompMap& dep
   // Don't play connection lights or notify subscribers, since the cube connection is still live
   SET_STATE(ConnectedInteractable);
 
-  PRINT_NAMED_INFO("CubeConnectionCoordinator.SwitchToBackgroundInterrupted",
+  LOG_INFO("CubeConnectionCoordinator.SwitchToBackgroundInterrupted",
                    "New interactable subscription received while switching to background, returning to interactable");
 
   // Stop the disconnection lights if they're playing
@@ -447,7 +449,7 @@ void CubeConnectionCoordinator::RequestConnection(const RobotCompMap& dependentC
   DASMSG_SET(s1, _firstSubscriber, "First subscription for current connection");
   DASMSG_SEND();
 
-  PRINT_NAMED_INFO("CubeConnectionCoordinator.RequestingConnection",
+  LOG_INFO("CubeConnectionCoordinator.RequestingConnection",
                     "Requesting cube connection from CubeCommsComponent");
 
   _connectionAttemptFinished = false;
@@ -481,7 +483,7 @@ void CubeConnectionCoordinator::RequestDisconnect(const RobotCompMap& dependentC
   DASMSG_SET(i1, std::round(connectionDuration_s), "Connection duration in seconds");
   DASMSG_SEND();
 
-  PRINT_NAMED_INFO("CubeConnectionCoordinator.RequestingDisconnect",
+  LOG_INFO("CubeConnectionCoordinator.RequestingDisconnect",
                     "Requesting disconnection from CubeCommsComponent");
 
   if(!_subscriptionRecords.empty()){

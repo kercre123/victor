@@ -49,7 +49,7 @@ namespace Vector {
 class IReactionTriggerStrategy;
 
 namespace {
-  const int kArbitrarilyLargeCancelBound = 1000000;
+  const int kArbitrarilyLargeCancelBound = 1000;
 
   #define CONSOLE_GROUP "Behaviors.BehaviorSystemManager"
   CONSOLE_VAR(bool, kDebugBehaviorStack, CONSOLE_GROUP, false);
@@ -341,11 +341,9 @@ bool BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
               delegator->GetDebugLabel().c_str());
 
     if (kDebugBehaviorStack) {
-      _behaviorStack->DebugPrintStack("AfterCancelDelgates");
+      _behaviorStack->DebugPrintStack("AfterCancelDelegates");
     }
-  }
 
-  if (anyPopped) {
     _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
   }
 

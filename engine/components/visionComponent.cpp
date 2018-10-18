@@ -79,6 +79,8 @@
 
 #include "opencv2/highgui/highgui.hpp"
 
+#define LOG_CHANNEL "VisionComponent"
+
 namespace Anki {
 namespace Vector {
 
@@ -124,14 +126,14 @@ namespace Vector {
   
   void DebugEraseAllEnrolledFaces(ConsoleFunctionContextRef context)
   {
-    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","DebugEraseAllEnrolledFaces function called");
+    LOG_INFO("VisionComponent.ConsoleFunc","DebugEraseAllEnrolledFaces function called");
     s_VisionComponent->EraseAllFaces();
   }
   CONSOLE_FUNC(DebugEraseAllEnrolledFaces, "Vision.General");
 
   void DebugCaptureOneImage(ConsoleFunctionContextRef context)
   {
-    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","Capture one image");
+    LOG_INFO("VisionComponent.ConsoleFunc","Capture one image");
     s_VisionComponent->CaptureOneFrame();
   }
   CONSOLE_FUNC(DebugCaptureOneImage, "Vision.General");
@@ -139,7 +141,7 @@ namespace Vector {
   void DebugToggleCameraEnabled(ConsoleFunctionContextRef context)
   {
     static bool enable = false;
-    PRINT_NAMED_INFO("VisionComponent.ConsoleFunc","Camera %s", (enable ? "enabled" : "disabled"));
+    LOG_INFO("VisionComponent.ConsoleFunc","Camera %s", (enable ? "enabled" : "disabled"));
     s_VisionComponent->EnableImageCapture(enable);
     enable = !enable;
   }
@@ -197,6 +199,7 @@ namespace Vector {
       // In alphabetical order:
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableColorImages>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableVisionMode>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisableAllVisionModes>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseAllEnrolledFaces>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestEnrolledNames>();
@@ -207,8 +210,6 @@ namespace Vector {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraSettings>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DevSubscribeVisionModes>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DevUnsubscribeVisionModes>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraCaptureFormat>();
 
       // Separate list for engine messages to listen to:
@@ -222,7 +223,19 @@ namespace Vector {
 
     if (nullptr != context->GetDataPlatform())
     {
-      ReadVisionConfig(context->GetDataLoader()->GetRobotVisionConfig());
+      const Json::Value& config = context->GetDataLoader()->GetRobotVisionConfig();
+      ReadVisionConfig(config);
+      
+      if(!config.isMember("InitialModeSchedules"))
+      {
+        PRINT_NAMED_ERROR("VisionComponent.InitDependent.MissingInitialModeSchedulesConfigField", "");
+      }
+      
+      const Json::Value& modeSchedulesConfig = config["InitialModeSchedules"];
+      const Result result = AllVisionModesSchedule::SetDefaultSchedulesFromJSON(modeSchedulesConfig);
+      if(RESULT_OK != result) {
+        PRINT_NAMED_ERROR("VisionComponent.InitDependent.FailedToInitializeDefaultModeSchedules", "");
+      }
     }
 
     CameraService::getInstance()->RegisterOnCameraRestartCallback([this](){
@@ -324,14 +337,14 @@ namespace Vector {
 
   void VisionComponent::SetIsSynchronous(bool isSynchronous) {
     if(isSynchronous && !_isSynchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetSynchronousMode.SwitchToSync", "");
+      LOG_INFO("VisionComponent.SetSynchronousMode.SwitchToSync", "");
       if(_running) {
         Stop();
       }
       _isSynchronous = true;
     }
     else if(!isSynchronous && _isSynchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetSynchronousMode.SwitchToAsync", "");
+      LOG_INFO("VisionComponent.SetSynchronousMode.SwitchToAsync", "");
       _isSynchronous = false;
       Start();
     }
@@ -347,12 +360,12 @@ namespace Vector {
     }
 
     if(_running) {
-      PRINT_NAMED_INFO("VisionComponent.Start.Restarting",
+      LOG_INFO("VisionComponent.Start.Restarting",
                        "Thread already started, calling Stop() and then restarting (paused:%d).",
                        _paused);
       Stop();
     } else {
-      PRINT_NAMED_INFO("VisionComponent.Start",
+      LOG_INFO("VisionComponent.Start",
                        "Starting vision processing thread (paused:%d)",
                        _paused);
     }
@@ -411,15 +424,21 @@ namespace Vector {
     _lock.unlock();
   }
 
+  Result VisionComponent::DisableAllModes()
+  {
+    _enabledVisionModes.Clear();
+    return RESULT_OK;
+  }
+  
   Result VisionComponent::EnableMode(VisionMode mode, bool enable)
   {
-    _enabledVisionModes.SetBitFlag(mode, enable);
+    _enabledVisionModes.Enable(mode, enable);
     return RESULT_OK;
   }
 
   bool VisionComponent::IsModeEnabled(VisionMode mode) const
   {
-    return _enabledVisionModes.IsBitFlagSet(mode);
+    return _enabledVisionModes.Contains(mode);
   }
 
   static Result GetImageHistState(const Robot&      robot,
@@ -648,23 +667,21 @@ namespace Vector {
       EnableImageCapture(false);
     }
 
-    _visionSystemInput.modesToProcess.ClearFlags();
-    _visionSystemInput.futureModesToProcess.ClearFlags();
+    _visionSystemInput.modesToProcess.Clear();
+    _visionSystemInput.futureModesToProcess.Clear();
     
     static u32 scheduleCount = 0;
     const AllVisionModesSchedule& schedule = _robot->GetVisionScheduleMediator().GetSchedule();
-    for(VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; mode++)
+    std::for_each(_enabledVisionModes.begin(), _enabledVisionModes.end(), [this,&schedule](const VisionMode mode)
     {
       // Only process modes that are enabled and want to run on this frame according to the schedule
-      if(_enabledVisionModes.IsBitFlagSet(mode))
+      if(_enabledVisionModes.Contains(mode))
       {
-        _visionSystemInput.modesToProcess.SetBitFlag(mode,
-                                                     schedule.IsTimeToProcess(mode, scheduleCount));
+        _visionSystemInput.modesToProcess.Enable(mode, schedule.IsTimeToProcess(mode, scheduleCount));
 
-        _visionSystemInput.futureModesToProcess.SetBitFlag(mode,
-                                                           schedule.GetScheduleForMode(mode).WillEverRun());
+        _visionSystemInput.futureModesToProcess.Enable(mode, schedule.GetScheduleForMode(mode).WillEverRun());
       }
-    }
+    });
     scheduleCount++;
 
     // We are all set to process this image so lock input
@@ -755,7 +772,7 @@ namespace Vector {
       }
     }
 
-    //      PRINT_NAMED_DEBUG("VisionComponent.LookupGroundPlaneHomography.HeadAngleDiff",
+    //      LOG_DEBUG("VisionComponent.LookupGroundPlaneHomography.HeadAngleDiff",
     //                        "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
     //                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
     //                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
@@ -776,16 +793,16 @@ namespace Vector {
 
     // VisionMode::ComputingCalibration is a one-shot mode, turn it off
     // as soon as it runs
-    if(_enabledVisionModes.IsBitFlagSet(VisionMode::ComputingCalibration))
+    if(_enabledVisionModes.Contains(VisionMode::ComputingCalibration))
     {
-      _enabledVisionModes.SetBitFlag(VisionMode::ComputingCalibration, false);
+      _enabledVisionModes.Remove(VisionMode::ComputingCalibration);
     }
   }
   
 
   void VisionComponent::Processor()
   {
-    PRINT_NAMED_INFO("VisionComponent.Processor",
+    LOG_INFO("VisionComponent.Processor",
                      "Starting Robot VisionComponent::Processor thread...");
 
     DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
@@ -903,41 +920,29 @@ namespace Vector {
         {
           // Send processed modes to viz
           VizInterface::EnabledVisionModes evm;
-          for(VisionMode m = VisionMode::Idle; m < VisionMode::Count; m++)
-          {
-            if(result.modesProcessed.IsBitFlagSet(m))
-            {
-              evm.modes.push_back(m);
-            }
-          }
+          std::copy(result.modesProcessed.begin(), result.modesProcessed.end(),
+                    std::back_inserter(evm.modes));
           _vizManager->SendEnabledVisionModes(std::move(evm));
         }
 
         SendImages(result);
         
-#       define ToVisionModeMask(__mode__) result.modesProcessed.GetBitMask(Util::EnumToUnderlying(VisionMode::__mode__))
-        
         using LocalHandlerType = Result(VisionComponent::*)(const VisionProcessingResult&);
-        using VisionModeMask = std::underlying_type<VisionMode>::type;
-        auto tryAndReport = [this, &result, &anyFailures]( LocalHandlerType handler, VisionModeMask mask )
+        auto tryAndReport = [this, &result, &anyFailures]( LocalHandlerType handler, const VisionModeSet& modes )
         {
-          if (!result.modesProcessed.AreAnyBitsInMaskSet(mask) && (mask != ToVisionModeMask(Count)))
+          if(!modes.IsEmpty())
           {
-            return;
+            VisionModeSet intersection = result.modesProcessed.Intersect(modes);
+            if( intersection.IsEmpty() )
+            {
+              return;
+            }
           }
 
           // Call the passed in member handler to look at the result
           if (RESULT_OK != (this->*handler)(result))
           {
-            std::string modeStr;
-            for(VisionMode mode=(VisionMode)0; mode < VisionMode::Count; ++mode)
-            {
-              if(mask & Util::EnumToUnderlying(mode))
-              {
-                modeStr += " ";
-                modeStr += EnumToString(mode);
-              }
-            }
+            std::string modeStr = modes.ToString();
             
             PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.LocalHandlerFailed",
                               "For mode(s):%s", modeStr.c_str());
@@ -947,34 +952,33 @@ namespace Vector {
         
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateVisionMarkers,        ToVisionModeMask(DetectingMarkers));
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,        {VisionMode::DetectingMarkers});
 
         // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateFaces,                ToVisionModeMask(DetectingFaces));
+        tryAndReport(&VisionComponent::UpdateFaces,                {VisionMode::DetectingFaces});
 
         // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdatePets,                 ToVisionModeMask(DetectingPets));
+        tryAndReport(&VisionComponent::UpdatePets,                 {VisionMode::DetectingPets});
 
-        tryAndReport(&VisionComponent::UpdateMotionCentroid,       ToVisionModeMask(DetectingMotion));
-        tryAndReport(&VisionComponent::UpdateOverheadEdges,        ToVisionModeMask(DetectingOverheadEdges));
-        tryAndReport(&VisionComponent::UpdateComputedCalibration,  ToVisionModeMask(ComputingCalibration));
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,       {VisionMode::DetectingMotion});
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,        {VisionMode::DetectingOverheadEdges});
+        tryAndReport(&VisionComponent::UpdateComputedCalibration,  {VisionMode::ComputingCalibration});
         
         // NOTE: Same handler for two modes
-        tryAndReport(&VisionComponent::UpdateCameraParams,        (ToVisionModeMask(AutoExposure) |
-                                                                   ToVisionModeMask(WhiteBalance)));
+        tryAndReport(&VisionComponent::UpdateCameraParams,         {VisionMode::AutoExposure, VisionMode::WhiteBalance});
         
-        tryAndReport(&VisionComponent::UpdateLaserPoints,          ToVisionModeMask(DetectingLaserPoints));
-        tryAndReport(&VisionComponent::UpdateSalientPoints,        ToVisionModeMask(Count)); // Use Count here to always call UpdateSalientPoints
-        tryAndReport(&VisionComponent::UpdateVisualObstacles,      ToVisionModeMask(DetectingVisualObstacles));
-        tryAndReport(&VisionComponent::UpdatePhotoManager,         ToVisionModeMask(SavingImages));
-        tryAndReport(&VisionComponent::UpdateDetectedIllumination, ToVisionModeMask(DetectingIllumination));
+        tryAndReport(&VisionComponent::UpdateLaserPoints,          {VisionMode::DetectingLaserPoints});
+        tryAndReport(&VisionComponent::UpdateSalientPoints,        {}); // Use empty set here to always call UpdateSalientPoints
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,      {VisionMode::DetectingVisualObstacles});
+        tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SavingImages});
+        tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::DetectingIllumination});
 
         if(ANKI_DEV_CHEATS) {
           // Note: we always run this because it handles switching to the mirror mode debug screen
           // It internally checks whether the MirrorMode flag is set in modesProcessed
-          tryAndReport(&VisionComponent::UpdateMirrorMode,           ToVisionModeMask(Count)); // Always run
+          tryAndReport(&VisionComponent::UpdateMirrorMode,           {}); // Use empty set to always run
         }
         
 #       undef ToVisionModeMask
@@ -988,20 +992,15 @@ namespace Vector {
         _lastProcessedImageTimeStamp_ms = result.timestamp;
 
         auto visionModesList = std::vector<VisionMode>();
-        for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode)
-        {
-          if (result.modesProcessed.IsBitFlagSet(mode))
-          {
-            visionModesList.push_back(mode);
-          }
-        }
+        std::copy(result.modesProcessed.begin(), result.modesProcessed.end(),
+                  std::back_inserter(visionModesList));
 
         // Send the processed image message last
         {
           using namespace ExternalInterface;
 
           u8 imageMean = 0;
-          if(result.modesProcessed.IsBitFlagSet(VisionMode::ComputingStatistics))
+          if(result.modesProcessed.Contains(VisionMode::ComputingStatistics))
           {
             imageMean = result.imageMean;
           }
@@ -1145,7 +1144,7 @@ namespace Vector {
     for(auto & faceDetection : procResult.faces)
     {
       /*
-       PRINT_NAMED_INFO("VisionComponent.Update",
+       LOG_INFO("VisionComponent.Update",
                         "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
                         "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
                         faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
@@ -1161,7 +1160,7 @@ namespace Vector {
 
       // Check this before potentially ignoring the face detection for faceWorld's purposes below
       if(faceDetection.GetNumEnrollments() > 0) {
-        PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
+        LOG_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
                           "Count=%d", faceDetection.GetNumEnrollments());
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
@@ -1226,8 +1225,9 @@ namespace Vector {
         iter = _salientPointsToDraw.erase(iter);
       }
     }
-    if(procResult.modesProcessed.IsBitFlagSet(VisionMode::RunningNeuralNet)
-        || procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingBrightColors))
+
+    if(procResult.modesProcessed.Contains(VisionMode::RunningNeuralNet)
+       || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors))
     {
       if(!usingFixedDrawTime)
       {
@@ -1357,7 +1357,7 @@ namespace Vector {
       
       auto cameraService = CameraService::getInstance();
       
-      const bool isWhiteBalanceEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::WhiteBalance);
+      const bool isWhiteBalanceEnabled = procResult.modesProcessed.Contains(VisionMode::WhiteBalance);
       if(isWhiteBalanceEnabled)
       {
         cameraService->CameraSetWhiteBalanceParameters(params.whiteBalanceGainR,
@@ -1365,7 +1365,7 @@ namespace Vector {
                                                        params.whiteBalanceGainB);
       }
       
-      const bool isAutoExposureEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::AutoExposure);
+      const bool isAutoExposureEnabled = procResult.modesProcessed.Contains(VisionMode::AutoExposure);
       if(isAutoExposureEnabled)
       {
         cameraService->CameraSetParameters(procResult.cameraParams.exposureTime_ms,
@@ -1422,7 +1422,7 @@ namespace Vector {
             break;
         }
 
-        PRINT_NAMED_INFO("robot.vision.image_quality", "%s", EnumToString(errorCode));
+        LOG_INFO("robot.vision.image_quality", "%s", EnumToString(errorCode));
 
         PRINT_CH_DEBUG("VisionComponent",
                        "VisionComponent.UpdateImageQuality.BroadcastingImageQualityChange",
@@ -1467,7 +1467,7 @@ namespace Vector {
   {
     // Handle switching the debug screen on/off when mirror mode changes
     static bool wasMirrorModeEnabled = false;
-    const bool isMirrorModeEnabled = procResult.modesProcessed.IsBitFlagSet(VisionMode::MirrorMode);
+    const bool isMirrorModeEnabled = procResult.modesProcessed.Contains(VisionMode::MirrorMode);
     if(wasMirrorModeEnabled != isMirrorModeEnabled)
     {
       PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateMirrorMode.TogglingMirrorMode",
@@ -1757,7 +1757,7 @@ namespace Vector {
                      calibPoses.size(), calibImages.size());
 
       if(!calibImages[whichPose].dotsFound) {
-        PRINT_NAMED_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
+        LOG_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
                          "Dots not found in image %zu, no pose available",
                          whichPose);
       } else {
@@ -2238,12 +2238,12 @@ namespace Vector {
 
   void VisionComponent::EnableAutoExposure(bool enable)
   {
-    _enabledVisionModes.SetBitFlag(VisionMode::AutoExposure, enable);
+    _enabledVisionModes.Enable(VisionMode::AutoExposure, enable);
   }
 
   void VisionComponent::EnableWhiteBalance(bool enable)
   {
-    _enabledVisionModes.SetBitFlag(VisionMode::WhiteBalance, enable);
+    _enabledVisionModes.Enable(VisionMode::WhiteBalance, enable);
   }
 
   void VisionComponent::SetAndDisableCameraControl(const Vision::CameraParams& params)
@@ -2529,6 +2529,12 @@ namespace Vector {
   {
     EnableMode(payload.mode, payload.enable);
   }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::DisableAllVisionModes& payload)
+  {
+    DisableAllModes();
+  }
 
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::VisionWhileMoving& msg)
@@ -2655,40 +2661,14 @@ namespace Vector {
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
     ImageSaverParams params(payload.path, payload.mode, payload.qualityOnRobot, "",
-                            Vision::ImageCacheSize::Full, 0.f, 1.f, payload.removeRadialDistortion);
+                            Vision::ImageCacheSize::Half, 0.f, 1.f, payload.removeRadialDistortion);
     SetSaveImageParameters(params);
-  }
-
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::DevSubscribeVisionModes& payload)
-  {
-    _robot->GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
-  }
-
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::DevUnsubscribeVisionModes& payload)
-  {
-    _robot->GetVisionScheduleMediator().DevOnly_SelfUnsubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
   }
 
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SetCameraCaptureFormat& msg)
   {
     SetCameraCaptureFormat(msg.format);
-  }
-
-  std::set<VisionMode> VisionComponent::GetVisionModesFromFlags(u64 bitflags) const
-  {
-    Util::BitFlags64<VisionMode> flags;
-    flags.SetFlags(bitflags);
-    std::set<VisionMode> visionModes;
-    for(uint32_t i=0; i<VisionModeNumEntries; ++i) {
-      auto mode = static_cast<VisionMode>(i);
-      if(flags.IsBitFlagSet(mode)) {
-        visionModes.insert(mode);
-      }
-    }
-    return visionModes;
   }
 
   template<>
@@ -2719,7 +2699,7 @@ namespace Vector {
             }
             ss << payload.distCoeffs.back() << "]";
 
-            PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.Recvd",
+            LOG_INFO("VisionComponent.ReadCameraCalibration.Recvd",
                              "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f, distCoeffs: %s)",
                              payload.ncols, payload.nrows,
                              payload.focalLength_x, payload.focalLength_y,
@@ -2863,7 +2843,7 @@ namespace Vector {
     }
 
     if(kImageCompressQuality > 0 &&
-       result.modesProcessed.IsBitFlagSet(VisionMode::ImageViz))
+       result.modesProcessed.Contains(VisionMode::ImageViz))
     {
       CompressAndSendImage(result.displayImg, kImageCompressQuality, "camera");
     }
@@ -2894,14 +2874,14 @@ namespace Vector {
     //     {
     //       _storeNextImageForCalibration = false;
     //       if (IsModeEnabled(VisionMode::ComputingCalibration)) {
-    //         PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+    //         LOG_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
     //       } else {
     //         Lock();
     //         Result result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
     //         Unlock();
 
     //         if(RESULT_OK != result) {
-    //           PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+    //           LOG_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
     //         }
     //       }
     //     } // if(_storeNextImageForCalibration)
@@ -2921,7 +2901,7 @@ namespace Vector {
 
     //   }
     //   else {
-    //     PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+    //     LOG_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
     //   }
     // } // if (_storeNextImageForCalibration || _doFactoryDotTest)
   }
@@ -2933,7 +2913,7 @@ namespace Vector {
 
   void VisionComponent::EnableImageCapture(bool enable)
   {
-    PRINT_NAMED_INFO("VisionComponent.EnableImageCapture",
+    LOG_INFO("VisionComponent.EnableImageCapture",
                      "%s image capture",
                      (enable ? "Enabling" : "Disabling"));
 
@@ -2961,7 +2941,7 @@ namespace Vector {
   void VisionComponent::SetupVisionModeConsoleVars()
   {
     #if REMOTE_CONSOLE_ENABLED
-    for(VisionMode m = VisionMode::Idle; m < VisionMode::Count; m++)
+    for(auto  m = VisionMode(0); m < VisionMode::Count; m++)
     {
       auto& pair = _visionModeConsoleVars[static_cast<u32>(m)];
       pair.first = new Util::ConsoleVar<bool>(pair.second,

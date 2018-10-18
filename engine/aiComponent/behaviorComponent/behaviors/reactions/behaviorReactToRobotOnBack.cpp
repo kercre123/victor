@@ -98,7 +98,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
       const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
-      PRINT_NAMED_INFO("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
       DelegateIfInControl(new CalibrateMotorAction(true, false, EnumToString(MotorCalibrationReason::BehaviorReactToOnBack)),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     }

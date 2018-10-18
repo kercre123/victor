@@ -53,10 +53,11 @@ class Robot:
     .. testcode::
 
         import anki_vector
+
         # Create the robot connection
         with anki_vector.Robot("my_robot_serial_number") as robot:
             # Run your commands
-            robot.anim.play_animation("anim_blackjack_victorwin_01")
+            robot.anim.play_animation("anim_turn_left_01")
 
     2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
     it allows the robot's connection to continue in the context in which it started.
@@ -64,12 +65,13 @@ class Robot:
     .. testcode::
 
         import anki_vector
+
         # Create a Robot object
         robot = anki_vector.Robot("my_robot_serial_number")
         # Connect to the Robot
         robot.connect()
         # Run your commands
-        robot.anim.play_animation("anim_blackjack_victorwin_01")
+        robot.anim.play_animation("anim_turn_left_01")
         # Disconnect from Vector
         robot.disconnect()
 
@@ -572,9 +574,10 @@ class Robot:
         .. testcode::
 
             import anki_vector
+
             robot = anki_vector.Robot("my_robot_serial_number")
             robot.connect()
-            robot.anim.play_animation("anim_blackjack_victorwin_01")
+            robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
 
         :param timeout: The time to allow for a connection before a
@@ -635,7 +638,7 @@ class Robot:
             import anki_vector
             robot = anki_vector.Robot("my_robot_serial_number")
             robot.connect()
-            robot.anim.play_animation("anim_blackjack_victorwin_01")
+            robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
         """
         if self.is_async:
@@ -748,7 +751,7 @@ class AsyncRobot(Robot):
         # Create the robot connection
         with anki_vector.AsyncRobot("my_robot_serial_number") as robot:
             # Run your commands
-            robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+            robot.anim.play_animation("anim_turn_left_01").wait_for_completed()
 
     2. Using :func:`connect` and :func:`disconnect` to explicitly open and close the connection:
     it allows the robot's connection to continue in the context in which it started.
@@ -761,7 +764,7 @@ class AsyncRobot(Robot):
         # Connect to Vector
         robot.connect()
         # Run your commands
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+        robot.anim.play_animation("anim_turn_left_01").wait_for_completed()
         # Disconnect from Vector
         robot.disconnect()
 

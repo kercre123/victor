@@ -12,8 +12,6 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 #define __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 
-#include "engine/aiComponent/aiBeacon.h"
-
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 
@@ -39,7 +37,6 @@ namespace Anki {
 namespace Vector {
 
 // Forward declarations
-class BlockWorldFilter;  
 class ObservableObject;
 class Robot;
 class SayNameProbabilityTable;
@@ -81,9 +78,6 @@ public:
   };
   using ObjectInfoList = std::vector<ObjectInfo>;
   
-  // list of beacons
-  using BeaconList = std::vector<AIBeacon>;
-
   // object usage reason for failure
   enum class ObjectActionFailure {
     PickUpObject,   // pick up object from location
@@ -122,6 +116,8 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Possible Objects
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // NB: BN 2018 - I'm not sure if this is still functional, it may be, but it's old Cozmo code
   
   // called when Cozmo can identify a clear quad (no borders, obstacles, etc)
   void ProcessClearQuad(const Quad2f& quad);
@@ -132,18 +128,10 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Cube search
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // find any usable cubes (not unknown) that are not in a beacon, and return true if any are found.
-  // recentFailureTimeout_sec: objects that failed to be picked up more recently than this ago will be
-  // discarded
-  bool FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const;
-  
-  // finds cubes in the given beacon and returns them in the given list. Returns true if the list is not empty (=if
-  // found any cubes at all)
-  bool FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& outObjectList) const;
-  
-  // returns true if all active cubes are known to be in beacons
-  bool AreAllCubesInBeacons() const;
+
+  // BN: this code is not really needed anymore in it's full form but it's still used in a few places so left
+  // it here for now. It was really designed for a multi-cube world where it was important to figure out which
+  // cubes were working (from which angles)
   
   // notify the whiteboard that we just failed to use this object.
   // uses object's current location
@@ -184,36 +172,12 @@ public:
   
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Beacons
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // add a new beacon
-  void AddBeacon( const Pose3d& beaconPos, const float radius );
-  
-  // add a new beacon
-  void ClearAllBeacons();
-  
-  // notify whiteboard that someone tried to find good locations for cubes in this beacon and it was not possible
-  void FailedToFindLocationInBeacon(AIBeacon* beacon);
-
-  // return current active beacon if any, or nullptr if none are active
-  const AIBeacon* GetActiveBeacon() const;
-  AIBeacon* GetActiveBeacon();
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // This getter iterates the list of possible objects currently stored and retrieves only those that can be located in
   // current origin. Note this causes a calculation WRT origin (consider caching in the future if need to optimize)
   void GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObjects) const;
-
-  // set/return time at which Cozmo got off the charger by himself
-  void GotOffChargerAtTime(const float time_sec) { _gotOffChargerAtTime_sec = time_sec; }
-  float GetTimeAtWhichRobotGotOffCharger() const { return _gotOffChargerAtTime_sec; }
-  
-  // return time at which Cozmo got back on treads (negative if never recorded)
-  float GetTimeAtWhichRobotReturnedToTreadsSecs() const { return _returnedToTreadsAtTime_sec; }
   
   // set/return time at which engine processed information regarding edges
   void SetLastEdgeInformation(const float closestEdgeDist_mm);
@@ -223,12 +187,6 @@ public:
   // decide whether or not to say a name
   inline std::shared_ptr<SayNameProbabilityTable>& GetSayNameProbabilityTable() { return _sayNameProbTable; }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Tracking Game Requests
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void SetCurrentGameRequestUIRequest(bool isUIRequest){_isGameRequestUIRequest = isUIRequest;}
-  bool IsCurrentGameRequestUIRequest(){ return _isGameRequestUIRequest;}
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Victor observing demo state (may eventually become part of victor freeplay)
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -293,8 +251,6 @@ private:
   
   // update render of possible markers since they may have changed
   void UpdatePossibleObjectRender();
-  // update render of beacons
-  void UpdateBeaconRender();
 
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -331,12 +287,7 @@ private:
   ObjectFailureTable _stackOnFailures;
   ObjectFailureTable _placeAtFailures;
   ObjectFailureTable _rollOrPopFailures;
-  
-  // time at which the robot got off the charger by itself. Negative value means never
-  float _gotOffChargerAtTime_sec;
-  // time at which the robot returned to being on treads (after being picked up)
-  float _returnedToTreadsAtTime_sec;
-  
+    
   // time at which the engine processed edge information coming from vision
   float _edgeInfoTime_sec;
   float _edgeInfoClosestEdge_mm;
@@ -344,11 +295,6 @@ private:
   // list of markers/objects we have not checked out yet
   PossibleObjectList _possibleObjects;
   
-  // container of beacons currently defined (high level AI concept)
-  BeaconList _beacons;
-
-  bool _isGameRequestUIRequest;
-
   ObjectID _victor_cubeToEat;
   
   std::unordered_map<PostBehaviorSuggestions, size_t> _postBehaviorSuggestions;

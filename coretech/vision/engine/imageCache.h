@@ -68,9 +68,6 @@ public:
   // Valid methods are: "nearest", "linear", "area" (ignored for "full")
   static ImageCacheSize StringToSize(const std::string& scaleStr, const std::string& methodStr);
 
-  // Convert size to a scaleFactor
-  static f32 GetScaleFactor(ImageCacheSize size);
-  
   // For unit tests to verify expected behavior
   enum class GetType : u8
   {
@@ -89,8 +86,9 @@ public:
   // Notes:
   //  * The result of HasColor is not changed by calling GetRGB.
   //  * These are non-const because they could compute a resized version on demand.
-  const Image&    GetGray(ImageCacheSize size=ImageCacheSize::Full, GetType* getType = nullptr);
-  const ImageRGB& GetRGB(ImageCacheSize size=ImageCacheSize::Full,  GetType* getType = nullptr);
+  static constexpr ImageCacheSize GetDefaultImageCacheSize() { return ImageCacheSize::Half; }
+  const Image&    GetGray(ImageCacheSize size = GetDefaultImageCacheSize(), GetType* getType = nullptr);
+  const ImageRGB& GetRGB(ImageCacheSize size  = GetDefaultImageCacheSize(), GetType* getType = nullptr);
 
   const ImageBuffer& GetBuffer() const { return _buffer; }
   

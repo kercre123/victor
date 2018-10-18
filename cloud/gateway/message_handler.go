@@ -128,7 +128,7 @@ func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.Messa
 
 func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithEnableVisionMode(&gw_clad.EnableVisionMode{
-		Mode:   gw_clad.VisionMode(msg.Mode),
+		Mode:   gw_clad.VisionMode(msg.Mode - 1), // Outside interface still has Idle=0; Engine does not. Remap. Gross.
 		Enable: msg.Enable,
 	})
 }
@@ -1312,6 +1312,9 @@ func (service *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *e
 }
 
 func (service *rpcService) EnableVisionMode(ctx context.Context, in *extint.EnableVisionModeRequest) (*extint.EnableVisionModeResponse, error) {
+	if in.Mode == extint.VisionMode_VISION_MODE_UNKNOWN {
+		return nil, grpc.Errorf(codes.InvalidArgument, "Unknown vision mode")
+	}
 	_, err := engineCladManager.Write(ProtoEnableVisionModeToClad(in))
 	if err != nil {
 		return nil, err
@@ -2227,6 +2230,30 @@ func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
 	return cloudResponse, nil
+}
+
+// FeatureFlag is used to check what features are enabled on the robot
+func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.FeatureFlagRequest) (*extint.FeatureFlagResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FeatureFlagRequest{
+			FeatureFlagRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetFeatureFlagResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
 }
 
 func newServer() *rpcService {

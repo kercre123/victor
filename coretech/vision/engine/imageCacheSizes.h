@@ -17,33 +17,37 @@
 namespace Anki {
 namespace Vision {
 
-// For requesting different sizes and resize interpolation methods
+// For requesting different sizes
 enum class ImageCacheSize : u8
 {
-  // Full *sensor* resolution with which this cache was Reset
-  Sensor,
-
-  // Full *processing* resolution
-  // Sizes below are relative to Full
+  // ImageCache is reset at this size (resolution of camera)
+  // For Vector this is 1280x720
   Full,
-
-  // Nearest Neighbor
-  Half_NN,
-  Quarter_NN,
-  Double_NN,
-
-  // Linear Interpolation
-  Half_Linear,
-  Quarter_Linear,
-  Double_Linear,
-
-  // Average-Area Downsampling
-  Half_AverageArea,
-  Quarter_AverageArea,
-
-  // TODO: add other sizes/methods (e.g. cubic interpolation)
+  Half,
+  Quarter,
+  Eighth,
 };
 
+// Convert size to a scaleFactor
+inline f32 ImageCacheSizeToScaleFactor(ImageCacheSize size)
+{
+  switch(size)
+  {
+    case ImageCacheSize::Full:
+      return 1.f;
+      
+    case ImageCacheSize::Half:
+      return 0.5f;
+      
+    case ImageCacheSize::Quarter:
+      return 0.25f;
+
+    case ImageCacheSize::Eighth:
+      return 0.125f;
+  }
+}
+
+  
 }
 }
 

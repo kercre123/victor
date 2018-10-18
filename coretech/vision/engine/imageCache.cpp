@@ -139,42 +139,14 @@ template<> inline bool ImageCache::ResizedEntry::IsValid<ImageBuffer>() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-f32 ImageCache::GetScaleFactor(ImageCacheSize size)
-{
-  // ScaleFactors are all defined relative to Sensor resolution
-  switch(size)
-  {
-    case ImageCacheSize::Sensor:
-      return 1.f;
-      
-    case ImageCacheSize::Full:
-      return 0.5f;
-      
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      return 2.f;
-      
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      return 0.25f;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      return 0.125f;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 s32 ImageCache::GetNumRows(const ImageCacheSize atSize) const
 {
-  return std::round(GetScaleFactor(atSize)*(f32)_sensorNumRows);
+  return std::round(ImageCacheSizeToScaleFactor(atSize)*(f32)_sensorNumRows);
 }
   
 s32 ImageCache::GetNumCols(const ImageCacheSize atSize) const
 {
-  return std::round(GetScaleFactor(atSize)*(f32)_sensorNumCols);
+  return std::round(ImageCacheSizeToScaleFactor(atSize)*(f32)_sensorNumCols);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -182,25 +154,13 @@ ResizeMethod ImageCache::GetMethod(ImageCacheSize size) const
 {
   switch(size)
   {
-    case ImageCacheSize::Sensor:
-      return ResizeMethod::NearestNeighbor;
-      
     case ImageCacheSize::Full:
       return _fullScaleMethod;
       
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Quarter_NN:
-      return ResizeMethod::NearestNeighbor;
-      
-    case ImageCacheSize::Double_Linear:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Quarter_Linear:
+    case ImageCacheSize::Half:
+    case ImageCacheSize::Quarter:
+    case ImageCacheSize::Eighth:
       return ResizeMethod::Linear;
-
-    case ImageCacheSize::Half_AverageArea:
-    case ImageCacheSize::Quarter_AverageArea:  
-      return ResizeMethod::AverageArea;
   }
 }
   
@@ -209,7 +169,7 @@ template<class ImageType>
 static void ResizeHelper(const ImageType& origImg, ImageCacheSize size, ResizeMethod method,
                          ImageType& resizedImg_out)
 {
-  f32 scaleFactor = ImageCache::GetScaleFactor(size);
+  f32 scaleFactor = ImageCacheSizeToScaleFactor(size);
   if(Util::IsNear(scaleFactor, 1.f))
   {
     resizedImg_out = origImg;
@@ -282,62 +242,31 @@ ImageCacheSize ImageCache::GetSize(s32 subsample, Vision::ResizeMethod method)
   {
     switch(method)
     {
-      case Vision::ResizeMethod::NearestNeighbor:
-      {
-        switch(subsample)
-        {
-          case 2:
-            size = ImageCacheSize::Half_NN;
-            break;
-            
-          case 4:
-            size = ImageCacheSize::Quarter_NN;
-            break;
-            
-          default:
-            DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedSubsampleNN");
-            break;
-        }
-        break;
-      }
-        
       case Vision::ResizeMethod::Linear:
-      {
-        switch(subsample)
-        {
-          case 2:
-            size = ImageCacheSize::Half_Linear;
-            break;
-            
-          case 4:
-            size = ImageCacheSize::Quarter_Linear;
-            break;
-            
-          default:
-            PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedSubsampleLinear", "");
-            break;
-        }
-        break;
-      }
-        
+      case Vision::ResizeMethod::NearestNeighbor:
       case Vision::ResizeMethod::AverageArea:
       {
         switch(subsample)
         {
           case 2:
-            size = ImageCacheSize::Half_AverageArea;
+            size = ImageCacheSize::Half;
             break;
-          
+            
           case 4:
-            size = ImageCacheSize::Quarter_AverageArea;
+            size = ImageCacheSize::Quarter;
+            break;
+
+          case 8:
+            size = ImageCacheSize::Eighth;
             break;
             
           default:
-            PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedSubsampleAverage", "");
+            DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedSubsample");
             break;
         }
+        break;
       }
-
+      
       default:
         PRINT_NAMED_ERROR("ImageCache.GetSize.UnsupportedMethod", "");
         break;
@@ -348,12 +277,13 @@ ImageCacheSize ImageCache::GetSize(s32 subsample, Vision::ResizeMethod method)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const char* const kScaleFullString = "full";
-const char* const kScaleHalfString = "half";
-const char* const kScaleQuarterString = "quarter";
+const char* const kScaleFullString     = "full";
+const char* const kScaleHalfString     = "half";
+const char* const kScaleQuarterString  = "quarter";
+const char* const kScaleEighthString   = "eighth";
 const char* const kMethodNearestString = "nearest";
-const char* const kMethodLinearString = "linear";
-const char* const kMethodAreaString = "average_area";
+const char* const kMethodLinearString  = "linear";
+const char* const kMethodAreaString    = "average_area";
 ImageCacheSize ImageCache::StringToSize(const std::string& scaleStr, const std::string& methodStr)
 {
   s32 scale = 0;
@@ -368,6 +298,10 @@ ImageCacheSize ImageCache::StringToSize(const std::string& scaleStr, const std::
   else if(kScaleQuarterString == scaleStr)
   {
     scale = 4;
+  }
+  else if(kScaleEighthString == scaleStr)
+  {
+    scale = 8;
   }
   else
   {
@@ -411,14 +345,14 @@ void ImageCache::ResetHelper(const ImageType& img, const ResizeMethod fullScaleM
   
   const ResizeMethod kSensorMethod = ResizeMethod::NearestNeighbor; // not used
   
-  auto iter = _resizedVersions.find(ImageCacheSize::Sensor);
+  auto iter = _resizedVersions.find(ImageCacheSize::Full);
   if(iter == _resizedVersions.end())
   {
-    _resizedVersions.emplace(ImageCacheSize::Sensor, ResizedEntry(img, ImageCacheSize::Sensor, kSensorMethod));
+    _resizedVersions.emplace(ImageCacheSize::Full, ResizedEntry(img, ImageCacheSize::Full, kSensorMethod));
   }
   else
   {
-    iter->second.Update(img, ImageCacheSize::Sensor, kSensorMethod);
+    iter->second.Update(img, ImageCacheSize::Full, kSensorMethod);
   }
   
   _sensorNumRows = img.GetNumRows();
@@ -453,7 +387,7 @@ void ImageCache::Reset(const Image& imgGray, const ResizeMethod fullScaleMethod)
   // ImageBuffer's data but it will have the side effect of "caching" the image in the Sensor ResizedEntry.
   // If this is not done then the first call to get the Sensor sized gray image will think it had to
   // "ComputeFromExisting" instead of having "FullyCached" image
-  auto iter = _resizedVersions.find(ImageCacheSize::Sensor);
+  auto iter = _resizedVersions.find(ImageCacheSize::Full);
   DEV_ASSERT(iter != _resizedVersions.end(), "ImageCache.Reset.Image.ExpectingToHaveSensor");
   (void)iter->second.Get<Image>();
 }
@@ -480,7 +414,7 @@ void ImageCache::Reset(const ImageRGB& imgColor, const ResizeMethod fullScaleMet
   // ImageBuffer's data but it will have the side effect of "caching" the image in the Sensor ResizedEntry.
   // If this is not done then the first call to get the Sensor sized rgb image will think it had to
   // "ComputeFromExisting" instead of having "FullyCached" image
-  auto iter = _resizedVersions.find(ImageCacheSize::Sensor);
+  auto iter = _resizedVersions.find(ImageCacheSize::Full);
   DEV_ASSERT(iter != _resizedVersions.end(), "ImageCache.Reset.ImageRGB.ExpectingToHaveSensor");
   (void)iter->second.Get<ImageRGB>();
 }
@@ -538,7 +472,7 @@ const ImageType& ImageCache::GetImageHelper(ImageCacheSize size, GetType& getTyp
   //     was originally reset with color data from which we could resize (instead of computing from gray)
   const bool shouldComputeNewValidEntry = (iter == _resizedVersions.end() ||
                                            !iter->second.IsValid<void>() ||
-                                           ((ImageCacheSize::Sensor != size) &&
+                                           ((ImageCacheSize::Full != size) &&
                                             HasColor() && IsRequestingColor<ImageType>()));
   if(shouldComputeNewValidEntry)
   {
@@ -562,7 +496,7 @@ const ImageType& ImageCache::GetImageHelper(ImageCacheSize size, GetType& getTyp
       else
       {
         GetType dummy;
-        const auto origImg = GetImageHelper<ImageType>(ImageCacheSize::Sensor, dummy);
+        const auto origImg = GetImageHelper<ImageType>(ImageCacheSize::Full, dummy);
         auto insertion = _resizedVersions.emplace(size, ResizedEntry(origImg, size, method));
 
         DEV_ASSERT(insertion.second, "ImageCache.GetImageHelper.NewEntryNotInserted");
@@ -584,7 +518,7 @@ const ImageType& ImageCache::GetImageHelper(ImageCacheSize size, GetType& getTyp
       else
       {
         GetType dummy;
-        const auto& origImg = GetImageHelper<ImageType>(ImageCacheSize::Sensor, dummy);
+        const auto& origImg = GetImageHelper<ImageType>(ImageCacheSize::Full, dummy);
         entry.Update(origImg, size, method);
       }
       getType = GetType::ResizeIntoExisting;

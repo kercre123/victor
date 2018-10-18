@@ -78,7 +78,7 @@ namespace Anki {
     PlayAnimationAction::~PlayAnimationAction()
     {
       if (HasStarted() && !_stoppedPlaying) {
-        PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",
+        PRINT_CH_INFO("Actions", "PlayAnimationAction.Destructor.StillStreaming",
                          "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
                          _animName.c_str());
         if (HasRobot()) {
@@ -435,7 +435,7 @@ namespace Anki {
         // StopAfterNextLoop() was called before Init(). Set a flag to stop on the first call to
         // CheckIfDone(), since the other flags (_numLoopsRemaining, etc) get set during Init().
         _completeImmediately = true;
-        PRINT_NAMED_INFO("ReselectingLoopAnimationAction.StopAfterNextLoop.NotStarted",
+        PRINT_CH_INFO("Actions", "ReselectingLoopAnimationAction.StopAfterNextLoop.NotStarted",
                          "Action was told to StopAfterNextLoop, but hasn't started, so will end before the first loop");
       }
       

@@ -5,14 +5,12 @@
 namespace Anki {
 namespace Vector {
 
-  enum uint_64 VisionMode
-  {
-    Idle                   = 0x00,
-    
+  enum uint_32 VisionMode
+  {    
     //
     // Full-blown vision modes
     //
-    DetectingMarkers,           // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
+    DetectingMarkers = 0x00,    // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
     DetectingFaces,
     DetectingMotion,
     DetectingBrightColors,
