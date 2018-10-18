@@ -21,13 +21,14 @@ The easiest way to make use of this viewer is to create an OpenGLViewer object
 for a valid robot and call run with a control function injected into it.
 
 Example:
-    .. code-block:: python
+    .. testcode::
+        import anki_vector
 
         def my_function(robot):
             robot.play_animation("anim_blackjack_victorwin_01")
 
-        with anki_vector.Robot("my_robot_serial_number") as robot:
-            viewer = opengl.OpenGLViewer(robot=robot)
+        with anki_vector.Robot() as robot:
+            viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
 Warning:
@@ -467,6 +468,31 @@ class OpenGLViewer():
             cube_pose = cube_frame.pose
             if cube_pose is not None and cube_pose.is_comparable(robot_pose):
                 light_cube_view.display(cube_pose)
+
+        # Render the custom objects
+        for obj in world_frame.custom_object_frames:
+            obj_pose = obj.pose
+            if obj_pose is not None and obj_pose.is_comparable(robot_pose):
+                glPushMatrix()
+                obj_matrix = obj_pose.to_matrix()
+                glMultMatrixf(obj_matrix.in_row_order)
+
+                glScalef(obj.x_size_mm * 0.5,
+                         obj.y_size_mm * 0.5,
+                         obj.z_size_mm * 0.5)
+
+                # Only draw solid object for observable custom objects
+
+                if obj.is_fixed:
+                    # fixed objects are drawn as transparent outlined boxes to make
+                    # it clearer that they have no effect on vision.
+                    FIXED_OBJECT_COLOR = [1.0, 0.7, 0.0, 1.0]
+                    unit_cube_view.display(FIXED_OBJECT_COLOR, False)
+                else:
+                    CUSTOM_OBJECT_COLOR = [1.0, 0.3, 0.3, 1.0]
+                    unit_cube_view.display(CUSTOM_OBJECT_COLOR, True)
+
+                glPopMatrix()
 
         glBindTexture(GL_TEXTURE_2D, 0)
 
