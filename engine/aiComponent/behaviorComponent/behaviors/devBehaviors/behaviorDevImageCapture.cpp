@@ -523,16 +523,20 @@ void BehaviorDevImageCapture::MoveToNewPose()
 void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
 {
   // To help avoid duplicate images names when combining images from multiple robots on multiple runs of
-  // this behavior, use a basename built from the robot's serial number and the milliseconds since epoch.
+  // this behavior, use a basename built from the robot's serial number and the seconds since epoch.
+  // If multiple images are being captured, a counter is appended as well.
   // Note that for streaming, a frame number will also be appended by the ImageSaver because all saved
-  // images will share the same timestamp (since it comes from when the button was pressed).
+  // images will share the same basename (since they comes from the same button press).
   using namespace std::chrono;
   const auto time_sec = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
   const auto robotESN = GetBEI().GetRobotInfo().GetHeadSerialNumber();
-  const std::string basename = (_iConfig.imageSavePrefix
-                                + std::to_string(robotESN) + "_"
-                                + std::to_string(time_sec) + "_"
-                                + std::to_string(_dVars.imagesSaved));
+  std::string basename = (_iConfig.imageSavePrefix
+                          + std::to_string(robotESN) + "_"
+                          + std::to_string(time_sec));
+  if(_iConfig.numImagesPerCapture > 1)
+  {
+    basename += "_" + std::to_string(_dVars.imagesSaved);
+  }
   
   // Tell VisionComponent to save an image
   const ImageSaverParams params(GetSavePath(),
