@@ -762,16 +762,16 @@ void Alexa::SendDirectiveToWebViz( const std::string& directive ) const
       ShittyDebug("has webservice");
       //if (webService->IsWebVizClientSubscribed("micdata")) {
         ShittyDebug("skipping client");
-        Json::Reader reader(Json::Features::all());
-        Json::Value root;
+        //Json::Reader reader(Json::Features::all());
+        //Json::Value root;
         
-        bool success = reader.parse(directive, root);
-        if( success ) {
-          ShittyDebug("parsed");
+        //bool success = reader.parse(directive, root);
+        //if( success ) {
+          //ShittyDebug("parsed");
           Json::Value data;
-          data["directive"] = root;
+          data["directive"] = directive; //root;
           webService->SendToWebViz("micdata", data);
-        }
+        //}
       //}
     }
   }
