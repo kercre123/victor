@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/jawher/mow.cli"
@@ -11,7 +10,7 @@ import (
 type options struct {
 	envName *string
 
-	defaultTestID *int
+	testID *int
 
 	enableAccountCreation *bool
 
@@ -24,10 +23,11 @@ type options struct {
 	testUserName     *string
 	testUserPassword *string
 
-	heartBeatInterval    time.Duration
-	jdocsInterval        time.Duration
-	logCollectorInterval time.Duration
-	tokenRefreshInterval time.Duration
+	heartBeatInterval       time.Duration
+	jdocsInterval           time.Duration
+	logCollectorInterval    time.Duration
+	tokenRefreshInterval    time.Duration
+	connectionCheckInterval time.Duration
 }
 
 func parseIntervalString(intervalStr *string) time.Duration {
@@ -53,7 +53,7 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "loadtest",
 	})
 
-	options.defaultTestID = app.Int(cli.IntOpt{
+	options.testID = app.Int(cli.IntOpt{
 		Name:   "i test-id",
 		Desc:   "Test ID (used for identifying user)",
 		EnvVar: "TEST_ID",
@@ -142,10 +142,18 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "0",
 	})
 
+	connectionCheckInterval := app.String(cli.StringOpt{
+		Name:   "c connection-check-interval",
+		Desc:   "Periodic interval for voice connection check",
+		EnvVar: "CONNECTION_CHECK_INTERVAL",
+		Value:  "5m",
+	})
+
 	options.heartBeatInterval = parseIntervalString(heartBeatInterval)
 	options.jdocsInterval = parseIntervalString(jdocsInterval)
 	options.logCollectorInterval = parseIntervalString(logCollectorInterval)
 	options.tokenRefreshInterval = parseIntervalString(tokenRefreshInterval)
+	options.connectionCheckInterval = parseIntervalString(connectionCheckInterval)
 
 	return options
 }
@@ -154,15 +162,16 @@ func (o *options) finalizeIdentity() {
 	testID, err := getUniqueTestID(*o.redisAddress)
 	if err == nil {
 		testID %= *o.numberOfCerts
+		*o.testID = testID
 	} else {
-		testID = *o.defaultTestID
+		testID = *o.testID
+
 		fmt.Printf("Could not assign unique testID (defaulting to %d), error: %v\n", testID, err)
 	}
 
 	if *o.defaultCloudDir == "" {
-		paddedIntFormatStr := fmt.Sprintf("%%0%dd", int(math.Log10(float64(*o.numberOfCerts)))+1)
 		o.defaultCloudDir = new(string)
-		*o.defaultCloudDir = fmt.Sprintf("/device_certs/"+paddedIntFormatStr, testID)
+		*o.defaultCloudDir = fmt.Sprintf("/device_certs/%08d", testID)
 	}
 
 	if *o.testUserName == "" {

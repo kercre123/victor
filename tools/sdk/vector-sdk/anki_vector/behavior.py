@@ -136,7 +136,7 @@ class BehaviorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.behavior.drive_off_charger()
         """
         drive_off_charger_request = protocol.DriveOffChargerRequest()
@@ -156,7 +156,7 @@ class BehaviorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.behavior.drive_on_charger()
         """
         drive_on_charger_request = protocol.DriveOnChargerRequest()
@@ -191,7 +191,7 @@ class BehaviorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
                 robot.behavior.go_to_pose(pose)
         """
@@ -238,7 +238,7 @@ class BehaviorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 if robot.world.connected_light_cube:
                     robot.behavior.dock_with_cube(object_id=robot.world.connected_light_cube)
         """
@@ -293,7 +293,7 @@ class BehaviorComponent(util.Component):
             import anki_vector
             from anki_vector.util import degrees, distance_mm, speed_mmps
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.behavior.drive_straight(distance_mm(100), speed_mmps(100))
         """
 
@@ -339,7 +339,7 @@ class BehaviorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.behavior.turn_in_place(degrees(90))
         """
         turn_in_place_request = protocol.TurnInPlaceRequest(angle_rad=angle.radians,
@@ -376,7 +376,7 @@ class BehaviorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.behavior.set_head_angle(degrees(50.0))
         """
         set_head_angle_request = protocol.SetHeadAngleRequest(angle_rad=angle.radians,
@@ -413,7 +413,7 @@ class BehaviorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.behavior.set_lift_height(100.0)
         """
         set_lift_height_request = protocol.SetLiftHeightRequest(height_mm=height,

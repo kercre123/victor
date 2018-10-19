@@ -16,11 +16,13 @@
 #include "engine/actions/basicActions.h"
 #include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -54,9 +56,11 @@ CONSOLE_VAR(float, kBW_MaxHeightForPossibleObject_mm, "AIWhiteboard", 30.0f);
 // debug render
 CONSOLE_VAR(bool, kBW_DebugRenderPossibleObjects, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleObjectsZ, "AIWhiteboard", 35.0f);
+CONSOLE_VAR(float, kAI_MaxExtraExploringCooldown_s, "AIWhiteboard", 800.0f);
 
-CONSOLE_VAR(int, kMaxObservationAgeToEatCube_ms, "AIWhiteboard", 3000);
-  
+// how often to update the actual exploring cooldown (yeah... it's a kind of cooldown cooldown)
+CONSOLE_VAR(float, kExploringCooldownUpdatePeriod_s, "AIWhiteboard", 60.0f);
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
 {
@@ -125,32 +129,19 @@ void AIWhiteboard::InitDependent(Vector::Robot* robot, const AICompMap& dependen
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
   }
+
+  // NOTE: the RobotStatsTracker is an init dependency for all of AIComponent, so it will have already been
+  // initialized by the time this runs
+  UpdateExploringTransitionCooldown();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::UpdateDependent(const AICompMap& dependentComps)
 {
-  // TODO:(bn) cache this filter
-
-  // Victor wants to eat cube #1 if it's known and upright
-  
-  BlockWorldFilter filter;
-  filter.SetAllowedTypes( { ObjectType::Block_LIGHTCUBE1 } );
-  filter.SetFilterFcn( [this](const ObservableObject* obj){
-      return obj->IsPoseStateKnown() &&
-        obj->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS &&
-        obj->GetLastObservedTime() + kMaxObservationAgeToEatCube_ms > _robot.GetLastImageTimeStamp();
-
-    });
-
-  const auto& blockWorld = _robot.GetBlockWorld();
-  const ObservableObject* obj = blockWorld.FindLocatedObjectClosestTo(_robot.GetPose(), filter);
-  if( obj != nullptr ) {
-    _victor_cubeToEat = obj->GetID();
-  }
-  else {
-    _victor_cubeToEat.UnSet();
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( currTime_s >= _lastExploringCooldownUpdateTime_s + kExploringCooldownUpdatePeriod_s ) {
+    UpdateExploringTransitionCooldown();
   }
 }
 
@@ -735,6 +726,109 @@ void AIWhiteboard::SetLastEdgeInformation(const float closestEdgeDist_mm)
   _edgeInfoClosestEdge_mm = closestEdgeDist_mm;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float AIWhiteboard::GetExploringCooldown_s() const
+{
+  const float cooldown_s = _exploringTransitionCooldownBase_s + _exploringTransitionCooldownExtra_s;
+  return cooldown_s;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::NotifyNewUserIntentPending(UserIntentTag userIntent)
+{
+  // NOTE: there is no time-based reset or anything for these, but it'll get wipes when the robot reboots
+  // overnight, or on any fresh boot
+  
+  switch( userIntent ) {
+    case UserIntentTag::imperative_quiet:
+    case UserIntentTag::imperative_shutup:
+      _exploringTransitionCooldownExtra_s += 10 * 60.0f;
+      break;
+
+    case UserIntentTag::global_stop:
+    case UserIntentTag::greeting_goodnight:
+    case UserIntentTag::imperative_scold:
+    case UserIntentTag::system_charger:
+    case UserIntentTag::system_sleep:
+      _exploringTransitionCooldownExtra_s += 5 * 60.0f;
+      break;
+
+    case UserIntentTag::imperative_lookatme:
+      _exploringTransitionCooldownExtra_s += 2 * 60.0f;
+      break;
+
+    case UserIntentTag::explore_start:
+      // if exploring is requested, then maybe the user likes it so get rid of this extra cooldown
+      _exploringTransitionCooldownExtra_s = 0.0f;
+      break;
+
+    case UserIntentTag::greeting_goodmorning:
+    case UserIntentTag::imperative_come:
+    case UserIntentTag::imperative_findcube:
+    case UserIntentTag::play_anygame:
+    case UserIntentTag::play_anytrick:
+    case UserIntentTag::play_specific:
+      // these maybe indicate the user wants the robot doing more stuff, so reduce the cooldown
+      _exploringTransitionCooldownExtra_s -= 60.0f;
+      break;
+
+
+    case UserIntentTag::blackjack_hit:
+    case UserIntentTag::blackjack_stand:
+    case UserIntentTag::blackjack_playagain:
+    case UserIntentTag::imperative_affirmative:
+    case UserIntentTag::imperative_praise:
+    case UserIntentTag::global_delete:
+    case UserIntentTag::set_timer:  
+      // no change for these
+      break;
+
+    default:
+      // add 30 seconds by default because maybe if the user is trying to use voice commands, then they'll be
+      // frustrated if he explores too much
+      _exploringTransitionCooldownExtra_s += 30.0f;
+      break;
+  }
+
+  _exploringTransitionCooldownExtra_s = Util::Clamp(_exploringTransitionCooldownExtra_s,
+                                                    0.0f,
+                                                    kAI_MaxExtraExploringCooldown_s);
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::UpdateExploringTransitionCooldown()
+{
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastExploringCooldownUpdateTime_s = currTime_s;
+
+  const auto& behaviorComp = _robot.GetComponent<AIComponent>().GetComponent<BehaviorComponent>();
+  const auto& statsComponent = behaviorComp.GetComponent<RobotStatsTracker>();
+  const float alive_h =  statsComponent.GetNumHoursAlive();
+
+  if( alive_h < 2.0f ) {
+    _exploringTransitionCooldownBase_s = 10.0f;
+  }
+  else if( alive_h < 24.0f ) {
+    _exploringTransitionCooldownBase_s = 20.0f;
+  }
+  else if( alive_h < 48.0f ) {
+    _exploringTransitionCooldownBase_s = 40.0f;
+  }
+  else if( alive_h < 72.0f ) {
+    _exploringTransitionCooldownBase_s = 90.0f;
+  }
+  else if( alive_h < 120.0f ) {
+    _exploringTransitionCooldownBase_s = 120.0f;
+  }
+  else if( alive_h < 168.0f ) {
+    _exploringTransitionCooldownBase_s = 240.0;
+  }
+  else {
+    // Explore every 5 minutes after a week, forever!
+    _exploringTransitionCooldownBase_s = 300.0f;
+  }
+}
 
 } // namespace Vector
 } // namespace Anki

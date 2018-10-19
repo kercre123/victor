@@ -54,6 +54,8 @@ public:
 
   void IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm, float bodyDelta_mm);
 
+  float GetNumHoursAlive() const;
+
   ////////////////////////////////////////////////////////////////////////////////
 
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {

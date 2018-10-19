@@ -138,7 +138,7 @@ class Connection:
         conn.close()
 
     :param name: Vector's name in the format of "Vector-XXXX"
-    :param host: The ip and port of Vector in the format "XX.XX.XX.XX:443"
+    :param host: The IP address and port of Vector in the format "XX.XX.XX.XX:443"
     :param cert_file: The location of the certificate file on disk
     :param loop: The asyncio loop for the control events to run inside
     """

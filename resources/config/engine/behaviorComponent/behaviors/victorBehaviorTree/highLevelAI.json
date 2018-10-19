@@ -53,7 +53,8 @@
     {
       "name": "Exploring",
       "behavior": "Exploring",
-      "getInBehavior": "ExploringGetIn"
+      "getInBehavior": "ExploringGetIn",
+      "ensureMinStimValue": 0.5 // will bring stim up to this value if it's below when this state starts
     },
     {
       "name": "ExploringVoiceCommand",
@@ -367,9 +368,7 @@
                 "feature": "Exploring" 
               },
               {
-                "conditionType": "SimpleMood",
-                "from": "HighStim",
-                "to": "MedStim"
+                "customCondition": "ExploringCooldownMet"
               },
               {
                 "conditionType": "Compound",
@@ -416,8 +415,7 @@
           "condition":
           {
             "conditionType": "SimpleMood",
-            "from": "MedStim",
-            "to": "LowStim"
+            "mood": "LowStim"
           }
         }
       ]

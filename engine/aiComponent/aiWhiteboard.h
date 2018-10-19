@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 
 #include "engine/aiComponent/aiComponents_fwd.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 
 #include "coretech/common/engine/math/pose.h"
@@ -124,6 +125,17 @@ public:
 
   // called when we've searched for a possible object at a given pose, but failed to find it
   void FinishedSearchForPossibleCubeAtPose(ObjectType objectType, const Pose3d& pose);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Exploring
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // Returns the cooldown that should be used to transition into Exploring autonomously. This is meant to be
+  // used as a cooldown since the last time we _stopped_ exploring
+  float GetExploringCooldown_s() const;
+
+  // Tell the whiteboard that a new user intent is pending (so it can internally update cooldowns)
+  void NotifyNewUserIntentPending(UserIntentTag userIntent);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Cube search
@@ -188,13 +200,6 @@ public:
   inline std::shared_ptr<SayNameProbabilityTable>& GetSayNameProbabilityTable() { return _sayNameProbTable; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Victor observing demo state (may eventually become part of victor freeplay)
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // feeding state
-  bool Victor_HasCubeToEat() const { return _victor_cubeToEat.IsSet(); }
-  const ObjectID& Victor_GetCubeToEat() const { return _victor_cubeToEat; }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Post behavior suggestions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -252,6 +257,11 @@ private:
   // update render of possible markers since they may have changed
   void UpdatePossibleObjectRender();
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Exploring
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  void UpdateExploringTransitionCooldown();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Failures
@@ -295,14 +305,16 @@ private:
   // list of markers/objects we have not checked out yet
   PossibleObjectList _possibleObjects;
   
-  ObjectID _victor_cubeToEat;
-  
   std::unordered_map<PostBehaviorSuggestions, size_t> _postBehaviorSuggestions;
   
   // holds the current onboarding stage to avoid having to listen for it or read it from disk
   OnboardingStages _onboardingStage;
-  
+
   std::shared_ptr<SayNameProbabilityTable> _sayNameProbTable;
+
+  float _exploringTransitionCooldownBase_s = 0.0f;
+  float _exploringTransitionCooldownExtra_s = 0.0f;
+  float _lastExploringCooldownUpdateTime_s = 0.0f;
 };
   
 

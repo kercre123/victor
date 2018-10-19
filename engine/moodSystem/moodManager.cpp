@@ -796,11 +796,11 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
 }
 
 
-void MoodManager::SetEmotion(EmotionType emotionType, float value)
+void MoodManager::SetEmotion(EmotionType emotionType, float value, const char* debugLabel)
 {
   GetEmotion(emotionType).SetValue(value);
   if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
-    SendMoodToWebViz(_robot->GetContext(), "SetEmotion");
+    SendMoodToWebViz(_robot->GetContext(), debugLabel);
   }
 }
 

@@ -131,8 +131,9 @@ public:
                      EmotionType emotionType2, float baseValue2,
                      EmotionType emotionType3, float baseValue3,
                      const char* uniqueIdString, float currentTimeInSeconds);
-  
-  void SetEmotion(EmotionType emotionType, float value); // directly set the value e.g. for debugging
+
+  // directly set the value e.g. for debugging
+  void SetEmotion(EmotionType emotionType, float value, const char* debugLabel = "SetEmotion");
 
   // This manager internally listens for ActionCompleted events from the robot, and can use those to trigger
   // emotion events. By default, it listens for any actions that complete, but this function can be used to

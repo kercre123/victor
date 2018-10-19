@@ -52,7 +52,7 @@ class ViewerComponent(util.Component):
 
         import asyncio
 
-        with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
+        with anki_vector.Robot(show_viewer=True) as robot:
             robot.loop.run_until_complete(asyncio.sleep(5))
 
     :param robot: A reference to the owner Robot object. (May be :class:`None`)
@@ -118,7 +118,7 @@ class ViewerComponent(util.Component):
             import anki_vector
             import asyncio
 
-            with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
+            with anki_vector.Robot(show_viewer=True) as robot:
                 robot.viewer.show_video()
                 robot.loop.run_until_complete(asyncio.sleep(5))
 
@@ -135,7 +135,7 @@ class ViewerComponent(util.Component):
             import anki_vector
             import asyncio
 
-            with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
+            with anki_vector.Robot(show_viewer=True) as robot:
                 robot.loop.run_until_complete(asyncio.sleep(5))
                 robot.viewer.stop_video()
                 robot.loop.run_until_complete(asyncio.sleep(5))

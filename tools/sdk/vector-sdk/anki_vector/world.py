@@ -92,7 +92,7 @@ class World(util.Component):
 
             # Print the all objects' class details
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.all_objects:
                     print(obj)
 
@@ -112,7 +112,7 @@ class World(util.Component):
 
             # Print the visible face's attributes
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for face in robot.world.visible_faces:
                     print("Face attributes:")
                     print(f"Face id: {face.face_id}")
@@ -142,7 +142,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print(obj)
 
@@ -159,7 +159,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.visible_custom_objects:
                     print(obj)
 
@@ -178,7 +178,8 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+            with anki_vector.Robot() as robot:
                 robot.world.connect_cube()
                 if robot.world.connected_light_cube:
                     dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
@@ -197,7 +198,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 cube = robot.world.light_cube
                 if cube:
                     print('LightCube {0} connected.'.format("is" if cube.is_connected else "isn't"))
@@ -218,7 +219,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 print('most recently observed charger: {0}.'.format(robot.world.charger))
 
         Raises:
@@ -257,7 +258,7 @@ class World(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 my_obj = robot.world.get_object(valid_object_id)
         """
         return self._objects.get(object_id)
@@ -280,7 +281,8 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+            with anki_vector.Robot() as robot:
                 robot.world.connect_cube()
         """
         req = protocol.ConnectCubeRequest()
@@ -304,7 +306,8 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+            with anki_vector.Robot() as robot:
                 robot.world.disconnect_cube()
         """
         req = protocol.DisconnectCubeRequest()
@@ -320,7 +323,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.flash_cube_lights()
         """
         req = protocol.FlashCubeLightsRequest()
@@ -337,7 +340,8 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+            with anki_vector.Robot() as robot:
                 robot.world.forget_preferred_cube()
         """
         req = protocol.ForgetPreferredCubeRequest()
@@ -354,7 +358,8 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+
+            with anki_vector.Robot() as robot:
                 connected_cube = robot.world.connected_light_cube
                 if connected_cube:
                     robot.world.set_preferred_cube(connected_cube.factory_id)
@@ -374,7 +379,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.delete_custom_objects()
         """
 
@@ -440,7 +445,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.define_custom_box(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
                                               marker_front=  anki_vector.objects.CustomObjectMarkers.Circles2,
                                               marker_back=   anki_vector.objects.CustomObjectMarkers.Circles3,
@@ -525,7 +530,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.define_custom_cube(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
                                                marker=anki_vector.objects.CustomObjectMarkers.Circles2,
                                                size_mm=20.0,
@@ -597,7 +602,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.define_custom_wall(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
                                                marker=anki_vector.objects.CustomObjectMarkers.Circles2,
                                                width_mm=20.0, height_mm=20.0,
@@ -664,7 +669,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                        x_size_mm=10, y_size_mm=100, z_size_mm=100,
                                                        relative_to_robot=True)

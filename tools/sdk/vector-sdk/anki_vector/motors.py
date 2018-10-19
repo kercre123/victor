@@ -42,7 +42,7 @@ class MotorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.motors.set_wheel_motors(25, 50)
 
         :param left_wheel_speed: Speed of the left tread (in millimeters per second).
@@ -71,7 +71,7 @@ class MotorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.motors.set_head_motor(-5.0)
 
         :param speed: Motor speed for Vector's head, measured in radians per second.
@@ -92,7 +92,7 @@ class MotorComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.motors.set_lift_motor(-5.0)
 
         :param speed: Motor speed for Vector's lift, measured in radians per second.
