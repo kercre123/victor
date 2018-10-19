@@ -2,7 +2,7 @@
 
 When thinking about how Vector's character should behave/evolve over long periods of time, there is often no difference between that evolution while the robot is powered on or powered off. To remove the need for every behavior/system to independently monitor the robot's power state and save data to disk before powering off, the Variable Snapshot Component (VSC) was introduced to provide a uniform way of thinking about data over long periods of time. Initializing a member variable using the VSC means that a) if it's the first time the variable has been initialized it will be added to the VSC and b) if the variable was initialized and/or updated during a previous robot boot cycle the last state of the data will be restored.
 
-The variable snapshot component is wiped clean every time the robot's code is updated, so it *should not be used to store critical data*.
+The variable snapshot component does not (as of now) explicitly support versioning. If you really need to do migration from an older version, just create a new variable snapshot ID and load in both variables
 
 ## Usage
   * Variables are identified in the VSC by a unique clad enum value. When introducing a new variable, add a new enum to [`/clad/src/clad/types/variableSnapshotIds.clad`](/clad/src/clad/types/variableSnapshotIds.clad)
@@ -15,7 +15,6 @@ The variable snapshot component is wiped clean every time the robot's code is up
 
 ## Example Uses
   * See the [`GreetAfterLongTime` behavior](/engine/aiComponent/behaviorComponent/behaviors/behaviorGreetAfterLongTime.cpp) for an example use of this component.
-  * The component also [uses itself to keep track of versioning information](/engine/components/variableSnapshot/variableSnapshotComponent.cpp).
 
 ## Current System Limitations (as of 8/9/2018)
   * The component can not handle multiple reinitializations of variables. As of now, the component ignores reinitializations, does not save them, and should have a warning.

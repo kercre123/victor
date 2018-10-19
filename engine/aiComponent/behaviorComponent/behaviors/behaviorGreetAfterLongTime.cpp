@@ -43,7 +43,7 @@ const bool kRecognizableFacesOnly = true;
 const float kMaxTimerAfterSeenToReact_s = 5.0f;
 
 #if REMOTE_CONSOLE_ENABLED
-static BehaviorGreetAfterLongTime::LastSeenMapPtr sMapPtr;
+static BehaviorGreetAfterLongTime::LastSeenMapPtr sMapPtr = nullptr;
 
 void ForceNextBigGreeting(ConsoleFunctionContextRef context)
 {

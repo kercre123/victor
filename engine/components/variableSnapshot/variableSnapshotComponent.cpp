@@ -5,16 +5,13 @@
  * Created: 5/31/2018
  *
  * Description: This is a component meant to provide persistence across boots for data within other 
- * 				      components (like timers or faces) that should be remembered by the robot.
+ *              components (like timers or faces) that should be remembered by the robot.
  *
  *
  * Copyright: Anki, Inc. 2018
  */
 
 #include "engine/components/variableSnapshot/variableSnapshotComponent.h"
-
-#include "osState/osState.h"
-#include "util/console/consoleInterface.h"
 
 #include "clad/types/variableSnapshotIds.h"
 
@@ -24,9 +21,6 @@
 
 namespace Anki {
 namespace Vector {
-
-// BN: set to false so big greeting wouldn't reset... need to re-visit why this was done in the first place
-CONSOLE_VAR(bool, kResetDataOnNewBuildVersion, "VariableSnapshotComponent", false);
 
 // save location for data
 const char* VariableSnapshotComponent::kVariableSnapshotFolder = "variableSnapshotStorage";
@@ -50,31 +44,6 @@ void VariableSnapshotComponent::InitDependent(Vector::Robot* robot, const RobotC
 {
   _robot = robot;
   _variableSnapshotJsonMap = _robot->GetDataAccessorComponent().GetVariableSnapshotJsonMap();
-
-  // if we want to reset data when there is a new build version, check for a new build version
-  if(kResetDataOnNewBuildVersion) {
-    // get current build version/SHA
-    auto* osState = Anki::Vector::OSState::getInstance();
-    if(nullptr != osState) {
-      auto _osBuildVersionPtr = std::make_shared<std::string>(osState->GetOSBuildVersion());
-      auto _buildShaPtr = std::make_shared<std::string>(osState->GetBuildSha());
-
-      // get versioning data
-      InitVariable<std::string>(VariableSnapshotId::_RobotOSBuildVersion, _osBuildVersionPtr);
-      InitVariable<std::string>(VariableSnapshotId::_RobotBuildSha, _buildShaPtr);
-
-      if(*_osBuildVersionPtr != osState->GetOSBuildVersion() || *_buildShaPtr != osState->GetBuildSha()) {
-        _variableSnapshotJsonMap->clear();
-        *_osBuildVersionPtr = osState->GetOSBuildVersion();
-        *_buildShaPtr = osState->GetBuildSha();
-      }
-    }
-    else {
-      DEV_ASSERT(osState != nullptr, "VariableSnapshotComponent.InitDependent.InvalidOSState");
-      PRINT_CH_DEBUG( "DataLoader", "VariableSnapshot", "OS State pointer is null." );
-    }
-
-  }
 }
 
 
