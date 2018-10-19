@@ -51,6 +51,7 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
+  virtual bool CanBeGentlyInterruptedNow() const override;
 
 private:
   
@@ -74,6 +75,9 @@ private:
   
   // euclidean dist to goal[idx], which must exist
   float CalcDistToCachedGoal(int idx) const;
+
+  // tell system it's ok to interrupt this tick (or next tick)
+  void SetGentleInterruptionOKForNow();
   
   // object helpers
   
@@ -157,6 +161,8 @@ private:
 
     float lastSearchForFaceTime_s;
     float timeDeactivated_s;
+
+    size_t gentleInterruptionOKUntilTick;
   };
 
   InstanceConfig _iConfig;

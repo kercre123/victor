@@ -41,6 +41,8 @@
   SetDebugStateName(#s);                        \
   }
 
+#define LOG_CHANNEL "Behaviors"
+
 namespace Anki {
 namespace Vector {
   
@@ -150,6 +152,8 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   
   devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
   timeDeactivated_s = -1.0f;
+
+  gentleInterruptionOKUntilTick = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -296,8 +300,8 @@ void BehaviorExploring::OnBehaviorActivated()
     if( _iConfig.referenceHumanBehavior->WantsToBeActivated() &&
         ( currTime_s - _iConfig.referenceHumanBehavior->GetTimeActivated_s() > kResumeReferenceCooldown_s ) &&
         (GetRNG().RandDbl() < kProbReferenceOnResume) ) {
-      PRINT_CH_INFO("Behaviors", "BehaviorExploring.OnBehaviorActivated.ResumeReference",
-                    "do resume reference");
+      LOG_INFO("BehaviorExploring.OnBehaviorActivated.ResumeReference",
+               "do resume reference");
       DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), &BehaviorExploring::SampleAndDrive );
       return;
     }
@@ -317,6 +321,8 @@ void BehaviorExploring::OnBehaviorDeactivated()
     DASMSG_SET(s1, _dVars.endReason, "The reason");
     DASMSG_SEND();
   }
+
+  LOG_INFO("BehaviorExploring.Ended", "reason: %s", _dVars.endReason.empty() ? "<NONE>" : _dVars.endReason.c_str() );
 
   _dVars.timeDeactivated_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
@@ -447,9 +453,30 @@ void BehaviorExploring::BehaviorUpdate()
     // todo: perhaps this should only start if we've driven far enough from the last spot we examined?
     // this would help with noisy prox data
     DelegateNow( _iConfig.examineBehavior.get(), &BehaviorExploring::RegainedControl );
-  } 
-  
+  }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploring::SetGentleInterruptionOKForNow()
+{
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+
+  // add one to let it work next tick too (in most cases, it won't be checked until next tick anyway because
+  // our parent already ran)
+  _dVars.gentleInterruptionOKUntilTick = currTick + 1;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorExploring::CanBeGentlyInterruptedNow() const
+{
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  
+  const bool canInterrupt = ( currTick <= _dVars.gentleInterruptionOKUntilTick );
+
+  return canInterrupt;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploring::IsChargerPositionKnown() const
@@ -533,6 +560,8 @@ void BehaviorExploring::TransitionToHumanSearch()
 {
   SET_STATE(SearchForHuman);
 
+  SetGentleInterruptionOKForNow();
+
   if( _iConfig.searchForHumanBehavior->WantsToBeActivated() ) {
     // run search behavior, transition out handled in BehaviorUpdate
     DelegateIfInControl(_iConfig.searchForHumanBehavior.get());
@@ -545,6 +574,9 @@ void BehaviorExploring::TransitionToHumanSearch()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::RegainedControl()
 {
+  // We're in between actions, so an interruption would be alright
+  SetGentleInterruptionOKForNow();
+
   if( _dVars.sampledPoses.empty() ) {
     SampleAndDrive();
   } else {
@@ -592,9 +624,9 @@ void BehaviorExploring::TransitionToDriving()
           SampleAndDrive();
         }
       } else {
-        PRINT_CH_INFO("Behaviors", "BehaviorExploring.TransitionToDriving.NoPath",
-                         "Could not plan a path after %d attempts",
-                         _dVars.numDriveAttemps);
+        LOG_INFO("BehaviorExploring.TransitionToDriving.NoPath",
+                 "Could not plan a path after %d attempts",
+                 _dVars.numDriveAttemps);
         _dVars.endReason = "CouldNotPlan";
         CancelSelf();
       }
@@ -780,8 +812,8 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INa
     }
     
     if( numAcceptedPoses >= kNumPositionsForSearch ) {
-      PRINT_CH_INFO("Behaviors", "BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
-                       "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
+      LOG_INFO("BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
+               "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
       break;
     }
   }

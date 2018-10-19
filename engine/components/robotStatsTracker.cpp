@@ -80,6 +80,7 @@ void FlushRobotStatsToDisk( ConsoleFunctionContextRef context )
 #define CONSOLE_GROUP "RobotStats"
 
 CONSOLE_VAR( f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 10.0f );
+CONSOLE_VAR( f32, kRobotStats_OverrideAliveHours, CONSOLE_GROUP, -1.0f);
 
 CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
 CONSOLE_FUNC( FlushRobotStatsToDisk, CONSOLE_GROUP );
@@ -304,6 +305,25 @@ void RobotStatsTracker::DoJdocFormatMigration()
   _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
 }
 
+float RobotStatsTracker::GetNumHoursAlive() const
+{
+  if( kRobotStats_OverrideAliveHours >= 0.0f ) {
+    return kRobotStats_OverrideAliveHours;
+  }
+  
+  std::string key(kLifetimeAliveCategory);
+  key += kRobotStatsSeparator;
+  key += "seconds";
+  
+  auto* statsJson = _jdocsManager->GetJdocBodyPointer(external_interface::ROBOT_LIFETIME_STATS);
+  if( statsJson != nullptr && statsJson->isMember(key) ) {
+    const float sec = (*statsJson)[key].asFloat();
+    return sec / (3600.0f);
+  }
+
+  // not present, return 0
+  return 0.0f;
+}
 
 }
 }

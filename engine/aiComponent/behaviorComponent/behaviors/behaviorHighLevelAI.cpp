@@ -33,9 +33,16 @@
 namespace Anki {
 namespace Vector {
 
+#define LOG_CHANNEL "Behaviors"
+
+#define CONSOLE_GROUP "BehaviorHighLevelAI"
+
 // speed up high level AI with this. Be careful -- some conditions that check for time
 // within a short interval [a,b] may not be met if you choose too fast a speedup factor
-CONSOLE_VAR_RANGED(float, kTimeMultiplier, "BehaviorHighLevelAI", 1.0f, 1.0f, 300.0f);
+CONSOLE_VAR_RANGED(float, kTimeMultiplier, CONSOLE_GROUP, 1.0f, 1.0f, 300.0f);
+
+// This is the _minumum_ cooldown to go from Observing to Exploring
+CONSOLE_VAR(float, kHLAI_MinObservingBeforeExploring_s, CONSOLE_GROUP, 10.0f);
   
 namespace {
 
@@ -205,9 +212,11 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           // for playing, but it recently played with a cube, then it shouldn't try to drive off the charger
           // again.
           const bool valueIfNeverRun = false;
-          const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("ObservingDriveOffCharger"),
-                                                                             _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
-                                                                             valueIfNeverRun);
+          const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(
+            GetStateID("ObservingDriveOffCharger"),
+            _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
+            InternalStatesBehavior::StateCooldownDefault::False);
+
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
           const bool hasntPlayed = timer.HasCooldownExpired(_params.playWithCubeCooldown_s / kTimeMultiplier, valueIfNeverRun);
           
@@ -238,6 +247,37 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
         },
         ConditionLambda::VisionModeSet{
           { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
+        },
+        emptyOwnerLabel )));
+
+  handles.emplace_back(
+    BEIConditionFactory::InjectCustomBEICondition(
+      "ExploringCooldownMet",
+      std::make_shared<ConditionLambda>(
+        [this](BehaviorExternalInterface& bei) {
+
+          const float stateStartTime_s = GetLastTimeStarted( GetCurrentStateID() );
+          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+          if( currTime_s - stateStartTime_s < kHLAI_MinObservingBeforeExploring_s ) {
+            // haven't been in observing for long enough
+            return false;
+          }
+
+          const float cooldown_s = GetAIComp<AIWhiteboard>().GetExploringCooldown_s();
+
+          if( _params.lastExploringCooldownPrinted != cooldown_s ) {
+            LOG_INFO("BehaviorHighLevelAI.ExploringState.NewCooldown",
+                     "Observing -> Exploring cooldown is now %f",
+                     cooldown_s);
+            _params.lastExploringCooldownPrinted = cooldown_s;
+          }
+
+          const bool cooldownPassed = StateExitCooldownExpired(
+            GetStateID("Exploring"),
+            cooldown_s,
+            InternalStatesBehavior::StateCooldownDefault::UseFirstBehaviorActivationTime);
+          return cooldownPassed;
         },
         emptyOwnerLabel )));
 

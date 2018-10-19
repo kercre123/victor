@@ -12,6 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
@@ -432,6 +434,12 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
 
   _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
   _pendingIntentTimeoutEnabled = true;
+
+  // notify the whiteboard
+  if( _robot && _robot->HasComponent<AIComponent>() ) {
+    _robot->GetComponent<AIComponent>().GetComponent<AIWhiteboard>().NotifyNewUserIntentPending(
+      _pendingIntent->intent.GetTag() );
+  }
 }
 
 void UserIntentComponent::DevSetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source)
