@@ -385,13 +385,3 @@ class FaceComponent(util.Component):
         """
         req = protocol.EraseAllEnrolledFacesRequest()
         return await self.grpc_interface.EraseAllEnrolledFaces(req)
-
-    # TODO move out of face component as this is general to objects if not specific to faces (to a new vision component?). Needs sample code.
-    @sync.Synchronizer.wrap
-    async def enable_vision_mode(self, enable: bool):
-        """Enable facial detection on the robot's camera
-
-        :param enable: Enable/Disable the mode specified.
-        """
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=enable)
-        return await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
