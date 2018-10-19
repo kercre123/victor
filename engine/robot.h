@@ -809,6 +809,8 @@ protected:
 
   // Performs various startup checks and displays fault codes as appropriate
   Result UpdateStartupChecks();
+
+  void UpdateToF();
 }; // class Robot
 
   

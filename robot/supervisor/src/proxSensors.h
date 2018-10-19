@@ -49,8 +49,6 @@ namespace Anki {
       // Get corrected ToF distance sensor data
       ProxSensorData GetProxData();
 
-      RangeDataRaw GetRangeData();
-
     } // namespace ProxSensors
   } // namespace Cozmo
 } // namespace Anki

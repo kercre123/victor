@@ -161,7 +161,6 @@ typedef enum
 
 /// Face proximity sensor
 ProxSensorData GetRawProxData();
-RangeDataRaw GetRawRangeData();
 
 /// Cliff sensors
 u16 GetRawCliffData(const CliffID cliff_id);

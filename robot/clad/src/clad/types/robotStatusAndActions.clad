@@ -91,7 +91,6 @@ structure RobotState
   GyroData gyro,    // in head-frame (rad/s)
   float_32 batteryVoltage,
   float_32 chargerVoltage,
-  RangeDataRaw rangeData,
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 cliffDataRaw[4],
   ProxSensorData proxData,

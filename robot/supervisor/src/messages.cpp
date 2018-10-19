@@ -113,8 +113,6 @@ namespace Anki {
         }
         //robotState_.proxData = ProxSensors::GetProxData();
 
-        robotState_.rangeData = ProxSensors::GetRangeData();
-
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
         robotState_.backpackTouchSensorFilt = HAL::GetTouchSensorFilt();
         
