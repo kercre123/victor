@@ -33,7 +33,7 @@ class PhotographComponent(util.Component):
         import anki_vector
         from PIL import Image
 
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             if len(robot.photos.photo_info) > 0:
                 first_photo = robot.photos.photo_info[0]
                 photo = robot.photos.get_photo(first_photo)
@@ -97,7 +97,7 @@ class PhotographComponent(util.Component):
             import anki_vector
             from PIL import Image
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 if len(robot.photos.photo_info) > 0:
                     first_photo = robot.photos.photo_info[0]
                     photo = robot.photos.get_photo(first_photo)
@@ -126,7 +126,7 @@ class PhotographComponent(util.Component):
             import anki_vector
             from PIL import Image
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for photo in robot.photos.photo_info:
                     photo = robot.photos.get_thumbnail(photo)
                     image = Image.open(io.BytesIO(photo.image))

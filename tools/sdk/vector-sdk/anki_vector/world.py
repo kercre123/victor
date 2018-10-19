@@ -70,7 +70,7 @@ class World(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # Print the visible face's attributes
                 for face in robot.world.visible_faces:
                     print("Face attributes:")
@@ -124,7 +124,7 @@ class World(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.connect_cube()
                 if robot.world.connected_light_cube:
                     dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
@@ -146,7 +146,7 @@ class World(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.connect_cube()
         """
         req = protocol.ConnectCubeRequest()
@@ -171,7 +171,7 @@ class World(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.disconnect_cube()
         """
         req = protocol.DisconnectCubeRequest()
@@ -199,7 +199,7 @@ class World(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.world.forget_preferred_cube()
         """
         req = protocol.ForgetPreferredCubeRequest()
@@ -217,7 +217,7 @@ class World(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 connected_cube = robot.world.connected_light_cube
                 if connected_cube:
                     robot.world.set_preferred_cube(connected_cube.factory_id)

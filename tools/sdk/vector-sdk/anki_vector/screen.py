@@ -117,7 +117,7 @@ def convert_image_to_screen_data(pil_image: Image.Image):
         except ImportError:
             sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             # Load an image
             image_file = Image.open('../examples/face_images/cozmo_image.jpg')
 
@@ -152,7 +152,7 @@ class ScreenComponent(util.Component):
             except ImportError:
                 sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # Load an image
                 image_file = Image.open('../examples/face_images/cozmo_image.jpg')
 
@@ -186,7 +186,7 @@ class ScreenComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.screen.set_screen_to_color(anki_vector.color.Color(rgb=[255, 128, 0]), duration_sec=1.0)
 
         :param solid_color: Desired color to set Vector's Screen.

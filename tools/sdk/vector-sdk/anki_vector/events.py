@@ -76,7 +76,7 @@ class EventHandler:
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.events.start(robot.conn, robot.loop)
 
         :param connection: A reference to the connection from the SDK to the robot.
@@ -94,7 +94,7 @@ class EventHandler:
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.events.close()
         """
         self.listening_for_events = False
@@ -111,7 +111,7 @@ class EventHandler:
             def event_listener(_, msg):
                 print(msg)
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.events.subscribe_by_name(event_listener, event_name='my_event')
                 robot.events.dispatch_event_by_name('my_event dispatched', event_name='my_event')
         """
@@ -172,7 +172,7 @@ class EventHandler:
             def event_listener(_, msg):
                 print(msg)
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.events.subscribe_by_name(event_listener, event_name='my_event')
                 robot.events.dispatch_event_by_name('my_event dispatched', event_name='my_event')
 
@@ -199,7 +199,7 @@ class EventHandler:
             def on_robot_observed_face():
                 print("Vector sees a face")
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 on_robot_observed_face = functools.partial(on_robot_observed_face, robot)
                 robot.events.subscribe(on_robot_observed_face,
                                        Events.robot_observed_face)
@@ -227,7 +227,7 @@ class EventHandler:
             def on_robot_observed_face(robot, event_type, event):
                 print("Vector sees a face")
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 on_robot_observed_face = functools.partial(on_robot_observed_face, robot)
                 robot.events.unsubscribe_by_name(on_robot_observed_face, Events.robot_observed_face)
 
@@ -257,7 +257,7 @@ class EventHandler:
             import anki_vector
             from anki_vector.events import Events
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.events.unsubscribe(on_robot_observed_face,
                                          Events.robot_observed_face)
 

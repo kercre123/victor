@@ -154,7 +154,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 was_face_originally_unrecognized_but_is_now_recognized = face.has_updated_face_id
         """
@@ -168,7 +168,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 updated_id = face.updated_face_id
         """
@@ -186,7 +186,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 name = face.name
         """
@@ -207,7 +207,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 expression = face.expression
         """
@@ -225,7 +225,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 expression_score = face.expression_score
         """
@@ -239,7 +239,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 left_eye = face.left_eye
         """
@@ -253,7 +253,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 right_eye = face.right_eye
         """
@@ -267,7 +267,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 nose = face.nose
         """
@@ -281,7 +281,7 @@ class Face(objects.ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 face = robot.world.get_face(1)
                 mouth = face.mouth
         """
@@ -331,7 +331,7 @@ class FaceComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 name_data_list = robot.faces.request_enrolled_names()
         """
         req = protocol.RequestEnrolledNamesRequest()
@@ -349,7 +349,7 @@ class FaceComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.faces.update_enrolled_face_by_id(1, 'Hanns', 'Boris')
         """
         req = protocol.UpdateEnrolledFaceByIDRequest(face_id=face_id,
@@ -366,7 +366,7 @@ class FaceComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.faces.erase_enrolled_face_by_id(1)
         """
         req = protocol.EraseEnrolledFaceByIDRequest(face_id=face_id)
@@ -380,7 +380,7 @@ class FaceComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.faces.erase_all_enrolled_faces()
         """
         req = protocol.EraseAllEnrolledFacesRequest()

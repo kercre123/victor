@@ -388,7 +388,7 @@ class LightCube(ObservableObject):
 
             import time
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # ensure we are connected to a cube
                 robot.world.connect_cube()
 
@@ -432,7 +432,7 @@ class LightCube(ObservableObject):
 
             import time
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # ensure we are connected to a cube
                 robot.world.connect_cube()
 
@@ -457,7 +457,7 @@ class LightCube(ObservableObject):
 
             import time
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # ensure we are connected to a cube
                 robot.world.connect_cube()
 
@@ -491,7 +491,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_tapped_time = robot.world.connected_light_cube.last_tapped_time
         """
         return self._last_tapped_time
@@ -504,7 +504,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_tapped_robot_timestamp = robot.world.connected_light_cube.last_tapped_robot_timestamp
         """
         return self._last_tapped_robot_timestamp
@@ -517,7 +517,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_time = robot.world.connected_light_cube.last_moved_time
         """
         return self._last_moved_time
@@ -530,7 +530,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_robot_timestamp = robot.world.connected_light_cube.last_moved_robot_timestamp
         """
         return self._last_moved_robot_timestamp
@@ -543,7 +543,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_start_time = robot.world.connected_light_cube.last_moved_start_time
         """
         return self._last_moved_start_time
@@ -556,7 +556,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_start_robot_timestamp = robot.world.connected_light_cube.last_moved_start_robot_timestamp
         """
         return self._last_moved_start_robot_timestamp
@@ -569,7 +569,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_up_axis_changed_time = robot.world.connected_light_cube.last_up_axis_changed_time
         """
         return self._last_up_axis_changed_time
@@ -582,7 +582,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_up_axis_changed_robot_timestamp = robot.world.connected_light_cube.last_up_axis_changed_robot_timestamp
         """
         return self._last_up_axis_changed_robot_timestamp
@@ -595,7 +595,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 up_axis = robot.world.connected_light_cube.up_axis
         """
         return self._up_axis
@@ -608,7 +608,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 is_moving = robot.world.connected_light_cube.is_moving
         """
         return self._is_moving
@@ -621,7 +621,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 is_connected = robot.world.connected_light_cube.is_connected
         """
         return self._is_connected
@@ -634,7 +634,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 top_face_orientation_rad = robot.world.connected_light_cube.top_face_orientation_rad
         """
         return self._top_face_orientation_rad
@@ -647,7 +647,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 factory_id = robot.world.connected_light_cube.factory_id
         """
         return self._factory_id
@@ -667,7 +667,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 descriptive_name = robot.world.connected_light_cube.descriptive_name
         """
         return "{0} id={1} factory_id={2} is_connected={3}".format(self.__class__.__name__, self._object_id, self._factory_id, self._is_connected)
@@ -682,7 +682,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 object_id = robot.world.connected_light_cube.object_id
         """
         return self._object_id
