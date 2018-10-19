@@ -72,7 +72,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_ForceDisableMicDataProc, CONSOLE_GROUP, false);
   CONSOLE_VAR_ENUM(uint8_t, kDevForceProcessState, CONSOLE_GROUP, 0,
                    "NormalOperation,None,NoProcessingSingleMic,SigEsBeamformingOff,SigEsBeamformingOn");
-
+#endif
   // NOTE: This enum needs to EXACTLY match the number and ordering of the kTriggerModelDataList array below
   enum class SupportedLocales
   {
@@ -114,11 +114,13 @@ namespace {
 
   size_t _triggerModelTypeIndexVector = (size_t) SupportedLocales::enUS_500kb;
   size_t _triggerModelTypeIndexAlexa = (size_t) SupportedLocales::ALEXAsize_500kb;
+#if ANKI_DEV_CHEATS
   CONSOLE_VAR_ENUM(size_t, kMicData_NextTriggerIndexVector, CONSOLE_GROUP, _triggerModelTypeIndexVector, "enUS_1mb,enUS_500kb,enUS_250kb,enUK,enAU,frFR,deDE,alexa1MB,alexa500kb");
   CONSOLE_VAR_ENUM(size_t, kMicData_NextTriggerIndexAlexa, CONSOLE_GROUP, _triggerModelTypeIndexAlexa, "enUS_1mb,enUS_500kb,enUS_250kb,enUK,enAU,frFR,deDE,alexa1MB,alexa500kb");
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_WakeWordless, CONSOLE_GROUP, false);
-#endif // ANKI_DEV_CHEATS
+#endif
+//#endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
   using MicProcessingState = MicDataProcessor::ProcessingState;
