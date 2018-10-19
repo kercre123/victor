@@ -180,6 +180,11 @@ void BehaviorDevSquawkBoxTest::HandleWhileActivated(const RobotToEngineEvent& ev
     const auto& msg = event.GetData().Get_triggerWordDetected();
     PRINT_CH_INFO("Behaviors", "nameBehaviorDevSquawkBoxTest.HandleWhileActivated.RobotToEngineEvent",
                      "Trigger word detected, score %d", msg.triggerScore);
+    
+    // Restart Animations after trigger word is detected
+    if (kLoopingAnimationState > 0) {
+      SetLoopingAnimationState();
+    }
   }
 }
 
