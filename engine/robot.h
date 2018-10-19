@@ -101,6 +101,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class MapComponent;
@@ -211,6 +212,9 @@ public:
 
   inline VisionScheduleMediator& GetVisionScheduleMediator() {return GetComponent<VisionScheduleMediator>(); }
   inline const VisionScheduleMediator& GetVisionScheduleMediator() const {return GetComponent<VisionScheduleMediator>(); }
+
+  inline RangeSensorComponent& GetRangeSensorComponent() {return GetComponent<RangeSensorComponent>(); }
+  inline const RangeSensorComponent& GetRangeSensorComponent() const {return GetComponent<RangeSensorComponent>(); }
 
   inline MapComponent&       GetMapComponent()       {return GetComponent<MapComponent>();}
   inline const MapComponent& GetMapComponent() const {return GetComponent<MapComponent>();}
@@ -809,8 +813,6 @@ protected:
 
   // Performs various startup checks and displays fault codes as appropriate
   Result UpdateStartupChecks();
-
-  void UpdateToF();
 }; // class Robot
 
   

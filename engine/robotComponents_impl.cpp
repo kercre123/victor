@@ -44,6 +44,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;

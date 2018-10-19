@@ -46,6 +46,7 @@ enum class RobotComponentID{
   Carrying,
   CliffSensor,
   ProxSensor,
+  RangeSensor,
   TouchSensor,
   Animation,
   StateHistory,
