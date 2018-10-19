@@ -118,6 +118,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class ImuComponent;
 class AnimationComponent;
@@ -271,6 +272,9 @@ public:
   #undef INLINE_GETTERS
 
   const PoseOriginList& GetPoseOriginList() const { return *_poseOrigins.get(); }
+
+  inline RangeSensorComponent& GetRangeSensorComponent() {return GetComponent<RangeSensorComponent>(); }
+  inline const RangeSensorComponent& GetRangeSensorComponent() const {return GetComponent<RangeSensorComponent>(); }
 
   inline BlockTapFilterComponent& GetBlockTapFilter() {return GetComponent<BlockTapFilterComponent>();}
   inline const BlockTapFilterComponent& GetBlockTapFilter() const {return GetComponent<BlockTapFilterComponent>();}
@@ -720,8 +724,6 @@ protected:
   bool UpdateGyroCalibChecks(Result& res);
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
-
-  void UpdateToF();
 }; // class Robot
 
 

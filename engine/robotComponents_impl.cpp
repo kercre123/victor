@@ -50,6 +50,7 @@ class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
 class ImuComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;

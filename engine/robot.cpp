@@ -52,6 +52,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/imuComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/userEntitlementsManager.h"
@@ -340,6 +341,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ProxSensor,                 new ProxSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ImuSensor,                  new ImuComponent());
+    _components->AddDependentComponent(RobotComponentID::RangeSensor,                new RangeSensorComponent());
     _components->AddDependentComponent(RobotComponentID::TouchSensor,                new TouchSensorComponent());
     _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
@@ -1290,7 +1292,6 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
   ToFSensor::getInstance()->Update();
-  UpdateToF();
 
   Result factoryRes;
   const bool checkDone = UpdateStartupChecks(factoryRes);
