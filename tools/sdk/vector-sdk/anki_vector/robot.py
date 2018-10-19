@@ -323,7 +323,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.vision.enable_vision_mode(true)
         """
         return self._vision
