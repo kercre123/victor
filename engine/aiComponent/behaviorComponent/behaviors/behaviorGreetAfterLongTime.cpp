@@ -156,8 +156,7 @@ void BehaviorGreetAfterLongTime::DebugPrintState(const char* debugLabel, const L
 bool BehaviorGreetAfterLongTime::WantsToBeActivatedBehavior() const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool shouldActivate = _dVars.shouldActivateBehaviorUntil_s > 0.0f &&
-                              _dVars.shouldActivateBehaviorUntil_s <= currTime_s;
+  const bool shouldActivate = currTime_s <= _dVars.shouldActivateBehaviorUntil_s;
   return shouldActivate;
 }
 
@@ -175,7 +174,7 @@ void BehaviorGreetAfterLongTime::OnBehaviorActivated()
   DebugPrintState("OnBehaviorActivated");
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const int timeSince_ms = std::round( (currTime_s - _dVars.shouldActivateBehaviorUntil_s) * 1000.0f );
+  const int timeSince_ms = std::round( (_dVars.shouldActivateBehaviorUntil_s - currTime_s ) * 1000.0f );
   
   DASMSG(big_greeting_played, "behavior.big_greeting.played",
          "We saw a face that we haven't seen in a while, playing a big greeting");
