@@ -12,6 +12,7 @@
 
 #include "whiskeyToF/tof.h"
 
+#include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
 #include <webots/Supervisor.hpp>

@@ -2704,24 +2704,34 @@ void Robot::UpdateToF()
   const RangeDataRaw data = ToFSensor::getInstance()->GetData();
  
   Pose3d co = GetCameraPose(GetComponent<FullRobotPose>().GetHeadAngle());
-  Pose3d c(0, Z_AXIS_3D(), {0, 0, 0}, co);
+  Pose3d c(TOF_ANGLE_DOWN_REL_CAMERA_RAD, Y_AXIS_3D(), {0, 0, 0}, co);
   c.RotateBy(Rotation3d(DEG_TO_RAD(-90), Y_AXIS_3D()));
   c.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
-  
-  Pose3d lp(TOF_LEFT_ROT_Z_REL_CAMERA_RAD,
-            Z_AXIS_3D(),
-            {TOF_LEFT_TRANS_REL_CAMERA_MM[0],
-             TOF_LEFT_TRANS_REL_CAMERA_MM[1],
-             TOF_LEFT_TRANS_REL_CAMERA_MM[2]},
-            c,
-            "leftProx");
-  Pose3d rp(TOF_RIGHT_ROT_Z_REL_CAMERA_RAD,
-            Z_AXIS_3D(),
-            {TOF_RIGHT_TRANS_REL_CAMERA_MM[0],
-             TOF_RIGHT_TRANS_REL_CAMERA_MM[1],
-             TOF_RIGHT_TRANS_REL_CAMERA_MM[2]},
-            c,
-            "rightProx");
+
+#if TOF_CONFIGURATION ==TOF_SIDE_BY_SIDE
+  const auto leftAngle = TOF_LEFT_ROT_Z_REL_CAMERA_RAD;
+  const auto rightAngle = TOF_RIGHT_ROT_Z_REL_CAMERA_RAD;
+  const auto axis = Z_AXIS_3D();  
+#elif TOF_CONFIGURATION == TOF_ABOVE_BELOW
+  const auto leftAngle = TOF_LEFT_ROT_Y_REL_CAMERA_RAD;
+  const auto rightAngle = TOF_RIGHT_ROT_Y_REL_CAMERA_RAD;
+  const auto axis = Y_AXIS_3D();
+#endif
+
+    Pose3d lp(leftAngle,
+              axis,
+              {TOF_LEFT_TRANS_REL_CAMERA_MM[0],
+               TOF_LEFT_TRANS_REL_CAMERA_MM[1],
+               TOF_LEFT_TRANS_REL_CAMERA_MM[2]},
+              c,
+              "leftProx");
+    Pose3d rp(rightAngle,
+              axis,
+              {TOF_RIGHT_TRANS_REL_CAMERA_MM[0],
+               TOF_RIGHT_TRANS_REL_CAMERA_MM[1],
+               TOF_RIGHT_TRANS_REL_CAMERA_MM[2]},
+              c,
+              "rightProx");
 
   const f32 kInnerAngle_rad = TOF_FOV_RAD / 8.f;
   const f32 kOuterAngle_rad = kInnerAngle_rad * 3.f;
