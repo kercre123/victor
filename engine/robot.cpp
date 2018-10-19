@@ -8,6 +8,7 @@
 
 #include "engine/robot.h"
 #include "camera/cameraService.h"
+#include "whiskeyToF/tof.h"
 
 #include "coretech/common/engine/math/poseOriginList.h"
 
@@ -970,106 +971,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       _touchSensorFiltDeque.pop_front();
     }
   }
-
-  
-
-  Pose3d co = GetCameraPose(msg.headAngle);
-  Pose3d c(DEG_TO_RAD(-4), Y_AXIS_3D(), {0, 0, 0}, co);
-  c.RotateBy(Rotation3d(DEG_TO_RAD(-90), Y_AXIS_3D()));
-  c.RotateBy(Rotation3d(DEG_TO_RAD(90)/* - msg.headAngle*/, Z_AXIS_3D()));
-  //c.RotateBy(Rotation3d(-msg.headAngle, Y_AXIS_3D()));
-  
-  
-  Pose3d lp(DEG_TO_RAD(-12.5), Z_AXIS_3D(), {0, 0, 0}, c, "leftProx");
-  Pose3d rp(DEG_TO_RAD(12.5), Z_AXIS_3D(), {0, 0, 0}, c, "rightProx");
-  Pose3d o = lp.GetWithRespectToRoot();
-  o.Print();
-  for(int r = 0; r < 4; r++)
-  {
-    f32 pitch = 0;
-    if(r == 0)
-    {
-      pitch = DEG_TO_RAD(7.125);
-    }
-    else if(r == 1)
-    {
-      pitch = DEG_TO_RAD(2.375);
-    }
-    else if(r == 2)
-    {
-      pitch = DEG_TO_RAD(-2.375);
-    }
-    else if(r == 3)
-    {
-      pitch = DEG_TO_RAD(-7.125);
-    }
-
-
-    for(int c = 0; c < 8; c++)
-    {
-      // YAW
-      if(c < 4)
-      {
-        f32 angleFromCenter = 0;
-        if(c == 0)
-        {
-          angleFromCenter = DEG_TO_RAD(7.125);
-        }
-        else if(c == 1)
-        {
-          angleFromCenter = DEG_TO_RAD(2.375);
-        }
-        else if(c == 2)
-        {
-          angleFromCenter = DEG_TO_RAD(-2.375);
-        }
-        else if(c == 3)
-        {
-          angleFromCenter = DEG_TO_RAD(-7.125);
-        }
-        const f32 y = sin(angleFromCenter) * msg.rangeData.data[4+c + (r*8)] *1000;
-        //const f32 x = cos(angleFromCenter) * msg.rangeData.data[4+c + (r*8)] * 1000;
-        const f32 z = sin(pitch) * msg.rangeData.data[4+c + (r*8)] * 1000;
-
-        Pose3d p(0, Z_AXIS_3D(), {msg.rangeData.data[4+c + (r*8)] * 1000, y, z}, lp, "point");
-        Pose3d root = p.GetWithRespectToRoot();
-        GetContext()->GetVizManager()->DrawCuboid(r*8 + c,
-                                                  {3, 3, 3},
-                                                  root);
-      }
-      else
-      {
-        int c2 = c - 4;
-        f32 angleFromCenter = 0;
-        if(c2 == 0)
-        {
-          angleFromCenter = DEG_TO_RAD(7.125);
-        }
-        else if(c2 == 1)
-        {
-          angleFromCenter = DEG_TO_RAD(2.375);
-        }
-        else if(c2 == 2)
-        {
-          angleFromCenter = DEG_TO_RAD(-2.375);
-        }
-        else if(c2 == 3)
-        {
-          angleFromCenter = DEG_TO_RAD(-7.125);
-        }
-        const f32 y = sin(angleFromCenter) * msg.rangeData.data[c2 + (r*8)] *1000;
-        //const f32 x = cos(angleFromCenter) * msg.rangeData.data[c2 + (r*8)] * 1000;
-        const f32 z = sin(pitch) * msg.rangeData.data[c2 + (r*8)] * 1000;
-        
-        Pose3d p(0, Z_AXIS_3D(), {msg.rangeData.data[c2 + (r*8)] * 1000, y, z}, rp, "point");
-        Pose3d root = p.GetWithRespectToRoot();
-        GetContext()->GetVizManager()->DrawCuboid(r*8 + c,
-                                                  {3, 3, 3},
-                                                  root);
-
-      }
-    }
-  }
   
   // Update head angle
   SetHeadAngle(msg.headAngle);
@@ -1388,6 +1289,8 @@ Result Robot::Update()
 
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
+  ToFSensor::getInstance()->Update();
+  UpdateToF();
 
   Result factoryRes;
   const bool checkDone = UpdateStartupChecks(factoryRes);
@@ -2503,7 +2406,6 @@ RobotState Robot::GetDefaultRobotState()
                          std::move(defaultImuDataFrames), // std::array<Anki::Vector::IMUDataFrame, 6> imuData,
                          0.f, // float batteryVoltage
                          0.f, // float chargerVoltage
-                         RangeDataRaw(),
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
@@ -2797,6 +2699,68 @@ bool Robot::SetLocale(const std::string & locale)
   return true;
 }
 
+void Robot::UpdateToF()
+{
+  const RangeDataRaw data = ToFSensor::getInstance()->GetData();
+ 
+  Pose3d co = GetCameraPose(GetComponent<FullRobotPose>().GetHeadAngle());
+  Pose3d c(0, Z_AXIS_3D(), {0, 0, 0}, co);
+  c.RotateBy(Rotation3d(DEG_TO_RAD(-90), Y_AXIS_3D()));
+  c.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
+  
+  Pose3d lp(TOF_LEFT_ROT_Z_REL_CAMERA_RAD,
+            Z_AXIS_3D(),
+            {TOF_LEFT_TRANS_REL_CAMERA_MM[0],
+             TOF_LEFT_TRANS_REL_CAMERA_MM[1],
+             TOF_LEFT_TRANS_REL_CAMERA_MM[2]},
+            c,
+            "leftProx");
+  Pose3d rp(TOF_RIGHT_ROT_Z_REL_CAMERA_RAD,
+            Z_AXIS_3D(),
+            {TOF_RIGHT_TRANS_REL_CAMERA_MM[0],
+             TOF_RIGHT_TRANS_REL_CAMERA_MM[1],
+             TOF_RIGHT_TRANS_REL_CAMERA_MM[2]},
+            c,
+            "rightProx");
+
+  const f32 kInnerAngle_rad = TOF_FOV_RAD / 8.f;
+  const f32 kOuterAngle_rad = kInnerAngle_rad * 3.f;
+  const f32 kPixToAngle[] = {kOuterAngle_rad,
+                             kInnerAngle_rad,
+                             -kInnerAngle_rad,
+                             -kOuterAngle_rad};
+  
+  for(int r = 0; r < TOF_RESOLUTION; r++)
+  {
+    const f32 pitch = sin(kPixToAngle[r]);
+
+    for(int c = 0; c < TOF_RESOLUTION; c++)
+    {
+      const f32 yaw = sin(kPixToAngle[c]);
+
+      const f32 leftDist_mm = data.data[c + (r*8)] * 1000; 
+
+      const f32 yl = yaw * leftDist_mm;
+      const f32 zl = pitch * leftDist_mm;
+
+      Pose3d pl(0, Z_AXIS_3D(), {leftDist_mm, yl, zl}, lp, "point");
+      Pose3d rootl = pl.GetWithRespectToRoot();
+      GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
+                                                {3, 3, 3},
+                                                rootl);
+
+      const f32 rightDist_mm = data.data[4+c + (r*8)] * 1000;
+      const f32 yr = yaw * rightDist_mm;
+      const f32 zr = pitch * rightDist_mm;
+        
+      Pose3d pr(0, Z_AXIS_3D(), {rightDist_mm, yr, zr}, rp, "point");
+      Pose3d rootr = pr.GetWithRespectToRoot();
+      GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
+                                                {3, 3, 3},
+                                                rootr);
+    }
+  }
+}
 
 void Robot::Shutdown(ShutdownReason reason)
 {

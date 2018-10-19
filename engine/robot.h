@@ -720,6 +720,8 @@ protected:
   bool UpdateGyroCalibChecks(Result& res);
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
+
+  void UpdateToF();
 }; // class Robot
 
 

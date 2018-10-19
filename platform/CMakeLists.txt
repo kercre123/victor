@@ -7,6 +7,8 @@ add_subdirectory(config)
 
 add_subdirectory(camera)
 
+add_subdirectory(whiskeyToF)
+
 add_subdirectory(switchboard)
 
 add_subdirectory(update-engine)

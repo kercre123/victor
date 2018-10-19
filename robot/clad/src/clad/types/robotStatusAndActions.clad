@@ -120,7 +120,6 @@ structure RobotState
   IMUDataFrame imuData[6], // gyro data for image processing (every 5 ms) (size IMUConstants::IMU_FRAMES_PER_ROBOT_STATE)
   float_32 batteryVoltage,
   float_32 chargerVoltage,
-  RangeDataRaw rangeData,
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 cliffDataRaw[4],
   ProxSensorDataRaw proxData,

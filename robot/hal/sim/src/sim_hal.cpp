@@ -138,9 +138,6 @@ namespace Anki {
       //webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *cliffSensors_[HAL::CLIFF_COUNT];
 
-      webots::RangeFinder *prox_;
-      webots::RangeFinder *proxl_;
-      
       // Charge contact
       webots::Connector* chargeContact_;
       bool wasOnCharger_ = false;
@@ -388,14 +385,6 @@ namespace Anki {
       // Accelerometer
       accel_ = webotRobot_.getAccelerometer("accel");
       accel_->enable(ROBOT_TIME_STEP_MS);
-
-      // Proximity sensor
-      //proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
-      //proxCenter_->enable(ROBOT_TIME_STEP_MS);
-      prox_ = webotRobot_.getRangeFinder("rightProxSensor");
-      prox_->enable(ROBOT_TIME_STEP_MS);
-      proxl_ = webotRobot_.getRangeFinder("leftProxSensor");
-      proxl_->enable(ROBOT_TIME_STEP_MS);
 
       // Cliff sensors
       cliffSensors_[HAL::CLIFF_FL] = webotRobot_.getDistanceSensor("cliffSensorFL");
@@ -816,24 +805,6 @@ namespace Anki {
   }
 
 
-    RangeDataRaw HAL::GetRawRangeData()
-    {
-      RangeDataRaw rangeData;
-      const float* rightImage = prox_->getRangeImage();
-      const float* leftImage = proxl_->getRangeImage();
-
-      for(int i = 0; i < prox_->getWidth(); i++)
-      {
-        for(int j = 0; j < 4; j++)
-        {
-          int index = i*8 + j;
-          rangeData.data[index] = leftImage[i*4 + j];
-          rangeData.data[index + 4] = rightImage[i*4 + j];
-        }
-      }
-      return rangeData;
-    }
-    
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
       switch(button_id) {

@@ -235,6 +235,20 @@ namespace Vector {
 
   /***************************************************************************
    *
+   *                          Range Sensor (whiskey)
+   *
+   **************************************************************************/
+
+  const f32 TOF_FOV_RAD = DEG_TO_RAD(19);
+  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -5, 0};
+  const f32 TOF_LEFT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(-12.5); 
+  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 5, 0};
+  const f32 TOF_RIGHT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(12.5); 
+  const u32 TOF_RESOLUTION = 4;
+
+  
+  /***************************************************************************
+   *
    *                          Speeds and Accels
    *
    **************************************************************************/

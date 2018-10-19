@@ -286,6 +286,7 @@ target_link_libraries(webotsCtrlGameEngine2
   util
   kazmath
   cameraService
+  whiskeyToF
   cti_common
   cti_common_robot
   cti_vision

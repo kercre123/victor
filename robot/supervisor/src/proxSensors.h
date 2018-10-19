@@ -61,8 +61,6 @@ namespace Anki {
       // Get corrected ToF distance sensor data
       ProxSensorDataRaw GetProxData();
 
-      RangeDataRaw GetRangeData();
-
     } // namespace ProxSensors
   } // namespace Vector
 } // namespace Anki
