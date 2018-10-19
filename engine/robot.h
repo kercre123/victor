@@ -119,6 +119,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class ImuComponent;
 class AnimationComponent;
@@ -258,6 +259,7 @@ public:
   INLINE_GETTERS(PhotographyManager)
   INLINE_GETTERS(PowerStateManager)
   INLINE_GETTERS(ProxSensorComponent)
+  INLINE_GETTERS(RangeSensorComponent)
   INLINE_GETTERS(ImuComponent)
   INLINE_GETTERS(PublicStateBroadcaster)
   INLINE_GETTERS(RobotHealthReporter)
@@ -715,8 +717,6 @@ protected:
   Result UpdateStartupChecks();
   Result UpdateCameraStartupChecks();
   Result UpdateGyroCalibChecks();
-
-  void UpdateToF();
 }; // class Robot
 
 

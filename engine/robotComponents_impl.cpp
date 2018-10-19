@@ -49,6 +49,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class RangeSensorComponent;
 class ImuComponent;
 class TouchSensorComponent;
 class AnimationComponent;
@@ -111,6 +112,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(DockingComponent,              RobotComponentID, Doc
 LINK_COMPONENT_TYPE_TO_ENUM(CarryingComponent,             RobotComponentID, Carrying)
 LINK_COMPONENT_TYPE_TO_ENUM(CliffSensorComponent,          RobotComponentID, CliffSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(ProxSensorComponent,           RobotComponentID, ProxSensor)
+LINK_COMPONENT_TYPE_TO_ENUM(RangeSensorComponent,          RobotComponentID, RangeSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(ImuComponent,                  RobotComponentID, ImuSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(TouchSensorComponent,          RobotComponentID, TouchSensor)
 LINK_COMPONENT_TYPE_TO_ENUM(AnimationComponent,            RobotComponentID, Animation)
@@ -190,6 +192,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(PhotographyManager)
     CASE(PowerStateManager)
     CASE(ProxSensor)
+    CASE(RangeSensor)
     CASE(PublicStateBroadcaster)
     CASE(RobotExternalRequestComponent)
     CASE(RobotHealthReporter)

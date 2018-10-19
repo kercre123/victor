@@ -70,6 +70,7 @@ enum class RobotComponentID {
   PhotographyManager,
   PowerStateManager,
   ProxSensor,
+  RangeSensor,
   PublicStateBroadcaster,
   SDK,
   SettingsCommManager,
