@@ -2907,7 +2907,7 @@ void Robot::UpdateToF()
   const auto leftAngle = TOF_LEFT_ROT_Z_REL_CAMERA_RAD;
   const auto rightAngle = TOF_RIGHT_ROT_Z_REL_CAMERA_RAD;
   const auto axis = Z_AXIS_3D();  
-#elif TOF_CONFIGURATION == TOF_ABOVE_BELOW
+#elif TOF_CONFIGURATION == TOF_ABOVE_BELOW || TOF_CONFIGURATION == TOF_CENTER_OF_FACE
   const auto leftAngle = TOF_LEFT_ROT_Y_REL_CAMERA_RAD;
   const auto rightAngle = TOF_RIGHT_ROT_Y_REL_CAMERA_RAD;
   const auto axis = Y_AXIS_3D();
