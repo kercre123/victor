@@ -55,7 +55,7 @@ class AnimationComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 print("List all animation names:")
                 anim_names = robot.anim.anim_list
                 for anim_name in anim_names:
@@ -95,7 +95,7 @@ class AnimationComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.AsyncRobot("my_robot_serial_number") as robot:
+            with anki_vector.AsyncRobot() as robot:
                 anim_request = robot.anim.load_animation_list()
                 anim_request.wait_for_completed()
                 anim_names = robot.anim.anim_list
@@ -122,7 +122,8 @@ class AnimationComponent(util.Component):
 
             import anki_vector
 
-            robot.anim.play_animation('anim_turn_left_01')
+            with anki_vector.Robot() as robot:
+                robot.anim.play_animation('anim_turn_left_01')
 
         :param anim: The animation to play. Can be of type str or :class:`anki_vector.protocol.Animation`.
         :param loop_count: Number of times to play the animation.

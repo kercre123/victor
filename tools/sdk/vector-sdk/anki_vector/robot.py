@@ -55,7 +55,7 @@ class Robot:
         import anki_vector
 
         # Create the robot connection
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             # Run your commands
             robot.anim.play_animation("anim_turn_left_01")
 
@@ -67,7 +67,7 @@ class Robot:
         import anki_vector
 
         # Create a Robot object
-        robot = anki_vector.Robot("my_robot_serial_number")
+        robot = anki_vector.Robot()
         # Connect to the Robot
         robot.connect()
         # Run your commands
@@ -77,7 +77,7 @@ class Robot:
 
     :param serial: Vector's serial number. The robot's serial number (ex. 00e20100) is located on the underside of Vector,
                    or accessible from Vector's debug screen. Used to identify which Vector configuration to load.
-    :param ip: Vector's IP Address. (optional)
+    :param ip: Vector's IP address. (optional)
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-XXXX", "guid": "<secret_key>"}`
                    where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
@@ -226,6 +226,9 @@ class Robot:
     @property
     def audio(self) -> audio.AudioComponent:
         """The audio instance used to control Vector's audio feed."""
+
+        print("\n\nNote: Audio stream is not yet supported and does not yet come from Vector's microphones.\n\n")
+
         if self._audio is None:
             raise exceptions.VectorNotReadyException("AudioComponent is not yet initialized")
         return self._audio
@@ -241,7 +244,7 @@ class Robot:
 
         .. code-block:: python
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
@@ -301,7 +304,7 @@ class Robot:
             import asyncio
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number", show_viewer=True) as robot:
+            with anki_vector.Robot(show_viewer=True) as robot:
                 # Render video for 10 seconds
                 robot.viewer.show_video()
                 robot.loop.run_until_complete(asyncio.sleep(5))
@@ -339,7 +342,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_robot_pose = robot.pose
         """
         return self._pose
@@ -351,7 +354,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_pose_angle_rad = robot.pose_angle_rad
         """
         return self._pose_angle_rad
@@ -363,7 +366,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_pose_pitch_rad = robot.pose_pitch_rad
         """
         return self._pose_pitch_rad
@@ -375,7 +378,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_left_wheel_speed_mmps = robot.left_wheel_speed_mmps
         """
         return self._left_wheel_speed_mmps
@@ -387,7 +390,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_right_wheel_speed_mmps = robot.right_wheel_speed_mmps
         """
         return self._right_wheel_speed_mmps
@@ -399,7 +402,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_head_angle_rad = robot.head_angle_rad
         """
         return self._head_angle_rad
@@ -411,7 +414,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_lift_height_mm = robot.lift_height_mm
         """
         return self._lift_height_mm
@@ -423,7 +426,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_accel = robot.accel
         """
         return self._accel
@@ -435,7 +438,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_gyro = robot.gyro
         """
         return self._gyro
@@ -447,7 +450,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_carrying_object_id = robot.carrying_object_id
         """
         return self._carrying_object_id
@@ -459,7 +462,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_head_tracking_object_id = robot.head_tracking_object_id
         """
         return self._head_tracking_object_id
@@ -471,7 +474,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_localized_to_object_id = robot.localized_to_object_id
         """
         return self._localized_to_object_id
@@ -484,7 +487,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_last_image_time_stamp = robot.last_image_time_stamp
         """
         return self._last_image_time_stamp
@@ -518,7 +521,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 current_status = robot.status
         """
         return self._status
@@ -535,7 +538,7 @@ class Robot:
             import asyncio
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number", enable_audio_feed=True) as robot:
+            with anki_vector.Robot(enable_audio_feed=True) as robot:
                 robot.loop.run_until_complete(asyncio.sleep(5))
                 robot.enable_audio_feed = False
                 robot.loop.run_until_complete(asyncio.sleep(5))
@@ -561,7 +564,7 @@ class Robot:
             import asyncio
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number", enable_camera_feed=True) as robot:
+            with anki_vector.Robot(enable_camera_feed=True) as robot:
                 robot.loop.run_until_complete(asyncio.sleep(5))
                 robot.enable_camera_feed = False
                 robot.loop.run_until_complete(asyncio.sleep(5))
@@ -602,7 +605,7 @@ class Robot:
 
             import anki_vector
 
-            robot = anki_vector.Robot("my_robot_serial_number")
+            robot = anki_vector.Robot()
             robot.connect()
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
@@ -664,7 +667,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            robot = anki_vector.Robot("my_robot_serial_number")
+            robot = anki_vector.Robot()
             robot.connect()
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
@@ -711,7 +714,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 battery_state = robot.get_battery_state()
                 if battery_state:
                     print("Vector's Battery Voltage: {0}".format(battery_state.battery_volts))
@@ -726,7 +729,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 version_state = robot.get_version_state()
         """
         get_version_state_request = protocol.VersionStateRequest()
@@ -739,7 +742,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 network_state = robot.get_version_state()
         """
         get_network_state_request = protocol.NetworkStateRequest()
@@ -752,7 +755,7 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.say_text("Hello World")
 
         :param text: The words for Vector to say.
@@ -781,7 +784,7 @@ class AsyncRobot(Robot):
 
         import anki_vector
         # Create the robot connection
-        with anki_vector.AsyncRobot("my_robot_serial_number") as robot:
+        with anki_vector.AsyncRobot() as robot:
             # Run your commands
             robot.anim.play_animation("anim_turn_left_01").wait_for_completed()
 
@@ -792,7 +795,7 @@ class AsyncRobot(Robot):
 
         import anki_vector
         # Create a Robot object
-        robot = anki_vector.AsyncRobot("my_robot_serial_number")
+        robot = anki_vector.AsyncRobot()
         # Connect to Vector
         robot.connect()
         # Run your commands

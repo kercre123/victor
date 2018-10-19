@@ -32,10 +32,10 @@ func newRobotSimulator(options *options) (*robotSimulator, error) {
 
 	// Enable client certs and set custom key pair dir (for this user)
 	token.UseClientCert = true
-	robot.DefaultCloudDir = *simulator.options.defaultCloudDir
+	robot.DefaultCloudDir = *options.defaultCloudDir
 
-	simulator.robotInstance = &testableRobot{}
-	go simulator.robotInstance.run(*simulator.options.urlConfigFile)
+	simulator.robotInstance = &testableRobot{id: *options.testID}
+	go simulator.robotInstance.run(*options.urlConfigFile)
 
 	simulator.robotInstance.waitUntilReady()
 
@@ -156,6 +156,12 @@ func (s *robotSimulator) testTokenRefresh() error {
 	return err
 }
 
+func (s *robotSimulator) testMicConnectionCheck() error {
+	err := s.robotInstance.micClient.connectionCheck()
+	s.logIfNoError(err, "mic_connection_check", "Microphone connection checked\n")
+	return err
+}
+
 func (s *robotSimulator) heartBeat() error {
 	var err error
 	s.logIfNoError(err, "heart_beat", "Heart beat")
@@ -188,6 +194,7 @@ func simulate(options *options) {
 	simulator.addPeriodicAction(options.jdocsInterval, simulator.testJdocsReadAndWriteSettings)
 	simulator.addPeriodicAction(options.logCollectorInterval, simulator.testLogCollector)
 	simulator.addPeriodicAction(options.tokenRefreshInterval, simulator.testTokenRefresh)
+	simulator.addPeriodicAction(options.connectionCheckInterval, simulator.testMicConnectionCheck)
 
 	simulator.start()
 

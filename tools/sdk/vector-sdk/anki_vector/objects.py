@@ -394,7 +394,7 @@ class LightCube(ObservableObject):
 
             import time
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # ensure we are connected to a cube
                 robot.world.connect_cube()
 
@@ -438,7 +438,7 @@ class LightCube(ObservableObject):
 
             import time
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # ensure we are connected to a cube
                 robot.world.connect_cube()
 
@@ -463,7 +463,7 @@ class LightCube(ObservableObject):
 
             import time
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 # ensure we are connected to a cube
                 robot.world.connect_cube()
 
@@ -497,7 +497,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_tapped_time = robot.world.connected_light_cube.last_tapped_time
         """
         return self._last_tapped_time
@@ -510,7 +510,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_tapped_robot_timestamp = robot.world.connected_light_cube.last_tapped_robot_timestamp
         """
         return self._last_tapped_robot_timestamp
@@ -523,7 +523,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_time = robot.world.connected_light_cube.last_moved_time
         """
         return self._last_moved_time
@@ -536,7 +536,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_robot_timestamp = robot.world.connected_light_cube.last_moved_robot_timestamp
         """
         return self._last_moved_robot_timestamp
@@ -549,7 +549,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_start_time = robot.world.connected_light_cube.last_moved_start_time
         """
         return self._last_moved_start_time
@@ -562,7 +562,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_moved_start_robot_timestamp = robot.world.connected_light_cube.last_moved_start_robot_timestamp
         """
         return self._last_moved_start_robot_timestamp
@@ -575,7 +575,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_up_axis_changed_time = robot.world.connected_light_cube.last_up_axis_changed_time
         """
         return self._last_up_axis_changed_time
@@ -588,7 +588,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 last_up_axis_changed_robot_timestamp = robot.world.connected_light_cube.last_up_axis_changed_robot_timestamp
         """
         return self._last_up_axis_changed_robot_timestamp
@@ -601,7 +601,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 up_axis = robot.world.connected_light_cube.up_axis
         """
         return self._up_axis
@@ -614,7 +614,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 is_moving = robot.world.connected_light_cube.is_moving
         """
         return self._is_moving
@@ -627,7 +627,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 is_connected = robot.world.connected_light_cube.is_connected
         """
         return self._is_connected
@@ -640,7 +640,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 top_face_orientation_rad = robot.world.connected_light_cube.top_face_orientation_rad
         """
         return self._top_face_orientation_rad
@@ -653,7 +653,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 factory_id = robot.world.connected_light_cube.factory_id
         """
         return self._factory_id
@@ -673,7 +673,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 descriptive_name = robot.world.connected_light_cube.descriptive_name
         """
         return "{0} id={1} factory_id={2} is_connected={3}".format(self.__class__.__name__, self._object_id, self._factory_id, self._is_connected)
@@ -688,7 +688,7 @@ class LightCube(ObservableObject):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 object_id = robot.world.connected_light_cube.object_id
         """
         return self._object_id
@@ -804,7 +804,7 @@ class Charger(ObservableObject):
     .. testcode::
 
         import anki_vector
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             if robot.world.charger:
                 print('Robot is aware of charger: {0}'.format(robot.world.charger))
     """
@@ -835,7 +835,7 @@ class Charger(ObservableObject):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 if robot.world.charger:
                     charger_object_id = robot.world.charger.object_id
 
@@ -910,7 +910,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with type: {0}'.format(obj.custom_type))
         """
@@ -923,7 +923,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
         """
@@ -936,7 +936,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
         """
@@ -949,7 +949,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
         """
@@ -962,7 +962,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with marker size: {0}mm x {1}mm'.format(obj.marker_width_mm, obj.marker_height_mm))
         """
@@ -975,7 +975,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with marker size: {0}mm x {1}mm'.format(obj.marker_width_mm, obj.marker_height_mm))
         """
@@ -1043,7 +1043,7 @@ class CustomObject(ObservableObject):
         .. code-block:: python
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
 
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
@@ -1075,7 +1075,7 @@ class CustomObject(ObservableObject):
         .. code-block:: python
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
 
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
@@ -1096,7 +1096,7 @@ class CustomObject(ObservableObject):
         .. code-block:: python
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
 
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
@@ -1157,7 +1157,7 @@ class CustomObjectTypes():  # pylint: disable=too-few-public-methods
     .. testcode::
 
         import anki_vector
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                            marker=CustomObjectMarkers.Circles2,
                                            size_mm=20.0,
@@ -1247,7 +1247,7 @@ class CustomObjectMarkers():  # pylint: disable=too-few-public-methods
     .. testcode::
 
         import anki_vector
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                            marker=CustomObjectMarkers.Circles2,
                                            size_mm=20.0,
@@ -1316,7 +1316,7 @@ class FixedCustomObject(util.Component):
     .. testcode::
 
         import anki_vector
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                    10, 100, 100, relative_to_robot=True)
     """
@@ -1355,7 +1355,7 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.object_id))
@@ -1376,7 +1376,7 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.pose))
@@ -1390,7 +1390,7 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1404,7 +1404,7 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1418,7 +1418,7 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))

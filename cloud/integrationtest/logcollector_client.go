@@ -47,7 +47,3 @@ func (c *logcollectorClient) upload(logFileName string) (string, error) {
 	}
 	return "", fmt.Errorf("Major error: received unknown tag %d", responseMsg.Tag())
 }
-
-func newLogcollectorClient() *logcollectorClient {
-	return new(logcollectorClient)
-}

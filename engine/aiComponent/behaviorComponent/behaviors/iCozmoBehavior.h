@@ -498,6 +498,7 @@ protected:
   // deactivated. For convenience (in the case where there is extra intent data), a pointer the the intent is
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
+  UserIntentPtr SmartActivateUserIntent(UserIntentTag tag, bool showActiveIntentFeedback);
   
   // de-activate an intent activated through the smart function above.
   void SmartDeactivateUserIntent();
@@ -604,6 +605,7 @@ private:
   //    the absence of other negative conditions), and
   // 2) Clear the intent when the behavior is activated
   std::shared_ptr< ConditionUserIntentPending > _respondToUserIntent;
+  bool _displayResponseToUserIntent = true;
 
   // The tag of the intent that should be deactivated when this behavior deactivates
   UserIntentTag _intentToDeactivate;

@@ -789,7 +789,7 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if ( uic.IsUserIntentPending( unmatched ) )
     {
-      SmartActivateUserIntent( unmatched );
+      SmartActivateUserIntent( unmatched, false );
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
       PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Unknown",
                      "Heard an intent, but it was unknown");
@@ -798,7 +798,7 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
     static const UserIntentTag silence = USER_INTENT(silence);
     if ( uic.IsUserIntentPending( silence ) )
     {
-      SmartActivateUserIntent( silence );
+      SmartActivateUserIntent( silence, false );
       _dVars.intentStatus = EIntentStatus::SilenceTimeout;
       PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Silence",
                      "Got response declaring silence timeout occurred");

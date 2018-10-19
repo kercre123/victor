@@ -111,6 +111,12 @@ stage("${primaryStageName} Build") {
         try {
             withDockerEnv {
                 buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                stage('DAS Unit Tests') {
+                    withEnv(["CXX=clang++", "LDFLAGS=-lpthread -luuid -lcurl -stdlib=libc++ -v"]) {
+                        sh "make -C ./lib/das-client/unix run-unit-tests"
+                        sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
+                    }
+                }
                 //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
         } catch (exc) {

@@ -54,7 +54,7 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 robot.enable_vision_mode(True)
         """
         self._vision_enabled = enable

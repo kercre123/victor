@@ -72,7 +72,7 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--new_param")
-        args = anki_vector.util.parse_command_args(parse)
+        args = anki_vector.util.parse_command_args(parser)
 
     :param parser: To add new command line arguments,
          pass an argparse parser with the new options
@@ -646,7 +646,7 @@ class Pose:
 
         import anki_vector
 
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
             robot.behavior.go_to_pose(pose)
     """

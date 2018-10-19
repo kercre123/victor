@@ -63,7 +63,7 @@ class CameraComponent(util.Component):
 
         from PIL import Image
 
-        with anki_vector.Robot("my_robot_serial_number") as robot:
+        with anki_vector.Robot() as robot:
             image = robot.camera.latest_image
             image.show()
 
@@ -87,7 +87,7 @@ class CameraComponent(util.Component):
 
             import anki_vector
 
-            with anki_vector.Robot("my_robot_serial_number") as robot:
+            with anki_vector.Robot() as robot:
                 image = robot.camera.latest_image
                 image.show()
         """
