@@ -55,7 +55,7 @@ SourceId AlexaSpeaker::m_sourceID=1; // 0 is invalid
     
     #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
     
-    CONSOLE_VAR_RANGED(float, kFudgeFactor, "AAA", 0.8f, 0.0f, 1.5f);
+    //CONSOLE_VAR_RANGED(float, kFudgeFactor, "AAA", 0.8f, 0.0f, 1.5f);
   }
 
 
