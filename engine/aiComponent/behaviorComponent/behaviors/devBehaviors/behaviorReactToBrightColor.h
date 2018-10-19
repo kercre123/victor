@@ -49,12 +49,14 @@ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
 
-     //! Name of the eye color behavior ID
-    std::string eyeColorBehaviorStr;
-    ICozmoBehaviorPtr eyeColorBehavior;
-
     //! Number of Hues. This is used to round SalientPoint BrightColors to he nearest hue
     u32 numHues;
+
+    //! Target distance to the object to move to in millimeters
+    u32 targetDistance_mm;
+
+    //! Number of times to spin when he gets to the bright color
+    u32 celebrationSpins;
   };
 
   struct DynamicVariables {
@@ -65,8 +67,8 @@ private:
     DynamicVariables();
     void Reset(bool keepPersistent);
 
-    //! The previous eye color to transition back to
-    u32 prevEyeColor;
+    //! The point that started this initial reaction (TODO: replace with optional<Vision::SalientPoint>)
+    std::shared_ptr<Vision::SalientPoint> point;
   };
 
   /**
@@ -88,6 +90,17 @@ private:
    * @todo Replace this structure with returning a std::optional<Vision::SalientPoint>
    */
   bool FindNewColor(Vision::SalientPoint& point);
+
+  void TurnOnLights(const Vision::SalientPoint& point);
+  void TurnOffLights();
+
+  bool CheckIfShouldStop();
+
+  void TransitionToStart();
+  void TransitionToTurnTowardsPoint();
+  void TransitionToDriveTowardsPoint();
+  void TransitionToCelebrate();
+  void TransitionToCompleted();
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;

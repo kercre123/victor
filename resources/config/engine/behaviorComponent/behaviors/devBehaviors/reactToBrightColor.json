@@ -2,8 +2,9 @@
   "behaviorID" :   "ReactToBrightColor",
   "behaviorClass": "ReactToBrightColor",
 
-  "eyeColorBehavior": "ChangeEyeColor",
   "numHues": 6,
+  "targetDistance_mm": 75,
+  "celebrationSpins": 2,
 
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",
