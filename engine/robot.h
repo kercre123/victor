@@ -715,6 +715,8 @@ protected:
   Result UpdateStartupChecks();
   Result UpdateCameraStartupChecks();
   Result UpdateGyroCalibChecks();
+
+  void UpdateToF();
 }; // class Robot
 
 
