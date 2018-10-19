@@ -122,7 +122,8 @@ class AnimationComponent(util.Component):
 
             import anki_vector
 
-            robot.anim.play_animation('anim_turn_left_01')
+            with anki_vector.Robot() as robot:
+                robot.anim.play_animation('anim_turn_left_01')
 
         :param anim: The animation to play. Can be of type str or :class:`anki_vector.protocol.Animation`.
         :param loop_count: Number of times to play the animation.

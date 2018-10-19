@@ -77,7 +77,7 @@ class Robot:
 
     :param serial: Vector's serial number. The robot's serial number (ex. 00e20100) is located on the underside of Vector,
                    or accessible from Vector's debug screen. Used to identify which Vector configuration to load.
-    :param ip: Vector's IP Address. (optional)
+    :param ip: Vector's IP address. (optional)
     :param config: A custom :class:`dict` to override values in Vector's configuration. (optional)
                    Example: :code:`{"cert": "/path/to/file.cert", "name": "Vector-XXXX", "guid": "<secret_key>"}`
                    where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
@@ -225,6 +225,9 @@ class Robot:
     @property
     def audio(self) -> audio.AudioComponent:
         """The audio instance used to control Vector's audio feed."""
+
+        print("\n\nNote: Audio stream is not yet supported and does not yet come from Vector's microphones.\n\n")
+
         if self._audio is None:
             raise exceptions.VectorNotReadyException("AudioComponent is not yet initialized")
         return self._audio
