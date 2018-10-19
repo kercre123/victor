@@ -90,6 +90,10 @@ public:
   void RegisterFormatMigrationCallback(const external_interface::JdocType jdocTypeKey,
                                        const FormatMigrationCallback cb);
 
+  using ShutdownCallback = std::function<void(void)>;
+  void RegisterShutdownCallback(const external_interface::JdocType jdocTypeKey,
+                                const ShutdownCallback cb);
+
 private:
 
   bool LoadJdocFile(const external_interface::JdocType jdocTypeKey);
@@ -181,6 +185,7 @@ private:
 
     OverwriteNotificationCallback _overwrittenCB; // Called when this jdoc is overwritten from the cloud
     FormatMigrationCallback   _formatMigrationCB; // Called when this jdoc needs a format migration
+    ShutdownCallback          _shutdownCB;        // Called on shutdown for this jdoc
   };
 
   using Jdocs = std::map<external_interface::JdocType, JdocInfo>;

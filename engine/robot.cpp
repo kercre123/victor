@@ -409,6 +409,10 @@ Robot::~Robot()
   _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
   _components->RemoveComponent(RobotComponentID::PathPlanning);
 
+  // Ensure JdocsManager destructor gets called before the destructors of the
+  // four components that it needs to talk to
+  _components->RemoveComponent(RobotComponentID::JdocsManager);
+
   LOG_INFO("robot.destructor", "%d", GetID());
 }
 
