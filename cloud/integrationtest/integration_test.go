@@ -25,7 +25,8 @@ func (testIDProvider) provideUniqueTestID() (int, error) {
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	options *options
+	options         *options
+	instanceOptions *instanceOptions
 
 	robotInstance *testableRobot
 }
@@ -34,15 +35,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app := cli.App("robot_integration_test", "Robot integration test")
 
 	s.options = newFromEnvironment(app)
-
-	var provider testIDProvider
-	s.options.finalizeIdentity(provider)
+	s.instanceOptions = s.options.createIdentity(nil)
 
 	// Enable client certs and set custom key pair dir (for this user)
 	identity.UseClientCert = true
 	robot.DefaultCloudDir = *s.options.defaultCloudDir
 
-	s.robotInstance = newTestableRobot(*s.options.testID, *s.options.urlConfigFile)
+	s.robotInstance = newTestableRobot(s.options, s.instanceOptions)
 	go s.robotInstance.run()
 
 	s.robotInstance.waitUntilReady()
@@ -56,7 +55,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 func (s *IntegrationTestSuite) logIfNoError(err error, action, format string, a ...interface{}) {
-	logIfNoError(err, *s.options.testUserName, action, format, a...)
+	logIfNoError(err, s.instanceOptions.testUserName, action, format, a...)
 }
 
 func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
@@ -70,14 +69,14 @@ func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {
 
 	// Step 0: Create a new user test account
 	if *s.options.enableAccountCreation {
-		json, err := createTestAccount(*s.options.envName, *s.options.testUserName, *s.options.testUserPassword)
+		json, err := createTestAccount(*s.options.envName, s.instanceOptions.testUserName, *s.options.testUserPassword)
 		s.logIfNoError(err, "create_account", "Created account %v\n", json)
 		require.NoError(err)
 	}
 
 	// Step 1 & 2: User Authentication request to Accounts (user logs into Chewie)
 	// Note: this is currently hardwired to the dev environment
-	session, _, err := accounts.DoLogin(*s.options.envName, *s.options.testUserName, *s.options.testUserPassword)
+	session, _, err := accounts.DoLogin(*s.options.envName, s.instanceOptions.testUserName, *s.options.testUserPassword)
 	if session != nil {
 		s.logIfNoError(err, "account_login", "Logged in user %q obtained session %q\n", session.UserID, session.Token)
 	} else {

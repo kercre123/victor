@@ -109,8 +109,6 @@ func (s *simulator) set(name, value string) {
 		fmt.Printf("Error setting %q to %q, invalid key %q\n", name, value, key)
 		return
 	}
-
-	fmt.Printf("Succesfully set %q to %q for action %q\n", key, value, id)
 }
 
 func (s *simulator) quit() {
@@ -128,7 +126,7 @@ func (s *simulator) addTearDownAction(action actionFunc) {
 }
 
 func (s *simulator) addPeriodicAction(id string, meanDuration time.Duration, stdDevDuration time.Duration, periodicAction actionFunc) {
-	fmt.Printf("Starting periodic timer %q (interval=%v, stddev=%v)\n", id, meanDuration, stdDevDuration)
+	fmt.Printf("Initializing periodic timer %q (interval=%v, stddev=%v)\n", id, meanDuration, stdDevDuration)
 
 	s.periodicActionMap[id] = &action{
 		id:             id,

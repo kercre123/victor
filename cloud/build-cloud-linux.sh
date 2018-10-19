@@ -82,12 +82,14 @@ TARGET_PATH=${OUTPUT_DIR}/${TARGET_NAME}
 if [ $COMMAND = "test" ]; then
     TARGET_PATH=${TARGET_PATH}.test
     go ${COMMAND} \
+        -tags shipping \
         -c -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
         -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \
         ./${TARGET_DIR}
 else
     go ${COMMAND} \
+        -tags shipping \
         -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
         -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \

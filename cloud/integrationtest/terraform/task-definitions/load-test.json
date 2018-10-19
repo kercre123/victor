@@ -10,6 +10,10 @@
                 "value": "${region}"
             },
             {
+                "name": "ROBOTS_PER_PROCESS",
+                "value": "${robots_per_process}"
+            },
+            {
                 "name": "LOG_TYPE",
                 "value": "kinesis"
             },

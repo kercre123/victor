@@ -14,7 +14,8 @@ type uniqueIDProvider interface {
 type options struct {
 	envName *string
 
-	testID *int
+	defaultTestID    *int
+	robotsPerProcess *int
 
 	enableDistributedControl *bool
 	enableAccountCreation    *bool
@@ -25,8 +26,8 @@ type options struct {
 	testLogFile     *string
 	numberOfCerts   *int
 
-	testUserName     *string
-	testUserPassword *string
+	defaultTestUserName *string
+	testUserPassword    *string
 
 	heartBeatInterval       time.Duration
 	heartBeatStdDev         time.Duration
@@ -38,6 +39,12 @@ type options struct {
 	logCollectorStdDev      time.Duration
 	connectionCheckInterval time.Duration
 	connectionCheckStdDev   time.Duration
+}
+
+type instanceOptions struct {
+	testID       int
+	testUserName string
+	cloudDir     string
 }
 
 func parseIntervalString(intervalStr *string) time.Duration {
@@ -63,10 +70,17 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "loadtest",
 	})
 
-	options.testID = app.Int(cli.IntOpt{
+	options.defaultTestID = app.Int(cli.IntOpt{
 		Name:   "i test-id",
 		Desc:   "Test ID (used for identifying user)",
-		EnvVar: "TEST_ID",
+		EnvVar: "DEFAULT_TEST_ID",
+		Value:  1,
+	})
+
+	options.robotsPerProcess = app.Int(cli.IntOpt{
+		Name:   "robots-per-process",
+		Desc:   "Number of robot instances per process",
+		EnvVar: "ROBOTS_PER_PROCESS",
 		Value:  1,
 	})
 
@@ -94,7 +108,7 @@ func newFromEnvironment(app *cli.Cli) *options {
 	options.defaultCloudDir = app.String(cli.StringOpt{
 		Name:   "k key-dir",
 		Desc:   "Key pair directory for client certs",
-		EnvVar: "CERT_DIR",
+		EnvVar: "DEFAULT_CLOUD_DIR",
 	})
 
 	options.urlConfigFile = app.String(cli.StringOpt{
@@ -118,10 +132,10 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  1000,
 	})
 
-	options.testUserName = app.String(cli.StringOpt{
+	options.defaultTestUserName = app.String(cli.StringOpt{
 		Name:   "u username",
-		Desc:   "Username for test accounts",
-		EnvVar: "TEST_USER_NAME",
+		Desc:   "Default username for test accounts",
+		EnvVar: "DEFAULT_TEST_USER_NAME",
 	})
 
 	options.testUserPassword = app.String(cli.StringOpt{
@@ -217,24 +231,34 @@ func newFromEnvironment(app *cli.Cli) *options {
 	return options
 }
 
-func (o *options) finalizeIdentity(idProvider uniqueIDProvider) {
-	testID, err := idProvider.provideUniqueTestID()
-	if err == nil {
-		testID %= *o.numberOfCerts
-		*o.testID = testID
-	} else {
-		testID = *o.testID
+func (o *options) createIdentity(controller *distributedController) *instanceOptions {
+	var err error
+	testID := *o.defaultTestID
 
+	if controller != nil {
+		testID, err = controller.provideUniqueTestID()
+		if err == nil {
+			testID %= *o.numberOfCerts
+		}
+	}
+
+	if err != nil {
 		fmt.Printf("Could not assign unique testID (defaulting to %d), error: %v\n", testID, err)
 	}
 
-	if *o.defaultCloudDir == "" {
-		o.defaultCloudDir = new(string)
-		*o.defaultCloudDir = fmt.Sprintf("/device_certs/%08d", testID)
+	options := &instanceOptions{
+		testID:       testID,
+		testUserName: *o.defaultTestUserName,
+		cloudDir:     *o.defaultCloudDir,
 	}
 
-	if *o.testUserName == "" {
-		o.testUserName = new(string)
-		*o.testUserName = fmt.Sprintf("test.%04d@anki.com", testID)
+	if options.cloudDir == "" {
+		options.cloudDir = fmt.Sprintf("/device_certs/%08d", testID)
 	}
+
+	if options.testUserName == "" {
+		options.testUserName = fmt.Sprintf("test.%08d@anki.com", testID)
+	}
+
+	return options
 }

@@ -1,41 +1,23 @@
 package main
 
 import (
-	"anki/robot"
-	"anki/token/identity"
 	"ankidev/accounts"
 	"clad/cloud"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 
-	scli "github.com/anki/sai-go-util/cli"
-	stoken "github.com/anki/sai-token-service/client/token"
-	mcli "github.com/jawher/mow.cli"
+	"github.com/anki/sai-token-service/client/token"
 )
 
 type robotSimulator struct {
 	*simulator
 
-	options *options
-
 	robotInstance *testableRobot
 }
 
-var signalChannel chan os.Signal
-
-func init() {
-	signalChannel = make(chan os.Signal, 1)
-
-	scli.InitLogFlags("")
-}
-
-func newRobotSimulator(options *options) (*robotSimulator, error) {
+func newRobotSimulator(options *options, instanceOptions *instanceOptions) (*robotSimulator, error) {
 	simulator := &robotSimulator{
 		simulator:     newSimulator(),
-		options:       options,
-		robotInstance: newTestableRobot(*options.testID, *options.urlConfigFile),
+		robotInstance: newTestableRobot(options, instanceOptions),
 	}
 
 	go simulator.robotInstance.run()
@@ -46,7 +28,7 @@ func newRobotSimulator(options *options) (*robotSimulator, error) {
 }
 
 func (s *robotSimulator) logIfNoError(err error, action, format string, a ...interface{}) {
-	logIfNoError(err, *s.options.testUserName, action, format, a...)
+	logIfNoError(err, s.robotInstance.instanceOptions.testUserName, action, format, a...)
 }
 
 func (s *robotSimulator) testPrimaryPairingSequence() error {
@@ -56,9 +38,12 @@ func (s *robotSimulator) testPrimaryPairingSequence() error {
 	// time). Not all steps are included as some entities (e.g. switchboard and gateway) are
 	// not part of the test setup.
 
+	options := s.robotInstance.options
+	instanceOptions := s.robotInstance.instanceOptions
+
 	// Step 0: Create a new user test account
-	if *s.options.enableAccountCreation {
-		json, err := createTestAccount(*s.options.envName, *s.options.testUserName, *s.options.testUserPassword)
+	if *options.enableAccountCreation {
+		json, err := createTestAccount(*options.envName, instanceOptions.testUserName, *options.testUserPassword)
 		s.logIfNoError(err, "create_account", "Created account %v\n", json)
 		if err != nil {
 			return err
@@ -67,7 +52,7 @@ func (s *robotSimulator) testPrimaryPairingSequence() error {
 
 	// Step 1 & 2: User Authentication request to Accounts (user logs into Chewie)
 	// Note: this is currently hardwired to the dev environment
-	session, _, err := accounts.DoLogin(*s.options.envName, *s.options.testUserName, *s.options.testUserPassword)
+	session, _, err := accounts.DoLogin(*options.envName, instanceOptions.testUserName, *options.testUserPassword)
 	s.logIfNoError(err, "account_login", "Logged in\n")
 	if err != nil {
 		return err
@@ -93,7 +78,7 @@ func (s *robotSimulator) testPrimaryPairingSequence() error {
 		return err
 	}
 
-	token, err := stoken.NewValidator().TokenFromString(authResponse.JwtToken)
+	token, err := token.NewValidator().TokenFromString(authResponse.JwtToken)
 	if err != nil {
 		return err
 	}
@@ -113,8 +98,14 @@ func (s *robotSimulator) testPrimaryPairingSequence() error {
 	return err
 }
 
+func (s *robotSimulator) tearDownAction() error {
+	// nothing to be done
+	s.logIfNoError(nil, "tear_down", "Tearing down (nothing to do)")
+	return nil
+}
+
 func (s *robotSimulator) testLogCollector() error {
-	s3Url, err := s.robotInstance.logcollectorClient.upload(*s.options.testLogFile)
+	s3Url, err := s.robotInstance.logcollectorClient.upload(*s.robotInstance.options.testLogFile)
 	s.logIfNoError(err, "log_upload", "File uploaded, url=%q (err=%v)\n", s3Url, err)
 	return err
 }
@@ -166,74 +157,6 @@ func (s *robotSimulator) testMicConnectionCheck() error {
 }
 
 func (s *robotSimulator) heartBeat() error {
-	var err error
-	s.logIfNoError(err, "heart_beat", "Heart beat")
-	return err
-}
-
-func waitForSignal() {
-	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
-
-	<-signalChannel
-
-	fmt.Println("Received SIGTERM signal, stopping simulator")
-}
-
-func simulate(options *options) {
-	controller := newDistributedController(*options.redisAddress)
-
-	options.finalizeIdentity(controller)
-
-	robot.DefaultCloudDir = *options.defaultCloudDir
-
-	simulator, err := newRobotSimulator(options)
-	simulator.logIfNoError(err, "main", "New robot created")
-	if err != nil {
-		return
-	}
-
-	// At startup we go through the primary pairing sequence action
-	simulator.addSetupAction(simulator.testPrimaryPairingSequence)
-
-	// After that we periodically run the following actions
-	simulator.addPeriodicAction("heart_beat", options.heartBeatInterval, options.heartBeatStdDev, simulator.heartBeat)
-	simulator.addPeriodicAction("jdocs", options.jdocsInterval, options.jdocsStdDev, simulator.testJdocsReadAndWriteSettings)
-	simulator.addPeriodicAction("logging", options.logCollectorInterval, options.logCollectorStdDev, simulator.testLogCollector)
-	simulator.addPeriodicAction("token_refresh", options.tokenRefreshInterval, options.tokenRefreshStdDev, simulator.testTokenRefresh)
-	simulator.addPeriodicAction("mic_connection_check", options.connectionCheckInterval, options.connectionCheckStdDev, simulator.testMicConnectionCheck)
-
-	if *options.enableDistributedControl {
-		fmt.Println("Listening for external simulation commands")
-		controller.forwardCommands(simulator)
-	} else {
-		simulator.start()
-	}
-
-	waitForSignal()
-
-	simulator.stop()
-
-	fmt.Println("All periodic actions have stopped, exiting")
-}
-
-func main() {
-	// init logging and make sure it gets cleaned up
-	scli.SetupLogging()
-	defer scli.CleanupAndExit()
-
-	app := mcli.App("robot_simulator", "Robot cloud simulation tool")
-
-	options := newFromEnvironment(app)
-
-	// Enable client certs and set custom key pair dir (for this user)
-	identity.UseClientCert = true
-
-	app.Action = func() {
-		simulate(options)
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		fmt.Println("Error starting simulator:", err)
-	}
+	s.logIfNoError(nil, "heart_beat", "Heart beat")
+	return nil
 }

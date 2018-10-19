@@ -74,7 +74,8 @@ func voiceServiceOptions(ms, lex bool) []voice.Option {
 }
 
 type testableRobot struct {
-	id int
+	options         *options
+	instanceOptions *instanceOptions
 
 	io      voice.MsgIO
 	process *voice.Process
@@ -85,11 +86,10 @@ type testableRobot struct {
 	micClient          *micClient
 }
 
-func newTestableRobot(id int, urlConfigFile string) *testableRobot {
-	testableRobot := &testableRobot{id: id}
-
-	if err := config.SetGlobal(urlConfigFile); err != nil {
-		log.Println("Could not load server config! This is not good!:", err)
+func newTestableRobot(options *options, instanceOptions *instanceOptions) *testableRobot {
+	testableRobot := &testableRobot{
+		options:         options,
+		instanceOptions: instanceOptions,
 	}
 
 	voice.SetVerbose(true)
@@ -109,17 +109,18 @@ func newTestableRobot(id int, urlConfigFile string) *testableRobot {
 func (r *testableRobot) connectClients() error {
 	r.tokenClient = new(tokenClient)
 
-	if err := r.tokenClient.connect(formatSocketName("token_server", r.id)); err != nil {
+	id := r.instanceOptions.testID
+	if err := r.tokenClient.connect(formatSocketName("token_server", id)); err != nil {
 		return err
 	}
 
 	r.jdocsClient = new(jdocsClient)
-	if err := r.jdocsClient.connect(formatSocketName("jdocs_server", r.id)); err != nil {
+	if err := r.jdocsClient.connect(formatSocketName("jdocs_server", id)); err != nil {
 		return err
 	}
 
 	r.logcollectorClient = new(logcollectorClient)
-	if err := r.logcollectorClient.connect(formatSocketName("logcollector_server", r.id)); err != nil {
+	if err := r.logcollectorClient.connect(formatSocketName("logcollector_server", id)); err != nil {
 		return err
 	}
 
@@ -143,9 +144,8 @@ func (r *testableRobot) closeClients() {
 }
 
 func (r *testableRobot) run() {
-	jwtPath := fmt.Sprintf("%s_%d", identity.DefaultTokenPath, r.id)
-	cloudDir := fmt.Sprintf("/device_certs/%d", r.id)
-	identityProvider, err := identity.NewFileProvider(jwtPath, cloudDir)
+	jwtPath := fmt.Sprintf("%s_%d", identity.DefaultTokenPath, r.instanceOptions.testID)
+	identityProvider, err := identity.NewFileProvider(jwtPath, r.instanceOptions.cloudDir)
 	if err != nil {
 		log.Println("Error: could not create identity provider")
 		return
@@ -158,7 +158,7 @@ func (r *testableRobot) run() {
 	options = append(options, cloudproc.WithVoice(r.process))
 	options = append(options, cloudproc.WithVoiceOptions(voiceServiceOptions(false, false)...))
 
-	socketNameSuffix := strconv.Itoa(r.id)
+	socketNameSuffix := strconv.Itoa(r.instanceOptions.testID)
 	options = append(options, cloudproc.WithTokenOptions(tokenServiceOptions(socketNameSuffix)...))
 	options = append(options, cloudproc.WithJdocs(jdocsServiceOptions(socketNameSuffix, tokener)...))
 	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorServiceOptions(socketNameSuffix, tokener)...))

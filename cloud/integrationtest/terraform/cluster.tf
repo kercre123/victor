@@ -16,6 +16,8 @@ data "template_file" "load_test" {
 
     logging_role = "${var.logging_role}"
 
+    robots_per_process = "${var.robots_per_process}"
+
     enable_account_creation = "${var.enable_account_creation}"
     enable_distributed_control = "${var.enable_distributed_control}"
   }

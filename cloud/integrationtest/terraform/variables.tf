@@ -8,6 +8,11 @@ variable "az_count" {
   default = 3
 }
 
+variable "robots_per_process" {
+  description = "Number of robot instances per load test Docker container"
+  default = 10
+}
+
 // Note: number of container instances per cluster: 1000
 variable "instance_count" {
   description = "Number of load test Docker containers running per task"
