@@ -41,12 +41,10 @@ import math
 import time
 from typing import List
 
-from anki_vector.faces import Face
-from anki_vector.objects import LightCube
-from anki_vector.robot import Robot
-from anki_vector import util
-
-import opengl
+from .faces import Face
+from .objects import CustomObject, FixedCustomObject, LightCube, ObservableObject
+from .robot import Robot
+from . import util, opengl
 
 try:
     from OpenGL.GL import (GL_AMBIENT, GL_BLEND, GL_DIFFUSE, GL_FILL, GL_FRONT, GL_FRONT_AND_BACK, GL_LIGHTING, GL_LINE, GL_ONE_MINUS_SRC_ALPHA, GL_POLYGON, GL_SHININESS, GL_SPECULAR, GL_SRC_ALPHA,
@@ -404,7 +402,7 @@ class ObservableObjectRenderFrame():
         return time.time() - self.last_observed_time
 
 
-class CubeRenderFrame():  # pylint: disable=too-few-public-methods
+class CubeRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a Cube's state for 1 frame of rendering.
 
     :param cube: the cube object to be rendered.
@@ -413,7 +411,7 @@ class CubeRenderFrame():  # pylint: disable=too-few-public-methods
         super().__init__(cube)
 
 
-class FaceRenderFrame():  # pylint: disable=too-few-public-methods
+class FaceRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a Face's state for 1 frame of rendering.
 
     :param face: The face object to be rendered.
@@ -422,7 +420,7 @@ class FaceRenderFrame():  # pylint: disable=too-few-public-methods
         super().__init__(face)
 
 
-class CustomObjectRenderFrame(ObservableElementRenderFrame):
+class CustomObjectRenderFrame(ObservableObjectRenderFrame):
     """Minimal copy of a CustomObject's state for 1 frame of rendering.
 
     :param custom_object: The custom object to be rendered.  Either :class:`anki_vector.objects.CustomObject` or :class:`anki_vector.objects.FixedCustomObject`.

@@ -61,12 +61,9 @@ import math
 import threading
 from typing import List
 
-import opengl
-import opengl_vector
-
-from anki_vector.events import Events
-from anki_vector.robot import Robot
-from anki_vector import util
+from .events import Events
+from .robot import Robot
+from . import util, opengl, opengl_vector
 
 try:
     from OpenGL.GL import (GL_FILL,
