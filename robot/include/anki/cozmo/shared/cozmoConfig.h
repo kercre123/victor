@@ -202,14 +202,39 @@ namespace Cozmo {
    *
    **************************************************************************/
 
+  #define TOF_SIDE_BY_SIDE 0
+  #define TOF_ABOVE_BELOW 1
+  #define TOF_CENTER_OF_FACE 2
+  
+  #define TOF_CONFIGURATION TOF_SIDE_BY_SIDE
+  
   const f32 TOF_FOV_RAD = DEG_TO_RAD(19);
-  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -5, 0};
-  const f32 TOF_LEFT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(-12.5); 
-  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 5, 0};
-  const f32 TOF_RIGHT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(12.5); 
+
   const u32 TOF_RESOLUTION = 4;
 
+  #if TOF_CONFIGURATION == TOF_SIDE_BY_SIDE
   
+  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -5, 0};
+  const f32 TOF_LEFT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(-12.5);
+  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 5, 0};
+  const f32 TOF_RIGHT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(12.5);
+  const f32 TOF_ANGLE_DOWN_REL_CAMERA_RAD = DEG_TO_RAD(0);
+  
+  #elif TOF_CONFIGURATION == TOF_ABOVE_BELOW
+
+  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -5, 0};
+  const f32 TOF_LEFT_ROT_Y_REL_CAMERA_RAD = DEG_TO_RAD(-9.5);
+  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 5, 0};
+  const f32 TOF_RIGHT_ROT_Y_REL_CAMERA_RAD = DEG_TO_RAD(9.5);
+  const f32 TOF_ANGLE_DOWN_REL_CAMERA_RAD = DEG_TO_RAD(-4);
+
+  #elif TOF_CONFIGURATION == TOF_CENTER_OF_FACE
+
+
+  #else
+  #error Invalid TOF_CONFIGURATION
+  #endif
+
   /***************************************************************************
    *
    *                          Speeds and Accels
