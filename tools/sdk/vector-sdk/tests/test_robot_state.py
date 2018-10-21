@@ -6,8 +6,8 @@ Test the robot state
 
 import os
 import sys
+import time
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
 
@@ -18,7 +18,7 @@ def main():
 
     print("------ Fetch robot state from robot's properties ------")
     with anki_vector.Robot(args.serial) as robot:
-        robot.loop.run_until_complete(utilities.delay_close(1, lambda _: None))
+        time.sleep(1)
         print(robot.pose)
         print(robot.pose_angle_rad)
         print(robot.pose_pitch_rad)

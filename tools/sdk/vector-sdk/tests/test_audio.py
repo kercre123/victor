@@ -7,13 +7,13 @@ Exports a wav clip from the robot's audio stream
 import os
 import sys
 from tempfile import gettempdir
+import time
 
 try:
     from scipy.io import wavfile
 except ImportError as exc:
     sys.exit("Cannot import scipy: Do `pip3 install scipy` to install")
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
 
@@ -27,9 +27,7 @@ def main():
     print("------ begin audio export test ------")
 
     with anki_vector.Robot(args.serial, enable_audio_feed=True) as robot:
-
-        robot.loop.run_until_complete(utilities.delay_close(8))
-
+        time.sleep(8)
         print('samples: {0}'.format(len(robot.audio.raw_audio_waveform_history)))
 
         output_folder = os.path.join(gettempdir(), 'vector_sdk')

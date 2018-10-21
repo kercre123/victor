@@ -24,7 +24,7 @@ __all__ = ['dimensions', 'convert_image_to_screen_data',
 
 import sys
 
-from . import sync, color, util
+from . import color, connection, util
 from .messaging import protocol
 
 try:
@@ -138,7 +138,7 @@ def convert_image_to_screen_data(pil_image: Image.Image):
 class ScreenComponent(util.Component):
     """Handles messaging to control Vector's screen"""
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread(log_messaging=False)
     async def set_screen_with_image_data(self, image_data: bytes, duration_sec: float, interrupt_running: bool = True):
         """
         Display an image on Vector's Screen (his "face").

@@ -42,7 +42,7 @@ __all__ = ['LIGHT_CUBE_1_TYPE', 'OBJECT_VISIBILITY_TIMEOUT',
 import math
 import time
 
-from . import lights, sync, util
+from . import connection, lights, util
 from .events import Events
 
 from .messaging import protocol
@@ -218,16 +218,15 @@ class ObservableObject(util.Component):
     def _reset_observed_timeout_handler(self):
         if self._observed_timeout_handler is not None:
             self._observed_timeout_handler.cancel()
-        self._observed_timeout_handler = self._robot.loop.call_later(
-            self.visibility_timeout, self._observed_timeout)
+        self._observed_timeout_handler = self.conn.loop.call_later(self.visibility_timeout, self._observed_timeout)
 
     def _observed_timeout(self):
         # Triggered when the element is no longer considered "visible".
         # i.e. visibility_timeout seconds after the last observed event.
         self._is_visible = False
-        self._robot.events.dispatch_event(EvtObjectDisappeared(self), Events.object_disappeared)
+        self.conn.run_soon(self._robot.events.dispatch_event(EvtObjectDisappeared(self), Events.object_disappeared))
 
-    def _on_observed(self, pose: util.Pose, image_rect: util.ImageRect, robot_timestamp: int):
+    async def _on_observed(self, pose: util.Pose, image_rect: util.ImageRect, robot_timestamp: int):
         # Called from subclasses on their corresponding observed messages.
         newly_visible = self._is_visible is False
         self._is_visible = True
@@ -239,10 +238,10 @@ class ObservableObject(util.Component):
         self._last_observed_image_rect = image_rect
         self._pose = pose
         self._reset_observed_timeout_handler()
-        self._robot.events.dispatch_event(EvtObjectObserved(self, image_rect, pose), Events.object_observed)
+        await self._robot.events.dispatch_event(EvtObjectObserved(self, image_rect, pose), Events.object_observed)
 
         if newly_visible:
-            self._robot.events.dispatch_event(EvtObjectAppeared(self, image_rect, pose), Events.object_appeared)
+            await self._robot.events.dispatch_event(EvtObjectAppeared(self, image_rect, pose), Events.object_appeared)
 
 
 #: LIGHT_CUBE_1_TYPE's markers look like 2 concentric circles with lines and gaps.
@@ -373,7 +372,7 @@ class LightCube(ObservableObject):
             self._on_object_connection_lost,
             Events.cube_connection_lost)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def set_light_corners(self,
                                 light1: lights.Light,
                                 light2: lights.Light,
@@ -730,7 +729,7 @@ class LightCube(ObservableObject):
         else:
             self.logger.warning('An object not currently tracked by the world moved with id {0}'.format(msg.object_id))
 
-    def _on_object_stopped_moving(self, _, msg):
+    async def _on_object_stopped_moving(self, _, msg):
         if msg.object_id == self._object_id:
             now = time.time()
             self._last_event_time = now
@@ -742,7 +741,7 @@ class LightCube(ObservableObject):
             if self._is_moving:
                 self._is_moving = False
                 move_duration = now - self._last_moved_start_time
-            self._robot.events.dispatch_event(EvtObjectFinishedMove(self, move_duration), Events.object_finished_move)
+            await self._robot.events.dispatch_event(EvtObjectFinishedMove(self, move_duration), Events.object_finished_move)
         else:
             self.logger.warning('An object not currently tracked by the world stopped moving with id {0}'.format(msg.object_id))
 
@@ -780,7 +779,7 @@ class LightCube(ObservableObject):
                                         msg.img_rect.height)
             self._top_face_orientation_rad = msg.top_face_orientation_rad
 
-            self._on_observed(pose, image_rect, msg.timestamp)
+            self.conn.run_soon(self._on_observed(pose, image_rect, msg.timestamp))
         else:
             self.logger.warning('Observed an object not currently tracked by the world with id {0}'.format(msg.object_id))
 
