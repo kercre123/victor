@@ -25,6 +25,17 @@ enum ApiVersion {
   LATEST  = 1;
 }
 
+enum Volume {
+  MUTE        = 0;
+  LOW         = 1;
+  MEDIUM_LOW  = 2;
+  MEDIUM      = 3;
+  MEDIUM_HIGH = 4;
+  HIGH        = 5;
+}
+
+// *** App only proto below ***
+
 enum JdocType {
   ROBOT_SETTINGS = 0;
   ROBOT_LIFETIME_STATS = 1;
@@ -49,15 +60,6 @@ enum RobotSetting {
   master_volume      = 5;
   temp_is_fahrenheit = 6;
   time_zone          = 7;
-}
-
-enum Volume {
-  MUTE        = 0;
-  LOW         = 1;
-  MEDIUM_LOW  = 2;
-  MEDIUM      = 3;
-  MEDIUM_HIGH = 4;
-  HIGH        = 5;
 }
 
 enum EyeColor {

@@ -729,7 +729,7 @@ class Robot:
 
             import anki_vector
             with anki_vector.Robot() as robot:
-                network_state = robot.get_version_state()
+                network_state = robot.get_network_state()
         """
         get_network_state_request = protocol.NetworkStateRequest()
         return await self.conn.grpc_interface.NetworkState(get_network_state_request)

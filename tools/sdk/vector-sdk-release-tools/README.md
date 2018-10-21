@@ -28,30 +28,14 @@ These instructions build the SDK and its documentation and produce a compressed 
     cd victor
     rm -rf tools/sdk/vector-sdk/tests
 
-4. On victor master branch, remove proto messages that we don't want to expose. Do not commit these changes.
+4. On victor master branch, from the following files, remove all messages marked "App only". This removes proto messages
+that we don't want to expose. Do not commit these changes to victor master.
 
-  a. From `cloud/gateway/external_interface.proto`, remove:
-        `UploadDebugLogs`
-        `CheckCloudConnection`
-        `UpdateUserEntitlements`
-
-  b. From `cloud/gateway/messages.proto`, remove:
-        `UploadDebugLogsRequest`
-        `UploadDebugLogsResponse`
-        `CheckCloudRequest`
-        `CheckCloudResponse`
-
-  c. From `cloud/gateway/settings.proto`, remove:
-        `enum UserEntitlement`
-        `message UserEntitlementsConfig`
-        `UpdateUserEntitlementsRequest`
-        `UpdateUserEntitlementsResponse`
-
-  d. From `cloud/gateway/shared.proto`, remove:
-        `UpdateUserEntitlementsRequest`
-        `UpdateUserEntitlementsResponse`
-        `CheckCloudRequest`
-        `CheckCloudResponse`
+  `cloud/gateway/external_interface.proto` (Keep the ending curly brace)
+  `cloud/gateway/messages.proto`
+  `cloud/gateway/onboardingSteps.proto`
+  `cloud/gateway/settings.proto`
+  `cloud/gateway/shared.proto`
 
 5. Run `victor/tools/sdk/scripts/update_proto.sh`
 
