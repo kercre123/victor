@@ -1,10 +1,7 @@
 package token
 
-import "anki/token/jwt"
-
 type options struct {
-	server           bool
-	identityProvider *jwt.IdentityProvider
+	server bool
 }
 
 // Option defines an option that can be set on the token server
@@ -15,11 +12,5 @@ type Option func(o *options)
 func WithServer() Option {
 	return func(o *options) {
 		o.server = true
-	}
-}
-
-func WithIdentityProvider(identityProvider *jwt.IdentityProvider) Option {
-	return func(o *options) {
-		o.identityProvider = identityProvider
 	}
 }
