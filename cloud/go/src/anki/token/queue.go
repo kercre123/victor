@@ -1,7 +1,6 @@
 package token
 
 import (
-	"anki/config"
 	"anki/log"
 	"anki/token/jwt"
 	"anki/util"
@@ -25,38 +24,33 @@ type response struct {
 	err  error
 }
 
-type tokenQueue struct {
-	identityProvider *jwt.IdentityProvider
-}
-
-// TODO: move into tokenQueue struct (this global variable is referenced by token.go and refresher.go)
 var queue = make(chan request)
+var url string
 
-func (q *tokenQueue) init(ctx context.Context, identityProvider *jwt.IdentityProvider) error {
-	q.identityProvider = identityProvider
-	go q.queueRoutine(ctx)
+func queueInit(ctx context.Context) error {
+	go queueRoutine(ctx)
 	return nil
 }
 
-func (q *tokenQueue) handleRequest(req *request) error {
+func handleQueueRequest(req *request) error {
 	var err error
 	var resp *cloud.TokenResponse
 	switch req.m.Tag() {
 	case cloud.TokenRequestTag_Auth:
-		resp, err = q.handleAuthRequest(req.m.GetAuth().SessionToken)
+		resp, err = handleAuthRequest(req.m.GetAuth().SessionToken)
 	case cloud.TokenRequestTag_Secondary:
-		resp, err = q.handleSecondaryAuthRequest(req.m.GetSecondary())
+		resp, err = handleSecondaryAuthRequest(req.m.GetSecondary())
 	case cloud.TokenRequestTag_Reassociate:
-		resp, err = q.handleReassociateRequest(req.m.GetReassociate())
+		resp, err = handleReassociateRequest(req.m.GetReassociate())
 	case cloud.TokenRequestTag_Jwt:
-		resp, err = q.handleJwtRequest()
+		resp, err = handleJwtRequest()
 	}
 	req.ch <- &response{resp, err}
 	return err
 }
 
 func getConnection(creds credentials.PerRPCCredentials) (*conn, error) {
-	c, err := newConn(config.Env.Token, creds)
+	c, err := newConn(url, creds)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +61,8 @@ func getConnection(creds credentials.PerRPCCredentials) (*conn, error) {
 // by a request should be returned for logging by processing code, but we need to
 // generate a CLAD response for token requests no matter what, and those responses
 // should indicate the stage of the request where an error occurred
-func (q *tokenQueue) handleJwtRequest() (*cloud.TokenResponse, error) {
-	existing := q.identityProvider.GetToken()
+func handleJwtRequest() (*cloud.TokenResponse, error) {
+	existing := jwt.GetToken()
 	errorResp := func(code cloud.TokenError) *cloud.TokenResponse {
 		return cloud.NewTokenResponseWithJwt(&cloud.JwtResponse{Error: code})
 	}
@@ -86,7 +80,7 @@ func (q *tokenQueue) handleJwtRequest() (*cloud.TokenResponse, error) {
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
-			tok, err := q.identityProvider.ParseToken(bundle.Token)
+			tok, err := jwt.ParseToken(bundle.Token)
 			if err != nil {
 				return errorResp(cloud.TokenError_InvalidToken), err
 			}
@@ -110,16 +104,16 @@ func sessionMetadata(sessionToken string) credentials.PerRPCCredentials {
 	return metadata
 }
 
-func (q *tokenQueue) handleAuthRequest(session string) (*cloud.TokenResponse, error) {
+func handleAuthRequest(session string) (*cloud.TokenResponse, error) {
 	metadata := sessionMetadata(session)
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associatePrimary(session)
 	}
-	return q.authRequester(metadata, requester, true)
+	return authRequester(metadata, requester, true)
 }
 
-func (q *tokenQueue) handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenResponse, error) {
-	existing := q.identityProvider.GetToken()
+func handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenResponse, error) {
+	existing := jwt.GetToken()
 	if existing == nil {
 		return authErrorResp(cloud.TokenError_NullToken), nil
 	}
@@ -128,18 +122,18 @@ func (q *tokenQueue) handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest)
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.associateSecondary(req.SessionToken, req.ClientName, req.AppId)
 	}
-	return q.authRequester(metadata, requester, false)
+	return authRequester(metadata, requester, false)
 }
 
-func (q *tokenQueue) handleReassociateRequest(req *cloud.ReassociateRequest) (*cloud.TokenResponse, error) {
+func handleReassociateRequest(req *cloud.ReassociateRequest) (*cloud.TokenResponse, error) {
 	metadata := sessionMetadata(req.SessionToken)
 	requester := func(c *conn) (*pb.TokenBundle, error) {
 		return c.reassociatePrimary(req.ClientName, req.AppId)
 	}
-	return q.authRequester(metadata, requester, false)
+	return authRequester(metadata, requester, false)
 }
 
-func (q *tokenQueue) authRequester(creds credentials.PerRPCCredentials,
+func authRequester(creds credentials.PerRPCCredentials,
 	requester func(c *conn) (*pb.TokenBundle, error),
 	parseJwt bool) (*cloud.TokenResponse, error) {
 
@@ -157,7 +151,7 @@ func (q *tokenQueue) authRequester(creds credentials.PerRPCCredentials,
 		return authErrorResp(cloud.TokenError_Connection), err
 	}
 	if parseJwt {
-		_, err = q.identityProvider.ParseToken(bundle.Token)
+		_, err = jwt.ParseToken(bundle.Token)
 		if err != nil {
 			return authErrorResp(cloud.TokenError_InvalidToken), err
 		}
@@ -167,7 +161,7 @@ func (q *tokenQueue) authRequester(creds credentials.PerRPCCredentials,
 		JwtToken: bundle.Token}), nil
 }
 
-func (q *tokenQueue) queueRoutine(ctx context.Context) {
+func queueRoutine(ctx context.Context) {
 	for {
 		var req request
 		select {
@@ -176,7 +170,7 @@ func (q *tokenQueue) queueRoutine(ctx context.Context) {
 		case req = <-queue:
 			break
 		}
-		if err := q.handleRequest(&req); err != nil {
+		if err := handleQueueRequest(&req); err != nil {
 			log.Println("Token queue error:", err)
 		}
 	}

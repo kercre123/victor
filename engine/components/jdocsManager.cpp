@@ -110,6 +110,15 @@ JdocsManager::JdocsManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 JdocsManager::~JdocsManager()
 {
+  for (auto& jdocPair : _jdocs)
+  {
+    auto& jdoc = jdocPair.second;
+    if (jdoc._shutdownCB != nullptr)
+    {
+      jdoc._shutdownCB();
+    }
+  }
+
   // Immediately save to disk any jdocs that are disk-dirty, OR cloud-dirty
   static const bool kIsShuttingDown = true;
   UpdatePeriodicFileSaves(kIsShuttingDown);
@@ -234,6 +243,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
     jdocInfo._overwrittenCB = nullptr;
     jdocInfo._formatMigrationCB = nullptr;
+    jdocInfo._shutdownCB = nullptr;
 
     if (Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
     {
@@ -346,6 +356,27 @@ void JdocsManager::RegisterFormatMigrationCallback(const external_interface::Jdo
                 "Registering format migration callback again...is that intended?");
   }
   jdocItem._formatMigrationCB = cb;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::RegisterShutdownCallback(const external_interface::JdocType jdocTypeKey,
+                                            const ShutdownCallback cb)
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.RegisterShutdownCallback.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return;
+  }
+  auto& jdocItem = (*it).second;
+  if (jdocItem._shutdownCB != nullptr)
+  {
+    LOG_WARNING("JdocsManager.RegisterShutdownCallback.AlreadyRegistered",
+                "Registering shutdown callback again...is that intended?");
+  }
+  jdocItem._shutdownCB = cb;
 }
 
 

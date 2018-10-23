@@ -45,7 +45,7 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
     def vision_enabled(self):
         return self._vision_enabled
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def enable_vision_mode(self, enable: bool):
         """Enable facial and custom object detection on the robot's camera
 

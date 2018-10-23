@@ -32,10 +32,10 @@ func newRobotSimulator(options *options) (*robotSimulator, error) {
 
 	// Enable client certs and set custom key pair dir (for this user)
 	token.UseClientCert = true
-	robot.DefaultCloudDir = *options.defaultCloudDir
+	robot.DefaultCloudDir = *simulator.options.defaultCloudDir
 
-	simulator.robotInstance = &testableRobot{id: *options.testID}
-	go simulator.robotInstance.run(*options.urlConfigFile)
+	simulator.robotInstance = newTestableRobot(*options.urlConfigFile)
+	go simulator.robotInstance.run()
 
 	simulator.robotInstance.waitUntilReady()
 

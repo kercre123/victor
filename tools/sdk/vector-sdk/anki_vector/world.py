@@ -25,8 +25,8 @@ __all__ = ['World']
 from typing import Iterable
 
 from . import faces
+from . import connection
 from . import objects
-from . import sync
 from . import util
 
 from .events import Events
@@ -272,7 +272,7 @@ class World(util.Component):
         """
         return self._faces.get(face_id)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def connect_cube(self) -> protocol.ConnectCubeResponse:
         """Attempt to connect to a cube.
 
@@ -295,11 +295,11 @@ class World(util.Component):
             connected=result.success,
             object_type=objects.LIGHT_CUBE_1_TYPE)
 
-        self._robot.events.dispatch_event(event, Events.object_connection_state)
+        await self._robot.events.dispatch_event(event, Events.object_connection_state)
 
         return result
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def disconnect_cube(self) -> protocol.DisconnectCubeResponse:
         """Requests a disconnection from the currently connected cube.
 
@@ -313,7 +313,7 @@ class World(util.Component):
         req = protocol.DisconnectCubeRequest()
         return await self.grpc_interface.DisconnectCube(req)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def flash_cube_lights(self) -> protocol.FlashCubeLightsResponse:
         """Flash cube lights
 
@@ -329,7 +329,7 @@ class World(util.Component):
         req = protocol.FlashCubeLightsRequest()
         return await self.grpc_interface.FlashCubeLights(req)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def forget_preferred_cube(self) -> protocol.ForgetPreferredCubeResponse:
         """Forget preferred cube.
 
@@ -347,7 +347,7 @@ class World(util.Component):
         req = protocol.ForgetPreferredCubeRequest()
         return await self.grpc_interface.ForgetPreferredCube(req)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def set_preferred_cube(self, factory_id: str) -> protocol.SetPreferredCubeResponse:
         """Set preferred cube.
 
@@ -369,7 +369,7 @@ class World(util.Component):
         req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
         return await self.grpc_interface.SetPreferredCube(req)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def delete_custom_objects(self,
                                     delete_custom_marker_objects: bool = True,
                                     delete_fixed_custom_objects: bool = True,
@@ -405,7 +405,7 @@ class World(util.Component):
 
         return last_blocking_call
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def define_custom_box(self,
                                 custom_object_type: objects.CustomObjectTypes,
                                 marker_front: objects.CustomObjectMarkers,
@@ -504,7 +504,7 @@ class World(util.Component):
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
         return None
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def define_custom_cube(self,
                                  custom_object_type: objects.CustomObjectTypes,
                                  marker: objects.CustomObjectMarkers,
@@ -572,7 +572,7 @@ class World(util.Component):
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
         return None
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def define_custom_wall(self,
                                  custom_object_type: objects.CustomObjectTypes,
                                  marker: objects.CustomObjectMarkers,
@@ -647,7 +647,7 @@ class World(util.Component):
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
         return None
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def create_custom_fixed_object(self,
                                          pose: util.Pose,
                                          x_size_mm: float,

@@ -35,7 +35,7 @@ functions for all the behaviors.
 __all__ = ["BehaviorComponent"]
 
 
-from . import objects, sync, util
+from . import connection, objects, util
 from .messaging import protocol
 
 
@@ -126,7 +126,7 @@ class BehaviorComponent(util.Component):
         return next_action_id
 
     # Navigation actions
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def drive_off_charger(self):
         """Drive Vector off the charger
 
@@ -142,7 +142,7 @@ class BehaviorComponent(util.Component):
         drive_off_charger_request = protocol.DriveOffChargerRequest()
         return await self.grpc_interface.DriveOffCharger(drive_off_charger_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def drive_on_charger(self):
         """Drive Vector onto the charger
 
@@ -162,7 +162,7 @@ class BehaviorComponent(util.Component):
         drive_on_charger_request = protocol.DriveOnChargerRequest()
         return await self.grpc_interface.DriveOnCharger(drive_on_charger_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def go_to_pose(self,
                          pose: util.Pose,
                          relative_to_robot: bool = False,
@@ -214,7 +214,7 @@ class BehaviorComponent(util.Component):
     # TODO Check that num_retries is working (and if not, same for other num_retries).
     # TODO alignment_type coming out ugly in the docs without real values
     # TODO DockWithCubeResponse not clear what it is in docs
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def dock_with_cube(self,
                              target_object: objects.LightCube,
                              approach_angle: util.Angle = None,
@@ -265,7 +265,7 @@ class BehaviorComponent(util.Component):
         return await self.grpc_interface.DockWithCube(dock_request)
 
     # Movement actions
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def drive_straight(self,
                              distance: util.Distance,
                              speed: util.Speed,
@@ -308,7 +308,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.DriveStraight(drive_straight_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def turn_in_place(self,
                             angle: util.Angle,
                             speed: util.Angle = util.Angle(0.0),
@@ -352,7 +352,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.TurnInPlace(turn_in_place_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def set_head_angle(self,
                              angle: util.Angle,
                              accel: float = 10.0,
@@ -388,7 +388,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.SetHeadAngle(set_head_angle_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def set_lift_height(self,
                               height: float,
                               accel: float = 10.0,

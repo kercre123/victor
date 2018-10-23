@@ -21,6 +21,7 @@ __all__ = ['EventHandler', 'Events']
 import asyncio
 from concurrent.futures import CancelledError
 from enum import Enum
+from typing import Callable
 import uuid
 
 from .connection import Connection
@@ -62,14 +63,13 @@ class EventHandler:
 
     def __init__(self):
         self.logger = util.get_class_logger(__name__, self)
-        self._loop = None
         self._conn = None
         self._conn_id = None
         self.listening_for_events = False
-        self.event_task = None
+        self.event_future = None
         self.subscribers = {}
 
-    def start(self, connection: Connection, loop: asyncio.BaseEventLoop):
+    def start(self, connection: Connection):
         """Start listening for events. Automatically called by the :class:`anki_vector.robot.Robot` class.
 
         .. testcode::
@@ -77,15 +77,14 @@ class EventHandler:
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                robot.events.start(robot.conn, robot.loop)
+                robot.events.start(robot.conn)
 
         :param connection: A reference to the connection from the SDK to the robot.
         :param loop: The loop to run the event task on.
         """
-        self._loop = loop
         self._conn = connection
         self.listening_for_events = True
-        self.event_task = self._loop.create_task(self._handle_events())
+        self.event_future = asyncio.run_coroutine_threadsafe(self._handle_events(), self._conn.loop)
 
     def close(self):
         """Stop listening for events. Automatically called by the :class:`anki_vector.robot.Robot` class.
@@ -98,10 +97,13 @@ class EventHandler:
                 robot.events.close()
         """
         self.listening_for_events = False
-        self.event_task.cancel()
-        self._loop.run_until_complete(self.event_task)
+        try:
+            self.event_future.cancel()
+            self.event_future.result()
+        except CancelledError:
+            pass
 
-    def dispatch_event_by_name(self, event_data, event_name: str = None):
+    async def dispatch_event_by_name(self, event_data, event_name: str = None):
         """Dispatches event to event listeners by name.
 
         .. testcode::
@@ -115,23 +117,27 @@ class EventHandler:
                 robot.events.subscribe_by_name(event_listener, event_name='my_event')
                 robot.events.dispatch_event_by_name('my_event dispatched', event_name='my_event')
         """
-
         if not event_name:
             self.logger.error('Bad event_name in dispatch_event.')
 
         if event_name in self.subscribers.keys():
             subscribers = self.subscribers[event_name].copy()
             for func in subscribers:
-                func(event_name, event_data)
+                if asyncio.iscoroutinefunction(func):
+                    await func(event_name, event_data)
+                elif asyncio.iscoroutine(func):
+                    await func
+                else:
+                    func(event_name, event_data)
 
-    def dispatch_event(self, event_data, event_type: Events):
+    async def dispatch_event(self, event_data, event_type: Events):
         """Dispatches event to event listeners."""
         if not event_type:
             self.logger.error('Bad event_type in dispatch_event.')
 
         event_name = event_type.value
 
-        self.dispatch_event_by_name(event_data, event_name)
+        await self.dispatch_event_by_name(event_data, event_name)
 
     def _unpackage_event(self, enum_key: str, event):
         event_key = event.WhichOneof(enum_key)
@@ -156,25 +162,27 @@ class EventHandler:
                     break
 
                 unpackaged_event_key, unpackaged_event_data = self._unpackage_event('event_type', evt.event)
-                self.dispatch_event_by_name(unpackaged_event_data, unpackaged_event_key)
+                await self.dispatch_event_by_name(unpackaged_event_data, unpackaged_event_key)
         except CancelledError:
             self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
         except TypeError:
             self.logger.debug('Unknown Event type')
 
-    def subscribe_by_name(self, func: callable, event_name: str = None):
+    def subscribe_by_name(self, func: Callable, event_name: str = None):
         """Receive a method call when the specified event occurs.
 
         .. testcode::
 
             import anki_vector
 
+            import asyncio
+
             def event_listener(_, msg):
                 print(msg)
 
             with anki_vector.Robot() as robot:
                 robot.events.subscribe_by_name(event_listener, event_name='my_event')
-                robot.events.dispatch_event_by_name('my_event dispatched', event_name='my_event')
+                robot.conn.run_coroutine(robot.events.dispatch_event_by_name('my_event dispatched', event_name='my_event'))
 
         :param func: A method implemented in your code that will be called when the event is fired.
         :param event_name: The name of the event that will result in func being called.
@@ -186,7 +194,7 @@ class EventHandler:
             self.subscribers[event_name] = set()
         self.subscribers[event_name].add(func)
 
-    def subscribe(self, func: callable, event_type: Events = None):
+    def subscribe(self, func: Callable, event_type: Events = None):
         """Receive a method call when the specified event occurs.
 
         .. testcode::
@@ -214,7 +222,7 @@ class EventHandler:
 
         self.subscribe_by_name(func, event_name)
 
-    def unsubscribe_by_name(self, func: callable, event_name: str = None):
+    def unsubscribe_by_name(self, func: Callable, event_name: str = None):
         """Unregister a previously subscribed method from an event.
 
         .. testcode::
@@ -249,7 +257,7 @@ class EventHandler:
             self.logger.error(f"Cannot unsubscribe from event_type '{event_name}'. "
                               "It has no subscribers.")
 
-    def unsubscribe(self, func: callable, event_type: Events = None):
+    def unsubscribe(self, func: Callable, event_type: Events = None):
         """Unregister a previously subscribed method from an event.
 
         .. testcode::

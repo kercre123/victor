@@ -21,8 +21,8 @@ def main():
     print("------ begin testing animations ------")
 
     with anki_vector.Robot(args.serial, cache_animation_list=False) as robot:
-        print("playing animation by name: anim_blackjack_victorwin_01")
-        robot.anim.play_animation("anim_blackjack_victorwin_01")
+        print("playing animation by name: anim_pounce_success_02")
+        robot.anim.play_animation("anim_pounce_success_02")
 
     with anki_vector.AsyncRobot(args.serial, cache_animation_list=False) as robot:
         print("------ testing load async animations ------")
@@ -35,7 +35,7 @@ def main():
             for idx, name in enumerate(anim_names):
                 print("(%d: %s)" % (idx, name), end=" ")
             print()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
+        robot.anim.play_animation("anim_pounce_success_02").result()
 
         print("------ finish testing animations ------")
 

@@ -487,8 +487,7 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
 {
   const f32 scaleMultiplier = (kMotionDetection_UseHalfRes ? 2.f : 1.f);
 
-  const Vision::ImageCacheSize imageSize = Vision::ImageCache::GetSize((s32)scaleMultiplier,
-                                                                         Vision::ResizeMethod::NearestNeighbor);
+  const Vision::ImageCacheSize imageSize = Vision::ImageCache::GetSize((s32)scaleMultiplier);
 
   // Call the right helper based on image's color
   if(imageCache.HasColor())
