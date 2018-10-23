@@ -906,8 +906,7 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
                                 const MarkerDetectionCLAHE useCLAHE,
                                 Vision::Image& claheImage)
 {
-  const Vision::ImageCacheSize whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
-                                                              Vision::ResizeMethod::Linear);
+  const Vision::ImageCacheSize whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
   
   switch(useCLAHE)
   {
@@ -1025,7 +1024,7 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   // Currently assuming we detect markers first, so we won't make use of anything already detected
   DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
   
-  const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier, Vision::ResizeMethod::Linear);
+  const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
   
   std::vector<const Vision::Image*> imagePtrs;
   
@@ -1174,8 +1173,7 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
 
         // By default we display images at the default image cache size so we need to scale the marker
         // corners to that size
-        const f32 scaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetSize(kMarkerDetector_ScaleMultiplier,
-                                                                                            Vision::ResizeMethod::Linear));
+        const f32 scaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetSize(kMarkerDetector_ScaleMultiplier));
         const f32 defaultScaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetDefaultImageCacheSize());
         corner *= (defaultScaleMultiplier / scaleMultiplier);
       }
@@ -1269,8 +1267,7 @@ void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::Update(const VisionSystemInput& input)
 {
-  _imageCache->Reset(input.imageBuffer,
-                     input.resizeMethod);
+  _imageCache->Reset(input.imageBuffer);
 
   _modes = input.modesToProcess;
   _futureModes = input.futureModesToProcess;

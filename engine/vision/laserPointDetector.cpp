@@ -253,8 +253,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
   Point2f groundPlaneCentroid(0.f,0.f);
   Point2f groundCentroidInImage(0.f, 0.f);
 
-  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier,
-                                                                       Vision::ResizeMethod::NearestNeighbor);
+  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);
 
   Vision::ImageRGB imageColor;
   if(imageCache.HasColor())
@@ -407,8 +406,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
   Point2f centroid(0.f,0.f);
   Point2f centroidInImage(0.f, 0.f);
 
-  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier,
-                                                                       Vision::ResizeMethod::NearestNeighbor);
+  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);
 
   Vision::ImageRGB imageColor;
   if(imageCache.HasColor())

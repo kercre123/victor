@@ -65,7 +65,6 @@ static const BackpackLightAnimation::BackpackAnimation kLightsOff = {
 const char* const kSavePathKey = "save_path";
 const char* const kImageSaveQualityKey = "quality";
 const char* const kImageScaleKey = "image_scale";
-const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
 const char* const kUseShutterSoundKey = "use_shutter_sound";
 const char* const kSaveSensorDataKey = "save_sensor_data";
@@ -145,8 +144,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevImageCapture");
   _iConfig.useShutterSound = JsonTools::ParseBool(config, kUseShutterSoundKey, "BehaviorDevImageCapture");
   std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevImageCapture");
-  std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevImageCapture");
-  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
+  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr);
   
   if(config.isMember(kMultiImageModeKey))
   {
@@ -268,7 +266,6 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kSavePathKey,
     kImageSaveQualityKey,
     kImageScaleKey,
-    kImageResizeMethodKey,
     kUseCapacitiveTouchKey,
     kSaveSensorDataKey,
     kUseShutterSoundKey,
