@@ -228,7 +228,7 @@ class ObservableObject(util.Component):
         self._is_visible = False
         self.conn.run_soon(self._robot.events.dispatch_event(EvtObjectDisappeared(self), Events.object_disappeared))
 
-    async def _on_observed(self, pose: util.Pose, image_rect: util.ImageRect, robot_timestamp: int):
+    def _on_observed(self, pose: util.Pose, image_rect: util.ImageRect, robot_timestamp: int):
         # Called from subclasses on their corresponding observed messages.
         newly_visible = self._is_visible is False
         self._is_visible = True
@@ -240,10 +240,10 @@ class ObservableObject(util.Component):
         self._last_observed_image_rect = image_rect
         self._pose = pose
         self._reset_observed_timeout_handler()
-        await self._robot.events.dispatch_event(EvtObjectObserved(self, image_rect, pose), Events.object_observed)
+        self.conn.run_soon(self._robot.events.dispatch_event(EvtObjectObserved(self, image_rect, pose), Events.object_observed))
 
         if newly_visible:
-            await self._robot.events.dispatch_event(EvtObjectAppeared(self, image_rect, pose), Events.object_appeared)
+            self.conn.run_soon(self._robot.events.dispatch_event(EvtObjectAppeared(self, image_rect, pose), Events.object_appeared))
 
 
 #: LIGHT_CUBE_1_TYPE's markers look like 2 concentric circles with lines and gaps.

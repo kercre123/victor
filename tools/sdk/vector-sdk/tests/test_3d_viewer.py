@@ -12,7 +12,8 @@ from anki_vector.objects import CustomObjectTypes, CustomObjectMarkers
 
 async def my_function(robot):  # pylint: disable=unused-argument
     await asyncio.sleep(20)
-    #print("done")
+    # @TODO: 3d viewer needs to shut down when this function completes
+    print("done")
 
 
 def main():
@@ -23,8 +24,8 @@ def main():
 
         robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                        marker=CustomObjectMarkers.Circles2,
-                                       size_mm=20.0,
-                                       marker_width_mm=10.0, marker_height_mm=10.0)
+                                       size_mm=100.0,
+                                       marker_width_mm=100.0, marker_height_mm=100.0)
 
         viewer = opengl_viewer.OpenGLViewer(robot=robot)
         viewer.run(my_function)

@@ -407,58 +407,61 @@ class OpenGLViewer():
         robot_frame = world_frame.robot_frame
         robot_pose = robot_frame.pose
 
-        # Render the cube
-        for i in range(1):
-            cube_frame = world_frame.cube_frames[i]
-            if cube_frame is None:
-                continue
+        try:
+            # Render the cube
+            for i in range(1):
+                cube_frame = world_frame.cube_frames[i]
+                if cube_frame is None:
+                    continue
 
-            cube_pose = cube_frame.pose
-            if cube_pose is not None and cube_pose.is_comparable(robot_pose):
-                light_cube_view.display(cube_pose)
+                cube_pose = cube_frame.pose
+                if cube_pose is not None and cube_pose.is_comparable(robot_pose):
+                    light_cube_view.display(cube_pose)
 
-        # Render the custom objects
-        for obj in world_frame.custom_object_frames:
-            obj_pose = obj.pose
-            if obj_pose is not None and obj_pose.is_comparable(robot_pose):
-                glPushMatrix()
-                obj_matrix = obj_pose.to_matrix()
-                glMultMatrixf(obj_matrix.in_row_order)
+            # Render the custom objects
+            for obj in world_frame.custom_object_frames:
+                obj_pose = obj.pose
+                if obj_pose is not None and obj_pose.is_comparable(robot_pose):
+                    glPushMatrix()
+                    obj_matrix = obj_pose.to_matrix()
+                    glMultMatrixf(obj_matrix.in_row_order)
 
-                glScalef(obj.x_size_mm * 0.5,
-                         obj.y_size_mm * 0.5,
-                         obj.z_size_mm * 0.5)
+                    glScalef(obj.x_size_mm * 0.5,
+                             obj.y_size_mm * 0.5,
+                             obj.z_size_mm * 0.5)
 
-                # Only draw solid object for observable custom objects
+                    # Only draw solid object for observable custom objects
 
-                if obj.is_fixed:
-                    # fixed objects are drawn as transparent outlined boxes to make
-                    # it clearer that they have no effect on vision.
-                    FIXED_OBJECT_COLOR = [1.0, 0.7, 0.0, 1.0]
-                    unit_cube_view.display(FIXED_OBJECT_COLOR, False)
-                else:
-                    CUSTOM_OBJECT_COLOR = [1.0, 0.3, 0.3, 1.0]
-                    unit_cube_view.display(CUSTOM_OBJECT_COLOR, True)
+                    if obj.is_fixed:
+                        # fixed objects are drawn as transparent outlined boxes to make
+                        # it clearer that they have no effect on vision.
+                        FIXED_OBJECT_COLOR = [1.0, 0.7, 0.0, 1.0]
+                        unit_cube_view.display(FIXED_OBJECT_COLOR, False)
+                    else:
+                        CUSTOM_OBJECT_COLOR = [1.0, 0.3, 0.3, 1.0]
+                        unit_cube_view.display(CUSTOM_OBJECT_COLOR, True)
 
-                glPopMatrix()
+                    glPopMatrix()
 
-        glBindTexture(GL_TEXTURE_2D, 0)
+            glBindTexture(GL_TEXTURE_2D, 0)
 
-        for face in world_frame.face_frames:
-            face_pose = face.pose
-            if face_pose is not None and face_pose.is_comparable(robot_pose):
-                glPushMatrix()
-                face_matrix = face_pose.to_matrix()
-                glMultMatrixf(face_matrix.in_row_order)
+            for face in world_frame.face_frames:
+                face_pose = face.pose
+                if face_pose is not None and face_pose.is_comparable(robot_pose):
+                    glPushMatrix()
+                    face_matrix = face_pose.to_matrix()
+                    glMultMatrixf(face_matrix.in_row_order)
 
-                # Approximate size of a head
-                glScalef(100, 25, 100)
+                    # Approximate size of a head
+                    glScalef(100, 25, 100)
 
-                FACE_OBJECT_COLOR = [0.5, 0.5, 0.5, 1.0]
-                draw_solid = face.time_since_last_seen < 30
-                unit_cube_view.display(FACE_OBJECT_COLOR, draw_solid)
+                    FACE_OBJECT_COLOR = [0.5, 0.5, 0.5, 1.0]
+                    draw_solid = face.time_since_last_seen < 30
+                    unit_cube_view.display(FACE_OBJECT_COLOR, draw_solid)
 
-                glPopMatrix()
+                    glPopMatrix()
+        except Exception as e:
+            self._logger.error('rendering error: {0}'.format(e))
 
         glDisable(GL_LIGHTING)
 
