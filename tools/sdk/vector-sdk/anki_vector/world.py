@@ -714,7 +714,16 @@ class World(util.Component):
     def _allocate_custom_marker_object(self, msg):
         # obj is the base object type for this custom object. We make instances of this for every
         # unique object_id we see of this custom object type.
-        archetype = self._custom_object_archetypes.get(msg.object_type)
+        first_custom_type = protocol.ObjectType.Value("FIRST_CUSTOM_OBJECT_TYPE")
+        if msg.object_type < first_custom_type or msg.object_type >= first_custom_type + protocol.CustomType.Value("CUSTOM_TYPE_COUNT"):
+            self.logger.error('Received a custom object observation with a type not inside the custom object range: %s. Msg=%s',
+                              msg.object_type, msg)
+            return None
+
+        # Object observation events contain an object_type.  A subset of that object_type enum maps to the
+        # custom_type enum, so we perform the conversion.
+        custom_type = msg.object_type - first_custom_type + objects.CustomObjectTypes.CustomType00.id
+        archetype = self._custom_object_archetypes.get(custom_type)
         if not archetype:
             self.logger.error('Received a custom object type: %s that has not been defined yet. Msg=%s',
                               msg.object_type, msg)

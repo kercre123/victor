@@ -123,6 +123,8 @@ enum ObjectType
 
   BLOCK_LIGHTCUBE1 = 2;
 
+  FIRST_CUSTOM_OBJECT_TYPE = 15;
+
   // There are 38 object types in the internal clad definition, though only
   // some are surfaced here
   OBJECT_TYPE_COUNT = 38;

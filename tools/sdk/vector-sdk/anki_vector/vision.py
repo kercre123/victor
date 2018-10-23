@@ -24,7 +24,7 @@ processing on the robot.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['VisionComponent']
 
-from . import util, sync
+from . import util, connection
 from .messaging import protocol
 
 

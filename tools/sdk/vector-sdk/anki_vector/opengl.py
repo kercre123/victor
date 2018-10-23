@@ -536,7 +536,7 @@ class PrecomputedView():
         material_library = mesh_data.material_library
 
         for key in mesh_data.groups:
-            new_gl_list = glGenLists(1)
+            new_gl_list = glGenLists(1)  # pylint: disable=assignment-from-no-return
             glNewList(new_gl_list, GL_COMPILE)
 
             group = mesh_data.groups[key]
@@ -571,7 +571,7 @@ class PrecomputedView():
         :param f: the function used to create the 3d geometry.
         :param *args: any parameters the supplied function is expecting.
         """
-        new_gl_list = glGenLists(1)
+        new_gl_list = glGenLists(1)  # pylint: disable=assignment-from-no-return
         glNewList(new_gl_list, GL_COMPILE)
         f(*args)
         glEndList()

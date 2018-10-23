@@ -9,8 +9,11 @@ import anki_vector
 from anki_vector import opengl_viewer
 from anki_vector.objects import CustomObjectTypes, CustomObjectMarkers
 
-async def my_function(robot):
-    await asyncio.sleep(60)
+
+async def my_function(robot):  # pylint: disable=unused-argument
+    await asyncio.sleep(20)
+    #print("done")
+
 
 def main():
     """main execution"""
@@ -25,6 +28,7 @@ def main():
 
         viewer = opengl_viewer.OpenGLViewer(robot=robot)
         viewer.run(my_function)
+
 
 if __name__ == "__main__":
     main()

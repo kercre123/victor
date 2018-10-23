@@ -383,11 +383,12 @@ class VectorViewManifest():
         self._unit_cube_view = UnitCubeView()
 
 
-class ObservableObjectRenderFrame():
+class ObservableObjectRenderFrame():  # pylint: disable=too-few-public-methods
     """Minimal copy of an object's state for 1 frame of rendering.
 
     :param obj: the cube object to be rendered.
     """
+
     def __init__(self, obj: ObservableObject):
         self.pose = obj.pose
         self.is_visible = obj.is_visible
@@ -407,6 +408,7 @@ class CubeRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-p
 
     :param cube: the cube object to be rendered.
     """
+
     def __init__(self, cube: LightCube):  # pylint: disable=useless-super-delegation
         super().__init__(cube)
 
@@ -416,16 +418,18 @@ class FaceRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-p
 
     :param face: The face object to be rendered.
     """
+
     def __init__(self, face: Face):  # pylint: disable=useless-super-delegation
         super().__init__(face)
 
 
-class CustomObjectRenderFrame(ObservableObjectRenderFrame):
+class CustomObjectRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a CustomObject's state for 1 frame of rendering.
 
     :param custom_object: The custom object to be rendered.  Either :class:`anki_vector.objects.CustomObject` or :class:`anki_vector.objects.FixedCustomObject`.
     :param is_fixed: Whether the custom object is permanently defined rather than an observable archetype.
     """
+
     def __init__(self, custom_object, is_fixed: bool):
         if is_fixed:
             # Not an observable, so init directly
@@ -436,9 +440,9 @@ class CustomObjectRenderFrame(ObservableObjectRenderFrame):
             super().__init__(custom_object)
 
         self.is_fixed = is_fixed
-        self.x_size_mm = custom_object.x_size_mm
-        self.y_size_mm = custom_object.y_size_mm
-        self.z_size_mm = custom_object.z_size_mm
+        self.x_size_mm = custom_object.archetype.x_size_mm
+        self.y_size_mm = custom_object.archetype.y_size_mm
+        self.z_size_mm = custom_object.archetype.z_size_mm
 
 
 class RobotRenderFrame():  # pylint: disable=too-few-public-methods
@@ -485,7 +489,7 @@ class WorldRenderFrame():  # pylint: disable=too-few-public-methods
 
         self.custom_object_frames = []
         for obj in robot.world.all_objects:
-            is_custom = isinstance(obj, objects.CustomObject)
-            is_fixed = isinstance(obj, objects.FixedCustomObject)
+            is_custom = isinstance(obj, CustomObject)
+            is_fixed = isinstance(obj, FixedCustomObject)
             if is_custom or is_fixed:
                 self.custom_object_frames.append(CustomObjectRenderFrame(obj, is_fixed))

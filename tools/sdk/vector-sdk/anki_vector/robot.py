@@ -666,7 +666,7 @@ class Robot:
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
         """
-        vision_mode = self._faces.enable_vision_mode(enable=False)
+        vision_mode = self.vision.enable_vision_mode(enable=False)
         if isinstance(vision_mode, concurrent.futures.Future):
             vision_mode.result()
 

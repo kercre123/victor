@@ -1113,7 +1113,7 @@ class CustomObject(ObservableObject):
     #### Private Methods ####
 
     def _repr_values(self):
-        return ('object_type={archetype.object_type} '
+        return ('object_type={archetype.custom_type} '
                 'x_size_mm={archetype.x_size_mm:.1f} '
                 'y_size_mm={archetype.y_size_mm:.1f} '
                 'z_size_mm={archetype.z_size_mm:.1f} '
