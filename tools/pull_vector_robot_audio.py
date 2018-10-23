@@ -80,13 +80,13 @@ def create_folder(folder_path):
 def wait_for_copy_finish(remote_recordings_total, local_folder_path):
     local_recordings_total = 0
     while(local_recordings_total != remote_recordings_total):
-        time.sleep(10)
+        time.sleep(3)
         local_recordings_total = get_total_wav_file(local_folder_path)
 
 def wait_for_delete_folder_finish(folder_path, robot_ip = ""):
     is_folder_exist = True
     while (is_folder_exist == True):
-        time.sleep(10)
+        time.sleep(3)
         if robot_ip == "":
             is_folder_exist = os.path.isdir(folder_path)
         else:
