@@ -21,6 +21,7 @@ ROBOT_USERNAME            = "root"
 TAB_CHARACTER             = "\t"
 ONE_CHANNEL               = 1
 FOUR_CHANNEL              = 4
+SSH_KEYWORD               = 'ssh'
 
 def parse_arguments(args):
     parser = argparse.ArgumentParser()
@@ -33,25 +34,32 @@ def parse_arguments(args):
     options = parser.parse_args(args)
     return (options)
 
-def execute_command_line(command_text):
-    process = subprocess.Popen(command_text, stdout = subprocess.PIPE)
-    return process
+def execute_command_line(command, background = False, shell = False, ignore_error = False):
+    if shell:
+        process = subprocess.Popen(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+    else:
+        process = subprocess.Popen(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+
+    output, error = process.communicate()
+    if process.returncode != 0 and not ignore_error:
+        print("Ran into an error")
+        print(output.decode("ascii"))
+        print(error.decode("ascii"))
+        return -1
+    else:
+        return output.decode("ascii").strip("\n")
 
 def copy_all_recordings(robot_ip, recordings_path, store_path):
     remote_recordings_total = get_total_wav_file(REMOTE_DEBUG_CAPTURE_PATH, robot_ip)
     create_folder(store_path)
-    command_text = eval("['scp', '-r', '{}@{}:{}', '{}']"
-                   .format(ROBOT_USERNAME, robot_ip, recordings_path, store_path))
+    scp_command = '{}@{}:{}'.format(ROBOT_USERNAME, robot_ip, recordings_path)
+    command_text = ['scp', '-r', scp_command , store_path]
     execute_command_line(command_text)
     wait_for_copy_finish(remote_recordings_total, LOCAL_DEBUG_CAPTURE_PATH)
 
-def get_command_output(command_text):
-    process = execute_command_line(command_text)
-    return process.communicate()[0].decode("utf-8")
-
 def get_list_recordings_folder_name(robot_ip, recordings_path):
-    command_text = eval("['ssh', '{}@{}', 'ls {}']".format(ROBOT_USERNAME, robot_ip, recordings_path))
-    return get_command_output(command_text)
+    command_text = [SSH_KEYWORD, '{}@{}'.format(ROBOT_USERNAME, robot_ip), 'ls {}'.format(recordings_path)]
+    return execute_command_line(command_text)
 
 def get_total_wav_file(folder_path, robot_ip = ""):
     total_file = 0;
@@ -60,9 +68,9 @@ def get_total_wav_file(folder_path, robot_ip = ""):
             for recordings_path in glob.glob(os.path.join(subdir, '*.wav')):
                 total_file += 1;
     else:
-        command_text = eval("['ssh', '{}@{}', 'ls -R {} | grep .wav | wc -l']" \
-                       .format(ROBOT_USERNAME, robot_ip, folder_path))
-        total_file = int(get_command_output(command_text)[:-1])
+        command_text = [SSH_KEYWORD, '{}@{}'.format(ROBOT_USERNAME, robot_ip), \
+                       'ls -R {} | grep .wav | wc -l'.format(folder_path)]
+        total_file = int(execute_command_line(command_text))
     return total_file
 
 def create_folder(folder_path):
@@ -76,15 +84,15 @@ def wait_for_copy_finish(remote_recordings_total, local_folder_path):
         local_recordings_total = get_total_wav_file(local_folder_path)
 
 def wait_for_delete_folder_finish(folder_path, robot_ip = ""):
-    folder_exist = True
-    while (folder_exist == True):
+    is_folder_exist = True
+    while (is_folder_exist == True):
         time.sleep(10)
         if robot_ip == "":
-            folder_exist = os.path.isdir(folder_path)
+            is_folder_exist = os.path.isdir(folder_path)
         else:
-            command_text = eval("['ssh', '{}@{}', 'test -d {} && echo True || echo False']" \
-                           .format(ROBOT_USERNAME, robot_ip, folder_path))
-            folder_exist = eval(get_command_output(command_text).split(TAB_CHARACTER)[0])
+            command_text = [SSH_KEYWORD, '{}@{}'.format(ROBOT_USERNAME, robot_ip), \
+                           'test -d {} && echo True || echo False'.format(folder_path)]
+            is_folder_exist = eval(execute_command_line(command_text).split(TAB_CHARACTER)[0])
 
 def get_channel_number_of_recordings(recordings_path):
     w = wave.open(recordings_path, 'r')
@@ -93,14 +101,14 @@ def get_channel_number_of_recordings(recordings_path):
     return channel_number
 
 def get_created_date_of_recordings_folder(robot_ip, recordings_folder_path):
-    command_text = eval("['ssh', '{}@{}', 'stat -c \"%y\" {}']" \
-                   .format(ROBOT_USERNAME, robot_ip, recordings_folder_path))
-    created_date = get_command_output(command_text).split(" ")[0]
+    command_text = [SSH_KEYWORD, '{}@{}'.format(ROBOT_USERNAME, robot_ip), \
+                   'stat -c \"%y\" {}'.format(recordings_folder_path)]
+    created_date = str(execute_command_line(command_text)).split(" ")[0]
     created_date = datetime.strptime(created_date, '%Y-%m-%d').strftime('%m%d%Y')
     return created_date
 
 def generate_folder_name_by_date(robot_ip, recordings_folder_path):
-    list_folder_name = get_list_recordings_folder_name(robot_ip, recordings_folder_path)[:-1].split("\n")
+    list_folder_name = get_list_recordings_folder_name(robot_ip, recordings_folder_path).split("\n")
     first_folder_path = "{}/{}".format(recordings_folder_path, list_folder_name[0])
     last_folder_path = "{}/{}".format(recordings_folder_path, list_folder_name[-1])
     first_created_date = get_created_date_of_recordings_folder(robot_ip, first_folder_path)
@@ -131,7 +139,7 @@ def process_recordings(raw_path, robot_path, dropbox_path):
 def clean_up_recordings(temp_path, robot_ip, recordings_remote_path):
     shutil.rmtree(temp_path)
     wait_for_delete_folder_finish(TEMP_FOLDER_PATH)
-    command_text = eval("['ssh', '{}@{}', 'rm -rf {}']".format(ROBOT_USERNAME, robot_ip, recordings_remote_path))
+    command_text = [SSH_KEYWORD, '{}@{}'.format(ROBOT_USERNAME, robot_ip), 'rm -rf {}'.format(recordings_remote_path)]
     execute_command_line(command_text)
     wait_for_delete_folder_finish(REMOTE_DEBUG_CAPTURE_PATH, robot_ip)
 
@@ -140,11 +148,12 @@ def grab_recordings(robot_ip, dropbox_recordings_path):
         folder_name = generate_folder_name_by_date(robot_ip, REMOTE_DEBUG_CAPTURE_PATH)
         raw_folder_path = "{}/{}".format(RAW_FOLDER_PATH, folder_name)
         robot_folder_path = "{}/{}".format(ROBOT_FOLDER_PATH, folder_name)
+
         filter_recordings_by_channel(robot_ip, LOCAL_DEBUG_CAPTURE_PATH, raw_folder_path, robot_folder_path)
         process_recordings(raw_folder_path, robot_folder_path, dropbox_recordings_path)
         clean_up_recordings(TEMP_FOLDER_PATH, robot_ip, REMOTE_DEBUG_CAPTURE_PATH)
         print("All recordings have been separated and moved to Dropbox folder with path: {}" \
-        .format(dropbox_recordings_path))
+              .format(dropbox_recordings_path))
     except Exception as e:
         print("An error occurred when connecting with robot: {}".format(e))
 
