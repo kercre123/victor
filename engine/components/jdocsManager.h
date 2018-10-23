@@ -72,7 +72,8 @@ public:
                                     const Json::Value* jdocBody,
                                     const bool saveToDiskImmediately,
                                     const bool saveToCloudImmediately,
-                                    const bool setCloudDirtyIfNotImmediate = true);
+                                    const bool setCloudDirtyIfNotImmediate = true,
+                                    const bool sendJdocsChangedMessage = false);
   bool                ClearJdocBody(const external_interface::JdocType jdocTypeKey);
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
@@ -113,6 +114,7 @@ private:
   void HandleThingResponse(const JDocs::ThingResponse& thingResponse);
   void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud);
   bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc);
+  void SendJdocsChangedMessage(const std::vector<external_interface::JdocType>& jdocTypes);
 
   external_interface::JdocType JdocTypeFromDocName(const std::string& docName) const;
 

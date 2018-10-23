@@ -59,6 +59,7 @@ message Event {
     CubeBattery                      cube_battery                        = 11;
     KeepAlivePing                    keep_alive                          = 12;
     ConnectionResponse               connection_response                 = 13;
+    JdocsChanged                     jdocs_changed                       = 14;
   }
 }
 
