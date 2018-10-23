@@ -72,14 +72,13 @@ private:
   };
 
   /**
-   * @brief Round the input SalientPoints that are BrightColors to the nearest hue
+   * @brief Round the input SalientPoints that are BrightColors to the nearest hue. Modifies elements of list.
    * @see InstanceConfig::numHueSectors
    */
   void RoundToNearestHue(std::list<Vision::SalientPoint>& points);
 
   /**
    * @brief Find a salient point for the current color the behavior is interested
-   * @return
    */
   void FindCurrentColor();
 
@@ -100,6 +99,7 @@ private:
   void TransitionToTurnTowardsPoint();
   void TransitionToDriveTowardsPoint();
   void TransitionToCelebrate();
+  void TransitionToRunAway();
   void TransitionToCompleted();
 
   InstanceConfig _iConfig;

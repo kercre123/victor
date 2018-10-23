@@ -380,6 +380,11 @@ void BehaviorReactToBrightColor::TransitionToCelebrate()
   DelegateIfInControl(sequence, &BehaviorReactToBrightColor::TransitionToCompleted);
 }
 
+void BehaviorReactToBrightColor::TransitionToRunAway()
+{
+  // TODO
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBrightColor::TransitionToCompleted()
 {

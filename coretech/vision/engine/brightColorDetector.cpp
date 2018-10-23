@@ -10,12 +10,27 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/common/engine/math/rect_impl.h"
 
+#include <array>
+
 namespace Anki {
 namespace Vision {
 
 struct BrightColorDetector::Parameters
 {
   bool isInitialized;
+
+  //! Number of cells in the grid horizontally
+  u32 gridWidth;
+
+  //! Number of cells in the grid vertically
+  u32 gridHeight;
+
+  //! Threshold that bright colors must exceed to be considered bright [0,109+]
+  float brightnessScoreThreshold;
+
+  //! Group connected regions into a single polygon
+  bool groupRegions;
+
   Parameters();
   void Initialize();
 };
@@ -48,35 +63,45 @@ Result BrightColorDetector::Init ()
 Result BrightColorDetector::Detect (const ImageRGB& inputImage,
                                     std::list<SalientPoint>& salientPoints)
 {
-  const u32 timestamp = inputImage.GetTimestamp();
+  // TODO: Get a smaller input image
+  ImageRGB smallerImage(100,100);
+  inputImage.Resize(smallerImage,ResizeMethod::NearestNeighbor);
+  float imageHeightScale = inputImage.GetNumRows()/static_cast<float>(smallerImage.GetNumRows());
+  float imageWidthScale = inputImage.GetNumCols()/static_cast<float>(smallerImage.GetNumCols());
+
+  const u32 timestamp = smallerImage.GetTimestamp();
   const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
   const char* typeString = EnumToString(type);
-  const s32 rows = inputImage.GetNumRows();
-  const s32 cols = inputImage.GetNumCols();
+//  const s32 rows = smallerImage.GetNumRows();
+//  const s32 cols = smallerImage.GetNumCols();
+  const s32 numStepsRow = _params->gridHeight;
+  const s32 stepRow = smallerImage.GetNumRows()/numStepsRow;
+  const s32 numStepsCol = _params->gridWidth;
+  const s32 stepCol = smallerImage.GetNumCols()/numStepsCol;
+
   const float kWidthScale  = 1.f / static_cast<float>(inputImage.GetNumCols());
   const float kHeightScale = 1.f / static_cast<float>(inputImage.GetNumRows());
-  const s32 numStepsRow = 3;
-  const s32 stepRow = inputImage.GetNumRows()/numStepsRow;
-  const s32 numStepsCol = 3;
-  const s32 stepCol = inputImage.GetNumCols()/numStepsCol;
-
-  const float kHeightStep = stepRow * kHeightScale;
-  const float kWidthStep = stepCol * kWidthScale;
+  const float kHeightStep = stepRow * kHeightScale * imageHeightScale;
+  const float kWidthStep = stepCol * kWidthScale * imageWidthScale;
   const float kHeightStep2 = kHeightStep/2.f;
   const float kWidthStep2 = kWidthStep/2.f;
 
-  // TODO: Turn this into a parameter
-  const float kScoreThreshold = 59.f;
+  // TODO replace std::shared_ptr with std::optional so we can just move the object rather than copy
+#if 0
+  std::array<std::array<std::shared_ptr<SalientPoint>,_params->gridWidth>,_params->gridHeight> gridSalientPoints;
+#endif
 
   // TODO: Add ignore regions argument
 
-  for (s32 row = 0; row < rows; row += stepRow){
-    for (s32 col = 0; col < cols; col += stepCol) {
-      Rectangle<s32> roi(col,row,stepCol,stepRow);
+  for (s32 row = 0; row < _params->gridHeight; ++row){
+    s32 iRow = row * stepRow;
+    for (s32 col = 0; col < _params->gridWidth; ++col) {
+      s32 iCol = col * stepCol;
+      Rectangle<s32> roi(iCol,iRow,stepCol,stepRow);
 
-      float score = GetScore(inputImage.GetROI(roi));
+      float score = GetScore(smallerImage.GetROI(roi));
 
-      bool isBright = (score > kScoreThreshold);
+      bool isBright = (score > _params->brightnessScoreThreshold);
 
       if (isBright){
         // Compute average color for region:
@@ -88,7 +113,7 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
         // Note that this means if the region has two colors (e.g. red, yellow),
         // you'll get the average of the two (e.g. orange).
 
-        cv::Scalar_<double> color = cv::mean(inputImage.GetROI(roi).get_CvMat_());
+        cv::Scalar_<double> color = cv::mean(smallerImage.GetROI(roi).get_CvMat_());
         PixelHSV hsv(PixelRGB(color[0],color[1],color[2]));
         hsv.s() = 1.f;
         hsv.v() = 1.f;
@@ -96,8 +121,8 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
         u32 rgba = ColorRGBA(pixel.r(),pixel.g(),pixel.b(),255).AsRGBA();
 
         // Provide polygon for the ROI at [0,1] scale
-        float x = Util::Clamp(col*kWidthScale, 0.f, 1.f);
-        float y = Util::Clamp(row*kHeightScale, 0.f, 1.f);
+        float x = Util::Clamp(iCol*kWidthScale, 0.f, 1.f);
+        float y = Util::Clamp(iRow*kHeightScale, 0.f, 1.f);
 
         std::vector<Anki::CladPoint2d> poly;
         poly.emplace_back(Util::Clamp(x,            0.f,1.f),
@@ -109,17 +134,70 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
         poly.emplace_back(Util::Clamp(x,            0.f,1.f),
                           Util::Clamp(y+kHeightStep,0.f,1.f));
 
-        salientPoints.emplace_back(timestamp,
-                                   x+kWidthStep2,y+kHeightStep2,
-                                   score,
-                                   (kWidthScale*kHeightScale),
-                                   type,
-                                   typeString,
-                                   poly,
-                                   rgba);
+        if (_params->groupRegions){
+#if 0
+          gridSalientPoints[row][col] = std::make_shared<SalientPoint>(timestamp,
+                                                                       x+kWidthStep2,y+kHeightStep2,
+                                                                       score,
+                                                                       (kWidthScale*kHeightScale),
+                                                                       type,
+                                                                       typeString,
+                                                                       poly,
+                                                                       rgba);
+#endif
+        }
+        else
+        {
+          salientPoints.emplace_back(timestamp,
+                                     x+kWidthStep2,y+kHeightStep2,
+                                     score,
+                                     (kWidthScale*kHeightScale),
+                                     type,
+                                     typeString,
+                                     poly,
+                                     rgba);
+        }
       }
     }
   }
+
+
+#if 0
+  if (_params->groupRegions)
+  {
+    std::array<std::array<bool,_params->gridWidth>,_params->gridHeight> visited;
+    for (s32 row = 0; row < _params->gridHeight; ++row)
+    {
+      for (s32 col = 0; col < _params->gridHeight; ++col)
+      {
+        visited[row][col] = false;
+      }
+    }
+
+    auto flood = [&](s32 row, s32 col) -> void {
+      visited[row][col] = true;
+      flood(
+    };
+
+    for (s32 row = 0; row < _params->gridHeight; ++row)
+    {
+      for (s32 col = 0; col < _params->gridHeight; ++col)
+      {
+        if (gridSalientPoints[row][col] == nullptr)
+        {
+          visited[row][col] = true;
+          continue;
+        }
+        else
+        {
+          // TODO: flood
+          visited[row][col] = true;
+        }
+      }
+    }
+    // TODO: Join regions and put them all in salientPoints
+  }
+#endif
   return RESULT_OK;
 }
 
@@ -152,6 +230,10 @@ float BrightColorDetector::GetScore(const ImageRGB& image)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BrightColorDetector::Parameters::Parameters()
 : isInitialized(false)
+, gridWidth(10)
+, gridHeight(10)
+, brightnessScoreThreshold(59.f)
+, groupRegions(false)
 {
 }
 
