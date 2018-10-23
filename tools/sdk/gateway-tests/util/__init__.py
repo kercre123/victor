@@ -65,7 +65,6 @@ class Connection:
     def default_stream_callback(response, response_type, iterations=10):
         i = 0
         for i, r in enumerate(response.iter_lines()):
-            print("Shawn Test: {}".format(r))
             data = json.loads(r.decode('utf8'))
             print("Stream response: {}".format(colored(json.dumps(data, indent=4, sort_keys=True), "cyan")))
             assert "result" in data
