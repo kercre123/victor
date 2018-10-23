@@ -298,8 +298,7 @@ async def map_explorer(robot: anki_vector.robot.Robot, viewer: OpenGLViewer):
                     # likely means the robot encountered a cliff or obstacle.
                     expected_drive_time = nav_distance / EXPLORE_DRIVE_SPEED_MMPS
                     await asyncio.wait_for(robot.behavior.drive_straight(distance=distance_mm(nav_distance), speed=speed_mmps(EXPLORE_DRIVE_SPEED_MMPS)),
-                                           1.25 * expected_drive_time,
-                                           loop=robot.loop)
+                                           1.25 * expected_drive_time)
                 except asyncio.TimeoutError:
                     print('obstacle encountered while moving, continuing exploration from current position')
 
