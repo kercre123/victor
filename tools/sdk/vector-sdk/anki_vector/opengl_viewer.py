@@ -634,5 +634,6 @@ class OpenGLViewer():
         We can safely capture any robot and world state here, and push to OpenGL
         (main) thread via a thread-safe queue.
         """
+
         world_frame = opengl_vector.WorldRenderFrame(self._robot)
         self._world_frame_queue.append(world_frame)
