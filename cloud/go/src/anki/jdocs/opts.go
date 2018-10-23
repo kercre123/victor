@@ -1,10 +1,14 @@
 package jdocs
 
-import "anki/token"
+import (
+	"anki/token"
+	"anki/util"
+)
 
 type options struct {
-	server  bool
-	tokener token.Accessor
+	server      bool
+	tokener     token.Accessor
+	errListener util.ErrorListener
 }
 
 // Option defines an option that can be set on the token server
@@ -23,5 +27,13 @@ func WithServer() Option {
 func WithTokener(value token.Accessor) Option {
 	return func(o *options) {
 		o.tokener = value
+	}
+}
+
+// WithErrorListener specifies that the given ErrorListener should be passed errors
+// that result from jdoc requests
+func WithErrorListener(value util.ErrorListener) Option {
+	return func(o *options) {
+		o.errListener = value
 	}
 }

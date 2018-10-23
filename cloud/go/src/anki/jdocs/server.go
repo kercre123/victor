@@ -45,6 +45,9 @@ func (c *client) handleConn(ctx context.Context) {
 		resp, err := c.handleRequest(ctx, &msg)
 		if err != nil {
 			log.Println("Error handling jdocs request:", err)
+			if c.opts.errListener != nil {
+				c.opts.errListener.OnError(err)
+			}
 		}
 		if resp != nil {
 			var buf bytes.Buffer

@@ -43,7 +43,12 @@ func handleQueueRequest(req *request) error {
 	case cloud.TokenRequestTag_Reassociate:
 		resp, err = handleReassociateRequest(req.m.GetReassociate())
 	case cloud.TokenRequestTag_Jwt:
-		resp, err = handleJwtRequest()
+		resp, err = handleJwtRequest(req.m.GetJwt())
+	}
+	// if we successfully reach the server for a request, re-enable our error handler
+	// (ignore JWT requests, which are very unlikely to actually hit the server)
+	if err == nil && req.m.Tag() != cloud.TokenRequestTag_Jwt {
+		errorHandler.onSuccess()
 	}
 	req.ch <- &response{resp, err}
 	return err
@@ -61,7 +66,7 @@ func getConnection(creds credentials.PerRPCCredentials) (*conn, error) {
 // by a request should be returned for logging by processing code, but we need to
 // generate a CLAD response for token requests no matter what, and those responses
 // should indicate the stage of the request where an error occurred
-func handleJwtRequest() (*cloud.TokenResponse, error) {
+func handleJwtRequest(req *cloud.JwtRequest) (*cloud.TokenResponse, error) {
 	existing := jwt.GetToken()
 	errorResp := func(code cloud.TokenError) *cloud.TokenResponse {
 		return cloud.NewTokenResponseWithJwt(&cloud.JwtResponse{Error: code})
@@ -70,7 +75,7 @@ func handleJwtRequest() (*cloud.TokenResponse, error) {
 		return cloud.NewTokenResponseWithJwt(&cloud.JwtResponse{JwtToken: token})
 	}
 	if existing != nil {
-		if time.Now().After(existing.RefreshTime()) {
+		if time.Now().After(existing.RefreshTime()) || req.ForceRefresh {
 			c, err := getConnection(tokenMetadata(existing.String()))
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err

@@ -2,14 +2,16 @@ package logcollector
 
 import (
 	"anki/token"
+	"anki/util"
 	"net/http"
 	"net/url"
 )
 
 type options struct {
-	server     bool
-	tokener    token.Accessor
-	httpClient *http.Client
+	server      bool
+	tokener     token.Accessor
+	httpClient  *http.Client
+	errListener util.ErrorListener
 
 	bucketName       string
 	s3BasePrefix     string
@@ -82,5 +84,12 @@ func WithS3UrlPrefix(s3UrlPrefix string) Option {
 func WithAwsRegion(awsRegion string) Option {
 	return func(o *options) {
 		o.awsRegion = awsRegion
+	}
+}
+
+// WithErrorListener reports errors to the specified error listener
+func WithErrorListener(errListener util.ErrorListener) Option {
+	return func(o *options) {
+		o.errListener = errListener
 	}
 }
