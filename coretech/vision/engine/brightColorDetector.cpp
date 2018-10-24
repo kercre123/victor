@@ -65,24 +65,24 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
 {
   // TODO: Get a smaller input image
   ImageRGB smallerImage(100,100);
+
   inputImage.Resize(smallerImage,ResizeMethod::NearestNeighbor);
-  float imageHeightScale = inputImage.GetNumRows()/static_cast<float>(smallerImage.GetNumRows());
-  float imageWidthScale = inputImage.GetNumCols()/static_cast<float>(smallerImage.GetNumCols());
 
   const u32 timestamp = smallerImage.GetTimestamp();
   const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
   const char* typeString = EnumToString(type);
-//  const s32 rows = smallerImage.GetNumRows();
-//  const s32 cols = smallerImage.GetNumCols();
-  const s32 numStepsRow = _params->gridHeight;
-  const s32 stepRow = smallerImage.GetNumRows()/numStepsRow;
-  const s32 numStepsCol = _params->gridWidth;
-  const s32 stepCol = smallerImage.GetNumCols()/numStepsCol;
 
-  const float kWidthScale  = 1.f / static_cast<float>(inputImage.GetNumCols());
-  const float kHeightScale = 1.f / static_cast<float>(inputImage.GetNumRows());
-  const float kHeightStep = stepRow * kHeightScale * imageHeightScale;
-  const float kWidthStep = stepCol * kWidthScale * imageWidthScale;
+//  float imageHeightScale = inputImage.GetNumRows()/static_cast<float>(smallerImage.GetNumRows());
+//  float imageWidthScale = inputImage.GetNumCols()/static_cast<float>(smallerImage.GetNumCols());
+
+  const s32 cellHeight = smallerImage.GetNumRows()/_params->gridHeight;
+  const s32 cellWidth = smallerImage.GetNumCols()/_params->gridWidth;
+
+  const float kHeightScale = 1.f / static_cast<float>(smallerImage.GetNumRows());
+  const float kWidthScale  = 1.f / static_cast<float>(smallerImage.GetNumCols());
+
+  const float kHeightStep = cellHeight * kHeightScale;
+  const float kWidthStep = cellWidth * kWidthScale;
   const float kHeightStep2 = kHeightStep/2.f;
   const float kWidthStep2 = kWidthStep/2.f;
 
@@ -92,12 +92,11 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
 #endif
 
   // TODO: Add ignore regions argument
-
   for (s32 row = 0; row < _params->gridHeight; ++row){
-    s32 iRow = row * stepRow;
+    s32 imageRow = row * cellHeight;
     for (s32 col = 0; col < _params->gridWidth; ++col) {
-      s32 iCol = col * stepCol;
-      Rectangle<s32> roi(iCol,iRow,stepCol,stepRow);
+      s32 imageCol = col * cellWidth;
+      Rectangle<s32> roi(imageCol,imageRow,cellHeight,cellWidth);
 
       float score = GetScore(smallerImage.GetROI(roi));
 
@@ -121,8 +120,8 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
         u32 rgba = ColorRGBA(pixel.r(),pixel.g(),pixel.b(),255).AsRGBA();
 
         // Provide polygon for the ROI at [0,1] scale
-        float x = Util::Clamp(iCol*kWidthScale, 0.f, 1.f);
-        float y = Util::Clamp(iRow*kHeightScale, 0.f, 1.f);
+        float x = Util::Clamp(imageCol * kWidthScale, 0.f, 1.f);
+        float y = Util::Clamp(imageRow * kHeightScale, 0.f, 1.f);
 
         std::vector<Anki::CladPoint2d> poly;
         poly.emplace_back(Util::Clamp(x,            0.f,1.f),

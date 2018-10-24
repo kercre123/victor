@@ -24,7 +24,6 @@ class ImageRGB;
 class BrightColorDetector
 {
 public:
-
   BrightColorDetector (const Camera& camera);
   ~BrightColorDetector ();
 
@@ -49,7 +48,6 @@ private:
    * @param image - input image to compute score for
    * @return Score between [0,?] representing colorfulness
    *
-   * @note Requires ANKICORETECH_USE_OPENCV to be on, otherwise it always returns 0.f
    * @todo Ignore region arguments
    */
   float GetScore(const ImageRGB& image);
