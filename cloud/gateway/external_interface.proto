@@ -22,7 +22,7 @@ import "google/api/annotations.proto";
 import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
-import "settings.proto";
+import "settings.proto"; // App only
 import "shared.proto";
 
 // The grpc-defined connection between the SDK and Anki's Vector robot.
@@ -87,12 +87,6 @@ service ExternalInterface {
     };
   }
 
-  rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
-    option (google.api.http) = {
-      post: "/v1/app_intent",
-      body: "*"
-    };
-  }
   rpc CancelFaceEnrollment(CancelFaceEnrollmentRequest) returns (CancelFaceEnrollmentResponse) {
     option (google.api.http) = {
       post: "/v1/cancel_face_enrollment",
@@ -179,20 +173,6 @@ service ExternalInterface {
     };
   }
 
-  rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
-    option (google.api.http) = {
-      post: "/v1/get_onboarding_state",
-      body: "*"
-    };
-  }
-
-  rpc SendOnboardingInput(OnboardingInputRequest) returns (OnboardingInputResponse) {
-    option (google.api.http) = {
-      post: "/v1/send_onboarding_input",
-      body: "*"
-    };
-  }
-
   // Get the photos info.
   rpc PhotosInfo(PhotosInfoRequest) returns (PhotosInfoResponse) {
     option (google.api.http) = {
@@ -221,41 +201,6 @@ service ExternalInterface {
   rpc DeletePhoto(DeletePhotoRequest) returns (DeletePhotoResponse) {
     option (google.api.http) = {
       post: "/v1/delete_photo",
-      body: "*"
-    };
-  }
-
-  rpc GetLatestAttentionTransfer(LatestAttentionTransferRequest) returns (LatestAttentionTransferResponse) {
-    option (google.api.http) = {
-      post: "/v1/get_latest_attention_transfer",
-      body: "*"
-    };
-  }
-
-  rpc PullJdocs(PullJdocsRequest) returns (PullJdocsResponse) {
-    option (google.api.http) = {
-      post: "/v1/pull_jdocs",
-      body: "*"
-    };
-  }
-
-  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
-    option (google.api.http) = {
-      post: "/v1/update_settings",
-      body: "*"
-    };
-  }
-
-  rpc UpdateAccountSettings(UpdateAccountSettingsRequest) returns (UpdateAccountSettingsResponse) {
-    option (google.api.http) = {
-      post: "/v1/update_account_settings",
-      body: "*"
-    };
-  }
-
-  rpc UpdateUserEntitlements(UpdateUserEntitlementsRequest) returns (UpdateUserEntitlementsResponse) {
-    option (google.api.http) = {
-      post: "/v1/update_user_entitlements",
       body: "*"
     };
   }
@@ -409,6 +354,64 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // *** App only proto below ***
+
+  rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
+    option (google.api.http) = {
+      post: "/v1/app_intent",
+      body: "*"
+    };
+  }  
+
+  rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/get_onboarding_state",
+      body: "*"
+    };
+  }
+
+  rpc SendOnboardingInput(OnboardingInputRequest) returns (OnboardingInputResponse) {
+    option (google.api.http) = {
+      post: "/v1/send_onboarding_input",
+      body: "*"
+    };
+  }  
+
+  rpc GetLatestAttentionTransfer(LatestAttentionTransferRequest) returns (LatestAttentionTransferResponse) {
+    option (google.api.http) = {
+      post: "/v1/get_latest_attention_transfer",
+      body: "*"
+    };
+  }
+
+  rpc PullJdocs(PullJdocsRequest) returns (PullJdocsResponse) {
+    option (google.api.http) = {
+      post: "/v1/pull_jdocs",
+      body: "*"
+    };
+  }
+
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_settings",
+      body: "*"
+    };
+  }
+
+  rpc UpdateAccountSettings(UpdateAccountSettingsRequest) returns (UpdateAccountSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_account_settings",
+      body: "*"
+    };
+  }
+
+  rpc UpdateUserEntitlements(UpdateUserEntitlementsRequest) returns (UpdateUserEntitlementsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_user_entitlements",
+      body: "*"
+    };
+  }  
 
   // CheckUpdateStatus tells if the robot is ready to reboot and update.
   rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {

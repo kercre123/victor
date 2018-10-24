@@ -2,4 +2,6 @@
 
 package jwt
 
-const DefaultTokenPath = "/data/data/com.anki.victor/persistent/token"
+func tokenPath() string {
+	return "/data/data/com.anki.victor/persistent/token"
+}

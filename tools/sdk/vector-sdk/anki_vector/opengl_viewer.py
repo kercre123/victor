@@ -21,13 +21,14 @@ The easiest way to make use of this viewer is to create an OpenGLViewer object
 for a valid robot and call run with a control function injected into it.
 
 Example:
-    .. code-block:: python
+    .. testcode::
+        import anki_vector
 
         def my_function(robot):
             robot.play_animation("anim_blackjack_victorwin_01")
 
-        with anki_vector.Robot("my_robot_serial_number") as robot:
-            viewer = opengl.OpenGLViewer(robot=robot)
+        with anki_vector.Robot() as robot:
+            viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
 Warning:
@@ -52,20 +53,15 @@ Warning:
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['OpenGLViewer']
 
-import asyncio
 import collections
 import concurrent
 import inspect
 import math
-import threading
 from typing import List
 
-import opengl
-import opengl_vector
-
-from anki_vector.events import Events
-from anki_vector.robot import Robot
-from anki_vector import util
+from .events import Events
+from .robot import Robot
+from . import util, opengl, opengl_vector
 
 try:
     from OpenGL.GL import (GL_FILL,
@@ -89,53 +85,6 @@ except ImportError as import_exc:
 
 class VectorException(BaseException):
     """Raised by a failure in the owned Vector thread while the openGL viewer is running."""
-
-
-class _LoopThread:
-    """Takes care of managing an event loop running in a dedicated thread.
-
-    :param loop: The loop to run
-    :param f: Optional code to execute on the loop's thread
-    :param argument: external argument to inject into the function.
-    """
-
-    def __init__(self, loop: asyncio.BaseEventLoop, f: callable = None, argument: object = None):
-        self._loop = loop
-        self._f = f
-        self._argument = argument
-        self._thread = None
-        self._running = False
-
-    def start(self):
-        """Start a thread."""
-        def run_loop():
-            asyncio.set_event_loop(self._loop)
-
-            if self._f:
-                asyncio.ensure_future(self._f(self._argument))
-            self._loop.run_forever()
-
-        self._thread = threading.Thread(target=run_loop)
-        self._thread.start()
-
-        self._running = True
-
-    def stop(self):
-        """Cleaning shutdown the running loop and thread."""
-        if self._running:
-            async def _stop():
-                self._loop.call_soon(lambda: self._loop.stop())  # pylint: disable=unnecessary-lambda
-            asyncio.run_coroutine_threadsafe(_stop(), self._loop).result()
-            self._thread.join()
-            self._running = False
-
-    def abort(self, exc: BaseException):  # pylint: disable=unused-argument
-        """Abort the running loop and thread.
-
-        :param exc: exception being raised
-        """
-        if self._running:
-            self.stop()
 
 
 class _OpenGLViewController():
@@ -458,33 +407,57 @@ class OpenGLViewer():
         robot_frame = world_frame.robot_frame
         robot_pose = robot_frame.pose
 
-        # Render the cube
-        for i in range(1):
-            cube_frame = world_frame.cube_frames[i]
-            if cube_frame is None:
-                continue
+        try:
+            # Render the cube
+            for obj in world_frame.cube_frames:
+                cube_pose = obj.pose
+                if cube_pose is not None and cube_pose.is_comparable(robot_pose):
+                    light_cube_view.display(cube_pose)
 
-            cube_pose = cube_frame.pose
-            if cube_pose is not None and cube_pose.is_comparable(robot_pose):
-                light_cube_view.display(cube_pose)
+            # Render the custom objects
+            for obj in world_frame.custom_object_frames:
+                obj_pose = obj.pose
+                if obj_pose is not None and obj_pose.is_comparable(robot_pose):
+                    glPushMatrix()
+                    obj_matrix = obj_pose.to_matrix()
+                    glMultMatrixf(obj_matrix.in_row_order)
 
-        glBindTexture(GL_TEXTURE_2D, 0)
+                    glScalef(obj.x_size_mm * 0.5,
+                             obj.y_size_mm * 0.5,
+                             obj.z_size_mm * 0.5)
 
-        for face in world_frame.face_frames:
-            face_pose = face.pose
-            if face_pose is not None and face_pose.is_comparable(robot_pose):
-                glPushMatrix()
-                face_matrix = face_pose.to_matrix()
-                glMultMatrixf(face_matrix.in_row_order)
+                    # Only draw solid object for observable custom objects
 
-                # Approximate size of a head
-                glScalef(100, 25, 100)
+                    if obj.is_fixed:
+                        # fixed objects are drawn as transparent outlined boxes to make
+                        # it clearer that they have no effect on vision.
+                        FIXED_OBJECT_COLOR = [1.0, 0.7, 0.0, 1.0]
+                        unit_cube_view.display(FIXED_OBJECT_COLOR, False)
+                    else:
+                        CUSTOM_OBJECT_COLOR = [1.0, 0.3, 0.3, 1.0]
+                        unit_cube_view.display(CUSTOM_OBJECT_COLOR, True)
 
-                FACE_OBJECT_COLOR = [0.5, 0.5, 0.5, 1.0]
-                draw_solid = face.time_since_last_seen < 30
-                unit_cube_view.display(FACE_OBJECT_COLOR, draw_solid)
+                    glPopMatrix()
 
-                glPopMatrix()
+            glBindTexture(GL_TEXTURE_2D, 0)
+
+            for face in world_frame.face_frames:
+                face_pose = face.pose
+                if face_pose is not None and face_pose.is_comparable(robot_pose):
+                    glPushMatrix()
+                    face_matrix = face_pose.to_matrix()
+                    glMultMatrixf(face_matrix.in_row_order)
+
+                    # Approximate size of a head
+                    glScalef(100, 25, 100)
+
+                    FACE_OBJECT_COLOR = [0.5, 0.5, 0.5, 1.0]
+                    draw_solid = face.time_since_last_seen < 30
+                    unit_cube_view.display(FACE_OBJECT_COLOR, draw_solid)
+
+                    glPopMatrix()
+        except Exception as e:
+            self._logger.error('rendering error: {0}'.format(e))
 
         glDisable(GL_LIGHTING)
 
@@ -553,25 +526,8 @@ class OpenGLViewer():
             else:
                 raise ValueError("the delegate_function injected into OpenGLViewer.run requires an unrecognized parameter, only 'robot' and 'viewer' are supported")
 
-        async def run_function(robot):
-            try:
-                if inspect.iscoroutinefunction(delegate_function):
-                    await delegate_function(*function_args)
-                else:
-                    # await robot.loop.run_in_executor(None, f, base._SyncProxy(robot))
-                    await robot.loop.run_in_executor(None, delegate_function, *function_args)
-            finally:
-                self._internal_function_finished = True
-                self.close()
-
-        #thread = None
         try:
-            # if not inspect.iscoroutinefunction(f):
-            #     conn_factory = functools.partial(conn_factory, _sync_abort_future=abort_future)
-            #thread = threading.Thread(target=run_function)
-            # thread.start()
-            lt = _LoopThread(robot.loop, f=run_function, argument=robot)
-            lt.start()
+            robot.conn.run_coroutine(delegate_function(*function_args))
 
             self._main_window.initialize(self._on_window_update)
             self._view_controller.initialize()
@@ -594,8 +550,6 @@ class OpenGLViewer():
         except BaseException as e:
             abort_future.set_exception(VectorException(repr(e)))
             raise
-        finally:
-            lt.stop()
 
         global opengl_viewer  # pylint: disable=global-statement
         opengl_viewer = None
@@ -611,5 +565,6 @@ class OpenGLViewer():
         We can safely capture any robot and world state here, and push to OpenGL
         (main) thread via a thread-safe queue.
         """
+
         world_frame = opengl_vector.WorldRenderFrame(self._robot)
         self._world_frame_queue.append(world_frame)

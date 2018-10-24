@@ -214,3 +214,50 @@ GTEST_TEST(ImageCache, ImageBuffer)
   ASSERT_EQ(imgRGB.get_CvMat_()[1][6],  PixelRGB(0, 255, 0));
   ASSERT_EQ(imgRGB.get_CvMat_()[1][10], PixelRGB(255, 0, 0));
 }
+
+GTEST_TEST(ImageCache, ResizeMethod)
+{
+  using namespace Anki::Vision;
+
+  ImageCache cache;
+
+  ResizeMethod method;
+  // Should not have a resize method due to the cache not having been reset with an image yet
+  ASSERT_FALSE(cache.GetResizeMethod(method));
+
+  const s32 nrows = 16;
+  const s32 ncols = 32;
+  ImageRGB rgbImg(nrows, ncols);
+  cache.Reset(rgbImg, ResizeMethod::Linear);
+
+  const bool hasMethod = cache.GetResizeMethod(method);
+  ASSERT_TRUE(hasMethod);
+  ASSERT_EQ(method, ResizeMethod::Linear);
+
+  // Make sure gray images also work
+  Image grayImg(nrows, ncols);
+  cache.Reset(grayImg, ResizeMethod::Lanczos);
+  
+  const bool hasMethod2 = cache.GetResizeMethod(method);
+  ASSERT_TRUE(hasMethod2);
+  ASSERT_EQ(method, ResizeMethod::Lanczos);
+
+  // An invalid buffer should not have a resize method
+  ImageBuffer invalidBuffer;
+  invalidBuffer.SetResizeMethod(ResizeMethod::Cubic);
+  cache.Reset(invalidBuffer);
+
+  const bool hasMethod3 = cache.GetResizeMethod(method);
+  ASSERT_FALSE(hasMethod3);
+
+  // A valid buffer should have a valid resize method
+  u8 data;
+  ImageBuffer buffer(&data, 0, 1, ImageEncoding::BAYER, 0, 0);
+  buffer.SetResizeMethod(ResizeMethod::Cubic);
+  cache.Reset(buffer);
+  
+  const bool hasMethod4 = cache.GetResizeMethod(method);
+  ASSERT_TRUE(hasMethod4);
+  ASSERT_EQ(method, ResizeMethod::Cubic);
+  ASSERT_EQ(buffer.GetResizeMethod(), ResizeMethod::Cubic);
+}

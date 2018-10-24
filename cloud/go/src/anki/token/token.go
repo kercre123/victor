@@ -1,6 +1,7 @@
 package token
 
 import (
+	"anki/config"
 	"anki/ipc"
 	"anki/log"
 	"anki/token/jwt"
@@ -13,8 +14,9 @@ import (
 // Init initializes the token service in advance of other services that depend on it
 var initialized = false
 
-func Init(identityProvider *jwt.IdentityProvider) error {
-	if err := identityProvider.Init(); err != nil {
+func Init() error {
+	url = config.Env.Token
+	if err := jwt.Init(); err != nil {
 		log.Println("Error initializing jwt store:", err)
 		return err
 	}
@@ -30,25 +32,18 @@ func Run(ctx context.Context, optionValues ...Option) {
 		o(&opts)
 	}
 
-	identityProvider := opts.identityProvider
-	if identityProvider == nil {
-		log.Println("Error initializing identity provider")
-		return
-	}
-
 	if !initialized {
-		if err := identityProvider.Init(); err != nil {
+		if err := jwt.Init(); err != nil {
 			return
 		}
 	}
 
-	var queue tokenQueue
-	if err := queue.init(ctx, identityProvider); err != nil {
+	if err := queueInit(ctx); err != nil {
 		log.Println("Error initializing request queue:", err)
 		return
 	}
 
-	initRefresher(ctx, identityProvider)
+	initRefresher(ctx)
 
 	if opts.server {
 		serv, err := initServer(ctx)

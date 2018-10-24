@@ -4,7 +4,6 @@ import (
 	"anki/jdocs"
 	"anki/logcollector"
 	"anki/token"
-	"anki/token/jwt"
 	"anki/voice"
 )
 
@@ -12,7 +11,6 @@ type Option func(o *options)
 
 type options struct {
 	voice            *voice.Process
-	identityProvider *jwt.IdentityProvider
 	voiceOpts        []voice.Option
 	tokenOpts        []token.Option
 	jdocOpts         []jdocs.Option
@@ -22,12 +20,6 @@ type options struct {
 func WithVoice(process *voice.Process) Option {
 	return func(o *options) {
 		o.voice = process
-	}
-}
-
-func WithIdentityProvider(identityProvider *jwt.IdentityProvider) Option {
-	return func(o *options) {
-		o.identityProvider = identityProvider
 	}
 }
 

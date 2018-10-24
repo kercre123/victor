@@ -5,7 +5,6 @@ import (
 	"anki/log"
 	"anki/logcollector"
 	"anki/token"
-	"anki/token/jwt"
 	"anki/voice"
 	"context"
 	"sync"
@@ -28,24 +27,15 @@ func Run(ctx context.Context, procOptions ...Option) {
 		})
 	}
 	// start token service synchronously since everything else depends on it
-	identityProvider := opts.identityProvider
-	if identityProvider == nil {
-		// identity provider not provided as option, we create a default identity provider
-		// with platform specific storage path "DefaultTokenPath" (see tokpath_*.go files)
-		identityProvider = new(jwt.IdentityProvider)
-	}
-
-	if err := token.Init(identityProvider); err != nil {
+	if err := token.Init(); err != nil {
 		log.Println("Fatal error initializing token service:", err)
 		return
 	}
 	addHandlers(token.GetDevHandlers)
 	launchProcess(&wg, func() {
-		tokenOpts := append([]token.Option{token.WithIdentityProvider(identityProvider)},
-			opts.tokenOpts...)
-		token.Run(ctx, tokenOpts...)
+		token.Run(ctx, opts.tokenOpts...)
 	})
-	tokener := token.GetAccessor(identityProvider)
+	tokener := token.GetAccessor()
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
 			// provide default token accessor

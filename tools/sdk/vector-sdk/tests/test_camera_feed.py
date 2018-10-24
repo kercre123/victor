@@ -6,7 +6,7 @@ Test camera feed
 
 import os
 import sys
-import utilities
+import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
@@ -22,26 +22,26 @@ def main():
     with anki_vector.Robot(args.serial, enable_camera_feed=True, show_viewer=True) as robot:
         print("------ waiting for image events, press ctrl+c to exit early ------")
         try:
-            # Render video for 10 seconds
-            robot.loop.run_until_complete(utilities.delay_close(10))
+            print("Render video for 10 seconds")
+            time.sleep(10)
 
-            # Disable video render for 5 seconds
+            print("Disabling video render for 5 seconds")
             robot.viewer.stop_video()
-            robot.loop.run_until_complete(utilities.delay_close(5))
+            time.sleep(5)
 
-            # Render video for 10 seconds
+            print("Render video for 10 seconds")
             robot.viewer.show_video()
-            robot.loop.run_until_complete(utilities.delay_close(10))
+            time.sleep(10)
 
-            # Disable video render and camera feed for 5 seconds
+            print("Disabling video render and camera feed for 5 seconds")
             robot.viewer.stop_video()
             robot.enable_camera_feed = False
-            robot.loop.run_until_complete(utilities.delay_close(5))
+            time.sleep(5)
 
-            # Try enabling video, after re-enabling camera feed
+            print("Enabling video, after re-enabling camera feed for 10 seconds")
             robot.enable_camera_feed = True
             robot.viewer.show_video(timeout=5)
-            robot.loop.run_until_complete(utilities.delay_close(10))
+            time.sleep(10)
 
         except KeyboardInterrupt:
             print("------ image test aborted ------")

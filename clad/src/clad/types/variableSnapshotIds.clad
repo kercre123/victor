@@ -11,9 +11,6 @@ namespace Anki {
 namespace Vector {
 
 enum uint_32 VariableSnapshotId {
-  // robot versioning snapshot variables
-  _RobotOSBuildVersion,
-  _RobotBuildSha,
 
   // unit test snapshot variables
   UnitTestInt0,

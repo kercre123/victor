@@ -9,11 +9,11 @@ import (
 	"time"
 )
 
-func initRefresher(ctx context.Context, identityProvider *jwt.IdentityProvider) {
-	go refreshRoutine(ctx, identityProvider)
+func initRefresher(ctx context.Context) {
+	go refreshRoutine(ctx)
 }
 
-func refreshRoutine(ctx context.Context, identityProvider *jwt.IdentityProvider) {
+func refreshRoutine(ctx context.Context) {
 	for {
 		const tokSleep = 5 * time.Minute
 		const ntpSleep = 20 * time.Second
@@ -21,7 +21,7 @@ func refreshRoutine(ctx context.Context, identityProvider *jwt.IdentityProvider)
 		// wait until we have a valid token
 		var tok jwt.Token
 		for {
-			tok = identityProvider.GetToken()
+			tok = jwt.GetToken()
 			if tok != nil {
 				break
 			}

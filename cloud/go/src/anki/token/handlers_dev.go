@@ -16,12 +16,8 @@ func init() {
 }
 
 func provisionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: can we pass this in so we have only a single instance?
-	identityProvider := jwt.NewIdentityProvider(jwt.DefaultTokenPath)
-	identityProvider.Init()
-
 	// See if we already have a JWT token and there's no reason for us to re-auth
-	existing := identityProvider.GetToken()
+	existing := jwt.GetToken()
 	if existing != nil {
 		// If the existing JWT token has an empty user ID, it's a dummy token we should
 		// replace with a real one - if non-empty, we don't need to re-auth

@@ -30,7 +30,7 @@ __all__ = ['Expression', 'Face', 'FaceComponent']
 from enum import Enum
 from typing import List
 
-from . import sync, util, objects, events
+from . import connection, util, objects, events
 from .messaging import protocol
 
 
@@ -96,7 +96,7 @@ class Face(objects.ObservableObject):
         self._nose = nose
         self._mouth = mouth
 
-        self._on_observed(pose, image_rect, instantiation_timestamp)
+        self.conn.run_soon(self._on_observed(pose, image_rect, instantiation_timestamp))
 
         self._robot.events.subscribe(
             self._on_face_observed,
@@ -310,8 +310,7 @@ class Face(objects.ObservableObject):
             self._right_eye = msg.right_eye
             self._nose = msg.nose
             self._mouth = msg.mouth
-
-            self._on_observed(pose, image_rect, msg.timestamp)
+            self._robot.conn.run_soon(self._on_observed(pose, image_rect, msg.timestamp))
 
     def _on_face_id_changed(self, _, msg):
         """Updates the face id when a tracked face (negative ID) is recognized and
@@ -323,7 +322,7 @@ class Face(objects.ObservableObject):
 class FaceComponent(util.Component):
     """Manage the state of the faces on the robot."""
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def request_enrolled_names(self) -> protocol.RequestEnrolledNamesRequest:
         """Asks the robot for the list of names attached to faces that it can identify.
 
@@ -337,7 +336,7 @@ class FaceComponent(util.Component):
         req = protocol.RequestEnrolledNamesRequest()
         return await self.grpc_interface.RequestEnrolledNames(req)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def update_enrolled_face_by_id(self, face_id: int, old_name: str, new_name: str):
         """Update the name enrolled for a given face.
 
@@ -356,7 +355,7 @@ class FaceComponent(util.Component):
                                                      old_name=old_name, new_name=new_name)
         return await self.grpc_interface.UpdateEnrolledFaceByID(req)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def erase_enrolled_face_by_id(self, face_id: int):
         """Erase the enrollment (name) record for the face with this ID.
 
@@ -372,7 +371,7 @@ class FaceComponent(util.Component):
         req = protocol.EraseEnrolledFaceByIDRequest(face_id=face_id)
         return await self.grpc_interface.EraseEnrolledFaceByID(req)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def erase_all_enrolled_faces(self):
         """Erase the enrollment (name) records for all faces.
 

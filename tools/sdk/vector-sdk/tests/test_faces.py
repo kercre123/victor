@@ -7,8 +7,8 @@ Test subscribing to seen faces
 import functools
 import os
 import sys
+import time
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from anki_vector.events import Events  # pylint: disable=wrong-import-position
 import anki_vector  # pylint: disable=wrong-import-position
@@ -49,7 +49,7 @@ def main():
 
         print("------ waiting for face events, press ctrl+c to exit early ------")
         try:
-            robot.loop.run_until_complete(utilities.delay_close(10))
+            time.sleep(10)
         except KeyboardInterrupt:
             print("------ finished testing face events ------")
             robot.disconnect()
