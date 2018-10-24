@@ -165,7 +165,7 @@ class EventHandler:
                     unpackaged_event_key, unpackaged_event_data = self._unpackage_event('event_type', evt.event)
                     await self.dispatch_event_by_name(unpackaged_event_data, unpackaged_event_key)
                 except TypeError:
-                    self.logger.warning('Unknown Event type {0}'.format(evt))
+                    self.logger.warning('Unknown Event type')
         except CancelledError:
             self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
 
