@@ -58,6 +58,8 @@ namespace
   static const std::string emptyString;
   static const Json::Value emptyJson;
 
+  static const std::string kCloudJdocResetRequestFile = "cloudjdocreset.txt";
+
   static const std::string kNotLoggedIn = "NotLoggedIn";
   static const float kUserLoginCheckPeriod_s = 3.0f;
 
@@ -283,6 +285,8 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       jdocInfo._needsCreation = true;
     }
   }
+
+  _cloudJdocResetPath = Util::FileUtils::FullFilePath({_savePath, kCloudJdocResetRequestFile});
 
   // Now queue up a request to the jdocs server (vic-cloud) for the userID
   const auto userReq = JDocs::DocRequest::Createuser(Void{});
@@ -1168,10 +1172,14 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
                  "Mismatch of number of items in jdocs read request vs. response (%zu vs %zu)",
                  readRequest.items.size(), readResponse.items.size());
 
-  // The first Read request is always for 'get all latest jdocs'
-  _gotLatestCloudJdocsAtStartup = true;
-
   std::vector<external_interface::JdocType> jdocsPulledFromCloud;
+
+  bool cloudJdocResetFileFound = Util::FileUtils::FileExists(_cloudJdocResetPath);
+  if (cloudJdocResetFileFound)
+  {
+    LOG_INFO("JdocsManager.HandleReadResponse.CloudJdocReset",
+             "Cloud Jdoc reset file found; it will be used and then removed");
+  }
 
   int index = 0;
   for (const auto& responseItem : readResponse.items)
@@ -1204,11 +1212,16 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       else if (responseItem.doc.docVersion > ourDocVersion)
       {
         // Cloud has a newer version than robot does
+        bool pullCloudVersion = jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD;
+        if (cloudJdocResetFileFound && !_gotLatestCloudJdocsAtStartup)
+        {
+          pullCloudVersion = false;
+        }
         static const size_t kBufferLen = 256;
         char logMsg[kBufferLen];
         snprintf(logMsg, kBufferLen, "Cloud version (%llu) of %s jdoc is later than robot version (%llu); %s",
                  responseItem.doc.docVersion, requestItem.docName.c_str(), ourDocVersion,
-                 jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD
+                 pullCloudVersion
                  ? "pulling down newer version from cloud"
                  : "submitting robot version to cloud");
         if (jdoc._errorOnCloudVersionLater)
@@ -1224,7 +1237,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
           LOG_INFO("JdocsManager.HandleReadResponse.LaterVersionInfo", "%s", logMsg);
         }
 
-        if (jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD)
+        if (pullCloudVersion)
         {
           // Replace jdoc on robot with the newer one from the cloud
           if (responseItem.doc.fmtVersion <= jdoc._curFormatVersion)
@@ -1235,7 +1248,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
           }
           checkForFormatVersionMigration = true;
         }
-        else  // jdoc._resolveMethod == external_interface::JdocResolveMethod::PUSH_TO_CLOUD
+        else
         {
           // Replace jdoc in cloud with the one we have on the robot
           jdoc._jdocVersion = responseItem.doc.docVersion;
@@ -1362,6 +1375,14 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
   if (!jdocsPulledFromCloud.empty())
   {
     SendJdocsChangedMessage(jdocsPulledFromCloud);
+  }
+
+  // The first Read request is always for 'get all latest jdocs'
+  _gotLatestCloudJdocsAtStartup = true;
+  
+  if (cloudJdocResetFileFound)
+  {
+    Util::FileUtils::DeleteFile(_cloudJdocResetPath);
   }
 }
 
