@@ -111,7 +111,6 @@ message SetCubeLightsResponse {
   ResponseStatus status = 1;
 }
 
-// This is an int_32 on the clad side.
 enum ObjectType
 {
   INVALID_OBJECT = 0;
@@ -120,17 +119,13 @@ enum ObjectType
   //////////////////////////////////////////////////////////////////////////
   // Light Cube (a.k.a. Active Block)
   //
-
   BLOCK_LIGHTCUBE1 = 2;
 
   FIRST_CUSTOM_OBJECT_TYPE = 15;
 
-  // There are 38 object types in the internal clad definition, though only
-  // some are surfaced here
   OBJECT_TYPE_COUNT = 38;
 }
 
-// This is an int_32 on the clad side.
 enum CustomType
 {
   option allow_alias = true;
@@ -171,8 +166,6 @@ enum ObjectFamily {
   CHARGER           = 4;
   CUSTOM_OBJECT     = 7;
 
-  // There are 7 object types in the internal clad definition, though only
-  // some are surfaced here
   OBJECT_FAMILY_COUNT = 7;
 }
 
@@ -342,7 +335,6 @@ message CustomWallDefinition {
   float              marker_height_mm = 5;
 }
 
-
 message DefineCustomObjectRequest {
   CustomType             custom_type = 1;
   bool                   is_unique   = 2;
@@ -358,7 +350,6 @@ message DefineCustomObjectResponse {
   ResponseStatus  status  = 1;
   bool            success = 2;
 }
-
 
 message ObjectEvent {
   oneof object_event_type {

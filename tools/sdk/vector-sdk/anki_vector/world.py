@@ -236,7 +236,7 @@ class World(util.Component):
         """The world will tear down all its faces and objects."""
 
         # delete_custom_objects is called before the _objects are torn down to make sure the
-        # engine recieves cues to remove the internal representations of these objects before
+        # engine receives cues to remove the internal representations of these objects before
         # we release the SDK side representations
         self.delete_custom_objects()
 
@@ -268,7 +268,8 @@ class World(util.Component):
 
         .. code-block:: python
 
-            my_face = robot.world.get_face(previously_observed_face_id)
+            with anki_vector.Robot() as robot:
+                my_face = robot.world.get_face(previously_observed_face_id)
         """
         return self._faces.get(face_id)
 
@@ -526,7 +527,6 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object
             (and therefore only 1 of each of any of these markers) in the world.
 
-
         .. testcode::
 
             import anki_vector
@@ -598,7 +598,6 @@ class World(util.Component):
         :param is_unique: If True, the engine will assume there is only 1 of this object
                 (and therefore only 1 of each of any of these markers) in the world.
 
-
         .. testcode::
 
             import anki_vector
@@ -664,7 +663,6 @@ class World(util.Component):
         :param relative_to_robot: whether or not the pose given assumes the robot's pose as its origin.
         :param use_robot_origin: whether or not to override the origin_id in the given pose to be
                                  the origin_id of Vector.
-
 
         .. testcode::
 
