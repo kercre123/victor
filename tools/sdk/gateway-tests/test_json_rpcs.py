@@ -66,7 +66,7 @@ def test_set_face_to_enroll(vector_connection, data):
     vector_connection.send_raw("v1/set_face_to_enroll", data, p.SetFaceToEnrollResponse())
 
 def test_enable_vision_mode(vector_connection):
-    vector_connection.send("v1/enable_vision_mode", p.EnableVisionModeRequest(), p.EnableVisionModeResponse())
+    vector_connection.send("v1/enable_vision_mode", p.EnableVisionModeRequest(mode=2), p.EnableVisionModeResponse())
 
 # TODO: add behavior control or else this does nothing
 # @pytest.mark.parametrize("data", [
@@ -170,7 +170,8 @@ def test_update_user_entitlements(vector_connection, data):
     vector_connection.send_raw("v1/update_user_entitlements", data, p.UpdateUserEntitlementsResponse())
 
 def test_user_authentication(vector_connection):
-    vector_connection.send("v1/user_authentication", p.UserAuthenticationRequest(), p.UserAuthenticationResponse())
+    if vector_connection.serial != "local":
+        vector_connection.send("v1/user_authentication", p.UserAuthenticationRequest(), p.UserAuthenticationResponse())
 
 def test_battery_state(vector_connection):
     vector_connection.send("v1/battery_state", p.BatteryStateRequest(), p.BatteryStateResponse())
@@ -217,7 +218,8 @@ def test_update_and_restart(vector_connection):
 #     vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse())
 
 def test_check_cloud_connection(vector_connection):
-    vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())
+    if vector_connection.serial != "local":
+        vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())
 
 @pytest.mark.parametrize("data,result", [
     ('{"feature_name":"TestFeature"}',1),

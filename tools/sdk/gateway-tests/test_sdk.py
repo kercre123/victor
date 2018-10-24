@@ -2,6 +2,7 @@
 #
 # This test provides an extensible way to write complicated SDK tests.
 #
+from concurrent import futures
 import os
 from pathlib import Path
 import sys
@@ -27,8 +28,8 @@ except ImportError:
 serial = os.environ.get("ANKI_ROBOT_SERIAL")
 if serial is None or len(serial) == 0:
     @pytest.fixture(scope="module", params=[
-        anki_vector.Robot(serial="Local", port="8443"),
-        anki_vector.AsyncRobot(serial="Local", port="8443")
+        anki_vector.Robot(serial="Local"),
+        anki_vector.AsyncRobot(serial="Local")
     ])
     def robot(request):
         return request.param
@@ -49,7 +50,7 @@ def wrap(robot):
         robot.disconnect()
 
 def synchronize(response):
-    return response.wait_for_completed() if isinstance(response, anki_vector.sync.Synchronizer) else response
+    return response.result() if isinstance(response, futures.Future) else response
 
 # Note: sometimes this would hang because of a failure to send from engine to gateway
 def test_play_animation(robot):

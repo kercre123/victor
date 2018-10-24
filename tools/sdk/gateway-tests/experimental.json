@@ -1,0 +1,11 @@
+{
+    "test rpcs" : [
+        "pytest -s test_json_rpcs.py"
+    ],
+    "test streaming" : [
+        "pytest -s test_json_streaming.py"
+    ],
+    "test sdk" : [
+        "pytest -s test_sdk.py"
+    ]
+}

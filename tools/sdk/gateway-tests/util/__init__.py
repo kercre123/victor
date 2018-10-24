@@ -44,6 +44,9 @@ class Connection:
         config_file = str(Path.home() / ".anki_vector" / "sdk_config.ini")
         config = configparser.ConfigParser()
         config.read(config_file)
+        serial = serial.lower()
+        self._serial = serial
+        config = {k.lower(): v for k, v in config.items()}
         self.info = {**config[serial]}
         if "port" in self.info:
             self.port = self.info["port"]
@@ -53,6 +56,10 @@ class Connection:
         print(self.info)
         self.session = requests.Session()
         self.session.mount("https://", host_header_ssl.HostHeaderSSLAdapter())
+
+    @property
+    def serial(self):
+        return self._serial
 
     @staticmethod
     def default_callback(response, response_type):
