@@ -316,6 +316,16 @@ class OpenGLViewer():
 
     Handles rendering of both a 3D world view and a 2D camera window.
 
+    .. testcode::
+        import anki_vector
+
+        def my_function(robot):
+            robot.play_animation("anim_blackjack_victorwin_01")
+
+        with anki_vector.Robot() as robot:
+            viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
+            viewer.run(my_function)
+
     :param robot: the robot object being used by the OpenGL viewer
     """
 
@@ -456,7 +466,7 @@ class OpenGLViewer():
                     unit_cube_view.display(FACE_OBJECT_COLOR, draw_solid)
 
                     glPopMatrix()
-        except Exception as e:
+        except BaseException as e:
             self._logger.error('rendering error: {0}'.format(e))
 
         glDisable(GL_LIGHTING)
@@ -506,6 +516,16 @@ class OpenGLViewer():
 
     def run(self, delegate_function: callable):
         """Turns control of the main thread over to the openGL viewer
+
+        .. testcode::
+            import anki_vector
+
+            def my_function(robot):
+                robot.play_animation("anim_blackjack_victorwin_01")
+
+            with anki_vector.Robot() as robot:
+                viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
+                viewer.run(my_function)
 
         :param delegate_function: external function to spin up on a seperate thread
             to allow for sdk code to run while the main thread is owned by the viewer.
