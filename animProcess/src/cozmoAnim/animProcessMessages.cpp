@@ -451,7 +451,7 @@ void Process_setAlexaUsage(const Anki::Vector::RobotInterface::SetAlexaUsage& ms
     alexa->SetAlexaUsage( msg.optedIn );
   }
 }
-  
+
 void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPendingAlexaAuth& msg)
 {
   auto* alexa = _context->GetAlexa();
@@ -569,7 +569,7 @@ void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnima
 void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
-  
+
   auto* alexa = _context->GetAlexa();
   if( alexa != nullptr ) {
     alexa->OnEngineLoaded();
@@ -757,7 +757,7 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   // to display the NO_ENGINE_COMMS fault code. For developer builds, fail fast
   // to capture a crash report of engine's current state.
   #if defined(VICOS) && ANKI_DEV_CHEATS
-  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::MilliSecToNanoSec(8.f * ANIM_TIME_STEP_MS);
+  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(0.5);
   #else
   static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(5.f);
   #endif
