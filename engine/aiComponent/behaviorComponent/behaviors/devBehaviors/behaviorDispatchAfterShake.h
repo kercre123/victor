@@ -37,6 +37,9 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  
+  void UpdateAmazonTest();
+  void UpdateWakeWords();
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;

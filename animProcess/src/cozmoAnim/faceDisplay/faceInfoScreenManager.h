@@ -60,6 +60,8 @@ class FaceInfoScreenManager : public Util::DynamicSingleton<FaceInfoScreenManage
   
 public:
   FaceInfoScreenManager();
+  
+  void EnableAlexaScreen(bool enable, const std::string& code);
 
   void Init(AnimContext* context, AnimationStreamer* animStreamer);
   void Update(const RobotState& state);
@@ -82,6 +84,7 @@ public:
   // The FaceInfoScreenManager otherwise does nothing since drawing on 
   // screen is handled by ConnectionFlow when in pairing mode.
   void EnablePairingScreen(bool enable);
+  
 
   // Begin drawing functionality
   // These functions update the screen only if they are relevant to the current screen
@@ -94,9 +97,12 @@ public:
   
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
+  
+  bool HasInit() const { return _hasInit; }
 
 private:
   const AnimContext* _context = nullptr;
+  bool _hasInit = false;
   
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
@@ -147,6 +153,7 @@ private:
   void DrawIMUInfo(const RobotState& state);
   void DrawMotorInfo(const RobotState& state);
   void DrawCustomText();
+  void DrawAlexaFace();
 
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();
@@ -189,6 +196,8 @@ private:
   WebService::WebService* _webService;
   
   bool _drawFAC = false;
+  
+  std::string _alexaCode;
   
   // Reboot Linux
   void Reboot();

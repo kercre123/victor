@@ -121,6 +121,9 @@ private:
   const AnimContext* _context = nullptr;
   float _lastPlayDirective = -1.0f;
   float _timeToSetIdle = -1.0f;
+  
+  std::string _toSendAlexaCode;
+  bool _sendAlexaCode = false;
 };
 
 

@@ -19,10 +19,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
 #include "util/console/consoleInterface.h"
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
+#include "util/logging/DAS.h"
 
 #include <set>
 
@@ -43,8 +45,23 @@ CONSOLE_VAR(unsigned int, kDevDispatchAfterShake, "DevBaseBehavior", 0);
 // how long you have to shake/pause
 CONSOLE_VAR_RANGED(float, kShakeTime, "DevBaseBehavior", 0.1f, 0.01f, 2.0f);
   
+// if true, this behavior won't activate anything else. shaking will just change earcon
+CONSOLE_VAR(bool, kAmazonTest, "DevBaseBehavior", true);
+  
 // if the robot is put down and no behavior wants to be active after this many ticks, the shake count is reset
 const unsigned int kFailTicksBeforeReset = 10;
+  
+  bool sPlayGetInAfterDevWakeWord = false;
+  bool sPlayAudioAfterWakeWord = false;
+  
+  void ShittyDebug(const char* str)
+  {
+    DASMSG(shitty_debug,
+           "shitty_debug",
+           "blah blah2");
+    DASMSG_SET(s1, str, "debug");
+    DASMSG_SEND();
+  }
   
 static const BackpackLightAnimation::BackpackAnimation kLightsSteady =
 {
@@ -111,21 +128,42 @@ void BehaviorDispatchAfterShake::GetBehaviorJsonKeys(std::set<const char*>& expe
 void BehaviorDispatchAfterShake::OnBehaviorActivated()
 {
   _dVars.countShaken = 0;
+  UpdateWakeWords();
+}
+  
+void BehaviorDispatchAfterShake::UpdateWakeWords()
+{
+  static bool first = true;
   
   namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
   const auto earConBegin = AudioMetaData::GameEvent::GenericEventFromString("Play__Robot_Vic_Sfx__Wake_Word_On");
   auto postAudioEvent = AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
-  bool kPlayGetInAfterDevWakeWord = true;
+  
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   bool kStreamAfterDevWakeWord = false;
-  SmartPushResponseToTriggerWord(
-                            kPlayGetInAfterDevWakeWord
+  if( !first ) {
+    uic.PopResponseToTriggerWord(GetDebugLabel());
+  }
+  
+  ShittyDebug( ("Setting getin = " + std::to_string(sPlayGetInAfterDevWakeWord)).c_str() );
+  
+  first = false;
+  // todo: pop on deactivation
+  uic.PushResponseToTriggerWord(GetDebugLabel(),
+                            sPlayGetInAfterDevWakeWord
                             ? AnimationTrigger::VC_ListeningGetIn
                             : AnimationTrigger::Count,
-                            postAudioEvent, // required if there is to be any effect at all
+                            sPlayAudioAfterWakeWord ? postAudioEvent : AudioEngine::Multiplexer::PostAudioEvent{},
                             kStreamAfterDevWakeWord
                             ? StreamAndLightEffect::StreamingEnabled
                             : StreamAndLightEffect::StreamingDisabled
                             );
+  
+  uic.SetResponseToAlexa("BehaviorDispatchAfterShake",
+                          sPlayGetInAfterDevWakeWord
+                          ? AnimationTrigger::VC_ListeningGetIn
+                          : AnimationTrigger::Count,
+                          sPlayAudioAfterWakeWord ? postAudioEvent : AudioEngine::Multiplexer::PostAudioEvent{});
 }
 
 
@@ -152,11 +190,79 @@ void BehaviorDispatchAfterShake::GetAllDelegates(std::set<IBehavior*>& delegates
                   std::inserter(delegates, delegates.end()),
                   [](const auto& x){ return x.get(); });
 }
+  
+  
+  
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatchAfterShake::UpdateAmazonTest()
+{
+  
+  
+  if( !IsActivated() ) {
+    return;
+  }
+  
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  static bool wasWasOnTreads = (robotInfo.GetOffTreadsState()  == OffTreadsState::OnTreads);
+  
+  const bool isBeingShaken = (robotInfo.GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold);
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( (_dVars.shakingSession && isBeingShaken)
+     || (!_dVars.shakingSession && !isBeingShaken) )
+  {
+    // last shake time / last steady time
+    _dVars.lastChangeTime_s = currentTime;
+  }
+  
+  const bool timeElapsed = (currentTime - _dVars.lastChangeTime_s >= kShakeTime);
+  if( _dVars.shakingSession && (!isBeingShaken) && timeElapsed ) {
+    // shaking stopped for a while
+    _dVars.shakingSession = false;
+    
+    GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsSteady);
+  }
+  if( !_dVars.shakingSession && isBeingShaken && timeElapsed ) {
+    // shaking started for a while
+    _dVars.shakingSession = true;
+    ++_dVars.countShaken;
+    
+    GetBEI().GetBackpackLightComponent().SetBackpackAnimation(kLightsShake);
+  }
+  
+  
+  const bool isOnTreads = (robotInfo.GetOffTreadsState() == OffTreadsState::OnTreads);
+  if( (_dVars.countShaken>0) && (!_dVars.shakingSession) && isOnTreads && !wasWasOnTreads ) {
+    EngineTimeStamp_t currTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    if( _dVars.tickPlacedDown == 0 ) {
+      _dVars.tickPlacedDown = currTimeStamp;
+    }
+    int mod = (_dVars.countShaken % 3);
+    if( mod == 0 ) {
+      sPlayGetInAfterDevWakeWord = false;
+      sPlayAudioAfterWakeWord = false;
+    } else if( mod == 1 ) {
+      sPlayGetInAfterDevWakeWord = false;
+      sPlayAudioAfterWakeWord = true;
+    } else if( mod == 2 ) {
+      sPlayGetInAfterDevWakeWord = true;
+      sPlayAudioAfterWakeWord = true;
+    }
+    UpdateWakeWords();
+    
+  }
+  wasWasOnTreads = isOnTreads;
+  
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatchAfterShake::BehaviorUpdate()
 {
+  if( kAmazonTest ) {
+    UpdateAmazonTest();
+    return;
+  }
+  
   if(!IsActivated() || IsControlDelegated()){
     return;
   }

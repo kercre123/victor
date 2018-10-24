@@ -285,6 +285,8 @@ namespace Vector {
           m_authCheckCounter = 0;
           CONSOLE_LOG("NOT YET AUTHORIZED");
           std::ostringstream oss;
+          
+          ToggleFaceInfoScreen(code);
 
             DASMSG(alexa_code,
                "alexa_code",
@@ -326,6 +328,12 @@ namespace Vector {
                 setFailureStatus(AUTH_FAILED_STR);
                 break;
             }
+            DASMSG(alexa_auth,
+                   "alexa_auth",
+                   "blah blah");
+            DASMSG_SET(i1, (int)m_authState, "m_authState");
+            DASMSG_SEND();
+            ToggleFaceInfoScreen("");
           }
         });
       }

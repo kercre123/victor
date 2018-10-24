@@ -38,6 +38,11 @@ class AlexaLogger
        */
       AlexaLogger();
       
+      void SetFaceInfoScreenCallback( std::function<void(const std::string&)> callback ) { _faceCallback = callback; }
+      void ToggleFaceInfoScreen(const std::string& code) { if( _faceCallback ) { _faceCallback(code); } }
+      
+      std::function<void(const std::string&)> _faceCallback;
+      
       void onDialogUXStateChanged(DialogUXState state) override;
       
       void onConnectionStatusChanged(const Status status, const ChangedReason reason) override;

@@ -192,6 +192,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
   ADD_SCREEN(MotorInfo, MicInfo);
+  ADD_SCREEN(AlexaPairing, AlexaPairing);
 
   if (hideSpecialDebugScreens) {
     ADD_SCREEN(MicInfo, Main); // Last screen cycles back to Main
@@ -328,6 +329,14 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   };
   SET_ENTER_ACTION(CameraMotorTest, cameraEnterAction);
   SET_EXIT_ACTION(CameraMotorTest, cameraMotorTestExitAction);
+  
+  // === AlexaPairing ===
+  auto alexaPairingEnterAction = [this]() {
+    DrawAlexaFace();
+  };
+  SET_ENTER_ACTION(AlexaPairing, alexaPairingEnterAction);
+  DISABLE_TIMEOUT(AlexaPairing); // let the authorization process handle timeout
+
 
   
   // Check if we booted in recovery mode
@@ -337,6 +346,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   } else {
     SetScreen(ScreenName::None);
   }
+  
+  _hasInit = true;
 }
 
 FaceInfoScreen* FaceInfoScreenManager::GetScreen(ScreenName name)
@@ -887,7 +898,8 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       (currScreenName == ScreenName::None ||
        currScreenName == ScreenName::FAC  ||
        currScreenName == ScreenName::CustomText ||
-       currScreenName == ScreenName::Pairing)) {
+       currScreenName == ScreenName::Pairing ||
+       currScreenName == ScreenName::AlexaPairing)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
     RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
 
@@ -1422,8 +1434,36 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
+    // TODO: it's possible that the user entered the app pairing screen during Alexa pairing,
+    // in which case the face should return to the Alexa screen when app pairing is complete
     SetScreen(ScreenName::None);
   }
+}
+
+void FaceInfoScreenManager::EnableAlexaScreen(bool enable, const std::string& code)
+{
+  if (enable && GetCurrScreenName() != ScreenName::AlexaPairing) {
+    _alexaCode = code;
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Enable", "");
+    SetScreen(ScreenName::AlexaPairing);
+  } else if (!enable && GetCurrScreenName() == ScreenName::AlexaPairing) {
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Disable", "");
+    SetScreen(ScreenName::None);
+  }
+}
+  
+void FaceInfoScreenManager::DrawAlexaFace()
+{
+  std::vector<std::string> textVec;
+  textVec.push_back(_alexaCode);
+  DrawTextOnScreen(textVec);
+
+  RobotInterface::SetHeadAngle headAction;
+  headAction.angle_rad = MAX_HEAD_ANGLE;
+  headAction.duration_sec = 1.0;
+  headAction.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
+  headAction.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
+  SendAnimToRobot(std::move(headAction));
 }
 
 void FaceInfoScreenManager::DrawScratch()

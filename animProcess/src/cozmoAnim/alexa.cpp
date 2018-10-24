@@ -33,6 +33,7 @@
 #include "cozmoAnim/animContext.h"
 #include "webServerProcess/src/webService.h"
    #include "util/logging/DAS.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 
 #include <ACL/Transport/HTTP2TransportFactory.h>
 #include <AVSCommon/AVS/Initialization/AlexaClientSDKInit.h>
@@ -254,6 +255,16 @@ namespace {
   
   using namespace alexaClientSDK;
   
+  void ShittyDebug(const char* str)
+  {
+    DASMSG(shitty_debug,
+           "shitty_debug",
+           "blah blah2");
+    DASMSG_SET(s1, str, "debug");
+    DASMSG_SEND();
+  }
+
+  
 void Alexa::Init(const AnimContext* context,
                  const OnStateChangedCallback& onStateChanged,
                  const OnAlertChangedCallback& onAlertChanged,
@@ -330,6 +341,10 @@ void Alexa::Init(const AnimContext* context,
    * Creating the UI component that observes various components and prints to the console accordingly.
    */
   auto userInterfaceManager = std::make_shared<AlexaLogger>();
+  userInterfaceManager->SetFaceInfoScreenCallback( [this](const std::string& code) {
+    _toSendAlexaCode = code;
+    _sendAlexaCode = true;
+  });
   
   //  /*
   //   * Creating the AuthDelegate - this component takes care of LWA and authorization of the client.
@@ -561,6 +576,11 @@ void Alexa::Update()
     m_audioSpeaker->Update();
   }
   
+  if( _sendAlexaCode && FaceInfoScreenManager::getInstance()->HasInit() ) {
+    _sendAlexaCode = false;
+    ShittyDebug( ("Sending code: " + _toSendAlexaCode).c_str() );
+    FaceInfoScreenManager::getInstance()->EnableAlexaScreen(!_toSendAlexaCode.empty(), _toSendAlexaCode);
+  }
   
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if( _timeToSetIdle >= 0.0f && currTime_s >= _timeToSetIdle && _playingSources.empty() ) {
@@ -742,14 +762,6 @@ void Alexa::OnDirective(const std::string& directive, const std::string& payload
   
 }
 
-void ShittyDebug(const char* str)
-{
-              DASMSG(shitty_debug,
-               "shitty_debug",
-               "blah blah2");
-              DASMSG_SET(s1, str, "debug");
-              DASMSG_SEND();
-}
   
 void Alexa::SendDirectiveToWebViz( const std::string& directive ) const
 {

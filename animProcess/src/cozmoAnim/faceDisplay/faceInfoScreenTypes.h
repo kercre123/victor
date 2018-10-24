@@ -39,6 +39,7 @@ enum class ScreenName {
   MicInfo,
   MicDirectionClock,
   CustomText,
+  AlexaPairing,
   
   Count
 };

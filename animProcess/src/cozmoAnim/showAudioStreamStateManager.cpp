@@ -199,8 +199,9 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
 
 bool ShowAudioStreamStateManager::HasValidTriggerResponse()
 {
-  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
-  return _postAudioEvent.audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid;
+  return true;
+//  std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
+//  return _postAudioEvent.audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid;
 }
 
 
