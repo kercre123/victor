@@ -199,6 +199,9 @@ message GatewayWrapper {
     FeatureFlagRequest            feature_flag_request               = 180; // App only
     FeatureFlagResponse           feature_flag_response              = 181; // App only
 
+    // ------------ App/engine connectivity ------------
+    AppDisconnected               app_disconnected                   = 190;
+
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

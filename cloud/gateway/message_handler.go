@@ -412,6 +412,16 @@ func SendOnboardingGetStep(in *extint.GatewayWrapper_OnboardingGetStep) (*extint
 	}
 }
 
+func SendAppDisconnected() {
+	msg := &extint.GatewayWrapper_AppDisconnected{
+		AppDisconnected: &extint.AppDisconnected{},
+	}
+	engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: msg,
+	})
+	// no error handling
+}
+
 func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.OnboardingInputResponse, error) {
 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
@@ -759,6 +769,8 @@ func (service *rpcService) onConnect(id string) {
 
 // Should be called on WiFi disconnect.
 func (service *rpcService) onDisconnect() {
+	// Message engine that app disconnected
+	SendAppDisconnected()
 	// Call DAS WiFi connection event to indicate stop of a WiFi connection
 	log.Das("wifi_conn_id.stop", (&log.DasFields{}).SetStrings(""))
 	connectionId = ""
