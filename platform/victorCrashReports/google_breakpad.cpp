@@ -65,6 +65,27 @@ std::string GetDateTimeString()
   return stringStream.str();
 }
 
+//
+// Capture recent log messages into given file
+//
+void DumpLogMessages(const std::string & logpath)
+{
+  char buf[1024];
+  snprintf(buf, sizeof(buf), "/bin/tail -100 /var/log/messages > %s", logpath.c_str());
+
+  LOG_INFO("GoogleBreakpad.DumpLogMessages", "%s", buf);
+  FILE * fp = popen(buf, "r");
+  if (fp != nullptr) {
+    // Run process to completion
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+      LOG_INFO("GoogleBreakpad.DumpLogMessages", "%s", buf);
+    }
+    pclose(fp);
+  } else {
+    LOG_ERROR("GoogleBreakpad.DumpLogMessages", "Unable to dump log messages");
+  }
+}
+
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
                   void* context, bool succeeded)
 {
@@ -80,6 +101,16 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
   DASMSG_SET(s1, dumpTag, "Service name");
   DASMSG_SET(s2, dumpName, "Crash name");
   DASMSG_SEND_ERROR();
+
+  //
+  // Flush logs to file system.  There is some latency in syslog so there's still no
+  // guarantee that latest messages will appear in log files. :(
+  //
+  sync();
+
+  // Capture recent log messages
+  const std::string & logpath = std::string(dumpPath) + ".log";
+  DumpLogMessages(logpath);
 
   // Return false (not handled) so breakpad will chain to next handler.
   return false;

@@ -59,6 +59,16 @@ if [ -f /anki/etc/version ]; then
   anki_version="`/bin/cat /anki/etc/version`"
 fi
 
+# Is this a developer (non-shipping) build?
+case "$os_version" in
+  *[ud])
+    DEVELOPER=1
+    ;;
+  *)
+    DEVELOPER=0
+    ;;
+esac
+
 while :
 do
     cd $VIC_CRASH_FOLDER > /dev/null
@@ -83,33 +93,49 @@ do
                     form="${form} -F robot.esn=${esn}"
                     form="${form} -F robot.os_version=${os_version}"
                     form="${form} -F robot.anki_version=${anki_version}"
+
+                    if [ ${DEVELOPER} -gt 0 ]; then
+                      if [ -f ${i}.log ]; then
+                        form="${form} -F attachment_messages.log=@${i}.log"
+                      fi
+                    fi
+
                     if /usr/bin/curl ${form} ${VIC_CRASH_UPLOAD_URL} ; then
-                        echo "Successfully uploaded "$i
+                        echo "Successfully uploaded ${i}"
 
                         # Rename the file so that we can keep it around for a while before deletion
-                        mv ${i} ${i}.$UPLOADED_EXT
+                        mv ${i} ${i}.${UPLOADED_EXT}
+                        if [ -f ${i}.log ]; then
+                          mv ${i}.log ${i}.${UPLOADED_EXT}.log
+                        fi
                     else
-                        echo "Failed to upload "$i
+                        echo "Failed to upload ${i}"
                     fi
                 else
                     # Don't upload, but rename
-                    echo "Renaming local build crash dump file {$i}"
-                    mv ${i} ${i}.$LOCAL_EXT
+                    echo "Renaming local build crash dump file ${i}"
+                    mv ${i} ${i}.${LOCAL_EXT}
+                    if [ -f ${i}.log ]; then
+                      mv ${i}.log ${i}.${LOCAL_EXT}.log
+                    fi
                 fi
             else
                 # If file size is zero, at this point it has been abandoned
                 echo "Deleting abandoned crash dump file ${i}"
-                rm -f ${i}
+                rm -f ${i} ${i}.log
             fi
         fi
     done
 
     # Now delete all but the oldest N crash files that have already been uploaded and/or renamed
-    processed_files_total=$(ls -1 *.$UPLOADED_EXT *.$LOCAL_EXT 2>/dev/null | wc -l)
-    if (( $processed_files_total > $VIC_CRASH_UPLOADER_KEEP_LATEST )); then
-        num_files_to_delete=$(( $processed_files_total - $VIC_CRASH_UPLOADER_KEEP_LATEST ))
-        echo "Deleting "$num_files_to_delete" crash dump file(s), but keeping the newest "$VIC_CRASH_UPLOADER_KEEP_LATEST" crash dump files"
-        ls -1tr *.$UPLOADED_EXT *.$LOCAL_EXT| head -n$num_files_to_delete | xargs rm -f --
+    processed_files_total=$(ls -1 *.${UPLOADED_EXT} *.${LOCAL_EXT} 2>/dev/null | wc -l)
+    if (( ${processed_files_total} > ${VIC_CRASH_UPLOADER_KEEP_LATEST} )); then
+        num_files_to_delete=$(( ${processed_files_total} - ${VIC_CRASH_UPLOADER_KEEP_LATEST} ))
+        echo "Deleting ${num_files_to_delete} crash dump file(s), but keeping the newest ${VIC_CRASH_UPLOADER_KEEP_LATEST} crash dump files"
+        files="`ls -1tr *.${UPLOADED_EXT} *.${LOCAL_EXT} | head -n${num_files_to_delete}`"
+        for f in ${files} ; do
+          /bin/rm -f ${f} ${f}.log
+        done
     fi
 
     sleep ${VIC_CRASH_SCRAPE_PERIOD_SEC}
