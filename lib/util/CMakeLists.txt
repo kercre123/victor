@@ -65,17 +65,17 @@ if (NOT TARGET util)
   add_subdirectory("source/anki/util")
 endif()
 
-if (NOT TARGET libeu)
-  add_subdirectory("source/3rd/elfutils/lib")
-endif()
-
-if (NOT TARGET libelf)
-  add_subdirectory("source/3rd/elfutils/libelf")
-endif()
-
-if (NOT TARGET libdw)
-  add_subdirectory("source/3rd/elfutils/libdw")
-endif()
+#if (NOT TARGET libeu)
+#  add_subdirectory("source/3rd/elfutils/lib")
+#endif()
+#
+#if (NOT TARGET libelf)
+#  add_subdirectory("source/3rd/elfutils/libelf")
+#endif()
+#
+#if (NOT TARGET libdw)
+#  add_subdirectory("source/3rd/elfutils/libdw")
+#endif()
 
 set(HEAPTRACK_BUILD_GUI OFF)
 add_subdirectory("source/3rd/heaptrack")

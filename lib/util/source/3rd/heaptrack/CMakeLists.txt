@@ -23,11 +23,20 @@ set(HEAPTRACK_FILE_FORMAT_VERSION 2)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(FeatureSummary)
-# find_package(Libunwind REQUIRED)
-set(LIBUNWIND_LIBRARY /Users/richard/.anki/vicos-sdk/dist/0.9-r03/./sysroot/usr/lib/libunwind.a)
+find_package(Libunwind REQUIRED)
+
+message("LIBUNWIND_FOUND ${LIBUNWIND_FOUND}")
+message("LIBUNWIND_INCLUDE_DIRS ${LIBUNWIND_INCLUDE_DIRS}")
+message("LIBUNWIND_LIBRARIES ${LIBUNWIND_LIBRARIES}")
+message("LIBUNWIND_HAS_UNW_GETCONTEXT ${LIBUNWIND_HAS_UNW_GETCONTEXT}")
+message("LIBUNWIND_HAS_UNW_INIT_LOCAL ${LIBUNWIND_HAS_UNW_INIT_LOCAL}")
+message("LIBUNWIND_HAS_UNW_BACKTRACE ${LIBUNWIND_HAS_UNW_BACKTRACE}")
+message("LIBUNWIND_HAS_UNW_BACKTRACE_SKIP ${LIBUNWIND_HAS_UNW_BACKTRACE_SKIP}")
+message("LIBUNWIND_VERSION_STRING ${LIBUNWIND_VERSION_STRING}")
 
 # find_package(Boost 1.41.0 COMPONENTS system filesystem) # option first
 # find_package(Boost 1.41.0 REQUIRED COMPONENTS iostreams program_options) # then required
+set(Boost_INCLUDE_DIRS /Users/richard/projects/victor/lib/util/source/3rd/boost_1_68_0)
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Zstd)

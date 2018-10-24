@@ -19,6 +19,9 @@
 #ifndef LINEWRITER_H
 #define LINEWRITER_H
 
+#include <errno.h> // TODO:REG
+#include <stdio.h> // TODO:REG
+
 #include <algorithm>
 #include <iterator>
 #include <memory>

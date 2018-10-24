@@ -32,15 +32,12 @@
 
 
 find_path(LIBUNWIND_INCLUDE_DIR libunwind.h )
-message("LIBUNWIND_INCLUDE_DIR ${LIBUNWIND_INCLUDE_DIR}")
 if(NOT EXISTS "${LIBUNWIND_INCLUDE_DIR}/unwind.h")
   MESSAGE("Found libunwind.h but corresponding unwind.h is absent!")
   SET(LIBUNWIND_INCLUDE_DIR "")
 endif()
 
-find_library(LIBUNWIND_LIBRARY LIBUNWIND_LIBRARY)
-message("LIBUNWIND_LIBRARY ${LIBUNWIND_LIBRARY}")
-message("LIBUNWIND_INCLUDE_DIR ${LIBUNWIND_INCLUDE_DIR}")
+find_library(LIBUNWIND_LIBRARY unwind)
 
 if(LIBUNWIND_INCLUDE_DIR AND EXISTS "${LIBUNWIND_INCLUDE_DIR}/libunwind-common.h")
   file(STRINGS "${LIBUNWIND_INCLUDE_DIR}/libunwind-common.h" LIBUNWIND_HEADER_CONTENTS REGEX "#define UNW_VERSION_[A-Z]+\t[0-9]*")
@@ -65,8 +62,6 @@ if (LIBUNWIND_LIBRARY)
   set(CMAKE_REQUIRED_LIBRARIES ${LIBUNWIND_LIBRARY})
   set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
   set(CMAKE_REQUIRED_INCLUDES ${LIBUNWIND_INCLUDE_DIR})
-  set(CMAKE_C_FLAGS_SAVE ${CMAKE_CPP_FLAGS})
-  set(CMAKE_C_FLAGS -I${LIBUNWIND_INCLUDE_DIR})
   check_c_source_compiles("#define UNW_LOCAL_ONLY 1\n#include <libunwind.h>\nint main() { unw_context_t context; unw_getcontext(&context); return 0; }"
                           LIBUNWIND_HAS_UNW_GETCONTEXT)
   check_c_source_compiles("#define UNW_LOCAL_ONLY 1\n#include <libunwind.h>\nint main() { unw_context_t context; unw_cursor_t cursor; unw_getcontext(&context); unw_init_local(&cursor, &context); return 0; }"
@@ -77,7 +72,6 @@ if (LIBUNWIND_LIBRARY)
   set(CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_SAVE})
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
   set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_SAVE})
-  set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS_SAVE})
 endif ()
 
 include(FindPackageHandleStandardArgs)

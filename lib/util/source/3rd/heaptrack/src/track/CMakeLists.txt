@@ -9,7 +9,7 @@ configure_file(heaptrack.sh.cmake
 )
 
 install(PROGRAMS ${PROJECT_BINARY_DIR}/${BIN_INSTALL_DIR}/heaptrack
-    DESTINATION ${BIN_INSTALL_DIR}
+    DESTINATION ${CMAKE_BINARY_DIR}/bin
 )
 
 # heaptrack_preload: track a newly started process
@@ -31,8 +31,13 @@ set_target_properties(heaptrack_preload PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${LIB_INSTALL_DIR}/heaptrack"
 )
 
+# target_compile_options(heaptrack_preload
+#    PRIVATE
+#    -Wno-gnu-statement-expression
+# )
+
 install(TARGETS heaptrack_preload
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}/heaptrack/
+    LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/lib
 )
 
 # heaptrack_inject: track an already running process
@@ -55,10 +60,10 @@ set_target_properties(heaptrack_inject PROPERTIES
 )
 
 install(TARGETS heaptrack_inject
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}/heaptrack/
+    LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/lib
 )
 
 # public API for custom pool allocators or static binaries
-install(FILES heaptrack_api.h
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/include
-)
+# install(FILES heaptrack_api.h
+#     DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+# )

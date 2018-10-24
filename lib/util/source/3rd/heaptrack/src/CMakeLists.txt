@@ -5,5 +5,7 @@ include_directories(
 
 add_subdirectory(util)
 add_subdirectory(track)
+if (MACOSX)
 add_subdirectory(interpret)
 add_subdirectory(analyze)
+endif()

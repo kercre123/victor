@@ -198,7 +198,7 @@ int createFile(const char* fileName)
 
     if (outputFileName.empty()) {
         // env var might not be set when linked directly into an executable
-        outputFileName = "heaptrack.$$";
+        outputFileName = "/tmp/heaptrack.$$";
     }
 
     boost::replace_all(outputFileName, "$$", to_string(getpid()));
@@ -273,7 +273,7 @@ public:
 
             // do not trace forked child processes
             // TODO: make this configurable
-            pthread_atfork(&prepare_fork, &parent_fork, &child_fork);
+            // TODO:REG pthread_atfork(&prepare_fork, &parent_fork, &child_fork);
 
             atexit([]() {
                 if (s_forceCleanup) {
@@ -700,17 +700,23 @@ void heaptrack_stop()
 
 void heaptrack_malloc(void* ptr, size_t size)
 {
+    fprintf(stderr, "heaptrack_malloc #1 %p %d %d\n", ptr, size, RecursionGuard::isActive);
     if (ptr && !RecursionGuard::isActive) {
+        fprintf(stderr, "heaptrack_malloc #2 %p %d %d\n", ptr, size, RecursionGuard::isActive);
         RecursionGuard guard;
 
         debugLog<VeryVerboseOutput>("heaptrack_malloc(%p, %zu)", ptr, size);
 
+        fprintf(stderr, "Trace trace\n");
         Trace trace;
+        fprintf(stderr, "Trace fill\n");
         trace.fill(2 + HEAPTRACK_DEBUG_BUILD);
+        fprintf(stderr, "Trace done\n");
 
-        HeapTrack heaptrack(guard);
-        heaptrack.handleMalloc(ptr, size, trace);
+        // HeapTrack heaptrack(guard);
+        // heaptrack.handleMalloc(ptr, size, trace);
     }
+    fprintf(stderr, "heaptrack_malloc #3 %p %d %d\n", ptr, size, RecursionGuard::isActive);
 }
 
 void heaptrack_free(void* ptr)

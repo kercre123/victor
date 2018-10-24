@@ -21,8 +21,14 @@
 
 #include <cstring>
 
+#define USE_BACKTRACE 0
+
+#if USE_BACKTRACE
+#include <execinfo.h>
+#else
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
+#endif
 
 /**
  * @brief A libunwind based backtrace.
@@ -58,6 +64,10 @@ struct Trace
 
     bool fill(int skip)
     {
+        fprintf(stderr, "before unw_backtrace %d %p %d\n", skip, &m_data[0], MAX_SIZE);
+#if USE_BACKTRACE
+        int size = backtrace(m_data, MAX_SIZE);
+#else
         int size = unw_backtrace(m_data, MAX_SIZE);
         // filter bogus frames at the end, which sometimes get returned by libunwind
         // cf.: https://bugs.kde.org/show_bug.cgi?id=379082
@@ -66,6 +76,8 @@ struct Trace
         }
         m_size = size > skip ? size - skip : 0;
         m_skip = skip;
+#endif
+        fprintf(stderr, "after unw_backtrace %d\n", size);
         return m_size > 0;
     }
 

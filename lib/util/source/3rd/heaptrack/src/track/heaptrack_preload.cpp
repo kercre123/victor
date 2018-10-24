@@ -24,6 +24,11 @@
 #include <cstring>
 #include <dlfcn.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <atomic>
 #include <type_traits>
 
@@ -122,6 +127,18 @@ void* dummy_calloc(size_t num, size_t size) noexcept
 
 void init()
 {
+    int out = open("/tmp/cout.log", O_RDWR|O_CREAT|O_APPEND, 0600);
+    if (-1 == out) { perror("opening cout.log"); }
+
+    int err = open("/tmp/cerr.log", O_RDWR|O_CREAT|O_APPEND, 0600);
+    if (-1 == err) { perror("opening cerr.log"); }
+
+    /*int save_out =*/ dup(fileno(stdout));
+    /*int save_err =*/ dup(fileno(stderr));
+
+    if (-1 == dup2(out, fileno(stdout))) { perror("cannot redirect stdout"); }
+    if (-1 == dup2(err, fileno(stderr))) { perror("cannot redirect stderr"); }
+
     heaptrack_init(getenv("DUMP_HEAPTRACK_OUTPUT"),
                    [] {
                        hooks::calloc.original = &dummy_calloc;
@@ -156,17 +173,20 @@ extern "C" {
 
 void* malloc(size_t size) noexcept
 {
+    fprintf(stderr, "malloc %d\n", size);
     if (!hooks::malloc) {
         hooks::init();
     }
 
     void* ptr = hooks::malloc(size);
     heaptrack_malloc(ptr, size);
+    fprintf(stderr, "malloc %d %p\n", size, ptr);
     return ptr;
 }
 
 void free(void* ptr) noexcept
 {
+    fprintf(stderr, "free %p\n", ptr);
     if (!hooks::free) {
         hooks::init();
     }
@@ -174,9 +194,10 @@ void free(void* ptr) noexcept
     // call handler before handing over the real free implementation
     // to ensure the ptr is not reused in-between and thus the output
     // stays consistent
-    heaptrack_free(ptr);
+    // heaptrack_free(ptr);
 
     hooks::free(ptr);
+    fprintf(stderr, "free\n");
 }
 
 void* realloc(void* ptr, size_t size) noexcept
@@ -187,9 +208,9 @@ void* realloc(void* ptr, size_t size) noexcept
 
     void* ret = hooks::realloc(ptr, size);
 
-    if (ret) {
-        heaptrack_realloc(ptr, size, ret);
-    }
+    // if (ret) {
+    //     heaptrack_realloc(ptr, size, ret);
+    // }
 
     return ret;
 }
@@ -202,9 +223,9 @@ void* calloc(size_t num, size_t size) noexcept
 
     void* ret = hooks::calloc(num, size);
 
-    if (ret) {
-        heaptrack_malloc(ret, num * size);
-    }
+    // if (ret) {
+    //     heaptrack_malloc(ret, num * size);
+    // }
 
     return ret;
 }
@@ -219,9 +240,9 @@ void cfree(void* ptr) noexcept
     // call handler before handing over the real free implementation
     // to ensure the ptr is not reused in-between and thus the output
     // stays consistent
-    if (ptr) {
-        heaptrack_free(ptr);
-    }
+    // if (ptr) {
+    //     heaptrack_free(ptr);
+    // }
 
     hooks::cfree(ptr);
 }
@@ -235,9 +256,9 @@ int posix_memalign(void** memptr, size_t alignment, size_t size) noexcept
 
     int ret = hooks::posix_memalign(memptr, alignment, size);
 
-    if (!ret) {
-        heaptrack_malloc(*memptr, size);
-    }
+    // if (!ret) {
+    //     heaptrack_malloc(*memptr, size);
+    // }
 
     return ret;
 }
@@ -251,9 +272,9 @@ void* aligned_alloc(size_t alignment, size_t size) noexcept
 
     void* ret = hooks::aligned_alloc(alignment, size);
 
-    if (ret) {
-        heaptrack_malloc(ret, size);
-    }
+    // if (ret) {
+    //     heaptrack_malloc(ret, size);
+    // }
 
     return ret;
 }
@@ -267,9 +288,9 @@ void* valloc(size_t size) noexcept
 
     void* ret = hooks::valloc(size);
 
-    if (ret) {
-        heaptrack_malloc(ret, size);
-    }
+    // if (ret) {
+    //     heaptrack_malloc(ret, size);
+    // }
 
     return ret;
 }
@@ -282,9 +303,9 @@ void* dlopen(const char* filename, int flag) noexcept
 
     void* ret = hooks::dlopen(filename, flag);
 
-    if (ret) {
-        heaptrack_invalidate_module_cache();
-    }
+    // if (ret) {
+    //     heaptrack_invalidate_module_cache();
+    // }
 
     return ret;
 }
@@ -297,9 +318,9 @@ int dlclose(void* handle) noexcept
 
     int ret = hooks::dlclose(handle);
 
-    if (!ret) {
-        heaptrack_invalidate_module_cache();
-    }
+    // if (!ret) {
+    //     heaptrack_invalidate_module_cache();
+    // }
 
     return ret;
 }
