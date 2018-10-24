@@ -174,7 +174,6 @@ class World(util.Component):
     def connected_light_cube(self) -> objects.LightCube:
         """A light cube connected to Vector, if any.
 
-
         .. testcode::
 
             import anki_vector
@@ -201,7 +200,10 @@ class World(util.Component):
             with anki_vector.Robot() as robot:
                 cube = robot.world.light_cube
                 if cube:
-                    print('LightCube {0} connected.'.format("is" if cube.is_connected else "isn't"))
+                    if cube.is_connected:
+                        print("LightCube is connected.")
+                    else:
+                        print("LightCube isn't connected")
 
         Raises:
             :class:`ValueError` if the cube_id is invalid.
