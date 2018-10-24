@@ -38,7 +38,7 @@ class Expression(Enum):
     """Facial expressions that Vector can distinguish.
 
     Facial expression not recognized.
-    Call :func:`anki_vector.robot.Robot.enable_vision_mode` to enable recognition.
+    Call :func:`anki_vector.robot.Robot.vision.set_vision_mode(detect_faces=True)` to enable recognition.
     """
     UNKNOWN = protocol.FacialExpression.Value("EXPRESSION_UNKNOWN")
     #: Facial expression neutral
@@ -197,7 +197,7 @@ class Face(objects.ObservableObject):
         """The facial expression Vector has recognized on the face.
 
         Will be :attr:`Expression.UNKNOWN` by default if you haven't called
-        :meth:`anki_vector.robot.Robot.enable_vision_mode` to enable
+        :meth:`anki_vector.robot.Robot.vision.set_vision_mode(detect_faces=True)` to enable
         the facial expression estimation. Otherwise it will be equal to one of:
         :attr:`Expression.NEUTRAL`, :attr:`Expression.HAPPINESS`,
         :attr:`Expression.SURPRISE`, :attr:`Expression.ANGER`,
@@ -218,7 +218,7 @@ class Face(objects.ObservableObject):
         """The score/confidence that :attr:`expression` was correct.
 
         Will be 0 if expression is :attr:`Expression.UNKNOWN` (e.g. if
-        :meth:`anki_vector.robot.Robot.enable_vision_mode` wasn't
+        :meth:`anki_vector.robot.Robot.vision.set_vision_mode(detect_faces=True)` wasn't
         called yet). The maximum possible score is 100.
 
         .. testcode::

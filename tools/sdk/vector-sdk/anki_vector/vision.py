@@ -39,31 +39,38 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
     def __init__(self, robot):
         super().__init__(robot)
 
-        self._vision_enabled = False
+        self._detect_faces = False
+        self._detect_custom_objects = False
 
     @property
-    def vision_enabled(self):
-        return self._vision_enabled
+    def detect_faces(self):
+        return self._detect_faces
+
+    @property
+    def detect_custom_objects(self):
+        return self._detect_custom_objects
 
     @connection.on_connection_thread()
-    async def enable_vision_mode(self, enable: bool):
-        """Enable facial and custom object detection on the robot's camera
+    async def set_vision_mode(self, detect_faces: bool = True, detect_custom_objects: bool = False):
+        """Enable facial and/or custom object detection on the robot's camera
 
-        :param enable: Enable/Disable vision.
+        :param detect_faces: Specify whether we want the robot to detect faces.
+        :param detect_custom_objects: Specify whether we want the robot to detect custom objects.
 
         .. testcode::
 
             import anki_vector
             with anki_vector.Robot() as robot:
-                robot.enable_vision_mode(True)
+                robot.set_vision_mode(detect_faces=True)
         """
-        self._vision_enabled = enable
+        self._detect_faces = detect_faces
+        self._detect_custom_objects = detect_custom_objects
 
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_MARKERS"), enable=enable)
+        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_MARKERS"), enable=detect_custom_objects)
         await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
 
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_FULL_FRAME_MARKER_DETECTION"), enable=enable)
+        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_FULL_FRAME_MARKER_DETECTION"), enable=detect_custom_objects)
         await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
 
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=enable)
+        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=detect_faces)
         return await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
