@@ -607,6 +607,17 @@ namespace Vector {
     return RESULT_OK;
   }
 
+  Result FaceWorld::AddOrUpdateFaceDireciton3d(const Vision::TrackedFace& face,
+                                               const TimeStamp_t& timeStamp)
+  {
+    auto& entry = _facesDirectedAtRobot3d[face.GetID()];
+    entry.Update(face, timeStamp);
+
+    // TODO need to set direction
+    return RESULT_OK;
+  }
+
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result FaceWorld::Update(const std::list<Vision::TrackedFace>& observedFaces)
   {
@@ -620,6 +631,9 @@ namespace Vector {
         PRINT_NAMED_WARNING("FaceWorld.Update.AddOrUpdateFaceFailed",
                             "ObservedFace ID=%d", obsFace.GetID());
       }
+
+      // Upate or create the face normal direction
+      AddOrUpdateFaceDireciton3d(obsFace, obsFace.GetTimeStamp());
     }
 
     const RobotTimeStamp_t lastProcImageTime = _robot->GetVisionComponent().GetLastProcessedImageTimeStamp();

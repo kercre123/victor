@@ -30,6 +30,7 @@ struct FaceDirectionData3d
   constexpr static const float kPitchMin_deg    = -180.f;
   Point3f point;
   bool inlier;
+  bool include;
   Point2f angles;
   FaceDirectionData3d()
     :
@@ -37,11 +38,13 @@ struct FaceDirectionData3d
       inlier(false),
       angles(Point2f(kYawMin_deg, kPitchMin_deg))
       {}
-  void Update(const Point3f& p, float pitch, float yaw)
+  // TODO naming is terrible
+  void Update(const Point3f& p, float pitch, float yaw, bool i)
   {
     point = p;
     inlier = false;
-    angles = Point2f(yaw, pitch); 
+    angles = Point2f(yaw, pitch);
+    include = i;
   }
 };
 
@@ -64,7 +67,7 @@ private:
 
   TrackedFace::FaceDirection DetermineFaceDirection();
 
-  Point3f GetPointFromHeadPose(const Pose3d& headPose);
+  bool GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint);
   Point3f ComputeEntireFaceDirectionAverage();
   Point3f ComputeFaceDirectionAverage(const bool filterOutliers);
   Point3f RecomputeFaceDirectionAverage();

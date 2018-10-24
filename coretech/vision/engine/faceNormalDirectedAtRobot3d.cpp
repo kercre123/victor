@@ -56,7 +56,8 @@ void FaceNormalDirectedAtRobot3d::Update(const TrackedFace& face,
   // angles are range limited without a wrap around we will
   // be able to treat them as Cartesian coordinates
 
-  auto faceDirectionPoint = GetPointFromHeadPose(_headPose);
+  Point3f faceDirectionPoint;
+  bool include = GetPointFromHeadPose(_headPose, faceDirectionPoint);
 
   /*
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.YawPitch",
@@ -65,19 +66,20 @@ void FaceNormalDirectedAtRobot3d::Update(const TrackedFace& face,
   */
   _faceDirectionHistory[_currentIndex].Update(faceDirectionPoint,
                                               RAD_TO_DEG(face.GetHeadPitch().ToFloat()),
-                                              RAD_TO_DEG(face.GetHeadYaw().ToFloat()));
+                                              RAD_TO_DEG(face.GetHeadYaw().ToFloat()),
+                                              include);
 
   _faceDirectionAverage = ComputeEntireFaceDirectionAverage();
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.AverageYawAndPitch",
-                   "average yaw=%.3f, average pitch=%.3f", _faceDirectionAverage.x(),
-                   _faceDirectionAverage.y());
+                   "average x=%.3f, average y=%.3f, average z=%.3f", _faceDirectionAverage.x(),
+                   _faceDirectionAverage.y(), _faceDirectionAverage.z());
   _numberOfInliers = FindInliers(_faceDirectionAverage);
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.NumberOfInliers",
                    "Number of Inliers = %d", _numberOfInliers);
   _faceDirectionAverage = RecomputeFaceDirectionAverage();
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.RecomputedAverageYawAndPitch",
-                   "average yaw=%.3f, average pitch=%.3f", _faceDirectionAverage.x(),
-                   _faceDirectionAverage.y());
+                   "average x=%.3f, average y=%.3f, average z=%.3f", _faceDirectionAverage.x(),
+                   _faceDirectionAverage.y(), _faceDirectionAverage.z());
   _faceDirection = DetermineFaceDirection();
 
   _currentIndex += 1;
@@ -97,14 +99,14 @@ Point3f FaceNormalDirectedAtRobot3d::ComputeFaceDirectionAverage(const bool filt
   // range of value does not include a wrap around
   u32 pointsInAverage = 0;
   for (const auto& faceDirection: _faceDirectionHistory) {
-    if (filterOutliers) {
-      if (faceDirection.inlier) {
+    if (faceDirection.include) {
+      if (filterOutliers) {
+        pointsInAverage += 1;
+        averageFaceDirection += faceDirection.point;
+      } else {
         pointsInAverage += 1;
         averageFaceDirection += faceDirection.point;
       }
-    } else {
-      pointsInAverage += 1;
-      averageFaceDirection += faceDirection.point;
     }
   }
 
@@ -122,9 +124,12 @@ int FaceNormalDirectedAtRobot3d::FindInliers(const Point3f& faceDirectionAverage
 {
   int numberOfInliers = 0;
   for (auto& faceDirection: _faceDirectionHistory) {
+    PRINT_NAMED_DEBUG("FaceNormalDirectedAtRobot3d.Update.FindInliers",
+                      "direction x=%.3f, y=%.3f, z=%.3f", faceDirection.point.x(),
+                      faceDirection.point.y(), faceDirection.point.z());
+                      
     auto difference = faceDirection.point - faceDirectionAverage;
-    auto distance = difference.LengthSq();
-    if (distance < kInlierDistanceSq) {
+    if (difference.x() < 300 && difference.y() < 100 && difference.z() < 20) {
       faceDirection.inlier = true;
       numberOfInliers += 1;
     } else {
@@ -170,7 +175,7 @@ bool FaceNormalDirectedAtRobot3d::GetExpired(const TimeStamp_t currentTime) cons
   return (currentTime - _lastUpdated) > kExpireThreshold;
 }
 
-Point3f FaceNormalDirectedAtRobot3d::GetPointFromHeadPose(const Pose3d& headPose)
+bool FaceNormalDirectedAtRobot3d::GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint)
 {
   // TODO look over history and determine if it's above or below the horizon
   bool aboveHorizon = IsFaceDirectionAboveHorizon();
@@ -192,22 +197,41 @@ Point3f FaceNormalDirectedAtRobot3d::GetPointFromHeadPose(const Pose3d& headPose
   // be double checked.
   if (aboveHorizon) {
     auto rotationMatrix = headPose.GetRotationMatrix();
-    auto stuff = rotationMatrix * Vec3f(1200, 0.f, 0.f);
+    auto faceRay = rotationMatrix * Vec3f(1200.f, 0.f, 0.f);
     PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.DirectionAboveHorizon",
-                     "x: %.3f, y:%.3f, z:%.3f", stuff.x(), stuff.y(), stuff.z());
+                     "x: %.3f, y:%.3f, z:%.3f", faceRay.x(), faceRay.y(), faceRay.z());
     // determine units of translation ... probably in mm or cm
-    return headPose.GetTranslation() + stuff;
+    faceDirectionPoint = headPose.GetTranslation() + faceRay;
   } else {
     auto rotationMatrix = headPose.GetRotationMatrix();
-    auto stuff = rotationMatrix * Vec3f(1200, 0.f, 0.f);
-    float distance = headPose.GetTranslation().z() / -stuff.z();
-    Point3f a = headPose.GetTranslation();
-    Point3f b = a + (rotationMatrix * Vec3f(distance, 0.f, 0.f));
-    auto groundPoint = IntersectionDirectionWithGroundPlane(a, b, distance);
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.DirectionBelowHorizon",
-                     "x: %.3f, y:%.3f, z:%.3f", groundPoint.x(), groundPoint.y(), groundPoint.z());
-    return groundPoint;
+    auto faceRay = rotationMatrix * Vec3f(1.f, 0.f, 0.f);
+    if (faceRay.z() < 0) {
+      PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceRay",
+                       "x: %.3f, y:%.3f, z:%.3f", faceRay.x(), faceRay.y(), faceRay.z());
+      if (!NEAR_ZERO(faceRay.z())) {
+        float distance = headPose.GetTranslation().z() / -faceRay.z();
+        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.Distance",
+                         "distance: %.3f", distance);
+        Point3f a = headPose.GetTranslation();
+        Point3f b = a + (rotationMatrix * Vec3f(distance, 0.f, 0.f));
+        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceTranslation",
+                         "x: %.3f, y:%.3f, z:%.3f", a.x(), a.y(), a.z());
+        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.SecondPoint",
+                         "x: %.3f, y:%.3f, z:%.3f", b.x(), b.y(), b.z());
+        /*
+        auto groundPoint = IntersectionDirectionWithGroundPlane(a, b, distance);
+        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.DirectionBelowHorizon",
+                         "x: %.3f, y:%.3f, z:%.3f", groundPoint.x(), groundPoint.y(), groundPoint.z());
+        */
+        faceDirectionPoint = b; 
+        return true;
+      }
+    } else {
+      // Can't do anything there won't be an intersection
+      return false;
+    }
   }
+  return false;
 }
 
 Point3f FaceNormalDirectedAtRobot3d::IntersectionDirectionWithGroundPlane(const Point3f& a,
@@ -215,9 +239,19 @@ Point3f FaceNormalDirectedAtRobot3d::IntersectionDirectionWithGroundPlane(const 
                                                                           const float distance)
 {
   Vec3f groundPlaneNormal(0.f, 0.f, 1.f);
-  double u = (groundPlaneNormal.x() * a.x()) + (groundPlaneNormal.y() * a.y()) + (groundPlaneNormal.z() * a.z())
-               / (groundPlaneNormal.x()* (a.x() - b.x())) + (groundPlaneNormal.y() * (a.y() - b.y()))
-                  + (groundPlaneNormal.z() * (a.z() - b.z()));
+  double numerator = ((groundPlaneNormal.x() * a.x()) + (groundPlaneNormal.y() * a.y()) + (groundPlaneNormal.z() * a.z()));
+  double denominator = ((groundPlaneNormal.x()* (a.x() - b.x())) + (groundPlaneNormal.y() * (a.y() - b.y()))
+                  + (groundPlaneNormal.z() * (a.z() - b.z())));
+  /*
+  double u = ((groundPlaneNormal.x() * a.x()) + (groundPlaneNormal.y() * a.y()) + (groundPlaneNormal.z() * a.z()))
+               / ((groundPlaneNormal.x()* (a.x() - b.x())) + (groundPlaneNormal.y() * (a.y() - b.y()))
+                  + (groundPlaneNormal.z() * (a.z() - b.z())));
+  */
+  double u = numerator / denominator;
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.IntersectionDirectionWithGroundPlane.Intermediate",
+                   "numerator: %.3f denominator: %.3f u: %.3f", numerator, denominator, u);
+
+  // TODO i am pretty sure this part is wrong
   return Point3f(
     u * a.x() + (1-u) * b.x(),
     u * a.y() + (1-u) * b.y(),
@@ -245,7 +279,7 @@ bool FaceNormalDirectedAtRobot3d::IsFaceDirectionAboveHorizon()
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.IsFaceDirectionAboveHorizon.AverageFaceAngles",
                    "yaw: %.3f pitch: %.3f", averageFaceDirection.x(), averageFaceDirection.y());
 
-  return true;
+  return false;
 }
 
 } // namespace Vision

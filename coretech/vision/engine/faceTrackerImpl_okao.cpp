@@ -1224,8 +1224,8 @@ namespace Vision {
         }
 
         // TODO this shoudl be wrapped in a conditional ... maybe? who knows
-        FaceDirection(face, frameOrig.GetTimestamp());
-        FaceDirection3d(face, frameOrig.GetTimestamp());
+        // FaceDirection(face, frameOrig.GetTimestamp());
+        // FaceDirection3d(face, frameOrig.GetTimestamp());
 
         //
         // Face Recognition:
