@@ -758,12 +758,12 @@ void Alexa::OnDirective(const std::string& directive, const std::string& payload
     }
   }
  
-  SendDirectiveToWebViz( directive );
+  SendDirectiveToWebViz( directive, payload );
   
 }
 
   
-void Alexa::SendDirectiveToWebViz( const std::string& directive ) const
+void Alexa::SendDirectiveToWebViz( const std::string& directive, const std::string& payload ) const
 {
   ShittyDebug("received webviz directive");
 
@@ -782,6 +782,7 @@ void Alexa::SendDirectiveToWebViz( const std::string& directive ) const
           //ShittyDebug("parsed");
           Json::Value data;
           data["directive"] = directive; //root;
+          data["payload"] = payload; //root;
           webService->SendToWebViz("micdata", data);
         //}
       //}
