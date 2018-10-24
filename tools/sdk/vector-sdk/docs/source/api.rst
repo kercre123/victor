@@ -25,6 +25,7 @@ The API
     anki_vector.screen
     anki_vector.util
     anki_vector.viewer
+    anki_vector.vision
     anki_vector.world
     anki_vector.messaging.client
 
