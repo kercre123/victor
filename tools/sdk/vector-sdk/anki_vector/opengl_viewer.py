@@ -25,7 +25,7 @@ Example:
         import anki_vector
 
         def my_function(robot):
-            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.play_animation("anim_turn_left_01")
 
         with anki_vector.Robot() as robot:
             viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
@@ -320,7 +320,7 @@ class OpenGLViewer():
         import anki_vector
 
         def my_function(robot):
-            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.play_animation("anim_turn_left_01")
 
         with anki_vector.Robot() as robot:
             viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
@@ -521,7 +521,7 @@ class OpenGLViewer():
             import anki_vector
 
             def my_function(robot):
-                robot.play_animation("anim_blackjack_victorwin_01")
+                robot.play_animation("anim_turn_left_01")
 
             with anki_vector.Robot() as robot:
                 viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
