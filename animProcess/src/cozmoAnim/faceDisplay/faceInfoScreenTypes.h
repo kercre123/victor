@@ -40,6 +40,7 @@ enum class ScreenName {
   MicDirectionClock,
   CustomText,
   MirrorMode, // Like Camera but without links to other screens
+  AlexaPairing,
   
   Count
 };

@@ -20,6 +20,7 @@
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animContext.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -177,10 +178,9 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
         // user didn't request to auth during this session, which means that an old token has expired. Logout
         SetAlexaActive( false );
       } else if( !code.empty() && ((_previousCode == code) || _previousCode.empty()) ) {
-        // todo: show code face
         LOG_INFO( "Alexa.OnAlexaAuthChanged.FirstCode", "Received code '%s'", code.c_str() );
         _previousCode = code;
-        SetAuthState( state, url );
+        SetAuthState( state, url, code );
       } else {
         LOG_DEBUG( "Alexa.OnAlexaAuthChanged.CodeRefresh", "Received another code (%s)", code.c_str());
         // this is not the first code, which means the first one expired. we don't have a good way of telling
@@ -202,12 +202,28 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::SetAuthState( AlexaAuthState state, const std::string& extra )
+void Alexa::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code )
 {
-  _authExtra = extra;
+  _authExtra = url;
   if( _authState != state ) {
     _authState = state;
     SendAuthState();
+    
+    const bool showAlexaFace = _authState == AlexaAuthState::WaitingForCode;
+    if( showAlexaFace ) {
+      std::string shortUrl;
+      if( url.find("https://") != std::string::npos ) {
+        shortUrl = url.substr(8);
+      } else if( url.find("http://") != std::string::npos ) {
+        shortUrl = url.substr(7);
+      } else {
+        shortUrl = url;
+      }
+      // note: order of params is flipped since url may or may not be displayed
+      FaceInfoScreenManager::getInstance()->EnableAlexaScreen( showAlexaFace, code, shortUrl );
+    } else {
+      FaceInfoScreenManager::getInstance()->EnableAlexaScreen( false, "", "" );
+    }
   }
   
 }

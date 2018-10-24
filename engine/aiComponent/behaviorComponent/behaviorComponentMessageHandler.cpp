@@ -14,6 +14,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponentMessageHandler.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/alexaAuthState.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -140,6 +142,19 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
     _eventHandles.push_back(
       _robot.GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus,
                                                setConnectionStatusCallback)
+    );
+    
+    // Go to the Wait behavior when the Alexa pairing screen is shown. This behavior ends when
+    // an exit debugScreenMode is received. This asymmetry is explained in debugScreenModeHandler
+    auto enterAlexaPairing = [this, &bContainer, &bsm](const RobotToEngineEvent& event) {
+      const auto& state = event.GetData().Get_alexaAuthChanged().state;
+      if( state == AlexaAuthState::WaitingForCode ) {
+        OnEnterInfoFace( bContainer, bsm );
+      }
+    };
+    _eventHandles.push_back(
+      _robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::alexaAuthChanged,
+                                                 enterAlexaPairing)
     );
 
 

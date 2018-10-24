@@ -65,7 +65,7 @@ private:
   bool HasImpl() const { return _impl != nullptr; }
   
   // sets this class's _authState and messages engine if it changes
-  void SetAuthState( AlexaAuthState state, const std::string& extra="" );
+  void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );
   // actually messages engine
   void SendAuthState();
   
