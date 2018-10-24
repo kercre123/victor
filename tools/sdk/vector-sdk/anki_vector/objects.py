@@ -37,7 +37,7 @@ Vector connects to his Light Cubes with BLE.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['LIGHT_CUBE_1_TYPE', 'OBJECT_VISIBILITY_TIMEOUT',
            'EvtObjectObserved', 'EvtObjectAppeared', 'EvtObjectDisappeared', 'EvtObjectFinishedMove',
-           'Charger', 'CustomObjectArchetype', 'CustomObject', 'CustomObjectTypes', 'CustomObjectMarkers',
+           'Charger', 'CustomObjectArchetype', 'CustomObject', 'CustomObjectMarkers', 'CustomObjectTypes',
            'FixedCustomObject', 'LightCube', 'ObservableObject']
 
 import collections
