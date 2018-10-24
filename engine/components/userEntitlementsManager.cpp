@@ -171,7 +171,8 @@ bool UserEntitlementsManager::SetUserEntitlement(const external_interface::UserE
   {
     const bool saveToCloudImmediately = DoesUserEntitlementUpdateCloudImmediately(userEntitlement);
     const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
-    success = UpdateUserEntitlementsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+    static const bool sendJdocsChangedMessage = true;
+    success = UpdateUserEntitlementsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate, sendJdocsChangedMessage);
   }
 
   return success;
@@ -232,14 +233,16 @@ bool UserEntitlementsManager::DoesUserEntitlementUpdateCloudImmediately(const ex
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool UserEntitlementsManager::UpdateUserEntitlementsJdoc(const bool saveToCloudImmediately,
-                                                         const bool setCloudDirtyIfNotImmediate)
+                                                         const bool setCloudDirtyIfNotImmediate,
+                                                         const bool sendJdocsChangedMessage)
 {
   static const bool saveToDiskImmediately = true;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::USER_ENTITLEMENTS,
                                                  &_currentUserEntitlements,
                                                  saveToDiskImmediately,
                                                  saveToCloudImmediately,
-                                                 setCloudDirtyIfNotImmediate);
+                                                 setCloudDirtyIfNotImmediate,
+                                                 sendJdocsChangedMessage);
   return success;
 }
 

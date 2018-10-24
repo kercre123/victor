@@ -192,8 +192,7 @@ void SettingsManager::UpdateDependent(const RobotCompMap& dependentComps)
 bool SettingsManager::SetRobotSetting(const external_interface::RobotSetting robotSetting,
                                       const Json::Value& valueJson,
                                       const bool updateSettingsJdoc,
-                                      bool& ignoredDueToNoChange,
-                                      const bool sendJdocsChangedMessage)
+                                      bool& ignoredDueToNoChange)
 {
   ignoredDueToNoChange = false;
 
@@ -231,6 +230,7 @@ bool SettingsManager::SetRobotSetting(const external_interface::RobotSetting rob
   {
     const bool saveToCloudImmediately = DoesSettingUpdateCloudImmediately(robotSetting);
     const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
+    static const bool sendJdocsChangedMessage = true;
     success = UpdateSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate, sendJdocsChangedMessage);
   }
 

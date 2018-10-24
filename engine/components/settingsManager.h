@@ -58,8 +58,7 @@ public:
   bool SetRobotSetting(const external_interface::RobotSetting robotSetting,
                        const Json::Value& valueJson,
                        const bool updateSettingsJdoc,
-                       bool& ignoredDueToNoChange,
-                       const bool sendJdocsChangedMessage = false);
+                       bool& ignoredDueToNoChange);
 
   // Return the setting value (currently strings, bools, uints supported)
   std::string GetRobotSettingAsString(const external_interface::RobotSetting key) const;
