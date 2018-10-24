@@ -137,16 +137,9 @@ void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream)
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // assume get in animation is playing
-  _waitingForTriggerWordGetInToFinish = true;
+  _waitingForTriggerWordGetInToFinish = HasAnimResponseToTriggerWord();
   _waitingForTriggerWordGetInToFinish_setTime_s = currTime_s;
 
-  if(!_responseToTriggerWordMap.empty()){
-    // TODO: VIC-5733 This also needs to either check if _responseToTriggerWordMap contains an empty anim, or listen
-    // for playing anims and compare tags
-    auto lastElemIter = _responseToTriggerWordMap.rbegin();
-    _robot->GetAnimationComponent().NotifyComponentOfAnimationStartedByAnimProcess(
-      lastElemIter->response.getInAnimationName, lastElemIter->response.getInAnimationTag);
-  }
   if (!GetEngineShouldRespondToTriggerWord()) {
     LOG_DEBUG("UserIntentComponent.SetPendingTrigger.TriggerWordDetectionDisabled",
               "Trigger word detection disabled, so ignoring message");
@@ -803,7 +796,7 @@ void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType strea
   RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType), playGetInFromAnimProcess};
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
   if (playGetInFromAnimProcess) {
-    _waitingForTriggerWordGetInToFinish = playGetInFromAnimProcess;
+    _waitingForTriggerWordGetInToFinish = playGetInFromAnimProcess && HasAnimResponseToTriggerWord();
     _waitingForTriggerWordGetInToFinish_setTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
@@ -963,6 +956,18 @@ void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& i
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(intentionalCopy)) );
   _responseToTriggerWordMap.emplace_back(TriggerWordResponseEntry(id, std::move(response)));
 
+}
+
+bool UserIntentComponent::HasAnimResponseToTriggerWord() const
+{
+  // if we have a trigger word response set, and that response has an anim specified
+  if (!_responseToTriggerWordMap.empty()) {
+    const TriggerWordResponseEntry& response = _responseToTriggerWordMap.back();
+    return !response.response.getInAnimationName.empty();
+  }
+
+  LOG_DEBUG("UserIntentComponent.HasAnimResponseToTriggerWord", "No anim reponse to trigger word set");
+  return false;
 }
 
 

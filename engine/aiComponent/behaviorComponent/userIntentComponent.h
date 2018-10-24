@@ -277,6 +277,7 @@ private:
   void SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
 
   void PushResponseToTriggerWordInternal(const std::string& id, RobotInterface::SetTriggerWordResponse&& response);
+  bool HasAnimResponseToTriggerWord() const;
 
   void HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg);
   
