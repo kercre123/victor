@@ -13,6 +13,7 @@ enum uint_32 BankType
   Dev_Debug = 1453038702,
   Init = 1355168291,
   Invalid = 0,
+  Victor_Alexa = 2239866820,
   Victor_Dev = 3324335988,
   Victor_Global_Data = 550470153,
   Victor_Sfx = 2740517684,
