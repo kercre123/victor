@@ -11,6 +11,7 @@
 #include "flash.h"
 
 static const int SELECTED_CHANNELS = 0
+  | ADC_CHSELR_CHSEL0
   | ADC_CHSELR_CHSEL2
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
@@ -20,8 +21,8 @@ static const int SELECTED_CHANNELS = 0
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
-static const uint16_t DISCHARGED_BATTERY = ADC_VOLTS(3.7);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
+
 static const int      MINIMUM_ON_CHARGER = 5;
 
 static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
@@ -35,7 +36,6 @@ static const int OVERHEAT_SHUTDOWN = 200 * 30;
 static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
 static const int MAX_CHARGE_TIME = 200 * 60 * 30;           // 30 minutes
-static const int START_DISCHARGE = 200 * 60 * 60 * 24 * 3;  // 3 Days
 static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
 static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
 
@@ -323,7 +323,6 @@ void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
-  static bool discharge_battery = false;
 
   debounceVEXT();
   handleButton();
@@ -335,9 +334,7 @@ void Analog::tick(void) {
 
   if (on_charger) {
     if (!prevent_charge) {
-      if (++on_charger_time == START_DISCHARGE) {
-        discharge_battery = true;
-      } else if (on_charger_time >= TOP_OFF_TIME) {
+      if (++on_charger_time >= TOP_OFF_TIME) {
         on_charger_time = 0;
       }
     }
@@ -366,7 +363,7 @@ void Analog::tick(void) {
     overheated = 0;
     heat_counter = 0;
     is_charging = false;
-  } else if (!on_charger || discharge_battery) {
+  } else if (!on_charger) {
     // Powered on, off charger
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
@@ -374,10 +371,6 @@ void Analog::tick(void) {
     nCHG_PWR::set();
 
     NVIC_DisableIRQ(ADC1_IRQn);
-
-    if (adc_values[ADC_VMAIN] <= DISCHARGED_BATTERY) {
-      discharge_battery = false;
-    }
 
     delay_disable = true;
     is_charging = false;

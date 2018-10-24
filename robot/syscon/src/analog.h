@@ -8,6 +8,7 @@
 #define ADC_WINDOW(low, high) (((high & 0xFFF) << 16) | (low & 0xFFF))
 
 enum ADC_CHANNEL {
+  ADC_VREF,
   ADC_VEXT,
   ADC_VMAIN,
   ADC_BUTTON,
