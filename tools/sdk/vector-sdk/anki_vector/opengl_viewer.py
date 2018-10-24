@@ -409,12 +409,8 @@ class OpenGLViewer():
 
         try:
             # Render the cube
-            for i in range(1):
-                cube_frame = world_frame.cube_frames[i]
-                if cube_frame is None:
-                    continue
-
-                cube_pose = cube_frame.pose
+            for obj in world_frame.cube_frames:
+                cube_pose = obj.pose
                 if cube_pose is not None and cube_pose.is_comparable(robot_pose):
                     light_cube_view.display(cube_pose)
 

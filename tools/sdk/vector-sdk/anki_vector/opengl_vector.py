@@ -475,9 +475,7 @@ class WorldRenderFrame():  # pylint: disable=too-few-public-methods
         self.robot_frame = RobotRenderFrame(robot)
 
         self.cube_frames: List[CubeRenderFrame] = []
-        if robot.world.connected_light_cube is None:
-            self.cube_frames.append(None)
-        else:
+        if robot.world.connected_light_cube is not None:
             self.cube_frames.append(CubeRenderFrame(robot.world.connected_light_cube))
 
         self.face_frames: List[FaceRenderFrame] = []

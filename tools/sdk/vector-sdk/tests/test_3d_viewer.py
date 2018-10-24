@@ -27,6 +27,8 @@ def main():
                                        size_mm=100.0,
                                        marker_width_mm=100.0, marker_height_mm=100.0)
 
+        robot.world.connect_cube()
+
         viewer = opengl_viewer.OpenGLViewer(robot=robot)
         viewer.run(my_function)
 
