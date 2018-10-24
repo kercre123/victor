@@ -262,6 +262,8 @@ enum FaceEnrollmentResult
   UNKNOWN_FAILURE = 9;
 }
 
+message AppDisconnected{}
+
 message AppIntentResponse {
   ResponseStatus status = 1;
 }

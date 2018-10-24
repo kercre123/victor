@@ -36,10 +36,12 @@ func Run(ctx context.Context, procOptions ...Option) {
 		token.Run(ctx, opts.tokenOpts...)
 	})
 	tokener := token.GetAccessor()
+	errorListener := token.ErrorListener()
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
 			// provide default token accessor
-			voiceOpts := append([]voice.Option{voice.WithTokener(tokener)},
+			voiceOpts := append([]voice.Option{voice.WithTokener(tokener),
+				voice.WithErrorListener(errorListener)},
 				opts.voiceOpts...)
 			opts.voice.Run(ctx, voiceOpts...)
 		})
@@ -47,14 +49,16 @@ func Run(ctx context.Context, procOptions ...Option) {
 	if opts.jdocOpts != nil {
 		launchProcess(&wg, func() {
 			// provide default token accessor
-			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener)},
+			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener),
+				jdocs.WithErrorListener(errorListener)},
 				opts.jdocOpts...)
 			jdocs.Run(ctx, jdocOpts...)
 		})
 	}
 	if opts.logcollectorOpts != nil {
 		launchProcess(&wg, func() {
-			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener)},
+			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener),
+				logcollector.WithErrorListener(errorListener)},
 				opts.logcollectorOpts...)
 			logcollector.Run(ctx, logcollectorOpts...)
 		})

@@ -59,6 +59,7 @@ message Event {
     CubeBattery                      cube_battery                        = 11;
     KeepAlivePing                    keep_alive                          = 12;
     ConnectionResponse               connection_response                 = 13;
+    JdocsChanged                     jdocs_changed                       = 14;
   }
 }
 
@@ -197,6 +198,9 @@ message GatewayWrapper {
     // ------------ Feature flags ------------
     FeatureFlagRequest            feature_flag_request               = 180; // App only
     FeatureFlagResponse           feature_flag_response              = 181; // App only
+
+    // ------------ App/engine connectivity ------------
+    AppDisconnected               app_disconnected                   = 190;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

@@ -156,3 +156,7 @@ message UpdateUserEntitlementsResponse {
   ResultCode code = 2;
   Jdoc doc = 3;
 }
+
+message JdocsChanged {
+  repeated JdocType jdoc_types = 1;
+}

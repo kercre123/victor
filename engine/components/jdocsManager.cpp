@@ -17,6 +17,8 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/messaging/shared/socketConstants.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "osState/osState.h"
@@ -612,7 +614,8 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
                               const Json::Value* jdocBody,
                               const bool saveToDiskImmediately,
                               const bool saveToCloudImmediately,
-                              const bool setCloudDirtyIfNotImmediate)
+                              const bool setCloudDirtyIfNotImmediate,
+                              const bool sendJdocsChangedMessage)
 {
   const auto& it = _jdocs.find(jdocTypeKey);
   if (it == _jdocs.end())
@@ -748,6 +751,11 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
   else
   {
     jdocItem._diskFileDirty = true;
+  }
+
+  if (sendJdocsChangedMessage)
+  {
+    SendJdocsChangedMessage({jdocTypeKey});
   }
 
   return true;
@@ -1163,6 +1171,8 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
   // The first Read request is always for 'get all latest jdocs'
   _gotLatestCloudJdocsAtStartup = true;
 
+  std::vector<external_interface::JdocType> jdocsPulledFromCloud;
+
   int index = 0;
   for (const auto& responseItem : readResponse.items)
   {
@@ -1221,6 +1231,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
           {
             CopyJdocFromCloud(jdocType, responseItem.doc);
             pulledNewVersionFromCloud = true;
+            jdocsPulledFromCloud.push_back(jdocType);
           }
           checkForFormatVersionMigration = true;
         }
@@ -1344,6 +1355,13 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
     }
 
     index++;
+  } // End loop through response items
+
+
+  // If we've pulled jdoc(s) from the cloud, signal the app
+  if (!jdocsPulledFromCloud.empty())
+  {
+    SendJdocsChangedMessage(jdocsPulledFromCloud);
   }
 }
 
@@ -1552,6 +1570,25 @@ void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocType
 
   const auto writeReq = JDocs::DocRequest::Createwrite(JDocs::WriteRequest{_userID, _thingID, GetJdocName(jdocTypeKey), jdocForCloud});
   SendJdocsRequest(writeReq);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::SendJdocsChangedMessage(const std::vector<external_interface::JdocType>& jdocTypes)
+{
+  if (_robot->HasGatewayInterface())
+  {
+    LOG_INFO("JdocsManager.SendJdocsChangedMessage", "Signaling app for %zu jdocs changed",
+             jdocTypes.size());
+    auto* gi = _robot->GetGatewayInterface();
+    auto* jdocsChangedMsg = new external_interface::JdocsChanged();
+    for (auto i = 0; i < jdocTypes.size(); i++)
+    {
+      jdocsChangedMsg->add_jdoc_types(jdocTypes[i]);
+    }
+
+    gi->Broadcast(ExternalMessageRouter::Wrap(jdocsChangedMsg));
+  }
 }
 
 

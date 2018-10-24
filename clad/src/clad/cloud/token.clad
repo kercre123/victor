@@ -32,6 +32,7 @@ structure SecondaryAuthRequest {
 }
 
 structure JwtRequest {
+	bool forceRefresh
 }
 
 structure JwtResponse {

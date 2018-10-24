@@ -1244,8 +1244,13 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
-  const Result factoryRes = UpdateStartupChecks();
-  if(factoryRes != RESULT_OK)
+  Result factoryRes;
+  const bool checkDone = UpdateStartupChecks(factoryRes);
+  if(!checkDone)
+  {
+    return RESULT_OK;
+  }
+  else if(factoryRes != RESULT_OK)
   {
     return factoryRes;
   }
@@ -2757,7 +2762,7 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
                                             shouldManage);
 }
 
-Result Robot::UpdateCameraStartupChecks()
+bool Robot::UpdateCameraStartupChecks(Result& res)
 {
   enum State {
     FAILED = -1,
@@ -2801,10 +2806,11 @@ Result Robot::UpdateCameraStartupChecks()
     }
   }
 
-  return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  res = (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  return (state != State::WAITING);
 }
 
-Result Robot::UpdateGyroCalibChecks()
+bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
   // should be displaying the gyro not calibrated image
@@ -2842,21 +2848,29 @@ Result Robot::UpdateGyroCalibChecks()
 
   }
 
-  return RESULT_OK;
+  res = RESULT_OK;
+  return true;
 }
 
-Result Robot::UpdateStartupChecks()
+bool Robot::UpdateStartupChecks(Result& res)
 {
-#define RUN_CHECK(func)  \
-  res = func();          \
-  if(res != RESULT_OK) { \
-    return res;          \
+#define RUN_CHECK(func)        \
+  {                            \
+    Result result = RESULT_OK; \
+    checkDone &= func(result); \
+    if(checkDone) {            \
+      res = result;            \
+      if(res != RESULT_OK) {   \
+        return res;            \
+      }                        \
+    }                          \
   }
 
-  Result res = RESULT_OK;
+  bool checkDone = true;
+  res = RESULT_OK;
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
-  return res;
+  return checkDone;
 
 #undef RUN_CHECK
 }

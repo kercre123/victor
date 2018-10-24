@@ -58,7 +58,8 @@ public:
   bool SetRobotSetting(const external_interface::RobotSetting robotSetting,
                        const Json::Value& valueJson,
                        const bool updateSettingsJdoc,
-                       bool& ignoredDueToNoChange);
+                       bool& ignoredDueToNoChange,
+                       const bool sendJdocsChangedMessage = false);
 
   // Return the setting value (currently strings, bools, uints supported)
   std::string GetRobotSettingAsString(const external_interface::RobotSetting key) const;
@@ -68,7 +69,8 @@ public:
   bool DoesSettingUpdateCloudImmediately(const external_interface::RobotSetting key) const;
 
   bool UpdateSettingsJdoc(const bool saveToCloudImmediately,
-                          const bool setCloudDirtyIfNotImmediate);
+                          const bool setCloudDirtyIfNotImmediate,
+                          const bool sendJdocsChangedMessage = false);
 
   //////
   // Some user settings need to be triggered from behaviors; these function help in dealing with latent setting change
