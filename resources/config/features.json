@@ -64,6 +64,11 @@
     "enabled": false
   },
   {
+    "feature": "Alexa",
+    // TODO (VIC-10016): turn off for 1.1
+    "enabled": true
+  },
+  {
     "feature": "PRDemo",
     "enabled": false
   },

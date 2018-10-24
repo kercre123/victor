@@ -158,6 +158,7 @@ static const char* kFeatureEnumString =
   "UserDefinedBehaviorTree,"
   "PopAWheelie,"
   "ActiveIntentFeedback,"
+  "Alexa,"
   "TestFeature,"
   "PRDemo";
 

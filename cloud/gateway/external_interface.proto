@@ -19,6 +19,7 @@ syntax = "proto3";
 package Anki.Vector.external_interface;
 
 import "google/api/annotations.proto";
+import "alexa.proto";
 import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
@@ -424,4 +425,20 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  rpc GetAlexaAuthState(AlexaAuthStateRequest) returns (AlexaAuthStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/alexa_auth_state",
+      body: "*"
+    };
+  }
+
+  rpc AlexaOptIn(AlexaOptInRequest) returns (AlexaOptInResponse) {
+    option (google.api.http) = {
+      post: "/v1/alexa_opt_in",
+      body: "*"
+    };
+  }
+
+  
 }

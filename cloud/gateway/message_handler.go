@@ -2268,6 +2268,47 @@ func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.Featur
 	return response, nil
 }
 
+// AlexaAuthState is used to check the alexa authorization state
+func (service *rpcService) GetAlexaAuthState(ctx context.Context, in *extint.AlexaAuthStateRequest) (*extint.AlexaAuthStateResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AlexaAuthStateResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AlexaAuthStateRequest{
+			AlexaAuthStateRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetAlexaAuthStateResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+// AlexaOptIn is used to check the alexa authorization state
+func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptInRequest) (*extint.AlexaOptInResponse, error) {
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AlexaOptInRequest{
+			AlexaOptInRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.AlexaOptInResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
 func newServer() *rpcService {
 	return new(rpcService)
 }

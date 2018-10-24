@@ -20,9 +20,11 @@ package Anki.Vector.external_interface;
 
 import "behavior.proto";
 import "cube.proto";
+import "alexa.proto";
 import "messages.proto";
 import "settings.proto";
 import "extensions.proto";
+import "response_status.proto";
 
 message ProtocolVersionRequest {
   int64 client_version = 1;
@@ -60,6 +62,7 @@ message Event {
     KeepAlivePing                    keep_alive                          = 12;
     ConnectionResponse               connection_response                 = 13;
     JdocsChanged                     jdocs_changed                       = 14;
+    AlexaAuthEvent                   alexa_auth_event                    = 15;
   }
 }
 
@@ -201,6 +204,13 @@ message GatewayWrapper {
 
     // ------------ App/engine connectivity ------------
     AppDisconnected               app_disconnected                   = 190;
+
+    // ------------ Alexa ------------
+    AlexaAuthStateRequest         alexa_auth_state_request           = 200;
+    AlexaAuthStateResponse        alexa_auth_state_response          = 201;
+    AlexaOptInRequest             alexa_opt_in_request               = 202;
+    AlexaOptInResponse            alexa_opt_in_response              = 203;
+
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

@@ -21,6 +21,7 @@ enum uint_8 FeatureType {
   UserDefinedBehaviorTree,
   PopAWheelie,
   ActiveIntentFeedback,
+  Alexa,
   
   TestFeature,
   PRDemo,

@@ -443,6 +443,14 @@ message ResetBeatDetector
 {
 }
 
+message SetAlexaUsage
+{
+  bool optedIn
+}
+message CancelPendingAlexaAuth
+{
+}
+
 structure ColorRGB
 {
   uint_8 r,
@@ -779,6 +787,9 @@ union EngineToRobot
   SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
+
+  SetAlexaUsage                 setAlexaUsage               = 0x9D,
+  CancelPendingAlexaAuth        cancelPendingAlexaAuth      = 0x9E,
 
   SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,

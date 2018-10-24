@@ -15,6 +15,7 @@
 #include "cozmoAnim/animComms.h"
 #include "cozmoAnim/robotDataLoader.h"
 
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
@@ -443,6 +444,22 @@ void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDete
   }
 }
 
+void Process_setAlexaUsage(const Anki::Vector::RobotInterface::SetAlexaUsage& msg)
+{
+  auto* alexa = _context->GetAlexa();
+  if (alexa != nullptr) {
+    alexa->SetAlexaUsage( msg.optedIn );
+  }
+}
+  
+void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPendingAlexaAuth& msg)
+{
+  auto* alexa = _context->GetAlexa();
+  if (alexa != nullptr) {
+    alexa->CancelPendingAlexaAuth();
+  }
+}
+
 void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
 {
   FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
@@ -552,6 +569,11 @@ void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnima
 void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
+  
+  auto* alexa = _context->GetAlexa();
+  if( alexa != nullptr ) {
+    alexa->OnEngineLoaded();
+  }
 }
 
 void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen& msg)
@@ -816,6 +838,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   _context->GetMicDataSystem()->Update(currTime_nanosec);
   _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);
   _context->GetShowAudioStreamStateManager()->Update();
+  _context->GetAlexa()->Update();
 
   // Process incoming messages from engine
   u32 dataLen;

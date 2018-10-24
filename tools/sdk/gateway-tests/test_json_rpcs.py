@@ -232,3 +232,20 @@ def test_feature_flag(vector_connection, data, result):
         assert data["valid_feature"] == result
         assert data["feature_enabled"] == 0
     vector_connection.send_raw("v1/feature_flag", data, p.FeatureFlagResponse(), callback=callback)
+
+def test_alexa_auth_state(vector_connection):
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+    vector_connection.send("v1/alexa_auth_state", p.AlexaAuthStateRequest(), p.AlexaAuthStateResponse(), callback=callback)
+
+@pytest.mark.parametrize("data", [
+    '{"opt_in":true}'
+])
+def test_alexa_opt_in(vector_connection, data):
+    vector_connection.send_raw("v1/alexa_opt_in", data, p.AlexaOptInResponse())
+
+@pytest.mark.parametrize("data", [
+    '{"opt_in":false}'
+])
+def test_alexa_opt_out(vector_connection, data):
+    vector_connection.send_raw("v1/alexa_opt_in", data, p.AlexaOptInResponse())

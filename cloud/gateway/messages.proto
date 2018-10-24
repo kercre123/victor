@@ -18,25 +18,14 @@ syntax = "proto3";
 
 package Anki.Vector.external_interface;
 
+import "response_status.proto";
 import "extensions.proto";
 import "onboardingSteps.proto";
+import "alexa.proto";
 
 // A null message used by streams to verify that the client is
 // still connected.
 message KeepAlivePing {}
-
-message ResponseStatus {
-  enum StatusCode {
-    UNKNOWN = 0;
-    RESPONSE_RECEIVED = 1; // The message has completed as expected
-    REQUEST_PROCESSING = 2; // The message has been sent to the robot
-    OK = 3;
-    FORBIDDEN = 100; // The user was not authorizied
-    NOT_FOUND = 101; // The requested attribute was not found
-    ERROR_UPDATE_IN_PROGRESS = 102; // Currently updating values from another call
-  }
-  StatusCode code = 1;
-}
 
 message Animation {
   string name = 1;
