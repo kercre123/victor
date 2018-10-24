@@ -216,7 +216,7 @@ class World(util.Component):
 
     @property
     def charger(self) -> objects.Charger:
-        """Returns the most recently observed vector charger object, or None if no chargers have been observed.
+        """Returns the most recently observed Vector charger object, or None if no chargers have been observed.
 
         .. testcode::
 
@@ -238,7 +238,7 @@ class World(util.Component):
         """The world will tear down all its faces and objects."""
 
         # delete_custom_objects is called before the _objects are torn down to make sure the
-        # engine receives cues to remove the internal representations of these objects before
+        # robot receives cues to remove the internal representations of these objects before
         # we release the SDK side representations
         self.delete_custom_objects()
 
@@ -425,7 +425,7 @@ class World(util.Component):
                                 is_unique: bool = True) -> objects.CustomObject:
         """Defines a cuboid of custom size and binds it to a specific custom object type.
 
-        The engine will now detect the markers associated with this object and send an
+        The robot will now detect the markers associated with this object and send an
         object_observed message when they are seen. The markers must be placed in the center
         of their respective sides. All 6 markers must be unique.
 
@@ -442,7 +442,7 @@ class World(util.Component):
             (the height of the object)
         :param marker_width_mm: width of the printed marker (in millimeters).
         :param maker_height_mm: height of the printed marker (in millimeters).
-        :param is_unique: If True, the engine will assume there is only 1 of this object.
+        :param is_unique: If True, the robot will assume there is only 1 of this object.
             (and therefore only 1 of each of any of these markers) in the world.
 
         .. testcode::
@@ -517,7 +517,7 @@ class World(util.Component):
                                  is_unique: bool = True) -> objects.CustomObject:
         """Defines a cube of custom size and binds it to a specific custom object type.
 
-        The engine will now detect the markers associated with this object and send an
+        The robot will now detect the markers associated with this object and send an
         object_observed message when they are seen. The markers must be placed in the center
         of their respective sides.
 
@@ -526,7 +526,7 @@ class World(util.Component):
         :param size_mm: size of each side of the cube (in millimeters).
         :param marker_width_mm: width of the printed marker (in millimeters).
         :param maker_height_mm: height of the printed marker (in millimeters).
-        :param is_unique: If True, the engine will assume there is only 1 of this object
+        :param is_unique: If True, the robot will assume there is only 1 of this object
             (and therefore only 1 of each of any of these markers) in the world.
 
         .. testcode::
@@ -585,7 +585,7 @@ class World(util.Component):
                                  is_unique: bool = True) -> objects.CustomObject:
         """Defines a wall of custom width and height, with a fixed depth of 10mm, and binds it to a specific custom object type.
 
-        The engine will now detect the markers associated with this object and send an
+        The robot will now detect the markers associated with this object and send an
         object_observed message when they are seen. The markers must be placed in the center
         of their respective sides.
 
@@ -597,7 +597,7 @@ class World(util.Component):
         :param height_mm: height of the wall (along Z axis) (in millimeters).
         :param marker_width_mm: width of the printed marker (in millimeters).
         :param maker_height_mm: height of the printed marker (in millimeters).
-        :param is_unique: If True, the engine will assume there is only 1 of this object
+        :param is_unique: If True, the robot will assume there is only 1 of this object
                 (and therefore only 1 of each of any of these markers) in the world.
 
         .. testcode::
@@ -678,7 +678,7 @@ class World(util.Component):
             FixedCustomObject instance with the specified dimensions and pose.
         """
         # Override the origin of the pose to be the same as the robot's. This will make sure they are in
-        # the same space in the engine every time.
+        # the same space in the robot every time.
         if use_robot_origin:
             pose = util.Pose(x=pose.position.x, y=pose.position.y, z=pose.position.z,
                              q0=pose.rotation.q0, q1=pose.rotation.q1,
