@@ -16,6 +16,7 @@
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 
+#include <sys/select.h>
 #include <unistd.h>
 
 #define LOG_CHANNEL "RobotLogUploader"
@@ -35,6 +36,10 @@ Result RobotLogUploader::Connect()
     Anki::Util::FileUtils::DeleteFile(_clientPath);
     return RESULT_FAIL;
   }
+
+  // Set mode so non-privileged process (vic-cloud) can reply to this socket
+  const auto mode = (S_IRWXU|S_IRWXG|S_IRWXO);
+  chmod(_clientPath.c_str(), mode);
 
   return RESULT_OK;
 }
@@ -88,6 +93,7 @@ Result RobotLogUploader::Upload(const std::string & path, std::string & url)
   result  = Send(Anki::Vector::LogCollector::LogCollectorRequest(std::move(request)));
   if (result != RESULT_OK) {
     LOG_ERROR("RobotLogUploader.Upload", "Unable to send upload request (error %d)", result);
+    Disconnect();
     return result;
   }
 
@@ -118,6 +124,9 @@ Result RobotLogUploader::Upload(const std::string & path, std::string & url)
 
   LogCollectorResponse response;
   result = Receive(response);
+
+  Disconnect();
+
   if (result != RESULT_OK) {
     LOG_ERROR("RobotLogUploader.Upload", "Unable to receive log collector response (error %d)", result);
     return result;

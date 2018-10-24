@@ -20,7 +20,7 @@ namespace Vector {
 Result RobotLogDumper::Dump(const std::string & gzpath)
 {
   // What command do we use to create the result?
-  const std::string & command = "/usr/bin/logcat -d | /bin/gzip > " + gzpath;
+  const std::string & command = "/anki/bin/vic-log-cat | /bin/gzip > " + gzpath;
 
   // Run command to completion
   LOG_INFO("RobotLogDumper.Dump", "%s", command.c_str());
