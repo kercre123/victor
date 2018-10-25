@@ -178,14 +178,14 @@
           <Type>0</Type>
           <LineNumber>175</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134237638</Address>
+          <Address>134237798</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/power.cpp\175</Expression>
         </Bp>
@@ -194,42 +194,22 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>unscaled</ItemText>
+          <ItemText>TEMP30_CAL</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>TEMP30_CAL</ItemText>
+          <ItemText>*TEMP30_CAL_ADDR</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>adc</ItemText>
+          <ItemText>temp_now,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>TEMP30_CAL - adc</ItemText>
-        </Ww>
-        <Ww>
-          <count>4</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>TEMP30_CAL - adc</ItemText>
-        </Ww>
-        <Ww>
-          <count>5</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>((unscaled * TEMP_SCALE) &gt;&gt; 24) + 30,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>6</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>temp_now,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>7</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>temperature</ItemText>
+          <ItemText>(3.3f / 2.8f) * 65536 * *TEMP30_CAL_ADDR</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

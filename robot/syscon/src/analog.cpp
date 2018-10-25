@@ -33,6 +33,7 @@ static const Voltage LOW_VOLTAGE_POWER_DOWN_POINT = FIXED_VOLTS(3.4);
 static const Voltage TRANSITION_POINT = FIXED_VOLTS(4.3);
 
 static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
+static const uint16_t* TEMP110_CAL_ADDR = (uint16_t*)0x1FFFF7C2;
 static const uint16_t* VREFINT_CAL_ADDR = (uint16_t*)0x1FFFF7BA;
 
 // We allow for 4 hours of over-heat time (variable)
@@ -60,8 +61,8 @@ static int heat_counter = 0;
 static uint16_t vref_avg = 0x700;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
 
-static const int32_t TEMP_SCALE = FIXED_VOLTS(1.000 / 5.336);
 static int32_t TEMP30_CAL;
+static int32_t TEMP110_CAL;
 static int32_t CAL_OFFSET;
 
 // Assume we started on the charger
@@ -137,8 +138,9 @@ void Analog::init(void) {
 
   allow_power = true;
   
-  CAL_OFFSET = *VREFINT_CAL_ADDR * FIXED_VOLTS(3.3f) / 2048;
-  TEMP30_CAL = *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
+  CAL_OFFSET  = *VREFINT_CAL_ADDR * FIXED_VOLTS(3.3f) / 2048;
+  TEMP30_CAL  =  *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
+  TEMP110_CAL = *TEMP110_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
 
   NVIC_DisableIRQ(ADC1_IRQn);
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
@@ -249,7 +251,7 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 
 static bool handleTemperature() {
   // Temperature logic
-  int32_t temp_now = (((TEMP30_CAL - AS_VOLTS(ADC_TEMP)) * TEMP_SCALE) >> 24) + 30;
+  int32_t temp_now = (AS_VOLTS(ADC_TEMP) - TEMP30_CAL) / (TEMP110_CAL - TEMP30_CAL) + 30;
 
   // We are running way too hot, have a bowl of boot loops.
   if (temp_now >= 70) {
