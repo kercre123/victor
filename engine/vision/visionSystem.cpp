@@ -322,22 +322,7 @@ Result VisionSystem::Init(const Json::Value& config)
     return RESULT_FAIL;
   }
 
-  // Default processing modes should are set in vision_config.json
-  if(!config.isMember("InitialVisionModes"))
-  {
-    PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialVisionModesConfigField", "");
-    return RESULT_FAIL;
-  }
-
-  // VisionModes are default enabled
-  _modes.InsertAllModes();
-  
-  const Json::Value& configModes = config["InitialVisionModes"];
-  for(auto & modeName : configModes.getMemberNames())
-  {
-    VisionMode mode = GetModeFromString(modeName);
-    _modes.Enable(mode, configModes[modeName].asBool());
-  }
+  _modes.Clear();
   
   _clahe->setClipLimit(kClaheClipLimit);
   _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));

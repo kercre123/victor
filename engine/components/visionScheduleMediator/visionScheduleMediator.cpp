@@ -128,31 +128,21 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
   SetVisionModeSubscriptions(subscriber, requests);
 }
 
-void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
-                                                        const std::set<VisionModeRequest>& requests)
+
+void VisionScheduleMediator::UpdateModeDataMapWithRequests(IVisionModeSubscriber* subscriber,
+                                                           const std::set<VisionModeRequest>& requests)
 {
-  // Prevent subscriptions using nullptr
-  DEV_ASSERT(nullptr != subscriber, "VisionScheduleMediator.NullVisionModeSubscriber");
-  if(nullptr == subscriber){
-    return;
-  }
-
-  // Remove any existing subscriptions from this subscriber
-  for(auto& modeDataPair : _modeDataMap){
-    if(modeDataPair.second.requestMap.erase(subscriber) > 0){
-      modeDataPair.second.dirty = true;
-      _subscriptionRecordIsDirty = true;
-    }
-  }
-
   for(auto& request : requests)
   {
     auto modeDataIterator = _modeDataMap.find(request.mode);
-    if(modeDataIterator == _modeDataMap.end()){
-      PRINT_NAMED_ERROR("VisionScheduleMediator.UnknownVisionMode",
+    if(modeDataIterator == _modeDataMap.end())
+    {
+      PRINT_NAMED_ERROR("VisionScheduleMediator.UpdateModeDataMapWithRequests.UnknownVisionMode",
         "Vision mode %s was requested by a subscriber, missing settings in visionScheduleMediator_config.json",
         EnumToString(request.mode));
-    } else {
+    }
+    else
+    {
       // Record the new request
       int updatePeriod_images = GetUpdatePeriodFromEnum(request.mode, request.frequency);
       VisionModeData& modeData = modeDataIterator->second;
@@ -163,7 +153,70 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
   }
 }
 
-  
+void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
+                                                        const std::set<VisionModeRequest>& requests)
+{
+  // Prevent subscriptions using nullptr
+  if(nullptr == subscriber)
+  {
+    DEV_ASSERT(false, "VisionScheduleMediator.SetVisionModeSubscriptions.NullVisionModeSubscriber");
+    return;
+  }
+
+  // Remove any existing subscriptions from this subscriber
+  for(auto& modeDataPair : _modeDataMap)
+  {
+    if(modeDataPair.second.requestMap.erase(subscriber) > 0)
+    {
+      modeDataPair.second.dirty = true;
+      _subscriptionRecordIsDirty = true;
+    }
+  }
+
+  UpdateModeDataMapWithRequests(subscriber, requests);
+}
+
+void VisionScheduleMediator::AddAndUpdateVisionModeSubscriptions(IVisionModeSubscriber* subscriber,
+                                                                 const std::set<VisionModeRequest>& requests)
+{
+  // Prevent subscriptions using nullptr
+  if(nullptr == subscriber)
+  {
+    DEV_ASSERT(false, "VisionScheduleMediator.AddAndUpdateVisionModeSubscriptions.NullVisionModeSubscriber");
+    return;
+  }
+
+  UpdateModeDataMapWithRequests(subscriber, requests);
+}
+
+void VisionScheduleMediator::RemoveVisionModeSubscriptions(IVisionModeSubscriber* subscriber,
+                                                          const std::set<VisionMode>& modes)
+{
+  // Prevent subscriptions using nullptr
+  DEV_ASSERT(nullptr != subscriber, "VisionScheduleMediator.NullVisionModeSubscriber");
+  if(nullptr == subscriber)
+  {
+    return;
+  }
+
+  for(const auto& mode : modes)
+  {
+    auto modeDataIterator = _modeDataMap.find(mode);
+    if(modeDataIterator == _modeDataMap.end())
+    {
+      PRINT_NAMED_ERROR("VisionScheduleMediator.RemoveVisionModeSubscription.UnknownVisionMode",
+                        "Vision mode %s was requested by a subscriber, missing settings in visionScheduleMediator_config.json",
+                        EnumToString(mode));
+    }
+    else
+    {
+      modeDataIterator->second.requestMap.erase(subscriber);
+      modeDataIterator->second.dirty = true;
+      _subscriptionRecordIsDirty = true;
+    }
+  }
+}
+
 void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const VisionModeSet& modes)
 {
   for(const VisionMode& mode : modes) {
@@ -187,6 +240,16 @@ void VisionScheduleMediator::DevOnly_SelfUnsubscribeVisionMode(const VisionModeS
       _subscriptionRecordIsDirty = true;
     }
   }
+}
+
+void VisionScheduleMediator::DevOnly_ReleaseAllSubscriptions()
+{
+  for(auto& iter : _modeDataMap)
+  {
+    iter.second.requestMap.clear();
+    iter.second.dirty = true;
+  }
+  _subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber)

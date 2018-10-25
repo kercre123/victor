@@ -319,9 +319,16 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_EXIT_ACTION(Camera, cameraExitAction);
   
   // === Mirror Mode ===
-  // NOTE: Re-using lambdas from Camera, since this is largely the same mode
-  SET_ENTER_ACTION(MirrorMode, cameraEnterAction);
-  SET_EXIT_ACTION(MirrorMode, cameraExitAction);
+  // Engine requests this screen so it is assumed that Engine is already
+  // set to send us images
+  FaceInfoScreen::ScreenAction mirrorEnterAction = [animStreamer]() {
+    animStreamer->RedirectFaceImagesToDebugScreen(true);
+  };
+  auto mirrorExitAction = [animStreamer]() {
+    animStreamer->RedirectFaceImagesToDebugScreen(false);
+  };
+  SET_ENTER_ACTION(MirrorMode, mirrorEnterAction);
+  SET_EXIT_ACTION(MirrorMode, mirrorExitAction);
   DISABLE_TIMEOUT(MirrorMode); // Let toggling the associated VisionMode handle turning this on/off
   
   // === AlexaPairing ===

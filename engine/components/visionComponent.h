@@ -21,6 +21,7 @@
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "util/entityComponent/entity.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/engineTimeStamp.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
@@ -75,7 +76,9 @@ struct RobotCompletedFactoryDotTest;
   
 struct DockingErrorSignal;
 
-  class VisionComponent : public IDependencyManagedComponent<RobotComponentID>, public Util::noncopyable
+  class VisionComponent : public IDependencyManagedComponent<RobotComponentID>,
+                          public Util::noncopyable,
+                          public IVisionModeSubscriber
   {
   public:
   
@@ -127,15 +130,6 @@ struct DockingErrorSignal;
 
     // Returns true as long as we are/will be processing images
     bool IsProcessingImages();
-    
-    // Enable/disable different types of processing
-    Result EnableMode(VisionMode mode, bool enable);
-    
-    // Check whether a specific vision mode is enabled
-    bool   IsModeEnabled(VisionMode mode) const;
-    
-    // Same as calling EnableMode(<mode>, false) for all modes
-    Result DisableAllModes();
     
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
@@ -215,6 +209,9 @@ struct DockingErrorSignal;
     
     // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
+
+    // Call to compute calibration from previously stored images
+    void EnableComputingCameraCalibration(bool enable) { EnableMode(VisionMode::ComputingCalibration, enable); }
     
     // For factory test behavior use only: tell vision component to find the
     // four dots for the test target and compute camera pose. Result is
@@ -325,6 +322,9 @@ struct DockingErrorSignal;
     // will leave image capture disabled once the image is captured
     // Normal image capture can be reenabled with EnableImageCapture(true)
     void CaptureOneFrame();
+
+    void EnableImageSending(bool enable);
+    void EnableMirrorMode(bool enable);
     
   protected:
     
@@ -363,8 +363,6 @@ struct DockingErrorSignal;
     // While _visionSystemInput.locked is true this is being processed by VisionSystem
     // and can not be modified by VisionComponent
     VisionSystemInput _visionSystemInput = {};
-
-    VisionModeSet _enabledVisionModes;
 
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;
@@ -471,7 +469,10 @@ struct DockingErrorSignal;
 
     // Watches vision mode console vars and does things when they change
     void UpdateVisionModeConsoleVars();
-    
+
+    // Enable/disable different types of processing
+    Result EnableMode(VisionMode mode, bool enable);
+
   }; // class VisionComponent
   
   inline void VisionComponent::Pause(bool isPaused) {

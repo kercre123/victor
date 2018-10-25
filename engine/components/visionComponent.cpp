@@ -199,7 +199,6 @@ namespace Vector {
       // In alphabetical order:
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableColorImages>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableVisionMode>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisableAllVisionModes>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseAllEnrolledFaces>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestEnrolledNames>();
@@ -280,7 +279,6 @@ namespace Vector {
       return;
     }
 
-    _enabledVisionModes = _visionSystem->GetEnabledModes();
     
     // Load face album and broadcast all known faces
     {
@@ -424,26 +422,25 @@ namespace Vector {
     _lock.unlock();
   }
 
-  Result VisionComponent::DisableAllModes()
-  {
-    _enabledVisionModes.Clear();
-    return RESULT_OK;
-  }
-  
   Result VisionComponent::EnableMode(VisionMode mode, bool enable)
   {
-    _enabledVisionModes.Enable(mode, enable);
+    if(enable)
+    {
+      VisionModeRequest request{.mode = mode,
+                                .frequency = EVisionUpdateFrequency::High};
+    
+      _robot->GetVisionScheduleMediator().AddAndUpdateVisionModeSubscriptions(this, {request});
+    }
+    else
+    {
+      _robot->GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, {mode});
+    }
     return RESULT_OK;
   }
 
-  bool VisionComponent::IsModeEnabled(VisionMode mode) const
-  {
-    return _enabledVisionModes.Contains(mode);
-  }
-
-  static Result GetImageHistState(const Robot&      robot,
+  static Result GetImageHistState(const Robot&           robot,
                                   const RobotTimeStamp_t imageTimeStamp,
-                                  HistRobotState&   imageHistState,
+                                  HistRobotState&        imageHistState,
                                   RobotTimeStamp_t&      imageHistTimeStamp)
   {
     // Handle the (rare, Webots-test-only?) possibility that the image timstamp is _newer_
@@ -672,16 +669,11 @@ namespace Vector {
     
     static u32 scheduleCount = 0;
     const AllVisionModesSchedule& schedule = _robot->GetVisionScheduleMediator().GetSchedule();
-    std::for_each(_enabledVisionModes.begin(), _enabledVisionModes.end(), [this,&schedule](const VisionMode mode)
+    for(VisionMode mode = VisionMode(0); mode < VisionMode::Count; mode++)
     {
-      // Only process modes that are enabled and want to run on this frame according to the schedule
-      if(_enabledVisionModes.Contains(mode))
-      {
-        _visionSystemInput.modesToProcess.Enable(mode, schedule.IsTimeToProcess(mode, scheduleCount));
-
-        _visionSystemInput.futureModesToProcess.Enable(mode, schedule.GetScheduleForMode(mode).WillEverRun());
-      }
-    });
+      _visionSystemInput.modesToProcess.Enable(mode, schedule.IsTimeToProcess(mode, scheduleCount));
+      _visionSystemInput.futureModesToProcess.Enable(mode, schedule.GetScheduleForMode(mode).WillEverRun());
+    }
     scheduleCount++;
 
     // We are all set to process this image so lock input
@@ -793,9 +785,9 @@ namespace Vector {
 
     // VisionMode::ComputingCalibration is a one-shot mode, turn it off
     // as soon as it runs
-    if(_enabledVisionModes.Contains(VisionMode::ComputingCalibration))
+    if(input.modesToProcess.Contains(VisionMode::ComputingCalibration))
     {
-      _enabledVisionModes.Remove(VisionMode::ComputingCalibration);
+      EnableMode(VisionMode::ComputingCalibration, false);
     }
   }
   
@@ -2238,12 +2230,12 @@ namespace Vector {
 
   void VisionComponent::EnableAutoExposure(bool enable)
   {
-    _enabledVisionModes.Enable(VisionMode::AutoExposure, enable);
+    EnableMode(VisionMode::AutoExposure, enable);
   }
 
   void VisionComponent::EnableWhiteBalance(bool enable)
   {
-    _enabledVisionModes.Enable(VisionMode::WhiteBalance, enable);
+    EnableMode(VisionMode::WhiteBalance, enable);
   }
 
   void VisionComponent::SetAndDisableCameraControl(const Vision::CameraParams& params)
@@ -2528,12 +2520,6 @@ namespace Vector {
   void VisionComponent::HandleMessage(const ExternalInterface::EnableVisionMode& payload)
   {
     EnableMode(payload.mode, payload.enable);
-  }
-  
-  template<>
-  void VisionComponent::HandleMessage(const ExternalInterface::DisableAllVisionModes& payload)
-  {
-    DisableAllModes();
   }
 
   template<>
@@ -2986,6 +2972,16 @@ namespace Vector {
       }
     }
     #endif
+  }
+
+  void VisionComponent::EnableImageSending(bool enable)
+  {
+    EnableMode(VisionMode::ImageViz, enable);
+  }
+
+  void VisionComponent::EnableMirrorMode(bool enable)
+  {
+    EnableMode(VisionMode::MirrorMode, enable);
   }
 
 } // namespace Vector

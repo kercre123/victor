@@ -1491,7 +1491,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCali
   }
   else
   {
-    robot->GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
+    robot->GetVisionComponent().EnableComputingCameraCalibration(true);
   }
 }
 

@@ -2907,7 +2907,8 @@ void Robot::SetImageSendMode(ImageSendMode newMode)
 {
   _imageSendMode = newMode;
   // TODO: VIC-5159 fix this to work with SingleShot
-  GetVisionComponent().EnableMode(VisionMode::ImageViz, (newMode != ImageSendMode::Off));
+  const bool enable = (newMode != ImageSendMode::Off);
+  GetVisionComponent().EnableImageSending(enable);
 }
 
 
