@@ -55,7 +55,10 @@ static bool too_hot = false;
 static int heat_counter = 0;
 static uint16_t vref_avg = 0x700;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
-static uint32_t calibration_value;
+
+static int32_t CAL_OFFSET;
+static int32_t TEMP_SCALE;
+static int32_t TEMP30_CAL;
 
 // Assume we started on the charger
 static bool allow_power;
@@ -67,8 +70,8 @@ static int overheated = 0;
 static uint16_t volatile adc_values[ADC_CHANNELS];
 static bool button_pressed = false;
 
-uint32_t AS_VOLTS(ADC_CHANNEL ch) {
-  return (adc_values[ch] * calibration_value) / (vref_avg);
+static inline uint32_t AS_VOLTS(ADC_CHANNEL ch) {
+  return (adc_values[ch] * CAL_OFFSET) / (vref_avg);
 }
 
 void Analog::init(void) {
@@ -127,7 +130,9 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   allow_power = true;
-  calibration_value = *VREFINT_CAL_ADDR * (FIXED_VOLTS(3.3f) / 2048);
+  CAL_OFFSET = *VREFINT_CAL_ADDR * (FIXED_VOLTS(3.3f) / 2048);
+  TEMP_SCALE = FIXED_VOLTS(1.000 / 5.336);
+  TEMP30_CAL = *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
 
   NVIC_DisableIRQ(ADC1_IRQn);
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
@@ -237,9 +242,6 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 }
 
 static bool handleTemperature() {
-  const int32_t TEMP_SCALE = FIXED_VOLTS(1.000 / 5.336);
-  const int32_t TEMP30_CAL = *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
-
   // Temperature logic
   int32_t adc      = AS_VOLTS(ADC_TEMP);
   int32_t unscaled = TEMP30_CAL - adc;
