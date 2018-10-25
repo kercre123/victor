@@ -960,6 +960,18 @@
     "AnimName": "ag_putdownblock"
   },
   {
+    "CladEvent": "ReactToBrightColorDetection",
+    "AnimName": "ag_brightcolordetection_detect_01"
+  },
+    {
+    "CladEvent": "ReactToBrightColorBrightReaction",
+    "AnimName": "ag_brightcolordetection_brightcolor_reaction_01"
+  },
+    {
+    "CladEvent": "ReactToBrightColorDullReaction",
+    "AnimName": "ag_brightcolordetection_dullcolor_reaction_01"
+  },
+  {
     "CladEvent": "ReactToCliff",
     "AnimName": "ag_reacttocliff_edge"
   },
