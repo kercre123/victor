@@ -5,6 +5,10 @@
   "numHues": 6,
   "targetDistance_mm": 75,
   "celebrationSpins": 2,
+  "salientPointAge_ms":500,
+  "animDetectedBrightColor":"ReactToBrightColorDetection",
+  "animTooFarAway":"ReactToBrightColorDullReaction",
+  "animAtBrightColor":"ReactToBrightColorBrightReaction",
 
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",

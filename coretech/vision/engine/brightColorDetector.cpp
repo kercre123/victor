@@ -72,9 +72,6 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
   const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
   const char* typeString = EnumToString(type);
 
-//  float imageHeightScale = inputImage.GetNumRows()/static_cast<float>(smallerImage.GetNumRows());
-//  float imageWidthScale = inputImage.GetNumCols()/static_cast<float>(smallerImage.GetNumCols());
-
   const s32 cellHeight = smallerImage.GetNumRows()/_params->gridHeight;
   const s32 cellWidth = smallerImage.GetNumCols()/_params->gridWidth;
 

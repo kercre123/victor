@@ -12,6 +12,7 @@
 
 #include "behaviorReactToBrightColor.h"
 
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -22,12 +23,14 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/settingsManager.h"
 
-#include "util/console/consoleInterface.h"
-#include "util/global/globalDefinitions.h"
-#include "util/logging/logging.h"
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/vision/engine/colorPixelTypes.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
+#include "util/console/consoleInterface.h"
+#include "util/global/globalDefinitions.h"
+#include "util/logging/logging.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include <algorithm>
 #include <functional>
@@ -38,7 +41,11 @@ namespace Vector {
 namespace {
 const char* const kNumHuesKey = "numHues";
 const char* const kTargetDistanceKey = "targetDistance_mm";
-const char* const kCelebrationSpins = "celebrationSpins";
+const char* const kCelebrationSpinsKey = "celebrationSpins";
+const char* const kAnimDetectedBrightColorKey = "animDetectedBrightColor";
+const char* const kAnimAtBrightColorKey = "animAtBrightColor";
+const char* const kAnimTooFarAwayKey = "animTooFarAway";
+const char* const kSalientPointAgeKey = "salientPointAge_ms";
 
 /**
  * @brief Modify the Vision::SalientPoint such that color is rounded to the nearest Hue
@@ -61,7 +68,17 @@ BehaviorReactToBrightColor::InstanceConfig::InstanceConfig(const Json::Value& co
   DEV_ASSERT(numHues > 0,"Number of hues must be greater than 0");
 
   targetDistance_mm = JsonTools::ParseUInt32(config, kTargetDistanceKey, debugName);
-  celebrationSpins = JsonTools::ParseUInt32(config, kCelebrationSpins, debugName);
+  celebrationSpins = JsonTools::ParseUInt32(config, kCelebrationSpinsKey, debugName);
+  salientPointAge_ms = JsonTools::ParseUInt32(config, kSalientPointAgeKey, debugName);
+
+  animBrightColorDetection = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimDetectedBrightColorKey, animBrightColorDetection, debugName, false);
+
+  animAtBrightColor = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimAtBrightColorKey, animAtBrightColor, debugName, false);
+
+  animTooFarAway = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimTooFarAwayKey, animTooFarAway, debugName, false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -120,14 +137,15 @@ void BehaviorReactToBrightColor::GetAllDelegates(std::set<IBehavior*>& delegates
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBrightColor::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-#if 1
   const char* list[] = {
     kNumHuesKey,
     kTargetDistanceKey,
-    kCelebrationSpins
+    kCelebrationSpinsKey,
+    kAnimDetectedBrightColorKey,
+    kAnimAtBrightColorKey,
+    kAnimTooFarAwayKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
-#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -204,8 +222,47 @@ void BehaviorReactToBrightColor::RoundToNearestHue(std::list<Vision::SalientPoin
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBrightColor::FindCurrentColor ()
+bool BehaviorReactToBrightColor::FindCurrentColor(Vision::SalientPoint& point)
 {
+  auto& component = GetAIComp<SalientPointsComponent>();
+  std::list<Vision::SalientPoint> latestBrightColors;
+
+  const RobotTimeStamp_t timestamp = _dVars.point->timestamp;
+  component.GetSalientPointSinceTime(latestBrightColors, Vision::SalientPointType::BrightColors, timestamp);
+
+  // No bright colors since salient point
+  if (latestBrightColors.empty())
+  {
+    return false;
+  }
+
+  auto getHue = [](uint32_t color_rgba) -> float {
+    ColorRGBA rgba(color_rgba);
+    Vision::PixelHSV hsv;
+    hsv.FromPixelRGB(Vision::PixelRGB(rgba.r(), rgba.g(), rgba.b()));
+    return hsv.h();
+  };
+
+  float currHue = getHue(_dVars.point->color_rgba);
+
+  // Ten percent of the hue steps in each direction around the hue
+  float closeEpsilon = (1.f/_iConfig.numHues)/10.f;
+
+  auto colorCloseEnough = [&](const Vision::SalientPoint& pt) -> bool {
+    float otherHue = getHue(pt.color_rgba);
+    return Util::IsNear(currHue, otherHue, closeEpsilon);
+  };
+  auto iter = std::find_if(latestBrightColors.begin(), latestBrightColors.end(), colorCloseEnough);
+
+  if (iter == latestBrightColors.end())
+  {
+    return false;
+  }
+  else
+  {
+    point = *iter;
+    return true;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -213,8 +270,8 @@ bool BehaviorReactToBrightColor::FindNewColor (Vision::SalientPoint& point)
 {
   auto& component = GetAIComp<SalientPointsComponent>();
   std::list<Vision::SalientPoint> latestBrightColors;
-  component.GetSalientPointSinceTime(latestBrightColors,Vision::SalientPointType::BrightColors,
-                                     _dVars.persistent.lastSeenTimeStamp);
+  const RobotTimeStamp_t timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _iConfig.salientPointAge_ms;
+  component.GetSalientPointSinceTime(latestBrightColors,Vision::SalientPointType::BrightColors, timestamp);
 
   // No bright colors since last time
   if (latestBrightColors.empty())
@@ -299,7 +356,14 @@ void BehaviorReactToBrightColor::TransitionToStart()
   // TODO: Make this a configurable range mapping
   TurnOnLights(*_dVars.point); // No Callback, just turns on backpack
 
-  TransitionToTurnTowardsPoint();
+  TransitionToNoticedBrightColor();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToBrightColor::TransitionToNoticedBrightColor()
+{
+  auto* action = new TriggerAnimationAction(_iConfig.animBrightColorDetection);
+  DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToTurnTowardsPoint);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -311,8 +375,27 @@ void BehaviorReactToBrightColor::TransitionToTurnTowardsPoint()
   CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction(new TurnTowardsImagePointAction(*_dVars.point));
 
-  DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToDriveTowardsPoint);
+  DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToLookForCurrentColor);
 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToBrightColor::TransitionToLookForCurrentColor()
+{
+  Vision::SalientPoint curr;
+  bool found = FindCurrentColor(curr);
+  if (found)
+  {
+    // Update the current point to be the latest
+    _dVars.point = std::make_shared<Vision::SalientPoint>(curr);
+    TransitionToDriveTowardsPoint();
+  }
+  else
+  {
+    TransitionToGiveUpLostColor();
+    PRINT_NAMED_ERROR("BehaviorReactToBrightColor.OnBehaviorActivated","No new bright colors to act on");
+    return;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -338,36 +421,33 @@ void BehaviorReactToBrightColor::TransitionToDriveTowardsPoint()
       shouldGoStraight = true;
       targetDistance_mm = distance_mm - _iConfig.targetDistance_mm;
     }
+
+    if (shouldGoStraight)
+    {
+      CompoundActionSequential * action;
+      // Far enough away that we should drive closer
+      action = new CompoundActionSequential({ new DriveStraightAction(targetDistance_mm) });
+      CancelDelegates(false);
+      DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToCelebrate);
+    }
+    else
+    {
+      // Close enough that we can celebrate
+      TransitionToCelebrate();
+    }
   }
   else
   {
-    // Can't see obstacle, drive forward indefinitely
-    shouldGoStraight = true;
-    // TODO: figure out how to drive until we get close enough or have some other terminate condition
-    targetDistance_mm = 250;
-
-    // TODO: Figure out how to get this to show up in webots at DEBUG level
-//    PRINT_NAMED_ERROR("BehaviorReactToBrightColor.TransitionToDriveTowardsPoint.NoValidProxSensorData", "");
+    // Prox sensor says there is nothing close enough to be considered valid. So just give up.
+    TransitionToGiveUpTooFarAway();
   }
 
-  CompoundActionSequential * action;
-
-  if (shouldGoStraight)
-  {
-    action = new CompoundActionSequential({ new DriveStraightAction(targetDistance_mm) });
-    CancelDelegates(false);
-    DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToCelebrate);
-  }
-  else
-  {
-    // TODO: Figure out how to get this to show up in webots at DEBUG level
-    PRINT_NAMED_ERROR("BehaviorReactToBrightColor.TransitionToDriveTowardsPoint.NotDrivingForward", "");
-    TransitionToCelebrate();
-  }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBrightColor::TransitionToCelebrate()
 {
+#if 0
   CompoundActionSequential* sequence = new CompoundActionSequential();
 
   CompoundActionParallel* parallel = new CompoundActionParallel();
@@ -378,11 +458,24 @@ void BehaviorReactToBrightColor::TransitionToCelebrate()
   sequence->AddAction(new MoveLiftToHeightAction(LIFT_PROTO_MIN_HEIGHT));
 
   DelegateIfInControl(sequence, &BehaviorReactToBrightColor::TransitionToCompleted);
+#elif 1
+  auto* action = new TriggerAnimationAction(_iConfig.animAtBrightColor);
+  DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToCompleted);
+#endif
 }
 
-void BehaviorReactToBrightColor::TransitionToRunAway()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToBrightColor::TransitionToGiveUpLostColor()
 {
-  // TODO
+  auto* action = new TriggerAnimationAction(_iConfig.animTooFarAway);
+  DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToCompleted);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToBrightColor::TransitionToGiveUpTooFarAway()
+{
+  auto* action = new TriggerAnimationAction(_iConfig.animTooFarAway);
+  DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToCompleted);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -57,6 +57,18 @@ private:
 
     //! Number of times to spin when he gets to the bright color
     u32 celebrationSpins;
+
+    //! The age of salient points to consider in ms
+    u32 salientPointAge_ms;
+
+    //! Animation to play when a bright color is too far away from the proximity sensor
+    AnimationTrigger animBrightColorDetection;
+
+    //! Animation to play when a bright color is reached
+    AnimationTrigger animAtBrightColor;
+
+    //! Animation to play when a bright color is too far away from the proximity sensor
+    AnimationTrigger animTooFarAway;
   };
 
   struct DynamicVariables {
@@ -79,8 +91,10 @@ private:
 
   /**
    * @brief Find a salient point for the current color the behavior is interested
+   * @details Finds a salient point within an epsilon from the current color and treats that as the same SalientPoint.
+   * @return true if a similar color point is found, and sets point to the found value, returns false otherwise.
    */
-  void FindCurrentColor();
+  bool FindCurrentColor(Vision::SalientPoint& point);
 
   /**
    * @brief Find a salient point for a new color
@@ -96,10 +110,13 @@ private:
   bool CheckIfShouldStop();
 
   void TransitionToStart();
+  void TransitionToNoticedBrightColor();
   void TransitionToTurnTowardsPoint();
+  void TransitionToLookForCurrentColor();
   void TransitionToDriveTowardsPoint();
   void TransitionToCelebrate();
-  void TransitionToRunAway();
+  void TransitionToGiveUpLostColor();
+  void TransitionToGiveUpTooFarAway();
   void TransitionToCompleted();
 
   InstanceConfig _iConfig;
