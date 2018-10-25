@@ -13,7 +13,7 @@ set(PLATFORM_COMPILE_DEFS "")
 if (VICOS)
     set(PLATFORM_LIBS
         log
-        camera_client)
+    )
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS
