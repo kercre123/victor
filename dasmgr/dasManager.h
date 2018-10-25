@@ -64,6 +64,7 @@ private:
   bool _purge_backup_files = false;
   bool _exiting = false;
   bool _uploading = false;
+  bool _gotFlushEvent = false;
   bool _gotTerminateEvent = false;
   std::string _logFilePath;
   std::ofstream _logFile;

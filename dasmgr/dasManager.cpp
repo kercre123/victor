@@ -353,6 +353,8 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
       _purge_backup_files = true;
     }
     _allow_upload = allow_upload;
+  } else if (name == DASMSG_DAS_FLUSH) {
+    _gotFlushEvent = true;
   }
 
   std::ostringstream ostr;
@@ -834,9 +836,9 @@ Result DASManager::Run(const bool & shutdown)
     // Dispose of this log entry
     ProcessLogEntry(logEntry);
 
-    if(_gotTerminateEvent)
+    if (_gotTerminateEvent)
     {
-      if(shutdown)
+      if (shutdown)
       {
         LOG_INFO("DASManager.Run.Shutdown", "");
         break;
@@ -854,13 +856,20 @@ Result DASManager::Run(const bool & shutdown)
     }
 
     // If we have exceeded the threshold size, roll the log file now.
+    // If we are allowed to upload and have received a flush event, roll the log file now.
     // If we are allowed to upload and have gone over the flush interval, roll the log file now.
     // If we are NOT allowed to upload, let the file keep growing to avoid fragmentation.
     //
     bool rollNow = false;
     if (_logFile.tellp() > fileThresholdSize) {
+      LOG_DEBUG("DASManager.Run", "Roll now due to file size");
+      rollNow = true;
+    } else if (_allow_upload && _gotFlushEvent) {
+      LOG_DEBUG("DASManager.Run", "Roll now due to flush event");
+      _gotFlushEvent = false;
       rollNow = true;
     } else if (_allow_upload && GetSecondsSinceLastFlush() > flushInterval) {
+      LOG_DEBUG("DASManager.Run", "Roll now due to flush interval");
       rollNow = true;
     }
 

@@ -187,10 +187,18 @@ void sLogDebug(const DasMsg & dasMessage);
 //
 // DAS Allow Upload
 // This event is used to enable/disable DAS uploads.
-// If event name or event parameters change, DASManager must be updated to match.
+// If event name or event parameters change, DASManager.cpp must be updated to match.
 // Names are defined as a macro, not a constexpr, so they can be expanded by doxygen.
 //
 #define DASMSG_DAS_ALLOW_UPLOAD "das.allow_upload"
+
+//
+// DAS Allow Upload
+// This event is used to request flush of queued DAS events.
+// If event name or event parameters change, DASManager.cpp must be updated to match.
+// Names are defined as a macro, not a constexpr, so they can be expanded by doxygen.
+//
+#define DASMSG_DAS_FLUSH "das.flush"
 
 //
 // DAS message macros

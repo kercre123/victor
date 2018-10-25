@@ -30,6 +30,8 @@
 
 #include "clad/types/lcdTypes.h"
 
+#include <cmath>
+
 namespace Anki {
 namespace Vector {
 
@@ -57,7 +59,7 @@ static constexpr const float kMicBufferHighMark = 0.6f;
 // The minimum amount of time that we must be in active mode before we can
 // go to power save mode, in order to limit fast/expensive mode toggling.
 static constexpr const float kMinActiveModeDuration_s = 10.f;
-  
+
 const std::string kWebVizPowerModule = "power";
 const f32 kSendWebVizDataPeriod_sec = 0.5f;
 
@@ -127,13 +129,13 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
       {
         visionComponent.EnableImageCapture(false);
       }
-        
+
       if(res == RESULT_OK)
       {
         _cameraState = CameraState::Deleted;
       }
     }
-    
+
   }
   else if(_cameraState == CameraState::ShouldInit)
   {
@@ -153,7 +155,7 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
     {
       visionComponent.EnableImageCapture(true);
     }
-    
+
     if(res == RESULT_OK)
     {
       visionComponent.Pause(false);
@@ -180,8 +182,8 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
       _cpuThrottleLow = true;
     }
   }
-  
-  
+
+
   // Send info to web viz occasionally
   if (ANKI_DEV_CHEATS) {
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -191,7 +193,7 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
         if (webService!= nullptr && webService->IsWebVizClientSubscribed(kWebVizPowerModule)) {
           Json::Value toSend;
           toSend["powerSaveEnabled"] = InPowerSaveMode() ? "true" : "false";
-          
+
           std::stringstream ss;
           ss << "[";
           for(auto& requester : _powerSaveRequests) {
@@ -364,20 +366,22 @@ void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
   if( kPowerSave_ThrottleCPU ) {
     TogglePowerSaveSetting( components, PowerSaveSetting::ThrottleCPU, true );
   }
-  
+
   if( kPowerSave_ProxSensorMap ) {
     TogglePowerSaveSetting( components, PowerSaveSetting::ProxSensorNavMap, true );
   }
 
   if( !_inPowerSaveMode ) {
-    DASMSG(power_save_start, "engine.power_save.start", "Sent when engine beigns trying to save power");
+    DASMSG(power_save_start, "engine.power_save.start", "Sent when engine begins trying to save power");
+    DASMSG_SEND();
+
+    DASMSG(das_flush, DASMSG_DAS_FLUSH, "Request flush of queued events");
     DASMSG_SEND();
   }
 
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
   _inPowerSaveMode = true;
-  _timePowerSaveToggled_s = currTime_s;
+  _timePowerSaveToggled_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
 }
 
 void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
