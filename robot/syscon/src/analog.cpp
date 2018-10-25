@@ -10,24 +10,30 @@
 #include "vectors.h"
 #include "flash.h"
 
+#define ADC_UNSCALED(v) ((uint16_t)((v) * (2048.0f / 2.8f)))
+#define ADC_WINDOW(low, high) ((((high) & 0xFFF) << 16) | ((low) & 0xFFF))
+#define FIXED_VOLTS(v) ((int32_t)((v) * 0x1000))
+typedef uint32_t Voltage;
+
 static const int SELECTED_CHANNELS = 0
-  | ADC_CHSELR_CHSEL0
   | ADC_CHSELR_CHSEL2
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
   | ADC_CHSELR_CHSEL16
+  | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
-static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
-static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
+static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_UNSCALED(3.50), ~0);
 
 static const int      MINIMUM_ON_CHARGER = 5;
 
+static const Voltage BUTTON_THRESHOLD = FIXED_VOLTS(2.0 * 2);
+static const Voltage LOW_VOLTAGE_POWER_DOWN_POINT = FIXED_VOLTS(3.4);
+static const Voltage TRANSITION_POINT = FIXED_VOLTS(4.3);
+
 static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
-static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x100000 * (2.8 / 3.3));
-static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x100000 * (1.000 / 5.336));
+static const uint16_t* VREFINT_CAL_ADDR = (uint16_t*)0x1FFFF7BA;
 
 // We allow for 4 hours of over-heat time (variable)
 static const int MAX_HEAT_COUNTDOWN = 200 * 60 * 60 * 4 * 5;
@@ -41,14 +47,15 @@ static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
-static const int BUTTON_THRESHOLD = ADC_VOLTS(2.0) * 2;
 
 static bool is_charging = false;
 bool Analog::on_charger = false;
 static bool charge_cutoff = false;
 static bool too_hot = false;
 static int heat_counter = 0;
+static uint16_t vref_avg = 0x700;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
+static uint32_t calibration_value;
 
 // Assume we started on the charger
 static bool allow_power;
@@ -59,6 +66,10 @@ static int overheated = 0;
 
 static uint16_t volatile adc_values[ADC_CHANNELS];
 static bool button_pressed = false;
+
+uint32_t AS_VOLTS(ADC_CHANNEL ch) {
+  return (adc_values[ch] * calibration_value) / (vref_avg);
+}
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -92,6 +103,7 @@ void Analog::init(void) {
   ADC1->TR = FALLING_EDGE;
 
   ADC->CCR = 0
+           | ADC_CCR_VREFEN
            | ADC_CCR_TSEN
            ;
 
@@ -115,6 +127,7 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   allow_power = true;
+  calibration_value = *VREFINT_CAL_ADDR * (FIXED_VOLTS(3.3f) / 2048);
 
   NVIC_DisableIRQ(ADC1_IRQn);
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
@@ -170,7 +183,7 @@ static void handleButton() {
   static int hold_count = 0;
   static int total_release = 0;
 
-  bool button_now = (adc_values[ADC_BUTTON] >= BUTTON_THRESHOLD);
+  bool button_now = (AS_VOLTS(ADC_BUTTON) >= BUTTON_THRESHOLD);
 
   // Trap stuck down button
   if (total_release < MINIMUM_RELEASE_UNSTUCK) {
@@ -224,9 +237,13 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 }
 
 static bool handleTemperature() {
+  const int32_t TEMP_SCALE = FIXED_VOLTS(1.000 / 5.336);
+  const int32_t TEMP30_CAL = *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
+
   // Temperature logic
-  int32_t temp_now = *TEMP30_CAL_ADDR - ((adc_values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
-  temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 20) + 30;
+  int32_t adc      = AS_VOLTS(ADC_TEMP);
+  int32_t unscaled = TEMP30_CAL - adc;
+  int32_t temp_now = ((unscaled * TEMP_SCALE) >> 24) + 30;
 
   // We are running way too hot, have a bowl of boot loops.
   if (temp_now >= 70) {
@@ -245,7 +262,7 @@ static bool handleTemperature() {
   }
 
   // Our filtered temp is cool enough to reset the counter
-  if (temperature < 45) {
+  if (temperature < 47) {
     temp_alarm = TEMP_ALARM_SAFE;
     if (heat_counter > 0) heat_counter--;
   } else {
@@ -253,7 +270,7 @@ static bool handleTemperature() {
     bool disable_vmain = false
       || alarmTimer<TEMP_ALARM_HOT, MAX_HEAT_COUNTDOWN>(temperature, 60) // Fire immediately
       || alarmTimer<TEMP_ALARM_MID,                 10>(temperature, 50) // Fire in ~2H
-      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 45) // Fire in ~4H
+      || alarmTimer<TEMP_ALARM_LOW,                  5>(temperature, 47) // Fire in ~4H
       ;
 
     if (overheated == 0 && disable_vmain) {
@@ -266,7 +283,7 @@ static bool handleTemperature() {
     Power::setMode(POWER_STOP);
   }
 
-  if (temperature >= 45) {
+  if (temperature >= 47) {
     too_hot = true;
   } else if (temperature <= 42) {
     too_hot = false;
@@ -280,7 +297,7 @@ static void handleLowBattery() {
 
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
-  if (adc_values[ADC_VMAIN] < LOW_VOLTAGE_POWER_DOWN_POINT) {
+  if (AS_VOLTS(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
     if (--power_down_timer <= 0) {
       Power::setMode(POWER_STOP);
     }
@@ -304,7 +321,7 @@ static bool shouldPowerRobot() {
 static void debounceVEXT() {
   static bool last_vext = true;
   static int vext_debounce = MINIMUM_ON_CHARGER;
-  bool vext_now = adc_values[ADC_VEXT] >= TRANSITION_POINT;
+  bool vext_now = AS_VOLTS(ADC_VEXT) >= TRANSITION_POINT;
 
   if (vext_now == last_vext) {
     if (vext_debounce < MINIMUM_ON_CHARGER) {
@@ -324,6 +341,8 @@ void Analog::tick(void) {
   static int on_charger_time = 0;
   static int off_charger_time = 0;
 
+  vref_avg = (vref_avg * 15 + adc_values[ADC_VREF]) / 16;
+  
   debounceVEXT();
   handleButton();
   handleLowBattery();
