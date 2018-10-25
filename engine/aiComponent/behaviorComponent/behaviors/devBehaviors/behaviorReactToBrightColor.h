@@ -62,13 +62,13 @@ private:
     u32 salientPointAge_ms;
 
     //! Animation to play when a bright color is too far away from the proximity sensor
-    AnimationTrigger animBrightColorDetection;
+    AnimationTrigger animDetectedBrightColor;
 
     //! Animation to play when a bright color is reached
-    AnimationTrigger animAtBrightColor;
+    AnimationTrigger animSuccess;
 
     //! Animation to play when a bright color is too far away from the proximity sensor
-    AnimationTrigger animTooFarAway;
+    AnimationTrigger animGiveUp;
   };
 
   struct DynamicVariables {
@@ -114,9 +114,11 @@ private:
   void TransitionToTurnTowardsPoint();
   void TransitionToLookForCurrentColor();
   void TransitionToDriveTowardsPoint();
+  void TransitionToCheckGotToObject();
   void TransitionToCelebrate();
   void TransitionToGiveUpLostColor();
   void TransitionToGiveUpTooFarAway();
+  void TransitionToGiveUpLostObject();
   void TransitionToCompleted();
 
   InstanceConfig _iConfig;

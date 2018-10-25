@@ -7,8 +7,8 @@
   "celebrationSpins": 2,
   "salientPointAge_ms":500,
   "animDetectedBrightColor":"ReactToBrightColorDetection",
-  "animTooFarAway":"ReactToBrightColorDullReaction",
-  "animAtBrightColor":"ReactToBrightColorBrightReaction",
+  "animGiveUp":"ReactToBrightColorDullReaction",
+  "animSuccess":"ReactToBrightColorBrightReaction",
 
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",
