@@ -117,6 +117,10 @@ namespace Vision {
     
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
+
+    // TODO add documentation
+    const Pose3d& GetFaceFocusPose() const;
+    void SetFaceFocusPose() const;
     
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
@@ -149,6 +153,10 @@ namespace Vision {
     bool IsMakingEyeContact() const { return _isMakingEyeContact; }
     void SetEyeContact(const bool eyeContact);
 
+    // Face focused
+    bool IsFaceFocused() const { return _isFaceFocused; }
+    void SetFaceFocused(const bool eyeContact);
+
     // Face direction
     TrackedFace::FaceDirection GetFaceDirection() const {return _faceDirection;}
     void SetFaceDirection(const TrackedFace::FaceDirection faceDirection);
@@ -168,9 +176,11 @@ namespace Vision {
     bool           _isBeingTracked     = false;
     bool           _isFacingCamera     = false;
     bool           _isMakingEyeContact = false;
+    bool           _isFaceFocused      = false;
     bool           _isTranslationSet   = false;
 
     FaceDirection _faceDirection;
+    Pose3d _faceFocusPose;
 
     std::string    _name;
     
@@ -361,11 +371,18 @@ namespace Vision {
     _isMakingEyeContact = eyeContact;
   }
 
+  inline void TrackedFace::SetFaceFocused(const bool isFaceFocused) {
+    _isFaceFocused = isFaceFocused;
+  }
+
   inline void TrackedFace::SetFaceDirection(const FaceDirection faceDirection) {
     _faceDirection = faceDirection;
     PRINT_NAMED_INFO("TrackedFace.SetFaceDirection", "face direction %d", faceDirection);
- }
-  
+  }
+
+  inline const Pose3d& TrackedFace::GetFaceFocusPose() const {
+    return _faceFocusPose;
+  }
 } // namespace Vision
 } // namespace Anki
 

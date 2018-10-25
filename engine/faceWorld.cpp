@@ -1089,6 +1089,30 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose) const
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
+
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (ShouldReturnFace(entry.second, recentTime, false))
+      {
+        if (entry.second.face.IsFaceFocused())
+        {
+          faceFocusPose = entry.second.face.GetFaceFocusPose();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Vision::TrackedFace::FaceDirection FaceWorld::GetFaceDirection(const u32 withinLast_ms) const
   {
     // Loop over all the faces and see if any of them are making eye contact

@@ -41,6 +41,7 @@ private:
 
   // TODO add eye contact "state" or something
   void TransitionToCheckFaceDirection();
+  void TransitionToCheckFaceDirectionOld();
   void TransitionToCompleted();
   bool CheckIfShouldStop();
 

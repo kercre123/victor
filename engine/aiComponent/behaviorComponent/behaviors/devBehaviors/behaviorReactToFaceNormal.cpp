@@ -101,6 +101,22 @@ bool BehaviorReactToFaceNormal::CheckIfShouldStop()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
 {
+  Pose3d faceFocusPose;
+  if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose)) {
+    CompoundActionSequential* turnAction = new CompoundActionSequential();
+    turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPose));
+    Radians absHeadAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(faceFocusPose.GetTranslation());
+    Radians relativeBodyTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(faceFocusPose.GetTranslation());
+    turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPose));
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedAtRobot.AnglesToTurn",
+             "head angle %.3f, body angle %.3f", absHeadAngle.getDegrees(), relativeBodyTurnAngle.getDegrees());
+    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToFaceNormal::TransitionToCheckFaceDirectionOld()
+{
   auto faceDirection = GetBEI().GetFaceWorld().GetFaceDirection(500);
 
   if (faceDirection == Vision::TrackedFace::FaceDirection::AtRobot) {
