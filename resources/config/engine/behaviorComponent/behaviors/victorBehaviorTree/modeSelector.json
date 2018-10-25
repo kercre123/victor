@@ -5,10 +5,7 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "SingletonPoweringRobotOff",
-    "EmergencyMode",
-    "ShutUpMode",
-    "QuietMode",
-    "SleepCycle"
+    "Alexa",
+    "Wait"
   ]
 }

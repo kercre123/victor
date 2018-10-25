@@ -18,9 +18,14 @@
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
+  
+  namespace {
+    const u8 kTracksToLock = (static_cast<u8>(AnimTrackFlag::BODY_TRACK) | static_cast<u8>(AnimTrackFlag::HEAD_TRACK) | static_cast<u8>(AnimTrackFlag::LIFT_TRACK) | static_cast<u8>(AnimTrackFlag::AUDIO_TRACK));
+  }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -97,18 +102,48 @@ void BehaviorAlexa::OnBehaviorActivated()
     TransitionToSpeakingGetIn();
   }
 }
+  namespace {
+  void ShittyDebug(const char* str)
+  {
+    DASMSG(shitty_debug,
+           "shitty_debug",
+           "blah blah3");
+    DASMSG_SET(s1, str, "debug");
+    DASMSG_SEND();
+  }
+  }
+  
   
 void BehaviorAlexa::OnBehaviorEnteredActivatableScope()
 {
-  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
-  const auto postAudioEvent
-    = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
-                                  AudioMetaData::GameObjectType::Behavior,
-                                  0 );
+  // not sure why but hey vecotr needs enabling too
+  //namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+  //const auto earConBegin = AudioMetaData::GameEvent::GenericEventFromString("Play__Robot_Vic_Sfx__Wake_Word_On");
+  auto postAudioEvent = AudioEngine::Multiplexer::PostAudioEvent{};//AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
+  
+  bool kPlayGetInAfterDevWakeWord = false;
+  bool kStreamAfterDevWakeWord = false;
+  SmartPushResponseToTriggerWord(
+                                 kPlayGetInAfterDevWakeWord
+                                 ? AnimationTrigger::VC_ListeningGetIn
+                                 : AnimationTrigger::Count,
+                                 postAudioEvent, // required if there is to be any effect at all
+                                 kStreamAfterDevWakeWord
+                                 ? StreamAndLightEffect::StreamingEnabled
+                                 : StreamAndLightEffect::StreamingDisabled
+                                 );
+  
+  
+  //namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+//  const auto postAudioEvent
+//    = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
+//                                  AudioMetaData::GameObjectType::Behavior,
+//                                  0 );
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
   uic.SetResponseToAlexa( GetDebugLabel(),
                           AnimationTrigger::AlexaListenGetIn,
                           postAudioEvent );
+  ShittyDebug( "BehaviorAlexa entered activatable scope" );
 }
 
 
@@ -127,8 +162,9 @@ void BehaviorAlexa::BehaviorUpdate()
       _dVars.shouldExitForWeatherWithinTicks = 0;
       _dVars.state = State::TransitioningToWeather;
       CancelDelegates(false);
-      auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaToWeather };
+      auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaToWeather, 1, true, kTracksToLock };
       action->SetRenderInEyeHue( false );
+      
       DelegateIfInControl(action, [this](const ActionResult& res) {
         CancelSelf();
       });
@@ -244,7 +280,7 @@ void BehaviorAlexa::TransitionToListeningLoop()
 {
   CancelDelegates(false);
   _dVars.state = State::ListeningLoop;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenLoop, 0 };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenLoop, 0, true, kTracksToLock };
   action->SetRenderInEyeHue( false );
   DelegateIfInControl( action );
 }
@@ -254,7 +290,7 @@ void BehaviorAlexa::TransitionToListeningGetOut()
 {
   CancelDelegates(false);
   _dVars.state = State::ListeningGetOut;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenTimeout };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListenTimeout, 1, true, kTracksToLock };
   action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){ CancelSelf(); } );
 }
@@ -264,7 +300,7 @@ void BehaviorAlexa::TransitionFromListeningToSpeaking()
 {
   CancelDelegates(false);
   _dVars.state = State::ListeningToSpeaking;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListen2Speak };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaListen2Speak, 1, true, kTracksToLock };
   action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     TransitionToSpeakingLoop();
@@ -276,7 +312,7 @@ void BehaviorAlexa::TransitionFromSpeakingToListening()
 {
   CancelDelegates(false);
   _dVars.state = State::SpeakingToListening;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeak2Listen };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeak2Listen, 1, true, kTracksToLock };
   action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     TransitionToListeningLoop();
@@ -288,7 +324,7 @@ void BehaviorAlexa::TransitionToSpeakingGetIn()
 {
   CancelDelegates(false);
   _dVars.state = State::SpeakingGetIn;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSuddenSpeak };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSuddenSpeak, 1, true, kTracksToLock };
   action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     TransitionToSpeakingLoop();
@@ -300,7 +336,7 @@ void BehaviorAlexa::TransitionToSpeakingLoop()
 {
   CancelDelegates(false);
   _dVars.state = State::SpeakingLoop;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakLoop, 0 };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakLoop, 0, true, kTracksToLock };
   action->SetRenderInEyeHue( false );
   DelegateIfInControl( action );
 }
@@ -310,7 +346,7 @@ void BehaviorAlexa::TransitionToSpeakingGetOut()
 {
   CancelDelegates(false);
   _dVars.state = State::SpeakingGetOut;
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakGetOut };
+  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::AlexaSpeakGetOut, 1, true, kTracksToLock };
   action->SetRenderInEyeHue( false );
   DelegateIfInControl( action, [this](ActionResult res){
     CancelSelf();

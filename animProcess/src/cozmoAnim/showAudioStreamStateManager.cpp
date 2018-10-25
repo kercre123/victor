@@ -16,6 +16,7 @@
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/robotDataLoader.h"
+#include "util/logging/DAS.h"
 
 #include "audioEngine/audioTypeTranslator.h"
 
@@ -55,8 +56,18 @@ void ShowAudioStreamStateManager::Update()
   }
 }
   
+  void ShittyDebug(const char* str)
+  {
+    DASMSG(shitty_debug,
+           "shitty_debug",
+           "blah blah3");
+    DASMSG_SET(s1, str, "debug");
+    DASMSG_SEND();
+  }
+  
 void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::SetTriggerWordResponse& msg)
 {
+  ShittyDebug( ("ShowAudioStreamStateManager SetTriggerWordResponse " + std::to_string(msg.isAlexa)).c_str() );
   if( msg.isAlexa ) {
     std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
     _postAudioEventAlexa = msg.postAudioEvent;
@@ -134,7 +145,9 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithGetIn(OnTriggerAudioCo
 //      bool interruptRunning = true,
 //      bool shouldOverrideEyeHue = false,
 //      bool shouldRenderInEyeHue = true
+      _streamer->SetLockedTracks(  (u8)AnimTrackFlag::HEAD_TRACK |  (u8)AnimTrackFlag::BODY_TRACK |  (u8)AnimTrackFlag::LIFT_TRACK |  (u8)AnimTrackFlag::AUDIO_TRACK );
       _streamer->SetStreamingAnimation(_getInAnimNameAlexa, _getInAnimationTagAlexa, 1, 0, true, true, false);
+      
     }else{
       PRINT_NAMED_ERROR("ShowAudioStreamStateManager.StartTriggerResponseWithGetIn.NoValidGetInAnimation",
                         "ALEXA Animation not found for get in %s", _getInAnimNameAlexa.c_str());

@@ -686,6 +686,17 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
   PushResponseToTriggerWordInternal(id, std::move(msg));
 }
   
+  namespace {
+  void ShittyDebug(const char* str)
+  {
+    DASMSG(shitty_debug,
+           "shitty_debug",
+           "blah blah3");
+    DASMSG_SET(s1, str, "debug");
+    DASMSG_SEND();
+  }
+  }
+  
 void UserIntentComponent::SetResponseToAlexa(const std::string& id, const AnimationTrigger& getInAnimTrigger,
                         const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent)
 {
@@ -718,6 +729,9 @@ void UserIntentComponent::SetResponseToAlexa(const std::string& id, const Animat
   
   StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabledButWithLight;
   ApplyStreamAndLightEffect(streamAndLightEffect, msg);
+  
+  
+  ShittyDebug( ("SetResponseToAlexa " + std::to_string( getInAnimTrigger != AnimationTrigger::Count)).c_str());
   
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(msg)) );
   

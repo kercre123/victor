@@ -40,7 +40,7 @@
 #include <sched.h>
 #include "webServerProcess/src/webService.h"
 #include "util/time/universalTime.h"
-
+#include "util/logging/DAS.h"
 #include "cozmoAnim/alexa.h"
 
 namespace Anki {
@@ -250,6 +250,16 @@ void MicDataProcessor::InitVAD()
   _sVadConfig->HangoverCountDownStart = 10;  // was 25, make 25 blocks (1/4 second) to see it actually end a couple times
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
+  namespace {
+  void ShittyDebug(const char* str)
+  {
+    DASMSG(shitty_debug,
+           "shitty_debug",
+           "blah blah3");
+    DASMSG_SET(s1, str, "debug");
+    DASMSG_SEND();
+  }
+  }
   
   void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms)
 {
@@ -274,7 +284,9 @@ void MicDataProcessor::InitVAD()
   }
   
   const bool isAlexa = keyword == "ALEXA";
+  ShittyDebug( ("heard " + keyword).c_str() );
   if( _alexa && isAlexa ) {
+    ShittyDebug( "calling trigger word" );
     _alexa->TriggerWord(from_ms, to_ms);
     return;
   }
@@ -333,6 +345,7 @@ void MicDataProcessor::SendAlexaWeatherToEngine( RobotInterface::AlexaWeather&& 
 void MicDataProcessor::OnAlexaStateChanged( AlexaUXState state )
 {
   static auto oldState = AlexaUXState::Idle;
+  ShittyDebug( ("got new ux state " + std::to_string((int)state)).c_str() );
   if( state == AlexaUXState::Listening ) {
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( oldState == AlexaUXState::Idle ) {

@@ -211,7 +211,8 @@ void BehaviorsBootLoader::InitOnboarding()
   Json::Reader reader;
   Json::Value onboardingStateJSON;
   
-  _stage = OnboardingStages::NotStarted;
+  // skip onboarding!
+  _stage = OnboardingStages::Complete;
 # if defined(ANKI_PLATFORM_OSX) 
   {
     // always start in DevDoNothing stage on mac if no persistent file exists, so that webots work

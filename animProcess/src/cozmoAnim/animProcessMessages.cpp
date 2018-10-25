@@ -54,6 +54,7 @@
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/logging/DAS.h"
 
 #include <unistd.h>
 
@@ -423,9 +424,20 @@ void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::Star
   micDataSystem->StartWakeWordlessStreaming(static_cast<CloudMic::StreamType>(msg.streamType),
                                             msg.playGetInFromAnimProcess);
 }
-
+namespace {
+  void ShittyDebug(const char* str)
+  {
+    DASMSG(shitty_debug,
+           "shitty_debug",
+           "blah blah3");
+    DASMSG_SET(s1, str, "debug");
+    DASMSG_SEND();
+  }
+  
+}
 void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTriggerWordResponse& msg)
 {
+  ShittyDebug( "Received SetTriggerWordResponse" );
   auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
   if(showStreamStateManager == nullptr){
     return;

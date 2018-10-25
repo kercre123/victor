@@ -255,6 +255,7 @@ namespace {
   
   using namespace alexaClientSDK;
   
+  namespace{
   void ShittyDebug(const char* str)
   {
     DASMSG(shitty_debug,
@@ -262,6 +263,7 @@ namespace {
            "blah blah2");
     DASMSG_SET(s1, str, "debug");
     DASMSG_SEND();
+  }
   }
 
   
