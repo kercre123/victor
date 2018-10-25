@@ -52,8 +52,6 @@
         ],
         "name": "load_test",
         "image": "${image}",
-        "cpu": ${cpu},
-        "memory": ${memory},
         "logConfiguration": {
             "logDriver": "awslogs",
             "options": {

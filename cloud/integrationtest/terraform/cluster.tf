@@ -11,8 +11,6 @@ data "template_file" "load_test" {
     region = "${var.region}"
 
     image = "${var.app_image}"
-    cpu = "${var.fargate_cpu}"
-    memory = "${var.fargate_memory}"
 
     logging_role = "${var.logging_role}"
 
@@ -30,9 +28,11 @@ resource "aws_ecs_task_definition" "load_test" {
   task_role_arn            = "${aws_iam_role.ecs_task.arn}"
   execution_role_arn       = "${aws_iam_role.ecs_execution.arn}"
   network_mode             = "awsvpc"
+
+  // Fargate required options
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "${var.fargate_cpu}"
-  memory                   = "${var.fargate_memory}"
+  cpu                      = "${var.fargate_cpu}"     // CPU Units
+  memory                   = "${var.fargate_memory}"  // MiB
 }
 
 resource "aws_ecs_service" "load_test" {
@@ -66,9 +66,11 @@ resource "aws_ecs_task_definition" "redis" {
   container_definitions    = "${data.template_file.redis.rendered}"
 
   network_mode             = "awsvpc"
+
+  // Fargate required options
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 256
-  memory                   = 512
+  cpu                      = 256  // CPU Units
+  memory                   = 512  // MiB
 }
 
 resource "aws_ecs_service" "redis" {

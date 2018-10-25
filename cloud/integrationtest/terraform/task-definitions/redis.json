@@ -1,9 +1,7 @@
 [
     {
         "name": "redis",
-        "image": "redis",
-        "cpu": ${cpu},
-        "memory": ${memory},
+        "image": "redis:alpine",
         "portMappings": [
             {
               "containerPort": 6379,
