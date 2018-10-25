@@ -121,7 +121,7 @@ private:
   Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   std::string               _savePath;
-  std::string               _cloudJdocResetPath;
+  bool                      _cloudJdocResetRequested = false;
   LocalUdpClient            _udpClient;
   std::string               _userID;
   std::string               _thingID;

@@ -163,6 +163,15 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     return;
   }
 
+  const auto& cloudJdocResetPath = Util::FileUtils::FullFilePath({_savePath, kCloudJdocResetRequestFile});
+  _cloudJdocResetRequested = Util::FileUtils::FileExists(cloudJdocResetPath);
+  if (_cloudJdocResetRequested)
+  {
+    LOG_INFO("JdocsManager.InitDependent.CloudJdocReset",
+             "Cloud Jdoc reset file found; it will be removed, and jdocs will be reset to defaults");
+    Util::FileUtils::DeleteFile(cloudJdocResetPath);
+  }
+
   // Build our jdoc data structure based on the config data, and possible saved jdoc files on disk
   const auto& config = robot->GetContext()->GetDataLoader()->GetJdocsConfig();
   const auto& jdocsConfig = config[kManagedJdocsKey];
@@ -249,7 +258,12 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     jdocInfo._formatMigrationCB = nullptr;
     jdocInfo._shutdownCB = nullptr;
 
-    if (Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
+    if (_cloudJdocResetRequested)
+    {
+      Util::FileUtils::DeleteFile(jdocInfo._jdocFullPath);
+    }
+
+    if (!_cloudJdocResetRequested && Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
     {
       if (LoadJdocFile(jdocType))
       {
@@ -285,8 +299,6 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       jdocInfo._needsCreation = true;
     }
   }
-
-  _cloudJdocResetPath = Util::FileUtils::FullFilePath({_savePath, kCloudJdocResetRequestFile});
 
   // Now queue up a request to the jdocs server (vic-cloud) for the userID
   const auto userReq = JDocs::DocRequest::Createuser(Void{});
@@ -1174,13 +1186,6 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
 
   std::vector<external_interface::JdocType> jdocsPulledFromCloud;
 
-  bool cloudJdocResetFileFound = Util::FileUtils::FileExists(_cloudJdocResetPath);
-  if (cloudJdocResetFileFound)
-  {
-    LOG_INFO("JdocsManager.HandleReadResponse.CloudJdocReset",
-             "Cloud Jdoc reset file found; it will be used and then removed");
-  }
-
   int index = 0;
   for (const auto& responseItem : readResponse.items)
   {
@@ -1213,7 +1218,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       {
         // Cloud has a newer version than robot does
         bool pullCloudVersion = jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD;
-        if (cloudJdocResetFileFound && !_gotLatestCloudJdocsAtStartup)
+        if (_cloudJdocResetRequested && !_gotLatestCloudJdocsAtStartup)
         {
           pullCloudVersion = false;
         }
@@ -1379,11 +1384,6 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
 
   // The first Read request is always for 'get all latest jdocs'
   _gotLatestCloudJdocsAtStartup = true;
-  
-  if (cloudJdocResetFileFound)
-  {
-    Util::FileUtils::DeleteFile(_cloudJdocResetPath);
-  }
 }
 
 
