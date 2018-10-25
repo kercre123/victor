@@ -1,32 +1,29 @@
 /**
- * File: tof_vicos.cpp
+ *@file  ankitof.c Reference implementation of VL53L1 sensor client for 16 zone imaging.
+ *@author Daniel Casner <daniel@anki.com>
  *
- * Author: Al Chaussee
- * Created: 10/18/2018
- *
- * Description: Defines interface to a some number(2) of tof sensors
- *
- * Copyright: Anki, Inc. 2018
- *
- **/
+ */
 
-#include "whiskeyToF/tof.h"
-
-#include "whiskeyToF/vicos/vl53l1_tools/inc/vl53l1_def.h"
-#include "whiskeyToF/vicos/vl53l1_tools/inc/stmvl53l1_if.h"
-#include "whiskeyToF/vicos/vl53l1_tools/inc/stmvl53l1_internal_if.h"
-
-#include "util/logging/logging.h"
-
-#include <sys/ioctl.h>
-#include <linux/input.h>
+#include <errno.h>
+#include <string.h>
+#include <stdio.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
 
+#include <linux/input.h>
 
-#ifdef SIMULATOR
-#error SIMULATOR should be defined by any target using tof_vicos.cpp
-#endif
+/* local bare driver top api file */
+#include "vl53l1_def.h"
+/* our driver kernel interface */
+#include "stmvl53l1_if.h"
+#include "stmvl53l1_internal_if.h"
 
 #define SPAD_COLS (16)  ///< What's in the sensor
 #define SPAD_ROWS (16)  ///< What's in the sensor
@@ -36,45 +33,25 @@
 
 #define error(fmt, ...)  fprintf(stderr, "[E] " fmt"\n", ##__VA_ARGS__)
 #define warn(fmt, ...)  fprintf(stderr, "[W] " fmt"\n", ##__VA_ARGS__)
+#define return_if_not(cond, ret, fmt, ...) do { if (!(cond)) { \
+  fprintf(stderr, "[E] " fmt "\n", ##__VA_ARGS__); \
+  return ret; \
+}} while(0)
+#if 0
+#define print_and_pause(fmt, ...) do { fprintf(stderr, "[P] " fmt "\n", ##__VA_ARGS__); getc(stdin); } while(0)
+#else
+#define print_and_pause(fmt, ...) (void)0
+#endif
 
-
-namespace Anki {
-namespace Vector {
-
-namespace {
-  int tof_fd = -1;
-}
-
-ToFSensor* ToFSensor::_instance = nullptr;
-
-ToFSensor* ToFSensor::getInstance()
-{
-  if(nullptr == _instance)
-  {
-    PRINT_NAMED_ERROR("","CREATING TOF");
-    _instance = new ToFSensor();
-  }
-  return _instance;
-}
-
-void ToFSensor::removeInstance()
-{
-  if(_instance != nullptr)
-  {
-    delete _instance;
-    _instance = nullptr;
-  }
-}
-
-int open_dev(const int dev_no)
-{
+/// Open VL53L1 device from /dev by device number
+int open_dev(const int dev_no) {
   char dev_fi_name[256];
   if (dev_no == 0) {
-    strcpy(dev_fi_name, "/dev/" VL53L1_MISC_DEV_NAME);
-  }
+		strcpy(dev_fi_name, "/dev/" VL53L1_MISC_DEV_NAME);
+	}
   else {
-    snprintf(dev_fi_name, sizeof(dev_fi_name), "%s%d","/dev/" VL53L1_MISC_DEV_NAME, dev_no);
-  }
+		snprintf(dev_fi_name, sizeof(dev_fi_name), "%s%d","/dev/" VL53L1_MISC_DEV_NAME, dev_no);
+	}
 
   return open(dev_fi_name ,O_RDWR);
 }
@@ -172,51 +149,47 @@ int setup_roi_grid(const int dev, const int rows, const int cols) {
   }
 
   ioctl_roi.is_read = 0;
-  ioctl_roi.roi_cfg.NumberOfRoi = n_roi;
+	ioctl_roi.roi_cfg.NumberOfRoi = n_roi;
   return ioctl(dev, VL53L1_IOCTL_ROI, &ioctl_roi);
 }
 
-#define return_if_not(cond, ret, fmt, ...) do { if (!(cond)) { \
-      PRINT_NAMED_ERROR("", "[E] " fmt "\n", ##__VA_ARGS__);   \
-  return ret; \
-}} while(0)
 
 /// Setup 4x4 multi-zone imaging
 int setup(void) {
   int fd = -1;
   int rc = 0;
 
-  PRINT_NAMED_ERROR("","open dev\n");
+  print_and_pause("open dev");
   fd = open_dev(0);
   return_if_not(fd >= 0, -1, "Could not open VL53L1 device");
 
   // Stop all ranging so we can change settings
-  PRINT_NAMED_ERROR("","stop ranging\n");
+  print_and_pause("stop ranging");
   rc = stop_ranging(fd);
   return_if_not(rc == 0, -1, "ioctl error stopping ranging: %d", errno);
 
   // Switch to multi-zone scanning mode
-  PRINT_NAMED_ERROR("","Switch to multi-zone scanning\n");
+  print_and_pause("Switch to multi-zone scanning");
   rc = preset_mode_set(fd, VL53L1_PRESETMODE_MULTIZONES_SCANNING);
   return_if_not(rc == 0, -1, "ioctl error setting preset_mode: %d", errno);
 
   // Setup ROIs
-  PRINT_NAMED_ERROR("","Setup ROI grid\n");
+  print_and_pause("Setup ROI grid");
   rc = setup_roi_grid(fd, 4, 4);
   return_if_not(rc == 0, -1, "ioctl error setting up preset grid: %d", errno);
 
   // Setup timing budget
-  PRINT_NAMED_ERROR("","set timing budget\n");
+  print_and_pause("set timing budget");
   rc = timing_budget_set(fd, 16*1000);
   return_if_not(rc == 0, -1, "ioctl error setting timing budged: %d", errno);
 
   // Set distance mode
-  PRINT_NAMED_ERROR("","set distance mode\n");
+  print_and_pause("set distance mode");
   rc = distance_mode_set(fd, VL53L1_DISTANCEMODE_SHORT);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
   // Start the sensor
-  PRINT_NAMED_ERROR("","start ranging\n");
+  print_and_pause("start ranging");
   rc = start_ranging(fd);
   return_if_not(rc == 0, -1, "ioctl error starting ranging: %d", errno);
 
@@ -230,64 +203,36 @@ int get_mz_data(const int dev, const int blocking, VL53L1_MultiRangingData_t *da
 }
 
 
-ToFSensor::ToFSensor()
-{
-  PRINT_NAMED_ERROR("", "SETTING UP TOF");
-  tof_fd = setup();
-  if(tof_fd < 0)
-  {
-    PRINT_NAMED_ERROR("","FAILED TO OPEN TOF");
-  }
-}
-
-ToFSensor::~ToFSensor()
-{
-  stop_ranging(tof_fd);
-  close(tof_fd);
-}
-
-Result ToFSensor::Update()
-{
-  return RESULT_OK;
-}
-
-RangeDataRaw ToFSensor::GetData()
-{
-  PRINT_NAMED_WARNING("","GET DATA");
-  RangeDataRaw rangeData;
-
-  int rc = 0;
+int main(int argc, char *argv[]) {
   VL53L1_MultiRangingData_t mz_data;
-  for(int i = 0; i < 4; i++)
-  {
-    for(int j = 0; j < 4; j++)
-    {
-      rc = get_mz_data(tof_fd, 1, &mz_data);
-      if(rc == 0)
-      {
-        rangeData.data[i*8 + j] = 2;
-        rangeData.data[i*8 + j + 4] = 2;
+  int dev, rc, i, j;
 
-        if(mz_data.NumberOfObjectsFound > 0)
-        {
-          int16_t minDist = std::numeric_limits<int16_t>::max();
-          for(int r = 0; r < mz_data.NumberOfObjectsFound; r++)
-          {
-            const int16_t dist = mz_data.RangeData[r].RangeMilliMeter;
-            PRINT_NAMED_WARNING("","I:%d R:%d D:%d", i*4 + j, r, dist);
-            if(dist < minDist)
-            {
-              minDist = dist;
-            }
-          }
-          rangeData.data[i*8 + j] = minDist / 1000.f;
-          rangeData.data[i*8 + j + 4] = minDist / 1000.f;
+  dev = setup();
+
+  if (dev < 0) return -1;
+
+  print_and_pause("get_mz_data loop");
+  for (i=0; i<10; ++i) {
+    rc = get_mz_data(dev, 1, &mz_data);
+    if (rc == 0) {
+      printf("sc = %02d\troi = %02d\tnof = %02d\tst = %02X\n", mz_data.StreamCount,
+                                                       mz_data.RoiNumber,
+                                                       mz_data.NumberOfObjectsFound,
+                                                       mz_data.RoiStatus);
+      if (mz_data.NumberOfObjectsFound > 0) {
+        printf("\tObjects: ")
+        for (j=0; j<mz_data.NumberOfObjectsFound; ++i) {
+          printf("%dmm\t", mz_data.RangeData[j].RangeMilliMeter);
         }
+        printf("\n");
       }
     }
+    else {
+      error("ioctl error getting mz data: %d\t%d", rc, errno);
+    }
   }
-  return rangeData;
-}
-  
-}
+
+  stop_ranging(dev);
+  close(dev);
+  return 0;
 }
