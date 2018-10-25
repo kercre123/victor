@@ -7,7 +7,6 @@ import (
 	"clad/cloud"
 	"context"
 	"fmt"
-	"sync"
 )
 
 func runServer(ctx context.Context, opts *options) {
@@ -61,8 +60,6 @@ func (c *client) handleConn(ctx context.Context) {
 		}
 	}
 }
-
-var reqMutex sync.Mutex
 
 func (c *client) handleRequest(ctx context.Context, msg *cloud.LogCollectorRequest) (*cloud.LogCollectorResponse, error) {
 	cladHandler, err := newCladHandler(c.opts)
