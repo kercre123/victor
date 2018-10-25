@@ -41,24 +41,28 @@ static const int OVERHEAT_SHUTDOWN = 200 * 30;
 
 static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int MAX_CHARGE_TIME = 200 * 60 * 30;           // 30 minutes
 static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
 static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
 
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
 
+static const int BATTERY_CHECK_PERIOD = 200 * 60 * 60;  // One hour
+static const int BATTERY_CHECK_TIME = 128;
+static const int BATTERY_SAMPLE_TIME = 64;
+
+static int sample_battery = 0;
+static int sample_battery_total;
 static bool is_charging = false;
-bool Analog::on_charger = false;
 static bool charge_cutoff = false;
 static bool too_hot = false;
 static int heat_counter = 0;
 static uint16_t vref_avg = 0x700;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
 
-static int32_t CAL_OFFSET;
-static int32_t TEMP_SCALE;
+static const int32_t TEMP_SCALE = FIXED_VOLTS(1.000 / 5.336);
 static int32_t TEMP30_CAL;
+static int32_t CAL_OFFSET;
 
 // Assume we started on the charger
 static bool allow_power;
@@ -70,8 +74,10 @@ static int overheated = 0;
 static uint16_t volatile adc_values[ADC_CHANNELS];
 static bool button_pressed = false;
 
+bool Analog::on_charger = false;
+
 static inline uint32_t AS_VOLTS(ADC_CHANNEL ch) {
-  return (adc_values[ch] * CAL_OFFSET) / (vref_avg);
+  return (adc_values[ch] * CAL_OFFSET) / vref_avg;
 }
 
 void Analog::init(void) {
@@ -130,8 +136,8 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   allow_power = true;
-  CAL_OFFSET = *VREFINT_CAL_ADDR * (FIXED_VOLTS(3.3f) / 2048);
-  TEMP_SCALE = FIXED_VOLTS(1.000 / 5.336);
+  
+  CAL_OFFSET = *VREFINT_CAL_ADDR * FIXED_VOLTS(3.3f) / 2048;
   TEMP30_CAL = *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
 
   NVIC_DisableIRQ(ADC1_IRQn);
@@ -243,9 +249,7 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 
 static bool handleTemperature() {
   // Temperature logic
-  int32_t adc      = AS_VOLTS(ADC_TEMP);
-  int32_t unscaled = TEMP30_CAL - adc;
-  int32_t temp_now = ((unscaled * TEMP_SCALE) >> 24) + 30;
+  int32_t temp_now = (((TEMP30_CAL - AS_VOLTS(ADC_TEMP)) * TEMP_SCALE) >> 24) + 30;
 
   // We are running way too hot, have a bowl of boot loops.
   if (temp_now >= 70) {
@@ -323,6 +327,7 @@ static bool shouldPowerRobot() {
 static void debounceVEXT() {
   static bool last_vext = true;
   static int vext_debounce = MINIMUM_ON_CHARGER;
+
   bool vext_now = AS_VOLTS(ADC_VEXT) >= TRANSITION_POINT;
 
   if (vext_now == last_vext) {
@@ -342,9 +347,10 @@ void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
+  static bool max_battery_reached = false;
 
   vref_avg = (vref_avg * 15 + adc_values[ADC_VREF]) / 16;
-  
+
   debounceVEXT();
   handleButton();
   handleLowBattery();
@@ -354,18 +360,17 @@ void Analog::tick(void) {
     || disable_charger;
 
   if (on_charger) {
-    if (!prevent_charge) {
-      if (++on_charger_time >= TOP_OFF_TIME) {
-        on_charger_time = 0;
-      }
+    if (!prevent_charge && ++on_charger_time >= TOP_OFF_TIME) {
+      on_charger_time = 0;
+      max_battery_reached = false;
     }
   } else if (++off_charger_time >= ON_CHARGER_RESET) {
     on_charger_time = 0;
+    max_battery_reached = false;
   }
 
   // 30 minute charge cut-off
-  bool max_charge_time_expired = on_charger_time >= MAX_CHARGE_TIME;
-  charge_cutoff = prevent_charge || max_charge_time_expired;
+  charge_cutoff = prevent_charge || max_battery_reached;
 
   // Charger / Battery logic
   if (!shouldPowerRobot()) {
@@ -384,7 +389,7 @@ void Analog::tick(void) {
     overheated = 0;
     heat_counter = 0;
     is_charging = false;
-  } else if (!on_charger) {
+  } else if (!on_charger || sample_battery > 0) {
     // Powered on, off charger
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
@@ -392,6 +397,17 @@ void Analog::tick(void) {
     nCHG_PWR::set();
 
     NVIC_DisableIRQ(ADC1_IRQn);
+
+    if (sample_battery-- > 0) {
+      if (sample_battery == 0) {
+        sample_battery_total /= BATTERY_SAMPLE_TIME;
+        max_battery_reached = sample_battery_total >= FIXED_VOLTS(3.9);
+      } else if (sample_battery <= BATTERY_SAMPLE_TIME) {
+        sample_battery_total += AS_VOLTS(ADC_VMAIN);
+      } else {
+        sample_battery_total = 0;
+      }
+    }
 
     delay_disable = true;
     is_charging = false;
@@ -411,8 +427,15 @@ void Analog::tick(void) {
 
     // As long as the 30 min timer hasn't expired (and we're not manually disabling charging)
     // continue to report that we are charging.
-    is_charging = !max_charge_time_expired && !disable_charger;
+    is_charging = !max_battery_reached && !disable_charger;
   } else {
+    static int check_battery_counter = 0;
+
+    if (++check_battery_counter >= BATTERY_CHECK_PERIOD) {
+      check_battery_counter = 0;
+      sample_battery = BATTERY_CHECK_TIME;
+    }
+
     // Battery connected, on charger (charging)  
     nCHG_PWR::reset();
 
