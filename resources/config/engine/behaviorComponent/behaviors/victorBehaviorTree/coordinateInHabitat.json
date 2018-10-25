@@ -9,6 +9,7 @@
     "PlayRollBlock",
     "PutDownBlock",
     "PlayWithCube",
+    "InvestigateHeldCube",
 
     "SingletonPounceApproachWithProx",
     "SingletonPounceDispatcher",
