@@ -346,9 +346,10 @@ void BehaviorReactToCliff::TransitionToHeadCalibration()
   // The `putDownOnCliff` flag is what triggers the calling of this method.
   // To avoid causing a loop, reset it here, since we're about to calibrate the head motor.
   _dVars.persistent.putDownOnCliff = false;
-  // Force the head to recalibrate since it's possible that Vector may have been put down too aggressively,
-  // resulting in gear slippage for the motor.
-  DelegateIfInControl(new CalibrateMotorAction(true, false,
+  // Force all motors to recalibrate since it's possible that Vector may have been put down too aggressively,
+  // resulting in gear slippage for a motor, or the user might have forced one of the motors into a different
+  // position while in the air or while sensors were disabled.
+  DelegateIfInControl(new CalibrateMotorAction(true, true,
                                                EnumToString(MotorCalibrationReason::BehaviorReactToCliff)),
                       &BehaviorReactToCliff::TransitionToVisualExtendCliffs);
 }
