@@ -16,7 +16,7 @@
 Support for Vector's distance sensor.
 
 Vector's time-of-flight distance sensor has a usable range of about 30 mm to 1200 mm
-(max useful range closer to 300mm for Victor) with a field of view of 25 degrees.
+(max useful range closer to 300mm for Vector) with a field of view of 25 degrees.
 
 The distance sensor can be used to detect objects in front of the robot.
 """
