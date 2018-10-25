@@ -2570,6 +2570,11 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
     srcProxData.isTooPitched);
   msg->set_allocated_prox_data(dstProxData);
 
+  auto* dstTouchData = new external_interface::TouchData(
+    GetTouchSensorComponent().GetLatestRawTouchValue(),
+    GetTouchSensorComponent().GetIsPressed());
+  msg->set_allocated_touch_data(dstTouchData);
+
   return msg;
 }
 

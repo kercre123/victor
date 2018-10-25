@@ -437,7 +437,10 @@ class Connection:
         :param coro: The coroutine, task or any awaitable to schedule for execution on the connection thread.
         """
         def soon():
-            asyncio.ensure_future(coro)
+            try:
+                asyncio.ensure_future(coro)
+            except TypeError as e:
+                raise Exception(f"\n\n{coro.__name__ if hasattr(coro, '__name__') else coro} could not be ensured as a future.\n") from e
         if threading.current_thread() is self._thread:
             self._loop.call_soon(soon)
         else:

@@ -26,8 +26,8 @@ from pathlib import Path
 
 from . import (animation, audio, behavior, camera,
                connection, events, exceptions, faces,
-               motors, screen, photos, proximity, util,
-               viewer, vision, world)
+               motors, screen, photos, proximity, touch,
+               util, viewer, vision, world)
 from .messaging import protocol
 
 # Constants
@@ -138,6 +138,7 @@ class Robot:
         self._screen: screen.ScreenComponent = None
         self._photos: photos.PhotographComponent = None
         self._proximity: proximity.ProximityComponent = None
+        self._touch: touch.TouchComponent = None
         self._viewer: viewer.ViewerComponent = None
         self._vision: vision.VisionComponent = None
         self._world: world.World = None
@@ -285,11 +286,24 @@ class Robot:
         .. testcode::
 
             import anki_vector
-            proximity_data = robot.proximity.last_valid_sensor_reading
-            if proximity_data is not None:
-                print(proximity_data.distance)
+            with anki_vector.Robot() as robot:
+                proximity_data = robot.proximity.last_valid_sensor_reading
+                if proximity_data is not None:
+                    print(proximity_data.distance)
         """
         return self._proximity
+
+    @property
+    def touch(self) -> touch.TouchComponent:
+        """Component containing state related to object touch detection.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot() as robot:
+                print('Robot is being touched: {0}'.format(robot.touch.last_sensor_reading.is_being_touched))
+        """
+        return self._touch
 
     @property
     def viewer(self) -> viewer.ViewerComponent:
@@ -599,7 +613,6 @@ class Robot:
         self._localized_to_object_id = msg.localized_to_object_id
         self._last_image_time_stamp = msg.last_image_time_stamp
         self._status = msg.status
-        self._proximity.on_proximity_update(msg.prox_data)
 
     def connect(self, timeout: int = 10) -> None:
         """Start the connection to Vector.
@@ -629,6 +642,7 @@ class Robot:
         self._screen = screen.ScreenComponent(self)
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
+        self._touch = touch.TouchComponent(self)
         self._viewer = viewer.ViewerComponent(self)
         self._vision = vision.VisionComponent(self)
         self._world = world.World(self)
@@ -681,6 +695,9 @@ class Robot:
             self._audio.close_audio_feed()
         # Close the world and cleanup its objects
         self.world.close()
+
+        self.proximity.close()
+        self.touch.close()
 
         self.events.close()
         self.conn.close()

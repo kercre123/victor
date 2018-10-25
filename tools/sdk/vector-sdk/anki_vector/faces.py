@@ -310,7 +310,7 @@ class Face(objects.ObservableObject):
             self._right_eye = msg.right_eye
             self._nose = msg.nose
             self._mouth = msg.mouth
-            self._robot.conn.run_soon(self._on_observed(pose, image_rect, msg.timestamp))
+            self._on_observed(pose, image_rect, msg.timestamp)
 
     def _on_face_id_changed(self, _, msg):
         """Updates the face id when a tracked face (negative ID) is recognized and
