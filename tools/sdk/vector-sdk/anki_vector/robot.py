@@ -27,7 +27,7 @@ from pathlib import Path
 from . import (animation, audio, behavior, camera,
                connection, events, exceptions, faces,
                motors, screen, photos, proximity, util,
-               viewer, world)
+               viewer, vision, world)
 from .messaging import protocol
 
 # Constants
@@ -85,7 +85,7 @@ class Robot:
                    that identifies the SDK user. Note: Never share your authentication credentials with anyone.
     :param default_logging: Disable default logging.
     :param behavior_activation_timeout: The time to wait for control of the robot before failing.
-    :param enable_vision_mode: Turn on face detection.
+    :param enable_face_detection: Turn on face detection.
     :param enable_camera_feed: Turn camera feed on/off.
     :param enable_audio_feed: Turn audio feed on/off.
     :param show_viewer: Render camera feed on/off."""
@@ -97,7 +97,8 @@ class Robot:
                  default_logging: bool = True,
                  behavior_activation_timeout: int = 10,
                  cache_animation_list: bool = True,
-                 enable_vision_mode: bool = False,
+                 enable_face_detection: bool = False,
+                 enable_custom_object_detection: bool = False,
                  enable_camera_feed: bool = False,
                  enable_audio_feed: bool = False,
                  show_viewer: bool = False):
@@ -138,10 +139,12 @@ class Robot:
         self._photos: photos.PhotographComponent = None
         self._proximity: proximity.ProximityComponent = None
         self._viewer: viewer.ViewerComponent = None
+        self._vision: vision.VisionComponent = None
         self._world: world.World = None
 
         self.behavior_activation_timeout = behavior_activation_timeout
-        self.enable_vision_mode = enable_vision_mode
+        self.enable_face_detection = enable_face_detection
+        self.enable_custom_object_detection = enable_custom_object_detection
         self.cache_animation_list = cache_animation_list
 
         # Robot state/sensor data
@@ -311,6 +314,18 @@ class Robot:
         if self._viewer is None:
             raise exceptions.VectorNotReadyException("ViewerComponent is not yet initialized")
         return self._viewer
+
+    @property
+    def vision(self) -> vision.VisionComponent:
+        """Component containing functionality related to vision based object detection.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot() as robot:
+                robot.vision.set_vision_mode(detect_faces=True)
+        """
+        return self._vision
 
     @property
     def world(self) -> world.World:
@@ -615,6 +630,7 @@ class Robot:
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
         self._viewer = viewer.ViewerComponent(self)
+        self._vision = vision.VisionComponent(self)
         self._world = world.World(self)
 
         if self.cache_animation_list:
@@ -636,7 +652,7 @@ class Robot:
             self.viewer.show_video()
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self._faces.enable_vision_mode(enable=self.enable_vision_mode)
+        self.vision.set_vision_mode(detect_faces=self.enable_face_detection, detect_custom_objects=self.enable_custom_object_detection)
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
@@ -652,7 +668,7 @@ class Robot:
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
         """
-        vision_mode = self._faces.enable_vision_mode(enable=False)
+        vision_mode = self.vision.set_vision_mode(detect_faces=False, detect_custom_objects=False)
         if isinstance(vision_mode, concurrent.futures.Future):
             vision_mode.result()
 
@@ -781,7 +797,7 @@ class AsyncRobot(Robot):
                    that identifies the SDK user. Note: Never share your authentication credentials with anyone.
     :param default_logging: Disable default logging.
     :param behavior_activation_timeout: The time to wait for control of the robot before failing.
-    :param enable_vision_mode: Turn on face detection.
+    :param enable_face_detection: Turn on face detection.
     :param enable_camera_feed: Turn camera feed on/off.
     :param enable_audio_feed: Turn audio feed on/off.
     :param show_viewer: Render camera feed on/off."""

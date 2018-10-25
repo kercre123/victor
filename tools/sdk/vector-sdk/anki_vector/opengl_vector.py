@@ -41,12 +41,10 @@ import math
 import time
 from typing import List
 
-from anki_vector.faces import Face
-from anki_vector.objects import LightCube
-from anki_vector.robot import Robot
-from anki_vector import util
-
-import opengl
+from .faces import Face
+from .objects import CustomObject, FixedCustomObject, LightCube, ObservableObject
+from .robot import Robot
+from . import util, opengl
 
 try:
     from OpenGL.GL import (GL_AMBIENT, GL_BLEND, GL_DIFFUSE, GL_FILL, GL_FRONT, GL_FRONT_AND_BACK, GL_LIGHTING, GL_LINE, GL_ONE_MINUS_SRC_ALPHA, GL_POLYGON, GL_SHININESS, GL_SPECULAR, GL_SRC_ALPHA,
@@ -385,40 +383,66 @@ class VectorViewManifest():
         self._unit_cube_view = UnitCubeView()
 
 
-class CubeRenderFrame():  # pylint: disable=too-few-public-methods
+class ObservableObjectRenderFrame():  # pylint: disable=too-few-public-methods
+    """Minimal copy of an object's state for 1 frame of rendering.
+
+    :param obj: the cube object to be rendered.
+    """
+
+    def __init__(self, obj: ObservableObject):
+        self.pose = obj.pose
+        self.is_visible = obj.is_visible
+        self.last_observed_time = obj.last_observed_time
+
+    @property
+    def time_since_last_seen(self) -> float:
+        # Equivalent of ObservableObject's method
+        """time since this obj was last seen (math.inf if never)"""
+        if self.last_observed_time is None:
+            return math.inf
+        return time.time() - self.last_observed_time
+
+
+class CubeRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a Cube's state for 1 frame of rendering.
 
     :param cube: the cube object to be rendered.
     """
 
     def __init__(self, cube: LightCube):  # pylint: disable=useless-super-delegation
-        self.pose = cube.pose
-        self.last_observed_time = cube.last_observed_time
-
-    @property
-    def time_since_last_seen(self) -> float:
-        """:return: time since this element was last seen (math.inf if never)"""
-        if self.last_observed_time is None:
-            return math.inf
-        return time.time() - self.last_observed_time
+        super().__init__(cube)
 
 
-class FaceRenderFrame():  # pylint: disable=too-few-public-methods
+class FaceRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a Face's state for 1 frame of rendering.
 
-    :param face: the face object to be rendered.
+    :param face: The face object to be rendered.
     """
 
     def __init__(self, face: Face):  # pylint: disable=useless-super-delegation
-        self.pose = face.pose
-        self.last_observed_time = face.last_observed_time
+        super().__init__(face)
 
-    @property
-    def time_since_last_seen(self) -> float:
-        """:return: time since this element was last seen (math.inf if never)"""
-        if self.last_observed_time is None:
-            return math.inf
-        return time.time() - self.last_observed_time
+
+class CustomObjectRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
+    """Minimal copy of a CustomObject's state for 1 frame of rendering.
+
+    :param custom_object: The custom object to be rendered.  Either :class:`anki_vector.objects.CustomObject` or :class:`anki_vector.objects.FixedCustomObject`.
+    :param is_fixed: Whether the custom object is permanently defined rather than an observable archetype.
+    """
+
+    def __init__(self, custom_object, is_fixed: bool):
+        if is_fixed:
+            # Not an observable, so init directly
+            self.pose = custom_object.pose
+            self.is_visible = None
+            self.last_observed_time = None
+        else:
+            super().__init__(custom_object)
+
+        self.is_fixed = is_fixed
+        self.x_size_mm = custom_object.archetype.x_size_mm
+        self.y_size_mm = custom_object.archetype.y_size_mm
+        self.z_size_mm = custom_object.archetype.z_size_mm
 
 
 class RobotRenderFrame():  # pylint: disable=too-few-public-methods
@@ -451,14 +475,19 @@ class WorldRenderFrame():  # pylint: disable=too-few-public-methods
         self.robot_frame = RobotRenderFrame(robot)
 
         self.cube_frames: List[CubeRenderFrame] = []
-        if robot.world.connected_light_cube is None:
-            self.cube_frames.append(None)
-        else:
+        if robot.world.connected_light_cube is not None:
             self.cube_frames.append(CubeRenderFrame(robot.world.connected_light_cube))
 
         self.face_frames: List[FaceRenderFrame] = []
         for face in robot.world.visible_faces:
             # Ignore faces that have a newer version (with updated id)
-            # or if they haven't been seen in a while).
+            # or if they haven't been seen in a while.
             if not face.has_updated_face_id and (face.time_since_last_seen < 60):
                 self.face_frames.append(FaceRenderFrame(face))
+
+        self.custom_object_frames = []
+        for obj in robot.world.all_objects:
+            is_custom = isinstance(obj, CustomObject)
+            is_fixed = isinstance(obj, FixedCustomObject)
+            if is_custom or is_fixed:
+                self.custom_object_frames.append(CustomObjectRenderFrame(obj, is_fixed))

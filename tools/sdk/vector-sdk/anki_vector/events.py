@@ -161,12 +161,13 @@ class EventHandler:
                 if not self.listening_for_events:
                     break
 
-                unpackaged_event_key, unpackaged_event_data = self._unpackage_event('event_type', evt.event)
-                await self.dispatch_event_by_name(unpackaged_event_data, unpackaged_event_key)
+                try:
+                    unpackaged_event_key, unpackaged_event_data = self._unpackage_event('event_type', evt.event)
+                    await self.dispatch_event_by_name(unpackaged_event_data, unpackaged_event_key)
+                except TypeError:
+                    self.logger.warning('Unknown Event type')
         except CancelledError:
             self.logger.debug('Event handler task was cancelled. This is expected during disconnection.')
-        except TypeError:
-            self.logger.debug('Unknown Event type')
 
     def subscribe_by_name(self, func: Callable, event_name: str = None):
         """Receive a method call when the specified event occurs.

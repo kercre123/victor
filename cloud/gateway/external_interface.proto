@@ -312,6 +312,30 @@ service ExternalInterface {
     };
   }
 
+  // Causes the robot to forget about custom objects it currently knows about.
+  rpc DeleteCustomObjects(DeleteCustomObjectsRequest) returns (DeleteCustomObjectsResponse) {
+    option (google.api.http) = {
+      post: "/v1/delete_custom_objects",
+      body: "*"
+    };
+  }
+
+  // Creates a permanent custom object instance in the robot's world, with no connection to the vision system.
+  rpc CreateFixedCustomObject(CreateFixedCustomObjectRequest) returns (CreateFixedCustomObjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/create_fixed_custom_object",
+      body: "*"
+    };
+  }
+
+  // Creates a custom object with distinct custom marker(s).
+  rpc DefineCustomObject(DefineCustomObjectRequest) returns (DefineCustomObjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/define_custom_object",
+      body: "*"
+    };
+  }
+
   // Set each of the lights on the currently connected cube based on two
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}

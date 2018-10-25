@@ -21,13 +21,14 @@ The easiest way to make use of this viewer is to create an OpenGLViewer object
 for a valid robot and call run with a control function injected into it.
 
 Example:
-    .. code-block:: python
+    .. testcode::
+        import anki_vector
 
         def my_function(robot):
-            robot.play_animation("anim_blackjack_victorwin_01")
+            robot.play_animation("anim_turn_left_01")
 
-        with anki_vector.Robot("my_robot_serial_number") as robot:
-            viewer = opengl.OpenGLViewer(robot=robot)
+        with anki_vector.Robot() as robot:
+            viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
 Warning:
@@ -58,12 +59,9 @@ import inspect
 import math
 from typing import List
 
-import opengl
-import opengl_vector
-
-from anki_vector.events import Events
-from anki_vector.robot import Robot
-from anki_vector import util
+from .events import Events
+from .robot import Robot
+from . import util, opengl, opengl_vector
 
 try:
     from OpenGL.GL import (GL_FILL,
@@ -318,6 +316,16 @@ class OpenGLViewer():
 
     Handles rendering of both a 3D world view and a 2D camera window.
 
+    .. testcode::
+        import anki_vector
+
+        def my_function(robot):
+            robot.play_animation("anim_turn_left_01")
+
+        with anki_vector.Robot() as robot:
+            viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
+            viewer.run(my_function)
+
     :param robot: the robot object being used by the OpenGL viewer
     """
 
@@ -409,33 +417,57 @@ class OpenGLViewer():
         robot_frame = world_frame.robot_frame
         robot_pose = robot_frame.pose
 
-        # Render the cube
-        for i in range(1):
-            cube_frame = world_frame.cube_frames[i]
-            if cube_frame is None:
-                continue
+        try:
+            # Render the cube
+            for obj in world_frame.cube_frames:
+                cube_pose = obj.pose
+                if cube_pose is not None and cube_pose.is_comparable(robot_pose):
+                    light_cube_view.display(cube_pose)
 
-            cube_pose = cube_frame.pose
-            if cube_pose is not None and cube_pose.is_comparable(robot_pose):
-                light_cube_view.display(cube_pose)
+            # Render the custom objects
+            for obj in world_frame.custom_object_frames:
+                obj_pose = obj.pose
+                if obj_pose is not None and obj_pose.is_comparable(robot_pose):
+                    glPushMatrix()
+                    obj_matrix = obj_pose.to_matrix()
+                    glMultMatrixf(obj_matrix.in_row_order)
 
-        glBindTexture(GL_TEXTURE_2D, 0)
+                    glScalef(obj.x_size_mm * 0.5,
+                             obj.y_size_mm * 0.5,
+                             obj.z_size_mm * 0.5)
 
-        for face in world_frame.face_frames:
-            face_pose = face.pose
-            if face_pose is not None and face_pose.is_comparable(robot_pose):
-                glPushMatrix()
-                face_matrix = face_pose.to_matrix()
-                glMultMatrixf(face_matrix.in_row_order)
+                    # Only draw solid object for observable custom objects
 
-                # Approximate size of a head
-                glScalef(100, 25, 100)
+                    if obj.is_fixed:
+                        # fixed objects are drawn as transparent outlined boxes to make
+                        # it clearer that they have no effect on vision.
+                        FIXED_OBJECT_COLOR = [1.0, 0.7, 0.0, 1.0]
+                        unit_cube_view.display(FIXED_OBJECT_COLOR, False)
+                    else:
+                        CUSTOM_OBJECT_COLOR = [1.0, 0.3, 0.3, 1.0]
+                        unit_cube_view.display(CUSTOM_OBJECT_COLOR, True)
 
-                FACE_OBJECT_COLOR = [0.5, 0.5, 0.5, 1.0]
-                draw_solid = face.time_since_last_seen < 30
-                unit_cube_view.display(FACE_OBJECT_COLOR, draw_solid)
+                    glPopMatrix()
 
-                glPopMatrix()
+            glBindTexture(GL_TEXTURE_2D, 0)
+
+            for face in world_frame.face_frames:
+                face_pose = face.pose
+                if face_pose is not None and face_pose.is_comparable(robot_pose):
+                    glPushMatrix()
+                    face_matrix = face_pose.to_matrix()
+                    glMultMatrixf(face_matrix.in_row_order)
+
+                    # Approximate size of a head
+                    glScalef(100, 25, 100)
+
+                    FACE_OBJECT_COLOR = [0.5, 0.5, 0.5, 1.0]
+                    draw_solid = face.time_since_last_seen < 30
+                    unit_cube_view.display(FACE_OBJECT_COLOR, draw_solid)
+
+                    glPopMatrix()
+        except BaseException as e:
+            self._logger.error('rendering error: {0}'.format(e))
 
         glDisable(GL_LIGHTING)
 
@@ -484,6 +516,16 @@ class OpenGLViewer():
 
     def run(self, delegate_function: callable):
         """Turns control of the main thread over to the openGL viewer
+
+        .. testcode::
+            import anki_vector
+
+            def my_function(robot):
+                robot.play_animation("anim_turn_left_01")
+
+            with anki_vector.Robot() as robot:
+                viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
+                viewer.run(my_function)
 
         :param delegate_function: external function to spin up on a seperate thread
             to allow for sdk code to run while the main thread is owned by the viewer.
@@ -543,5 +585,6 @@ class OpenGLViewer():
         We can safely capture any robot and world state here, and push to OpenGL
         (main) thread via a thread-safe queue.
         """
+
         world_frame = opengl_vector.WorldRenderFrame(self._robot)
         self._world_frame_queue.append(world_frame)
