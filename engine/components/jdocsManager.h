@@ -72,7 +72,8 @@ public:
                                     const Json::Value* jdocBody,
                                     const bool saveToDiskImmediately,
                                     const bool saveToCloudImmediately,
-                                    const bool setCloudDirtyIfNotImmediate = true);
+                                    const bool setCloudDirtyIfNotImmediate = true,
+                                    const bool sendJdocsChangedMessage = false);
   bool                ClearJdocBody(const external_interface::JdocType jdocTypeKey);
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
@@ -89,6 +90,10 @@ public:
   using FormatMigrationCallback = std::function<void(void)>;
   void RegisterFormatMigrationCallback(const external_interface::JdocType jdocTypeKey,
                                        const FormatMigrationCallback cb);
+
+  using ShutdownCallback = std::function<void(void)>;
+  void RegisterShutdownCallback(const external_interface::JdocType jdocTypeKey,
+                                const ShutdownCallback cb);
 
 private:
 
@@ -109,12 +114,14 @@ private:
   void HandleThingResponse(const JDocs::ThingResponse& thingResponse);
   void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud);
   bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc);
+  void SendJdocsChangedMessage(const std::vector<external_interface::JdocType>& jdocTypes);
 
   external_interface::JdocType JdocTypeFromDocName(const std::string& docName) const;
 
   Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   std::string               _savePath;
+  std::string               _cloudJdocResetPath;
   LocalUdpClient            _udpClient;
   std::string               _userID;
   std::string               _thingID;
@@ -151,6 +158,7 @@ private:
     int                       _origCloudSavePeriod_s; // Original cloud save period (so we can restore if changed)
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
     bool                      _pendingCloudSave;  // True when cloud save is awaiting response from prior cloud save
+    external_interface::JdocResolveMethod _resolveMethod;   // Resolve method to use when cloud has newer version of this jdoc
 
     struct CloudAbuseDetectionConfig
     {
@@ -180,6 +188,7 @@ private:
 
     OverwriteNotificationCallback _overwrittenCB; // Called when this jdoc is overwritten from the cloud
     FormatMigrationCallback   _formatMigrationCB; // Called when this jdoc needs a format migration
+    ShutdownCallback          _shutdownCB;        // Called on shutdown for this jdoc
   };
 
   using Jdocs = std::map<external_interface::JdocType, JdocInfo>;

@@ -35,7 +35,7 @@ functions for all the behaviors.
 __all__ = ["BehaviorComponent"]
 
 
-from . import objects, sync, util
+from . import connection, objects, util
 from .messaging import protocol
 
 
@@ -126,20 +126,23 @@ class BehaviorComponent(util.Component):
         return next_action_id
 
     # Navigation actions
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def drive_off_charger(self):
         """Drive Vector off the charger
 
         If Vector is on the charger, drives him off the charger.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.behavior.drive_off_charger()
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                robot.behavior.drive_off_charger()
         """
         drive_off_charger_request = protocol.DriveOffChargerRequest()
         return await self.grpc_interface.DriveOffCharger(drive_off_charger_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def drive_on_charger(self):
         """Drive Vector onto the charger
 
@@ -149,14 +152,17 @@ class BehaviorComponent(util.Component):
         Vector's charger has a visual marker so that the robot can locate it
         for self-docking.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.behavior.drive_on_charger()
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                robot.behavior.drive_on_charger()
         """
         drive_on_charger_request = protocol.DriveOnChargerRequest()
         return await self.grpc_interface.DriveOnCharger(drive_on_charger_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def go_to_pose(self,
                          pose: util.Pose,
                          relative_to_robot: bool = False,
@@ -181,10 +187,13 @@ class BehaviorComponent(util.Component):
         Returns:
             A response from the robot with status information sent when this request successfully completes or fails.
 
-        .. code-block:: python
+        .. testcode::
 
-            pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
-            robot.behavior.go_to_pose(pose)
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
+                robot.behavior.go_to_pose(pose)
         """
         if relative_to_robot and self.robot.pose:
             pose = self.robot.pose.define_pose_relative_this(pose)
@@ -202,10 +211,10 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.GoToPose(go_to_pose_request)
 
-    # TODO Check that num_retries is actually working (and if not, same for other num_retries).
+    # TODO Check that num_retries is working (and if not, same for other num_retries).
     # TODO alignment_type coming out ugly in the docs without real values
     # TODO DockWithCubeResponse not clear what it is in docs
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def dock_with_cube(self,
                              target_object: objects.LightCube,
                              approach_angle: util.Angle = None,
@@ -225,10 +234,13 @@ class BehaviorComponent(util.Component):
         Returns:
             A response from the robot with status information sent when this request successfully completes or fails.
 
-        .. code-block:: python
+        .. testcode::
 
-            if robot.world.connected_light_cube:
-                robot.behavior.dock_with_cube(object_id=robot.world.connected_light_cube)
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                if robot.world.connected_light_cube:
+                    robot.behavior.dock_with_cube(object_id=robot.world.connected_light_cube)
         """
         if target_object is None:
             raise Exception("Must supply a target_object to dock_with_cube")
@@ -253,7 +265,7 @@ class BehaviorComponent(util.Component):
         return await self.grpc_interface.DockWithCube(dock_request)
 
     # Movement actions
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def drive_straight(self,
                              distance: util.Distance,
                              speed: util.Speed,
@@ -276,9 +288,13 @@ class BehaviorComponent(util.Component):
         Returns:
             A response from the robot with status information sent when this request successfully completes or fails.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.behavior.drive_straight(distance_mm(100), speed_mmps(100))
+            import anki_vector
+            from anki_vector.util import degrees, distance_mm, speed_mmps
+
+            with anki_vector.Robot() as robot:
+                robot.behavior.drive_straight(distance_mm(100), speed_mmps(100))
         """
 
         # @TODO: the id_tag we supply can be used to cancel this action,
@@ -292,7 +308,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.DriveStraight(drive_straight_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def turn_in_place(self,
                             angle: util.Angle,
                             speed: util.Angle = util.Angle(0.0),
@@ -319,9 +335,12 @@ class BehaviorComponent(util.Component):
         Returns:
             A response from the robot with status information sent when this request successfully completes or fails.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.behavior.turn_in_place(degrees(90))
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                robot.behavior.turn_in_place(degrees(90))
         """
         turn_in_place_request = protocol.TurnInPlaceRequest(angle_rad=angle.radians,
                                                             speed_rad_per_sec=speed.radians,
@@ -333,7 +352,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.TurnInPlace(turn_in_place_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def set_head_angle(self,
                              angle: util.Angle,
                              accel: float = 10.0,
@@ -353,9 +372,12 @@ class BehaviorComponent(util.Component):
         Returns:
             A response from the robot with status information sent when this request successfully completes or fails.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.behavior.set_head_angle(degrees(50.0))
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                robot.behavior.set_head_angle(degrees(50.0))
         """
         set_head_angle_request = protocol.SetHeadAngleRequest(angle_rad=angle.radians,
                                                               max_speed_rad_per_sec=max_speed,
@@ -366,7 +388,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.SetHeadAngle(set_head_angle_request)
 
-    @sync.Synchronizer.wrap
+    @connection.on_connection_thread()
     async def set_lift_height(self,
                               height: float,
                               accel: float = 10.0,
@@ -387,9 +409,12 @@ class BehaviorComponent(util.Component):
         Returns:
             A response from the robot with status information sent when this request successfully completes or fails.
 
-        .. code-block:: python
+        .. testcode::
 
-            robot.behavior.set_lift_height(100.0)
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                robot.behavior.set_lift_height(100.0)
         """
         set_lift_height_request = protocol.SetLiftHeightRequest(height_mm=height,
                                                                 max_speed_rad_per_sec=max_speed,

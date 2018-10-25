@@ -233,7 +233,7 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
                robot.GetPose().GetRotation().GetAngleAroundZaxis());
     }
     
-    PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.TransitionToRefineTurn.TurnAngle",
+    PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDistanceSensor.TransitionToRefineTurn.TurnAngle",
                      "Turning %f degrees to be perpendicular to marker",
                      angle.getDegrees());
     
@@ -290,7 +290,7 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
 
     if(object == nullptr)
     {
-      PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.NullObject","");
+      PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.NullObject","");
       return false;
     }
 
@@ -312,7 +312,7 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
 
     if(lastObservedTime < robot.GetLastImageTimeStamp())
     {
-      PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld","");
+      PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld","");
       return false;
     }
     

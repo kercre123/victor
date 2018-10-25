@@ -15,6 +15,7 @@
 #include "cozmoAnim/animComms.h"
 #include "cozmoAnim/robotDataLoader.h"
 
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
@@ -443,6 +444,22 @@ void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDete
   }
 }
 
+void Process_setAlexaUsage(const Anki::Vector::RobotInterface::SetAlexaUsage& msg)
+{
+  auto* alexa = _context->GetAlexa();
+  if (alexa != nullptr) {
+    alexa->SetAlexaUsage( msg.optedIn );
+  }
+}
+
+void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPendingAlexaAuth& msg)
+{
+  auto* alexa = _context->GetAlexa();
+  if (alexa != nullptr) {
+    alexa->CancelPendingAlexaAuth();
+  }
+}
+
 void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
 {
   FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
@@ -552,11 +569,21 @@ void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnima
 void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
+
+  auto* alexa = _context->GetAlexa();
+  if( alexa != nullptr ) {
+    alexa->OnEngineLoaded();
+  }
 }
-  
+
 void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen& msg)
 {
   FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);
+}
+
+void Process_updatedAccountSettings(const RobotInterface::UpdatedAccountSettings& msg)
+{
+  _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
 }
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
@@ -727,8 +754,13 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
 
   // Amount of time for which we must be disconnected from the engine in order
-  // to display the NO_ENGINE_COMMS fault code
-  static const BaseStationTime_t kDisconnectedTimeout_nanosec = Util::SecToNanoSec(5.f);
+  // to display the NO_ENGINE_COMMS fault code. For developer builds, fail fast
+  // to capture a crash report of engine's current state.
+  #if defined(VICOS) && ANKI_DEV_CHEATS
+  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(0.5);
+  #else
+  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(5.f);
+  #endif
 
   // Check for changes in connection state to engine and send RobotAvailable
   // message when engine connects
@@ -745,11 +777,11 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   } else if (wasConnected && !isConnected) {
     // We've just become unconnected. Start a timer to display the fault
     // code on the face at the desired time.
-    displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_nanosec;
+    displayFaultCodeTime_nanosec = currTime_nanosec + kDisconnectedTimeout_ns;
 
     PRINT_NAMED_WARNING("AnimProcessMessages.MonitorConnectionState.DisconnectedFromEngine",
                         "We have become disconnected from engine process. Displaying a fault code in %.1f seconds.",
-                        Util::NanoSecToSec(kDisconnectedTimeout_nanosec));
+                        Util::NanoSecToSec(kDisconnectedTimeout_ns));
 
     wasConnected = false;
   }
@@ -806,6 +838,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   _context->GetMicDataSystem()->Update(currTime_nanosec);
   _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);
   _context->GetShowAudioStreamStateManager()->Update();
+  _context->GetAlexa()->Update();
 
   // Process incoming messages from engine
   u32 dataLen;
@@ -885,11 +918,11 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
 {
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToRobot");
-  msgProfiler.Update(msg.tag, msg.Size());
-
   LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
   bool result = AnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
-  if (!result) {
+  if (result) {
+    msgProfiler.Update(msg.tag, msg.Size());
+  } else {
     msgProfiler.ReportOnFailure();
   }
   return result;
@@ -898,11 +931,12 @@ bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& m
 bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
 {
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToEngine");
-  msgProfiler.Update(msg.tag, msg.Size());
 
   LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", msg.tag, msg.Size());
   bool result = AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
-  if (!result) {
+  if (result) {
+    msgProfiler.Update(msg.tag, msg.Size());
+  } else {
     msgProfiler.ReportOnFailure();
   }
   return result;

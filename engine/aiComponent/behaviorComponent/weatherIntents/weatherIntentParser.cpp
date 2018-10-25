@@ -24,18 +24,7 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-const std::string kWeatherLocationPrepend = "Right now in ";
-std::string kCityWhereItAlwaysRainsMutable = "Seattle";
-
-#if REMOTE_CONSOLE_ENABLED
-void SetRainyCity(ConsoleFunctionContextRef context)
-{
-  kCityWhereItAlwaysRainsMutable = ConsoleArg_Get_String(context, "rainyCity");
-}
-
-CONSOLE_FUNC(SetRainyCity, "WeatherHack", const char* rainyCity);
-#endif
-
+  const std::string kWeatherLocationPrepend = "Right now in ";
 }
 
 
@@ -75,13 +64,8 @@ bool WeatherIntentParser::IsFahrenheit(const UserIntent_WeatherResponse& weather
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WeatherConditionType WeatherIntentParser::GetCondition(const UserIntent_WeatherResponse& weatherIntent,
-                                                       bool isForPRDemo) const
+WeatherConditionType WeatherIntentParser::GetCondition(const UserIntent_WeatherResponse& weatherIntent) const
 {
-  if(isForPRDemo && (weatherIntent.speakableLocationString == kCityWhereItAlwaysRainsMutable)){
-    return WeatherConditionType::Rain;
-  }
-
   std::string str;
   std::transform(weatherIntent.condition.begin(), weatherIntent.condition.end(),
                  std::back_inserter(str), [](const char c) { return std::tolower(c); });

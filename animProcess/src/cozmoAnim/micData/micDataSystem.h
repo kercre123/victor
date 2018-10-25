@@ -118,6 +118,7 @@ public:
   void RequestConnectionStatus();
 
   void SetBatteryLowStatus( bool isLow ) { _batteryLow = isLow; }
+  void SetEnableDataCollectionSettings( bool isEnable ) { _enableDataCollection = isEnable; }
 
   // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
   // sending any data to the cloud; this lasts for a set duration
@@ -166,6 +167,7 @@ private:
   std::vector<std::function<void(bool)>> _streamUpdatedCallbacks;
 
   bool _batteryLow = false;
+  bool _enableDataCollection = false;
 
   void SetWillStream(bool willStream) const;
 

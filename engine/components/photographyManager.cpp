@@ -40,9 +40,6 @@ namespace Vector {
 
 CONSOLE_VAR(bool, kDevIsStorageFull, "Photography", false);
 
-// If true, requires OS version that supports camera format change
-CONSOLE_VAR(bool, kTakePhoto_UseSensorResolution, "Photography", true);
-  
 // If enabled, disables all smoothing and sharpening, despite what is in Json config (but still uses undistortion)
 CONSOLE_VAR(bool, kTakePhoto_UseRawPhotos, "Photography", false);
 
@@ -197,7 +194,6 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
   {
     LOG_INFO("PhotographyManager.UpdateDependent.DisablingPhotoMode",
              "Disable was queued. Doing now.");
-    _visionComponent->EnableSensorRes(false);
     _state = State::WaitingForPhotoModeDisable;
     _disableWhenPossible = false;
   }
@@ -206,14 +202,7 @@ void PhotographyManager::UpdateDependent(const RobotCompMap& dependentComps)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result PhotographyManager::EnablePhotoMode(bool enable)
-{
-  if(!UseSensorResolution())
-  {
-    // No format change: immediately in photo mode
-    _state = State::InPhotoMode;
-    return RESULT_OK;
-  }
-  
+{  
   DEV_ASSERT(nullptr != _visionComponent, "PhotographyManager.EnablePhotoMode.NullVisionComponent");
 
   if(!IsReadyToSwitchModes())
@@ -234,7 +223,6 @@ Result PhotographyManager::EnablePhotoMode(bool enable)
     return RESULT_FAIL;
   }
 
-  _visionComponent->EnableSensorRes(enable);
   _state = (enable ? State::WaitingForPhotoModeEnable : State::WaitingForPhotoModeDisable);
   
   LOG_INFO("PhotographyManager.EnablePhotoMode.FormatChange",
@@ -278,14 +266,6 @@ std::string PhotographyManager::GetBasename(int photoID) const
   ss << std::setw(6) << std::setfill('0') << photoID;
   return "photo_" + ss.str();
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PhotographyManager::UseSensorResolution() const
-{
-  // NOTE: using half-res (aka "Full") for PRDemo until VIC-4077 is fixed
-  return (kTakePhoto_UseSensorResolution
-          && !_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo));
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
@@ -298,13 +278,6 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
     return 0;
   }
 
-  const bool useSensorRes = UseSensorResolution();
-  const auto photoSize = (useSensorRes ?
-                          Vision::ImageCache::Size::Sensor :
-                          Vision::ImageCache::Size::Full);
-  
-  // Upsampling half-res to full scale for PRDemo until VIC-4077 is fixed
-  const float saveScale = (_robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::PRDemo) ? 2.f : 1.f);
   const uint8_t medianFilterSize = (kTakePhoto_UseRawPhotos ? 0 : kMedianFilterSize);
   const float   sharpeningAmount = (kTakePhoto_UseRawPhotos ? 0.f : kSharpeningAmount);
   
@@ -312,9 +285,9 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
                                                             ImageSendMode::SingleShot,
                                                             kSaveQuality,
                                                             GetBasename(_nextPhotoID),
-                                                            photoSize,
+                                                            Vision::ImageCacheSize::Full,
                                                             kThumbnailScale,
-                                                            saveScale,
+                                                            1.f, // saveScale
                                                             kRemoveDistortion,
                                                             medianFilterSize,
                                                             sharpeningAmount));
@@ -323,8 +296,7 @@ PhotographyManager::PhotoHandle PhotographyManager::TakePhoto()
   _state = State::WaitingForTakePhoto;
   
   LOG_INFO("PhotographyManager.TakePhoto.SetSaveParams",
-           "Resolution: %s, RequestedHandle: %zu",
-           (useSensorRes ? "Sensor" : "Full"),
+           "RequestedHandle: %zu",
            _lastRequestedPhotoHandle);
   
   return _lastRequestedPhotoHandle;

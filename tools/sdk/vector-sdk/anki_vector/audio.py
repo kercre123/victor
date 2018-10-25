@@ -23,6 +23,8 @@ The :class:`AudioComponent` class defined in this module is made available as
 sending and process audio data being sent by the robot.
 """
 
+# TODO Not yet supported. Audio from robot does not yet reach Python.
+
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['AudioComponent']
 
@@ -31,6 +33,7 @@ from concurrent.futures import CancelledError
 import sys
 
 from . import util
+from .events import Events
 from .messaging import protocol
 
 try:
@@ -48,17 +51,20 @@ class AudioComponent(util.Component):
 
     .. code-block:: python
 
+        import asyncio
+
         try:
             from scipy.io import wavfile
         except ImportError as exc:
             sys.exit("Cannot import scipy: Do `pip3 install scipy` to install")
 
-        with anki_vector.Robot("my_robot_serial_number", enable_audio_feed=True) as robot:
-            robot.loop.run_until_complete(utilities.delay_close(5))
+        with anki_vector.Robot(enable_audio_feed=True) as robot:
+            robot.loop.run_until_complete(asyncio.sleep(5))
             wavfile.write("outputfile.wav", anki_vector.protocol.PROCESSED_SAMPLE_RATE, robot.audio.raw_audio_waveform_history)
 
     :param robot: A reference to the owner Robot object.
     """
+    # TODO When audio is ready, convert `.. code-block:: python` to `.. testcode::`
 
     def __init__(self, robot):
         super().__init__(robot)
@@ -72,8 +78,8 @@ class AudioComponent(util.Component):
         self._audio_feed_task: asyncio.Task = None
 
         # Subscribe to callbacks related to objects
-        robot.events.subscribe("audio_send_mode_changed",
-                               self._on_audio_send_mode_changed_event)
+        robot.events.subscribe(self._on_audio_send_mode_changed_event,
+                               Events.audio_send_mode_changed)
 
     # @TODO: Implement audio history as ringbuffer, caching only recent audio
     # @TODO: Add function to return a recent chunk of the audio history in a standardized python audio package format
@@ -90,23 +96,25 @@ class AudioComponent(util.Component):
 
         .. code-block:: python
 
+            import asyncio
+
             try:
                 from scipy.io import wavfile
             except ImportError as exc:
                 sys.exit("Cannot import scipy: Do `pip3 install scipy` to install")
 
-            with anki_vector.Robot("my_robot_serial_number", enable_audio_feed=True) as robot:
-                robot.loop.run_until_complete(utilities.delay_close(5))
+            with anki_vector.Robot(enable_audio_feed=True) as robot:
+                robot.loop.run_until_complete(asyncio.sleep(5))
                 wavfile.write("outputfile.wav", anki_vector.protocol.PROCESSED_SAMPLE_RATE, robot.audio.raw_audio_waveform_history)
 
         :getter: Returns the numpy array representing the audio history
         """
-
+        # TODO When audio is ready, convert `.. code-block:: python` to `.. testcode::`
         return self._raw_audio_waveform_history
 
     @property
     def latest_sample_id(self) -> int:
-        """The most recent recieved audio sample from the robot.
+        """The most recent received audio sample from the robot.
 
         :getter: Returns the id for the latest audio sample
         """
@@ -155,7 +163,7 @@ class AudioComponent(util.Component):
 
     async def _request_and_handle_audio(self) -> None:
         """Queries and listens for audio feed events from the robot.
-        Recieved events are parsed by a helper function."""
+        Received events are parsed by a helper function."""
         try:
             req = protocol.AudioFeedRequest()
             async for evt in self.grpc_interface.AudioFeed(req):

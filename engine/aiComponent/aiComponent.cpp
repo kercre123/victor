@@ -15,6 +15,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/shared/radiansMath.h"
 #include "engine/aiComponent/aiWhiteboard.h"
+#include "engine/aiComponent/alexaComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/continuityComponent.h"
@@ -80,6 +81,7 @@ void AIComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depend
       auto* faceSelectionComp = new FaceSelectionComponent(*robot, dependentComps.GetComponent<FaceWorld>(), 
                                                            micDirectionHistory, dependentComps.GetComponent<VisionComponent>());
 
+      _aiComponents->AddDependentComponent(AIComponentID::AlexaComponent,                    new AlexaComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,                 new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,               new ContinuityComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::FaceSelection,                     faceSelectionComp);
@@ -113,6 +115,12 @@ void AIComponent::OnRobotDelocalized()
 void AIComponent::OnRobotRelocalized()
 {
   GetComponent<AIWhiteboard>().OnRobotRelocalized();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIComponent::OnRobotWakeUp()
+{
+  GetComponent<AIWhiteboard>().OnRobotWakeUp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2017-12-12
  *
- * Description: Dev behavior to use the touch sensor to enable / disable image capture
+ * Description: Dev behavior to use the touch sensor or backpack button to enable / disable image capture
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -29,7 +29,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/vision/imageSaver.h"
-
+#include "osState/osState.h"
 #include "util/fileUtils/fileUtils.h"
 
 #define LOG_CHANNEL "Behaviors"
@@ -65,12 +65,12 @@ static const BackpackLightAnimation::BackpackAnimation kLightsOff = {
 const char* const kSavePathKey = "save_path";
 const char* const kImageSaveQualityKey = "quality";
 const char* const kImageScaleKey = "image_scale";
-const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
 const char* const kUseShutterSoundKey = "use_shutter_sound";
 const char* const kSaveSensorDataKey = "save_sensor_data";
 const char* const kClassNamesKey = "class_names";
 const char* const kVisionModesKey = "vision_modes";
+const char* const kUseSavePrefixKey = "use_save_prefix";
   
 const char* const kMultiImageModeKey = "multi_image_mode";
 const char* const kNumImagesPerCaptureKey = "num_images_per_capture";
@@ -83,7 +83,8 @@ const char* const kBodyAngleRangeKey = "body_angle_range_deg";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
   : imageSaveQuality(-1)
-  , imageSaveSize(Vision::ImageCache::Size::Full)
+  , imageSaveSize(Vision::ImageCacheSize::Half)
+  , useSavePrefix(false)
   , useCapTouch(false)
   , saveSensorData(false)
   , useShutterSound(true)
@@ -92,6 +93,7 @@ BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
   , headAngleRange_rad{0,0}
   , bodyAngleRange_rad{0,0}
 {
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -104,6 +106,9 @@ BehaviorDevImageCapture::DynamicVariables::DynamicVariables()
 
   isStreaming = false;
   wasLiftUp = false;
+  
+  startingBodyAngle_rad = 0.f;
+  startingHeadAngle_rad = 0.f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -135,11 +140,11 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
 {
   _iConfig.imageSavePath = JsonTools::ParseString(config, kSavePathKey, "BehaviorDevImageCapture");
   _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, kImageSaveQualityKey, "BehaviorDevImageCapture");
+  JsonTools::GetValueOptional(config, kUseSavePrefixKey, _iConfig.useSavePrefix);
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevImageCapture");
   _iConfig.useShutterSound = JsonTools::ParseBool(config, kUseShutterSoundKey, "BehaviorDevImageCapture");
   std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevImageCapture");
-  std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevImageCapture");
-  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
+  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr);
   
   if(config.isMember(kMultiImageModeKey))
   {
@@ -208,14 +213,37 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
       LOG_WARNING("BehaviorDevImageCapture.Constructor.InvalidVisionModeEntry", "");
     }
   }
-}
 
+  // Grab the serial number to use in the filename:
+  auto *osstate = OSState::getInstance();
+  _iConfig.serialNumber = osstate->GetSerialNumberAsString();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::InitBehavior()
+{
+  if(_iConfig.useSavePrefix)
+  {
+    // If we have a special saving prefix string in persistent data, use that.
+    // This is how we work around the fact that times may not be right and could
+    // thus be non-unique if the robot eventually talks to a time server somewhere
+    // and updates itself after having already saved images.
+    const auto context = GetBEI().GetRobotInfo().GetContext();
+    const std::string prefixFileName = context->GetDataPlatform()->GetPersistentPath("devImageCapturePrefix.txt");
+    if(Util::FileUtils::FileExists(prefixFileName))
+    {
+      _iConfig.imageSavePrefix = Util::FileUtils::ReadFile(prefixFileName);
+      _iConfig.imageSavePrefix += "_";
+      LOG_INFO("BehaviorDevImageCapture.Constructor.UsingPrefix.", "%s", _iConfig.imageSavePrefix.c_str());
+    }
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
@@ -238,13 +266,13 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kSavePathKey,
     kImageSaveQualityKey,
     kImageScaleKey,
-    kImageResizeMethodKey,
     kUseCapacitiveTouchKey,
     kSaveSensorDataKey,
     kUseShutterSoundKey,
     kClassNamesKey,
     kVisionModesKey,
     kMultiImageModeKey,
+    kUseSavePrefixKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -261,6 +289,12 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
+
+  // Enable mirror mode so we can see the what the camera is seeing
+  // This is NOT the normal way to enable a vision mode. Normally one only needs to subscribe to the mode
+  // via the visionModesForActiveScope set. This is a dev behavior and a dev vision mode. This vision mode
+  // is default disabled but still scheduled in order to support mirror mode in the debug face menus.
+  GetBEI().GetVisionComponent().EnableMode(VisionMode::MirrorMode, true);
 }
 
 
@@ -270,6 +304,9 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
+
+  // Disable mirror mode
+  GetBEI().GetVisionComponent().EnableMode(VisionMode::MirrorMode, false);
 }
 
 
@@ -340,7 +377,9 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   if(_dVars.currentClassIter != _iConfig.classNames.end())
   {
     using namespace Util;
-    const size_t numFiles = FileUtils::FilesInDirectory(GetSavePath()).size();
+    
+    const size_t numFiles = FileUtils::FilesInDirectory(GetSavePath(), false,
+                                                        ImageSaver::GetExtension(_iConfig.imageSaveQuality)).size();
 
     const std::string str(*_dVars.currentClassIter + ":" + std::to_string(numFiles));
     visionComponent.SetMirrorModeDisplayString(str, NamedColors::YELLOW);
@@ -435,18 +474,26 @@ void BehaviorDevImageCapture::MoveToNewPose()
   
   if(Util::IsFltLT(_iConfig.headAngleRange_rad.first, _iConfig.headAngleRange_rad.second))
   {
-    const f32 headAngle_rad = GetRNG().RandDblInRange(_iConfig.headAngleRange_rad.first,
-                                                      _iConfig.headAngleRange_rad.second);
+    const f32 headAngleDelta_rad = GetRNG().RandDblInRange(_iConfig.headAngleRange_rad.first,
+                                                           _iConfig.headAngleRange_rad.second);
+    const f32 headAngle_rad = Util::Clamp((_dVars.startingHeadAngle_rad + headAngleDelta_rad).ToFloat(),
+                                          MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
     turnAction->AddAction(new MoveHeadToAngleAction(headAngle_rad));
     LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.HeadAngle", "%.1fdeg", RAD_TO_DEG(headAngle_rad));
   }
   
   if(Util::IsFltLT(_iConfig.bodyAngleRange_rad.first, _iConfig.bodyAngleRange_rad.second))
   {
-    const f32 bodyAngle_rad = GetRNG().RandDblInRange(_iConfig.bodyAngleRange_rad.first,
-                                                      _iConfig.bodyAngleRange_rad.second);
-    turnAction->AddAction(new TurnInPlaceAction(bodyAngle_rad, false));
-    LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.BodyAngle", "%.1fdeg", RAD_TO_DEG(bodyAngle_rad));
+    const f32 bodyAngleDelta_rad = GetRNG().RandDblInRange(_iConfig.bodyAngleRange_rad.first,
+                                                           _iConfig.bodyAngleRange_rad.second);
+    const f32 bodyAngle_rad = (_dVars.startingBodyAngle_rad + bodyAngleDelta_rad).ToFloat();
+    const bool isAbsolute = true; // using absolute because we want to be relative to starting angle, not current
+    turnAction->AddAction(new TurnInPlaceAction(bodyAngle_rad, isAbsolute));
+    LOG_DEBUG("BehaviorDevImageCapture.MoveToNewPose.BodyAngle",
+              "Start:%.1fdeg Current:%.1fdeg Delta:%.1fdeg NewAngle:%.1fdeg",
+              _dVars.startingBodyAngle_rad.getDegrees(),
+              GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>().getDegrees(),
+              RAD_TO_DEG(bodyAngleDelta_rad), RAD_TO_DEG(bodyAngle_rad));
   }
   
   CompoundActionSequential* action = new CompoundActionSequential();
@@ -475,11 +522,26 @@ void BehaviorDevImageCapture::MoveToNewPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
 {
+  // To help avoid duplicate images names when combining images from multiple robots on multiple runs of
+  // this behavior, use a basename built from the robot's serial number and the seconds since epoch.
+  // If multiple images are being captured, a counter is appended as well.
+  // Note that for streaming, a frame number will also be appended by the ImageSaver because all saved
+  // images will share the same basename (since they comes from the same button press).
+  using namespace std::chrono;
+  const auto time_sec = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+  std::string basename = (_iConfig.imageSavePrefix
+                          + _iConfig.serialNumber + "_"
+                          + std::to_string(time_sec));
+  if(_iConfig.numImagesPerCapture > 1)
+  {
+    basename += "_" + std::to_string(_dVars.imagesSaved);
+  }
+  
   // Tell VisionComponent to save an image
   const ImageSaverParams params(GetSavePath(),
                                 sendMode,
                                 _iConfig.imageSaveQuality,
-                                "",
+                                basename,
                                 _iConfig.imageSaveSize);
   
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
@@ -500,6 +562,13 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
     
     DelegateIfInControl(waitAction, [this]() {
       _dVars.imagesSaved++;
+      if(_dVars.imagesSaved == 1)
+      {
+        // After the first image is taken, store starting angles for each button press so we can move to
+        // new positions relative to that
+        _dVars.startingBodyAngle_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
+        _dVars.startingHeadAngle_rad = GetBEI().GetRobotInfo().GetHeadAngle();
+      }
       if(_dVars.imagesSaved < _iConfig.numImagesPerCapture)
       {
         MoveToNewPose();

@@ -5,7 +5,6 @@
   "delegateID" : "HabitatMutedDispatcher",
 
   "suppressedBehaviors" : [
-    "PickupCube",
     "VectorPlaysCubeSpinner",
     "PlayRollBlock",
     "PutDownBlock",

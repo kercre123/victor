@@ -728,7 +728,13 @@ namespace Anki {
     {
       // Only look for the robot node once at the beginning
       if (_robotNode == nullptr) {
-        const auto& cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "CozmoBot");
+        auto cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "CozmoBot");
+        if (cozmoBotNodeInfo.nodePtr == nullptr) {
+          // If there's no Vector, look for a Whiskey
+          cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "WhiskeyBot");
+        }
+        
+
         DEV_ASSERT(cozmoBotNodeInfo.nodePtr != nullptr, "UiGameController.UpdateActualObjectPoses.NoCozmoBot");
         DEV_ASSERT(cozmoBotNodeInfo.type == webots::Node::SUPERVISOR, "UiGameController.UpdateActualObjectPoses.CozmoBotNotSupervisor");
         
@@ -968,6 +974,18 @@ namespace Anki {
       m.duration_sec = duration_sec;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetLiftHeight(m);
+      SendMessage(message);
+    }
+
+    void UiGameController::SendMoveLiftToAngle(const f32 angle_rad, const f32 speed, const f32 accel, const f32 duration_sec)
+    {
+      ExternalInterface::SetLiftAngle m;
+      m.angle_rad = angle_rad,
+      m.max_speed_rad_per_sec = speed;
+      m.accel_rad_per_sec2 = accel;
+      m.duration_sec = duration_sec;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_SetLiftAngle(m);
       SendMessage(message);
     }
     

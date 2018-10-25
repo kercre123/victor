@@ -518,6 +518,20 @@ BehaviorReactToMotion::MotionArea BehaviorReactToMotion::GetAreaWithMostMotion()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToMotion::DevAddFakeMotion()
+{
+  if( (GetAreaWithMostMotion() == MotionArea::None) || !WantsToBeActivatedBehavior() ) {
+    MotionArea mostMotionArea = MotionArea::Left;
+    for( auto& elem : _dVars.motionConditions ) {
+      if( elem.area == mostMotionArea ) {
+        elem.motionLevel = 1.0f;
+        elem.sawMotionLastTick = true;
+      }
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMotion::TransitionToCompleted(bool revertHead)
 {
   _dVars.state = State::Completed;

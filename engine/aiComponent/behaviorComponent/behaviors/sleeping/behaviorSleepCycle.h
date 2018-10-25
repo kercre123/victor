@@ -96,7 +96,7 @@ private:
 
   void SetAudioActive( bool active );
 
-  bool WasNighlyReboot() const;
+  bool WasNightlyReboot() const;
 
   struct InstanceConfig {
     std::string awakeDelegateName;

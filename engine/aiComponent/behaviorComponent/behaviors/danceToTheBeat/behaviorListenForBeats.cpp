@@ -157,7 +157,7 @@ void BehaviorListenForBeats::BehaviorUpdate()
 void BehaviorListenForBeats::TransitionToListening()
 {
   _dVars.listeningStartTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  DelegateIfInControl(new ReselectingLoopAnimationAction(_iConfig.listeningAnim, 0)); // loop forever
+  DelegateIfInControl(new ReselectingLoopAnimationAction(_iConfig.listeningAnim));
 }
   
 

@@ -603,7 +603,7 @@ namespace Vector {
     }
     const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
     SendMessage(ExternalInterface::MessageGameToEngine(
-                                                       ExternalInterface::ExecuteBehaviorByID(behaviorName, numRuns)));
+                                                       ExternalInterface::ExecuteBehaviorByID(behaviorName, numRuns, true)));
   }
   
   void WebotsKeyboardController::LogCliffSensorData()
@@ -1235,7 +1235,7 @@ namespace Vector {
   void WebotsKeyboardController::ExecutePlaypenTest()
   {
     SendMessage(ExternalInterface::MessageGameToEngine(
-                                                       ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1)));
+                                                       ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1, false)));
   }
   
   void WebotsKeyboardController::ToggleSendAvailableObjects()
@@ -1598,6 +1598,12 @@ namespace Vector {
   {
     SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
   }
+
+  void WebotsKeyboardController::MoveLiftToAngle()
+  {
+    f32 targetAngle_rad = DEG_TO_RAD(root_->getField("liftTargetAngleDeg")->getSFFloat());
+    SendMoveLiftToAngle(targetAngle_rad, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
+  }
   
   void WebotsKeyboardController::MoveHeadToLowLimit()
   {
@@ -1823,7 +1829,7 @@ namespace Vector {
     REGISTER_KEY_FCN('5', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 5");
     REGISTER_KEY_FCN('6', MOD_NONE,      MoveHeadToHighLimit,    "Move head all the way up");
     REGISTER_KEY_FCN('6', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 6");
-//      REGISTER_KEY_FCN('7', MOD_NONE,      , "");
+    REGISTER_KEY_FCN('7', MOD_NONE,      MoveLiftToAngle,        "Move lift to targetAngle_deg");
     REGISTER_KEY_FCN('7', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 7");
 //      REGISTER_KEY_FCN('8', MOD_NONE,      , "");
     REGISTER_KEY_FCN('8', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 8");
@@ -1899,7 +1905,7 @@ namespace Vector {
     
     REGISTER_KEY_FCN('A', MOD_NONE,      MoveLiftUp,            "Move lift up");
     REGISTER_KEY_FCN('A', MOD_SHIFT,     MoveLiftUp,            "Move lift up (half speed)");
-    REGISTER_KEY_FCN('A', MOD_ALT,       SendReadAnimationFile, "Re-load animations (Not working)");
+//    REGISTER_KEY_FCN('A', MOD_ALT,       SendReadAnimationFile, "Re-load animations (Not working)");
 //      REGISTER_KEY_FCN('A', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('B', MOD_NONE,      SetActiveObjectLights, "Cube lights");
@@ -1910,7 +1916,7 @@ namespace Vector {
     REGISTER_KEY_FCN('C', MOD_NONE,      LogCliffSensorData,    "Request cliff sensor log");
     REGISTER_KEY_FCN('C', MOD_SHIFT,     ExecuteBehavior,       "Execute behavior in 'behaviorName'");
     REGISTER_KEY_FCN('C', MOD_ALT,       ToggleCameraCaptureFormat, "Toggle camera capture format between RGB and YUV");
-    REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, ToggleBayerImageResFormat, "Toggle bayer image resolution (640x360 / 1280x720)");
+    // REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('D', MOD_NONE,      ToggleVizDisplay,      "Toggle viz display");
     REGISTER_KEY_FCN('D', MOD_SHIFT,     LogRawProxData,        "Request prox sensor log");
@@ -2424,24 +2430,6 @@ namespace Vector {
              yuv ? "YUV" : "RGB");
     msg.format = (yuv ? Vision::ImageEncoding::YUV420sp : Vision::ImageEncoding::RawRGB);
     yuv = !yuv;
-    
-    ExternalInterface::MessageGameToEngine msgWrapper;
-    msgWrapper.Set_SetCameraCaptureFormat(msg);
-    SendMessage(msgWrapper);
-  }
-
-  void WebotsKeyboardController::ToggleBayerImageResFormat()
-  {
-    ExternalInterface::SetCameraCaptureFormat msg;
-    msg.format = Vision::ImageEncoding::BAYER;
-
-    static bool enableSensorRes = true;
-    msg.enableSensorRes = enableSensorRes;
-    enableSensorRes = !enableSensorRes;
-
-    LOG_INFO("ToggleBayerImageResFormat",
-             "%s sensor res",
-             (msg.enableSensorRes ? "Enabling" : "Disabling"));
     
     ExternalInterface::MessageGameToEngine msgWrapper;
     msgWrapper.Set_SetCameraCaptureFormat(msg);

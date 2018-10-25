@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -28,7 +27,11 @@ func DoCreate(envName, email, password string) (apiclient.Json, error) {
 	if err != nil {
 		return nil, err
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprint("http status ", resp.StatusCode))
+		json, err := resp.Json()
+		if err != nil || json == nil {
+			return nil, fmt.Errorf("http status %d: (no JSON body)", resp.StatusCode)
+		}
+		return nil, fmt.Errorf("http status %d: (%q)", resp.StatusCode, json["message"])
 	}
 
 	json, err := resp.Json()

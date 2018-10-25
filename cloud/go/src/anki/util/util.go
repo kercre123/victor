@@ -93,3 +93,9 @@ func SleepSelect(dur time.Duration, ch <-chan struct{}) bool {
 		return true
 	}
 }
+
+// ErrorListener defines an interface that can be used as a common definition to inject error
+// handlers into dependent modules
+type ErrorListener interface {
+	OnError(error)
+}

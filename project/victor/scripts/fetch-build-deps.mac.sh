@@ -32,7 +32,8 @@ vlog "Check homebrew dependencies"
     python3 \
     git-lfs \
     libsndfile \
-    node
+    node \
+    rsync
 
 vlog "vicos sdk"
 ./tools/build/tools/ankibuild/vicos.py --install 0.9-r03

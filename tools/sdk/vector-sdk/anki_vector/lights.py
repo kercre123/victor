@@ -22,11 +22,10 @@ __all__ = ['MAX_COLOR_PROFILE', 'WHITE_BALANCED_CUBE_PROFILE',
 
 from .color import Color, green, red, blue, cyan, magenta, yellow, white, off
 
-# TODO Needs a better docstring. Can't describe a ColorProfile as a Color profile.
-
 
 class ColorProfile:
-    """A Color profile to be used with messages involving Lights.
+    """Applies transforms to make Vector's lights and colors appear as
+    intended, by limiting maximum channel intensity.
 
     :param red_multiplier: Scaling value for the brightness of red Lights
     :param green_multiplier: Scaling value for the brightness of green Lights

@@ -99,7 +99,6 @@ static const BackpackLightAnimation::BackpackAnimation kLightsPostCap = {
 const char* const kSavePathKey = "save_path";
 const char* const kImageSaveQualityKey = "quality";
 const char* const kImageScaleKey = "image_scale";
-const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
 const char* const kClassNamesKey = "class_names";
 const char* const kSequenceSetupTimeKey = "sequence_setup_time";
@@ -115,7 +114,7 @@ const char* const kMaxHeadTiltKey = "max_head_tilt";
 BehaviorDevEventSequenceCapture::InstanceConfig::InstanceConfig()
 {
   useCapTouch = false;
-  imageSaveSize = Vision::ImageCache::Size::Full;
+  imageSaveSize = Vision::ImageCacheSize::Half;
 }
 
 BehaviorDevEventSequenceCapture::DynamicVariables::DynamicVariables()
@@ -136,8 +135,7 @@ BehaviorDevEventSequenceCapture::BehaviorDevEventSequenceCapture(const Json::Val
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevEventSequenceCapture");
 
   std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevEventSequenceCapture");
-  std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevEventSequenceCapture");
-  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
+  _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr);
 
   _iConfig.sequenceSetupTime = JsonTools::ParseFloat(config, kSequenceSetupTimeKey, "BehaviorDevEventSequenceCapture");
   _iConfig.preEventCaptureTime = JsonTools::ParseFloat(config, kPreEventCaptureTimeKey, "BehaviorDevEventSequenceCapture");
@@ -192,7 +190,6 @@ void BehaviorDevEventSequenceCapture::GetBehaviorJsonKeys(std::set<const char*>&
     kSavePathKey,
     kImageSaveQualityKey,
     kImageScaleKey,
-    kImageResizeMethodKey,
     kUseCapacitiveTouchKey,
     kClassNamesKey,
     kSequenceSetupTimeKey,

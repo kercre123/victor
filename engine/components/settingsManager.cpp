@@ -230,7 +230,8 @@ bool SettingsManager::SetRobotSetting(const external_interface::RobotSetting rob
   {
     const bool saveToCloudImmediately = DoesSettingUpdateCloudImmediately(robotSetting);
     const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
-    success = UpdateSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+    static const bool sendJdocsChangedMessage = true;
+    success = UpdateSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate, sendJdocsChangedMessage);
   }
 
   return success;
@@ -291,14 +292,16 @@ bool SettingsManager::DoesSettingUpdateCloudImmediately(const external_interface
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::UpdateSettingsJdoc(const bool saveToCloudImmediately,
-                                         const bool setCloudDirtyIfNotImmediate)
+                                         const bool setCloudDirtyIfNotImmediate,
+                                         const bool sendJdocsChangedMessage)
 {
   static const bool saveToDiskImmediately = true;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ROBOT_SETTINGS,
                                                  &_currentSettings,
                                                  saveToDiskImmediately,
                                                  saveToCloudImmediately,
-                                                 setCloudDirtyIfNotImmediate);
+                                                 setCloudDirtyIfNotImmediate,
+                                                 sendJdocsChangedMessage);
   return success;
 }
 

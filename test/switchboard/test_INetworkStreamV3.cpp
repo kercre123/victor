@@ -108,10 +108,10 @@ void Test_INetworkStreamV3::Update() {
 
         if(_reconnect) {
           SendRtsMessage<Vector::ExternalComms::RtsConnResponse>
-            (Cozmo::ExternalComms::RtsConnType::Reconnection, publicKey);
+            (Vector::ExternalComms::RtsConnType::Reconnection, publicKey);
         } else {
           SendRtsMessage<Vector::ExternalComms::RtsConnResponse>
-            (Cozmo::ExternalComms::RtsConnType::FirstTimePair, publicKey);
+            (Vector::ExternalComms::RtsConnType::FirstTimePair, publicKey);
         }
         break;
       }
@@ -168,11 +168,19 @@ void Test_INetworkStreamV3::Update() {
     _handShake = true;
     _reconnect = true;
     delete _securePairing;
+    std::shared_ptr<TaskExecutor> taskExecutor = std::make_shared<Anki::TaskExecutor>(ev_default_loop(0));
+    Anki::Wifi::Initialize(taskExecutor);
+    std::shared_ptr<WifiWatcher> wifiWatcher = std::make_shared<WifiWatcher>(ev_default_loop(0));
+
     _securePairing = new RtsComms(
       this,                 // 
       ev_default_loop(0),   // ev loop
       nullptr,              // engineClient (don't need--only for updating face)
+      nullptr,
       nullptr,              // tokenClient
+      nullptr,
+      wifiWatcher,
+      taskExecutor,
       false,                // is pairing
       false,                // is ota-ing
       false);               // has cloud owner

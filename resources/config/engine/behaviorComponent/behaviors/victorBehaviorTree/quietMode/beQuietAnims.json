@@ -12,7 +12,7 @@
     {
       "behaviorName"     : "QuietGetInInternal",
       "behaviorClass"    : "AnimSequence",
-      "animTriggers"     : ["BeQuiet"]
+      "animTriggers"     : ["Feedback_BeQuiet"]
     },
     {
       "behaviorName"     : "PutHeadDownInternal",

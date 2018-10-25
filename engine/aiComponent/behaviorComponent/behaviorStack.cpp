@@ -4,7 +4,7 @@
 * Author: Kevin Karol
 * Date:   8/17/2017
 *
-* Description: Class for repesenting and managing stack of behaviors
+* Description: Class for representing and managing stack of behaviors
 *
 * Copyright: Anki, Inc. 2017
 **/
@@ -25,6 +25,8 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
+#define LOG_CHANNEL "BehaviorSystem"
+
 namespace Anki {
 namespace Vector {
 
@@ -32,7 +34,7 @@ namespace Vector {
 BehaviorStack::BehaviorStack()
 {
   _stackMonitors.emplace_front( std::make_unique<StackCycleMonitor>() );
-  if( ANKI_DEV_CHEATS ) {
+  if (ANKI_DEV_CHEATS) {
     _stackMonitors.emplace_front( std::make_unique<StackVizMonitor>() );
   }
 }
@@ -48,12 +50,12 @@ std::string BehaviorStack::StackToBehaviorString(std::vector<IBehavior*> stack)
 {
   std::stringstream ss;
   int i = 0;
-  for(auto* behavior : stack){
+  for (auto* behavior : stack) {
     auto* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(behavior);
-    if(cozmoBehavior == nullptr){
+    if (cozmoBehavior == nullptr) {
       continue;
     }
-    if(i != 0){
+    if (i != 0) {
       ss << "/";
     }
     i++;
@@ -83,7 +85,7 @@ void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack, IExternalInterface
   baseOfStack->OnEnteredActivatableScope();
 
   ANKI_VERIFY(baseOfStack->WantsToBeActivated(),
-              "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesntWantToBeActivated",
+              "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesNotWantToBeActivated",
               "%s",
               baseOfStack->GetDebugLabel().c_str());
 
@@ -97,7 +99,7 @@ void BehaviorStack::ClearStack()
   const bool behaviorStackAlreadyEmpty = _behaviorStack.empty();
 
   const size_t stackSize = _behaviorStack.size();
-  for(int i = 0; i + 1 < stackSize; i++){
+  for (int i = 0; i + 1 < stackSize; i++) {
     PopStack();
   }
 
@@ -125,17 +127,16 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
                                         std::set<IBehavior*>& tickedInStack)
 {
   if(_behaviorStack.size() == 0){
-    PRINT_NAMED_WARNING("BehaviorSystemManager.BehaviorStack.UpdateBehaviorStack.NoStackInitialized",
-                        "");
+    LOG_WARNING("BehaviorSystemManager.BehaviorStack.UpdateBehaviorStack.NoStackInitialized", "");
     return;
   }
 
   // The stack can be altered during update ticks through the cancel delegation
   // functions - so track the index in the stack rather than the iterator directly
   // One side effect of this is that if a Behavior ends this tick without queueing
-  // an action we potentially lose a tick before the next time a BSbehavior queues
+  // an action we potentially lose a tick before the next time a BSBehavior queues
   // an action - to save on complexity we're accepting this tradeoff for the time being
-  // but may decide to address it directly here or within the BSbehavior/one of its subclasses
+  // but may decide to address it directly here or within the BSBehavior/one of its subclasses
   // in the future
   auto & eventComponent = behaviorExternalInterface.GetBehaviorEventComponent();
 
@@ -234,18 +235,18 @@ std::set<IBehavior*> BehaviorStack::GetBehaviorsInActivatableScope()
 {
   std::set<IBehavior*> activatableScope;
   // Add all delegates/linked scope
-  for(auto& entry: _stackMetadataMap){
-    for(auto& behavior: entry.second.delegates){
+  for (auto& entry: _stackMetadataMap) {
+    for (auto& behavior: entry.second.delegates) {
       activatableScope.insert(behavior);
     }
-    for(auto& behavior: entry.second.linkedActivationScope){
+    for (auto& behavior: entry.second.linkedActivationScope) {
       activatableScope.insert(behavior);
     }
   }
 
-  for(auto& behavior : _behaviorStack){
+  for (auto& behavior : _behaviorStack) {
     auto iter = activatableScope.find(behavior);
-    if(iter != activatableScope.end()){
+    if (iter != activatableScope.end()) {
       activatableScope.erase(iter);
     }
   }
@@ -258,7 +259,7 @@ std::set<IBehavior*> BehaviorStack::GetBehaviorsInActivatableScope()
 bool BehaviorStack::IsValidDelegation(IBehavior* delegator, IBehavior* delegated)
 {
   auto iter = _stackMetadataMap.find(delegator);
-  if(iter != _stackMetadataMap.end()){
+  if (iter != _stackMetadataMap.end()) {
     return (iter->second.delegates.find(delegated) != iter->second.delegates.end());
   }
   return false;
@@ -308,10 +309,10 @@ void BehaviorStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
   auto iter = _stackMetadataMap.find(delegated);
   DEV_ASSERT(iter != _stackMetadataMap.end(),
              "BehaviorStack.PrepareDelegateForRemovalFromStack.DelegateNotFound");
-  for(auto& entry: iter->second.delegates){
+  for (auto& entry: iter->second.delegates) {
     entry->OnLeftActivatableScope();
   }
-  for(auto& entry: iter->second.linkedActivationScope){
+  for (auto& entry: iter->second.linkedActivationScope) {
     entry->OnLeftActivatableScope();
   }
 }
@@ -323,10 +324,10 @@ void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
 #if ALLOW_DEBUG_LOGGING
   const std::string & debugName = "BehaviorSystemManager.Stack." + debugStr;
   for (size_t i=0; i<_behaviorStack.size(); ++i) {
-    PRINT_CH_DEBUG("BehaviorSystem", debugName.c_str(),
-                   "%zu: %s",
-                   i,
-                   _behaviorStack[i]->GetDebugLabel().c_str());
+    LOG_DEBUG("BehaviorSystem", debugName.c_str(),
+              "%zu: %s",
+              i,
+              _behaviorStack[i]->GetDebugLabel().c_str());
   }
 #endif
 }
@@ -336,7 +337,7 @@ void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::NotifyOfChange(BehaviorExternalInterface& bei)
 {
-  for( auto& monitor : _stackMonitors ) {
+  for (auto& monitor : _stackMonitors) {
     monitor->NotifyOfChange( bei, _behaviorStack, this );
   }
 }
@@ -351,25 +352,25 @@ Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& beh
   auto& stack = data["stack"] = Json::arrayValue;
 
   // construct flat table of tree relationships
-  for( const auto& elem : _stackMetadataMap ) {
+  for (const auto& elem : _stackMetadataMap) {
     if( elem.first == nullptr )  {
       // skip root node
       continue;
     }
-    for( const auto& child : elem.second.delegates ) {
+    for (const auto& child : elem.second.delegates) {
       Json::Value relationship;
       relationship["behaviorID"] = child->GetDebugLabel();
       relationship["parent"] = elem.first->GetDebugLabel();
       tree.append( relationship );
     }
   }
-  if( !_behaviorStack.empty() ) {
+  if (!_behaviorStack.empty()) {
     Json::Value relationship;
     relationship["behaviorID"] = _behaviorStack.front()->GetDebugLabel();
     relationship["parent"] = Json::nullValue;
     tree.append( relationship );
   }
-  for( const auto& stackElem : _behaviorStack ) {
+  for (const auto& stackElem : _behaviorStack) {
     stack.append( stackElem->GetDebugLabel() );
   }
 
@@ -382,13 +383,13 @@ BehaviorStack::StackMetadataEntry::StackMetadataEntry(IBehavior* behavior, int i
 : behavior(behavior)
 , indexInStack(indexInStack)
 {
-  if(behavior != nullptr){
+  if (behavior != nullptr) {
     behavior->GetAllDelegates(delegates);
-    for(auto& delegate: delegates){
-      if( ANKI_VERIFY( delegate != nullptr,
-                       "BehaviorStack.DelegateTree.NullDelegate",
-                       "Behavior '%s' claims that it may delegate to null",
-                       behavior->GetDebugLabel().c_str() ) ) {
+    for (auto& delegate: delegates) {
+      if (ANKI_VERIFY(delegate != nullptr,
+                      "BehaviorStack.DelegateTree.NullDelegate",
+                      "Behavior '%s' claims that it may delegate to null",
+                      behavior->GetDebugLabel().c_str())) {
         RecursivelyGatherLinkedBehaviors(delegate, linkedActivationScope);
       }
     }
@@ -406,12 +407,12 @@ void BehaviorStack::StackMetadataEntry::RecursivelyGatherLinkedBehaviors(IBehavi
     auto bIter = rawBehaviors.begin();
     auto res = linkedBehaviors.insert(*bIter);
     // If insertion was successful this is a new behavior that needs link checking
-    if(res.second){
+    if (res.second) {
       // Anki dev cheats - make sure no one erases behavior set passed in existing behaviors
-      if(ANKI_DEV_CHEATS){
+      if (ANKI_DEV_CHEATS) {
         std::set<IBehavior*> dupSet = rawBehaviors;
         (*bIter)->GetLinkedActivatableScopeBehaviors(dupSet);
-        for(auto& rBehavior : rawBehaviors){
+        for (auto& rBehavior : rawBehaviors) {
           ANKI_VERIFY(dupSet.find(rBehavior) != dupSet.end(),
                       "BehaviorStack.RecursivelyGatherLinkedBehaviors.BehaviorErasedLinkedSet",
                       "Behavior %s erased the behavior set when asked for linked behaviors",

@@ -21,13 +21,8 @@ using namespace Anki::Vector;
 
 TEST(Action, CreateAndDestroy)
 {
-  Anki::Util::_errG = false;
-  
   auto* action = new CompoundActionSequential();
   action->AddAction(new TurnInPlaceAction(0.0f, true));
 
   delete action;
-  
-  // TODO: test that everything is released properly. For now just test that there are no errors or crashes
-  ASSERT_FALSE(Anki::Util::_errG);
 }

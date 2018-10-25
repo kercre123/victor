@@ -68,7 +68,8 @@ public:
   bool DoesSettingUpdateCloudImmediately(const external_interface::RobotSetting key) const;
 
   bool UpdateSettingsJdoc(const bool saveToCloudImmediately,
-                          const bool setCloudDirtyIfNotImmediate);
+                          const bool setCloudDirtyIfNotImmediate,
+                          const bool sendJdocsChangedMessage = false);
 
   //////
   // Some user settings need to be triggered from behaviors; these function help in dealing with latent setting change

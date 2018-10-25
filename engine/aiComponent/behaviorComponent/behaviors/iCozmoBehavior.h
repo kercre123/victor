@@ -53,7 +53,6 @@ namespace Vector {
 class ActionableObject;
 class ConditionUserIntentPending;
 class DriveToObjectAction;
-enum class ObjectInteractionIntention;
 class UnitTestKey;
 enum class ActiveFeature : uint32_t;
 enum class BehaviorStat : uint32_t;
@@ -85,7 +84,26 @@ struct BehaviorOperationModifiers{
     visionModesForActivatableScope = std::make_unique<std::set<VisionModeRequest>>();
     visionModesForActiveScope = std::make_unique<std::set<VisionModeRequest>>();
   }
-
+  
+  // Alters the default value of the behavior operation modifiers via the behavior's
+  // JSON configuration map. Returns a set of tags of which defaults were set.
+  std::set<std::string> SetDefaultBehaviorOperationModifiers(const Json::Value& config, const std::string& debugLabel);
+  
+  // Set of keys for operation modifiers that cannot be set via JSON
+  const std::set<std::string> illegalKeys = {"behaviorAlwaysDelegates"};
+  
+  // Allows for lookup of modifier flags via an associated string name
+  const std::unordered_map<std::string, bool*> stringToModifiersFlagMap = {
+    {"wantsToBeActivatedWhenCarryingObject", &wantsToBeActivatedWhenCarryingObject},
+    {"wantsToBeActivatedWhenOffTreads", &wantsToBeActivatedWhenOffTreads},
+    {"wantsToBeActivatedWhenOnCharger", &wantsToBeActivatedWhenOnCharger},
+    {"behaviorAlwaysDelegates", &behaviorAlwaysDelegates},
+    {"connectToCubeInBackground", &connectToCubeInBackground},
+    {"ensuresCubeConnectionAtDelegation", &ensuresCubeConnectionAtDelegation}
+  };
+  
+  bool ModifierFlagValueFromString(const std::string& str, bool& output) const;
+  
   // WantsToBeActivated modifiers
   bool wantsToBeActivatedWhenCarryingObject = false;
   bool wantsToBeActivatedWhenOffTreads = false;
@@ -110,7 +128,9 @@ struct BehaviorOperationModifiers{
     RequiredLazy, // Run only if already connected. Always subscribe if activated.
     RequiredManaged // Run only if already connected. Always subscribe if activated. Requires Ancestor to manage connection.
   } cubeConnectionRequirements = CubeConnectionRequirements::None;
-
+  
+  bool CubeConnectionRequirementFromString(const std::string& str, CubeConnectionRequirements& enumOutput) const;
+  
   // Background connections will open and hold a cube connection open, but will not trigger connection/status lights.
   // If a non-background subscription is made, the connection will convert to foreground until all foreground 
   // subscriptions are gone, whereupon we will indicate disconnection to the user and convert back to a background
@@ -195,7 +215,7 @@ public:
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedInternal() const override final;
 
-  BehaviorID         GetID()      const { return _id; }
+  BehaviorID GetID() const { return _id; }
 
   const std::string& GetDebugStateName() const { return _debugStateName;}
   const BehaviorClass GetClass() const { return _behaviorClassID; }
@@ -214,6 +234,7 @@ public:
                                              bool& alreadyInPosition);
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
+  // TODO:(bn) this is likely unused and should be deleted (we tend to use direct casts to behavior types now)
   virtual void AddListener(ISubtaskListener* listener)
                 { DEV_ASSERT(false, "AddListener.FrustrationListener.Unimplemented"); }
   virtual void AddListener(IReactToFaceListener* listener)
@@ -477,6 +498,7 @@ protected:
   // deactivated. For convenience (in the case where there is extra intent data), a pointer the the intent is
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
+  UserIntentPtr SmartActivateUserIntent(UserIntentTag tag, bool showActiveIntentFeedback);
   
   // de-activate an intent activated through the smart function above.
   void SmartDeactivateUserIntent();
@@ -520,7 +542,10 @@ protected:
   T& GetBehaviorComp() const {
     return GetBEI().GetAIComponent().GetComponent<BehaviorComponent>(). template GetComponent<T>();
   }
-  
+
+  // NOTE: this is old functionality from Cozmo sparks, but may become useful again if we want a way to
+  // "streamline" certain behaviors (i.e. skip some of the animations / reactions that can slow things down).
+  // BN: as of 1.0.1 this is only ever used in a single behavior (pickupCube) and maybe not intentionally so...
   bool ShouldStreamline() const { return (_alwaysStreamline); }
     
   // make a member variable a console var that is only around as long as its class instance is
@@ -545,6 +570,7 @@ private:
   u32 _lastActionTag = 0;
   std::vector<IBEIConditionPtr> _wantsToBeActivatedConditions;
   std::vector<IBEIConditionPtr> _wantsToCancelSelfConditions;
+  
   BehaviorOperationModifiers _operationModifiers;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
@@ -579,6 +605,7 @@ private:
   //    the absence of other negative conditions), and
   // 2) Clear the intent when the behavior is activated
   std::shared_ptr< ConditionUserIntentPending > _respondToUserIntent;
+  bool _displayResponseToUserIntent = true;
 
   // The tag of the intent that should be deactivated when this behavior deactivates
   UserIntentTag _intentToDeactivate;
@@ -604,16 +631,6 @@ private:
 
   // If non-empty, trigger this emotion event when this behavior activated
   std::string _emotionEventOnActivated;
-  
-  // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only activatable if last time the robot got off the charger by
-  // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
-  float _requiredRecentDriveOffCharger_sec;
-  
-  // if _requiredRecentSwitchToParent_sec is greater than 0, this behavior is only activatable if last time its parent behavior
-  // chooser was activated happened less than this time ago. Eg: a value of 1 means 'if the parent got activated less
-  // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for activities)
-  // TODO rsam: differentiate between (de)activation and interruption
-  float _requiredRecentSwitchToParent_sec;
 
   int _startCount = 0;
 

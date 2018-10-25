@@ -156,6 +156,7 @@ enum uint_16 BehaviorID {
   InteractWithStaticCube,
   InvestigateCubeConnectionGate,
   InvestigateHeldCube,
+  MoveCube,
   PlaceCubeByCharger,
   RollBlockIfNotVertical,
   TurnToLastFace,
@@ -202,6 +203,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
+  PickupCubeNoInitialReaction,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
   CubeSpinnerConnectionGate,
@@ -211,12 +213,11 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/playWithCube
   FetchCube,
   FindCube,
+  FindCubeAndThen,
   FindFacesFetchCube,
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
-  PopAWheelieVoiceCommand,
-  RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/pounceWithProx
   SingletonPounceApproachWithProx,
@@ -227,6 +228,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   PutDownBlock,
+  PutDownBlockAtPose,
   PutDownDispatch_LookForFaceAndCube,
   SayName,
   ShortLookAroundForFaceAndCube,
@@ -254,12 +256,16 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   BlackJackVoiceCommand,
   DoATrickVoiceCommand,
+  FetchCubeVoiceCommand,
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
   GoHomeVoiceCommand,
   KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
+  PickUpCubeVoiceCommand,
   PlayAGameVoiceCommand,
+  PopAWheelieVoiceCommand,
+  RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands/trickDispatchers
   CubeTrickDispatcher,
@@ -335,17 +341,21 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/reactions
   AskForHelp,
   AskForHelpOnSide,
+  BasicVoiceCommands,
   InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
+  ReactToAbuse,
   ReactToAffirmative,
+  ReactToApology,
   ReactToCliff,
+  ReactToCliffDuringFetch,
   ReactToDarkness,
   ReactToFrustrationMajor,
   ReactToGoodBye,
   ReactToGoodMorning,
-  ReactToGreeting,
   ReactToHello,
+  ReactToLove,
   ReactToMotorCalibration,
   ReactToNegative,
   ReactToObstacle,

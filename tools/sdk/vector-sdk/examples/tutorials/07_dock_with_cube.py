@@ -17,7 +17,7 @@
 """Tell Vector to drive up to a seen cube.
 
 This example demonstrates Vector driving to and docking with a cube, without
-picking it up.  Vector will line his lift hooks up with the cube so that they are
+picking it up.  Vector will line his arm hooks up with the cube so that they are
 inserted into the cube's corners.
 
 You must place a cube in front of Vector so that he can see it.
@@ -42,7 +42,7 @@ def main():
 
         if robot.world.connected_light_cube:
             print("Begin cube docking...")
-            # TODO Add num_retries of 3. Observe it actually trying multiple times.
+            # TODO Try with num_retries of 3
             dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
             docking_result = dock_response.result
 

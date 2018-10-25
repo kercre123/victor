@@ -26,7 +26,6 @@
 #include "engine/cozmoContext.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 #include <sstream>
 
@@ -59,13 +58,13 @@ void AudioBehaviorStackListener::HandleAudioBehaviorMessage(const ExternalInterf
   auto revPathIt = message.branchPath.rbegin();
   const auto it = _reversedPathBehaviorTree.find(*revPathIt);
   if (it == _reversedPathBehaviorTree.end()) {
-    // no evnts for leaf
+    // no events for leaf
     return;
   }
 
   // Keep walking towards the root of the path to find the best match
   const BehaviorNode* node = &it->second;
-  BOUNDED_WHILE( message.branchPath.size(), ++revPathIt != message.branchPath.rend() ) {
+  while( ++revPathIt != message.branchPath.rend() ) {
     auto childIt = node->childrenMap.find(*revPathIt);
     if (childIt == node->childrenMap.end()) {
       // Current node is the best path match
@@ -206,7 +205,7 @@ void AudioBehaviorStackListener::LoadMetaData( Util::Data::DataPlatform* dataPla
     }
     
     // Walk through behavior tree nodes towards the root of the path
-    BOUNDED_WHILE( results.size(), ++revPathIt != results.rend() ) {
+    while( ++revPathIt != results.rend() ) {
       // Allow wildcard path prefix
       if (*revPathIt == "*") {
         break;

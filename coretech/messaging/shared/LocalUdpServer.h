@@ -45,6 +45,12 @@ public:
 
   int GetSocket() const { return _socket; }
 
+  // Return count of bytes queued for read or -1 on error
+  ssize_t GetIncomingSize() const;
+
+  // Return count of bytes queued for write or -1 on error
+  ssize_t GetOutgoingSize() const;
+
 private:
   // Socket parameters
   int _sndbufsz;

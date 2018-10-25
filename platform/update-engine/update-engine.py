@@ -54,8 +54,18 @@ def make_blocking(pipe, blocking):
     else:
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
+#
+# Return milliseconds since boot for use as hardware timestamp.
+#
+def das_uptime_ms():
+  try:
+      up, _ = [float(field) for field in open("/proc/uptime").read().split()]
+  except (IOError, ValueError):
+      return 0
+  return long(up*1000)
+
 def das_event(name, s1 = "", s2 = "", s3 = "", s4 = "", i1 = "", i2 = "", i3 = "", i4 = ""):
-    fmt = "\n@{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\n"
+    fmt = "\n@{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\n"
     s1 = s1.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     s2 = s2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     s3 = s3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
@@ -64,7 +74,7 @@ def das_event(name, s1 = "", s2 = "", s3 = "", s4 = "", i1 = "", i2 = "", i3 = "
     i2 = i2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     i3 = i3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     i4 = i4.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    sys.stdout.write(fmt.format(name, s1, s2, s3, s4, i1, i2, i3, i4))
+    sys.stdout.write(fmt.format(name, s1, s2, s3, s4, i1, i2, i3, i4, das_uptime_ms()))
     sys.stdout.flush()
 
 
@@ -74,6 +84,13 @@ def safe_delete(name):
         os.remove(name)
     elif os.path.isdir(name):
         shutil.rmtree(name)
+
+
+def safe_delete_staging_files():
+    "Delete staging files"
+    safe_delete(BOOT_STAGING)
+    safe_delete(DELTA_STAGING)
+    safe_delete(ABOOT_STAGING)
 
 def clear_status():
     "Clear everything out of the status directory"
@@ -96,6 +113,7 @@ def die(code, text):
     if DEBUG:
         sys.stderr.write(str(text))
         sys.stderr.write(os.linesep)
+    safe_delete_staging_files()
     exit(code)
 
 
@@ -127,7 +145,7 @@ def zero_slot(target_slot):
 
 
 def call(*args):
-    "Simple wrapper arround subprocess.call to make ret=0 -> True"
+    "Simple wrapper around subprocess.call to make ret=0 -> True"
     return subprocess.call(*args) == 0
 
 
@@ -277,7 +295,7 @@ def open_url_stream(url):
         assert url.startswith("http")  # Accepts http and https but not ftp or file
         os_version = get_prop("ro.anki.version")
         victor_version = get_prop("ro.anki.victor.version")
-        if '?' in url:  # Already has a querry string
+        if '?' in url:  # Already has a query string
             if not url.endswith('?'):
                 url += '&'
         else:
@@ -383,6 +401,9 @@ def handle_boot_system(target_slot, manifest, tar_stream):
         with open_slot("boot", target_slot, "w") as dst:
             dst.write(src.read())
 
+    # Delete the staged boot.img file
+    safe_delete(BOOT_STAGING)
+
 
 def copy_slot(partition, src_slot, dst_slot):
     "Copy the contents of a partition slot from one to the other"
@@ -420,7 +441,6 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
                                 open(DELTA_STAGING, "wb"),
                                 progress_update)
     if extract_result is False:
-        safe_delete(DELTA_STAGING)
         die(209, "delta.bin hash doesn't match manifest value")
     try:
         payload = update_payload.Payload(open(DELTA_STAGING, "rb"))
@@ -450,6 +470,8 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
                       get_slot_name("boot", current_slot),
                       get_slot_name("system", current_slot),
                       truncate_to_expected_size=False)
+
+        safe_delete(DELTA_STAGING)
 
     except update_payload.PayloadError as pay_err:
         zero_slot(target_slot)
@@ -504,10 +526,17 @@ def handle_factory(manifest, tar_stream):
     with open(BOOT_STAGING, "rb") as src:
         with open_slot("boot", target_slot, "w") as dst:
             dst.write(src.read())
+
+    # Delete the staged boot.img file
+    safe_delete(BOOT_STAGING)
+
     # And actually write the aboot image
     with open(ABOOT_STAGING, "rb") as src:
         with open(os.path.join(BOOT_DEVICE, "aboot"), "wb") as dst:
             dst.write(src.read())
+
+    # Delete the staged aboot.img file
+    safe_delete(ABOOT_STAGING)
 
 def validate_new_os_version(current_os_version, new_os_version, cmdline):
     allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
@@ -685,4 +714,5 @@ if __name__ == '__main__':
             die(208, "IO Error: " + str(io_error))
         except Exception as e:
             die(219, e)
+    safe_delete_staging_files()
     exit(0)

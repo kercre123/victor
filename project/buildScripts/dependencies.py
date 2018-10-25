@@ -87,7 +87,8 @@ def is_tool(name):
 def is_up(url_string):
     import urllib2
     try:
-        urllib2.urlopen(url_string)
+        response = urllib2.urlopen(url_string)
+        response.read()
         return True
     except urllib2.HTTPError, e:
         if e.code == 401:
@@ -97,6 +98,9 @@ def is_up(url_string):
         return False
     except urllib2.URLError, e:
         return False
+    except ConnectionResetError, e:
+        response.close()
+        os.exit(e)
 
 
 def extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):

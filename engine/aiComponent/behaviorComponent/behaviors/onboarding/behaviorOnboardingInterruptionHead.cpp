@@ -80,7 +80,7 @@ void BehaviorOnboardingInterruptionHead::OnBehaviorActivated()
     parallelAction->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(-22.0f) ) );
     if( _dVars.isGroggy && (_iConfig.animWhenGroggy != AnimationTrigger::Count) ) {
       const u8 tracks = (u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::BODY_TRACK;
-      auto* animAction = new TriggerLiftSafeAnimationAction{ _iConfig.animWhenGroggy, 0, true, tracks };
+      auto* animAction = new ReselectingLoopAnimationAction{ _iConfig.animWhenGroggy, 0, true, tracks };
       parallelAction->AddAction( animAction );
     }
     action->AddAction( parallelAction );

@@ -27,6 +27,6 @@ python3 -c "import autopep8" || { echo; echo "You must install autopep8 first wi
 echo "> Running autopep8"
 python3 -m autopep8 --ignore E501,E402 --in-place ${FILES}
 
-python3 -c "import pylint" || { echo; echo "You must install autopep8 first with 'pip3 install pylint'" ; exit 1; }
+python3 -c "import pylint" || { echo; echo "You must install pylint first with 'pip3 install pylint'" ; exit 1; }
 echo "> Running pylint"
-python3 -m pylint --rcfile=.pylint ${FILES}
+python3 -m pylint --rcfile="${SCRIPT_PATH}/.pylint" ${FILES}

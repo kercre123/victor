@@ -24,6 +24,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "gtest/gtest.h"
+#include "test/engine/callWithoutError.h"
 
 #include "clad/types/variableSnapshotIds.h"
 
@@ -153,139 +154,23 @@ TEST(VariableSnapshotComponent, BasicFunctionalityTest)
   RemoveTestDataAfter();
 };
 
-// changing version info leads to data reset
-TEST(VariableSnapshotComponent, VersioningInfoDataResetOSBuildVersion)
-{
-  using namespace Anki::Vector;
-
-  bool falseBool = false;
-  std::string wrongVersion = "wrongVersion";
-
-  // scope so that robot 1 is destroyed before robot 2 is made
-  {
-    // make a robot
-    auto robot0 = std::make_unique<Robot>(kRobotId, cozmoContext);
-    RemoveTestDataPrior(robot0);
-
-    // get and load data
-    auto& variableSnapshotComp = robot0->GetVariableSnapshotComponent();
-
-    // alter version number serialization
-    auto wrongVersionSeralizeFn = [wrongVersion](Json::Value& outJson) { 
-      outJson[VariableSnapshotEncoder::kVariableSnapshotKey] = wrongVersion;
-      outJson[VariableSnapshotEncoder::kVariableSnapshotIdKey] = VariableSnapshotIdToString(VariableSnapshotId::_RobotOSBuildVersion);
-      return true;
-    };
-
-    variableSnapshotComp._variableSnapshotDataMap.at(VariableSnapshotId::_RobotOSBuildVersion) = wrongVersionSeralizeFn;
-
-    // identify data to be stored
-    std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(falseBool);
-
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr0);
-
-    variableSnapshotComp.SaveVariableSnapshots();
-  }
-
-  // make another robot
-  {
-    // make a robot
-    auto robot1 = std::make_unique<Robot>(kRobotId, cozmoContext);
-
-    // get and load data
-    auto& variableSnapshotComp = robot1->GetVariableSnapshotComponent();
-
-    // identify data to be stored
-    std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!falseBool);
-
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr1);
-
-    // check that the data is the same
-    EXPECT_TRUE(*testBoolPtr1);
-
-    // the robot now automatically saves data as it destructs
-  }
-  RemoveTestDataAfter();
-};
-
-// changing version robot build sha leads to data reset
-TEST(VariableSnapshotComponent, VersioningInfoDataResetRobotBuildSha)
-{
-  using namespace Anki::Vector;
-
-  bool falseBool = false;
-  std::string wrongSha = "wrongSha";
-
-  // scope so that robot 1 is destroyed before robot 2 is made
-  {
-    // make a robot
-    auto robot0 = std::make_unique<Robot>(kRobotId, cozmoContext);
-    RemoveTestDataPrior(robot0);
-
-    // get and load data
-    auto& variableSnapshotComp = robot0->GetVariableSnapshotComponent();
-
-    // alter version number serialization
-    auto wrongShaSeralizeFn = [wrongSha](Json::Value& outJson) { 
-      outJson[VariableSnapshotEncoder::kVariableSnapshotKey] = wrongSha;
-      outJson[VariableSnapshotEncoder::kVariableSnapshotIdKey] = VariableSnapshotIdToString(VariableSnapshotId::_RobotBuildSha);
-      return true;
-    };
-
-    variableSnapshotComp._variableSnapshotDataMap.at(VariableSnapshotId::_RobotBuildSha) = wrongShaSeralizeFn;
-
-    // identify data to be stored
-    std::shared_ptr<bool> testBoolPtr0 = std::make_shared<bool>(falseBool);
-
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr0);
-
-    variableSnapshotComp.SaveVariableSnapshots();
-  }
-
-  // make another robot
-  {
-    // make a robot
-    auto robot1 = std::make_unique<Robot>(kRobotId, cozmoContext);
-
-    // get and load data
-    auto& variableSnapshotComp = robot1->GetVariableSnapshotComponent();
-
-    // identify data to be stored
-    std::shared_ptr<bool> testBoolPtr1 = std::make_shared<bool>(!falseBool);
-
-    variableSnapshotComp.InitVariable<bool>(VariableSnapshotId::UnitTestBool0, testBoolPtr1);
-
-    // check that the data is the same
-    EXPECT_TRUE(*testBoolPtr1);
-
-    // the robot now automatically saves data as it destructs
-  }
-  RemoveTestDataAfter();
-};
-
 // test that passing in a nullptr results in an error
 TEST(VariableSnapshotComponent, NullPointerError)
 {
   using namespace Anki::Vector;
 
   {
-    auto errGState = Anki::Util::_errG;
-
     // make a robot
     auto robot0 = std::make_unique<Robot>(kRobotId, cozmoContext);
 
     // get and load data
-    RemoveTestDataPrior(robot0);auto& variableSnapshotComp    
-     = robot0->GetVariableSnapshotComponent();
+    RemoveTestDataPrior(robot0);
+    auto& variableSnapshotComp = robot0->GetVariableSnapshotComponent();
 
-    Anki::Util::_errG = false;
-    variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, nullptr);
-    
-    // should error here
-    EXPECT_TRUE( Anki::Util::_errG );
-
-    // set _errG back to its initial value
-    Anki::Util::_errG = errGState;
+    const bool err = CallWithoutError( [&](){
+      variableSnapshotComp.InitVariable<int>(VariableSnapshotId::UnitTestInt0, nullptr);
+    });
+    EXPECT_TRUE( err );
   }
 
   RemoveTestDataAfter();

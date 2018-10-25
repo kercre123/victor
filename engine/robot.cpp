@@ -83,7 +83,7 @@
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
-#define LOG_CHANNEL "RobotState"
+#define LOG_CHANNEL "Robot"
 
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
 
@@ -114,8 +114,10 @@ static void PlayAnimationByName(ConsoleFunctionContextRef context)
     const char* animName = ConsoleArg_Get_String(context, "animName");
     if (animName) {
       int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
-      _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW,
-                                              new PlayAnimationAction(animName, numLoops));
+      bool renderInEyeHue = ConsoleArg_GetOptional_Bool(context, "renderInEyeHue", true);
+      auto* action = new PlayAnimationAction(animName, numLoops);
+      action->SetRenderInEyeHue(renderInEyeHue);
+      _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
     }
   }
 }
@@ -141,14 +143,14 @@ static void AddAnimation(ConsoleFunctionContextRef context)
           CannedAnimationLoader animLoader(platform, spritePaths, spriteSequenceContainer, loadingCompleteRatio, abortLoad);
 
           animLoader.LoadAnimationIntoContainer(animationPath.c_str(), animContainer);
-          PRINT_NAMED_INFO("Robot.AddAnimation", "Loaded animation from %s", animationPath.c_str());
+          LOG_INFO("Robot.AddAnimation", "Loaded animation from %s", animationPath.c_str());
         }
       }
     }
   }
 }
 
-CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName, optional int numLoops);
+CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName, optional int numLoops, optional bool renderInEyeHue);
 CONSOLE_FUNC(AddAnimation, "Animation", const char* animFile);
 
 // Perform Text to Speech Coordinator from debug console
@@ -407,7 +409,11 @@ Robot::~Robot()
   _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
   _components->RemoveComponent(RobotComponentID::PathPlanning);
 
-  PRINT_NAMED_INFO("robot.destructor", "%d", GetID());
+  // Ensure JdocsManager destructor gets called before the destructors of the
+  // four components that it needs to talk to
+  _components->RemoveComponent(RobotComponentID::JdocsManager);
+
+  LOG_INFO("robot.destructor", "%d", GetID());
 }
 
 
@@ -524,7 +530,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // Falling seems worthy of a DAS event
     if (_awaitingConfirmationTreadState == OffTreadsState::Falling) {
       _fallingStartedTime_ms = GetLastMsgTimestamp();
-      PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStarted",
+      LOG_INFO("Robot.CheckAndUpdateTreadsState.FallingStarted",
                        "t=%dms",
                        (TimeStamp_t)_fallingStartedTime_ms);
 
@@ -534,7 +540,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     } else if (_offTreadsState == OffTreadsState::Falling) {
       // This is not an exact measurement of fall time since it includes some detection delays on the robot side
       // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands
-      PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStopped",
+      LOG_INFO("Robot.CheckAndUpdateTreadsState.FallingStopped",
                        "t=%dms, duration=%dms",
                        (TimeStamp_t)GetLastMsgTimestamp(), (TimeStamp_t)(GetLastMsgTimestamp() - _fallingStartedTime_ms));
       _fallingStartedTime_ms = 0;
@@ -615,16 +621,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     inAirTooLongReportTime_ms = 0;
   }
 
-
-  // Send viz message with current treads states
-  const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
-  const auto vizManager = GetContext()->GetVizManager();
-  vizManager->SetText(VizManager::OFF_TREADS_STATE,
-                      NamedColors::GREEN,
-                      "OffTreadsState: %s  %s",
-                      EnumToString(_offTreadsState),
-                      awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
-
   return offTreadsStateChanged;
 }
 
@@ -674,7 +670,7 @@ void Robot::Delocalize(bool isCarryingObject)
                  worldOriginID, worldOrigin.GetID());
 
   // Log delocalization, new origin name, and num origins to DAS
-  PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
+  LOG_INFO("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
                    GetID(), worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
 
   GetComponent<FullRobotPose>().GetPose().SetRotation(0, Z_AXIS_3D());
@@ -706,9 +702,9 @@ void Robot::Delocalize(bool isCarryingObject)
   }
 
   // Update VizText
-  GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-  GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          GetPoseOriginList().GetSize(),
                                          worldOrigin.GetName().c_str());
@@ -770,7 +766,7 @@ void Robot::Delocalize(bool isCarryingObject)
 Result Robot::SetLocalizedTo(const ObservableObject* object)
 {
   if (object == nullptr) {
-    GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+    GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                            "LocalizedTo: Odometry");
     _localizedToID.UnSet();
     _isLocalized = true;
@@ -808,10 +804,10 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   GetAIComponent().OnRobotRelocalized();
 
   // Update VizText
-  GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
-  GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+  GetContext()->GetVizManager()->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
                                          GetPoseOriginList().GetSize(),
                                          GetWorldOrigin().GetName().c_str());
@@ -1141,7 +1137,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetComponent<RobotGyroDriftDetector>().DetectBias(msg);
 
   /*
-    PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
+    LOG_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
     "Robot %d's pose updated to (%.3f, %.3f, %.3f) @ %.1fdeg based on "
     "msg at time=%d, frame=%d saying (%.3f, %.3f) @ %.1fdeg\n",
     _ID, GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y(), GetComponent<FullRobotPose>().GetPose().GetTranslation().z(),
@@ -1158,17 +1154,18 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const u16 imageProcPeriod_ms  = static_cast<u16>( GetVisionComponent().GetProcessingPeriod_ms() );
 
   // Send state to visualizer for displaying
-  GetContext()->GetVizManager()->SendRobotState(
-    stateMsg,
-    imageFramePeriod_ms,
-    imageProcPeriod_ms,
-    GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
-    GetMoveComponent().GetLockedTracks(),
-    GetAnimationComponent().GetAnimState_TracksInUse(),
-    _robotImuTemperature_degC,
-    GetCliffSensorComponent().GetCliffDetectThresholds(),
-    GetBatteryComponent().GetBatteryVolts()
-    );
+  VizInterface::RobotStateMessage vizState(stateMsg,
+                                           _robotImuTemperature_degC,
+                                           GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
+                                           GetCliffSensorComponent().GetCliffDetectThresholds(),
+                                           imageFramePeriod_ms,
+                                           imageProcPeriod_ms,
+                                           GetMoveComponent().GetLockedTracks(),
+                                           GetAnimationComponent().GetAnimState_TracksInUse(),
+                                           GetBatteryComponent().GetBatteryVolts(),
+                                           _offTreadsState,
+                                           _awaitingConfirmationTreadState);
+  GetContext()->GetVizManager()->SendRobotState(std::move(vizState));
 
   return lastResult;
 
@@ -1247,8 +1244,13 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
-  const Result factoryRes = UpdateStartupChecks();
-  if(factoryRes != RESULT_OK)
+  Result factoryRes;
+  const bool checkDone = UpdateStartupChecks(factoryRes);
+  if(!checkDone)
+  {
+    return RESULT_OK;
+  }
+  else if(factoryRes != RESULT_OK)
   {
     return factoryRes;
   }
@@ -1271,8 +1273,6 @@ Result Robot::Update()
   ActiveBlockLightTest(1);
   return RESULT_OK;
 #endif
-
-  GetContext()->GetVizManager()->SendStartRobotUpdate();
 
   _components->UpdateComponents();
 
@@ -1320,8 +1320,6 @@ Result Robot::Update()
   GetContext()->GetVizManager()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
   vizPose, ROBOT_BOUNDING_QUAD_COLOR);
   */
-
-  GetContext()->GetVizManager()->SendEndRobotUpdate();
 
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states
@@ -1589,10 +1587,10 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   }
 
   /* Useful for Debug:
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.MatSeenChain",
+     LOG_INFO("Robot.LocalizeToMat.MatSeenChain",
      "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
 
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
+     LOG_INFO("Robot.LocalizeToMat.ExistingMatChain",
      "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
   */
 
@@ -1673,7 +1671,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   const Pose3d& origOrigin = GetPoseOriginList().GetCurrentOrigin();
   if (!existingObject->GetPose().HasSameRootAs(origOrigin))
   {
-    PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
+    LOG_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
                      "Robot %d's current origin is %s, about to localize to origin %s.",
                      GetID(), origOrigin.GetName().c_str(),
                      existingObject->GetPose().FindRoot().GetName().c_str());
@@ -1738,7 +1736,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
 
   // Overly-verbose. Use for debugging localization issues
   /*
-    PRINT_NAMED_INFO("Robot.LocalizeToObject",
+    LOG_INFO("Robot.LocalizeToObject",
     "Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f), frameID=%d\n",
     ObjectTypeToString(existingObject->GetType()),
     existingObject->GetID().GetValue(), GetID(),
@@ -1779,10 +1777,10 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   }
 
   /* Useful for Debug:
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.MatSeenChain",
+     LOG_INFO("Robot.LocalizeToMat.MatSeenChain",
      "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
 
-     PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
+     LOG_INFO("Robot.LocalizeToMat.ExistingMatChain",
      "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
   */
 
@@ -2001,7 +1999,7 @@ Result Robot::SetPosePostRollOffCharger()
     return lastResult;
   }
 
-  PRINT_NAMED_INFO("Robot.SetPosePostRollOffCharger.NewRobotPose",
+  LOG_INFO("Robot.SetPosePostRollOffCharger.NewRobotPose",
                    "Updated robot pose to be in front of the charger, as if it had just rolled off.");
   return RESULT_OK;
 }
@@ -2012,10 +2010,11 @@ Result Robot::SetPosePostRollOffCharger()
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
 {
   static Util::MessageProfiler msgProfiler("Robot::SendMessage");
-  msgProfiler.Update((int)msg.GetTag(), msg.Size());
 
   Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(msg, reliable, hot);
-  if (sendResult != RESULT_OK) {
+  if (sendResult == RESULT_OK) {
+    msgProfiler.Update((int)msg.GetTag(), msg.Size());
+  } else {
     const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
     Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);
     msgProfiler.ReportOnFailure();
@@ -2763,7 +2762,7 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
                                             shouldManage);
 }
 
-Result Robot::UpdateCameraStartupChecks()
+bool Robot::UpdateCameraStartupChecks(Result& res)
 {
   enum State {
     FAILED = -1,
@@ -2807,10 +2806,11 @@ Result Robot::UpdateCameraStartupChecks()
     }
   }
 
-  return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  res = (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  return (state != State::WAITING);
 }
 
-Result Robot::UpdateGyroCalibChecks()
+bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
   // should be displaying the gyro not calibrated image
@@ -2848,21 +2848,29 @@ Result Robot::UpdateGyroCalibChecks()
 
   }
 
-  return RESULT_OK;
+  res = RESULT_OK;
+  return true;
 }
 
-Result Robot::UpdateStartupChecks()
+bool Robot::UpdateStartupChecks(Result& res)
 {
-#define RUN_CHECK(func)  \
-  res = func();          \
-  if(res != RESULT_OK) { \
-    return res;          \
+#define RUN_CHECK(func)        \
+  {                            \
+    Result result = RESULT_OK; \
+    checkDone &= func(result); \
+    if(checkDone) {            \
+      res = result;            \
+      if(res != RESULT_OK) {   \
+        return res;            \
+      }                        \
+    }                          \
   }
 
-  Result res = RESULT_OK;
+  bool checkDone = true;
+  res = RESULT_OK;
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
-  return res;
+  return checkDone;
 
 #undef RUN_CHECK
 }

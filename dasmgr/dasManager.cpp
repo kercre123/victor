@@ -303,12 +303,11 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
     pos = end+1;
   }
 
-  if (values.size() != Anki::Util::DAS::FIELD_COUNT) {
+  if (values.size() < Anki::Util::DAS::FIELD_COUNT) {
     LOG_ERROR("DASManager.ConvertLogEntry", "Unable to parse %s from %s (%zu != %d)",
               logEntry.message, logEntry.tag, values.size(), Anki::Util::DAS::FIELD_COUNT);
     return "";
   }
-
 
   const auto & name = values[DAS_NAME];
   if (name.empty()) {
@@ -389,16 +388,20 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
   }
 
   static const std::vector<std::string> keys =
-    {"event", "s1", "s2", "s3", "s4", "i1", "i2", "i3", "i4"};
+    {"event", "s1", "s2", "s3", "s4", "i1", "i2", "i3", "i4", "uptime_ms"};
 
-  for (unsigned int i = 0 ; i < keys.size(); i++) {
-    if (!values[i].empty()) {
-      ostr << ',';
-      if (keys[i][0] == 'i') {
-        serialize(ostr, keys[i], std::atoll(values[i].c_str()));
-      } else {
-        serialize(ostr, keys[i], values[i]);
-      }
+  const size_t n = std::min(keys.size(), values.size());
+  for (unsigned int i = 0 ; i < n; ++i) {
+    const std::string & value = values[i];
+    if (value.empty()) {
+      continue;
+    }
+    const std::string & key = keys[i];
+    ostr << ',';
+    if (key[0] == 'i' || key[0] == 'u') {
+      serialize(ostr, key, std::atoll(value.c_str()));
+    } else {
+      serialize(ostr, key, value);
     }
   }
 
@@ -427,15 +430,6 @@ void DASManager::ProcessLogEntry(const AndroidLogEntry & logEntry)
 
   const std::string & json = ConvertLogEntryToJson(logEntry);
   if (json.empty()) {
-    return;
-  }
-
-  // Create the directory that will hold the json
-  const auto & storagePath = _dasConfig.GetStoragePath();
-  if (!Util::FileUtils::CreateDirectory(storagePath, false, true, S_IRWXU)) {
-    LOG_ERROR("DASManager.ProcessLogEntry.CreateStoragePathFailure",
-              "Failed to create storage path %s",
-              storagePath.c_str());
     return;
   }
 
@@ -758,8 +752,19 @@ Result DASManager::Run(const bool & shutdown)
     LOG_ERROR("DASManager.Run.InvalidURL", "Invalid URL");
     return RESULT_FAIL_INVALID_PARAMETER;
   }
-  if (_dasConfig.GetStoragePath().empty()) {
+
+  // Validate storage path
+  const auto & storagePath = _dasConfig.GetStoragePath();
+  if (storagePath.empty()) {
     LOG_ERROR("DASManager.Run.InvalidStoragePath", "Invalid Storage Path");
+    return RESULT_FAIL_INVALID_PARAMETER;
+  }
+
+  // Create the directory that will hold the json
+  if (!Util::FileUtils::CreateDirectory(storagePath, false, true, S_IRWXU)) {
+    LOG_ERROR("DASManager.Run.CreateStoragePathFailure",
+              "Failed to create storage path %s",
+              storagePath.c_str());
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 

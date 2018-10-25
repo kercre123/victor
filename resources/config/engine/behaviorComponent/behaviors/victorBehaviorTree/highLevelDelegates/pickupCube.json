@@ -1,4 +1,6 @@
 {
   "behaviorClass": "PickUpCube",
-  "behaviorID": "PickupCube"
+  "behaviorID": "PickupCube",
+  
+  "alwaysStreamline" : true
 }

@@ -14,7 +14,7 @@ anki_build_target_license(util "ANKI" "RSA,${CMAKE_SOURCE_DIR}/licenses/md5.lice
 
 set_target_properties(util PROPERTIES OUTPUT_NAME ankiutil)
 
-target_include_directories(util 
+target_include_directories(util
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
 )
@@ -37,8 +37,8 @@ target_link_libraries(util
   # vendor libs
   jsoncpp
   kazmath
+  hdr_histogram
   ${PLATFORM_LIBS}
 )
 
 anki_build_strip(TARGET util)
-

@@ -9,10 +9,11 @@ namespace Vector {
 
 enum int_32 AnimationTrigger
 {
+  InvalidAnimTrigger, // default value of 0 == invalid
+
   // Animation triggers, sorted alphabetically
   AlreadyAtFace,
   AudioOnlyHuh,
-  BeQuiet,
 
   BlackJack_Deal,
   BlackJack_GoodLuck,
@@ -141,7 +142,7 @@ enum int_32 AnimationTrigger
   FailedToRightFromFace,
 
   FetchCubeFailure,
-  FetchCubeFrustrated,
+  FetchCubeSetDown,
   FetchCubeSuccess,
 
   FoundFace,
@@ -155,6 +156,16 @@ enum int_32 AnimationTrigger
   FistBumpLeftHanging,
   FlipDownFromBack,
   FrustratedByFailureMajor,
+
+  // feedback/imperative anims
+  Feedback_GoodRobot,
+  Feedback_BadRobot,
+  Feedback_ShutUp,
+  Feedback_BeQuiet,
+  Feedback_Apology,
+  Feedback_ILoveYou,
+  Feedback_MeanWords,
+
   GoToSleepGetIn,
   GoToSleepOff,
   GoToSleepSleeping,
@@ -261,17 +272,18 @@ enum int_32 AnimationTrigger
   PickupCubePreperation,
   PickupCubeRetry,
   PickupCubeSuccess,
-  PokeObjectGetIn,
-  PokeObjectDriveLoop,
-  PokeObjectGetOut,
-  
+
   PlaceCubeByChargerFail,
   PlaceCubeByChargerReactToCharger,
   PlaceCubeByChargerSuccess,
-  
+
   PlanningGetIn,
   PlanningLoop,
   PlanningGetOut,
+
+  PokeObjectGetIn,
+  PokeObjectDriveLoop,
+  PokeObjectGetOut,
 
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,
@@ -305,8 +317,6 @@ enum int_32 AnimationTrigger
   ReactToCubeTapInteractionGetOut,
   ReactToCubeTapInteractionLoop,
   ReactToDarkness,
-  ReactToAffirmative,
-  ReactToNegative,
   ReactToGoodBye,
   ReactToGoodMorning,
   ReactToGoodNight,
@@ -399,7 +409,6 @@ enum int_32 AnimationTrigger
   RollBlockRealign,
   RollBlockRetry,
   RollBlockSuccess,
-  ShutUp,
   SoundOnlyLiftEffortPickup,
   SoundOnlyLiftEffortPlaceHigh,
   SoundOnlyLiftEffortPlaceLow,

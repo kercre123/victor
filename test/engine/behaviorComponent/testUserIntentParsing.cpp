@@ -52,9 +52,9 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
     const std::string fileContents{ Util::FileUtils::ReadFile( inFilename ) };
     
     Json::Reader reader;
-    Json::Value config;
     const bool parsedOK = reader.parse(fileContents, config, false);
     EXPECT_TRUE(parsedOK);
+    PRINT_NAMED_INFO("UserIntentsParsing.TestIntentSampleFile.ConfigSize", "Size of JSON root = %d", config.size());
     
   } else {
     
@@ -78,7 +78,6 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
   std::set<std::string> completedLabels = tih.GetCompletedLabels();
   std::set<std::string> sampleLabels;
   
-  
   for( const auto& sample : config ) {
     std::stringstream ss;
     ss << sample;
@@ -90,6 +89,8 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
     if( intent.GetTag() != UserIntentTag::unmatched_intent ) {
       const auto& label = tih.GetLabelForIntent( intent );
       if( !label.empty() ) {
+        PRINT_NAMED_INFO("UserIntentsParsing.TestIntentSampleFile.SampleLabel",
+                         "The label for %s is %s", ss.str().c_str(), label.c_str());
         sampleLabels.insert( label );
       }
     }
@@ -113,7 +114,6 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
   EXPECT_FALSE(itSamples == sampleLabels.end() && itCompleted != completedLabels.end())
     << "Could not find " << *itCompleted << " and maybe more ";
   
-  
   // it should be ok if user_intent_map has a cloud intent that isnt completed, but it should
   // exist in dialogflow samples; otherwise it should be considered garbage.
   UserIntentMap intentMap( cozmoContext->GetDataLoader()->GetUserIntentConfig(), cozmoContext );
@@ -129,7 +129,7 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
     EXPECT_TRUE( found ) << "Could not find user_intent_map cloud intent " << cloudName << " in sample file";
   }
 }
-  
+
 TEST(UserIntentsParsing, CompletedInCloudList)
 {
   // tests that every completed intent has a match for both app and cloud in user_intent_map.

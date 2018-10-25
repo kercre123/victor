@@ -83,48 +83,48 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-  ActionList& GetActionList();
-  BatteryLevel GetBatteryLevel() const;
-  BatteryComponent& GetBatteryComponent() const;
-  Quad2f GetBoundingQuadXY(const Pose3d& atPose) const;
-  CarryingComponent& GetCarryingComponent() const;
-  const CliffSensorComponent& GetCliffSensorComponent() const;
-  const ProxSensorComponent& GetProxSensorComponent() const;
-  const CozmoContext* GetContext() const;
-  u32 GetDisplayWidthInPixels() const;
-  u32 GetDisplayHeightInPixels() const;
-  DockingComponent& GetDockingComponent() const;
-  DrivingAnimationHandler& GetDrivingAnimationHandler() const;
-  const AccelData& GetHeadAccelData() const;
-  float GetHeadAccelMagnitudeFiltered() const;
-  const f32 GetHeadAngle() const;
-  const GyroData& GetHeadGyroData() const;
-  const RobotID_t GetID() const;
-  RobotTimeStamp_t GetLastImageTimeStamp() const;
-  RobotTimeStamp_t GetLastMsgTimestamp() const;
-  f32 GetLiftAngle() const;
-  f32 GetLiftHeight() const;
-  MovementComponent& GetMoveComponent() const;
-  NVStorageComponent& GetNVStorageComponent() const;
-  ObjectPoseConfirmer& GetObjectPoseConfirmer() const;
-  OffTreadsState GetOffTreadsState() const;
-  EngineTimeStamp_t GetOffTreadsStateLastChangedTime_ms() const;
-  PathComponent& GetPathComponent() const;
-  Radians GetPitchAngle() const;
-  const Pose3d& GetPose() const;
-  const PoseOriginList&  GetPoseOriginList() const;
-  RobotEventHandler& GetRobotEventHandler() const;
-  Util::RandomGenerator& GetRNG();
-  SDKComponent& GetSDKComponent() const;
-  const Pose3d& GetWorldOrigin()  const;
-  PoseOriginID_t GetWorldOriginID() const;
-  u32 GetHeadSerialNumber() const;
-  Util::Data::DataPlatform* GetDataPlatform() const;
-  bool IsPowerButtonPressed() const;
-  TimeStamp_t GetTimeSincePowerButtonPressed_ms() const;
-  uint32_t GetCpuTemperature_degC() const;
-  u32 GetTimeSinceLastPoke_ms() const;
 
+  ActionList&                 GetActionList();
+  BatteryComponent&           GetBatteryComponent()                   const;
+  BatteryLevel                GetBatteryLevel()                       const;
+  Quad2f                      GetBoundingQuadXY(const Pose3d& atPose) const;
+  CarryingComponent&          GetCarryingComponent()                  const;
+  const CliffSensorComponent& GetCliffSensorComponent()               const;
+  const CozmoContext*         GetContext()                            const;
+  uint32_t                    GetCpuTemperature_degC()                const;
+  Util::Data::DataPlatform*   GetDataPlatform()                       const;
+  u32                         GetDisplayHeightInPixels()              const;
+  u32                         GetDisplayWidthInPixels()               const;
+  DockingComponent&           GetDockingComponent()                   const;
+  DrivingAnimationHandler&    GetDrivingAnimationHandler()            const;
+  const AccelData&            GetHeadAccelData()                      const;
+  float                       GetHeadAccelMagnitudeFiltered()         const;
+  const f32                   GetHeadAngle()                          const;
+  const GyroData&             GetHeadGyroData()                       const;
+  u32                         GetHeadSerialNumber()                   const;
+  const RobotID_t             GetID()                                 const;
+  RobotTimeStamp_t            GetLastImageTimeStamp()                 const;
+  RobotTimeStamp_t            GetLastMsgTimestamp()                   const;
+  f32                         GetLiftAngle()                          const;
+  f32                         GetLiftHeight()                         const;
+  MovementComponent&          GetMoveComponent()                      const;
+  NVStorageComponent&         GetNVStorageComponent()                 const;
+  ObjectPoseConfirmer&        GetObjectPoseConfirmer()                const;
+  OffTreadsState              GetOffTreadsState()                     const;
+  EngineTimeStamp_t           GetOffTreadsStateLastChangedTime_ms()   const;
+  PathComponent&              GetPathComponent()                      const;
+  Radians                     GetPitchAngle()                         const;
+  const Pose3d&               GetPose()                               const;
+  const PoseOriginList&       GetPoseOriginList()                     const;
+  const ProxSensorComponent&  GetProxSensorComponent()                const;
+  Util::RandomGenerator&      GetRNG();
+  RobotEventHandler&          GetRobotEventHandler()                  const;
+  SDKComponent&               GetSDKComponent()                       const;
+  u32                         GetTimeSinceLastPoke_ms()               const;
+  TimeStamp_t                 GetTimeSincePowerButtonPressed_ms()     const;
+  const Pose3d&               GetWorldOrigin()                        const;
+  PoseOriginID_t              GetWorldOriginID()                      const;
+  
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();
   
@@ -142,6 +142,7 @@ public:
   bool IsOnChargerPlatform() const;
   bool IsPhysical() const;
   bool IsPickedUp() const;
+  bool IsPowerButtonPressed() const;  
   bool IsBeingHeld() const;
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
   

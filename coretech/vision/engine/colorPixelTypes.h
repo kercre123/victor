@@ -5,7 +5,7 @@
  * Date:   11/9/2015
  *
  * Description: Defines an RGB & RGBA pixels for color images and sets them up to be
- *              understandable/usable by OpenCV.
+ *              understandable/usable by OpenCV. Defines HSV float pixel.
  *
  * Copyright: Anki, Inc. 2015
  **/
@@ -15,6 +15,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "util/math/numericCast.h"
+#include "util/math/math.h"
 #include <opencv2/core.hpp>
 
 namespace Anki {
@@ -140,10 +141,46 @@ namespace Vision {
     static constexpr u16 Gmask = 0x07E0;
     static constexpr u16 Bmask = 0x001F;
   };
-
   
   static_assert(sizeof(PixelRGB565)==2,  "PixelRGB565 not 2 bytes!");
   
+  /**
+   * @brief Pixel in HSV format. Values should range from [0,1].
+   */
+  class PixelHSV : public cv::Vec3f
+  {
+  public:
+
+    PixelHSV(float h, float s, float v) : cv::Vec3f(h,s,v) { }
+    PixelHSV() : PixelHSV(0,0,0) { }
+    PixelHSV(const PixelRGB& rgb) : PixelHSV()
+    {
+      FromPixelRGB(rgb);
+    }
+
+    // Const accessors
+    float  h() const { return this->operator[](0); }
+    float  s() const { return this->operator[](1); }
+    float  v() const { return this->operator[](2); }
+
+    // Non-const accessors
+    float& h() { return this->operator[](0); }
+    float& s() { return this->operator[](1); }
+    float& v() { return this->operator[](2); }
+
+    /**
+     * Convert to a PixelRGB. Source: https://www.cs.rit.edu/~ncs/color/t_convert.html
+     */
+    PixelRGB ToPixelRGB() const;
+
+    /**
+     * Convert from a PixelRGB. Source: https://www.cs.rit.edu/~ncs/color/t_convert.html
+     * @param rgb
+     */
+    void FromPixelRGB(const PixelRGB& rgb);
+
+  }; // class PixelHSV
+
   //
   // Inlined implementations
   //

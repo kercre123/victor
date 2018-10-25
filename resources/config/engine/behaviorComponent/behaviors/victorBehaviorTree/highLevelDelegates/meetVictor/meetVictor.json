@@ -3,7 +3,8 @@
   "behaviorID": "MeetVictor",
 
   "associatedActiveFeature": "MeetVictor",
-  
+
+  "showActiveIntentFeedback" : false,
 
   "maxFacesVisible": 10,  // Error state thrown if enrollment is attempted while more than this many faces visible
   "tooManyFacesTimeout_sec": 1.5, // Set to zero to error immediately upon seeing multiple faces

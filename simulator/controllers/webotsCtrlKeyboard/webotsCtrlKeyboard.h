@@ -128,6 +128,7 @@ protected:
   void MoveLiftToLowDock();
   void MoveLiftToHighDock();
   void MoveLiftToCarryHeight();
+  void MoveLiftToAngle();
   
   void MoveHeadToLowLimit();
   void MoveHeadToHorizontal();
@@ -150,7 +151,6 @@ protected:
   void CycleConnectionFlowState();
 
   void ToggleCameraCaptureFormat();
-  void ToggleBayerImageResFormat();
   
   // ==== End of key press functions ====
   

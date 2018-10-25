@@ -37,7 +37,6 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
-#include "util/helpers/boundedWhile.h"
 
 
 #define LOG_CHANNEL    "Movement"
@@ -117,10 +116,25 @@ void MovementComponent::OnRobotDelocalized()
   
 void MovementComponent::NotifyOfRobotState(const Vector::RobotState& robotState)
 {
-  _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
-  _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
-  _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
-  _areWheelsMoving = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::ARE_WHEELS_MOVING);
+  _isMoving     =  static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::IS_MOVING);
+  _isHeadMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS);
+  _isLiftMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS);
+  _areWheelsMoving = static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::ARE_WHEELS_MOVING);
+  
+  // NOTE(GB): In the future, the meaning of `_isMoving` may change, and may not be coupled to
+  // _isHeadMoving, _isLiftMoving, or _areWheelsMoving, so check if we can set each timestamp individually.
+  if (_isMoving) {
+    _lastTimeWasMoving = robotState.timestamp;
+  }
+  if (_isHeadMoving) {
+    _lastTimeHeadWasMoving = robotState.timestamp;
+  }
+  if (_isLiftMoving) {
+    _lastTimeLiftWasMoving = robotState.timestamp;
+  }
+  if (_areWheelsMoving) {
+    _lastTimeWheelsWereMoving = robotState.timestamp;
+  }
   
   for (auto layerIter = _eyeShiftToRemove.begin(); layerIter != _eyeShiftToRemove.end(); )
   {
@@ -211,9 +225,9 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
   }
   
   // Don't check for unexpected movement under the following conditions
-  if (robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP   ||
-      robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint16_t)RobotStatusFlag::IS_FALLING)
+  if (robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP   ||
+      robotState.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER  ||
+      robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING)
   {
     _unexpectedMovement.Reset();
     return;
@@ -683,6 +697,20 @@ u8 MovementComponent::GetTracksLockedAtRelativeStreamTime(const TimeStamp_t rela
   return trackState;
 }
 
+// Sends a message to the robot to move the lift to the specified angle
+Result MovementComponent::MoveLiftToAngle(const f32 angle_rad,
+                                          const f32 max_speed_rad_per_sec,
+                                          const f32 accel_rad_per_sec2,
+                                          const f32 duration_sec,
+                                          MotorActionID* actionID_out)
+{
+  return _robot->SendRobotMessage<RobotInterface::SetLiftAngle>(angle_rad,
+                                                                max_speed_rad_per_sec,
+                                                                accel_rad_per_sec2,
+                                                                duration_sec,
+                                                                GetNextMotorActionID(actionID_out));
+}
+
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,
@@ -982,9 +1010,8 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
 void MovementComponent::ApplyUpdatesForStreamTime(const TimeStamp_t relativeStreamTime_ms, const bool shouldClearUnusedLocks)
 {
   if(!_delayedTracksToLock.empty()){
-    const auto upperBound = _delayedTracksToLock.size() + 1;
     auto delayedIter = _delayedTracksToLock.begin();
-    BOUNDED_WHILE(upperBound, delayedIter != _delayedTracksToLock.end()){
+    while(delayedIter != _delayedTracksToLock.end()){
       if(delayedIter->first <= relativeStreamTime_ms){
         LockTracks(delayedIter->second.tracksToLock, delayedIter->second.who, delayedIter->second.who);
         delayedIter = _delayedTracksToLock.erase(delayedIter);
@@ -996,9 +1023,8 @@ void MovementComponent::ApplyUpdatesForStreamTime(const TimeStamp_t relativeStre
 
 
   if(!_delayedTracksToUnlock.empty()){
-    const auto upperBound = _delayedTracksToUnlock.size() + 1;
     auto delayedIter = _delayedTracksToUnlock.begin();
-    BOUNDED_WHILE(upperBound, delayedIter != _delayedTracksToUnlock.end()){
+    while(delayedIter != _delayedTracksToUnlock.end()){
       if(delayedIter->first <= relativeStreamTime_ms){
         UnlockTracks(delayedIter->second.tracksToLock, delayedIter->second.who);
         delayedIter = _delayedTracksToUnlock.erase(delayedIter);
@@ -1087,6 +1113,11 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
     trackFlags = trackFlags >> 1;
   }
   return ss.str();
+}
+  
+RobotTimeStamp_t MovementComponent::GetLastTimeCameraWasMoving() const
+{
+  return std::max(_lastTimeWheelsWereMoving, _lastTimeHeadWasMoving);
 }
 
   static inline bool WasMovingHelper(Robot& robot, RobotTimeStamp_t atTime, const std::string& debugStr,

@@ -4,7 +4,7 @@
 * Author: damjan stulic
 * Created: 9/8/15
 *
-* Description: 
+* Description:
 *
 * Copyright: Anki, inc. 2015
 *
@@ -42,30 +42,47 @@ MessageHandler::MessageHandler()
 , _messageCountEtR(0)
 {
 }
-  
-MessageHandler::~MessageHandler() = default;
+
+MessageHandler::~MessageHandler()
+{
+  #if ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
+  if (_robotConnectionManager) {
+    _robotConnectionManager->ReportSocketBufferStats();
+  }
+  #endif
+}
 
 void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context)
 {
   _robotManager = robotMgr;
-  _robotConnectionManager.reset(new RobotConnectionManager(_robotManager));
+  _robotConnectionManager = std::make_unique<RobotConnectionManager>(_robotManager);
   _robotConnectionManager->Init();
-  
+
+  #if ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
+  _robotConnectionManager->InitSocketBufferStats();
+  #endif
+
   _isInitialized = true;
 }
 
 Result MessageHandler::ProcessMessages()
 {
   ANKI_CPU_PROFILE("MessageHandler::ProcessMessages");
-  
+
   if (_isInitialized)
   {
+    DEV_ASSERT(_robotConnectionManager, "MessageHander.ProcessMessages.InvalidRobotConnectionManager");
+
+    #if ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
+    _robotConnectionManager->UpdateSocketBufferStats();
+    #endif
+
     Result result = _robotConnectionManager->Update();
     if (RESULT_OK != result) {
       LOG_ERROR("MessageHandler.ProcessMessages", "Unable to update robot connection (result %d)", result);
       return result;
     }
-    
+
     std::vector<uint8_t> nextData;
     while (_robotConnectionManager->PopData(nextData))
     {
@@ -77,7 +94,7 @@ Result MessageHandler::ProcessMessages()
       {
         continue;
       }
-      
+
       const size_t dataSize = nextData.size();
       if (dataSize <= 0)
       {
@@ -98,16 +115,22 @@ Result MessageHandler::ProcessMessages()
                           RobotToEngineTagToString(msgType), unpackSize, dataSize);
         continue;
       }
-      
-#if ANKI_DEV_CHEATS
+
+      #if ANKI_DEV_CHEATS
       if (nullptr != DevLoggingSystem::GetInstance())
       {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
-#endif
+      #endif
       Broadcast(std::move(message));
     }
+
+    #if ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
+    _robotConnectionManager->UpdateSocketBufferStats();
+    #endif
+
   }
+
   return RESULT_OK;
 }
 
@@ -119,7 +142,7 @@ Result MessageHandler::SendMessage(const RobotInterface::EngineToRobot& msg, boo
   {
     return RESULT_FAIL;
   }
-  
+
   if (_robotManager->ShouldFilterMessage(msg.GetTag()))
   {
     return RESULT_FAIL;
@@ -140,20 +163,20 @@ Result MessageHandler::SendMessage(const RobotInterface::EngineToRobot& msg, boo
   {
     return RESULT_FAIL;
   }
-  
+
   const bool success = _robotConnectionManager->SendData(messageData.data(), Util::numeric_cast<unsigned int>(packedSize));
   if (!success)
   {
     return RESULT_FAIL;
   }
-  
+
   return RESULT_OK;
 }
 
 void MessageHandler::Broadcast(const RobotInterface::RobotToEngine& message)
 {
   ANKI_CPU_PROFILE("Broadcast_R2E");
-  
+
   u32 type = static_cast<u32>(message.GetTag());
   _eventMgr.Broadcast(AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, message));
 }
@@ -161,7 +184,7 @@ void MessageHandler::Broadcast(const RobotInterface::RobotToEngine& message)
 void MessageHandler::Broadcast(RobotInterface::RobotToEngine&& message)
 {
   ANKI_CPU_PROFILE("Broadcast_R2E");
-  
+
   u32 type = static_cast<u32>(message.GetTag());
   _eventMgr.Broadcast(AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }
@@ -175,17 +198,17 @@ Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
   return _robotConnectionManager->Connect(robotId);
 }
-  
+
 void MessageHandler::Disconnect()
 {
   _robotConnectionManager->DisconnectCurrent();
 }
- 
+
 const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
 {
   return _robotConnectionManager->GetQueuedTimes_ms();
 }
-  
+
 } // end namespace RobotInterface
 } // end namespace Vector
 } // end namespace Anki

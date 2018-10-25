@@ -1,40 +1,64 @@
 {
   "InitialVisionModes" :
   {
-    // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"           : true,
-    "DetectingFaces"             : false,
-    "DetectingPets"              : false,
-    "DetectingMotion"            : false,
-    "DetectingOverheadEdges"     : false,
-    "AutoExposure"               : true,
-    "WhiteBalance"               : true,
-    "EstimatingFacialExpression" : false,
-    "DetectingSmileAmount"       : false,
-    "DetectingGaze"              : false,
-    "DetectingBlinkAmount"       : false,
-    "DetectingLaserPoints"       : false,
-    "ComputingStatistics"        : false,
-    "BuildingOverheadMap"        : false,
-    "DetectingVisualObstacles"   : false,
-    "RunningNeuralNet"           : false,
-    "DetectingIllumination"      : true
+    // If a vision mode is not listed, it will be left enabled
+    // Most (dev) modes that are default disabled will likely need to have a default schedule of always
+    // on. These are modes that are not normally used by behaviors. The typically usage of these is
+    // from message handlers who are not capable of subscribing to a vision mode.
+    // Essentially we have modes
+    // 1) that are enabled by default but unscheduled
+    // 2) that are disabled by default but have default schedules to use once they are enabled. 
+    "DetectingMarkers"                 : true,
+    "DetectingFaces"                   : true,
+    "DetectingMotion"                  : true,
+    "DetectingOverheadEdges"           : true,
+    "DetectingBrightColors"            : true,
+    "ComputingCalibration"             : false,
+    "AutoExposure"                     : true,
+    "WhiteBalance"                     : true,
+    "ComputingStatistics"              : true,
+    "DetectingPets"                    : false,
+    "DetectingLaserPoints"             : false,
+    // "BuildingOverheadMap"              : false // Disabled to save a VisionMode (and this is deprecated anyway). TODO: Re-enable
+    "DetectingVisualObstacles"         : true,      
+    "Benchmarking"                     : true,
+    "SavingImages"                     : true,
+    "RunningNeuralNet"                 : true,  
+    "DetectingIllumination"            : true,
+    "ImageViz"                         : false,
+    "MirrorMode"                       : false,
+
+    "DisableMarkerDetection"           : true,
+
+    "MeteringFromChargerOnly"          : true,
+    "FullFrameMarkerDetection"         : true,
+    "FullHeightMarkerDetection"        : true,
+    "FullWidthMarkerDetection"         : true,
+    "MarkerDetectionWhileRotatingFast" : true,
+
+    "EstimatingFacialExpression"       : true,
+    "DetectingSmileAmount"             : true,
+    "DetectingGaze"                    : true,
+    "DetectingBlinkAmount"             : true,
+    "CroppedFaceDetection"             : true,
+
+    "CyclingExposure"                  : true,
+    "MinGainAutoExposure"              : true
   },
 
+  // VisionModes that need to be scheduled by default go here
+  // Basically things that are always running
   "InitialModeSchedules" :
-  {
-    // If a vision mode is not listed, it is scheduled to run every frame (if enabled)
+  {  
+    // If a vision mode is not listed, it is scheduled to never run (might still be enabled)
     // Specify either an array of bools indicating a specific schedule, or an integer
     // value to process every Nth frame
-    "DetectingPets"          : [true, false],
-    "DetectingOverheadEdges" : [false, true],
-    "AutoExposure"           : 5,  // NOTE: Should probably be no more frequent than every 5th frame
-    "WhiteBalance"           : 5,  // NOTE: Should probably be no more frequent than every 5th frame
-    "DetectingLaserPoints"   : 2,
-    "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
-    "RunningNeuralNet"       : 1, // Won't actually run every frame, but as frequently as possible (is asynchronous)
-    "SavingImages"           : 1,
-    "DetectingIllumination"  : 1
+    "DetectingMarkers" : 4, // Remove with VIC-6838 
+    "AutoExposure"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
+    "WhiteBalance"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
+
+    "ImageViz"         : 1,
+    "MirrorMode"       : 1
   },
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)

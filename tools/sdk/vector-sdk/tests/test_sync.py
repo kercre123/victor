@@ -14,6 +14,7 @@ import sys
 import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from anki_vector.events import Events  # pylint: disable=wrong-import-position
 import anki_vector  # pylint: disable=wrong-import-position
 
 
@@ -29,22 +30,22 @@ def main():
 
     print("------ Synchronous Robot using with ------")
     with anki_vector.Robot(args.serial) as robot:
-        robot.events.subscribe('robot_state', test_subscriber)
+        robot.events.subscribe(test_subscriber, Events.robot_state)
         robot.anim.play_animation("anim_blackjack_victorwin_01")
 
     print("------ Synchronous Robot using with ------")
     with anki_vector.Robot(args.serial) as robot:
-        robot.events.subscribe('test1', test_subscriber)
+        robot.events.subscribe_by_name(test_subscriber, event_name='test1')
         robot.anim.play_animation("anim_blackjack_victorwin_01")
-        robot.events.unsubscribe('test1', test_subscriber)
-        robot.events.unsubscribe('test1', test_subscriber)
+        robot.events.unsubscribe_by_name(test_subscriber, event_name='test1')
+        robot.events.unsubscribe_by_name(test_subscriber, event_name='test1')
         robot.motors.set_wheel_motors(100.0, -100.0)
 
     time.sleep(2)
 
     print("------ Synchronous Robot using try finally ------")
     robot = anki_vector.Robot(args.serial)
-    robot.events.subscribe('test1', test_subscriber)
+    robot.events.subscribe_by_name(test_subscriber, event_name='test1')
     try:
         robot.connect()
         robot.anim.play_animation("anim_blackjack_victorwin_01")
@@ -56,19 +57,19 @@ def main():
 
     print("------ Asynchronous Robot using with ------")
     with anki_vector.AsyncRobot(args.serial) as robot:
-        robot.events.subscribe('robot_state', test_subscriber)
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(-100.0, 100.0).wait_for_completed()
+        robot.events.subscribe(test_subscriber, Events.robot_state)
+        robot.anim.play_animation("anim_blackjack_victorwin_01").result()
+        robot.motors.set_wheel_motors(-100.0, 100.0).result()
 
     time.sleep(2)
 
     print("------ Asynchronous Robot using try finally ------")
     robot = anki_vector.AsyncRobot(args.serial)
-    robot.events.subscribe('robot_state', test_subscriber)
+    robot.events.subscribe(test_subscriber, Events.robot_state)
     try:
         robot.connect()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(100.0, -100.0).wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").result()
+        robot.motors.set_wheel_motors(100.0, -100.0).result()
     finally:
         robot.disconnect()
 
@@ -78,8 +79,8 @@ def main():
     # Reuse the same robot from a previous connection
     try:
         robot.connect()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(0.0, 0.0).wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").result()
+        robot.motors.set_wheel_motors(0.0, 0.0).result()
     finally:
         robot.disconnect()
 

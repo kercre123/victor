@@ -2,6 +2,7 @@ package voice
 
 import (
 	"anki/token"
+	"anki/util"
 
 	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
 )
@@ -31,6 +32,7 @@ type options struct {
 	saveAudio    bool
 	tokener      token.Accessor
 	requireToken bool
+	errListener  util.ErrorListener
 }
 
 // WithCompression sets whether compression will be performed on audio
@@ -77,5 +79,13 @@ func WithRequireToken() Option {
 func WithTokener(value token.Accessor) Option {
 	return func(o *options) {
 		o.tokener = value
+	}
+}
+
+// WithErrorListener specifies that the given ErrorListener should be passed errors
+// that result from voice requests
+func WithErrorListener(value util.ErrorListener) Option {
+	return func(o *options) {
+		o.errListener = value
 	}
 }

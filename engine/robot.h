@@ -30,7 +30,6 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/fullRobotPose.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/shared/types.h"
@@ -48,7 +47,6 @@
 #include "util/entityComponent/entity.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
-#include "util/stats/recentStatsAccumulator.h"
 
 #include <queue>
 #include <time.h>
@@ -714,9 +712,11 @@ protected:
   void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
 
   // Performs various startup checks and displays fault codes as appropriate
-  Result UpdateStartupChecks();
-  Result UpdateCameraStartupChecks();
-  Result UpdateGyroCalibChecks();
+  // Returns true if the check is complete, false if the check is still running
+  // If return true, then res will be set appropriately
+  bool UpdateStartupChecks(Result& res);
+  bool UpdateCameraStartupChecks(Result& res);
+  bool UpdateGyroCalibChecks(Result& res);
 }; // class Robot
 
 

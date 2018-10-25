@@ -38,15 +38,23 @@
     },
     {
       "cloud_intent": "intent_imperative_praise",
-      "user_intent": "imperative_affirmative"
+      "user_intent": "imperative_praise"
     },
     {
       "cloud_intent": "intent_imperative_apologize",
-      "user_intent": "imperative_affirmative"
+      "user_intent": "imperative_apology"
     },
     {
       "cloud_intent": "intent_imperative_scold",
-      "user_intent": "imperative_negative"
+      "user_intent": "imperative_scold"
+    },
+    {
+      "cloud_intent": "intent_imperative_iloveyou",
+      "user_intent": "imperative_love"
+    },
+    {
+      "cloud_intent": "intent_imperative_abuse",
+      "user_intent": "imperative_abuse"
     },
     {
       "cloud_intent": "intent_global_stop_extend",
@@ -191,6 +199,12 @@
       "user_intent": "imperative_lookatme",
       "cloud_intent": "intent_imperative_lookatme",
       "app_intent": "intent_imperative_lookatme"
+    },
+    {
+      "user_intent": "imperative_fetchcube",
+      "cloud_intent": "intent_imperative_fetchcube",
+      "app_intent": "intent_imperative_fetchcube",
+      "feature_gate": "FetchCube"
     },
     {
       "user_intent": "imperative_findcube",

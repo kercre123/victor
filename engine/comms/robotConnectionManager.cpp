@@ -9,10 +9,10 @@
 * Copyright: Anki, inc. 2016
 *
 */
-
+#include "engine/comms/robotConnectionManager.h"
 #include "engine/actions/actionContainers.h"
 #include "engine/comms/robotConnectionData.h"
-#include "engine/comms/robotConnectionManager.h"
+
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
@@ -20,8 +20,8 @@
 #include "coretech/messaging/shared/socketConstants.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/histogram/histogram.h"
 #include "util/logging/logging.h"
-#include "util/wifi/wifiUtil_android.h"
 
 #define LOG_CHANNEL "RobotConnectionManager"
 
@@ -307,6 +307,64 @@ const Anki::Util::Stats::StatsAccumulator& RobotConnectionManager::GetQueuedTime
   return sNullStats;
 #endif // TRACK_INCOMING_PACKET_LATENCY
 }
+
+#if ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
+
+void RobotConnectionManager::InitSocketBufferStats()
+{
+  constexpr int lowest = 1;
+  constexpr int highest = 256*1024;
+  constexpr int significant_figures = 3;
+
+  _incomingStats = std::make_unique<Histogram>(lowest, highest, significant_figures);
+  _outgoingStats = std::make_unique<Histogram>(lowest, highest, significant_figures);
+
+  // Postconditions
+  DEV_ASSERT(_incomingStats, "RobotConnectionManager.InitSocketBufferStats.InvalidIncomingStats");
+  DEV_ASSERT(_outgoingStats, "RobotConnectionManager.InitSocketBufferStats.InvalidOutgoingStats");
+}
+
+void RobotConnectionManager::UpdateSocketBufferStats()
+{
+  // Preconditions
+  DEV_ASSERT(_incomingStats, "RobotConnectionManager.UpdateSocketBufferStats.InvalidIncomingStats");
+  DEV_ASSERT(_outgoingStats, "RobotConnectionManager.UpdateSocketBufferStats.InvalidOutgoingStats");
+
+  if (_udpClient.IsConnected()) {
+    const auto incoming = _udpClient.GetIncomingSize();
+    if (incoming >= 0) {
+      _incomingStats->Record(incoming);
+    }
+    const auto outgoing = _udpClient.GetOutgoingSize();
+    if (outgoing >= 0) {
+      _outgoingStats->Record(outgoing);
+    }
+  }
+}
+
+void RobotConnectionManager::ReportSocketBufferStats(const std::string & name, const HistogramPtr & histogram)
+{
+  // Preconditions
+  DEV_ASSERT(histogram, "RobotConnectionManager.ReportSocketBufferStats.InvalidHistogram");
+
+  const int64_t min = histogram->GetMin();
+  const int64_t mean = histogram->GetMean();
+  const int64_t max = histogram->GetMax();
+
+  LOG_INFO("RobotConnectionManager.ReportSocketBufferStats", "%s: %lld/%lld/%lld", name.c_str(), min, mean, max);
+}
+
+void RobotConnectionManager::ReportSocketBufferStats()
+{
+  // Preconditions
+  DEV_ASSERT(_incomingStats, "RobotConnectionManager.ReportSocketBufferStats.InvalidIncomingStats");
+  DEV_ASSERT(_outgoingStats, "RobotConnectionManager.ReportSocketBufferStats.InvalidOutgoingStats");
+
+  ReportSocketBufferStats("incoming", _incomingStats);
+  ReportSocketBufferStats("outgoing", _outgoingStats);
+}
+
+#endif // ANKI_PROFILE_ENGINE_SOCKET_BUFFER_STATS
 
 } // end namespace Vector
 } // end namespace Anki

@@ -19,9 +19,12 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/cozmoContext.h"
+#include "engine/robot.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
@@ -57,6 +60,12 @@ namespace {
   // use some margin here to account for sensor noise.
   static const u16   kSuspiciousCliffValDiff = 20;
 
+  // minimum number of images with edge detection activated
+  const int kNumImagesToWaitForEdges = 10;
+
+  // rate of turning the robot while searching for cliffs with vision
+  const f32 kBodyTurnSpeedForCliffSearch_degPerSec = 120.0f;
+
   // Cooldown for playing more dramatic react to cliff reaction
   CONSOLE_VAR(float, kDramaticReactToCliffCooldown_sec, CONSOLE_GROUP, 3 * 60.f);
 
@@ -64,6 +73,10 @@ namespace {
   // while activated, then just give up and go to StuckOnEdge.
   // It's probably too dangerous to keep trying anything
   CONSOLE_VAR(uint32_t, kMaxNumRobotStopsBeforeGivingUp, CONSOLE_GROUP, 5);
+
+  // whether this experimental feature whereby the robot uses vision
+  // to extend known cliffs via edge detection is active
+  CONSOLE_VAR(bool, kEnableVisualCliffExtension, CONSOLE_GROUP, false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,13 +125,17 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
 {
   quitReaction = false;
   gotStop = false;
-  putDownOnCliff = false;
   wantsToBeActivated = false;
+  hasTargetCliff = false;
+
+  cliffPose.ClearParent();
+  cliffPose = Pose3d(); // identity
 
   const auto kInitVal = std::numeric_limits<u16>::max();
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
   persistent.numStops = 0;
   persistent.lastStopTime_sec = 0.f;
+  persistent.putDownOnCliff = false;
   persistent.lastPutDownOnCliffTime_sec = 0.f;
 }
   
@@ -131,7 +148,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
   
   SubscribeToTags({{
     EngineToGameTag::RobotStopped,
-    EngineToGameTag::RobotOffTreadsStateChanged
+    EngineToGameTag::RobotOffTreadsStateChanged,
   }});
 }
 
@@ -146,7 +163,7 @@ void BehaviorReactToCliff::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _dVars.gotStop || _dVars.wantsToBeActivated || _dVars.putDownOnCliff;
+  return _dVars.gotStop || _dVars.wantsToBeActivated || _dVars.persistent.putDownOnCliff;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -190,14 +207,27 @@ void BehaviorReactToCliff::OnBehaviorActivated()
       }
     }
 
+    // compute the pose of the detected cliff, 
+    // and cache it for determining lookat positions
+    if(cliffComp.GetCliffPoseRelativeToRobot(cliffComp.GetCliffDetectedFlags(), _dVars.cliffPose)) {
+      _dVars.cliffPose.SetParent(GetBEI().GetRobotInfo().GetPose());
+      if (_dVars.cliffPose.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), _dVars.cliffPose)) {
+        _dVars.hasTargetCliff = true;
+      } else {
+        PRINT_NAMED_WARNING("BehaviorReactToCliff.OnBehaviorActivated.OriginMismatch",
+                            "cliffPose and WorldOrigin do not share the same origin!");
+      }
+    } else {
+      PRINT_NAMED_WARNING("BehaviorReactToCliff.OnBehaviorActivated.NoPoseForCliffFlags",
+                          "flags=%hhu", cliffComp.GetCliffDetectedFlags());
+    }
+
     return true;
   };
 
   // skip the "huh" animation if in severe energy or repair
-  auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
-
   WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(waitForStopLambda);
-  DelegateIfInControl(waitForStopAction, callbackFunc);
+  DelegateIfInControl(waitForStopAction, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -240,7 +270,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     auto cliffDetectedFlags = GetBEI().GetRobotInfo().GetCliffSensorComponent().GetCliffDetectedFlags();
     if (cliffDetectedFlags == 0) {
       // For some reason no cliffs are detected. Just leave the reaction.
-      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToPlayingCliffReaction.NoCliffs", "");
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.NoCliffs", "");
       CancelSelf();
       return;
     }
@@ -249,7 +279,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     // activation of the behavior? Must be in a very "cliffy" area.
     // Just go to StuckOnEdge to be safe.
     if (_dVars.persistent.numStops > kMaxNumRobotStopsBeforeGivingUp) {
-      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToPlayingCliffReaction.TooManyRobotStops", "");
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.TooManyRobotStops", "");
       TransitionToStuckOnEdge();
       return;
     }
@@ -259,7 +289,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     if (action == nullptr) {
       // No action was returned because the detected cliffs represent 
       // a precarious situation so just delegate to StuckOnEdge.
-      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToPlayingCliffReaction.StuckOnEdge", 
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.StuckOnEdge", 
                        "%x", 
                        cliffDetectedFlags);
       TransitionToStuckOnEdge();
@@ -285,23 +315,111 @@ void BehaviorReactToCliff::TransitionToBackingUp()
       direction = -1.f;
     }
 
-    PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.DoingExtraRecoveryMotion", "");
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToBackingUp.DoingExtraRecoveryMotion", "");
     DelegateIfInControl(new DriveStraightAction(direction * _iConfig.cliffBackupDist_mm, _iConfig.cliffBackupSpeed_mmps),
                   [this](){
-                      PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.ExtraRecoveryMotionComplete", "");
+                      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToBackingUp.ExtraRecoveryMotionComplete", "");
 
                       auto& cliffComponent = GetBEI().GetRobotInfo().GetCliffSensorComponent();
                       if ( cliffComponent.IsCliffDetected() ) {
-                        PRINT_NAMED_INFO("BehaviorReactToCliff.TransitionToBackingUp.StillStuckOnEdge", 
+                        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToBackingUp.StillStuckOnEdge", 
                                          "%x", 
                                          cliffComponent.GetCliffDetectedFlags());
                         TransitionToStuckOnEdge();
+                      } else if (_dVars.persistent.putDownOnCliff) {
+                          TransitionToHeadCalibration();
+                      } else {
+                        TransitionToVisualExtendCliffs();
                       }
                   });
+  } if (_dVars.persistent.putDownOnCliff) {
+    TransitionToHeadCalibration();
+  } else {
+    TransitionToVisualExtendCliffs();
   }
-  else {
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::TransitionToHeadCalibration()
+{
+  DEBUG_SET_STATE(CalibratingHead);
+  // The `putDownOnCliff` flag is what triggers the calling of this method.
+  // To avoid causing a loop, reset it here, since we're about to calibrate the head motor.
+  _dVars.persistent.putDownOnCliff = false;
+  // Force all motors to recalibrate since it's possible that Vector may have been put down too aggressively,
+  // resulting in gear slippage for a motor, or the user might have forced one of the motors into a different
+  // position while in the air or while sensors were disabled.
+  DelegateIfInControl(new CalibrateMotorAction(true, true,
+                                               EnumToString(MotorCalibrationReason::BehaviorReactToCliff)),
+                      &BehaviorReactToCliff::TransitionToVisualExtendCliffs);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
+{
+  if(!kEnableVisualCliffExtension) {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
+    return;
   }
+  
+  DEBUG_SET_STATE(VisuallyExtendingCliffs);
+  Pose3d leftHandSide, rightHandSide;
+
+  bool didComputeLookAtPoses = false;
+  if(_dVars.hasTargetCliff) {
+    // use the cached position of the observed cliff to
+    // determine nearby positions to observe for possible edges
+    // the positions here are a best guess of where to look
+    leftHandSide.SetParent(_dVars.cliffPose);
+    leftHandSide.SetTranslation({0.f, +90.f, 0.f});
+    bool result = leftHandSide.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), leftHandSide);
+
+    rightHandSide.SetParent(_dVars.cliffPose);
+    rightHandSide.SetTranslation({0.f, -90.f, 0.f});
+    result &= rightHandSide.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), rightHandSide);
+
+    if(result) {
+      didComputeLookAtPoses = true;
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservingCliffAt", 
+                      "x=%4.2f y=%4.2f",
+                      _dVars.cliffPose.GetTranslation().x(),
+                      _dVars.cliffPose.GetTranslation().y());
+    } else {
+      PRINT_NAMED_WARNING("BehaviorReactToCliff.TransitionToVisualCliffExtend.CliffPoseNotInSameTreeAsCurrentWorldOrigin","");
+    }
+  }
+
+  if(!didComputeLookAtPoses) {
+    // no previously set target cliff pose to look at
+    // instead look at two arbitrary positions in front
+    // and to either side of the robot
+    leftHandSide.SetParent(GetBEI().GetRobotInfo().GetPose());
+    leftHandSide.SetTranslation({60.f, +60.f, 0.f});
+
+    rightHandSide.SetParent(GetBEI().GetRobotInfo().GetPose());
+    rightHandSide.SetTranslation({60.f, -60.f, 0.f});
+  }
+  
+  CompoundActionSequential* action = new CompoundActionSequential();
+
+  action->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK)); // move lift to be out of the FOV
+
+  const auto addTurnAndObserveAction = [&action](const Pose3d& pose) -> void {
+    auto turnAction = new TurnTowardsPoseAction(pose);
+    turnAction->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec));
+    action->AddAction(turnAction);
+    action->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::DetectingOverheadEdges));
+  };
+
+  addTurnAndObserveAction(leftHandSide);
+  addTurnAndObserveAction(rightHandSide);
+  
+  BehaviorSimpleCallback callback = [this] (void) -> void {
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservationFinished", "");
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
+  };
+
+  DelegateIfInControl(action, callback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -311,7 +429,7 @@ void BehaviorReactToCliff::OnBehaviorDeactivated()
   _dVars = DynamicVariables();
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.stuckOnEdgeBehavior.get());
@@ -326,19 +444,19 @@ void BehaviorReactToCliff::BehaviorUpdate()
       const auto& timeSinceLastStop_sec = currentTime_sec - _dVars.persistent.lastStopTime_sec;
       if (timeSinceLastStop_sec > _iConfig.eventFlagTimeout_sec) {
         _dVars.gotStop = false;
-        PRINT_NAMED_INFO("BehaviorReactToCliff.Update.IgnoreLastStopEvent", "");
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.IgnoreLastStopEvent", "");
       }
     }
-    if (_dVars.putDownOnCliff) {
+    if (_dVars.persistent.putDownOnCliff) {
       const auto& timeSinceLastPutDownOnCliff_sec = currentTime_sec - _dVars.persistent.lastPutDownOnCliffTime_sec;
       if (timeSinceLastPutDownOnCliff_sec > _iConfig.eventFlagTimeout_sec) {
-        _dVars.putDownOnCliff = false;
-        PRINT_NAMED_INFO("BehaviorReactToCliff.Update.IgnoreLastPossiblePutDownOnCliffEvent", "");
+        _dVars.persistent.putDownOnCliff = false;
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.IgnoreLastPossiblePutDownOnCliffEvent", "");
       }
     }
     // Set wantsToBeActivated to effectively give the activation conditions
     // an extra tick to be evaluated.
-    _dVars.wantsToBeActivated = _dVars.gotStop || _dVars.putDownOnCliff;
+    _dVars.wantsToBeActivated = _dVars.gotStop || _dVars.persistent.putDownOnCliff;
     _dVars.gotStop = false;
     return;
   }
@@ -353,7 +471,7 @@ void BehaviorReactToCliff::BehaviorUpdate()
   // const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
   // const bool cliffDetected = GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
   // if (unexpectedMovement && cliffDetected) {
-  //   PRINT_NAMED_INFO("BehaviorReactToCliff.Update.StuckOnEdge", "");
+  //   PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.StuckOnEdge", "");
   //   _iConfig.stuckOnEdgeBehavior->WantsToBeActivated();
   //   DelegateNow(_iConfig.stuckOnEdgeBehavior.get());
   // }
@@ -361,7 +479,7 @@ void BehaviorReactToCliff::BehaviorUpdate()
   // Cancel if picked up
   const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
   if (isPickedUp) {
-    PRINT_NAMED_INFO("BehaviorReactToCliff.Update.CancelDueToPickup", "");
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.CancelDueToPickup", "");
     CancelSelf();
   }
 }
@@ -370,6 +488,8 @@ void BehaviorReactToCliff::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
+  auto& robotInfo = GetBEI().GetRobotInfo();
+
   const bool alreadyActivated = IsActivated();
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::RobotStopped: {
@@ -384,7 +504,6 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
 
       // Record triggered cliff sensor value(s) and compare to what they are when wheels
       // stop moving. If the values are higher, the cliff is suspicious and we should quit.
-      auto& robotInfo = GetBEI().GetRobotInfo();
       const auto& cliffComp = robotInfo.GetCliffSensorComponent();
       const auto& cliffData = cliffComp.GetCliffDataRaw();
       std::copy(cliffData.begin(), cliffData.end(), _dVars.persistent.cliffValsAtStart.begin());
@@ -409,10 +528,10 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       
       if (treadsState == OffTreadsState::OnTreads && cliffsDetected) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.AlwaysHandleInScope", "Possibly put down on cliff");
-        _dVars.putDownOnCliff = true;
+        _dVars.persistent.putDownOnCliff = true;
         _dVars.persistent.lastPutDownOnCliffTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       } else {
-        _dVars.putDownOnCliff = false;
+        _dVars.persistent.putDownOnCliff = false;
       }
       break;
     }
@@ -441,7 +560,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffReactAction(uint8_t clif
   const float currTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool doDramaticReaction = currTime_sec > _dramaticCliffReactionPlayableTime_sec;
 
-  PRINT_NAMED_INFO("ReactToCliff.GetCliffReactAction.CliffsDetected", "0x%x", cliffDetectedFlags);
+  PRINT_CH_INFO("Behaviors", "ReactToCliff.GetCliffReactAction.CliffsDetected", "0x%x", cliffDetectedFlags);
 
   // Play reaction animation based on triggered sensor(s)
   // Possibly supplement with "dramatic" reaction which involves
@@ -484,7 +603,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffReactAction(uint8_t clif
 
   
   if (doDramaticReaction) {
-    PRINT_NAMED_INFO("BehaviorReactToCliff.GetCliffReactAction.DoDramaticReaction", "");
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.GetCliffReactAction.DoDramaticReaction", "");
 
     // Turn to face cliff
     if (amountToTurn_deg != 0.f) {

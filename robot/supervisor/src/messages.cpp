@@ -307,9 +307,11 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, accel %f, decel %f",
-                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
+        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, backUpWhileLiftingCube %d, speed %f, accel %f, decel %f",
+                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.backUpWhileLiftingCube, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
 
+        PickAndPlaceController::SetBackUpWhileLiftingCube(msg.backUpWhileLiftingCube);
+        
         DockingController::SetDockingMethod(msg.dockingMethod);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
@@ -387,6 +389,18 @@ namespace Anki {
           LiftController::SetDesiredHeightByDuration(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
         } else {
           LiftController::SetDesiredHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        }
+        AckMotorCommand(msg.actionID);
+      }
+
+      void Process_setLiftAngle(const RobotInterface::SetLiftAngle& msg) {
+        // AnkiInfo( "Messages.Process_liftAngle.Recvd", 
+        //           "height %f, maxSpeed %f, duration %f", 
+        //           msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
+        if (msg.duration_sec > 0) {
+          LiftController::SetDesiredAngleByDuration(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
+        } else {
+          LiftController::SetDesiredAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         }
         AckMotorCommand(msg.actionID);
       }

@@ -16,7 +16,6 @@
 
 #include "coretech/common/shared/types.h"
 #include "engine/moodSystem/emotion.h"
-#include "engine/moodSystem/moodDebug.h"
 
 #include "clad/types/actionResults.h"
 #include "clad/types/actionTypes.h"
@@ -25,7 +24,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/moodSystem/emotion.h"
-#include "engine/moodSystem/moodDebug.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotDataLoader.h"
 
@@ -133,8 +131,9 @@ public:
                      EmotionType emotionType2, float baseValue2,
                      EmotionType emotionType3, float baseValue3,
                      const char* uniqueIdString, float currentTimeInSeconds);
-  
-  void SetEmotion(EmotionType emotionType, float value); // directly set the value e.g. for debugging
+
+  // directly set the value e.g. for debugging
+  void SetEmotion(EmotionType emotionType, float value, const char* debugLabel = "SetEmotion");
 
   // This manager internally listens for ActionCompleted events from the robot, and can use those to trigger
   // emotion events. By default, it listens for any actions that complete, but this function can be used to
@@ -229,8 +228,6 @@ private:
   
   void SendStimToApp(float velocity, float accel);
 
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
-
   void SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent = "");
   void SubscribeToWebViz();
     
@@ -238,7 +235,6 @@ private:
   
   Emotion         _emotions[(size_t)EmotionType::Count];
   MoodEventTimes  _moodEventTimes;
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
   Robot*          _robot = nullptr;
   float           _lastUpdateTime;
   

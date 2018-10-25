@@ -20,7 +20,8 @@ function usage() {
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
-    echo "  -D                      allow #defines to be specified from the command-line"
+    echo "  -D                      Define a cmake variable from the command-line"
+    echo "                          Those that match the ANKI_* pattern will be made into #defines for all targets"
     echo "  -F [FEATURE]            enable feature {factoryTest,factoryTestDev}"
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
@@ -208,6 +209,10 @@ for feature in ${FEATURES} ; do
       ;;
   esac
 done
+
+# until the CTE build works again (BI-1614), extract precompiled libs and headers for now
+# TODO: remove this and instead use DEPS
+tar xf TEMP-avs-device-sdk.tar.gz -C EXTERNALS/coretech_external/build/
 
 #
 # Get short commit sha

@@ -18,6 +18,8 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/vision/visionModeSet.h"
+#include "engine/vision/visionModesHelpers.h"
 #include "webServerProcess/src/webService.h"
 
 namespace Anki{
@@ -62,7 +64,6 @@ void VisionScheduleMediator::Init(const Json::Value& config)
   {
     std::string modeName = ParseString(modeSettings, "mode", debugName);
     VisionMode visionMode = VisionModeFromString(modeName);
-    DEV_ASSERT(visionMode != VisionMode::Idle, "VisionScheduleMediator.InvalidVisionModeInJsonConfig");
 
     VisionModeData newModeData = { .low = ParseUint8(modeSettings, "low", debugName),
                                    .med = ParseUint8(modeSettings, "med", debugName),
@@ -87,6 +88,8 @@ void VisionScheduleMediator::Init(const Json::Value& config)
                "VisionScheduleMediator.NonPOTVisionModeFrequency");
 
     _modeDataMap.insert(std::pair<VisionMode, VisionModeData>(visionMode, newModeData));
+
+    _schedule = AllVisionModesSchedule({}, true);
   }
 
   // Set up baseline subscriptions to manage VisionMode defaults via the VSM
@@ -161,17 +164,24 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
 }
 
   
-void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const std::set<VisionMode>& modes)
-{
-  // TODO(agm): we probably want to be able to set the frequency through this dev-method
-  SetVisionModeSubscriptions(this, modes);
-}
-  
-void VisionScheduleMediator::DevOnly_SelfUnsubscribeVisionMode(const std::set<VisionMode>& modes)
+void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const VisionModeSet& modes)
 {
   for(const VisionMode& mode : modes) {
     auto got = _modeDataMap.find(mode);
-    if(got!=_modeDataMap.end()) {
+    if(got != _modeDataMap.end()) {
+      got->second.requestMap.emplace(this, 1);
+      got->second.dirty = true;
+      _subscriptionRecordIsDirty = true;
+    }
+  }
+
+}
+  
+void VisionScheduleMediator::DevOnly_SelfUnsubscribeVisionMode(const VisionModeSet& modes)
+{
+  for(const VisionMode& mode : modes) {
+    auto got = _modeDataMap.find(mode);
+    if(got != _modeDataMap.end()) {
       got->second.requestMap.erase(this);
       got->second.dirty = true;
       _subscriptionRecordIsDirty = true;
@@ -212,17 +222,17 @@ void VisionScheduleMediator::UpdateVisionSchedule(VisionComponent& visionCompone
       // Check if the mode should be enabled or disabled
       if(modeData.requestMap.empty() == modeData.enabled){
         modeData.enabled = !modeData.requestMap.empty();
-        visionComponent.EnableMode(mode, modeData.enabled);
         modeEnabledChanged = true;
         activeModesDirty = true;
       }
 
       // Compute the update period for active modes and add to the schedule
+      if(UpdateModePeriodIfNecessary(modeData)){
+        modeScheduleChanged = true;
+        scheduleDirty = true;
+      }
+      
       if(modeData.enabled) {
-        if(UpdateModePeriodIfNecessary(modeData)){
-          modeScheduleChanged = true;
-          scheduleDirty = true;
-        }
         if(modeEnabledChanged || modeScheduleChanged){
           PRINT_NAMED_INFO("visionScheduleMediator.EnablingVisionMode",
                            "Vision Schedule Mediator is enabling mode: %s every %d frame(s).", 
@@ -247,7 +257,9 @@ void VisionScheduleMediator::UpdateVisionSchedule(VisionComponent& visionCompone
   }
 
   if(scheduleDirty){
-    GenerateBalancedSchedule(visionComponent);
+    auto modeScheduleList = GenerateBalancedSchedule(visionComponent);
+    const bool kUseDefaultsForUnspecified = true;
+    _schedule = AllVisionModesSchedule(modeScheduleList, kUseDefaultsForUnspecified);
   }
 
   // On any occasion where we made updates, update the debug viz
@@ -316,15 +328,6 @@ const AllVisionModesSchedule::ModeScheduleList VisionScheduleMediator::GenerateB
     modeScheduleList.push_back({ mode, schedule });
   }
 
-  const bool kUseDefaultsForUnspecified = true;
-  AllVisionModesSchedule overallSchedule(modeScheduleList, kUseDefaultsForUnspecified);
-  if(_hasScheduleOnStack){
-    visionComponent.PopCurrentModeSchedule();
-  }
-  visionComponent.PushNextModeSchedule(std::move(overallSchedule));
-  _hasScheduleOnStack = true;
-
-  // For error checking in unit tests
   return modeScheduleList;
 }
 
@@ -371,22 +374,26 @@ void VisionScheduleMediator::SendDebugVizMessages(const CozmoContext* context)
   uint8_t numActiveModes = 0;
   webVizData["patternWidth"] = kMaxUpdatePeriod;
   Json::Value& fullSchedule = webVizData["fullSchedule"]; 
+
+  // Debug display strings for schedules of all vision modes
+  for(VisionMode whichMode = VisionMode(0); whichMode < VisionMode::Count; ++whichMode)
+  {
+    char schedule[kMaxUpdatePeriod + 1] = {0};
+      
+    for(int j = 0; j < kMaxUpdatePeriod; j++){
+      schedule[j] = (_schedule.GetScheduleForMode(whichMode).IsTimeToProcess(j) ? '1' : '0');
+    }
+
+    std::string modeString(schedule);
+    modeString += " ";
+    modeString += EnumToString(whichMode);
+    data.debugStrings.push_back(modeString);
+  }
+
   
   for(const auto& modeDataPair : _modeDataMap) {
-    if(modeDataPair.second.enabled){
+    if(modeDataPair.second.enabled || modeDataPair.second.updatePeriod != 0){
       numActiveModes++;
-
-      char schedule[kMaxUpdatePeriod + 1] = {0};
-      memset(schedule, '0', kMaxUpdatePeriod);
-      
-      for(int i = modeDataPair.second.offset; i < kMaxUpdatePeriod; i += modeDataPair.second.updatePeriod){
-        schedule[i] = '1';
-      }
-
-      std::string modeString(schedule);
-      modeString += " ";
-      modeString += EnumToString(modeDataPair.first);
-      data.debugStrings.push_back(modeString);
 
       // Store data for WebViz
       Json::Value modeSchedule;

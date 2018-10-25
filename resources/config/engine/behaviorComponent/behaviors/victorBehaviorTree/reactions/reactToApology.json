@@ -1,0 +1,18 @@
+{
+  "behaviorID": "ReactToApology",
+  "behaviorClass": "AnimSequence",
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+
+  "respondToUserIntents":
+  [
+    {
+      "type": "imperative_apology"
+    }
+  ],
+
+  "animTriggers":
+  [
+    "Feedback_Apology"
+  ]
+}

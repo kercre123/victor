@@ -12,7 +12,7 @@
     {
       "behaviorName"     : "ShutUpGetInInternal",
       "behaviorClass"    : "AnimSequence",
-      "animTriggers"     : ["ShutUp"]
+      "animTriggers"     : ["Feedback_ShutUp"]
     },
     {
       "behaviorName"     : "PutHeadDownInternal",

@@ -39,7 +39,7 @@ const char* kDevTestUtteranceKey         = "DEV_TEST_UTTERANCE";
 
 #define SET_STATE(s) do{ \
                           _dVars.state = State::s; \
-                          PRINT_NAMED_INFO("BehaviorTextToSpeechLoop.State", "State = %s", #s); \
+                          PRINT_CH_INFO("Behaviors", "BehaviorTextToSpeechLoop.State", "State = %s", #s); \
                         } while(0);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -165,6 +165,14 @@ void BehaviorTextToSpeechLoop::SetTextToSay(const std::string& textToSay,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTextToSpeechLoop::ClearTextToSay()
+{
+  if(kInvalidUtteranceID != _dVars.utteranceID) {
+    GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTextToSpeechLoop::WantsToBeActivatedBehavior() const 
 {
   return ((kInvalidUtteranceID != _dVars.utteranceID) || !_iConfig.devTestUtteranceString.empty());
@@ -249,7 +257,7 @@ void BehaviorTextToSpeechLoop::BehaviorUpdate()
        !_dVars.hasSentPlayCommand){
       PlayUtterance();
     } else if (UtteranceState::Finished == _dVars.utteranceState){
-      PRINT_NAMED_INFO("BehaviorTextToSpeechLoop.Update.UtteranceCompleted",
+      PRINT_CH_INFO("Behaviors", "BehaviorTextToSpeechLoop.Update.UtteranceCompleted",
                        "Utterance %d finished playing",
                        _dVars.utteranceID);
       CancelDelegates(false);
@@ -314,9 +322,7 @@ void BehaviorTextToSpeechLoop::TransitionToGetOut()
 void BehaviorTextToSpeechLoop::TransitionToEmergencyGetOut()
 {
   SET_STATE(EmergencyGetOut);
-  if(kInvalidUtteranceID != _dVars.utteranceID) {
-    GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
-  }
+  ClearTextToSay();
 
   if(AnimationTrigger::Count == _iConfig.emergencyGetOutTrigger){
     CancelSelf();
@@ -363,9 +369,7 @@ void BehaviorTextToSpeechLoop::Interrupt( bool immediate )
     // we've been told to cancel our TTS, but there's no hurry, so ...
     // + cancel TTS immediately so it feels responsive
     // + transition into the get out anim after the next looping anim so that the anims transition properly
-    if(kInvalidUtteranceID != _dVars.utteranceID) {
-      GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
-    }
+    ClearTextToSay();
     _dVars.cancelOnNextLoop = true;;
   }
 }

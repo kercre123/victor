@@ -15,6 +15,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
@@ -312,11 +313,20 @@ void BehaviorClearChargerArea::TransitionToPlacingCubeOnGround()
     return;
   }
   
-  // Place the cube on the ground next to the charger
-  Pose3d cubePlacementPose;
-  cubePlacementPose.SetTranslation(Vec3f(20.f, 100.f, 0.f));
-  cubePlacementPose.SetParent(charger->GetPose());
-  DelegateIfInControl(new PlaceObjectOnGroundAtPoseAction(cubePlacementPose),
+  // Place the cube on the ground next to the charger.
+  // Generate some optional placement poses, and let DriveToPose decide which one is best.
+  const auto& chargerPose = charger->GetPose();
+  std::vector<Pose3d> cubePlacementPoses;
+  cubePlacementPoses.push_back(Pose3d{DEG_TO_RAD( 40.f), Z_AXIS_3D(), {-35.f,  60.f, 0.f}, chargerPose});
+  cubePlacementPoses.push_back(Pose3d{DEG_TO_RAD( 50.f), Z_AXIS_3D(), {-50.f,  65.f, 0.f}, chargerPose});
+  cubePlacementPoses.push_back(Pose3d{DEG_TO_RAD(-40.f), Z_AXIS_3D(), {-35.f, -60.f, 0.f}, chargerPose});
+  cubePlacementPoses.push_back(Pose3d{DEG_TO_RAD(-50.f), Z_AXIS_3D(), {-50.f, -65.f, 0.f}, chargerPose});
+  
+  auto* action = new CompoundActionSequential();
+  action->AddAction(new DriveToPoseAction(cubePlacementPoses, false));
+  action->AddAction(new PlaceObjectOnGroundAction());
+  
+  DelegateIfInControl(action,
                       [this](ActionResult result) {
                         const auto& robotInfo = GetBEI().GetRobotInfo();
                         if (robotInfo.GetCarryingComponent().IsCarryingObject()) {

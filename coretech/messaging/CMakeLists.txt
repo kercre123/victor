@@ -17,6 +17,7 @@ target_compile_definitions(cti_messaging
 )
 
 target_link_libraries(cti_messaging
+  cti_common
   clad
 )
 

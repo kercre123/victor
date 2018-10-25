@@ -80,16 +80,15 @@ private:
   void SetTriggerDirection( MicDirectionIndex direction );
   void ClearTriggerDirection();
 
-  MicDirectionNodeList GetLatestMicDirectionData() const;
-  DirectionTrigger GetTriggerData( MicDirectionIndex index ) const;
-
   // callback function for sound reaction
   bool OnMicPowerSampleRecorded( double, MicDirectionConfidence, MicDirectionIndex );
 
+  void OnValidSoundDetected( MicDirectionIndex, double, MicDirectionConfidence );
   void RespondToSound();
   void OnResponseComplete();
 
   bool CanReactToSound() const;
+  bool CanReactToDirection( MicDirectionIndex ) const;
 
   EngineTimeStamp_t GetCurrentTimeMS() const;
 
@@ -129,8 +128,6 @@ private:
     SoundReactorId  reactorId;
 
   } _iVars;
-
-  EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
 
   // these are the values that we're reacting to
   MicDirectionIndex                     _triggeredDirection       = kInvalidMicDirectionIndex;

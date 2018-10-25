@@ -995,7 +995,7 @@ void PathComponent::RestartPlannerIfNeeded()
           if (_currPathSegment >= validSubPath.GetNumSegments())
           {
             // the robot already drove the extent of the valid path, so force stop
-            PRINT_NAMED_INFO("PathComponent.RestartPlannerIfNeeded", "Replanning and current Path invalid. ESTOP Robot");
+            PRINT_CH_INFO("Planner", "PathComponent.RestartPlannerIfNeeded", "Replanning and current Path invalid. ESTOP Robot");
             ClearPath();
             _hasStoppedBeforeExecuting = true;
           } else {

@@ -30,6 +30,7 @@
           "cloudAbuseSavePeriod_s" : 120
         }
       ],
+      "resolveMethod" : "PULL_FROM_CLOUD",
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     },
@@ -41,6 +42,7 @@
       "cloudSavePeriod_s" : 86400,
       "cloudAbuseRules" : [
       ],
+      "resolveMethod" : "PUSH_TO_CLOUD",
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : true
     },
@@ -73,6 +75,7 @@
           "cloudAbuseSavePeriod_s" : 300
         }
       ],
+      "resolveMethod" : "PULL_FROM_CLOUD",
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     },
@@ -105,6 +108,7 @@
           "cloudAbuseSavePeriod_s" : 300
         }
       ],
+      "resolveMethod" : "PULL_FROM_CLOUD",
       "jdocFormatVersion" : 1,
       "bodyOwnedByJdocManager" : false
     }

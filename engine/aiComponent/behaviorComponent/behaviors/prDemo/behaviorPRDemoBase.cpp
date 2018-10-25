@@ -28,7 +28,7 @@ namespace Vector {
 
 namespace {
 
-static constexpr const char* kPRDemoDisableLockName = "PRDemoBaseBeahvior";
+static constexpr const char* kPRDemoDisableLockName = "PRDemoBaseBehavior";
 
 }
 
@@ -83,7 +83,7 @@ void BehaviorPRDemoBase::InitBehavior()
 
   _iConfig.sleepingBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(PRDemoSleeping));
   ANKI_VERIFY(_iConfig.sleepingBehavior != nullptr, "BehaviorPRDemoBase.CouldntGetSleepingBehavior", "");
-  
+
   _iConfig.wakeUpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(SleepingWakeUp));
   ANKI_VERIFY(_iConfig.wakeUpBehavior != nullptr, "BehaviorPRDemoBase.CouldntGetWakeupBehavior", "");
 
@@ -101,10 +101,10 @@ void BehaviorPRDemoBase::OnBehaviorActivated()
 
   // also disable face keep-alive
   GetBEI().GetAnimationComponent().AddKeepFaceAliveDisableLock(kPRDemoDisableLockName);
-  
+
   // Reset so the trick of entering and exiting pairing truly resets the demo
   _iConfig.demoBehavior->Reset();
-  
+
   if( _iConfig.sleepingBehavior->WantsToBeActivated() ) {
     DelegateIfInControl(_iConfig.sleepingBehavior.get(), [this]() {
         SmartPopResponseToTriggerWord();
@@ -160,7 +160,7 @@ void BehaviorPRDemoBase::BehaviorUpdate()
       DelegateIfInControl(_iConfig.mainBehavior.get());
     }
   }
-  
+
 }
 
 

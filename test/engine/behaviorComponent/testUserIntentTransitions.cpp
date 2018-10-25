@@ -65,11 +65,14 @@ bool PlaySpecificHelper( std::string entityBehavior, BehaviorID behavior, bool o
   return IntentHelper( intent, behavior, onlyCheckInStack );
 }
 
-TEST_INTENT(UserIntentsTransitions, KeepAway, "keep_away")
-{
-  const bool res = PlaySpecificHelper( "keep_away", BehaviorID::Keepaway );
-  EXPECT_TRUE(res);
-}
+// keep_away was removed from entity_behavior_entries_en.json in April
+// (see https://github.com/anki/voice-intent-resolution-config/pull/33/files)
+//
+//TEST_INTENT(UserIntentsTransitions, KeepAway, "keep_away")
+//{
+//  const bool res = PlaySpecificHelper( "keep_away", BehaviorID::Keepaway );
+//  EXPECT_TRUE(res);
+//}
 
 TEST_INTENT(UserIntentsTransitions, FistBump, "fist_bump")
 {

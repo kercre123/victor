@@ -986,30 +986,13 @@ bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalIn
   
   if (_depth == quad.depth)
   {
-    ColorRGBA color = Anki::NamedColors::WHITE;
-    float scale = quad.aux;
-    switch(quad.content)
-    {
-      case ENodeContentTypeEnum::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
-      case ENodeContentTypeEnum::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
-      case ENodeContentTypeEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
-      case ENodeContentTypeEnum::InterestingEdge        : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::NotInterestingEdge     : { color = Anki::NamedColors::PINK;     color.SetAlpha(0.8f); break; }
-      case ENodeContentTypeEnum::ObstacleProx           : 
-        { color = (Anki::NamedColors::CYAN * scale) + (Anki::NamedColors::GREEN * (1 - scale));  color.SetAlpha(0.5f + .5*scale); break; }
-      case ENodeContentTypeEnum::ObstacleProxExplored   : 
-        { color = (Anki::NamedColors::BLUE * scale) + (Anki::NamedColors::GREEN * (1 - scale));  color.SetAlpha(0.5f + .5*scale); break; }
-    }
-    VizInterface::SimpleQuad quad;
-    quad.center[0] = _center.x();
-    quad.center[1] = _center.y();
-    quad.center[2] = _center.z();
-    quad.sideSize = _size_m;
-    quad.color = color;
-    destSimpleQuads.emplace_back(quad);
+    VizInterface::SimpleQuad simpleQuad;
+    simpleQuad.center[0] = _center.x();
+    simpleQuad.center[1] = _center.y();
+    simpleQuad.center[2] = _center.z();
+    simpleQuad.sideSize = _size_m;
+    simpleQuad.color = ColorRGBA(quad.colorRGBA);
+    destSimpleQuads.emplace_back(simpleQuad);
     return true;
   }
   

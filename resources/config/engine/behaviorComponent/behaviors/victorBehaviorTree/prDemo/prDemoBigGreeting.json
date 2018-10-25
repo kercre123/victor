@@ -3,7 +3,7 @@
   "behaviorClass" : "FindFaceAndThen",
 
   // not really a voice command, but we need some feature to associate here
-  "associatedActiveFeature": "VC_Greeting",
+  "associatedActiveFeature": "BasicVoiceCommand",
 
   "timeUntilCancelFaceLooking_s": 2.0,
   "timeUntilCancelFaceSearch_s": 10.0,

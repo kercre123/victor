@@ -81,7 +81,6 @@ private:
     UserIntentPtr           currentIntent;
     uint8_t utteranceID;
     UtteranceState  utteranceState;
-    bool shouldSayTemperature;
     bool playingWeatherResponse;
   };
 

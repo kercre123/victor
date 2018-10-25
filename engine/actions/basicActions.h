@@ -46,6 +46,7 @@ namespace Vector {
     // Forward declaration
     struct ImageSaverParams;
     class ObservableObject;
+    class SayNameProbabilityTable;
   
     // Turn in place by a given angle, wherever the robot is when the action is executed.
     //
@@ -378,6 +379,51 @@ namespace Vector {
     };  // class MoveHeadToAngleAction
     
     
+    // Set the lift to specified angle with a given tolerance. Note that setting
+    // the tolerance too small will likely lead to an action timeout.
+    class MoveLiftToAngleAction : public IAction
+    {
+    public:
+      
+      MoveLiftToAngleAction(const f32 angle_rad,
+                            const f32 tolerance_rad = DEG_TO_RAD(3.f), 
+                            const f32 variability = 0.f);
+      
+      // how long this action should take (which, in turn, effects lift speed)
+      void SetDuration(float duration_sec) { _duration = duration_sec; }
+      
+      void SetMaxLiftSpeed(float speedRadPerSec) { _maxLiftSpeedRadPerSec = speedRadPerSec; }
+      void SetLiftAccel(float accelRadPerSec2) { _liftAccelRacPerSec2 = accelRadPerSec2; }
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+      
+    private:
+      
+      bool IsLiftInPosition() const;
+      
+      f32         _angle_rad;
+      f32         _angleTolerance_rad;
+      f32         _variability;
+      f32         _angleWithVariation;
+      f32         _duration = 0.0f; // 0 means "as fast as it can"
+      f32         _maxLiftSpeedRadPerSec = 10.0f;
+      f32         _liftAccelRacPerSec2 = 20.0f;
+
+      MovementComponent::MotorActionID _actionID;
+      bool        _motionCommanded = false;
+      bool        _motionCommandAcked = false;
+      
+      bool        _inPosition;
+      bool        _motionStarted = false;
+      
+      Signal::SmartHandle _signalHandle;
+      
+    }; // class MoveLiftToAngleAction
+
+
     // Set the lift to specified height with a given tolerance. Note that setting
     // the tolerance too small will likely lead to an action timeout.
     class MoveLiftToHeightAction : public IAction
@@ -394,7 +440,8 @@ namespace Vector {
       };
       
       MoveLiftToHeightAction(const f32 height_mm,
-                             const f32 tolerance_mm = 5.f, const f32 variability = 0);
+                             const f32 tolerance_mm = 5.f, 
+                             const f32 variability = 0);
       MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 5.f);
       
       // how long this action should take (which, in turn, effects lift speed)
@@ -609,6 +656,11 @@ namespace Vector {
     {
     public:
       TurnTowardsFaceAction(const SmartFaceID& faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
+      
+      // Use SayNameProbabilityTable to decide if the name, if any, should be said
+      TurnTowardsFaceAction(const SmartFaceID& faceID, Radians maxTurnAngle,
+                            std::shared_ptr<SayNameProbabilityTable>& sayNameProbTable);
+      
       virtual ~TurnTowardsFaceAction();
       
       // Set the maximum number of frames we are will to wait to see a face after
@@ -670,6 +722,7 @@ namespace Vector {
         Turning,
         WaitingForFace,
         FineTuning,
+        WaitingForRecognition,
         PlayingAnimation, // playing an recognition animation, possibly including TTS for the name
       };
       
@@ -691,8 +744,15 @@ namespace Vector {
       
       std::vector<Signal::SmartHandle> _signalHandles;
 
+      std::shared_ptr<SayNameProbabilityTable> _sayNameProbTable;
+      f32 _startedWaitingForRecognition = 0.f;
+      
+      bool MightSayName() const;
+      bool ShouldSayName(const std::string& name);
+      
       void CreateFineTuneAction();
       void SetAction(IActionRunner* action, bool suppressTrackLocking = true);
+      bool CreateNameAnimationAction(const Vision::TrackedFace* face);
       
     }; // TurnTowardsFaceAction
 

@@ -19,7 +19,7 @@
 #define __platform_camera_camera_service_h__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/vision/engine/imageBuffer.h"
+#include "coretech/vision/engine/imageBuffer/imageBuffer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/imageTypes.h"
 

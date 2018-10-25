@@ -499,15 +499,17 @@ void RtsHandlerV4::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenE
   }
 
   // Send message to gateway to refresh JDOCs/client hash
-  std::shared_ptr<SafeHandle> handle = _gatewayServer->SendClientGuidRefreshRequest([this, authError, status, appToken] (bool success) {
-    // Send HandleRtsResponse
-    SendRtsMessage<RtsCloudSessionResponse>(
-      authError==Anki::Vector::TokenError::NoError, 
-      status,
-      appToken);
-  });
+  if(_gatewayServer != nullptr) {
+    std::shared_ptr<SafeHandle> handle = _gatewayServer->SendClientGuidRefreshRequest([this, authError, status, appToken] (bool success) {
+      // Send HandleRtsResponse
+      SendRtsMessage<RtsCloudSessionResponse>(
+        authError==Anki::Vector::TokenError::NoError, 
+        status,
+        appToken);
+    });
 
-  _handles.push_back(handle);
+    _handles.push_back(handle);
+  }
 }
 
 void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::RtsConnection_4& msg) {

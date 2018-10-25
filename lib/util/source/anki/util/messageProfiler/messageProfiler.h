@@ -39,6 +39,7 @@ namespace Util {
 
     std::string m_prefix;
     clock_t m_start;
+    bool m_started;
     bool m_failed;
 
     int m_count[kMaxMessages];

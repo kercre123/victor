@@ -59,10 +59,11 @@ namespace Vision {
   }
   
   Result FaceTracker::Update(const Vision::Image&        frameOrig,
+                             const float                 cropFactor,
                              std::list<TrackedFace>&     faces,
                              std::list<UpdatedFaceID>&   updatedIDs)
   {
-    return _pImpl->Update(frameOrig, faces, updatedIDs);
+    return _pImpl->Update(frameOrig, cropFactor, faces, updatedIDs);
   }
   
   void FaceTracker::AddAllowedTrackedFace(const FaceID_t faceID)

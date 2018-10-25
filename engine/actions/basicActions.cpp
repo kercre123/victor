@@ -35,6 +35,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/sayNameProbabilityTable.h"
 #include "engine/vision/imageSaver.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "util/console/consoleInterface.h"
@@ -49,6 +50,8 @@ namespace Anki {
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
 
     CONSOLE_VAR(u32, kDefaultNumFramesToWait, "WaitForImages", 3);
+    
+    CONSOLE_VAR(f32, kMaxTimeToWaitForRecognition_sec, "TurnTowardsFace", 3.f);
 
     
     TurnInPlaceAction::TurnInPlaceAction(const float angle_rad, const bool isAbsolute)
@@ -501,7 +504,7 @@ namespace Anki {
         - firstTurnDir * GetRNG().RandDblInRange(_minSearchAngle_rads, _maxSearchAngle_rads);
       float afterSecondTurnWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
 
-      PRINT_NAMED_DEBUG("SearchForNearbyObjectAction.Init",
+      PRINT_CH_DEBUG("Actions", "SearchForNearbyObjectAction.Init",
                         "Action will wait %f, turn %fdeg, wait %f, turn %fdeg, wait %f",
                         initialWait_s,
                         RAD_TO_DEG(firstAngle_rads),
@@ -843,7 +846,7 @@ namespace Anki {
       bool headComplete = !_calibHead || (_headCalibStarted && !headCalibrating);
       bool liftComplete = !_calibLift || (_liftCalibStarted && !liftCalibrating);
       if (headComplete && liftComplete) {
-        PRINT_NAMED_INFO("CalibrateMotorAction.CheckIfDone.Done", "");
+        PRINT_CH_INFO("Actions", "CalibrateMotorAction.CheckIfDone.Done", "");
         result = ActionResult::SUCCESS;
       }
 
@@ -1075,6 +1078,132 @@ namespace Anki {
       return result;
     }
     
+#pragma mark ---- MoveLiftToAngleAction ----
+    
+    MoveLiftToAngleAction::MoveLiftToAngleAction(const f32 angle_rad, const f32 tolerance_rad, const f32 variability)
+    : IAction("MoveLiftTo" + std::to_string(RAD_TO_DEG(angle_rad)) + "deg",
+              RobotActionType::MOVE_LIFT_TO_ANGLE,
+              (u8)AnimTrackFlag::LIFT_TRACK)
+    , _angle_rad(angle_rad)
+    , _angleTolerance_rad(tolerance_rad)
+    , _variability(variability)
+    , _inPosition(false)
+    {
+      
+    }
+    
+    bool MoveLiftToAngleAction::IsLiftInPosition() const
+    {
+      const bool inPosition = (NEAR(_angleWithVariation, GetRobot().GetComponent<FullRobotPose>().GetLiftAngle(), _angleTolerance_rad) &&
+                               !GetRobot().GetMoveComponent().IsLiftMoving());
+      
+      return inPosition;
+    }
+    
+    ActionResult MoveLiftToAngleAction::Init()
+    {
+      ActionResult result = ActionResult::SUCCESS;
+      _motionCommanded = false;
+      _motionCommandAcked = false;
+      _motionStarted = false;
+      
+      if (_angle_rad < MIN_LIFT_ANGLE || _angle_rad > MAX_LIFT_ANGLE) {
+        PRINT_NAMED_WARNING("MoveLiftToAngleAction.Init.InvalidAngle",
+                            "%f deg. Clipping to be in range.", RAD_TO_DEG(_angle_rad));
+        _angle_rad = CLIP(_angle_rad, MIN_LIFT_ANGLE, MAX_LIFT_ANGLE);
+      }
+      
+      _angleWithVariation = _angle_rad;
+      if(_variability > 0.f) {
+        _angleWithVariation += GetRNG().RandDblInRange(-_variability, _variability);
+      }
+      _angleWithVariation = CLIP(_angleWithVariation, MIN_LIFT_ANGLE, MAX_LIFT_ANGLE);
+
+
+      if (_angleTolerance_rad < LIFT_ANGLE_TOL) {
+        
+        PRINT_NAMED_WARNING("MoveLiftToAngleAction.Init.TolTooSmall",
+                            "Angle tolerance (%f rad) must be >= LIFT_ANGLE_TOL. Clipping tolerance",
+                            RAD_TO_DEG(_angleTolerance_rad));
+        _angleTolerance_rad = LIFT_ANGLE_TOL;
+      }
+      
+      _inPosition = IsLiftInPosition();
+      
+      if (!_inPosition) {
+        if(GetRobot().GetMoveComponent().MoveLiftToAngle(_angleWithVariation,
+                                                         _maxLiftSpeedRadPerSec,
+                                                         _liftAccelRacPerSec2,
+                                                         _duration,
+                                                         &_actionID) != RESULT_OK) {
+          result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
+        } else {
+          _motionCommanded = true;
+        }
+        
+      }
+      
+      // Subscribe to motor command ack
+      auto actionStartedLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+      {
+        if(_motionCommanded && _actionID == event.GetData().Get_motorActionAck().actionID) {
+          PRINT_CH_INFO("Actions", "MoveLiftToAngleAction.MotorActionAcked",
+                        "[%d] ActionID: %d",
+                        GetTag(),
+                        _actionID);
+          _motionCommandAcked = true;
+        }
+      };
+      
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
+                                                                     actionStartedLambda);
+
+
+      return result;
+    }
+    
+    ActionResult MoveLiftToAngleAction::CheckIfDone()
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      if (_motionCommanded && !_motionCommandAcked) {
+        PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveLiftToAngleAction.CheckIfDone.WaitingForAck",
+                                "[%d] ActionID: %d",
+                                GetTag(),
+                                _actionID);
+        return result;
+      }
+
+      if(!_inPosition) {
+        _inPosition = IsLiftInPosition();
+      }
+      
+      const bool isLiftMoving = GetRobot().GetMoveComponent().IsLiftMoving();
+      if( isLiftMoving ) {
+        _motionStarted = true;
+      }
+      
+      if(_inPosition) {
+        result = isLiftMoving ? ActionResult::RUNNING : ActionResult::SUCCESS;
+      } else {
+        PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveLiftToAngleAction.CheckIfDone.NotInPosition",
+                                "[%d] Waiting for lift to get in position: %.1fdeg vs. %.1fdeg (tol: %f)",
+                                GetTag(),
+                                RAD_TO_DEG(GetRobot().GetComponent<FullRobotPose>().GetLiftAngle()), 
+                                RAD_TO_DEG(_angleWithVariation), 
+                                RAD_TO_DEG(_angleTolerance_rad));
+        
+        if( _motionStarted && !isLiftMoving ) {
+          PRINT_NAMED_WARNING("MoveLiftToAngleAction.CheckIfDone.StoppedMakingProgress",
+                              "[%d] giving up since we stopped moving",
+                              GetTag());
+          result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
+        }
+      }
+      
+      return result;
+    }
+    
 #pragma mark ---- MoveLiftToHeightAction ----
     
     MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
@@ -1277,7 +1406,7 @@ namespace Anki {
       
       return result;
     }
-    
+
 #pragma mark ---- PanAndTiltAction ----
     
     PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
@@ -1914,7 +2043,13 @@ namespace Anki {
       SetType(RobotActionType::TURN_TOWARDS_FACE);
       SetTracksToLock((u8)AnimTrackFlag::NO_TRACKS);
     }
-
+    
+    TurnTowardsFaceAction::TurnTowardsFaceAction(const SmartFaceID& faceID, Radians maxTurnAngle,
+                                                 std::shared_ptr<SayNameProbabilityTable>& sayNameProbTable)
+    : TurnTowardsFaceAction(faceID, maxTurnAngle, false)
+    {
+      _sayNameProbTable = sayNameProbTable;
+    }
     
     void TurnTowardsFaceAction::SetAction(IActionRunner *action, bool suppressTrackLocking)
     {
@@ -1952,8 +2087,8 @@ namespace Anki {
 
     void TurnTowardsFaceAction::SetSayNameAnimationTrigger(AnimationTrigger trigger)
     {
-      if( ! _sayName ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
+      if( !MightSayName() ) {
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
                           "setting say name trigger, but we aren't going to say the name. This is useless");
       }
       auto callback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
@@ -1964,8 +2099,8 @@ namespace Anki {
 
     void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
     {
-      if( ! _sayName ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
+      if( !MightSayName() ) {
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
                           "setting anim trigger for unnamed faces, but we aren't going to say the name.");
       }
       auto callback = [trigger](const Robot& robot, const SmartFaceID& faceID) {
@@ -1986,8 +2121,8 @@ namespace Anki {
     {
       DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
                  "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
-      if( ! _sayName ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerCallbackWithoutSayingName",
+      if( !MightSayName() ) {
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetSayNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
       _sayNameTriggerCallback = std::move(callback);
@@ -1997,8 +2132,8 @@ namespace Anki {
     {
       DEV_ASSERT(_anyFaceTriggerCallback == nullptr,
                  "SetNoNameTriggerCallback is mutually exclusive with SetAnyFaceTriggerCallback");
-      if( ! _sayName ) {
-        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerCallbackWithoutSayingName",
+      if( !MightSayName() ) {
+        PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.SetNoNameTriggerCallbackWithoutSayingName",
                           "setting say name trigger callback, but we aren't going to say the name. This is useless");
       }
       _noNameTriggerCallback = std::move(callback);
@@ -2008,7 +2143,7 @@ namespace Anki {
     {
       DEV_ASSERT((_noNameTriggerCallback == nullptr) && (_sayNameTriggerCallback == nullptr),
                  "SetAnyFaceTriggerCallback is mutually exclusive with other anim trigger callbacks");
-      DEV_ASSERT(!_sayName, "SetAnyFaceTriggerCallback is mutually exclusive sayname animations");
+      DEV_ASSERT(!MightSayName(), "SetAnyFaceTriggerCallback is mutually exclusive sayname animations");
       _anyFaceTriggerCallback = std::move(callback);
     }
 
@@ -2102,7 +2237,7 @@ namespace Anki {
               if(distSq < _closestDistSq) {
                 GetRobot().GetFaceWorld().UpdateSmartFaceToID(faceID, _obsFaceID);
                 _closestDistSq = distSq;
-                PRINT_NAMED_DEBUG("TurnTowardsFaceAction.ObservedFaceCallback",
+                PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.ObservedFaceCallback",
                                   "Observed ID=%s at distSq=%.1f",
                                   _obsFaceID.GetDebugStr().c_str(), _closestDistSq);
               }
@@ -2121,7 +2256,7 @@ namespace Anki {
         
     void TurnTowardsFaceAction::CreateFineTuneAction()
     {
-      PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CreateFinalAction.SawFace",
+      PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.CreateFinalAction.SawFace",
                         "Observed ID=%s. Will fine tune.", _obsFaceID.GetDebugStr().c_str());
 
       if(_obsFaceID.IsValid() ) {
@@ -2155,6 +2290,74 @@ namespace Anki {
       _state = State::FineTuning;
     } // CreateFineTuneAction()
     
+    bool TurnTowardsFaceAction::MightSayName() const
+    {
+      if(nullptr != _sayNameProbTable)
+      {
+        // If we even have a say name probability LUT, we _might_ say a name,
+        // depending on the name...
+        return true;
+      }
+      else
+      {
+        return _sayName;
+      }
+    }
+    
+    bool TurnTowardsFaceAction::ShouldSayName(const std::string& name)
+    {
+      if(nullptr != _sayNameProbTable)
+      {
+        return _sayNameProbTable->UpdateShouldSayName(name);
+      }
+      else
+      {
+        return _sayName;
+      }
+    }
+    
+    bool TurnTowardsFaceAction::CreateNameAnimationAction(const Vision::TrackedFace* face)
+    {
+      // return value
+      bool createdActions = false;
+      
+      // info for DAS
+      const bool haveName = face->HasName();
+      bool saidName = false;
+      
+      // Done being recognized, say name or don't
+      if( haveName ) {
+        if( ShouldSayName(face->GetName()) ) {
+          SayTextAction* sayText = new SayTextAction(face->GetName());
+          if( _sayNameTriggerCallback ) {
+            AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
+            if( sayNameAnim != AnimationTrigger::Count ) {
+              sayText->SetAnimationTrigger( sayNameAnim, _animTracksToLock );
+            }
+          }
+          SetAction(sayText);
+          createdActions = true;
+          saidName = true;
+        }
+        // If we aren't supposed to say the name, do nothing.
+        // TODO: If should not say name, provide anim trigger/callback for "name known but not saying"
+      }
+      else if( _noNameTriggerCallback ) {
+        AnimationTrigger noNameAnim = _noNameTriggerCallback(GetRobot(), _obsFaceID);
+        if( noNameAnim != AnimationTrigger::Count ) {
+          SetAction(new TriggerLiftSafeAnimationAction(noNameAnim, 1, true, _animTracksToLock));
+          createdActions = true;
+        }
+      }
+      
+      DASMSG(turn_towards_face_might_say_name, "turn_towards_face.might_say_name",
+             "TurnTowardsFace action requested to say name");
+      DASMSG_SET(i1, haveName, "Face's name was known at end of action");
+      DASMSG_SET(i2, saidName, "When haveName=1, whether we chose to say name");
+      DASMSG_SEND();
+      
+      return createdActions;
+    }
     
     ActionResult TurnTowardsFaceAction::CheckIfDone()
     {
@@ -2177,7 +2380,7 @@ namespace Anki {
             // Initial (blind) turning to pose finished...
             if(!_obsFaceID.IsValid()) {
               // ...didn't see a face yet, wait a couple of images to see if we do
-              PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CheckIfDone.NoFaceObservedYet",
+              PRINT_CH_DEBUG("Actions", "TurnTowardsFaceAction.CheckIfDone.NoFaceObservedYet",
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
               DEV_ASSERT(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
@@ -2222,7 +2425,7 @@ namespace Anki {
              // Create action to say name if enabled and we have a name by now.
             result = _action->Update();
             // play an animation, possibly a TTS animation, based on what callbacks have been provided
-            const bool playAnim = (_sayName || _anyFaceTriggerCallback);
+            const bool playAnim = (MightSayName() || _anyFaceTriggerCallback);
             if((ActionResult::SUCCESS == result) && playAnim)
             {
               const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_obsFaceID);
@@ -2236,30 +2439,46 @@ namespace Anki {
                     result = ActionResult::RUNNING;
                   }
                 }
-                else if( face->GetName().empty() ) {
-                  if( _noNameTriggerCallback ) {
-                    AnimationTrigger noNameAnim = _noNameTriggerCallback(GetRobot(), _obsFaceID);
-                    if( noNameAnim != AnimationTrigger::Count ) {
-                      SetAction(new TriggerLiftSafeAnimationAction(noNameAnim, 1, true, _animTracksToLock));
-                      _state = State::PlayingAnimation;
-                      result = ActionResult::RUNNING;
-                    }
-                  }
-                }
-                else {
-                  // we have a name
-                  SayTextAction* sayText = new SayTextAction(face->GetName());
-                  if( _sayNameTriggerCallback ) {
-                    AnimationTrigger sayNameAnim = _sayNameTriggerCallback(GetRobot(), _obsFaceID);
-                    if( sayNameAnim != AnimationTrigger::Count ) {
-                      sayText->SetAnimationTrigger( sayNameAnim, _animTracksToLock );
-                    }
-                  }
-                  SetAction(sayText);
-                  _state = State::PlayingAnimation;
+                else if( face->GetID() < 0 ) {
+                  // Need to wait for recognition to complete
+                  _startedWaitingForRecognition = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                  _state = State::WaitingForRecognition;
                   result = ActionResult::RUNNING;
                 }
+                else {
+                  const bool actionCreated = CreateNameAnimationAction(face);
+                  if(actionCreated) {
+                    _state = State::PlayingAnimation;
+                    result = ActionResult::RUNNING;
+                  }
+                }
               }
+            }
+          }
+          break;
+        }
+          
+        case State::WaitingForRecognition:
+        {
+          const Vision::TrackedFace* face = GetRobot().GetFaceWorld().GetFace(_obsFaceID);
+          const f32 currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const bool timedOut = (currentTime_sec - _startedWaitingForRecognition) > kMaxTimeToWaitForRecognition_sec;
+          if( face->GetID() > 0 || timedOut)
+          {
+            // Done being recognized (or timed out), say name or don't
+            const bool actionCreated = CreateNameAnimationAction(face);
+            if(actionCreated) {
+              _state = State::PlayingAnimation;
+              result = ActionResult::RUNNING;
+            }
+            else {
+              result = ActionResult::SUCCESS;
+            }
+            
+            if(timedOut) {
+              DASMSG(turn_towards_face_recognition_timeout, "turn_towards_face.recognition_timeout",
+                     "TurnTowardsFaceAction timed out waiting for recognition to complete");
+              DASMSG_SEND();
             }
           }
           break;
@@ -2373,7 +2592,7 @@ namespace Anki {
       // Disable saving if needed
       if(ANKI_DEV_CHEATS && nullptr != _saveParams)
       {
-        PRINT_NAMED_INFO("WaitForImagesAction.Destructor.DisablingSave", "Saved %d images to %s",
+        PRINT_CH_INFO("Actions", "WaitForImagesAction.Destructor.DisablingSave", "Saved %d images to %s",
                          _numFramesToWaitFor, _saveParams->path.c_str());
         _saveParams->mode = ImageSaverParams::Mode::Off;
         GetRobot().GetVisionComponent().SetSaveImageParameters(*_saveParams);
@@ -2405,7 +2624,7 @@ namespace Anki {
           if (VisionMode::Count == _visionMode)
           {
             ++_numModeFramesSeen;
-            PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d for any mode",
+            PRINT_CH_DEBUG("Actions", "WaitForImagesAction.Callback", "Frame %d of %d for any mode",
                               _numModeFramesSeen, _numFramesToWaitFor);
           }
           else
@@ -2415,7 +2634,7 @@ namespace Anki {
               if (mode == _visionMode)
               {
                 ++_numModeFramesSeen;
-                PRINT_NAMED_DEBUG("WaitForImagesAction.Callback", "Frame %d of %d for mode %s",
+                PRINT_CH_DEBUG("Actions", "WaitForImagesAction.Callback", "Frame %d of %d for mode %s",
                                   _numModeFramesSeen, _numFramesToWaitFor, EnumToString(mode));
                 break;
               }
@@ -2428,7 +2647,7 @@ namespace Anki {
       
       if(ANKI_DEV_CHEATS && nullptr != _saveParams)
       {
-        PRINT_NAMED_DEBUG("WaitForImagesAction.Init.SetSaveParams", "Mode:%s Path:%s Quality:%d",
+        PRINT_CH_DEBUG("Actions", "WaitForImagesAction.Init.SetSaveParams", "Mode:%s Path:%s Quality:%d",
                           EnumToString(_saveParams->mode),
                           _saveParams->path.c_str(),
                           _saveParams->quality);

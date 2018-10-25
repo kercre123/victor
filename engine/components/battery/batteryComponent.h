@@ -91,13 +91,16 @@ public:
   // It may also be disconnected if the battery overheats to 45C until it cools
   // down to 42C at which point it will be reconnected. The cumulative total
   // time that the battery is connected while on the charger should still be 30 min.
-  // (Currently, when disconnected, GetBatteryVoltsRaw() returns a very low (~0.1V)
-  // reading while GetBatteryVolts() holds the last valid filtered voltage reading, 
-  // but this can be changed as needed.)
+  // (When disconnected, GetBatteryVoltsRaw() returns a low reading that shouldn't
+  // be considered to represent that actual battery voltage. GetBatteryVolts()
+  // always holds the last valid filtered voltage reading.)
   bool IsBatteryDisconnectedFromCharger() const { return _battDisconnected; }
 
   // Indicates that the robot has its charge circuit enabled. Note that
-  // this will remain true even after the battery is fully charged.
+  // this may remain true even after the battery has become fully charged.
+  // It will eventually become false after 30 min of cumulative charge time.
+  // NOTE: If battery is disconnected and IsCharging() == true, it means the battery
+  //       has actually suspended charging but will resume when the battery has cooled down.
   bool IsCharging() const { return _isCharging; }
   
   // Indicates that the robot is sensing voltage on its charge contacts
@@ -120,6 +123,16 @@ public:
   // Returns how long the "low battery" state has been active. Returns 0
   // if not currently in a low battery state.
   float GetLowBatteryTimeSec() const;
+
+  // Get the amount of time that we've been on charger.
+  // Returns 0.f if not on charger.
+  float GetOnChargerDurationSec() const;
+
+  // Get time that the battery has been disconnected from the charger circuit.
+  // Returns 0.f if battery is connected to charger circuit or if not on charger.
+  // NOTE: If battery is disconnected and IsCharging() == true, it means the battery
+  //       has actually suspended charging but will resume when the battery has cooled down.
+  float GetBatteryDisconnectedDurationSec() const;
 
   external_interface::GatewayWrapper GetBatteryState(const external_interface::BatteryStateRequest& request);
   
@@ -162,10 +175,13 @@ private:
   
   float _lastBatteryLevelChange_sec = 0;
   float _lastOnChargerContactsChange_sec = 0;
+  float _lastDisconnectedChange_sec = 0;
   
   float _saturationChargingStartTime_sec = 0.f;
   float _saturationChargeTimeRemaining_sec = 0.f;
   float _lastSaturationChargingEndTime_sec = 0.f;
+
+  bool _resetVoltageFilterWhenBatteryConnected = false;
 
   // The timestamp of the RobotState message with the latest data
   RobotTimeStamp_t _lastMsgTimestamp = 0;

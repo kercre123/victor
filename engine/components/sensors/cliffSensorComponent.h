@@ -91,7 +91,17 @@ public:
   const CliffSensorDataArray& GetCliffDataRaw() const { return _cliffDataRaw; }
   
   // Compute the estimated pose of the cliff obstacle for the given cliff event.
-  bool ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const;
+  // - timestamp represents the time at which the cliff was detected (used to calculate
+  //   the robot's historical pose)
+  // - cliff detected flags used to estimate the cliff's pose relative to the robot
+  bool ComputeCliffPose(uint32_t timestampOfCliff, uint8_t cliffDetectedFlags, Pose3d& cliffPose) const;
+
+  // given a set of cliff detected flags, gets the pose of the cliff relative to the robot
+  // returns true if the output pose is valid
+  bool GetCliffPoseRelativeToRobot(const uint8_t cliffDetectedFlags, Pose3d& relativePose) const;
+
+  // mark a quad of fixed dimensions as cliff-type obstacles in the navmap
+  void UpdateNavMapWithCliffAt(const Pose3d& pose, const uint32_t timestamp) const;
 
   // Enable/Disable stopping the robot when cliff sensor detects something 
   // as reflective as the white border of the habitat.

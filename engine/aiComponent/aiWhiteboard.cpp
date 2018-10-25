@@ -16,16 +16,19 @@
 #include "engine/actions/basicActions.h"
 #include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/components/robotStatsTracker.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
+#include "engine/sayNameProbabilityTable.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/rotation.h"
@@ -53,11 +56,11 @@ CONSOLE_VAR(float, kBW_MaxHeightForPossibleObject_mm, "AIWhiteboard", 30.0f);
 // debug render
 CONSOLE_VAR(bool, kBW_DebugRenderPossibleObjects, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleObjectsZ, "AIWhiteboard", 35.0f);
-CONSOLE_VAR(bool, kBW_DebugRenderBeacons, "AIWhiteboard", true);
-CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
+CONSOLE_VAR(float, kAI_MaxExtraExploringCooldown_s, "AIWhiteboard", 800.0f);
 
-CONSOLE_VAR(int, kMaxObservationAgeToEatCube_ms, "AIWhiteboard", 3000);
-  
+// how often to update the actual exploring cooldown (yeah... it's a kind of cooldown cooldown)
+CONSOLE_VAR(float, kExploringCooldownUpdatePeriod_s, "AIWhiteboard", 60.0f);
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
 {
@@ -82,7 +85,7 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectActionFailure action)
   switch(action) {
     case ObjectActionFailure::PickUpObject :     { return 1; }
     case ObjectActionFailure::StackOnObject:     { return 1; }
-    case ObjectActionFailure::PlaceObjectAt:     { return 10;} // this can affect behaviorExploreBringCubeToBeacon's kLocationFailureDist_mm (read note there)
+    case ObjectActionFailure::PlaceObjectAt:     { return 10;}
     case ObjectActionFailure::RollOrPopAWheelie: { return 1; }
   };
   
@@ -99,10 +102,9 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectActionFailure action)
 AIWhiteboard::AIWhiteboard(Robot& robot)
 : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::Whiteboard)
 , _robot(robot)
-, _gotOffChargerAtTime_sec(-1.0f)
-, _returnedToTreadsAtTime_sec(-1.0f)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
+, _sayNameProbTable(new SayNameProbabilityTable(*_robot.GetContext()->GetRandom()))
 {
 }
 
@@ -123,37 +125,23 @@ void AIWhiteboard::InitDependent(Vector::Robot* robot, const AICompMap& dependen
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
   }
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
   }
+
+  // NOTE: the RobotStatsTracker is an init dependency for all of AIComponent, so it will have already been
+  // initialized by the time this runs
+  UpdateExploringTransitionCooldown();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::UpdateDependent(const AICompMap& dependentComps)
 {
-  // TODO:(bn) cache this filter
-
-  // Victor wants to eat cube #1 if it's known and upright
-  
-  BlockWorldFilter filter;
-  filter.SetAllowedTypes( { ObjectType::Block_LIGHTCUBE1 } );
-  filter.SetFilterFcn( [this](const ObservableObject* obj){
-      return obj->IsPoseStateKnown() &&
-        obj->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS &&
-        obj->GetLastObservedTime() + kMaxObservationAgeToEatCube_ms > _robot.GetLastImageTimeStamp();
-
-    });
-
-  const auto& blockWorld = _robot.GetBlockWorld();
-  const ObservableObject* obj = blockWorld.FindLocatedObjectClosestTo(_robot.GetPose(), filter);
-  if( obj != nullptr ) {
-    _victor_cubeToEat = obj->GetID();
-  }
-  else {
-    _victor_cubeToEat.UnSet();
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( currTime_s >= _lastExploringCooldownUpdateTime_s + kExploringCooldownUpdatePeriod_s ) {
+    UpdateExploringTransitionCooldown();
   }
 }
 
@@ -163,9 +151,6 @@ void AIWhiteboard::OnRobotDelocalized()
   RemovePossibleObjectsFromZombieMaps();
 
   UpdatePossibleObjectRender();
-  
-  // TODO rsam we probably want to rematch beacons when robot relocalizes.
-  ClearAllBeacons();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -173,10 +158,15 @@ void AIWhiteboard::OnRobotRelocalized()
 {
   // just need to update render, otherwise they render wrt old origin
   UpdatePossibleObjectRender();
-
-  UpdateBeaconRender();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::OnRobotWakeUp()
+{
+  PRINT_CH_DEBUG("AIWhiteboard", "AIWhiteBoard.OnRobotWakeUp.ResetSayNameProbTable", "");
+  _sayNameProbTable->Reset();
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 {
@@ -206,178 +196,11 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
 {
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
     PRINT_CH_INFO("AIWhiteboard", "PossibleObject.FinishedSearch",
-                      "finished search, so removing possible object");
+                  "finished search, so removing possible object");
   }
   RemovePossibleObjectsMatching(objectType, pose);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const
-{
-  if(ANKI_DEVELOPER_CODE)
-  {
-    // all beacons should be in this world
-    for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
-                 "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
-    }
-  }
-
-  outObjectList.clear();
-  if ( !_beacons.empty() )
-  {
-    // if the robot is currently carrying a cube, insert only that one right away, regardless of whether it's inside or
-    // outisde the beacon, since we would always want to drop it. Any other cube would be unusable until we drop this one
-    if ( _robot.GetCarryingComponent().IsCarryingObject() )
-    {
-      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingComponent().GetCarryingObject() );
-      if ( nullptr != carryingObject ) {
-        outObjectList.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
-      } else {
-        // this can be blocking under certain scenarios, since we can think we are carrying a cube, but it is not in
-        // the blockworld
-        PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons.NullCarryingObject",
-                          "Could not get carrying object pointer (ID=%d)",
-                          _robot.GetCarryingComponent().GetCarryingObject().GetValue());
-      }
-    }
-    else
-    {
-      // ask for all cubes we know, and if any is not inside a beacon, add to the list
-      BlockWorldFilter filter;
-      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      filter.AddFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
-        // check if the robot can pick up this object
-        const bool canPickUp = _robot.GetDockingComponent().CanPickUpObject(*blockPtr);
-        if ( canPickUp )
-        {
-          bool isBlockInAnyBeacon = false;
-          // check if the object is within any beacon
-          for ( const auto& beacon : _beacons ) {
-            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-            if ( isBlockInAnyBeacon ) {
-              break;
-            }
-          }
-          
-          // this block should be carried to a beacon
-          if ( !isBlockInAnyBeacon ) {
-            outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
-          }
-        }
-        return false; // have to return true/false, even though not used
-      });
-      
-      _robot.GetBlockWorld().FilterLocatedObjects(filter);
-    }
-  }
-
-  // do we have any usable cubes out of beacons?
-  bool hasBlocksOutOfBeacons = !outObjectList.empty();
-  return hasBlocksOutOfBeacons;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& outObjectList) const
-{
-  #if ANKI_DEVELOPER_CODE
-  {
-    // passed beacon should be a beacon in our list, not null and in the current origin
-    bool beaconIsValid = false;
-    for ( const auto& beaconIt : _beacons ) {
-      beaconIsValid = beaconIsValid || (beacon == &beaconIt);
-    }
-    DEV_ASSERT(beaconIsValid, "AIWhiteboard.FindCubesInBeacon.NotABeacon");
-    DEV_ASSERT(beacon, "AIWhiteboard.FindCubesInBeacon.NullBeacon");
-    DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon->GetPose() ),
-               "AIWhiteboard.FindCubesInBeacon.BeaconNotInOrigin");
-  }
-  #endif
-  
-  outObjectList.clear();
-  
-  {
-    // ask for all cubes we know about inside the beacon
-    BlockWorldFilter filter;
-    filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    filter.AddFilterFcn([this, &outObjectList, beacon](const ObservableObject* blockPtr)
-    {
-      if(!_robot.GetCarryingComponent().IsCarryingObject(blockPtr->GetID()) )
-      {
-        const bool isBlockInBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose());
-        if ( isBlockInBeacon ) {
-          outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
-        }
-      }
-      return false; // have to return true/false, even though not used
-    });
-    
-    _robot.GetBlockWorld().FilterLocatedObjects(filter);
-  }
-  
-  return !outObjectList.empty();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::AreAllCubesInBeacons() const
-{
-  #if ANKI_DEVELOPER_CODE
-  {
-    // all beacons should be in this world
-    for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose().FindRoot() ),
-                 "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
-    }
-  }
-  #endif
-
-  bool allInBeacon = false;
-  if ( !_beacons.empty() )
-  {
-    // robot can't be carrying an object, otherwise they are not in beacons
-    if ( !_robot.GetCarryingComponent().IsCarryingObject() )
-    {
-      size_t locatedCubesInBeacon = 0;
-      size_t allDefinedCubes = 0;
-      
-      // ask located cubes which ones are in a beacon. Note some cubes might be in the beacon already, but
-      // if Cozmo doesn't know about them he won't count them before detecting them.
-      {
-        BlockWorldFilter filter;
-        filter.SetAllowedFamilies({ ObjectFamily::LightCube });
-        filter.AddFilterFcn([this, &locatedCubesInBeacon](const ObservableObject* blockPtr)
-        {
-          bool isBlockInAnyBeacon = false;
-          if (blockPtr->IsPoseStateKnown()){
-            // check if the object is within any beacon
-            for ( const auto& beacon : _beacons ) {
-              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-              if ( isBlockInAnyBeacon ) {
-                break;
-              }
-            }
-          }
-        
-          // if the block is in a beacon, count as located
-          if ( isBlockInAnyBeacon ) {
-            ++locatedCubesInBeacon;
-          }
-          return false; // have to return true/false, even though not used
-        });
-        
-        _robot.GetBlockWorld().FilterLocatedObjects(filter);
-      }
-      
-      // Find out how many defined cubes we have and compare
-      allDefinedCubes = _robot.GetBlockWorld().GetNumDefinedObjects(ObjectFamily::LightCube);
-      
-      allInBeacon = (allDefinedCubes == locatedCubesInBeacon);
-    }
-  }
-
-  // return the result of the filter
-  return allInBeacon;
-}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectActionFailure action)
 {
@@ -644,54 +467,6 @@ void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObj
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::AddBeacon( const Pose3d& beaconPos, const float radius )
-{
-  _beacons.emplace_back( beaconPos, radius );
-
-  // update render
-  UpdateBeaconRender();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::ClearAllBeacons()
-{
-  _beacons.clear();
-  
-  // update render
-  UpdateBeaconRender();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::FailedToFindLocationInBeacon(AIBeacon* beacon)
-{
-  // set time stamp in the beacon
-  beacon->FailedToFindLocation();
-  
-  // update render
-  UpdateBeaconRender();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const AIBeacon* AIWhiteboard::GetActiveBeacon() const
-{
-  if ( _beacons.empty() ) {
-    return nullptr;
-  }
-  
-  return &_beacons[0];
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AIBeacon* AIWhiteboard::GetActiveBeacon()
-{
-  if ( _beacons.empty() ) {
-    return nullptr;
-  }
-  
-  return &_beacons[0];
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::RemovePossibleObjectsMatching(ObjectType objectType, const Pose3d& pose)
 {
   // iterate all current possible objects
@@ -785,16 +560,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   }
 
   ConsiderNewPossibleObject(possibleObject.objectType, obsPose);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void AIWhiteboard::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
-{
-  const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
-  if ( onTreads ) {
-    _returnedToTreadsAtTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
 }
 
 
@@ -927,37 +692,6 @@ void AIWhiteboard::UpdatePossibleObjectRender()
     }
   }
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::UpdateBeaconRender()
-{
-  // re-draw all beacons since they all use the same id
-  if ( kBW_DebugRenderBeacons )
-  {
-    static const std::string renderId("AIWhiteboard.UpdateBeaconRender");
-    _robot.GetContext()->GetVizManager()->EraseSegments(renderId);
-  
-    // iterate all beacons and render
-    for( const auto& beacon : _beacons )
-    {
-      // currently we don't support beacons from older origins (rsam: I will soon)
-      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
-                 "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
-      
-      // note that since we don't know what timeout behaviors use, we can only say that it ever failed
-      const ColorRGBA& color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
-      
-      Vec3f center = beacon.GetPose().GetWithRespectToRoot().GetTranslation();
-      center.z() += kBW_DebugRenderBeaconZ;
-      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius(), color, false);
-      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius()-0.5f, color, false); // double line
-      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius()-1.0f, color, false); // triple line (jane's request)
-    }
-  }
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::OfferPostBehaviorSuggestion( const PostBehaviorSuggestions& suggestion )
@@ -992,6 +726,109 @@ void AIWhiteboard::SetLastEdgeInformation(const float closestEdgeDist_mm)
   _edgeInfoClosestEdge_mm = closestEdgeDist_mm;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float AIWhiteboard::GetExploringCooldown_s() const
+{
+  const float cooldown_s = _exploringTransitionCooldownBase_s + _exploringTransitionCooldownExtra_s;
+  return cooldown_s;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::NotifyNewUserIntentPending(UserIntentTag userIntent)
+{
+  // NOTE: there is no time-based reset or anything for these, but it'll get wipes when the robot reboots
+  // overnight, or on any fresh boot
+  
+  switch( userIntent ) {
+    case UserIntentTag::imperative_quiet:
+    case UserIntentTag::imperative_shutup:
+      _exploringTransitionCooldownExtra_s += 10 * 60.0f;
+      break;
+
+    case UserIntentTag::global_stop:
+    case UserIntentTag::greeting_goodnight:
+    case UserIntentTag::imperative_scold:
+    case UserIntentTag::system_charger:
+    case UserIntentTag::system_sleep:
+      _exploringTransitionCooldownExtra_s += 5 * 60.0f;
+      break;
+
+    case UserIntentTag::imperative_lookatme:
+      _exploringTransitionCooldownExtra_s += 2 * 60.0f;
+      break;
+
+    case UserIntentTag::explore_start:
+      // if exploring is requested, then maybe the user likes it so get rid of this extra cooldown
+      _exploringTransitionCooldownExtra_s = 0.0f;
+      break;
+
+    case UserIntentTag::greeting_goodmorning:
+    case UserIntentTag::imperative_come:
+    case UserIntentTag::imperative_findcube:
+    case UserIntentTag::play_anygame:
+    case UserIntentTag::play_anytrick:
+    case UserIntentTag::play_specific:
+      // these maybe indicate the user wants the robot doing more stuff, so reduce the cooldown
+      _exploringTransitionCooldownExtra_s -= 60.0f;
+      break;
+
+
+    case UserIntentTag::blackjack_hit:
+    case UserIntentTag::blackjack_stand:
+    case UserIntentTag::blackjack_playagain:
+    case UserIntentTag::imperative_affirmative:
+    case UserIntentTag::imperative_praise:
+    case UserIntentTag::global_delete:
+    case UserIntentTag::set_timer:  
+      // no change for these
+      break;
+
+    default:
+      // add 30 seconds by default because maybe if the user is trying to use voice commands, then they'll be
+      // frustrated if he explores too much
+      _exploringTransitionCooldownExtra_s += 30.0f;
+      break;
+  }
+
+  _exploringTransitionCooldownExtra_s = Util::Clamp(_exploringTransitionCooldownExtra_s,
+                                                    0.0f,
+                                                    kAI_MaxExtraExploringCooldown_s);
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::UpdateExploringTransitionCooldown()
+{
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastExploringCooldownUpdateTime_s = currTime_s;
+
+  const auto& behaviorComp = _robot.GetComponent<AIComponent>().GetComponent<BehaviorComponent>();
+  const auto& statsComponent = behaviorComp.GetComponent<RobotStatsTracker>();
+  const float alive_h =  statsComponent.GetNumHoursAlive();
+
+  if( alive_h < 2.0f ) {
+    _exploringTransitionCooldownBase_s = 10.0f;
+  }
+  else if( alive_h < 24.0f ) {
+    _exploringTransitionCooldownBase_s = 20.0f;
+  }
+  else if( alive_h < 48.0f ) {
+    _exploringTransitionCooldownBase_s = 40.0f;
+  }
+  else if( alive_h < 72.0f ) {
+    _exploringTransitionCooldownBase_s = 90.0f;
+  }
+  else if( alive_h < 120.0f ) {
+    _exploringTransitionCooldownBase_s = 120.0f;
+  }
+  else if( alive_h < 168.0f ) {
+    _exploringTransitionCooldownBase_s = 240.0;
+  }
+  else {
+    // Explore every 5 minutes after a week, forever!
+    _exploringTransitionCooldownBase_s = 300.0f;
+  }
+}
 
 } // namespace Vector
 } // namespace Anki

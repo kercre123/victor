@@ -171,7 +171,7 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
   // Send request to animation process
   const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
   if (RESULT_OK != result) {
-    LOG_ERROR("TextToSpeechCoordinator.CreateUtterance", "Unable to send robot message (result %d)", result);
+    // SendMessage already logs this failure
     return kInvalidUtteranceID;
   }
 

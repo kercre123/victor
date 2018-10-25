@@ -1,0 +1,26 @@
+{
+  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorID": "BasicVoiceCommands",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  // all behaviors below this count as "greetings"
+  "associatedActiveFeature": "BasicVoiceCommand",
+
+  "behaviors": [
+    "ReactToHello",
+    "ReactToGoodMorning",
+    "ReactToGoodBye",
+    "ReactToAffirmative",
+    "ReactToNegative",
+    "ReactToAbuse",
+    "ReactToApology",
+    "ReactToLove"
+
+    // NOTE: "goodnight" greeting is handled by the sleep cycle behavior, not here
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
+}
+ 

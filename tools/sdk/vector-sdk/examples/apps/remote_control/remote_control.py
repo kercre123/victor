@@ -19,7 +19,6 @@
 This example lets you control Vector by Remote Control, using a webpage served by Flask.
 """
 
-import asyncio
 import io
 import json
 import sys
@@ -111,12 +110,12 @@ class RemoteControlVector:
         default_anims_for_keys = ["anim_turn_left_01",  # 0
                                   "anim_blackjack_victorwin_01",  # 1
                                   "anim_pounce_success_02",  # 2
-                                  "vig_alwayshelpful_photo",  # 3
-                                  "anim_hiking_lookaround_03",  # 4
+                                  "anim_vc_shutup_01",  # 3
+                                  "anim_weather_snow_01",  # 4
                                   "anim_wakeword_groggyeyes_listenloop_01",  # 5
                                   "anim_fistbump_success_01",  # 6
                                   "anim_reacttoface_unidentified_02",  # 7
-                                  "anim_vc_reaction_whatwasthat_01",  # 8
+                                  "anim_vc_comehere_reaction",  # 8
                                   "anim_lookatdvice_getout"]  # 9
 
         self.anim_index_for_key = [0] * 10
@@ -266,12 +265,8 @@ class RemoteControlVector:
             self.action_queue.pop(0)
         self.action_queue.append(new_action)
 
-    async def dummy_wait(self):
-        await asyncio.sleep(0)
-
     def update(self):
         """Try and execute the next queued action"""
-        self.vector.loop.run_until_complete(self.dummy_wait())
         if self.action_queue:
             queued_action, action_args = self.action_queue[0]
             if queued_action(action_args):
@@ -672,7 +667,7 @@ def handle_updateVector():
 def run():
     args = util.parse_command_args()
 
-    with anki_vector.AsyncRobot(args.serial) as robot:
+    with anki_vector.AsyncRobot(args.serial, enable_camera_feed=True) as robot:
         flask_app.remote_control_vector = RemoteControlVector(robot)
 
         robot.behavior.drive_off_charger()

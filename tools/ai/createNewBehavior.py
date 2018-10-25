@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     var_descriptions = {'class_name': 'name of the C++ class. "Behavior" will be prepended if missing',
                         'author': 'name of the author of this new behavior',
-                        'description': 'short descirption of the behavior'}
+                        'description': 'short description of the behavior'}
 
     
     parser = argparse.ArgumentParser(description='Create a new behavior class')

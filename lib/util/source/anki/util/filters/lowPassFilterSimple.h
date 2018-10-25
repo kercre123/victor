@@ -49,10 +49,24 @@ public:
   // the filter. Does not affect the sample period or desired
   // time constant (they are const).
   void Reset();
+
+  // Modify the sampling period
+  void SetSamplePeriod(const float samplePeriod_sec);
+
+  // Modify the time constant
+  void SetTimeConstant(const float desiredTimeConstant_sec);
+
+  float GetSamplePeriod_sec() const { return _samplePeriod_sec; }
+  float GetTimeConstant_sec() const { return _desiredTimeConstant_sec; }
   
 private:
   
-  const float kFilterCoef;
+  void UpdateFilterCoeff(const float samplePeriod_sec,
+                         const float desiredTimeConstant_sec);
+
+  float _samplePeriod_sec;
+  float _desiredTimeConstant_sec;
+  float _filterCoef;
   
   float _filteredValue = 0.f;
   bool _initialized = false;

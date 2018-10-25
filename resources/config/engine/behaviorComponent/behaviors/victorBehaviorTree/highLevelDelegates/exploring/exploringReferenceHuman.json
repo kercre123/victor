@@ -3,8 +3,10 @@
   "behaviorClass": "AnimSequenceWithFace",
 
   "requireFaceForActivation": true,
-  "requireFaceConfirmation": true,
+  "requireFaceConfirmation": false,
   "returnToOriginalPose": false,
+
+  "setFastTurn": true,
 
   "animTriggers" : ["ExploringLookAtHuman"],
 

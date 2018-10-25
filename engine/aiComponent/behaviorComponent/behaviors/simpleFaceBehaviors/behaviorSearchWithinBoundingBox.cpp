@@ -157,7 +157,8 @@ void BehaviorSearchWithinBoundingBox::TransitionToMoveToLookAt()
                                    0,
                                    Vision::SalientPointType::Unknown,
                                    "",
-                                   {}
+                                   {},
+                                   0
   );
   auto* turnAction =  new TurnTowardsImagePointAction(point);
   CancelDelegates(false);

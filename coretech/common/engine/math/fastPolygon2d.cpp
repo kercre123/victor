@@ -15,7 +15,6 @@
 #include "coretech/common/engine/math/axisAlignedHyperCube.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
-#include "util/helpers/boundedWhile.h"
 
 #include <cmath>
 #include <cfloat>
@@ -258,12 +257,12 @@ void FastPolygon::SortEdgeVectors()
 
   std::vector< std::pair< bool, Point2f > > testPoints;
 
-  float outerRadius = GetCircumscribedRadius();
+  const float outerRadius = GetCircumscribedRadius();
 
   // inner radius is between the two, closer to the inside
-  float innerRadius = 0.3*outerRadius + 0.7*GetInscribedRadius();
+  const float innerRadius = 0.3*outerRadius + 0.7*GetInscribedRadius();
 
-  float stepSize = 2 * M_PI / 16;
+  const float stepSize = 2 * M_PI / 16;
   for(float theta = 0; theta <= 2*M_PI + 1e-5; theta += stepSize) {
     testPoints.emplace_back( std::make_pair( false,
                                              Point2f{ outerRadius * cosf(theta) + _circleCenter.x(),
@@ -276,12 +275,12 @@ void FastPolygon::SortEdgeVectors()
   
   std::vector< std::pair< Vec2f, size_t> > sortedEdges;
 
-  size_t numEdges = _perpendicularEdgeVectors.size();
+  const size_t numEdges = _perpendicularEdgeVectors.size();
   assert(numEdges > 0);
 
   std::vector<bool> usedEdge(numEdges, false);
 
-  BOUNDED_WHILE( 1000, sortedEdges.size() < numEdges ) {
+  while( sortedEdges.size() < numEdges ) {
     // try each edge and check how many points it would add
     unsigned int maxHits = 0;
     size_t bestIdx = 0;
@@ -328,8 +327,8 @@ unsigned int FastPolygon::CheckTestPoints(std::vector< std::pair< bool, Point2f 
     }
 
 
-    size_t pointIdx = _perpendicularEdgeVectors[edgeIdx].second;
-    float dot = Anki::DotProduct( _perpendicularEdgeVectors[edgeIdx].first, testEntry.second - _points[pointIdx] );
+    const size_t pointIdx = _perpendicularEdgeVectors[edgeIdx].second;
+    const float dot = Anki::DotProduct( _perpendicularEdgeVectors[edgeIdx].first, testEntry.second - _points[pointIdx] );
 
     if( dot > 0.0f ) {
       // is outside of edge, so this point is a hit! (we want to throw out as many test points as we can)

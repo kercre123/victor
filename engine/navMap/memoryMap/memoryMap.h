@@ -88,7 +88,7 @@ public:
   virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const override;
   
   // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
-  virtual bool AnyOf(const Poly2f& p, NodePredicate f)             const override;
+  virtual bool AnyOf(const Poly2f& p, NodePredicate f)          const override;
   virtual bool AnyOf(const MemoryMapRegion& p, NodePredicate f) const override;
 
   // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)

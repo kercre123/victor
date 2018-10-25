@@ -80,6 +80,7 @@ void FlushRobotStatsToDisk( ConsoleFunctionContextRef context )
 #define CONSOLE_GROUP "RobotStats"
 
 CONSOLE_VAR( f32, kRobotStats_AliveUpdatePeriod_s, CONSOLE_GROUP, 60.0f );
+CONSOLE_VAR( f32, kRobotStats_OverrideAliveHours, CONSOLE_GROUP, -1.0f);
 
 CONSOLE_FUNC( ResetRobotStats, CONSOLE_GROUP, const char* typeResetToConfirm );
 CONSOLE_FUNC( FlushRobotStatsToDisk, CONSOLE_GROUP );
@@ -138,11 +139,12 @@ void RobotStatsTracker::InitDependent(Vector::Robot* robot, const RobotCompMap& 
     DoJdocFormatMigration();
   });
 
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const auto currWallTime = WallTime::getInstance()->GetApproximateTime();
-  // start alive tracking counter now
-  _lastTimeAliveUpdated_s = currTime_s;
-  _lastAliveWallTime = currWallTime;
+  _jdocsManager->RegisterShutdownCallback(external_interface::JdocType::ROBOT_LIFETIME_STATS, [this]() {
+    AddRemainingAliveTimeOnShutdown();
+  });
+
+  _currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _timeOfNextAliveTimeCheck = _currTime_s + kRobotStats_AliveUpdatePeriod_s;
 }
 
 void RobotStatsTracker::IncreaseStimulationSeconds(float delta)
@@ -221,21 +223,18 @@ void RobotStatsTracker::IncreaseHelper(const std::string& prefix, const std::str
 
 void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  if( _lastTimeAliveUpdated_s + kRobotStats_AliveUpdatePeriod_s <= currTime_s ) {
-    auto currWallTime = WallTime::getInstance()->GetApproximateTime();
-    auto wallTimeSinceUpdate = currWallTime - _lastAliveWallTime;
-    auto deltaSeconds = std::chrono::duration_cast<std::chrono::seconds>(wallTimeSinceUpdate).count();
-    if( deltaSeconds > 0 ) {
-      IncreaseHelper( kLifetimeAliveCategory, "seconds", deltaSeconds );
-    }
-
-    _lastTimeAliveUpdated_s = currTime_s;
-    _lastAliveWallTime = currWallTime;
+  if( _currTime_s > _timeOfNextAliveTimeCheck ) {
+    const auto secondsElapsed = static_cast<uint64_t>(kRobotStats_AliveUpdatePeriod_s);
+    IncreaseHelper( kLifetimeAliveCategory, "seconds", secondsElapsed );
+    _timeOfNextAliveTimeCheck += kRobotStats_AliveUpdatePeriod_s;
   }
 
   // Update jdoc if there were change(s) this tick
+  // Note: In this case (robot lifetime stats), the call to UpdateStatsJdoc is very quick
+  // because the body of the jdoc is owned by the JdocsManager, and we are not saving to
+  // disk or submitting to cloud at this time
   if (_dirtyJdoc)
   {
     static const bool kSaveToDiskImmediately = false;
@@ -245,22 +244,18 @@ void RobotStatsTracker::UpdateDependent(const RobotCompMap& dependentComps)
 }
 
 
+#define FILTER_HELPER(key) if (json.isMember(key)) { jsonOut[key] = json[key]; }
+
 Json::Value RobotStatsTracker::FilterStatsForApp(const Json::Value& json)
 {
   Json::Value jsonOut;
 
-  for (Json::ValueConstIterator it = json.begin(); it != json.end(); ++it)
-  {
-    if (it.name() == "Stim.CumlPosDelta" ||
-        it.name() == "BStat.ReactedToTriggerWord" ||
-        it.name() == "Odom.Body" ||
-        it.name() == "FeatureType.Utility" ||
-        it.name() == "Pet.ms" ||
-        it.name() == "Alive.seconds")
-    {
-      jsonOut[it.memberName()] = (*it);
-    }
-  }
+  FILTER_HELPER("Stim.CumlPosDelta")
+  FILTER_HELPER("BStat.ReactedToTriggerWord")
+  FILTER_HELPER("Odom.Body")
+  FILTER_HELPER("FeatureType.Utility")
+  FILTER_HELPER("Pet.ms")
+  FILTER_HELPER("Alive.seconds")
 
   return jsonOut;
 }
@@ -312,6 +307,37 @@ void RobotStatsTracker::DoJdocFormatMigration()
 
   // Now update the format version of this jdoc to the current format version
   _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
+}
+
+float RobotStatsTracker::GetNumHoursAlive() const
+{
+  if( kRobotStats_OverrideAliveHours >= 0.0f ) {
+    return kRobotStats_OverrideAliveHours;
+  }
+  
+  std::string key(kLifetimeAliveCategory);
+  key += kRobotStatsSeparator;
+  key += "seconds";
+  
+  auto* statsJson = _jdocsManager->GetJdocBodyPointer(external_interface::ROBOT_LIFETIME_STATS);
+  if( statsJson != nullptr && statsJson->isMember(key) ) {
+    const float sec = (*statsJson)[key].asFloat();
+    return sec / (3600.0f);
+  }
+
+  // not present, return 0
+  return 0.0f;
+}
+
+void RobotStatsTracker::AddRemainingAliveTimeOnShutdown()
+{
+  const auto secondsElapsed = _currTime_s - (_timeOfNextAliveTimeCheck - kRobotStats_AliveUpdatePeriod_s);
+  const auto secondsElapsedInt = static_cast<uint64_t>(secondsElapsed + 0.5f);
+  IncreaseHelper( kLifetimeAliveCategory, "seconds", secondsElapsedInt );
+  
+  // Although in this call we don't save to disk immediately, the JdocsManager destructor will do so for us
+  static const bool kSaveToDiskImmediately = false;
+  UpdateStatsJdoc(kSaveToDiskImmediately);
 }
 
 

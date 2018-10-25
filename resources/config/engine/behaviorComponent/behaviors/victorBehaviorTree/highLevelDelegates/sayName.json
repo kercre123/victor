@@ -11,5 +11,8 @@
   "dontKnowNameAnimation" : "MeetVictorSawWrongFace",
   
   // Text to speak *after* playing dontKnowNameAnimation (empty for none)
-  "dontKnowText": "eye dont know"
+  "dontKnowText": "eye dont know",
+  
+  // Max time to wait for recognition to complete on an observed face before giving up and triggering "don't know"
+  "waitForRecognitionMaxTime_sec": 2.0
 }

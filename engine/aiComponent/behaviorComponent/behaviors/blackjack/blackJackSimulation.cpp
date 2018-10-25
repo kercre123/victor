@@ -195,7 +195,7 @@ bool BlackJackGame::DealToPlayer(const bool faceUp)
   topCardID = _deck.PopTopCard();
   if(kInvalidCardID != topCardID){
     _playerHand.emplace_back(topCardID);
-    PRINT_NAMED_INFO("BlackJackGame.DealToPlayer",
+    PRINT_CH_INFO("Behaviors", "BlackJackGame.DealToPlayer",
                       "Player got the %s (CardID %d)",
                       _playerHand.back().GetString().c_str(),
                       topCardID);   
@@ -224,7 +224,7 @@ bool BlackJackGame::DealToDealer(const bool faceUp)
     _dealerHand.emplace_back(topCardID, faceUp);
     std::string faceUpString;
     faceUpString = faceUp ? "face up." : "face down.";
-    PRINT_NAMED_INFO("BlackJackGame.DealToDealer",
+    PRINT_CH_INFO("Behaviors", "BlackJackGame.DealToDealer",
                       "Dealer got the %s (CardID %d) %s",
                       _dealerHand.back().GetString().c_str(),
                       topCardID,
@@ -321,7 +321,7 @@ bool BlackJackGame::ScoreHandAndReportAces(const std::vector<Card>& hand, int& o
 void BlackJackGame::ScorePlayerHand()
 {
   ScoreHandAndReportAces(_playerHand, _playerScore);
-  PRINT_NAMED_INFO("BlackJackSimulation.ScorePlayerHand",
+  PRINT_CH_INFO("Behaviors", "BlackJackSimulation.ScorePlayerHand",
                    "Player has score of %d",
                    _playerScore);
 }
@@ -337,11 +337,11 @@ void BlackJackGame::ScoreDealerHand()
         (_dealerHand.size() < kHandSizeLimit) ){
       // Treat Ace as low as low so he'll hit on soft 17
       _dealerScore += kAceLowValue - kAceHighValue;
-      PRINT_NAMED_INFO("BlackJackSimulation.ScoreDealerHand.SoftSeventeen",
+      PRINT_CH_INFO("Behaviors", "BlackJackSimulation.ScoreDealerHand.SoftSeventeen",
                        "Dealer had a soft 17 and scored it as 7");
     }
   }
-  PRINT_NAMED_INFO("BlackJackSimulation.ScoreDealerHand",
+  PRINT_CH_INFO("Behaviors", "BlackJackSimulation.ScoreDealerHand",
                    "Dealer has score of %d",
                    _dealerScore);
 }

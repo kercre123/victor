@@ -57,6 +57,7 @@ public:
     dependencies.insert(RobotComponentID::NVStorage);
     dependencies.insert(RobotComponentID::Vision);
     dependencies.insert(RobotComponentID::VariableSnapshotComponent);
+    dependencies.insert(RobotComponentID::RobotStatsTracker);
   };
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
@@ -79,6 +80,7 @@ public:
   using UnreliableComponent<BCComponentID>::GetInitDependencies;
   using UnreliableComponent<BCComponentID>::UpdateDependent;
   using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
+  using UnreliableComponent<BCComponentID>::IsComponentValid;
   //////
   // end IDependencyManagedComponent functions
   //////
@@ -104,13 +106,14 @@ public:
 
   void OnRobotDelocalized();
   void OnRobotRelocalized();
+  void OnRobotWakeUp();
 
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
 
   inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
-
+  
 private:
   Robot* _robot = nullptr;
   using EntityType = DependencyManagedEntity<AIComponentID>;

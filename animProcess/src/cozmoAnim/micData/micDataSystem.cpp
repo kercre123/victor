@@ -382,7 +382,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamBeginTime_ns = currTime_nanosec;
 
         // Send out the message announcing the trigger word has been detected
-        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString(), false};
+        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString(), !_enableDataCollection};
         if (_currentStreamingJob != nullptr) {
           hw.mode = _currentStreamingJob->_type;
         }
