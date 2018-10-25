@@ -1954,11 +1954,21 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 	if err != nil {
 		return nil, err
 	}
-	payload, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	done := false
+	var sayTextResponse *extint.SayTextResponse
+	for !done {
+		payload, ok := <-responseChan
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
+		sayTextResponse = payload.GetSayTextResponse()
+		state := sayTextResponse.GetState()
+		if state == extint.SayTextResponse_FINISHED {
+			done = true
+		} else if state == extint.SayTextResponse_INVALID {
+			return nil, grpc.Errorf(codes.Internal, "Failed to say text")
+		}
 	}
-	sayTextResponse := payload.GetSayTextResponse()
 	sayTextResponse.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
