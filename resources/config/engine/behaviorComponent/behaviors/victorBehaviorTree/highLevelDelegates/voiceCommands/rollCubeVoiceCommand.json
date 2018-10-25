@@ -17,6 +17,7 @@
   },
 
   "followUpBehaviorID" : "PlayRollBlock",
+  "skipConnectToCubeBehavior" : false,
 
   "postBehaviorSuggestion": "Nothing"
 }

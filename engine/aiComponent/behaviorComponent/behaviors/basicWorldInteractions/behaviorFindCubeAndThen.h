@@ -4,8 +4,8 @@
  * Author: Sam Russell
  * Created: 2018-08-20
  *
- * Description: If Vector thinks he know's where a cube is, visually verify that its there. Otherwise, 
- *   search quickly for a cube. Go to the pre-dock pose if found/known, delegate to next behavior if specified
+ * Description: Run BehaviorFindCube. Upon locating a cube, go to the pre-dock pose if found/known, connect to the cube,
+ *              (visiblly if this behavior was user driven) then delegate to the followUp behavior, if specified.
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -22,7 +22,8 @@
 namespace Anki {
 namespace Vector {
 
-class BlockWorldFilter;
+// FWD Declarations
+class BehaviorFindCube;
 
 class BehaviorFindCubeAndThen : public ICozmoBehavior
 {
@@ -48,63 +49,36 @@ protected:
 private:
 
   enum class FindCubeState{
-    GetIn,
-    DriveOffCharger,
-    VisuallyCheckLastKnown,
-    CheckForCubeInFront,
-    QuickSearchForCube,
-    BackUpAndCheck,
-    ReactToCube,
+    FindCube,
     DriveToPredockPose,
     AttemptConnection,
     FollowUpBehavior,
     GetOutFailure
   };
 
-  enum class CubeObservationState{
-    Unreliable,
-    ObservedRecently,
-    Confirmed
-  };
-
   struct InstanceConfig {
     InstanceConfig();
-    std::unique_ptr<BlockWorldFilter> cubesFilter;
-    ICozmoBehaviorPtr                 driveOffChargerBehavior;
+    std::shared_ptr<BehaviorFindCube> findCubeBehavior;
     ICozmoBehaviorPtr                 connectToCubeBehavior;
     std::string                       followUpBehaviorID;
     ICozmoBehaviorPtr                 followUpBehavior;
+    bool                              skipConnectToCubeBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables();
     FindCubeState        state;
     ObservableObject*    cubePtr;
-    CubeObservationState cubeState;
-    Pose3d               cubePoseAtSearchStart;
-    RobotTimeStamp_t     lastPoseCheckTimestamp;
-    float                angleSwept_deg;
-    int                  numTurnsCompleted; 
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
-  void TransitionToDriveOffCharger();
-  void TransitionToVisuallyCheckLastKnown();
-  void TransitionToCheckForCubeInFront();
-  void TransitionToQuickSearchForCube();
-  void TransitionToBackUpAndCheck();
-  void TransitionToReactToCube();
+  void TransitionToFindCube();
   void TransitionToDriveToPredockPose();
   void TransitionToAttemptConnection();
   void TransitionToFollowUpBehavior();
   void TransitionToGetOutFailure();
-
-  void StartNextTurn();
-
-  // Returns true if worldViz returned a valid pointer stored in _dVars.cubePtr
-  bool UpdateTargetCube();
 };
 
 } // namespace Vector

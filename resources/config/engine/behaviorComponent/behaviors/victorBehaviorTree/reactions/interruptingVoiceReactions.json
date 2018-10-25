@@ -9,6 +9,8 @@
     "DoATrickVoiceCommand",
     "PlayAGameVoiceCommand",
     "FindYourCubeVoiceCommand",
+    "FetchCubeVoiceCommand",
+    "PickUpCubeVoiceCommand",
     "FistBumpVoiceCommand",
     "GoHomeVoiceCommand",
     "RollCubeVoiceCommand",

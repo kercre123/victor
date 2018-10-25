@@ -15,5 +15,8 @@
     "feature": "PopAWheelie"
   }, 
 
-  "followUpBehaviorID" : "PopAWheelie"
+  "followUpBehaviorID" : "PopAWheelie",
+  "skipConnectToCubeBehavior" : false,
+
+  "postBehaviorSuggestion": "Nothing"
 }

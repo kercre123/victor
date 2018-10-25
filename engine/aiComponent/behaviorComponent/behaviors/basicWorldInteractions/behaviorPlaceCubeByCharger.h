@@ -35,6 +35,7 @@ namespace RobotPointSamplerHelper {
 class CarryingComponent;
 class BlockWorldFilter;
 class BehaviorPickUpCube;
+class BehaviorPutDownBlockAtPose;
 
 
 class BehaviorPlaceCubeByCharger : public ICozmoBehavior
@@ -51,7 +52,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
     modifiers.wantsToBeActivatedWhenOnCharger = false;
-    modifiers.wantsToBeActivatedWhenCarryingObject = false;
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
@@ -67,19 +68,17 @@ private:
     ConfirmCharger,
     SearchForCharger,
     ReactToCharger,
-    DriveToChargerPlacement,
-    DriveToRandomPlacement,
-    PutCubeDown,
-    LookDownAtBlock,
+    TakeCubeToCharger,
+    TakeCubeToRandomPlacement,
     GetOut
   };
 
   struct InstanceConfig {
     InstanceConfig();
-    std::shared_ptr<BehaviorPickUpCube> pickupBehavior;
-    std::shared_ptr<ICozmoBehavior>     turnToLastFaceBehavior;
-    std::unique_ptr<BlockWorldFilter>   chargerFilter;
-    std::unique_ptr<BlockWorldFilter>   cubesFilter;
+    std::shared_ptr<BehaviorPickUpCube>         pickupBehavior;
+    std::shared_ptr<BehaviorPutDownBlockAtPose> putCubeSomewhereBehavior;
+    std::shared_ptr<ICozmoBehavior>             turnToLastFaceBehavior;
+    std::unique_ptr<BlockWorldFilter>           chargerFilter;
 
     std::unique_ptr<Util::RejectionSamplerHelper<Point2f>> searchSpacePointEvaluator;
     std::unique_ptr<Util::RejectionSamplerHelper<Poly2f>>  searchSpacePolyEvaluator;
@@ -108,18 +107,11 @@ private:
   void TransitionToSearchForCharger();
   void TransitionToReactToCharger();
   void TransitionToPickUpCube();
-  void TransitionToDriveToChargerPlacement();
-  void TransitionToDriveToRandomPlacement();
-  void TransitionToPutCubeDown();
-  void TransitionToLookDownAtBlock();
-  // void TransitionToGetOutFailed();
-  // void TransitionToGetOutSucceeded();
+  void TransitionToTakeCubeToCharger();
+  void TransitionToTakeCubeToRandomPlacement();
   void TransitionToGetOut();
 
   void AttemptToPickUpCube();
-  IActionRunner* CreateLookAfterPlaceAction(CarryingComponent& carryingComponent, bool doLookAtFaceAfter);
-  // void AttemptToPlaceCubeByCharger();
-  // void AttemptToPutCubeBack();
   void StartNextSearchForChargerTurn();
 
   bool RobotKnowsWhereChargerIs();

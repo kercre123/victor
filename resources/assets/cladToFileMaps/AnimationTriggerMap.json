@@ -512,12 +512,12 @@
     "AnimName": "ag_pounceonmotionfail"
   },
   {
-    "CladEvent": "FetchCubeFrustrated",
-    "AnimName": "ag_reacttoblock_frustrated"
+    "CladEvent": "FetchCubeSetDown",
+    "AnimName": "ag_reacttoblock_dropsuccess"
   },
   {
     "CladEvent": "FetchCubeSuccess",
-    "AnimName": "ag_greeting_imhome"
+    "AnimName": "ag_knowledgegraph_success_01"
   },
   {
     "CladEvent": "FindCubeReactToCube",

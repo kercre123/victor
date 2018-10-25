@@ -12,6 +12,10 @@
     "enabled": true
   },
   {
+    "feature": "FetchCube",
+    "enabled": true
+  },
+  {
     "feature": "FindCube",
     "enabled": true
   },
@@ -21,7 +25,7 @@
   },
   {
     "feature": "MoveCube",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "ReactToHeldCube",

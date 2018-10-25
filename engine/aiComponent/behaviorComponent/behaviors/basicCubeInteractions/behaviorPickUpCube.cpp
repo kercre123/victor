@@ -25,17 +25,20 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockWorld.h"
 
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
 
 namespace{
 const char* kPickupRetryCountKey = "retryCount";
+const char* kSkipInitialReactionAnimKey = "skipInitialReactionAnim";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPickUpCube::InstanceConfig::InstanceConfig()
+: skipInitialReactionAnim(false)
 {
   pickupRetryCount = 1;
 }
@@ -61,6 +64,8 @@ BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
     const std::string debug = "BehaviorPickupCube.Constructor.RetryParseIssue";
     _iConfig.pickupRetryCount = JsonTools::ParseUint8(config, kPickupRetryCountKey, debug);
   }
+
+  JsonTools::GetValueOptional(config, kSkipInitialReactionAnimKey, _iConfig.skipInitialReactionAnim);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,7 +73,7 @@ void BehaviorPickUpCube::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
 {
   const char* list[] = {
     kPickupRetryCountKey,
-    kPickupRetryCountKey,
+    kSkipInitialReactionAnimKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -103,10 +108,10 @@ void BehaviorPickUpCube::OnBehaviorActivated()
     CalculateTargetID(_dVars.targetBlockID);
   }
   
-  if(!ShouldStreamline()){
-    TransitionToDoingInitialReaction();
-  }else{
+  if(_iConfig.skipInitialReactionAnim || ShouldStreamline()){
     TransitionToPickingUpCube();
+  }else{
+    TransitionToDoingInitialReaction();
   }
   
 }
