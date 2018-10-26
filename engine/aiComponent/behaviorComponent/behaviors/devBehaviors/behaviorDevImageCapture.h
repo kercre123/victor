@@ -58,6 +58,7 @@ private:
     bool                   useCapTouch;
     bool                   saveSensorData;
     bool                   useShutterSound;
+    bool                   allowStreaming;
     s32                    numImagesPerCapture;
     std::pair<f32,f32>     distanceRange_mm;
     std::pair<f32,f32>     headAngleRange_rad;

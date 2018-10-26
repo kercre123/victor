@@ -68,6 +68,7 @@ const char* const kImageScaleKey = "image_scale";
 const char* const kImageResizeMethodKey = "resize_method";
 const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
 const char* const kUseShutterSoundKey = "use_shutter_sound";
+const char* const kAllowStreamingKey = "allow_streaming";
 const char* const kSaveSensorDataKey = "save_sensor_data";
 const char* const kClassNamesKey = "class_names";
 const char* const kVisionModesKey = "vision_modes";
@@ -89,6 +90,7 @@ BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
   , useCapTouch(false)
   , saveSensorData(false)
   , useShutterSound(true)
+  , allowStreaming(true)
   , numImagesPerCapture(1)
   , distanceRange_mm{0,0}
   , headAngleRange_rad{0,0}
@@ -144,6 +146,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   JsonTools::GetValueOptional(config, kUseSavePrefixKey, _iConfig.useSavePrefix);
   _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevImageCapture");
   _iConfig.useShutterSound = JsonTools::ParseBool(config, kUseShutterSoundKey, "BehaviorDevImageCapture");
+  _iConfig.allowStreaming = JsonTools::ParseBool(config, kAllowStreamingKey, "BehaviorDevImageCapture");
   std::string scaleStr = JsonTools::ParseString(config, kImageScaleKey, "BehaviorDevImageCapture");
   std::string methodStr = JsonTools::ParseString(config, kImageResizeMethodKey, "BehaviorDevImageCapture");
   _iConfig.imageSaveSize = Vision::ImageCache::StringToSize(scaleStr, methodStr);
@@ -272,6 +275,7 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
     kUseCapacitiveTouchKey,
     kSaveSensorDataKey,
     kUseShutterSoundKey,
+    kAllowStreamingKey,
     kClassNamesKey,
     kVisionModesKey,
     kMultiImageModeKey,
@@ -395,9 +399,9 @@ void BehaviorDevImageCapture::BehaviorUpdate()
                           GetBEI().GetRobotInfo().IsPowerButtonPressed());
 
   if( wasTouched && !isTouched ) {
-    // just "released", see if it's been long enough to count as a "hold"
+    // just "released", see if it's been long enough to count as a "hold" for toggling streaming
     ImageSendMode sendMode = ImageSendMode::Off;
-    if( currTime_s >= _dVars.touchStartedTime_s + kHoldTimeForStreaming_s ) {
+    if( _iConfig.allowStreaming && (currTime_s >= _dVars.touchStartedTime_s + kHoldTimeForStreaming_s) ) {
       LOG_DEBUG("BehaviorDevImageCapture.touch.longPress", "long press release");
         
       // toggle streaming
