@@ -61,7 +61,7 @@ namespace {
   static const u16   kSuspiciousCliffValDiff = 20;
 
   // minimum number of images with edge detection activated
-  const int kNumImagesToWaitForEdges = 10;
+  const int kNumImagesToWaitForEdges = 1;
 
   // rate of turning the robot while searching for cliffs with vision
   const f32 kBodyTurnSpeedForCliffSearch_degPerSec = 120.0f;

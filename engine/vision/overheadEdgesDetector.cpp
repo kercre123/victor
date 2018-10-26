@@ -354,7 +354,11 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
         Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
         DEV_ASSERT(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
         const f32 divisor = 1.f / temp.z();
-        dispEdgeImg.DrawCircle({temp.x() * divisor, temp.y() * divisor}, NamedColors::RED, 1);
+        if(chain.isBorder) {
+          dispEdgeImg.DrawCircle({temp.x() * divisor, temp.y() * divisor}, NamedColors::RED, 1);
+        } else {
+          dispEdgeImg.DrawCircle({temp.x() * divisor, temp.y() * divisor}, NamedColors::WHITE, 1);
+        }
       }
     }
     dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);

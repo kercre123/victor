@@ -185,6 +185,18 @@ private:
   void TimeoutObjects();
   
   void SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const;
+
+  // computes the best edge, relative to known cliff centers
+  // given a set of vision-detected edge points (projected to the robot frame)
+  // returns true if a line was detected, and return argument `outEdge` can be used
+  bool ExtractDominantCliffEdge(const std::vector<Point2f>& points, 
+                                const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& cliffNodes,
+                                std::pair<Point2f, Point2f>& outEdge) const;
+
+  // helper method to retrieve all unique cliff positions in the current map
+  // note: unique because multiple cells in the QT are associated with the same
+  //       cliff object, which has one pose (determined at the time it was sensed)
+  Result FindSensorDetectedCliffs(std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& cliffNodes) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Vision border detection
