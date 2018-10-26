@@ -14,7 +14,7 @@ function usage() {
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {mac,vicos}"
     echo "  -a                      append cmake platform argument {arg}"
-    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefiles}"
+    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Eclipse,Makefiles}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
     echo "  -X                      delete build assets, forcing assets to be re-copied"
     echo "  -d                      DEBUG: generate file lists and exit"
@@ -176,6 +176,9 @@ case "${GENERATOR}" in
   [Xx][Cc][Oo][Dd][Ee])
     GENERATOR="Xcode"
     ;;
+  [Ee][Cc][Ll][Ii][Pp][Ss][Ee])
+    GENERATOR="Eclipse"
+    ;;
   [Mm][Aa][Kk][Ee][Ff][Ii][Ll][Ee][Ss])
     GENERATOR="Makefiles"
     ;;
@@ -240,6 +243,10 @@ case ${GENERATOR} in
         ;;
     "Xcode")
         PROJECT_FILE="victor.xcodeproj"
+        ;;
+    "Eclipse")
+        PROJECT_FILE=".cproject"
+        GENERATOR="Eclipse CDT4 - Unix Makefiles"
         ;;
     "Makefiles")
         PROJECT_FILE="Makefile"
