@@ -112,7 +112,7 @@ stage("${primaryStageName} Build") {
         node('master') {
             build 'Create VM'
             ephemeralBuildAgentName = sh (
-                script: 'head -n 1 ~/name/queue.txt',
+                script: 'tail -n 1 ~/name/queue.txt',
                 returnStdout: true
             ).trim()
         }
