@@ -52,6 +52,12 @@ private:
    */
   float GetScore(const ImageRGB& image);
 
+  Result GetSalientPointsWithoutGrouping(const ImageRGB& inputImage,
+                                         std::list<SalientPoint>& salientPoints);
+
+  Result GetSalientPointsWithGrouping(const ImageRGB& inputImage,
+                                      std::list<SalientPoint>& salientPoints);
+
   const Camera& _camera;
 
   struct Parameters;

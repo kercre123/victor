@@ -75,6 +75,9 @@ struct BrightColorDetector::Parameters
   //! Threshold that bright colors must exceed to be considered bright [0,109+]
   float brightnessScoreThreshold;
 
+  //! Group salient points into larger salient points based on whether they are similar hues
+  bool groupGridPoints;
+
   //! The epsilon for deciding whether two hues in range [0,1] are the same or similar.
   float colorConnectednessEpsilon;
 
@@ -112,18 +115,105 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
 {
   // TODO: Get a smaller input image
   ImageRGB smallerImage(100,100);
-
   inputImage.Resize(smallerImage,ResizeMethod::NearestNeighbor);
 
-  const u32 timestamp = smallerImage.GetTimestamp();
+  if (_params->groupGridPoints){
+    return GetSalientPointsWithGrouping(smallerImage,salientPoints);
+  } else {
+    return GetSalientPointsWithoutGrouping(smallerImage, salientPoints);
+  }
+}
+
+Result BrightColorDetector::GetSalientPointsWithoutGrouping(const ImageRGB& inputImage,
+                                                         std::list<SalientPoint>& salientPoints)
+{
+  const u32 timestamp = inputImage.GetTimestamp();
   const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
   const char* typeString = EnumToString(type);
 
-  const s32 cellHeight = smallerImage.GetNumRows()/_params->gridHeight;
-  const s32 cellWidth = smallerImage.GetNumCols()/_params->gridWidth;
+  const s32 cellHeight = inputImage.GetNumRows()/_params->gridHeight;
+  const s32 cellWidth = inputImage.GetNumCols()/_params->gridWidth;
 
-  const float kHeightScale = 1.f / static_cast<float>(smallerImage.GetNumRows());
-  const float kWidthScale  = 1.f / static_cast<float>(smallerImage.GetNumCols());
+  const float kHeightScale = 1.f / static_cast<float>(inputImage.GetNumRows());
+  const float kWidthScale  = 1.f / static_cast<float>(inputImage.GetNumCols());
+
+  const float kHeightStep = cellHeight * kHeightScale;
+  const float kWidthStep = cellWidth * kWidthScale;
+  const float kHeightStep2 = kHeightStep/2.f;
+  const float kWidthStep2 = kWidthStep/2.f;
+
+  for (s32 row = 0; row < _params->gridHeight; ++row)
+  {
+    const s32 imageRow = row * cellHeight;
+    for (s32 col = 0; col < _params->gridWidth; ++col)
+    {
+      const s32 imageCol = col * cellWidth;
+      Rectangle<s32> roi(imageCol,imageRow,cellHeight,cellWidth);
+
+      const float score = GetScore(inputImage.GetROI(roi));
+
+      const bool isBright = (score > _params->brightnessScoreThreshold);
+
+      if (isBright){
+        // Compute average color for region:
+        // 1) Grab the mean color for the region.
+        // 2) Convert to HSV space
+        // 3) Push saturation and value up to the max
+        // 4) Convert back to RGB
+        // 5) Pack into a uint32
+        // Note that this means if the region has two colors (e.g. red, yellow),
+        // you'll get the average of the two (e.g. orange).
+
+        const cv::Scalar_<double> color = cv::mean(inputImage.GetROI(roi).get_CvMat_());
+        PixelHSV hsv(PixelRGB(color[0],color[1],color[2]));
+        hsv.s() = 1.f;
+        hsv.v() = 1.f;
+        const PixelRGB pixel = hsv.ToPixelRGB();
+        const u32 rgba = ColorRGBA(pixel.r(),pixel.g(),pixel.b(),255).AsRGBA();
+
+        // Provide polygon for the ROI at [0,1] scale
+        const float x = Util::Clamp(imageCol * kWidthScale, 0.f, 1.f);
+        const float y = Util::Clamp(imageRow * kHeightScale, 0.f, 1.f);
+
+        std::vector<Anki::CladPoint2d> poly;
+        poly.emplace_back(Util::Clamp(x,            0.f,1.f),
+                          Util::Clamp(y,            0.f,1.f));
+        poly.emplace_back(Util::Clamp(x+kWidthStep, 0.f,1.f),
+                          Util::Clamp(y,            0.f,1.f));
+        poly.emplace_back(Util::Clamp(x+kWidthStep, 0.f,1.f),
+                          Util::Clamp(y+kHeightStep,0.f,1.f));
+        poly.emplace_back(Util::Clamp(x,            0.f,1.f),
+                          Util::Clamp(y+kHeightStep,0.f,1.f));
+
+        salientPoints.emplace_back(timestamp,
+                                   x+kWidthStep2,y+kHeightStep2,
+                                   score,
+                                   (kWidthScale*kHeightScale),
+                                   type,
+                                   typeString,
+                                   poly,
+                                   rgba);
+
+      }
+    }
+  }
+
+
+  return RESULT_OK;
+}
+
+Result BrightColorDetector::GetSalientPointsWithGrouping(const ImageRGB& inputImage,
+                                                         std::list<SalientPoint>& salientPoints)
+{
+  const u32 timestamp = inputImage.GetTimestamp();
+  const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
+  const char* typeString = EnumToString(type);
+
+  const s32 cellHeight = inputImage.GetNumRows()/_params->gridHeight;
+  const s32 cellWidth = inputImage.GetNumCols()/_params->gridWidth;
+
+  const float kHeightScale = 1.f / static_cast<float>(inputImage.GetNumRows());
+  const float kWidthScale  = 1.f / static_cast<float>(inputImage.GetNumCols());
 
   dlib::array2d<float> gridScores(_params->gridHeight,_params->gridWidth);
   dlib::array2d<float> gridHues(gridScores.nr(), gridScores.nc());
@@ -138,13 +228,13 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
       const s32 imageCol = col * cellWidth;
       Rectangle<s32> roi(imageCol,imageRow,cellHeight,cellWidth);
 
-      const float score = GetScore(smallerImage.GetROI(roi));
+      const float score = GetScore(inputImage.GetROI(roi));
 
       const bool isBright = (score > _params->brightnessScoreThreshold);
 
       if (isBright){
 
-        const cv::Scalar_<double> color = cv::mean(smallerImage.GetROI(roi).get_CvMat_());
+        const cv::Scalar_<double> color = cv::mean(inputImage.GetROI(roi).get_CvMat_());
         const PixelHSV hsv(PixelRGB(color[0],color[1],color[2]));
 
         gridHues[row][col] = hsv.h();
@@ -202,56 +292,56 @@ Result BrightColorDetector::Detect (const ImageRGB& inputImage,
   // Create Vision::SalientPoints
   // Skip label 0, it's the background pixels (i.e. not bright colors)
   for (u32 label = 1; label < numLabels; ++label){
-      BrightColorRegion& region = regions[label];
+    BrightColorRegion& region = regions[label];
 
-      // Get the score
-      float score = cv::mean(region.scores).val[0];
+    // Get the score
+    float score = cv::mean(region.scores).val[0];
 
-      // Get the convex hull of the points
-      std::vector<cv::Point2f> hull;
-      cv::convexHull(region.points, hull,true,true);
+    // Get the convex hull of the points
+    std::vector<cv::Point2f> hull;
+    cv::convexHull(region.points, hull,true,true);
 
-      // Get the center of the convex hull
-      cv::Point2f center;
-      {
-        // Get the average point, shift it half a unit, then scale to image coordinates in [0,1]
-        cv::Mat mean(cv::Mat::zeros(1,2,CV_32FC1));
-        cv::reduce(hull, mean, 1, CV_REDUCE_AVG);
-        center.x = Util::Clamp((mean.at<float>(0,0) + 0.5f) * cellWidth * kWidthScale,   0.f, 1.f);
-        center.y = Util::Clamp((mean.at<float>(0,1) + 0.5f) * cellHeight * kHeightScale, 0.f, 1.f);
-      }
-
-      // Convert the hull to a polygon in [0,1] image coordinates
-      std::vector<Anki::CladPoint2d> poly;
-      for (auto& pt : hull)
-      {
-        // Convert points to image coordinates in [0,1]
-        const float x = Util::Clamp(pt.x * cellWidth * kWidthScale,   0.f, 1.f);
-        const float y = Util::Clamp(pt.y * cellHeight * kHeightScale, 0.f, 1.f);
-        poly.emplace_back(x,y);
-      }
-
-      // Convert from HSV to RGBA with maximized saturation and value
-      u32 rgba;
-      {
-        float hue = cv::mean(region.hues).val[0];
-        PixelRGB rgb = PixelHSV(hue,1.f,1.f).ToPixelRGB();
-        rgba = ColorRGBA(rgb.r(),rgb.g(),rgb.b(),255).AsRGBA();
-      }
-
-      // Get the area_fraction. The convexh hull is in [0,1] coordinates so the area is also the area fraction.
-      float area_fraction = cv::contourArea(hull);
-
-      // Create the Vision::SalientPoint for this region
-      salientPoints.emplace_back(timestamp,
-                                 center.x, center.y,
-                                 score,
-                                 area_fraction,
-                                 type,
-                                 typeString,
-                                 poly,
-                                 rgba);
+    // Get the center of the convex hull
+    cv::Point2f center;
+    {
+      // Get the average point, shift it half a unit, then scale to image coordinates in [0,1]
+      cv::Mat mean(cv::Mat::zeros(1,2,CV_32FC1));
+      cv::reduce(hull, mean, 1, CV_REDUCE_AVG);
+      center.x = Util::Clamp((mean.at<float>(0,0) + 0.5f) * cellWidth * kWidthScale,   0.f, 1.f);
+      center.y = Util::Clamp((mean.at<float>(0,1) + 0.5f) * cellHeight * kHeightScale, 0.f, 1.f);
     }
+
+    // Convert the hull to a polygon in [0,1] image coordinates
+    std::vector<Anki::CladPoint2d> poly;
+    for (auto& pt : hull)
+    {
+      // Convert points to image coordinates in [0,1]
+      const float x = Util::Clamp(pt.x * cellWidth * kWidthScale,   0.f, 1.f);
+      const float y = Util::Clamp(pt.y * cellHeight * kHeightScale, 0.f, 1.f);
+      poly.emplace_back(x,y);
+    }
+
+    // Convert from HSV to RGBA with maximized saturation and value
+    u32 rgba;
+    {
+      float hue = cv::mean(region.hues).val[0];
+      PixelRGB rgb = PixelHSV(hue,1.f,1.f).ToPixelRGB();
+      rgba = ColorRGBA(rgb.r(),rgb.g(),rgb.b(),255).AsRGBA();
+    }
+
+    // Get the area_fraction. The convexh hull is in [0,1] coordinates so the area is also the area fraction.
+    float area_fraction = cv::contourArea(hull);
+
+    // Create the Vision::SalientPoint for this region
+    salientPoints.emplace_back(timestamp,
+                               center.x, center.y,
+                               score,
+                               area_fraction,
+                               type,
+                               typeString,
+                               poly,
+                               rgba);
+  }
 
   return RESULT_OK;
 }
@@ -288,6 +378,7 @@ BrightColorDetector::Parameters::Parameters()
 , gridWidth(10)
 , gridHeight(10)
 , brightnessScoreThreshold(59.f)
+, groupGridPoints(false)
 , colorConnectednessEpsilon(5.f/360.f) // N/360 degrees in either direction
 {
 }
