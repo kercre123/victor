@@ -116,6 +116,7 @@ void SpeechRecognizerSystem::SetupConsoleFuncs()
 
   sConsoleFuncs.emplace_front("UpdateRecognizerModel", std::move(updateRecognizerModel), CONSOLE_GROUP, "");
 #endif
+  _micDataSystem->GetSpeakerLatency_ms(); // Fix compiler error when ANKI_DEV_CHEATS is not enabled
 }
 
 # undef CONSOLE_GROUP
