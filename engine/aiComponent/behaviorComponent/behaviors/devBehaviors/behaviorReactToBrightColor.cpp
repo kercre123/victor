@@ -143,7 +143,8 @@ void BehaviorReactToBrightColor::GetBehaviorJsonKeys(std::set<const char*>& expe
     kCelebrationSpinsKey,
     kAnimDetectedBrightColorKey,
     kAnimSuccessKey,
-    kAnimGiveUpKey
+    kAnimGiveUpKey,
+    kSalientPointAgeKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -290,9 +291,9 @@ bool BehaviorReactToBrightColor::FindNewColor (Vision::SalientPoint& point)
   };
   std::remove_if(latestBrightColors.begin(), latestBrightColors.end(), IsOnCooldown);
 
-  // Finally choose the brightest SalientPoint
+  // Finally choose the largest and brightest SalientPoint
   auto IsScoreLessThan = [](const Vision::SalientPoint& a, const Vision::SalientPoint& b) -> bool {
-    return a.score < b.score;
+    return (a.score*a.area_fraction) < (b.score*b.area_fraction);
   };
   auto iter = std::max_element(latestBrightColors.begin(), latestBrightColors.end(), IsScoreLessThan);
 
