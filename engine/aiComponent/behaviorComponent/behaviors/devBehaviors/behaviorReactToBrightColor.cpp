@@ -42,8 +42,9 @@ namespace {
 const char* const kNumHuesKey = "numHues";
 const char* const kTargetDistanceKey = "targetDistance_mm";
 const char* const kCelebrationSpinsKey = "celebrationSpins";
-const char* const kAnimDetectedBrightColorKey = "animDetectedBrightColor";
-const char* const kAnimSuccessKey = "animSuccess";
+const char* const kAnimDetectKey = "animDetect";
+const char* const kAnimReactColorAKey = "animReactColorA";
+const char* const kAnimReactColorBKey = "animReactColorB";
 const char* const kAnimGiveUpKey = "animGiveUp";
 const char* const kSalientPointAgeKey = "salientPointAge_ms";
 
@@ -56,6 +57,13 @@ void RoundToNearestHueImpl(u32 numHues, Vision::SalientPoint& pt) {
   hsv.h() = std::roundf(hsv.h() * numHues)/numHues;
   Vision::PixelRGB rgb = hsv.ToPixelRGB();
   pt.color_rgba = ColorRGBA(rgb.r(),rgb.g(),rgb.b(),255).AsRGBA();
+}
+
+float GetHue(uint32_t color_rgba){
+  ColorRGBA rgba(color_rgba);
+  Vision::PixelHSV hsv;
+  hsv.FromPixelRGB(Vision::PixelRGB(rgba.r(), rgba.g(), rgba.b()));
+  return hsv.h();
 }
 
 }
@@ -71,11 +79,14 @@ BehaviorReactToBrightColor::InstanceConfig::InstanceConfig(const Json::Value& co
   celebrationSpins = JsonTools::ParseUInt32(config, kCelebrationSpinsKey, debugName);
   salientPointAge_ms = JsonTools::ParseUInt32(config, kSalientPointAgeKey, debugName);
 
-  animDetectedBrightColor = AnimationTrigger::Count;
-  JsonTools::GetCladEnumFromJSON(config, kAnimDetectedBrightColorKey, animDetectedBrightColor, debugName, false);
+  animDetect = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimDetectKey, animDetect, debugName, false);
 
-  animSuccess = AnimationTrigger::Count;
-  JsonTools::GetCladEnumFromJSON(config, kAnimSuccessKey, animSuccess, debugName, false);
+  animReactColorA = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimReactColorAKey, animReactColorA, debugName, false);
+
+  animReactColorB = AnimationTrigger::Count;
+  JsonTools::GetCladEnumFromJSON(config, kAnimReactColorBKey, animReactColorB, debugName, false);
 
   animGiveUp = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kAnimGiveUpKey, animGiveUp, debugName, false);
@@ -141,8 +152,9 @@ void BehaviorReactToBrightColor::GetBehaviorJsonKeys(std::set<const char*>& expe
     kNumHuesKey,
     kTargetDistanceKey,
     kCelebrationSpinsKey,
-    kAnimDetectedBrightColorKey,
-    kAnimSuccessKey,
+    kAnimDetectKey,
+    kAnimReactColorAKey,
+    kAnimReactColorBKey,
     kAnimGiveUpKey,
     kSalientPointAgeKey
   };
@@ -237,20 +249,13 @@ bool BehaviorReactToBrightColor::FindCurrentColor(Vision::SalientPoint& point)
     return false;
   }
 
-  auto getHue = [](uint32_t color_rgba) -> float {
-    ColorRGBA rgba(color_rgba);
-    Vision::PixelHSV hsv;
-    hsv.FromPixelRGB(Vision::PixelRGB(rgba.r(), rgba.g(), rgba.b()));
-    return hsv.h();
-  };
-
-  float currHue = getHue(_dVars.point->color_rgba);
+  float currHue = GetHue(_dVars.point->color_rgba);
 
   // Ten percent of the hue steps in each direction around the hue
   float closeEpsilon = (1.f/_iConfig.numHues)*0.5f;
 
   auto colorCloseEnough = [&](const Vision::SalientPoint& pt) -> bool {
-    float otherHue = getHue(pt.color_rgba);
+    float otherHue = GetHue(pt.color_rgba);
     return Util::IsNear(currHue, otherHue, closeEpsilon);
   };
   auto iter = std::find_if(latestBrightColors.begin(), latestBrightColors.end(), colorCloseEnough);
@@ -364,7 +369,7 @@ void BehaviorReactToBrightColor::TransitionToStart()
 void BehaviorReactToBrightColor::TransitionToNoticedBrightColor()
 {
   PRINT_NAMED_ERROR("BehaviorReactToBrightColor.TransitionToNoticedBrightColor","");
-  auto* action = new TriggerAnimationAction(_iConfig.animDetectedBrightColor);
+  auto* action = new TriggerAnimationAction(_iConfig.animDetect);
   DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToTurnTowardsPoint);
 }
 
@@ -488,7 +493,11 @@ void BehaviorReactToBrightColor::TransitionToCelebrate()
 
   DelegateIfInControl(sequence, &BehaviorReactToBrightColor::TransitionToCompleted);
 #elif 1
-  auto* action = new TriggerAnimationAction(_iConfig.animSuccess);
+  const float hue = GetHue(_dVars.point->color_rgba);
+  // Splint on warm colors
+  const bool isWarm = (hue < 0.25 || hue > 0.75);
+  const AnimationTrigger trigger = (isWarm)? _iConfig.animReactColorA : _iConfig.animReactColorB;
+  auto* action = new TriggerAnimationAction(trigger);
   DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToCompleted);
 #endif
 }

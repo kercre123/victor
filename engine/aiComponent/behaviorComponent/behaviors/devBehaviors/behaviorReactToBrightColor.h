@@ -61,13 +61,16 @@ private:
     //! The age of salient points to consider in ms
     u32 salientPointAge_ms;
 
-    //! Animation to play when a bright color is too far away from the proximity sensor
-    AnimationTrigger animDetectedBrightColor;
+    //! Animation to play when a bright color is first detected
+    AnimationTrigger animDetect;
 
-    //! Animation to play when a bright color is reached
-    AnimationTrigger animSuccess;
+    //! Animation to play when a bright color A is reached
+    AnimationTrigger animReactColorA;
 
-    //! Animation to play when a bright color is too far away from the proximity sensor
+    //! Animation to play when a bright color B is reached
+    AnimationTrigger animReactColorB;
+
+    //! Animation to play when giving up for any reason
     AnimationTrigger animGiveUp;
   };
 

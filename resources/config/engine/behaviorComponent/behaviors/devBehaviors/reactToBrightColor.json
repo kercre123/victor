@@ -6,9 +6,10 @@
   "targetDistance_mm": 75,
   "celebrationSpins": 2,
   "salientPointAge_ms":500,
-  "animDetectedBrightColor":"ReactToBrightColorDetection",
-  "animGiveUp":"ReactToBrightColorDullReaction",
-  "animSuccess":"ReactToBrightColorBrightReaction",
+  "animDetect":"ReactToBrightColorDetect",
+  "animReactColorA":"ReactToBrightColorReactColorA",
+  "animReactColorB":"ReactToBrightColorReactColorB",
+  "animGiveUp":"ReactToBrightColorGiveUp",
 
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",
