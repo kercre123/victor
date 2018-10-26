@@ -2285,8 +2285,11 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 }
 
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
-// TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
+	if !debugLogLimiter.Allow() {
+		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum upload rate exceeded. Please wait and try again later.")
+	}
+
 	url, err := loguploader.UploadDebugLogs()
 	if err != nil {
 		log.Println("MessageHandler.UploadDebugLogs.Error: " + err.Error())
@@ -2304,6 +2307,10 @@ func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.Uploa
 // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud
 // Its main use is to be called by the app during setup, but is fine for use by the outside world.
 func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.CheckCloudRequest) (*extint.CheckCloudResponse, error) {
+	if !cloudCheckLimiter.Allow() {
+		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum check rate exceeded. Please wait and try again later.")
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CheckCloudResponse{}, 1)
 	defer f()
 
