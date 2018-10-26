@@ -90,6 +90,11 @@ structure UserIntent_Test_Name
   string name
 }
 
+structure UserIntent_Volume
+{
+  string volume_level
+}
+
 union dupes_allowed UserIntent
 {
   UserIntent_Void unmatched_intent,
@@ -119,6 +124,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             imperative_apology,
   UserIntent_Void             imperative_love,
   UserIntent_Void             imperative_abuse,
+  UserIntent_Volume           imperative_volumelevel,
   UserIntent_MeetVictor       meet_victor, 
   UserIntent_Void             names_ask,
   UserIntent_Void             play_anygame,

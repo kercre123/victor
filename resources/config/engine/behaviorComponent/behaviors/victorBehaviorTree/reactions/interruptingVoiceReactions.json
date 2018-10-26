@@ -21,6 +21,7 @@
     "ComeHereVoiceCommand",
     "LookAtMeVoiceCommand",
     "WhatsMyNameVoiceCommand",
+    "Volume",
     "LeaveAMessage",
     "PlaybackMessage",
     "KnowledgeGraphQuestion",

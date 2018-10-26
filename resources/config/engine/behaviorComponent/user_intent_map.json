@@ -220,6 +220,11 @@
     {
       "user_intent": "silence",
       "cloud_intent": "intent_system_noaudio"
+    },
+    {
+      "user_intent": "imperative_volumelevel",
+      "cloud_intent": "intent_imperative_volumelevel_extend",
+      "feature_gate": "Volume"
     }
   ],
 
