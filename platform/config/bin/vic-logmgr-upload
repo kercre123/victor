@@ -85,21 +85,7 @@ blobpath="${blobdir}/${blobname}"
 bloburl="${APP_URL}/${blobname}"
 logpath="/var/log"
 
-
-/bin/cp -f ${logpath}/messages.1.gz ${blobpath}
-/bin/cat ${logpath}/messages | /bin/gzip >> ${blobpath}
-
-upload ${bloburl} ${blobpath} ${blobname}
-
-#
-# Repeat for dmesg
-# Note that we screen out a few patterns of known spam
-#
-blobname="dmesg-${esn}-${timestamp}-${pid}.log.gz"
-blobpath="${blobdir}/${blobname}"
-bloburl="${APP_URL}/${blobname}"
-
-/bin/dmesg | /bin/grep -v send_filled_buffers_to_user | /bin/grep -v dxeTXCompFrame | /bin/gzip > ${blobpath}
+/anki/bin/vic-log-cat | /bin/gzip > ${blobpath}
 
 upload ${bloburl} ${blobpath} ${blobname}
 
