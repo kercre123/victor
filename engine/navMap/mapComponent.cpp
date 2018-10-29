@@ -265,14 +265,14 @@ decltype(auto) GetHabitatRegion(const Pose3d& poseWRTRoot)
 // console var utility for testing out Visual extending cliffs
 static Robot* consoleRobot = nullptr;
 
-#if ANKI_DEV_CHEATS
+#if REMOTE_CONSOLE_ENABLED 
 void DevProcessOneFrameForVisionEdges( ConsoleFunctionContextRef context )
 {
   if(consoleRobot != nullptr) {
     consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::DetectingOverheadEdges));
   }
 }
-#endif //ANKI_DEV_CHEATS
+#endif //REMOTE_CONSOLE_ENABLED
 CONSOLE_FUNC( DevProcessOneFrameForVisionEdges, "MapComponent.VisualEdgeDetection" );
 
 };
