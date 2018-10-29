@@ -74,8 +74,8 @@ bool BehaviorVolume::WantsToBeActivatedBehavior() const
   // check the different intents that should be handled here
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool volumeLevelPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumelevel));
-  const bool volumeUpPending = false; // TODO: update when this is actually added
-  const bool volumeDownPending = false; // TODO: update when this is actually added
+  const bool volumeUpPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumeup));
+  const bool volumeDownPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumedown));
   
   //LOG_WARNING("BehaviorVolume.WantsToBeActivatedBehavior.Result",
   //            "WantsToBeActivatedBehavior returning %s", volumeLevelPending || volumeUpPending || volumeDownPending ? "true" : "false");
@@ -128,14 +128,12 @@ void BehaviorVolume::OnBehaviorActivated()
       // warning already output in method
       return;
     }
-    /*
   } else if(uic.IsUserIntentPending(USER_INTENT(imperative_volumeup))){
     intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumeup));
-    desiredVolume = getDesiredVolumeFromUpIntent(intentData);
+    desiredVolume = computeDesiredVolumeFromIncrement(true);
   } else if(uic.IsUserIntentPending(USER_INTENT(imperative_volumedown))){
     intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumedown));
-    desiredVolume = getDesiredVolumeFromDownIntent(intentData);
-    */
+    desiredVolume = computeDesiredVolumeFromIncrement(false);
   } else {
     LOG_WARNING("BehaviorVolume.OnBehaviorActivated.NoRecognizedPendingIntent",
                 "No recognized pending intent for volume.");
@@ -233,6 +231,31 @@ VolumeLevel BehaviorVolume::computeDesiredVolumeFromLevelIntent(UserIntentPtr in
   }
   
   return desiredVol;
+}
+
+VolumeLevel BehaviorVolume::computeDesiredVolumeFromIncrement(bool positiveIncrement) {
+  // read volume from settings
+  SettingsManager& settings = GetBEI().GetSettingsManager();
+  uint32_t vol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+
+  // apply increment
+  int increment = positiveIncrement ? 1 : -1;
+  uint32_t newVol = vol + increment;
+  // check bounds
+  if (newVol < 1) {
+    newVol = 1;
+    LOG_INFO("BehaviorVolume.computeDesiredVolumeFromIncrement.out_of_range",
+              "volume is already at minimum level");
+  }
+  if (newVol > 5) {
+    newVol = 5;
+    LOG_INFO("BehaviorVolume.computeDesiredVolumeFromIncrement.out_of_range",
+              "volume is already at maximum level");
+  }
+
+  // cast to VolumeLevel. The enum is already a uint32_t, this is just to be really explicit
+  VolumeLevel desiredVolume = static_cast<VolumeLevel>(newVol);
+  return desiredVolume;
 }
 
 

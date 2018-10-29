@@ -225,6 +225,16 @@
       "user_intent": "imperative_volumelevel",
       "cloud_intent": "intent_imperative_volumelevel_extend",
       "feature_gate": "Volume"
+    },
+    {
+      "user_intent": "imperative_volumeup",
+      "cloud_intent": "intent_imperative_volumeup",
+      "feature_gate": "Volume"
+    },
+    {
+      "user_intent": "imperative_volumedown",
+      "cloud_intent": "intent_imperative_volumedown",
+      "feature_gate": "Volume"
     }
   ],
 

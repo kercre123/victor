@@ -68,6 +68,7 @@ private:
   
   bool setVolume(VolumeLevel desiredVolume);
   VolumeLevel computeDesiredVolumeFromLevelIntent(UserIntentPtr intentData);
+  VolumeLevel computeDesiredVolumeFromIncrement(bool positiveIncrement);
 };
 
 } // namespace Vector

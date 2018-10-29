@@ -125,6 +125,8 @@ union dupes_allowed UserIntent
   UserIntent_Void             imperative_love,
   UserIntent_Void             imperative_abuse,
   UserIntent_Volume           imperative_volumelevel,
+  UserIntent_Void             imperative_volumeup,
+  UserIntent_Void             imperative_volumedown,
   UserIntent_MeetVictor       meet_victor, 
   UserIntent_Void             names_ask,
   UserIntent_Void             play_anygame,
