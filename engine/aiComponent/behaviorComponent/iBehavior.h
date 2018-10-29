@@ -48,7 +48,7 @@ public:
   void Update();
 
   // Check to see if the behavior wants to run right now
-  bool WantsToBeActivated() const;
+  bool __attribute__((warn_unused_result)) WantsToBeActivated() const;
 
   // Informs the behavior that it has been activated
   void OnActivated();

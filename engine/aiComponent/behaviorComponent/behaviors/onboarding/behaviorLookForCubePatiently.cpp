@@ -136,7 +136,7 @@ void BehaviorLookForCubePatiently::TurnAndLoopAnim()
   
   if( _iConfig.animLoop != AnimationTrigger::Count ) {
     // loop forever, but will get cut short once the duration has expired
-    auto* animAction = new ReselectingLoopAnimationAction{ _iConfig.animLoop, 0 };
+    auto* animAction = new ReselectingLoopAnimationAction{ _iConfig.animLoop };
     _dVars.animAction = parallelAction->AddAction( animAction );
   }
   

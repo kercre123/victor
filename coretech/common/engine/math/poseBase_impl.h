@@ -23,7 +23,6 @@
 #include "coretech/common/engine/math/poseBase.h"
 #include "coretech/common/engine/math/poseTreeNode.h"
 
-#include "util/helpers/boundedWhile.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 
@@ -413,7 +412,7 @@ namespace Anki {
     
     int depthDiff = from->GetTreeDepth() - to->GetTreeDepth();
     
-    BOUNDED_WHILE(1000, depthDiff > 0)
+    while(depthDiff > 0)
     {
       DEV_ASSERT(from->HasParent(), "PoseBase.GetWithRespectTo.FromParentIsNull");
       
@@ -435,7 +434,7 @@ namespace Anki {
       --depthDiff;
     }
     
-    BOUNDED_WHILE(1000, depthDiff < 0)
+    while(depthDiff < 0)
     {
       DEV_ASSERT(to->HasParent(), "PoseBase.GetWithRespectTo.ToParentIsNull");
       

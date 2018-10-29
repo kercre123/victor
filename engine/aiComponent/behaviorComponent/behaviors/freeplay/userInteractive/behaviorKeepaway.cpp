@@ -430,7 +430,7 @@ void BehaviorKeepaway::UpdateStalking()
             });
         } else if(_dVars.target.isInMousetrapRange){
           if(GetRNG().RandDbl() < _iConfig.probBackupInsteadOfMousetrap){
-            PRINT_NAMED_INFO("BehaviorKeepaway.BackupInsteadOfPounce","");
+            PRINT_CH_INFO("Behaviors", "BehaviorKeepaway.BackupInsteadOfPounce","");
             StopIdleAnimation();
             DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubePounceBackup),
                                 &BehaviorKeepaway::StartIdleAnimation);
@@ -552,7 +552,7 @@ void BehaviorKeepaway::TransitionToReacting()
     float newVal = _dVars.frustrationExcitementScale + _iConfig.excitementIncPerHit;
     _dVars.frustrationExcitementScale = Anki::Util::Min(newVal, max);
     probExit = Anki::Util::Max(0.0f, _dVars.frustrationExcitementScale - 1.0f);
-    PRINT_NAMED_INFO("BehaviorKeepaway.Hit",
+    PRINT_CH_INFO("Behaviors", "BehaviorKeepaway.Hit",
                      "Successful pounce! Scale value: %f. Exit probability: %f",
                      _dVars.frustrationExcitementScale,
                      probExit);
@@ -562,7 +562,7 @@ void BehaviorKeepaway::TransitionToReacting()
     float newVal = _dVars.frustrationExcitementScale - _iConfig.frustrationIncPerMiss;
     _dVars.frustrationExcitementScale = Anki::Util::Max( newVal, min);
     probExit = Anki::Util::Max(0.0f, 1.0f - _dVars.frustrationExcitementScale);
-    PRINT_NAMED_INFO("BehaviorKeepaway.Miss",
+    PRINT_CH_INFO("Behaviors", "BehaviorKeepaway.Miss",
                      "Missed pounce. Scale value: %f. Exit probability: %f",
                      _dVars.frustrationExcitementScale,
                      probExit);
@@ -571,13 +571,13 @@ void BehaviorKeepaway::TransitionToReacting()
   float exitRoll = GetRNG().RandDblInRange(0.0f, 1.0f);
   if(exitRoll < _iConfig.minProbToExit){
     exitRoll = _iConfig.minProbToExit;
-    PRINT_NAMED_INFO("BehaviorKeepaway.ClampedExitProbability",
+    PRINT_CH_INFO("Behaviors", "BehaviorKeepaway.ClampedExitProbability",
                      "Exit roll of: %f clamped to: %f",
                      exitRoll, _iConfig.minProbToExit);
   }
 
   if(exitRoll < probExit){
-    PRINT_NAMED_INFO("BehaviorKeepaway.EmotionalExit", 
+    PRINT_CH_INFO("Behaviors", "BehaviorKeepaway.EmotionalExit", 
                      "Exiting keepaway due to excessive excitement/frustration. prob: %f. rand: %f.",
                      probExit, exitRoll);
                       

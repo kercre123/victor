@@ -78,7 +78,7 @@ void BehaviorReactToPutDown::TransitionToPlayingPutDownAnimation()
   
   // Send DAS event for activation.
   {
-    DASMSG(behavior_cliffreaction, "Behavior.PutDownReaction", "The robot reacted to being put down.");
+    DASMSG(behavior_putdownreaction, "Behavior.PutDownReaction", "The robot reacted to being put down.");
     DASMSG_SEND();
   }
     
@@ -91,9 +91,10 @@ void BehaviorReactToPutDown::TransitionToHeadCalibration()
 {
   DEBUG_SET_STATE(CalibratingHead);
 
-  // Force the head to recalibrate since it's possible that Vector may have been put down too aggressively,
-  // resulting in gear slippage for the motor.
-  DelegateIfInControl(new CalibrateMotorAction(true, false,
+  // Force all motors to recalibrate since it's possible that Vector may have been put down too aggressively,
+  // resulting in gear slippage for a motor, or the user might have forced one of the motors into a different
+  // position while in the air or while sensors were disabled.
+  DelegateIfInControl(new CalibrateMotorAction(true, true,
                                                EnumToString(MotorCalibrationReason::BehaviorReactToPutDown)),
                       &BehaviorReactToPutDown::TransitionToPlayingWaitAnimation);
 }

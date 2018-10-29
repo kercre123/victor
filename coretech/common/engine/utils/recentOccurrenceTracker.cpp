@@ -14,7 +14,6 @@
 #include "coretech/common/engine/utils/recentOccurrenceTracker.h"
 
 #include "coretech/common/engine/utils/timer.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
 #include "json/json.h"
@@ -182,8 +181,7 @@ void RecentOccurrenceTracker::Prune(float currTime_s)
 
   // now remove anything we're storing that's older than the max time we care about
   const float oldestToSave = currTime_s - _maxAgeEvents;
-  size_t maxIter = _occurrences.size() + 1;
-  BOUNDED_WHILE(maxIter, !_occurrences.empty() && _occurrences.front()  < oldestToSave ) {
+  while( !_occurrences.empty() && _occurrences.front() < oldestToSave ) {
     _occurrences.pop_front();
   }
 }
@@ -194,8 +192,7 @@ void RecentOccurrenceTracker::RecomputeLimits()
   _maxAgeEvents = 0.0f;
 
   auto handleIter = _handles.begin();
-  size_t maxIter = _handles.size() + 1;
-  BOUNDED_WHILE(maxIter, handleIter != _handles.end()) {
+  while( handleIter != _handles.end() ) {
     if( auto handle = handleIter->lock() ) {
       if( handle->_requiredNumber > _maxNumEvents ) {
         _maxNumEvents = handle->_requiredNumber;

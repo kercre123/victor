@@ -41,7 +41,7 @@ These commands will work on all objects inside of the shell.
 
 You can even call the functions that send messages to Vector, and he'll respond just like he would in a script.
 Try it out! Type:
-    robot.anim.play_animation('anim_vc_alrighty_01')
+    robot.anim.play_animation('anim_pounce_success_02')
 """
 
 args = anki_vector.util.parse_command_args()
@@ -49,6 +49,7 @@ args = anki_vector.util.parse_command_args()
 ipyshell = InteractiveShellEmbed(banner1='\nWelcome to the Vector Interactive Shell!',
                                  exit_msg='Goodbye\n')
 
-with anki_vector.Robot(args.serial) as robot:
-    # Invoke the ipython shell while connected to Vector
-    ipyshell(usage)
+if __name__ == "__main__":
+    with anki_vector.Robot(args.serial, enable_camera_feed=True, show_viewer=True) as robot:
+        # Invoke the ipython shell while connected to Vector
+        ipyshell(usage)

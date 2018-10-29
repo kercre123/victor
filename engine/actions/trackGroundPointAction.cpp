@@ -130,11 +130,7 @@ ActionResult TrackGroundPointAction::InitInternal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TrackGroundPointAction::~TrackGroundPointAction()
 {
-  PRINT_CH_DEBUG(kLogChannelName, "TrackGroundPointAction.Destructor",
-                 "Popping vision mode schedule");
-  if(HasRobot()){
-    GetRobot().GetVisionComponent().PopCurrentModeSchedule();
-  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -167,7 +163,7 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTrackingHelper(Radians&
   
   if(DEBUG_TRACKING_ACTIONS)
   {
-    PRINT_NAMED_DEBUG("TrackGroundPointAction.UpdateTrackingHelper.GotObservation",
+    PRINT_CH_DEBUG("Actions", "TrackGroundPointAction.UpdateTrackingHelper.GotObservation",
                       "Ground: area=%.3f%% centroid=(%.1f,%.1f)",
                       _pointObservation.groundArea * 100.f,
                       _pointObservation.groundPoint.x(), _pointObservation.groundPoint.y());

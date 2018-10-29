@@ -218,7 +218,7 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
 
     const auto& cliffData = robot.GetCliffSensorComponent().GetCliffDataRaw();
     
-    PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.CliffEvent",
+    PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDriveForwards.CliffEvent",
                      "CliffDetected?: %d, FR: %u, FL: %u, BR: %u, BL: %u",
                      cliffDetected,
                      cliffData[(u16)CliffSensor::CLIFF_FR],
@@ -270,7 +270,7 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
         PLAYPEN_TRY(GetLogger().AppendCliffValuesOnFrontDrop(cliffVals),
                     FactoryTestResultCode::WRITE_TO_LOG_FAILED);
         
-        PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.WaitingForFrontCliffs.CliffDetected", "");
+        PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDriveForwards.WaitingForFrontCliffs.CliffDetected", "");
         
         _frontCliffsDetected = true;
         
@@ -287,7 +287,7 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
           PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
         }
         
-        PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.WaitingForFrontCliffsUndetected.CliffUndetected",
+        PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDriveForwards.WaitingForFrontCliffsUndetected.CliffUndetected",
                          "Moving to waiting for back cliffs");
         
         _waitingForCliffsState = WAITING_FOR_BACK_CLIFFS;
@@ -332,7 +332,7 @@ void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGa
           PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
         }
         
-        PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.WaitingForBackCliffsUndetected.CliffUndetected",
+        PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDriveForwards.WaitingForBackCliffsUndetected.CliffUndetected",
                          "Moving to state NONE");
         
         _waitingForCliffsState = NONE;

@@ -1,0 +1,24 @@
+// Alexa auth clad
+//
+// Copyright: Anki Inc (c) 2018
+
+namespace Anki {
+namespace Vector {
+
+// See also external_interface::AlexaAuthState
+enum uint_8 AlexaAuthState
+{
+  // Invalid
+  Invalid=0,
+  // Not opted in, or opt-in attempted but failed
+  Uninitialized,
+  // Opted in, and attempting to authorize
+  RequestingAuth,
+  // Opted in, and authorized / in use
+  WaitingForCode,
+  // Opted in, and authorized / in use
+  Authorized,
+}
+
+} // namespace Vector
+} // namespace Anki

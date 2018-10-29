@@ -21,6 +21,7 @@
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "util/entityComponent/entity.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/engineTimeStamp.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
@@ -36,6 +37,7 @@
 #include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -74,7 +76,9 @@ struct RobotCompletedFactoryDotTest;
   
 struct DockingErrorSignal;
 
-  class VisionComponent : public IDependencyManagedComponent<RobotComponentID>, public Util::noncopyable
+  class VisionComponent : public IDependencyManagedComponent<RobotComponentID>,
+                          public Util::noncopyable,
+                          public IVisionModeSubscriber
   {
   public:
   
@@ -126,20 +130,6 @@ struct DockingErrorSignal;
 
     // Returns true as long as we are/will be processing images
     bool IsProcessingImages();
-    
-    // Enable/disable different types of processing
-    Result EnableMode(VisionMode mode, bool enable);
-    
-    // Push new schedule which takes affect on next image and can be popped using
-    // PopCurrentModeSchedule() below.
-    Result PushNextModeSchedule(AllVisionModesSchedule&& schedule);
-    
-    // Return to the schedule prior to the last push.
-    // Note that you cannot popup the last remaining (original) schedule.
-    Result PopCurrentModeSchedule();
-    
-    // Check whether a specific vision mode is enabled
-    bool   IsModeEnabled(VisionMode mode) const;
     
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
@@ -219,6 +209,9 @@ struct DockingErrorSignal;
     
     // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
+
+    // Call to compute calibration from previously stored images
+    void EnableComputingCameraCalibration(bool enable) { EnableMode(VisionMode::ComputingCalibration, enable); }
     
     // For factory test behavior use only: tell vision component to find the
     // four dots for the test target and compute camera pose. Result is
@@ -329,15 +322,15 @@ struct DockingErrorSignal;
     // will leave image capture disabled once the image is captured
     // Normal image capture can be reenabled with EnableImageCapture(true)
     void CaptureOneFrame();
+
+    void EnableImageSending(bool enable);
+    void EnableMirrorMode(bool enable);
     
   protected:
     
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
     
-    // helper method --- unpacks bitflags representation into a set of vision modes
-    std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;
-
     bool _isInitialized = false;
     bool _hasStartedCapturingImages = false;
     
@@ -431,6 +424,12 @@ struct DockingErrorSignal;
     bool _enableImageCapture = true;
 
     bool _captureOneImage = false;
+
+    #if REMOTE_CONSOLE_ENABLED
+    // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes
+    using VisionModeConsoleVarPair = std::pair<Util::ConsoleVar<bool>*, bool>;
+    std::array<VisionModeConsoleVarPair, static_cast<u32>(VisionMode::Count)>  _visionModeConsoleVars;
+    #endif
     
     void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
@@ -464,7 +463,16 @@ struct DockingErrorSignal;
     void SetLiftCrossBar();
 
     Vision::ImageEncoding GetCurrentImageFormat() const;
-    
+
+    // Dynamically creates console vars for all the vision modes
+    void SetupVisionModeConsoleVars();
+
+    // Watches vision mode console vars and does things when they change
+    void UpdateVisionModeConsoleVars();
+
+    // Enable/disable different types of processing
+    Result EnableMode(VisionMode mode, bool enable);
+
   }; // class VisionComponent
   
   inline void VisionComponent::Pause(bool isPaused) {

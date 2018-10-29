@@ -17,6 +17,7 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
+#define LOG_CHANNEL "Planner"
 
 namespace Anki {
 namespace Vector {
@@ -48,16 +49,16 @@ Planning::GoalID IPathPlanner::ComputeClosestGoalPose(const Pose3d& startPose,
       selectedTargetIdx = i;
     }
 
-    PRINT_NAMED_DEBUG("IPathPlanner.ComputeClosestGoalPose",
-                      "Candidate target pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f): dist %f",
-                      targetPose.GetTranslation().x(),
-                      targetPose.GetTranslation().y(),
-                      targetPose.GetTranslation().z(),
-                      targetPose.GetRotationAngle<'Z'>().getDegrees(),
-                      targetPose.GetRotationAxis().x(),
-                      targetPose.GetRotationAxis().y(),
-                      targetPose.GetRotationAxis().z(),
-                      distToPose);
+    LOG_DEBUG("IPathPlanner.ComputeClosestGoalPose",
+              "Candidate target pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f): dist %f",
+              targetPose.GetTranslation().x(),
+              targetPose.GetTranslation().y(),
+              targetPose.GetTranslation().z(),
+              targetPose.GetRotationAngle<'Z'>().getDegrees(),
+              targetPose.GetRotationAxis().x(),
+              targetPose.GetRotationAxis().y(),
+              targetPose.GetRotationAxis().z(),
+              distToPose);
   }
 
   return selectedTargetIdx;

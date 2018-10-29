@@ -119,7 +119,7 @@ namespace Anki {
         return;
       }
 
-      PRINT_NAMED_INFO("DriveToObjectAction.SetApproachingAngle",
+      PRINT_CH_INFO("Actions", "DriveToObjectAction.SetApproachingAngle",
                        "[%d] %f rad",
                        GetTag(),
                        angle_rad);
@@ -199,7 +199,7 @@ namespace Anki {
       if(alreadyInPosition)
       {
         Pose3d p = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetPose();
-        PRINT_NAMED_INFO("DriveToObjectAction.GetPossiblePoses.UseRobotPose",
+        PRINT_CH_INFO("Actions", "DriveToObjectAction.GetPossiblePoses.UseRobotPose",
                          "Robot's current pose (x:%f y:%f a:%f) is close enough to preAction pose (x:%f y:%f a:%f)"
                          " with threshold (%f,%f), using current robot pose as goal",
                          GetRobot().GetPose().GetTranslation().x(),
@@ -279,7 +279,7 @@ namespace Anki {
         if(!GetRobot().GetCarryingComponent().IsCarryingObject(object->GetID()))
         {
           TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_objectID, Radians(0), true, false);
-          PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
+          PRINT_CH_DEBUG("Actions", "IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                             GetTag(),
                             GetName().c_str(),
                             turnTowardsObjectAction->GetTag(),
@@ -339,7 +339,7 @@ namespace Anki {
       if(result == ActionResult::SUCCESS) {
         
         if (!_doPositionCheckOnPathCompletion) {
-          PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone.SkippingPositionCheck", "Action complete");
+          PRINT_CH_INFO("Actions", "DriveToObjectAction.CheckIfDone.SkippingPositionCheck", "Action complete");
           return result;
         }
         
@@ -371,7 +371,7 @@ namespace Anki {
           {
             const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(GetRobot().GetPose().GetTranslation())).LengthSq();
             if(distanceSq > _distance_mm*_distance_mm) {
-              PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
+              PRINT_CH_INFO("Actions", "DriveToObjectAction.CheckIfDone",
                                "[%d] Robot not close enough, will return FAILURE_RETRY.",
                                GetTag());
               result = ActionResult::DID_NOT_REACH_PREACTION_POSE;
@@ -385,7 +385,7 @@ namespace Anki {
           result = _getPossiblePosesFunc(object, possiblePoses, inPosition);
           
           if(!inPosition) {
-            PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
+            PRINT_CH_INFO("Actions", "DriveToObjectAction.CheckIfDone",
                              "[%d] Robot not in position, will return FAILURE_RETRY.",
                              GetTag());
             result = ActionResult::DID_NOT_REACH_PREACTION_POSE;
@@ -489,7 +489,7 @@ namespace Anki {
       {
         const bool isFree = IsPlacementGoalFree();
         if ( !isFree ) {
-          PRINT_NAMED_INFO("DriveToPlaceCarriedObjectAction.PlacementGoalNotFree",
+          PRINT_CH_INFO("Actions", "DriveToPlaceCarriedObjectAction.PlacementGoalNotFree",
                            "Placement goal is not free to drop the cube, failing with retry.");
           result = ActionResult::PLACEMENT_GOAL_NOT_FREE;
         }
@@ -610,7 +610,7 @@ namespace Anki {
       
       _goalPoses = {pose};
       
-      PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
+      PRINT_CH_INFO("Actions", "DriveToPoseAction.SetGoal",
                        "[%d] Setting pose goal to (%.1f,%.1f,%.1f) @ %.1fdeg",
                        GetTag(),
                        _goalPoses.back().GetTranslation().x(),
@@ -640,7 +640,7 @@ namespace Anki {
       
       _goalPoses = poses;
       
-      PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
+      PRINT_CH_INFO("Actions", "DriveToPoseAction.SetGoal",
                        "[%d] Setting %lu possible goal options.",
                        GetTag(),
                        (unsigned long)_goalPoses.size());
@@ -750,7 +750,7 @@ namespace Anki {
       
       switch( GetRobot().GetPathComponent().GetDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Failed:
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
+          PRINT_CH_INFO("Actions", "DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
           result = ActionResult::PATH_PLANNING_FAILED_ABORT;
           break;
@@ -792,7 +792,7 @@ namespace Anki {
           
           if(GetRobot().GetPose().IsSameAs(_goalPoses[*_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
-            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
+            PRINT_CH_INFO("Actions", "DriveToPoseAction.CheckIfDone.Success",
                              "[%d] Robot %d successfully finished following path (Tdiff=%.1fmm) robotPose (%.1f, %.1f) goalPose (%.1f %.1f) threshold (%.1f %.1f).",
                              GetTag(),
                              GetRobot().GetID(),
@@ -809,7 +809,7 @@ namespace Anki {
           // The last path sent was definitely received by the robot
           // and it is no longer executing it, but we appear to not be in position
           else if (GetRobot().GetPathComponent().GetLastSentPathID() == GetRobot().GetPathComponent().GetLastRecvdPathID()) {
-            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
+            PRINT_CH_INFO("Actions", "DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastReceivedPathID=%d lastSentPathID=%d"
                              " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg), threshold (%f, %f)",
                              GetTag(),
@@ -883,7 +883,7 @@ namespace Anki {
         _timeToAbortPlanning = currTime + _maxPlanningTime;
       }
       else if( checkPlanningTime && (currTime >= _timeToAbortPlanning) ) {
-        PRINT_NAMED_INFO("DriveToPoseAction.HandleComputingAndFollowingPath.ComputingPathTimeout",
+        PRINT_CH_INFO("Actions", "DriveToPoseAction.HandleComputingAndFollowingPath.ComputingPathTimeout",
                          "Robot has been planning for more than %f seconds, aborting",
                          _maxPlanningTime);
         GetRobot().GetPathComponent().Abort();
@@ -1236,7 +1236,7 @@ namespace Anki {
                             "Can not set angle of null actions (the action were originally constructed with an angle of zero)");
         return;
       }
-      PRINT_NAMED_DEBUG("IDriveToInteractWithObject.SetMaxTurnTowardsFaceAngle",
+      PRINT_CH_DEBUG("Actions", "IDriveToInteractWithObject.SetMaxTurnTowardsFaceAngle",
                         "Setting maxTurnTowardsFaceAngle to %f degrees", angle.getDegrees());
       static_cast<TurnTowardsLastFacePoseAction*>(_turnTowardsLastFacePoseAction.lock().get())->SetMaxTurnAngle(angle);
       static_cast<TurnTowardsObjectAction*>(_turnTowardsObjectAction.lock().get())->SetMaxTurnAngle(angle);
@@ -1251,7 +1251,7 @@ namespace Anki {
                             "Can not set angle of null actions (the action were originally constructed with an angle of zero)");
         return;
       }
-      PRINT_NAMED_DEBUG("IDriveToInteractWithObject.SetTiltTolerance",
+      PRINT_CH_DEBUG("Actions", "IDriveToInteractWithObject.SetTiltTolerance",
                         "Setting tilt tolerance to %f degrees", tol.getDegrees());
       static_cast<TurnTowardsLastFacePoseAction*>(_turnTowardsLastFacePoseAction.lock().get())->SetTiltTolerance(tol);
       static_cast<TurnTowardsObjectAction*>(_turnTowardsObjectAction.lock().get())->SetTiltTolerance(tol);

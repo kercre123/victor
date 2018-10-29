@@ -329,7 +329,7 @@ void BehaviorFindHome::TransitionToSearchTurn()
       // images action, and play a "search turn end" animation after the "wait for images" anim.
       auto* loopAndWaitForImagesAction = new CompoundActionParallel();
       loopAndWaitForImagesAction->SetShouldEndWhenFirstActionCompletes(true);
-      loopAndWaitForImagesAction->AddAction(new TriggerAnimationAction(_iConfig.waitForImagesAnimTrigger, 0)); // loop forever
+      loopAndWaitForImagesAction->AddAction(new ReselectingLoopAnimationAction(_iConfig.waitForImagesAnimTrigger));
       loopAndWaitForImagesAction->AddAction(waitForImagesAction);
       action->AddAction(loopAndWaitForImagesAction);
       action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));

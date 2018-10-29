@@ -26,9 +26,8 @@ __all__ = ['ClearedTerritory', 'MapState', 'Wall', 'WallSegment']
 from math import cos, sin, pi
 from typing import List
 
+from anki_vector import opengl
 from anki_vector.util import Vector3
-
-import opengl
 
 try:
     from OpenGL.GL import (GL_AMBIENT, GL_BLEND, GL_DIFFUSE, GL_FILL, GL_FRONT, GL_FRONT_AND_BACK, GL_LIGHTING,

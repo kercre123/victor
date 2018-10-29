@@ -318,7 +318,7 @@ void BehaviorEnrollFace::CheckForIntentData() const
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if( uic.IsUserIntentPending( USER_INTENT(meet_victor) ) ) {
     // activate the intent
-    uic.ActivateUserIntent( USER_INTENT(meet_victor), GetDebugLabel() );
+    uic.ActivateUserIntent( USER_INTENT(meet_victor), GetDebugLabel(), false );
   }
 
   UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(meet_victor));

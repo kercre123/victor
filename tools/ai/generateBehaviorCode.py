@@ -93,7 +93,7 @@ def get_behavior_instances(behaviors_config_path):
     behavior_instances.sort(key=rel_path_sorter)
     return behavior_instances, all_classes
 
-def generate_all(options):
+def generate_all(options=None):
 
 
     
@@ -135,7 +135,7 @@ def generate_all(options):
                 instance.rel_path, instance.behavior_class))
             anyError = True
         
-    if options.dangling_classes:   
+    if options and options.dangling_classes:   
         for behavior_class in sorted(all_behavior_classes):
             if behavior_class not in all_instance_classes:
                 print('WARNING: behavior class {} not found in any behavior instances'.format(behavior_class))

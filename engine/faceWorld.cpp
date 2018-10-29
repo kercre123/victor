@@ -265,8 +265,6 @@ namespace Vector {
     if(kIgnoreFacesBelowRobot && robotOnTreads && headBelowRobot)
     {
       // Don't report faces that are below the origin (which we are assuming is on the ground plane)
-      //PRINT_NAMED_DEBUG("VisionSystem.DetectFaces.IgnoreFaceBelowRobot",
-      //                  "z=%.2f", headPose.GetTranslation().z());
       PRINT_CH_DEBUG(kLoggingChannelName, "FaceWorld.AddOrUpdateFace.IgnoringFaceBelowRobot",
                      "z=%f", headPoseWrtWorldOrigin.GetTranslation().z());
       return RESULT_OK;
@@ -441,9 +439,9 @@ namespace Vector {
             // if the new sighting is in a different day than the last one, we need to update robot stats
             const auto lastSeen = it->second.front();
             if( !WallTime::AreTimePointsInSameDay(lastSeen, wallTime) ) {
-              PRINT_NAMED_INFO("FaceWorld.UpdateFace.FaceSeenOnNewDay",
-                               "face %d seen on new day",
-                               face.GetID());
+              PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.FaceSeenOnNewDay",
+                            "face %d seen on new day",
+                            face.GetID());
               _robot->GetComponent<RobotStatsTracker>().IncrementNamedFacesPerDay();
             }
           }
@@ -451,9 +449,9 @@ namespace Vector {
             // new entry
             _wallTimesObserved.emplace( face.GetID(), ObservationTimeHistory{{wallTime}} );
 
-            PRINT_NAMED_INFO("FaceWorld.UpdateFace.NamedFaceFirstDaySeen",
-                             "face %d has been seen for the first time",
-                             face.GetID());
+            PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.NamedFaceFirstDaySeen",
+                          "face %d has been seen for the first time",
+                          face.GetID());
 
             _robot->GetComponent<RobotStatsTracker>().IncrementNamedFacesPerDay();
           }

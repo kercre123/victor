@@ -142,7 +142,7 @@ enum int_32 AnimationTrigger
   FailedToRightFromFace,
 
   FetchCubeFailure,
-  FetchCubeFrustrated,
+  FetchCubeSetDown,
   FetchCubeSuccess,
 
   FoundFace,
@@ -272,17 +272,18 @@ enum int_32 AnimationTrigger
   PickupCubePreperation,
   PickupCubeRetry,
   PickupCubeSuccess,
-  PokeObjectGetIn,
-  PokeObjectDriveLoop,
-  PokeObjectGetOut,
-  
+
   PlaceCubeByChargerFail,
   PlaceCubeByChargerReactToCharger,
   PlaceCubeByChargerSuccess,
-  
+
   PlanningGetIn,
   PlanningLoop,
   PlanningGetOut,
+
+  PokeObjectGetIn,
+  PokeObjectDriveLoop,
+  PokeObjectGetOut,
 
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,

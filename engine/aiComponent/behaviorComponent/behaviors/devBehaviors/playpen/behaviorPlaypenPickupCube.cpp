@@ -67,9 +67,6 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal()
 
   RecordTouchSensorData(robot, GetDebugLabel());
   
-  // Make sure marker detection is enabled (probably super overkill...)
-  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
   // TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(-90), false);
   // CompoundActionParallel* action = new CompoundActionParallel(robot, {head, turn});
@@ -211,7 +208,7 @@ void BehaviorPlaypenPickupCube::TransitionToPlaceCube()
   Radians robotAngleAfterBackup = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
   f32 angleChange_rad = std::fabsf((robotAngleAfterBackup - _robotAngleAtPickup).ToFloat());
   
-  PRINT_NAMED_INFO("BehaviorPlaypenPickupCube.TransitionToPlaceCube.AngleChangeDuringBackup",
+  PRINT_CH_INFO("Behaviors", "BehaviorPlaypenPickupCube.TransitionToPlaceCube.AngleChangeDuringBackup",
                    "%f deg", RAD_TO_DEG(angleChange_rad));
   
   if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)
@@ -247,7 +244,7 @@ void BehaviorPlaypenPickupCube::TransitionToBackup()
     Radians robotAngleAfterBackAndForth = robot.GetPose().GetRotation().GetAngleAroundZaxis();
     f32 angleChange_rad = std::fabsf((robotAngleAfterBackAndForth - _robotAngleAtPickup).ToFloat());
     
-    PRINT_NAMED_INFO("BehaviorPlaypenPickupCube.TransitionToBackup.AngleChangeDuringBackAndForth",
+    PRINT_CH_INFO("Behaviors", "BehaviorPlaypenPickupCube.TransitionToBackup.AngleChangeDuringBackAndForth",
                      "%f deg", RAD_TO_DEG(angleChange_rad));
     
     if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)

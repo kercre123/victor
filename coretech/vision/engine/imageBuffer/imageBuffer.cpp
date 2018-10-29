@@ -14,6 +14,7 @@
 
 #include "coretech/vision/engine/imageBuffer/conversions/imageConversions.h"
 #include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/neonMacros.h"
 
 #include "opencv2/core.hpp"
@@ -94,7 +95,7 @@ s32 ImageBuffer::GetNumRows() const
   return rows;
 }
     
-bool ImageBuffer::GetRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetRGB(ImageRGB& rgb, ImageCacheSize size) const
 {
   DEV_ASSERT(_rawData != nullptr, "ImageBuffer.GetRGB.NullData");
 
@@ -104,22 +105,22 @@ bool ImageBuffer::GetRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method
   {
     case ImageEncoding::BAYER:
       {
-        res = GetRGBFromBAYER(rgb, size, method);
+        res = GetRGBFromBAYER(rgb, size);
       }
       break;
     case ImageEncoding::RawRGB:
       {
-        res = GetRGBFromRawRGB(rgb, size, method);
+        res = GetRGBFromRawRGB(rgb, size);
       }
       break;
     case ImageEncoding::YUV420sp:
       {
-        res = GetRGBFromYUV420sp(rgb, size, method);
+        res = GetRGBFromYUV420sp(rgb, size);
       }
       break;
     case ImageEncoding::RawGray:
       {
-        res = GetRGBFromRawGray(rgb, size, method);
+        res = GetRGBFromRawGray(rgb, size);
       }
       break;
     default:
@@ -139,7 +140,7 @@ bool ImageBuffer::GetRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method
   return res;
 }
   
-bool ImageBuffer::GetGray(Image& gray, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetGray(Image& gray, ImageCacheSize size) const
 {
   DEV_ASSERT(_rawData != nullptr, "ImageBuffer.GetRGB.NullData");
 
@@ -149,22 +150,22 @@ bool ImageBuffer::GetGray(Image& gray, ImageCacheSize size, ResizeMethod method)
   {
     case ImageEncoding::BAYER:
       {
-        res = GetGrayFromBAYER(gray, size, method);
+        res = GetGrayFromBAYER(gray, size);
       }
       break;
     case ImageEncoding::RawRGB:
       {
-        res = GetGrayFromRawRGB(gray, size, method);
+        res = GetGrayFromRawRGB(gray, size);
       }
       break;
     case ImageEncoding::YUV420sp:
       {
-        res = GetGrayFromYUV420sp(gray, size, method);
+        res = GetGrayFromYUV420sp(gray, size);
       }
       break;
     case ImageEncoding::RawGray:
       {
-        res = GetGrayFromRawGray(gray, size, method);
+        res = GetGrayFromRawGray(gray, size);
       }
       break;
     default:
@@ -183,13 +184,11 @@ bool ImageBuffer::GetGray(Image& gray, ImageCacheSize size, ResizeMethod method)
   return res;
 }
 
-bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size) const
 {
   switch(size)
   {
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
+    case ImageCacheSize::Full:
       {
         ImageConversions::DemosaicBGGR10ToRGB(_rawData,
                                               _rawNumRows,
@@ -198,18 +197,16 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
       }
       return true;
       
-    case ImageCacheSize::Full:
+    case ImageCacheSize::Half:
       {
         ImageConversions::HalveBGGR10ToRGB(_rawData,
-                                                _rawNumRows,
-                                                _rawNumCols,
-                                                rgb);
+                                           _rawNumRows,
+                                           _rawNumCols,
+                                           rgb);
       }
       return true;
       
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
+    case ImageCacheSize::Quarter:
       {
         // ImageCacheSizes smaller than Full are defined relative to Full
         // So Half of Full ends up being quarter sized bayer
@@ -220,9 +217,7 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
       }
       return true;
       
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
+    case ImageCacheSize::Eighth:
       {
         // Get closest conversion we know how to do and then
         // resize to the correct size
@@ -230,84 +225,37 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMeth
                                              _rawNumRows,
                                              _rawNumCols,
                                              rgb);
-        rgb.Resize(0.5f, method);
+        rgb.Resize(0.5f, _resizeMethod);
       }
       return true;
   }
 }
 
-bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const
+  bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size) const
 {
   // Wrap ImageRGB around raw rgb data and we will resize it to the "size"
   ImageRGB orig(_rawNumRows, _rawNumCols, _rawData);
 
-  f32 scaleFactor = 0.f;
-  switch(size)
-  {
-    // ImageBuffer set with RawRGB data is special in that
-    // the raw data is at Full size so scaleFactor accounts for that
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Full:
-      rgb = orig;
-      return true;
-      
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      scaleFactor = 2.0f;
-      break;
-      
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      scaleFactor = 0.5f;
-      break;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      scaleFactor = 0.25f;
-      break;
-  }
+  f32 scaleFactor = ImageCacheSizeToScaleFactor(size);
 
+  if(Util::IsNear(scaleFactor, 1.f))
+  {
+    rgb = orig;
+    return true;
+  }
+  
   const s32 desiredNumRows = _rawNumRows * scaleFactor;
   const s32 desiredNumCols = _rawNumCols * scaleFactor;
   rgb.Allocate(desiredNumRows, desiredNumCols);
   
-  orig.Resize(rgb, method);
+  orig.Resize(rgb, _resizeMethod);
   
   return true;
 }
 
-bool ImageBuffer::GetRGBFromYUV420sp(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetRGBFromYUV420sp(ImageRGB& rgb, ImageCacheSize size) const
 {
-  f32 scaleFactor = 0.f;
-  switch(size)
-  {
-    case ImageCacheSize::Sensor:
-      scaleFactor = 1.0f;
-      break;
-      
-    case ImageCacheSize::Full:
-      scaleFactor = 0.5f;
-      break;
-      
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      scaleFactor = 1.0f;
-      break;
-      
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      scaleFactor = 0.25f;
-      break;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      scaleFactor = 0.125f;
-      break;
-  }
+  const f32 scaleFactor = ImageCacheSizeToScaleFactor(size);
 
   s32 rows = 0;
   s32 cols = 0;
@@ -319,16 +267,16 @@ bool ImageBuffer::GetRGBFromYUV420sp(ImageRGB& rgb, ImageCacheSize size, ResizeM
                                          cols,
                                          rgb);
   
-  rgb.Resize(scaleFactor, method);
+  rgb.Resize(scaleFactor, _resizeMethod);
 
   return true;
 }
 
-bool ImageBuffer::GetRGBFromRawGray(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetRGBFromRawGray(ImageRGB& rgb, ImageCacheSize size) const
 {
   Image gray;
 
-  bool res = GetGrayFromRawGray(gray, size, method);
+  bool res = GetGrayFromRawGray(gray, size);
   if(res)
   {
     rgb.SetFromGray(gray);
@@ -337,46 +285,42 @@ bool ImageBuffer::GetRGBFromRawGray(ImageRGB& rgb, ImageCacheSize size, ResizeMe
   return res;
 }
 
-bool ImageBuffer::GetGrayFromBAYER(Image& gray, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetGrayFromBAYER(Image& gray, ImageCacheSize size) const
 {
   // For now the only optimized conversion from Bayer to Gray is for halved gray
   // So do that and then resize image if needed
   ImageConversions::HalveBGGR10ToGray(_rawData,
-                                           _rawNumRows,
-                                           _rawNumCols,
-                                           gray);
-      
+                                      _rawNumRows,
+                                      _rawNumCols,
+                                      gray);
+
   switch(size)
   {
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      gray.Resize(2.0f, method);
-      return true;
-      
+    // TODO VIC-9781 Add method to convert directly to Full sized Gray
+    // instead of halving and resizing
     case ImageCacheSize::Full:
+      gray.Resize(2.0f, _resizeMethod);
       return true;
       
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      gray.Resize(0.5f, method);
+    case ImageCacheSize::Half:
       return true;
       
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      gray.Resize(0.25f, method);
+    case ImageCacheSize::Quarter:
+      gray.Resize(0.5f, _resizeMethod);
+      return true;
+
+    case ImageCacheSize::Eighth:
+      gray.Resize(0.25f, _resizeMethod);
       return true;
   }
 }
 
-bool ImageBuffer::GetGrayFromRawRGB(Image& gray, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetGrayFromRawRGB(Image& gray, ImageCacheSize size) const
 {
   ImageRGB rgb;
   // For now there are no optimized conversions from RawRGB to Gray so convert to
   // RGB and then fill gray
-  bool res = GetRGBFromRawRGB(rgb, size, method);
+  bool res = GetRGBFromRawRGB(rgb, size);
   if(res)
   {
     rgb.FillGray(gray);
@@ -385,12 +329,12 @@ bool ImageBuffer::GetGrayFromRawRGB(Image& gray, ImageCacheSize size, ResizeMeth
   return res;
 }
 
-bool ImageBuffer::GetGrayFromYUV420sp(Image& gray, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetGrayFromYUV420sp(Image& gray, ImageCacheSize size) const
 {
   ImageRGB rgb;
   // For now there are no optimized conversions from YUV420sp to Gray so convert to
   // RGB and then fill gray
-  bool res = GetRGBFromYUV420sp(rgb, size, method);
+  bool res = GetRGBFromYUV420sp(rgb, size);
   if(res)
   {
     rgb.FillGray(gray);
@@ -399,44 +343,24 @@ bool ImageBuffer::GetGrayFromYUV420sp(Image& gray, ImageCacheSize size, ResizeMe
   return res;
 }
 
-bool ImageBuffer::GetGrayFromRawGray(Image& gray, ImageCacheSize size, ResizeMethod method) const
+bool ImageBuffer::GetGrayFromRawGray(Image& gray, ImageCacheSize size) const
 {
   // Wrap Image around raw gray data and we will resize it to the "size"
   Image orig(_rawNumRows, _rawNumCols, _rawData);
 
-  f32 scaleFactor = 0.f;
-  switch(size)
+  const f32 scaleFactor = ImageCacheSizeToScaleFactor(size);
+
+  if(Util::IsNear(scaleFactor, 1.f))
   {
-    // ImageBuffer set with RawGray data is special in that
-    // the raw data is at Full size so scaleFactor accounts for that
-    case ImageCacheSize::Sensor:
-    case ImageCacheSize::Full:
-      gray = orig;
-      return true;
-      
-    case ImageCacheSize::Double_NN:
-    case ImageCacheSize::Double_Linear:
-      scaleFactor = 2.0f;
-      break;
-      
-    case ImageCacheSize::Half_NN:
-    case ImageCacheSize::Half_Linear:
-    case ImageCacheSize::Half_AverageArea:
-      scaleFactor = 0.5f;
-      break;
-      
-    case ImageCacheSize::Quarter_NN:
-    case ImageCacheSize::Quarter_Linear:
-    case ImageCacheSize::Quarter_AverageArea:
-      scaleFactor = 0.25f;
-      break;
+    gray = orig;
+    return true;
   }
 
   const s32 desiredNumRows = _rawNumRows * scaleFactor;
   const s32 desiredNumCols = _rawNumCols * scaleFactor;
   gray.Allocate(desiredNumRows, desiredNumCols);
   
-  orig.Resize(gray, method);
+  orig.Resize(gray, _resizeMethod);
   
   return true;
 }

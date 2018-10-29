@@ -48,6 +48,7 @@ private:
     AnimationTrigger preListeningAnim;
     AnimationTrigger listeningAnim;
     AnimationTrigger postListeningAnim;
+    AnimationTrigger noBeatAnim;
     
     float minListeningTime_sec = 0.f;
     float maxListeningTime_sec = 0.f;

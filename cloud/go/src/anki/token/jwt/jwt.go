@@ -13,6 +13,8 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+const jwtFile = "token.jwt"
+
 // Token provides the methods that clients will care about for authenticating and
 // using tokens
 type Token interface {
@@ -22,25 +24,39 @@ type Token interface {
 	UserID() string
 }
 
+// IdentityProvider caches the JWT token for a single robot instance
+type IdentityProvider struct {
+	path         string
+	currentToken *model.Token
+}
+
+// NewIdentityProvider creates a new identity provider with path for the JWT file
+func NewIdentityProvider(path string) *IdentityProvider {
+	if path == "" {
+		path = DefaultTokenPath
+	}
+	return &IdentityProvider{path: path}
+}
+
 // ParseToken parses the given token received from the server and saves it
 // to our persistent store
-func ParseToken(token string) (Token, error) {
-	tok, err := parseToken(token)
+func (c *IdentityProvider) ParseToken(token string) (Token, error) {
+	tok, err := c.parseToken(token)
 	if err != nil {
 		return nil, err
 	}
 	// everything ok, token is legit
-	if err := saveToken(token); err != nil {
+	if err := c.saveToken(token); err != nil {
 		return nil, err
 	}
-	currentToken = tok
+	c.currentToken = tok
 	logUserID(tok)
 	return tokWrapper{tok}, nil
 }
 
 // Init triggers the jwt package to initialize its data from disk
-func Init() error {
-	err := jwtInit()
+func (c *IdentityProvider) Init() error {
+	err := c.init()
 	if err != nil {
 		if err := robot.WriteFaceErrorCode(851); err != nil {
 			log.Println("Couldn't print face error:", err)
@@ -53,32 +69,31 @@ func Init() error {
 // nil, then one should be requested from the server. If not, it might be worth
 // checking ShouldRefresh() on the token to see if a new one should be requested
 // anyway.
-func GetToken() Token {
-	if currentToken == nil {
+func (c *IdentityProvider) GetToken() Token {
+	if c.currentToken == nil {
 		return nil
 	}
-	return tokWrapper{currentToken}
+	return tokWrapper{c.currentToken}
 }
 
-func jwtInit() error {
+func (c *IdentityProvider) init() error {
 	// try to create dir token will live in
-	path := tokenPath()
-	if err := os.Mkdir(path, 0777); err != nil {
+	if err := os.Mkdir(c.path, 0777); err != nil {
 		// if this failed, make sure it's because it already exists
-		s, err := os.Stat(path)
+		s, err := os.Stat(c.path)
 		if err != nil {
 			log.Println("token mkdir + stat error:", err)
 			return err
 		} else if !s.IsDir() {
-			err := fmt.Errorf("token store exists but is not a dir: %s", path)
+			err := fmt.Errorf("token store exists but is not a dir: %s", c.path)
 			log.Println(err)
 			return err
 		}
 	}
 	// see if a token already lives on disk
-	buf, err := ioutil.ReadFile(tokenFile())
+	buf, err := ioutil.ReadFile(c.tokenFile())
 	if err == nil {
-		tok, err := parseToken(string(buf))
+		tok, err := c.parseToken(string(buf))
 		if err != nil {
 			return err
 		}
@@ -87,24 +102,21 @@ func jwtInit() error {
 		// delete fake, no-userid token TMS used to generate for testing
 		if tok.UserId == "" {
 			log.Println("Deleting old test token")
-			os.Remove(tokenFile())
+			os.Remove(c.tokenFile())
 			return nil
 		}
 
-		currentToken = tok
+		c.currentToken = tok
 		logUserID(tok)
 	}
 	return nil
 }
 
-var jwtFile = "token.jwt"
-var currentToken *model.Token
-
-func tokenFile() string {
-	return path.Join(tokenPath(), jwtFile)
+func (c *IdentityProvider) tokenFile() string {
+	return path.Join(c.path, jwtFile)
 }
 
-func parseToken(token string) (*model.Token, error) {
+func (c *IdentityProvider) parseToken(token string) (*model.Token, error) {
 	t, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
 	if err != nil {
 		return nil, err
@@ -116,11 +128,11 @@ func parseToken(token string) (*model.Token, error) {
 	return tok, nil
 }
 
-func saveToken(token string) error {
-	if err := os.Mkdir(tokenPath(), os.ModeDir); err != nil && !os.IsExist(err) {
+func (c *IdentityProvider) saveToken(token string) error {
+	if err := os.Mkdir(c.path, os.ModeDir); err != nil && !os.IsExist(err) {
 		return err
 	}
-	return ioutil.WriteFile(tokenFile(), []byte(token), 0777)
+	return ioutil.WriteFile(c.tokenFile(), []byte(token), 0777)
 }
 
 func logUserID(token *model.Token) {

@@ -306,7 +306,7 @@ void IBehaviorPlaypen::WriteToStorage(Robot& robot,
   }
   else
   {
-    PRINT_NAMED_INFO("IBehaviorPlaypen.WriteToStorage.WritingNotEnabled", 
+    PRINT_CH_INFO("Behaviors", "IBehaviorPlaypen.WriteToStorage.WritingNotEnabled", 
                      "Not writing to %s",
                      EnumToString(tag));
   }

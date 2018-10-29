@@ -12,6 +12,10 @@
     "enabled": true
   },
   {
+    "feature": "FetchCube",
+    "enabled": true
+  },
+  {
     "feature": "FindCube",
     "enabled": true
   },
@@ -21,7 +25,7 @@
   },
   {
     "feature": "MoveCube",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "ReactToHeldCube",
@@ -60,12 +64,25 @@
     "enabled": true
   },
   {
+    "feature": "TestFeature",
+    "enabled": false
+  },
+  {
+    "feature": "Alexa",
+    // TODO (VIC-10016): turn off for 1.1
+    "enabled": true
+  },
+  {
     "feature": "PRDemo",
     "enabled": false
   },
   {
     "feature": "ReactToIllumination",
     "enabled": true
+  },
+  {
+    "feature": "ActiveIntentFeedback",
+    "enabled": false
   }
 ]
 

@@ -28,7 +28,7 @@
 
 #define SET_STATE(s) do{ \
                           _dVars.state = EState::s; \
-                          PRINT_NAMED_INFO("BehaviorBlackJack.State", "State = %s", #s); \
+                          PRINT_CH_INFO("Behaviors", "BehaviorBlackJack.State", "State = %s", #s); \
                         } while(0);
 
 namespace Anki {

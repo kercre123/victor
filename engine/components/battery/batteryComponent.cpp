@@ -38,6 +38,8 @@
 
 #include <unistd.h>
 
+#define LOG_CHANNEL "Battery"
+
 namespace Anki {
 namespace Vector {
 
@@ -71,19 +73,26 @@ namespace {
   // (the 'off-charger' low battery threshold).
   const float kOnChargerLowBatteryThresholdVolts = 4.0f;
 
+  #define CONSOLE_GROUP "BatteryComponent"
+
   // Console var for faking low battery
-  CONSOLE_VAR(bool, kFakeLowBattery, "BatteryComponent", false);
+  CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, false);
   const float kFakeLowBatteryVoltage = 3.5f;
 
   const float kInvalidPitchAngle = std::numeric_limits<float>::max();
+
+  // Console var for faking disconnected battery
+  CONSOLE_VAR(bool, kFakeDisconnectedBattery, CONSOLE_GROUP, false);
 
   // The app needs an estimate of time-to-charge in a few cases (mostly onboarding/FTUE). When low
   // battery, the robot must sit on the charger for kRequiredChargeTime_s seconds. If the robot is
   // removed, the timer pauses. When being re-placed on the charger, the remaining time is increased
   // my an amount proportional to the time off charger (const is kExtraChargingTimePerDischargePeriod_s),
   // clamped at a max of kRequiredChargeTime_s.
-  CONSOLE_VAR_RANGED(float, kRequiredChargeTime_s, "BatteryComponent", 5*60.0f, 10.0f, 9999.0f ); // must be set before low battery and then not changed
+  CONSOLE_VAR_RANGED(float, kRequiredChargeTime_s, CONSOLE_GROUP, 5*60.0f, 10.0f, 9999.0f ); // must be set before low battery and then not changed
   const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
+
+  #undef CONSOLE_GROUP
 }
 
 BatteryComponent::BatteryComponent()
@@ -140,6 +149,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
                       || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
                                                   // Anything under 3V doesn't make sense.
 
+  // Fake disconnected battery but only when on charger
+  if (kFakeDisconnectedBattery && IsOnChargerContacts()) {
+    _battDisconnected = true;
+  }
+
   // If in calm mode, RobotState messages are expected to come in at a slower rate
   // and we therefore need to adjust the sampling rate of the filter.
   static bool prevSysconCalmMode = false;
@@ -176,15 +190,19 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   UpdateOnChargerPlatform();
 
 
-  // DAS message for when battery is disconnected for cooldown
-  if ((_battDisconnected != wasDisconnected) && IsCharging()) {
-    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    DASMSG(battery_cooldown, "battery.cooldown", "Indicates that the battery was disconnected/reconnected in order to cool down the battery");
-    DASMSG_SET(i1, _battDisconnected, "Whether we have started or stopped cooldown (1 if we have started, 0 if we have stopped)");
-    DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since placed on charger (sec)");
-    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
-    DASMSG_SET(i4, GetBatteryTemperature_C(), "Current temperature (C)");
-    DASMSG_SEND();
+  // Check for change in disconnected state
+  if (_battDisconnected != wasDisconnected) {
+    _lastDisconnectedChange_sec = now_sec;
+
+    // DAS message for when battery is disconnected for cooldown
+    if (IsCharging()) {
+      DASMSG(battery_cooldown, "battery.cooldown", "Indicates that the battery was disconnected/reconnected in order to cool down the battery");
+      DASMSG_SET(i1, _battDisconnected, "Whether we have started or stopped cooldown (1 if we have started, 0 if we have stopped)");
+      DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since placed on charger (sec)");
+      DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
+      DASMSG_SET(i4, GetBatteryTemperature_C(), "Current temperature (C)");
+      DASMSG_SEND();
+    }
   }
 
   // Check if saturation charging
@@ -301,7 +319,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   }
 
   if (level != _batteryLevel) {
-    PRINT_NAMED_INFO("BatteryComponent.BatteryLevelChanged",
+    LOG_INFO("BatteryComponent.BatteryLevelChanged",
                      "New battery level %s (previously %s for %f seconds)",
                      BatteryLevelToString(level),
                      BatteryLevelToString(_batteryLevel),
@@ -402,7 +420,7 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     _resetVoltageFilterWhenBatteryConnected = true;
 
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    PRINT_NAMED_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
+    LOG_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
     // Broadcast to game
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
@@ -509,7 +527,7 @@ void BatteryComponent::UpdateOnChargerPlatform()
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
 
-    PRINT_NAMED_INFO("BatteryComponent.UpdateOnChargerPlatform.OnChargerPlatformChange",
+    LOG_INFO("BatteryComponent.UpdateOnChargerPlatform.OnChargerPlatformChange",
                      "robot is now %s the charger platform",
                      _isOnChargerPlatform ? "ON" : "OFF");
 
@@ -606,6 +624,25 @@ float BatteryComponent::GetSuggestedChargerTime() const
   }
 }
 
+
+float BatteryComponent::GetOnChargerDurationSec() const
+{
+  if (IsOnChargerContacts()) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    return currTime_s - _lastOnChargerContactsChange_sec;
+  }
+  return 0.f;
+}
+
+  
+float BatteryComponent::GetBatteryDisconnectedDurationSec() const
+{
+  if (IsBatteryDisconnectedFromCharger()) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    return currTime_s - _lastDisconnectedChange_sec;
+  }
+  return 0.f;
+}
 
 } // Vector namespace
 } // Anki namespace

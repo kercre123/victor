@@ -83,7 +83,7 @@ Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot,
 {
       
   if(RESULT_OK != AddAnimationGroup(animationGroupName)) {
-    PRINT_NAMED_INFO("AnimationGroupContainer.DefineAnimationGroupFromJson.ReplaceName",
+    PRINT_CH_INFO("Animations", "AnimationGroupContainer.DefineAnimationGroupFromJson.ReplaceName",
                      "Replacing existing animation group named '%s'.",
                      animationGroupName.c_str());
   }

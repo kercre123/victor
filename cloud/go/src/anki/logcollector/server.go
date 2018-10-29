@@ -11,7 +11,12 @@ import (
 )
 
 func runServer(ctx context.Context, opts *options) {
-	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("logcollector_server"))
+	socketName := "logcollector_server"
+	if opts.socketNameSuffix != "" {
+		socketName = fmt.Sprintf("%s_%s", socketName, opts.socketNameSuffix)
+	}
+
+	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath(socketName))
 	if err != nil {
 		log.Println("Error creating log collector server:", err)
 		return
@@ -63,6 +68,9 @@ func (c *client) handleRequest(ctx context.Context, msg *cloud.LogCollectorReque
 	cladHandler, err := newCladHandler(c.opts)
 	if err != nil {
 		return connectErrorResponse, err
+		if c.opts.errListener != nil {
+			c.opts.errListener.OnError(err)
+		}
 	}
 	return cladHandler.handleRequest(ctx, msg)
 }

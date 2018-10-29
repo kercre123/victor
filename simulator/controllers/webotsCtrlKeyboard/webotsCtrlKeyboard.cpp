@@ -603,7 +603,7 @@ namespace Vector {
     }
     const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
     SendMessage(ExternalInterface::MessageGameToEngine(
-                                                       ExternalInterface::ExecuteBehaviorByID(behaviorName, numRuns)));
+                                                       ExternalInterface::ExecuteBehaviorByID(behaviorName, numRuns, true)));
   }
   
   void WebotsKeyboardController::LogCliffSensorData()
@@ -1235,7 +1235,7 @@ namespace Vector {
   void WebotsKeyboardController::ExecutePlaypenTest()
   {
     SendMessage(ExternalInterface::MessageGameToEngine(
-                                                       ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1)));
+                                                       ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1, false)));
   }
   
   void WebotsKeyboardController::ToggleSendAvailableObjects()

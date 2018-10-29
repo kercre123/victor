@@ -17,6 +17,12 @@
         "not": {
           "conditionType": "OnChargerPlatform"
         }
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "CliffDetected"
+        }
       }
     ]
   },

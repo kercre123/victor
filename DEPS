@@ -23,9 +23,6 @@
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "files": {
-        "aws_credentials": {
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-logcollector-aws-credentials/victor-logcollector-aws-credentials"
-        },
         "chipper_key": {
             "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
         },
@@ -56,11 +53,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4374"
+                "version": "4487"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "99"
+                "version": "107"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

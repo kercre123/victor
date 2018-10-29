@@ -25,19 +25,18 @@
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micImmediateDirection.h"
-#include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
-#include "cozmoAnim/speechRecognizerTHFSimple.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/threading/threadPriority.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
+#include <list>
 #include <sched.h>
 
 
@@ -46,8 +45,7 @@ namespace Vector {
 namespace MicData {
 
 namespace {
-# define CONSOLE_GROUP "MicData"
-#define CONSOLE_GROUP_RECOGNIZER "MicData.Recognizer"
+#define CONSOLE_GROUP "MicData"
 
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
@@ -55,9 +53,6 @@ namespace {
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
   CONSOLE_VAR_RANGED(uint32_t, kMicData_QuietTimeCooldown_ms, CONSOLE_GROUP, 1000, 500, 10000);
-  
-  // VIC-7175 To test a theory we want to be able to ignore the VAD state and always feed mic data to the recognizer
-  CONSOLE_VAR(bool, kIgnoreVadStateInRecognizer, CONSOLE_GROUP, false);
 
 #if ANKI_DEV_CHEATS
 
@@ -70,61 +65,17 @@ namespace {
   uint8_t _currentDevForcedProcesState = 0;
   CONSOLE_VAR_ENUM(uint8_t, kDevForceProcessState, CONSOLE_GROUP, _currentDevForcedProcesState,
                    "NormalOperation,None,NoProcessingSingleMic,SigEsBeamformingOff,SigEsBeamformingOn");
-
-  // NOTE: This enum needs to EXACTLY match the number and ordering of the kTriggerModelDataList array below
-  enum class SupportedLocales
-  {
-    enUS_1mb, // default
-    enUS_500kb,
-    enUS_250kb,
-    enUS_Alt_1mb,
-    enUK,
-    enAU,
-    frFR,
-    deDE,
-    Count
-  };
-
-  struct TriggerModelTypeData
-  {
-    Util::Locale                  locale;
-    MicTriggerConfig::ModelType   modelType;
-    int                           searchFileIndex;
-  };
-
-  // NOTE: This array needs to EXACTLY match the number and ordering of the SupportedLocales enum above
-  const TriggerModelTypeData kTriggerModelDataList[] = 
-  {
-    // Easily selectable values for consolevar dropdown. Note 'Count' and '-1' values indicate to use default
-    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_1mb, .searchFileIndex = -1 },
-    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_500kb, .searchFileIndex = -1 },
-    { .locale = Util::Locale("en","US"), .modelType = MicTriggerConfig::ModelType::size_250kb, .searchFileIndex = -1 },
-    // This is a hack to add a second en_US model, it will appear in console vars as `enUS_Alt_1mb`
-    { .locale = Util::Locale("en","ZW"), .modelType = MicTriggerConfig::ModelType::Count, .searchFileIndex = -1 },
-    { .locale = Util::Locale("en","GB"), .modelType = MicTriggerConfig::ModelType::Count, .searchFileIndex = -1 },
-    { .locale = Util::Locale("en","AU"), .modelType = MicTriggerConfig::ModelType::Count, .searchFileIndex = -1 },
-    { .locale = Util::Locale("fr","FR"), .modelType = MicTriggerConfig::ModelType::Count, .searchFileIndex = -1 },
-    { .locale = Util::Locale("de","DE"), .modelType = MicTriggerConfig::ModelType::Count, .searchFileIndex = -1 },
-  };
-  constexpr size_t kTriggerDataListLen = sizeof(kTriggerModelDataList) / sizeof(kTriggerModelDataList[0]);
-  static_assert(kTriggerDataListLen == (size_t) SupportedLocales::Count, "Need trigger data for each supported locale");
-
-  size_t _recognizerModelTypeIndex = (size_t) SupportedLocales::enUS_1mb;
-  CONSOLE_VAR_ENUM(size_t, kRecognizerModel, CONSOLE_GROUP_RECOGNIZER, _recognizerModelTypeIndex,
-                   "enUS_1mb,enUS_500kb,enUS_250kb,enUS_Alt_1mb,enUK,enAU,frFR,deDE");
   
-  int _triggerModelSensitivityIndex = 0;
-  CONSOLE_VAR_ENUM(int, kRecognizerModelSensitivity, CONSOLE_GROUP_RECOGNIZER, _triggerModelSensitivityIndex,
-                   "default,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20");
-  
+  bool kEnableRobotNoiseMicProcLogic = false;
   std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 
 #endif // ANKI_DEV_CHEATS
 
   CONSOLE_VAR(bool, kBeatDetectorUseProcessedAudio, CONSOLE_GROUP, false);
   
-# undef CONSOLE_GROUP
+  #define ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG 0
   using MicProcessingState = MicDataProcessor::ProcessingState;
+  const MicProcessingState kDefaultProcessingState = MicProcessingState::SigEsBeamformingOff;
   const MicProcessingState kLowPowerModeProcessingState = MicProcessingState::NoProcessingSingleMic;
 
 } // anonymous namespace
@@ -145,51 +96,29 @@ static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of Mic
 void MicDataProcessor::SetupConsoleFuncs()
 {
 #if ANKI_DEV_CHEATS
-  // Update Recognizer Model with kRecognizerModel & kRecognizerModelSensitivity enums
-  auto updateRecognizerModel = [this](ConsoleFunctionContextRef context) {
-    if ((_recognizerModelTypeIndex != kRecognizerModel) ||
-        (_triggerModelSensitivityIndex != kRecognizerModelSensitivity))
-    {
-      _recognizerModelTypeIndex = kRecognizerModel;
-      _triggerModelSensitivityIndex = kRecognizerModelSensitivity;
-      const auto& newTypeData = kTriggerModelDataList[kRecognizerModel];
-      _micDataSystem->SetLocaleDevOnly(newTypeData.locale);
-      const int sensitivitySearchFileIdx = (kRecognizerModelSensitivity == 0) ?
-                                            newTypeData.searchFileIndex : kRecognizerModelSensitivity;
-      const bool success = UpdateTriggerForLocale(newTypeData.locale,
-                                                  newTypeData.modelType,
-                                                  sensitivitySearchFileIdx);
-      context->channel->WriteLog("UpdateRecognizerModel %s", (success ? "success!" : "fail :("));
+  // Toggle robot noise mic processing logic ON/OFF
+  auto toggleRobotNoiseMicProcLogic = [this](ConsoleFunctionContextRef context) {
+    kEnableRobotNoiseMicProcLogic = !kEnableRobotNoiseMicProcLogic;
+    if (!kEnableRobotNoiseMicProcLogic) {
+      // Set back to default state
+      SetPreferredMicDataProcessingState(kDefaultProcessingState);
     }
+    context->channel->WriteLog("Toggle Robot Noise Mic Processing Logic %s", (kEnableRobotNoiseMicProcLogic ? "ON" : "OFF"));
   };
-  sConsoleFuncs.emplace_front("UpdateRecognizerModel", std::move(updateRecognizerModel), CONSOLE_GROUP_RECOGNIZER, "");
+  sConsoleFuncs.emplace_front("ToggleRobotNoiseMicProcLogic", std::move(toggleRobotNoiseMicProcLogic), CONSOLE_GROUP, "");
 #endif
 }
-  
-# undef CONSOLE_GROUP_RECOGNIZER
+# undef CONSOLE_GROUP
 
 
 MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, 
-                                   const std::string& writeLocation, const std::string& triggerWordDataDir)
+                                   const std::string& writeLocation)
 : _context(context)
 , _micDataSystem(micDataSystem)
 , _writeLocationDir(writeLocation)
-, _triggerWordDataDir(triggerWordDataDir)
-, _recognizer(std::make_unique<SpeechRecognizerTHF>())
 , _micImmediateDirection(std::make_unique<MicImmediateDirection>())
-, _micTriggerConfig(std::make_unique<MicTriggerConfig>())
 , _beatDetector(std::make_unique<BeatDetector>())
 {
-  // Init Sensory processing. Note we don't add in a search trigger here, that happens later
-  const std::string& pronunciationFileToUse = "";
-  (void) _recognizer->Init(pronunciationFileToUse);
-
-  // Set up the callback that creates the recording job when the trigger is detected
-  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordVoiceCallback,
-                                   this, std::placeholders::_1, std::placeholders::_2);
-  _recognizer->SetCallback(triggerCallback);
-  _recognizer->Start();
-
   // Init the various SE processing
   MMIfInit(0, nullptr);
   InitVAD();
@@ -211,29 +140,21 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
   SetupConsoleFuncs();
 }
 
-void MicDataProcessor::Init(const RobotDataLoader& dataLoader, const Util::Locale& locale)
+void MicDataProcessor::Init()
 {
-  _micTriggerConfig->Init(dataLoader.GetMicTriggerConfig());
-
-  // On Debug builds, check that all the files listed in the trigger config actually exist
-#if ANKI_DEVELOPER_CODE
-  const auto& triggerDataList = _micTriggerConfig->GetAllTriggerModelFiles();
-  for (const auto& filePath : triggerDataList)
-  {
-    const auto& fullFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir, filePath});
-    if (Util::FileUtils::FileDoesNotExist(fullFilePath))
-    {
-      PRINT_NAMED_WARNING("MicDataProcessor.Init.MicTriggerConfigFileMissing","%s",fullFilePath.c_str());
-    }
-  }
-#endif // ANKI_DEVELOPER_CODE
-
-  UpdateTriggerForLocale(locale);
+  ASSERT_NAMED(_micDataSystem != nullptr, "MicDataProcessor.Init._micDataSystem.IsNull");
+  ASSERT_NAMED(_micDataSystem->GetSpeechRecognizerSystem() != nullptr,
+               "MicDataProcessor.Init._micDataSystem.GetSpeechRecognizerSystem.IsNull");
+  // Setup detection Callback
+  _speechRecognizerSystem = _micDataSystem->GetSpeechRecognizerSystem();
+  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const SpeechRecognizerSystem::TriggerWordDetectedInfo& info) {
+    TriggerWordDetectCallback( TriggerWordDetectSource::Voice, info.score );
+  };
+  _speechRecognizerSystem->SetTriggerWordDetectedCallback( callback );
   
   // Set initial processing state
-  const auto initProcessState = ProcessingState::SigEsBeamformingOff;
-  SetPreferredMicDataProcessingState(initProcessState);
-  SetActiveMicDataProcessingState(initProcessState);
+  SetPreferredMicDataProcessingState(kDefaultProcessingState);
+  SetActiveMicDataProcessingState(kDefaultProcessingState);
 }
 
 void MicDataProcessor::InitVAD()
@@ -423,7 +344,6 @@ MicDataProcessor::~MicDataProcessor()
   _processTriggerThread.join();
 
   MMIfDestroy();
-  _recognizer->Stop();
 }
 
 void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
@@ -607,17 +527,24 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     }
   }
 
-  // Check if the power mode state needs to be updated
+  // Determine mic processing state
   ProcessingState processingState = _activeProcState;
-  // Low Power Mode toggle
+
+  // Check if the power mode state needs to be updated
   if (isLowPowerMode != _isInLowPowerMode) {
     // Update Power mode state
     processingState = isLowPowerMode ? kLowPowerModeProcessingState : _preferredProcState.load();
     _isInLowPowerMode = isLowPowerMode;
   }
 
-  
 #if ANKI_DEV_CHEATS
+  // NOTE: This logic goes with the statement above ^^^^^^
+  else if (kEnableRobotNoiseMicProcLogic && !isLowPowerMode) {
+    // Update preferred processing state for robot noise state
+    processingState = hasRobotNoise ? ProcessingState::SigEsBeamformingOff : ProcessingState::SigEsBeamformingOn;
+    SetPreferredMicDataProcessingState(processingState);
+  }
+  
   // Allow overriding (for testing) to force enable or disable mic data processing & force processing state
   if (kMicData_ForceEnableMicDataProc)
   {
@@ -854,10 +781,10 @@ void MicDataProcessor::ProcessTriggerLoop()
 
     // Run the trigger detection, which will use the callback defined above
     // Note we skip it if there is no activity as of the latest processed audioblock
-    if ((_micImmediateDirection->GetLatestSample().activeState != 0) || kIgnoreVadStateInRecognizer)
+    if (_micImmediateDirection->GetLatestSample().activeState != 0)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
-      _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+      _speechRecognizerSystem->Update(processedAudio.data(), (unsigned int)processedAudio.size());
     }
 
     // Now we're done using this audio with the recognizer, so let it go
@@ -921,73 +848,13 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
   return MAX(_rawAudioBufferFullness[0], _rawAudioBufferFullness[1]);
 }
 
-bool MicDataProcessor::UpdateTriggerForLocale(Util::Locale newLocale,
-                                              MicTriggerConfig::ModelType modelType,
-                                              int searchFileIndex)
-{
-  std::lock_guard<std::mutex> lock (_triggerModelMutex);
-  _nextTriggerPaths = _micTriggerConfig->GetTriggerModelDataPaths(newLocale, modelType, searchFileIndex);
-  bool success = false;
-
-  if (!_nextTriggerPaths.IsValid())
-  {
-    PRINT_NAMED_WARNING("MicDataProcessor.UpdateTriggerForLocale.NoPathsFoundForLocale",
-                        "locale: %s modelType: %d searchFileIndex: %d",
-                        newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
-  }
-
-  if (_currentTriggerPaths != _nextTriggerPaths)
-  {
-    ANKI_CPU_PROFILE("SwitchTriggerWordSearch");
-    _currentTriggerPaths = _nextTriggerPaths;
-    _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
-    const AudioUtil::SpeechRecognizer::IndexType singleSlotIndex = 0;
-    _recognizer->RemoveRecognitionData(singleSlotIndex);
-    
-    if (_currentTriggerPaths.IsValid())
-    {
-      const std::string& netFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-        _currentTriggerPaths._dataDir,
-        _currentTriggerPaths._netFile});
-      const std::string& searchFilePath = Util::FileUtils::FullFilePath({_triggerWordDataDir,
-        _currentTriggerPaths._dataDir,
-        _currentTriggerPaths._searchFile});
-      const bool isPhraseSpotted = true;
-      const bool allowsFollowUpRecog = false;
-      success = _recognizer->AddRecognitionDataFromFile(singleSlotIndex, netFilePath, searchFilePath,
-                                                                   isPhraseSpotted, allowsFollowUpRecog);
-      if (success)
-      {
-        PRINT_NAMED_INFO("MicDataProcessor.UpdateTriggerForLocale.SwitchTriggerSearch",
-                         "Switched speechRecognizer to netFile: %s searchFile %s",
-                         netFilePath.c_str(), searchFilePath.c_str());
-        
-        _recognizer->SetRecognizerIndex(singleSlotIndex);
-      }
-      else
-      {
-        _currentTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
-        _nextTriggerPaths = MicTriggerConfig::TriggerDataPaths{};
-        PRINT_NAMED_ERROR("MicDataProcessor.UpdateTriggerForLocale.FailedSwitchTriggerSearch",
-                          "Failed to add speechRecognizer netFile: %s searchFile %s",
-                          netFilePath.c_str(), searchFilePath.c_str());
-      }
-    }
-    else
-    {
-      PRINT_NAMED_INFO("MicDataProcessor.UpdateTriggerForLocale.ClearTriggerSearch",
-                       "Cleared speechRecognizer to have no search");
-    }
-  }
-  return success;
-}
-
 void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::ProcessingState state)
 {
   if (state != _activeProcState) {
-    
-    PRINT_NAMED_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
-                     GetProcessingStateName(_activeProcState), GetProcessingStateName(state));
+    if (ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG) {
+      PRINT_NAMED_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
+                       GetProcessingStateName(_activeProcState), GetProcessingStateName(state));
+    }
     
     switch (state) {
       case ProcessingState::None:

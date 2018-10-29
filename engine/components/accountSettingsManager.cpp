@@ -57,9 +57,10 @@ AccountSettingsManager::AccountSettingsManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AccountSettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
 {
-  _jdocsManager = &robot->GetComponent<JdocsManager>();
+  _robot = robot;
+  _jdocsManager = &_robot->GetComponent<JdocsManager>();
 
-  _accountSettingsConfig = &robot->GetContext()->GetDataLoader()->GetAccountSettingsConfig();
+  _accountSettingsConfig = &_robot->GetContext()->GetDataLoader()->GetAccountSettingsConfig();
 
   // Call the JdocsManager to see if our account settings jdoc file exists
   bool settingsDirty = false;
@@ -184,7 +185,8 @@ bool AccountSettingsManager::SetAccountSetting(const external_interface::Account
   {
     const bool saveToCloudImmediately = DoesSettingUpdateCloudImmediately(accountSetting);
     const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
-    success = UpdateAccountSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+    static const bool sendJdocsChangedMessage = true;
+    success = UpdateAccountSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate, sendJdocsChangedMessage);
   }
 
   return success;
@@ -245,14 +247,16 @@ bool AccountSettingsManager::DoesSettingUpdateCloudImmediately(const external_in
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AccountSettingsManager::UpdateAccountSettingsJdoc(const bool saveToCloudImmediately,
-                                                       const bool setCloudDirtyIfNotImmediate)
+                                                       const bool setCloudDirtyIfNotImmediate,
+                                                       const bool sendJdocsChangedMessage)
 {
   static const bool saveToDiskImmediately = true;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ACCOUNT_SETTINGS,
                                                  &_currentAccountSettings,
                                                  saveToDiskImmediately,
                                                  saveToCloudImmediately,
-                                                 setCloudDirtyIfNotImmediate);
+                                                 setCloudDirtyIfNotImmediate,
+                                                 sendJdocsChangedMessage);
   return success;
 }
 
@@ -318,7 +322,13 @@ bool AccountSettingsManager::ApplyAccountSettingDataCollection()
 
   // Publish choice to DAS manager
   EnableDataCollection(value);
-
+  // Send message to mic system in anim process
+  ASSERT_NAMED(_robot != nullptr, "AccountSettingsManager.ApplyAccountSettingDataCollection._robot.IsNull");
+  if (_robot != nullptr) {
+    using namespace RobotInterface;
+    const auto msg = EngineToRobot::CreateupdatedAccountSettings(UpdatedAccountSettings(value));
+    _robot->SendMessage(std::move(msg));
+  }
   return true;
 }
 

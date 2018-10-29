@@ -49,6 +49,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   bool                   IsRootNode()     const { return _parent == nullptr; }
   bool                   IsSubdivided()   const { return !_childrenPtr.empty(); }
   bool                   IsEmptyType()    const { return IsSubdivided() || (GetData()->type == EContentType::Unknown); }
@@ -60,29 +61,15 @@ public:
   const NodeAddress&     GetAddress()     const { return _address; }
   const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Modification
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
   void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
   void Fold(FoldFunctorConst accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Exploration
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // find the neighbor of the same or higher level in the given direction
-  const QuadTreeNode* FindSingleNeighbor(EDirection direction) const;
-
-  // find the group of smallest neighbors with whom this node shares a border.
-  // they would be children of the same level neighbor. This is normally useful when our neighbor is subdivided but
-  // we are not.
-  // direction: direction in which we move to find the neighbors (4 cardinals)
-  // iterationDirection: when there're more than one neighbor in that direction, which one comes first in the list
-  // NOTE: this method is expected to NOT clear the vector before adding neighbors
-  void AddSmallestNeighbors(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& neighbors) const;
+  // finds all the leaf nodes that are neighbors with this node
+  NodeCPtrVector GetNeighbors() const;
 
 protected:
 
@@ -103,7 +90,7 @@ protected:
   void ResetAddress();
   
   // find a node at a particular address
-  const QuadTreeNode* GetNodeAtAddress(const NodeAddress& addr) const;
+  QuadTreeNode* GetNodeAtAddress(const NodeAddress& addr);
   
   // subdivide/join children
   bool Subdivide();
@@ -162,9 +149,6 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-   
-  // calculate where we would land from a quadrant if we moved in the given direction
-  static const MoveInfo* GetDestination(EQuadrant from, EDirection direction);
   
   // get the child in the given quadrant, or null if this node is not subdivided
   const QuadTreeNode* GetChild(EQuadrant quadrant) const;
@@ -172,7 +156,11 @@ private:
 
   // iterate until we reach the nodes that have a border in the given direction, and add them to the vector
   // NOTE: this method is expected to NOT clear the vector before adding descendants
-  void AddSmallestDescendants(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& descendants) const;
+  void AddSmallestDescendants(EDirection direction, NodeCPtrVector& descendants) const;
+   
+  // find the neighbor of the same or higher level in the given direction
+  const QuadTreeNode* FindSingleNeighbor(EDirection direction) const;
+
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

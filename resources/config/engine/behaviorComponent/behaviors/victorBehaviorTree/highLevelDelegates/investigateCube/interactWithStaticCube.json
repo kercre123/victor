@@ -22,12 +22,17 @@
           "weight" : 0.1
         },
         {
+          "behavior" : "FetchCube",
+          "cooldown_s" : 900.0,
+          "weight" : 1.0
+        },
+        {
           "behavior" : "FindCubeAndPlayKeepaway",
           "cooldown_s" : 300.0,
           "weight" : 1.0
         },
         {
-          "behavior" : "PlaceCubeByCharger",
+          "behavior" : "MoveCube",
           "cooldown_s" : 300.0,
           "weight" : 1.0
         },

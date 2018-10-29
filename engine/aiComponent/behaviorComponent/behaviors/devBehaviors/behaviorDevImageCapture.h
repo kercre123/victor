@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2017-12-12
  *
- * Description: Dev behavior to use the touch sensor to enable / disable image capture
+ * Description: Dev behavior to use the touch sensor or backpack button to enable / disable image capture
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -40,6 +40,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
@@ -48,16 +49,20 @@ protected:
 private:
   struct InstanceConfig {
     InstanceConfig();
-    std::string               imageSavePath;
-    int8_t                    imageSaveQuality;
-    Vision::ImageCacheSize  imageSaveSize;
-    bool                      useCapTouch;
-    bool                      saveSensorData;
-    bool                      useShutterSound;
-    s32                       numImagesPerCapture;
-    std::pair<f32,f32>        distanceRange_mm;
-    std::pair<f32,f32>        headAngleRange_rad;
-    std::pair<f32,f32>        bodyAngleRange_rad;
+    std::string            imageSavePath;
+    std::string            imageSavePrefix;
+    std::string            serialNumber;
+    int8_t                 imageSaveQuality;
+    Vision::ImageCacheSize imageSaveSize;
+    bool                   useSavePrefix;
+    bool                   useCapTouch;
+    bool                   saveSensorData;
+    bool                   useShutterSound;
+    bool                   allowStreaming;
+    s32                    numImagesPerCapture;
+    std::pair<f32,f32>     distanceRange_mm;
+    std::pair<f32,f32>     headAngleRange_rad;
+    std::pair<f32,f32>     bodyAngleRange_rad;
     
     std::list<std::string> classNames;
     std::list<VisionMode>  visionModesBesidesSaving;

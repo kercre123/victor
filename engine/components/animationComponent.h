@@ -107,10 +107,6 @@ public:
   // to being off cooldown when all animations in the group are on cooldown
   const std::string& GetAnimationNameFromGroup(const std::string& name, bool strictCooldown = false) const;
   
-  // Tell the animation component that the anim process started an animation on its own so that
-  // engine has up to date information
-  void NotifyComponentOfAnimationStartedByAnimProcess(const std::string& animName, Tag animationTag);
-  
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
   Result PlayAnimByName(const std::string& animName,

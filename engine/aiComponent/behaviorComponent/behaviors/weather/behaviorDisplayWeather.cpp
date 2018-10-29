@@ -291,7 +291,9 @@ void BehaviorDisplayWeather::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::OnBehaviorDeactivated()
 {
-  GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  if( _dVars.utteranceID != kInvalidUtteranceID ) {
+    GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -587,12 +589,12 @@ void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
   if(track.TrackLength() == 2){
     _iConfig->timeTempShouldAppear_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
     _iConfig->timeTempShouldDisappear_ms = track.GetLastKeyFrame()->GetTriggerTime_ms();
-    PRINT_CH_INFO("Behaviors",
-                  "BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.TemperatureTimes",
-                  "For animation named %s temp will appear at %d and disappear at %d",
-                  _iConfig->animationName.c_str(),
-                  _iConfig->timeTempShouldAppear_ms,
-                  _iConfig->timeTempShouldDisappear_ms);
+    PRINT_CH_DEBUG("Behaviors",
+                   "BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.TemperatureTimes",
+                   "For animation named %s temp will appear at %d and disappear at %d",
+                   _iConfig->animationName.c_str(),
+                   _iConfig->timeTempShouldAppear_ms,
+                   _iConfig->timeTempShouldDisappear_ms);
   }else{
     PRINT_NAMED_ERROR("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.IncorrectNumberOfKeyframes",
                       "Expected 2 keyframes in event track, but track has %d",

@@ -28,6 +28,9 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <sys/stat.h>
+#include <cstring>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -211,8 +214,9 @@ void getDASTimeString(std::string& outTimeString) {
                                     "%H:%M:%S", std::localtime(&nowTime));
   assert(timeStrLen > 0);
   size_t remainingLen = sizeof(timeStr) - timeStrLen;
+  uint64_t msCount = ms.count();
   int printfResult __attribute((unused)) = snprintf(timeStr + timeStrLen, remainingLen,
-                                                    ":%03llu", ms.count() % 1000);
+                                                    "%" PRIu64 "", msCount % 1000);
   assert(printfResult <= remainingLen);
   outTimeString = timeStr;
 }

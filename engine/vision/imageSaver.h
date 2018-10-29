@@ -35,7 +35,7 @@ struct ImageSaverParams
   std::string            basename; // leave empty to use frame number
   Mode                   mode              = Mode::Off;
   int8_t                 quality           = -1; // -1 for .png, [0,100] for .jpg quality
-  Vision::ImageCacheSize size              = Vision::ImageCacheSize::Full;
+  Vision::ImageCacheSize size              = Vision::ImageCacheSize::Half;
   float                  thumbnailScale    = 0.f; // in range [0,1], as fraction of size, 0 to disable
   float                  saveScale         = 1.f; // > 0, as fraction of size
   bool                   removeDistortion  = false;
@@ -48,7 +48,7 @@ struct ImageSaverParams
                             Mode                   saveMode,
                             int8_t                 quality,
                             const std::string&     basename         = "",
-                            Vision::ImageCacheSize size             = Vision::ImageCacheSize::Full,
+                            Vision::ImageCacheSize size             = Vision::ImageCacheSize::Half,
                             float                  thumbnailScale   = 0.f,
                             float                  saveScale        = 1.f,
                             bool                   removeDistortion = false,

@@ -1,40 +1,14 @@
 {
-  "InitialVisionModes" :
-  {
-    // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"           : true,
-    "DetectingFaces"             : false,
-    "DetectingPets"              : false,
-    "DetectingMotion"            : false,
-    "DetectingOverheadEdges"     : false,
-    "AutoExposure"               : true,
-    "WhiteBalance"               : true,
-    "EstimatingFacialExpression" : false,
-    "DetectingSmileAmount"       : false,
-    "DetectingGaze"              : false,
-    "DetectingBlinkAmount"       : false,
-    "DetectingLaserPoints"       : false,
-    "ComputingStatistics"        : false,
-    // "BuildingOverheadMap"        : false, // Disabled to save a VisionMode (and this is deprecated anyway). TODO: Re-enable
-    "DetectingVisualObstacles"   : false,
-    "RunningNeuralNet"           : false,
-    "DetectingIllumination"      : true
-  },
-
+  // VisionModes that need to be scheduled by default go here
+  // Basically things that are always running
   "InitialModeSchedules" :
-  {
-    // If a vision mode is not listed, it is scheduled to run every frame (if enabled)
+  {  
+    // If a vision mode is not listed, it is scheduled to never run (might still be enabled)
     // Specify either an array of bools indicating a specific schedule, or an integer
     // value to process every Nth frame
-    "DetectingPets"          : [true, false],
-    "DetectingOverheadEdges" : [false, true],
-    "AutoExposure"           : 5,  // NOTE: Should probably be no more frequent than every 5th frame
-    "WhiteBalance"           : 5,  // NOTE: Should probably be no more frequent than every 5th frame
-    "DetectingLaserPoints"   : 2,
-    "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
-    "RunningNeuralNet"       : 1, // Won't actually run every frame, but as frequently as possible (is asynchronous)
-    "SavingImages"           : 1,
-    "DetectingIllumination"  : 1
+    "DetectingMarkers" : 4, // Remove with VIC-6838 
+    "AutoExposure"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
+    "WhiteBalance"     : 5 // NOTE: Should probably be no more frequent than every 5th frame
   },
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)

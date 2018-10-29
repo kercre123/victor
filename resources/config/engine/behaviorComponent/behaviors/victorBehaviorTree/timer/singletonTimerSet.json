@@ -3,12 +3,6 @@
   "behaviorID" : "SingletonTimerSet",
 
   "associatedActiveFeature": "TimerSet",
-  
-  "respondToUserIntents": [
-    {
-      "type": "set_timer"
-    }
-  ],
 
   "getInAnimTrigger" : "TimerSetGetIn",
   "getOutAnimTrigger" : "TimerSetGetOut",

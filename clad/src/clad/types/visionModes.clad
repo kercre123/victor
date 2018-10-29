@@ -6,15 +6,14 @@ namespace Anki {
 namespace Vector {
 
   enum uint_32 VisionMode
-  {
-    Idle                   = 0x00,
-    
+  {    
     //
     // Full-blown vision modes
     //
-    DetectingMarkers,           // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
+    DetectingMarkers = 0x00,    // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
     DetectingFaces,
     DetectingMotion,
+    DetectingBrightColors,
     DetectingOverheadEdges,
     ComputingCalibration,
     AutoExposure,        
@@ -22,7 +21,7 @@ namespace Vector {
     ComputingStatistics,
     DetectingPets,
     DetectingLaserPoints,
-    //BuildingOverheadMap,      // Disabled to save a VisionMode (and this is deprecated anyway). TODO: Re-enable
+    BuildingOverheadMap,
     DetectingVisualObstacles,
     Benchmarking,
     SavingImages,

@@ -154,7 +154,7 @@ namespace Vector {
                                        completionUnion);
         
         // Retry callback should NOT modify things that would be reset by reset (ie action's state)
-        PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.CallingRetryCallback", "");
+        PRINT_CH_DEBUG("Actions", "RetryWrapperAction.CheckIfDone.CallingRetryCallback", "");
         AnimationTrigger animTrigger = AnimationTrigger::Count;
         bool shouldRetry = _retryCallback(robotCompletedAction, _retryCount, animTrigger);
         
@@ -168,11 +168,11 @@ namespace Vector {
         // and don't new the animation action
         if(animTrigger == AnimationTrigger::Count)
         {
-          PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.NoAnimation",
+          PRINT_CH_DEBUG("Actions", "RetryWrapperAction.CheckIfDone.NoAnimation",
                             "RetryCallback returned AnimationTrigger::Count so not playing animation");
           if(_retryCount++ >= _numRetries)
           {
-            PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone.MaxRetriesReached","");
+            PRINT_CH_INFO("Actions", "RetryWrapperAction.CheckIfDone.MaxRetriesReached","");
             return res;
           }
           // Reset the subaction and unlock the tracks locked by the subaction.
@@ -181,7 +181,7 @@ namespace Vector {
         }
         else
         {
-          PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.Animation",
+          PRINT_CH_DEBUG("Actions", "RetryWrapperAction.CheckIfDone.Animation",
                             "Resetting subaction and unlocking tracks");
           // Reset the subaction again, and unlock the tracks locked by the subaction.
           _subAction->Reset(true);
@@ -203,7 +203,7 @@ namespace Vector {
       ActionResult res = _animationAction->Update();
       if(res != ActionResult::RUNNING)
       {
-        PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.RetryAnimFinished", "");
+        PRINT_CH_DEBUG("Actions", "RetryWrapperAction.CheckIfDone.RetryAnimFinished", "");
         _animationAction->PrepForCompletion();
         _animationAction.reset();
         
@@ -211,7 +211,7 @@ namespace Vector {
         // this action ends when the animation does
         if(_retryCount++ >= _numRetries)
         {
-          PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone.MaxAnimRetriesReached","");
+          PRINT_CH_INFO("Actions", "RetryWrapperAction.CheckIfDone.MaxAnimRetriesReached","");
           return res;
         }
       }

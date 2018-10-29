@@ -19,7 +19,6 @@ def main():
 
     with anki_vector.Robot(args.serial) as robot:
         robot.say_text("hello", use_vector_voice=True)
-        time.sleep(1)  # Avoid overlapping messages
         robot.say_text("hello", use_vector_voice=False)
 
     print("------ end testing text-to-speech ------")

@@ -155,35 +155,26 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred, NodeSet& output)
+QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred)
 {
-  // search direction constants
-  static const EClockDirection clockDir = EClockDirection::CW;
-  static const std::array<EDirection, 4> cwDirs{{ EDirection::North, EDirection::East, EDirection::South, EDirection::West }};
+  NodeSet output;
 
   // find any node of typeToFill that satisfies pred(node, neighbor)
   std::deque<const QuadTreeNode*> unexpandedNodes;
-  FoldFunctorConst fillTypeFilter = [&] (const QuadTreeNode& node) {
-    // first check if node is typeToFill
-    if ( innerPred( node.GetData() ) ) {
-      QuadTreeNode::NodeCPtrVector neighbors;
-      neighbors.reserve( 1 << node.GetLevel() );
-
-      // check if this nodes has a neighbor of any typesToFillFrom
-      for(const EDirection candidateDir : cwDirs) {
-        neighbors.clear(); // AddSmallestNeighbors does not clear the output list itself
-        node.AddSmallestNeighbors(candidateDir, clockDir, neighbors);
-
-        for(const auto neighbor : neighbors) {
+  for (const auto& keyValuePair : _nodeSets ) {
+    for (const auto& node : keyValuePair.second ) {
+      // first check if node is typeToFill
+      if ( innerPred( node->GetData() ) ) {
+        // check if this nodes has a neighbor of any typesToFillFrom
+        for(const auto& neighbor : node->GetNeighbors()) {
           if( outerPred( neighbor->GetData() ) ) {
-            unexpandedNodes.push_back( &node );
-            return;
+            unexpandedNodes.emplace_back( node );
+            break;
           }
         }
       }
     }
-  };
-  ((const QuadTree*) _quadTree)->Fold(fillTypeFilter);
+  }
 
   // expand all nodes for fill
   while(!unexpandedNodes.empty()) {
@@ -193,22 +184,15 @@ void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const Nod
     output.insert(node);
 
     // get all of this nodes neighbors of the same type
-    QuadTreeNode::NodeCPtrVector neighbors;
-    neighbors.reserve( 1 << node->GetLevel() );
-
-    for(const EDirection candidateDir : cwDirs) {
-      neighbors.clear();
-      node->AddSmallestNeighbors(candidateDir, clockDir, neighbors);
-
-      // for any neighbor of the same type, if it has not already been expanded, add it the unexpanded list
-      for(const auto neighbor : neighbors) {
-        MemoryMapDataConstPtr neighborData = neighbor->GetData();
-        if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
-          unexpandedNodes.push_back( neighbor );
-        }
-      } // done adding neighbors for this side
-    } // finished all sides
+    for(const auto& neighbor : node->GetNeighbors()) {
+      MemoryMapDataConstPtr neighborData = neighbor->GetData();
+      if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
+        unexpandedNodes.push_back( neighbor );
+      }
+    }
   } // all nodes expanded
+  
+  return output;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -230,40 +214,15 @@ bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedTy
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data)
 {
-  ANKI_CPU_PROFILE("QuadTreeProcessor.FillBorder");
-
-  // should this timer be a member variable? It's normally desired to time all processors
-  // together, but beware when merging stats from different maps (always current is the only one processing)
-  static Vision::Profiler timer;
-  // timer.SetPrintChannelName("Unfiltered");
-  timer.SetPrintFrequency(5000);
-  timer.Tic("QuadTreeProcessor.FillBorder");
-
   // calculate nodes being flooded directly. Note that we are not going to cause filled nodes to flood forward
   // into others. A second call to FillBorder would be required for that (consider for local fills when we have them,
   // since they'll be significally faster).
-  
-  // The reason why we cache points instead of nodes is because adding a point can cause change and destruction of nodes,
-  // for example through automerges in parents whose children all become the new content. To prevent having to
-  // update an iterator from this::OnNodeX events, cache centers and apply. The result algorithm should be
-  // slightly slower, but much simpler to understand, debug and profile
-  std::vector<Point2f> floodedQuadCenters;
 
-  // grab nodes to fill and find their centers
-  NodeSet nodesToFill;
-  GetNodesToFill(innerPred, outerPred, nodesToFill);
-  for( const auto& node : nodesToFill ) {
-    floodedQuadCenters.emplace_back( node->GetCenter() );
-  }
-  
-  // add flooded centers to the tree (note this does not cause flood filling)
   bool changed = false;
-  MemoryMapDataPtr dataPtr = data->Clone();
-  for( const auto& center : floodedQuadCenters ) {
-    changed |= _quadTree->Insert(FastPolygon({center}), [&dataPtr] (auto _) { return dataPtr; });
+  for( const auto& node : GetNodesToFill(innerPred, outerPred) ) {
+    changed |= _quadTree->Transform( node->GetAddress(), [&data] (auto) { return data; } );
   }
-  
-  timer.Toc("QuadTreeProcessor.FillBorder");
+
   return changed;
 }
 

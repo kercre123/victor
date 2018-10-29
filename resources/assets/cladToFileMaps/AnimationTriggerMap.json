@@ -333,7 +333,7 @@
   },
   {
     "CladEvent" : "DanceBeatNoBeatDetected",
-    "AnimName": "ag_communication_cantdothat"
+    "AnimName": "ag_dancebeat_nobeatdetected"
   },
   {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
@@ -473,7 +473,7 @@
   },
   {
     "CladEvent": "ExploringLookAtHuman",
-    "AnimName": "ag_generic_look_stright_01"
+    "AnimName": "ag_referencing_reaction"
   },
   {
     "CladEvent": "ExploringQuickScan",
@@ -512,12 +512,12 @@
     "AnimName": "ag_pounceonmotionfail"
   },
   {
-    "CladEvent": "FetchCubeFrustrated",
-    "AnimName": "ag_reacttoblock_frustrated"
+    "CladEvent": "FetchCubeSetDown",
+    "AnimName": "ag_reacttoblock_dropsuccess"
   },
   {
     "CladEvent": "FetchCubeSuccess",
-    "AnimName": "ag_greeting_imhome"
+    "AnimName": "ag_knowledgegraph_success_01"
   },
   {
     "CladEvent": "FindCubeReactToCube",

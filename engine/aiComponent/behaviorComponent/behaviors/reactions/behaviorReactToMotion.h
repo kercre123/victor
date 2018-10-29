@@ -26,6 +26,8 @@ class BehaviorReactToMotion : public ICozmoBehavior
 {
 public: 
   virtual ~BehaviorReactToMotion();
+  
+  void DevAddFakeMotion();
 
 protected:
 

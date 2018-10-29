@@ -76,13 +76,12 @@ namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
 
-static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
-static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfCondition";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
+static const char* kDisplayIntentActivity            = "showActiveIntentFeedback";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
@@ -100,8 +99,74 @@ static const char* kAnonymousBehaviorName            = "behaviorName";
 
 static const char* kBehaviorDebugLabel               = "debugLabel";
 static const char* kTracksLockedWhileActivatedID     = "tracksLockedWhileActivated";
+  
+// Keys for loading in behavior modifiers
+static const char* kBehaviorModifiersMapKey              = "behaviorModifiers";
+static const char* kCubeConnectionRequirements           = "cubeConnectionRequirements";
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::set<std::string> BehaviorOperationModifiers::SetDefaultBehaviorOperationModifiers(const Json::Value& config, const std::string& debugLabel)
+{
+  const std::string debugStr = debugLabel + ".BehaviorOperationModifiers.SetDefaultFromJson";
+  std::set<std::string> newModifierDefaults;
+  // TODO(GB): Allow user to set vision mode operation modifiers via JSON as well.
+  visionModesForActivatableScope = std::make_unique<std::set<VisionModeRequest>>();
+  visionModesForActiveScope = std::make_unique<std::set<VisionModeRequest>>();
+  
+  for (const auto& entry : stringToModifiersFlagMap) {
+    if (illegalKeys.find(entry.first) != illegalKeys.end()) {
+      ANKI_VERIFY(!config.isMember(entry.first), (debugStr + ".IllegalKey").c_str(),
+                  "Key %s cannot be set via JSON, default remains set to %d",
+                  entry.first.c_str(), *(entry.second));
+      continue;
+    }
+    if (JsonTools::GetValueOptional(config, entry.first, *(entry.second))) {
+      newModifierDefaults.emplace(entry.first);
+    }
+  }
+  
+  if(config.isMember(kCubeConnectionRequirements)){
+    const std::string cubeConnectReqStr = config[kCubeConnectionRequirements].asString();
+    if (ANKI_VERIFY(CubeConnectionRequirementFromString(cubeConnectReqStr, cubeConnectionRequirements),
+                    (debugStr + ".InvalidCubeConnectionRequirement").c_str(),
+                    "Invalid type of cube connection requirement: %s",
+                    cubeConnectReqStr.c_str())) {
+      newModifierDefaults.emplace(kCubeConnectionRequirements);
+    }
+  }
+  return newModifierDefaults;
+}
+ 
+bool BehaviorOperationModifiers::ModifierFlagValueFromString(const std::string &str, bool &output) const
+{
+  auto it = stringToModifiersFlagMap.find(str);
+  if(it == stringToModifiersFlagMap.end()) {
+    return false;
+  }
+  
+  output = *(it->second);
+  return true;
+}
+
+bool BehaviorOperationModifiers::CubeConnectionRequirementFromString(const std::string &str, CubeConnectionRequirements &enumOutput) const
+{
+  static const std::unordered_map<std::string, CubeConnectionRequirements> stringToEnumMap = {
+    {"None", CubeConnectionRequirements::None},
+    {"OptionalLazy", CubeConnectionRequirements::OptionalLazy},
+    {"OptionalActive", CubeConnectionRequirements::OptionalActive},
+    {"RequiredLazy", CubeConnectionRequirements::RequiredLazy},
+    {"RequiredManaged", CubeConnectionRequirements::RequiredManaged}
+  };
+  
+  auto it = stringToEnumMap.find(str);
+  if(it == stringToEnumMap.end()) {
+    return false;
+  }
+  
+  enumOutput = it->second;
+  return true;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Json::Value ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID)
@@ -206,8 +271,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 , _intentToDeactivate( UserIntentTag::INVALID )
 , _respondToTriggerWord( false )
 , _emotionEventOnActivated("")
-, _requiredRecentDriveOffCharger_sec(-1.0f)
-, _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
 {
   if(!ReadFromJson(config)){
@@ -219,26 +282,12 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 {
-  // - - - - - - - - - -
-  // Got off charger timer
-  const Json::Value& requiredDriveOffChargerJson = config[kRequiredDriveOffChargerKey];
-  if (!requiredDriveOffChargerJson.isNull())
-  {
-    DEV_ASSERT_MSG(requiredDriveOffChargerJson.isNumeric(), "ICozmoBehavior.ReadFromJson", "Not a float: %s",
-                   kRequiredDriveOffChargerKey);
-    _requiredRecentDriveOffCharger_sec = requiredDriveOffChargerJson.asFloat();
-  }
-
-  // - - - - - - - - - -
-  // Required recent parent switch
-  const Json::Value& requiredSwitchToParentJson = config[kRequiredParentSwitchKey];
-  if (!requiredSwitchToParentJson.isNull()) {
-    DEV_ASSERT_MSG(requiredSwitchToParentJson.isNumeric(), "ICozmoBehavior.ReadFromJson", "Not a float: %s",
-                   kRequiredParentSwitchKey);
-    _requiredRecentSwitchToParent_sec = requiredSwitchToParentJson.asFloat();
-  }
-
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
+  
+  // Load any changes to the default values of behavior modifiers from the JSON config
+  if (config.isMember(kBehaviorModifiersMapKey)){
+    _operationModifiers.SetDefaultBehaviorOperationModifiers(config[kBehaviorModifiersMapKey], GetDebugLabel());
+  }
 
   // Add WantsToBeActivated conditions
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
@@ -273,6 +322,8 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
       _wantsToBeActivatedConditions.push_back( cond );
     }
   }
+
+  JsonTools::GetValueOptional(config, kDisplayIntentActivity, _displayResponseToUserIntent);
 
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
 
@@ -388,13 +439,13 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
   static const char* baseKeys[] = {
     kBehaviorClassKey,
     kBehaviorIDConfigKey,
-    kRequiredDriveOffChargerKey,
-    kRequiredParentSwitchKey,
     kAlwaysStreamlineKey,
+    kBehaviorModifiersMapKey,
     kWantsToBeActivatedCondConfigKey,
     kWantsToCancelSelfConfigKey,
     kRespondToUserIntentsKey,
     kRespondToTriggerWordKey,
+    kDisplayIntentActivity,
     kEmotionEventOnActivatedKey,
     kResetTimersKey,
     kAnonymousBehaviorMapKey,
@@ -550,7 +601,6 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
 {
   // N.B. this can't happen in Init because some behaviors actually rely on other behaviors having been
   // initialized to properly handler GetBehaviorOperationModifiers
-
   GetBehaviorOperationModifiers(_operationModifiers);
 }
 
@@ -1020,37 +1070,6 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
     return false;
   }
 
-  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-  // if there's a timer requiring a recent drive off the charger, check with whiteboard
-  const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
-  if ( requiresRecentDriveOff )
-  {
-    const float lastDriveOff = GetAIComp<AIWhiteboard>().GetTimeAtWhichRobotGotOffCharger();
-    const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
-    if ( !hasDrivenOff ) {
-      // never driven off the charger, can't run
-      return false;
-    }
-
-    const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
-    if ( !isRecent ) {
-      // driven off, but not recently enough
-      return false;
-    }
-  }
-
-  // if there's a timer requiring a recent parent switch
-  const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
-  if ( requiresRecentParentSwitch ) {
-    const float lastTime = 0.f;// robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
-    const float changedAgoSecs = curTime - lastTime;
-    const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
-    if ( !isSwitchRecent ) {
-      return false;
-    }
-  }
-
   //check if the behavior runs while in the air
   if(GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads
       && !_operationModifiers.wantsToBeActivatedWhenOffTreads){
@@ -1192,7 +1211,7 @@ void ICozmoBehavior::UpdateInternal()
     // Check whether we should cancel the behavior if control is no longer delegated
     if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
       shouldCancelSelf = true;
-      PRINT_NAMED_INFO((baseDebugStr + "ControlNotDelegated").c_str(),
+      PRINT_CH_INFO("Behaviors", (baseDebugStr + "ControlNotDelegated").c_str(),
                        "Behavior %s always delegates, so cancel self",
                        GetDebugLabel().c_str());
     }
@@ -1201,7 +1220,7 @@ void ICozmoBehavior::UpdateInternal()
     for(auto& condition: _wantsToCancelSelfConditions){
       if(condition->AreConditionsMet(GetBEI())){
         shouldCancelSelf = true;
-        PRINT_NAMED_INFO((baseDebugStr + "WantsToCancelSelfCondition").c_str(),
+        PRINT_CH_INFO("Behaviors", (baseDebugStr + "WantsToCancelSelfCondition").c_str(),
                          "Condition %s wants behavior %s to cancel itself",
                          condition->GetDebugLabel().c_str(),
                          GetDebugLabel().c_str());
@@ -1579,7 +1598,7 @@ bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
     _customLightObjects.push_back(objectID);
     return true;
   }else{
-    PRINT_NAMED_INFO("ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
+    PRINT_CH_INFO("Behaviors", "ICozmoBehavior.SmartSetCustomLightPattern.LightsAlreadySet",
                      "A custom light pattern has already been set on object %d", objectID.GetValue());
     return false;
   }
@@ -1599,7 +1618,7 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
     _customLightObjects.erase(objectIter);
     return true;
   }else{
-    PRINT_NAMED_INFO("ICozmoBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
+    PRINT_CH_INFO("Behaviors", "ICozmoBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
                         "No custom light pattern is set for object %d", objectID.GetValue());
     return false;
   }
@@ -1608,12 +1627,18 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 {
+  return SmartActivateUserIntent(tag, _displayResponseToUserIntent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag, bool showActiveIntentFeedback)
+{
   auto& uic = GetBehaviorComp<UserIntentComponent>();
 
   // track the tag so that we can automatically deactivate it when this behavior deactivates
   _intentToDeactivate = tag;
 
-  return uic.ActivateUserIntent(tag, GetDebugLabel());
+  return uic.ActivateUserIntent(tag, GetDebugLabel(), showActiveIntentFeedback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -20,6 +20,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/unitTestKey.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
+#include "test/engine/callWithoutError.h"
 #include "util/fileUtils/fileUtils.h"
 #include "gtest/gtest.h"
 
@@ -60,7 +61,6 @@ bool LoadBehaviors(const std::string& path, BehaviorIDJsonMap& behaviors)
 
 TEST(BehaviorDirectoryStructure, Run)
 {
-  Anki::Util::_errG = false;
   const std::vector<std::string> directories = {
     "config/engine/behaviorComponent/behaviors/victorBehaviorTree",
     "config/engine/behaviorComponent/behaviors/inProgress",
@@ -130,18 +130,21 @@ TEST(BehaviorDirectoryStructure, Run)
   
   // manually add them so we can do checks
   for( const auto& behaviorIDJsonPair : behaviorData ) {
-    const auto& behaviorID = behaviorIDJsonPair.first;
-    const auto& behaviorJson = behaviorIDJsonPair.second;
-    EXPECT_TRUE( !behaviorJson.empty() );
-    const bool createdOK = tbf.GetBehaviorContainer().CreateAndStoreBehavior(behaviorJson);
-    EXPECT_TRUE( createdOK ) << BehaviorTypesWrapper::BehaviorIDToString(behaviorID) << " might reference a missing behavior";
-    EXPECT_FALSE( Anki::Util::_errG );
+    const bool hadErr = CallWithoutError([&](){
+      const auto& behaviorID = behaviorIDJsonPair.first;
+      const auto& behaviorJson = behaviorIDJsonPair.second;
+      EXPECT_TRUE( !behaviorJson.empty() );
+      const bool createdOK = tbf.GetBehaviorContainer().CreateAndStoreBehavior(behaviorJson);
+      EXPECT_TRUE( createdOK ) << BehaviorTypesWrapper::BehaviorIDToString(behaviorID) << " might reference a missing behavior";
+    });
+    EXPECT_FALSE( hadErr );
   }
   
-  // make sure they can all be init'd (this is where anonymous behaviors get loaded)
-  tbf.GetBehaviorContainer().Init( tbf.GetBehaviorExternalInterface() );
-  
-  EXPECT_FALSE( Anki::Util::_errG );
+  const bool hadErr = CallWithoutError([&](){
+    // make sure they can all be init'd (this is where anonymous behaviors get loaded)
+    tbf.GetBehaviorContainer().Init( tbf.GetBehaviorExternalInterface() );
+  });
+  EXPECT_FALSE( hadErr );
   
   // (Part 2) now get a list of behavior classes associated with this directory. most behaviors can be
   // obtained from the BehaviorContainer, but we need to walk the anonymous behavior map pointers

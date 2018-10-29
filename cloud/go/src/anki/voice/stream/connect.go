@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gwatts/rootcerts"
@@ -25,10 +24,8 @@ const (
 
 func (strm *Streamer) connect() error {
 	if strm.opts.checkOpts != nil {
-		// for connection check, first try the OTA CDN with no tls
-		otaBase := strings.Split(config.Env.OTA, ":")[0]
-		// construct a HTTP URL from OTA address (something like `ota-cdn.anki.com:443`)
-		otaURL := "http://" + otaBase
+		// for connection check, first try the connection check URL with no tls
+		otaURL := "http://" + config.Env.Check
 		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
 			log.Println("Error creating CDN server http head request:", err)
 			strm.receiver.OnError(cloud.ErrorType_Connectivity, err)
@@ -42,7 +39,7 @@ func (strm *Streamer) connect() error {
 			log.Println("Successfully dialed CDN")
 		}
 
-		// for connection check, next try a simple https connection to our OTA CDN
+		// for connection check, next try a simple https connection to our connection check endpoint
 		httpsClient := &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -50,8 +47,8 @@ func (strm *Streamer) connect() error {
 				},
 			},
 		}
-		// construct a HTTPS URL from OTA address (something like `ota-cdn.anki.com:443`)
-		otaURL = "https://" + otaBase
+
+		otaURL = "https://" + config.Env.Check
 		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
 			log.Println("Error creating CDN server https head request:", err)
 			strm.receiver.OnError(cloud.ErrorType_TLS, err)

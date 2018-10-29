@@ -31,6 +31,7 @@ namespace {
   const char* kPreListeningAnim_key  = "preListeningAnim";
   const char* kListeningAnim_key     = "listeningAnim";
   const char* kPostListeningAnim_key = "postListeningAnim";
+  const char* kNoBeatAnim_key        = "noBeatAnim";
   const char* kMinListeningTime_key  = "minListeningTime_sec";
   const char* kMaxListeningTime_key  = "maxListeningTime_sec";
   const char* kCancelSelfIfBeatLost_key = "cancelSelfIfBeatLost";
@@ -42,10 +43,12 @@ BehaviorListenForBeats::InstanceConfig::InstanceConfig(const Json::Value& config
   preListeningAnim   = AnimationTrigger::Count;
   listeningAnim      = AnimationTrigger::Count;
   postListeningAnim  = AnimationTrigger::Count;
+  noBeatAnim         = AnimationTrigger::Count;
   
   JsonTools::GetCladEnumFromJSON(config, kPreListeningAnim_key,  preListeningAnim,  debugName);
   JsonTools::GetCladEnumFromJSON(config, kListeningAnim_key,     listeningAnim,     debugName);
   JsonTools::GetCladEnumFromJSON(config, kPostListeningAnim_key, postListeningAnim, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kNoBeatAnim_key,        noBeatAnim,        debugName);
   
   minListeningTime_sec = JsonTools::ParseFloat(config, kMinListeningTime_key, debugName);
   maxListeningTime_sec = JsonTools::ParseFloat(config, kMaxListeningTime_key, debugName);
@@ -92,6 +95,7 @@ void BehaviorListenForBeats::GetBehaviorJsonKeys(std::set<const char*>& expected
     kPreListeningAnim_key,
     kListeningAnim_key,
     kPostListeningAnim_key,
+    kNoBeatAnim_key,
     kMinListeningTime_key,
     kMaxListeningTime_key,
     kCancelSelfIfBeatLost_key
@@ -130,25 +134,26 @@ void BehaviorListenForBeats::BehaviorUpdate()
     return;
   }
   
-  bool shouldEnd = false;
+  // Play this animation and exit if it's anything other than Count
+  AnimationTrigger exitWithAnim = AnimationTrigger::Count;
   
   const auto& beatDetector = GetBEI().GetBeatDetectorComponent();
   if (listeningTime_sec > _iConfig.maxListeningTime_sec) {
     PRINT_NAMED_WARNING("BehaviorListenForBeats.BehaviorUpdate.Timeout",
                         "No beat detected after maximum listening period of %.2f seconds",
                         _iConfig.maxListeningTime_sec);
-    shouldEnd = true;
+    exitWithAnim = _iConfig.noBeatAnim;
   } else if (beatDetector.IsBeatDetected()) {
     // A legit beat is detected - play the post listening anim and exit
-    shouldEnd = true;
+    exitWithAnim = _iConfig.postListeningAnim;
   } else if (!beatDetector.IsPossibleBeatDetected() && _iConfig.cancelSelfIfBeatLost) {
     PRINT_NAMED_WARNING("BehaviorListenForBeats.BehaviorUpdate.NoMoreBeat",
                         "Cancelling since beat detector says there is no possible beat detected");
-    shouldEnd = true;
+    exitWithAnim = _iConfig.noBeatAnim;
   }
   
-  if (shouldEnd) {
-    DelegateNow(new TriggerAnimationAction(_iConfig.postListeningAnim));
+  if (exitWithAnim != AnimationTrigger::Count) {
+    DelegateNow(new TriggerAnimationAction(exitWithAnim));
     _dVars.listeningStartTime_sec = -1.f;
   }
 }
@@ -157,7 +162,7 @@ void BehaviorListenForBeats::BehaviorUpdate()
 void BehaviorListenForBeats::TransitionToListening()
 {
   _dVars.listeningStartTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  DelegateIfInControl(new ReselectingLoopAnimationAction(_iConfig.listeningAnim, 0)); // loop forever
+  DelegateIfInControl(new ReselectingLoopAnimationAction(_iConfig.listeningAnim));
 }
   
 

@@ -212,7 +212,7 @@ void BehaviorPlaybackMessage::PlaybackNextMessage()
     PRINT_DEBUG( "Playing message id %d", (int)_dVars.activeMessageId );
 
     // we assume any get-in animation has already been played, so we simply jump right into the looping anim
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::MessagingMessageLoop, 0 ) );
+    DelegateIfInControl( new ReselectingLoopAnimationAction( AnimationTrigger::MessagingMessageLoop ) );
   }
 }
 

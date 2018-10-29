@@ -24,9 +24,17 @@ variable "app_image" {
   default = "649949066229.dkr.ecr.us-west-2.amazonaws.com/load_test:latest"
 }
 
+variable "logging_role" {
+  default = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-development"
+}
 
 // Note: determines if a new account is created as part of the test action
 variable "enable_account_creation" {
+  default = "true"
+}
+
+// Note: determines if the containers are remote controlled via Redis
+variable "enable_distributed_control" {
   default = "true"
 }
 

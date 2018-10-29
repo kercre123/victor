@@ -85,6 +85,7 @@ enum : uint16_t {
 
   // DO NOT CHANGE any of the codes in this section
   // They are hardcoded into various system level programs
+  BODY_COMMS_FAILURE    = 802,
   DFU_FAILED            = 801,
   NO_ANIM_PROCESS       = 800,
 

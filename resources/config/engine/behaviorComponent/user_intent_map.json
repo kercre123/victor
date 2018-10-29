@@ -49,7 +49,7 @@
       "user_intent": "imperative_scold"
     },
     {
-      "cloud_intent": "intent_imperative_iloveyou",
+      "cloud_intent": "intent_imperative_love",
       "user_intent": "imperative_love"
     },
     {
@@ -199,6 +199,12 @@
       "user_intent": "imperative_lookatme",
       "cloud_intent": "intent_imperative_lookatme",
       "app_intent": "intent_imperative_lookatme"
+    },
+    {
+      "user_intent": "imperative_fetchcube",
+      "cloud_intent": "intent_imperative_fetchcube",
+      "app_intent": "intent_imperative_fetchcube",
+      "feature_gate": "FetchCube"
     },
     {
       "user_intent": "imperative_findcube",

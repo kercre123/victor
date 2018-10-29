@@ -210,6 +210,10 @@ for feature in ${FEATURES} ; do
   esac
 done
 
+# until the CTE build works again (BI-1614), extract precompiled libs and headers for now
+# TODO: remove this and instead use DEPS
+tar xf TEMP-avs-device-sdk.tar.gz -C EXTERNALS/coretech_external/build/
+
 #
 # Get short commit sha
 #

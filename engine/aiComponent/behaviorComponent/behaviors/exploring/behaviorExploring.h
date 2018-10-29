@@ -51,11 +51,13 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
+  virtual bool CanBeGentlyInterruptedNow() const override;
 
 private:
   
   void TransitionToDriving();
-  void TransitionToArrived();
+  void TransitionToArrived(const bool forceReferencing = false);
+  void TransitionToHumanSearch();
   
   // helper to decide state once a delegated behavior finishes
   void RegainedControl();
@@ -73,6 +75,9 @@ private:
   
   // euclidean dist to goal[idx], which must exist
   float CalcDistToCachedGoal(int idx) const;
+
+  // tell system it's ok to interrupt this tick (or next tick)
+  void SetGentleInterruptionOKForNow();
   
   // object helpers
   
@@ -110,6 +115,7 @@ private:
     Invalid=0,
     Driving,    // driving to point
     Arrived,    // arrived at sample point, looking around
+    SearchForHuman,
     Complete,
   };
 
@@ -125,6 +131,7 @@ private:
     ICozmoBehaviorPtr confirmCubeBehavior;
     
     ICozmoBehaviorPtr referenceHumanBehavior;
+    ICozmoBehaviorPtr searchForHumanBehavior;
     
     std::unique_ptr<PathMotionProfile> customMotionProfile;
     
@@ -151,6 +158,11 @@ private:
     std::string endReason; // for DAS
     
     size_t devWarnIfNotInterruptedByTick;
+
+    float lastSearchForFaceTime_s;
+    float timeDeactivated_s;
+
+    size_t gentleInterruptionOKUntilTick;
   };
 
   InstanceConfig _iConfig;

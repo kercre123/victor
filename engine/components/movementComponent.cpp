@@ -37,7 +37,6 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
-#include "util/helpers/boundedWhile.h"
 
 
 #define LOG_CHANNEL    "Movement"
@@ -1011,9 +1010,8 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
 void MovementComponent::ApplyUpdatesForStreamTime(const TimeStamp_t relativeStreamTime_ms, const bool shouldClearUnusedLocks)
 {
   if(!_delayedTracksToLock.empty()){
-    const auto upperBound = _delayedTracksToLock.size() + 1;
     auto delayedIter = _delayedTracksToLock.begin();
-    BOUNDED_WHILE(upperBound, delayedIter != _delayedTracksToLock.end()){
+    while(delayedIter != _delayedTracksToLock.end()){
       if(delayedIter->first <= relativeStreamTime_ms){
         LockTracks(delayedIter->second.tracksToLock, delayedIter->second.who, delayedIter->second.who);
         delayedIter = _delayedTracksToLock.erase(delayedIter);
@@ -1025,9 +1023,8 @@ void MovementComponent::ApplyUpdatesForStreamTime(const TimeStamp_t relativeStre
 
 
   if(!_delayedTracksToUnlock.empty()){
-    const auto upperBound = _delayedTracksToUnlock.size() + 1;
     auto delayedIter = _delayedTracksToUnlock.begin();
-    BOUNDED_WHILE(upperBound, delayedIter != _delayedTracksToUnlock.end()){
+    while(delayedIter != _delayedTracksToUnlock.end()){
       if(delayedIter->first <= relativeStreamTime_ms){
         UnlockTracks(delayedIter->second.tracksToLock, delayedIter->second.who);
         delayedIter = _delayedTracksToUnlock.erase(delayedIter);

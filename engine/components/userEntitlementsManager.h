@@ -67,7 +67,8 @@ public:
   bool DoesUserEntitlementUpdateCloudImmediately(const external_interface::UserEntitlement key) const;
 
   bool UpdateUserEntitlementsJdoc(const bool saveToCloudImmediately,
-                                  const bool setCloudDirtyIfNotImmediate);
+                                  const bool setCloudDirtyIfNotImmediate,
+                                  const bool sendJdocsChangedMessage = false);
 
 private:
 

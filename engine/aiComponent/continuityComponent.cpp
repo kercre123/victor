@@ -15,6 +15,9 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/actions/animActions.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
@@ -103,6 +106,14 @@ void ContinuityComponent::PlayEmergencyGetOut(AnimationTrigger anim)
   {
     PRINT_NAMED_INFO("ContinuityComponent.PlayEmergencyGetOut.DisplayingInfoFace",
                      "Not playing emergency get out %s due to info face being displayed",
+                     EnumToString(anim));
+    return;
+  }
+
+  BehaviorComponent& bComp = _robot.GetAIComponent().GetComponent<BehaviorComponent>();
+  if( bComp.GetComponent<UserIntentComponent>().WaitingForTriggerWordGetInToFinish() ) {
+    PRINT_NAMED_INFO("ContinuityComponent.PlayEmergencyGetOut.WaitingForTriggerWordGetInToFinish",
+                     "Not playing emergency get out %s due to trigger word get in anim playing",
                      EnumToString(anim));
     return;
   }

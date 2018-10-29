@@ -22,11 +22,15 @@
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/vision/visionModeSchedule.h"
+#include "engine/cozmoContext.h"
+#include "engine/robot.h"
 #include "engine/robotComponents_fwd.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 
 using namespace Anki;
 using namespace Anki::Vector;
+
+extern CozmoContext* cozmoContext;
 
 namespace {
 
@@ -110,6 +114,12 @@ TEST(VisionScheduleMediator, Interleaving)
   VisionScheduleMediator vsm;
   vsm.Init(config);
   std::set<VisionMode> enabledModes;
+  
+  // vision component needs access to vision system to not complain, so needs Initing
+  Robot robot(0, cozmoContext);
+  DependencyManagedEntity<RobotComponentID> dependencies;
+  dependencies.AddDependentComponent(RobotComponentID::CozmoContextWrapper, robot.GetComponentPtr<ContextWrapper>(), false);
+  visionComponent.InitDependent( &robot, dependencies);
 
   TestSubscriber lowMarkerSubscriber(&vsm, { { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low } });
   TestSubscriber medMarkerSubscriber(&vsm, { { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Med } });
@@ -223,10 +233,4 @@ TEST(VisionScheduleMediator, Interleaving)
   lowMotionSubscriber.Unsubscribe();
   vsm.UpdateVisionSchedule(visionComponent, nullptr);
   scheduleList = vsm.GenerateBalancedSchedule(visionComponent);
-
-  // Verify default modes are still scheduled after unsubscribing
-  EXPECT_TRUE(scheduleList.size() == 1);
-  EXPECT_TRUE(scheduleList.front().first == VisionMode::DetectingMarkers);
-  EXPECT_TRUE(scheduleList.front().second._schedule == std::vector<bool>({true, false, false, false}));
-
 }

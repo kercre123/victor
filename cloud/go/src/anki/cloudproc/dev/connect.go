@@ -54,7 +54,7 @@ func connectRoutine() {
 			dest.stamp = ts
 			ctx, cancel := context.WithTimeout(context.Background(), connInterval)
 			// construct a HTTP URL from OTA address (something like `ota-cdn.anki.com:443`)
-			otaURL := "http://" + strings.Split(config.Env.OTA, ":")[0]
+			otaURL := "http://" + config.Env.Check
 			if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
 				dest.ms = -1
 				dest.err = err

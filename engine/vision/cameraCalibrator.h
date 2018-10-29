@@ -29,13 +29,11 @@
 namespace Anki {
 namespace Vector {
  
-class VisionSystem;
- 
 class CameraCalibrator
 {
 public:
   
-  CameraCalibrator(VisionSystem& visionSystem);
+  CameraCalibrator();
   ~CameraCalibrator();
   
   // Enum of various supported calibration targets
@@ -98,8 +96,6 @@ private:
                                              std::set<Vision::MarkerType>& markersNeededToBeSeen);
   void GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords,
                                                    std::set<Vision::MarkerType>& markersNeededToBeSeen);
-
-  VisionSystem& _visionSystem;
 
   std::vector<CalibImage> _calibImages;
   std::vector<Pose3d>     _calibPoses;

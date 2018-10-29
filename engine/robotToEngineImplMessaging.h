@@ -10,13 +10,13 @@
 #define __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "coretech/vision/engine/image.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
-
 
 #include <fstream>
 #include <memory.h>
@@ -26,7 +26,9 @@ namespace Vector {
 
 class Robot;
   
-class RobotToEngineImplMessaging : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable, public Util::SignalHolder
+class RobotToEngineImplMessaging : public IDependencyManagedComponent<RobotComponentID>,
+                                   private Util::noncopyable,
+                                   public Util::SignalHolder
 {
 public:
   RobotToEngineImplMessaging();
