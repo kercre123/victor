@@ -19,7 +19,7 @@
 #include "proto/external_interface/settings.pb.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/actions/animActions.h"
-#include "engine/actions/compoundActions.h"
+//#include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
 
@@ -39,6 +39,11 @@ namespace {
                                                             {"high", VolumeLevel::HIGH},
                                                             {"maximum", VolumeLevel::MAX},
                                                             {"max", VolumeLevel::MAX}};
+  const std::map<VolumeLevel, AnimationTrigger> volumeLevelAnimMap {{VolumeLevel::MIN, AnimationTrigger::VolumeLevel1},
+                                                                    {VolumeLevel::LOW, AnimationTrigger::VolumeLevel2},
+                                                                    {VolumeLevel::MED, AnimationTrigger::VolumeLevel3},
+                                                                    {VolumeLevel::HIGH, AnimationTrigger::VolumeLevel4},
+                                                                    {VolumeLevel::MAX, AnimationTrigger::VolumeLevel5}};
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,12 +153,9 @@ void BehaviorVolume::OnBehaviorActivated()
               "Read volume from settings: %u", vol);
 
   // delegate to play an animation (sequence)
-  CompoundActionSequential* animationSequence = new CompoundActionSequential();
-  animationSequence->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::EyeColorGetIn ), true );
-  animationSequence->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::EyeColorSwitch ), true );
-  animationSequence->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::EyeColorGetOut ), true );
-
-  DelegateIfInControl( animationSequence );
+  AnimationTrigger animTrigger = volumeLevelAnimMap.at(desiredVolume);
+  TriggerLiftSafeAnimationAction* animation = new TriggerLiftSafeAnimationAction(animTrigger);
+  DelegateIfInControl(animation);
                      
 }
 
@@ -216,11 +218,8 @@ bool BehaviorVolume::setVolume(VolumeLevel desiredVolumeEnum)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-VolumeLevel BehaviorVolume::computeDesiredVolumeFromLevelIntent(UserIntentPtr intentData) // TODO: more specific type
+VolumeLevel BehaviorVolume::computeDesiredVolumeFromLevelIntent(UserIntentPtr intentData)
 {
-  LOG_WARNING("BehaviorVolume.computeDesiredVolumeFromLevelIntent.volumelevel",
-              "In volumelevel case");
-
   const std::string levelRequest = intentData->intent.Get_imperative_volumelevel().volume_level;
   VolumeLevel desiredVol;
   try {
