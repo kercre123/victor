@@ -19,6 +19,7 @@ type Accessor interface {
 
 type accessor struct {
 	identityProvider identity.Provider
+	stsCache         stsCredentialsCache
 	handler          RequestHandler
 }
 
@@ -36,7 +37,7 @@ func (a accessor) Credentials() (gc.PerRPCCredentials, error) {
 }
 
 func (a accessor) GetStsCredentials() (*ac.Credentials, error) {
-	return getStsCredentials(a)
+	return a.stsCache.getStsCredentials(a)
 }
 
 func (a accessor) UserID() string {
