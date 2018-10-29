@@ -13,8 +13,99 @@
 #include "util/helpers/includeGTest.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/maybe.h"
+#include "util/helpers/algebraicDataType.h"
 #include "util/math/math.h"
 
+
+TEST(TestMaybe, Variant)
+{
+  using namespace Anki::Util;
+
+  struct Just {
+    bool IsJust() { return true; }
+  };
+
+  struct Nothing {
+    bool IsJust() { return false; }
+  };
+
+  using Maybe = SumType<Just, Nothing>;
+  Maybe x = Just();
+  
+  Nothing nada;
+
+  x.SetTo( nada );
+  bool test = x.Match(
+    [] (Nothing n) { return n.IsJust(); },
+    [] (Just n)    { return n.IsJust(); }
+  );
+
+
+  EXPECT_TRUE(!test);
+
+  x.SetTo( Just() );
+  test = x.Match(
+    [] (auto m) { return m.IsJust(); } 
+  );
+
+  EXPECT_TRUE(test);
+
+  // incomplete match! Will not compile.
+  // x.Match( 
+  //   [] (Nothing n) { return n.IsJust(); }
+  // );
+
+  // duplicate matches! Will not compile.
+  // x.Match(
+  //   [] (Nothing n) { return n.IsJust(); },
+  //   [] (Nothing n) { return !n.IsJust(); },
+  //   [] (Just n)    { return n.IsJust(); }
+  // );
+
+  using RecordTypes = SumType<int, std::string>;
+  RecordTypes records(5);
+
+  records.SetTo(5); 
+  records.SetTo(std::string("Michael")); 
+
+  struct Empty;
+  struct Leaf;
+  struct Node;
+  using Tree = SumType<Leaf, Node, Empty>;
+
+  struct Empty {};
+  struct Leaf  { int val; };
+  struct Node  { Tree left; Tree right; };
+
+  Tree newTree = Empty{};
+
+  std::function<Tree(Tree&, int)> insert;
+  insert = [&] (Tree& t, int v) { 
+    return t.Match(
+      [&] (Empty x) -> Tree { return Leaf{v}; },
+      [&] (Leaf  x) -> Tree { return (v < x.val) ? Node{Leaf{v}, x} : Node{x, Leaf{v}}; },
+      [&] (Node  x) -> Node { return Node{insert(x.left, v), x.right}; }
+    );
+  };
+
+  std::function<int(Tree&)> size;
+  size = [&] (Tree& t) { 
+    return t.Match(
+      [&] (Empty x) { return 0; },
+      [&] (Leaf  x) { return 1; },
+      [&] (Node  x) { return size(x.left) + size(x.right); }
+    );
+  };
+
+
+  EXPECT_EQ(0, size(newTree));
+
+  newTree = insert(newTree, 2);
+  newTree = insert(newTree, 6);
+  newTree = insert(newTree, 3);
+
+  EXPECT_EQ(3, size(newTree)) << "failed to count nested tree";
+}
 
 TEST(TestMaybe, NothingFMap)
 {

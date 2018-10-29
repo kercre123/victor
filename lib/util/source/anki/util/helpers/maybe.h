@@ -157,11 +157,6 @@ public:
     static_assert(IsMaybe, "Attempted to Bind a function that does not return a Maybe type. Did you mean FMap (infix `*=`)?"); 
   }
 
-  // template <typename Func, typename... Ts, typename RT = Maybe< TypeOperators::DerefResult<Func&(T&)> >>
-  // RT operator->*(LazyUnaryFunctor<T, Func, Ts...>&& f) { 
-  //   return (_valid) ? RT::Just( std::forward<LazyUnaryFunctor<T, Func, Ts...>>(f)(*_data) ) : RT::Nothing(); 
-  // }
-
   template <typename Func, typename RT = Maybe< TypeOperators::DerefResult<Func&(T&)> >>
   RT operator->*(Func&& f) { 
     return (_valid) ? RT::Just( std::forward<Func>(f)(*_data) ) : RT::Nothing(); 
