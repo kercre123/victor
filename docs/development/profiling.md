@@ -244,7 +244,7 @@ The following are arguments to `app_profiler.py`:
 |-np       |--native_program       |   |Profile a native program.
 |-o        |--perf_data_path       |   |The path to store profiling data.
 |          |--profile_from_launch  |X  |Profile an activity from initial launch. It should be used with -p, -a, and --arch options.
-|-r        |--record_options       |   |Set options for `simpleperf record` command. See also [annotated-profiler-events.md](annotated-profiler-events.md).
+|-r        |--record_options       |   |Set options for `simpleperf record` command.
 |-t        |--test                 |X  |When profiling an Android app, start an instrumentation test before profiling. It restarts the app if the app is already running.
 
 ## Anki Profiling
