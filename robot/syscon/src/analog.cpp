@@ -10,9 +10,11 @@
 #include "vectors.h"
 #include "flash.h"
 
-#define ADC_UNSCALED(v) ((uint16_t)((v) * (2048.0f / 2.8f)))
+#define FIXED_SCALE           2048
+#define ADC_SCALE             2048
+#define ADC_UNSCALED(v)       ((uint16_t)((v) * (ADC_SCALE / 2.8f)))
 #define ADC_WINDOW(low, high) ((((high) & 0xFFF) << 16) | ((low) & 0xFFF))
-#define FIXED_VOLTS(v) ((int32_t)((v) * 0x1000))
+#define FIXED_VOLTS(v)        ((int32_t)((v) * FIXED_SCALE))
 typedef uint32_t Voltage;
 
 static const int SELECTED_CHANNELS = 0
@@ -138,9 +140,9 @@ void Analog::init(void) {
 
   allow_power = true;
   
-  CAL_OFFSET  = *VREFINT_CAL_ADDR * FIXED_VOLTS(3.3f) / 2048;
-  TEMP30_CAL  =  *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
-  TEMP110_CAL = *TEMP110_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / 2048;
+  CAL_OFFSET  = *VREFINT_CAL_ADDR * FIXED_VOLTS(3.3f) / ADC_SCALE;
+  TEMP30_CAL  =  *TEMP30_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / ADC_SCALE;
+  TEMP110_CAL = *TEMP110_CAL_ADDR * FIXED_VOLTS(3.3f / 2.8f) / ADC_SCALE;
 
   NVIC_DisableIRQ(ADC1_IRQn);
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
@@ -251,7 +253,8 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 
 static bool handleTemperature() {
   // Temperature logic
-  int32_t temp_now = (AS_VOLTS(ADC_TEMP) - TEMP30_CAL) / (TEMP110_CAL - TEMP30_CAL) + 30;
+  int32_t sample = AS_VOLTS(ADC_TEMP);
+  int32_t temp_now = (TEMP30_CAL - sample) * (110 - 30) / (TEMP30_CAL - TEMP110_CAL) + 30;
 
   // We are running way too hot, have a bowl of boot loops.
   if (temp_now >= 70) {
