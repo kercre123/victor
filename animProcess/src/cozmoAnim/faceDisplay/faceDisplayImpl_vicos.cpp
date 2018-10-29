@@ -33,18 +33,18 @@ namespace Vector {
 
   FaceDisplayImpl::~FaceDisplayImpl()
   {
-    FaceClear();
-    lcd_shutdown();
+    //FaceClear();
+    //lcd_shutdown();
   }
   
   void FaceDisplayImpl::FaceClear()
   {
-    lcd_clear_screen();
+    //lcd_clear_screen();
   }
   
   void FaceDisplayImpl::FaceDraw(const u16* frame)
   {
-    lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
+    //lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
   }
   
   void FaceDisplayImpl::FacePrintf(const char* format, ...)

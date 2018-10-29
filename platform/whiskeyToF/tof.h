@@ -48,7 +48,7 @@ public:
 private:
   
   ToFSensor();
-
+  
   static ToFSensor* _instance;
 };
   
