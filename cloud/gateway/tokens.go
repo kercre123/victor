@@ -15,6 +15,7 @@ import (
 	cloud_clad "clad/cloud"
 
 	"github.com/anki/sai-token-service/client/token"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -47,11 +48,30 @@ type ClientTokenManager struct {
 	recentTokenIndex  int                `json:"-"`
 	lastUpdatedTokens time.Time          `json:"-"`
 	forceClearFile    bool               `json:"-"`
+	limiter           *MultiLimiter      `json:"-"`
 }
 
 func (ctm *ClientTokenManager) Init() error {
 	ctm.forceClearFile = false
 	ctm.lastUpdatedTokens = time.Now().Add(-24 * time.Hour) // older than our startup time
+	// Limit the updates of the AppTokens with the following logic:
+	// - At the maximum, allow 1 update per minute
+	// - After 3 requests (within 15 minutes) allow 1 update per 15 minutes
+	// - After 6 requests (within an hour) allow 1 update per hour
+	// The limiters will refill over time, and everything will be back to the initial state
+	// after 6 hours of inactivity have passed.
+	//
+	// In the case that a user is connected for over 6 hours (which shouldn't be the norm),
+	// it's fine to not keep checking because the valid tokens should not be take out from
+	// under a user too often.
+	//
+	// Due to the ordering of MultiLimiter, it will acquire the shorter tokens, and only grab
+	// acquire the longer tokens if it was able to grab a shorter one.
+	ctm.limiter = NewMultiLimiter(
+		rate.NewLimiter(rate.Every(time.Minute), 1),
+		rate.NewLimiter(rate.Every(15*time.Minute), 3),
+		rate.NewLimiter(rate.Every(time.Hour), 6),
+	)
 	ctm.checkValid = make(chan struct{})
 	ctm.notifyValid = make(chan struct{})
 	ctm.updateNowChan = make(chan chan struct{})
@@ -222,7 +242,7 @@ func (ctm *ClientTokenManager) ForceUpdate(response chan struct{}) {
 
 func (ctm *ClientTokenManager) updateListener() {
 	for range ctm.checkValid {
-		if time.Since(ctm.lastUpdatedTokens) > time.Hour {
+		if time.Since(ctm.lastUpdatedTokens) > time.Hour && ctm.limiter.Allow() {
 			ctm.updateNowChan <- ctm.notifyValid
 		} else {
 			ctm.notifyValid <- struct{}{}
