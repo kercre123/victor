@@ -629,6 +629,7 @@ void BehaviorFindFaceAndThen::RunSearchFaceBehavior()
   } else {
     PRINT_NAMED_WARNING( "BehaviorFindFaceAndThen.RunSearchFaceBehavior.SearchDoesntWantToActivate",
                          "Search behavior %s doesn't want to activate", _iConfig.searchBehaviorID.c_str() );
+    CancelSelf();
   }
 }
 
@@ -674,6 +675,10 @@ void BehaviorFindFaceAndThen::RunFindFaceFromBodyAction()
                      "Behavior SearchWithinBoundingBox ended unexpectedly. Recovering" );
       if( _dVars.currentState == State::SearchForFace ) {
         RunSearchFaceBehavior();
+      }
+      else{
+        // We're coming from the LookForFaceInMicDirection state, lets go on to search more generally.
+        TransitionToSearchingForFace();
       }
     });
   } else {
