@@ -39,15 +39,13 @@ func (c *stsCredentialsCache) expired() bool {
 	return testableTime.Now().UTC().After(c.expiration.Add(-TokenRefreshWindow))
 }
 
-var stsCache stsCredentialsCache
-
 // Currently STS tokens are only refreshed on demand since they are rarely
 // used. The only current use (uploading of log files) is not time critical.
 // In the future we may implement a pro-active refreshing mechanism (similar
 // to the one in refresher.go).
-func getStsCredentials(accessor Accessor) (*credentials.Credentials, error) {
-	if !stsCache.expired() && stsCache.credentials != nil {
-		return stsCache.credentials, nil
+func (c *stsCredentialsCache) getStsCredentials(accessor Accessor) (*credentials.Credentials, error) {
+	if !c.expired() && c.credentials != nil {
+		return c.credentials, nil
 	}
 
 	perRPCCreds, err := accessor.Credentials()
@@ -74,7 +72,7 @@ func getStsCredentials(accessor Accessor) (*credentials.Credentials, error) {
 		SessionToken:    stsToken.SessionToken,
 	})
 
-	stsCache.add(stsToken.GetExpiration(), awsCredentials)
+	c.add(stsToken.GetExpiration(), awsCredentials)
 
 	return awsCredentials, nil
 }
