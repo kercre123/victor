@@ -10,8 +10,11 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/common/engine/math/rect_impl.h"
 
+#define PDORAN_USE_DLIB 1
+#if PDORAN_USE_DLIB
 #include <dlib/array2d.h>
 #include <dlib/image_transforms/label_connected_blobs.h>
+#endif
 
 #include <array>
 #include <vector>
@@ -20,7 +23,7 @@ namespace Anki {
 namespace Vision {
 
 namespace {
-
+#if PDORAN_USE_DLIB
 /**
  * @brief Container struct for storing information about contiguous regions of bright colors
  */
@@ -59,6 +62,7 @@ struct IsBackground
       return img[p.y()][p.x()] < 0.f;
     }
 };
+#endif
 
 } /* anonymous namespace */
 
@@ -205,6 +209,7 @@ Result BrightColorDetector::GetSalientPointsWithoutGrouping(const ImageRGB& inpu
 Result BrightColorDetector::GetSalientPointsWithGrouping(const ImageRGB& inputImage,
                                                          std::list<SalientPoint>& salientPoints)
 {
+#if PDORAN_USE_DLIB
   const u32 timestamp = inputImage.GetTimestamp();
   const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
   const char* typeString = EnumToString(type);
@@ -344,6 +349,9 @@ Result BrightColorDetector::GetSalientPointsWithGrouping(const ImageRGB& inputIm
   }
 
   return RESULT_OK;
+#else
+  return RESULT_FAIL;
+#endif
 }
 
 float BrightColorDetector::GetScore(const ImageRGB& image)
@@ -378,7 +386,7 @@ BrightColorDetector::Parameters::Parameters()
 , gridWidth(10)
 , gridHeight(10)
 , brightnessScoreThreshold(59.f)
-, groupGridPoints(false)
+, groupGridPoints(true)
 , colorConnectednessEpsilon(5.f/360.f) // N/360 degrees in either direction
 {
 }
