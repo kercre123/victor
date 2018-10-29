@@ -108,6 +108,7 @@ CONSOLE_VAR(float, kHoughAngleResolution_deg, "MapComponent.VisualEdgeDetection"
 CONSOLE_VAR(int,   kHoughAccumThreshold,      "MapComponent.VisualEdgeDetection", 20);
 CONSOLE_VAR(float, kHoughMinLineLength_mm,    "MapComponent.VisualEdgeDetection", 40.0);
 CONSOLE_VAR(float, kHoughMaxLineGap_mm,       "MapComponent.VisualEdgeDetection", 10.0);
+CONSOLE_VAR(float, kEdgeLineLengthToInsert_mm,"MapComponent.VisualEdgeDetection", 200.f);
 
 CONSOLE_VAR(int,   kMaxPixelsUsedForHoughTransform, "MapComponent.VisualEdgeDetection", 160000); // 400 x 400 max size
 
@@ -1616,38 +1617,67 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   };
 
   if(validPoints.size() >= kHoughAccumThreshold && cliffNodes.size() > 0) {
-    std::pair<Point2f, Point2f> bestEdge;
-    bool result = ExtractDominantCliffEdge(validPoints, cliffNodes, bestEdge);
-    if(result) {
-      currentMap->Insert(FastPolygon(Poly2f({bestEdge.first, bestEdge.second})), transformVisionCliffs); 
+    // find the newly created cliff, and the old cliffs
+    // TODO(agm) currently we set the newest cliff as the "target" cliff to extend
+    //           it would be nice if we could decide on the cliff to extend more intelligently
+    //           based on what we are currently observing. This assumes that the edge
+    //           processing is always called in response to discovering a new cliff from the
+    //           drop sensor.
+    auto newestNodeIter = std::max_element(cliffNodes.cbegin(), cliffNodes.cend(), [&](const auto& lhs, const auto& rhs) {
+      return lhs->GetLastObservedTime() < rhs->GetLastObservedTime();
+    });
+    std::vector<MemoryMapDataConstPtr> oldCliffNodes;
+    for(auto iter = cliffNodes.cbegin(); iter!=cliffNodes.cend(); ++iter) {
+      if(iter != newestNodeIter) {
+        oldCliffNodes.push_back(*iter);
+      }
+    }
+    if(newestNodeIter != cliffNodes.cend()) {
+      auto newCliffNode = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(*newestNodeIter);
+      Pose3d refinedCliffPose;
+      const bool result = RefineNewCliffPose(validPoints, newCliffNode, oldCliffNodes, refinedCliffPose);
+      if(result) {
+        auto ptr = std::const_pointer_cast<MemoryMapData_Cliff>(newCliffNode.GetSharedPtr());
+        ptr->pose = refinedCliffPose; // directly edit the pose of the cliff
+        Point3f side1 = refinedCliffPose * Point3f(0.f, kEdgeLineLengthToInsert_mm, 0.f);
+        Point3f side2 = refinedCliffPose * Point3f(0.f,-kEdgeLineLengthToInsert_mm, 0.f);
+        currentMap->Insert(FastPolygon(Poly2f({side1, side2})), transformVisionCliffs); 
+      }
     }
   } else {
     PRINT_CH_INFO("MapComponent",
                   "MapComponent.AddVisionOverheadEdges.InvalidCliffOrPointsCount",
                   "numCliffs=%zd numPoints=%zd",validPoints.size(), cliffNodes.size());
   }
-
   return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points, 
-                                            const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& cliffNodes,
-                                            std::pair<Point2f, Point2f>& outEdge) const
+bool MapComponent::RefineNewCliffPose(const std::vector<Point2f>& points,
+                                      MemoryMapTypes::MemoryMapDataConstPtr newCliffNode,
+                                      const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& oldCliffNodes,
+                                      Pose3d& refinedCliffPose) const
 {
   // using a hough transform on a binary image constructed from
   // the input edge-feature points, this method returns the best
   // edge from a computed list of candidate edges
+  const Pose3d& newCliffPose = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(newCliffNode)->pose;
+  const Point2f& newCliffCenter = newCliffPose.GetTranslation();
+  std::vector<Point2f> oldCliffCenters;
+  std::transform( oldCliffNodes.cbegin(), 
+                  oldCliffNodes.cend(), 
+                  std::back_inserter(oldCliffCenters), 
+                  [](MemoryMapTypes::MemoryMapDataConstPtr iter) -> Point2f { 
+                    return MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(iter)->pose.GetTranslation();
+                  });
 
-  DEV_ASSERT(std::all_of( cliffNodes.cbegin(), 
-                          cliffNodes.cend(), 
+  DEV_ASSERT(std::all_of( oldCliffNodes.cbegin(), 
+                          oldCliffNodes.cend(), 
                           [](const MemoryMapDataConstPtr& ptr){ return ptr->type == EContentType::Cliff; }),
-                          "MapComponent.ExtractDominantEdge.MemoryMapDataTypesNotCliff");
-  DEV_ASSERT(cliffNodes.size() > 0, "MapComponent.ExtractDominantEdge.NoCliffsToCheckAgainst");
-  DEV_ASSERT(points.size() > 1, "MapComponent.ExtractDominantEdge.NotEnoughPointsToExtractLineFrom");
+                          "MapComponent.RefineNewCliffPose.MemoryMapDataTypesNotCliff");
+  DEV_ASSERT(points.size() > 1, "MapComponent.RefineNewCliffPose.NotEnoughPointsToExtractLineFrom");
 
   // get the image extents given a set of edge-feature points
-
   auto xRange = std::minmax_element(points.begin(), points.end(), [](auto& a, auto& b) { return a.x() < b.x(); } );
   auto yRange = std::minmax_element(points.begin(), points.end(), [](auto& a, auto& b) { return a.y() < b.y(); } );
   const f32& xMin = xRange.first->x();
@@ -1663,42 +1693,21 @@ bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points,
   int rows = std::ceil(yMax-yMin);
   int cols = std::ceil(xMax-xMin);
   if(rows == 0 || cols == 0) {
-    PRINT_NAMED_WARNING("MapComponent.ExtractDominantEdge.BinaryImageHasZeroRowCol","");
+    PRINT_NAMED_WARNING("MapComponent.RefineNewCliffPose.BinaryImageHasZeroRowCol","");
     return false;
   }
 
   if( rows*cols > kMaxPixelsUsedForHoughTransform ) {
-    PRINT_NAMED_WARNING("MapComponent.ExtractDominantEdge.BinaryImageTooLarge","dims=(%d,%d)",rows,cols);
+    PRINT_NAMED_WARNING("MapComponent.RefineNewCliffPose.BinaryImageTooLarge","dims=(%d,%d)",rows,cols);
     return false;
   }
-
-  // TODO(agm) currently we set the newest cliff as the "target" cliff to extend
-  //           it would be nice if we could decide on the cliff to extend more intelligently
-  //           based on what we are currently observing. This assumes that the edge
-  //           processing is always called in response to discovering a new cliff from the
-  //           drop sensor.
-
-  // find the newly created cliff
-  auto newestNodeIter = std::max_element(cliffNodes.cbegin(), cliffNodes.cend(), [&](const auto& lhs, const auto& rhs) {
-    return lhs->GetLastObservedTime() < rhs->GetLastObservedTime();
-  });
-  std::vector<Point2f> oldCliffCenters;
-  for(auto iter = cliffNodes.cbegin(); iter!=cliffNodes.cend(); ++iter) {
-    if(iter != newestNodeIter) {
-      auto node = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(*iter);
-      oldCliffCenters.push_back(node->pose.GetTranslation());
-    }
-  }
-  auto node = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(*newestNodeIter);
-  const Point2f& newCliffCenter = node->pose.GetTranslation();
-
 
   // binary image containing the edge-feature points
   cv::Mat binImg = cv::Mat::zeros(rows, cols, CV_8UC1);
   std::for_each(points.begin(), points.end(), [&](const Point2f& point) {
     int i = std::floor(point.y() - yMin);
     int j = std::floor(point.x() - xMin);
-    binImg.at<uint8_t>(i,j) = 1;
+    binImg.at<uint8_t>(i,j) = 255;
   });
 
   // 5 degrees resolution for the angle
@@ -1727,6 +1736,7 @@ bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points,
                   kHoughMaxLineGap_mm);
 
   if(linesInImg.size() == 0) {
+    PRINT_CH_INFO("MapComponent","MapComponent.RefineNewCliffPose.NoLinesFoundInBinaryImage","%zd count of edge points", points.size());
     return false;
   }
 
@@ -1802,20 +1812,44 @@ bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points,
     auto& pp = linesInCartes[lineIdx]; // point pair
     auto& p1 = pp.first;
 
-    // project the cliff center onto the detected line
-    // => use this as the starting point for the inserted edge
+    // compute the corrected pose of the cliff:
+    // we want to translate the cliff center pose to lie on the detected edge line
+    // and reorient the pose s.t. y-axis is along the edge, x-axis points in the direction of "air"
+    /*
+                  x
+          y      /
+          :\    /
+          : \  /
+          :  \/
+          :   :
+          :   :
+          :   :
+          :   :
+    ------.---.---------- edge
+          y'  o'
+
+    start by projecting the origin of the cliff frame
+    and the head of the y-axis onto the detected edge
+
+    the vector o'y' is the new y-axis, and the origin
+    of the new cliff frame is o'. The new x-axis is
+    found by taking the cross product of z with y'
+    and thus the new pose is derived by finding the
+    angle vector o'x' makes with the world-frame x-axis
+    
+    */
     Point2f lineUnitVec{ pp.second - pp.first };
     lineUnitVec.MakeUnitLength();
-    auto projPt = p1 + lineUnitVec * Anki::DotProduct(lineUnitVec, newCliffCenter - p1);
-
-    // choose another point on the line, in the heading of the edges-features
-    // => use this as the ending point for the inserted edge
-    int sign = (Anki::DotProduct(lineUnitVec, p1 - projPt) > 0) ? 1 : -1;
-    Point2f extentPt = projPt + lineUnitVec * (sign * 150.f); // extends slightly past the detected edges
-    // TODO: dynamically determine how far to draw the line from cliff to edgePoints
-
-    outEdge = {projPt, extentPt};
+    auto projCliffCenter = p1 + lineUnitVec * Anki::DotProduct(lineUnitVec, newCliffCenter - p1);
+    auto projYAxis = p1 + lineUnitVec * Anki::DotProduct(lineUnitVec, (Pose2d)newCliffPose * Y_AXIS_2D() - p1); // on the edgeLine
+    auto correctedYAxis = projYAxis - projCliffCenter;
+    auto correctedXAxis = Point2f(correctedYAxis.y(), -correctedYAxis.x()); // y^ cross z^ = x^
+    Radians cliffAngleWrtWorld = std::atan2(correctedXAxis.y(), correctedXAxis.x());
+    refinedCliffPose = Pose3d(cliffAngleWrtWorld, Z_AXIS_3D(), Point3f(projCliffCenter.x(), projCliffCenter.y(), 0.f));
+    refinedCliffPose.SetParent(_robot->GetWorldOrigin());
     return true;
+  } else {
+    PRINT_CH_INFO("MapComponent","MapComponent.RefineNewCliffPose.NoAcceptableLinesFound","%zd candidate lines", linesInCartes.size());
   }
   return false;
 }
