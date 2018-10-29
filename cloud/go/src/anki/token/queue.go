@@ -3,7 +3,7 @@ package token
 import (
 	"anki/config"
 	"anki/log"
-	"anki/token/jwt"
+	"anki/token/identity"
 	"anki/util"
 	"clad/cloud"
 	"context"
@@ -26,13 +26,13 @@ type response struct {
 }
 
 type tokenQueue struct {
-	identityProvider *jwt.IdentityProvider
+	identityProvider identity.Provider
 }
 
 // TODO: move into tokenQueue struct (this global variable is referenced by token.go and refresher.go)
 var queue = make(chan request)
 
-func (q *tokenQueue) init(ctx context.Context, identityProvider *jwt.IdentityProvider) error {
+func (q *tokenQueue) init(ctx context.Context, identityProvider identity.Provider) error {
 	q.identityProvider = identityProvider
 	go q.queueRoutine(ctx)
 	return nil
@@ -60,8 +60,8 @@ func (q *tokenQueue) handleRequest(req *request) error {
 	return err
 }
 
-func getConnection(creds credentials.PerRPCCredentials) (*conn, error) {
-	c, err := newConn(config.Env.Token, creds)
+func (q *tokenQueue) getConnection(creds credentials.PerRPCCredentials) (*conn, error) {
+	c, err := newConn(q.identityProvider, config.Env.Token, creds)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (q *tokenQueue) handleJwtRequest(req *cloud.JwtRequest) (*cloud.TokenRespon
 	}
 	if existing != nil {
 		if time.Now().After(existing.RefreshTime()) || req.ForceRefresh {
-			c, err := getConnection(tokenMetadata(existing.String()))
+			c, err := q.getConnection(tokenMetadata(existing.String()))
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
@@ -91,7 +91,7 @@ func (q *tokenQueue) handleJwtRequest(req *cloud.JwtRequest) (*cloud.TokenRespon
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
-			tok, err := q.identityProvider.ParseToken(bundle.Token)
+			tok, err := q.identityProvider.ParseAndStoreToken(bundle.Token)
 			if err != nil {
 				return errorResp(cloud.TokenError_InvalidToken), err
 			}
@@ -148,7 +148,7 @@ func (q *tokenQueue) authRequester(creds credentials.PerRPCCredentials,
 	requester func(c *conn) (*pb.TokenBundle, error),
 	parseJwt bool) (*cloud.TokenResponse, error) {
 
-	c, err := getConnection(creds)
+	c, err := q.getConnection(creds)
 	if err != nil {
 		return authErrorResp(cloud.TokenError_Connection), err
 	}
@@ -162,7 +162,7 @@ func (q *tokenQueue) authRequester(creds credentials.PerRPCCredentials,
 		return authErrorResp(cloud.TokenError_Connection), err
 	}
 	if parseJwt {
-		_, err = q.identityProvider.ParseToken(bundle.Token)
+		_, err = q.identityProvider.ParseAndStoreToken(bundle.Token)
 		if err != nil {
 			return authErrorResp(cloud.TokenError_InvalidToken), err
 		}

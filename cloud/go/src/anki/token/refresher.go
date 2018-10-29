@@ -2,24 +2,24 @@ package token
 
 import (
 	"anki/log"
-	"anki/token/jwt"
+	"anki/token/identity"
 	"anki/util"
 	"clad/cloud"
 	"context"
 	"time"
 )
 
-func initRefresher(ctx context.Context, identityProvider *jwt.IdentityProvider) {
+func initRefresher(ctx context.Context, identityProvider identity.Provider) {
 	go refreshRoutine(ctx, identityProvider)
 }
 
-func refreshRoutine(ctx context.Context, identityProvider *jwt.IdentityProvider) {
+func refreshRoutine(ctx context.Context, identityProvider identity.Provider) {
 	for {
 		const tokSleep = 5 * time.Minute
 		const ntpSleep = 20 * time.Second
 
 		// wait until we have a valid token
-		var tok jwt.Token
+		var tok identity.Token
 		for {
 			tok = identityProvider.GetToken()
 			if tok != nil {

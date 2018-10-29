@@ -3,7 +3,6 @@ package jdocs
 import (
 	"anki/config"
 	"anki/log"
-	"anki/robot"
 	"anki/token"
 	"anki/util"
 	"clad/cloud"
@@ -119,6 +118,6 @@ func (c *client) handleUserRequest() (*cloud.DocResponse, error) {
 }
 
 func (c *client) handleThingRequest() (*cloud.DocResponse, error) {
-	thing, err := robot.CertCommonName(robot.DefaultCloudDir)
-	return cloud.NewDocResponseWithThing(&cloud.ThingResponse{ThingName: thing}), err
+	thing := c.opts.tokener.IdentityProvider().CertCommonName()
+	return cloud.NewDocResponseWithThing(&cloud.ThingResponse{ThingName: thing}), nil
 }
