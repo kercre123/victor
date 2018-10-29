@@ -19,9 +19,11 @@
 #if (defined(VICOS) && defined(USE_GOOGLE_BREAKPAD))
 #include <client/linux/handler/exception_handler.h>
 #include <client/linux/handler/minidump_descriptor.h>
+#include "util/string/stringUtils.h"
 
 #include <chrono>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <fcntl.h>
 #include <unistd.h>
@@ -42,6 +44,9 @@ static char dumpName[BUFSIZ];
 static char dumpPath[1024];
 static int fd = -1;
 static google_breakpad::ExceptionHandler* exceptionHandler;
+
+constexpr const char* kRobotVersionFile = "/anki/etc/version";
+constexpr const char* kDigits = "0123456789";
 
 std::string GetDateTimeString()
 {
@@ -124,8 +129,16 @@ void InstallGoogleBreakpad(const char* filenamePrefix)
   const std::string & path = "/data/data/com.anki.victor/cache/crashDumps/";
   Anki::Util::FileUtils::CreateDirectory(path);
 
+  std::string buildVersion;
+  std::ifstream ifs(kRobotVersionFile);
+  ifs >> buildVersion;
+  const size_t lastDigitIndex = buildVersion.find_last_of(kDigits);
+  const size_t firstDigitIndex = buildVersion.find_last_not_of(kDigits, lastDigitIndex) + 1;
+  const size_t len = lastDigitIndex - firstDigitIndex + 1;
+  buildVersion = buildVersion.substr(firstDigitIndex, len);
   const std::string & crashTag = filenamePrefix;
-  const std::string & crashName = crashTag + "-" + GetDateTimeString() + ".dmp";
+  const std::string & crashName = crashTag + "-V" + buildVersion +
+                                  "-" + GetDateTimeString() + ".dmp";
   const std::string & crashFile = path + crashName;
 
   // Save these strings for later
