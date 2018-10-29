@@ -620,7 +620,7 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   auto * micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem != nullptr)
   {
-    micDataSystem->ProcessMicDataPayload(payload);
+    //micDataSystem->ProcessMicDataPayload(payload);
   }
 }
 

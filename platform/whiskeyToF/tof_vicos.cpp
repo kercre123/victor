@@ -22,7 +22,8 @@
 #include <linux/input.h>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <thread>
+#include <mutex>
 
 #ifdef SIMULATOR
 #error SIMULATOR should be defined by any target using tof_vicos.cpp
@@ -43,6 +44,12 @@ namespace Vector {
 
 namespace {
   int tof_fd = -1;
+
+std::thread _processor;
+std::mutex _mutex;
+bool _stopProcessing = false;
+
+RangeDataRaw _latestData;
 }
 
 ToFSensor* ToFSensor::_instance = nullptr;
@@ -51,7 +58,6 @@ ToFSensor* ToFSensor::getInstance()
 {
   if(nullptr == _instance)
   {
-    PRINT_NAMED_ERROR("","CREATING TOF");
     _instance = new ToFSensor();
   }
   return _instance;
@@ -230,30 +236,8 @@ int get_mz_data(const int dev, const int blocking, VL53L1_MultiRangingData_t *da
 }
 
 
-ToFSensor::ToFSensor()
+RangeDataRaw ReadData()
 {
-  PRINT_NAMED_ERROR("", "SETTING UP TOF");
-  tof_fd = setup();
-  if(tof_fd < 0)
-  {
-    PRINT_NAMED_ERROR("","FAILED TO OPEN TOF");
-  }
-}
-
-ToFSensor::~ToFSensor()
-{
-  stop_ranging(tof_fd);
-  close(tof_fd);
-}
-
-Result ToFSensor::Update()
-{
-  return RESULT_OK;
-}
-
-RangeDataRaw ToFSensor::GetData()
-{
-  PRINT_NAMED_WARNING("","GET DATA");
   RangeDataRaw rangeData;
 
   int rc = 0;
@@ -287,6 +271,54 @@ RangeDataRaw ToFSensor::GetData()
     }
   }
   return rangeData;
+}
+
+void ProcessLoop()
+{
+  tof_fd = setup();
+  if(tof_fd < 0)
+  {
+   PRINT_NAMED_ERROR("","FAILED TO OPEN TOF");
+   return;
+  }
+
+  while(!_stopProcessing)
+  {
+    RangeDataRaw data = ReadData();
+    
+    {
+      std::lock_guard<std::mutex> lock(_mutex);
+      _latestData = data;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+  }
+
+  stop_ranging(tof_fd);
+  close(tof_fd);
+}
+
+
+ToFSensor::ToFSensor()
+{
+  _processor = std::thread(ProcessLoop);
+  _processor.detach();
+}
+
+ToFSensor::~ToFSensor()
+{
+  _stopProcessing = true;
+}
+
+Result ToFSensor::Update()
+{
+  return RESULT_OK;
+}
+
+RangeDataRaw ToFSensor::GetData()
+{
+  std::lock_guard<std::mutex> lock(_mutex);
+  return _latestData;
 }
   
 }
