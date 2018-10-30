@@ -22,6 +22,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "proto/external_interface/shared.pb.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Vector {
@@ -32,12 +33,10 @@ AlexaComponent::AlexaComponent(Robot& robot)
   , _robot(robot)
   , _authState( AlexaAuthState::Uninitialized )
 {
-
 }
   
 void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps)
 {
-  
   // setup event handlers
   
   if( robot->HasGatewayInterface() ) {
@@ -53,6 +52,16 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
     auto callback = std::bind( &AlexaComponent::HandleAnimEvents, this, std::placeholders::_1 );
     _signalHandles.push_back( ri->Subscribe( RobotInterface::RobotToEngineTag::alexaAuthChanged, callback ) );
   }
+  auto forceOptIn = [this](ConsoleFunctionContextRef context) {
+    SetAlexaOption( true );
+  };
+  _consoleFuncs.emplace_front( "ForceAlexaOptIn", std::move(forceOptIn), "Alexa", "" );
+  auto forceOptOut = [this](ConsoleFunctionContextRef context) {
+    SetAlexaOption( false );
+  };
+  _consoleFuncs.emplace_front( "ForceAlexaOptOut", std::move(forceOptOut), "Alexa", "" );
+  
+  
   
   // check Alexa feature flag
   const auto* ctx = robot->GetContext();

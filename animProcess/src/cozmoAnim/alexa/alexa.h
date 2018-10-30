@@ -14,6 +14,7 @@
 
 #ifndef ANIMPROCESS_COZMO_ALEXA_H
 #define ANIMPROCESS_COZMO_ALEXA_H
+#pragma once
 
 #include <memory>
 #include <string>

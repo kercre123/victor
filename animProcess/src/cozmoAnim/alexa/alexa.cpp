@@ -130,22 +130,23 @@ void Alexa::CreateImpl()
   
   _previousCode = "";
   
-  // the impl may also set this state through a callback once it gets to that phase of
-  // initialization, but setting it here ensures that authentication is never pending if
-  // the state is Uninitialized
+  // Set auth state that indicates that we are starting the auth process (RequestingAuth)
+  // Setting this here ensures that authentication is never pending if
+  // the state is Uninitialized. (the impl may also set this state through
+  // a callback once it gets to that phase of initialization, but the current impl
+  // design does not.)
   SetAuthState( AlexaAuthState::RequestingAuth );
   
   _impl = std::make_unique<AlexaImpl>();
+  // set callbacks into this class (this one can occur during init)
+  _impl->SetOnAlexaAuthStateChanged( std::bind( &Alexa::OnAlexaAuthChanged, this,
+                                                std::placeholders::_1,
+                                                std::placeholders::_2,
+                                                std::placeholders::_3 ) );
   const bool success = _impl->Init( _context );
   if( !success ) {
     // initialization was unsuccessful
     SetAlexaActive( false );
-  } else {
-    // set callbacks into this class
-    _impl->SetOnAlexaAuthStateChanged( std::bind( &Alexa::OnAlexaAuthChanged, this,
-                                                  std::placeholders::_1,
-                                                  std::placeholders::_2,
-                                                  std::placeholders::_3 ) );
   }
 }
 
