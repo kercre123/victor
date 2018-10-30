@@ -71,6 +71,15 @@ variable "timer_params" {
   }
 }
 
+variable "ramp_durations" {
+  description = "Duration for robots (across all containers) to ramp up/down (Go time.Duration format)"
+  type    = "map"
+  default = {
+    "up" = "15m"
+    "down" = "0s"
+  }
+}
+
 // Fargate Pricing (us-west-2): per vCPU per hour $0.0506, per GB per hour $0.0127
 // See (for supported configurations and pricing): https://aws.amazon.com/fargate/pricing/
 // Total: service_count * instance_count * (fargate_cpu * $0.0506 + fargate_memory * $0.0127) per hour

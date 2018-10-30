@@ -7,15 +7,11 @@ import (
 	"github.com/jawher/mow.cli"
 )
 
-type uniqueIDProvider interface {
-	provideUniqueTestID() (int, error)
-}
-
 type options struct {
 	envName *string
 
-	defaultTestID    *int
 	robotsPerProcess *int
+	tasksPerCluster  *int
 
 	enableDistributedControl *bool
 	enableAccountCreation    *bool
@@ -28,6 +24,11 @@ type options struct {
 
 	defaultTestUserName *string
 	testUserPassword    *string
+
+	rampupDuration   time.Duration
+	rampdownDuration time.Duration
+
+	robotsPerCluster int
 
 	heartBeatInterval       time.Duration
 	heartBeatStdDev         time.Duration
@@ -42,9 +43,13 @@ type options struct {
 }
 
 type instanceOptions struct {
-	testID       int
+	taskID       int
+	robotID      int
 	testUserName string
 	cloudDir     string
+
+	rampupDelay   time.Duration
+	rampdownDelay time.Duration
 }
 
 func parseIntervalString(intervalStr *string) time.Duration {
@@ -70,17 +75,17 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "loadtest",
 	})
 
-	options.defaultTestID = app.Int(cli.IntOpt{
-		Name:   "i test-id",
-		Desc:   "Test ID (used for identifying user)",
-		EnvVar: "DEFAULT_TEST_ID",
-		Value:  1,
-	})
-
 	options.robotsPerProcess = app.Int(cli.IntOpt{
 		Name:   "robots-per-process",
 		Desc:   "Number of robot instances per process",
 		EnvVar: "ROBOTS_PER_PROCESS",
+		Value:  1,
+	})
+
+	options.tasksPerCluster = app.Int(cli.IntOpt{
+		Name:   "tasks-per-cluster",
+		Desc:   "Number of tasks per ECS/Fargate cluster",
+		EnvVar: "TASKS_PER_CLUSTER",
 		Value:  1,
 	})
 
@@ -143,6 +148,20 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Desc:   "Password for test accounts",
 		EnvVar: "TEST_USER_PASSWORD",
 		Value:  "ankisecret",
+	})
+
+	rampupDuration := app.String(cli.StringOpt{
+		Name:   "ramp-down-duration",
+		Desc:   "Robot fleet ramp-up duration (time.Duration string)",
+		EnvVar: "RAMP_UP_DURATION",
+		Value:  "0s",
+	})
+
+	rampdownDuration := app.String(cli.StringOpt{
+		Name:   "ramp-up-duration",
+		Desc:   "Robot fleet ramp-down duration (time.Duration string)",
+		EnvVar: "RAMP_DOWN_DURATION",
+		Value:  "0s",
 	})
 
 	heartBeatInterval := app.String(cli.StringOpt{
@@ -215,7 +234,12 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "5m",
 	})
 
+	options.robotsPerCluster = *options.tasksPerCluster * *options.robotsPerProcess
+
 	// Note this only works for environment variables
+	options.rampupDuration = parseIntervalString(rampupDuration)
+	options.rampdownDuration = parseIntervalString(rampdownDuration)
+
 	options.heartBeatInterval = parseIntervalString(heartBeatInterval)
 	options.jdocsInterval = parseIntervalString(jdocsInterval)
 	options.logCollectorInterval = parseIntervalString(logCollectorInterval)
@@ -231,33 +255,51 @@ func newFromEnvironment(app *cli.Cli) *options {
 	return options
 }
 
-func (o *options) createIdentity(controller *distributedController) *instanceOptions {
-	var err error
-	testID := *o.defaultTestID
+func (o *options) calculateDelay(rampDuration time.Duration, robotID int) time.Duration {
+	// Note: We ramp robots linearly in time (based on their index and task offset)
+	return time.Duration((int(rampDuration) * robotID) / o.robotsPerCluster)
+}
 
-	if controller != nil {
-		testID, err = controller.provideUniqueTestID()
-		if err == nil {
-			testID %= *o.numberOfCerts
+func (o *options) createIdentity(provider robotIdentityProvider, robotIndex, taskID int) *instanceOptions {
+	// Note: we ensure that robots in the same container are spread across the entire cluster's ID range
+	// (and hence also across the entire ramp duration in order to distribute ramp load across containers)
+	// We also wrap around robot IDs (e.g. to ensure its cert directory exists)
+	robotID := ((robotIndex * *o.tasksPerCluster) + taskID) % *o.numberOfCerts
+
+	var rampupDelay, rampdownDelay time.Duration
+	if provider != nil {
+		var err error
+
+		rampupDelay, err = provider.arrivalTime(robotID)
+		if err != nil {
+			rampupDelay = o.calculateDelay(o.rampupDuration, robotID)
 		}
-	}
 
-	if err != nil {
-		fmt.Printf("Could not assign unique testID (defaulting to %d), error: %v\n", testID, err)
+		rampdownDelay, err = provider.departureTime(robotID)
+		if err != nil {
+			rampdownDelay = o.calculateDelay(o.rampdownDuration, robotID)
+		}
+	} else {
+		rampupDelay = o.calculateDelay(o.rampupDuration, robotID)
+		rampdownDelay = o.calculateDelay(o.rampdownDuration, robotID)
 	}
 
 	options := &instanceOptions{
-		testID:       testID,
+		taskID:       taskID,
+		robotID:      robotID,
 		testUserName: *o.defaultTestUserName,
 		cloudDir:     *o.defaultCloudDir,
+
+		rampupDelay:   rampupDelay,
+		rampdownDelay: rampdownDelay,
 	}
 
 	if options.cloudDir == "" {
-		options.cloudDir = fmt.Sprintf("/device_certs/%08d", testID)
+		options.cloudDir = fmt.Sprintf("/device_certs/%08d", robotID)
 	}
 
 	if options.testUserName == "" {
-		options.testUserName = fmt.Sprintf("test.%08d@anki.com", testID)
+		options.testUserName = fmt.Sprintf("test.%08d@example.com", robotID)
 	}
 
 	return options

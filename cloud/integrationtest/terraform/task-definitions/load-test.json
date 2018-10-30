@@ -54,6 +54,18 @@
                 "value": "${connection_check_stddev}"
             },
             {
+                "name": "TASKS_PER_CLUSTER",
+                "value": "${tasks_per_cluster}"
+            },
+            {
+                "name": "RAMP_UP_DURATION",
+                "value": "${ramp_up_duration}"
+            },
+            {
+                "name": "RAMP_DOWN_DURATION",
+                "value": "${ramp_down_duration}"
+            },
+            {
                 "name": "LOG_TYPE",
                 "value": "${logging_type}"
             },

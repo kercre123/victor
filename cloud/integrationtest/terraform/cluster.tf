@@ -20,6 +20,10 @@ data "template_file" "load_test" {
     logging_source_type = "${var.logging["source_type"]}"
 
     robots_per_process = "${var.robots_per_process}"
+    tasks_per_cluster = "${var.instance_count * var.service_count}"
+
+    ramp_up_duration = "${var.ramp_durations["up"]}"
+    ramp_down_duration = "${var.ramp_durations["down"]}"
 
     heart_beat_interval = "${var.timer_params["heart_beat_interval"]}"
     heart_beat_stddev = "${var.timer_params["heart_beat_stddev"]}"

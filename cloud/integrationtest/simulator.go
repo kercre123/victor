@@ -4,71 +4,65 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"syscall"
+	"sync"
 	"time"
 )
 
 type actionFunc func() error
 
 type action struct {
-	id             string
-	quitChan       chan struct{}
+	quitChan   chan struct{}
+	actionFunc actionFunc
+}
+
+type periodicAction struct {
+	action
+
+	id string
+
 	meanDuration   time.Duration
 	stdDevDuration time.Duration
-	action         actionFunc
+}
+
+type oneShotAction struct {
+	action
+
+	delay time.Duration
 }
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func (a action) isRunning() bool {
-	return a.quitChan != nil
-}
+type SimulatorState int
+
+const (
+	SimulatorUnknown = iota
+	SimulatorInitialized
+	SimulatorStarting
+	SimulatorStarted
+	SimulatorStopping
+	SimulatorStopped
+	SimulatorTerminated
+)
 
 type simulator struct {
-	started bool
+	mutex sync.Mutex
 
-	setupActionFunc    actionFunc
-	tearDownActionFunc actionFunc
+	state     SimulatorState
+	startTime time.Time
 
-	periodicActionMap map[string]*action
+	setupAction    *oneShotAction
+	tearDownAction *oneShotAction
+
+	periodicActionMap map[string]*periodicAction
 }
 
 func newSimulator() *simulator {
-	return &simulator{periodicActionMap: make(map[string]*action)}
-}
-
-func (s *simulator) start() {
-	if s.started {
-		return
+	return &simulator{
+		state:             SimulatorInitialized,
+		periodicActionMap: make(map[string]*periodicAction),
 	}
-
-	s.started = true
-
-	if s.setupActionFunc != nil {
-		s.setupActionFunc()
-	}
-
-	for _, action := range s.periodicActionMap {
-		s.startPeriodicAction(action)
-	}
-}
-
-func (s *simulator) stop() {
-	if !s.started {
-		return
-	}
-
-	for _, action := range s.periodicActionMap {
-		s.stopPeriodicAction(action)
-	}
-
-	if s.tearDownActionFunc != nil {
-		s.tearDownActionFunc()
-	}
-
-	s.started = false
 }
 
 func (s *simulator) set(name, value string) {
@@ -95,13 +89,9 @@ func (s *simulator) set(name, value string) {
 
 	switch key {
 	case "mean":
-		action.meanDuration = duration
-		if !action.isRunning() && duration > 0 {
-			// this action requires starting (was not running)
+		if action.meanDuration != duration {
+			action.meanDuration = duration
 			s.startPeriodicAction(action)
-		} else if action.isRunning() && duration == 0 {
-			// this action requires stopping (was running)
-			s.stopPeriodicAction(action)
 		}
 	case "stddev":
 		action.stdDevDuration = duration
@@ -111,32 +101,156 @@ func (s *simulator) set(name, value string) {
 	}
 }
 
-func (s *simulator) quit() {
-	s.stop()
+func (s *simulator) start() error {
+	if !(s.state == SimulatorInitialized || s.state == SimulatorStopped) {
+		return fmt.Errorf("starting from state %v not supported", s.state)
+	}
 
-	signalChannel <- syscall.SIGINT
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.state = SimulatorStarting
+
+	s.startTime = time.Now()
+
+	if s.setupAction != nil {
+		s.setupAction.quitChan = make(chan struct{})
+
+		go func(quitChan chan struct{}) {
+			select {
+			case <-time.After(s.setupAction.delay):
+				s.mutex.Lock()
+
+				s.setupAction.actionFunc()
+
+				for _, action := range s.periodicActionMap {
+					s.startPeriodicAction(action)
+				}
+
+				s.state = SimulatorStarted
+
+				s.mutex.Unlock()
+			case <-quitChan:
+				return
+			}
+		}(s.setupAction.quitChan)
+	} else {
+		for _, action := range s.periodicActionMap {
+			s.startPeriodicAction(action)
+		}
+
+		s.state = SimulatorStarted
+	}
+
+	return nil
 }
 
-func (s *simulator) addSetupAction(action actionFunc) {
-	s.setupActionFunc = action
+func (s *simulator) stop() error {
+	if s.state != SimulatorStarted && s.state != SimulatorStarting {
+		return fmt.Errorf("stopping from state %v not supported", s.state)
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.state = SimulatorStopping
+
+	// stop any pending setup go routines (if any)
+	if s.setupAction != nil && s.setupAction.quitChan != nil {
+		close(s.setupAction.quitChan)
+		s.setupAction.quitChan = nil
+	}
+
+	if s.tearDownAction != nil {
+		s.tearDownAction.quitChan = make(chan struct{})
+
+		go func(quitChan chan struct{}) {
+			select {
+			case <-time.After(s.tearDownAction.delay):
+				s.mutex.Lock()
+
+				for _, action := range s.periodicActionMap {
+					s.stopPeriodicAction(action)
+				}
+
+				s.tearDownAction.actionFunc()
+
+				s.state = SimulatorStopped
+
+				s.mutex.Unlock()
+			case <-quitChan:
+				return
+			}
+		}(s.tearDownAction.quitChan)
+	} else {
+		for _, action := range s.periodicActionMap {
+			s.stopPeriodicAction(action)
+		}
+
+		s.state = SimulatorStopped
+	}
+
+	return nil
 }
 
-func (s *simulator) addTearDownAction(action actionFunc) {
-	s.tearDownActionFunc = action
+func (s *simulator) quit() error {
+	if s.state != SimulatorStopped {
+		return fmt.Errorf("quiting from state %v not supported", s.state)
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	// stop any ongoing setup
+	if s.setupAction.quitChan != nil {
+		close(s.setupAction.quitChan)
+		s.setupAction.quitChan = nil
+	}
+
+	// stop any ongoing teardown
+	if s.tearDownAction.quitChan != nil {
+		close(s.tearDownAction.quitChan)
+		s.tearDownAction.quitChan = nil
+	}
+
+	s.state = SimulatorTerminated
+
+	return nil
 }
 
-func (s *simulator) addPeriodicAction(id string, meanDuration time.Duration, stdDevDuration time.Duration, periodicAction actionFunc) {
-	fmt.Printf("Initializing periodic timer %q (interval=%v, stddev=%v)\n", id, meanDuration, stdDevDuration)
+func (s *simulator) addSetupAction(delay time.Duration, actionFunc actionFunc) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
-	s.periodicActionMap[id] = &action{
-		id:             id,
-		meanDuration:   meanDuration,
-		stdDevDuration: stdDevDuration,
-		action:         periodicAction,
+	s.setupAction = &oneShotAction{
+		action: action{actionFunc: actionFunc},
+		delay:  delay,
 	}
 }
 
-func (*simulator) calculateDuration(action *action, duration time.Duration) time.Duration {
+func (s *simulator) addTearDownAction(delay time.Duration, actionFunc actionFunc) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.tearDownAction = &oneShotAction{
+		action: action{actionFunc: actionFunc},
+		delay:  delay,
+	}
+}
+
+func (s *simulator) addPeriodicAction(id string, meanDuration time.Duration, stdDevDuration time.Duration, actionFunc actionFunc) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.periodicActionMap[id] = &periodicAction{
+		action:         action{actionFunc: actionFunc},
+		id:             id,
+		meanDuration:   meanDuration,
+		stdDevDuration: stdDevDuration,
+	}
+}
+
+func calculateDuration(action *periodicAction, duration time.Duration) time.Duration {
 	// calculate timer interval based on mean, standard deviation (while discounting duration of the action execution time)
 	remainingDuration := time.Duration(rand.NormFloat64()*float64(action.stdDevDuration)+float64(action.meanDuration)) - duration
 
@@ -147,47 +261,37 @@ func (*simulator) calculateDuration(action *action, duration time.Duration) time
 	return remainingDuration
 }
 
-func (s *simulator) startPeriodicAction(action *action) {
-	if !s.started || action.meanDuration == 0 {
-		// no need to do anything
+// internal method, not used outside simulator type
+func (s *simulator) startPeriodicAction(periodicAction *periodicAction) {
+	// stop if already running
+	s.stopPeriodicAction(periodicAction)
+
+	if periodicAction.meanDuration == 0 {
 		return
 	}
 
-	if action.isRunning() {
-		fmt.Printf("Periodic action %q already running\n", action.id)
-		return
-	}
-
-	action.quitChan = make(chan struct{})
+	periodicAction.quitChan = make(chan struct{})
 
 	go func() {
 		var actionDuration time.Duration
 
-	timerloop:
 		for {
 			select {
-			case <-time.After(s.calculateDuration(action, actionDuration)):
+			case <-time.After(calculateDuration(periodicAction, actionDuration)):
 				start := time.Now()
-				action.action()
+				periodicAction.actionFunc()
 				actionDuration = time.Since(start)
-			case <-action.quitChan:
-				break timerloop
+			case <-periodicAction.quitChan:
+				return
 			}
 		}
 	}()
 }
 
-func (s *simulator) stopPeriodicAction(action *action) {
-	if !s.started {
-		// no need to do anything
-		return
+// internal method, not used outside simulator type
+func (s *simulator) stopPeriodicAction(periodicAction *periodicAction) {
+	if periodicAction.quitChan != nil {
+		close(periodicAction.quitChan)
+		periodicAction.quitChan = nil
 	}
-
-	if !action.isRunning() {
-		fmt.Printf("Periodic action %q not running\n", action.id)
-		return
-	}
-
-	close(action.quitChan)
-	action.quitChan = nil
 }

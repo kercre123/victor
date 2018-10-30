@@ -27,27 +27,32 @@ func waitForSignal() {
 
 type robotFleet struct {
 	distributedController *distributedController
-	robots                []*robotSimulator
+
+	mutex  sync.Mutex
+	robots []*robotSimulator
 }
 
 func newRobotFleet(options *options) *robotFleet {
 	return &robotFleet{distributedController: newDistributedController(*options.redisAddress)}
 }
 
-func (r *robotFleet) runSingleRobot(options *options) {
-	instanceOptions := options.createIdentity(r.distributedController)
+func (r *robotFleet) runSingleRobot(options *options, robotIndex, taskID int) {
+	instanceOptions := options.createIdentity(r.distributedController, robotIndex, taskID)
 
 	simulator, err := newRobotSimulator(options, instanceOptions)
-	simulator.logIfNoError(err, "main", "New robot (id=%d) created", instanceOptions.testID)
+	simulator.logIfNoError(err, "framework", "New robot (id=%d) inside task (id=%d) created (start delay %v)",
+		instanceOptions.robotID, taskID, instanceOptions.rampupDelay)
 	if err != nil {
 		return
 	}
 
+	r.mutex.Lock()
 	r.robots = append(r.robots, simulator)
+	r.mutex.Unlock()
 
 	// At startup we go through the primary pairing sequence action
-	simulator.addSetupAction(simulator.testPrimaryPairingSequence)
-	simulator.addTearDownAction(simulator.tearDownAction)
+	simulator.addSetupAction(instanceOptions.rampupDelay, simulator.testPrimaryPairingSequence)
+	simulator.addTearDownAction(instanceOptions.rampdownDelay, simulator.tearDownAction)
 
 	// After that we periodically run the following actions
 	simulator.addPeriodicAction("heart_beat", options.heartBeatInterval, options.heartBeatStdDev, simulator.heartBeat)
@@ -63,16 +68,25 @@ func (r *robotFleet) runSingleRobot(options *options) {
 	// wait for stop signal
 	<-waitChannel
 
-	simulator.logIfNoError(err, "main", "Stopping robot (id=%d)", instanceOptions.testID)
+	simulator.logIfNoError(err, "framework", "Stopping robot (id=%d)", instanceOptions.robotID)
 
 	simulator.stop()
 
-	simulator.logIfNoError(err, "main", "Robot (id=%d) stopped", instanceOptions.testID)
+	simulator.logIfNoError(err, "framework", "Robot (id=%d) stopped", instanceOptions.robotID)
 }
 
 func (r *robotFleet) runRobots(options *options) {
+	taskID, err := r.distributedController.uniqueTaskID()
+	if err == nil {
+		// Note: As the Redis incrementer starts at 1, we apply an offset to start at 0
+		taskID--
+	} else {
+		// We default to zero in case of error
+		taskID = 0
+	}
+
 	if *options.enableDistributedControl {
-		fmt.Println("Listening for external simulation commands")
+		fmt.Printf("Task %d listening for external simulation commands\n", taskID)
 		r.distributedController.forwardCommands(r)
 	}
 
@@ -81,11 +95,11 @@ func (r *robotFleet) runRobots(options *options) {
 	for i := 0; i < *options.robotsPerProcess; i++ {
 		wg.Add(1)
 
-		go func() {
+		go func(robotIndex int) {
 			defer wg.Done()
 
-			r.runSingleRobot(options)
-		}()
+			r.runSingleRobot(options, robotIndex, taskID)
+		}(i)
 	}
 
 	waitForSignal()
@@ -94,23 +108,36 @@ func (r *robotFleet) runRobots(options *options) {
 }
 
 // Implement localController interface to propagate control to every robot instance
-func (r *robotFleet) start() {
+func (r *robotFleet) start() error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	for _, robot := range r.robots {
 		robot.start()
 	}
 
 	fmt.Printf("Started all %d robots\n", len(r.robots))
+
+	return nil
 }
 
-func (r *robotFleet) stop() {
+func (r *robotFleet) stop() error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	for _, robot := range r.robots {
 		robot.stop()
 	}
 
 	fmt.Printf("Stopped all %d robots\n", len(r.robots))
+
+	return nil
 }
 
 func (r *robotFleet) set(name, value string) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	for _, robot := range r.robots {
 		robot.set(name, value)
 	}
@@ -118,10 +145,15 @@ func (r *robotFleet) set(name, value string) {
 	fmt.Printf("Set property %q to %q for all %d robots\n", name, value, len(r.robots))
 }
 
-func (r *robotFleet) quit() {
+func (r *robotFleet) quit() error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	for _, robot := range r.robots {
 		robot.quit()
 	}
 
 	fmt.Printf("Terminated all %d robots\n", len(r.robots))
+
+	return nil
 }
