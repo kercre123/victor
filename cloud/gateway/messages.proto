@@ -829,6 +829,15 @@ message CameraFeedResponse {
   bytes                    data = 4;
 }
 
+message SetEyeColorRequest {
+  float hue = 1;
+  float saturation = 2;
+}
+
+message SetEyeColorResponse {
+  ResponseStatus status = 1;
+}
+
 // *** App only proto below ***
 
 message FeatureStatus {

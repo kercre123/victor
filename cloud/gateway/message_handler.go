@@ -2508,3 +2508,21 @@ func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptIn
 func newServer() *rpcService {
 	return new(rpcService)
 }
+
+// Set Eye Color (SDK only)
+// TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control (e.g., in go code or when SDK behavior deactivates)
+func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeColorRequest) (*extint.SetEyeColorResponse, error) {
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetEyeColorRequest{
+			SetEyeColorRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetEyeColorResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}

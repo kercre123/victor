@@ -13,6 +13,7 @@
 #include "engine/buildVersion.h"
 #include "engine/components/robotExternalRequestComponent.h"
 #include "engine/components/battery/batteryComponent.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
 #include "osState/osState.h"
@@ -106,6 +107,17 @@ namespace Vector {
       robot->SetSDKRequestingImage(true);
     }
     robot->SetImageSendMode(sendMode);
+  }
+
+  void RobotExternalRequestComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event){
+    Robot* robot = _context->GetRobotManager()->GetRobot();
+    external_interface::SetEyeColorRequest request = event.GetData().set_eye_color_request();
+
+    const float hue = request.hue();
+    const float saturation = request.saturation();
+
+    robot->SendRobotMessage<RobotInterface::SetFaceHue>(hue);
+    robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(saturation);
   }
 
 } // Cozmo namespace

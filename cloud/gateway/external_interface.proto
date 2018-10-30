@@ -356,6 +356,14 @@ service ExternalInterface {
     };
   }
 
+  // Set Vector's eye color.
+  rpc SetEyeColor(SetEyeColorRequest) returns (SetEyeColorResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_eye_color",
+      body: "*"
+    };
+  }
+
   // *** App only proto below ***
 
   rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
