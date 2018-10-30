@@ -9,6 +9,8 @@ import (
 	"net/http"
 )
 
+var TokenServer *Server
+
 func init() {
 	devHandlers = func(s *http.ServeMux) {
 		s.HandleFunc("/tokenauth", provisionHandler)
@@ -53,7 +55,7 @@ func provisionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authRequest := cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{SessionToken: tok})
-	if authResp, err := HandleRequest(authRequest); err != nil {
+	if authResp, err := TokenServer.handleRequest(authRequest); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Error attempting authorization: ", err)
 		return

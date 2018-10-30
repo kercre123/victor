@@ -15,6 +15,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// The tokenQueue struct consumes CLAD requests from a message queue (i.e. channel) and forwards them to the conn
+// struct in client.go. The conn struct issues GRPC requests. Messages are produced by the TokenService struct in
+// token.go
+
 type request struct {
 	m  *cloud.TokenRequest
 	ch chan *response
@@ -26,15 +30,16 @@ type response struct {
 }
 
 type tokenQueue struct {
+	queue            chan request
 	identityProvider identity.Provider
+	errorHandler     *backoffHandler
 }
 
-// TODO: move into tokenQueue struct (this global variable is referenced by token.go and refresher.go)
-var queue = make(chan request)
-
-func (q *tokenQueue) init(ctx context.Context, identityProvider identity.Provider) error {
+func (q *tokenQueue) init(ctx context.Context, errorHandler *backoffHandler, identityProvider identity.Provider) error {
+	q.queue = make(chan request)
+	q.errorHandler = errorHandler
 	q.identityProvider = identityProvider
-	go q.queueRoutine(ctx)
+	go q.routine(ctx)
 	return nil
 }
 
@@ -54,7 +59,7 @@ func (q *tokenQueue) handleRequest(req *request) error {
 	// if we successfully reach the server for a request, re-enable our error handler
 	// (ignore JWT requests, which are very unlikely to actually hit the server)
 	if err == nil && req.m.Tag() != cloud.TokenRequestTag_Jwt {
-		errorHandler.onSuccess()
+		q.errorHandler.onSuccess()
 	}
 	req.ch <- &response{resp, err}
 	return err
@@ -172,13 +177,13 @@ func (q *tokenQueue) authRequester(creds credentials.PerRPCCredentials,
 		JwtToken: bundle.Token}), nil
 }
 
-func (q *tokenQueue) queueRoutine(ctx context.Context) {
+func (q *tokenQueue) routine(ctx context.Context) {
 	for {
 		var req request
 		select {
 		case <-ctx.Done():
 			return
-		case req = <-queue:
+		case req = <-q.queue:
 			break
 		}
 		if err := q.handleRequest(&req); err != nil {
