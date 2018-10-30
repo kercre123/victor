@@ -32,6 +32,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/alexa/alexaAudioInput.h"
 #include "cozmoAnim/alexa/alexaClient.h"
+#include "cozmoAnim/alexa/alexaMediaPlayer.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -98,6 +99,21 @@ AlexaImpl::~AlexaImpl()
   if( _capabilitiesDelegate ) {
     // TODO: this is likely leaking something when commented out, but running shutdown() causes a lock
     //_capabilitiesDelegate->shutdown();
+  }
+  
+  // First clean up anything that depends on the the MediaPlayers.
+  // This would be a userInputManager or interactionManager, for instance.
+  // We don't have those yet.
+  
+  // Now it's safe to shut down the MediaPlayers.
+  if( _ttsMediaPlayer ) {
+    _ttsMediaPlayer->shutdown();
+  }
+  if( _alertsMediaPlayer ) {
+    _alertsMediaPlayer->shutdown();
+  }
+  if( _audioMediaPlayer ) {
+    _audioMediaPlayer->shutdown();
   }
   
   avsCommon::avs::initialization::AlexaClientSDKInit::uninitialize();
@@ -202,6 +218,25 @@ bool AlexaImpl::Init(const AnimContext* context)
   auto alertStorage
     = alexaClientSDK::capabilityAgents::alerts::storage::SQLiteAlertStorage::create( rootConfig,
                                                                                      audioFactory->alerts() );
+  // setup media player interfaces
+  auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
+  _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
+                                                        "TTS",
+                                                        httpContentFetcherFactory );
+  _ttsMediaPlayer->Init(context);
+  _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_ALERTS_VOLUME,
+                                                           "Alerts",
+                                                           httpContentFetcherFactory );
+  _alertsMediaPlayer->Init( context );
+  _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
+                                                          "Audio",
+                                                          httpContentFetcherFactory );
+  _audioMediaPlayer->Init( context );
+  
+  // the alerts/audio speakers dont change UX so we observe them
+  _alertsMediaPlayer->setObserver( _observer );
+  _audioMediaPlayer->setObserver( _observer );
+  
   
   _client = AlexaClient::Create( deviceInfo,
                                  customerDataManager,
@@ -212,12 +247,12 @@ bool AlexaImpl::Init(const AnimContext* context)
                                  {_observer},
                                  {_observer},
                                  _capabilitiesDelegate,
-                                 nullptr,//_ttsSpeaker,
-                                 nullptr,//_alertsSpeaker,
-                                 nullptr,//_audioSpeaker,
-                                 nullptr,//std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_ttsSpeaker),
-                                 nullptr,//std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_alertsSpeaker),
-                                 nullptr);//std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_audioSpeaker) );
+                                 _ttsMediaPlayer,
+                                 _alertsMediaPlayer,
+                                 _audioMediaPlayer,
+                                 std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_ttsMediaPlayer),
+                                 std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_alertsMediaPlayer),
+                                 std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_audioMediaPlayer) );
   
   if( !_client ) {
     CRITICAL_SDK("Failed to create SDK client!");
@@ -226,7 +261,7 @@ bool AlexaImpl::Init(const AnimContext* context)
   
   _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
   
-  // _client->AddSpeakerManagerObserver( _observer );
+  _client->AddSpeakerManagerObserver( _observer );
 
   // Creating the buffer (Shared Data Stream) that will hold user audio data. This is the main input into the SDK.
   size_t bufferSize = alexaClientSDK::avsCommon::avs::AudioInputStream::calculateBufferSize( kBufferSize,
@@ -305,6 +340,15 @@ void AlexaImpl::Update()
 {
   if( _observer != nullptr ) {
     _observer->Update();
+  }
+  if( _ttsMediaPlayer != nullptr ) {
+    _ttsMediaPlayer->Update();
+  }
+  if( _alertsMediaPlayer != nullptr ) {
+    _alertsMediaPlayer->Update();
+  }
+  if( _audioMediaPlayer != nullptr ) {
+    _audioMediaPlayer->Update();
   }
 }
   

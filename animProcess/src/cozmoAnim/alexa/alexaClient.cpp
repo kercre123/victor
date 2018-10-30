@@ -32,9 +32,6 @@
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/alexa/alexaCapabilityWrapper.h"
 
-// temp:
-#include "cozmoAnim/alexa/stubSpeechSynth.h"
-
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -283,10 +280,78 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   
   _audioInputProcessor->addObserver( _dialogUXStateAggregator );
 
-  // temp stub for speech synthesis so that alexa will authorize
-  _speechSynthesizer = capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer::create(_exceptionSender);
+  // Creating the Speech Synthesizer - This component is the Capability Agent that implements the SpeechSynthesizer
+  // interface of AVS.
+  _speechSynthesizer = capabilityAgents::speechSynthesizer::SpeechSynthesizer::create( ttsMediaPlayer,
+                                                                                       _connectionManager,
+                                                                                       _audioFocusManager,
+                                                                                       contextManager,
+                                                                                       _exceptionSender,
+                                                                                       _dialogUXStateAggregator );
   if( !_speechSynthesizer ) {
     ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSpeechSynthesizer"));
+    return false;
+  }
+  _speechSynthesizer->addObserver( _dialogUXStateAggregator );
+  
+  // Creating the PlaybackController Capability Agent - This component is the Capability Agent that implements the
+  // PlaybackController interface of AVS.
+  _playbackController = capabilityAgents::playbackController::PlaybackController::create(contextManager, _connectionManager);
+  if( !_playbackController ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreatePlaybackController"));
+    return false;
+  }
+  
+  // Creating the PlaybackRouter - This component routes a playback button press to the active handler.
+  // The default handler is PlaybackController.
+  _playbackRouter = capabilityAgents::playbackController::PlaybackRouter::create( _playbackController );
+  if( !_playbackRouter ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreatePlaybackRouter"));
+    return false;
+  }
+
+  // Creating the Audio Player - This component is the Capability Agent that implements the AudioPlayer
+  // interface of AVS.
+  _audioPlayer = capabilityAgents::audioPlayer::AudioPlayer::create( audioMediaPlayer,
+                                                                     _connectionManager,
+                                                                     _audioFocusManager,
+                                                                     contextManager,
+                                                                     _exceptionSender,
+                                                                     _playbackRouter );
+  if( !_audioPlayer ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAudioPlayer"));
+    return false;
+  }
+  
+  std::vector<std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface>> allSpeakers = {
+    ttsSpeaker,
+    alertsSpeaker,
+    audioSpeaker,
+    // unused speaker types supported by SDK: notificationsSpeaker, bluetoothSpeaker, ringtoneSpeaker
+  };
+  
+  // Creating the SpeakerManager Capability Agent - This component is the Capability Agent that implements the
+  // Speaker interface of AVS.
+  _speakerManager = capabilityAgents::speakerManager::SpeakerManager::create( allSpeakers, contextManager, _connectionManager, _exceptionSender );
+  if( !_speakerManager ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSpeakerManager"));
+    return false;
+  }
+  
+  
+  _alertsCapabilityAgent = capabilityAgents::alerts::AlertsCapabilityAgent::create( _connectionManager,
+                                                                                    _connectionManager,
+                                                                                    _certifiedSender,
+                                                                                    _audioFocusManager,
+                                                                                    _speakerManager,
+                                                                                    contextManager,
+                                                                                    _exceptionSender,
+                                                                                    alertStorage,
+                                                                                    audioFactory->alerts(),
+                                                                                    capabilityAgents::alerts::renderer::Renderer::create( alertsMediaPlayer ),
+                                                                                    customerDataManager );
+  if (!_alertsCapabilityAgent) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAlertsCapabilityAgent"));
     return false;
   }
   
@@ -304,26 +369,86 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
-  if (!_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("SpeechRecognizer", _audioInputProcessor) )) {
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("SpeechRecognizer", _audioInputProcessor) ) ) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "AudioInputProcessor"));
     return false;
   }
   
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("System", _userInactivityMonitor) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "UserInactivityMonitor"));
+    return false;
+  }
+  
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("Alerts", _alertsCapabilityAgent) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "AlertsCapabilityAgent"));
+    return false;
+  }
+  
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("AudioPlayer", _audioPlayer) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "AudioPlayer"));
+    return false;
+  }
+  
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("Speaker", _speakerManager) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "SpeakerManager"));
+    return false;
+  }
+  
   // Register capabilities
   
-  if (!(capabilitiesDelegate->registerCapability(_audioInputProcessor))) {
+  if( !capabilitiesDelegate->registerCapability(_alertsCapabilityAgent) ) {
+    ACSDK_ERROR(
+                LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "Alerts"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(_audioActivityTracker) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "AudioActivityTracker"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(_audioInputProcessor) ) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterCapability")
                 .d("capabilitiesDelegate", "SpeechRecognizer"));
     return false;
   }
-
-  if (!(capabilitiesDelegate->registerCapability(_speechSynthesizer))) {
+  
+  if( !capabilitiesDelegate->registerCapability(_speechSynthesizer) ) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterCapability")
                 .d("capabilitiesDelegate", "SpeechSynthesizer"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(_audioPlayer) ) {
+    ACSDK_ERROR(
+                LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "AudioPlayer"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(_playbackController) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "PlaybackController"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(_speakerManager) ) {
+    ACSDK_ERROR(
+                LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "Speaker"));
     return false;
   }
   
@@ -338,8 +463,7 @@ void AlexaClient::Connect( const std::shared_ptr<avsCommon::sdkInterfaces::Capab
     capabilitiesDelegate->publishCapabilitiesAsyncWithRetries();
   }
 }
-  
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::future<bool> AlexaClient::NotifyOfTapToTalk( capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
                                                   avsCommon::avs::AudioInputStream::Index beginIndex )

@@ -33,9 +33,6 @@
 #include "util/helpers/noncopyable.h"
 #include <memory>
 
-// temp:
-#include "cozmoAnim/alexa/stubSpeechSynth.h"
-
 // todo: forward declare where possible. this is insane
 #include <ACL/AVSConnectionManager.h>
 #include <ACL/Transport/MessageRouter.h>
@@ -168,9 +165,7 @@ private:
   
   std::shared_ptr<alexaClientSDK::avsCommon::avs::ExceptionEncounteredSender> _exceptionSender;
   
-  // TEMP change:
-  //std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::SpeechSynthesizer> _speechSynthesizer;
-  std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::AlexaSpeechSynthesizer> _speechSynthesizer;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::speechSynthesizer::SpeechSynthesizer> _speechSynthesizer;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::AlertsCapabilityAgent> _alertsCapabilityAgent;
   
@@ -184,13 +179,13 @@ private:
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioInputProcessor> _audioInputProcessor;
   
-  std::unique_ptr<alexaClientSDK::capabilityAgents::speakerManager::SpeakerManager> _speakerManager;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::speakerManager::SpeakerManager> _speakerManager;
   
-  std::unique_ptr<alexaClientSDK::capabilityAgents::playbackController::PlaybackRouter> _playbackRouter;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::playbackController::PlaybackRouter> _playbackRouter;
   
-  std::unique_ptr<alexaClientSDK::capabilityAgents::playbackController::PlaybackController> _playbackController;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::playbackController::PlaybackController> _playbackController;
   
-  std::unique_ptr<alexaClientSDK::capabilityAgents::audioPlayer::AudioPlayer> _audioPlayer;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::audioPlayer::AudioPlayer> _audioPlayer;
   
   OnDirectiveFunc _onDirectiveFunc;
 };
