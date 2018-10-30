@@ -104,8 +104,14 @@ TEST(TestMaybe, Variant)
   newTree = insert(newTree, 6);
   newTree = insert(newTree, 3);
 
+  int n = 0;
+  newTree.Match( [&] (auto) { ++n; } );
+
   EXPECT_EQ(3, size(newTree)) << "failed to count nested tree";
+  EXPECT_EQ(1, n) << "bad void";
 }
+	
+ 
 
 TEST(TestMaybe, NothingFMap)
 {

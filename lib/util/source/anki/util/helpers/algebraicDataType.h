@@ -25,8 +25,26 @@ namespace {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // helpers for getting type information about Argument Packs
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template <typename... Ts> struct TypePack {};
+  template <typename... Ts> struct TypePack  { using type = TypePack; };
+  template <size_t... Is>   struct IndexPack { using type = IndexPack; };
 
+
+  template <size_t I, typename IPack> struct _prepend;
+  template <size_t I, size_t... Is>   struct _prepend<I, IndexPack<Is...>> : IndexPack<I, Is...> {};
+
+  template <size_t I, typename IPack> struct _prepend1;
+  template <size_t I, size_t... Is>   struct _prepend1<I, IndexPack<Is...>> : IndexPack<I, 1 + Is...> {};
+
+  template <size_t Idx, typename Sequence>
+  struct _get;
+
+  template <size_t I, size_t... Is>
+  struct _get<0, IndexPack<I, Is...>> : std::integral_constant<size_t, I> {};
+
+  template <size_t Idx, size_t I, size_t... Is>
+  struct _get<Idx, IndexPack<I, Is...>> : _get<Idx-1, IndexPack<Is...>> {};
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template <typename Arg, typename... Ts>
   struct GetPackIdx : 
     std::integral_constant<size_t, 1> {};
@@ -34,6 +52,15 @@ namespace {
   template <typename Arg, typename T0, typename... Ts>
   struct GetPackIdx<Arg, T0, Ts...> : 
     std::integral_constant<size_t, std::is_same<Arg, T0>::value ? 0 : 1 + GetPackIdx<Arg, Ts...>::value> {};
+
+  template <typename... Ts>
+  struct GetIndices : 
+    IndexPack<> {};
+   
+  template <typename T0, typename... Ts>
+  struct GetIndices<T0, Ts...> : 
+    _prepend1<0, typename GetIndices<Ts...>::type> {};
+
 
   template <typename... Types>
   struct IsUniqueList : 
@@ -88,20 +115,6 @@ namespace {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // map a set-of-types to a set-of-functions and apply when given a specified type-index
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  template <size_t... Ints> struct IndexPack { using type = IndexPack; };
-
-  template <size_t I, typename IPack> struct _prepend;
-  template <size_t I, size_t... Is>   struct _prepend<I, IndexPack<Is...>> : IndexPack<I, Is...> {};
-
-  template <size_t Idx, typename Sequence>
-  struct _get;
-
-  template <size_t I, size_t... Is>
-  struct _get<0, IndexPack<I, Is...>> : std::integral_constant<size_t, I> {};
-
-  template <size_t Idx, size_t I, size_t... Is>
-  struct _get<Idx, IndexPack<I, Is...>> : _get<Idx-1, IndexPack<Is...>> {};
    
 
   // --------------------------------------------------------------
@@ -155,8 +168,49 @@ namespace {
     template <typename Tup>
     inline static void visit(size_t idx, Tup& tup) { delete std::get<0>(tup); }
   };
-}
 
+  template <size_t I>
+  struct CopyType {
+    template <typename Tup>
+    inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) {
+    // inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) {
+      using T = std::remove_pointer_t<std::tuple_element_t<I, Tup>>;
+      if (idx == I) {
+        std::get<I>(tup0) = new T( *std::get<I>(tup1) );
+      } else {
+        CopyType<I - 1>::template visit(idx, tup0, tup1);
+      }
+    }
+  };
+
+  template <>
+  struct CopyType<0> {
+    template <typename Tup>
+    inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) { 
+    // inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) { 
+      using T = std::remove_pointer_t<std::tuple_element_t<0, Tup>>;
+      std::get<0>(tup0) = new T( *std::get<0>(tup1) ); 
+    }
+  };
+
+  // template <class Tup, size_t...Is>
+  // void copy_switch(std::size_t i, Tup& t0, const Tup& t1, IndexPack<Is...>) {
+  //   [](...){}( (i == Is &&
+  //       (std::get<Is>(t0) = new std::remove_pointer_t<std::tuple_element_t<Is, Tup>>( *std::get<Is>(t1) ))
+  //     )...
+  //   );
+  // } 
+
+  template <size_t...Is, typename Tup>
+  void copy_switch(std::size_t i, Tup& t0, const Tup& t1, IndexPack<Is...>) {
+    [](...){}( (i == Is &&
+        (std::get<Is>(t0) = new std::remove_pointer_t<std::tuple_element_t<Is, Tup>>( *std::get<Is>(t1) ))
+      )...
+    );
+  } 
+  // todo, use copy switch and test
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Pattern Matched SumType
@@ -174,13 +228,13 @@ public:
   }
 
   SumType(const SumType<Types...>& other) {
-    this->concrete = other.concrete;
     this->idx = other.idx;
+    // CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
+    copy_switch(idx, concrete, other.concrete, indices);
   }
 
   ~SumType() {
-    // DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
-    // delete here can create a double free
+    DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
   }
 
   template <typename InitType, 
@@ -192,8 +246,8 @@ public:
   }
 
   SumType<Types...>& operator=(const SumType<Types...>& other) {
-    this->concrete = other.concrete;
     this->idx = other.idx;
+    CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
     return *this;
   }
 
@@ -218,6 +272,8 @@ public:
 private:
   // TODO: we could make this a union. Otherwise this class could be a wrapper for std::variant
   //       see https://gist.github.com/tibordp/6909880 for variant implementation
+
+  static constexpr auto indices = GetIndices<Types...>{};
   std::tuple<Types*...> concrete;
   size_t idx;
 };
