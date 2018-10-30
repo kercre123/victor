@@ -86,6 +86,7 @@ public:
   void SetLocale(const std::string & locale);
 
   // Callbacks invoked by audio engine
+  void OnAudioPlaying(const TTSID_t ttsID);
   void OnAudioComplete(const TTSID_t ttsID);
   void OnAudioError(const TTSID_t ttsID);
 
@@ -210,6 +211,8 @@ private:
 
   // SWAG estimate of final duration
   f32 GetEstimatedDuration_ms(const std::string & text);
+  f32 GetDuration_ms(const StreamingWaveDataPtr & waveData);
+  f32 GetDuration_ms(const BundlePtr & bundle);
 
   // AudioEngine Callbacks
   void OnUtteranceCompleted(uint8_t ttsID);
