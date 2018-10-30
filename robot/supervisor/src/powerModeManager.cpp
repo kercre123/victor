@@ -22,8 +22,9 @@ namespace {
 
   // Whether or not we should go into calm mode because on charger
   // in order to prevent battery overheating
-  bool autoDisable_   = false;
-  TimeStamp_t autoDisableOnChargerTime_ms_ = 0;
+  bool autoDisable_                           = false;
+  bool suppressAutoDisable_                   = false;
+  TimeStamp_t autoDisableOnChargerTime_ms_    = 0;
   const u32 TIME_TO_AUTODISABLE_ON_CHARGER_MS = 10 * 1000;
 
 } // "private" members
@@ -38,6 +39,11 @@ void EnableActiveMode(bool enable, bool calibOnEnable)
 bool IsActiveModeEnabled()
 {
   return enable_;
+}
+
+void SuppressAutoDisableOnCharger(bool suppress)
+{
+  suppressAutoDisable_ = suppress;
 }
 
 void Update() 
@@ -92,24 +98,29 @@ void Update()
     }
   }
 
-  // Check for any activity that should clear, and reset the timeout for, autoDisable 
-  static bool wasOnCharger          = false;
-  const bool  isOnCharger           = HAL::BatteryIsOnCharger();
-  const bool  onChargerStateChanged = isOnCharger != wasOnCharger;
-              wasOnCharger          = isOnCharger;
+  // If robot has been on charger for long enough, disable active power mode.
+  if (suppressAutoDisable_) {
+    autoDisableOnChargerTime_ms_ = 0;
+    autoDisable_ = false;
+  } else {
+    static bool wasOnCharger          = false;
+    const bool  isOnCharger           = HAL::BatteryIsOnCharger();
+    const bool  onChargerStateChanged = isOnCharger != wasOnCharger;
+                wasOnCharger          = isOnCharger;
 
-  auto now_ms = HAL::GetTimeStamp();
-  if (onChargerStateChanged) {
-    if (isOnCharger) {
-      autoDisableOnChargerTime_ms_ = now_ms + TIME_TO_AUTODISABLE_ON_CHARGER_MS;
-    } else {
-      autoDisableOnChargerTime_ms_ = 0;
-      autoDisable_ = false;
+    auto now_ms = HAL::GetTimeStamp();
+    if (onChargerStateChanged) {
+      if (isOnCharger) {
+        autoDisableOnChargerTime_ms_ = now_ms + TIME_TO_AUTODISABLE_ON_CHARGER_MS;
+      } else {
+        autoDisableOnChargerTime_ms_ = 0;
+        autoDisable_ = false;
+      }
     }
-  }
-  if (autoDisableOnChargerTime_ms_ > 0 && now_ms > autoDisableOnChargerTime_ms_) {
-    autoDisable_ = true;
-    calibOnEnable_ = false;
+    if (autoDisableOnChargerTime_ms_ > 0 && now_ms > autoDisableOnChargerTime_ms_) {
+      autoDisable_ = true;
+      calibOnEnable_ = false;
+    }
   }
 
 }

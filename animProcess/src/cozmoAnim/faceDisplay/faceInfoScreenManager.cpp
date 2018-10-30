@@ -213,6 +213,11 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   auto noneEnterFcn = [this, animStreamer]() {
     // Restore power mode as specified by engine
     SendAnimToRobot(_calmModeMsgOnNone);
+
+    RobotInterface::AutoCalmOnCharger autoCalmMsg;
+    autoCalmMsg.suppress = false;
+    SendAnimToRobot(std::move(autoCalmMsg));
+
     if (FACTORY_TEST) {
       InitConnectionFlow(animStreamer);
     }
@@ -223,6 +228,10 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     msg.enable = false;
     msg.calibOnDisable = false;
     SendAnimToRobot(std::move(msg));
+
+    RobotInterface::AutoCalmOnCharger autoCalmMsg;
+    autoCalmMsg.suppress = true;
+    SendAnimToRobot(std::move(autoCalmMsg));
   };
   SET_ENTER_ACTION(None, noneEnterFcn);
   SET_EXIT_ACTION(None, noneExitFcn);
