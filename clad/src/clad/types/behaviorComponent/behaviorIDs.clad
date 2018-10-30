@@ -363,6 +363,7 @@ enum uint_16 BehaviorID {
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
+  ReactToRobotShaken,
   ReactToSoundAsleep,
   ReactToSoundAwake,
   ReactToSoundDirectionAsleep,

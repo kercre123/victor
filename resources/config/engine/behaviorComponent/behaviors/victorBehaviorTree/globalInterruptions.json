@@ -14,6 +14,7 @@
     "WeatherResponses",
     "GreetAfterLongTime",
     "TakeAPhotoCoordinator",
+    "ReactToRobotShaken",
     "ReactToTouchPetting",
     "ReactToObstacle",
     "InterruptingVoiceReactions",
