@@ -70,7 +70,7 @@ private:
     OnGround,
   };
 
-  // we can use either magnitued or duration to determine what shake level to use
+  // we can use either magnitude or duration to determine what shake level to use
   // adding both so we can easily go between the two during iteration
   EReactionLevel GetReactionLevelFromMagnitude() const;
 //  EReactionLevel GetReactionLevelFromDuration() const;

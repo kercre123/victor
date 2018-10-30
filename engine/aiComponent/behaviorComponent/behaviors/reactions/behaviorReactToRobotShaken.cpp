@@ -19,6 +19,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "util/logging/DAS.h"
 
 
 #define LOG_CHANNEL "Behaviors"
@@ -147,7 +148,7 @@ void BehaviorReactToRobotShaken::TransitionToDoneShaking()
   // cancel the looping animation
   CancelDelegates( false );
 
-  auto getOutCallbcak = [this]()
+  auto getOutCallback = [this]()
   {
     // now that we've had time to transition out of the shake anim, check if we're on the ground or still in hand and
     // play the appropriate animation
@@ -158,7 +159,7 @@ void BehaviorReactToRobotShaken::TransitionToDoneShaking()
   };
 
   const AnimationTrigger reactionAnim = GetReactionAnimation( EReactionAnimation::ShakeTransition );
-  DelegateIfInControl( new TriggerAnimationAction( reactionAnim ), getOutCallbcak );
+  DelegateIfInControl( new TriggerAnimationAction( reactionAnim ), getOutCallback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -174,11 +175,16 @@ void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
   const EReactionLevel level = GetReactionLevelFromMagnitude();
   const std::string levelString = EReactionLevelToString( level );
 
+  // This DAS event is preserved from it's original formatting, but maybe we want to change it now that we have the
+  // new DAS macros and not everything needs to be a string anymore?
+
   // DAS event string: "<shakenDuration_ms>:<maxShakenAccelMag>"
   const std::string& data = std::to_string( shakenDuration_ms ) + ":" + std::to_string( maxShakenAccelMag );
-  Anki::Util::sInfo( "robot.dizzy_reaction",
-                     {{DDATA, data.c_str()}},
-                     levelString.c_str() );
+  DASMSG( robot_dizzy_reaction, "robot.dizzy_reaction", "Robot is dizzy after being shaken" );
+  DASMSG_SET( s1, data, "<shakeDuration>:<shakeMagnitude>");
+//  DASMSG_SET( i1, maxShakenAccelMag, "max shake magnitude while robot was shaken" );
+//  DASMSG_SET( i2, shakenDuration_ms, "the duration the robot was shaken in ms" );
+  DASMSG_SEND();
 
   // Log human-readable completion info:
   LOG_DEBUG( "BehaviorReactToRobotShaken.DizzyReaction",
