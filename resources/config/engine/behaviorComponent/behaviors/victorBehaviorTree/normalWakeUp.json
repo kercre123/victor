@@ -1,5 +1,16 @@
 {
   "behaviorID": "NormalWakeUp",
+  "behaviorClass": "DispatcherQueue",
+  
+  "behaviors": [
+    "WakeUpInternal",
+    "HeadUpInternal"
+  ],
+  
+  "anonymousBehaviors": [
+  {
+  "behaviorName": "WakeUpInternal",
+  
   "behaviorClass": "AnimSequence",
 
   "associatedActiveFeature": "NoFeature",
@@ -21,4 +32,11 @@
   },
 
   "animTriggers": ["InitialWakeUp"]
+  },
+  {
+    "behaviorName": "HeadUpInternal",
+    "behaviorClass": "MoveHeadToAngle",
+    "headAngle_deg": 40.0
+  }
+  ]
 }

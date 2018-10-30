@@ -14,6 +14,7 @@
 #include "json/json.h"
 
 #include "coretech/common/shared/types.h"
+#include "cozmoAnim/animContext.h"
 
 // Forward declarations
 namespace Anki {
@@ -22,7 +23,6 @@ namespace Anki {
     class AnimationStreamer;
     class StreamingAnimationModifier;
     class TextToSpeechComponent;
-    class BackpackLightComponent;
     
     namespace Audio {
       class CozmoAudioController;
@@ -63,8 +63,8 @@ public:
   void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
   void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
-  const BackpackLightComponent& GetBackpackLightComponent() const { return *_backpackLightComponent.get(); }
-  BackpackLightComponent& GetBackpackLightComponent() { return *_backpackLightComponent.get(); }
+  const BackpackLightComponent& GetBackpackLightComponent() const { return *_context->_backpackLightComponent.get(); }
+  BackpackLightComponent& GetBackpackLightComponent() { return *_context->_backpackLightComponent.get(); }
   
 protected:
 
@@ -74,8 +74,7 @@ protected:
   std::unique_ptr<StreamingAnimationModifier>   _streamingAnimationModifier;
   std::unique_ptr<TextToSpeechComponent>        _ttsComponent;
   std::unique_ptr<Audio::MicrophoneAudioClient> _microphoneAudioClient;
-  Audio::CozmoAudioController*                  _audioControllerPtr = nullptr;
-  std::unique_ptr<BackpackLightComponent>       _backpackLightComponent;   
+  Audio::CozmoAudioController*                  _audioControllerPtr = nullptr;   
   
 }; // class AnimEngine
 

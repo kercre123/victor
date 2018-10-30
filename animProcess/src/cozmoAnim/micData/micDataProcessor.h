@@ -110,6 +110,8 @@ public:
   
   void AlexaAlertsCancelled(const std::vector<int> alertIDs);
   
+  void ToggleMute(bool muted) { _muted = muted; }
+  
 private:
   const AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;
@@ -236,6 +238,8 @@ private:
   const char* GetProcessingStateName(ProcessingState state) const;
   
   void SavePCM(short* buff, int size) const;
+  
+  bool _muted = false;
 };
 
 } // namespace MicData

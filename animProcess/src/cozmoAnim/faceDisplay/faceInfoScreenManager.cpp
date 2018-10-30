@@ -37,6 +37,7 @@
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "webServerProcess/src/webService.h"
+#include "util/logging/DAS.h"
 
 #include "json/json.h"
 #include "osState/osState.h"
@@ -866,6 +867,18 @@ void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()
   _headLowestAngle_rad = std::numeric_limits<f32>::max();
   _headHighestAngle_rad = std::numeric_limits<f32>::lowest();
 }
+  
+//  namespace {
+//    void ShittyDebug(const char* str)
+//    {
+//      DASMSG(shitty_debug,
+//             "shitty_debug",
+//             "blah blah4");
+//      DASMSG_SET(s1, str, "debug");
+//      DASMSG_SEND();
+//    }
+//
+//  }
 
 void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 {
@@ -908,6 +921,17 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
                   "Remove FORCE_TRANSITION_TO_PAIRING when switchboard is working");
       SetScreen(ScreenName::Pairing);
     }
+  }
+  //ShittyDebug(("doublePress=" + std::to_string(doublePressDetected) + " screen=" + std::to_string(int(currScreenName))).c_str());
+  if(doublePressDetected &&
+     !isOnCharger &&
+      (currScreenName == ScreenName::None ||
+       currScreenName == ScreenName::FAC  ||
+       currScreenName == ScreenName::CustomText ||
+       currScreenName == ScreenName::Pairing ||
+       currScreenName == ScreenName::AlexaPairing) )
+  {
+    _context->GetMicDataSystem()->ToggleMute();
   }
 
   // Check for button press to go to next debug screen

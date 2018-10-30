@@ -263,6 +263,9 @@ void MicDataProcessor::InitVAD()
   
   void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, const std::string& keyword, float score, int from_ms, int to_ms)
 {
+  if( _muted ) {
+    return;
+  }
   PRINT_NAMED_WARNING("WHATNOW", "TRIGGER WORD keyword=%s from=%d, to=%d. UXState=%d", keyword.c_str(), from_ms, to_ms, kRunAlexa ? (int)_alexa->GetState() : -1);
   
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
@@ -1258,7 +1261,7 @@ const char* MicDataProcessor::GetProcessingStateName(MicDataProcessor::Processin
 }
   
 void MicDataProcessor::FakeTriggerWordDetection() {
-  if( _alexa ) {
+  if( _alexa && !_muted ) {
     _alexa->ButtonPress();
   } else {
     TriggerWordDetectCallback(TriggerWordDetectSource::Button, "HEY_VECTOR", 0.f, 0,0);

@@ -89,7 +89,7 @@ static_assert(
 
 
 MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
-                             const AnimContext* context)
+                             AnimContext* context)
 : _udpServer(new LocalUdpServer())
 , _fftResultData(new FFTResultData())
 , _context(context)
@@ -767,6 +767,17 @@ void MicDataSystem::AlexaAlertsCancelled(const std::vector<int> alertIDs)
 {
   if( _micDataProcessor != nullptr ) {
     _micDataProcessor->AlexaAlertsCancelled(alertIDs);
+  }
+}
+  
+void MicDataSystem::ToggleMute()
+{
+  _isMuted = !_isMuted;
+  if( _micDataProcessor != nullptr ) {
+    _micDataProcessor->ToggleMute(_isMuted);
+  }
+  if( _context != nullptr ) {
+    _context->SetMute(_isMuted);
   }
 }
 

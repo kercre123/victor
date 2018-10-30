@@ -70,8 +70,8 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
   , _context(std::make_unique<AnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
-  , _backpackLightComponent(std::make_unique<BackpackLightComponent>(_context.get()))
 {
+  _context->_backpackLightComponent = std::make_unique<BackpackLightComponent>(_context.get());
 #if ANKI_CPU_PROFILER_ENABLED
   // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
   Anki::Util::CpuProfiler::GetInstance();
@@ -120,7 +120,7 @@ Result AnimEngine::Init()
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init(_ttsComponent.get());
-  _backpackLightComponent->Init();
+  _context->_backpackLightComponent->Init();
 
   // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
@@ -232,9 +232,9 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     _audioControllerPtr->Update();
   }
 
-  if(_backpackLightComponent != nullptr)
+  if(_context != nullptr && _context->_backpackLightComponent != nullptr)
   {
-    _backpackLightComponent->Update();
+    _context->_backpackLightComponent->Update();
   }
 
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS

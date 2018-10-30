@@ -35,6 +35,7 @@ enum int_32 BackpackAnimationTrigger
   SpinnerYellowHoldTarget,
   SpinnerYellowSelectTarget,
   Streaming,
+  Muted,
 
   Count
 }
@@ -65,6 +66,7 @@ enum_concept string EnumToString[BackpackAnimationTrigger] {
   SpinnerYellowHoldTarget   = verbatim "SpinnerYellowHoldTarget",
   SpinnerYellowSelectTarget = verbatim "SpinnerYellowSelectTarget",
   Streaming                 = verbatim "Streaming",
+  Muted                     = verbatim "Muted",
 
   Count                     = verbatim "Count"
 }

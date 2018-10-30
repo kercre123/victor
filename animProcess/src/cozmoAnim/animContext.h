@@ -37,6 +37,8 @@ class AudioMultiplexer;
 }
 
 namespace Vector {
+  
+class BackpackLightComponent;
 
 namespace MicData {
   class MicDataSystem;
@@ -86,6 +88,9 @@ public:
   ShowAudioStreamStateManager*          GetShowAudioStreamStateManager() const { return _showStreamStateManager.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
   Audio::AudioPlaybackSystem*           GetAudioPlaybackSystem() const { return _audioPlayer.get(); }
+  
+  std::unique_ptr<BackpackLightComponent>       _backpackLightComponent;
+  
 
   void SetRandomSeed(uint32_t seed);
 
@@ -96,6 +101,8 @@ public:
   bool IsMainThread() const;
 
   void SetLocale(const std::string & locale);
+  
+  void SetMute(bool muted);
 
 private:
   // This is passed in and held onto, but not owned by the context (yet.

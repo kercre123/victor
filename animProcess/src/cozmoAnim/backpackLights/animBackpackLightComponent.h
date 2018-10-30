@@ -50,6 +50,10 @@ public:
   void Init();  
   void Update();
   
+  void SetMute(bool muted) {
+    _isMuted = muted;
+  }
+  
   // General purpose call to set backpack lights. The light pattern will persist until this function is called again.
   // Plays the lights on the Engine priority level
   void SetBackpackAnimation(const BackpackLightAnimation::BackpackAnimation& lights);
@@ -65,6 +69,8 @@ public:
   // Update battery status as we need to know when to play charging/low battery lights
   // Priority of battery related lights Low Battery > Charging > Fully Charged (Off)
   void UpdateBatteryStatus(const RobotInterface::BatteryStatus& msg);
+  
+  
   
 private:
 
@@ -90,7 +96,7 @@ private:
   BackpackLightDataRefWeak GetBestLightConfig();
 
   // Updates the critical backpack light config if neccessary
-  void UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen);
+  void UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen, bool isMuted);
 
   // Updates the current system light pattern if neccessary
   void UpdateSystemLightState(bool isCloudStreamOpen);
@@ -141,6 +147,7 @@ private:
   // State for streaming lights
   bool _willStreamOpen = false;
   bool _isStreaming = false;
+  bool _isMuted = false;
 
 };
 

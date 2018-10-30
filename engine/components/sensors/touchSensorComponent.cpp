@@ -354,7 +354,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   }
   
   bool sendTrue = false;
-  {
+  if( true ) { // pickup enabled
     static int wasOffTreads = -1;
     const bool offTreads = (_robot->GetOffTreadsState() != OffTreadsState::OnTreads);
     if( offTreads && wasOffTreads != (int)offTreads  ) {

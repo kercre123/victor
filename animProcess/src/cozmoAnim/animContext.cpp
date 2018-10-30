@@ -7,6 +7,7 @@
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 
 #include "webServerProcess/src/webService.h"
 
@@ -16,6 +17,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
+#include "util/logging/DAS.h"
 
 #define LOG_CHANNEL "AnimContext"
 
@@ -105,5 +107,23 @@ void AnimContext::SetLocale(const std::string & locale)
     _micDataSystem->UpdateLocale(*_locale);
   }
 }
+  
+  namespace {
+    void ShittyDebug(const char* str)
+    {
+      DASMSG(shitty_debug,
+             "shitty_debug",
+             "blah blah3");
+      DASMSG_SET(s1, str, "debug");
+      DASMSG_SEND();
+    }
+    
+  }
+  
+  void AnimContext::SetMute(bool muted)
+  {
+    ShittyDebug(("anim context set mute=" + std::to_string(muted)).c_str());
+    _backpackLightComponent->SetMute(muted);
+  }
 } // namespace Vector
 } // namespace Anki

@@ -14,10 +14,22 @@
 
 #include "coretech/common/engine/colorRGBA.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
 
+  namespace {
+    void ShittyDebug(const char* str)
+    {
+      DASMSG(shitty_debug,
+             "shitty_debug",
+             "blah blah3");
+      DASMSG_SET(s1, str, "debug");
+      DASMSG_SEND();
+    }
+  }
+  
 
 BackpackLightAnimationContainer::BackpackLightAnimationContainer(const InitMap& initializationMap)
 {
@@ -29,6 +41,7 @@ BackpackLightAnimationContainer::BackpackLightAnimationContainer(const InitMap& 
       auto animName = Util::FileUtils::GetFileName(pair.first, mustHaveExtension, removeExtension);
       AddAnimation(animName, std::move(animation));
     }else{
+      ShittyDebug(("could not parse " + pair.first).c_str());
       PRINT_NAMED_ERROR("BackpackLightAnimationContainer.Constructor.FailedToParseJSON",
                         "Failed to parse JSON for file %s",
                         pair.first.c_str());
@@ -64,6 +77,7 @@ const BackpackLightAnimation::BackpackAnimation* BackpackLightAnimationContainer
   BackpackLightAnimation::BackpackAnimation* animPtr = nullptr;
   auto retVal = _animations.find(name);
   if(retVal == _animations.end()) {
+    ShittyDebug(("Animation requested for unknown animation " + name).c_str());
     PRINT_NAMED_ERROR("BackpackLightAnimationContainer.GetAnimation_Const.InvalidName",
                       "Animation requested for unknown animation '%s'.",
                       name.c_str());

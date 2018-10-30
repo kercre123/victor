@@ -63,7 +63,7 @@ namespace MicData {
 class MicDataSystem {
 public:
   MicDataSystem(Util::Data::DataPlatform* dataPlatform,
-                const AnimContext* context);
+                AnimContext* context);
   ~MicDataSystem();
   MicDataSystem(const MicDataSystem& other) = delete;
   MicDataSystem& operator=(const MicDataSystem& other) = delete;
@@ -103,6 +103,8 @@ public:
   
   bool IsSpeakerPlayingAudio() const;
   
+  void ToggleMute();
+  
   // Get the maximum speaker 'latency', which is the max delay between when we
   // command audio to be played and it actually gets played on the speaker
   uint32_t GetSpeakerLatency_ms() const { return _speakerLatency_ms; }
@@ -135,6 +137,7 @@ public:
 
 private:
   bool _isAlexa;
+  bool _isMuted = false;
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
   std::string _writeLocationDir = "";
@@ -184,7 +187,7 @@ private:
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
-  const AnimContext* _context;
+  AnimContext* _context;
 };
 
 } // namespace MicData

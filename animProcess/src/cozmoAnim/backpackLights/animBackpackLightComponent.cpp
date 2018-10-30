@@ -23,6 +23,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/internetUtils/internetUtils.h"
+#include "util/logging/DAS.h"
 
 #include "osState/osState.h"
 
@@ -88,9 +89,20 @@ void BackpackLightComponent::Init()
 
   _backpackTriggerToNameMap = _context->GetDataLoader()->GetBackpackAnimationTriggerMap();
 }
+  
+  namespace {
+    void ShittyDebug(const char* str)
+    {
+      DASMSG(shitty_debug,
+             "shitty_debug",
+             "blah blah3");
+      DASMSG_SET(s1, str, "debug");
+      DASMSG_SEND();
+    }
+  }
 
 
-void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen)
+void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen, bool isMuted)
 {
   const AnimTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
  
@@ -114,6 +126,10 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   {
     trigger = BackpackAnimationTrigger::Offline; 
   }
+  else if( isMuted ) {
+    ShittyDebug("is muted!!!");
+    trigger = BackpackAnimationTrigger::Muted;
+  }
   // If we are on the charger and charging
   else if(_isOnChargerContacts &&
           _isBatteryCharging &&
@@ -125,10 +141,12 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   if(trigger != _internalCriticalLightsTrigger)
   {
     _internalCriticalLightsTrigger = trigger;
+    ShittyDebug(("new trigger=" + std::to_string((int)trigger)).c_str());
     auto animName = _backpackTriggerToNameMap->GetValue(trigger);
     const auto* anim = _backpackLightContainer->GetAnimation(animName);
     if(anim == nullptr)
     {
+      ShittyDebug(("No anim: " + animName).c_str());
       PRINT_NAMED_WARNING("BackpackLightComponent.UpdateChargingLightConfig.NullAnim",
                           "Got null anim for trigger %s",
                           EnumToString(trigger));
@@ -156,6 +174,7 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
 }
 
 
+
 void BackpackLightComponent::Update()
 {
   UpdateOfflineCheck();
@@ -163,7 +182,7 @@ void BackpackLightComponent::Update()
   // Consider stream to be open when the trigger word is detected or we are actually
   // streaming. Trigger word stays detected until the stream state is updated
   const bool isCloudStreamOpen = (_willStreamOpen || _isStreaming);
-  UpdateCriticalBackpackLightConfig(isCloudStreamOpen);
+  UpdateCriticalBackpackLightConfig(isCloudStreamOpen, _isMuted);
 
   UpdateSystemLightState(isCloudStreamOpen);
   

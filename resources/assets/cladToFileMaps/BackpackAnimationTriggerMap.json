@@ -94,6 +94,10 @@
   {
       "CladEvent": "Streaming",
       "AnimName": "streaming"
-  }
+  },
+ {
+   "CladEvent": "Muted",
+   "AnimName": "muted"
+ }
 ]
 
