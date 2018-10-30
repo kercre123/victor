@@ -304,6 +304,22 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
+  if (!_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("SpeechRecognizer", _audioInputProcessor) )) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "AudioInputProcessor"));
+    return false;
+  }
+  
+  // Register capabilities
+  
+  if (!(capabilitiesDelegate->registerCapability(_audioInputProcessor))) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "SpeechRecognizer"));
+    return false;
+  }
+
   if (!(capabilitiesDelegate->registerCapability(_speechSynthesizer))) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterCapability")
@@ -321,6 +337,14 @@ void AlexaClient::Connect( const std::shared_ptr<avsCommon::sdkInterfaces::Capab
   if( capabilitiesDelegate != nullptr ) {
     capabilitiesDelegate->publishCapabilitiesAsyncWithRetries();
   }
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::future<bool> AlexaClient::NotifyOfTapToTalk( capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
+                                                  avsCommon::avs::AudioInputStream::Index beginIndex )
+{
+  return _audioInputProcessor->recognize(tapToTalkAudioProvider, capabilityAgents::aip::Initiator::TAP, beginIndex);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

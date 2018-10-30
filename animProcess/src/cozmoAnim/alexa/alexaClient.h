@@ -118,6 +118,10 @@ public:
   
   void Connect( const std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface>& capabilitiesDelegate );
   
+  std::future<bool> NotifyOfTapToTalk( alexaClientSDK::capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
+                                       alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex
+                                         = alexaClientSDK::capabilityAgents::aip::AudioInputProcessor::INVALID_INDEX );
+  
   virtual void onCapabilitiesStateChange( alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::State newState,
                                           alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::Error newError ) override;
   

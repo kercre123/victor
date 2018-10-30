@@ -21,6 +21,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -42,10 +43,8 @@ Alexa::Alexa()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// these are defined here since AlexaImpl is not defined in the header
+// is defined here since AlexaImpl is not defined in the header
 Alexa::~Alexa() = default;
-Alexa::Alexa(Alexa &&) noexcept = default;
-Alexa& Alexa::operator=(Alexa &&) noexcept = default;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Init(const AnimContext* context)
@@ -89,7 +88,11 @@ void Alexa::SetAlexaActive(bool active)
     CreateImpl();
   } else if( !active && HasImpl() ) {
     DeleteImpl();
-    // todo: tell micDataSystem to NOT use wakeword
+    
+    auto* mds = _context->GetMicDataSystem();
+    if( mds != nullptr ) {
+      mds->SetAlexaActive( false );
+    }
   }
   
   if( !active ) {
@@ -153,6 +156,7 @@ void Alexa::CreateImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::DeleteImpl()
 {
+  std::lock_guard<std::mutex> lg{ _implMutex };
   ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" );
   _impl.reset();
   SetAuthState( AlexaAuthState::Uninitialized );
@@ -192,9 +196,12 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
       break;
     case AlexaAuthState::Authorized:
     {
-      // todo: tell micDataSystem to use wakeword
       SetAuthState( state );
       TouchOptInFile();
+      auto* mds = _context->GetMicDataSystem();
+      if( mds != nullptr ) {
+        mds->SetAlexaActive( true );
+      }
     }
       break;
     case AlexaAuthState::Invalid:
@@ -292,8 +299,26 @@ void Alexa::SendAuthState()
     _pendingEngineMsgs = true;
     LOG_INFO( "Alexa.SetAuthState", "Pending state = %d", (int)_authState );
   }
-
-  
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const
+{
+  // note: this can be called on another thread. guard access to _impl in case it is being deleted.
+  // it might make more sense to move calls to this to the main thread as a precaution, sacrificing a copy
+  std::lock_guard<std::mutex> lg{ _implMutex };
+  if( _impl != nullptr ) {
+    _impl->AddMicrophoneSamples( samples, nSamples );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::NotifyOfTapToTalk() const
+{
+  if( _impl != nullptr ) {
+    _impl->NotifyOfTapToTalk();
+  }
+}
+  
 } // namespace Vector
 } // namespace Anki

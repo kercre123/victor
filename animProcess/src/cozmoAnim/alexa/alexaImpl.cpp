@@ -30,6 +30,7 @@
 
 #include "clad/types/alexaAuthState.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "cozmoAnim/alexa/alexaAudioInput.h"
 #include "cozmoAnim/alexa/alexaClient.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/animContext.h"
@@ -70,6 +71,19 @@ using namespace alexaClientSDK;
 namespace {
   #define CRITICAL_SDK(event) ACSDK_CRITICAL(avsCommon::utils::logger::LogEntry(__FILE__, event))
   #define LOG_CHANNEL "Alexa"
+  
+  // The sample rate of microphone audio data.
+  static const unsigned int kSampleRate_Hz = 16000;
+  // The number of audio channels.
+  static const unsigned int kNumChannels = 1;
+  // The size of each word within the stream.
+  static const size_t kWordSize = 2;
+  // The maximum number of readers of the stream.
+  static const size_t kMaxReaders = 10;
+  // The amount of audio data to keep in the ring buffer.
+  static const std::chrono::seconds kBufferDuration_s = std::chrono::seconds(15);
+  // The size of the ring buffer.
+  static const size_t kBufferSize = (kSampleRate_Hz)*kBufferDuration_s.count();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -212,6 +226,72 @@ bool AlexaImpl::Init(const AnimContext* context)
   
   _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
   
+  // _client->AddSpeakerManagerObserver( _observer );
+
+  // Creating the buffer (Shared Data Stream) that will hold user audio data. This is the main input into the SDK.
+  size_t bufferSize = alexaClientSDK::avsCommon::avs::AudioInputStream::calculateBufferSize( kBufferSize,
+                                                                                             kWordSize,
+                                                                                             kMaxReaders );
+  auto buffer = std::make_shared<alexaClientSDK::avsCommon::avs::AudioInputStream::Buffer>( bufferSize );
+  std::shared_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream> sharedDataStream
+    = alexaClientSDK::avsCommon::avs::AudioInputStream::create( buffer, kWordSize, kMaxReaders );
+
+  if( !sharedDataStream ) {
+    CRITICAL_SDK("Failed to create shared data stream!");
+    return false;
+  }
+
+  alexaClientSDK::avsCommon::utils::AudioFormat compatibleAudioFormat;
+  compatibleAudioFormat.sampleRateHz = kSampleRate_Hz;
+  compatibleAudioFormat.sampleSizeInBits = kWordSize * CHAR_BIT;
+  compatibleAudioFormat.numChannels = kNumChannels;
+  compatibleAudioFormat.endianness = alexaClientSDK::avsCommon::utils::AudioFormat::Endianness::LITTLE;
+  compatibleAudioFormat.encoding = alexaClientSDK::avsCommon::utils::AudioFormat::Encoding::LPCM;
+
+  // Creating each of the audio providers. An audio provider is a simple package of data consisting of the stream
+  // of audio data, as well as metadata about the stream. For each of the three audio providers created here, the same
+  // stream is used since this sample application will only have one microphone.
+
+  const auto kNearField = alexaClientSDK::capabilityAgents::aip::ASRProfile::NEAR_FIELD;
+  
+  {
+    // Creating tap to talk audio provider
+    bool tapAlwaysReadable = true;
+    bool tapCanOverride = true;
+    bool tapCanBeOverridden = true;
+    _tapToTalkAudioProvider
+      = std::make_shared<alexaClientSDK::capabilityAgents::aip::AudioProvider>( sharedDataStream,
+                                                                                compatibleAudioFormat,
+                                                                                kNearField,
+                                                                                tapAlwaysReadable,
+                                                                                tapCanOverride,
+                                                                                tapCanBeOverridden );
+  }
+
+  // TODO: create a wakeword provider
+  //{
+  //  bool wakeAlwaysReadable = true;
+  //  bool wakeCanOverride = false;
+  //  bool wakeCanBeOverridden = true;
+  //
+  //
+  //  _wakeWordAudioProvider = std::make_shared<capabilityAgents::aip::AudioProvider>( sharedDataStream,
+  //                                                                                   compatibleAudioFormat,
+  //                                                                                   kNearField,
+  //                                                                                   wakeAlwaysReadable,
+  //                                                                                   wakeCanOverride,
+  //                                                                                   wakeCanBeOverridden );
+  //
+  //  auto dummyEspProvider = std::make_shared<esp::DummyESPDataProvider>();
+  //  std::shared_ptr<esp::ESPDataProviderInterface> espProvider = dummyEspProvider;
+  //  std::shared_ptr<esp::ESPDataModifierInterface> espModifier = dummyEspProvider;
+  //  // This observer is notified any time a keyword is detected and notifies the AlexaClient to start recognizing.
+  //  _keywordObserver = std::make_shared<KeywordObserver>( _client, *_wakeWordAudioProvider, espProvider );
+  //}
+  
+  _microphone = AlexaAudioInput::Create( sharedDataStream );
+  _microphone->startStreamingMicrophoneData();
+  
   _capabilitiesDelegate->addCapabilitiesObserver( _client );
   
   // try connecting
@@ -233,6 +313,14 @@ void AlexaImpl::StopForegroundActivity()
 {
   if( _client ) {
     _client->StopForegroundActivity();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples )
+{
+  if( _microphone != nullptr ) {
+    _microphone->AddSamples( samples, nSamples );
   }
 }
 
@@ -316,6 +404,16 @@ void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, cons
   _currAuthState = state;
   if( (_onAlexaAuthStateChanged != nullptr) && changed ) {
     _onAlexaAuthStateChanged( state, url, code );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::NotifyOfTapToTalk()
+{
+  if( _client != nullptr ) {
+    ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
+                 "AlexaImpl.NotifyOfTapToTalk.Failed",
+                 "Failed to notify tap to talk" );
   }
 }
 

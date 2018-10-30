@@ -30,6 +30,7 @@
 #define ANIMPROCESS_COZMO_ALEXAIMPL_H
 #pragma once
 
+#include "audioUtil/audioDataTypes.h"
 #include "util/helpers/noncopyable.h"
 
 #include <AVSCommon/SDKInterfaces/AuthObserverInterface.h>
@@ -51,7 +52,8 @@ namespace alexaClientSDK{
 
 namespace Anki {
 namespace Vector {
-  
+
+class AlexaAudioInput;
 enum class AlexaAuthState : uint8_t;
 class AlexaClient;
 class AlexaObserver;
@@ -70,6 +72,11 @@ public:
   void Update();
   
   void StopForegroundActivity();
+  
+  // Adds samples to the mic stream buffer. Should be ok to call on another thread
+  void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples );
+  
+  void NotifyOfTapToTalk();
   
   // Callback setters
   
@@ -102,6 +109,9 @@ private:
   std::shared_ptr<AlexaObserver> _observer;
   
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> _capabilitiesDelegate;
+  
+  std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _tapToTalkAudioProvider;
+  std::shared_ptr<AlexaAudioInput> _microphone;
   
   // callbacks
   OnAlexaAuthStateChanged _onAlexaAuthStateChanged;
