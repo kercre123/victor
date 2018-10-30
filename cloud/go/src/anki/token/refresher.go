@@ -9,11 +9,11 @@ import (
 	"time"
 )
 
-func initRefresher(ctx context.Context, identityProvider identity.Provider) {
-	go refreshRoutine(ctx, identityProvider)
+func initRefresher(ctx context.Context, tokenQueue *tokenQueue, identityProvider identity.Provider) {
+	go refreshRoutine(ctx, tokenQueue, identityProvider)
 }
 
-func refreshRoutine(ctx context.Context, identityProvider identity.Provider) {
+func refreshRoutine(ctx context.Context, tokenQueue *tokenQueue, identityProvider identity.Provider) {
 	for {
 		const tokSleep = 5 * time.Minute
 		const ntpSleep = 20 * time.Second
@@ -45,7 +45,7 @@ func refreshRoutine(ctx context.Context, identityProvider identity.Provider) {
 		if refreshDuration <= 0 {
 			log.Println("token refresh: refreshing")
 			ch := make(chan *response)
-			queue <- request{m: cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{}), ch: ch}
+			tokenQueue.queue <- request{m: cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{}), ch: ch}
 			msg := <-ch
 			close(ch)
 			if msg.err != nil {
