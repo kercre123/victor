@@ -1,0 +1,4 @@
+halo
+pytest
+requests
+requests_toolbelt
