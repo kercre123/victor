@@ -560,8 +560,20 @@
     "SpriteName" : "blackjack_vector_flipover"
   },
   {
+    "CladEvent" : "Face_Alexa_Listen2weather",
+    "SpriteName" : "face_alexa_listen2weather"
+  },
+  {
     "CladEvent" : "Face_Alexa_Ring_Test",
     "SpriteName" : "face_alexa_ring_test"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Back2listen",
+    "SpriteName" : "face_alexaint_back2listen"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Fail",
+    "SpriteName" : "face_alexaint_fail"
   },
   {
     "CladEvent" : "Face_Alexaint_Getin",
@@ -572,8 +584,24 @@
     "SpriteName" : "face_alexaint_l_loop"
   },
   {
+    "CladEvent" : "Face_Alexaint_Listen2neutral",
+    "SpriteName" : "face_alexaint_listen2neutral"
+  },
+  {
     "CladEvent" : "Face_Alexaint_Listen2speak",
     "SpriteName" : "face_alexaint_listen2speak"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Listen2timer",
+    "SpriteName" : "face_alexaint_listen2timer"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Listen2weather",
+    "SpriteName" : "face_alexaint_listen2weather"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Listen_Timeout",
+    "SpriteName" : "face_alexaint_listen_timeout"
   },
   {
     "CladEvent" : "Face_Alexaint_Speak_Getout",
@@ -582,6 +610,10 @@
   {
     "CladEvent" : "Face_Alexaint_Speak_Loop",
     "SpriteName" : "face_alexaint_speak_loop"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Suddenspeak",
+    "SpriteName" : "face_alexaint_suddenspeak"
   },
   {
     "CladEvent" : "Face_Chargerdocking_Severerequest",

@@ -5,25 +5,45 @@
   "associatedActiveFeature": "InTheAir",
 
   "wantsToBeActivatedCondition": {
-    "conditionType": "OffTreadsState",
-    "targetState": "InAir"  
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "InAir"
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OnCharger"
+        }
+      }
+    ]
   },
 
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",
-    "and": [
+    "or": [
       {
         "conditionType": "Compound",
-        "not": {
-          "conditionType": "OffTreadsState",
-          "targetState": "InAir"
-        }
+        "and": [
+          {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType": "OffTreadsState",
+              "targetState": "InAir"
+            }
+          },
+          {
+            "conditionType": "BeingHeld",
+            "shouldBeHeld": false
+          }
+        ]
       },
       {
-        "conditionType": "BeingHeld",
-        "shouldBeHeld": false
+        "conditionType": "OnCharger"
       }
     ]
+    
   },
 
   "behaviors": [

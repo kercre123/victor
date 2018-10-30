@@ -103,6 +103,36 @@ def is_up(url_string):
         os.exit(e)
 
 
+def is_valid_checksum(url_string):
+    """
+    Test if the provided checksum is a valid SHA and uncorrupted. Function will pull checksums
+    from json DEPS then cross compare its sha value, and return True or False
+    if the checksum is correct.
+    # Logic from https://codereview.stackexchange.com/a/27831
+
+    Args:
+        url_string: root_url from DEPS
+
+    Returns: hex digest of checksum(sha256 in this case)
+
+    """
+    import urllib2
+    import contextlib
+    import hashlib
+
+    # TODO: add other checksum verifications as new checksums values are added for dependencies
+
+    hash_url = hashlib.sha256()  # Creates a SHA-256 hash object, stored into hash_url.
+    # Return a context manager that closes _thing_ upon completion of the block.
+    with contextlib.closing(urllib2.urlopen(url_string)) as binary_file:
+        # Open requested url and then store it as a binary file
+        for chunk in iter(lambda: binary_file.read(4096), ''):
+            # iterate through the binary_file's chunks at 4096b intervals
+            hash_url.update(chunk)
+            # Update the hash object with the bytes-like object.
+        return hash_url.hexdigest()  # Return the hexadecimal of the data passed to the update() method so far.
+
+
 def extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
   """
   Given the path to a directory that contains .tar files and a list
@@ -202,7 +232,6 @@ def get_flatc_dir():
  
   return flatc_dir
   
-
 
 def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
     tmp_json_files = []
@@ -557,6 +586,7 @@ def teamcity_package(tc_dict):
         build_type_id = builds[build].get("build_type_id", "undefined")
         package_name = builds[build].get("package_name", "undefined")
         ext = builds[build].get("extension", "undefined")
+        checksums = builds[build].get("checksums", "undefined")
         # TODO:  Switch parameters and compression tool based on extension.
 
         loc = os.path.join(DEPENDENCY_LOCATION, build)
@@ -575,6 +605,18 @@ def teamcity_package(tc_dict):
           pull_down = [tool, '-f', combined_url, '-o', dist]
         if VERBOSE:
             pull_down += ['-v']
+
+        try:
+            sha = checksums.get("sha256", "undefined")
+            if VERBOSE:
+                print("{0}'s stored hash is {1}".format(package_name, sha))
+                print("{0}'s actual hash is {1}".format(package_name, is_valid_checksum(combined_url)))
+            if sha == is_valid_checksum(combined_url):
+                print("{0} checksum validated.".format(package_name))
+            else:
+                sys.exit("{0} checksum invalid. Assume binary corruption.".format(package_name))
+        except AttributeError:
+            pass
 
         if not is_up(combined_url):
             print "WARNING {0} is not available.  Cannot verify {1}.".format(combined_url, build)

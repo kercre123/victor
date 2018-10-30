@@ -17,6 +17,15 @@ asset_project(
 )
 
 asset_project(
+    name = 'platform_config_bin_development',
+    srcs = subdir_glob([
+                ('development/bin', '**/*'),
+                ],
+                prefix = 'bin'
+            ),
+)
+
+asset_project(
     name = 'platform_config_etc_development',
     srcs = subdir_glob([
                 ('development/etc', '**/*'),

@@ -23,9 +23,10 @@ The API
     anki_vector.proximity
     anki_vector.robot
     anki_vector.screen
-    anki_vector.sync
+    anki_vector.touch
     anki_vector.util
     anki_vector.viewer
+    anki_vector.vision
     anki_vector.world
     anki_vector.messaging.client
 

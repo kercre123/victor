@@ -232,9 +232,9 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   if (!payload.enabled) {
     // Burnout protection triggered.
     // Somebody is probably messing with the lift
-    PRINT_NAMED_INFO("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
+    LOG_INFO("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
   } else {
-    PRINT_NAMED_INFO("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
+    LOG_INFO("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
   }
 
   // This probably applies here as it does in HandleMotorCalibration.
@@ -277,8 +277,6 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
         robot->GetCarryingComponent().SetCarriedObjectAsUnattached();
       }
 
-      robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-
       break;
     }
     case BlockStatus::BLOCK_PICKED_UP:
@@ -306,7 +304,7 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   //const DockingStatus& payload = message.GetData().Get_dockingStatus();
 
   // Log event to help us track whether backup or "Hanns Manuever" is being used
-  PRINT_NAMED_INFO("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
+  LOG_INFO("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
 
@@ -594,10 +592,11 @@ void RobotToEngineImplMessaging::HandleDisplayedFaceImage(const AnkiEvent<RobotI
 
 }
 
-void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message,
+                                                          Robot* const robot)
 {
   const auto & payload = message.GetData().Get_streamCameraImages();
-  robot->GetVisionComponent().EnableMode(VisionMode::MirrorMode, payload.enable);
+  robot->GetVisionComponent().EnableMirrorMode(payload.enable);
 }
 
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

@@ -299,7 +299,7 @@ void BehaviorDanceToTheBeat::PlayNextDanceAnim()
   } else {
     // Delegate to this animation, and play the eye hold indefinitely after that
     DelegateNow(animAction, [this](){
-      DelegateIfInControl(new TriggerAnimationAction(_iConfig.eyeHoldAnim, 0));
+      DelegateIfInControl(new ReselectingLoopAnimationAction(_iConfig.eyeHoldAnim));
     });
     SetNextAnimTriggerTime();
   }

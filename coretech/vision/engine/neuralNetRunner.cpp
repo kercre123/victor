@@ -195,15 +195,15 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
   
     if(kNeuralNetRunner_SaveImages == 2)
     {
-      const Vision::ImageRGB& img = imageCache.GetRGB(ImageCacheSize::Full);
-      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "full",
+      const Vision::ImageRGB& img = imageCache.GetRGB(ImageCacheSize::Half);
+      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "half",
         std::to_string(img.GetTimestamp()) + ".png"});
       img.Save(saveFilename);
     }
 
     // Resize to processing size
     _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
-    const ImageCacheSize kImageSize = ImageCacheSize::Full;
+    const ImageCacheSize kImageSize = ImageCacheSize::Half;
     const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
     const Vision::ImageRGB& imgOrig = imageCache.GetRGB(kImageSize);
     imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
@@ -254,10 +254,6 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
 {
-  // Always clear the output list, so it's definitely only populated once the
-  // future is ready below
-  salientPoints.clear();
-
   if(_future.valid())
   {
     // Check the future's status and keep waiting until it's ready.

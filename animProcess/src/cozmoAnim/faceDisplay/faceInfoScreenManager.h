@@ -82,6 +82,10 @@ public:
   // The FaceInfoScreenManager otherwise does nothing since drawing on 
   // screen is handled by ConnectionFlow when in pairing mode.
   void EnablePairingScreen(bool enable);
+  
+  // When enabled, switches to a screen showing the alexa pairing code, and optionally the URL,
+  // depending on how the auth process originated (app or voice command)
+  void EnableAlexaScreen(bool enable, const std::string& code, const std::string& url);
 
   // When enabled, switches to a special camera screen used to show
   // the vision system's "mirror mode", which displays the camera feed
@@ -126,6 +130,10 @@ private:
                            bool& buttonReleasedEvent,
                            bool& singlePressDetected, 
                            bool& doublePressDetected);
+  
+  // Returns true if screenName is one of the screens that allow the user to enter pairing when
+  // double pressing the backpack and on the charger
+  bool CanEnterPairingFromScreen( const ScreenName& screenName) const;
 
   // Process wheel, head, lift, button motion for menu navigation
   void ProcessMenuNavigation(const RobotState& state);
@@ -152,6 +160,7 @@ private:
   void DrawIMUInfo(const RobotState& state);
   void DrawMotorInfo(const RobotState& state);
   void DrawCustomText();
+  void DrawAlexaFace();
 
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();
@@ -192,6 +201,9 @@ private:
 
   RobotInterface::DrawTextOnScreen _customText;
   WebService::WebService* _webService;
+  
+  std::string _alexaCode;
+  std::string _alexaUrl;
   
   bool _drawFAC = false;
   

@@ -75,7 +75,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
   // Else test is disabled via emr print message
   else
   {
-    PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.OnActivated.SkippingActiveObjectCheck","");
+    PRINT_CH_INFO("Behaviors", "BehaviorPlaypenEndChecks.OnActivated.SkippingActiveObjectCheck","");
   }
 
   // Check if we detected any wifi APs and that this check is even enabled
@@ -89,7 +89,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
   // Else test is disabled via emr print message
   else
   {
-    PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.OnActivated.SkippingWifiScanCheck","");
+    PRINT_CH_INFO("Behaviors", "BehaviorPlaypenEndChecks.OnActivated.SkippingWifiScanCheck","");
   }
 
   if(!DidReceiveFFTResult())
@@ -134,7 +134,7 @@ void BehaviorPlaypenEndChecks::AlwaysHandleInScope(const GameToEngineEvent& even
   const auto& eventData = event.GetData();
   if (eventData.GetTag() == GameToEngineTag::WifiScanResponse) {
     auto scanResponse = eventData.Get_WifiScanResponse();
-    PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.AlwaysHandleInScope.WifiScanResponse",
+    PRINT_CH_INFO("Behaviors", "BehaviorPlaypenEndChecks.AlwaysHandleInScope.WifiScanResponse",
                         "ssid_count: %u, status: %hhu", 
                         scanResponse.ssid_count,
                         scanResponse.status_code);

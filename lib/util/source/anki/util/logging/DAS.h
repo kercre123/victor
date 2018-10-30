@@ -81,6 +81,17 @@ constexpr const char FIELD_MARKER = '\x1F';
 //
 constexpr const int FIELD_COUNT = 9;
 
+//
+// Return DAS uptime value, aka millisecs since boot
+//
+uint64_t UptimeMS();
+
+//
+// Return DAS encoded string, safe for use with JSON
+//
+std::string Escape(const char * str);
+std::string Escape(const std::string & str);
+
 } // end namespace DAS
 } // end namespace Util
 } // end namespace Anki
@@ -197,6 +208,9 @@ void sLogDebug(const DasMsg & dasMessage);
 //
 // Overwriting fields that have already been set (e.g. calling DASMSG_SET(i1, ...) twice) is not allowed.
 //
+// If a string field can contain JSON syntax characters such as double quotes (") or backslash (\), it should be
+// escaped with DASMSG_ESCAPE(). Most string fields are JSON-safe so we do not do this automatically.
+//
 #ifndef DOXYGEN
 
 #define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
@@ -225,6 +239,9 @@ class DasDoxMsg() {}
 #define DASMSG_SEND_WARNING };
 #define DASMSG_SEND_ERROR };
 #define DASMSG_SEND_DEBUG };
+
 #endif
+
+#define DASMSG_ESCAPE(str) Anki::Util::DAS::Escape(str)
 
 #endif // __util_logging_DAS_h

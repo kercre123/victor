@@ -6,8 +6,8 @@ Test cube connection interactions
 
 import os
 import sys
+import time
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
 
@@ -28,8 +28,7 @@ def main():
         print("disconnecting from any connected cube...")
         robot.world.disconnect_cube()
 
-        loop = robot.loop
-        loop.run_until_complete(utilities.wait_async(2.0))
+        time.sleep(2)
 
         robot.events.subscribe(test_subscriber, anki_vector.events.Events.object_appeared)
         robot.events.subscribe(test_subscriber, anki_vector.events.Events.object_disappeared)
@@ -44,11 +43,11 @@ def main():
         if connected_cube:
             print("connected to cube {0}, clearing preferred cube for 1 second...".format(connected_cube.factory_id))
             robot.world.forget_preferred_cube()
-            loop.run_until_complete(utilities.wait_async(1.0))
+            time.sleep(1)
 
             print("resetting preferred cube to the one we connected to...")
             robot.world.set_preferred_cube(connected_cube.factory_id)
-            loop.run_until_complete(utilities.wait_async(1.0))
+            time.sleep(1)
 
             robot.world.flash_cube_lights()
 
@@ -58,11 +57,11 @@ def main():
             if connected_cube:
                 print(connected_cube)
                 print("last observed timestamp: " + str(connected_cube.last_observed_time) + ", robot timestamp: " + str(connected_cube.last_observed_robot_timestamp))
-            loop.run_until_complete(utilities.wait_async(0.5))
+            time.sleep(0.5)
 
         print("disconnecting...")
         robot.world.disconnect_cube()
-        loop.run_until_complete(utilities.wait_async(1.0))
+        time.sleep(1)
 
     print("------ finish cube interactions ------")
 

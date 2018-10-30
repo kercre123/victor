@@ -7,8 +7,8 @@ Test subscribing to seen faces
 import functools
 import os
 import sys
+import time
 
-import utilities
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from anki_vector.events import Events  # pylint: disable=wrong-import-position
 import anki_vector  # pylint: disable=wrong-import-position
@@ -42,14 +42,14 @@ def main():
             print(f"Nose: {face.nose}")
             print(f"Mouth: {face.mouth}")
 
-    with anki_vector.Robot(args.serial, enable_vision_mode=True) as robot:
+    with anki_vector.Robot(args.serial, enable_face_detection=True) as robot:
         test_subscriber = functools.partial(test_subscriber, robot)
         robot.events.subscribe(test_subscriber, Events.robot_changed_observed_face_id)
         robot.events.subscribe(test_subscriber, Events.robot_observed_face)
 
         print("------ waiting for face events, press ctrl+c to exit early ------")
         try:
-            robot.loop.run_until_complete(utilities.delay_close(10))
+            time.sleep(10)
         except KeyboardInterrupt:
             print("------ finished testing face events ------")
             robot.disconnect()

@@ -19,7 +19,7 @@ elseif (MACOSX)
     set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
 endif()
 
-if (VICOS)
+if (VICOS AND ANKI_DEV_CHEATS)
 
   anki_build_cxx_executable(vic-testcrash ${ANKI_SRCLIST_DIR})
   anki_build_target_license(vic-testcrash "ANKI")

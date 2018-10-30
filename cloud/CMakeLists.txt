@@ -193,6 +193,7 @@ anki_build_target_license(vic-cloud
   "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gorilla/context/LICENSE"
   "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/grd/ogg/LICENSE"
   "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/golang.org/x/text/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/golang.org/x/time/LICENSE"
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/anki/opus-go/libopus/LICENSE"
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/cenkalti/backoff/LICENSE"
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/dgrijalva/jwt-go/LICENSE"

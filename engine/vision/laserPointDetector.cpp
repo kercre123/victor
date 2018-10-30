@@ -253,8 +253,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
   Point2f groundPlaneCentroid(0.f,0.f);
   Point2f groundCentroidInImage(0.f, 0.f);
 
-  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier,
-                                                                       Vision::ResizeMethod::NearestNeighbor);
+  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);
 
   Vision::ImageRGB imageColor;
   if(imageCache.HasColor())
@@ -279,8 +278,8 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
   // Get centroid of all the motion within the ground plane, if we have one to reason about
   Quad2f imgQuad;
   poseData.groundPlaneROI.GetImageQuad(poseData.groundPlaneHomography,
-                                       imageCache.GetNumCols(Vision::ImageCacheSize::Full),
-                                       imageCache.GetNumRows(Vision::ImageCacheSize::Full),
+                                       imageCache.GetNumCols(Vision::ImageCacheSize::Half),
+                                       imageCache.GetNumRows(Vision::ImageCacheSize::Half),
                                        imgQuad);
 
   imgQuad *= 1.f/(f32)Params::kLaser_scaleMultiplier;
@@ -367,8 +366,8 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     Vision::ImageRGB saliencyImageFullSize;
     if(Params::kLaser_scaleMultiplier > 1)
     {
-      saliencyImageFullSize.Allocate(imageCache.GetNumRows(Vision::ImageCacheSize::Full),
-                                     imageCache.GetNumCols(Vision::ImageCacheSize::Full));
+      saliencyImageFullSize.Allocate(imageCache.GetNumRows(Vision::ImageCacheSize::Half),
+                                     imageCache.GetNumCols(Vision::ImageCacheSize::Half));
       _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
     }
 
@@ -407,8 +406,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
   Point2f centroid(0.f,0.f);
   Point2f centroidInImage(0.f, 0.f);
 
-  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier,
-                                                                       Vision::ResizeMethod::NearestNeighbor);
+  const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);
 
   Vision::ImageRGB imageColor;
   if(imageCache.HasColor())
@@ -481,8 +479,8 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
     Vision::ImageRGB saliencyImageFullSize;
     if(Params::kLaser_scaleMultiplier > 1)
     {
-      saliencyImageFullSize.Allocate(imageCache.GetNumRows(Vision::ImageCacheSize::Full),
-                                     imageCache.GetNumCols(Vision::ImageCacheSize::Full));
+      saliencyImageFullSize.Allocate(imageCache.GetNumRows(Vision::ImageCacheSize::Half),
+                                     imageCache.GetNumCols(Vision::ImageCacheSize::Half));
       _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
     }
 

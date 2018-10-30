@@ -128,8 +128,80 @@ func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.Messa
 
 func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithEnableVisionMode(&gw_clad.EnableVisionMode{
-		Mode:   gw_clad.VisionMode(msg.Mode),
+		Mode:   gw_clad.VisionMode(msg.Mode - 1), // Outside interface still has Idle=0; Engine does not. Remap. Gross.
 		Enable: msg.Enable,
+	})
+}
+
+func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
+	return &gw_clad.PoseStruct3d{
+		X:        msg.X,
+		Y:        msg.Y,
+		Z:        msg.Z,
+		Q0:       msg.Q0,
+		Q1:       msg.Q1,
+		Q2:       msg.Q2,
+		Q3:       msg.Q3,
+		OriginID: msg.OriginId,
+	}
+}
+
+func ProtoCreateFixedCustomObjectToClad(msg *extint.CreateFixedCustomObjectRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithCreateFixedCustomObject(&gw_clad.CreateFixedCustomObject{
+		Pose:    *ProtoPoseToClad(msg.Pose),
+		XSizeMm: msg.XSizeMm,
+		YSizeMm: msg.YSizeMm,
+		ZSizeMm: msg.ZSizeMm,
+	})
+}
+
+func ProtoDefineCustomBoxToClad(msg *extint.DefineCustomObjectRequest, def *extint.CustomBoxDefinition) *gw_clad.MessageExternalToRobot {
+	// Convert from the proto defined CustomObject enum to the more general clad ObjectType enum space
+	object_type := gw_clad.ObjectType(int(msg.CustomType) - int(extint.CustomType_CUSTOM_TYPE_00) + int(gw_clad.ObjectType_CustomType00))
+
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomBox(&gw_clad.DefineCustomBox{
+		CustomType:     object_type,
+		MarkerFront:    gw_clad.CustomObjectMarker(def.MarkerFront - 1),
+		MarkerBack:     gw_clad.CustomObjectMarker(def.MarkerBack - 1),
+		MarkerTop:      gw_clad.CustomObjectMarker(def.MarkerTop - 1),
+		MarkerBottom:   gw_clad.CustomObjectMarker(def.MarkerBottom - 1),
+		MarkerLeft:     gw_clad.CustomObjectMarker(def.MarkerLeft - 1),
+		MarkerRight:    gw_clad.CustomObjectMarker(def.MarkerRight - 1),
+		XSizeMm:        def.XSizeMm,
+		YSizeMm:        def.YSizeMm,
+		ZSizeMm:        def.ZSizeMm,
+		MarkerWidthMm:  def.MarkerWidthMm,
+		MarkerHeightMm: def.MarkerHeightMm,
+		IsUnique:       msg.IsUnique,
+	})
+}
+
+func ProtoDefineCustomCubeToClad(msg *extint.DefineCustomObjectRequest, def *extint.CustomCubeDefinition) *gw_clad.MessageExternalToRobot {
+	// Convert from the proto defined CustomObject enum to the more general clad ObjectType enum space
+	object_type := gw_clad.ObjectType(int(msg.CustomType) - int(extint.CustomType_CUSTOM_TYPE_00) + int(gw_clad.ObjectType_CustomType00))
+
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomCube(&gw_clad.DefineCustomCube{
+		CustomType:     object_type,
+		Marker:         gw_clad.CustomObjectMarker(def.Marker - 1),
+		SizeMm:         def.SizeMm,
+		MarkerWidthMm:  def.MarkerWidthMm,
+		MarkerHeightMm: def.MarkerHeightMm,
+		IsUnique:       msg.IsUnique,
+	})
+}
+
+func ProtoDefineCustomWallToClad(msg *extint.DefineCustomObjectRequest, def *extint.CustomWallDefinition) *gw_clad.MessageExternalToRobot {
+	// Convert from the proto defined CustomObject enum to the more general clad ObjectType enum space
+	object_type := gw_clad.ObjectType(int(msg.CustomType) - int(extint.CustomType_CUSTOM_TYPE_00) + int(gw_clad.ObjectType_CustomType00))
+
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomWall(&gw_clad.DefineCustomWall{
+		CustomType:     object_type,
+		Marker:         gw_clad.CustomObjectMarker(def.Marker - 1),
+		WidthMm:        def.WidthMm,
+		HeightMm:       def.HeightMm,
+		MarkerWidthMm:  def.MarkerWidthMm,
+		MarkerHeightMm: def.MarkerHeightMm,
+		IsUnique:       msg.IsUnique,
 	})
 }
 
@@ -410,6 +482,16 @@ func SendOnboardingGetStep(in *extint.GatewayWrapper_OnboardingGetStep) (*extint
 			},
 		}, nil
 	}
+}
+
+func SendAppDisconnected() {
+	msg := &extint.GatewayWrapper_AppDisconnected{
+		AppDisconnected: &extint.AppDisconnected{},
+	}
+	engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: msg,
+	})
+	// no error handling
 }
 
 func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.OnboardingInputResponse, error) {
@@ -759,6 +841,8 @@ func (service *rpcService) onConnect(id string) {
 
 // Should be called on WiFi disconnect.
 func (service *rpcService) onDisconnect() {
+	// Message engine that app disconnected
+	SendAppDisconnected()
 	// Call DAS WiFi connection event to indicate stop of a WiFi connection
 	log.Das("wifi_conn_id.stop", (&log.DasFields{}).SetStrings(""))
 	connectionId = ""
@@ -1312,6 +1396,9 @@ func (service *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *e
 }
 
 func (service *rpcService) EnableVisionMode(ctx context.Context, in *extint.EnableVisionModeRequest) (*extint.EnableVisionModeResponse, error) {
+	if in.Mode == extint.VisionMode_VISION_MODE_UNKNOWN {
+		return nil, grpc.Errorf(codes.InvalidArgument, "Unknown vision mode")
+	}
 	_, err := engineCladManager.Write(ProtoEnableVisionModeToClad(in))
 	if err != nil {
 		return nil, err
@@ -1867,11 +1954,21 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 	if err != nil {
 		return nil, err
 	}
-	payload, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	done := false
+	var sayTextResponse *extint.SayTextResponse
+	for !done {
+		payload, ok := <-responseChan
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
+		sayTextResponse = payload.GetSayTextResponse()
+		state := sayTextResponse.GetState()
+		if state == extint.SayTextResponse_FINISHED {
+			done = true
+		} else if state == extint.SayTextResponse_INVALID {
+			return nil, grpc.Errorf(codes.Internal, "Failed to say text")
+		}
 	}
-	sayTextResponse := payload.GetSayTextResponse()
 	sayTextResponse.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
@@ -2188,8 +2285,11 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 }
 
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
-// TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
+	if !debugLogLimiter.Allow() {
+		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum upload rate exceeded. Please wait and try again later.")
+	}
+
 	url, err := loguploader.UploadDebugLogs()
 	if err != nil {
 		log.Println("MessageHandler.UploadDebugLogs.Error: " + err.Error())
@@ -2207,6 +2307,10 @@ func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.Uploa
 // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud
 // Its main use is to be called by the app during setup, but is fine for use by the outside world.
 func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.CheckCloudRequest) (*extint.CheckCloudResponse, error) {
+	if !cloudCheckLimiter.Allow() {
+		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum check rate exceeded. Please wait and try again later.")
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CheckCloudResponse{}, 1)
 	defer f()
 
@@ -2227,6 +2331,178 @@ func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
 	return cloudResponse, nil
+}
+
+func (service *rpcService) DeleteCustomObjects(ctx context.Context, in *extint.DeleteCustomObjectsRequest) (*extint.DeleteCustomObjectsResponse, error) {
+	var responseMessageType gw_clad.MessageRobotToExternalTag
+	var cladMsg *gw_clad.MessageExternalToRobot
+
+	switch in.Mode {
+	case extint.CustomObjectDeletionMode_DELETION_MASK_ARCHETYPES:
+		responseMessageType = gw_clad.MessageRobotToExternalTag_RobotDeletedCustomMarkerObjects
+		cladMsg = gw_clad.NewMessageExternalToRobotWithUndefineAllCustomMarkerObjects(
+			&gw_clad.UndefineAllCustomMarkerObjects{})
+		break
+	case extint.CustomObjectDeletionMode_DELETION_MASK_FIXED_CUSTOM_OBJECTS:
+		responseMessageType = gw_clad.MessageRobotToExternalTag_RobotDeletedFixedCustomObjects
+		cladMsg = gw_clad.NewMessageExternalToRobotWithDeleteFixedCustomObjects(
+			&gw_clad.DeleteFixedCustomObjects{})
+		break
+	case extint.CustomObjectDeletionMode_DELETION_MASK_CUSTOM_MARKER_OBJECTS:
+		responseMessageType = gw_clad.MessageRobotToExternalTag_RobotDeletedCustomMarkerObjects
+		cladMsg = gw_clad.NewMessageExternalToRobotWithDeleteCustomMarkerObjects(
+			&gw_clad.DeleteCustomMarkerObjects{})
+		break
+	}
+
+	f, responseChan := engineCladManager.CreateChannel(responseMessageType, 1)
+	defer f()
+
+	_, err := engineCladManager.Write(cladMsg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+
+	return &extint.DeleteCustomObjectsResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+	}, nil
+}
+
+func (service *rpcService) CreateFixedCustomObject(ctx context.Context, in *extint.CreateFixedCustomObjectRequest) (*extint.CreateFixedCustomObjectResponse, error) {
+	f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_CreatedFixedCustomObject, 1)
+	defer f()
+
+	cladData := ProtoCreateFixedCustomObjectToClad(in)
+
+	_, err := engineCladManager.Write(cladData)
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetCreatedFixedCustomObject()
+
+	return &extint.CreateFixedCustomObjectResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		ObjectId: response.ObjectID,
+	}, nil
+}
+
+func (service *rpcService) DefineCustomObject(ctx context.Context, in *extint.DefineCustomObjectRequest) (*extint.DefineCustomObjectResponse, error) {
+	var cladMsg *gw_clad.MessageExternalToRobot
+
+	f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_DefinedCustomObject, 1)
+	defer f()
+
+	switch x := in.CustomObjectDefinition.(type) {
+	case *extint.DefineCustomObjectRequest_CustomBox:
+		cladMsg = ProtoDefineCustomBoxToClad(in, in.GetCustomBox())
+		break
+	case *extint.DefineCustomObjectRequest_CustomCube:
+		cladMsg = ProtoDefineCustomCubeToClad(in, in.GetCustomCube())
+		break
+	case *extint.DefineCustomObjectRequest_CustomWall:
+		cladMsg = ProtoDefineCustomWallToClad(in, in.GetCustomWall())
+		break
+	default:
+		return nil, grpc.Errorf(codes.InvalidArgument, "DefineCustomObjectRequest has unexpected type %T", x)
+	}
+
+	_, err := engineCladManager.Write(cladMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetDefinedCustomObject()
+
+	return &extint.DefineCustomObjectResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		Success: response.Success,
+	}, nil
+}
+
+// FeatureFlag is used to check what features are enabled on the robot
+func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.FeatureFlagRequest) (*extint.FeatureFlagResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FeatureFlagRequest{
+			FeatureFlagRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetFeatureFlagResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+// AlexaAuthState is used to check the alexa authorization state
+func (service *rpcService) GetAlexaAuthState(ctx context.Context, in *extint.AlexaAuthStateRequest) (*extint.AlexaAuthStateResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AlexaAuthStateResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AlexaAuthStateRequest{
+			AlexaAuthStateRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetAlexaAuthStateResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+// AlexaOptIn is used to check the alexa authorization state
+func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptInRequest) (*extint.AlexaOptInResponse, error) {
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AlexaOptInRequest{
+			AlexaOptInRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.AlexaOptInResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
 }
 
 func newServer() *rpcService {

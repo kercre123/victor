@@ -18,7 +18,7 @@
 
 #define SET_STATE(s) do{ \
                           _dVars.state = EState::s; \
-                          PRINT_NAMED_INFO("BehaviorConnectToCube.State", "State = %s", #s); \
+                          PRINT_CH_INFO("Behaviors", "BehaviorConnectToCube.State", "State = %s", #s); \
                         } while(0);
 
 namespace{

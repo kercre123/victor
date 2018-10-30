@@ -495,7 +495,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
 
       // we now loop indefinitely and wait for the timeout in the update function
       // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningLoop, 0 ) );
+      DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
       _dVars.state = EState::ListeningLoop;
     }
   }
@@ -789,7 +789,7 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if ( uic.IsUserIntentPending( unmatched ) )
     {
-      SmartActivateUserIntent( unmatched );
+      SmartActivateUserIntent( unmatched, false );
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
       PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Unknown",
                      "Heard an intent, but it was unknown");
@@ -798,7 +798,7 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
     static const UserIntentTag silence = USER_INTENT(silence);
     if ( uic.IsUserIntentPending( silence ) )
     {
-      SmartActivateUserIntent( silence );
+      SmartActivateUserIntent( silence, false );
       _dVars.intentStatus = EIntentStatus::SilenceTimeout;
       PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Silence",
                      "Got response declaring silence timeout occurred");
@@ -843,7 +843,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
     {
       if( IsTurnEnabled() ) {
         const MicDirectionIndex triggerDirection = GetReactionDirection();
-        PRINT_NAMED_INFO("BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
         _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
         PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",

@@ -64,14 +64,10 @@ namespace Anki {
       switch (_testState) {
         case TestState::SetupVisionMode:
         {
-          // enable the correct vision modes
-          Util::BitFlags32<VisionMode> visionModeFlags;
-          visionModeFlags.SetBitFlag(VisionMode::DetectingFaces, true);
-          
-          ExternalInterface::DevSubscribeVisionModes msg;
-          msg.bitFlags = visionModeFlags.GetFlags();
-          ExternalInterface::MessageGameToEngine wrap;
-          wrap.Set_DevSubscribeVisionModes(msg);
+          // enable the correct vision modes (using the console var message for this will also ensure
+          // the right schedule is used as well)
+          using namespace ExternalInterface;
+          MessageGameToEngine wrap(SetDebugConsoleVarMessage("DetectingFaces", "1"));
           
           if(SendMessage(wrap)==Anki::RESULT_OK) {
             _testState = TestState::TurnToFace;

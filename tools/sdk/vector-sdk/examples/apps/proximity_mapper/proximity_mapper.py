@@ -32,7 +32,7 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
 from proximity_mapper_state import ClearedTerritory, MapState, Wall, WallSegment   # pylint: disable=wrong-import-position
-from opengl_viewer import OpenGLViewer   # pylint: disable=wrong-import-position
+from anki_vector.opengl_viewer import OpenGLViewer   # pylint: disable=wrong-import-position
 
 import anki_vector   # pylint: disable=wrong-import-position
 from anki_vector.util import parse_command_args, radians, degrees, distance_mm, speed_mmps, Vector3  # pylint: disable=wrong-import-position
@@ -222,7 +222,7 @@ async def scan_area(robot: anki_vector.robot.Robot, state: MapState):
     # Turn around in place.
     turn_call = robot.behavior.turn_in_place(angle=degrees(360.0), speed=degrees(360.0 / PROXIMITY_SCAN_TURN_DURATION_S))
     # Activate the collection task while the robot turns in place.
-    collect_task = robot.loop.create_task(collect_proximity_data_loop(robot, collect_future, state))
+    collect_task = robot.conn.loop.create_task(collect_proximity_data_loop(robot, collect_future, state))
 
     # Wait for the turning to finish, then send the signal to kill the collection task.
     await turn_call
@@ -259,48 +259,48 @@ async def map_explorer(robot: anki_vector.robot.Robot, viewer: OpenGLViewer):
     # Loop until running out of open samples to navigate to,
     # or if the process has yet to start (indicated by a lack of cleared_territories).
     while (state.open_nodes and ACTIVELY_EXPLORE_SPACE) or not state.cleared_territories:
-        # Delete any open samples range of the robot.
-        state.open_nodes = [position for position in state.open_nodes if (position - robot.pose.position).magnitude > PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM]
+        if robot.pose:
+            # Delete any open samples range of the robot.
+            state.open_nodes = [position for position in state.open_nodes if (position - robot.pose.position).magnitude > PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM]
 
-        # Collect map data for the robot's current location.
-        await scan_area(robot, state)
+            # Collect map data for the robot's current location.
+            await scan_area(robot, state)
 
-        # Add where the robot is to the map's cleared territories.
-        state.cleared_territories.append(ClearedTerritory(robot.pose.position, PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM))
+            # Add where the robot is to the map's cleared territories.
+            state.cleared_territories.append(ClearedTerritory(robot.pose.position, PROXIMITY_SCAN_DISTANCE_THRESHOLD_MM))
 
-        # @TODO: This whole block should ideally be replaced with the go_to_pose actions when that is ready to go.
-        # Alternatively, the turn&drive commands can be modified to respond to collisions by cancelling.  After
-        # either change, ACTIVELY_EXPLORE_SPACE should be defaulted True
-        if ACTIVELY_EXPLORE_SPACE and state.open_nodes:
-            # Sort the open nodes and find our next navigation point.
-            state.open_nodes.sort(key=open_point_sort_func)
-            nav_point = state.open_nodes[0]
+            # @TODO: This whole block should ideally be replaced with the go_to_pose actions when that is ready to go.
+            # Alternatively, the turn&drive commands can be modified to respond to collisions by cancelling.  After
+            # either change, ACTIVELY_EXPLORE_SPACE should be defaulted True
+            if ACTIVELY_EXPLORE_SPACE and state.open_nodes:
+                # Sort the open nodes and find our next navigation point.
+                state.open_nodes.sort(key=open_point_sort_func)
+                nav_point = state.open_nodes[0]
 
-            # Calculate the distance and direction of this next navigation point.
-            nav_point_delta = Vector3(
-                nav_point.x - robot.pose.position.x,
-                nav_point.y - robot.pose.position.y,
-                0)
-            nav_distance = nav_point_delta.magnitude
-            nav_direction = nav_point_delta.normalized
+                # Calculate the distance and direction of this next navigation point.
+                nav_point_delta = Vector3(
+                    nav_point.x - robot.pose.position.x,
+                    nav_point.y - robot.pose.position.y,
+                    0)
+                nav_distance = nav_point_delta.magnitude
+                nav_direction = nav_point_delta.normalized
 
-            # Convert the nav_direction into a turn angle relative to the robot's current facing.
-            robot_forward = Vector3(*robot.pose.rotation.to_matrix().forward_xyz).normalized
-            turn_angle = acos(nav_direction.dot(robot_forward))
-            if nav_direction.cross(robot_forward).z > 0:
-                turn_angle = -turn_angle
+                # Convert the nav_direction into a turn angle relative to the robot's current facing.
+                robot_forward = Vector3(*robot.pose.rotation.to_matrix().forward_xyz).normalized
+                turn_angle = acos(nav_direction.dot(robot_forward))
+                if nav_direction.cross(robot_forward).z > 0:
+                    turn_angle = -turn_angle
 
-            # Turn toward the nav point, and drive to it.
-            await robot.behavior.turn_in_place(angle=radians(turn_angle), speed=degrees(EXPLORE_TURN_SPEED_DPS))
-            try:
-                # if more than 125% of the expected drive time elapses without the drive_straight concluding, it
-                # likely means the robot encountered a cliff or obstacle.
-                expected_drive_time = nav_distance / EXPLORE_DRIVE_SPEED_MMPS
-                await asyncio.wait_for(robot.behavior.drive_straight(distance=distance_mm(nav_distance), speed=speed_mmps(EXPLORE_DRIVE_SPEED_MMPS)),
-                                       1.25 * expected_drive_time,
-                                       loop=robot.loop)
-            except asyncio.TimeoutError:
-                print('obstacle encountered while moving, continuing exploration from current position')
+                # Turn toward the nav point, and drive to it.
+                await robot.behavior.turn_in_place(angle=radians(turn_angle), speed=degrees(EXPLORE_TURN_SPEED_DPS))
+                try:
+                    # if more than 125% of the expected drive time elapses without the drive_straight concluding, it
+                    # likely means the robot encountered a cliff or obstacle.
+                    expected_drive_time = nav_distance / EXPLORE_DRIVE_SPEED_MMPS
+                    await asyncio.wait_for(robot.behavior.drive_straight(distance=distance_mm(nav_distance), speed=speed_mmps(EXPLORE_DRIVE_SPEED_MMPS)),
+                                           1.25 * expected_drive_time)
+                except asyncio.TimeoutError:
+                    print('obstacle encountered while moving, continuing exploration from current position')
 
     if PROXIMITY_EXPLORATION_SHUTDOWN_DELAY_S == 0.0:
         while True:
@@ -310,15 +310,18 @@ async def map_explorer(robot: anki_vector.robot.Robot, viewer: OpenGLViewer):
         await asyncio.sleep(PROXIMITY_EXPLORATION_SHUTDOWN_DELAY_S)
 
 
-# Connect to the robot
-args = parse_command_args()
-with anki_vector.Robot(args.serial, enable_camera_feed=True, show_viewer=True) as robotInstance:
-    # Creates a 3d viewer for the connected robot.
-    viewerInstance = OpenGLViewer(robot=robotInstance)
+if __name__ == '__main__':
+    # Connect to the robot
+    args = parse_command_args()
+    with anki_vector.Robot(args.serial, enable_camera_feed=True, show_viewer=True) as robotInstance:
+        import time
+        time.sleep(1)
+        # Creates a 3d viewer for the connected robot.
+        viewerInstance = OpenGLViewer(robot=robotInstance)
 
-    # The opengl 3d viewer has to run on the main thread, so control is given to
-    # it via the blocking 'run' call.  The core loop of our program is injected into
-    # this call to run in parallel on a secondary thread.  When the injected function
-    # finishes, the viewer will automatically shut down and relinquish control of the
-    # main thread.
-    viewerInstance.run(map_explorer)
+        # The opengl 3d viewer has to run on the main thread, so control is given to
+        # it via the blocking 'run' call.  The core loop of our program is injected into
+        # this call to run in parallel on a secondary thread.  When the injected function
+        # finishes, the viewer will automatically shut down and relinquish control of the
+        # main thread.
+        viewerInstance.run(map_explorer)

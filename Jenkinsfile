@@ -28,6 +28,7 @@ def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
 
 def primaryStageName = ''
+def ephemeralBuildAgentName = ''
 
 if (env.CHANGE_ID) {
     primaryStageName = 'Pull Request'
@@ -107,10 +108,25 @@ stage("${primaryStageName} Build") {
             }
         }
     }*/
-    node('victor-shipping') {
+    stage('Spin up ephemeral VM') {
+        node('master') {
+            build 'Create VM'
+            ephemeralBuildAgentName = sh (
+                script: 'tail -n 1 ~/name/queue.txt',
+                returnStdout: true
+            ).trim()
+        }
+    }
+    node(ephemeralBuildAgentName) {
         try {
             withDockerEnv {
                 buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                stage('DAS Unit Tests') {
+                    withEnv(["CXX=clang++", "LDFLAGS=-lpthread -luuid -lcurl -stdlib=libc++ -v"]) {
+                        sh "make -C ./lib/das-client/unix run-unit-tests"
+                        sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
+                    }
+                }
                 //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
         } catch (exc) {
@@ -125,6 +141,11 @@ stage("${primaryStageName} Build") {
                     dir("${workspace}@script") {
                         deleteDir()
                     }
+                }
+            }
+            stage('Destroy ephemeral VM') {
+                node('master') {
+                    build 'Delete VM'
                 }
             }
         }

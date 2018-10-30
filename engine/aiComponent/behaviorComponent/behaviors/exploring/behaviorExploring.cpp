@@ -36,6 +36,13 @@
 #include "util/random/randomIndexSampler.h"
 #include "util/random/rejectionSamplerHelper.h"
 
+#define SET_STATE(s) {                          \
+  _dVars.state = State::s;                      \
+  SetDebugStateName(#s);                        \
+  }
+
+#define LOG_CHANNEL "Behaviors"
+
 namespace Anki {
 namespace Vector {
   
@@ -58,7 +65,14 @@ namespace {
   const float kMaxDistToProxPose_mm = 750.0f;
   const float kMinDistToProxPose_mm = 100.0f;
   const float kMaxCubeFromChargerDist_mm = 2000.0f;
-  const float kProbReferenceHuman = 0.5f;
+  const float kProbReferenceHuman = 1.0f;
+
+  CONSOLE_VAR_RANGED( float, kProbReferenceOnResume, "BehaviorExploring", 1.0f, 0.0f, 1.0f);
+  CONSOLE_VAR_RANGED( float, kResumeReferenceCooldown_s, "BehaviorExploring", 20.0f, 0.0f, 60.0f);
+
+  // if no face is known (meaning we can't run the referencing behavior) then run a short face search (at
+  // most) this often (instead of driving to a new pose)
+  const float kPeriodToCheckForFaces_s = 30.0f;
 
   static_assert( kMinCliffPenaltyDist_mm < kMaxCliffPenaltyDist_mm, "Max must be > min" );
   
@@ -137,6 +151,9 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   endReason = "";
   
   devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
+  timeDeactivated_s = -1.0f;
+
+  gentleInterruptionOKUntilTick = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -186,6 +203,7 @@ void BehaviorExploring::InitBehavior()
                                   _iConfig.examineBehavior );
   
   _iConfig.referenceHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringReferenceHuman) );
+  _iConfig.searchForHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ShortLookAroundForFaceAndCube) );
   
   _iConfig.confirmChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCharger) );
   _iConfig.confirmCubeBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCube) );
@@ -239,6 +257,7 @@ void BehaviorExploring::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert( _iConfig.confirmChargerBehavior.get() );
   delegates.insert( _iConfig.confirmCubeBehavior.get() );
   delegates.insert( _iConfig.referenceHumanBehavior.get() );
+  delegates.insert( _iConfig.searchForHumanBehavior.get() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -258,6 +277,16 @@ void BehaviorExploring::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::OnBehaviorActivated() 
 {
+  // if there is a valid end reason, then the last time this behavior ran it stopped on purpose. Otherwise,
+  // it's either the first time this behavior has ever run, or we were interrupted last time
+  const bool hasEndReason = !_dVars.endReason.empty();
+  const bool everRan = _dVars.timeDeactivated_s > 0.0f;
+
+  const float kMaxTimeToCountAsResume_s = 8.0f;
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  const bool isResume = everRan && !hasEndReason && (currTime_s - _dVars.timeDeactivated_s <= kMaxTimeToCountAsResume_s);
+
   // reset dynamic variables
   _dVars = DynamicVariables();
   _dVars.timeFinishedConfirmCharger_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -266,7 +295,18 @@ void BehaviorExploring::OnBehaviorActivated()
   if( _iConfig.customMotionProfile != nullptr ) {
     SmartSetMotionProfile( *_iConfig.customMotionProfile );
   }
-  
+
+  if( isResume ) {
+    if( _iConfig.referenceHumanBehavior->WantsToBeActivated() &&
+        ( currTime_s - _iConfig.referenceHumanBehavior->GetTimeActivated_s() > kResumeReferenceCooldown_s ) &&
+        (GetRNG().RandDbl() < kProbReferenceOnResume) ) {
+      LOG_INFO("BehaviorExploring.OnBehaviorActivated.ResumeReference",
+               "do resume reference");
+      DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), &BehaviorExploring::SampleAndDrive );
+      return;
+    }
+  }
+
   // pick a bunch of points and have the planner choose one and drive there
   SampleAndDrive();
 }
@@ -281,6 +321,10 @@ void BehaviorExploring::OnBehaviorDeactivated()
     DASMSG_SET(s1, _dVars.endReason, "The reason");
     DASMSG_SEND();
   }
+
+  LOG_INFO("BehaviorExploring.Ended", "reason: %s", _dVars.endReason.empty() ? "<NONE>" : _dVars.endReason.c_str() );
+
+  _dVars.timeDeactivated_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -320,6 +364,23 @@ void BehaviorExploring::BehaviorUpdate()
     }
     return;
   }
+
+  if( _dVars.state == State::SearchForHuman ) {
+    // if we're searching, but could reference instead, then do that by going to the "Arrived" state
+    // similarly, if the search ended without finding someone, do the same
+
+    if( _iConfig.referenceHumanBehavior->WantsToBeActivated() ) {
+      CancelDelegates();
+    }
+
+    if( !IsControlDelegated() ) {
+      const bool forceReferencing = true;
+      TransitionToArrived(forceReferencing);
+    }
+
+    return;
+  }
+
   
   // make sure the lift is out of the prox fov
   PrepRobotForProx();
@@ -392,9 +453,30 @@ void BehaviorExploring::BehaviorUpdate()
     // todo: perhaps this should only start if we've driven far enough from the last spot we examined?
     // this would help with noisy prox data
     DelegateNow( _iConfig.examineBehavior.get(), &BehaviorExploring::RegainedControl );
-  } 
-  
+  }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploring::SetGentleInterruptionOKForNow()
+{
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+
+  // add one to let it work next tick too (in most cases, it won't be checked until next tick anyway because
+  // our parent already ran)
+  _dVars.gentleInterruptionOKUntilTick = currTick + 1;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorExploring::CanBeGentlyInterruptedNow() const
+{
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  
+  const bool canInterrupt = ( currTick <= _dVars.gentleInterruptionOKUntilTick );
+
+  return canInterrupt;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploring::IsChargerPositionKnown() const
@@ -446,6 +528,17 @@ bool BehaviorExploring::IsCubeNearCharger() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::SampleAndDrive()
 {
+
+  // if we don't have a face (can't run the referencing behavior) then we should occasionally search for
+  // faces. Check that here
+  if( ! _iConfig.referenceHumanBehavior->WantsToBeActivated() ) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if( currTime_s - _dVars.lastSearchForFaceTime_s >= kPeriodToCheckForFaces_s ) {
+      TransitionToHumanSearch();
+      return;
+    }
+  }
+
   // sample locations to visit
   _dVars.sampledPoses = SampleVisitLocations();
   _dVars.posesHaveBeenPruned = false;
@@ -453,7 +546,7 @@ void BehaviorExploring::SampleAndDrive()
   
   if( _dVars.sampledPoses.empty() ) {
     // flag to CancelSelf, making sure CancelSelf doesn't happen on the same tick as activation
-    _dVars.state = State::Complete;
+    SET_STATE(Complete);
     _dVars.endReason = "NoSamplePoses";
     return;
   }
@@ -463,8 +556,27 @@ void BehaviorExploring::SampleAndDrive()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploring::TransitionToHumanSearch()
+{
+  SET_STATE(SearchForHuman);
+
+  SetGentleInterruptionOKForNow();
+
+  if( _iConfig.searchForHumanBehavior->WantsToBeActivated() ) {
+    // run search behavior, transition out handled in BehaviorUpdate
+    DelegateIfInControl(_iConfig.searchForHumanBehavior.get());
+
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _dVars.lastSearchForFaceTime_s = currTime_s;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::RegainedControl()
 {
+  // We're in between actions, so an interruption would be alright
+  SetGentleInterruptionOKForNow();
+
   if( _dVars.sampledPoses.empty() ) {
     SampleAndDrive();
   } else {
@@ -475,7 +587,7 @@ void BehaviorExploring::RegainedControl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::TransitionToDriving()
 {
-  _dVars.state = State::Driving;
+  SET_STATE(Driving);
   ++_dVars.numDriveAttemps;
   
   
@@ -512,9 +624,9 @@ void BehaviorExploring::TransitionToDriving()
           SampleAndDrive();
         }
       } else {
-        PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath",
-                         "Could not plan a path after %d attempts",
-                         _dVars.numDriveAttemps);
+        LOG_INFO("BehaviorExploring.TransitionToDriving.NoPath",
+                 "Could not plan a path after %d attempts",
+                 _dVars.numDriveAttemps);
         _dVars.endReason = "CouldNotPlan";
         CancelSelf();
       }
@@ -526,9 +638,9 @@ void BehaviorExploring::TransitionToDriving()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploring::TransitionToArrived()
+void BehaviorExploring::TransitionToArrived(const bool forceReferencing)
 {
-  _dVars.state = State::Arrived;
+  SET_STATE(Arrived);
   _dVars.sampledPoses.clear();
   _dVars.distToGoal_mm = -1.0f;
   _dVars.numDriveAttemps = 0;
@@ -559,7 +671,8 @@ void BehaviorExploring::TransitionToArrived()
     });
   };
   
-  if( _iConfig.referenceHumanBehavior->WantsToBeActivated() && (GetRNG().RandDbl() < kProbReferenceHuman) ) {
+  if( _iConfig.referenceHumanBehavior->WantsToBeActivated() &&
+      ( forceReferencing || (GetRNG().RandDbl() < kProbReferenceHuman) ) ) {
     DelegateIfInControl( _iConfig.referenceHumanBehavior.get(), callback );
   } else {
     callback();
@@ -699,8 +812,8 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INa
     }
     
     if( numAcceptedPoses >= kNumPositionsForSearch ) {
-      PRINT_NAMED_INFO("BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
-                       "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
+      LOG_INFO("BehaviorExploring.SampleVisitLocationsOpenSpace.Completed",
+               "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
       break;
     }
   }

@@ -10,7 +10,7 @@ type URLs struct {
 	JDocs    string `json:"jdocs"`
 	Token    string `json:"tms"`
 	Chipper  string `json:"chipper"`
-	OTA      string `json:"ota"`
+	Check    string `json:"check"`
 	LogFiles string `json:"logfiles"`
 	AppKey   string `json:"appkey"`
 }
@@ -21,7 +21,7 @@ var DefaultURLs = URLs{
 	JDocs:    "jdocs-dev.api.anki.com:443",
 	Token:    "token-dev.api.anki.com:443",
 	Chipper:  "chipper-dev.api.anki.com:443",
-	OTA:      "ota-cdn.anki.com:443",
+	Check:    "conncheck.global.anki-dev-services.com/ok",
 	LogFiles: "s3://anki-device-logs-dev/victor",
 	AppKey:   "xiepae8Ach2eequiphee4U",
 }

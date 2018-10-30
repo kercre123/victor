@@ -1,4 +1,4 @@
-package integrationtest
+package main
 
 import (
 	"bytes"
@@ -46,8 +46,4 @@ func (c *logcollectorClient) upload(logFileName string) (string, error) {
 		return "", fmt.Errorf("LogCollectorError: %v", errResponse.Err)
 	}
 	return "", fmt.Errorf("Major error: received unknown tag %d", responseMsg.Tag())
-}
-
-func newLogcollectorClient() *logcollectorClient {
-	return new(logcollectorClient)
 }

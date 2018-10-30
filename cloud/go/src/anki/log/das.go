@@ -2,6 +2,24 @@ package log
 
 /*
 #include "das.h"
+#include <stdint.h>
+#include <time.h>
+
+#if defined(CLOCK_BOOTTIME)
+#define CLOCK CLOCK_BOOTTIME
+#else
+#define CLOCK CLOCK_MONOTONIC
+#endif
+
+uint64_t dasUptimeMS()
+{
+  struct timespec ts;
+  if (clock_gettime(CLOCK, &ts) == 0) {
+    return (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+  }
+  return 0;
+}
+
 */
 import "C"
 import (
@@ -56,6 +74,7 @@ func DasEmpty(event string) {
 func Das(event string, fields *DasFields) {
 	strs := strings.Join(fields.Strings[:], dasFieldMarker)
 	ints := strings.Join(fields.Ints[:], dasFieldMarker)
-	allFields := strings.Join([]string{event, strs, ints}, dasFieldMarker)
+	uptimeMS := strconv.FormatUint(uint64(C.dasUptimeMS()), 10)
+	allFields := strings.Join([]string{event, strs, ints, uptimeMS}, dasFieldMarker)
 	Printf("%s%s", dasEventMarker, allFields)
 }

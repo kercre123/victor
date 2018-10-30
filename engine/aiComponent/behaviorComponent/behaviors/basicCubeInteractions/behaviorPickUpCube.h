@@ -72,6 +72,7 @@ private:
   struct InstanceConfig{
     InstanceConfig();
     int pickupRetryCount;
+    bool skipInitialReactionAnim;
   };
 
   struct DynamicVariables{

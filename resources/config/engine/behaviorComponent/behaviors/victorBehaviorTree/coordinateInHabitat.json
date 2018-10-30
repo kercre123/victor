@@ -5,11 +5,11 @@
   "delegateID" : "HabitatMutedDispatcher",
 
   "suppressedBehaviors" : [
-    "PickupCube",
     "VectorPlaysCubeSpinner",
     "PlayRollBlock",
     "PutDownBlock",
     "PlayWithCube",
+    "InvestigateHeldCube",
 
     "SingletonPounceApproachWithProx",
     "SingletonPounceDispatcher",

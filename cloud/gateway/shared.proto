@@ -20,9 +20,11 @@ package Anki.Vector.external_interface;
 
 import "behavior.proto";
 import "cube.proto";
+import "alexa.proto";
 import "messages.proto";
 import "settings.proto";
 import "extensions.proto";
+import "response_status.proto";
 
 message ProtocolVersionRequest {
   int64 client_version = 1;
@@ -47,9 +49,9 @@ message ConnectionResponse {
 message Event {
   oneof event_type {
     TimeStampedStatus                time_stamped_status                 = 1;
-    Onboarding                       onboarding                          = 2;
+    Onboarding                       onboarding                          = 2; // App only
     WakeWord                         wake_word                           = 3;
-    AttentionTransfer                attention_transfer                  = 4;
+    AttentionTransfer                attention_transfer                  = 4; // App only
     RobotObservedFace                robot_observed_face                 = 5;
     RobotChangedObservedFaceID       robot_changed_observed_face_id      = 6;
     ObjectEvent                      object_event                        = 7;
@@ -59,6 +61,8 @@ message Event {
     CubeBattery                      cube_battery                        = 11;
     KeepAlivePing                    keep_alive                          = 12;
     ConnectionResponse               connection_response                 = 13;
+    JdocsChanged                     jdocs_changed                       = 14;
+    AlexaAuthEvent                   alexa_auth_event                    = 15;
   }
 }
 
@@ -79,6 +83,22 @@ message EventResponse {
   ResponseStatus status = 1;
   Event event = 2;
 }
+
+message UserAuthenticationRequest {
+  bytes user_session_id = 1;
+}
+
+message UserAuthenticationResponse {
+  ResponseStatus status = 1;
+  enum Code {
+    UNAUTHORIZED = 0;
+    AUTHORIZED = 1;
+  }
+  Code code = 2;
+  bytes client_token_guid = 3;
+}
+
+// *** App only proto below ***
 
 // Messages to pass to the engine
 message GatewayWrapper {
@@ -194,21 +214,21 @@ message GatewayWrapper {
     AudioSendModeChanged          audio_send_mode_changed            = 171;
     AudioChunk                    audio_chunk                        = 172;
 
+    // ------------ Feature flags ------------
+    FeatureFlagRequest            feature_flag_request               = 180;
+    FeatureFlagResponse           feature_flag_response              = 181;
+
+    // ------------ App/engine connectivity ------------
+    AppDisconnected               app_disconnected                   = 190;
+
+    // ------------ Alexa ------------
+    AlexaAuthStateRequest         alexa_auth_state_request           = 200;
+    AlexaAuthStateResponse        alexa_auth_state_response          = 201;
+    AlexaOptInRequest             alexa_opt_in_request               = 202;
+    AlexaOptInResponse            alexa_opt_in_response              = 203;
+
+
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }
-}
-
-message UserAuthenticationRequest {
-  bytes user_session_id = 1;
-}
-
-message UserAuthenticationResponse {
-  ResponseStatus status = 1;
-  enum Code {
-    UNAUTHORIZED = 0;
-    AUTHORIZED = 1;
-  }
-  Code code = 2;
-  bytes client_token_guid = 3;
 }

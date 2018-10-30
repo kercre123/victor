@@ -93,7 +93,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // obtains a set of nodes of type typeToFill that satisfy innerPred(node of type typeToFill) && outerPred(neighboring node)
-  void GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred, NodeSet& output);
+  NodeSet GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred);
   
   // true if we have a need to cache the given content type, false otherwise
   static bool IsCached(EContentType contentType);

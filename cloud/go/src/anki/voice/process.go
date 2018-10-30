@@ -292,6 +292,9 @@ procloop:
 			logVerbose("Received error from cloud:", err.err)
 			p.signalMicStop()
 			p.writeError(err.kind, err.err)
+			if p.opts.errListener != nil {
+				p.opts.errListener.OnError(err.err)
+			}
 			if err := strm.Close(); err != nil {
 				log.Println("Error closing context:")
 			}

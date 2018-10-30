@@ -29,9 +29,7 @@ class ImageBuffer
 public:
   ImageBuffer() {};
 
-  // Expects data to be at size ImageCacheSize::Sensor for all formats except for RawRGB.
-  // Sim is the only thing capturing images in RawRGB format and it does so at 640x360 (Full) so
-  // internal functions that deal with RawRGB data need to account for this
+  // Expects data to be at size ImageCacheSize::Full for all formats
   ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding format, TimeStamp_t timestamp, s32 id);
 
   void SetImageId(u32 id) { _imageId = id; }
@@ -43,6 +41,10 @@ public:
   // Basically max resolution an image can be from this sensor
   void SetSensorResolution(s32 rows, s32 cols) { _sensorNumRows = rows; _sensorNumCols = cols; }
 
+  // Sets the resize method used for resizing the image when calling GetRGB/Gray
+  // Defaults to ResizeMethod::Linear
+  void SetResizeMethod(ResizeMethod method) { _resizeMethod = method; }
+  
   // Returns number of rows a converted RGB image will have
   s32 GetNumRows() const;
 
@@ -58,6 +60,8 @@ public:
   // Depending on the format of the raw data there may either be 1 or 3 channels
   u32 GetNumChannels() const { return (_format == ImageEncoding::RawGray ? 1 : 3); }
 
+  ResizeMethod GetResizeMethod() const { return _resizeMethod; }
+
   // Returns whether or not the buffer has valid data
   bool HasValidData() const { return _rawData != nullptr; }
 
@@ -67,15 +71,11 @@ public:
 
   // Converts raw image data to rgb
   // Returns true if conversion was successful
-  // The specific ResizeMethod is ignored so for "Half_NN" we only care about
-  // the "Half" and ignore the "NN"
-  bool GetRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const;
+  bool GetRGB(ImageRGB& rgb, ImageCacheSize size) const;
 
   // Converts raw image data to gray
   // Returns true if conversion was successful
-  // The specific ResizeMethod is ignored so for "Half_NN" we only care about
-  // the "Half" and ignore the "NN"
-  bool GetGray(Image& gray, ImageCacheSize size, ResizeMethod method) const;
+  bool GetGray(Image& gray, ImageCacheSize size) const;
 
 private:
 
@@ -83,17 +83,16 @@ private:
   void GetNumRowsCols(s32& rows, s32& cols) const;
 
   // Get RGB image at size from various formats
-  bool GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const;
-  bool GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const;
-  bool GetRGBFromYUV420sp(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const;
-  bool GetRGBFromRawGray(ImageRGB& rgb, ImageCacheSize size, ResizeMethod method) const;
+  bool GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size) const;
+  bool GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size) const;
+  bool GetRGBFromYUV420sp(ImageRGB& rgb, ImageCacheSize size) const;
+  bool GetRGBFromRawGray(ImageRGB& rgb, ImageCacheSize size) const;
 
-  
-  // Get Gray image at size from various formats
-  bool GetGrayFromBAYER(Image& gray, ImageCacheSize size, ResizeMethod method) const;
-  bool GetGrayFromRawRGB(Image& gray, ImageCacheSize size, ResizeMethod method) const;
-  bool GetGrayFromYUV420sp(Image& gray, ImageCacheSize size, ResizeMethod method) const;
-  bool GetGrayFromRawGray(Image& gray, ImageCacheSize size, ResizeMethod method) const;
+    // Get Gray image at size from various formats
+  bool GetGrayFromBAYER(Image& gray, ImageCacheSize size) const;
+  bool GetGrayFromRawRGB(Image& gray, ImageCacheSize size) const;
+  bool GetGrayFromYUV420sp(Image& gray, ImageCacheSize size) const;
+  bool GetGrayFromRawGray(Image& gray, ImageCacheSize size) const;
 
   u8*           _rawData           = nullptr;
   s32           _rawNumRows        = 0;
@@ -103,6 +102,7 @@ private:
   TimeStamp_t   _timestamp         = 0;
   s32           _sensorNumRows     = 0;
   s32           _sensorNumCols     = 0;
+  ResizeMethod  _resizeMethod      = ResizeMethod::Linear;
   
 };
   

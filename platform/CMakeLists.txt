@@ -17,6 +17,8 @@ add_subdirectory(faultCodeDisplay)
 
 add_subdirectory(robotLogUploader)
 
+add_subdirectory(vic-log-event)
+
 add_subdirectory(vic-log-upload)
 
 #

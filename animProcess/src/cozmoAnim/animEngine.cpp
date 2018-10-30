@@ -11,10 +11,11 @@
  */
 
 #include "cozmoAnim/animEngine.h"
+
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animComms.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
-
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/audio/microphoneAudioClient.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
@@ -150,7 +151,7 @@ Result AnimEngine::Init()
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
-
+  _context->GetAlexa()->Init(_context.get());
 
   // Make sure OpenCV isn't threading
   Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );

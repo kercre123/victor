@@ -45,6 +45,7 @@ namespace Anki {
       struct MicData;
       struct RobotToEngine;
     }
+    class SpeechRecognizerSystem;
   }
   namespace Util {
     namespace Data {
@@ -69,6 +70,9 @@ public:
 
   void Init(const RobotDataLoader& dataLoader);
 
+  MicData::MicDataProcessor* GetMicDataProcessor() const { return _micDataProcessor.get(); }
+  SpeechRecognizerSystem* GetSpeechRecognizerSystem() const { return _speechRecognizerSystem.get(); }
+  
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
@@ -118,6 +122,7 @@ public:
   void RequestConnectionStatus();
 
   void SetBatteryLowStatus( bool isLow ) { _batteryLow = isLow; }
+  void SetEnableDataCollectionSettings( bool isEnable ) { _enableDataCollection = isEnable; }
 
   // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
   // sending any data to the cloud; this lasts for a set duration
@@ -140,8 +145,9 @@ private:
   size_t _streamingAudioIndex = 0;
   Util::Locale _locale = {"en", "US"};
 
-  std::unique_ptr<MicDataProcessor> _micDataProcessor;
-  std::unique_ptr<LocalUdpServer> _udpServer;
+  std::unique_ptr<MicDataProcessor>       _micDataProcessor;
+  std::unique_ptr<SpeechRecognizerSystem> _speechRecognizerSystem;
+  std::unique_ptr<LocalUdpServer>         _udpServer;
 
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
@@ -166,6 +172,7 @@ private:
   std::vector<std::function<void(bool)>> _streamUpdatedCallbacks;
 
   bool _batteryLow = false;
+  bool _enableDataCollection = false;
 
   void SetWillStream(bool willStream) const;
 

@@ -74,8 +74,6 @@ namespace Vector {
     Robot* robot = _context->GetRobotManager()->GetRobot();
     external_interface::SayTextRequest request = event.GetData().say_text_request();
     AudioMetaData::SwitchState::Robot_Vic_External_Processing processingStyle;
-    uint8_t utteranceID;
-    UtteranceState utteranceState;
 
     if (request.use_vector_voice()) {
       processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Default_Processed;
@@ -83,18 +81,18 @@ namespace Vector {
     else {
       processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Unprocessed;
     }
-    
-    utteranceID = robot->GetTextToSpeechCoordinator().CreateUtterance(request.text(), 
-                                                                      UtteranceTriggerType::Immediate, 
-                                                                      processingStyle,
-                                                                      request.duration_scalar());
-    
-    utteranceState = robot->GetTextToSpeechCoordinator().GetUtteranceState(utteranceID);
-    external_interface::SayTextResponse* response = new external_interface::SayTextResponse{nullptr,
-                                                                                            (external_interface::SayTextResponse::UtteranceState)utteranceState};
-    external_interface::GatewayWrapper wrapper;
-    wrapper.set_allocated_say_text_response(response);
-    robot->GetGatewayInterface()->Broadcast(wrapper);
+    auto ttsCallback = [robot](const UtteranceState& state) {
+      external_interface::SayTextResponse* response = new external_interface::SayTextResponse{nullptr,
+                                                                                            (external_interface::SayTextResponse::UtteranceState)state};
+      external_interface::GatewayWrapper wrapper;
+      wrapper.set_allocated_say_text_response(response);
+      robot->GetGatewayInterface()->Broadcast(wrapper);
+    };
+    robot->GetTextToSpeechCoordinator().CreateUtterance(request.text(),
+                                                        UtteranceTriggerType::Immediate, 
+                                                        processingStyle,
+                                                        request.duration_scalar(),
+                                                        ttsCallback);
   }
 
   void RobotExternalRequestComponent::ImageRequest(const AnkiEvent<external_interface::GatewayWrapper>& imageRequest) {

@@ -2,7 +2,7 @@
   "behaviorID" : "InvestigateHeldCube",
   "behaviorClass" : "InspectCube",
 
-  "PlayWithCubeBehaviorID" : "InvestigateCubeConnectionGate",
+  "PlayWithCubeBehaviorID" : "InteractWithStaticCube",
 
   "wantsToBeActivatedCondition" : {
     "conditionType" : "FeatureGate",

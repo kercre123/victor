@@ -228,7 +228,7 @@ def display(stdscr):
       if parsed:
         dateTime = padToLength(dateTime, 20)
         msgName = padToLength(msgName, 50)
-        msgDefailt = padToLength(msgDetail,30)
+        msgDetail = padToLength(msgDetail,30)
         line = dateTime + msgName + msgDetail
         outputLines.append(line[:(maxx - 4)])
         changed = True

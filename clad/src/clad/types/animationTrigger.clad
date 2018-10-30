@@ -9,6 +9,8 @@ namespace Vector {
 
 enum int_32 AnimationTrigger
 {
+  InvalidAnimTrigger, // default value of 0 == invalid
+
   // Animation triggers, sorted alphabetically
   AlreadyAtFace,
   AudioOnlyHuh,
@@ -140,7 +142,7 @@ enum int_32 AnimationTrigger
   FailedToRightFromFace,
 
   FetchCubeFailure,
-  FetchCubeFrustrated,
+  FetchCubeSetDown,
   FetchCubeSuccess,
 
   FoundFace,
@@ -270,17 +272,18 @@ enum int_32 AnimationTrigger
   PickupCubePreperation,
   PickupCubeRetry,
   PickupCubeSuccess,
-  PokeObjectGetIn,
-  PokeObjectDriveLoop,
-  PokeObjectGetOut,
-  
+
   PlaceCubeByChargerFail,
   PlaceCubeByChargerReactToCharger,
   PlaceCubeByChargerSuccess,
-  
+
   PlanningGetIn,
   PlanningLoop,
   PlanningGetOut,
+
+  PokeObjectGetIn,
+  PokeObjectDriveLoop,
+  PokeObjectGetOut,
 
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,

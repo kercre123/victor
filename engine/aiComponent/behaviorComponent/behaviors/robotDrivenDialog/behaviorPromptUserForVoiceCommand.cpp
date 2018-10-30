@@ -55,7 +55,7 @@ namespace {
 
 #define SET_STATE(s) do{ \
                           _dVars.state = EState::s; \
-                          PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.State", "State = %s", #s); \
+                          PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.State", "State = %s", #s); \
                         } while(0);
                         
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -138,13 +138,9 @@ BehaviorPromptUserForVoiceCommand::~BehaviorPromptUserForVoiceCommand()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPromptUserForVoiceCommand::WantsToBeActivatedBehavior() const
 {
-  if(!ANKI_VERIFY(!_iConfig.vocalPromptString.empty(), "BehaviorPromptUserForVoiceCommand.MissingPromptString", ""))
-  {
-    // Prompt was not set by JSON config or a call to SetPrompt()
-    return false;
-  }
+  const bool hasPrompt = !GetVocalPromptString().empty();
   
-  return true;
+  return hasPrompt;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -197,7 +193,7 @@ void BehaviorPromptUserForVoiceCommand::SetPrompt(const std::string &text)
                  "BehaviorPromptUserForVoiceCommand.SetPrompt.AlreadySetFromJson",
                  "Prompt set by Json config. Refusing to override."))
   {
-    _iConfig.vocalPromptString = text;
+    _dVars.vocalPromptString = text;
   }
 }
 
@@ -226,8 +222,7 @@ void BehaviorPromptUserForVoiceCommand::InitBehavior(){
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated() 
 {
-  // reset dynamic variables
-  _dVars = DynamicVariables();
+  // _dVars are reset on deactivation so that the effects of SetPrompt/SetReprompt persist
 
   // Configure streaming params with defaults in case they're not set due to behaviorStack state
   namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
@@ -250,6 +245,9 @@ void BehaviorPromptUserForVoiceCommand::OnBehaviorDeactivated()
 {
   // Any resultant intents should be handled by external behaviors or transitions, let 'em roll
   GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled(true);
+  
+  // reset dynamic variables
+  _dVars = DynamicVariables();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -264,9 +262,9 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
       bool waitingOnGetIn = _iConfig.playListeningGetIn &&
                             GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish();
       if(!waitingOnGetIn){
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::VC_ListeningLoop,
-                                                      0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
-                                                      std::max(kMaxRecordTime_s, 1.0f)),
+        DelegateIfInControl(new ReselectingLoopAnimationAction(AnimationTrigger::VC_ListeningLoop,
+                                                               0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
+                                                               std::max(kMaxRecordTime_s, 1.0f)),
                             &BehaviorPromptUserForVoiceCommand::TransitionToThinking);
       }
     }
@@ -316,12 +314,12 @@ void BehaviorPromptUserForVoiceCommand::TransitionToTurnToFace()
 void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
 {
   SET_STATE(Prompting);
-  _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalPromptString);
+  _iConfig.ttsBehavior->SetTextToSay( GetVocalPromptString() );
   if(_iConfig.ttsBehavior->WantsToBeActivated()){
     DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToListening);
   }
 }
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 {
@@ -405,14 +403,14 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
 
     if(_iConfig.vocalRepromptString.empty()){
       // If we don't have any Reprompt anims or vocalizations, just reuse the prompting state
-      PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.RepromptGeneric",
+      PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.RepromptGeneric",
                        "Reprompting user %d of %d times with original prompt action",
                        _dVars.repromptCount,
                        _iConfig.maxNumReprompts);
       TransitionToPrompting();
       return;
     } else {
-      PRINT_NAMED_INFO("BehaviorPromptUserForVoiceCommand.RepromptSpecialized",
+      PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.RepromptSpecialized",
                       "Reprompting user %d of %d times with specialized reprompt action.",
                       _dVars.repromptCount,
                       _iConfig.maxNumReprompts);
@@ -426,6 +424,12 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
   }
 
   CancelSelf();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const std::string& BehaviorPromptUserForVoiceCommand::GetVocalPromptString() const
+{
+  return _iConfig.wasPromptSetFromJson ? _iConfig.vocalPromptString : _dVars.vocalPromptString;
 }
 
 } // namespace Vector 

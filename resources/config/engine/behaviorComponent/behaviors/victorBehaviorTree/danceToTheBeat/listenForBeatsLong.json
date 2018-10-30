@@ -5,6 +5,7 @@
   "preListeningAnim"  : "DanceBeatGetIn",
   "listeningAnim"     : "DanceBeatListening",
   "postListeningAnim" : "DanceBeatGetReady",
+  "noBeatAnim"        : "DanceBeatNoBeatDetected",
   
   "minListeningTime_sec" : 10.0,
   "maxListeningTime_sec" : 15.0,

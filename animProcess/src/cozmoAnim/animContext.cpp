@@ -2,6 +2,7 @@
 #include "cozmoAnim/animContext.h"
 
 #include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/audio/audioPlaybackSystem.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/micData/micDataSystem.h"
@@ -38,6 +39,7 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _showStreamStateManager(new ShowAudioStreamStateManager(this))
   , _webService(new WebService::WebService())
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
+  , _alexa(new Alexa())
   , _threadIdHolder(new ThreadIDInternal)
 {
   InitAudio(_dataPlatform);

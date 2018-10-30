@@ -43,25 +43,13 @@ BehaviorAnimSequence::DynamicVariables::DynamicVariables() {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool triggerRequired)
+BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   // load anim triggers, if they exist
   for (const auto& trigger : config[kAnimTriggerKey])
   {
-    // make sure each trigger is valid
-    AnimationTrigger animTrigger;
-    if( AnimationTriggerFromString( trigger.asString(), animTrigger ) ) 
-    {
-      _iConfig.animTriggers.emplace_back( animTrigger );
-    }
-    else 
-    {
-      PRINT_NAMED_ERROR("BehaviorAnimSequence.InvalidTriggerString",
-                        "Behavior '%s' config specified an invalid animation trigger: '%s'",
-                        GetDebugLabel().c_str(),
-                        trigger.asCString() );
-    }
+    _iConfig.animTriggers.push_back(AnimationTriggerFromString(trigger.asString()));
   }
 
   // load animations by name, if they exist
@@ -69,14 +57,11 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
   {
     _iConfig.animationNames.emplace_back( animName.asString() );
   }
-
-  if(ANKI_DEV_CHEATS){
-    const bool onlyTriggersSet = !_iConfig.animTriggers.empty() && _iConfig.animationNames.empty();
-    const bool onlyNamesSet    =  _iConfig.animTriggers.empty() && !_iConfig.animationNames.empty();
-    // make sure we loaded at least one trigger or animation by name
-    DEV_ASSERT_MSG(!triggerRequired || onlyTriggersSet || onlyNamesSet,
-                   "BehaviorAnimSequence.NoTriggers", "Behavior '%s'", GetDebugLabel().c_str());
-  }
+  
+  DEV_ASSERT_MSG(_iConfig.animTriggers.empty() != _iConfig.animationNames.empty(),
+                 "BehaviorAnimSequence.Ctor.InvalidConfig",
+                 "Behavior '%s' invalid config. Must specify either animations or triggers, but not both",
+                 GetDebugLabel().c_str());
 
   // load loop count
   _iConfig.numLoops = config.get(kLoopsKey, 1).asInt();
@@ -95,7 +80,6 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
       }
     }
   }
-  
 }
   
   
@@ -128,15 +112,12 @@ bool BehaviorAnimSequence::WantsToBeActivatedBehavior() const
 void BehaviorAnimSequence::OnBehaviorActivated()
 {
   StartPlayingAnimations();
-
-  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimSequence::StartPlayingAnimations()
 {
-  DEV_ASSERT(!_iConfig.animTriggers.empty() || !_iConfig.animationNames.empty(), "BehaviorAnimSequence.InitInternal.NoTriggers");
   if(IsSequenceLoop()){
     _dVars.sequenceLoopsDone = 0;    
     StartSequenceLoop();
@@ -178,13 +159,13 @@ IActionRunner* BehaviorAnimSequence::GetAnimationAction()
     numLoops = 1; // just one loop per animation, so we can loop the entire sequence together
   }
 
+  const bool interruptRunning = true;
+  const u8 tracksToLock = GetTracksToLock();
+  
   // create sequence with all triggers
   CompoundActionSequential* sequenceAction = new CompoundActionSequential();
   for (AnimationTrigger trigger : _iConfig.animTriggers) {
-    const bool interruptRunning = true;
-    const u8 tracksToLock = GetTracksToLock();
-
-    IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
+    IAction* playAnim = new ReselectingLoopAnimationAction(trigger,
                                                            numLoops,
                                                            interruptRunning,
                                                            tracksToLock);
@@ -192,9 +173,6 @@ IActionRunner* BehaviorAnimSequence::GetAnimationAction()
   }
 
   for (const auto& name : _iConfig.animationNames) {
-    const bool interruptRunning = true;
-    const u8 tracksToLock = GetTracksToLock();
-
     IAction* playAnim = new PlayAnimationAction(name,
                                                 numLoops,
                                                 interruptRunning,
@@ -230,7 +208,6 @@ void BehaviorAnimSequence::CallToListeners()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 u8 BehaviorAnimSequence::GetTracksToLock() const
 {
-  // otherwise whatever was specified in config
   return _iConfig.tracksToLock;
 }
 

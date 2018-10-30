@@ -80,8 +80,6 @@ BehaviorReactToMicDirection::BehaviorReactToMicDirection( const Json::Value& con
   ASSERT_NAMED_EVENT( ( !allResponses.isNull() ), "BehaviorReactToMicDirection.Init",
                       "Config is missing list of response animations (key == reaction_list)" );
 
-  PRINT_NAMED_INFO("TESTING", "Created BehaviorReactToMicDirection");
-
   // initialize our default data to our fallback data ...
   std::copy( std::begin( kFallbackReaction.directionalResponseList ),
              std::end( kFallbackReaction.directionalResponseList ),

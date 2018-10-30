@@ -109,7 +109,7 @@ void BehaviorFactoryCentroidExtractor::OnBehaviorActivated()
   std::stringstream serialNumString;
   serialNumString << std::hex << robot.GetHeadSerialNumber();
   _iConfig.factoryTestLogger.StartLog(serialNumString.str() + "_centroids", true, robot.GetContextDataPlatform());
-  PRINT_NAMED_INFO("BehaviorFactoryCentroidExtractor.WillLogToDevice",
+  PRINT_CH_INFO("Behaviors", "BehaviorFactoryCentroidExtractor.WillLogToDevice",
                     "Log name: %s",
                     _iConfig.factoryTestLogger.GetLogName().c_str());
   

@@ -24,6 +24,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
+#include "test/engine/callWithoutError.h"
 
 #include <json/json.h>
 
@@ -333,10 +334,13 @@ TEST(UserIntentMap, IntentExpiration)
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  for( float t=0.1f; t<1.0f; t+=0.1f ) {
-    BaseStationTimer::getInstance()->UpdateTime(t);
-    comp->UpdateDependent(emptyMap);
-  }
+  const bool errGGotSet = CallWithoutError( [&]() {
+    for( float t=0.1f; t<1.0f; t+=0.1f ) {
+      BaseStationTimer::getInstance()->UpdateTime(t);
+      comp->UpdateDependent(emptyMap);
+    }
+  });
+  EXPECT_TRUE( errGGotSet );
 
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));

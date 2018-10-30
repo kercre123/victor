@@ -16,7 +16,7 @@
 Support for Vector's distance sensor.
 
 Vector's time-of-flight distance sensor has a usable range of about 30 mm to 1200 mm
-(max useful range closer to 300mm for Victor) with a field of view of 25 degrees.
+(max useful range closer to 300mm for Vector) with a field of view of 25 degrees.
 
 The distance sensor can be used to detect objects in front of the robot.
 """
@@ -25,6 +25,8 @@ The distance sensor can be used to detect objects in front of the robot.
 __all__ = ["ProximityComponent", "ProximitySensorData"]
 
 from . import util
+from .events import Events
+from .messaging import protocol
 
 
 class ProximitySensorData:
@@ -39,13 +41,24 @@ class ProximitySensorData:
     behavior of the robot's innate object avoidance.
     """
 
+    def __init__(self, proto_data: protocol.ProxData):
+        self._distance = util.Distance(distance_mm=proto_data.distance_mm)
+        self._signal_quality = proto_data.signal_quality
+        self._is_in_valid_range = proto_data.is_in_valid_range
+        self._is_valid_signal_quality = proto_data.is_valid_signal_quality
+        self._is_lift_in_fov = proto_data.is_lift_in_fov
+        self._is_too_pitched = proto_data.is_too_pitched
+
     @property
     def distance(self) -> float:
         """The distance between the sensor and a detected object
 
-        .. code-block:: python
+        .. testcode::
 
-           distance = robot.proximity.last_sensor_reading.distance
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                distance = robot.proximity.last_sensor_reading.distance
         """
         return self._distance
 
@@ -57,9 +70,12 @@ class ProximitySensorData:
         this value represents the likelihood of the reported distance being
         a solid surface.
 
-        .. code-block:: python
+        .. testcode::
 
-           signal_quality = robot.proximity.last_sensor_reading.signal_quality
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                signal_quality = robot.proximity.last_sensor_reading.signal_quality
         """
         return self._signal_quality
 
@@ -69,9 +85,12 @@ class ProximitySensorData:
         to be considered useful. Past a certain threshold, distance readings
         become unreliable.
 
-        .. code-block:: python
+        .. testcode::
 
-           is_in_valid_range = robot.proximity.last_sensor_reading.is_in_valid_range
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                is_in_valid_range = robot.proximity.last_sensor_reading.is_in_valid_range
         """
         return self._is_in_valid_range
 
@@ -80,9 +99,12 @@ class ProximitySensorData:
         """Whether the engine considers the detected signal to be reliable enough
         to be considered an object in proximity.
 
-        .. code-block:: python
+        .. testcode::
 
-           is_valid_signal_quality = robot.proximity.last_sensor_reading.is_valid_signal_quality
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                is_valid_signal_quality = robot.proximity.last_sensor_reading.is_valid_signal_quality
         """
         return self._is_valid_signal_quality
 
@@ -92,9 +114,12 @@ class ProximitySensorData:
         the lift will send clear proximity signals, it's not useful for object
         detection.
 
-        .. code-block:: python
+        .. testcode::
 
-           is_lift_in_fov = robot.proximity.last_sensor_reading.is_lift_in_fov
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                is_lift_in_fov = robot.proximity.last_sensor_reading.is_lift_in_fov
         """
         return self._is_lift_in_fov
 
@@ -104,28 +129,26 @@ class ProximitySensorData:
         for the time-of-flight data to usefully describe obstacles in the driving
         plane.
 
-        .. code-block:: python
+        .. testcode::
 
-           is_too_pitched = robot.proximity.last_sensor_reading.is_too_pitched
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                is_too_pitched = robot.proximity.last_sensor_reading.is_too_pitched
         """
         return self._is_too_pitched
-
-    def __init__(self, proto_data):
-        self._distance = util.Distance(distance_mm=proto_data.distance_mm)
-        self._signal_quality = proto_data.signal_quality
-        self._is_in_valid_range = proto_data.is_in_valid_range
-        self._is_valid_signal_quality = proto_data.is_valid_signal_quality
-        self._is_lift_in_fov = proto_data.is_lift_in_fov
-        self._is_too_pitched = proto_data.is_too_pitched
 
     @property
     def is_valid(self) -> bool:
         """Comprehensive judgment of whether the reported distance is useful for
         object proximity detection.
 
-        .. code-block:: python
+        .. testcode::
 
-           is_valid = robot.proximity.last_sensor_reading.is_valid
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                is_valid = robot.proximity.last_sensor_reading.is_valid
         """
         return self._is_in_valid_range and self._is_valid_signal_quality and not self._is_lift_in_fov and not self._is_too_pitched
 
@@ -139,12 +162,14 @@ class ProximityComponent(util.Component):
 
     An example of how to extract sensor data:
 
-      .. code-block:: python
+    .. testcode::
 
-         with anki_vector.Robot("my_robot_serial_number") as robot:
-             proximity_data = robot.proximity.last_sensor_reading
-             if proximity_data is not None:
-                 print('Proximity distance: {0}, engine considers useful: {1}'.format(proximity_data.distance, proximity_data.is_valid))
+        import anki_vector
+
+        with anki_vector.Robot() as robot:
+            proximity_data = robot.proximity.last_sensor_reading
+            if proximity_data is not None:
+                print('Proximity distance: {0}, engine considers useful: {1}'.format(proximity_data.distance, proximity_data.is_valid))
     """
 
     def __init__(self, robot):
@@ -152,13 +177,27 @@ class ProximityComponent(util.Component):
         self._last_valid_sensor_reading = None
         self._last_sensor_reading = None
 
+        # Subscribe to a callback that updates the robot's local properties - which includes proximity data.
+        self._robot.events.subscribe(
+            self._on_robot_state,
+            Events.robot_state)
+
+    def close(self):
+        """Closing the touch component will unsubscribe from robot state updates."""
+        self._robot.events.unsubscribe(
+            self._on_robot_state,
+            Events.robot_state)
+
     @property
     def last_sensor_reading(self) -> ProximitySensorData:
         """:class:`anki_vector.proximity.ProximitySensorData`: The last reported sensor data.
 
-        .. code-block:: python
+        .. testcode::
 
-           last_sensor_reading = robot.proximity.last_sensor_reading
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                last_sensor_reading = robot.proximity.last_sensor_reading
         """
         return self._last_sensor_reading
 
@@ -167,14 +206,16 @@ class ProximityComponent(util.Component):
         """:class:`anki_vector.proximity.ProximitySensorData`: The last reported sensor data
         which is considered useful for object detection.
 
-        .. code-block:: python
+        .. testcode::
 
-           last_valid_sensor_reading = robot.proximity.last_valid_sensor_reading
+            import anki_vector
+
+            with anki_vector.Robot() as robot:
+                last_valid_sensor_reading = robot.proximity.last_valid_sensor_reading
         """
         return self._last_valid_sensor_reading
 
-    # TODO Should this be private? Otherwise needs docstring, sample code
-    def on_proximity_update(self, prox_data: ProximitySensorData):
-        self._last_sensor_reading = ProximitySensorData(prox_data)
+    def _on_robot_state(self, _, msg):
+        self._last_sensor_reading = ProximitySensorData(msg.prox_data)
         if self._last_sensor_reading.is_valid:
             self._last_valid_sensor_reading = self._last_sensor_reading

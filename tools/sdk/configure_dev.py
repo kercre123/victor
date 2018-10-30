@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Invoke the configure.py script using dev or beta credentials
+Invoke the configure.py script using dev or beta credentials.
+For more details, please view the configure.py script directly.
 """
 
 import argparse
@@ -42,6 +43,9 @@ class InternalApi(conf.Api):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-e", "--env", help="Accounts api to use [dev,beta]")
-    args = parser.parse_args()
-    conf.main(InternalApi(args.env if args.env is not None else 'dev'))
+    parser.add_argument("-b", "--beta",
+                        help="Indicate that the beta environment should be used",
+                        action="store_true")
+    args = parser.parse_known_args()
+    sys.argv = [sys.argv[0]] + args[1]
+    conf.main(InternalApi('beta' if args[0].beta else 'dev'))

@@ -19,6 +19,8 @@
 #include "DASPrivate.h"
 #include "stringUtils.h"
 #include <sys/stat.h>
+#include <atomic>
+#include <cstring>
 
 static std::atomic<uint32_t> sDasSequenceNumber = ATOMIC_VAR_INIT(0);
 

@@ -34,6 +34,7 @@ anki_build_copy_assets(
 
 #
 # platform_config_etc_development, platform_config_etc_shipping
+# platform_config_bin_development, (none for shipping)
 # Choose extra config files from shipping or development,
 # then copy them into etc
 #
@@ -41,6 +42,7 @@ if (ANKI_RESOURCE_SHIPPING)
   set(platform_config_etc_extra platform_config_etc_shipping)
 else()
   set(platform_config_etc_extra platform_config_etc_development)
+  set(platform_config_bin_extra platform_config_bin_development)
 endif()
 
 # If this is the special "userdev" build then use its etc files
@@ -59,4 +61,15 @@ anki_build_copy_assets(
   OUTPUT_DIR "${CMAKE_BINARY_DIR}"
 )
 
+if (NOT ANKI_RESOURCE_SHIPPING)
+  anki_build_copy_assets(
+    TARGET ${platform_config_bin_extra}
+    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+    OUTPUT_DIR "${CMAKE_BINARY_DIR}"
+  )
+endif()
+
 add_dependencies(platform_config_etc ${platform_config_etc_extra})
+if (NOT ANKI_RESOURCE_SHIPPING)
+  add_dependencies(platform_config_bin ${platform_config_bin_extra})
+endif()

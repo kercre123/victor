@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"anki/log"
 	"anki/robot"
@@ -21,6 +22,7 @@ import (
 
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -50,7 +52,34 @@ var (
 	tempEventStreamDone   chan struct{}
 	tempEventStreamMutex1 sync.Mutex
 	tempEventStreamMutex2 sync.Mutex
+	cloudCheckLimiter     *MultiLimiter
+	debugLogLimiter       *MultiLimiter
 )
+
+// MultiLimiter defines a combination of rate limiters for more complex rate limiting.
+// The max theoretical limit is the time of all limiters combined. But this is in the major spamming case.
+// It is highly recommended to keep this logic simple.
+type MultiLimiter struct {
+	limiters []*rate.Limiter
+}
+
+// NewMultiLimiter creates a *MultiLimiter where the limiters are applied in the order provided.
+func NewMultiLimiter(limiters ...*rate.Limiter) *MultiLimiter {
+	ml := new(MultiLimiter)
+	ml.limiters = limiters
+	return ml
+}
+
+// Allow reports whether an event may happen at time.Now().
+// Use this method if you intend to drop / skip events that exceed the rate limit.
+func (ml *MultiLimiter) Allow() bool {
+	for _, limiter := range ml.limiters {
+		if !limiter.Allow() {
+			return false
+		}
+	}
+	return true
+}
 
 func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, errOut error) {
 	defer func() {
@@ -182,6 +211,16 @@ func main() {
 	}
 
 	log.Println("Sockets successfully created")
+
+	cloudCheckLimiter = NewMultiLimiter(
+		rate.NewLimiter(rate.Every(10*time.Second), 1),
+		rate.NewLimiter(rate.Every(time.Minute), 3),
+	)
+
+	debugLogLimiter = NewMultiLimiter(
+		rate.NewLimiter(rate.Every(time.Minute), 1),
+		rate.NewLimiter(rate.Every(time.Hour), 3),
+	)
 
 	creds, err := credentials.NewServerTLSFromFile(robot.GatewayCert, robot.GatewayKey)
 	if err != nil {

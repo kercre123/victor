@@ -413,8 +413,7 @@ namespace Anki {
       {
         // Get offset of the drive center from robot origin depending on carry state
         if (PickAndPlaceController::IsCarryingBlock()) {
-          // If carrying a block the drive center goes forward, possibly to robot origin
-          return 0;
+          return DRIVE_CENTER_OFFSET_CARRYING_CUBE;
         }
 
         return DRIVE_CENTER_OFFSET;
@@ -456,8 +455,8 @@ namespace Anki {
         
         if (movement) {
 #if(DEBUG_LOCALIZATION)
-          PRINT("\ncurrWheelPos (%f, %f)   prevWheelPos (%f, %f)\n",
-                currLeftWheelPos, currRightWheelPos, prevLeftWheelPos_, prevRightWheelPos_);
+          printf("\ncurrWheelPos (%f, %f)   prevWheelPos (%f, %f)\n",
+                 currLeftWheelPos, currRightWheelPos, prevLeftWheelPos_, prevRightWheelPos_);
 #endif
 
           f32 lRadius, rRadius; // Radii of each wheel arc path (+ve radius means origin of arc is to the left)
@@ -500,10 +499,10 @@ namespace Anki {
           }
 
 #if(DEBUG_LOCALIZATION)
-          PRINT("lRadius %f, rRadius %f, lDist %f, rDist %f, cTheta %f, cDist %f, cRadius %f\n",
-                lRadius, rRadius, lDist, rDist, cTheta, cDist, cRadius);
+          printf("lRadius %f, rRadius %f, lDist %f, rDist %f, cTheta %f, cDist %f, cRadius %f\n",
+                 lRadius, rRadius, lDist, rDist, cTheta, cDist, cRadius);
 
-          PRINT("oldPose: %f %f %f\n", x_, y_, orientation_.ToFloat());
+          printf("oldPose: %f %f %f\n", x_, y_, orientation_.ToFloat());
 #endif
 
           f32 driveCenterOffset = GetDriveCenterOffset();
@@ -635,7 +634,7 @@ namespace Anki {
           }
 
 #if(DEBUG_LOCALIZATION)
-          PRINT("newPose: %f %f %f\n", x_, y_, orientation_.ToFloat());
+          printf("newPose: %f %f %f\n", x_, y_, orientation_.ToFloat());
 #endif
 
         }
@@ -649,8 +648,14 @@ namespace Anki {
         
 
 #if(USE_OVERLAY_DISPLAY)
-        if(movement && HAL::GetTimeStamp()%100 == 0)
+        static bool shouldUpdateDisplay = false;
+        if (movement) {
+          shouldUpdateDisplay = true;
+        }
+        if(shouldUpdateDisplay && HAL::GetTimeStamp()%100 == 0)
         {
+          shouldUpdateDisplay = false;
+          
           using namespace Sim::OverlayDisplay;
 
           SetText(CURR_EST_POSE, "Est. Pose: (x,y)=(%.4f, %.4f) at deg=%.1f",
@@ -685,7 +690,7 @@ namespace Anki {
         }
 
 #if(DEBUG_LOCALIZATION)
-        PRINT("LOC: %f, %f, %f\n", x_, y_, orientation_.getDegrees());
+        printf("LOC: %f, %f, %f\n", x_, y_, orientation_.getDegrees());
 #endif
       }
 

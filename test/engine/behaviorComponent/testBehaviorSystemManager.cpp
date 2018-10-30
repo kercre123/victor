@@ -63,7 +63,7 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated();
+    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
@@ -125,7 +125,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated();
+    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
@@ -161,7 +161,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated();
+    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
@@ -188,7 +188,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated();
+    const bool wtba __attribute((unused)) = bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
 
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),

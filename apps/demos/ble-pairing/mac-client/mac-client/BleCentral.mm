@@ -110,7 +110,7 @@ BleCentral* centralContext;
   
   (void)[fileManager createDirectoryAtPath:dirPath withIntermediateDirectories:true attributes:nil error:nil];
   
-  std::string cmdCurl = "curl http://ota-cdn.anki.com/vic/dev/werih2382df23ij/full/latest.ota --output " + std::string(filePath.UTF8String) + "; ";
+  std::string cmdCurl = "curl http://ota.global.anki-dev-services.com/vic/master-dev/lo8awreh23498sf/full/latest.ota --output " + std::string(filePath.UTF8String) + "; ";
   
   if(!_download) {
     cmdCurl = "";
@@ -2000,7 +2000,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       } else if(strcmp(words[0].c_str(), "anki-auth") == 0) {
         Clad::SendRtsMessage_3<Anki::Vector::ExternalComms::RtsCloudSessionRequest>(self, _commVersion, words[1]);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
-        std::string url = "http://ota-cdn.anki.com/vic/dev/werih2382df23ij/full/latest.ota";
+        std::string url = "http://ota.global.anki-dev-services.com/vic/master-dev/lo8awreh23498sf/full/latest.ota";
         if(words.size() > 1) {
           url = words[1];
         }

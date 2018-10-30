@@ -193,6 +193,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(IMUInfo, MotorInfo);
   ADD_SCREEN(MotorInfo, MicInfo);
   ADD_SCREEN(MirrorMode, MirrorMode);
+  ADD_SCREEN(AlexaPairing, AlexaPairing);
   
   if (hideSpecialDebugScreens) {
     ADD_SCREEN(MicInfo, Main); // Last screen cycles back to Main
@@ -318,10 +319,24 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_EXIT_ACTION(Camera, cameraExitAction);
   
   // === Mirror Mode ===
-  // NOTE: Re-using lambdas from Camera, since this is largely the same mode
-  SET_ENTER_ACTION(MirrorMode, cameraEnterAction);
-  SET_EXIT_ACTION(MirrorMode, cameraExitAction);
+  // Engine requests this screen so it is assumed that Engine is already
+  // set to send us images
+  FaceInfoScreen::ScreenAction mirrorEnterAction = [animStreamer]() {
+    animStreamer->RedirectFaceImagesToDebugScreen(true);
+  };
+  auto mirrorExitAction = [animStreamer]() {
+    animStreamer->RedirectFaceImagesToDebugScreen(false);
+  };
+  SET_ENTER_ACTION(MirrorMode, mirrorEnterAction);
+  SET_EXIT_ACTION(MirrorMode, mirrorExitAction);
   DISABLE_TIMEOUT(MirrorMode); // Let toggling the associated VisionMode handle turning this on/off
+  
+  // === AlexaPairing ===
+  auto alexaPairingEnterAction = [this]() {
+    DrawAlexaFace();
+  };
+  SET_ENTER_ACTION(AlexaPairing, alexaPairingEnterAction);
+  DISABLE_TIMEOUT(AlexaPairing); // let the authorization process handle timeout
   
   // === Camera Motor Test ===
   // Add menu item to camera screen to start a test mode where the motors run back and forth
@@ -892,10 +907,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       isOnCharger &&
       // Only enter pairing from these three screens which include
       // screens that are normally active during playpen test
-      (currScreenName == ScreenName::None ||
-       currScreenName == ScreenName::FAC  ||
-       currScreenName == ScreenName::CustomText ||
-       currScreenName == ScreenName::Pairing)) {
+      CanEnterPairingFromScreen(currScreenName)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
     RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
 
@@ -1358,6 +1370,23 @@ void FaceInfoScreenManager::DrawCustomText()
                              _customText.bgColor.b),
                    { 0, FACE_DISPLAY_HEIGHT-10 }, 10, 3.f);
 }
+  
+void FaceInfoScreenManager::DrawAlexaFace()
+{
+  std::vector<std::string> textVec;
+  textVec.push_back(_alexaCode);
+  if (!_alexaUrl.empty()) {
+    textVec.push_back(_alexaUrl);
+  }
+  DrawTextOnScreen(textVec);
+  
+  RobotInterface::SetHeadAngle headAction;
+  headAction.angle_rad = MAX_HEAD_ANGLE;
+  headAction.duration_sec = 1.0;
+  headAction.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
+  headAction.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
+  SendAnimToRobot(std::move(headAction));
+}
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
 // in textColor with a background of bgColor.
@@ -1430,6 +1459,21 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
+    // TODO: it's possible that the user entered the app pairing screen during Alexa pairing,
+    // in which case the face should return to the Alexa screen when app pairing is complete
+    SetScreen(ScreenName::None);
+  }
+}
+  
+void FaceInfoScreenManager::EnableAlexaScreen(bool enable, const std::string& code, const std::string& url)
+{
+  if (enable && GetCurrScreenName() != ScreenName::AlexaPairing) {
+    _alexaCode = code;
+    _alexaUrl = url;
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Enable", "");
+    SetScreen(ScreenName::AlexaPairing);
+  } else if (!enable && GetCurrScreenName() == ScreenName::AlexaPairing) {
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Disable", "");
     SetScreen(ScreenName::None);
   }
 }
@@ -1541,6 +1585,20 @@ void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
   }
 }
 
+bool FaceInfoScreenManager::CanEnterPairingFromScreen( const ScreenName& screenName) const
+{
+  switch (screenName)
+  {
+    case ScreenName::None:
+    case ScreenName::FAC:
+    case ScreenName::CustomText:
+    case ScreenName::Pairing:
+    case ScreenName::AlexaPairing:
+      return true;
+    default:
+      return false;
+  }
+}
 
 } // namespace Vector
 } // namespace Anki

@@ -14,7 +14,10 @@ data "template_file" "load_test" {
     cpu = "${var.fargate_cpu}"
     memory = "${var.fargate_memory}"
 
+    logging_role = "${var.logging_role}"
+
     enable_account_creation = "${var.enable_account_creation}"
+    enable_distributed_control = "${var.enable_distributed_control}"
   }
 }
 
@@ -22,6 +25,7 @@ resource "aws_ecs_task_definition" "load_test" {
   family                   = "load_test"
   container_definitions    = "${data.template_file.load_test.rendered}"
 
+  task_role_arn            = "${aws_iam_role.ecs_task.arn}"
   execution_role_arn       = "${aws_iam_role.ecs_execution.arn}"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]

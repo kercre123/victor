@@ -119,6 +119,18 @@ void BehaviorRespondToRenameFace::OnBehaviorActivated()
   _name.clear();
   _faceID = Vision::UnknownFaceID;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRespondToRenameFace::SetName(const std::string& name)
+{
+  if( ANKI_VERIFY( _name.empty(),
+                   "BehaviorRespondToRenameFace.SetName.NameExists",
+                   "Attempted to set name with '%s' but already set with '%s'",
+                   name.c_str(), _name.c_str()) )
+  {
+    _name = name;
+  }
+}
 
 
 } // namespace Vector

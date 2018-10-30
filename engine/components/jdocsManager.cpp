@@ -17,6 +17,8 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/messaging/shared/socketConstants.h"
+#include "engine/externalInterface/externalMessageRouter.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "osState/osState.h"
@@ -55,6 +57,8 @@ namespace
 
   static const std::string emptyString;
   static const Json::Value emptyJson;
+
+  static const std::string kCloudJdocResetRequestFile = "cloudjdocreset.txt";
 
   static const std::string kNotLoggedIn = "NotLoggedIn";
   static const float kUserLoginCheckPeriod_s = 3.0f;
@@ -110,6 +114,15 @@ JdocsManager::JdocsManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 JdocsManager::~JdocsManager()
 {
+  for (auto& jdocPair : _jdocs)
+  {
+    auto& jdoc = jdocPair.second;
+    if (jdoc._shutdownCB != nullptr)
+    {
+      jdoc._shutdownCB();
+    }
+  }
+
   // Immediately save to disk any jdocs that are disk-dirty, OR cloud-dirty
   static const bool kIsShuttingDown = true;
   UpdatePeriodicFileSaves(kIsShuttingDown);
@@ -148,6 +161,15 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
   {
     LOG_ERROR("JdocsManager.InitDependent.FailedToCreateFolder", "Failed to create folder %s", _savePath.c_str());
     return;
+  }
+
+  const auto& cloudJdocResetPath = Util::FileUtils::FullFilePath({_savePath, kCloudJdocResetRequestFile});
+  _cloudJdocResetRequested = Util::FileUtils::FileExists(cloudJdocResetPath);
+  if (_cloudJdocResetRequested)
+  {
+    LOG_INFO("JdocsManager.InitDependent.CloudJdocReset",
+             "Cloud Jdoc reset file found; it will be removed, and jdocs will be reset to defaults");
+    Util::FileUtils::DeleteFile(cloudJdocResetPath);
   }
 
   // Build our jdoc data structure based on the config data, and possible saved jdoc files on disk
@@ -234,8 +256,14 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
     jdocInfo._overwrittenCB = nullptr;
     jdocInfo._formatMigrationCB = nullptr;
+    jdocInfo._shutdownCB = nullptr;
 
-    if (Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
+    if (_cloudJdocResetRequested)
+    {
+      Util::FileUtils::DeleteFile(jdocInfo._jdocFullPath);
+    }
+
+    if (!_cloudJdocResetRequested && Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
     {
       if (LoadJdocFile(jdocType))
       {
@@ -346,6 +374,27 @@ void JdocsManager::RegisterFormatMigrationCallback(const external_interface::Jdo
                 "Registering format migration callback again...is that intended?");
   }
   jdocItem._formatMigrationCB = cb;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::RegisterShutdownCallback(const external_interface::JdocType jdocTypeKey,
+                                            const ShutdownCallback cb)
+{
+  const auto& it = _jdocs.find(jdocTypeKey);
+  if (it == _jdocs.end())
+  {
+    LOG_ERROR("JdocsManager.RegisterShutdownCallback.InvalidJdocTypeKey",
+              "Invalid jdoc type key (not managed by JdocsManager) %i", (int)jdocTypeKey);
+    return;
+  }
+  auto& jdocItem = (*it).second;
+  if (jdocItem._shutdownCB != nullptr)
+  {
+    LOG_WARNING("JdocsManager.RegisterShutdownCallback.AlreadyRegistered",
+                "Registering shutdown callback again...is that intended?");
+  }
+  jdocItem._shutdownCB = cb;
 }
 
 
@@ -581,7 +630,8 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
                               const Json::Value* jdocBody,
                               const bool saveToDiskImmediately,
                               const bool saveToCloudImmediately,
-                              const bool setCloudDirtyIfNotImmediate)
+                              const bool setCloudDirtyIfNotImmediate,
+                              const bool sendJdocsChangedMessage)
 {
   const auto& it = _jdocs.find(jdocTypeKey);
   if (it == _jdocs.end())
@@ -717,6 +767,11 @@ bool JdocsManager::UpdateJdoc(const external_interface::JdocType jdocTypeKey,
   else
   {
     jdocItem._diskFileDirty = true;
+  }
+
+  if (sendJdocsChangedMessage)
+  {
+    SendJdocsChangedMessage({jdocTypeKey});
   }
 
   return true;
@@ -1129,8 +1184,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
                  "Mismatch of number of items in jdocs read request vs. response (%zu vs %zu)",
                  readRequest.items.size(), readResponse.items.size());
 
-  // The first Read request is always for 'get all latest jdocs'
-  _gotLatestCloudJdocsAtStartup = true;
+  std::vector<external_interface::JdocType> jdocsPulledFromCloud;
 
   int index = 0;
   for (const auto& responseItem : readResponse.items)
@@ -1163,11 +1217,16 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       else if (responseItem.doc.docVersion > ourDocVersion)
       {
         // Cloud has a newer version than robot does
+        bool pullCloudVersion = jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD;
+        if (_cloudJdocResetRequested && !_gotLatestCloudJdocsAtStartup)
+        {
+          pullCloudVersion = false;
+        }
         static const size_t kBufferLen = 256;
         char logMsg[kBufferLen];
         snprintf(logMsg, kBufferLen, "Cloud version (%llu) of %s jdoc is later than robot version (%llu); %s",
                  responseItem.doc.docVersion, requestItem.docName.c_str(), ourDocVersion,
-                 jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD
+                 pullCloudVersion
                  ? "pulling down newer version from cloud"
                  : "submitting robot version to cloud");
         if (jdoc._errorOnCloudVersionLater)
@@ -1183,17 +1242,18 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
           LOG_INFO("JdocsManager.HandleReadResponse.LaterVersionInfo", "%s", logMsg);
         }
 
-        if (jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD)
+        if (pullCloudVersion)
         {
           // Replace jdoc on robot with the newer one from the cloud
           if (responseItem.doc.fmtVersion <= jdoc._curFormatVersion)
           {
             CopyJdocFromCloud(jdocType, responseItem.doc);
             pulledNewVersionFromCloud = true;
+            jdocsPulledFromCloud.push_back(jdocType);
           }
           checkForFormatVersionMigration = true;
         }
-        else  // jdoc._resolveMethod == external_interface::JdocResolveMethod::PUSH_TO_CLOUD
+        else
         {
           // Replace jdoc in cloud with the one we have on the robot
           jdoc._jdocVersion = responseItem.doc.docVersion;
@@ -1313,7 +1373,17 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
     }
 
     index++;
+  } // End loop through response items
+
+
+  // If we've pulled jdoc(s) from the cloud, signal the app
+  if (!jdocsPulledFromCloud.empty())
+  {
+    SendJdocsChangedMessage(jdocsPulledFromCloud);
   }
+
+  // The first Read request is always for 'get all latest jdocs'
+  _gotLatestCloudJdocsAtStartup = true;
 }
 
 
@@ -1521,6 +1591,25 @@ void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocType
 
   const auto writeReq = JDocs::DocRequest::Createwrite(JDocs::WriteRequest{_userID, _thingID, GetJdocName(jdocTypeKey), jdocForCloud});
   SendJdocsRequest(writeReq);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void JdocsManager::SendJdocsChangedMessage(const std::vector<external_interface::JdocType>& jdocTypes)
+{
+  if (_robot->HasGatewayInterface())
+  {
+    LOG_INFO("JdocsManager.SendJdocsChangedMessage", "Signaling app for %zu jdocs changed",
+             jdocTypes.size());
+    auto* gi = _robot->GetGatewayInterface();
+    auto* jdocsChangedMsg = new external_interface::JdocsChanged();
+    for (auto i = 0; i < jdocTypes.size(); i++)
+    {
+      jdocsChangedMsg->add_jdoc_types(jdocTypes[i]);
+    }
+
+    gi->Broadcast(ExternalMessageRouter::Wrap(jdocsChangedMsg));
+  }
 }
 
 

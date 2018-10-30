@@ -23,8 +23,11 @@ namespace Anki {
 namespace Vector {
 
 // Fwd Declarations
+class BehaviorFindCube;
 class BehaviorFindFaceAndThen;
 class BehaviorPickUpCube;
+class BehaviorPlaceCubeByCharger;
+class BehaviorPutDownBlockAtPose;
 class BlockWorldFilter;
 
 class BehaviorFetchCube : public ICozmoBehavior
@@ -53,30 +56,30 @@ private:
     GetIn,
     DriveOffCharger,
     LookForUser,
+    FindCube,
     AttemptConnection,
-    VisuallyCheckLastKnown,
-    QuickSearchForCube,
-    ExtensiveSearchForCube,
-    LookToUserForHelp,
-    ExasperatedSearchForCube,
     PickUpCube,
     TakeCubeSomewhere,
-    PlayWithCube,
+    PutCubeDownHere,
     GetOutSuccess,
-    GetOutFailure,
+    GetOutFailure
   };
 
   struct InstanceConfig {
     InstanceConfig();
-    std::unique_ptr<BlockWorldFilter>        cubesFilter;
-    std::unique_ptr<BlockWorldFilter>        chargerFilter;
-    std::shared_ptr<BehaviorPickUpCube>      pickUpCubeBehavior;
-    std::shared_ptr<ICozmoBehavior>          driveOffChargerBehavior;
-    std::shared_ptr<ICozmoBehavior>          connectToCubeBehavior;
-    std::shared_ptr<BehaviorFindFaceAndThen> lookForUserBehavior;
-    std::shared_ptr<ICozmoBehavior>          lookBackAtUserBehavior;
-    std::shared_ptr<ICozmoBehavior>          extensiveSearchForCubeBehavior;
-    std::shared_ptr<ICozmoBehavior>          playWithCubeBehavior;
+    std::unique_ptr<BlockWorldFilter>           cubesFilter;
+    std::unique_ptr<BlockWorldFilter>           chargerFilter;
+
+    std::shared_ptr<BehaviorFindFaceAndThen>    lookForUserBehavior;
+    std::shared_ptr<BehaviorFindCube>           findCubeBehavior;
+    std::shared_ptr<BehaviorPickUpCube>         pickUpCubeBehavior;
+    std::shared_ptr<BehaviorPutDownBlockAtPose> putCubeSomewhereBehavior;
+
+    ICozmoBehaviorPtr                           driveOffChargerBehavior;
+    ICozmoBehaviorPtr                           reactToCliffBehavior;
+    ICozmoBehaviorPtr                           connectToCubeBehavior;
+    ICozmoBehaviorPtr                           putCubeByChargerBehavior;
+    bool                                        skipConnectToCubeBehavior;
   };
 
   struct DynamicVariables {
@@ -87,9 +90,7 @@ private:
     Pose3d            poseAtStartOfBehavior;
     Pose3d            destination;
     int               attemptsAtCurrentAction;
-    float             stopSearchTime_s;
     bool              startedOnCharger;
-    RobotTimeStamp_t  searchStartTimeStamp;
   };
 
   InstanceConfig _iConfig;
@@ -97,24 +98,18 @@ private:
 
   void TransitionToDriveOffCharger();
   void TransitionToLookForUser();
+  void TransitionToFindCube();
   void TransitionToAttemptConnection();
-  void TransitionToVisuallyCheckLastKnown();
-  void TransitionToQuickSearchForCube();
-  void TransitionToExtensiveSearchForCube();
-  void TransitionToLookToUserForHelp();
-  void TransitionToExasperatedSearchForCube();
 
   void TransitionToPickUpCube();
   void AttemptToPickUpCube();
   
   void TransitionToTakeCubeSomewhere();
-  void AttemptToTakeCubeSomewhere();
+  void TransitionToPutCubeDownHere();
 
-  void TransitionToPlayWithCube();
   void TransitionToGetOutSuccess();
   void TransitionToGetOutFailure();
 
-  bool CheckForCube(bool useTimeStamp = false, RobotTimeStamp_t maxTimeSinceSeen_ms = 0);
   bool ComputeFaceBasedTargetPose();
 };
 
