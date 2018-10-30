@@ -177,12 +177,24 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   {
     return;
   }
+  
+  // Start command stream after EarCon completes
+  auto earConCallback = [this](bool success) {
+    // If we didn't succeed, it means that we didn't have a wake word response setup
+    if (success) {
+      RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
+      PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
+                       "Timestamp %d",
+                       (TimeStamp_t)mostRecentTimestamp);
+    }
+    else {
+      PRINT_NAMED_WARNING("MicDataProcessor.TWCallback",
+                          "Don't have a wake word response setup");
+    }
+  };
+  showStreamState->SetPendingTriggerResponseWithGetIn(earConCallback);
 
-  showStreamState->SetPendingTriggerResponseWithGetIn();
-
-  RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
-
   const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
                                !_micDataSystem->ShouldSimulateStreaming();
 
@@ -208,9 +220,8 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   // }
 
   PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
-                    "Direction index %d at timestamp %d",
-                    currentDirection,
-                    (TimeStamp_t)mostRecentTimestamp);
+                    "Direction index %d",
+                    currentDirection);
 }
 
 RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamType,
