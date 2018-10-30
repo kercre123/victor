@@ -23,7 +23,7 @@ namespace Vector {
 //class Robot;
 class SettingsManager;
 
-enum class VolumeLevel : uint32_t {
+enum class EVolumeLevel : uint32_t {
   MUTE = 0, // don't ever actually set the volume to this.
   MIN = 1,
   LOW = 2,
@@ -44,9 +44,7 @@ protected:
   explicit BehaviorVolume(const Json::Value& config);  
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
@@ -66,9 +64,9 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
-  bool setVolume(VolumeLevel desiredVolume);
-  VolumeLevel computeDesiredVolumeFromLevelIntent(UserIntentPtr intentData);
-  VolumeLevel computeDesiredVolumeFromIncrement(bool positiveIncrement);
+  bool SetVolume(EVolumeLevel desiredVolume);
+  EVolumeLevel ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData);
+  EVolumeLevel ComputeDesiredVolumeFromIncrement(bool positiveIncrement);
 };
 
 } // namespace Vector

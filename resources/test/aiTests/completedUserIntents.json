@@ -71,6 +71,10 @@
 
     "shut_up": {
       "type": "imperative_shutup"
+    },
+
+    "imperative_volumelevel": {
+      "type": "imperative_volumelevel"
     }
   }
 

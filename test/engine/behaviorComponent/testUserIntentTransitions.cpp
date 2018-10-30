@@ -134,6 +134,13 @@ TEST_INTENT(UserIntentsTransitions, Sleep, "system_sleep")
   EXPECT_TRUE(res);
 }
 
+TEST_INTENT(UserIntentsTransitions, VolumeLevel, "imperative_volumelevel")
+{
+  const bool res = IntentHelper( UserIntent::Createimperative_volumelevel( UserIntent_Volume("medium") ), BehaviorID::Volume, true );
+  EXPECT_TRUE(res);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // the testing of the tests
 TEST(UserIntentsTransitions, CompletedHaveTests)
