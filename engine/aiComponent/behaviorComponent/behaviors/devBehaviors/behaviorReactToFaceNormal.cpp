@@ -102,15 +102,25 @@ bool BehaviorReactToFaceNormal::CheckIfShouldStop()
 void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
 {
   Pose3d faceFocusPose;
-  if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose)) {
-    CompoundActionSequential* turnAction = new CompoundActionSequential();
-    turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPose));
-    Radians absHeadAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(faceFocusPose.GetTranslation());
-    Radians relativeBodyTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(faceFocusPose.GetTranslation());
-    turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPose));
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceNormalDirectedAtRobot.AnglesToTurn",
-             "head angle %.3f, body angle %.3f", absHeadAngle.getDegrees(), relativeBodyTurnAngle.getDegrees());
-    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+  SmartFaceID faceID;
+  if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose, faceID)) {
+    auto robotPose = GetBEI().GetRobotInfo().GetPose();
+    Pose3d faceFocusPoseWRTRobot;
+    if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
+      faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
+      CompoundActionSequential* turnAction = new CompoundActionSequential();
+      turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
+      // TODO most likely will need to have a sleep here to make things "moar natural"
+      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.FaceID",
+               "smart face id %s", faceID.GetDebugStr().c_str());
+      turnAction->AddAction(new WaitAction(2));
+      turnAction->AddAction(new TurnTowardsFaceAction(faceID));
+      DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+    } else {
+      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
+    }
+  } else {
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.NoFaceFocus", "");
   }
 }
 
