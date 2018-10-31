@@ -226,7 +226,6 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
 
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
-  twDetectedMessage.timestamp = (TimeStamp_t)mostRecentTimestamp;
   twDetectedMessage.direction = currentDirection;
   twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
   twDetectedMessage.triggerScore = (uint32_t) score;
