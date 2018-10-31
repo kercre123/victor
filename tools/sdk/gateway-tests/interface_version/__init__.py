@@ -2,6 +2,7 @@ import importlib
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -13,12 +14,14 @@ __all__ = []
 
 def clone(path, repo, tag, **_):
     shutil.rmtree(package_path / path, ignore_errors=True)
+    command = f"git clone --branch \"{tag}\" --depth 1 \"{repo}\" \"{path}\""
+    print(f"\n > Cloning version command = '{command}'\n")
     process = subprocess.Popen(
-        ["git", "clone", repo, path],
+        shlex.split(command),
         cwd=package_path,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-    ) #TODO: add tag
+    )
     code = process.wait()
     if code != 0:
         print(process.stdout.read())
