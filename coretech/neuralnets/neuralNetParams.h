@@ -61,6 +61,8 @@ struct NeuralNetParams
   
 private:
   
+  void Clear();
+  
   // Helper to set output_type enum
   // Must be called after input/output_layer_names have been set
   Result SetOutputTypeFromConfig(const Json::Value& config);

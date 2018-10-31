@@ -28,6 +28,8 @@
 #include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/scopedTicToc.h"
 #include "coretech/neuralnets/iNeuralNetMain.h"
+#include "coretech/neuralnets/neuralNetFilenames.h"
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
@@ -60,8 +62,6 @@ void INeuralNetMain::CleanupAndExit(Result result)
   DerivedCleanup();
   
   sync();
-  
-  exit(result);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -101,12 +101,15 @@ Result INeuralNetMain::Init(const std::string& configFilename,
   LOG_INFO("INeuralNetMain.Init.Starting", "Config:%s ModelPath:%s CachePath:%s",
            configFilename.c_str(), modelPath.c_str(), cachePath.c_str());
   
+  _cachePath = cachePath;
+  
   // Read config file
   Json::Value config;
   {
     Json::Reader reader;
     std::ifstream file(configFilename);
     const bool success = reader.parse(file, config);
+    file.close();
     if(!success)
     {
       LOG_ERROR("INeuralNetMain.Init.ReadConfigFailed",
@@ -114,56 +117,78 @@ Result INeuralNetMain::Init(const std::string& configFilename,
       CleanupAndExit(RESULT_FAIL);
     }
     
-    const char *  const kNeuralNetsKey = "NeuralNets";
-    if(!config.isMember(kNeuralNetsKey))
+    if(!config.isMember(JsonKeys::NeuralNets))
     {
-      LOG_ERROR("INeuralNetMain.Init.MissingConfigKey", "Config file missing '%s' field", kNeuralNetsKey);
+      LOG_ERROR("INeuralNetMain.Init.MissingConfigKey", "Config file missing '%s' field", JsonKeys::NeuralNets);
       CleanupAndExit(RESULT_FAIL);
     }
     
-    config = config[kNeuralNetsKey];
-    
-    if(!config.isMember("pollPeriod_ms"))
-    {
-      LOG_ERROR("INeuralNetMain.Init.MissingPollPeriodField", "No 'pollPeriod_ms' specified in config file");
-      CleanupAndExit(RESULT_FAIL);
-    }
+    config = config[JsonKeys::NeuralNets];
   }
   
-  _pollPeriod_ms = GetPollPeriod_ms(config);
+  _imageFilename = imageFileToProcess;
   
-  _imageFileprovided = !imageFileToProcess.empty();
-  
-  _imageFilename = (_imageFileprovided ?
-                    imageFileToProcess :
-                    Util::FileUtils::FullFilePath({cachePath, "neuralNetImage.png"}));
-  
-  _timestampFilename = Util::FileUtils::FullFilePath({cachePath, "timestamp.txt"});
-  
-  _jsonFilename = Util::FileUtils::FullFilePath({cachePath, "neuralNetResults.json"});
-  
-  // Initialize the detector
-  _neuralNet.reset( new NeuralNets::NeuralNetModel(cachePath) );
+  // Initialize the detectors
+  if(!config.isMember(JsonKeys::Models))
   {
+    LOG_ERROR("INeuralNetMain.Init.MissingModelsField", "No 'models' specified in config file");
+    CleanupAndExit(RESULT_FAIL);
+  }
+
+  const Json::Value& modelsConfig = config[JsonKeys::Models];
+  bool anyVerbose = false;
+  for(auto & modelConfig : modelsConfig)
+  {
+    if(!modelConfig.isMember(JsonKeys::NetworkName))
+    {
+      LOG_ERROR("INeuralNetMain.Init.MissingNameField", "No 'name' specified in model spec in config");
+      CleanupAndExit(RESULT_FAIL);
+    }
+
+    const std::string name = modelConfig[JsonKeys::NetworkName].asString();
+    auto insertionResult = _neuralNets.emplace(name, new NeuralNets::NeuralNetModel(cachePath));
+    if(!insertionResult.second)
+    {
+      LOG_ERROR("INeuralNetMain.Init.DuplicateModelName", "More than one model named '%s'", name.c_str());
+      CleanupAndExit(RESULT_FAIL);
+    }
+    
+    std::unique_ptr<NeuralNetModel>& neuralNet = insertionResult.first->second;
     ScopedTicToc ticToc("LoadModel", LOG_CHANNEL);
-    result = _neuralNet->LoadModel(modelPath, config);
+    result = neuralNet->LoadModel(modelPath, modelConfig);
     
     if(RESULT_OK != result)
     {
-      LOG_ERROR("INeuralNetMain.Init.LoadModelFail", "Failed to load model from path: %s", modelPath.c_str());
+      LOG_ERROR("INeuralNetMain.Init.LoadModelFail", "Failed to load model '%s' from path: %s",
+                name.c_str(), modelPath.c_str());
       CleanupAndExit(result);
     }
     
-    ScopedTicToc::Enable(_neuralNet->IsVerbose());
+    // Make sure output directory for this model exists
+    const std::string outputDir = Util::FileUtils::FullFilePath({_cachePath, name});
+    const bool success = Util::FileUtils::CreateDirectory(outputDir);
+    if(!success)
+    {
+      LOG_ERROR("INeuralNetMain.Init.CreateOutputDirFailed", "Tried: %s", outputDir.c_str());
+      CleanupAndExit(RESULT_FAIL);
+    }
+    
+    anyVerbose |= neuralNet->IsVerbose();
+    _pollPeriod_ms = std::min(_pollPeriod_ms, GetPollPeriod_ms(modelConfig));
+  
+  }
+  ScopedTicToc::Enable(anyVerbose);
+  
+  if(_pollPeriod_ms >= std::numeric_limits<int>::max())
+  {
+    LOG_ERROR("INeuralNetMain.Init.MissingPollingPeriod", "");
+    CleanupAndExit(RESULT_FAIL);
   }
   
-  LOG_INFO("INeuralNetMain.Init.ImageLoadMode", "%s: %s",
-           (_imageFileprovided ? "Loading given image" : "Polling for images at"),
-           _imageFilename.c_str());
-  
-  LOG_INFO("INeuralNetMain.Init.DetectorInitialized", "Waiting for images");
-  
   _isInitialized = true;
+  
+  LOG_INFO("INeuralNetMain.Init.DetectorInitialized", "Loaded %zu model(s). Polling for images every %dms",
+           _neuralNets.size(), _pollPeriod_ms);
   
   return RESULT_OK;
 }
@@ -179,119 +204,137 @@ Result INeuralNetMain::Run()
   
   Result result = RESULT_OK;
   
-  while(!ShouldShutdown())
+  const bool imageFileProvided = !_imageFilename.empty();
+  
+  bool anyFailures = false;
+  while(!anyFailures && !ShouldShutdown())
   {
-    // Is there an image file available in the cache?
-    const bool isImageAvailable = Util::FileUtils::FileExists(_imageFilename);
-    
-    if(isImageAvailable)
+    for(auto & model : _neuralNets)
     {
-      if(_neuralNet->IsVerbose())
-      {
-        LOG_INFO("INeuralNetMain.Run.FoundImage", "%s", _imageFilename.c_str());
-      }
+      const std::string& networkName = model.first;
+      std::unique_ptr<NeuralNets::NeuralNetModel>& neuralNet = model.second;
       
-      // Get the image
-      Vision::ImageRGB img;
+      // Is there an image file available in the cache?
+      const std::string fullImagePath = (imageFileProvided ?
+                                         _imageFilename :
+                                         Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Image}));
+      
+      const bool isImageAvailable = Util::FileUtils::FileExists(fullImagePath);
+      
+      if(isImageAvailable)
       {
-        ScopedTicToc ticToc("GetImage", LOG_CHANNEL);
-        GetImage(_imageFilename, _timestampFilename, img);
-        
-        if(img.IsEmpty())
+        if(neuralNet->IsVerbose())
         {
-          LOG_ERROR("INeuralNetMain.Run.ImageReadFailed", "Error while loading image %s", _imageFilename.c_str());
-          if(_imageFileprovided)
+          LOG_INFO("INeuralNetMain.Run.FoundImage", "%s", fullImagePath.c_str());
+        }
+        
+        // Get the image
+        Vision::ImageRGB img;
+        {
+          ScopedTicToc ticToc("GetImage", LOG_CHANNEL);
+          
+          const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Timestamp});
+          
+          GetImage(fullImagePath, timestampFilename, img);
+          
+          if(img.IsEmpty())
           {
-            // If we loaded in image file specified on the command line, we are done
-            result = RESULT_FAIL;
+            LOG_ERROR("INeuralNetMain.Run.ImageReadFailed", "Error while loading image %s", fullImagePath.c_str());
+            if(imageFileProvided)
+            {
+              // If we loaded in image file specified on the command line, we are done
+              anyFailures = true;
+              break;
+            }
+            else
+            {
+              // Remove the image file we were working with to signal that we're done with it
+              // and ready for a new image, even if this one was corrupted
+              if(neuralNet->IsVerbose())
+              {
+                LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", fullImagePath.c_str());
+              }
+              remove(fullImagePath.c_str());
+              continue; // no need to stop the process, it was just a bad image, won't happen again
+            }
+          }
+        }
+        
+        // Detect what's in it
+        std::list<Vision::SalientPoint> salientPoints;
+        {
+          ScopedTicToc ticToc("Detect", LOG_CHANNEL);
+          result = neuralNet->Detect(img, salientPoints);
+          
+          if(RESULT_OK != result)
+          {
+            LOG_ERROR("INeuralNetMain.Run.DetectFailed", "");
+            result = RESULT_OK; // keep trying (?)
+          }
+        }
+        
+        // Convert the results to JSON
+        Json::Value detectionResults;
+        ConvertSalientPointsToJson(salientPoints, neuralNet->IsVerbose(), detectionResults);
+        
+        // Write out the Json
+        {
+          ScopedTicToc ticToc("WriteJSON", LOG_CHANNEL);
+          const std::string jsonFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Result});
+          if(neuralNet->IsVerbose())
+          {
+            LOG_INFO("INeuralNetMain.Run.WritingResults", "%s", jsonFilename.c_str());
+          }
+          
+          const bool success = WriteResults(jsonFilename, detectionResults);
+          if(!success)
+          {
+            anyFailures = true;
             break;
           }
-          else
-          {
-            // Remove the image file we were working with to signal that we're done with it
-            // and ready for a new image, even if this one was corrupted
-            if(_neuralNet->IsVerbose())
-            {
-              LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", _imageFilename.c_str());
-            }
-            remove(_imageFilename.c_str());
-            continue; // no need to stop the process, it was just a bad image, won't happen again
-          }
-        }
-      }
-      
-      // Detect what's in it
-      std::list<Vision::SalientPoint> salientPoints;
-      {
-        ScopedTicToc ticToc("Detect", LOG_CHANNEL);
-        result = _neuralNet->Detect(img, salientPoints);
-      
-        if(RESULT_OK != result)
-        {
-          LOG_ERROR("INeuralNetMain.Run.DetectFailed", "");
-        }
-      }
-      
-      // Convert the results to JSON
-      Json::Value detectionResults;
-      ConvertSalientPointsToJson(salientPoints, _neuralNet->IsVerbose(), detectionResults);
-      
-      // Write out the Json
-      {
-        ScopedTicToc ticToc("WriteJSON", LOG_CHANNEL);
-        if(_neuralNet->IsVerbose())
-        {
-          LOG_INFO("INeuralNetMain.Run.WritingResults", "%s", _jsonFilename.c_str());
         }
         
-        const bool success = WriteResults(_jsonFilename, detectionResults);
-        if(!success)
+        if(!imageFileProvided)
         {
-          result = RESULT_FAIL;
-          break;
+          // Remove the image file we were working with to signal that we're done with it
+          // and ready for a new image
+          if(neuralNet->IsVerbose())
+          {
+            LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", fullImagePath.c_str());
+          }
+          remove(fullImagePath.c_str());
         }
       }
-      
-      if(_imageFileprovided)
+      else if(imageFileProvided)
       {
-        // If we loaded in image file specified on the command line, we are done
-        result = RESULT_OK;
+        LOG_ERROR("INeuralNetMain.Run.ImageFileDoesNotExist", "%s", _imageFilename.c_str());
+        anyFailures = true;
         break;
       }
-      else
-      {
-        // Remove the image file we were working with to signal that we're done with it
-        // and ready for a new image
-        if(_neuralNet->IsVerbose())
-        {
-          LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", _imageFilename.c_str());
-        }
-        remove(_imageFilename.c_str());
-      }
-    }
-    else if(_imageFileprovided)
-    {
-      LOG_ERROR("INeuralNetMain.Run.ImageFileDoesNotExist", "%s", _imageFilename.c_str());
-      break;
-    }
-    else
-    {
-      if(_neuralNet->IsVerbose())
+      else if(neuralNet->IsVerbose())
       {
         const int kVerbosePrintFreq_ms = 1000;
         static int count = 0;
         if(count++ * _pollPeriod_ms >= kVerbosePrintFreq_ms)
         {
-          LOG_INFO("INeuralNetMain.Run.WaitingForImage", "%s", _imageFilename.c_str());
+          LOG_INFO("INeuralNetMain.Run.WaitingForImage", "%s", fullImagePath.c_str());
           count = 0;
         }
       }
       
-      Step(_pollPeriod_ms);
+    } // FOR each model
+    
+    if(imageFileProvided)
+    {
+      // No polling needed when a specific image to process is provided, so finish
+      break;
     }
-  }
+    
+    Step(_pollPeriod_ms);
+    
+  } // WHILE should not shutdown
   
-  CleanupAndExit(result);
+  CleanupAndExit( anyFailures ? RESULT_FAIL : RESULT_OK );
   
   return result;
 }

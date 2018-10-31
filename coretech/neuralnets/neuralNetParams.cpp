@@ -44,8 +44,16 @@ static inline void SetFromConfigHelper(const Json::Value& json, std::vector<std:
 // }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NeuralNetParams::Clear()
+{
+  *this = NeuralNetParams();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result NeuralNetParams::SetFromConfig(const Json::Value& config)
 {
+  Clear();
+  
 # define GetFromConfig(keyName) \
   if(!config.isMember(QUOTE(keyName))) \
   { \

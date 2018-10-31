@@ -46,5 +46,5 @@
   // other than "SavingImages" and "MirrorMode" (which are always enabled)
   // see visionModes.clad/h for the names of available vision modes
   // NOTE: modes will be scheduled with "Standard" frequency
-  "vision_modes": []  // e.g. ["RunningNeuralNet", "DetectingMarkers", "DetectingFaces"]
+  "vision_modes": []  // e.g. ["DetectingPeople", "DetectingMarkers", "DetectingFaces"]
 }

@@ -25,7 +25,7 @@ namespace Vector {
     DetectingVisualObstacles,
     Benchmarking,
     SavingImages,
-    RunningNeuralNet,
+    DetectingPeople,
     DetectingIllumination,
     ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
     MirrorMode,                  // Draw images/detections on the robot's face, mirrored

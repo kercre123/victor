@@ -152,7 +152,7 @@ void BehaviorFindFaceAndThen::GetBehaviorOperationModifiers(BehaviorOperationMod
     modifiers.visionModesForActivatableScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::Low} );
   }
   if( _iConfig.useBodyDetector ) {
-    modifiers.visionModesForActiveScope->insert( {VisionMode::RunningNeuralNet, EVisionUpdateFrequency::Med} );
+    modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingPeople, EVisionUpdateFrequency::Med} );
   }
   
   modifiers.behaviorAlwaysDelegates = false;
