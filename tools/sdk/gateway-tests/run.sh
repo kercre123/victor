@@ -39,15 +39,36 @@ fi
 
 ENV_DIR="${ENV_ROOT}/test-gateway-env"
 
-echo "[ Clearing virtualenv: '${ENV_DIR}' ]"
+if [ -t 1 ]
+then
+    RED="$(tput setaf 1)"
+    GREEN="$(tput setaf 2)"
+    YELLOW="$(tput setaf 3)"
+    BLUE="$(tput setaf 4)"
+    PURPLE="$(tput setaf 5)"
+    CYAN="$(tput setaf 6)"
+    CLEAR="$(tput sgr0)"
+else
+    RED=
+    GREEN=
+    YELLOW=
+    BLUE=
+    PURPLE=
+    CYAN=
+    CLEAR=
+fi
+
+function title(){
+    echo ${CYAN}$@${CLEAR}
+}
+
+title "[ Clearing virtualenv: '${CLEAR}${ENV_DIR}${CYAN}' ]"
 rm -rf ${ENV_DIR}
 virtualenv -p python3 ${ENV_DIR} --no-site-packages
 source ${ENV_DIR}/bin/activate
-echo "[ Installing requirements ]"
+title "[ Installing requirements ]"
 pip install -q -r ${SCRIPT_PATH}/requirements.txt
-echo "[ Installing current anki_vector ]"
+title "[ Installing current anki_vector ]"
 pip install -q ${PYTHON_SDK_ROOT}
-echo "[ Running gateway tests ]"
-pytest
-echo "[ Running version tests ]"
-python3 "${SCRIPT_PATH}/test_versions/test_versions.py" -e "${ENV_ROOT}"
+title "[ Running gateway tests ]"
+pytest -v

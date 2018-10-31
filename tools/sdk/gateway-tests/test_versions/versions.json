@@ -1,8 +1,0 @@
-{
-    "1.0.0": {
-        "path": "victor-version-tests-1.0.0",
-        "repo": "git@github.com:anki/victor-version-tests.git",
-        "tag": "1.0.0",
-        "command": "./run.sh -e {virtualenv}"
-    }
-}
