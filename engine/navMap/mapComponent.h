@@ -185,6 +185,20 @@ private:
   void TimeoutObjects();
   
   void SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const;
+
+  // given a set of vision-detected edge points (projected to the robot frame)
+  // determines a refinement on the newest cliff's pose, based on known cliff
+  // data.
+  // Returns true if such a refinement exists
+  bool RefineNewCliffPose(const std::vector<Point2f>& points,
+                          MemoryMapTypes::MemoryMapDataConstPtr newCliffNode,
+                          const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& oldCliffNodes,
+                          Pose3d& refinedCliffPose) const;
+
+  // helper method to retrieve all unique cliff positions in the current map
+  // note: unique because multiple cells in the QT are associated with the same
+  //       cliff object, which has one pose (determined at the time it was sensed)
+  Result FindSensorDetectedCliffs(std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& cliffNodes) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Vision border detection

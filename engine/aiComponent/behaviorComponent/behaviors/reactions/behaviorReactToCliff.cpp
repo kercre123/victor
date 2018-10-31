@@ -50,6 +50,17 @@ namespace {
   const char* kCliffBackupDistKey = "cliffBackupDistance_mm";
   const char* kCliffBackupSpeedKey = "cliffBackupSpeed_mmps";
   const char* kEventFlagTimeoutKey = "eventFlagTimeout_sec";
+  
+  // If the robot is at a steep pitch, it's possible it's been put down
+  // purposefully on a slope, so this behavior won't activate until enough time
+  // has passed with the robot on its treads in order to give `ReactToPlacedOnSlope`
+  // time to activate and run.
+  const f32 kMinPitchToCheckForIncline_rad = DEG_TO_RAD(10.f);
+  
+  // When the robot is at a steep pitch, there is an additional requirement that the
+  // robot should consider itself "OnTreads" for at least this number of ms to
+  // prevent interrupting the `ReactToPlacedOnSlope` behavior.
+  const u16 kMinTimeSinceOffTreads_ms = 1000;
 
   // If the value of the cliff when it started stopping is
   // this much less than the value when it stopped, then
@@ -61,7 +72,7 @@ namespace {
   static const u16   kSuspiciousCliffValDiff = 20;
 
   // minimum number of images with edge detection activated
-  const int kNumImagesToWaitForEdges = 10;
+  const int kNumImagesToWaitForEdges = 1;
 
   // rate of turning the robot while searching for cliffs with vision
   const f32 kBodyTurnSpeedForCliffSearch_degPerSec = 120.0f;
@@ -77,6 +88,8 @@ namespace {
   // whether this experimental feature whereby the robot uses vision
   // to extend known cliffs via edge detection is active
   CONSOLE_VAR(bool, kEnableVisualCliffExtension, CONSOLE_GROUP, false);
+
+  CONSOLE_VAR(float, kMinViewingDistanceToCliff_mm, CONSOLE_GROUP, 80.0f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -163,7 +176,19 @@ void BehaviorReactToCliff::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _dVars.gotStop || _dVars.wantsToBeActivated || _dVars.persistent.putDownOnCliff;
+  if (_dVars.gotStop || _dVars.wantsToBeActivated || _dVars.persistent.putDownOnCliff)
+  {
+    if( GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads ) {
+      const Radians& pitch =  GetBEI().GetRobotInfo().GetPitchAngle();
+      if( pitch >= DEG_TO_RAD(kMinPitchToCheckForIncline_rad) ) {
+        const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        const EngineTimeStamp_t lastChangedTime_ms = GetBEI().GetRobotInfo().GetOffTreadsStateLastChangedTime_ms();
+        return (currTime_ms - lastChangedTime_ms >= kMinTimeSinceOffTreads_ms);
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -363,23 +388,10 @@ void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
   }
   
   DEBUG_SET_STATE(VisuallyExtendingCliffs);
-  Pose3d leftHandSide, rightHandSide;
-
-  bool didComputeLookAtPoses = false;
+  Pose3d cliffLookAtPose;
   if(_dVars.hasTargetCliff) {
-    // use the cached position of the observed cliff to
-    // determine nearby positions to observe for possible edges
-    // the positions here are a best guess of where to look
-    leftHandSide.SetParent(_dVars.cliffPose);
-    leftHandSide.SetTranslation({0.f, +90.f, 0.f});
-    bool result = leftHandSide.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), leftHandSide);
-
-    rightHandSide.SetParent(_dVars.cliffPose);
-    rightHandSide.SetTranslation({0.f, -90.f, 0.f});
-    result &= rightHandSide.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), rightHandSide);
-
+    bool result = _dVars.cliffPose.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), cliffLookAtPose);
     if(result) {
-      didComputeLookAtPoses = true;
       PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservingCliffAt", 
                       "x=%4.2f y=%4.2f",
                       _dVars.cliffPose.GetTranslation().x(),
@@ -387,39 +399,42 @@ void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
     } else {
       PRINT_NAMED_WARNING("BehaviorReactToCliff.TransitionToVisualCliffExtend.CliffPoseNotInSameTreeAsCurrentWorldOrigin","");
     }
-  }
-
-  if(!didComputeLookAtPoses) {
+  } else {
     // no previously set target cliff pose to look at
-    // instead look at two arbitrary positions in front
-    // and to either side of the robot
-    leftHandSide.SetParent(GetBEI().GetRobotInfo().GetPose());
-    leftHandSide.SetTranslation({60.f, +60.f, 0.f});
-
-    rightHandSide.SetParent(GetBEI().GetRobotInfo().GetPose());
-    rightHandSide.SetTranslation({60.f, -60.f, 0.f});
+    // instead look at arbitrary position in front
+    cliffLookAtPose = Pose3d(0.f, Z_AXIS_3D(), {60.f, 0.f, 0.f});
+    cliffLookAtPose.SetParent(GetBEI().GetRobotInfo().GetPose());
+    cliffLookAtPose.GetWithRespectTo(GetBEI().GetRobotInfo().GetWorldOrigin(), cliffLookAtPose);
   }
   
-  CompoundActionSequential* action = new CompoundActionSequential();
+  CompoundActionSequential* compoundAction = new CompoundActionSequential();
 
-  action->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK)); // move lift to be out of the FOV
+  compoundAction->AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK)); // move lift to be out of the FOV
 
-  const auto addTurnAndObserveAction = [&action](const Pose3d& pose) -> void {
-    auto turnAction = new TurnTowardsPoseAction(pose);
-    turnAction->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec));
-    action->AddAction(turnAction);
-    action->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::DetectingOverheadEdges));
-  };
+  // if we're too close to the cliff, we need to backup to view it better
+  float dist = ComputeDistanceBetween(cliffLookAtPose.GetTranslation(), GetBEI().GetRobotInfo().GetPose().GetTranslation());
 
-  addTurnAndObserveAction(leftHandSide);
-  addTurnAndObserveAction(rightHandSide);
+  auto turnAction = new TurnTowardsPoseAction(cliffLookAtPose);
+  turnAction->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec));
+  compoundAction->AddAction(turnAction);
+
+  if(dist < kMinViewingDistanceToCliff_mm) {
+    // note: we will always be facing the cliff, so the backup direction is set at this point
+    compoundAction->AddAction(new DriveStraightAction(-(kMinViewingDistanceToCliff_mm-dist), _iConfig.cliffBackupSpeed_mmps));
+    // secondary look-at action to ensure we're facing the cliff point
+    // note: this will correct any offset introduced by the backup action
+    auto turnAction2 = new TurnTowardsPoseAction(cliffLookAtPose);
+    turnAction2->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec));
+    compoundAction->AddAction(turnAction2);
+  }
+  compoundAction->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::DetectingOverheadEdges));
   
   BehaviorSimpleCallback callback = [this] (void) -> void {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservationFinished", "");
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
   };
 
-  DelegateIfInControl(action, callback);
+  DelegateIfInControl(compoundAction, callback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -478,9 +493,32 @@ void BehaviorReactToCliff::BehaviorUpdate()
 
   // Cancel if picked up
   const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+  // Often, when the robot gets too close to a curved edge, the robot can teeter and trigger a false
+  // positive for pick-up detection. To counter this we wait for more than half of the cliff sensors
+  // to also report that they are detecting "cliffs", due to the robot getting picked up. Otherwise,
+  // we wait until the next engine tick to check all conditions
+
+  u8 cliffsDetected = CliffSensorComponent::kNumCliffSensors;
+  const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
+  for (int i=0; i<CliffSensorComponent::kNumCliffSensors; ++i) {
+    if (!cliffComp.IsCliffDetected((CliffSensor)(i))) {
+      // Robot is reporting that it has been picked up, but not all cliff sensors have reported
+      // seing cliffs yet, which would be expected if the robot is teetering on an edge for
+      // some reason, so it might lead to a false-positive detection of a pick-up event.
+      --cliffsDetected;
+    }
+  }
+  
   if (isPickedUp) {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.CancelDueToPickup", "");
-    CancelSelf();
+    if (cliffsDetected > 2) {
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.CancelDueToPickup", "");
+      CancelSelf();
+    } else {
+      PRINT_PERIODIC_CH_INFO(5, "Behaviors",
+                             "BehaviorReactToCliff.Update.PossibleFalsePickUpDetected",
+                             "Only %u cliff sensors are detecting cliffs, but pick-up detected.",
+                             cliffsDetected);
+    }
   }
 }
 

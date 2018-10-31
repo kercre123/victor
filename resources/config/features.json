@@ -82,7 +82,7 @@
   },
   {
     "feature": "ActiveIntentFeedback",
-    "enabled": false
+    "enabled": true
   }
 ]
 

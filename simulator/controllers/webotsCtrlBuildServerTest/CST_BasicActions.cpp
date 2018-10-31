@@ -57,6 +57,9 @@ namespace Anki {
       
       const Point3f _poseToVerify = {200, 0, 22};
       
+      // Position tolerance to use when visually verifying (no) object at pose
+      const float kVisuallyVerifyTolerance_mm = 20.f;
+      
       // to keep track of relative turns of more than one revolution:
       Radians _prevAngle;
       float _angularDistTraversed_deg = 0.f;
@@ -263,7 +266,12 @@ namespace Anki {
             ExternalInterface::QueueSingleAction m;
             m.position = QueueActionPosition::NOW;
             m.idTag = 9;
-            m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(GetRobotPose().GetTranslation().x(), GetRobotPose().GetTranslation().y() + 100, NECK_JOINT_POSITION[2], 10, 10, 10));
+            m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(GetRobotPose().GetTranslation().x(),
+                                                                                                      GetRobotPose().GetTranslation().y() + 100,
+                                                                                                      NECK_JOINT_POSITION[2],
+                                                                                                      kVisuallyVerifyTolerance_mm,
+                                                                                                      kVisuallyVerifyTolerance_mm,
+                                                                                                      kVisuallyVerifyTolerance_mm));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -285,7 +293,12 @@ namespace Anki {
             ExternalInterface::QueueSingleAction m;
             m.position = QueueActionPosition::NOW;
             m.idTag = 10;
-            m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(_poseToVerify.x(), _poseToVerify.y(), _poseToVerify.z(), 10, 10, 10));
+            m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(_poseToVerify.x(),
+                                                                                                      _poseToVerify.y(),
+                                                                                                      _poseToVerify.z(),
+                                                                                                      kVisuallyVerifyTolerance_mm,
+                                                                                                      kVisuallyVerifyTolerance_mm,
+                                                                                                      kVisuallyVerifyTolerance_mm));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

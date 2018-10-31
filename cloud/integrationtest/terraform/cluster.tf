@@ -14,7 +14,10 @@ data "template_file" "load_test" {
     cpu = "${var.fargate_cpu}"
     memory = "${var.fargate_memory}"
 
+    logging_role = "${var.logging_role}"
+
     enable_account_creation = "${var.enable_account_creation}"
+    enable_distributed_control = "${var.enable_distributed_control}"
   }
 }
 

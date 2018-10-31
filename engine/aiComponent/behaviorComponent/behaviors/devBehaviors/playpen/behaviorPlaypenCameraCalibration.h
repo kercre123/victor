@@ -34,6 +34,7 @@ protected:
 protected:
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.visionModesForActiveScope->insert({VisionMode::DetectingMarkers, EVisionUpdateFrequency::High});
   }
 
   virtual Result         OnBehaviorActivatedInternal()   override;

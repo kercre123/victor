@@ -592,10 +592,11 @@ void RobotToEngineImplMessaging::HandleDisplayedFaceImage(const AnkiEvent<RobotI
 
 }
 
-void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message,
+                                                          Robot* const robot)
 {
   const auto & payload = message.GetData().Get_streamCameraImages();
-  robot->GetVisionComponent().EnableMode(VisionMode::MirrorMode, payload.enable);
+  robot->GetVisionComponent().EnableMirrorMode(payload.enable);
 }
 
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

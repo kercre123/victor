@@ -2570,6 +2570,11 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
     srcProxData.isTooPitched);
   msg->set_allocated_prox_data(dstProxData);
 
+  auto* dstTouchData = new external_interface::TouchData(
+    GetTouchSensorComponent().GetLatestRawTouchValue(),
+    GetTouchSensorComponent().GetIsPressed());
+  msg->set_allocated_touch_data(dstTouchData);
+
   return msg;
 }
 
@@ -2907,7 +2912,8 @@ void Robot::SetImageSendMode(ImageSendMode newMode)
 {
   _imageSendMode = newMode;
   // TODO: VIC-5159 fix this to work with SingleShot
-  GetVisionComponent().EnableMode(VisionMode::ImageViz, (newMode != ImageSendMode::Off));
+  const bool enable = (newMode != ImageSendMode::Off);
+  GetVisionComponent().EnableImageSending(enable);
 }
 
 

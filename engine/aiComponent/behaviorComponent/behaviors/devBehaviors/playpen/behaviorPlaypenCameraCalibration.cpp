@@ -68,9 +68,6 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
                                           std::to_string(PlaypenConfig::kPlaypenCalibTarget).c_str());
   
-  // Make sure marker detection is enabled for calibration
-  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-
   // Define a custom object with marker kMarkerToTriggerCalibration so we can know when we are seeing the
   // calibration target via a RobotObservedObject message
   CustomObject* customCube = CustomObject::CreateCube(ObjectType::CustomType00,
@@ -134,7 +131,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateI
     // Otherwise if we have a calibration image, start computing calibration
     else if(!IsControlDelegated() && robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)
     {
-      robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
+      robot.GetVisionComponent().EnableComputingCameraCalibration(true);
       _computingCalibration = true;
       AddTimer(PlaypenConfig::kTimeoutForComputingCalibration_ms, [this, &robot](){ 
           // We have at least seen the calibration target so we should at least save the image we were trying to use for
@@ -174,7 +171,7 @@ void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated()
   robot.GetVisionComponent().ClearCalibrationImages();
   
   // Make sure to disable computing calibration mode in case it was left on for some reason
-  robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, false);
+  robot.GetVisionComponent().EnableComputingCameraCalibration(false);
   
   // Turn CLAHE back to "WhenDark"
   NativeAnkiUtilConsoleSetValueWithString("UseCLAHE_u8", "4");

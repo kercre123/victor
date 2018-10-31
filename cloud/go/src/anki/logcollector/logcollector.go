@@ -2,7 +2,6 @@ package logcollector
 
 import (
 	"anki/log"
-	"anki/robot"
 	"anki/token"
 	"context"
 	"encoding/base64"
@@ -54,12 +53,7 @@ func newLogCollector(opts *options) (*logCollector, error) {
 		c.httpClient = http.DefaultClient
 	}
 
-	certCommonName, err := robot.CertCommonName(robot.DefaultCloudDir)
-	if err != nil {
-		return nil, err
-	}
-
-	c.certCommonName = certCommonName
+	c.certCommonName = opts.tokener.IdentityProvider().CertCommonName()
 
 	awsCredentials, err := c.tokener.GetStsCredentials()
 	if err != nil {

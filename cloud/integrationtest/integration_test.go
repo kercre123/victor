@@ -5,7 +5,7 @@ package main
 
 import (
 	"anki/robot"
-	"anki/token"
+	"anki/token/identity"
 	"ankidev/accounts"
 	"clad/cloud"
 	"testing"
@@ -15,6 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+type testIDProvider struct{}
+
+func (testIDProvider) provideUniqueTestID() (int, error) {
+	return 0, nil
+}
 
 type IntegrationTestSuite struct {
 	suite.Suite
@@ -29,8 +35,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.options = newFromEnvironment(app)
 
+	var provider testIDProvider
+	s.options.finalizeIdentity(provider)
+
 	// Enable client certs and set custom key pair dir (for this user)
-	token.UseClientCert = true
+	identity.UseClientCert = true
 	robot.DefaultCloudDir = *s.options.defaultCloudDir
 
 	s.robotInstance = newTestableRobot(*s.options.testID, *s.options.urlConfigFile)

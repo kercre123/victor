@@ -78,6 +78,13 @@ public:
   // the pertinent subscriber 
   void SetVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionModeRequest>& requests);
 
+  // Subscribe at defined update frequencies to a vector of VisionModes. This call only updates the requested VisionModes
+  // subscriptions for the pertinent subscriber 
+  void AddAndUpdateVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionModeRequest>& requests);
+
+  // Removes subscriptions to specified modes for the subscriber
+  void RemoveVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionMode>& modes);
+  
   // Remove all existing subscriptions for the pertinent subscriber
   void ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber);
 
@@ -92,6 +99,8 @@ public:
   // webotsCtrlBuildServerTest)
   void DevOnly_SelfSubscribeVisionMode(const VisionModeSet& modes);
   void DevOnly_SelfUnsubscribeVisionMode(const VisionModeSet& modes);
+  // Releases all subscriptions for every subscriber
+  void DevOnly_ReleaseAllSubscriptions();
 
 private:
 
@@ -127,6 +136,9 @@ private:
 
   // Helper method to convert between enums and settings in (frames between updates)
   int GetUpdatePeriodFromEnum(const VisionMode& mode, const EVisionUpdateFrequency& frequencySetting) const;
+
+  void UpdateModeDataMapWithRequests(IVisionModeSubscriber* subscriber,
+                                     const std::set<VisionModeRequest>& requests);
 
   using RequestRecord = std::pair<IVisionModeSubscriber*, EVisionUpdateFrequency>;
 

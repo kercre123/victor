@@ -153,6 +153,11 @@ message ProxData {
   bool   is_too_pitched          = 6; // Robot is too far pitched up or down
 }
 
+message TouchData {
+  uint32 raw_touch_value  = 1; // Raw input from the touch sensor
+  bool   is_being_touched = 2; // Robot's context aware evaluation of whether it currently is or isn't being touched
+}
+
 message RobotState {
   PoseStruct pose = 1;
   float pose_angle_rad = 2;
@@ -170,6 +175,7 @@ message RobotState {
   uint32 last_image_time_stamp = 14;
   uint32 status = 15;
   ProxData prox_data = 16;
+  TouchData touch_data = 17;
 }
 
 message CladPoint
@@ -821,6 +827,15 @@ message CameraFeedResponse {
   uint32                   image_id = 2;
   ImageChunk.ImageEncoding image_encoding = 3;
   bytes                    data = 4;
+}
+
+message SetEyeColorRequest {
+  float hue = 1;
+  float saturation = 2;
+}
+
+message SetEyeColorResponse {
+  ResponseStatus status = 1;
 }
 
 // *** App only proto below ***

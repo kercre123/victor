@@ -18,6 +18,8 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
@@ -98,15 +100,15 @@ Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& ca
   
   // Get the input height/width so we can do the resize and only need to share/copy/write as
   // small an image as possible for the standalone CNN process to pick up
-  if(false == JsonTools::GetValueOptional(config, "inputHeight", _processingHeight))
+  if(false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::InputHeight, _processingHeight))
   {
-    PRINT_NAMED_ERROR("NeuralNetRunner.Init.MissingConfig", "inputHeight");
+    PRINT_NAMED_ERROR("NeuralNetRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::InputHeight);
     return RESULT_FAIL;
   }
   
-  if(false == JsonTools::GetValueOptional(config, "inputWidth", _processingWidth))
+  if(false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::InputWidth, _processingWidth))
   {
-    PRINT_NAMED_ERROR("NeuralNetRunner.Init.MissingConfig", "inputWidth");
+    PRINT_NAMED_ERROR("NeuralNetRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::InputWidth);
     return RESULT_FAIL;
   }
 

@@ -29,6 +29,8 @@
 #include "cozmoAnim/backpackLights/backpackLightAnimationContainer.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 
+#include "osState/osState.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/fileUtils/fileUtils.h"
@@ -104,6 +106,23 @@ void RobotDataLoader::LoadConfigData()
       LOG_ERROR("RobotDataLoader.MicTriggerConfigNotFound",
                 "Mic trigger config file %s not found or failed to parse",
                 triggerConfigFile.c_str());
+    }
+  }
+  // Alexa config
+  {
+#ifdef SHIPPING
+    const std::string& alexaConfigFile = "config/alexa/alexa_prod.json";
+#else
+    const std::string& alexaConfigFile = "config/alexa/alexa_dev.json";
+#endif
+    auto path = _platform->pathToResource(Util::Data::Scope::Resources, alexaConfigFile);
+    
+    if( Util::FileUtils::FileExists( path ) ) {
+      _alexaConfig = Util::FileUtils::ReadFile( path );
+    } else {
+      LOG_ERROR("RobotDataLoader.AlexaConfigNotFound",
+                "Alexa config file %s not found or failed to parse",
+                path.c_str());
     }
   }
 }

@@ -7,7 +7,7 @@ import (
 	"anki/log"
 	"anki/logcollector"
 	"anki/token"
-	"anki/token/jwt"
+	"anki/token/identity"
 	"anki/voice"
 	"clad/cloud"
 	"context"
@@ -143,8 +143,13 @@ func (r *testableRobot) closeClients() {
 }
 
 func (r *testableRobot) run() {
-	path := fmt.Sprintf("%s_%d", jwt.DefaultTokenPath, r.id)
-	identityProvider := jwt.NewIdentityProvider(path)
+	jwtPath := fmt.Sprintf("%s_%d", identity.DefaultTokenPath, r.id)
+	cloudDir := fmt.Sprintf("/device_certs/%d", r.id)
+	identityProvider, err := identity.NewFileProvider(jwtPath, cloudDir)
+	if err != nil {
+		log.Println("Error: could not create identity provider")
+		return
+	}
 
 	tokener := token.GetAccessor(identityProvider)
 

@@ -333,7 +333,7 @@
   },
   {
     "CladEvent" : "DanceBeatNoBeatDetected",
-    "AnimName": "ag_communication_cantdothat"
+    "AnimName": "ag_dancebeat_nobeatdetected"
   },
   {
     "CladEvent": "DEPRECATED_DizzyReactionHard",

@@ -1,4 +1,4 @@
-package jwt
+package identity
 
 import (
 	"anki/log"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/anki/sai-token-service/model"
 	jwt "github.com/dgrijalva/jwt-go"
+	"google.golang.org/grpc/credentials"
 )
 
 const jwtFile = "token.jwt"
@@ -24,23 +25,59 @@ type Token interface {
 	UserID() string
 }
 
-// IdentityProvider caches the JWT token for a single robot instance
-type IdentityProvider struct {
-	path         string
-	currentToken *model.Token
+// Provider is an interface to manage JWT tokens and TLS certs for a single robot
+type Provider interface {
+	Init() error
+	ParseAndStoreToken(token string) (Token, error)
+	GetToken() Token
+	CertCommonName() string
+	TransportCredentials() credentials.TransportCredentials
 }
 
-// NewIdentityProvider creates a new identity provider with path for the JWT file
-func NewIdentityProvider(path string) *IdentityProvider {
-	if path == "" {
-		path = DefaultTokenPath
+type fileProvider struct {
+	credentials    credentials.TransportCredentials
+	jwtPath        string
+	currentToken   *model.Token
+	certCommonName string
+}
+
+// NewFileProvider creates a new file backed Provider interface implementation
+func NewFileProvider(jwtPath, cloudDir string) (*fileProvider, error) {
+	if jwtPath == "" {
+		jwtPath = DefaultTokenPath
 	}
-	return &IdentityProvider{path: path}
+	if cloudDir == "" {
+		cloudDir = robot.DefaultCloudDir
+	}
+
+	certCommonName, err := robot.CertCommonName(cloudDir)
+	if err != nil {
+		return nil, err
+	}
+
+	credentials, err := getTLSCert(cloudDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return &fileProvider{
+		credentials:    credentials,
+		jwtPath:        jwtPath,
+		certCommonName: certCommonName,
+	}, nil
 }
 
-// ParseToken parses the given token received from the server and saves it
+func (c *fileProvider) CertCommonName() string {
+	return c.certCommonName
+}
+
+func (c *fileProvider) TransportCredentials() credentials.TransportCredentials {
+	return c.credentials
+}
+
+// ParseAndStoreToken parses the given token received from the server and saves it
 // to our persistent store
-func (c *IdentityProvider) ParseToken(token string) (Token, error) {
+func (c *fileProvider) ParseAndStoreToken(token string) (Token, error) {
 	tok, err := c.parseToken(token)
 	if err != nil {
 		return nil, err
@@ -55,7 +92,7 @@ func (c *IdentityProvider) ParseToken(token string) (Token, error) {
 }
 
 // Init triggers the jwt package to initialize its data from disk
-func (c *IdentityProvider) Init() error {
+func (c *fileProvider) Init() error {
 	err := c.init()
 	if err != nil {
 		if err := robot.WriteFaceErrorCode(851); err != nil {
@@ -69,23 +106,23 @@ func (c *IdentityProvider) Init() error {
 // nil, then one should be requested from the server. If not, it might be worth
 // checking ShouldRefresh() on the token to see if a new one should be requested
 // anyway.
-func (c *IdentityProvider) GetToken() Token {
+func (c *fileProvider) GetToken() Token {
 	if c.currentToken == nil {
 		return nil
 	}
 	return tokWrapper{c.currentToken}
 }
 
-func (c *IdentityProvider) init() error {
+func (c *fileProvider) init() error {
 	// try to create dir token will live in
-	if err := os.Mkdir(c.path, 0777); err != nil {
+	if err := os.Mkdir(c.jwtPath, 0777); err != nil {
 		// if this failed, make sure it's because it already exists
-		s, err := os.Stat(c.path)
+		s, err := os.Stat(c.jwtPath)
 		if err != nil {
 			log.Println("token mkdir + stat error:", err)
 			return err
 		} else if !s.IsDir() {
-			err := fmt.Errorf("token store exists but is not a dir: %s", c.path)
+			err := fmt.Errorf("token store exists but is not a dir: %s", c.jwtPath)
 			log.Println(err)
 			return err
 		}
@@ -112,11 +149,11 @@ func (c *IdentityProvider) init() error {
 	return nil
 }
 
-func (c *IdentityProvider) tokenFile() string {
-	return path.Join(c.path, jwtFile)
+func (c *fileProvider) tokenFile() string {
+	return path.Join(c.jwtPath, jwtFile)
 }
 
-func (c *IdentityProvider) parseToken(token string) (*model.Token, error) {
+func (c *fileProvider) parseToken(token string) (*model.Token, error) {
 	t, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
 	if err != nil {
 		return nil, err
@@ -128,8 +165,8 @@ func (c *IdentityProvider) parseToken(token string) (*model.Token, error) {
 	return tok, nil
 }
 
-func (c *IdentityProvider) saveToken(token string) error {
-	if err := os.Mkdir(c.path, os.ModeDir); err != nil && !os.IsExist(err) {
+func (c *fileProvider) saveToken(token string) error {
+	if err := os.Mkdir(c.jwtPath, os.ModeDir); err != nil && !os.IsExist(err) {
 		return err
 	}
 	return ioutil.WriteFile(c.tokenFile(), []byte(token), 0777)

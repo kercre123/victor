@@ -37,6 +37,7 @@ namespace
 {
   static const std::string kJdocsManagerFolder = "jdocs";
 
+  static const char* kMinCloudGetPeriodKey = "minCloudGetPeriod_s";
   static const char* kManagedJdocsKey = "managedJdocs";
   static const char* kDocNameKey = "docName";
   static const char* kDocVersionKey = "doc_version";
@@ -44,6 +45,7 @@ namespace
   static const char* kClientMetadataKey = "client_metadata";
   static const char* kCloudDirtyRemainingSecKey = "cloud_dirty_remaining_sec";
   static const char* kCloudAccessedKey = "cloud_accessed";
+  static const char* kCloudGetTimeKey = "cloud_get_time";
   static const char* kJdocKey = "jdoc";
   static const char* kDiskSavePeriodKey = "diskSavePeriod_s";
   static const char* kBodyOwnedByJdocsManagerKey = "bodyOwnedByJdocManager";
@@ -163,8 +165,18 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
     return;
   }
 
+  const auto& cloudJdocResetPath = Util::FileUtils::FullFilePath({_savePath, kCloudJdocResetRequestFile});
+  _cloudJdocResetRequested = Util::FileUtils::FileExists(cloudJdocResetPath);
+  if (_cloudJdocResetRequested)
+  {
+    LOG_INFO("JdocsManager.InitDependent.CloudJdocReset",
+             "Cloud Jdoc reset file found; it will be removed, and jdocs will be reset to defaults");
+    Util::FileUtils::DeleteFile(cloudJdocResetPath);
+  }
+
   // Build our jdoc data structure based on the config data, and possible saved jdoc files on disk
   const auto& config = robot->GetContext()->GetDataLoader()->GetJdocsConfig();
+  _minCloudGetPeriod_s = config[kMinCloudGetPeriodKey].asUInt();
   const auto& jdocsConfig = config[kManagedJdocsKey];
   const auto& memberNames = jdocsConfig.getMemberNames();
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -243,13 +255,19 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
                 "Error parsing resolve method '%s'", resolveMethodStr.c_str());
       continue;
     }
+    jdocInfo._lastCloudGetTime = 0;
     jdocInfo._cloudDisabled = JdocInfo::CloudDisabled::NotDisabled;
     jdocInfo._jdocFullPath = Util::FileUtils::FullFilePath({_savePath, jdocInfo._jdocName + ".json"});
     jdocInfo._overwrittenCB = nullptr;
     jdocInfo._formatMigrationCB = nullptr;
     jdocInfo._shutdownCB = nullptr;
 
-    if (Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
+    if (_cloudJdocResetRequested)
+    {
+      Util::FileUtils::DeleteFile(jdocInfo._jdocFullPath);
+    }
+
+    if (!_cloudJdocResetRequested && Util::FileUtils::FileExists(jdocInfo._jdocFullPath))
     {
       if (LoadJdocFile(jdocType))
       {
@@ -285,8 +303,6 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
       jdocInfo._needsCreation = true;
     }
   }
-
-  _cloudJdocResetPath = Util::FileUtils::FullFilePath({_savePath, kCloudJdocResetRequestFile});
 
   // Now queue up a request to the jdocs server (vic-cloud) for the userID
   const auto userReq = JDocs::DocRequest::Createuser(Void{});
@@ -811,6 +827,10 @@ bool JdocsManager::LoadJdocFile(const external_interface::JdocType jdocTypeKey)
   {
     jdocItem._hasAccessedCloud = jdocJson[kCloudAccessedKey].asBool();
   }
+  if (jdocJson.isMember(kCloudGetTimeKey))
+  {
+    jdocItem._lastCloudGetTime = jdocJson[kCloudGetTimeKey].asUInt();
+  }
 
   if (jdocJson.isMember(kCloudDirtyRemainingSecKey))
   {
@@ -846,6 +866,7 @@ void JdocsManager::SaveJdocFile(const external_interface::JdocType jdocTypeKey,
   jdocJson[kJdocKey]           = jdocItem._jdocBody;
   jdocJson[kCloudAccessedKey]  = jdocItem._hasAccessedCloud;
   jdocJson[kCloudDirtyRemainingSecKey] = cloudDirtyRemaining_s;
+  jdocJson[kCloudGetTimeKey]   = jdocItem._lastCloudGetTime;
 
   if (!_platform->writeAsJson(jdocItem._jdocFullPath, jdocJson))
   {
@@ -1174,13 +1195,6 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
 
   std::vector<external_interface::JdocType> jdocsPulledFromCloud;
 
-  bool cloudJdocResetFileFound = Util::FileUtils::FileExists(_cloudJdocResetPath);
-  if (cloudJdocResetFileFound)
-  {
-    LOG_INFO("JdocsManager.HandleReadResponse.CloudJdocReset",
-             "Cloud Jdoc reset file found; it will be used and then removed");
-  }
-
   int index = 0;
   for (const auto& responseItem : readResponse.items)
   {
@@ -1191,7 +1205,9 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
     bool checkForFormatVersionMigration = false;
     bool pulledNewVersionFromCloud = false;
     bool accessedCloud = true;
-    bool needToSaveToDisk = false;
+    // If we requested the latest version from cloud, then we need to save to disk
+    // because the save includes the timestamp of our request
+    bool needToSaveToDisk = wasRequestingLatestVersion;
 
     if (responseItem.status == JDocs::ReadStatus::Changed)
     {
@@ -1213,7 +1229,7 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
       {
         // Cloud has a newer version than robot does
         bool pullCloudVersion = jdoc._resolveMethod == external_interface::JdocResolveMethod::PULL_FROM_CLOUD;
-        if (cloudJdocResetFileFound && !_gotLatestCloudJdocsAtStartup)
+        if (_cloudJdocResetRequested && !_gotLatestCloudJdocsAtStartup)
         {
           pullCloudVersion = false;
         }
@@ -1379,11 +1395,6 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
 
   // The first Read request is always for 'get all latest jdocs'
   _gotLatestCloudJdocsAtStartup = true;
-  
-  if (cloudJdocResetFileFound)
-  {
-    Util::FileUtils::DeleteFile(_cloudJdocResetPath);
-  }
 }
 
 
@@ -1486,14 +1497,40 @@ void JdocsManager::HandleThingResponse(const JDocs::ThingResponse& thingResponse
            _thingID.c_str());
 
   // Now ask the jdocs server to get the latest versions it has of each of the jdocs
-  std::vector<JDocs::ReadItem> itemsToRequest;
+  // But not if we've done this "recently"
+  // But always do it if any jdocs were not present in robot filesystem
+  bool getLatestFromCloud = false;
+  using namespace std::chrono;
+  const auto time_s = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+  const auto epochTimestamp = static_cast<uint32_t>(time_s);
   for (const auto& jdoc : _jdocs)
   {
-    itemsToRequest.emplace_back(jdoc.second._jdocName, 0); // 0 means 'get latest'
+    // Note: If the jdoc was not present on disk, _lastCloudGetTime will be zero,
+    // forcing this check to evaluate to true
+    if ((epochTimestamp - jdoc.second._lastCloudGetTime) > _minCloudGetPeriod_s)
+    {
+      getLatestFromCloud = true;
+      break;
+    }
   }
+  if (getLatestFromCloud)
+  {
+    std::vector<JDocs::ReadItem> itemsToRequest;
+    for (auto& jdoc : _jdocs)
+    {
+      itemsToRequest.emplace_back(jdoc.second._jdocName, 0); // 0 means 'get latest'
+      jdoc.second._lastCloudGetTime = epochTimestamp;
+    }
 
-  const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{_userID, _thingID, itemsToRequest});
-  SendJdocsRequest(readReq);
+    const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{_userID, _thingID, itemsToRequest});
+    SendJdocsRequest(readReq);
+  }
+  else
+  {
+    // Let's pretend we did
+    _gotLatestCloudJdocsAtStartup = true;
+    LOG_INFO("JdocsManager.HandleThingResponse", "Not getting latest jdocs from cloud");
+  }
 
   // Finally, if there are any jdoc operations waiting to be sent,
   // send them now, and for each one, fill in the missing userID and thingID

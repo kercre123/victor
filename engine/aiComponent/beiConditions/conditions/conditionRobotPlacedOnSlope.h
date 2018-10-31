@@ -37,7 +37,7 @@ private:
   const float _kOnInclinePitchThresholdHigh_deg = 55.f;
 
   // if any gyro reading is above this threshold, robot is considered "moving"
-  const float _kIsMovingNowGyroThreshold_degPerSec = 0.01f;
+  const float _kIsMovingNowGyroThreshold_degPerSec = 0.5f;
   
   // time for which robot must not be moving at all to be considered "stationary"
   const double _kIsStationaryTimeThreshold_sec = 0.40;

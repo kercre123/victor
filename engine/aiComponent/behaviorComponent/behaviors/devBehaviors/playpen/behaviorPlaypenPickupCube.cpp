@@ -67,9 +67,6 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal()
 
   RecordTouchSensorData(robot, GetDebugLabel());
   
-  // Make sure marker detection is enabled (probably super overkill...)
-  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
   // TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(-90), false);
   // CompoundActionParallel* action = new CompoundActionParallel(robot, {head, turn});

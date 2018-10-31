@@ -56,7 +56,7 @@ GDBusInterfaceVTable agentVtable = {
   .method_call = AgentCallback,
 };
 
-// Introspection data for the service we are exporting 
+// Introspection data for the service we are exporting
 static const gchar introspection_xml[] =
   "<node>"
   "  <interface name='net.connman.Agent'>"
@@ -87,7 +87,7 @@ void OnTechnologyChanged (GDBusConnection *connection,
                         const gchar *signal_name,
                         GVariant *parameters,
                         gpointer user_data) {
-  GVariant* nameChild = g_variant_get_child_value(parameters, 0);  
+  GVariant* nameChild = g_variant_get_child_value(parameters, 0);
   const char* propertyName = g_variant_get_string(nameChild, nullptr);
   const char MAC_BYTES = 6;
   const char MAC_MANUFAC_BYTES = 3;
@@ -99,7 +99,7 @@ void OnTechnologyChanged (GDBusConnection *connection,
     return;
   }
 
-  GVariant* valueChild = g_variant_get_child_value(parameters, 1);  
+  GVariant* valueChild = g_variant_get_child_value(parameters, 1);
   bool connected = g_variant_get_boolean(g_variant_get_variant(valueChild));
   double duration_s = 0;
 
@@ -131,7 +131,7 @@ void OnTechnologyChanged (GDBusConnection *connection,
     sWifiChangedSignal.emit(connected, apMacManufacturerBytes);
   });
 
-  Log::Write("WiFi connection status changed: [connected=%s / mac=%s]", 
+  Log::Write("WiFi connection status changed: [connected=%s / mac=%s]",
     connected?"true":"false", apMacManufacturerBytes.c_str());
 
   std::string event = connected?"wifi.connection":"wifi.disconnection";
@@ -226,7 +226,7 @@ WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool sca
     if (error) {
       loge("error getting proxy for net.connman /net/connman/technology/wifi");
       DASMSG(connman_error, "connman.error.technology_proxy", "Connman error.");
-      DASMSG_SET(s1, error->message, "Error message");
+      DASMSG_SET(s1, DASMSG_ESCAPE(error->message), "Error message");
       DASMSG_SEND();
 
       g_error_free(error);
@@ -240,7 +240,7 @@ WifiScanErrorCode GetWiFiServices(std::vector<WiFiScanResult>& results, bool sca
     if (error) {
       loge("error asking connman to scan for wifi access points [%s]", error->message);
       DASMSG(connman_error, "connman.error.call_scan", "Connman error.");
-      DASMSG_SET(s1, error->message, "Error message");
+      DASMSG_SET(s1, DASMSG_ESCAPE(error->message), "Error message");
       DASMSG_SEND();
 
       RecoverNetworkServices();
@@ -965,7 +965,7 @@ ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t au
 
   WPAConnectInfo connectInfo = {};
   bool agent_registered = false;
-  
+
   // Register agent
   connectInfo.name = nameFromHex.c_str();
   connectInfo.passphrase = pw.c_str();
@@ -1071,7 +1071,7 @@ ConnectWifiResult ConnectToWifiService(ConnManBusService* service) {
 
   if(data.error != nullptr) {
     DASMSG(connman_error, "connman.error.connect", "Connman error.");
-      DASMSG_SET(s1, data.error->message, "Error message");
+      DASMSG_SET(s1, DASMSG_ESCAPE(data.error->message), "Error message");
       DASMSG_SEND();
     Log::Write("Connect error: %s", data.error->message);
   }
@@ -1084,7 +1084,7 @@ bool DisconnectFromWifiService(ConnManBusService* service) {
   if(service == nullptr) {
     return false;
   }
-  
+
   GError* error = nullptr;
   bool success = conn_man_bus_service_call_disconnect_sync (service, nullptr, &error);
 
@@ -1304,7 +1304,7 @@ bool CanConnectToHostName(char* hostName) {
   }
 
   close(sockfd);
-  
+
   // success, return true!
   return true;
 }
@@ -1412,7 +1412,7 @@ bool EnableAccessPointMode(std::string ssid, std::string pw) {
                                                               &error);
 
   if(error != nullptr) {
-    g_error_free(error);    
+    g_error_free(error);
     return false;
   }
 
@@ -1527,7 +1527,7 @@ void WpaSupplicantScan() {
 
   FiW1Wpa_supplicant1Outerface* interfacePath = fi_w1_wpa_supplicant1_outerface_proxy_new_sync(
     gdbusConn,
-    G_DBUS_PROXY_FLAGS_NONE, 
+    G_DBUS_PROXY_FLAGS_NONE,
     "fi.w1.wpa_supplicant1",
     interface_path,
     nullptr,
@@ -1606,7 +1606,7 @@ bool GetApMacAddress(uint8_t* mac_48bits) {
   struct iwreq data;
 
   // the iwreq struct must be populated with
-  // the device name before making ioctl request  
+  // the device name before making ioctl request
   strncpy(data.ifr_name, WIFI_DEVICE, IFNAMSIZ);
 
   // make ioctl request for AP mac address

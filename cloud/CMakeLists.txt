@@ -1,10 +1,15 @@
+#
+# cloud/CMakeLists.txt
+#
 cmake_minimum_required(VERSION 3.6)
+
 project(cloud)
 
 include(anki_build_cxx)
 include(anki_build_go)
 include(anki_build_util)
 include(breakpad)
+include(webots)
 
 # Grab the gateway files
 file(STRINGS "${ANKI_SRCLIST_DIR}/gateway_grpc.srcs.lst" GATEWAY_GRPC_SRCS)
@@ -193,6 +198,7 @@ anki_build_target_license(vic-cloud
   "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/gorilla/context/LICENSE"
   "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/grd/ogg/LICENSE"
   "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/golang.org/x/text/LICENSE"
+  "BSD-3,${CMAKE_SOURCE_DIR}/cloud/go/src/golang.org/x/time/LICENSE"
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/anki/opus-go/libopus/LICENSE"
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/cenkalti/backoff/LICENSE"
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/dgrijalva/jwt-go/LICENSE"
@@ -285,9 +291,9 @@ anki_build_target_license(vic-gateway
   "MIT,${CMAKE_SOURCE_DIR}/cloud/go/src/github.com/satori/go.uuid/LICENSE"
 )
 
-
 # Install certs for mac build of vic-gateway
 if (MACOSX)
+
   set(GATEWAY_MAC_CERTS
     "/tmp/anki/gateway/trust.cert"
     "/tmp/anki/gateway/trust.key"
@@ -304,4 +310,10 @@ if (MACOSX)
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tools/sdk/scripts"
     COMMENT "Creating mac certs for vic-gateway"
   )
+
+  if (WEBOTS_SETUP_FIREWALL)
+    webots_setup_exe(vic-gateway-firewall ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vic-gateway)
+    add_dependencies(vic-gateway-firewall vic-gateway)
+  endif()
+
 endif()

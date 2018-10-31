@@ -12,7 +12,6 @@
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/observableObject.h"
 #include "coretech/vision/engine/perspectivePoseEstimation.h"
 #include "coretech/vision/engine/profiler.h"

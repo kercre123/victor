@@ -14,9 +14,12 @@
 
 #ifndef ANIMPROCESS_COZMO_ALEXA_H
 #define ANIMPROCESS_COZMO_ALEXA_H
+#pragma once
 
+#include "audioUtil/audioDataTypes.h"
 #include <memory>
 #include <string>
+#include <mutex>
 
 namespace Anki {
 namespace Vector {
@@ -32,10 +35,6 @@ public:
   Alexa();
   ~Alexa();
   
-  // movable (and implicitly noncopyable)
-  Alexa(Alexa&& other) noexcept;
-  Alexa& operator=(Alexa&& other) noexcept;
-  
   void Init(const AnimContext* context);
   
   void Update();
@@ -46,6 +45,11 @@ public:
   void CancelPendingAlexaAuth();
   
   void OnEngineLoaded();
+  
+  // Adds samples to the mic stream buffer. Should be ok to call on another thread
+  void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
+  
+  void NotifyOfTapToTalk() const;
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -89,6 +93,8 @@ private:
   bool _userOptedIn = false;
   // if during an authentication the state was ever WaitingForCode, this is the most recent code
   std::string _previousCode;
+  
+  mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
 };
 
 

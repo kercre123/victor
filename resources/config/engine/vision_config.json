@@ -1,51 +1,4 @@
 {
-  "InitialVisionModes" :
-  {
-    // If a vision mode is not listed, it will be left enabled
-    // Most (dev) modes that are default disabled will likely need to have a default schedule of always
-    // on. These are modes that are not normally used by behaviors. The typically usage of these is
-    // from message handlers who are not capable of subscribing to a vision mode.
-    // Essentially we have modes
-    // 1) that are enabled by default but unscheduled
-    // 2) that are disabled by default but have default schedules to use once they are enabled. 
-    "DetectingMarkers"                 : true,
-    "DetectingFaces"                   : true,
-    "DetectingMotion"                  : true,
-    "DetectingOverheadEdges"           : true,
-    "DetectingBrightColors"            : true,
-    "ComputingCalibration"             : false,
-    "AutoExposure"                     : true,
-    "WhiteBalance"                     : true,
-    "ComputingStatistics"              : true,
-    "DetectingPets"                    : false,
-    "DetectingLaserPoints"             : false,
-    // "BuildingOverheadMap"              : false // Disabled to save a VisionMode (and this is deprecated anyway). TODO: Re-enable
-    "DetectingVisualObstacles"         : true,      
-    "Benchmarking"                     : true,
-    "SavingImages"                     : true,
-    "RunningNeuralNet"                 : true,  
-    "DetectingIllumination"            : true,
-    "ImageViz"                         : false,
-    "MirrorMode"                       : false,
-
-    "DisableMarkerDetection"           : true,
-
-    "MeteringFromChargerOnly"          : true,
-    "FullFrameMarkerDetection"         : true,
-    "FullHeightMarkerDetection"        : true,
-    "FullWidthMarkerDetection"         : true,
-    "MarkerDetectionWhileRotatingFast" : true,
-
-    "EstimatingFacialExpression"       : true,
-    "DetectingSmileAmount"             : true,
-    "DetectingGaze"                    : true,
-    "DetectingBlinkAmount"             : true,
-    "CroppedFaceDetection"             : true,
-
-    "CyclingExposure"                  : true,
-    "MinGainAutoExposure"              : true
-  },
-
   // VisionModes that need to be scheduled by default go here
   // Basically things that are always running
   "InitialModeSchedules" :
@@ -55,10 +8,7 @@
     // value to process every Nth frame
     "DetectingMarkers" : 4, // Remove with VIC-6838 
     "AutoExposure"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
-    "WhiteBalance"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
-
-    "ImageViz"         : 1,
-    "MirrorMode"       : 1
+    "WhiteBalance"     : 5 // NOTE: Should probably be no more frequent than every 5th frame
   },
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
@@ -159,30 +109,34 @@
     "ProfilingEventLogFrequency_ms"  : 30000,
 
     //
-    // Model definition:
+    // Model definitions:
     //
-    "graphFile"           : "dfp_victor_6x6_tiny_128x128_36b906234ae4405dbf479d42d87787da.tflite",
-    "memoryMapGraph"      : 0,
-    "labelsFile"          : "person-labels.txt",
-    "architecture"        : "custom",
-    "inputLayerName"      : "input_1",
-    "outputLayerNames"    : "output_node0",
-    "outputType"          : "binary_localization",
-    "numGridRows"         : 6,
-    "numGridCols"         : 6,
-    "useFloatInput"       : 1,
-    "useGrayscale"        : 0,
-    "inputWidth"          : 128,
-    "inputHeight"         : 128,
-    "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
-    "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
-    "minScore"            : 0.5,
-    "verbose"             : 0,
-    "pollPeriod_ms"       : 10,
-    "timeoutDuration_sec" : 10.0,
-    "benchmarkRuns"       : 0
-
-
+    "Models" : [
+      {
+        "networkName"        : "person_detector",
+        "graphFile"           : "dfp_victor_6x6_tiny_128x128_36b906234ae4405dbf479d42d87787da.tflite",
+        "memoryMapGraph"      : 0,
+        "labelsFile"          : "person-labels.txt",
+        "architecture"        : "custom",
+        "inputLayerName"      : "input_1",
+        "outputLayerNames"    : "output_node0",
+        "outputType"          : "binary_localization",
+        "numGridRows"         : 6,
+        "numGridCols"         : 6,
+        "useFloatInput"       : 1,
+        "useGrayscale"        : 0,
+        "inputWidth"          : 128,
+        "inputHeight"         : 128,
+        "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
+        "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
+        "minScore"            : 0.5,
+        "verbose"             : 0,
+        "pollPeriod_ms"       : 10,
+        "timeoutDuration_sec" : 10.0,
+        "benchmarkRuns"       : 0
+      }
+    ]
+    
     // // OBJECTNESS MODEL
     // "ProfilingPrintFrequency_ms"     : 10000,
     // "ProfilingEventLogFrequency_ms"  : 30000,

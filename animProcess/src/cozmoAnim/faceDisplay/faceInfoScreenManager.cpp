@@ -109,6 +109,11 @@ namespace {
 
   // How long the button needs to be pressed for before it should trigger shutdown animation
   CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
+#if ANKI_DEV_CHEATS
+  // Fake one of several types of button presses. This value will get reset immediately, so to
+  // run it again from the web interface, first set it to NoOp
+  CONSOLE_VAR_ENUM(int, kFakeButtonPressType, "FaceInfoScreenManager", 0, "NoOp,singlePressDetected,doublePressDetected");
+#endif
 }
 
 
@@ -328,9 +333,16 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_EXIT_ACTION(Camera, cameraExitAction);
   
   // === Mirror Mode ===
-  // NOTE: Re-using lambdas from Camera, since this is largely the same mode
-  SET_ENTER_ACTION(MirrorMode, cameraEnterAction);
-  SET_EXIT_ACTION(MirrorMode, cameraExitAction);
+  // Engine requests this screen so it is assumed that Engine is already
+  // set to send us images
+  FaceInfoScreen::ScreenAction mirrorEnterAction = [animStreamer]() {
+    animStreamer->RedirectFaceImagesToDebugScreen(true);
+  };
+  auto mirrorExitAction = [animStreamer]() {
+    animStreamer->RedirectFaceImagesToDebugScreen(false);
+  };
+  SET_ENTER_ACTION(MirrorMode, mirrorEnterAction);
+  SET_EXIT_ACTION(MirrorMode, mirrorExitAction);
   DISABLE_TIMEOUT(MirrorMode); // Let toggling the associated VisionMode handle turning this on/off
   
   // === AlexaPairing ===
@@ -870,6 +882,16 @@ void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed,
     doublePressDetected = false;
     shutdownSent        = true;
   }
+  
+#if ANKI_DEV_CHEATS
+  if( kFakeButtonPressType == 1 ) { // single press
+    singlePressDetected = true;
+    kFakeButtonPressType = 0;
+  } else if( kFakeButtonPressType == 2 ) { // double press
+    doublePressDetected = true;
+    kFakeButtonPressType = 0;
+  }
+#endif
 }
 
 void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()

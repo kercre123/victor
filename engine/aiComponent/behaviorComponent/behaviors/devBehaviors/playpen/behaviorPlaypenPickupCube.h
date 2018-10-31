@@ -33,6 +33,11 @@ protected:
   
   virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event) override;
 
+  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->insert({VisionMode::DetectingMarkers, EVisionUpdateFrequency::High});
+  }
+
+
 private:
   
   void TransitionToWaitForCube();
