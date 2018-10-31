@@ -465,6 +465,10 @@ namespace Vector {
     assert(faceEntry != nullptr);
 
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
+
+    // This is where I am going to update my faceEntry
+    AddOrUpdateFaceDireciton3d(faceEntry->face, faceEntry->face.GetTimeStamp());
+
     faceEntry->numTimesObserved++;
 
     // Keep up with how many times non-tracking-only faces have been seen facing
@@ -605,13 +609,30 @@ namespace Vector {
     return RESULT_OK;
   }
 
-  Result FaceWorld::AddOrUpdateFaceDireciton3d(const Vision::TrackedFace& face,
+  Result FaceWorld::AddOrUpdateFaceDireciton3d(Vision::TrackedFace& face,
                                                const TimeStamp_t& timeStamp)
   {
     auto& entry = _facesDirectedAtRobot3d[face.GetID()];
     entry.Update(face, timeStamp);
 
     // TODO need to set direction
+    const bool faceFocused = entry.IsFaceFocused();
+    if (faceFocused) {
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceFocused", "");
+    } else {
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceIsNotFocused", "");
+    }
+    face.SetFaceFocused(faceFocused);
+    if (faceFocused)
+    {
+      //face.SetFaceFocusPose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), entry.GetFaceDirectionAverage()));
+      Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(1022.112f, 393.799f, 0.f)));
+      // set the pose ... i think this is right but ... let's verify
+      focusPose.SetParent(_robot->GetWorldOrigin());
+      // _robot->GetPoseOriginList().GetOriginByID(histOriginID));
+      // set root?
+      face.SetFaceFocusPose(focusPose);
+    }
     return RESULT_OK;
   }
 
@@ -630,8 +651,6 @@ namespace Vector {
                             "ObservedFace ID=%d", obsFace.GetID());
       }
 
-      // Upate or create the face normal direction
-      AddOrUpdateFaceDireciton3d(obsFace, obsFace.GetTimeStamp());
     }
 
     const RobotTimeStamp_t lastProcImageTime = _robot->GetVisionComponent().GetLastProcessedImageTimeStamp();
@@ -1087,7 +1106,7 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose) const
+  bool FaceWorld::GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose, SmartFaceID& faceID) const
   {
     // Loop over all the faces and see if any of them are making eye contact
     const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
@@ -1099,11 +1118,15 @@ namespace Vector {
     for (const auto& entry: _faceEntries)
     {
       if (ShouldReturnFace(entry.second, recentTime, false))
-      {
+      { 
         if (entry.second.face.IsFaceFocused())
         {
+          PRINT_NAMED_WARNING("FaceWorld.GetFaceFocusPose.FaceFocused", "");
           faceFocusPose = entry.second.face.GetFaceFocusPose();
+          faceID = GetSmartFaceID(entry.second.face.GetID());
           return true;
+        } else {
+          PRINT_NAMED_WARNING("FaceWorld.GetFaceFocusPose.FaceIsNotFocused", "");
         }
       }
     }

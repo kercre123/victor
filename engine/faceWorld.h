@@ -86,7 +86,7 @@ namespace Vector {
     
     Result Update(const std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(const Vision::TrackedFace& face);
-    Result AddOrUpdateFaceDireciton3d(const Vision::TrackedFace& face, const TimeStamp_t& timeStamp);
+    Result AddOrUpdateFaceDireciton3d(Vision::TrackedFace& face, const TimeStamp_t& timeStamp);
   
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
@@ -162,7 +162,7 @@ namespace Vector {
 
     // TOOD add documentation
     Vision::TrackedFace::FaceDirection GetFaceDirection(const u32 withinLast_ms) const;
-    bool GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose) const;
+    bool GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose, SmartFaceID& smartFaceID) const;
 
     // Get the wall times that the given face ID has been observed for named faces. This implementation
     // returns at most 2 entries with front() being the wall time that was recorded first. On loading time,
