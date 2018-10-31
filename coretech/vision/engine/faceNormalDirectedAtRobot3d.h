@@ -36,6 +36,7 @@ struct FaceDirectionData3d
     :
       point(Point3f(kDefaultDistance_cm, kDefaultDistance_cm, kDefaultDistance_cm)),
       inlier(false),
+      include(false),
       angles(Point2f(kYawMin_deg, kPitchMin_deg))
       {}
   // TODO naming is terrible
@@ -61,6 +62,7 @@ public:
   Point3f GetFaceDirectionAverage() const {return _faceDirectionAverage;}
   bool GetExpired(const TimeStamp_t currentTime) const;
   std::vector<FaceDirectionData3d> const& GetFaceDirectionHistory() {return _faceDirectionHistory;}
+  bool IsFaceFocused() const;
 
 private:
   int FindInliers(const Point3f& faceDirectionAverage);

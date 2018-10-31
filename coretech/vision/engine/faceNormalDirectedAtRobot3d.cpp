@@ -127,6 +127,10 @@ int FaceNormalDirectedAtRobot3d::FindInliers(const Point3f& faceDirectionAverage
     PRINT_NAMED_DEBUG("FaceNormalDirectedAtRobot3d.Update.FindInliers",
                       "direction x=%.3f, y=%.3f, z=%.3f", faceDirection.point.x(),
                       faceDirection.point.y(), faceDirection.point.z());
+
+    if (!faceDirection.include) {
+      continue;
+    }
                       
     auto difference = faceDirection.point - faceDirectionAverage;
     if (difference.x() < 300 && difference.y() < 100 && difference.z() < 20) {
@@ -280,6 +284,20 @@ bool FaceNormalDirectedAtRobot3d::IsFaceDirectionAboveHorizon()
                    "yaw: %.3f pitch: %.3f", averageFaceDirection.x(), averageFaceDirection.y());
 
   return false;
+}
+
+bool FaceNormalDirectedAtRobot3d::IsFaceFocused() const
+{
+  // TODO i don't think we want to use face direction for this, however
+  // that was what we were using in the first version of this
+  // return ( _faceDirection != TrackedFace::FaceDirection::None );
+
+  // TODO for some reason there isn't the right number of inliers
+  // so i'm just going to make this 2
+  // return ( _numberOfInliers > kHistorySize *.6);
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.IsFaceFocused.NumberOfInliers",
+                   "Number of Inliers = %d", _numberOfInliers);
+  return ( (_numberOfInliers > 2) && _initialized );
 }
 
 } // namespace Vision
