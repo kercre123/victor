@@ -202,6 +202,8 @@ TEST(FaceDirection, LookingAtPhone)
   config["FaceAlbum"] = "robot";
 
   const std::string path = "foo";
+  // Use the whole image
+  const float cropFactor = 1.0;
   FaceTracker faceTracker(camera, path, config);
   faceTracker.EnableGazeDetection(true);
   faceTracker.EnableBlinkDetection(true);
@@ -224,7 +226,7 @@ TEST(FaceDirection, LookingAtPhone)
     // Do the gaze estimation
     std::list<TrackedFace> faces;
     std::list<UpdatedFaceID> updatedIDs;
-    lastResult = faceTracker.Update(image.ToGray(), faces, updatedIDs);
+    lastResult = faceTracker.Update(image.ToGray(), cropFactor, faces, updatedIDs);
     // We don't detect a face in the first frame (even though
     // there is one present) but should find one face in the
     // rest of the frames
@@ -261,6 +263,7 @@ TEST(FaceDirection, LookingAtPhone)
   } // imageFiles
 }
 
+/*
 TEST(FaceDirection, LookingAtPhoneVisionSystem)
 {
 # define DISABLED        0
@@ -303,11 +306,9 @@ TEST(FaceDirection, LookingAtPhoneVisionSystem)
   }));
   ASSERT_EQ(RESULT_OK, result);
 
-  /*
   // Grab all the test images from "resources/test/lowLightMarkerDetectionTests"
-  const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                                   "test/markerDetectionTests");
-  */
+  // const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+  //                                                                                  "test/markerDetectionTests");
   const std::string pathToImages = "/var/tmp/face_direction/interact_with_phone";
 
   Vision::ImageCache imageCache;
@@ -388,6 +389,7 @@ TEST(FaceDirection, LookingAtPhoneVisionSystem)
 # undef ENABLE_AND_SAVE
 
 } // MarkerDetectionTests
+*/
 
 static void ProcessImage(Anki::Vector::Robot& robot, RobotTimeStamp_t timestamp, Anki::Vector::RobotState& stateMsg, Vision::Image& img,
                          const std::string& filename)
@@ -540,7 +542,12 @@ TEST(FaceDirection, FaceDirectionVisionComponent)
   // Get default config and make it use synchronous mode for face recognition
   Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfigUpdatableRef();
   config["FaceRecognition"]["RunMode"] = "synchronous";
-  
+  config["InitialVisionModes"]["DetectingFaces"] = true;
+  config["InitialVisionModes"]["DetectingGaze"] = true;
+  config["InitialModeSchedules"]["DetectingGaze"] = 1;
+  config["InitialModeSchedules"]["DetectingFaces"] = 1;
+
+  // TODO this calibration is likely incorrect  
   const u16 HEAD_CAM_CALIB_WIDTH  = 320;
   const u16 HEAD_CAM_CALIB_HEIGHT = 240;
   const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
@@ -583,7 +590,9 @@ TEST(FaceDirection, FaceDirectionVisionComponent)
   robot.GetVisionComponent().InitDependent(&robot, dependentComps);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
-  robot.GetVisionComponent().EnableMode(Anki::Vector::VisionMode::Idle, true);
+  // TODO not sure if there needs to be something to replace this but for right now
+  // Idle no longer exists
+  // robot.GetVisionComponent().EnableMode(Anki::Vector::VisionMode::Idle, true);
   robot.GetVisionComponent().EnableMode(Anki::Vector::VisionMode::DetectingFaces, true);
   robot.GetVisionComponent().EnableMode(Anki::Vector::VisionMode::DetectingGaze, true);
   robot.GetVisionComponent().Enable(true);
