@@ -430,7 +430,7 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
         BroadcastMapToSDK(data);
 
         // Reset the timer but don't accumulate error
-        nextBroadcastTime_s += ((int) (currentTime_s - nextBroadcastTime_s) / kMapRenderRate_sec + 1) * _broadcastRate_sec;
+        nextBroadcastTime_s += ((int) (currentTime_s - nextBroadcastTime_s) / _broadcastRate_sec + 1) * _broadcastRate_sec;
         _gameMessageDirty = false;
       }
     }
