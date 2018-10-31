@@ -87,7 +87,7 @@ namespace {
 
   // whether this experimental feature whereby the robot uses vision
   // to extend known cliffs via edge detection is active
-  CONSOLE_VAR(bool, kEnableVisualCliffExtension, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kEnableVisualCliffExtension, CONSOLE_GROUP, true);
 
   CONSOLE_VAR(float, kMinViewingDistanceToCliff_mm, CONSOLE_GROUP, 80.0f);
 }

@@ -111,6 +111,7 @@ CONSOLE_VAR(float, kHoughMinLineLength_mm,    "MapComponent.VisualEdgeDetection"
 CONSOLE_VAR(float, kHoughMaxLineGap_mm,       "MapComponent.VisualEdgeDetection", 10.0);
 CONSOLE_VAR(float, kEdgeLineLengthToInsert_mm,"MapComponent.VisualEdgeDetection", 200.f);
 CONSOLE_VAR(float, kVisionCliffPadding_mm,    "MapComponent.VisualEdgeDetection", 20.f);
+CONSOLE_VAR(bool,  kVisualCliffObstacleChecking, "MapComponent.VisualEdgeDetection", false);
 
 CONSOLE_VAR(int,   kMaxPixelsUsedForHoughTransform, "MapComponent.VisualEdgeDetection", 160000); // 400 x 400 max size
 
@@ -1626,10 +1627,15 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
     for( const auto& imagePt : chain.points) {
       Point2f imagePtOnGround = robotPose * imagePt.position;
-      const bool rayToCliffIsObstructed = currentMap->AnyOf( 
+
+      if(kVisualCliffObstacleChecking) {
+        const bool rayToCliffIsObstructed = currentMap->AnyOf( 
                                           {robotPose.GetTranslation(), imagePtOnGround}, 
                                           isCollisionType);
-      if (!rayToCliffIsObstructed) {
+        if (!rayToCliffIsObstructed) {
+          validPoints.push_back(std::move(imagePtOnGround));
+        }
+      } else {
         validPoints.push_back(std::move(imagePtOnGround));
       }
     }
