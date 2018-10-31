@@ -120,7 +120,7 @@ namespace Vision {
 
     // TODO add documentation
     const Pose3d& GetFaceFocusPose() const;
-    void SetFaceFocusPose() const;
+    void SetFaceFocusPose(const Pose3d faceFocusPose);
     
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
@@ -373,6 +373,11 @@ namespace Vision {
 
   inline void TrackedFace::SetFaceFocused(const bool isFaceFocused) {
     _isFaceFocused = isFaceFocused;
+    if (_isFaceFocused) {
+      PRINT_NAMED_INFO("TrackedFace.SetFaceFocused.True", "");
+    } else {
+      PRINT_NAMED_INFO("TrackedFace.SetFaceFocused.False", "");
+    }
   }
 
   inline void TrackedFace::SetFaceDirection(const FaceDirection faceDirection) {
@@ -382,6 +387,10 @@ namespace Vision {
 
   inline const Pose3d& TrackedFace::GetFaceFocusPose() const {
     return _faceFocusPose;
+  }
+
+  inline void TrackedFace::SetFaceFocusPose(const Pose3d faceFocusPose) {
+    _faceFocusPose = faceFocusPose;
   }
 } // namespace Vision
 } // namespace Anki
