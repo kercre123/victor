@@ -32,7 +32,7 @@
 #include "util/logging/logging.h"
 #include "cozmoAnim/animContext.h"
 #include "webServerProcess/src/webService.h"
-   #include "util/logging/DAS.h"
+#include "util/logging/DAS.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 
 #include <ACL/Transport/HTTP2TransportFactory.h>
@@ -806,7 +806,7 @@ void Alexa::CancelAlerts(const std::vector<int>& alertIDs)
     _alertsManager->CancelAlerts(alertIDs);
   }
 }
-  
+// whitespace!!! omg  
   
 } // namespace Vector
 } // namespace Anki
