@@ -9,7 +9,7 @@ resource "aws_security_group" "admin" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [
-      "64.71.21.198/32",
+      "4.15.77.82/32",
       "173.46.64.74/32",
       "173.46.64.90/32",
       "4.15.74.6/32"
