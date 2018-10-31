@@ -1,3 +1,6 @@
+aiogrpc
+googleapis-common-protos
 pytest
 requests
 requests_toolbelt
+termcolor

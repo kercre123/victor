@@ -24,7 +24,6 @@ except ImportError:
 
 try:
     from google.protobuf.json_format import MessageToJson, Parse
-    import anki_vector.messaging.protocol as p
 except ImportError:
     base_dir = Path(os.path.dirname(os.path.realpath(__file__))) / ".." / ".."
     base_dir = base_dir.resolve()

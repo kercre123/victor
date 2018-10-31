@@ -67,8 +67,8 @@ rm -rf ${ENV_DIR}
 virtualenv -p python3 ${ENV_DIR} --no-site-packages
 source ${ENV_DIR}/bin/activate
 title "[ Installing requirements ]"
-pip install -q -r ${SCRIPT_PATH}/requirements.txt
+pip install -r ${SCRIPT_PATH}/requirements.txt
 title "[ Installing current anki_vector ]"
 pip install -q ${PYTHON_SDK_ROOT}
 title "[ Running gateway tests ]"
-pytest -v
+python3 -m pytest -v
