@@ -29,18 +29,22 @@ namespace Vector {
 
 
 namespace {
+  // confusingly, "low" and "high" were chosen to represent intermediate
+  // levels in the enum coming from the cloud, and then later it was
+  // decided that "low" and "high" would continue to represent extrema
+  // in the app and in verbal semantics.
   const std::map<std::string, EVolumeLevel> volumeLevelMap {//{"mute", EVolumeLevel::MUTE}, // don't ever actually use "mute"
                                                             {"minimum", EVolumeLevel::MIN},
                                                             {"min", EVolumeLevel::MIN},
-                                                            {"low", EVolumeLevel::LOW},
+                                                            {"low", EVolumeLevel::MEDLOW}, 
                                                             {"medium", EVolumeLevel::MED},
-                                                            {"high", EVolumeLevel::HIGH},
+                                                            {"high", EVolumeLevel::MEDHIGH},
                                                             {"maximum", EVolumeLevel::MAX},
                                                             {"max", EVolumeLevel::MAX}};
   const std::map<EVolumeLevel, AnimationTrigger> volumeLevelAnimMap {{EVolumeLevel::MIN, AnimationTrigger::VolumeLevel1},
-                                                                    {EVolumeLevel::LOW, AnimationTrigger::VolumeLevel2},
+                                                                    {EVolumeLevel::MEDLOW, AnimationTrigger::VolumeLevel2},
                                                                     {EVolumeLevel::MED, AnimationTrigger::VolumeLevel3},
-                                                                    {EVolumeLevel::HIGH, AnimationTrigger::VolumeLevel4},
+                                                                    {EVolumeLevel::MEDHIGH, AnimationTrigger::VolumeLevel4},
                                                                     {EVolumeLevel::MAX, AnimationTrigger::VolumeLevel5}};
 }
 

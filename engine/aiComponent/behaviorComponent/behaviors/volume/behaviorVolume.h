@@ -26,9 +26,9 @@ class SettingsManager;
 enum class EVolumeLevel : uint32_t {
   MUTE = 0, // don't ever actually set the volume to this.
   MIN = 1,
-  LOW = 2,
+  MEDLOW = 2,
   MED = 3,
-  HIGH = 4,
+  MEDHIGH = 4,
   MAX = 5
 };
 
