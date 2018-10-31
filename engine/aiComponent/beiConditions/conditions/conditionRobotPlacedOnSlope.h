@@ -43,7 +43,7 @@ private:
   const double _kIsStationaryTimeThreshold_sec = 0.40;
   
   // time after transition from PickedUp to not PickedUp for which robot is consider "just transitioned to not PickedUp"
-  const double _kTransitionToNotPickedUpTimeThreshold_sec = 1.5;
+  const double _kTransitionToNotPickedUpTimeThreshold_sec = 2.5;
   
 };
 
