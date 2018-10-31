@@ -28,6 +28,15 @@ namespace {
   template <typename... Ts> struct TypePack  { using type = TypePack; };
   template <size_t... Is>   struct IndexPack { using type = IndexPack; };
 
+  // template <size_t... Is> struct IndexPack : TypePack<decltype(Is)...> {};
+  // template <> struct IndexPack<> : TypePack<> {};
+
+  template <size_t I, size_t... Is>
+  struct _max : std::integral_constant<size_t, I> {};
+
+  template <size_t I0, size_t I1, size_t... Is>
+  struct _max<I0, I1, Is...> : std::integral_constant<size_t, _max<I0 >= I1 ? I0 : I1, Is...>::value> {};
+
 
   template <size_t I, typename IPack> struct _prepend;
   template <size_t I, size_t... Is>   struct _prepend<I, IndexPack<Is...>> : IndexPack<I, Is...> {};
@@ -38,8 +47,8 @@ namespace {
   template <size_t Idx, typename Sequence>
   struct _get;
 
-  template <size_t I, size_t... Is>
-  struct _get<0, IndexPack<I, Is...>> : std::integral_constant<size_t, I> {};
+  template <size_t Idx, size_t... Is>
+  struct _get<0, IndexPack<Idx, Is...>> : std::integral_constant<size_t, Idx> {};
 
   template <size_t Idx, size_t I, size_t... Is>
   struct _get<Idx, IndexPack<I, Is...>> : _get<Idx-1, IndexPack<Is...>> {};
@@ -52,6 +61,17 @@ namespace {
   template <typename Arg, typename T0, typename... Ts>
   struct GetPackIdx<Arg, T0, Ts...> : 
     std::integral_constant<size_t, std::is_same<Arg, T0>::value ? 0 : 1 + GetPackIdx<Arg, Ts...>::value> {};
+
+
+  template <size_t I, typename... Ts>
+  struct GetPackElement { using type = void; };
+   
+  template <typename T0, typename... Ts>
+  struct GetPackElement<0, T0, Ts...> { using type = T0; };
+
+  template <size_t I, typename T0, typename... Ts>
+  struct GetPackElement<I, T0, Ts...> : GetPackElement<I-1, Ts...> {};
+
 
   template <typename... Ts>
   struct GetIndices : 
@@ -156,6 +176,27 @@ namespace {
   };
 
   template <size_t I>
+  struct FindType_Ptr {
+    template <typename... Types, typename... Funcs, typename... Is>
+    inline static decltype(auto) visit(size_t idx, void* t, Funcs&&... fs) {
+      using FIdx = _get<I, typename MapFuncs<TypePack<Types...>, TypePack<Funcs...>>::type>;
+      using T = typename GetPackElement<I, Types...>::type;
+      return (idx == I) ? std::get< FIdx::value >(std::tuple<Funcs...>(std::forward<Funcs>(fs)...))(*reinterpret_cast<T*>(t))
+                        : FindType_Ptr<I - 1>::template visit<Types...>(idx, t, std::forward<Funcs>(fs)...);
+    }
+  };
+
+  template <>
+  struct FindType_Ptr<0> {
+    template <typename... Types, typename... Funcs>
+    inline static decltype(auto) visit(size_t idx, void* t, Funcs&&... fs) {
+      using FIdx = _get<0, typename MapFuncs<TypePack<Types...>, TypePack<Funcs...>>::type>;
+      using T = typename GetPackElement<0, Types...>::type;
+      return std::get< FIdx::value >(std::tuple<Funcs...>(std::forward<Funcs>(fs)...))(*reinterpret_cast<T*>(t));
+    }
+  };
+
+  template <size_t I>
   struct DeleteType {
     template <typename Tup>
     inline static void visit(size_t idx, Tup& tup) {
@@ -187,28 +228,10 @@ namespace {
   struct CopyType<0> {
     template <typename Tup>
     inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) { 
-    // inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) { 
       using T = std::remove_pointer_t<std::tuple_element_t<0, Tup>>;
       std::get<0>(tup0) = new T( *std::get<0>(tup1) ); 
     }
   };
-
-  // template <class Tup, size_t...Is>
-  // void copy_switch(std::size_t i, Tup& t0, const Tup& t1, IndexPack<Is...>) {
-  //   [](...){}( (i == Is &&
-  //       (std::get<Is>(t0) = new std::remove_pointer_t<std::tuple_element_t<Is, Tup>>( *std::get<Is>(t1) ))
-  //     )...
-  //   );
-  // } 
-
-  template <size_t...Is, typename Tup>
-  void copy_switch(std::size_t i, Tup& t0, const Tup& t1, IndexPack<Is...>) {
-    [](...){}( (i == Is &&
-        (std::get<Is>(t0) = new std::remove_pointer_t<std::tuple_element_t<Is, Tup>>( *std::get<Is>(t1) ))
-      )...
-    );
-  } 
-  // todo, use copy switch and test
 
 }
 
@@ -223,18 +246,19 @@ public:
             typename = std::enable_if_t<TypeIdx < sizeof...(Types)> >
   SumType(InitType val) {
     static_assert(IsUniqueList<Types...>::value, "Cannot resolve addresses of a SumType with duplicate types.");
-    idx = TypeIdx;
-    std::get<TypeIdx>( concrete ) = new InitType( val );
+    SetTo(val);
   }
 
   SumType(const SumType<Types...>& other) {
     this->idx = other.idx;
     // CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
-    copy_switch(idx, concrete, other.concrete, indices);
+    copy_ptr(idx, &_data, &other._data, indices);
   }
 
   ~SumType() {
-    DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
+    // DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
+
+    delete_ptr(idx, &_data, indices);
   }
 
   template <typename InitType, 
@@ -247,7 +271,8 @@ public:
 
   SumType<Types...>& operator=(const SumType<Types...>& other) {
     this->idx = other.idx;
-    CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
+    // CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
+    copy_ptr(idx, &_data, &other._data, indices);
     return *this;
   }
 
@@ -255,18 +280,20 @@ public:
             int TypeIdx = GetPackIdx<InitType, Types...>::value,
             typename = std::enable_if_t<TypeIdx < sizeof...(Types)> >
   void SetTo(InitType val) {
-    DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
+    // DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
 
     idx = TypeIdx;
-    std::get<TypeIdx>( concrete ) = new InitType( val );
+    // std::get<TypeIdx>( concrete ) = new InitType( val );
+    copy_ptr(idx, &_data, &val, indices);
   }
 
   template <typename... Funcs>
   inline decltype(auto) Match(Funcs&&... fs) {
     static_assert(AcceptsAll<TypePack<Types...>, Funcs...>::value,  "Function list does not match all types of variant"); 
     static_assert(AcceptsOnce<TypePack<Types...>, Funcs...>::value, "Function list contains ambiguous Argument types"); 
-
-    return FindType<sizeof...(Types)-1>::template visit(idx, concrete, std::forward<Funcs>(fs)...);
+    
+    return FindType_Ptr<sizeof...(Types)-1>::template visit<Types...>(idx, &_data, std::forward<Funcs>(fs)...);
+    // return FindType<sizeof...(Types)-1>::template visit(idx, concrete, std::forward<Funcs>(fs)...);
   }
 
 private:
@@ -274,8 +301,45 @@ private:
   //       see https://gist.github.com/tibordp/6909880 for variant implementation
 
   static constexpr auto indices = GetIndices<Types...>{};
-  std::tuple<Types*...> concrete;
+  // std::tuple<Types*...> concrete;
   size_t idx;
+
+
+	static const size_t data_size  = _max<sizeof(Types)...>::value;
+	static const size_t data_align = _max<alignof(Types)...>::value;
+	using data_t = typename std::aligned_storage<data_size, data_align>::type;
+	data_t _data;
+
+  // template <size_t...Is, typename... Funcs>
+  // static void visit_ptr(std::size_t i, void* t0, Funcs&&... fs, IndexPack<Is...>) {
+  //   [](...){}( (i == Is &&
+  //       (t0 = new GetPackElement<Is, Types>( *reinterpret_cast<const GetPackElement<Is, Types>*>(t1) ))
+  //     )...
+  //   );
+  // } 
+
+  template <size_t...Is>
+  static void copy_ptr(std::size_t i, void* t0, const void* t1, IndexPack<Is...>) {
+    [](...){}( (i == Is &&
+        (new (t0) GetPackElement<Is, Types>( *reinterpret_cast<const GetPackElement<Is, Types>*>(t1) ))
+      )...
+    );
+  } 
+  
+  template <size_t...Is>
+  static void delete_ptr(std::size_t i, void* t, IndexPack<Is...>) {
+    [](...){}( 
+        (i == Is && (delete_helper<GetPackElement<Is, Types>>(t))
+      )...
+    );
+  } 
+  
+  template <typename T>
+  inline static bool delete_helper(void* t) {
+    // delete reinterpret_cast<T*>(t);
+    reinterpret_cast<T*>(t)->~T();
+    return true;
+  }
 };
 
 
