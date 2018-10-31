@@ -64,7 +64,7 @@ bool FileUtils::CreateDirectory(const std::string &path,
   std::string workPath;
   if (stripFilename) {
     size_t pos = path.rfind('/');
-    workPath = path.substr(0,pos);
+    workPath = (pos == std::string::npos)? "" : path.substr(0,pos);
   } else {
     workPath = path;
   }

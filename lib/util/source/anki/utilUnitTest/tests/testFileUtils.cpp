@@ -65,6 +65,10 @@ TEST_F(FileUtilsTest, CreateRemoveDirectory)
   Anki::Util::FileUtils::RemoveDirectory(path+"A");
   DirectoryShouldNotExist(path+"A");
 
+  // Test creating a directory that is in the current directory; it should not be created.
+  Anki::Util::FileUtils::CreateDirectory("filename",true,true);
+  DirectoryShouldNotExist("filename");
+
 }
 
 TEST_F(FileUtilsTest, ListDirectory)
