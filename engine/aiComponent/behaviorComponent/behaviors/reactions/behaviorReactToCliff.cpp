@@ -50,6 +50,17 @@ namespace {
   const char* kCliffBackupDistKey = "cliffBackupDistance_mm";
   const char* kCliffBackupSpeedKey = "cliffBackupSpeed_mmps";
   const char* kEventFlagTimeoutKey = "eventFlagTimeout_sec";
+  
+  // If the robot is at a steep pitch, it's possible it's been put down
+  // purposefully on a slope, so this behavior won't activate until enough time
+  // has passed with the robot on its treads in order to give `ReactToPlacedOnSlope`
+  // time to activate and run.
+  const f32 kMinPitchToCheckForIncline_rad = DEG_TO_RAD(10.f);
+  
+  // When the robot is at a steep pitch, there is an additional requirement that the
+  // robot should consider itself "OnTreads" for at least this number of ms to
+  // prevent interrupting the `ReactToPlacedOnSlope` behavior.
+  const u16 kMinTimeSinceOffTreads_ms = 1000;
 
   // If the value of the cliff when it started stopping is
   // this much less than the value when it stopped, then
@@ -165,7 +176,19 @@ void BehaviorReactToCliff::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _dVars.gotStop || _dVars.wantsToBeActivated || _dVars.persistent.putDownOnCliff;
+  if (_dVars.gotStop || _dVars.wantsToBeActivated || _dVars.persistent.putDownOnCliff)
+  {
+    if( GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads ) {
+      const Radians& pitch =  GetBEI().GetRobotInfo().GetPitchAngle();
+      if( pitch >= DEG_TO_RAD(kMinPitchToCheckForIncline_rad) ) {
+        const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        const EngineTimeStamp_t lastChangedTime_ms = GetBEI().GetRobotInfo().GetOffTreadsStateLastChangedTime_ms();
+        return (currTime_ms - lastChangedTime_ms >= kMinTimeSinceOffTreads_ms);
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -470,9 +493,32 @@ void BehaviorReactToCliff::BehaviorUpdate()
 
   // Cancel if picked up
   const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+  // Often, when the robot gets too close to a curved edge, the robot can teeter and trigger a false
+  // positive for pick-up detection. To counter this we wait for more than half of the cliff sensors
+  // to also report that they are detecting "cliffs", due to the robot getting picked up. Otherwise,
+  // we wait until the next engine tick to check all conditions
+
+  u8 cliffsDetected = CliffSensorComponent::kNumCliffSensors;
+  const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
+  for (int i=0; i<CliffSensorComponent::kNumCliffSensors; ++i) {
+    if (!cliffComp.IsCliffDetected((CliffSensor)(i))) {
+      // Robot is reporting that it has been picked up, but not all cliff sensors have reported
+      // seing cliffs yet, which would be expected if the robot is teetering on an edge for
+      // some reason, so it might lead to a false-positive detection of a pick-up event.
+      --cliffsDetected;
+    }
+  }
+  
   if (isPickedUp) {
-    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.CancelDueToPickup", "");
-    CancelSelf();
+    if (cliffsDetected > 2) {
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.CancelDueToPickup", "");
+      CancelSelf();
+    } else {
+      PRINT_PERIODIC_CH_INFO(5, "Behaviors",
+                             "BehaviorReactToCliff.Update.PossibleFalsePickUpDetected",
+                             "Only %u cliff sensors are detecting cliffs, but pick-up detected.",
+                             cliffsDetected);
+    }
   }
 }
 
