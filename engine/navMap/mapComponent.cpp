@@ -99,16 +99,18 @@ CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kObstacleTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kProxTimeout_ms, "MapComponent", 600.0f * 1000);
 CONSOLE_VAR(float, kTimeoutUpdatePeriod_ms, "MapComponent", 5.0f * 1000);
+CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 1200.f * 1000); // 20 minutes
 
 // the length and half width of two triangles used in FlagProxObstaclesUsingPose (see method)
 CONSOLE_VAR(float, kProxExploredTriangleLength_mm, "MapComponent", 300.0f );
 CONSOLE_VAR(float, kProxExploredTriangleHalfWidth_mm, "MapComponent", 50.0f );
 
-CONSOLE_VAR(float, kHoughAngleResolution_deg, "MapComponent.VisualEdgeDetection", 5.0);
+CONSOLE_VAR(float, kHoughAngleResolution_deg, "MapComponent.VisualEdgeDetection", 2.0);
 CONSOLE_VAR(int,   kHoughAccumThreshold,      "MapComponent.VisualEdgeDetection", 20);
 CONSOLE_VAR(float, kHoughMinLineLength_mm,    "MapComponent.VisualEdgeDetection", 40.0);
 CONSOLE_VAR(float, kHoughMaxLineGap_mm,       "MapComponent.VisualEdgeDetection", 10.0);
 CONSOLE_VAR(float, kEdgeLineLengthToInsert_mm,"MapComponent.VisualEdgeDetection", 200.f);
+CONSOLE_VAR(float, kVisionCliffPadding_mm,    "MapComponent.VisualEdgeDetection", 20.f);
 
 CONSOLE_VAR(int,   kMaxPixelsUsedForHoughTransform, "MapComponent.VisualEdgeDetection", 160000); // 400 x 400 max size
 
@@ -273,8 +275,47 @@ void DevProcessOneFrameForVisionEdges( ConsoleFunctionContextRef context )
     consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::DetectingOverheadEdges));
   }
 }
+
+// cache the visualized cliff frames to clear on subsequent calls
+// to drawing the cliffs
+static std::vector<std::string> sCliffFrameIdentifiers;
+
+void DevDrawCliffPoses( ConsoleFunctionContextRef context )
+{
+  if(consoleRobot != nullptr) {
+    auto vizm = consoleRobot->GetContext()->GetVizManager();
+    auto& mapc = consoleRobot->GetMapComponent();
+
+    const auto currentMap = mapc.GetCurrentMemoryMap();
+    if (!currentMap) {
+      return;
+    }
+
+    for(const auto& id : sCliffFrameIdentifiers) {
+      vizm->EraseSegments(id);
+    }
+    sCliffFrameIdentifiers.clear();
+
+    MemoryMapTypes::NodePredicate isDropSensorCliff = [](MemoryMapTypes::MemoryMapDataConstPtr nodeData) -> bool {
+      const bool isValidCliff = nodeData->type == MemoryMapTypes::EContentType::Cliff;
+      return isValidCliff;
+    };
+
+    MemoryMapTypes::MemoryMapDataConstList cliffNodes;
+    currentMap->FindContentIf(isDropSensorCliff, cliffNodes);
+
+    size_t cliffCount = 0;
+    for(auto& node : cliffNodes) {
+      const Pose3d& pose = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(node)->pose;
+      std::string id = "cliff_frame" + std::to_string(cliffCount++);
+      vizm->DrawFrameAxes2D(id, pose, 100.f, 3.f);
+      sCliffFrameIdentifiers.push_back(id);
+    }
+  }
+}
 #endif //REMOTE_CONSOLE_ENABLED
 CONSOLE_FUNC( DevProcessOneFrameForVisionEdges, "MapComponent.VisualEdgeDetection" );
+CONSOLE_FUNC( DevDrawCliffPoses,                "MapComponent.VisualEdgeDetection");
 
 };
 
@@ -533,14 +574,15 @@ void MapComponent::TimeoutObjects()
     const RobotTimeStamp_t obstacleTooOld = (currentTime <= kObstacleTimeout_ms) ? 0 : currentTime - kObstacleTimeout_ms;
     const RobotTimeStamp_t visionTooOld   = (currentTime <= kVisionTimeout_ms)   ? 0 : currentTime - kVisionTimeout_ms;
     const RobotTimeStamp_t proxTooOld     = (currentTime <= kProxTimeout_ms)     ? 0 : currentTime - kProxTimeout_ms;
+    const RobotTimeStamp_t cliffTooOld    = (currentTime <= kCliffTimeout_ms)    ? 0 : currentTime - kCliffTimeout_ms;
     
     NodeTransformFunction timeoutObjects =
-      [obstacleTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
+      [obstacleTooOld, visionTooOld, proxTooOld, cliffTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
         const RobotTimeStamp_t lastObs = data->GetLastObservedTime();
 
-        if ((EContentType::Cliff                == nodeType && lastObs <= obstacleTooOld) ||
+        if ((EContentType::Cliff                == nodeType && lastObs <= cliffTooOld)    ||
             (EContentType::ObstacleUnrecognized == nodeType && lastObs <= obstacleTooOld) ||
             (EContentType::InterestingEdge      == nodeType && lastObs <= visionTooOld)   ||
             (EContentType::NotInterestingEdge   == nodeType && lastObs <= visionTooOld)   ||
@@ -1593,29 +1635,6 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     }
   }
 
-  // data node contain visually-seen cliff information
-  MemoryMapData_Cliff cliffDataVis(robotPose, frameInfo.timestamp);
-  cliffDataVis.isFromVision = true;
-  const auto& cliffDataVisPtr = cliffDataVis.Clone();
-
-  // special transform function to insert visual cliffs, without overwriting
-  // sensor-detected cliffs (merges both sources of info the same node)
-  NodeTransformFunction transformVisionCliffs = [&cliffDataVisPtr] (MemoryMapDataPtr currNode) -> MemoryMapDataPtr {
-    if(currNode->type == EContentType::Cliff) {
-      // a node can be from the cliff sensor AND from vision
-      auto currCliff = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(currNode);
-      if(currCliff->isFromCliffSensor && !currCliff->isFromVision) {
-        currCliff->isFromVision = true;
-        // already modified the current node, no need to clone it
-        return currNode;
-      }
-    } else if(currNode->CanOverrideSelfWithContent(cliffDataVisPtr)) {
-      // every other type of node is handled here
-      return cliffDataVisPtr;
-    }
-    return currNode;
-  };
-
   if(validPoints.size() >= kHoughAccumThreshold && cliffNodes.size() > 0) {
     // find the newly created cliff, and the old cliffs
     // TODO(agm) currently we set the newest cliff as the "target" cliff to extend
@@ -1639,9 +1658,37 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
       if(result) {
         auto ptr = std::const_pointer_cast<MemoryMapData_Cliff>(newCliffNode.GetSharedPtr());
         ptr->pose = refinedCliffPose; // directly edit the pose of the cliff
-        Point3f side1 = refinedCliffPose * Point3f(0.f, kEdgeLineLengthToInsert_mm, 0.f);
-        Point3f side2 = refinedCliffPose * Point3f(0.f,-kEdgeLineLengthToInsert_mm, 0.f);
-        currentMap->Insert(FastPolygon(Poly2f({side1, side2})), transformVisionCliffs); 
+
+        // data node contain visually-seen cliff information
+        MemoryMapData_Cliff cliffDataVis(refinedCliffPose, frameInfo.timestamp);
+        cliffDataVis.isFromVision = true;
+        const auto& cliffDataVisPtr = cliffDataVis.Clone();
+
+        // special transform function to insert visual cliffs, without overwriting
+        // sensor-detected cliffs (merges both sources of info the same node)
+        NodeTransformFunction transformVisionCliffs = [&cliffDataVisPtr] (MemoryMapDataPtr currNode) -> MemoryMapDataPtr {
+          if(currNode->type == EContentType::Cliff) {
+            // a node can be from the cliff sensor AND from vision
+            auto currCliff = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(currNode);
+            if(currCliff->isFromCliffSensor && !currCliff->isFromVision) {
+              currCliff->isFromVision = true;
+              // already modified the current node, no need to clone it
+              return currNode;
+            }
+          } else if(currNode->CanOverrideSelfWithContent(cliffDataVisPtr)) {
+            // every other type of node is handled here
+            return cliffDataVisPtr;
+          }
+          return currNode;
+        };
+
+        const Pose2d& refinedCliffPose2d = refinedCliffPose;
+        currentMap->Insert(FastPolygon({
+          refinedCliffPose2d * Point2f(-kVisionCliffPadding_mm,  kEdgeLineLengthToInsert_mm),
+          refinedCliffPose2d * Point2f(-kVisionCliffPadding_mm, -kEdgeLineLengthToInsert_mm),
+          refinedCliffPose2d * Point2f(0.f, -kEdgeLineLengthToInsert_mm),
+          refinedCliffPose2d * Point2f(0.f,  kEdgeLineLengthToInsert_mm),
+        }), transformVisionCliffs); 
       }
     }
   } else {
