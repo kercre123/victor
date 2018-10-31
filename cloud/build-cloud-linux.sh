@@ -100,4 +100,5 @@ if [ $? -eq 0 ]; then
     echo "Binary is written to ${TARGET_PATH}"
 else
     echo "ERROR: ${COMMAND} step failed!"
+    exit 1
 fi
