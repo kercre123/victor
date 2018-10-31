@@ -33,14 +33,21 @@ namespace {
   // levels in the enum coming from the cloud, and then later it was
   // decided that "low" and "high" would continue to represent extrema
   // in the app and in verbal semantics.
+  // update: this interface is a moving target. now changed to VOLUME_1 through VOLUME_5...
+  // (once it's stabilized we could remove the older ones...)
   const std::map<std::string, EVolumeLevel> volumeLevelMap {//{"mute", EVolumeLevel::MUTE}, // don't ever actually use "mute"
                                                             {"minimum", EVolumeLevel::MIN},
                                                             {"min", EVolumeLevel::MIN},
+                                                            {"VOLUME_1", EVolumeLevel::MIN},
                                                             {"low", EVolumeLevel::MEDLOW}, 
+                                                            {"VOLUME_2", EVolumeLevel::MEDLOW},
                                                             {"medium", EVolumeLevel::MED},
+                                                            {"VOLUME_3", EVolumeLevel::MED},
                                                             {"high", EVolumeLevel::MEDHIGH},
+                                                            {"VOLUME_4", EVolumeLevel::MEDHIGH},
                                                             {"maximum", EVolumeLevel::MAX},
-                                                            {"max", EVolumeLevel::MAX}};
+                                                            {"max", EVolumeLevel::MAX},
+                                                            {"VOLUME_5", EVolumeLevel::MAX}};
   const std::map<EVolumeLevel, AnimationTrigger> volumeLevelAnimMap {{EVolumeLevel::MIN, AnimationTrigger::VolumeLevel1},
                                                                     {EVolumeLevel::MEDLOW, AnimationTrigger::VolumeLevel2},
                                                                     {EVolumeLevel::MED, AnimationTrigger::VolumeLevel3},
