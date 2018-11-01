@@ -67,25 +67,8 @@ CONSOLE_VAR(float, kObjectRotationChangeToReport_deg, "MapComponent", 10.0f);
 // kObjectPositionChangeToReport_mm: if the position of an object changes by this much, memory map will be notified
 CONSOLE_VAR(float, kObjectPositionChangeToReport_mm, "MapComponent", 5.0f);
 
-
-// kOverheadEdgeCloseMaxLenForTriangle_mm: maximum length of the close edge to be considered a triangle instead of a quad
-CONSOLE_VAR(float, kOverheadEdgeCloseMaxLenForTriangle_mm, "MapComponent", 15.0f);
-// kOverheadEdgeFarMaxLenForLine_mm: maximum length of the far edge to be considered a line instead of a triangle or a quad
-CONSOLE_VAR(float, kOverheadEdgeFarMaxLenForLine_mm, "MapComponent", 15.0f);
-// kOverheadEdgeFarMinLenForLine_mm: minimum length of the far edge to even report the line
-CONSOLE_VAR(float, kOverheadEdgeFarMinLenForClearReport_mm, "MapComponent", 3.0f); // tested 5 and was too big
-// kOverheadEdgeSegmentNoiseLen_mm: segments whose length is smaller than this will be considered noise
-CONSOLE_VAR(float, kOverheadEdgeSegmentNoiseLen_mm, "MapComponent", 6.0f);
-
-// kDebugRenderOverheadEdges: enables/disables debug render of points reported from vision
-CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "MapComponent", false);
-// kDebugRenderOverheadEdgeClearQuads: enables/disables debug render of nonBorder quads from overhead detection (clear)
-CONSOLE_VAR(bool, kDebugRenderOverheadEdgeClearQuads, "MapComponent", false);
-// kDebugRenderOverheadEdgeBorderQuads: enables/disables debug render of border quads only (interesting edges)
-CONSOLE_VAR(bool, kDebugRenderOverheadEdgeBorderQuads, "MapComponent", false);
-
-// kReviewInterestingEdges: if set to true, interesting edges are reviewed after adding new ones to see whether they are still interesting
-CONSOLE_VAR(bool, kReviewInterestingEdges, "MapComponent", true);
+// kNeverMergeOldMaps: if set to false, we only relocalize if the robot is in the same world origin as the previous map
+CONSOLE_VAR(bool, kMergeOldMaps, "MapComponent", false);
 
 // Whether or not to put unrecognized markerless objects like collision/prox obstacles and cliffs into the memory map
 CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "MapComponent", false);
@@ -452,65 +435,47 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
 {
   // oldOrigin is the pointer/id of the map we were just building, and it's going away. It's the current map
   // newOrigin is the pointer/id of the map that is staying, it's the one we rejiggered to, and we haven't changed in a while
-  DEV_ASSERT(_navMaps.find(oldOriginID) != _navMaps.end(),
-             "MapComponent.UpdateMapOrigins.missingMapOriginOld");
-  DEV_ASSERT(_navMaps.find(newOriginID) != _navMaps.end(),
-             "MapComponent.UpdateMapOrigins.missingMapOriginNew");
-  DEV_ASSERT(oldOriginID == _currentMapOriginID, "MapComponent.UpdateMapOrigins.updatingMapNotCurrent");
-
-  // maps have changed, so make sure to clear all the renders
-  ClearRender();
+  auto oldMapIter = _navMaps.find(oldOriginID);
+  auto newMapIter = _navMaps.find(newOriginID);
 
   const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
   const Pose3d& newOrigin = _robot->GetPoseOriginList().GetOriginByID(newOriginID);
 
-  // before we merge the object information from the memory maps, apply rejiggering also to their
-  // reported poses
+  ANKI_VERIFY(oldMapIter != _navMaps.end(), 
+              "MemoryMap.UpdateMapOrigins.OldOriginNotFound", 
+              "PreviousOrigin could not be found, so nothing will be merged");
+
+  ANKI_VERIFY(oldOriginID == _currentMapOriginID, 
+              "MemoryMap.UpdateMapOrigins.BadOrigin", 
+              "rejiggering map %d, but currentID = %d",
+              oldOriginID, 
+              _currentMapOriginID);
+
+  // maps have changed, so make sure to clear all the renders
+  ClearRender();
+
+  // before we merge the object information from the memory maps, apply rejiggering also to their reported poses
   UpdateOriginsOfObjects(oldOriginID, newOriginID);
   
-  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-
-  // grab the underlying memory map and merge them
-  auto& oldMap = _navMaps[oldOriginID].map;
-  auto& newMap = _navMaps[newOriginID].map;
-
-  // COZMO-6184: the issue localizing to a zombie map was related to a cube being disconnected while we delocalized.
-  // The issue has been fixed, but this code here would have prevented a crash and produce an error instead, so I
-  // am going to keep the code despite it may not run anymore
-  if ( nullptr == newMap )
-  {
-    // error to identify the issue
-    PRINT_NAMED_ERROR("MapComponent.UpdateMapOrigins.NullMapFound",
-                      "Origin '%s' did not have a memory map. Creating empty",
-                      newOrigin.GetName().c_str());
-
-    // create empty map since somehow we lost the one we had
-    INavMap* emptyMemoryMap = NavMapFactory::CreateMemoryMap();
-
-    // set in the container of maps
-    _navMaps[newOriginID].map.reset(emptyMemoryMap);
-    _navMaps[newOriginID].activationTime_ms = currTime_ms;
-    _navMaps[newOriginID].activeDuration_ms = 0;
-    // set the pointer to this newly created instance
-    newMap.reset(emptyMemoryMap);
+  // reset newMap if we somehow lost it
+  if (newMapIter == _navMaps.end() || nullptr == newMapIter->second.map) {
+    _navMaps[newOriginID].map.reset(NavMapFactory::CreateMemoryMap());
+    newMapIter = _navMaps.find(newOriginID);
   }
 
-  // continue the merge as we were going to do, so at least we don't lose the information we were just collecting
-  Pose3d oldWrtNew;
-  const bool success = oldOrigin.GetWithRespectTo(newOrigin, oldWrtNew);
-  DEV_ASSERT(success, "MapComponent.UpdateMapOrigins.BadOldWrtNull");
-  UpdateBroadcastFlags(newMap->Merge(*oldMap, oldWrtNew));
-
-  // switch back to what is becoming the new map
   _currentMapOriginID = newOriginID;
-  
-  // mark the time that this origin was re-activated, and bump the new origin's active time with that of the
-  // old origin's, since they have been merged into _currentMapOriginID.
-  _navMaps[_currentMapOriginID].activeDuration_ms += _navMaps[oldOriginID].activeDuration_ms;
-  _navMaps[_currentMapOriginID].activationTime_ms = currTime_ms;
+  newMapIter->second.activationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-  // now we can delete what is become the old map, since we have merged its data into the new one
-  _navMaps.erase( oldOriginID ); // smart pointer will delete memory
+  // if we had an old map, merge its data into the new map, then delete it
+  if (oldMapIter != _navMaps.end()) {
+    Pose3d oldWrtNew;
+    const bool success = oldOrigin.GetWithRespectTo(newOrigin, oldWrtNew);
+    DEV_ASSERT(success, "MapComponent.UpdateMapOrigins.BadOldWrtNull");
+    UpdateBroadcastFlags(newMapIter->second.map->Merge(*(oldMapIter->second.map), oldWrtNew));
+
+    newMapIter->second.activeDuration_ms += oldMapIter->second.activeDuration_ms;
+    _navMaps.erase( oldOriginID ); // smart pointer will delete memory
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -740,17 +705,17 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
   MapTable::iterator iter = _navMaps.begin();
   while ( iter != _navMaps.end() )
   {
-    const bool isZombie = _robot->GetBlockWorld().IsZombiePoseOrigin( iter->first );
+    // if we cannot merge old maps, force zombie to be true so we delete it
+    const bool isZombie = _robot->GetBlockWorld().IsZombiePoseOrigin( iter->first ) || !kMergeOldMaps;
     if ( isZombie ) {
       LOG_INFO("MapComponent.memory_map.deleting_zombie_map", "%d", worldOriginID );
-      iter = _navMaps.erase(iter);
-      
       // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
       for( auto& posesForObjectIt : _reportedPoses ) {
         OriginToPoseInMapInfo& posesPerOriginForObject = posesForObjectIt.second;
         const PoseOriginID_t zombieOriginID = iter->first;
         posesPerOriginForObject.erase( zombieOriginID );
       }
+      iter = _navMaps.erase(iter);
     } else {
       LOG_INFO("MapComponent.memory_map.keeping_alive_map", "%d", worldOriginID );
       ++iter;
@@ -965,12 +930,18 @@ void MapComponent::SetRenderEnabled(bool enabled)
 std::shared_ptr<INavMap> MapComponent::GetCurrentMemoryMapHelper() const
 {
   // current map (if any) must match current robot origin
-  DEV_ASSERT((PoseOriginList::UnknownOriginID == _currentMapOriginID) ||
-      (_robot->GetPoseOriginList().GetCurrentOriginID() == _currentMapOriginID), "MapComponent.GetNavMemoryMap.Bad Origin");
+  const bool validOrigin = (PoseOriginList::UnknownOriginID == _currentMapOriginID) ||
+                           (_robot->GetPoseOriginList().GetCurrentOriginID() == _currentMapOriginID);
+                             
+  ANKI_VERIFY(validOrigin, 
+              "MemoryMap.GetCurrentMap.BadOrigin", 
+              "robot and mapComponent missmatch. robot: %d. map: %d",
+              _robot->GetPoseOriginList().GetCurrentOriginID(), 
+              _currentMapOriginID);
 
 
   std::shared_ptr<INavMap> curMap = nullptr;
-  if ( PoseOriginList::UnknownOriginID != _currentMapOriginID ) {
+  if ( validOrigin ) {
     auto matchPair = _navMaps.find(_currentMapOriginID);
     if ( matchPair != _navMaps.end() ) {
       curMap = matchPair->second.map;
