@@ -20,7 +20,7 @@ def main():
     """main execution"""
     args = anki_vector.util.parse_command_args()
 
-    with anki_vector.Robot(args.serial, show_viewer=True, enable_camera_feed=True, enable_face_detection=True, enable_custom_object_detection=True) as robot:
+    with anki_vector.Robot(args.serial, show_viewer=True, enable_camera_feed=True, enable_face_detection=True, enable_custom_object_detection=True, enable_nav_map_feed=True) as robot:
 
         robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                        marker=CustomObjectMarkers.Circles2,

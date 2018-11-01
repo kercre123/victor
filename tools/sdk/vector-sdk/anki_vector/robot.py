@@ -26,8 +26,8 @@ from pathlib import Path
 
 from . import (animation, audio, behavior, camera,
                connection, events, exceptions, faces,
-               motors, screen, photos, proximity, touch,
-               util, viewer, vision, world)
+               motors, nav_map, screen, photos, proximity,
+               touch, util, viewer, vision, world)
 from .messaging import protocol
 
 # Constants
@@ -88,6 +88,7 @@ class Robot:
     :param enable_face_detection: Turn on face detection.
     :param enable_camera_feed: Turn camera feed on/off.
     :param enable_audio_feed: Turn audio feed on/off.
+    :param enable_nav_map_feed: Turn nav map feed on/off.
     :param show_viewer: Render camera feed on/off."""
 
     def __init__(self,
@@ -101,6 +102,7 @@ class Robot:
                  enable_custom_object_detection: bool = False,
                  enable_camera_feed: bool = False,
                  enable_audio_feed: bool = False,
+                 enable_nav_map_feed: bool = False,
                  show_viewer: bool = False):
 
         if default_logging:
@@ -135,6 +137,7 @@ class Robot:
         self._camera: camera.CameraComponent = None
         self._faces: faces.FaceComponent = None
         self._motors: motors.MotorComponent = None
+        self._nav_map: nav_map.NavMapComponent = None
         self._screen: screen.ScreenComponent = None
         self._photos: photos.PhotographComponent = None
         self._proximity: proximity.ProximityComponent = None
@@ -167,6 +170,7 @@ class Robot:
 
         self._enable_camera_feed = enable_camera_feed
         self._enable_audio_feed = enable_audio_feed
+        self._enable_nav_map_feed = enable_nav_map_feed
         self._show_viewer = show_viewer
 
     def _read_configuration(self, serial: str) -> dict:
@@ -264,6 +268,13 @@ class Robot:
         if self._motors is None:
             raise exceptions.VectorNotReadyException("MotorComponent is not yet initialized")
         return self._motors
+
+    @property
+    def nav_map(self) -> nav_map.NavMapComponent:
+        """A reference to the NavMapComponent instance."""
+        if self._nav_map is None:
+            raise exceptions.VectorNotReadyException("NavMapComponent is not yet initialized")
+        return self._nav_map
 
     @property
     def screen(self) -> screen.ScreenComponent:
@@ -639,6 +650,7 @@ class Robot:
         self._camera = camera.CameraComponent(self)
         self._faces = faces.FaceComponent(self)
         self._motors = motors.MotorComponent(self)
+        self._nav_map = nav_map.NavMapComponent(self)
         self._screen = screen.ScreenComponent(self)
         self._photos = photos.PhotographComponent(self)
         self._proximity = proximity.ProximityComponent(self)
@@ -664,6 +676,9 @@ class Robot:
         # Start rendering camera feed
         if self._show_viewer:
             self.viewer.show_video()
+
+        if self._enable_nav_map_feed:
+            self.nav_map.init_nav_map_feed()
 
         # Enable face detection, to allow Vector to add faces to its world view
         self.vision.set_vision_mode(detect_faces=self.enable_face_detection, detect_custom_objects=self.enable_custom_object_detection)
@@ -693,6 +708,8 @@ class Robot:
         # Shutdown audio feed
         if self._audio is not None:
             self._audio.close_audio_feed()
+        # Shutdown nav map feed
+        self.nav_map.close_nav_map_feed()
         # Close the world and cleanup its objects
         self.world.close()
 

@@ -22,6 +22,7 @@ from .alexa_pb2 import *
 from .behavior_pb2 import *
 from .cube_pb2 import *
 from .messages_pb2 import *
+from .nav_map_pb2 import *
 from .settings_pb2 import *
 from .shared_pb2 import *
 from .external_interface_pb2 import *

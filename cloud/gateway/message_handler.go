@@ -356,6 +356,24 @@ func CladRobotObservedObjectToProto(msg *gw_clad.RobotObservedObject) *extint.Ro
 	}
 }
 
+func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
+	return &extint.NavMapInfo{
+		RootDepth:   int32(msg.RootDepth),
+		RootSizeMm:  msg.RootSizeMm,
+		RootCenterX: msg.RootCenterX,
+		RootCenterY: msg.RootCenterY,
+		RootCenterZ: 0.0,
+	}
+}
+
+func CladMemoryMapQuadInfoToProto(msg *gw_clad.MemoryMapQuadInfo) *extint.NavMapQuadInfo {
+	return &extint.NavMapQuadInfo{
+		Content:   extint.NavNodeContentType(msg.Content), // Not incrementing this one because the CLAD enum has 0 as unknown
+		Depth:     uint32(msg.Depth),
+		ColorRgba: msg.ColorRGBA,
+	}
+}
+
 func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingCompleteResponse{}, 1)
 	defer f()
@@ -2518,6 +2536,96 @@ func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptIn
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
 		},
 	}, nil
+}
+
+func SetNavMapBroadcastFrequency(frequency float32) error {
+	log.Println("Setting NavMapBroadcastFrequency to (", frequency, ") seconds")
+
+	cladMsg := gw_clad.NewMessageExternalToRobotWithSetMemoryMapBroadcastFrequencySec(&gw_clad.SetMemoryMapBroadcastFrequency_sec{
+		Frequency: frequency,
+	})
+	_, err := engineCladManager.Write(cladMsg)
+
+	return err
+}
+
+func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extint.ExternalInterface_NavMapFeedServer) error {
+
+	// Enable nav map stream
+	err := SetNavMapBroadcastFrequency(in.Frequency)
+	if err != nil {
+		return err
+	}
+
+	// Disable nav map stream when the RPC exits
+	defer SetNavMapBroadcastFrequency(-1.0)
+
+	f1, memoryMapMessageBegin := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageBegin, 1)
+	defer f1()
+
+	// Every frame the engine can send up to: (Anki::Comms::MsgPacket::MAX_SIZE-3)/sizeof(QuadInfoVector::value_type) quads.
+	// 50 feels like a reasonable educated guess.
+	f2, memoryMapMessageData := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessage, 50)
+	defer f2()
+
+	f3, memoryMapMessageEnd := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageEnd, 1)
+	defer f3()
+
+	var pendingMap *extint.NavMapFeedResponse = nil
+
+	for {
+		select {
+		case chanResponse, ok := <-memoryMapMessageBegin:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			if pendingMap != nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapBegin recieved from engine while still processing a pending memory map; discarding pending map.")
+			}
+
+			response := chanResponse.GetMemoryMapMessageBegin()
+			pendingMap = &extint.NavMapFeedResponse{
+				OriginId:  response.OriginId,
+				MapInfo:   CladMemoryMapBeginToProtoNavMapInfo(response),
+				QuadInfos: []*extint.NavMapQuadInfo{},
+			}
+
+		case chanResponse, ok := <-memoryMapMessageData:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			if pendingMap == nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapData recieved from engine with no pending content to add to.")
+			} else {
+				response := chanResponse.GetMemoryMapMessage()
+				for i := 0; i < len(response.QuadInfos); i++ {
+					newQuad := CladMemoryMapQuadInfoToProto(&response.QuadInfos[i])
+					pendingMap.QuadInfos = append(pendingMap.QuadInfos, newQuad)
+				}
+			}
+
+		case _, ok := <-memoryMapMessageEnd:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+
+			if pendingMap == nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapEnd recieved from engine with no pending content to send.")
+			} else if err := stream.Send(pendingMap); err != nil {
+				return err
+			} else if err = stream.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
+
+			pendingMap = nil
+		}
+	}
+
+	errMsg := "NavMemoryMap engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return grpc.Errorf(codes.Internal, errMsg)
 }
 
 func newServer() *rpcService {

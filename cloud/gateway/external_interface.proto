@@ -23,6 +23,7 @@ import "alexa.proto";
 import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
+import "nav_map.proto";
 import "settings.proto"; // App only
 import "shared.proto";
 
@@ -480,5 +481,11 @@ service ExternalInterface {
     };
   }
 
+  rpc NavMapFeed(NavMapFeedRequest) returns (stream NavMapFeedResponse) {
+    option (google.api.http) = {
+      post: "/v1/nav_map_feed",
+      body: "*"
+    };
+  }
   
 }
