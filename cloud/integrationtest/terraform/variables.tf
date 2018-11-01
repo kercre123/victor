@@ -43,6 +43,26 @@ variable "enable_distributed_control" {
   default = "true"
 }
 
+variable "timer_params" {
+  type    = "map"
+  default = {
+    "heart_beat_interval" = "0s"
+    "heart_beat_stddev" = "0s"
+
+    "jdocs_interval" = "5m"
+    "jdocs_stddev" = "3m"
+
+    "log_collector_interval" = "10m"
+    "log_collector_stddev" = "4m"
+
+    "token_refresh_interval" = "0s"
+    "token_refresh_stddev" = "0s"
+
+    "connection_check_interval" = "10m"
+    "connection_check_stddev" = "5m"
+  }
+}
+
 // Fargate Pricing (us-west-2): per vCPU per hour $0.0506, per GB per hour $0.0127
 // See (for supported configurations and pricing): https://aws.amazon.com/fargate/pricing/
 // Total: service_count * instance_count * (fargate_cpu * $0.0506 + fargate_memory * $0.0127) per hour

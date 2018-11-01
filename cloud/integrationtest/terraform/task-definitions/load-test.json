@@ -14,6 +14,46 @@
                 "value": "${robots_per_process}"
             },
             {
+                "name": "HEART_BEAT_INTERVAL",
+                "value": "${heart_beat_interval}"
+            },
+            {
+                "name": "HEART_BEAT_STDDEV",
+                "value": "${heart_beat_stddev}"
+            },
+            {
+                "name": "JDOCS_INTERVAL",
+                "value": "${jdocs_interval}"
+            },
+            {
+                "name": "JDOCS_STDDEV",
+                "value": "${jdocs_stddev}"
+            },
+            {
+                "name": "LOG_COLLECTOR_INTERVAL",
+                "value": "${log_collector_interval}"
+            },
+            {
+                "name": "LOG_COLLECTOR_STDDEV",
+                "value": "${log_collector_stddev}"
+            },
+            {
+                "name": "TOKEN_REFRESH_INTERVAL",
+                "value": "${token_refresh_interval}"
+            },
+            {
+                "name": "TOKEN_REFRESH_STDDEV",
+                "value": "${token_refresh_stddev}"
+            },
+            {
+                "name": "CONNECTION_CHECK_INTERVAL",
+                "value": "${connection_check_interval}"
+            },
+            {
+                "name": "CONNECTION_CHECK_STDDEV",
+                "value": "${connection_check_stddev}"
+            },
+            {
                 "name": "LOG_TYPE",
                 "value": "kinesis"
             },

@@ -16,6 +16,17 @@ data "template_file" "load_test" {
 
     robots_per_process = "${var.robots_per_process}"
 
+    heart_beat_interval = "${var.timer_params["heart_beat_interval"]}"
+    heart_beat_stddev = "${var.timer_params["heart_beat_stddev"]}"
+    jdocs_interval = "${var.timer_params["jdocs_interval"]}"
+    jdocs_stddev = "${var.timer_params["jdocs_stddev"]}"
+    log_collector_interval = "${var.timer_params["log_collector_interval"]}"
+    log_collector_stddev = "${var.timer_params["log_collector_stddev"]}"
+    token_refresh_interval = "${var.timer_params["token_refresh_interval"]}"
+    token_refresh_stddev = "${var.timer_params["token_refresh_stddev"]}"
+    connection_check_interval = "${var.timer_params["connection_check_interval"]}"
+    connection_check_stddev = "${var.timer_params["connection_check_stddev"]}"
+
     enable_account_creation = "${var.enable_account_creation}"
     enable_distributed_control = "${var.enable_distributed_control}"
   }
