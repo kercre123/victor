@@ -103,7 +103,7 @@ private:
                                   ExternalInterface::RobotObservedMotion &msg);
 
   template <class ImageType>
-  void FilterImageAndPrevImages(const ImageType& image);
+  void FilterImageAndPrevImages(const ImageType& image, ImageType& blurredImage);
 
   void ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
                                 const VisionPoseData &crntPoseData,
@@ -126,7 +126,13 @@ private:
   
   template<class ImageType>
   bool HavePrevImage() const;
-
+  
+  template<class ImageType>
+  ImageType& GetPrevImage();
+  
+  template<class ImageType>
+  bool WasPrevImageBlurred() const;
+  
   // Computes "centroid" at specified percentiles in X and Y
   static size_t GetCentroid(const Vision::Image& motionImg,
                             Anki::Point2f& centroid,
