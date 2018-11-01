@@ -881,6 +881,21 @@ func (service *rpcService) checkConnectionID(id string) bool {
 	return true
 }
 
+// SDK-only message to pass version info for device OS, Python version, etc.
+func (service *rpcService) SDKInitialization(ctx context.Context, in *extint.SDKInitializationRequest) (*extint.SDKInitializationResponse, error) {
+	log.Das("robot.sdk_module_version", (&log.DasFields{}).SetStrings(in.SdkModuleVersion))
+	log.Das("robot.sdk_python_version", (&log.DasFields{}).SetStrings(in.PythonVersion))
+	log.Das("robot.sdk_python_implementation", (&log.DasFields{}).SetStrings(in.PythonImplementation))
+	log.Das("robot.sdk_os_version", (&log.DasFields{}).SetStrings(in.OsVersion))
+	log.Das("robot.sdk_cpu_version", (&log.DasFields{}).SetStrings(in.CpuVersion))
+
+	return &extint.SDKInitializationResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
 // Long running message for sending events to listening sdk users
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
 	// TODO: v Remove the tempEventStream handling below when the app connection properly closes v

@@ -37,6 +37,14 @@ service ExternalInterface {
     };
   }
 
+  // SDK-only message to pass version info for device OS, Python version, etc.
+  rpc SDKInitialization(SDKInitializationRequest) returns (SDKInitializationResponse) {
+    option (google.api.http) = {
+      post: "/v1/sdk_initialization",
+      body: "*"
+    };
+  }
+
   // Sets the speed and acceleration for Vector's wheel motors.
   rpc DriveWheels(DriveWheelsRequest) returns (DriveWheelsResponse) {}
 
