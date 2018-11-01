@@ -50,6 +50,8 @@ public:
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
   
   void NotifyOfTapToTalk() const;
+  
+  void NotifyOfWakeWord( long from_ms, long to_ms ) const;
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)

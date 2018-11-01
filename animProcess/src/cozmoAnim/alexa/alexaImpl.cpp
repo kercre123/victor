@@ -32,6 +32,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/alexa/alexaAudioInput.h"
 #include "cozmoAnim/alexa/alexaClient.h"
+#include "cozmoAnim/alexa/alexaKeywordObserver.h"
 #include "cozmoAnim/alexa/alexaMediaPlayer.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/animContext.h"
@@ -85,6 +86,8 @@ namespace {
   static const std::chrono::seconds kBufferDuration_s = std::chrono::seconds(15);
   // The size of the ring buffer.
   static const size_t kBufferSize = (kSampleRate_Hz)*kBufferDuration_s.count();
+  // Conversion factor from milliseconds to samples
+  static const unsigned int kMillisToSamples = kSampleRate_Hz / 1000;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -303,26 +306,24 @@ bool AlexaImpl::Init(const AnimContext* context)
                                                                                 tapCanBeOverridden );
   }
 
-  // TODO: create a wakeword provider
-  //{
-  //  bool wakeAlwaysReadable = true;
-  //  bool wakeCanOverride = false;
-  //  bool wakeCanBeOverridden = true;
-  //
-  //
-  //  _wakeWordAudioProvider = std::make_shared<capabilityAgents::aip::AudioProvider>( sharedDataStream,
-  //                                                                                   compatibleAudioFormat,
-  //                                                                                   kNearField,
-  //                                                                                   wakeAlwaysReadable,
-  //                                                                                   wakeCanOverride,
-  //                                                                                   wakeCanBeOverridden );
-  //
-  //  auto dummyEspProvider = std::make_shared<esp::DummyESPDataProvider>();
-  //  std::shared_ptr<esp::ESPDataProviderInterface> espProvider = dummyEspProvider;
-  //  std::shared_ptr<esp::ESPDataModifierInterface> espModifier = dummyEspProvider;
-  //  // This observer is notified any time a keyword is detected and notifies the AlexaClient to start recognizing.
-  //  _keywordObserver = std::make_shared<KeywordObserver>( _client, *_wakeWordAudioProvider, espProvider );
-  //}
+  {
+    bool wakeAlwaysReadable = true;
+    bool wakeCanOverride = false;
+    bool wakeCanBeOverridden = true;
+  
+    _wakeWordAudioProvider = std::make_shared<capabilityAgents::aip::AudioProvider>( sharedDataStream,
+                                                                                     compatibleAudioFormat,
+                                                                                     kNearField,
+                                                                                     wakeAlwaysReadable,
+                                                                                     wakeCanOverride,
+                                                                                     wakeCanBeOverridden );
+  
+    auto dummyEspProvider = std::make_shared<esp::DummyESPDataProvider>();
+    std::shared_ptr<esp::ESPDataProviderInterface> espProvider = dummyEspProvider;
+    std::shared_ptr<esp::ESPDataModifierInterface> espModifier = dummyEspProvider;
+    // This observer is notified any time a keyword is detected and notifies the AlexaClient to start recognizing.
+    _keywordObserver = std::make_shared<AlexaKeywordObserver>( _client, *_wakeWordAudioProvider, espProvider );
+  }
   
   _microphone = AlexaAudioInput::Create( sharedDataStream );
   _microphone->startStreamingMicrophoneData();
@@ -459,6 +460,49 @@ void AlexaImpl::NotifyOfTapToTalk()
                  "AlexaImpl.NotifyOfTapToTalk.Failed",
                  "Failed to notify tap to talk" );
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
+{
+  avsCommon::avs::AudioInputStream::Index fromIndex;
+  avsCommon::avs::AudioInputStream::Index toIndex;
+  
+  const int kWindowHalfBuffer = 100;
+  
+  if ( from_ms < 0 ) {
+    fromIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
+  } else {
+    fromIndex = from_ms; // first move into larger type
+    fromIndex = kMillisToSamples*fromIndex; // milliseconds to samples @ 16k audio
+    if( fromIndex > kWindowHalfBuffer ) {
+      fromIndex -= kWindowHalfBuffer;
+    }
+  }
+  
+  const size_t totalNumSamples = _microphone->GetTotalNumSamples();
+  
+  if ( to_ms < 0 ) {
+    toIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
+  } else {
+    toIndex = to_ms;
+    toIndex = kMillisToSamples*toIndex + kWindowHalfBuffer;
+    if( toIndex > totalNumSamples ) {
+      toIndex = totalNumSamples;
+    }
+  }
+  
+  // NOTE: this only works if our extra VAD is off, since otherwise the mic samples wont match the sample indices provided by sensory.
+  // To get around this, we simply take the size (in # samples) of the window and
+  // back up from the most recent sample by that amount. It seems to work...
+  if ( from_ms >= 0 && to_ms >= 0 ) {
+    avsCommon::avs::AudioInputStream::Index dIndex = toIndex - fromIndex;
+    toIndex = totalNumSamples;
+    fromIndex = toIndex - dIndex;
+  }
+  
+  // this can generate SdsReader:seekFailed:reason=seekOverwrittenData if the time indices contain overwritten data
+  _keywordObserver->onKeyWordDetected( _wakeWordAudioProvider->stream, "ALEXA", fromIndex, toIndex, nullptr);
 }
 
 } // namespace Vector

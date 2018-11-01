@@ -315,8 +315,22 @@ void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, s
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::NotifyOfTapToTalk() const
 {
-  if( _impl != nullptr ) {
+  if( ANKI_VERIFY( _impl != nullptr,
+                   "Alexa.NotifyOfTapToTalk.Disabled",
+                   "Tap-to-talk was issued when alexa was disabled" ) )
+  {
     _impl->NotifyOfTapToTalk();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::NotifyOfWakeWord( long from_ms, long to_ms ) const
+{
+  if( ANKI_VERIFY( _impl != nullptr,
+                   "Alexa.NotifyOfWakeWord.Disabled",
+                   "Wake word was issued when alexa was disabled" ) )
+  {
+    _impl->NotifyOfWakeWord( from_ms, to_ms );
   }
 }
   

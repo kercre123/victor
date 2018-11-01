@@ -56,6 +56,7 @@ std::unique_ptr<AlexaAudioInput> AlexaAudioInput::Create( std::shared_ptr<AudioI
 AlexaAudioInput::AlexaAudioInput( std::shared_ptr<AudioInputStream> stream )
 : _audioInputStream{ std::move(stream) }
 , _streaming{ false }
+, _totalNumSamples{ 0 }
 {
 }
 
@@ -87,6 +88,8 @@ void AlexaAudioInput::AddSamples( const AudioUtil::AudioSample* data, size_t siz
   if( !_streaming || (_writer == nullptr) ) {
     return;
   }
+  
+  _totalNumSamples += size;
   
   _writer->write( data, size );
 }

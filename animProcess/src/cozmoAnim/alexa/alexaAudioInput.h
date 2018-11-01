@@ -50,6 +50,8 @@ public:
   // Adds data to the stream buffer held by alexa. Should be ok to call on another thread
   void AddSamples( const AudioUtil::AudioSample* data, size_t size );
   
+  size_t GetTotalNumSamples() const { return _totalNumSamples; }
+  
   // Stops streaming from the microphone. Returns whether the stop was successful.
   // (note: the micDataSystem job is still there, but we just drop all incoming data)
   virtual bool stopStreamingMicrophoneData() override;
@@ -71,6 +73,7 @@ private:
   std::unique_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream::Writer> _writer;
   
   std::atomic<bool> _streaming;
+  std::atomic<size_t> _totalNumSamples;
   
 };
   

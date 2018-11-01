@@ -472,6 +472,40 @@ std::future<bool> AlexaClient::NotifyOfTapToTalk( capabilityAgents::aip::AudioPr
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::future<bool> AlexaClient::NotifyOfWakeWord( capabilityAgents::aip::AudioProvider wakeWordAudioProvider,
+                                                 avsCommon::avs::AudioInputStream::Index beginIndex,
+                                                 avsCommon::avs::AudioInputStream::Index endIndex,
+                                                 const std::string& keyword,
+                                                 const capabilityAgents::aip::ESPData espData,
+                                                 std::shared_ptr<const std::vector<char>> KWDMetadata )
+{
+  if( !_connectionManager->isConnected() ) {
+    std::promise<bool> ret;
+    static const std::string ALEXA_STOP_KEYWORD = "STOP";
+    if( ALEXA_STOP_KEYWORD == keyword ) {
+      // Alexa Stop uttered while offline
+      StopForegroundActivity();
+      // Returning as interaction handled
+      ret.set_value(true);
+      return ret.get_future();
+    } else {
+      // Ignore Alexa wake word while disconnected
+      // Returning as interaction not handled
+      ret.set_value(false);
+      return ret.get_future();
+    }
+  }
+
+  return _audioInputProcessor->recognize( wakeWordAudioProvider,
+                                          capabilityAgents::aip::Initiator::WAKEWORD,
+                                          beginIndex,
+                                          endIndex,
+                                          keyword,
+                                          espData,
+                                          KWDMetadata );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaClient::AddConnectionObserver( std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface> observer)
 {
   if( ANKI_VERIFY(_connectionManager != nullptr, "AlexaClient.AddConnectionObserver.Null", "Connection manager is null") ) {

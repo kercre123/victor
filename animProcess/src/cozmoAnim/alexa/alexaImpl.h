@@ -56,6 +56,7 @@ namespace Vector {
 class AlexaAudioInput;
 enum class AlexaAuthState : uint8_t;
 class AlexaClient;
+class AlexaKeywordObserver;
 class AlexaMediaPlayer;
 class AlexaObserver;
 class AnimContext;
@@ -78,6 +79,8 @@ public:
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples );
   
   void NotifyOfTapToTalk();
+  
+  void NotifyOfWakeWord( long from_ms, long to_ms );
   
   // Callback setters
   
@@ -115,8 +118,8 @@ private:
   std::shared_ptr<AlexaMediaPlayer> _alertsMediaPlayer;
   std::shared_ptr<AlexaMediaPlayer> _audioMediaPlayer;
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _tapToTalkAudioProvider;
-  // std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _wakeWordAudioProvider;
-  // std::shared_ptr<KeywordObserver> _keywordObserver;
+  std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _wakeWordAudioProvider;
+  std::shared_ptr<AlexaKeywordObserver> _keywordObserver;
   std::shared_ptr<AlexaAudioInput> _microphone;
   
   // callbacks

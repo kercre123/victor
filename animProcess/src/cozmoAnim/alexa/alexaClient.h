@@ -119,6 +119,14 @@ public:
                                        alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex
                                          = alexaClientSDK::capabilityAgents::aip::AudioInputProcessor::INVALID_INDEX );
   
+  std::future<bool> NotifyOfWakeWord( alexaClientSDK::capabilityAgents::aip::AudioProvider wakeWordAudioProvider,
+                                      alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex,
+                                      alexaClientSDK::avsCommon::avs::AudioInputStream::Index endIndex,
+                                      const std::string& keyword,
+                                      const alexaClientSDK::capabilityAgents::aip::ESPData espData
+                                        = alexaClientSDK::capabilityAgents::aip::ESPData::getEmptyESPData(),
+                                      std::shared_ptr<const std::vector<char>> KWDMetadata = nullptr );
+  
   virtual void onCapabilitiesStateChange( alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::State newState,
                                           alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::Error newError ) override;
   
