@@ -2337,11 +2337,23 @@ func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.Uploa
 	return response, nil
 }
 
+var lastResult *extint.CheckCloudResponse
+
 // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud
 // Its main use is to be called by the app during setup, but is fine for use by the outside world.
 func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.CheckCloudRequest) (*extint.CheckCloudResponse, error) {
 	if !cloudCheckLimiter.Allow() {
-		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum check rate exceeded. Please wait and try again later.")
+		if lastResult == nil {
+			lastResult = &extint.CheckCloudResponse{
+				Status: &extint.ResponseStatus{
+					Code: extint.ResponseStatus_UNKNOWN,
+				},
+				Code: extint.CheckCloudResponse_UNKNOWN,
+			}
+		}
+		return lastResult, nil
+		// TODO: change this back to a resource exhausted error after app properly handles the error
+		// return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum check rate exceeded. Please wait and try again later.")
 	}
 
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CheckCloudResponse{}, 1)
@@ -2363,6 +2375,7 @@ func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.
 	cloudResponse.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
+	lastResult = cloudResponse
 	return cloudResponse, nil
 }
 
