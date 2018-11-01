@@ -40,6 +40,10 @@ if (CMAKE_GENERATOR MATCHES "Xcode")
   option(DEPLOY_WITH_CMAKE "Use cmake instead of python3 for deploying assets" OFF)
 endif()
 
+# LTTNG based userspace tracing
+option(USE_ANKITRACE "Enable ANKITRACE tracing" ON)
+include(ankitrace)
+
 # Set up custom property for file locations for custom targets
 define_property(TARGET PROPERTY ANKI_OUT_PATH
                 BRIEF_DOCS "The output path for this custom target"

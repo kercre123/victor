@@ -105,6 +105,7 @@ target_link_libraries(cozmo_engine
   z
   # platform
   ${PLATFORM_LIBS}
+  ${ANKITRACE}
 )
 
 target_compile_options(cozmo_engine PRIVATE

@@ -143,6 +143,13 @@ target_compile_options(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_OPTIONS
 
 target_compile_definitions(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS})
 
+target_include_directories(displayFaultCode
+  PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>)
+
+target_link_libraries(displayFaultCode
+  ${ANKITRACE})
+
 anki_build_strip(TARGET displayFaultCode)
 
 anki_build_target_license(displayFaultCode "ANKI")
@@ -233,6 +240,7 @@ if (VICOS)
     COZMO_ROBOT
     CORETECH_ROBOT
     ${PLATFORM_COMPILE_DEFS}
+    ${ANKITRACE}
     #HAL_DUMMY_BODY # Uncomment if deploying on head only
   )
 
@@ -255,6 +263,7 @@ if (VICOS)
     cti_common_robot
     cti_messaging_robot
     victorCrashReports
+    ${ANKITRACE}
     ${PLATFORM_LIBS}
   )
 

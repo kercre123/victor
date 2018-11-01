@@ -10,5 +10,6 @@ ${GIT_PROJ_ROOT}/project/victor/build-victor.sh \
                 -DANKI_MESSAGE_PROFILER_ENABLED=0 \
                 -DANKI_RESOURCE_SHIPPING=1 \
                 -DREMOTE_CONSOLE_ENABLED=0 \
+                -DUSE_ANKITRACE=OFF\
                 -a -DAUDIO_RELEASE=ON \
                 "$@"

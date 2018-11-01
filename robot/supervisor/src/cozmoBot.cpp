@@ -10,6 +10,8 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+#include "platform/anki-trace/tracing.h"
+
 #include "backpackLightController.h"
 #include "dockingController.h"
 #include "liftController.h"
@@ -482,6 +484,7 @@ namespace Anki {
         // Check if main took too long
         u32 cycleEndTime = HAL::GetMicroCounter();
         u32 cycleTime = cycleEndTime - cycleStartTime;
+        tracepoint(anki_ust, vic_robot_loop_duration, cycleTime);
         if (cycleTime > MAIN_TOO_LONG_TIME_THRESH_USEC) {
           EventStart(EventType::MAIN_CYCLE_TOO_LONG);
           ++mainTooLongCnt_;
