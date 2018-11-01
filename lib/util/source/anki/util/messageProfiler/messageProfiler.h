@@ -7,10 +7,12 @@
 
 #include "util/global/globalDefinitions.h"
 
+#ifndef ANKI_MESSAGE_PROFILER_ENABLED
 #if ANKI_PROFILING_ENABLED
   #define ANKI_MESSAGE_PROFILER_ENABLED 1
 #else
   #define ANKI_MESSAGE_PROFILER_ENABLED 0
+#endif
 #endif
 
 #ifndef __Util_MessageProfiler_MessageProfiler_H__
