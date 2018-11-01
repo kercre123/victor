@@ -24,6 +24,7 @@
 #include "util/logging/channelFilter.h"
 #include "util/logging/victorLogger.h"
 #include "util/string/stringUtils.h"
+#include "platform/anki-trace/tracing.h"
 
 #include "platform/common/diagnosticDefines.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
@@ -199,6 +200,7 @@ int main(void)
 
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
+    tracepoint(anki_ust, vic_anim_loop_duration, duration_cast<microseconds>(tickNow - tickStart).count());
 
 #if ENABLE_RUN_TIME_DIAGNOSTICS
     // Complain if we're going overtime

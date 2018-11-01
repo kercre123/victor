@@ -25,6 +25,7 @@ target_link_libraries(vic-faultCodeDisplay
   cti_common
   cti_vision
   ${PLATFORM_LIBS}
+  ${ANKITRACE}
 )
 
 anki_build_strip(TARGET vic-faultCodeDisplay)

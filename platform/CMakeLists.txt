@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.6)
 
 # config files that live in /anki/etc
+add_subdirectory(anki-trace)
+
 add_subdirectory(config)
 
 add_subdirectory(camera)
@@ -20,6 +22,7 @@ add_subdirectory(robotLogUploader)
 add_subdirectory(vic-log-event)
 
 add_subdirectory(vic-log-upload)
+
 
 #
 # Macro command to create build rules for full symbol files

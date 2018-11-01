@@ -101,6 +101,7 @@ if (VICOS)
     #       wait for a (much) larger cleanup to cmake / clad / coretech.
     cti_common
     jsoncpp
+    ${ANKITRACE}
     ${PLATFORM_LIBS}
   )
 
