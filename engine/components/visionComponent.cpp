@@ -2603,11 +2603,8 @@ namespace Vector {
     }
     else
     {
-      auto const& currentParams = _visionSystem->GetCurrentCameraParams();
       Vision::CameraParams params(payload.exposure_ms, payload.gain,
-                                  currentParams.whiteBalanceGainR,
-                                  currentParams.whiteBalanceGainG,
-                                  currentParams.whiteBalanceGainB);
+                                  payload.awb_red, payload.awb_green, payload.awb_blue);
       
       PRINT_CH_INFO("VisionComponent", "VisionComponent.HandleSetCameraSettings.Manual",
                     "Setting camera params to: Exp:%dms / %.3f, WB:%.3f,%.3f,%.3f",

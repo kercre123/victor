@@ -1494,6 +1494,9 @@ namespace Vector {
     settings.exposure_ms = root_->getField("exposure_ms")->getSFFloat();
     settings.gain = root_->getField("gain")->getSFFloat();
     settings.enableAutoExposure = root_->getField("enableAutoExposure")->getSFBool();
+    settings.awb_red = root_->getField("awb_red")->getSFFloat();
+    settings.awb_green = root_->getField("awb_green")->getSFFloat();
+    settings.awb_blue = root_->getField("awb_blue")->getSFFloat();
     ExternalInterface::MessageGameToEngine message;
     message.Set_SetCameraSettings(settings);
     SendMessage(message);

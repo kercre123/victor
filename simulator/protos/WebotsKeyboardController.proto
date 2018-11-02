@@ -1,6 +1,13 @@
 PROTO WebotsKeyboardController [
   field SFString name "WebotsKeyboardController"
 
+  field SFBool  enableAutoExposure TRUE
+  field SFFloat exposure_ms 16.8
+  field SFFloat gain 1.0
+  field SFFloat awb_red 1.0
+  field SFFloat awb_green 1.0
+  field SFFloat awb_blue 1.0
+
   # Volume
   field SFFloat robotVolume 1.0
 
@@ -205,10 +212,6 @@ PROTO WebotsKeyboardController [
   field SFString drivingStartAnim ""
   field SFString drivingLoopAnim ""
   field SFString drivingEndAnim ""
-
-  field SFBool  enableAutoExposure TRUE
-  field SFFloat exposure_ms 16.8
-  field SFFloat gain 1.0
 
   # Redirect viz to this host upon connect
   field SFBool  redirectViz TRUE

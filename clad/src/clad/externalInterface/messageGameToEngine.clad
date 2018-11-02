@@ -874,7 +874,10 @@ message TransferFile {
 message SetCameraSettings {
   bool enableAutoExposure,
   uint_16 exposure_ms,
-  float_32 gain
+  float_32 gain,
+  float_32 awb_red,
+  float_32 awb_green,
+  float_32 awb_blue
 }
 
 // Request robot sends back any per-robot settings
