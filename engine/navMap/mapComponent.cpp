@@ -290,9 +290,12 @@ void DevDrawCliffPoses( ConsoleFunctionContextRef context )
 
     size_t cliffCount = 0;
     for(auto& node : cliffNodes) {
-      const Pose3d& pose = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(node)->pose;
+      Pose3d pose = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(node)->pose;
+      // set z-height above the map when rendering
+      Point3f renderPoint(pose.GetTranslation().x(),pose.GetTranslation().y(), 3.f);
+      pose.SetTranslation(renderPoint);
       std::string id = "cliff_frame" + std::to_string(cliffCount++);
-      vizm->DrawFrameAxes2D(id, pose, 100.f, 3.f);
+      vizm->DrawFrameAxes(id, pose);
       sCliffFrameIdentifiers.push_back(id);
     }
   }
