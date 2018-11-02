@@ -165,7 +165,7 @@ TEST(UserIntentMap, UserIntent)
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(unmatched_intent)));
 
-  comp->ActivateUserIntent(USER_INTENT(test_user_intent_1), "test");
+  comp->ActivateUserIntent(USER_INTENT(test_user_intent_1), "test", false);
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
@@ -194,7 +194,7 @@ TEST(UserIntentMap, UserIntent)
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentActive(USER_INTENT(unmatched_intent)));
 
-  comp->ActivateUserIntent(USER_INTENT(test_user_intent_2), "test");
+  comp->ActivateUserIntent(USER_INTENT(test_user_intent_2), "test", false);
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
@@ -412,7 +412,7 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_EQ(data.GetTag(), UserIntentTag::set_timer);
   EXPECT_EQ(data.Get_set_timer().time_s, 42);
 
-  comp->ActivateUserIntent(USER_INTENT(set_timer), "test");
+  comp->ActivateUserIntent(USER_INTENT(set_timer), "test", false);
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(set_timer), data));
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(set_timer)));
 
@@ -442,7 +442,7 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_EQ(data.GetTag(), UserIntentTag::set_timer);
   EXPECT_EQ(data.Get_set_timer().time_s, 9001);
 
-  comp->ActivateUserIntent(USER_INTENT(set_timer), "test");
+  comp->ActivateUserIntent(USER_INTENT(set_timer), "test", false);
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(set_timer)));
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(set_timer)));
 
@@ -473,7 +473,7 @@ TEST(UserIntentMap, ExtraData)
   EXPECT_EQ(data.GetTag(), UserIntentTag::test_name);
   EXPECT_EQ(data.Get_test_name().name, "Victor");
               
-  comp->ActivateUserIntent(USER_INTENT(test_name), "test");
+  comp->ActivateUserIntent(USER_INTENT(test_name), "test", false);
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_name)));
   EXPECT_TRUE(comp->IsUserIntentActive(USER_INTENT(test_name)));
 

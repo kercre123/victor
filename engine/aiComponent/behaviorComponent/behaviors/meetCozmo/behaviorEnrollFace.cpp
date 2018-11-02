@@ -36,6 +36,7 @@
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -43,6 +44,7 @@
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -313,12 +315,18 @@ void BehaviorEnrollFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::CheckForIntentData() const
+void BehaviorEnrollFace::CheckForIntentData()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if( uic.IsUserIntentPending( USER_INTENT(meet_victor) ) ) {
     // activate the intent
-    uic.ActivateUserIntent( USER_INTENT(meet_victor), GetDebugLabel(), false );
+    if( AreScanningLightsEnabled() ) {
+      uic.ActivateUserIntent( USER_INTENT(meet_victor), GetDebugLabel(), false );
+    }
+    else {
+      // let our config decide what to do with intent feedback
+      ActivateUserIntentHelper( USER_INTENT(meet_victor) );
+    }
   }
 
   UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(meet_victor));
@@ -743,18 +751,23 @@ void BehaviorEnrollFace::BehaviorUpdate()
           {
             ResetEnrollment();
             TransitionToWrongFace(wrongID, wrongName);
-            
-            auto& blc = GetBEI().GetBackpackLightComponent();
-            blc.ClearAllBackpackLightConfigs();
+
+            if(AreScanningLightsEnabled())
+            {
+              auto& blc = GetBEI().GetBackpackLightComponent();
+              blc.ClearAllBackpackLightConfigs();
+            }
           }
         }
       }
 
       if( finishedScanning )
       {
-        
-        auto& blc = GetBEI().GetBackpackLightComponent();
-        blc.ClearAllBackpackLightConfigs();
+        if(AreScanningLightsEnabled())
+        {
+          auto& blc = GetBEI().GetBackpackLightComponent();
+          blc.ClearAllBackpackLightConfigs();
+        }
         
         // tell the app we've finished scanning
         if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
@@ -806,9 +819,12 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   _dVars->persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  
-  auto& blc = GetBEI().GetBackpackLightComponent();
-  blc.ClearAllBackpackLightConfigs();
+
+  if(AreScanningLightsEnabled())
+  {
+    auto& blc = GetBEI().GetBackpackLightComponent();
+    blc.ClearAllBackpackLightConfigs();
+  }
 
   // Reset the unexpected movement mode back to what it was when this behavior activated
   auto& moveComp = GetBEI().GetMovementComponent();
@@ -997,7 +1013,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   if( uic.IsUserIntentActive( USER_INTENT(meet_victor) ) ) {
-    uic.DeactivateUserIntent( USER_INTENT(meet_victor) );
+    DeactivateUserIntentHelper( USER_INTENT(meet_victor) );
   }
 
   if( info.result == FaceEnrollmentResult::Success ) {
@@ -1408,9 +1424,12 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   auto* scanLoop = new ReselectingLoopAnimationAction{ AnimationTrigger::MeetVictorLookFace };
 
   CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
-  
-  auto& blc = GetBEI().GetBackpackLightComponent();
-  blc.SetBackpackAnimation(_iConfig->backpackAnim);
+
+  if(AreScanningLightsEnabled())
+  {
+    auto& blc = GetBEI().GetBackpackLightComponent();
+    blc.SetBackpackAnimation(_iConfig->backpackAnim);
+  }
 
   // Tracking never completes. UpdateInternal will watch for timeout or for
   // face enrollment to complete and stop this behavior or transition to
@@ -1422,9 +1441,12 @@ void BehaviorEnrollFace::TransitionToEnrolling()
 void BehaviorEnrollFace::TransitionToScanningInterrupted()
 {
   SET_STATE(ScanningInterrupted);
-  
-  auto& blc = GetBEI().GetBackpackLightComponent();
-  blc.ClearAllBackpackLightConfigs();
+
+  if(AreScanningLightsEnabled())
+  {
+    auto& blc = GetBEI().GetBackpackLightComponent();
+    blc.ClearAllBackpackLightConfigs();
+  }
 
   // Make sure we stop tracking necessary (in case we timed out while tracking)
   CancelDelegates(false);
@@ -2245,6 +2267,13 @@ bool BehaviorEnrollFace::MatchesBasedOnPose(const FaceID_t currentFaceID, const 
           newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
                                           kEnrollFace_UpdateFacePositionThreshold_mm,
                                           DEG_TO_RAD(kEnrollFace_UpdateFaceAngleThreshold_deg)));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorEnrollFace::AreScanningLightsEnabled() const
+{
+  // scanning lights should be enabled if the ActiveIntentFeature is not enabled
+  return !GetBEI().GetRobotInfo().GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ActiveIntentFeedback);
 }
 
 } // namespace Vector

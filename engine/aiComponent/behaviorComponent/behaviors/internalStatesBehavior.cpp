@@ -842,7 +842,14 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
   if( _activateIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsUserIntentPending( _activateIntent ) ) {
-      uic.ActivateUserIntent( _activateIntent, ("InternalState:" + _name) );
+      // if we have a behavior associated with this state, activate the intent through it so that
+      // it can control how it wants to display the active intent feedback
+      if( nullptr != _behavior ) {
+        _behavior->ActivateUserIntentHelper( _activateIntent, ("InternalState:" + _name) );
+      }
+      else {
+        uic.ActivateUserIntent( _activateIntent, ("InternalState:" + _name), true );
+      }
     }
   }
 
@@ -906,7 +913,13 @@ void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei
   if( _activateIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsUserIntentActive( _activateIntent ) ) {
-      uic.DeactivateUserIntent( _activateIntent );
+      // if the behavior activated the intent, it needs to deactivate it
+      if( nullptr != _behavior ) {
+        _behavior->DeactivateUserIntentHelper( _activateIntent );
+      }
+      else {
+        uic.DeactivateUserIntent( _activateIntent );
+      }
     }
   }
 

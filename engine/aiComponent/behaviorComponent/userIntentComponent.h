@@ -158,7 +158,8 @@ public:
   // move it from pending to active (it will no longer be pending) and return a pointer to the full intent
   // data. Otherwise, it will print warnings and return nullptr
   // showFeedback = true will cause Vector to actively display to the user that he is carrying out this intent
-  UserIntentPtr ActivateUserIntent(UserIntentTag userIntent, const std::string& owner, bool showFeedback = true);
+  // autoShutoffFeedback = true will cause the feedback to shut off after a certain amount of time
+  UserIntentPtr ActivateUserIntent(UserIntentTag userIntent, const std::string& owner, bool showFeedback, bool autoShutoffFeedback = false);
 
   // Must be called when a user intent is no longer active (generally meaning that the behavior that was
   // handling the intent has stopped).
@@ -305,8 +306,9 @@ private:
       void Init(Robot* robot);
 
       // activating/deactivating this state will cause vector to convey to the user that he is responding to an active user intent
-      void Activate(UserIntentTag userIntent);
+      void Activate(UserIntentTag userIntent, bool autoShutoff);
       void Deactivate(UserIntentTag userIntent);
+      void Update();
 
     private:
       bool IsEnabled() const;
@@ -315,6 +317,8 @@ private:
       Robot* robot;
       UserIntentTag activatedIntentTag;
       BackpackLightDataLocator lightsHandle;
+
+      float feedbackShutOffTime = 0.0f;
   } _activeIntentFeedback;
 
   // for debugging -- intents should be processed within one tick so track the ticks here
