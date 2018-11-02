@@ -38,8 +38,6 @@ var (
 	signalHandler      chan os.Signal
 	demoKeyPair        *tls.Certificate
 	demoCertPool       *x509.CertPool
-	cloudCheckLimiter  *MultiLimiter
-	debugLogLimiter    *MultiLimiter
 	switchboardManager SwitchboardIpcManager
 	engineProtoManager EngineProtoIpcManager
 	tokenManager       ClientTokenManager
