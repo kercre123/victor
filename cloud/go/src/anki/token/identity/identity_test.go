@@ -35,6 +35,8 @@ const testToken2 = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjoiMjAyMC0
 	"Tqv_MOsDAZYNrCjCvfAbFg5jkj2YkKAFqiq4VN6WIgvSnqJORNmtIuJQ3uXf_a6BIlbvev-dTcaGL9XyGW-ZWj2P_3N8aHdL-6" +
 	"lbA0Js1lbPist4dyTRXfdAP_8xZNks89oik3ZaBfRRWxhiEr4nuxMGLU1B5vvnbj1EFCxFAoOM_-uQTTw"
 
+const testToken3 = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjoiMjAxOC0xMC0yNVQwNjo0Mjo0Ni40NDM2NTE2MzRaIiwiaWF0IjoiMjAxOC0xMC0yNFQwNjo0Mjo0Ni40NDM2NTE2MzRaIiwicmVxdWVzdG9yX2lkIjoidmljOjAwZTIwMTI0IiwidG9rZW5faWQiOiIzOThiMDI5YS02MDYxLTRhMjEtYjc5ZC01NzhhMzI1MmY5YmQiLCJ0b2tlbl90eXBlIjoidXNlcityb2JvdCIsInVzZXJfaWQiOiIyZ3FOTXlRaHRwY0NRTVh2cVhjckpFQSJ9.Oy2wz2OgWoEjjU0efY7kclahyFjUYgNXq5rRIHQxxK8sf0g95C8c3AQ20FWEJj9crcJLJKu0l7FtNAIEpiBMlex2FetSjvl8BCKBh4abnIsLHqSrLwxEd3pnZY5rAYBGHiY6AkOGN1JJksR46gQKhK2grwJtDa-_vso_Zg_SoFN38S9dqPGmhv5l_ypLnR1NwPIhDp_GAWEHc5N7a3TTOxKHblCMmFsxLr8_C8rgDF6Je_-xQ5Y7i9N-J0anC8woqwD9fPoXieP_cXUIzjtM7iQs9JcSRxhVb4yGyyjTHk9xBzMS_J5CG-0nmeAjMzIPuzKBY0xwz1r1_0A7M28Lmw"
+
 type IdentityProviderSuite struct {
 	suite.Suite
 
@@ -95,6 +97,32 @@ func (s *IdentityProviderSuite) TestSingleInstance() {
 	s.NotNil(token)
 	s.Equal(testToken1, token.String())
 	s.Equal("test_user_1", token.UserID())
+
+	storedToken = provider.GetToken()
+	s.Equal(token, storedToken)
+}
+
+func (s *IdentityProviderSuite) TestTimestamps() {
+	require := require.New(s.T())
+
+	tokenPath := s.createRandomTokenPath()
+	provider, err := NewFileProvider(tokenPath, s.certPath)
+	require.NoError(err)
+
+	err = provider.Init()
+	require.NoError(err)
+	s.Equal(tokenPath, provider.jwtPath)
+
+	storedToken := provider.GetToken()
+	s.Nil(storedToken)
+
+	token, err := provider.ParseAndStoreToken(testToken3)
+	require.NoError(err)
+	s.NotNil(token)
+	s.Equal(testToken3, token.String())
+	s.Equal("2gqNMyQhtpcCQMXvqXcrJEA", token.UserID())
+	s.Equal("2018-10-24 06:42:46.443651634 +0000 UTC", token.IssuedAt().String())
+	s.Equal("2018-10-25 03:42:46.443651634 +0000 UTC", token.RefreshTime().String())
 
 	storedToken = provider.GetToken()
 	s.Equal(token, storedToken)

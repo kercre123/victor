@@ -17,7 +17,7 @@ import (
 func (strm *Streamer) sendAudio(samples []byte) error {
 	var err error
 	sendTime := util.TimeFuncMs(func() {
-		err = strm.stream.SendAudio(samples)
+		err = strm.conn.SendAudio(samples)
 	})
 	if err != nil {
 		log.Println("Cloud error:", err)
@@ -87,7 +87,7 @@ func (strm *Streamer) testRoutine(streamSize int) {
 // responseRoutine should be started after streaming begins, and will wait for a response
 // to send back to the main routine on the given channels
 func (strm *Streamer) responseRoutine() {
-	resp, err := strm.stream.WaitForResponse()
+	resp, err := strm.conn.WaitForResponse()
 	strm.respOnce.Do(func() {
 		if strm.closed {
 			if err != nil {
@@ -110,6 +110,8 @@ func (strm *Streamer) responseRoutine() {
 			sendKGResponse(r, strm.receiver)
 		case *chipper.ConnectionCheckResponse:
 			sendConnectionCheckResponse(r, strm.receiver, strm.opts.checkOpts)
+		default:
+			log.Println("Unexpected response type:", fmt.Sprintf("%T", resp))
 		}
 	})
 }

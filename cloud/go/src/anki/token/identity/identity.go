@@ -200,3 +200,13 @@ func (t tokWrapper) IssuedAt() time.Time {
 func (t tokWrapper) UserID() string {
 	return t.tok.UserId
 }
+
+var platformTokenPath string
+var testTokenPath string
+
+func tokenPath() string {
+	if testTokenPath != "" {
+		return testTokenPath
+	}
+	return platformTokenPath
+}
