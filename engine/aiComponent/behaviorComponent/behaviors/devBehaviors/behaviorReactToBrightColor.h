@@ -72,6 +72,9 @@ private:
 
     //! Animation to play when giving up for any reason
     AnimationTrigger animGiveUp;
+
+    //! Amount of error for close enough to matching a hue. This is computed from numHues, not set from config.
+    f32 closeHueEpsilon;
   };
 
   struct DynamicVariables {

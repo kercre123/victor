@@ -55,6 +55,8 @@ void RoundToNearestHueImpl(u32 numHues, Vision::SalientPoint& pt) {
   ColorRGBA color(pt.color_rgba);
   Vision::PixelHSV hsv(Vision::PixelRGB(color.r(),color.g(),color.b()));
   hsv.h() = std::roundf(hsv.h() * numHues)/numHues;
+  hsv.s() = 1.f;
+  hsv.v() = 1.f;
   Vision::PixelRGB rgb = hsv.ToPixelRGB();
   pt.color_rgba = ColorRGBA(rgb.r(),rgb.g(),rgb.b(),255).AsRGBA();
 }
@@ -74,6 +76,14 @@ BehaviorReactToBrightColor::InstanceConfig::InstanceConfig(const Json::Value& co
   const std::string& debugName = "BehaviorReactToBrightColor.InstanceConfig.LoadConfig";
   numHues = JsonTools::ParseUInt32(config, kNumHuesKey, debugName);
   DEV_ASSERT(numHues > 0,"Number of hues must be greater than 0");
+
+  // Because we divide the incoming hues into numHues and round the incoming SalientPoint colors to the nearest hue
+  // we really don't need an epsilon since they *should* be equal. In reality we're comparing floating points so
+  // we need an epsilon, so it might as well be _most_ of the range. By doing 0.4 (or 40% of the space between the
+  // hues that we round to), we're capturing anything within a 40% error. Again, this should not matter because we
+  // are rounding all the incoming colors to the nearest hue. The maximum value for this scalar is 0.5f, otherwise
+  // the error range starts to overlap with the error range for neighboring hues.
+  closeHueEpsilon = (1.f/numHues)*0.4f;
 
   targetDistance_mm = JsonTools::ParseUInt32(config, kTargetDistanceKey, debugName);
   celebrationSpins = JsonTools::ParseUInt32(config, kCelebrationSpinsKey, debugName);
@@ -251,12 +261,10 @@ bool BehaviorReactToBrightColor::FindCurrentColor(Vision::SalientPoint& point)
 
   float currHue = GetHue(_dVars.point->color_rgba);
 
-  // Ten percent of the hue steps in each direction around the hue
-  float closeEpsilon = (1.f/_iConfig.numHues)*0.5f;
-
+  RoundToNearestHue(latestBrightColors);
   auto colorCloseEnough = [&](const Vision::SalientPoint& pt) -> bool {
     float otherHue = GetHue(pt.color_rgba);
-    return Util::IsNear(currHue, otherHue, closeEpsilon);
+    return Util::IsNear(currHue, otherHue, _iConfig.closeHueEpsilon);
   };
   auto iter = std::find_if(latestBrightColors.begin(), latestBrightColors.end(), colorCloseEnough);
 
@@ -369,22 +377,48 @@ void BehaviorReactToBrightColor::TransitionToStart()
 void BehaviorReactToBrightColor::TransitionToNoticedBrightColor()
 {
   PRINT_NAMED_ERROR("BehaviorReactToBrightColor.TransitionToNoticedBrightColor","");
+#if 1
   auto* action = new TriggerAnimationAction(_iConfig.animDetect);
   DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToTurnTowardsPoint);
+#elif 0
+  TransitionToTurnTowardsPoint();
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBrightColor::TransitionToTurnTowardsPoint()
 {
-  // Compute angle that we need to turn
   DEV_ASSERT(_dVars.point != nullptr, "Turning towards point without a point to turn towards");
   PRINT_NAMED_ERROR("BehaviorReactToBrightColor.TransitionToTurnTowardsPoint","");
 
+#if 0
+  DEV_ASSERT(_dVars.point != nullptr, "Turning towards point without a point to turn towards");
+  PRINT_NAMED_ERROR("BehaviorReactToBrightColor.TransitionToTurnTowardsPoint","");
   CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction(new TurnTowardsImagePointAction(*_dVars.point));
-
   DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToLookForCurrentColor);
 
+#elif 1
+  // We need a more recent point because we just played an animation and may have lost the point due
+  // to looking away or simply having lost the history of the robot state due to age. Without that
+  // then we don't know where to turn.
+  Vision::SalientPoint curr;
+  bool found = FindCurrentColor(curr);
+  if (found)
+  {
+    // Update the current point to be the latest
+    _dVars.point = std::make_shared<Vision::SalientPoint>(curr);
+
+    CompoundActionSequential* action = new CompoundActionSequential();
+    action->AddAction(new TurnTowardsImagePointAction(*_dVars.point));
+
+    DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToLookForCurrentColor);
+  }
+  else
+  {
+    TransitionToGiveUpLostColor();
+  }
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -402,7 +436,6 @@ void BehaviorReactToBrightColor::TransitionToLookForCurrentColor()
   else
   {
     TransitionToGiveUpLostColor();
-    return;
   }
 }
 
@@ -481,25 +514,12 @@ void BehaviorReactToBrightColor::TransitionToCheckGotToObject()
 void BehaviorReactToBrightColor::TransitionToCelebrate()
 {
   PRINT_NAMED_ERROR("BehaviorReactToBrightColor.TransitionToCelebrate","");
-#if 0
-  CompoundActionSequential* sequence = new CompoundActionSequential();
-
-  CompoundActionParallel* parallel = new CompoundActionParallel();
-  parallel->AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY));
-  parallel->AddAction(new TurnInPlaceAction(3.14159f*2*_iConfig.celebrationSpins, false));
-
-  sequence->AddAction(parallel);
-  sequence->AddAction(new MoveLiftToHeightAction(LIFT_PROTO_MIN_HEIGHT));
-
-  DelegateIfInControl(sequence, &BehaviorReactToBrightColor::TransitionToCompleted);
-#elif 1
   const float hue = GetHue(_dVars.point->color_rgba);
-  // Splint on warm colors
+  // Spint on warm colors vs cool colors
   const bool isWarm = (hue < 0.25 || hue > 0.75);
   const AnimationTrigger trigger = (isWarm)? _iConfig.animReactColorA : _iConfig.animReactColorB;
   auto* action = new TriggerAnimationAction(trigger);
   DelegateIfInControl(action, &BehaviorReactToBrightColor::TransitionToCompleted);
-#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -535,5 +555,5 @@ void BehaviorReactToBrightColor::TransitionToCompleted()
   CancelDelegates(false);
 }
 
-}
-}
+} /* namespace vector */
+} /* namespace anki */
