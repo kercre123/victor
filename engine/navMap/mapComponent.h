@@ -128,6 +128,7 @@ public:
 
   // return true of the specified region contains any objects of known collision types
   bool CheckForCollisions(const BoundedConvexSet2f& region) const;
+  bool CheckForCollisions(const BoundedConvexSet2f& region, const MemoryMapTypes::NodePredicate& pred) const;
 
   // returns the accumulated area of cells in mm^2 in the current map that satisfy the predicate (and region, if supplied)
   float GetCollisionArea(const BoundedConvexSet2f& region) const;

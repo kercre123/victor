@@ -1431,6 +1431,16 @@ bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MapComponent::CheckForCollisions(const BoundedConvexSet2f& region, const MemoryMapTypes::NodePredicate& pred) const
+{
+  const auto currentMap = GetCurrentMemoryMap();
+  if (currentMap) {
+    return currentMap->AnyOf( region, pred );
+  }
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
 {
   const auto currentMap = GetCurrentMemoryMap();
