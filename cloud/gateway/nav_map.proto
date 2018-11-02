@@ -19,8 +19,6 @@ syntax = "proto3";
 
 package Anki.Vector.external_interface;
 
-import "messages.proto";
-
 // Every tile in the nav map will be tagged with a content key referring to
 // the different environmental elements that Vector can identify.
 enum NavNodeContentType
