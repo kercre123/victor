@@ -73,22 +73,28 @@ std::string GetDateTimeString()
 //
 // Capture recent log messages into given file
 //
-void DumpLogMessages(const std::string & logpath)
+void DumpLogMessages(const std::string & path)
 {
-  char buf[1024];
-  snprintf(buf, sizeof(buf), "/bin/tail -100 /var/log/messages > %s", logpath.c_str());
-
-  LOG_INFO("GoogleBreakpad.DumpLogMessages", "%s", buf);
-  FILE * fp = popen(buf, "r");
-  if (fp != nullptr) {
-    // Run process to completion
-    while (fgets(buf, sizeof(buf), fp) != nullptr) {
-      LOG_INFO("GoogleBreakpad.DumpLogMessages", "%s", buf);
-    }
-    pclose(fp);
-  } else {
-    LOG_ERROR("GoogleBreakpad.DumpLogMessages", "Unable to dump log messages");
+  // If activation socket exists, activate anki-crash-log.service.
+  // This allows unprivileged processes (vic-cloud, vic-gateway)
+  // to fetch log messages with reading /var/log/messages directly.
+  //
+  // Anki-crash-log.service is only available on developer builds.
+  // Crash reports from a production build will not include log messages.
+  //
+  static const char * socket = "/run/anki-crash-log";
+  if (!Anki::Util::FileUtils::FileExists(socket)) {
+    LOG_WARNING("GoogleBreakpad.DumpLogMessages", "Unable to dump log messages");
+    return;
   }
+
+  FILE * fp = fopen(socket, "w");
+  if (fp == nullptr) {
+    LOG_WARNING("GoogleBreakpad.DumpLogMessages", "Unable to open %s", socket);
+    return;
+  }
+  fprintf(fp, "%s\n", path.c_str());
+  fclose(fp);
 }
 
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
@@ -114,8 +120,7 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
   sync();
 
   // Capture recent log messages
-  const std::string & logpath = std::string(dumpPath) + ".log";
-  DumpLogMessages(logpath);
+  DumpLogMessages(dumpPath);
 
   // Return false (not handled) so breakpad will chain to next handler.
   return false;
