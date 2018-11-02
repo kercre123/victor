@@ -38,8 +38,8 @@
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
 
 #include <functional>
-#include <list>
 #include <string>
+#include <set>
 
 namespace alexaClientSDK{
   namespace capabilitiesDelegate {class CapabilitiesDelegate; }
@@ -55,6 +55,7 @@ namespace Vector {
 
 class AlexaAudioInput;
 enum class AlexaAuthState : uint8_t;
+enum class AlexaUXState : uint8_t;
 class AlexaClient;
 class AlexaKeywordObserver;
 class AlexaMediaPlayer;
@@ -88,7 +89,12 @@ public:
   using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&)>;
   void SetOnAlexaAuthStateChanged( const OnAlexaAuthStateChanged& callback ) { _onAlexaAuthStateChanged = callback; }
   
+  using OnAlexaUXStateChanged = std::function<void(AlexaUXState)>;
+  void SetOnAlexaUXStateChanged( const OnAlexaUXStateChanged& callback ) { _onAlexaUXStateChanged = callback; }
+  
 private:
+  using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
+  using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
   
   std::vector<std::shared_ptr<std::istream>> GetConfigs() const;
   
@@ -96,17 +102,33 @@ private:
   
   void SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code );
   
+  // considers media player state and dialog state to determine _uxState
+  void CheckForUXStateChange();
+  
   // things we care about called by AlexaObserver
-  void OnDialogUXStateChanged( alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState state );
+  void OnDialogUXStateChanged( DialogUXState state );
   void OnRequestAuthorization( const std::string& url, const std::string& code );
   void OnAuthStateChange( alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::State newState,
                           alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::Error newError );
+  void OnSourcePlaybackChange( SourceId id, bool playing );
   
   
   const AnimContext* _context = nullptr;
-  std::string _alexaFolder;
+  std::string _alexaPersistentFolder;
+  std::string _alexaCacheFolder;
   
-  AlexaAuthState _currAuthState;
+  // current auth state
+  AlexaAuthState _authState;
+  // current ux/media player state
+  AlexaUXState _uxState;
+  // ux state (may be IDLE when audio is playing)
+  DialogUXState _dialogState;
+  // sources that are playing (or paused?)
+  std::set<SourceId> _playingSources;
+  // the last BS time that the sdk received a "Play" or "Speak" directive
+  float _lastPlayDirective_s = -1.0f;
+  // if non-negative, the update loop with automatically set the ux state to Idle at this time
+  float _timeToSetIdle_s = -1.0f;
   
   std::shared_ptr<AlexaClient> _client;
   
@@ -124,6 +146,7 @@ private:
   
   // callbacks
   OnAlexaAuthStateChanged _onAlexaAuthStateChanged;
+  OnAlexaUXStateChanged _onAlexaUXStateChanged;
 };
 
 

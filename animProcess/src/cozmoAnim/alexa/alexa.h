@@ -27,6 +27,7 @@ namespace Vector {
 class AlexaImpl;
 class AnimContext;
 enum class AlexaAuthState : uint8_t;
+enum class AlexaUXState : uint8_t;
 
 class Alexa
 {
@@ -66,14 +67,19 @@ private:
   // called when SDK auth state changes
   void OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code );
   
+  // called when SDK dialog or media player state changes
+  void OnAlexaUXStateChanged( AlexaUXState newState );
+  
   void CreateImpl();
   void DeleteImpl();
   bool HasImpl() const { return _impl != nullptr; }
   
   // sets this class's _authState and messages engine if it changes
   void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );
-  // actually messages engine
+  
+  // messages engine
   void SendAuthState();
+  void SendUXState();
   
   // helpers for the file that indicates whether the last robot run ended during an authenticated session
   const std::string& GetOptInFilePath() const;
@@ -89,7 +95,11 @@ private:
   AlexaAuthState _authState;
   std::string _authExtra;
   bool _engineLoaded = false;
-  bool _pendingEngineMsgs = false;
+  bool _pendingAuthMsgs = false;
+  bool _pendingUXMsgs = false;
+  
+  AlexaUXState _uxState;
+  
   
   // whether a message was received from engine saying to opt in
   bool _userOptedIn = false;

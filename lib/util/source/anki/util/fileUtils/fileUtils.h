@@ -65,7 +65,7 @@ public:
 
   static std::vector<uint8_t> ReadFileAsBinary(const std::string& fileName);
 
-  static bool WriteFile(const std::string& fileName, const std::string& body);
+  static bool WriteFile(const std::string& fileName, const std::string& body, bool append = false);
   
   static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body, bool append = false);
   

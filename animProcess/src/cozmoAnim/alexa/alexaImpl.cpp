@@ -28,8 +28,9 @@
 
 #include "cozmoAnim/alexa/alexaImpl.h"
 
-#include "clad/types/alexaAuthState.h"
+#include "clad/types/alexaTypes.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/alexa/alexaAudioInput.h"
 #include "cozmoAnim/alexa/alexaClient.h"
 #include "cozmoAnim/alexa/alexaKeywordObserver.h"
@@ -51,6 +52,7 @@
 #include <AVSCommon/Utils/LibcurlUtils/HttpPut.h>
 #include <AVSCommon/Utils/Logger/Logger.h>
 #include <AVSCommon/Utils/Logger/LoggerSinkManager.h>
+#include <AVSCommon/Utils/MediaPlayer/MediaPlayerInterface.h>
 #include <AVSCommon/Utils/Network/InternetConnectionMonitor.h>
 #include <AVSCommon/AVS/AudioInputStream.h>
 #include <Alerts/Storage/SQLiteAlertStorage.h>
@@ -88,12 +90,28 @@ namespace {
   static const size_t kBufferSize = (kSampleRate_Hz)*kBufferDuration_s.count();
   // Conversion factor from milliseconds to samples
   static const unsigned int kMillisToSamples = kSampleRate_Hz / 1000;
+  
+  const std::string kDirectivesFile = "directives.txt";
+  const std::string kAlexaFolder = "alexa";
+  
+  // If the DialogUXState is set to Idle, but a directive was received to Play, then wait this long before
+  // setting to idle
+  CONSOLE_VAR_RANGED(float, kAlexaIdleDelay_s, "Alexa", 1.0f, 0.0f, 10.0f);
+  // If the DialogUXState was set to Idle, but the last Play directive was older than this amount, then
+  // switch to Idle
+  CONSOLE_VAR_RANGED(float, kAlexaMaxIdleDelay_s, "Alexa", 2.0f, 0.0f, 10.0f);
+  
+  CONSOLE_VAR(bool, kLogAlexaDirectives, "Alexa", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::AlexaImpl()
-  : _currAuthState{ AlexaAuthState::Uninitialized }
+  : _authState{ AlexaAuthState::Uninitialized }
+  , _uxState{ AlexaUXState::Idle }
+  , _dialogState{ DialogUXState::IDLE }
 {
+  static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
+                 "Our shorthand SourceId type differs" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -128,11 +146,24 @@ bool AlexaImpl::Init(const AnimContext* context)
   _context = context;
   
   const auto* dataPlatform = _context->GetDataPlatform();
-  _alexaFolder = dataPlatform->pathToResource( Util::Data::Scope::Persistent, "alexa" );
   
-  if( !_alexaFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _alexaFolder ) ) {
-    Util::FileUtils::CreateDirectory( _alexaFolder );
+  _alexaPersistentFolder = dataPlatform->pathToResource( Util::Data::Scope::Persistent, kAlexaFolder );
+  _alexaPersistentFolder = Util::FileUtils::AddTrailingFileSeparator( _alexaPersistentFolder );
+  if( !_alexaPersistentFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _alexaPersistentFolder ) ) {
+    Util::FileUtils::CreateDirectory( _alexaPersistentFolder );
   }
+  
+  _alexaCacheFolder = dataPlatform->pathToResource( Util::Data::Scope::Cache, kAlexaFolder );
+  _alexaCacheFolder = Util::FileUtils::AddTrailingFileSeparator( _alexaCacheFolder );
+  if( !_alexaCacheFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _alexaCacheFolder ) ) {
+    Util::FileUtils::CreateDirectory( _alexaCacheFolder );
+  }
+  
+#if ANKI_DEV_CHEATS
+  if( Util::FileUtils::FileExists( _alexaCacheFolder + kDirectivesFile ) ) {
+    Util::FileUtils::DeleteFile( _alexaCacheFolder + kDirectivesFile );
+  }
+#endif
   
   auto configs = GetConfigs();
   if( configs.empty() ) {
@@ -156,7 +187,8 @@ bool AlexaImpl::Init(const AnimContext* context)
   _observer = std::make_shared<AlexaObserver>();
   _observer->Init( std::bind(&AlexaImpl::OnDialogUXStateChanged, this, std::placeholders::_1),
                    std::bind(&AlexaImpl::OnRequestAuthorization, this, std::placeholders::_1, std::placeholders::_2),
-                   std::bind(&AlexaImpl::OnAuthStateChange, this, std::placeholders::_1, std::placeholders::_2) );
+                   std::bind(&AlexaImpl::OnAuthStateChange, this, std::placeholders::_1, std::placeholders::_2),
+                   std::bind(&AlexaImpl::OnSourcePlaybackChange, this, std::placeholders::_1, std::placeholders::_2) );
   
   const auto& rootConfig = avsCommon::utils::configuration::ConfigurationNode::getRoot();
   
@@ -351,6 +383,13 @@ void AlexaImpl::Update()
   if( _audioMediaPlayer != nullptr ) {
     _audioMediaPlayer->Update();
   }
+  
+  // check if the idle timer _timeToSetIdle_s has expired
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
+    _dialogState = DialogUXState::IDLE;
+    CheckForUXStateChange();
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -385,7 +424,7 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
   const uint32_t esn = osState->GetSerialNumber();
   Util::StringReplace( configJson, "<SERIAL_NUMBER>", std::to_string(esn) );
   
-  const std::string pathToPersistent = dataPlatform->pathToResource( Util::Data::Scope::Persistent, "alexa" );
+  const std::string pathToPersistent = _alexaPersistentFolder;
   Util::StringReplace( configJson, "<ALEXA_STORAGE_PATH>", pathToPersistent );
   
   configJsonStreams.push_back( std::shared_ptr<std::istringstream>( new std::istringstream( configJson ) ) );
@@ -395,7 +434,21 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnDirective(const std::string& directive, const std::string& payload)
 {
-  // todo: this will be needed for timer, and is also useful for debugging
+  if( directive == "Play" || directive == "Speak" ) {
+    _lastPlayDirective_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+  // TODO: is there a Stop directive we can listed to? that should force the Idle ux state or at least reset idle timers
+  // "StopCapture" might be it. needs further investigation to see how it overlaps with music audio
+  
+  if( kLogAlexaDirectives ) {
+    Json::Value json;
+    Json::Reader reader;
+    bool success = reader.parse( payload, json );
+    if( success ) {
+      const bool append = true;
+      Util::FileUtils::WriteFile( _alexaCacheFolder + kDirectivesFile, directive + ": " + json.toStyledString(), append );
+    }
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -436,17 +489,92 @@ void AlexaImpl::OnRequestAuthorization( const std::string& url, const std::strin
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::OnDialogUXStateChanged( avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState state )
+void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 {
-  // TODO: will be needed for engine
+  _dialogState = state;
+  CheckForUXStateChange();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::CheckForUXStateChange()
+{
+  const auto oldState = _uxState;
+  const bool anyPlaying = !_playingSources.empty();
+  
+  // reset idle timer
+  _timeToSetIdle_s = -1.0f;
+  
+  switch( _dialogState ) {
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED:
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE:
+    {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      // if nothing is playing, it could be because something is about to play. We only know because
+      // a directive for "Play" or "Speak" has arrived. If one has arrived recently, don't switch to idle yet,
+      // and instead set a timer so that it will switch to idle only if no other state change occurs.
+      // Sometimes, if the delay is long enough, the robot will momentarily break to normal behavior before
+      // returning to alexa. Maybe we need a base delay
+      if( anyPlaying ) {
+        _uxState = AlexaUXState::Speaking;
+      } else if( _lastPlayDirective_s < 0.0f || (currTime_s > _lastPlayDirective_s + kAlexaMaxIdleDelay_s) ) {
+        // "Play" wasn't received within kAlexaMaxIdleDelay_s seconds ago. Set to Idle
+        _uxState = AlexaUXState::Idle;
+      } else if( kAlexaIdleDelay_s > 0.0f ) {
+        // wait kAlexaIdleDelay_s before setting to idle
+        _timeToSetIdle_s = _lastPlayDirective_s + kAlexaIdleDelay_s;
+      } else {
+        _uxState = AlexaUXState::Idle;
+      }
+    }
+      break;
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING:
+    {
+      _uxState = AlexaUXState::Thinking;
+    }
+      break;
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING:
+    {
+      _uxState = AlexaUXState::Listening;
+    }
+      break;
+    case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING:
+    {
+      _uxState = AlexaUXState::Speaking;
+    }
+      break;
+  }
+  
+  if( (oldState != _uxState) && (_onAlexaUXStateChanged != nullptr) ) {
+    _onAlexaUXStateChanged( _uxState );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
+{
+  if( playing ) {
+    auto res = _playingSources.insert( id );
+    // not fatal, but it means we don't understand the media player lifecycle correctly
+    if( ANKI_VERIFY( res.second, "AlexaImpl.OnSourcePlaybackChange.Exists", "Source %llu was already playing", id ) ) {
+      CheckForUXStateChange();
+    }
+  } else {
+    auto it = _playingSources.find( id );
+    if( ANKI_VERIFY( it != _playingSources.end(),
+                     "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id ) )
+    {
+      _playingSources.erase( it );
+      CheckForUXStateChange();
+    }
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code )
 {
   // always send WaitingForCode in case url or code changed
-  const bool changed = (_currAuthState != state) || (state == AlexaAuthState::WaitingForCode);
-  _currAuthState = state;
+  const bool changed = (_authState != state) || (state == AlexaAuthState::WaitingForCode);
+  _authState = state;
   if( (_onAlexaAuthStateChanged != nullptr) && changed ) {
     _onAlexaAuthStateChanged( state, url, code );
   }

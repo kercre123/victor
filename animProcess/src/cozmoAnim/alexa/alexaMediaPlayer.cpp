@@ -150,8 +150,11 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
   // in dev, remove any debug audio files from last time
   const Util::Data::DataPlatform* platform = context->GetDataPlatform();
   if( platform != nullptr ) {
-    _saveFolder = platform->pathToResource( Util::Data::Scope::Cache, "" );
+    _saveFolder = platform->pathToResource( Util::Data::Scope::Cache, "alexa" );
     _saveFolder = Util::FileUtils::AddTrailingFileSeparator( _saveFolder );
+    if( !_saveFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _saveFolder ) ) {
+      Util::FileUtils::CreateDirectory( _saveFolder );
+    }
 #if ANKI_DEV_CHEATS
     for( int i=1; i<100; ++i ) {
       std::string ss = _saveFolder + "speaker_" + _name + std::to_string(i) + ".mp3";

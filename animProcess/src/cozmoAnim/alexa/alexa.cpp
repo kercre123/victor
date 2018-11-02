@@ -15,7 +15,7 @@
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/alexa/alexaImpl.h" // impl declaration
 #include "cozmoAnim/animProcessMessages.h"
-#include "clad/types/alexaAuthState.h"
+#include "clad/types/alexaTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -39,6 +39,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Alexa::Alexa()
 : _authState{ AlexaAuthState::Uninitialized }
+, _uxState{ AlexaUXState::Idle }
 {
 }
 
@@ -141,11 +142,12 @@ void Alexa::CreateImpl()
   SetAuthState( AlexaAuthState::RequestingAuth );
   
   _impl = std::make_unique<AlexaImpl>();
-  // set callbacks into this class (this one can occur during init)
+  // set callbacks into this class (in case they occur during init)
   _impl->SetOnAlexaAuthStateChanged( std::bind( &Alexa::OnAlexaAuthChanged, this,
                                                 std::placeholders::_1,
                                                 std::placeholders::_2,
                                                 std::placeholders::_3 ) );
+  _impl->SetOnAlexaUXStateChanged( std::bind( &Alexa::OnAlexaUXStateChanged, this, std::placeholders::_1 ) );
   const bool success = _impl->Init( _context );
   if( !success ) {
     // initialization was unsuccessful
@@ -237,6 +239,28 @@ void Alexa::SetAuthState( AlexaAuthState state, const std::string& url, const st
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
+{
+  _uxState = newState;
+  SendUXState();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::SendUXState()
+{
+  if( _engineLoaded ) {
+    RobotInterface::AlexaUXChanged msg;
+    msg.state = _uxState;
+    RobotInterface::SendAnimToEngine( msg );
+    LOG_INFO( "Alexa.SendUXState", "Sending state = %d", (int)_uxState );
+  } else {
+    // the ux state can change before engine init if a timer goes off, for example
+    _pendingUXMsgs = true;
+    LOG_INFO( "Alexa.SendUXState", "Pending state = %d", (int)_uxState );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::TouchOptInFile() const
 {
   const auto& fullPath = GetOptInFilePath();
@@ -278,9 +302,13 @@ const std::string& Alexa::GetOptInFilePath() const
 void Alexa::OnEngineLoaded()
 {
   _engineLoaded = true;
-  if( _pendingEngineMsgs ) {
-    _pendingEngineMsgs = false;
+  if( _pendingAuthMsgs ) {
+    _pendingAuthMsgs = false;
     SendAuthState();
+  }
+  if( _pendingUXMsgs ) {
+    _pendingUXMsgs = false;
+    SendUXState();
   }
 }
   
@@ -294,10 +322,10 @@ void Alexa::SendAuthState()
     msg.extra_length = _authExtra.length();
 
     RobotInterface::SendAnimToEngine( msg );
-    LOG_INFO( "Alexa.SetAuthState", "Setting state = %d", (int)_authState );
+    LOG_INFO( "Alexa.SendAuthState", "Sending state = %d", (int)_authState);
   } else {
-    _pendingEngineMsgs = true;
-    LOG_INFO( "Alexa.SetAuthState", "Pending state = %d", (int)_authState );
+    _pendingAuthMsgs = true;
+    LOG_INFO( "Alexa.SendAuthState", "Pending state = %d", (int)_authState);
   }
 }
   

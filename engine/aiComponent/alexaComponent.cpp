@@ -51,6 +51,7 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
   if( ri != nullptr ) {
     auto callback = std::bind( &AlexaComponent::HandleAnimEvents, this, std::placeholders::_1 );
     _signalHandles.push_back( ri->Subscribe( RobotInterface::RobotToEngineTag::alexaAuthChanged, callback ) );
+    _signalHandles.push_back( ri->Subscribe( RobotInterface::RobotToEngineTag::alexaUXChanged, callback ) );
   }
   auto forceOptIn = [this](ConsoleFunctionContextRef context) {
     SetAlexaOption( true );
@@ -129,6 +130,10 @@ void AlexaComponent::HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEn
       const bool isResponse = false;
       SendAuthStateToApp( isResponse );
     }
+  } else if( msg.GetTag() == RobotInterface::RobotToEngineTag::alexaUXChanged ) {
+    const auto& state = msg.Get_alexaUXChanged().state;
+    // TODO: cache so behaviors can access it. for now, print so it can be seen in webots
+    PRINT_NAMED_WARNING("AlexaComponent.HandleAnimEvents.UXState", "State=%s", AlexaUXStateToString(state) );
   }
 }
   

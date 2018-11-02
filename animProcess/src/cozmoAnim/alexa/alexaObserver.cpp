@@ -56,11 +56,13 @@ AlexaObserver::AlexaObserver()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
                           const OnRequestAuthorizationFunc& onRequestAuthorization,
-                          const OnAuthStateChangeFunc& onAuthStateChange )
+                          const OnAuthStateChangeFunc& onAuthStateChange,
+                          const OnSourcePlaybackChange& onSourcePlaybackChange )
 {
   _onDialogUXStateChanged = onDialogUXStateChanged;
   _onRequestAuthorization = onRequestAuthorization;
   _onAuthStateChange = onAuthStateChange;
+  _onSourcePlaybackChange = onSourcePlaybackChange;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -224,6 +226,53 @@ void AlexaObserver::onCapabilitiesStateChange( CapabilitiesObserverInterface::St
         oss << "UNRECOVERABLE CAPABILITIES API ERROR: " << _capabilitiesError;
         CONSOLE_LOG({oss.str()});
       }
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onPlaybackStarted( SourceId id )
+{
+  auto func = [this,id]() {
+    if( _onSourcePlaybackChange != nullptr ) {
+      _onSourcePlaybackChange( id, true );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onPlaybackFinished( SourceId id )
+{
+  auto func = [this,id]() {
+    if( _onSourcePlaybackChange != nullptr ) {
+      _onSourcePlaybackChange( id, false );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onPlaybackStopped( SourceId id )
+{
+  auto func = [this,id]() {
+    if( _onSourcePlaybackChange != nullptr ) {
+      _onSourcePlaybackChange( id, false );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onPlaybackError( SourceId id,
+                                     const avsCommon::utils::mediaPlayer::ErrorType& type,
+                                     std::string error )
+{
+  PRINT_NAMED_ERROR( "AlexaObserver.onPlaybackError", "Error '%s': %s", errorTypeToString(type).c_str(), error.c_str() );
+  auto func = [this,id]() {
+    if( _onSourcePlaybackChange != nullptr ) {
+      _onSourcePlaybackChange( id, false );
     }
   };
   AddToQueue( std::move(func) );

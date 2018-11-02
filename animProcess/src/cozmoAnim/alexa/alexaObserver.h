@@ -71,9 +71,11 @@ public:
   using OnRequestAuthorizationFunc = std::function<void(const std::string&,const std::string&)>;
   using OnAuthStateChangeFunc = std::function<void(alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::State,
                                                    alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::Error)>;
+  using OnSourcePlaybackChange = std::function<void(alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId,bool errFlag)>;
   void Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
              const OnRequestAuthorizationFunc& onRequestAuthorization,
-             const OnAuthStateChangeFunc& onAuthStateChange );
+             const OnAuthStateChangeFunc& onAuthStateChange,
+             const OnSourcePlaybackChange& onSourcePlaybackChange );
   
   virtual void onDialogUXStateChanged( DialogUXState state ) override;
   
@@ -98,15 +100,15 @@ public:
                                           alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface::Error newError ) override;
   
   // observing speaker state
-  // definitions in a future commit
-  virtual void onPlaybackStarted( SourceId id ) override{}
-  virtual void onPlaybackFinished( SourceId id ) override{}
-  virtual void onPlaybackStopped( SourceId id ) override{}
+  virtual void onPlaybackStarted( SourceId id ) override;
+  virtual void onPlaybackFinished( SourceId id ) override;
+  virtual void onPlaybackStopped( SourceId id ) override;
   virtual void onPlaybackError( SourceId id,
                                 const alexaClientSDK::avsCommon::utils::mediaPlayer::ErrorType& type,
-                                std::string error ) override{}
+                                std::string error ) override;
   
 private:
+  using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
   
   void AddToQueue( std::function<void(void)>&& func );
   
@@ -135,6 +137,7 @@ private:
   OnDialogUXStateChangedFunc _onDialogUXStateChanged;
   OnRequestAuthorizationFunc _onRequestAuthorization;
   OnAuthStateChangeFunc _onAuthStateChange;
+  OnSourcePlaybackChange _onSourcePlaybackChange;
   
   std::mutex _mutex;
   std::queue<std::function<void(void)>> _workQueue;
