@@ -92,7 +92,7 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
                              -kInnerAngle_rad,
                              -kOuterAngle_rad};
 
-  std::vector<RangeData> navMapData;
+  std::vector<Point3f> navMapData;
   
   for(int r = 0; r < TOF_RESOLUTION; r++)
   {
@@ -100,8 +100,8 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 
     for(int c = 0; c < TOF_RESOLUTION; c++)
     {
-      RangeData left;
-      RangeData right;
+      Point3f left;
+      Point3f right;
       
       const f32 yaw = sin(kPixToAngle[c]);
 
@@ -112,11 +112,11 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 
       Pose3d pl(0, Z_AXIS_3D(), {leftDist_mm, yl, zl}, lp, "point");
       Pose3d rootl = pl.GetWithRespectToRoot();
-      _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
-                                                        {3, 3, 3},
-                                                        rootl);
-      left.sensorPoint = lp.GetWithRespectToRoot();
-      left.worldPoint = rootl;
+      // _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
+      //                                                   {3, 3, 3},
+      //                                                   rootl);
+      // left.sensorPoint = lp.GetWithRespectToRoot();
+      // left.worldPoint = rootl.GetTranslation();
       
       const f32 rightDist_mm = data.data[4+c + (r*8)] * 1000;
       const f32 yr = yaw * rightDist_mm;
@@ -124,25 +124,31 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
         
       Pose3d pr(0, Z_AXIS_3D(), {rightDist_mm, yr, zr}, rp, "point");
       Pose3d rootr = pr.GetWithRespectToRoot();
-      _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
-                                                        {3, 3, 3},
-                                                        rootr);
-      right.sensorPoint = rp.GetWithRespectToRoot();
-      right.worldPoint = rootr;
+      // _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
+      //                                                   {3, 3, 3},
+      //                                                   rootr);
+      // right.sensorPoint = rp.GetWithRespectToRoot();
+      // right.worldPoint = rootr.GetTranslation();
 
-      navMapData.push_back(left);
-      navMapData.push_back(right);
+      navMapData.push_back(rootl.GetTranslation());
+      navMapData.push_back(rootr.GetTranslation());
     }
   }
 
   UpdateNavMap(navMapData);
 }
   
-void RangeSensorComponent::UpdateNavMap(const std::vector<RangeData>& data)
+void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data)
 {
-  for(const auto& rangeData : data)
+  int n = 0;
+  for(const auto& pt : data)
   {
-    (void)rangeData;
+    _robot->GetContext()->GetVizManager()->DrawCuboid(n++,
+                                                      {3, 3, 3},
+                                                      Pose3d(0, Z_AXIS_3D(), pt), NEAR(pt.z(), 0.f, 2) ? NamedColors::GREEN : NamedColors::RED);
+
+    if (NEAR(pt.z(), 0.f, 2)) {
+    }
     // TODO Find intersection point of vector formed between rangeData.sensorPoint and rangeData.worldPoint
     // and the XY ground plane to update nav map
   }

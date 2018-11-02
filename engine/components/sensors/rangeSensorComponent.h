@@ -56,12 +56,12 @@ protected:
   
 private:
 
-  struct RangeData
-  {
-    Pose3d sensorPoint;
-    Pose3d worldPoint;
-  };
-  void UpdateNavMap(const std::vector<RangeData>& data);
+  // struct RangeData
+  // {
+  //   Pose3d sensorPoint;
+  //   Pose3d worldPoint;
+  // };
+  void UpdateNavMap(const std::vector<Point3f>& data);
 
   Robot* _robot = nullptr;
   
