@@ -90,6 +90,12 @@ enum uint_16 BehaviorID {
   DanceToTheBeat,
   DanceToTheBeatCoordinator,
   DanceToTheBeatVoiceCommand,
+
+  // victorBehaviorTree/danceToTheBeat/dances
+  DanceBig,
+  DanceSwell,
+
+  // victorBehaviorTree/danceToTheBeat
   ListenForBeats,
   ListenForBeatsLong,
 
@@ -169,6 +175,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   LookInPlaceHeadUp,
+  LookInPlaceHeadUpInAir,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
@@ -190,6 +197,7 @@ enum uint_16 BehaviorID {
   ObservingEyeContact,
   ObservingFindFaces,
   ObservingLookAtFaces,
+  ObservingLookAtFacesInAir,
   ObservingOffChargerHeadOnly,
   ObservingOnCharger,
   ObservingOnChargerEyeContact,
@@ -407,6 +415,11 @@ enum uint_16 BehaviorID {
   UserDefinedBehaviorTreeConfirmNewBehavior,
   UserDefinedBehaviorTreeRouter,
   UserDefinedBehaviorTreeTextToSpeech,
+
+  // victorBehaviorTree/volume
+  Volume,
+
+  // victorBehaviorTree
   Wait,
 
   // victorBehaviorTree/weather/genericResponses

@@ -55,12 +55,18 @@ private:
   
   void TransitionToStuckOnEdge();
   void TransitionToPlayingCliffReaction();
-  void TransitionToBackingUp();
+  void TransitionToRecoveryBackup();
   void TransitionToHeadCalibration();
   void TransitionToVisualExtendCliffs();
+  void TransitionToFaceAndBackAwayCliff();
   
   // Based on which cliff sensor(s) was tripped, create the appropriate reaction
-  CompoundActionSequential* GetCliffReactAction(uint8_t cliffDetectedFlags);
+  IActionRunner* GetCliffReactAction(uint8_t cliffDetectedFlags);
+
+  // returns the cliff pose as estimated using the drop-sensor
+  // note: the cliff in question will be the newly discovered
+  //        one that caused this behavior to be triggered
+  Pose3d GetCliffPoseToLookAt() const;
   
   struct InstanceConfig {
     InstanceConfig();
@@ -75,8 +81,6 @@ private:
   };
 
   InstanceConfig _iConfig;
-
-  float _dramaticCliffReactionPlayableTime_sec = 0.f;  
 
   struct DynamicVariables {
     DynamicVariables();

@@ -71,6 +71,8 @@ protected:
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
   virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) override;
+
+  bool AreScanningLightsEnabled() const;
   
 private:
   
@@ -152,7 +154,7 @@ private:
   void ResetEnrollment();   // Reset to try enrollment again, e.g. before returning to LookingForFace
   
   // helper to see if a user intent was left in the user intent component for us by a parent behavior
-  void CheckForIntentData() const;
+  void CheckForIntentData();
 
   // helper to see if a new face matches the pose of the current face
   inline bool MatchesBasedOnPose(const FaceID_t currentFaceID, const Face* newFace);

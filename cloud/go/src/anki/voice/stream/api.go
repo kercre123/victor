@@ -10,20 +10,25 @@ import (
 
 func NewStreamer(ctx context.Context, receiver Receiver, streamSize int, opts ...Option) *Streamer {
 	strm := &Streamer{
-		conn:        nil,
-		stream:      nil,
 		byteChan:    make(chan []byte),
 		audioStream: make(chan []byte, 10),
 		receiver:    receiver}
 
+	// set default connector before applying options
+	strm.opts.connectFn = strm.newChipperConn
 	for _, o := range opts {
 		o(&strm.opts)
 	}
 
+	var cancel context.CancelFunc
 	if timeout := strm.opts.streamOpts.Timeout; timeout != 0 {
-		strm.ctx, strm.cancel = context.WithTimeout(ctx, timeout)
+		strm.ctx, cancel = context.WithTimeout(ctx, timeout)
 	} else {
-		strm.ctx, strm.cancel = context.WithCancel(ctx)
+		strm.ctx, cancel = context.WithCancel(ctx)
+	}
+	strm.cancel = func() {
+		strm.closed = true
+		cancel()
 	}
 
 	go strm.init(streamSize)
@@ -49,12 +54,8 @@ func (strm *Streamer) AddBytes(bytes []byte) {
 }
 
 func (strm *Streamer) Close() error {
-	strm.closed = true
 	strm.cancel()
 	var err util.Errors
-	if strm.stream != nil {
-		err.Append(strm.stream.Close())
-	}
 	if strm.conn != nil {
 		err.Append(strm.conn.Close())
 	}
@@ -63,8 +64,8 @@ func (strm *Streamer) Close() error {
 
 func (strm *Streamer) CloseSend() error {
 	// ignore if conn check?
-	if strm.stream != nil {
-		return strm.stream.CloseSend()
+	if strm.conn != nil {
+		return strm.conn.CloseSend()
 	}
 	return errors.New("cannot CloseSend on nil stream")
 }

@@ -15,12 +15,13 @@
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/alexa/alexaImpl.h" // impl declaration
 #include "cozmoAnim/animProcessMessages.h"
-#include "clad/types/alexaAuthState.h"
+#include "clad/types/alexaTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -38,14 +39,13 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Alexa::Alexa()
 : _authState{ AlexaAuthState::Uninitialized }
+, _uxState{ AlexaUXState::Idle }
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// these are defined here since AlexaImpl is not defined in the header
+// is defined here since AlexaImpl is not defined in the header
 Alexa::~Alexa() = default;
-Alexa::Alexa(Alexa &&) noexcept = default;
-Alexa& Alexa::operator=(Alexa &&) noexcept = default;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Init(const AnimContext* context)
@@ -89,7 +89,11 @@ void Alexa::SetAlexaActive(bool active)
     CreateImpl();
   } else if( !active && HasImpl() ) {
     DeleteImpl();
-    // todo: tell micDataSystem to NOT use wakeword
+    
+    auto* mds = _context->GetMicDataSystem();
+    if( mds != nullptr ) {
+      mds->SetAlexaActive( false );
+    }
   }
   
   if( !active ) {
@@ -130,28 +134,31 @@ void Alexa::CreateImpl()
   
   _previousCode = "";
   
-  // the impl may also set this state through a callback once it gets to that phase of
-  // initialization, but setting it here ensures that authentication is never pending if
-  // the state is Uninitialized
+  // Set auth state that indicates that we are starting the auth process (RequestingAuth)
+  // Setting this here ensures that authentication is never pending if
+  // the state is Uninitialized. (the impl may also set this state through
+  // a callback once it gets to that phase of initialization, but the current impl
+  // design does not.)
   SetAuthState( AlexaAuthState::RequestingAuth );
   
   _impl = std::make_unique<AlexaImpl>();
+  // set callbacks into this class (in case they occur during init)
+  _impl->SetOnAlexaAuthStateChanged( std::bind( &Alexa::OnAlexaAuthChanged, this,
+                                                std::placeholders::_1,
+                                                std::placeholders::_2,
+                                                std::placeholders::_3 ) );
+  _impl->SetOnAlexaUXStateChanged( std::bind( &Alexa::OnAlexaUXStateChanged, this, std::placeholders::_1 ) );
   const bool success = _impl->Init( _context );
   if( !success ) {
     // initialization was unsuccessful
     SetAlexaActive( false );
-  } else {
-    // set callbacks into this class
-    _impl->SetOnAlexaAuthStateChanged( std::bind( &Alexa::OnAlexaAuthChanged, this,
-                                                  std::placeholders::_1,
-                                                  std::placeholders::_2,
-                                                  std::placeholders::_3 ) );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::DeleteImpl()
 {
+  std::lock_guard<std::mutex> lg{ _implMutex };
   ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" );
   _impl.reset();
   SetAuthState( AlexaAuthState::Uninitialized );
@@ -191,9 +198,12 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
       break;
     case AlexaAuthState::Authorized:
     {
-      // todo: tell micDataSystem to use wakeword
       SetAuthState( state );
       TouchOptInFile();
+      auto* mds = _context->GetMicDataSystem();
+      if( mds != nullptr ) {
+        mds->SetAlexaActive( true );
+      }
     }
       break;
     case AlexaAuthState::Invalid:
@@ -226,6 +236,28 @@ void Alexa::SetAuthState( AlexaAuthState state, const std::string& url, const st
     }
   }
   
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
+{
+  _uxState = newState;
+  SendUXState();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::SendUXState()
+{
+  if( _engineLoaded ) {
+    RobotInterface::AlexaUXChanged msg;
+    msg.state = _uxState;
+    RobotInterface::SendAnimToEngine( msg );
+    LOG_INFO( "Alexa.SendUXState", "Sending state = %d", (int)_uxState );
+  } else {
+    // the ux state can change before engine init if a timer goes off, for example
+    _pendingUXMsgs = true;
+    LOG_INFO( "Alexa.SendUXState", "Pending state = %d", (int)_uxState );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -270,9 +302,13 @@ const std::string& Alexa::GetOptInFilePath() const
 void Alexa::OnEngineLoaded()
 {
   _engineLoaded = true;
-  if( _pendingEngineMsgs ) {
-    _pendingEngineMsgs = false;
+  if( _pendingAuthMsgs ) {
+    _pendingAuthMsgs = false;
     SendAuthState();
+  }
+  if( _pendingUXMsgs ) {
+    _pendingUXMsgs = false;
+    SendUXState();
   }
 }
   
@@ -286,13 +322,45 @@ void Alexa::SendAuthState()
     msg.extra_length = _authExtra.length();
 
     RobotInterface::SendAnimToEngine( msg );
-    LOG_INFO( "Alexa.SetAuthState", "Setting state = %d", (int)_authState );
+    LOG_INFO( "Alexa.SendAuthState", "Sending state = %d", (int)_authState);
   } else {
-    _pendingEngineMsgs = true;
-    LOG_INFO( "Alexa.SetAuthState", "Pending state = %d", (int)_authState );
+    _pendingAuthMsgs = true;
+    LOG_INFO( "Alexa.SendAuthState", "Pending state = %d", (int)_authState);
   }
-
-  
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const
+{
+  // note: this can be called on another thread. guard access to _impl in case it is being deleted.
+  // it might make more sense to move calls to this to the main thread as a precaution, sacrificing a copy
+  std::lock_guard<std::mutex> lg{ _implMutex };
+  if( _impl != nullptr ) {
+    _impl->AddMicrophoneSamples( samples, nSamples );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::NotifyOfTapToTalk() const
+{
+  if( ANKI_VERIFY( _impl != nullptr,
+                   "Alexa.NotifyOfTapToTalk.Disabled",
+                   "Tap-to-talk was issued when alexa was disabled" ) )
+  {
+    _impl->NotifyOfTapToTalk();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::NotifyOfWakeWord( long from_ms, long to_ms ) const
+{
+  if( ANKI_VERIFY( _impl != nullptr,
+                   "Alexa.NotifyOfWakeWord.Disabled",
+                   "Wake word was issued when alexa was disabled" ) )
+  {
+    _impl->NotifyOfWakeWord( from_ms, to_ms );
+  }
+}
+  
 } // namespace Vector
 } // namespace Anki

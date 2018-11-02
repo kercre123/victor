@@ -163,6 +163,23 @@ class BehaviorComponent(util.Component):
         return await self.grpc_interface.DriveOnCharger(drive_on_charger_request)
 
     @connection.on_connection_thread()
+    async def set_eye_color(self, hue: float, saturation: float) -> protocol.SetEyeColorResponse:
+        """Set Vector's eye color.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot() as robot:
+                print("Set Vector's eye color to purple...")
+                robot.behavior.set_eye_color(0.83, 0.76)
+
+        :param hue: The hue to use for Vector's eyes.
+        :param saturation: The saturation to use for Vector's eyes.
+        """
+        eye_color_request = protocol.SetEyeColorRequest(hue=hue, saturation=saturation)
+        return await self.conn.grpc_interface.SetEyeColor(eye_color_request)
+
+    @connection.on_connection_thread()
     async def go_to_pose(self,
                          pose: util.Pose,
                          relative_to_robot: bool = False,

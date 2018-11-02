@@ -41,9 +41,9 @@ namespace {
 enum class SupportedLocales
 {
   enUS_1mb, // default
+  enUS_500kb,
+  enUS_250kb,
   enUS_Alt_1mb,
-  enUS_Alt_500kb,
-  enUS_Alt_250kb,
   enUK,
   enAU,
   frFR,
@@ -63,14 +63,13 @@ struct TriggerModelTypeData
 const TriggerModelTypeData kTriggerModelDataList[] =
 {
   // Easily selectable values for consolevar dropdown. Note 'Count' and '-1' values indicate to use default
-  
-  // We are using delivery 2 as our defualt enUS model
+  // We are using delivery 1 as our defualt enUS model
   { .locale = Util::Locale("en","US"), .modelType = MicConfigModelType::size_1mb, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","US"), .modelType = MicConfigModelType::size_500kb, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","US"), .modelType = MicConfigModelType::size_250kb, .searchFileIndex = -1 },
   // This is a hack to add a second en_US model, it will appear in console vars as `enUS_Alt_1mb`
-  // This is delivery 1 model
+  // This is delivery 2 model
   { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_1mb, .searchFileIndex = -1 },
-  { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_500kb, .searchFileIndex = -1 },
-  { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_250kb, .searchFileIndex = -1 },
   // Other Locales
   { .locale = Util::Locale("en","GB"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
   { .locale = Util::Locale("en","AU"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
@@ -80,9 +79,9 @@ const TriggerModelTypeData kTriggerModelDataList[] =
 constexpr size_t kTriggerDataListLen = sizeof(kTriggerModelDataList) / sizeof(kTriggerModelDataList[0]);
 static_assert(kTriggerDataListLen == (size_t) SupportedLocales::Count, "Need trigger data for each supported locale");
 
-size_t _recognizerModelTypeIndex = (size_t) SupportedLocales::enUS_1mb;
+size_t _recognizerModelTypeIndex = (size_t) SupportedLocales::enUS_500kb;
 CONSOLE_VAR_ENUM(size_t, kRecognizerModel, CONSOLE_GROUP, _recognizerModelTypeIndex,
-                 "enUS_1mb,enUS_Alt_1mb,enUS_Alt_500kb,enUS_Alt_250kb,enUK,enAU,frFR,deDE");
+                 "enUS_1mb,enUS_500kb,enUS_250kb,enUS_Alt_1mb,enUK,enAU,frFR,deDE");
 
 int _triggerModelSensitivityIndex = 0;
 CONSOLE_VAR_ENUM(int, kRecognizerModelSensitivity, CONSOLE_GROUP, _triggerModelSensitivityIndex,
@@ -116,6 +115,7 @@ void SpeechRecognizerSystem::SetupConsoleFuncs()
 
   sConsoleFuncs.emplace_front("UpdateRecognizerModel", std::move(updateRecognizerModel), CONSOLE_GROUP, "");
 #endif
+  _micDataSystem->GetSpeakerLatency_ms(); // Fix compiler error when ANKI_DEV_CHEATS is not enabled
 }
 
 # undef CONSOLE_GROUP

@@ -82,6 +82,7 @@ static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfConditi
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const char* kDisplayIntentActivity            = "showActiveIntentFeedback";
+static const char* kIntentActivityShutOff            = "autoShutOffIntentFeedback";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
@@ -323,7 +324,9 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     }
   }
 
-  JsonTools::GetValueOptional(config, kDisplayIntentActivity, _displayResponseToUserIntent);
+  // set our feedback response type based on our config bools.
+  JsonTools::GetValueOptional(config, kDisplayIntentActivity, _showActiveIntentFeedback);
+  JsonTools::GetValueOptional(config, kIntentActivityShutOff, _autoShutOffActiveIntentFeedback);
 
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
 
@@ -400,7 +403,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
       }
     }
   }
-  
+
   return true;
 }
 
@@ -446,6 +449,7 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kRespondToUserIntentsKey,
     kRespondToTriggerWordKey,
     kDisplayIntentActivity,
+    kIntentActivityShutOff,
     kEmotionEventOnActivatedKey,
     kResetTimersKey,
     kAnonymousBehaviorMapKey,
@@ -1235,7 +1239,6 @@ void ICozmoBehavior::UpdateInternal()
         return;
       }
     }
-
   } // end IsActivated
 }
 
@@ -1627,28 +1630,42 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 {
-  return SmartActivateUserIntent(tag, _displayResponseToUserIntent);
+  return SmartActivateUserIntent(tag, _showActiveIntentFeedback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag, bool showActiveIntentFeedback)
+UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag, bool showFeedback)
 {
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
-
   // track the tag so that we can automatically deactivate it when this behavior deactivates
   _intentToDeactivate = tag;
 
-  return uic.ActivateUserIntent(tag, GetDebugLabel(), showActiveIntentFeedback);
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  return uic.ActivateUserIntent(tag, GetDebugLabel(), showFeedback, _autoShutOffActiveIntentFeedback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartDeactivateUserIntent()
 {
   if( _intentToDeactivate != UserIntentTag::INVALID ) {
-    auto& uic = GetBehaviorComp<UserIntentComponent>();
-    uic.DeactivateUserIntent( _intentToDeactivate );
+    DeactivateUserIntentHelper(_intentToDeactivate);
     _intentToDeactivate = UserIntentTag::INVALID;
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UserIntentPtr ICozmoBehavior::ActivateUserIntentHelper(UserIntentTag tag, const std::string& owner)
+{
+  const std::string& ownerLabel = owner.empty() ? GetDebugLabel() : owner;
+
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  return uic.ActivateUserIntent(tag, ownerLabel, _showActiveIntentFeedback, _autoShutOffActiveIntentFeedback);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::DeactivateUserIntentHelper(UserIntentTag tag)
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  uic.DeactivateUserIntent(tag);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

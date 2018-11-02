@@ -263,7 +263,8 @@ namespace Vector {
     std::unique_ptr<ImageSaver>                     _imageSaver;
     std::unique_ptr<MirrorModeManager>              _mirrorModeManager;
     std::unique_ptr<Vision::Benchmark>              _benchmark;
-    std::unique_ptr<Vision::NeuralNetRunner>        _neuralNetRunner;
+    
+    std::map<std::string, std::unique_ptr<Vision::NeuralNetRunner>> _neuralNetRunners;
     
     RobotTimeStamp_t                                _neuralNetRunnerTimestamp = 0;
     

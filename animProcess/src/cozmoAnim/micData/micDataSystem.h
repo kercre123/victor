@@ -99,6 +99,8 @@ public:
   const Anki::Vector::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
+  
+  void SetAlexaActive(bool active);
 
   void UpdateLocale(const Util::Locale& newLocale);
   

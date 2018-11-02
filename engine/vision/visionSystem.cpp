@@ -34,6 +34,7 @@
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/vision/engine/benchmark.h"
 #include "coretech/vision/engine/cameraParamsController.h"
 #include "coretech/vision/engine/faceTracker.h"
@@ -42,8 +43,6 @@
 #include "coretech/vision/engine/markerDetector.h"
 #include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/petTracker.h"
-
-#include "coretech/vision/engine/neonMacros.h"
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -117,11 +116,6 @@ CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
   
-#if REMOTE_CONSOLE_ENABLED
-// If non-zero, toggles the corresponding VisionMode and sets back to 0
-CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
-#endif
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
   // These are initialized from Json config:
@@ -159,7 +153,6 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _imageSaver(new ImageSaver())
 , _mirrorModeManager(new MirrorModeManager())
 , _benchmark(new Vision::Benchmark())
-, _neuralNetRunner(new Vision::NeuralNetRunner())
 , _clahe(cv::createCLAHE())
 {
   DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -284,7 +277,7 @@ Result VisionSystem::Init(const Json::Value& config)
     return petTrackerInitResult;
   }
   
-  if(!config.isMember("NeuralNets"))
+  if(!config.isMember(NeuralNets::JsonKeys::NeuralNets))
   {
     PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetsConfigField", "");
     return RESULT_FAIL;
@@ -293,7 +286,21 @@ Result VisionSystem::Init(const Json::Value& config)
   const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
   if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
   {
-    const Json::Value& neuralNetConfig = config["NeuralNets"];
+    const Json::Value& neuralNetConfig = config[NeuralNets::JsonKeys::NeuralNets];
+    
+    if(!neuralNetConfig.isMember(NeuralNets::JsonKeys::Models))
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetsModelsConfigField", "");
+      return RESULT_FAIL;
+    }
+    
+    const Json::Value& modelsConfig = neuralNetConfig[NeuralNets::JsonKeys::Models];
+    
+    if(!modelsConfig.isArray())
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetsModelsConfigNotArray", "");
+      return RESULT_FAIL;
+    }
     
 #   ifdef VICOS
     // Use faster tmpfs partition for the cache, to make I/O less of a bottleneck
@@ -301,12 +308,31 @@ Result VisionSystem::Init(const Json::Value& config)
 #   else
     const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
 #   endif
-    Result neuralNetResult = _neuralNetRunner->Init(modelPath,
-                                                    dnnCachePath,
-                                                    neuralNetConfig);
-    if(RESULT_OK != neuralNetResult)
+    
+    for(const auto& modelConfig : modelsConfig)
     {
-      PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetInitFailed", "");
+      if(!modelConfig.isMember(NeuralNets::JsonKeys::NetworkName))
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetModelName", "");
+        continue;
+      }
+      
+      const std::string& name = modelConfig[NeuralNets::JsonKeys::NetworkName].asString();
+      auto addModelResult = _neuralNetRunners.emplace(name, new Vision::NeuralNetRunner());
+      if(!addModelResult.second)
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.DuplicateNeuralNetModelName", "%s", name.c_str());
+        continue;
+      }
+      std::unique_ptr<Vision::NeuralNetRunner>& neuralNetRunner = addModelResult.first->second;
+      Result neuralNetResult = neuralNetRunner->Init(modelPath,
+                                                     dnnCachePath,
+                                                     modelConfig);
+      if(RESULT_OK != neuralNetResult)
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetInitFailed", "Name: %s", name.c_str());
+        continue;
+      }
     }
   }
    
@@ -1222,14 +1248,26 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   return lastResult;
   
 } // DetectMarkersWithCLAHE()
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
 {
-  const bool resultReady = _neuralNetRunner->GetDetections(_currentResult.salientPoints);
-  if(resultReady)
+  for(const auto& neuralNetRunner : _neuralNetRunners)
   {
-    _currentResult.modesProcessed.Insert(VisionMode::RunningNeuralNet);
+    const bool resultReady = neuralNetRunner.second->GetDetections(_currentResult.salientPoints);
+    if(resultReady)
+    {
+      std::set<VisionMode> modes;
+      const bool success = GetVisionModesForNeuralNet(neuralNetRunner.first, modes);
+      if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
+                     neuralNetRunner.first.c_str()))
+      {
+        for(auto & mode : modes)
+        {
+          _currentResult.modesProcessed.Insert(mode);
+        }
+      }
+    }
   }
 }
 
@@ -1540,9 +1578,27 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // VisionProcessingResult.
   CheckForNeuralNetResults();
   
-  if(IsModeEnabled(VisionMode::RunningNeuralNet))
+  // Figure out if any modes requiring neural nets are enabled and keep up with the
+  // set of networks needed to satisfy those modes (multiple modes could use the same
+  // network!)
+  std::set<std::string> networksToRun;
+  for(const auto& mode : GetVisionModesUsingNeuralNets())
   {
-    const bool started = _neuralNetRunner->StartProcessingIfIdle(imageCache);
+    if(IsModeEnabled(mode))
+    {
+      std::set<std::string> networkNames;
+      const bool success = GetNeuralNetsForVisionMode(mode, networkNames);
+      if(ANKI_VERIFY(success, "VisionSystem.Update.NoNetworkForMode", "%s", EnumToString(mode)))
+      {
+        networksToRun.insert(networkNames.begin(), networkNames.end());
+      }
+    }
+  }
+  
+  // Run the set of required networks
+  for(const auto& networkName : networksToRun)
+  {
+    const bool started = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
     if(started)
     {
       // Remember the timestamp of the image used to do object detection

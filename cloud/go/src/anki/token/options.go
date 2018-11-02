@@ -1,10 +1,10 @@
 package token
 
-import "anki/token/jwt"
+import "anki/token/identity"
 
 type options struct {
 	server           bool
-	identityProvider *jwt.IdentityProvider
+	identityProvider identity.Provider
 	socketNameSuffix string
 }
 
@@ -20,7 +20,7 @@ func WithServer() Option {
 }
 
 // WithIdentityProvider specifies a non-default identity provider
-func WithIdentityProvider(identityProvider *jwt.IdentityProvider) Option {
+func WithIdentityProvider(identityProvider identity.Provider) Option {
 	return func(o *options) {
 		o.identityProvider = identityProvider
 	}

@@ -1,7 +1,7 @@
 package token
 
 import (
-	"anki/token/jwt"
+	"anki/token/identity"
 	"anki/util"
 	"clad/cloud"
 	"fmt"
@@ -13,11 +13,12 @@ import (
 type Accessor interface {
 	Credentials() (gc.PerRPCCredentials, error)
 	GetStsCredentials() (*ac.Credentials, error)
+	IdentityProvider() identity.Provider
 	UserID() string
 }
 
 type accessor struct {
-	identityProvider *jwt.IdentityProvider
+	identityProvider identity.Provider
 }
 
 func (accessor) Credentials() (gc.PerRPCCredentials, error) {
@@ -45,7 +46,11 @@ func (a accessor) UserID() string {
 	return token.UserID()
 }
 
-func GetAccessor(identityProvider *jwt.IdentityProvider) Accessor {
+func (a accessor) IdentityProvider() identity.Provider {
+	return a.identityProvider
+}
+
+func GetAccessor(identityProvider identity.Provider) Accessor {
 	return accessor{identityProvider}
 }
 

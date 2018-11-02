@@ -672,6 +672,13 @@ void MicDataSystem::ResetBeatDetector()
 {
   _micDataProcessor->GetBeatDetector().Start();
 }
+  
+void MicDataSystem::SetAlexaActive(bool active)
+{
+  // Tell micDataProcessor Alexa is active
+  _micDataProcessor->SetAlexaActive(active);
+  // TODO: toggle "Alexa" wake word in SpeechRecognizerSystem
+}
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 {

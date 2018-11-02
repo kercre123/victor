@@ -754,13 +754,8 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   static BaseStationTime_t displayFaultCodeTime_nanosec = 0;
 
   // Amount of time for which we must be disconnected from the engine in order
-  // to display the NO_ENGINE_COMMS fault code. For developer builds, fail fast
-  // to capture a crash report of engine's current state.
-  #if defined(VICOS) && ANKI_DEV_CHEATS
-  static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(0.5);
-  #else
+  // to display the NO_ENGINE_COMMS fault code.
   static const BaseStationTime_t kDisconnectedTimeout_ns = Util::SecToNanoSec(5.f);
-  #endif
 
   // Check for changes in connection state to engine and send RobotAvailable
   // message when engine connects

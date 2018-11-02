@@ -128,6 +128,7 @@ public:
 
   // return true of the specified region contains any objects of known collision types
   bool CheckForCollisions(const BoundedConvexSet2f& region) const;
+  bool CheckForCollisions(const BoundedConvexSet2f& region, const MemoryMapTypes::NodePredicate& pred) const;
 
   // returns the accumulated area of cells in mm^2 in the current map that satisfy the predicate (and region, if supplied)
   float GetCollisionArea(const BoundedConvexSet2f& region) const;
@@ -185,6 +186,20 @@ private:
   void TimeoutObjects();
   
   void SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const;
+
+  // given a set of vision-detected edge points (projected to the robot frame)
+  // determines a refinement on the newest cliff's pose, based on known cliff
+  // data.
+  // Returns true if such a refinement exists
+  bool RefineNewCliffPose(const std::vector<Point2f>& points,
+                          MemoryMapTypes::MemoryMapDataConstPtr newCliffNode,
+                          const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& oldCliffNodes,
+                          Pose3d& refinedCliffPose) const;
+
+  // helper method to retrieve all unique cliff positions in the current map
+  // note: unique because multiple cells in the QT are associated with the same
+  //       cliff object, which has one pose (determined at the time it was sensed)
+  Result FindSensorDetectedCliffs(std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& cliffNodes) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Vision border detection

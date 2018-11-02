@@ -249,3 +249,6 @@ def test_alexa_opt_in(vector_connection, data):
 ])
 def test_alexa_opt_out(vector_connection, data):
     vector_connection.send_raw("v1/alexa_opt_in", data, p.AlexaOptInResponse())
+
+def test_set_eye_color(vector_connection):
+    vector_connection.send("v1/set_eye_color", p.SetEyeColorRequest(), p.SetEyeColorResponse())

@@ -193,6 +193,11 @@ void BehaviorLookAroundInPlace::LoadConfig(const Json::Value& config)
     _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec", debugName);
   }
   
+  if( config.isMember("behavior_TrackTurnProgress") ) {
+    _configParams.behavior_TrackTurnProgress = ParseBool(config, "behavior_TrackTurnProgress", debugName);
+  } else {
+    _configParams.behavior_TrackTurnProgress = false;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -588,6 +593,7 @@ IAction* BehaviorLookAroundInPlace::CreateBodyAndHeadTurnAction(
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   
   PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+  turnAction->EnableTurnProgressTrackingTimeout(_configParams.behavior_TrackTurnProgress);
 
   if( _configParams.customMotionProfile == nullptr ) {
     // only set speeds if the motion profile won't be doing it for us

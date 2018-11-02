@@ -12,6 +12,7 @@
 
 #ifndef __Engine_AiComponent_AlexaComponent_H__
 #define __Engine_AiComponent_AlexaComponent_H__
+#pragma once
 
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -21,6 +22,11 @@
 #include <list>
 
 namespace Anki {
+
+namespace Util {
+  class IConsoleFunction;
+}
+  
 namespace Vector {
 
 namespace external_interface {
@@ -59,11 +65,13 @@ private:
   
   Robot& _robot;
   std::list<Signal::SmartHandle> _signalHandles;
+  std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
   
   AlexaAuthState _authState;
   std::string _authStateExtra;
   
   bool _featureFlagEnabled = false;
+  
 };
 
 } // namespace Vector

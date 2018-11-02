@@ -29,10 +29,15 @@ type options struct {
 	testUserPassword *string
 
 	heartBeatInterval       time.Duration
-	jdocsInterval           time.Duration
-	logCollectorInterval    time.Duration
+	heartBeatStdDev         time.Duration
 	tokenRefreshInterval    time.Duration
+	tokenRefreshStdDev      time.Duration
+	jdocsInterval           time.Duration
+	jdocsStdDev             time.Duration
+	logCollectorInterval    time.Duration
+	logCollectorStdDev      time.Duration
 	connectionCheckInterval time.Duration
+	connectionCheckStdDev   time.Duration
 }
 
 func parseIntervalString(intervalStr *string) time.Duration {
@@ -127,45 +132,87 @@ func newFromEnvironment(app *cli.Cli) *options {
 	})
 
 	heartBeatInterval := app.String(cli.StringOpt{
-		Name:   "h heart-beat-interval",
-		Desc:   "Periodic heart beat interval",
+		Name:   "heart-beat-interval",
+		Desc:   "Periodic heart beat interval (time.Duration string)",
 		EnvVar: "HEART_BEAT_INTERVAL",
 		Value:  "30s",
 	})
 
 	jdocsInterval := app.String(cli.StringOpt{
-		Name:   "j jdocs-interval",
-		Desc:   "Periodic interval for JDOCS read / write",
+		Name:   "jdocs-interval",
+		Desc:   "Periodic interval for JDOCS read / write (time.Duration string)",
 		EnvVar: "JDOCS_INTERVAL",
 		Value:  "5m",
 	})
 
 	logCollectorInterval := app.String(cli.StringOpt{
-		Name:   "l log-collector-interval",
-		Desc:   "Periodic interval for log collector upload",
+		Name:   "log-collector-interval",
+		Desc:   "Periodic interval for log collector upload (time.Duration string)",
 		EnvVar: "LOG_COLLECTOR_INTERVAL",
 		Value:  "30m",
 	})
 
 	tokenRefreshInterval := app.String(cli.StringOpt{
-		Name:   "t token-refresh-interval",
-		Desc:   "Periodic interval for token refresh",
+		Name:   "token-refresh-interval",
+		Desc:   "Periodic interval for token refresh (time.Duration string)",
 		EnvVar: "TOKEN_REFRESH_INTERVAL",
 		Value:  "0",
 	})
 
 	connectionCheckInterval := app.String(cli.StringOpt{
-		Name:   "c connection-check-interval",
-		Desc:   "Periodic interval for voice connection check",
+		Name:   "connection-check-interval",
+		Desc:   "Periodic interval for voice connection check (time.Duration string)",
 		EnvVar: "CONNECTION_CHECK_INTERVAL",
 		Value:  "5m",
 	})
 
+	heartBeatStdDev := app.String(cli.StringOpt{
+		Name:   "heart-beat-stddev",
+		Desc:   "Periodic standard deviation for heart beat (time.Duration string)",
+		EnvVar: "HEART_BEAT_STDDEV",
+		Value:  "0",
+	})
+
+	jdocsStdDev := app.String(cli.StringOpt{
+		Name:   "jdocs-stddev",
+		Desc:   "Periodic standard deviation for JDOCS read / write (time.Duration string)",
+		EnvVar: "JDOCS_STDDEV",
+		Value:  "0",
+	})
+
+	logCollectorStdDev := app.String(cli.StringOpt{
+		Name:   "log-collector-stddev",
+		Desc:   "Periodic standard deviation for log collector upload (time.Duration string)",
+		EnvVar: "LOG_COLLECTOR_STDDEV",
+		Value:  "0",
+	})
+
+	tokenRefreshStdDev := app.String(cli.StringOpt{
+		Name:   "token-refresh-stddev",
+		Desc:   "Periodic standard deviation for token refresh (time.Duration string)",
+		EnvVar: "TOKEN_REFRESH_STDDEV",
+		Value:  "0",
+	})
+
+	connectionCheckStdDev := app.String(cli.StringOpt{
+		Name:   "connection-check-stddev",
+		Desc:   "Periodic standrd deviation for voice connection check (time.Duration string)",
+		EnvVar: "CONNECTION_CHECK_STDDEV",
+		Value:  "5m",
+	})
+
+	// Note this only works for environment variables
 	options.heartBeatInterval = parseIntervalString(heartBeatInterval)
 	options.jdocsInterval = parseIntervalString(jdocsInterval)
 	options.logCollectorInterval = parseIntervalString(logCollectorInterval)
 	options.tokenRefreshInterval = parseIntervalString(tokenRefreshInterval)
 	options.connectionCheckInterval = parseIntervalString(connectionCheckInterval)
+
+	options.heartBeatStdDev = parseIntervalString(heartBeatStdDev)
+	options.jdocsStdDev = parseIntervalString(jdocsStdDev)
+	options.logCollectorStdDev = parseIntervalString(logCollectorStdDev)
+	options.tokenRefreshStdDev = parseIntervalString(tokenRefreshStdDev)
+	options.connectionCheckStdDev = parseIntervalString(connectionCheckStdDev)
 
 	return options
 }

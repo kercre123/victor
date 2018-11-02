@@ -17,7 +17,7 @@
 #include "proto/external_interface/messages.pb.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/alexaAuthState.h"
+#include "clad/types/alexaTypes.h"
 #include "clad/types/behaviorComponent/attentionTransferTypes.h"
 
 

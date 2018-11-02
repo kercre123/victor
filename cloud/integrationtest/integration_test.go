@@ -5,7 +5,7 @@ package main
 
 import (
 	"anki/robot"
-	"anki/token"
+	"anki/token/identity"
 	"ankidev/accounts"
 	"clad/cloud"
 	"testing"
@@ -39,7 +39,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.options.finalizeIdentity(provider)
 
 	// Enable client certs and set custom key pair dir (for this user)
-	token.UseClientCert = true
+	identity.UseClientCert = true
 	robot.DefaultCloudDir = *s.options.defaultCloudDir
 
 	s.robotInstance = newTestableRobot(*s.options.testID, *s.options.urlConfigFile)

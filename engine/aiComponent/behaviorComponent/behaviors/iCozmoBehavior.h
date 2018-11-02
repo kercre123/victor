@@ -262,6 +262,9 @@ public:
 
   // if an active feature is associated with this behavior, return true and set it in arguments
   bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
+
+  UserIntentPtr ActivateUserIntentHelper(UserIntentTag tag, const std::string& owner = "");
+  void DeactivateUserIntentHelper(UserIntentTag tag);
   
   std::map<std::string,ICozmoBehaviorPtr> TESTONLY_GetAnonBehaviors( UnitTestKey key ) const;
 
@@ -498,7 +501,7 @@ protected:
   // deactivated. For convenience (in the case where there is extra intent data), a pointer the the intent is
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
-  UserIntentPtr SmartActivateUserIntent(UserIntentTag tag, bool showActiveIntentFeedback);
+  UserIntentPtr SmartActivateUserIntent(UserIntentTag tag, bool showFeedback);
   
   // de-activate an intent activated through the smart function above.
   void SmartDeactivateUserIntent();
@@ -605,7 +608,8 @@ private:
   //    the absence of other negative conditions), and
   // 2) Clear the intent when the behavior is activated
   std::shared_ptr< ConditionUserIntentPending > _respondToUserIntent;
-  bool _displayResponseToUserIntent = true;
+  bool _showActiveIntentFeedback = true;
+  bool _autoShutOffActiveIntentFeedback = false;
 
   // The tag of the intent that should be deactivated when this behavior deactivates
   UserIntentTag _intentToDeactivate;

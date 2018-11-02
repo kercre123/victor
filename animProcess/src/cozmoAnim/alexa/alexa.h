@@ -14,9 +14,12 @@
 
 #ifndef ANIMPROCESS_COZMO_ALEXA_H
 #define ANIMPROCESS_COZMO_ALEXA_H
+#pragma once
 
+#include "audioUtil/audioDataTypes.h"
 #include <memory>
 #include <string>
+#include <mutex>
 
 namespace Anki {
 namespace Vector {
@@ -24,6 +27,7 @@ namespace Vector {
 class AlexaImpl;
 class AnimContext;
 enum class AlexaAuthState : uint8_t;
+enum class AlexaUXState : uint8_t;
 
 class Alexa
 {
@@ -31,10 +35,6 @@ public:
   
   Alexa();
   ~Alexa();
-  
-  // movable (and implicitly noncopyable)
-  Alexa(Alexa&& other) noexcept;
-  Alexa& operator=(Alexa&& other) noexcept;
   
   void Init(const AnimContext* context);
   
@@ -46,6 +46,13 @@ public:
   void CancelPendingAlexaAuth();
   
   void OnEngineLoaded();
+  
+  // Adds samples to the mic stream buffer. Should be ok to call on another thread
+  void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
+  
+  void NotifyOfTapToTalk() const;
+  
+  void NotifyOfWakeWord( long from_ms, long to_ms ) const;
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -60,14 +67,19 @@ private:
   // called when SDK auth state changes
   void OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code );
   
+  // called when SDK dialog or media player state changes
+  void OnAlexaUXStateChanged( AlexaUXState newState );
+  
   void CreateImpl();
   void DeleteImpl();
   bool HasImpl() const { return _impl != nullptr; }
   
   // sets this class's _authState and messages engine if it changes
   void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );
-  // actually messages engine
+  
+  // messages engine
   void SendAuthState();
+  void SendUXState();
   
   // helpers for the file that indicates whether the last robot run ended during an authenticated session
   const std::string& GetOptInFilePath() const;
@@ -83,12 +95,18 @@ private:
   AlexaAuthState _authState;
   std::string _authExtra;
   bool _engineLoaded = false;
-  bool _pendingEngineMsgs = false;
+  bool _pendingAuthMsgs = false;
+  bool _pendingUXMsgs = false;
+  
+  AlexaUXState _uxState;
+  
   
   // whether a message was received from engine saying to opt in
   bool _userOptedIn = false;
   // if during an authentication the state was ever WaitingForCode, this is the most recent code
   std::string _previousCode;
+  
+  mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
 };
 
 

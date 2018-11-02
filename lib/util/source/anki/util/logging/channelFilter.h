@@ -28,13 +28,19 @@ namespace Util {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // ChannelVar: console var
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-struct ChannelVar {
+struct ChannelVar : public ConsoleVar<bool> {
   ChannelVar(const std::string& name, bool defaultEnable, bool unregisterInDestructor)
-  : enable(defaultEnable)
-  , cvar(enable, name.c_str(), "Channels", unregisterInDestructor) {}
-  
+  : ConsoleVar<bool>(enable, name.c_str(), "Channels", unregisterInDestructor)
+  , enable(defaultEnable) {
+  }
+
+  virtual void ToggleValue() override {
+    ConsoleVar<bool>::ToggleValue();
+
+    // report back to channel filter if required
+  }
+
   bool enable; // variable where the value is stored
-  ConsoleVar<bool> cvar; // consoleVar provider (for console var menu) that links to the storage variable 'enable'
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,9 +57,7 @@ public:
   
   void EnableChannel(const std::string& channelName);
   void DisableChannel(const std::string& channelName);
-  void RegisterChannel(const std::string& channelName, bool defaultEnableStatus, bool unregisterInDestructor);
-  bool IsChannelRegistered(const std::string& channelName) const;
-  
+
   // IChannelFilter API
   virtual bool IsChannelEnabled(const std::string& channelName) const override;
   

@@ -34,6 +34,7 @@
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
+#include <memory>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -107,6 +108,16 @@ f32 TextToSpeechComponent::GetEstimatedDuration_ms(const std::string & text)
   return (text.size() * 1000.f / 4.0f);
 }
 
+f32 TextToSpeechComponent::GetDuration_ms(const StreamingWaveDataPtr & waveData)
+{
+  return (waveData ? waveData->GetApproximateTimeReceived_sec() * 1000.f : 0.f);
+}
+
+f32 TextToSpeechComponent::GetDuration_ms(const BundlePtr & bundle)
+{
+  return (bundle ? GetDuration_ms(bundle->waveData) : 0.f);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
                                            const TextToSpeechTriggerMode triggerMode,
@@ -137,7 +148,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
   // Set trailing silence pause to 10 ms and add punctuation to the end of the string
   ttsStr += " \\pau=10\\";
   ttsStr.push_back(lastChar);
-  
+
   // Get an empty data instance
   auto waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
 
@@ -222,7 +233,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
         return;
       }
 
-      const f32 duration_ms = waveData->GetApproximateTimeReceived_sec() * 1000.f;
+      const f32 duration_ms = GetDuration_ms(waveData);
 
       if (!sentPlayable) {
         LOG_DEBUG("TextToSpeechComponent.CreateSpeech", "TTSID %d audio is ready to play", ttsID);
@@ -273,7 +284,7 @@ bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
 
   // Set OUT value
   // TBD: How do we estimate duration of streaming audio?
-  out_duration_ms = (waveData->GetApproximateTimeReceived_sec() * 1000.f);
+  out_duration_ms = GetDuration_ms(waveData);
 
   auto * pluginInterface = _audioController->GetPluginInterface();
   DEV_ASSERT(nullptr != pluginInterface, "TextToSpeechComponent.PrepareAudioEngine.InvalidPluginInterface");
@@ -583,7 +594,9 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
 
   LOG_INFO("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d will play for %.2f ms", ttsID, duration_ms);
 
-  // Post audio event?
+  // Post audio event? For manual triggers, post event now and notify engine that playback is in progress.
+  // For keyframe events, event will be posted by AnimationAudioClient and engine will be notified by
+  // callback to OnAudioPlaying.
   if (triggerMode == TextToSpeechTriggerMode::Manual) {
     if (!PostAudioEvent(ttsID)) {
       LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "Unable to post audio event for ttsID %d", ttsID);
@@ -591,10 +604,8 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
       CleanupAudioEngine(ttsID);
       return;
     }
+    SendAnimToEngine(ttsID, TextToSpeechState::Playing, duration_ms);
   }
-
-  // Notify engine
-  SendAnimToEngine(ttsID, TextToSpeechState::Playing, duration_ms);
 
 }
 
@@ -657,7 +668,7 @@ void TextToSpeechComponent::OnStatePlayable(const TTSID_t ttsID, f32 duration_ms
     return;
   }
 
-// Notify engine that tts request is now playable.
+  // Notify engine that tts request is now playable.
   SendAnimToEngine(ttsID, TextToSpeechState::Playable, duration_ms);
 
   //
@@ -684,7 +695,7 @@ void TextToSpeechComponent::OnStatePlayable(const TTSID_t ttsID, f32 duration_ms
       return;
     }
     LOG_INFO("TextToSpeech.OnStatePlayable", "ttsID %d will play for at least %.2f ms", ttsID, duration_ms);
-    SendAnimToEngine(ttsID, TextToSpeechState::Playing);
+    SendAnimToEngine(ttsID, TextToSpeechState::Playing, duration_ms);
   }
 }
 
@@ -768,6 +779,26 @@ void TextToSpeechComponent::SetLocale(const std::string & locale)
 
 }
 
+//
+// Called by audio engine to handle keyframe playback start
+//
+void TextToSpeechComponent::OnAudioPlaying(const TTSID_t ttsID)
+{
+  LOG_DEBUG("TextToSpeechComponent.OnAudioPlaying", "Now playing ttsID %d", ttsID);
+  auto bundle = GetBundle(ttsID);
+  if (!bundle) {
+    LOG_ERROR("TextToSpeechComponent.OnAudioPlaying", "ttsID %d not found", ttsID);
+    return;
+  }
+
+  // Notify engine that TTS is now playing
+  SendAnimToEngine(ttsID, TextToSpeechState::Playing, GetDuration_ms(bundle));
+
+}
+
+//
+// Called by audio engine to handle keyframe playback complete
+//
 void TextToSpeechComponent::OnAudioComplete(const TTSID_t ttsID)
 {
   LOG_DEBUG("TextToSpeechComponent.OnAudioComplete", "Finished playing ttsID %d", ttsID);
@@ -777,11 +808,15 @@ void TextToSpeechComponent::OnAudioComplete(const TTSID_t ttsID)
     return;
   }
 
+  // Notify engine that TTS is complete
   SendAnimToEngine(ttsID, TextToSpeechState::Finished);
   ClearOperationData(ttsID);
 
 }
 
+//
+// Called by audio engine to handle keyframe playback error
+//
 void TextToSpeechComponent::OnAudioError(const TTSID_t ttsID)
 {
   LOG_DEBUG("TextToSpeechComponent.OnAudioError", "Error playing ttsID %d ", ttsID);

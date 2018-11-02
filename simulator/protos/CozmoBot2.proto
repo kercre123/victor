@@ -706,7 +706,7 @@ Supervisor {
             }
             PositionSensor {
               name "LeftWheelMotorPosSensor"
-              resolution 0.001
+              resolution 0.0001
             }
           ]
           %{ end }%
@@ -746,7 +746,7 @@ Supervisor {
             }
             PositionSensor {
               name "RightWheelMotorPosSensor"
-              resolution 0.001
+              resolution 0.0001
             }
           ]
           %{ end }%

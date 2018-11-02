@@ -183,6 +183,11 @@ namespace Anki {
         PowerModeManager::EnableActiveMode(!msg.enable, msg.calibOnDisable);
       }
 
+      void Process_autoCalmOnCharger(const RobotInterface::AutoCalmOnCharger& msg)
+      {
+        PowerModeManager::SuppressAutoDisableOnCharger(msg.suppress);
+      }
+
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
       {
         // Don't modify localization while running path following test.

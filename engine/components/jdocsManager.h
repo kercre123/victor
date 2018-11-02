@@ -129,6 +129,7 @@ private:
   // We save currTime_s here each tick, because we need it in the destructor, and by then BasetationTimer is gone
   float                     _currTime_s;
   float                     _nextUserLoginCheckTime_s;
+  uint32_t                  _minCloudGetPeriod_s; // Minimum time between 'get latest jdocs from cloud'
 
   struct JdocInfo
   {
@@ -159,6 +160,7 @@ private:
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
     bool                      _pendingCloudSave;  // True when cloud save is awaiting response from prior cloud save
     external_interface::JdocResolveMethod _resolveMethod;   // Resolve method to use when cloud has newer version of this jdoc
+    uint32_t                  _lastCloudGetTime;  // Timestamp of last request to cloud to get latest version
 
     struct CloudAbuseDetectionConfig
     {

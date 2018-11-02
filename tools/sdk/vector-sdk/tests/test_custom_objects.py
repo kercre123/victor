@@ -6,23 +6,18 @@ Sightings of those custom objects will be observable during while they are in pl
 Instantiates FixedCustomObject and pathfinds around it.
 """
 
-import asyncio
+import time
 
 import anki_vector  # pylint: disable=wrong-import-position
 from anki_vector.util import Pose, degrees
 from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
-
-
-def wait(robot, t):
-    robot.loop.run_until_complete(asyncio.sleep(t))
-
 
 def main():
     """main execution"""
     args = anki_vector.util.parse_command_args()
 
     with anki_vector.Robot(args.serial) as robot:
-        wait(robot, 1)
+        time.sleep(1.0)
 
         print('testing creation of custom box...')
         box = robot.world.define_custom_box(custom_object_type=CustomObjectTypes.CustomType00,
@@ -36,7 +31,7 @@ def main():
                                             marker_width_mm=10.0, marker_height_mm=10.0)
         if box:
             print("custom box created successfully")
-        wait(robot, 1)
+        time.sleep(1.0)
         robot.world.delete_custom_objects()
 
         print('testing creation of custom cube...')
@@ -46,7 +41,7 @@ def main():
                                               marker_width_mm=10.0, marker_height_mm=10.0)
         if cube:
             print("custom cube created successfully")
-        wait(robot, 1)
+        time.sleep(1.0)
         robot.world.delete_custom_objects()
 
         print('testing creation of custom wall...')
@@ -56,7 +51,7 @@ def main():
                                               marker_width_mm=10.0, marker_height_mm=10.0)
         if wall:
             print("custom wall created successfully")
-        wait(robot, 1)
+        time.sleep(1.0)
         robot.world.delete_custom_objects()
 
         fixed_object = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),

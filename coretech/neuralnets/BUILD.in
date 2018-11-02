@@ -6,16 +6,14 @@ cxx_project(
       "neuralNetModel_tensorflow.cpp", 
       "neuralNetModel_tflite.cpp",
       "neuralNetParams.cpp", 
+      "neuralNetJsonKeys.cpp",
+      "neuralNetFilenames.cpp"
     ],
     platform_srcs = [
     ],
-    headers = [
-      "iNeuralNetMain.h",
-      "neuralNetModel_interface.h", 
-      "neuralNetModel_tensorflow.h", 
-      "neuralNetModel_tflite.h", 
-      "neuralNetParams.h"
-    ],
+    headers = glob([
+      "**/*.h"
+    ]),
     platform_headers = [
     ]
 )

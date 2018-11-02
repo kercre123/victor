@@ -2,6 +2,11 @@
   "behaviorClass": "LookAroundInPlace",
   "behaviorID": "LookInPlaceHeadUp",
 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  },
+  
   "params":
   {
     "behavior_ShouldResetTurnDirection": true,

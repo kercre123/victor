@@ -26,6 +26,8 @@
 #include <type_traits>
 #include <unordered_map>
 
+#define LOG_CHANNEL "quadTreeProcessor"
+
 namespace Anki {
 namespace Vector {
 
@@ -39,7 +41,7 @@ CONSOLE_VAR(bool , kDebugFindBorders   , "QuadTreeProcessor", false); // prints 
 
 #define DEBUG_FIND_BORDER(format, ...)                                                                          \
 if ( kDebugFindBorders ) {                                                                                      \
-  do{::Anki::Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, "NMQTProcessor", {}, format, ##__VA_ARGS__);}while(0); \
+  do{::Anki::Util::sChanneledInfoF(LOG_CHANNEL, "NMQTProcessor", {}, format, ##__VA_ARGS__);}while(0); \
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

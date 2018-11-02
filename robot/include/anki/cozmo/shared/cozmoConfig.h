@@ -54,10 +54,17 @@ namespace Vector {
   const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
   
   // The x-offset from robot origin that the robot's drive center is
-  // located for the treaded robot when not carrying a block.
+  // located (note that this is different when carrying a block).
   // (If you were to model the treaded robot as a two-wheel robot,
   // the drive center is the location between the two wheels)
-  const f32 DRIVE_CENTER_OFFSET = -20.f;
+#ifdef SIMULATOR
+  // In simulation, the drive center pose always seems to be this value, whether carrying a block or not
+  const f32 DRIVE_CENTER_OFFSET = -16.f;
+  const f32 DRIVE_CENTER_OFFSET_CARRYING_CUBE = -16.f;
+#else
+  const f32 DRIVE_CENTER_OFFSET = -25.f;
+  const f32 DRIVE_CENTER_OFFSET_CARRYING_CUBE = 0.f;
+#endif // SIMULATOR
   
   // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
   const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.5f);    // Angle that the prox sensor is tilted (upward is positive)

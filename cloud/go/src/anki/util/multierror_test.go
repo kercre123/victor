@@ -31,4 +31,9 @@ func TestMultierror(t *testing.T) {
 	if e.Error().Error() != expected {
 		t.Fatalf("unexpected error format: got %s, expected %s", e.Error().Error(), expected)
 	}
+	e = Errors{}
+	e.AppendMulti(known, known)
+	if e.Error().Error() != expected {
+		t.Fatalf("unexpected error format: got %s, expected %s", e.Error().Error(), expected)
+	}
 }

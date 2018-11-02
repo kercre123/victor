@@ -3,7 +3,7 @@ package token
 import (
 	"anki/ipc"
 	"anki/log"
-	"anki/token/jwt"
+	"anki/token/identity"
 	"bytes"
 	"clad/cloud"
 	"context"
@@ -13,7 +13,7 @@ import (
 // Init initializes the token service in advance of other services that depend on it
 var initialized = false
 
-func Init(identityProvider *jwt.IdentityProvider) error {
+func Init(identityProvider identity.Provider) error {
 	if err := identityProvider.Init(); err != nil {
 		log.Println("Error initializing jwt store:", err)
 		return err

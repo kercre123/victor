@@ -3,9 +3,20 @@
   "behaviorClass": "ObservingLookAtFaces",
 
   "wantsToBeActivatedCondition": {
-    "conditionType": "Emotion",
-    "emotion": "Stimulated",
-    "min": 0.1
-  }
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads"
+      },
+      {
+        "conditionType": "Emotion",
+        "emotion": "Stimulated",
+        "min": 0.1
+      }
+    ]
+  },
+  
+  "searchBehavior": "ObservingFindFaces"
 }
 

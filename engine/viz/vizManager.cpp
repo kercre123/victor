@@ -250,7 +250,19 @@ namespace Anki {
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
       return vizID;
     }
-    
+      
+    void VizManager::DrawFrameAxes(const std::string identifier, const Pose3d& pose, const f32 scale_mm)
+    {
+      Point3f xHead = pose * Point3f(scale_mm,0,0);
+      Point3f yHead = pose * Point3f(0,scale_mm,0);
+      Point3f zHead = pose * Point3f(0,0,scale_mm);
+
+      DrawSegment(identifier, pose.GetTranslation(), xHead, NamedColors::RED, true);
+      DrawSegment(identifier, pose.GetTranslation(), yHead, NamedColors::GREEN, false);
+      DrawSegment(identifier, pose.GetTranslation(), zHead, NamedColors::BLUE, false);
+      // TODO: add some arrow head decorations?
+    }
+
     void VizManager::DrawCameraOval(const Point2f &center,
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)

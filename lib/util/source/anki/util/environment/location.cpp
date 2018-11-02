@@ -14,6 +14,8 @@
 #include <mutex>
 #include <string>
 
+#define LOG_CHANNEL "Location"
+
 namespace Anki {
 namespace Util {
 
@@ -92,7 +94,7 @@ void Location::StartProvider(const Location::ProviderConfig& config)
       const std::vector<uint8_t>& responseBody) {
 
       if (!isHttpSuccessCode(responseCode)) {
-        Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, "util.location.fetch_failed.bad_http_response",
+        Util::sChanneledInfoF(LOG_CHANNEL, "util.location.fetch_failed.bad_http_response",
                               {{DDATA, std::to_string(responseCode).c_str()}},
                               "%s", request.uri.c_str());
 

@@ -818,7 +818,7 @@ public:
 
   MenuConsoleChannel(char* outText, uint32_t outTextLength)
     : _outText(outText)
-    , _channelName(DEFAULT_CHANNEL_NAME)
+    , _channelName(LOG_CHANNEL)
     , _outTextLength(outText ? outTextLength : 0u)
     , _outTextPos(0)
     , _requiredCapacity(0)

@@ -69,8 +69,11 @@
   },
   {
     "feature": "Alexa",
-    // TODO (VIC-10016): turn off for 1.1
-    "enabled": true
+    "enabled": false
+  },
+  {
+    "feature": "FindFacesWhileHeld",
+    "enabled": false
   },
   {
     "feature": "PRDemo",
@@ -82,6 +85,10 @@
   },
   {
     "feature": "ActiveIntentFeedback",
+    "enabled": true
+  },
+  {
+    "feature": "Volume",
     "enabled": false
   }
 ]

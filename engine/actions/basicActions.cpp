@@ -60,6 +60,7 @@ namespace Anki {
               (u8)AnimTrackFlag::BODY_TRACK)
     , _requestedAngle_rad(angle_rad)
     , _isAbsoluteAngle(isAbsolute)
+    , _timeout_s(IAction::GetTimeoutInSeconds())
     {
 
     }
@@ -160,11 +161,35 @@ namespace Anki {
                                                        &_actionID);
     }
     
+    float TurnInPlaceAction::RecalculateTimeout()
+    {
+      // If the pan acceleration is too slow, the robot will never reach _maxPanSpeed_radPerSec
+      // in the allowed _bodyPanAngle. The check to verify this is: d_total/2 >= v_max^2 / (2 * a_max)
+      // This is rewritten below to avoid float division, as: d_total * a_max >= v_max^2
+      if (fabs(_angularDistExpected_rad * _accel_radPerSec2) >= _maxSpeed_radPerSec * _maxSpeed_radPerSec) {
+        // The acceleration is sufficiently fast, we can calculate time of travel as follows:
+        // t_total = t_accel + t_decel + (d_total - d_accel - d_decel) / v_max
+        // Which simplifies (assuming t_accel == t_decel and d_accel == d_decel) to:
+        // t_total = v_max / a_max + d_total / v_max
+        _expectedTotalAccelTime_s = 2.0 * fabs(_maxSpeed_radPerSec / _accel_radPerSec2);
+        const float totalTime_s = fabs(_maxSpeed_radPerSec / _accel_radPerSec2) + fabs(_angularDistExpected_rad / _maxSpeed_radPerSec);
+        _expectedMaxSpeedTime_s = totalTime_s - _expectedTotalAccelTime_s;
+        return totalTime_s;
+      } else {
+        // Otherwise, we can just assume we're accelerating and decelerating the entire time, and
+        // therefore the following is true: d_total / 2  = (a_max / 2) * (t_total / 2)^2
+        // Or alternatively: (4 * d_total / a_max)^0.5 = t_total
+        _expectedMaxSpeedTime_s = 0.f;
+        _expectedTotalAccelTime_s = sqrt(4.0 * fabs(_angularDistExpected_rad / _accel_radPerSec2));
+        return _expectedTotalAccelTime_s;
+      }
+    }
+    
     bool TurnInPlaceAction::IsOffTreadsStateValid() const
     {
       // If the robot is not on its treads, it may exhibit erratic turning behavior
       const auto otState = GetRobot().GetOffTreadsState();
-      const bool valid = (otState == OffTreadsState::OnTreads);
+      const bool valid = validTreadStates.find(otState) != validTreadStates.end();
       if (!valid) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.OffTreadsStateInvalid",
                             "[%d] Off tread state %s is invalid for TurnInPlace",
@@ -234,6 +259,14 @@ namespace Anki {
         // Also, for relative turns, the sign of the requested angle should dictate the direction of
         //   the turn. (the robot uses the sign of _maxSpeed_radPerSec to decide which direction to turn)
         _maxSpeed_radPerSec = std::copysign(_maxSpeed_radPerSec, _requestedAngle_rad);
+      }
+      
+      // Recalculate the timeout limit allowed for this turn, if progress-tracking is enabled
+      if (_shouldTimeoutOnProgressStall) {
+        _timeout_s = _kDefaultTimeoutFactor * RecalculateTimeout();
+        PRINT_CH_DEBUG("Actions", "TurnInPlaceAction.Init.RecalculatedTimeout",
+                       "Action will timeout after %.1f s",
+                       _timeout_s);
       }
 
       // reset angular distance traversed and previousAngle (used in CheckIfDone):
@@ -408,6 +441,8 @@ namespace Anki {
                               RAD_TO_DEG(_angularDistTraversed_rad),
                               GetRobot().GetPoseFrameID());
           result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
+        } else if (_turnStarted && _shouldTimeoutOnProgressStall && !IsActionMakingProgress()) {
+          result = ActionResult::TIMEOUT;
         }
       }
       
@@ -417,6 +452,65 @@ namespace Anki {
       }
       
       return result;
+    }
+    
+    bool TurnInPlaceAction::IsActionMakingProgress() const {
+      const float currRunTime_sec = GetCurrentRunTimeSeconds();
+      // Calculate the time that the action expected to take to reach _angularDistanceTraversed
+      float expectedTraversalTime_sec;
+      const float accelTime_sec = _expectedTotalAccelTime_s / 2.0;
+      if (_expectedMaxSpeedTime_s <= 0) {
+        const float accelDistance_rad = fabs(_angularDistExpected_rad / 2.0);
+        if (fabs(_angularDistTraversed_rad) > accelDistance_rad) {
+          // Robot should be decelerating by this point, approaching end of point-turn
+          const float expectedMidwaySpeed_radPerSec = accelTime_sec * _accel_radPerSec2;
+          const float expectedSpeed_radPerSec = sqrt(pow(expectedMidwaySpeed_radPerSec, 2.0) - 2 * _accel_radPerSec2 * (fabs(_angularDistTraversed_rad) - accelDistance_rad));
+          expectedTraversalTime_sec = accelTime_sec + (fabs(expectedSpeed_radPerSec - expectedMidwaySpeed_radPerSec) / _accel_radPerSec2);
+        } else {
+          // Robot still accelerating towards mid-point of turn.
+          expectedTraversalTime_sec = sqrt(2.0 * fabs(_angularDistTraversed_rad) / _accel_radPerSec2);
+        }
+      } else {
+        const float accelDistance_rad = 0.5 * _accel_radPerSec2 * pow(accelTime_sec, 2.0);
+        if (fabs(_angularDistTraversed_rad) < accelDistance_rad) {
+          // Robot still accelerating
+          expectedTraversalTime_sec = sqrt(2.0 * fabs(_angularDistTraversed_rad) / _accel_radPerSec2);
+        } else if (fabs(_angularDistTraversed_rad) > (fabs(_angularDistExpected_rad) - accelDistance_rad)) {
+          // Robot should be decelerating,, approaching end of point-turn
+          const float expectedTotalTimeAtMaxSpeed_sec = (fabs(_angularDistExpected_rad) - accelDistance_rad) / fabs(_maxSpeed_radPerSec);
+          const float expectedTimeAtDecelStart_sec = accelTime_sec + expectedTotalTimeAtMaxSpeed_sec;
+          const float expectedSpeed_radPerSec = sqrt(pow(_maxSpeed_radPerSec, 2.0)
+                                                     - 2 * _accel_radPerSec2 * (fabs(_angularDistTraversed_rad) - fabs(_angularDistExpected_rad) + accelDistance_rad));
+          expectedTraversalTime_sec = expectedTimeAtDecelStart_sec + fabs(expectedSpeed_radPerSec - fabs(_maxSpeed_radPerSec)) / _accel_radPerSec2;
+        } else {
+          // Robot turning at constant rate, as allowed by _maxSpeed_radPerSec
+          const float expectedTimeAtMaxSpeed_sec = (fabs(_angularDistTraversed_rad) - accelDistance_rad) / fabs(_maxSpeed_radPerSec);
+          expectedTraversalTime_sec = accelTime_sec + expectedTimeAtMaxSpeed_sec;
+        }
+      }
+      
+      
+      // If it's taken much longer than expected to reach the current orientation (scaled by the same timeout factor),
+      // this will trigger and warn the caller that the action might be stalled.
+      const bool isActionMakingProgress = expectedTraversalTime_sec > 0.2f ?
+          (currRunTime_sec < (_kDefaultProgressTimeoutFactor * expectedTraversalTime_sec)) : (currRunTime_sec < 0.5f);
+      if(!isActionMakingProgress) {
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.StoppedMakingProgress",
+                      "[%d] is not causing robot to rotate fast enough.", GetTag());
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.StoppedMakingProgress",
+                      "currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
+                      _currentAngle.getDegrees(),
+                      _currentTargetAngle.getDegrees(),
+                      RAD_TO_DEG(_angularDistExpected_rad),
+                      RAD_TO_DEG(_angularDistTraversed_rad),
+                      GetRobot().GetPoseFrameID());
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.StoppedMakingProgress",
+                      "Completed %.1f of turn, expectedTraversalTime=%.1fsec, currRunTime=%.1fsec",
+                      _angularDistTraversed_rad/_angularDistExpected_rad,
+                      expectedTraversalTime_sec,
+                      currRunTime_sec);
+      }
+      return isActionMakingProgress;
     }
     
     void TurnInPlaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1532,6 +1626,7 @@ namespace Anki {
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle.ToFloat(), _isPanAbsolute);      
       action->SetTolerance(_panAngleTol);
       action->SetMoveEyes(_moveEyes);
+      action->EnableProgressTrackingTimeout(_shouldTimeoutPanOnProgressStall);
       if( _panSpeedsManuallySet ) {
         action->SetMaxSpeed(_maxPanSpeed_radPerSec);
         action->SetAccel(_panAccel_radPerSec2);

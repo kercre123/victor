@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/cozmoContext.h"
@@ -29,6 +30,7 @@
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 
+#include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTriggerResponse.h"
 #include "clad/types/behaviorComponent/userIntent.h"
@@ -57,6 +59,8 @@ static const float kTimeToClearWaitingForTriggerWordGetIn_s = 3.0f;
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
 static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
+
+static const float kDefaultIntentFeedbackShutoffTime     = 3.0f;
 
   CONSOLE_VAR(bool, kStreamAfterDevWakeWord, "UserIntentComponent", false);
   CONSOLE_VAR(bool, kPlayGetInAfterDevWakeWord, "UserIntentComponent", false);
@@ -177,7 +181,8 @@ bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent) const
   return (_pendingIntent != nullptr) && (_pendingIntent->intent.GetTag() == userIntent);
 }
 
-UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner, bool showFeedback)
+UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner,
+                                                      bool showFeedback, bool autoShutoffFeedback)
 {
   if (!IsUserIntentPending(userIntent)) {
     LOG_ERROR("UserIntentComponent.ActivateIntent.NoActive",
@@ -208,7 +213,7 @@ UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, 
   _activeIntentOwner = owner;
 
   if( showFeedback ){
-    _activeIntentFeedback.Activate(userIntent);
+    _activeIntentFeedback.Activate(userIntent, autoShutoffFeedback);
   }
 
   return _activeIntent;
@@ -249,7 +254,8 @@ void UserIntentComponent::StopActiveUserIntentFeedback()
 
 UserIntentComponent::ActiveIntentFeedback::ActiveIntentFeedback() :
   robot(nullptr),
-  activatedIntentTag(UserIntentTag::INVALID)
+  activatedIntentTag(UserIntentTag::INVALID),
+  feedbackShutOffTime(0.0f)
 {
 
 }
@@ -260,7 +266,7 @@ void UserIntentComponent::ActiveIntentFeedback::Init(Robot* robot)
   DEV_ASSERT( this->robot != nullptr, "UserIntentComponent.ActiveIntentFeedback.Init: Invalid Robot pointer" );
 }
 
-void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userIntent)
+void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userIntent, bool autoShutoff)
 {
   if (!IsEnabled()) {
     return;
@@ -293,10 +299,20 @@ void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userInten
     }
     #endif
 
-    // todo: send "start" audio event
+    // send audio state begin event
+//    const AudioMetaData::GameEvent::GenericEvent startEvent = AudioMetaData::GameEvent::GenericEvent::Play_Robot_Vic_SfxWorking_Loop_Play;
+//    robot->GetAudioClient()->PostEvent(startEvent, AudioMetaData::GameObjectType::Behavior);
 
     // store who activated the state so only it may deactivate it
     activatedIntentTag = userIntent;
+    feedbackShutOffTime = 0.0f; // default this to off
+
+    // have the user intent feedback shut itself off after a set amount of time
+    if (autoShutoff)
+    {
+      const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      feedbackShutOffTime = (currentTime + kDefaultIntentFeedbackShutoffTime);
+    }
   }
 }
 
@@ -325,9 +341,29 @@ void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userInt
     }
     #endif
 
-    // todo: send "stop" audio event
+    // send audio state end event
+//    const AudioMetaData::GameEvent::GenericEvent startEvent = AudioMetaData::GameEvent::GenericEvent::StopRobot_Vic_Sfx_Working_Loop_Stop;
+//    robot->GetAudioClient()->PostEvent(startEvent, AudioMetaData::GameObjectType::Behavior);
 
     activatedIntentTag = UserIntentTag::INVALID;
+    feedbackShutOffTime = 0.0f;
+  }
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Update()
+{
+  if (!IsEnabled()) {
+    return;
+  }
+
+  // if we were told to automatically shut off at a certain point, check for that here
+  if (IsActive() && (feedbackShutOffTime > 0.0f))
+  {
+    const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if (currentTime >= feedbackShutOffTime)
+    {
+      Deactivate( UserIntentTag::INVALID );
+    }
   }
 }
 
@@ -788,6 +824,8 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
       }
     }
   }
+
+  _activeIntentFeedback.Update();
 }
 
 

@@ -143,6 +143,7 @@ static const char* kFeatureEnumString =
   "Invalid,"
   "Laser,"
   "Exploring,"
+  "FetchCube,"
   "FindCube,"
   "Keepaway,"
   "ReactToHeldCube,"
@@ -159,7 +160,9 @@ static const char* kFeatureEnumString =
   "PopAWheelie,"
   "ActiveIntentFeedback,"
   "Alexa,"
+  "FindFacesWhileHeld,"
   "TestFeature,"
+  "Volume,"
   "PRDemo";
 
 CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, kFeatureEnumString );

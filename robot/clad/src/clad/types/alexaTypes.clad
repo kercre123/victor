@@ -20,5 +20,13 @@ enum uint_8 AlexaAuthState
   Authorized,
 }
 
+enum uint_8 AlexaUXState
+{
+  Idle,
+  Listening,
+  Thinking,
+  Speaking,
+}
+
 } // namespace Vector
 } // namespace Anki

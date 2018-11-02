@@ -70,20 +70,24 @@ void BatteryStats::Update(const float batteryTemp_degC, const float batteryVolts
 
 void BatteryStats::LogToDas()
 {
-  DASMSG(battery_temperature_stats, "battery.temperature_stats", "Battery temperature statistics");
-  DASMSG_SET(i1, _temperatureStats_degC->GetIntMin(), "Minimum battery temperature experienced (degC)");
-  DASMSG_SET(i2, _temperatureStats_degC->GetIntMax(), "Maximum battery temperature experienced (degC)");
-  DASMSG_SET(i3, _temperatureStats_degC->GetIntMean(), "Average battery temperature experienced (degC)");
-  DASMSG_SET(i4, _temperatureStats_degC->GetNum(), "Total number of samples");
-  DASMSG_SEND();
+  if (_temperatureStats_degC->GetNum() > 0) {
+    DASMSG(battery_temperature_stats, "battery.temperature_stats", "Battery temperature statistics");
+    DASMSG_SET(i1, _temperatureStats_degC->GetIntMin(), "Minimum battery temperature experienced (degC)");
+    DASMSG_SET(i2, _temperatureStats_degC->GetIntMax(), "Maximum battery temperature experienced (degC)");
+    DASMSG_SET(i3, _temperatureStats_degC->GetIntMean(), "Average battery temperature experienced (degC)");
+    DASMSG_SET(i4, _temperatureStats_degC->GetNum(), "Total number of samples");
+    DASMSG_SEND();
+  }
   
-  // Voltage stats are recorded in volts, but reported to DAS in millivolts
-  DASMSG(battery_voltage_stats, "battery.voltage_stats", "Battery voltage statistics");
-  DASMSG_SET(i1, std::round(1000.f * _voltageStats->GetMin()), "Minimum battery voltage experienced (mV)");
-  DASMSG_SET(i2, std::round(1000.f * _voltageStats->GetMax()), "Maximum battery voltage experienced (mV)");
-  DASMSG_SET(i3, std::round(1000.f * _voltageStats->GetMean()), "Average battery voltage experienced (mV)");
-  DASMSG_SET(i4, _voltageStats->GetNum(), "Total number of samples");
-  DASMSG_SEND();
+  if (_voltageStats->GetNum() > 0) {
+    // Voltage stats are recorded in volts, but reported to DAS in millivolts
+    DASMSG(battery_voltage_stats, "battery.voltage_stats", "Battery voltage statistics");
+    DASMSG_SET(i1, std::round(1000.f * _voltageStats->GetMin()), "Minimum battery voltage experienced (mV)");
+    DASMSG_SET(i2, std::round(1000.f * _voltageStats->GetMax()), "Maximum battery voltage experienced (mV)");
+    DASMSG_SET(i3, std::round(1000.f * _voltageStats->GetMean()), "Average battery voltage experienced (mV)");
+    DASMSG_SET(i4, _voltageStats->GetNum(), "Total number of samples");
+    DASMSG_SEND();
+  }
   
   _temperatureStats_degC->Clear();
   _voltageStats->Clear();

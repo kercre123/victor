@@ -356,6 +356,24 @@ func CladRobotObservedObjectToProto(msg *gw_clad.RobotObservedObject) *extint.Ro
 	}
 }
 
+func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
+	return &extint.NavMapInfo{
+		RootDepth:   int32(msg.RootDepth),
+		RootSizeMm:  msg.RootSizeMm,
+		RootCenterX: msg.RootCenterX,
+		RootCenterY: msg.RootCenterY,
+		RootCenterZ: 0.0,
+	}
+}
+
+func CladMemoryMapQuadInfoToProto(msg *gw_clad.MemoryMapQuadInfo) *extint.NavMapQuadInfo {
+	return &extint.NavMapQuadInfo{
+		Content:   extint.NavNodeContentType(msg.Content), // Not incrementing this one because the CLAD enum has 0 as unknown
+		Depth:     uint32(msg.Depth),
+		ColorRgba: msg.ColorRGBA,
+	}
+}
+
 func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingCompleteResponse{}, 1)
 	defer f()
@@ -879,6 +897,21 @@ func (service *rpcService) checkConnectionID(id string) bool {
 	}
 	connectionId = id
 	return true
+}
+
+// SDK-only message to pass version info for device OS, Python version, etc.
+func (service *rpcService) SDKInitialization(ctx context.Context, in *extint.SDKInitializationRequest) (*extint.SDKInitializationResponse, error) {
+	log.Das("robot.sdk_module_version", (&log.DasFields{}).SetStrings(in.SdkModuleVersion))
+	log.Das("robot.sdk_python_version", (&log.DasFields{}).SetStrings(in.PythonVersion))
+	log.Das("robot.sdk_python_implementation", (&log.DasFields{}).SetStrings(in.PythonImplementation))
+	log.Das("robot.sdk_os_version", (&log.DasFields{}).SetStrings(in.OsVersion))
+	log.Das("robot.sdk_cpu_version", (&log.DasFields{}).SetStrings(in.CpuVersion))
+
+	return &extint.SDKInitializationResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
 }
 
 // Long running message for sending events to listening sdk users
@@ -2285,8 +2318,11 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 }
 
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
-// TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
+	if !debugLogLimiter.Allow() {
+		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum upload rate exceeded. Please wait and try again later.")
+	}
+
 	url, err := loguploader.UploadDebugLogs()
 	if err != nil {
 		log.Println("MessageHandler.UploadDebugLogs.Error: " + err.Error())
@@ -2301,9 +2337,25 @@ func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.Uploa
 	return response, nil
 }
 
+var lastResult *extint.CheckCloudResponse
+
 // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud
 // Its main use is to be called by the app during setup, but is fine for use by the outside world.
 func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.CheckCloudRequest) (*extint.CheckCloudResponse, error) {
+	if !cloudCheckLimiter.Allow() {
+		if lastResult == nil {
+			lastResult = &extint.CheckCloudResponse{
+				Status: &extint.ResponseStatus{
+					Code: extint.ResponseStatus_UNKNOWN,
+				},
+				Code: extint.CheckCloudResponse_UNKNOWN,
+			}
+		}
+		return lastResult, nil
+		// TODO: change this back to a resource exhausted error after app properly handles the error
+		// return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum check rate exceeded. Please wait and try again later.")
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CheckCloudResponse{}, 1)
 	defer f()
 
@@ -2323,6 +2375,7 @@ func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.
 	cloudResponse.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
+	lastResult = cloudResponse
 	return cloudResponse, nil
 }
 
@@ -2498,6 +2551,114 @@ func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptIn
 	}, nil
 }
 
+func SetNavMapBroadcastFrequency(frequency float32) error {
+	log.Println("Setting NavMapBroadcastFrequency to (", frequency, ") seconds")
+
+	cladMsg := gw_clad.NewMessageExternalToRobotWithSetMemoryMapBroadcastFrequencySec(&gw_clad.SetMemoryMapBroadcastFrequency_sec{
+		Frequency: frequency,
+	})
+	_, err := engineCladManager.Write(cladMsg)
+
+	return err
+}
+
+func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extint.ExternalInterface_NavMapFeedServer) error {
+
+	// Enable nav map stream
+	err := SetNavMapBroadcastFrequency(in.Frequency)
+	if err != nil {
+		return err
+	}
+
+	// Disable nav map stream when the RPC exits
+	defer SetNavMapBroadcastFrequency(-1.0)
+
+	f1, memoryMapMessageBegin := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageBegin, 1)
+	defer f1()
+
+	// Every frame the engine can send up to: (Anki::Comms::MsgPacket::MAX_SIZE-3)/sizeof(QuadInfoVector::value_type) quads.
+	// 50 feels like a reasonable educated guess.
+	f2, memoryMapMessageData := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessage, 50)
+	defer f2()
+
+	f3, memoryMapMessageEnd := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageEnd, 1)
+	defer f3()
+
+	var pendingMap *extint.NavMapFeedResponse = nil
+
+	for {
+		select {
+		case chanResponse, ok := <-memoryMapMessageBegin:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			if pendingMap != nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapBegin recieved from engine while still processing a pending memory map; discarding pending map.")
+			}
+
+			response := chanResponse.GetMemoryMapMessageBegin()
+			pendingMap = &extint.NavMapFeedResponse{
+				OriginId:  response.OriginId,
+				MapInfo:   CladMemoryMapBeginToProtoNavMapInfo(response),
+				QuadInfos: []*extint.NavMapQuadInfo{},
+			}
+
+		case chanResponse, ok := <-memoryMapMessageData:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			if pendingMap == nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapData recieved from engine with no pending content to add to.")
+			} else {
+				response := chanResponse.GetMemoryMapMessage()
+				for i := 0; i < len(response.QuadInfos); i++ {
+					newQuad := CladMemoryMapQuadInfoToProto(&response.QuadInfos[i])
+					pendingMap.QuadInfos = append(pendingMap.QuadInfos, newQuad)
+				}
+			}
+
+		case _, ok := <-memoryMapMessageEnd:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+
+			if pendingMap == nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapEnd recieved from engine with no pending content to send.")
+			} else if err := stream.Send(pendingMap); err != nil {
+				return err
+			} else if err = stream.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
+
+			pendingMap = nil
+		}
+	}
+
+	errMsg := "NavMemoryMap engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return grpc.Errorf(codes.Internal, errMsg)
+}
+
 func newServer() *rpcService {
 	return new(rpcService)
+}
+
+// Set Eye Color (SDK only)
+// TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control (e.g., in go code or when SDK behavior deactivates)
+func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeColorRequest) (*extint.SetEyeColorResponse, error) {
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetEyeColorRequest{
+			SetEyeColorRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetEyeColorResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
 }

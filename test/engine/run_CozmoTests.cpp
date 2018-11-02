@@ -44,13 +44,21 @@
 #include <fstream>
 #include <unistd.h>
 
+#if !defined(ANKICONFIGROOT)
+#error "You must define a default ANKICONFIGROOT when compiling"
+#endif
+
+#if !defined(ANKIWORKROOT)
+#error "You must define a default ANKIWORKROOT when compiling"
+#endif
+
 Anki::Vector::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Test listener that fails the test if it ends with the global error flag set to true
 class ListenerFailOnErrFlag : public ::testing::EmptyTestEventListener {
 private:
-  
+
   virtual void OnTestStart(const ::testing::TestInfo& test_info) {
     _errG = Anki::Util::sGetErrG();
   }
@@ -62,14 +70,14 @@ private:
       if( !_errG ) {
         Anki::Util::sUnSetErrG();
       }
-      
+
       GTEST_FAIL() << "Test "
         << test_info.test_case_name()
         << "." << test_info.name()
         << " or a concurrent thread called PRINT_NAMED_ERROR or ANKI_VERIFY";
     }
   }
-  
+
   bool _errG = false;
 };
 
@@ -847,7 +855,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   const auto origMinObservationsToConfirm   = NativeAnkiUtilConsoleGetVarValueAsInt64("MinTimesToObserveObject");
   NativeAnkiUtilConsoleSetValueWithString("UseImmediateConfirmationIfRobotNotMoving", "0");
   NativeAnkiUtilConsoleSetValueWithString("MinTimesToObserveObject", "2");
-                                          
+
   Result lastResult;
 
   Robot robot(1, cozmoContext);
@@ -1030,7 +1038,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_NE(obj2Ptr, nullptr);
   obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
   ASSERT_NE(obj3Ptr, nullptr);
-  
+
   // Restore original values for console vars controlling the pose confirmer
   NativeAnkiUtilConsoleSetValueWithString("UseImmediateConfirmationIfRobotNotMoving",
                                           std::to_string(origImmediateConfirmationValue).c_str());
@@ -1686,23 +1694,23 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
     bool isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation1), nullptr, wasRobotMoving, 10);
 
     ObservableObject* confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
-    
+
     const auto minObservationsToConfirm = NativeAnkiUtilConsoleGetVarValueAsInt64("MinTimesToObserveObject");
     if(minObservationsToConfirm > 1)
     {
       // Test assumes it takes exactly two confirmations, so assert that
       ASSERT_EQ(2, minObservationsToConfirm);
-      
+
       // should not be confirmed yet in this origin
       ASSERT_FALSE(isConfirmed);
       ASSERT_EQ(nullptr, confirmedObject);
-      
+
       ObservableObject* observation2 = object2->CloneType();
       observation2->InitPose(fakePose, PoseState::Known);
       observation2->CopyID(object2);
       isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation2), confirmedObject, false, 10);
     }
-    
+
     // now it should have been confirmed
     ASSERT_TRUE(isConfirmed);
     confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
@@ -2363,31 +2371,33 @@ TEST(Localization, UnexpectedMovement)
   ASSERT_TRUE(robot.IsPoseInWorldOrigin(robot.GetPose()));
 }
 
-#define CONFIGROOT "ANKICONFIGROOT"
-#define WORKROOT "ANKIWORKROOT"
-
 int main(int argc, char ** argv)
 {
+  ::testing::InitGoogleTest(&argc, argv);
+
   // Since some tests are testing for changes to the global error flag in a MT environment, block access to
   // the flag in some circumstances
   Anki::Util::_lockErrG = true;
-  
+
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
   loggerProvider->SetMinLogLevel(Anki::Util::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = loggerProvider;
 
+  // Compile-time defaults
+  std::string configRoot = ANKICONFIGROOT;
+  std::string workRoot = ANKIWORKROOT;
 
-  std::string configRoot;
-  char* configRootChars = getenv(CONFIGROOT);
-  if (configRootChars != NULL) {
+  // Allow environment to override defaults
+  const char * configRootChars = getenv("ANKICONFIGROOT");
+  if (configRootChars != nullptr) {
     configRoot = configRootChars;
   }
 
-  std::string workRoot;
-  char* workRootChars = getenv(WORKROOT);
-  if (workRootChars != NULL)
+  const char * workRootChars = getenv("ANKIWORKROOT");
+  if (workRootChars != nullptr) {
     workRoot = workRootChars;
+  }
 
   std::string resourcePath;
   std::string persistentPath;
@@ -2448,8 +2458,8 @@ int main(int argc, char ** argv)
   //std::string files = dataPlatform->pathToResource(Anki::Vector::Data::Scope::Output, "");
   //Anki::Util::FileUtils::RemoveDirectory(files);
 
-  ::testing::InitGoogleTest(&argc, argv);
-  
+
+
   // add test listener that fails a test whenever the global error flag is set
   {
     ::testing::UnitTest& unit_test = *::testing::UnitTest::GetInstance();

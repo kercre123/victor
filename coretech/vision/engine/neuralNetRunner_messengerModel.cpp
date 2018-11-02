@@ -22,6 +22,9 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
+#include "coretech/neuralnets/neuralNetFilenames.h"
+
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
@@ -74,9 +77,16 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
   //       with a standalone process which is loading and running the model. Here we'll just set any inititalization
   //       parameters for communicating with that process.
   
-  _cachePath = cachePath;
+  std::string name;
+  if(!JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::NetworkName, name))
+  {
+    PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.MissingName", "");
+    return RESULT_FAIL;
+  }
+  
+  _cachePath = Util::FileUtils::FullFilePath({cachePath, name});
 
-  if (false == JsonTools::GetValueOptional(config, "pollPeriod_ms", _pollPeriod_ms))
+  if (false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::PollingPeriod, _pollPeriod_ms))
   {
     PRINT_NAMED_ERROR("NeuralNetRunner.Model.LoadModel.MissingPollPeriod", "");
     return RESULT_FAIL;
@@ -89,7 +99,7 @@ Result NeuralNetRunner::Model::LoadModel(const std::string& modelPath, const std
 
   // Overwrite timeout if it's in the neural net config. This is
   // primarily motivated by longer running models
-  if (false == JsonTools::GetValueOptional(config, "timeoutDuration_sec",
+  if (false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::TimeoutDuration,
                                            _timeoutDuration_sec))
   {
     PRINT_NAMED_INFO("NeuralNetRunner.Model.LoadModel.MissingTimeoutDuraction",
@@ -108,7 +118,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
   // Profiling will be from time we write file to when we get results
   auto totalTicToc = _profiler.TicToc("NeuralNetRunner.Model.Run");
   
-  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "neuralNetImage.png"});
+  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, NeuralNets::Filenames::Image});
   {
     // Write image to a temporary file
     auto writeTicToc = _profiler.TicToc("NeuralNetRunner.Model.Run.WriteImage");
@@ -116,7 +126,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
     img.Save(tempFilename);
     
     // Write timestamp to file
-    const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, "timestamp.txt"});
+    const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, NeuralNets::Filenames::Timestamp});
     const std::string timestampString = std::to_string(img.GetTimestamp());
     std::ofstream timestampFile(timestampFilename);
     timestampFile << timestampString;
@@ -136,7 +146,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
   }
 
   // Wait for detection result JSON to appear
-  const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "neuralNetResults.json"});
+  const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, NeuralNets::Filenames::Result});
   bool resultAvailable = false;
   f32 startTime_sec = 0.f, currentTime_sec = 0.f;
   {
