@@ -157,6 +157,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/volume/behaviorVolume.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorCoordinateWeather.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
@@ -1064,6 +1065,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TrackFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTrackFace(config));
+      break;
+    }
+    
+    case BehaviorClass::Volume:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVolume(config));
       break;
     }
     

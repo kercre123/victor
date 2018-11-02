@@ -414,6 +414,11 @@ enum uint_16 BehaviorID {
   UserDefinedBehaviorTreeConfirmNewBehavior,
   UserDefinedBehaviorTreeRouter,
   UserDefinedBehaviorTreeTextToSpeech,
+
+  // victorBehaviorTree/volume
+  Volume,
+
+  // victorBehaviorTree
   Wait,
 
   // victorBehaviorTree/weather/genericResponses

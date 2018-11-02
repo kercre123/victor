@@ -442,6 +442,11 @@ enum int_32 AnimationTrigger
   VC_SleepingToListeningLoop,
   VC_SleepingToListeningGetOut,
   VC_IntentNeutral,
+  VolumeLevel1,
+  VolumeLevel2,
+  VolumeLevel3,
+  VolumeLevel4,
+  VolumeLevel5,
   WakeupGetout,
 
   // Animation triggers not currently used in Victor, but which we'll probably need eventually

@@ -231,6 +231,9 @@ enum uint_8 BehaviorClass {
   TrackCube,
   TrackFace,
 
+  // volume
+  Volume,
+
   // weather
   CoordinateWeather,
   DisplayWeather,
