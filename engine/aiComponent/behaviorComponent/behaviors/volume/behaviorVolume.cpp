@@ -11,7 +11,7 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/volume/behaviorVolume.h"
+#include "behaviorVolume.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -55,15 +55,6 @@ namespace {
                                                                     {EVolumeLevel::MAX, AnimationTrigger::VolumeLevel5}};
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorVolume::InstanceConfig::InstanceConfig()
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorVolume::DynamicVariables::DynamicVariables()
-{
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVolume::BehaviorVolume(const Json::Value& config)
@@ -112,9 +103,6 @@ void BehaviorVolume::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVolume::OnBehaviorActivated() 
 {
-  // reset dynamic variables
-  _dVars = DynamicVariables();
-  
   // to get the identity of the pending intent I basically have to do this check again
   UserIntentPtr intentData = nullptr;
   auto& uic = GetBehaviorComp<UserIntentComponent>();
@@ -173,19 +161,19 @@ void BehaviorVolume::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 bool BehaviorVolume::SetVolume(EVolumeLevel desiredVolumeEnum)
 {
-  // cast the enum to uint32_t. Bonus! It's already a uint32_t, this is just to be really explicit
-  uint32_t desiredVolume = static_cast<uint32_t>(desiredVolumeEnum);
-
   // Let's do some range checking here
   // should really be unnecessary now that we're using the enum, but let's be safe
-  if (desiredVolume < 1 || desiredVolume > 5) {
+  if ( (desiredVolumeEnum < EVolumeLevel::MIN) || (desiredVolumeEnum > EVolumeLevel::MAX) ) {
     LOG_WARNING("BehaviorVolume.SetVolume.OutsidePermittedRange",
-                "Requested volume %u outside permitted range of [1,5].", desiredVolume);
+                "Requested volume %u outside permitted range of [%u,%u].", desiredVolumeEnum, EVolumeLevel::MIN, EVolumeLevel::MAX);
     return false;
   }
 
   // check whether there's actually a change, if not, don't bother setting?
   // Not checking for now--SettingsManager handles that gracefully
+
+  // cast the enum to uint32_t. Bonus! It's already a uint32_t, this is just to be really explicit
+  uint32_t desiredVolume = static_cast<uint32_t>(desiredVolumeEnum);
 
   SettingsManager& settings = GetBEI().GetSettingsManager();
   bool ignoredDueToNoChange;
@@ -238,7 +226,7 @@ EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromIncrement(bool positiveIncr
   // read volume from settings
   SettingsManager& settings = GetBEI().GetSettingsManager();
   uint32_t vol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
-  if (vol < 1 || vol > 5){
+  if ( (vol < static_cast<uint32_t>(EVolumeLevel::MIN) ) || (vol > static_cast<uint32_t>(EVolumeLevel::MAX)) ){
     LOG_WARNING("BehaviorVolume.ComputeDesiredVolumeFromIncrement.unexpectedCurrentVolume",
                 "Volume read from settings was outside expected range: %u", vol);
     if (vol < 1 && !positiveIncrement){
@@ -250,15 +238,15 @@ EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromIncrement(bool positiveIncr
 
   // apply increment
   int increment = positiveIncrement ? 1 : -1;
-  uint32_t newVol = vol + increment;
+  uint32_t newVol = vol + increment; 
   // check bounds
-  if (newVol < 1) {
-    newVol = 1;
+  if (newVol < static_cast<uint32_t>(EVolumeLevel::MIN) ) {
+    newVol = static_cast<uint32_t>(EVolumeLevel::MIN);
     LOG_INFO("BehaviorVolume.ComputeDesiredVolumeFromIncrement.out_of_range",
               "volume is already at minimum level");
   }
-  if (newVol > 5) {
-    newVol = 5;
+  if (newVol > static_cast<uint32_t>(EVolumeLevel::MAX) ) {
+    newVol = static_cast<uint32_t>(EVolumeLevel::MAX);
     LOG_INFO("BehaviorVolume.ComputeDesiredVolumeFromIncrement.out_of_range",
               "volume is already at maximum level");
   }

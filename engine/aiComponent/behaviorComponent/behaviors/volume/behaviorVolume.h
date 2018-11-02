@@ -52,20 +52,6 @@ protected:
   virtual void BehaviorUpdate() override;
 
 private:
-
-  struct InstanceConfig {
-    InstanceConfig();
-    // TODO: put configuration variables here
-  };
-
-  struct DynamicVariables {
-    DynamicVariables();
-    // TODO: put member variables here
-  };
-
-  InstanceConfig _iConfig;
-  DynamicVariables _dVars;
-  
   bool SetVolume(EVolumeLevel desiredVolume);
   EVolumeLevel ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData, bool& valid);
   EVolumeLevel ComputeDesiredVolumeFromIncrement(bool positiveIncrement);
