@@ -124,112 +124,112 @@ message GatewayWrapper {
     OnboardingWakeUpStartedResponse onboarding_wake_up_started_response = 16;
 
     // ------------ Attention transfer -----------------------------------
-    LatestAttentionTransferRequest latest_attention_transfer_request = 30;
-    LatestAttentionTransfer        latest_attention_transfer         = 31;
+    LatestAttentionTransferRequest latest_attention_transfer_request = 100;
+    LatestAttentionTransfer        latest_attention_transfer         = 101;
 
     // ------------ photos request/response pairs ------------------------
-    PhotosInfoRequest             photos_info_request                = 40;
-    PhotosInfoResponse            photos_info_response               = 41;
-    PhotoRequest                  photo_request                      = 42;
-    PhotoPathMessage              photo_path_message                 = 43;
-    ThumbnailRequest              thumbnail_request                  = 44;
-    ThumbnailPathMessage          thumbnail_path_message             = 45;
-    DeletePhotoRequest            delete_photo_request               = 46;
-    DeletePhotoResponse           delete_photo_response              = 47;
+    PhotosInfoRequest             photos_info_request                = 200;
+    PhotosInfoResponse            photos_info_response               = 201;
+    PhotoRequest                  photo_request                      = 202;
+    PhotoPathMessage              photo_path_message                 = 203;
+    ThumbnailRequest              thumbnail_request                  = 204;
+    ThumbnailPathMessage          thumbnail_path_message             = 205;
+    DeletePhotoRequest            delete_photo_request               = 206;
+    DeletePhotoResponse           delete_photo_response              = 207;
 
     // ------------ settings pairs ---------------------------------------
-    PullJdocsRequest              pull_jdocs_request                 = 60;
-    PullJdocsResponse             pull_jdocs_response                = 61;
-    UpdateSettingsRequest         update_settings_request            = 62;
-    UpdateSettingsResponse        update_settings_response           = 63;
-    UpdateAccountSettingsRequest  update_account_settings_request    = 64;
-    UpdateAccountSettingsResponse update_account_settings_response   = 65;
-    UpdateUserEntitlementsRequest  update_user_entitlements_request  = 66;
-    UpdateUserEntitlementsResponse update_user_entitlements_response = 67;
+    PullJdocsRequest              pull_jdocs_request                 = 300;
+    PullJdocsResponse             pull_jdocs_response                = 301;
+    UpdateSettingsRequest         update_settings_request            = 302;
+    UpdateSettingsResponse        update_settings_response           = 303;
+    UpdateAccountSettingsRequest  update_account_settings_request    = 304;
+    UpdateAccountSettingsResponse update_account_settings_response   = 305;
+    UpdateUserEntitlementsRequest  update_user_entitlements_request  = 306;
+    UpdateUserEntitlementsResponse update_user_entitlements_response = 307;
 
     // ------------ sdk behavior request/response pairs --------------------
-    DriveOffChargerRequest        drive_off_charger_request          = 70;
-    DriveOffChargerResponse       drive_off_charger_response         = 71;
-    DriveOnChargerRequest         drive_on_charger_request           = 72;
-    DriveOnChargerResponse        drive_on_charger_response          = 73;
+    DriveOffChargerRequest        drive_off_charger_request          = 400;
+    DriveOffChargerResponse       drive_off_charger_response         = 401;
+    DriveOnChargerRequest         drive_on_charger_request           = 402;
+    DriveOnChargerResponse        drive_on_charger_response          = 403;
 
     // ------------ movement request/response pairs ----------------------
-    TurnInPlaceRequest            turn_in_place_request              = 90;
-    TurnInPlaceResponse           turn_in_place_response             = 91;
-    DriveStraightRequest          drive_straight_request             = 92;
-    DriveStraightResponse         drive_straight_response            = 93;
-    SetHeadAngleRequest           set_head_angle_request             = 94;
-    SetHeadAngleResponse          set_head_angle_response            = 95;
-    SetLiftHeightRequest          set_lift_height_request            = 96;
-    SetLiftHeightResponse         set_lift_height_response           = 97;
-    PlayAnimationRequest          play_animation_request             = 98;
-    PlayAnimationResponse         play_animation_response            = 99;
-    GoToPoseRequest               go_to_pose_request                 = 150;
-    GoToPoseResponse              go_to_pose_response                = 151;
-    DockWithCubeRequest           dock_with_cube_request             = 152;
-    DockWithCubeResponse          dock_with_cube_response            = 153;
+    TurnInPlaceRequest            turn_in_place_request              = 500;
+    TurnInPlaceResponse           turn_in_place_response             = 501;
+    DriveStraightRequest          drive_straight_request             = 502;
+    DriveStraightResponse         drive_straight_response            = 503;
+    SetHeadAngleRequest           set_head_angle_request             = 504;
+    SetHeadAngleResponse          set_head_angle_response            = 505;
+    SetLiftHeightRequest          set_lift_height_request            = 506;
+    SetLiftHeightResponse         set_lift_height_response           = 507;
+    PlayAnimationRequest          play_animation_request             = 508;
+    PlayAnimationResponse         play_animation_response            = 509;
+    GoToPoseRequest               go_to_pose_request                 = 510;
+    GoToPoseResponse              go_to_pose_response                = 511;
+    DockWithCubeRequest           dock_with_cube_request             = 512;
+    DockWithCubeResponse          dock_with_cube_response            = 513;
 
     // ------------ status history --------------------
-    RobotHistoryRequest           robot_history_request              = 80;
-    RobotHistoryResponse          robot_history_response             = 81;
+    RobotHistoryRequest           robot_history_request              = 600;
+    RobotHistoryResponse          robot_history_response             = 601;
 
     // ------------ cube connections --------------------
-    ConnectCubeRequest            connect_cube_request               = 100;
-    ConnectCubeResponse           connect_cube_response              = 101;
-    DisconnectCubeRequest         disconnect_cube_request            = 102;
-    FlashCubeLightsRequest        flash_cube_lights_request          = 103;
-    ForgetPreferredCubeRequest    forget_preferred_cube_request      = 104;
-    SetPreferredCubeRequest       set_preferred_cube_request         = 105;
-    SetCubeLightsRequest          set_cube_lights_request            = 106;
-    CubesAvailableRequest         cubes_available_request            = 107;
-    CubesAvailableResponse        cubes_available_response           = 108;
+    ConnectCubeRequest            connect_cube_request               = 700;
+    ConnectCubeResponse           connect_cube_response              = 701;
+    DisconnectCubeRequest         disconnect_cube_request            = 702;
+    FlashCubeLightsRequest        flash_cube_lights_request          = 703;
+    ForgetPreferredCubeRequest    forget_preferred_cube_request      = 704;
+    SetPreferredCubeRequest       set_preferred_cube_request         = 705;
+    SetCubeLightsRequest          set_cube_lights_request            = 706;
+    CubesAvailableRequest         cubes_available_request            = 707;
+    CubesAvailableResponse        cubes_available_response           = 708;
 
     // ------------ robot stats --------------------
-    BatteryStateRequest             battery_state_request            = 110;
-    BatteryStateResponse            battery_state_response           = 111;
-    VersionStateRequest             version_state_request            = 112;
-    VersionStateResponse            version_state_response           = 113;
-    NetworkStateRequest             network_state_request            = 114;
-    NetworkStateResponse            network_state_response           = 115;
+    BatteryStateRequest             battery_state_request            = 800;
+    BatteryStateResponse            battery_state_response           = 801;
+    VersionStateRequest             version_state_request            = 802;
+    VersionStateResponse            version_state_response           = 803;
+    NetworkStateRequest             network_state_request            = 804;
+    NetworkStateResponse            network_state_response           = 805;
 
     // ------------ text-to-speech pairs ------------
-    SayTextRequest                say_text_request                   = 120;
-    SayTextResponse               say_text_response                  = 121;
+    SayTextRequest                say_text_request                   = 900;
+    SayTextResponse               say_text_response                  = 901;
 
     // ------------ behavior control pairs ----------
-    ControlRequest                control_request                    = 130;
-    ControlRelease                control_release                    = 131;
-    BehaviorControlResponse       behavior_control_response          = 132;
+    ControlRequest                control_request                    = 1000;
+    ControlRelease                control_release                    = 1001;
+    BehaviorControlResponse       behavior_control_response          = 1002;
 
     // ------------ Image chunks sent from the vision component ------------
-    ImageRequest                  image_request                      = 140;
-    ImageChunk                    image_chunk                        = 141;
+    ImageRequest                  image_request                      = 1100;
+    ImageChunk                    image_chunk                        = 1101;
 
     // ------------ Message and response for cloud connectivity check ------------
-    CheckCloudRequest             check_cloud_request                = 160;
-    CheckCloudResponse            check_cloud_response               = 161;
+    CheckCloudRequest             check_cloud_request                = 1200;
+    CheckCloudResponse            check_cloud_response               = 1201;
 
     // ------------ Audio chunks sent from the animProcess ------------
-    AudioSendModeRequest          audio_send_mode_request            = 170;
-    AudioSendModeChanged          audio_send_mode_changed            = 171;
-    AudioChunk                    audio_chunk                        = 172;
+    AudioSendModeRequest          audio_send_mode_request            = 1300;
+    AudioSendModeChanged          audio_send_mode_changed            = 1301;
+    AudioChunk                    audio_chunk                        = 1302;
 
     // ------------ Feature flags ------------
-    FeatureFlagRequest            feature_flag_request               = 180;
-    FeatureFlagResponse           feature_flag_response              = 181;
+    FeatureFlagRequest            feature_flag_request               = 1400;
+    FeatureFlagResponse           feature_flag_response              = 1401;
 
     // ------------ App/engine connectivity ------------
-    AppDisconnected               app_disconnected                   = 190;
+    AppDisconnected               app_disconnected                   = 1500;
 
     // ------------ Alexa ------------
-    AlexaAuthStateRequest         alexa_auth_state_request           = 200;
-    AlexaAuthStateResponse        alexa_auth_state_response          = 201;
-    AlexaOptInRequest             alexa_opt_in_request               = 202;
-    AlexaOptInResponse            alexa_opt_in_response              = 203;
+    AlexaAuthStateRequest         alexa_auth_state_request           = 1600;
+    AlexaAuthStateResponse        alexa_auth_state_response          = 1601;
+    AlexaOptInRequest             alexa_opt_in_request               = 1602;
+    AlexaOptInResponse            alexa_opt_in_response              = 1603;
 
     // ------------ Eye color (SDK only) ------------
-    SetEyeColorRequest            set_eye_color_request              = 220;
-    SetEyeColorResponse           set_eye_color_response             = 221;
+    SetEyeColorRequest            set_eye_color_request              = 1700;
+    SetEyeColorResponse           set_eye_color_response             = 1701;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
