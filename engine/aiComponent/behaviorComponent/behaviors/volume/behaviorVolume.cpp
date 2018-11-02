@@ -13,13 +13,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/volume/behaviorVolume.h"
 
+#include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/settingsManager.h"
-#include "engine/actions/animActions.h"
 #include "engine/robot.h"
-#include "util/logging/logging.h"
 #include "proto/external_interface/settings.pb.h"
+#include "util/logging/logging.h"
 
 
 #define LOG_CHANNEL "BehaviorVolume"
@@ -35,7 +35,7 @@ namespace {
   // in the app and in verbal semantics.
   // update: this interface is a moving target. now changed to VOLUME_1 through VOLUME_5...
   // (once it's stabilized we could remove the older ones...)
-  const std::map<std::string, EVolumeLevel> volumeLevelMap {//{"mute", EVolumeLevel::MUTE}, // don't ever actually use "mute"
+  const std::map<std::string, EVolumeLevel> kVolumeLevelMap {//{"mute", EVolumeLevel::MUTE}, // don't ever actually use "mute"
                                                             {"minimum", EVolumeLevel::MIN},
                                                             {"min", EVolumeLevel::MIN},
                                                             {"VOLUME_1", EVolumeLevel::MIN},
@@ -48,7 +48,7 @@ namespace {
                                                             {"maximum", EVolumeLevel::MAX},
                                                             {"max", EVolumeLevel::MAX},
                                                             {"VOLUME_5", EVolumeLevel::MAX}};
-  const std::map<EVolumeLevel, AnimationTrigger> volumeLevelAnimMap {{EVolumeLevel::MIN, AnimationTrigger::VolumeLevel1},
+  const std::map<EVolumeLevel, AnimationTrigger> kVolumeLevelAnimMap {{EVolumeLevel::MIN, AnimationTrigger::VolumeLevel1},
                                                                     {EVolumeLevel::MEDLOW, AnimationTrigger::VolumeLevel2},
                                                                     {EVolumeLevel::MED, AnimationTrigger::VolumeLevel3},
                                                                     {EVolumeLevel::MEDHIGH, AnimationTrigger::VolumeLevel4},
@@ -121,18 +121,18 @@ void BehaviorVolume::OnBehaviorActivated()
   EVolumeLevel desiredVolume;
   if(uic.IsUserIntentPending(USER_INTENT(imperative_volumelevel))){
     intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumelevel));
-    try {
-      desiredVolume = ComputeDesiredVolumeFromLevelIntent(intentData);
-    } catch (std::out_of_range) {
-      // warning already issued in method
+    bool valid = false;
+    desiredVolume = ComputeDesiredVolumeFromLevelIntent(intentData, valid);
+    // if it's invalid, don't set the volume or do the animation
+    if (!valid){
       return;
     }
   } else if(uic.IsUserIntentPending(USER_INTENT(imperative_volumeup))){
     intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumeup));
-    desiredVolume = ComputeDesiredVolumeFromIncrement(true);
+    desiredVolume = ComputeDesiredVolumeFromIncrement(true); // increment
   } else if(uic.IsUserIntentPending(USER_INTENT(imperative_volumedown))){
     intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumedown));
-    desiredVolume = ComputeDesiredVolumeFromIncrement(false);
+    desiredVolume = ComputeDesiredVolumeFromIncrement(false); // decrement
   } else {
     LOG_WARNING("BehaviorVolume.OnBehaviorActivated.NoRecognizedPendingIntent",
                 "No recognized pending intent for volume.");
@@ -143,7 +143,14 @@ void BehaviorVolume::OnBehaviorActivated()
   SetVolume(desiredVolume);
 
   // delegate to play an animation (sequence)
-  const AnimationTrigger animTrigger = volumeLevelAnimMap.at(desiredVolume);
+  const auto it = kVolumeLevelAnimMap.find(desiredVolume);
+  if(it == kVolumeLevelAnimMap.end()){
+    // we don't have an anim designated for this volume level (probably because it's MUTE)
+    LOG_WARNING("BehaviorVolume.OnBehaviorActivated.NoAnimForLevel",
+                "No animation mapped for volume level %u", desiredVolume);
+    return;
+  }
+  const AnimationTrigger animTrigger = kVolumeLevelAnimMap.at(desiredVolume);
   TriggerLiftSafeAnimationAction* animation = new TriggerLiftSafeAnimationAction(animTrigger);
   DelegateIfInControl(animation);
                      
@@ -178,7 +185,7 @@ bool BehaviorVolume::SetVolume(EVolumeLevel desiredVolumeEnum)
   }
 
   // check whether there's actually a change, if not, don't bother setting?
-  // Not bothering for now--SettingsManager handles that gracefully
+  // Not checking for now--SettingsManager handles that gracefully
 
   SettingsManager& settings = GetBEI().GetSettingsManager();
   bool ignoredDueToNoChange;
@@ -202,20 +209,28 @@ bool BehaviorVolume::SetVolume(EVolumeLevel desiredVolumeEnum)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData)
+EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData, bool& valid)
 {
   const std::string levelRequest = intentData->intent.Get_imperative_volumelevel().volume_level;
   EVolumeLevel desiredVol;
-  try {
-    desiredVol = volumeLevelMap.at(levelRequest);
+  const auto it = kVolumeLevelMap.find(levelRequest);
+  if (it != kVolumeLevelMap.end()){
+    valid = true;
+    desiredVol = kVolumeLevelMap.at(levelRequest);
     LOG_DEBUG("BehaviorVolume.ComputeDesiredVolumeFromLevelIntent.desiredVol",
                 "mapped level request %s to desiredVol %u", levelRequest.c_str(), desiredVol);
-  } catch (std::out_of_range) {
-    LOG_WARNING("BehaviorVolume.ComputeDesiredVolumeFromLevelIntent.out_of_range",
+  } else {
+    // invalid level request
+    valid = false;
+    LOG_WARNING("BehaviorVolume.ComputeDesiredVolumeFromLevelIntent.invalid",
                 "unexpected user intent volume_level: %s", levelRequest.c_str());
-    throw;
-  }
-  
+    // what should we return in this case? (since we don't want to throw an exception)
+    // let's not return invalid data, just in case it gets used. 
+    // Rather, get the current volume and return that. A bit roundabout, but oh well...
+    SettingsManager& settings = GetBEI().GetSettingsManager();
+    uint32_t vol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+    desiredVol = static_cast<EVolumeLevel>(vol);
+  }  
   return desiredVol;
 }
 
@@ -223,6 +238,15 @@ EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromIncrement(bool positiveIncr
   // read volume from settings
   SettingsManager& settings = GetBEI().GetSettingsManager();
   uint32_t vol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+  if (vol < 1 || vol > 5){
+    LOG_WARNING("BehaviorVolume.ComputeDesiredVolumeFromIncrement.unexpectedCurrentVolume",
+                "Volume read from settings was outside expected range: %u", vol);
+    if (vol < 1 && !positiveIncrement){
+      // we're about to try to decrement an unsigned zero, which would underflow, which would be bad
+      // so let's not do that. Instead, since we're already (unexpectedly) at MUTE, return MUTE
+      return EVolumeLevel::MUTE;
+    }
+  }
 
   // apply increment
   int increment = positiveIncrement ? 1 : -1;

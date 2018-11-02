@@ -23,8 +23,10 @@ namespace Vector {
 //class Robot;
 class SettingsManager;
 
+// note that if you're changing this enum, you're likely to also want to change
+// kVolumeLevelMap and kVolumeLevelAnimMap in behaviorVolume.cpp.
 enum class EVolumeLevel : uint32_t {
-  MUTE = 0, // don't ever actually set the volume to this.
+  MUTE = 0, // don't ever actually set the volume to this (as a matter of character policy)
   MIN = 1,
   MEDLOW = 2,
   MED = 3,
@@ -65,7 +67,7 @@ private:
   DynamicVariables _dVars;
   
   bool SetVolume(EVolumeLevel desiredVolume);
-  EVolumeLevel ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData);
+  EVolumeLevel ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData, bool& valid);
   EVolumeLevel ComputeDesiredVolumeFromIncrement(bool positiveIncrement);
 };
 
