@@ -175,15 +175,9 @@ void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
   const EReactionLevel level = GetReactionLevelFromMagnitude();
   const std::string levelString = EReactionLevelToString( level );
 
-  // This DAS event is preserved from it's original formatting, but maybe we want to change it now that we have the
-  // new DAS macros and not everything needs to be a string anymore?
-
-  // DAS event string: "<shakenDuration_ms>:<maxShakenAccelMag>"
-  const std::string& data = std::to_string( shakenDuration_ms ) + ":" + std::to_string( maxShakenAccelMag );
   DASMSG( robot_dizzy_reaction, "robot.dizzy_reaction", "Robot is dizzy after being shaken" );
-  DASMSG_SET( s1, data, "<shakeDuration>:<shakeMagnitude>");
-//  DASMSG_SET( i1, maxShakenAccelMag, "max shake magnitude while robot was shaken" );
-//  DASMSG_SET( i2, shakenDuration_ms, "the duration the robot was shaken in ms" );
+  DASMSG_SET( i1, maxShakenAccelMag, "max shake magnitude while robot was shaken" );
+  DASMSG_SET( i2, shakenDuration_ms, "the duration the robot was shaken in ms" );
   DASMSG_SEND();
 
   // Log human-readable completion info:
