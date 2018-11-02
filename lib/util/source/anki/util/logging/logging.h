@@ -44,7 +44,6 @@ std::string HexDump(const void *value, const size_t len, char delimiter);
 
 extern ITickTimeProvider* gTickTimeProvider;
 extern ILoggerProvider* gLoggerProvider;
-extern ChannelFilter gChannelFilter;
 extern IEventProvider* gEventProvider;
 
 // Accessors for global error flag for unit testing
@@ -167,12 +166,6 @@ __attribute__((noreturn)) void sAbort();
 } // namespace Util
 } // namespace Anki
 
-// Special channel names
-constexpr const char * LOG_UNNAMED = "Unnamed";
-constexpr const char * LOG_UNFILTERED = "Unfiltered";
-
-#define DEFAULT_CHANNEL_NAME LOG_UNNAMED
-
 //
 // Logging with names.
 //
@@ -189,12 +182,12 @@ constexpr const char * LOG_UNFILTERED = "Unfiltered";
 } while(0)
 
 #define PRINT_NAMED_INFO(name, format, ...) do { \
-  ::Anki::Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__); \
+  ::Anki::Util::sChanneledInfoF(name, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_NAMED_DEBUG(name, format, ...) do { \
-  ::Anki::Util::sChanneledDebugF(DEFAULT_CHANNEL_NAME, name, {}, format, ##__VA_ARGS__); \
+  ::Anki::Util::sChanneledDebugF(name, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 #else
 #define PRINT_NAMED_DEBUG(name, format, ...)
@@ -291,13 +284,13 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 
 #define PRINT_STREAM_INFO(name, args) do{          \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sChanneledInfo(DEFAULT_CHANNEL_NAME, name, {}, ss.str().c_str()); \
+      ::Anki::Util::sChanneledInfo(name, name, {}, ss.str().c_str()); \
     } while(0)
 
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_STREAM_DEBUG(name, args) do {         \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sChanneledDebug(DEFAULT_CHANNEL_NAME, name, {}, ss.str().c_str()); \
+      ::Anki::Util::sChanneledDebug(name, name, {}, ss.str().c_str()); \
     } while(0)
 #else
 #define PRINT_STREAM_DEBUG(eventName, args)

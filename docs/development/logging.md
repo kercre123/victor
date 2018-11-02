@@ -23,7 +23,7 @@ Note that `DEBUG` log statements get compiled out in `release` and `shipping` bu
 
 Log channels are simple strings that provide a facility to filter logs, enabling select channels and disabling others based on the type of problem you are interested in debugging. Each high-level code module will usually use its own log channel (e.g. `Behaviors`, `Actions`, `BlockWorld`, `Planner`).
 
-Using log channels is preferable to using "named" prints (e.g. `PRINT_NAMED_INFO`), which are much more difficult to filter.
+`PRINT_NAMED_INFO` will automatically use the event as a channel for your convenience, normal filtering rules apply.
 
 Note: Log channels apply only to debug and info levels. Warning and error levels are always `NAMED`.
 
