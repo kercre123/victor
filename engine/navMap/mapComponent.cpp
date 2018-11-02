@@ -79,7 +79,7 @@ CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "MapComponent", 20.0f);
 CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
-CONSOLE_VAR(float, kObstacleTimeout_ms, "MapComponent", 120.0f * 1000);
+CONSOLE_VAR(float, kUnrecognizedTimeout_ms, "MapComponent", 20.0f * 1000);
 CONSOLE_VAR(float, kProxTimeout_ms, "MapComponent", 600.0f * 1000);
 CONSOLE_VAR(float, kTimeoutUpdatePeriod_ms, "MapComponent", 5.0f * 1000);
 CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 1200.f * 1000); // 20 minutes
@@ -540,21 +540,21 @@ void MapComponent::TimeoutObjects()
     _nextTimeoutUpdate_ms = currentTime + kTimeoutUpdatePeriod_ms;
     
     // ternary to prevent uInt wrapping on subtract
-    const RobotTimeStamp_t obstacleTooOld = (currentTime <= kObstacleTimeout_ms) ? 0 : currentTime - kObstacleTimeout_ms;
-    const RobotTimeStamp_t visionTooOld   = (currentTime <= kVisionTimeout_ms)   ? 0 : currentTime - kVisionTimeout_ms;
-    const RobotTimeStamp_t proxTooOld     = (currentTime <= kProxTimeout_ms)     ? 0 : currentTime - kProxTimeout_ms;
-    const RobotTimeStamp_t cliffTooOld    = (currentTime <= kCliffTimeout_ms)    ? 0 : currentTime - kCliffTimeout_ms;
+    const RobotTimeStamp_t unrecognizedTooOld = (currentTime <= kUnrecognizedTimeout_ms) ? 0 : currentTime - kUnrecognizedTimeout_ms;
+    const RobotTimeStamp_t visionTooOld       = (currentTime <= kVisionTimeout_ms)       ? 0 : currentTime - kVisionTimeout_ms;
+    const RobotTimeStamp_t proxTooOld         = (currentTime <= kProxTimeout_ms)         ? 0 : currentTime - kProxTimeout_ms;
+    const RobotTimeStamp_t cliffTooOld        = (currentTime <= kCliffTimeout_ms)        ? 0 : currentTime - kCliffTimeout_ms;
     
     NodeTransformFunction timeoutObjects =
-      [obstacleTooOld, visionTooOld, proxTooOld, cliffTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
+      [unrecognizedTooOld, visionTooOld, proxTooOld, cliffTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
         const RobotTimeStamp_t lastObs = data->GetLastObservedTime();
 
-        if ((EContentType::Cliff                == nodeType && lastObs <= cliffTooOld)    ||
-            (EContentType::ObstacleUnrecognized == nodeType && lastObs <= obstacleTooOld) ||
-            (EContentType::InterestingEdge      == nodeType && lastObs <= visionTooOld)   ||
-            (EContentType::NotInterestingEdge   == nodeType && lastObs <= visionTooOld)   ||
+        if ((EContentType::Cliff                == nodeType && lastObs <= cliffTooOld)        ||
+            (EContentType::ObstacleUnrecognized == nodeType && lastObs <= unrecognizedTooOld) ||
+            (EContentType::InterestingEdge      == nodeType && lastObs <= visionTooOld)       ||
+            (EContentType::NotInterestingEdge   == nodeType && lastObs <= visionTooOld)       ||
             (EContentType::ObstacleProx         == nodeType && lastObs <= proxTooOld))
         {
           return MemoryMapDataPtr();
