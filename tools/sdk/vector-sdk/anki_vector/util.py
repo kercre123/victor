@@ -81,6 +81,7 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
     if parser is None:
         parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--serial", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
+    parser.add_argument("-i", "--ip", nargs='?')
     return parser.parse_args()
 
 
