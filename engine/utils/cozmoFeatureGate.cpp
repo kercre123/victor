@@ -159,6 +159,7 @@ static const char* kFeatureEnumString =
   "PopAWheelie,"
   "ActiveIntentFeedback,"
   "Alexa,"
+  "FindFacesWhileHeld,"
   "TestFeature,"
   "PRDemo";
 

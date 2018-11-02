@@ -71,8 +71,11 @@ namespace Vector {
       void SetAccel(f32 accel_radPerSec2);
       void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
+      void SetValidOffTreadsStates(const std::set<OffTreadsState>& states);
+      void EnableProgressTrackingTimeout(const bool enable) { _shouldTimeoutOnProgressStall = enable; }
 
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
+      virtual f32 GetTimeoutInSeconds() const override { return _timeout_s; }
       
       // Note: PROCEDURAL_EYE_LEADING is a compile-time option to enable/disable eye leading
       void SetMoveEyes(bool enable) { _moveEyes = (enable && PROCEDURAL_EYE_LEADING); }
@@ -85,13 +88,17 @@ namespace Vector {
       
     private:
       
+      float RecalculateTimeout();
       bool IsBodyInPosition(Radians& currentAngle) const;
       Result SendSetBodyAngle();
       bool IsOffTreadsStateValid() const;
+      bool IsActionMakingProgress() const;
       
       const f32 _kDefaultSpeed        = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       const f32 _kDefaultAccel        = 10.f;
+      const f32 _kDefaultTimeoutFactor = 1.5f;
       const f32 _kMaxRelativeTurnRevs = 25.f; // Maximum number of revolutions allowed for a relative turn.
+      const f32 _kDefaultProgressTimeoutFactor = 3.0f;
       const std::string _kEyeShiftLayerName = "TurnInPlaceEyeShiftLayer";
       
       bool       _inPosition = false;
@@ -108,7 +115,12 @@ namespace Vector {
       const bool _isAbsoluteAngle;
       f32        _maxSpeed_radPerSec = _kDefaultSpeed;
       f32        _accel_radPerSec2 = _kDefaultAccel;
+      bool       _shouldTimeoutOnProgressStall = false;
       bool       _motionProfileManuallySet = false;
+      float      _timeout_s;
+      float      _expectedTotalAccelTime_s = 0.f;
+      float      _expectedMaxSpeedTime_s = 0.f;
+      std::set<OffTreadsState> validTreadStates = {OffTreadsState::OnTreads, OffTreadsState::InAir};
       
       // To keep track of PoseFrameId changes mid-turn:
       PoseFrameID_t _prevPoseFrameId = 0;
@@ -238,6 +250,8 @@ namespace Vector {
       void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
       void SetMoveEyes(bool enable) { _moveEyes = (enable && PROCEDURAL_EYE_LEADING); }
+      void SetValidOffTreadsStates(const std::set<OffTreadsState>& states);
+      void EnableTurnProgressTrackingTimeout(const bool enable) { _shouldTimeoutPanOnProgressStall = enable; }
       
       Radians GetBodyPanAngleTolerance() const { return _panAngleTol; }
       Radians GetHeadTiltAngleTolerance() const { return _tiltAngleTol; }
@@ -277,6 +291,8 @@ namespace Vector {
       f32     _tiltAccel_radPerSec2   = _kDefaultTiltAccel;
       bool    _panSpeedsManuallySet   = false;
       bool    _tiltSpeedsManuallySet  = false;
+      bool    _shouldTimeoutPanOnProgressStall = false;
+
       
     }; // class PanAndTiltAction
     

@@ -23,6 +23,7 @@ enum uint_8 FeatureType {
   PopAWheelie,
   ActiveIntentFeedback,
   Alexa,
+  FindFacesWhileHeld,
   
   TestFeature,
   PRDemo,

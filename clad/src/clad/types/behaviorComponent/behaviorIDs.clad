@@ -175,6 +175,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   LookInPlaceHeadUp,
+  LookInPlaceHeadUpInAir,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
@@ -196,6 +197,7 @@ enum uint_16 BehaviorID {
   ObservingEyeContact,
   ObservingFindFaces,
   ObservingLookAtFaces,
+  ObservingLookAtFacesInAir,
   ObservingOffChargerHeadOnly,
   ObservingOnCharger,
   ObservingOnChargerEyeContact,

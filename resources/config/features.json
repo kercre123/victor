@@ -72,6 +72,10 @@
     "enabled": false
   },
   {
+    "feature": "FindFacesWhileHeld",
+    "enabled": false
+  },
+  {
     "feature": "PRDemo",
     "enabled": false
   },

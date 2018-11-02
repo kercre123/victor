@@ -71,6 +71,7 @@ public:
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = _configParams.behavior_CanCarryCube;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
   }
@@ -143,6 +144,9 @@ protected:
     float sx_BodyTurnSpeed_degPerSec = 0.0f;
     float sxt_HeadTurnSpeed_degPerSec = 0.0f; // for turn states
     float sxh_HeadTurnSpeed_degPerSec = 0.0f; // for head move states
+    
+    // Tracking and cancelling of point-turns that have stalled and are not making progress towards goal pose
+    bool behavior_TrackTurnProgress;
 
     // instead of turn speeds, the user can optionally specify a motion profile (must specify this XOR turn
     // speeds above)

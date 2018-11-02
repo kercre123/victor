@@ -598,6 +598,18 @@ namespace Anki {
       const auto& currTreadState = GetRobot().GetOffTreadsState();
       return _prevTreadsState == OffTreadsState::OnTreads && currTreadState != OffTreadsState::OnTreads;
     }
+    
+    f32 IAction::GetCurrentRunTimeSeconds() const
+    {
+      const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      if(_startTime_sec < 0.f) {
+        // Action has not started running/updating yet!
+        return 0.f;
+      } else {
+        return currentTimeInSeconds - _startTime_sec;
+      }
+    }
 
     ActionResult IAction::UpdateInternal()
     {

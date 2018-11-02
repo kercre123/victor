@@ -37,9 +37,10 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
     modifiers.visionModesForActiveScope->insert({ VisionMode::CroppedFaceDetection, EVisionUpdateFrequency::Standard });
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
 
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
@@ -56,6 +57,22 @@ private:
     TurnTowardsFace,
     StareAtFace
   };
+  
+  struct InstanceConfig {
+    InstanceConfig();
+    std::string searchBehaviorStr;
+    ICozmoBehaviorPtr searchBehavior;
+  };
+  
+  struct DynamicVariables {
+    DynamicVariables();
+    // which faces we've already looked at during this activation of the behavior.
+    std::vector<SmartFaceID> faceIdsLookedAt;
+    struct Persistent {
+      State state;
+    };
+    Persistent persistent;
+  };
 
   RobotTimeStamp_t GetRecentFaceTime();
   SmartFaceID GetFaceToStareAt();
@@ -67,12 +84,8 @@ private:
 
   void SetState_internal(State state, const std::string& stateName);
 
-  State _state = State::FindFaces;
-
-  ICozmoBehaviorPtr _searchBehavior;
-  
-  // which faces we've already looked at during this activation of the behavior. 
-  std::vector<SmartFaceID> _faceIdsLookedAt;
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 
 };
 

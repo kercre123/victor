@@ -90,8 +90,6 @@
 namespace Anki {
 namespace Vector {
 
-CONSOLE_VAR(bool, kFakeRobotBeingHeld, "Robot", false);
-
 CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 
 // if false, vision system keeps running while picked up, on side, etc.
@@ -2237,9 +2235,6 @@ Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 at
 
 OffTreadsState Robot::GetOffTreadsState() const
 {
-  if(kFakeRobotBeingHeld){
-    return OffTreadsState::Held;
-  }
   return _offTreadsState;
 }
 
