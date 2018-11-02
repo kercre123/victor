@@ -143,6 +143,7 @@ static const char* kFeatureEnumString =
   "Invalid,"
   "Laser,"
   "Exploring,"
+  "FetchCube,"
   "FindCube,"
   "Keepaway,"
   "ReactToHeldCube,"
