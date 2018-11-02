@@ -138,7 +138,7 @@ void BehaviorVolume::OnBehaviorActivated()
                 "No animation mapped for volume level %u", desiredVolume);
     return;
   }
-  const AnimationTrigger animTrigger = kVolumeLevelAnimMap.at(desiredVolume);
+  const AnimationTrigger animTrigger = it->second;
   TriggerLiftSafeAnimationAction* animation = new TriggerLiftSafeAnimationAction(animTrigger);
   DelegateIfInControl(animation);
                      
@@ -204,7 +204,7 @@ EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromLevelIntent(UserIntentPtr i
   const auto it = kVolumeLevelMap.find(levelRequest);
   if (it != kVolumeLevelMap.end()){
     valid = true;
-    desiredVol = kVolumeLevelMap.at(levelRequest);
+    desiredVol = it->second;
     LOG_DEBUG("BehaviorVolume.ComputeDesiredVolumeFromLevelIntent.desiredVol",
                 "mapped level request %s to desiredVol %u", levelRequest.c_str(), desiredVol);
   } else {
