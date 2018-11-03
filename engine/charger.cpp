@@ -19,11 +19,15 @@
 
 #include "coretech/common/engine/math/quad_impl.h"
 
+#include "util/console/consoleInterface.h"
+
 #include "util/logging/logging.h"
 
 namespace Anki {
   
   namespace Vector {
+    
+    CONSOLE_VAR(bool, kUseChargerForLocalization, "Charger", true);
     
     // === Charger predock pose params ===
     // {angle, x, y}
@@ -210,6 +214,11 @@ namespace Anki {
     Point3f Charger::GetSameDistanceTolerance() const {
       Point3f distTol(kLength*.5f, kWidth*.5f, kHeight*.5f);
       return distTol;
+    }
+    
+    bool Charger::CanBeUsedForLocalization() const
+    {
+      return kUseChargerForLocalization;
     }
         
     bool Charger::IsPreActionPoseValid(const PreActionPose& preActionPose,

@@ -701,8 +701,8 @@ TEST(BlockWorld, PoseUpdates)
 //  };
 
   // These parameters create corners beyond localizable distance
-  const f32 halfHeight = 0.05f*static_cast<f32>(camCalib->GetNrows());
-  const f32 halfWidth = 0.05f*static_cast<f32>(camCalib->GetNcols());
+  const f32 halfHeight = 0.025f*static_cast<f32>(camCalib->GetNrows());
+  const f32 halfWidth = 0.025f*static_cast<f32>(camCalib->GetNcols());
   const f32 xcen = camCalib->GetCenter_x();
   const f32 ycen = camCalib->GetCenter_y();
   Quad2f farCorners;

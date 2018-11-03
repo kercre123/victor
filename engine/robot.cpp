@@ -557,13 +557,11 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         // Re-enable vision if we've returned to treads
         GetVisionComponent().Pause(false);
       }
-
-      DEV_ASSERT(!IsLocalized(), "Robot should be delocalized when first put back down!");
-
+      
       // If we are not localized and there is nothing else left in the world that
       // we could localize to, then go ahead and mark us as localized (via
       // odometry alone)
-      if (false == GetBlockWorld().AnyRemainingLocalizableObjects()) {
+      if (!IsLocalized() && !GetBlockWorld().AnyRemainingLocalizableObjects()) {
         LOG_INFO("Robot.UpdateOfftreadsState.NoMoreRemainingLocalizableObjects",
                  "Marking previously-unlocalized robot %d as localized to odometry because "
                  "there are no more objects to localize to in the world.", GetID());
@@ -769,6 +767,12 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
     _localizedToID.UnSet();
     _isLocalized = true;
     return RESULT_OK;
+  }
+  
+  // Do not allow localizing if we're not on treads
+  if (_offTreadsState != OffTreadsState::OnTreads) {
+    LOG_ERROR("Robot.SetLocalizedTo.OffTreads", "Cannot localize while off treads");
+    return RESULT_FAIL;
   }
 
   if (object->GetID().IsUnknown()) {
@@ -1723,6 +1727,11 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     return RESULT_FAIL;
   }
 
+  if (histStatePtr->WasPickedUp() || (_offTreadsState != OffTreadsState::OnTreads)) {
+    LOG_INFO("Robot.LocalizeToObject.OffTreads", "Not localizing to object since we are not on treads");
+    return RESULT_OK;
+  }
+  
   // Mark the robot as now being localized to this object
   // NOTE: this should be _after_ calling AddVisionOnlyStateToHistory, since
   //    that function checks whether the robot is already localized
