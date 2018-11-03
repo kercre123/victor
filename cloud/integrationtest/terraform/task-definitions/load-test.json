@@ -58,6 +58,14 @@
                 "value": "${tasks_per_cluster}"
             },
             {
+                "name": "REPORTING_TASKS_PER_CLUSTER",
+                "value": "${reporting_tasks_per_cluster}"
+            },
+            {
+                "name": "METRICS_REPORTING_INTERVAL",
+                "value": "${metrics_reporting_interval}"
+            },
+            {
                 "name": "RAMP_UP_DURATION",
                 "value": "${ramp_up_duration}"
             },
@@ -100,6 +108,10 @@
             {
                 "name": "REDIS_ADDRESS",
                 "value": "redis.loadtest:6379"
+            },
+            {
+                "name": "WAVEFRONT_ADDRESS",
+                "value": "wavefront.loadtest:2878"
             }
         ],
         "name": "load_test",
