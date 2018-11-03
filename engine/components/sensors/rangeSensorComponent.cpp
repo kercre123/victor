@@ -15,6 +15,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/robot.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/viz/vizManager.h"
@@ -106,29 +107,18 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
       const f32 yaw = sin(kPixToAngle[c]);
 
       const f32 leftDist_mm = data.data[c + (r*8)] * 1000; 
-
       const f32 yl = yaw * leftDist_mm;
       const f32 zl = pitch * leftDist_mm;
 
       Pose3d pl(0, Z_AXIS_3D(), {leftDist_mm, yl, zl}, lp, "point");
       Pose3d rootl = pl.GetWithRespectToRoot();
-      // _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
-      //                                                   {3, 3, 3},
-      //                                                   rootl);
-      // left.sensorPoint = lp.GetWithRespectToRoot();
-      // left.worldPoint = rootl.GetTranslation();
-      
+
       const f32 rightDist_mm = data.data[4+c + (r*8)] * 1000;
       const f32 yr = yaw * rightDist_mm;
       const f32 zr = pitch * rightDist_mm;
         
       Pose3d pr(0, Z_AXIS_3D(), {rightDist_mm, yr, zr}, rp, "point");
       Pose3d rootr = pr.GetWithRespectToRoot();
-      // _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
-      //                                                   {3, 3, 3},
-      //                                                   rootr);
-      // right.sensorPoint = rp.GetWithRespectToRoot();
-      // right.worldPoint = rootr.GetTranslation();
 
       navMapData.push_back(rootl.GetTranslation());
       navMapData.push_back(rootr.GetTranslation());
@@ -137,22 +127,52 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 
   UpdateNavMap(navMapData);
 }
-  
+
+namespace {
+  Point3f lineIntersection(Point3f lineOrigin, Vec3f lineDirection) {
+
+    if (lineDirection.z() == 0) {
+        return {0,0,0};
+    }
+
+    Point3f normal(0,0,1);
+    float t = DotProduct(normal, lineOrigin) / DotProduct(normal, lineDirection);
+    return lineOrigin + (lineDirection * t);
+  }
+} 
+
 void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data)
 {
   int n = 0;
-  for(const auto& pt : data)
-  {
-    _robot->GetContext()->GetVizManager()->DrawCuboid(n++,
-                                                      {3, 3, 3},
-                                                      Pose3d(0, Z_AXIS_3D(), pt), NEAR(pt.z(), 0.f, 2) ? NamedColors::GREEN : NamedColors::RED);
-
-    if (NEAR(pt.z(), 0.f, 2)) {
+  std::vector<Point2f> groundPlane, cliffPoints;
+  Point3f robotPt = _robot->GetPose().GetTranslation();
+  Point3f camera = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle()).GetTranslation() + _robot->GetPose().GetTranslation();
+  for(const auto& pt : data) {
+    _robot->GetContext()->GetVizManager()->DrawCuboid(n++, {3, 3, 3}, Pose3d(0, Z_AXIS_3D(), pt), NEAR(pt.z(), 0.f, 2) ? NamedColors::GREEN : NamedColors::RED);
+    if (NEAR(pt.z(), 0.f, 2) && ((pt - robotPt).Length() < 500)) { groundPlane.emplace_back(pt); }
+    if (FLT_LT(pt.z(), -10.f)) { 
+      // Get ground plane intersection
+      Vec3f ray = pt - camera;
+      ray.MakeUnitLength();
+      cliffPoints.emplace_back( lineIntersection(camera, ray) ); 
     }
-    // TODO Find intersection point of vector formed between rangeData.sensorPoint and rangeData.worldPoint
-    // and the XY ground plane to update nav map
   }
-  
+
+  if (groundPlane.size() >= 2) {
+    auto ch = ConvexPolygon::ConvexHull( std::move(groundPlane) );
+
+    // TODO: get actual message timestamp from incoming message
+    _robot->GetMapComponent().InsertData(ch, MemoryMapData(MemoryMapTypes::EContentType::ClearOfObstacle, _robot->GetLastMsgTimestamp()));
+  }
+
+  for(const auto& pt : cliffPoints) {
+    Ball2f b( pt, 4.f );
+    Pose3d cliffPose(0.f, Z_AXIS_3D(), Point3f(pt.x(), pt.y(), 0.f));
+
+    // TODO: get actual message timestamp from incoming message
+    _robot->GetMapComponent().InsertData( b, MemoryMapData_Cliff(cliffPose, _robot->GetLastMsgTimestamp()) );
+  }
+
 }
 
 } // Cozmo namespace

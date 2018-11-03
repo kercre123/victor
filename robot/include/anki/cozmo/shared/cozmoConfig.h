@@ -244,7 +244,7 @@ namespace Vector {
   #define TOF_ABOVE_BELOW 1
   #define TOF_CENTER_OF_FACE 2
   
-  #define TOF_CONFIGURATION TOF_CENTER_OF_FACE
+  #define TOF_CONFIGURATION TOF_SIDE_BY_SIDE
   
   const f32 TOF_FOV_RAD = DEG_TO_RAD(19);
   const u32 TOF_RESOLUTION = 4;
