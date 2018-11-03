@@ -99,7 +99,7 @@ static int lcd_spi_init()
   // bufsiz is stored as a string in the file
   char buf[32] = {0};
   int bytes_read = 0;
-  
+
   // Attempt to read enough bytes to fit in our buffer
   while(bytes_read < sizeof(buf))
   {
@@ -116,14 +116,13 @@ static int lcd_spi_init()
       error_exit(app_IO_ERROR, "Failed to read from spi bufsiz\n");
     }
   }
-  
+
   char* end;
   int size = strtol(buf, &end, 10);
-  printf("LCD.lcd_spi_init.transferSize %d\n", size);
   MAX_TRANSFER = size;
 
   (void)close(bufsiz_fd);
-  
+
   return lcd_fd;
 }
 
@@ -264,7 +263,7 @@ int lcd_init(void) {
   gpio_set_value(RESET_PIN, 1);
   // Wait 120 milliseconds after releasing reset before sending commands
   milliwait(120);
-  
+
   lcd_device_init();
 
   return 0;
