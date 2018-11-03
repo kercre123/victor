@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/settingsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
@@ -129,6 +130,10 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   auto& sdkComponent = robotInfo.GetSDKComponent();
   sdkComponent.SDKBehaviorActivation(false);
+
+  // Unsets eye color. Also unsets any other changes though SDK only changes eye color but this is good future proofing.
+  SettingsManager& settings = GetBEI().GetSettingsManager();
+  settings.ApplyAllCurrentSettings();
 
   // Do not permit low level movement commands/actions to run since SDK behavior is no longer active.
   SetAllowExternalMovementCommands(false);

@@ -71,6 +71,7 @@ namespace Vector {
     robot->GetGatewayInterface()->Broadcast(wrapper);
   }
 
+  // TODO Only allow this if the SDK behavior is activated.
   void RobotExternalRequestComponent::SayText(const AnkiEvent<external_interface::GatewayWrapper>& event) {
     Robot* robot = _context->GetRobotManager()->GetRobot();
     external_interface::SayTextRequest request = event.GetData().say_text_request();
@@ -109,6 +110,7 @@ namespace Vector {
     robot->SetImageSendMode(sendMode);
   }
 
+  // TODO Only allow this if the SDK behavior is activated.
   void RobotExternalRequestComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event){
     Robot* robot = _context->GetRobotManager()->GetRobot();
     external_interface::SetEyeColorRequest request = event.GetData().set_eye_color_request();

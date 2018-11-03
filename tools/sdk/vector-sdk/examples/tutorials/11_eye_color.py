@@ -17,6 +17,7 @@
 """Set Vector's eye color.
 """
 
+import time
 import anki_vector
 
 
@@ -27,6 +28,8 @@ def main():
         print("Set Vector's eye color to purple...")
         robot.behavior.set_eye_color(hue=0.83, saturation=0.76)
 
+        print("Sleep 5 seconds...")
+        time.sleep(5)
 
 if __name__ == '__main__':
     main()

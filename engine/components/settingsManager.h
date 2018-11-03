@@ -88,9 +88,10 @@ public:
   bool ApplyPendingSettingsUpdate(const external_interface::RobotSetting setting, const bool clearRequest = true);
   //////
 
+  void ApplyAllCurrentSettings();
+
 private:
 
-  void ApplyAllCurrentSettings();
   bool ApplyRobotSetting(const external_interface::RobotSetting robotSetting, bool force = true);
   bool ApplySettingMasterVolume();
   bool ApplySettingEyeColor();
