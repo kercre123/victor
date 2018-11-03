@@ -186,12 +186,14 @@ private:
   
   void SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const;
 
-  // computes the best edge, relative to known cliff centers
   // given a set of vision-detected edge points (projected to the robot frame)
-  // returns true if a line was detected, and return argument `outEdge` can be used
-  bool ExtractDominantCliffEdge(const std::vector<Point2f>& points, 
-                                const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& cliffNodes,
-                                std::pair<Point2f, Point2f>& outEdge) const;
+  // determines a refinement on the newest cliff's pose, based on known cliff
+  // data.
+  // Returns true if such a refinement exists
+  bool RefineNewCliffPose(const std::vector<Point2f>& points,
+                          MemoryMapTypes::MemoryMapDataConstPtr newCliffNode,
+                          const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& oldCliffNodes,
+                          Pose3d& refinedCliffPose) const;
 
   // helper method to retrieve all unique cliff positions in the current map
   // note: unique because multiple cells in the QT are associated with the same

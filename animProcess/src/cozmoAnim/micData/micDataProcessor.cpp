@@ -17,6 +17,7 @@
 #include "policy_actions.h"
 #include "se_diag.h"
 
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/beatDetector/beatDetector.h"
@@ -171,25 +172,43 @@ void MicDataProcessor::InitVAD()
   
 void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, float score)
 {
+  const bool isButtonPress = (source == TriggerWordDetectSource::Button);
+  if( isButtonPress && _buttonPressIsAlexa ) {
+    NotifyAlexaOfButtonPress();
+    return;
+  }
+  
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
   if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
   {
     return;
   }
+  
+  // Start command stream after EarCon completes
+  auto earConCallback = [this](bool success) {
+    // If we didn't succeed, it means that we didn't have a wake word response setup
+    if (success) {
+      RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
+      PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
+                       "Timestamp %d",
+                       (TimeStamp_t)mostRecentTimestamp);
+    }
+    else {
+      PRINT_NAMED_WARNING("MicDataProcessor.TWCallback",
+                          "Don't have a wake word response setup");
+    }
+  };
+  showStreamState->SetPendingTriggerResponseWithGetIn(earConCallback);
 
-  showStreamState->SetPendingTriggerResponseWithGetIn();
-
-  RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
-
   const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
                                !_micDataSystem->ShouldSimulateStreaming();
 
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.direction = currentDirection;
-  twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
+  twDetectedMessage.isButtonPress = isButtonPress;
   twDetectedMessage.triggerScore = (uint32_t) score;
   twDetectedMessage.willOpenStream = willStreamAudio;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
@@ -208,11 +227,16 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   // }
 
   PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
-                    "Direction index %d at timestamp %d",
-                    currentDirection,
-                    (TimeStamp_t)mostRecentTimestamp);
+                    "Direction index %d",
+                    currentDirection);
 }
 
+void MicDataProcessor::SetAlexaActive(bool active)
+{
+  // for now, pretend we received a message from the app specifying what the backpack button should do
+  _buttonPressIsAlexa = active;
+}
+  
 RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamType,
                                                   uint32_t overlapLength_ms)
 {
@@ -778,6 +802,8 @@ void MicDataProcessor::ProcessTriggerLoop()
     {
       job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
     }
+    
+    UpdateAlexaInput( processedAudio.data(), processedAudio.size() );
 
     // Run the trigger detection, which will use the callback defined above
     // Note we skip it if there is no activity as of the latest processed audioblock
@@ -816,6 +842,15 @@ void MicDataProcessor::UpdateBeatDetector(const AudioUtil::AudioSample* const sa
       auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
       _micDataSystem->SendMessageToEngine(std::move(engineMessage));
     }
+  }
+}
+  
+void MicDataProcessor::UpdateAlexaInput(const AudioUtil::AudioSample* const samples, size_t nSamples)
+{
+  auto* alexa = _context->GetAlexa();
+  if (alexa != nullptr) {
+    // this will not go any further if the user has not opted in
+    alexa->AddMicrophoneSamples(samples, nSamples);
   }
 }
   
@@ -887,6 +922,14 @@ const char* MicDataProcessor::GetProcessingStateName(MicDataProcessor::Processin
       return "SigEsBeamformingOn";
   }
   return "";
+}
+  
+void MicDataProcessor::NotifyAlexaOfButtonPress()
+{
+  auto* alexa = _context->GetAlexa();
+  if (alexa != nullptr) {
+    alexa->NotifyOfTapToTalk();
+  }
 }
 
 } // namespace MicData

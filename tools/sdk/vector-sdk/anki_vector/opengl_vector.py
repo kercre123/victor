@@ -44,12 +44,14 @@ from typing import List
 from .faces import Face
 from .objects import CustomObject, FixedCustomObject, LightCube, ObservableObject
 from .robot import Robot
-from . import util, opengl
+from . import nav_map, opengl, util
 
 try:
-    from OpenGL.GL import (GL_AMBIENT, GL_BLEND, GL_DIFFUSE, GL_FILL, GL_FRONT, GL_FRONT_AND_BACK, GL_LIGHTING, GL_LINE, GL_ONE_MINUS_SRC_ALPHA, GL_POLYGON, GL_SHININESS, GL_SPECULAR, GL_SRC_ALPHA,
-                           glBegin, glBlendFunc, glColor, glDisable, glEnable, glEnd, glMaterialfv, glMultMatrixf, glNormal3fv,
-                           glPolygonMode, glPopMatrix, glPushMatrix, glRotatef, glScalef, glTranslatef, glVertex3fv)
+    from OpenGL.GL import (GL_AMBIENT, GL_BLEND, GL_COMPILE, GL_DIFFUSE, GL_FILL, GL_FRONT, GL_FRONT_AND_BACK, GL_LIGHTING, GL_LINE, GL_LINE_STRIP,
+                           GL_ONE_MINUS_SRC_ALPHA, GL_POLYGON, GL_SHININESS, GL_SPECULAR, GL_SRC_ALPHA, GL_TRIANGLE_STRIP,
+                           glBegin, glBlendFunc, glCallList, glColor, glColor3f, glColor4f, glDisable, glEnable, glEnd, glEndList, glGenLists,
+                           glMaterialfv, glMultMatrixf, glNewList, glNormal3fv, glPolygonMode, glPopMatrix, glPushMatrix, glRotatef, glScalef,
+                           glTranslatef, glVertex3f, glVertex3fv)
 
 except ImportError as import_exc:
     opengl.raise_opengl_or_pillow_import_error(import_exc)
@@ -339,6 +341,104 @@ class RobotView(opengl.PrecomputedView):
         glPopMatrix()
 
 
+class NavMapView(opengl.PrecomputedView):
+    """A view containing a cube of unit size at the origin."""
+
+    def __init__(self):
+        self.logger = util.get_class_logger(__name__, self)
+        super(NavMapView, self).__init__()
+
+    def build_from_nav_map(self, new_nav_map: nav_map.NavMapGrid):
+        """Reconstructs the display list for the NavMapView based on a :class:`anki_vector.nav_map.NavMapGrid` object.
+
+        :param new_nav_map: nav map source data to be referenced for the new display list.
+        """
+        cen = new_nav_map.center
+        half_size = new_nav_map.size * 0.5
+
+        self._display_lists['_navmap'] = glGenLists(1)  # pylint: disable=assignment-from-no-return
+        glNewList(self._display_lists['_navmap'], GL_COMPILE)
+
+        glPushMatrix()
+
+        color_light_gray = (0.65, 0.65, 0.65)
+        glColor3f(*color_light_gray)
+        glBegin(GL_LINE_STRIP)
+        glVertex3f(cen.x + half_size, cen.y + half_size, cen.z)  # TL
+        glVertex3f(cen.x + half_size, cen.y - half_size, cen.z)  # TR
+        glVertex3f(cen.x - half_size, cen.y - half_size, cen.z)  # BR
+        glVertex3f(cen.x - half_size, cen.y + half_size, cen.z)  # BL
+        glVertex3f(cen.x + half_size, cen.y + half_size,
+                   cen.z)  # TL (close loop)
+        glEnd()
+
+        def color_for_content(content):
+            nct = nav_map.NavNodeContentTypes
+            colors = {nct.Unknown.value: (0.3, 0.3, 0.3),                      # dark gray
+                      nct.ClearOfObstacle.value: (0.0, 1.0, 0.0),              # green
+                      nct.ClearOfCliff.value: (0.0, 0.5, 0.0),                 # dark green
+                      nct.ObstacleCube.value: (1.0, 0.0, 0.0),                 # red
+                      nct.ObstacleProximity.value: (1.0, 0.5, 0.0),            # orange
+                      nct.ObstacleProximityExplored.value: (0.5, 1.0, 0.0),    # yellow-green
+                      nct.ObstacleUnrecognized.value: (0.5, 0.0, 0.0),         # dark red
+                      nct.Cliff.value: (0.0, 0.0, 0.0),                        # black
+                      nct.InterestingEdge.value: (1.0, 1.0, 0.0),              # yellow
+                      nct.NonInterestingEdge.value: (0.5, 0.5, 0.0),           # dark-yellow
+                      }
+
+            col = colors.get(content)
+            if col is None:
+                col = (1.0, 1.0, 1.0)  # white
+            return col
+
+        fill_z = cen.z - 0.4
+
+        def _recursive_draw(grid_node: nav_map.NavMapGridNode):
+            if grid_node.children is not None:
+                for child in grid_node.children:
+                    _recursive_draw(child)
+            else:
+                # leaf node - render as a quad
+                map_alpha = 0.5
+                cen = grid_node.center
+                half_size = grid_node.size * 0.5
+
+                # Draw outline
+                glColor4f(*color_light_gray, 1.0)  # fully opaque
+                glBegin(GL_LINE_STRIP)
+                glVertex3f(cen.x + half_size, cen.y + half_size, cen.z)
+                glVertex3f(cen.x + half_size, cen.y - half_size, cen.z)
+                glVertex3f(cen.x - half_size, cen.y - half_size, cen.z)
+                glVertex3f(cen.x - half_size, cen.y + half_size, cen.z)
+                glVertex3f(cen.x + half_size, cen.y + half_size, cen.z)
+                glEnd()
+
+                # Draw filled contents
+                glColor4f(*color_for_content(grid_node.content), map_alpha)
+                glBegin(GL_TRIANGLE_STRIP)
+                glVertex3f(cen.x + half_size, cen.y - half_size, fill_z)
+                glVertex3f(cen.x + half_size, cen.y + half_size, fill_z)
+                glVertex3f(cen.x - half_size, cen.y - half_size, fill_z)
+                glVertex3f(cen.x - half_size, cen.y + half_size, fill_z)
+                glEnd()
+
+        _recursive_draw(new_nav_map.root_node)
+
+        glPopMatrix()
+        glEndList()
+
+    def display(self):
+        """Displays the precomputed nav map view.
+        This function will do nothing if no display list has yet been built.
+        """
+        if '_navmap' in self._display_lists:
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glEnable(GL_BLEND)
+            glPushMatrix()
+            glCallList(self._display_lists['_navmap'])
+            glPopMatrix()
+
+
 class VectorViewManifest():
     """A collection of Vector-specific source data containing views to display.
     """
@@ -347,6 +447,7 @@ class VectorViewManifest():
         self._light_cube_view: LightCubeView = None
         self._unit_cube_view: UnitCubeView = None
         self._robot_view: RobotView = None
+        self._nav_map_view: NavMapView = None
 
     @property
     def light_cube_view(self) -> LightCubeView:
@@ -366,6 +467,13 @@ class VectorViewManifest():
         """A precomputed view of the robot."""
         return self._robot_view
 
+    @property
+    def nav_map_view(self) -> NavMapView:
+        """A precomputable view of the navigation map.  This will be updated
+        as new content comes in.
+        """
+        return self._nav_map_view
+
     def load_assets(self):
         """Loads all assets needed for the view manifest, and precomputes them
         into cached views.
@@ -381,6 +489,8 @@ class VectorViewManifest():
         self._light_cube_view = LightCubeView(cube_mesh_data)
 
         self._unit_cube_view = UnitCubeView()
+
+        self._nav_map_view = NavMapView()
 
 
 class ObservableObjectRenderFrame():  # pylint: disable=too-few-public-methods

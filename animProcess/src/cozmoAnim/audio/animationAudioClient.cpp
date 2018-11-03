@@ -162,6 +162,11 @@ AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData:
     }
   }
 
+  if (ttsID != TextToSpeechComponent::kInvalidTTSID) {
+    // Notify TTS component that keyframe has been triggered
+    _ttsComponent->OnAudioPlaying(ttsID);
+  }
+
   // Set up callback function, callback context
   const auto callbackFunc = std::bind(&AnimationAudioClient::CozmoEventCallback, this, ttsID, std::placeholders::_1);
   AudioCallbackContext* audioCallbackContext = new AudioCallbackContext();

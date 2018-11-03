@@ -18,6 +18,7 @@ The API
     anki_vector.faces
     anki_vector.lights
     anki_vector.motors
+    anki_vector.nav_map
     anki_vector.objects
     anki_vector.photos
     anki_vector.proximity

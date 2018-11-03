@@ -37,11 +37,17 @@ protected:
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual void OnBehaviorActivated() override;
+  
+  virtual void BehaviorUpdate() override;
 
 private:
 
   // Check robot's pitch angle at the end of the behavior
   void CheckPitch();
+  
+  // Checks whether the cliffs detected are valid in order to activate or continue
+  // running the behavior.
+  bool AreCliffDetectedFlagsValid(const u8 cliffDetectedFlags) const;
   
   // Keeps track of whether or not the robot ended the behavior still inclined
   bool _endedOnInclineLastTime = false;

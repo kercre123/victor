@@ -2,7 +2,7 @@ package main
 
 import (
 	"anki/robot"
-	"anki/token"
+	"anki/token/identity"
 	"ankidev/accounts"
 	"clad/cloud"
 	"fmt"
@@ -226,7 +226,7 @@ func main() {
 	options := newFromEnvironment(app)
 
 	// Enable client certs and set custom key pair dir (for this user)
-	token.UseClientCert = true
+	identity.UseClientCert = true
 
 	app.Action = func() {
 		simulate(options)

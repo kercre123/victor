@@ -99,15 +99,19 @@ CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kObstacleTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kProxTimeout_ms, "MapComponent", 600.0f * 1000);
 CONSOLE_VAR(float, kTimeoutUpdatePeriod_ms, "MapComponent", 5.0f * 1000);
+CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 1200.f * 1000); // 20 minutes
 
 // the length and half width of two triangles used in FlagProxObstaclesUsingPose (see method)
 CONSOLE_VAR(float, kProxExploredTriangleLength_mm, "MapComponent", 300.0f );
 CONSOLE_VAR(float, kProxExploredTriangleHalfWidth_mm, "MapComponent", 50.0f );
 
-CONSOLE_VAR(float, kHoughAngleResolution_deg, "MapComponent.VisualEdgeDetection", 5.0);
+CONSOLE_VAR(float, kHoughAngleResolution_deg, "MapComponent.VisualEdgeDetection", 2.0);
 CONSOLE_VAR(int,   kHoughAccumThreshold,      "MapComponent.VisualEdgeDetection", 20);
 CONSOLE_VAR(float, kHoughMinLineLength_mm,    "MapComponent.VisualEdgeDetection", 40.0);
 CONSOLE_VAR(float, kHoughMaxLineGap_mm,       "MapComponent.VisualEdgeDetection", 10.0);
+CONSOLE_VAR(float, kEdgeLineLengthToInsert_mm,"MapComponent.VisualEdgeDetection", 200.f);
+CONSOLE_VAR(float, kVisionCliffPadding_mm,    "MapComponent.VisualEdgeDetection", 20.f);
+CONSOLE_VAR(bool,  kVisualCliffObstacleChecking, "MapComponent.VisualEdgeDetection", false);
 
 CONSOLE_VAR(int,   kMaxPixelsUsedForHoughTransform, "MapComponent.VisualEdgeDetection", 160000); // 400 x 400 max size
 
@@ -272,8 +276,47 @@ void DevProcessOneFrameForVisionEdges( ConsoleFunctionContextRef context )
     consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::DetectingOverheadEdges));
   }
 }
+
+// cache the visualized cliff frames to clear on subsequent calls
+// to drawing the cliffs
+static std::vector<std::string> sCliffFrameIdentifiers;
+
+void DevDrawCliffPoses( ConsoleFunctionContextRef context )
+{
+  if(consoleRobot != nullptr) {
+    auto vizm = consoleRobot->GetContext()->GetVizManager();
+    auto& mapc = consoleRobot->GetMapComponent();
+
+    const auto currentMap = mapc.GetCurrentMemoryMap();
+    if (!currentMap) {
+      return;
+    }
+
+    for(const auto& id : sCliffFrameIdentifiers) {
+      vizm->EraseSegments(id);
+    }
+    sCliffFrameIdentifiers.clear();
+
+    MemoryMapTypes::NodePredicate isDropSensorCliff = [](MemoryMapTypes::MemoryMapDataConstPtr nodeData) -> bool {
+      const bool isValidCliff = nodeData->type == MemoryMapTypes::EContentType::Cliff;
+      return isValidCliff;
+    };
+
+    MemoryMapTypes::MemoryMapDataConstList cliffNodes;
+    currentMap->FindContentIf(isDropSensorCliff, cliffNodes);
+
+    size_t cliffCount = 0;
+    for(auto& node : cliffNodes) {
+      const Pose3d& pose = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(node)->pose;
+      std::string id = "cliff_frame" + std::to_string(cliffCount++);
+      vizm->DrawFrameAxes2D(id, pose, 100.f, 3.f);
+      sCliffFrameIdentifiers.push_back(id);
+    }
+  }
+}
 #endif //REMOTE_CONSOLE_ENABLED
 CONSOLE_FUNC( DevProcessOneFrameForVisionEdges, "MapComponent.VisualEdgeDetection" );
+CONSOLE_FUNC( DevDrawCliffPoses,                "MapComponent.VisualEdgeDetection");
 
 };
 
@@ -388,7 +431,7 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
         BroadcastMapToSDK(data);
 
         // Reset the timer but don't accumulate error
-        nextBroadcastTime_s += ((int) (currentTime_s - nextBroadcastTime_s) / kMapRenderRate_sec + 1) * _broadcastRate_sec;
+        nextBroadcastTime_s += ((int) (currentTime_s - nextBroadcastTime_s) / _broadcastRate_sec + 1) * _broadcastRate_sec;
         _gameMessageDirty = false;
       }
     }
@@ -532,14 +575,15 @@ void MapComponent::TimeoutObjects()
     const RobotTimeStamp_t obstacleTooOld = (currentTime <= kObstacleTimeout_ms) ? 0 : currentTime - kObstacleTimeout_ms;
     const RobotTimeStamp_t visionTooOld   = (currentTime <= kVisionTimeout_ms)   ? 0 : currentTime - kVisionTimeout_ms;
     const RobotTimeStamp_t proxTooOld     = (currentTime <= kProxTimeout_ms)     ? 0 : currentTime - kProxTimeout_ms;
+    const RobotTimeStamp_t cliffTooOld    = (currentTime <= kCliffTimeout_ms)    ? 0 : currentTime - kCliffTimeout_ms;
     
     NodeTransformFunction timeoutObjects =
-      [obstacleTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
+      [obstacleTooOld, visionTooOld, proxTooOld, cliffTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
         const RobotTimeStamp_t lastObs = data->GetLastObservedTime();
 
-        if ((EContentType::Cliff                == nodeType && lastObs <= obstacleTooOld) ||
+        if ((EContentType::Cliff                == nodeType && lastObs <= cliffTooOld)    ||
             (EContentType::ObstacleUnrecognized == nodeType && lastObs <= obstacleTooOld) ||
             (EContentType::InterestingEdge      == nodeType && lastObs <= visionTooOld)   ||
             (EContentType::NotInterestingEdge   == nodeType && lastObs <= visionTooOld)   ||
@@ -1583,71 +1627,110 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
     for( const auto& imagePt : chain.points) {
       Point2f imagePtOnGround = robotPose * imagePt.position;
-      const bool rayToCliffIsObstructed = currentMap->AnyOf( 
+
+      if(kVisualCliffObstacleChecking) {
+        const bool rayToCliffIsObstructed = currentMap->AnyOf( 
                                           {robotPose.GetTranslation(), imagePtOnGround}, 
                                           isCollisionType);
-      if (!rayToCliffIsObstructed) {
+        if (!rayToCliffIsObstructed) {
+          validPoints.push_back(std::move(imagePtOnGround));
+        }
+      } else {
         validPoints.push_back(std::move(imagePtOnGround));
       }
     }
   }
 
-  // data node contain visually-seen cliff information
-  MemoryMapData_Cliff cliffDataVis(robotPose, frameInfo.timestamp);
-  cliffDataVis.isFromVision = true;
-  const auto& cliffDataVisPtr = cliffDataVis.Clone();
-
-  // special transform function to insert visual cliffs, without overwriting
-  // sensor-detected cliffs (merges both sources of info the same node)
-  NodeTransformFunction transformVisionCliffs = [&cliffDataVisPtr] (MemoryMapDataPtr currNode) -> MemoryMapDataPtr {
-    if(currNode->type == EContentType::Cliff) {
-      // a node can be from the cliff sensor AND from vision
-      auto currCliff = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(currNode);
-      if(currCliff->isFromCliffSensor && !currCliff->isFromVision) {
-        currCliff->isFromVision = true;
-        // already modified the current node, no need to clone it
-        return currNode;
-      }
-    } else if(currNode->CanOverrideSelfWithContent(cliffDataVisPtr)) {
-      // every other type of node is handled here
-      return cliffDataVisPtr;
-    }
-    return currNode;
-  };
-
   if(validPoints.size() >= kHoughAccumThreshold && cliffNodes.size() > 0) {
-    std::pair<Point2f, Point2f> bestEdge;
-    bool result = ExtractDominantCliffEdge(validPoints, cliffNodes, bestEdge);
-    if(result) {
-      currentMap->Insert(FastPolygon(Poly2f({bestEdge.first, bestEdge.second})), transformVisionCliffs); 
+    // find the newly created cliff, and the old cliffs
+    // TODO(agm) currently we set the newest cliff as the "target" cliff to extend
+    //           it would be nice if we could decide on the cliff to extend more intelligently
+    //           based on what we are currently observing. This assumes that the edge
+    //           processing is always called in response to discovering a new cliff from the
+    //           drop sensor.
+    auto newestNodeIter = std::max_element(cliffNodes.cbegin(), cliffNodes.cend(), [&](const auto& lhs, const auto& rhs) {
+      return lhs->GetLastObservedTime() < rhs->GetLastObservedTime();
+    });
+    std::vector<MemoryMapDataConstPtr> oldCliffNodes;
+    for(auto iter = cliffNodes.cbegin(); iter!=cliffNodes.cend(); ++iter) {
+      if(iter != newestNodeIter) {
+        oldCliffNodes.push_back(*iter);
+      }
+    }
+    if(newestNodeIter != cliffNodes.cend()) {
+      auto newCliffNode = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(*newestNodeIter);
+      Pose3d refinedCliffPose;
+      const bool result = RefineNewCliffPose(validPoints, newCliffNode, oldCliffNodes, refinedCliffPose);
+      if(result) {
+        auto ptr = std::const_pointer_cast<MemoryMapData_Cliff>(newCliffNode.GetSharedPtr());
+        ptr->pose = refinedCliffPose; // directly edit the pose of the cliff
+
+        // data node contain visually-seen cliff information
+        MemoryMapData_Cliff cliffDataVis(refinedCliffPose, frameInfo.timestamp);
+        cliffDataVis.isFromVision = true;
+        const auto& cliffDataVisPtr = cliffDataVis.Clone();
+
+        // special transform function to insert visual cliffs, without overwriting
+        // sensor-detected cliffs (merges both sources of info the same node)
+        NodeTransformFunction transformVisionCliffs = [&cliffDataVisPtr] (MemoryMapDataPtr currNode) -> MemoryMapDataPtr {
+          if(currNode->type == EContentType::Cliff) {
+            // a node can be from the cliff sensor AND from vision
+            auto currCliff = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(currNode);
+            if(currCliff->isFromCliffSensor && !currCliff->isFromVision) {
+              currCliff->isFromVision = true;
+              // already modified the current node, no need to clone it
+              return currNode;
+            }
+          } else if(currNode->CanOverrideSelfWithContent(cliffDataVisPtr)) {
+            // every other type of node is handled here
+            return cliffDataVisPtr;
+          }
+          return currNode;
+        };
+
+        const Pose2d& refinedCliffPose2d = refinedCliffPose;
+        currentMap->Insert(FastPolygon({
+          refinedCliffPose2d * Point2f(-kVisionCliffPadding_mm,  kEdgeLineLengthToInsert_mm),
+          refinedCliffPose2d * Point2f(-kVisionCliffPadding_mm, -kEdgeLineLengthToInsert_mm),
+          refinedCliffPose2d * Point2f(0.f, -kEdgeLineLengthToInsert_mm),
+          refinedCliffPose2d * Point2f(0.f,  kEdgeLineLengthToInsert_mm),
+        }), transformVisionCliffs); 
+      }
     }
   } else {
     PRINT_CH_INFO("MapComponent",
                   "MapComponent.AddVisionOverheadEdges.InvalidCliffOrPointsCount",
                   "numCliffs=%zd numPoints=%zd",validPoints.size(), cliffNodes.size());
   }
-
   return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points, 
-                                            const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& cliffNodes,
-                                            std::pair<Point2f, Point2f>& outEdge) const
+bool MapComponent::RefineNewCliffPose(const std::vector<Point2f>& points,
+                                      MemoryMapTypes::MemoryMapDataConstPtr newCliffNode,
+                                      const std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& oldCliffNodes,
+                                      Pose3d& refinedCliffPose) const
 {
   // using a hough transform on a binary image constructed from
   // the input edge-feature points, this method returns the best
   // edge from a computed list of candidate edges
+  const Pose3d& newCliffPose = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(newCliffNode)->pose;
+  const Point2f& newCliffCenter = newCliffPose.GetTranslation();
+  std::vector<Point2f> oldCliffCenters;
+  std::transform( oldCliffNodes.cbegin(), 
+                  oldCliffNodes.cend(), 
+                  std::back_inserter(oldCliffCenters), 
+                  [](MemoryMapTypes::MemoryMapDataConstPtr iter) -> Point2f { 
+                    return MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(iter)->pose.GetTranslation();
+                  });
 
-  DEV_ASSERT(std::all_of( cliffNodes.cbegin(), 
-                          cliffNodes.cend(), 
+  DEV_ASSERT(std::all_of( oldCliffNodes.cbegin(), 
+                          oldCliffNodes.cend(), 
                           [](const MemoryMapDataConstPtr& ptr){ return ptr->type == EContentType::Cliff; }),
-                          "MapComponent.ExtractDominantEdge.MemoryMapDataTypesNotCliff");
-  DEV_ASSERT(cliffNodes.size() > 0, "MapComponent.ExtractDominantEdge.NoCliffsToCheckAgainst");
-  DEV_ASSERT(points.size() > 1, "MapComponent.ExtractDominantEdge.NotEnoughPointsToExtractLineFrom");
+                          "MapComponent.RefineNewCliffPose.MemoryMapDataTypesNotCliff");
+  DEV_ASSERT(points.size() > 1, "MapComponent.RefineNewCliffPose.NotEnoughPointsToExtractLineFrom");
 
   // get the image extents given a set of edge-feature points
-
   auto xRange = std::minmax_element(points.begin(), points.end(), [](auto& a, auto& b) { return a.x() < b.x(); } );
   auto yRange = std::minmax_element(points.begin(), points.end(), [](auto& a, auto& b) { return a.y() < b.y(); } );
   const f32& xMin = xRange.first->x();
@@ -1663,42 +1746,21 @@ bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points,
   int rows = std::ceil(yMax-yMin);
   int cols = std::ceil(xMax-xMin);
   if(rows == 0 || cols == 0) {
-    PRINT_NAMED_WARNING("MapComponent.ExtractDominantEdge.BinaryImageHasZeroRowCol","");
+    PRINT_NAMED_WARNING("MapComponent.RefineNewCliffPose.BinaryImageHasZeroRowCol","");
     return false;
   }
 
   if( rows*cols > kMaxPixelsUsedForHoughTransform ) {
-    PRINT_NAMED_WARNING("MapComponent.ExtractDominantEdge.BinaryImageTooLarge","dims=(%d,%d)",rows,cols);
+    PRINT_NAMED_WARNING("MapComponent.RefineNewCliffPose.BinaryImageTooLarge","dims=(%d,%d)",rows,cols);
     return false;
   }
-
-  // TODO(agm) currently we set the newest cliff as the "target" cliff to extend
-  //           it would be nice if we could decide on the cliff to extend more intelligently
-  //           based on what we are currently observing. This assumes that the edge
-  //           processing is always called in response to discovering a new cliff from the
-  //           drop sensor.
-
-  // find the newly created cliff
-  auto newestNodeIter = std::max_element(cliffNodes.cbegin(), cliffNodes.cend(), [&](const auto& lhs, const auto& rhs) {
-    return lhs->GetLastObservedTime() < rhs->GetLastObservedTime();
-  });
-  std::vector<Point2f> oldCliffCenters;
-  for(auto iter = cliffNodes.cbegin(); iter!=cliffNodes.cend(); ++iter) {
-    if(iter != newestNodeIter) {
-      auto node = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(*iter);
-      oldCliffCenters.push_back(node->pose.GetTranslation());
-    }
-  }
-  auto node = MemoryMapData::MemoryMapDataCast<const MemoryMapData_Cliff>(*newestNodeIter);
-  const Point2f& newCliffCenter = node->pose.GetTranslation();
-
 
   // binary image containing the edge-feature points
   cv::Mat binImg = cv::Mat::zeros(rows, cols, CV_8UC1);
   std::for_each(points.begin(), points.end(), [&](const Point2f& point) {
     int i = std::floor(point.y() - yMin);
     int j = std::floor(point.x() - xMin);
-    binImg.at<uint8_t>(i,j) = 1;
+    binImg.at<uint8_t>(i,j) = 255;
   });
 
   // 5 degrees resolution for the angle
@@ -1727,6 +1789,7 @@ bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points,
                   kHoughMaxLineGap_mm);
 
   if(linesInImg.size() == 0) {
+    PRINT_CH_INFO("MapComponent","MapComponent.RefineNewCliffPose.NoLinesFoundInBinaryImage","%zd count of edge points", points.size());
     return false;
   }
 
@@ -1802,20 +1865,44 @@ bool MapComponent::ExtractDominantCliffEdge(const std::vector<Point2f>& points,
     auto& pp = linesInCartes[lineIdx]; // point pair
     auto& p1 = pp.first;
 
-    // project the cliff center onto the detected line
-    // => use this as the starting point for the inserted edge
+    // compute the corrected pose of the cliff:
+    // we want to translate the cliff center pose to lie on the detected edge line
+    // and reorient the pose s.t. y-axis is along the edge, x-axis points in the direction of "air"
+    /*
+                  x
+          y      /
+          :\    /
+          : \  /
+          :  \/
+          :   :
+          :   :
+          :   :
+          :   :
+    ------.---.---------- edge
+          y'  o'
+
+    start by projecting the origin of the cliff frame
+    and the head of the y-axis onto the detected edge
+
+    the vector o'y' is the new y-axis, and the origin
+    of the new cliff frame is o'. The new x-axis is
+    found by taking the cross product of z with y'
+    and thus the new pose is derived by finding the
+    angle vector o'x' makes with the world-frame x-axis
+    
+    */
     Point2f lineUnitVec{ pp.second - pp.first };
     lineUnitVec.MakeUnitLength();
-    auto projPt = p1 + lineUnitVec * Anki::DotProduct(lineUnitVec, newCliffCenter - p1);
-
-    // choose another point on the line, in the heading of the edges-features
-    // => use this as the ending point for the inserted edge
-    int sign = (Anki::DotProduct(lineUnitVec, p1 - projPt) > 0) ? 1 : -1;
-    Point2f extentPt = projPt + lineUnitVec * (sign * 150.f); // extends slightly past the detected edges
-    // TODO: dynamically determine how far to draw the line from cliff to edgePoints
-
-    outEdge = {projPt, extentPt};
+    auto projCliffCenter = p1 + lineUnitVec * Anki::DotProduct(lineUnitVec, newCliffCenter - p1);
+    auto projYAxis = p1 + lineUnitVec * Anki::DotProduct(lineUnitVec, (Pose2d)newCliffPose * Y_AXIS_2D() - p1); // on the edgeLine
+    auto correctedYAxis = projYAxis - projCliffCenter;
+    auto correctedXAxis = Point2f(correctedYAxis.y(), -correctedYAxis.x()); // y^ cross z^ = x^
+    Radians cliffAngleWrtWorld = std::atan2(correctedXAxis.y(), correctedXAxis.x());
+    refinedCliffPose = Pose3d(cliffAngleWrtWorld, Z_AXIS_3D(), Point3f(projCliffCenter.x(), projCliffCenter.y(), 0.f));
+    refinedCliffPose.SetParent(_robot->GetWorldOrigin());
     return true;
+  } else {
+    PRINT_CH_INFO("MapComponent","MapComponent.RefineNewCliffPose.NoAcceptableLinesFound","%zd candidate lines", linesInCartes.size());
   }
   return false;
 }

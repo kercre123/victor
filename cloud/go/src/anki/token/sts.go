@@ -55,7 +55,7 @@ func getStsCredentials(accessor Accessor) (*credentials.Credentials, error) {
 		return nil, err
 	}
 
-	client, err := newConn(config.Env.Token, perRPCCreds)
+	client, err := newConn(accessor.IdentityProvider(), config.Env.Token, perRPCCreds)
 	if err != nil {
 		return nil, err
 	}

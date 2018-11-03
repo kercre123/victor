@@ -24,6 +24,7 @@ from concurrent import futures
 from enum import Enum
 import functools
 import logging
+import platform
 import sys
 import threading
 from typing import Any, Awaitable, Callable, Coroutine, Dict, List
@@ -33,6 +34,7 @@ import aiogrpc
 
 from . import exceptions, util
 from .messaging import client, protocol
+from .version import __version__
 
 
 class CONTROL_PRIORITY_LEVEL(Enum):
@@ -349,6 +351,19 @@ class Connection:
             protocol_version = self._loop.run_until_complete(self._interface.ProtocolVersion(version))
             if protocol_version.result != protocol.ProtocolVersionResponse.SUCCESS:  # pylint: disable=no-member
                 raise exceptions.VectorInvalidVersionException(version, protocol_version)
+
+            # Initialze SDK
+            sdk_module_version = __version__
+            python_version = platform.python_version()
+            python_implementation = platform.python_implementation()
+            os_version = platform.platform()
+            cpu_version = platform.machine()
+            initialize = protocol.SDKInitializationRequest(sdk_module_version=sdk_module_version,
+                                                           python_version=python_version,
+                                                           python_implementation=python_implementation,
+                                                           os_version=os_version,
+                                                           cpu_version=cpu_version)
+            self._loop.run_until_complete(self._interface.SDKInitialization(initialize))
 
             self._control_stream_task = self._loop.create_task(self._open_connections())
             self._loop.run_until_complete(self._request_control(timeout=timeout))

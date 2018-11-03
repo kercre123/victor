@@ -23,6 +23,7 @@ import "alexa.proto";
 import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
+import "nav_map.proto";
 import "settings.proto"; // App only
 import "shared.proto";
 
@@ -33,6 +34,14 @@ service ExternalInterface {
   rpc ProtocolVersion(ProtocolVersionRequest) returns (ProtocolVersionResponse) {
     option (google.api.http) = {
       post: "/v1/protocol_version",
+      body: "*"
+    };
+  }
+
+  // SDK-only message to pass version info for device OS, Python version, etc.
+  rpc SDKInitialization(SDKInitializationRequest) returns (SDKInitializationResponse) {
+    option (google.api.http) = {
+      post: "/v1/sdk_initialization",
       body: "*"
     };
   }
@@ -356,6 +365,14 @@ service ExternalInterface {
     };
   }
 
+  // Set Vector's eye color.
+  rpc SetEyeColor(SetEyeColorRequest) returns (SetEyeColorResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_eye_color",
+      body: "*"
+    };
+  }
+
   // *** App only proto below ***
 
   rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
@@ -464,5 +481,11 @@ service ExternalInterface {
     };
   }
 
+  rpc NavMapFeed(NavMapFeedRequest) returns (stream NavMapFeedResponse) {
+    option (google.api.http) = {
+      post: "/v1/nav_map_feed",
+      body: "*"
+    };
+  }
   
 }

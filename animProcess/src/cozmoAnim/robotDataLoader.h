@@ -75,6 +75,8 @@ public:
   const Json::Value & GetMicTriggerConfig() const { return _micTriggerConfig; }
   Animation* GetCannedAnimation(const std::string& name);
   std::vector<std::string> GetAnimationNames();
+  
+  const std::string& GetAlexaConfig() const { return _alexaConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
   const Vision::SpritePathMap* GetSpritePaths() const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
@@ -119,6 +121,7 @@ private:
   Json::Value _tts_config;
   Json::Value _ws_config;
   Json::Value _micTriggerConfig;
+  std::string _alexaConfig;
 
   std::unique_ptr<BackpackAnimationTriggerMap> _backpackAnimationTriggerMap;
   FileJsonMap _backpackLightAnimations;

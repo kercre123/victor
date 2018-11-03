@@ -40,6 +40,8 @@ var (
 	signalHandler      chan os.Signal
 	demoKeyPair        *tls.Certificate
 	demoCertPool       *x509.CertPool
+	cloudCheckLimiter  *MultiLimiter
+	debugLogLimiter    *MultiLimiter
 	switchboardManager SwitchboardIpcManager
 	engineProtoManager EngineProtoIpcManager
 	tokenManager       ClientTokenManager
@@ -52,34 +54,7 @@ var (
 	tempEventStreamDone   chan struct{}
 	tempEventStreamMutex1 sync.Mutex
 	tempEventStreamMutex2 sync.Mutex
-	cloudCheckLimiter     *MultiLimiter
-	debugLogLimiter       *MultiLimiter
 )
-
-// MultiLimiter defines a combination of rate limiters for more complex rate limiting.
-// The max theoretical limit is the time of all limiters combined. But this is in the major spamming case.
-// It is highly recommended to keep this logic simple.
-type MultiLimiter struct {
-	limiters []*rate.Limiter
-}
-
-// NewMultiLimiter creates a *MultiLimiter where the limiters are applied in the order provided.
-func NewMultiLimiter(limiters ...*rate.Limiter) *MultiLimiter {
-	ml := new(MultiLimiter)
-	ml.limiters = limiters
-	return ml
-}
-
-// Allow reports whether an event may happen at time.Now().
-// Use this method if you intend to drop / skip events that exceed the rate limit.
-func (ml *MultiLimiter) Allow() bool {
-	for _, limiter := range ml.limiters {
-		if !limiter.Allow() {
-			return false
-		}
-	}
-	return true
-}
 
 func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, errOut error) {
 	defer func() {

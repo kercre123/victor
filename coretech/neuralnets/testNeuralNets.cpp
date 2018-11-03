@@ -10,6 +10,10 @@
 #  error One of ANKI_NEURALNETS_USE_{TENSORFLOW | CAFFE2 | OPENCVDNN | TFLITE} must be defined
 #endif
 
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/neuralnets/iNeuralNetMain.h"
+#include "coretech/neuralnets/neuralNetFilenames.h"
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/vision/engine/image.h"
 
 #include "util/fileUtils/fileUtils.h"
@@ -22,11 +26,6 @@
 
 #include <fstream>
 
-namespace JsonKeys
-{
-  const char * const NeuralNets = "NeuralNets";
-  const char * const GraphFile  = "graphFile";
-}
 namespace TestPaths
 {
 #ifndef TEST_DATA_PATH
@@ -57,16 +56,20 @@ GTEST_TEST(NeuralNets, InitFromConfigAndLoadModel)
     ASSERT_TRUE(success);
   }
   
-  ASSERT_TRUE(config.isMember(JsonKeys::NeuralNets));
-  const Json::Value& neuralNetConfig = config[JsonKeys::NeuralNets];
+  ASSERT_TRUE(config.isMember(NeuralNets::JsonKeys::NeuralNets));
+  const Json::Value& neuralNetConfig = config[NeuralNets::JsonKeys::NeuralNets];
   
-  ASSERT_TRUE(neuralNetConfig.isMember(JsonKeys::GraphFile));
-  const std::string modelFileName = neuralNetConfig[JsonKeys::GraphFile].asString();
-  
+  ASSERT_TRUE(neuralNetConfig.isMember(NeuralNets::JsonKeys::Models));
+  const Json::Value& modelsConfig = neuralNetConfig[NeuralNets::JsonKeys::Models];
+
   NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
-  
-  const Result loadResult = neuralNet.LoadModel(TestPaths::ModelPath, neuralNetConfig);
-  ASSERT_EQ(RESULT_OK, loadResult);
+
+  ASSERT_TRUE(modelsConfig.isArray());
+  for(const auto& modelConfig : modelsConfig)
+  {
+    const Result loadResult = neuralNet.LoadModel(TestPaths::ModelPath, modelConfig);
+    ASSERT_EQ(RESULT_OK, loadResult);
+  }
 }
 
 // Make sure we can run stock MobileNet on the standard Grace Hopper image
@@ -81,7 +84,7 @@ GTEST_TEST(NeuralNets, MobileNet)
   config[JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_frozen.pb";
   config["useFloatInput"] = true;
 # elif defined(ANKI_NEURALNETS_USE_TFLITE)
-  config[JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_quant.tflite";
+  config[NeuralNets::JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_quant.tflite";
   config["useFloatInput"] = false;
 # endif
   
@@ -178,11 +181,28 @@ GTEST_TEST(NeuralNets, PersonDetection)
     ASSERT_TRUE(success);
   }
   
-  ASSERT_TRUE(config.isMember(JsonKeys::NeuralNets));
-  const Json::Value& neuralNetConfig = config[JsonKeys::NeuralNets];
+  ASSERT_TRUE(config.isMember(NeuralNets::JsonKeys::NeuralNets));
+  const Json::Value& neuralNetConfig = config[NeuralNets::JsonKeys::NeuralNets];
   
   NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
-  const Result loadResult = neuralNet.LoadModel(vectorModelPath, neuralNetConfig);
+  
+  ASSERT_TRUE(neuralNetConfig.isMember(NeuralNets::JsonKeys::Models));
+  const Json::Value& modelsConfig = neuralNetConfig[NeuralNets::JsonKeys::Models];
+  ASSERT_TRUE(modelsConfig.isArray());
+  
+  Result loadResult = RESULT_FAIL;
+  for(const auto& modelConfig : modelsConfig)
+  {
+    std::string networkName;
+    if(JsonTools::GetValueOptional(modelConfig, NeuralNets::JsonKeys::NetworkName, networkName))
+    {
+      if(networkName == "person_detector")
+      {
+        loadResult = neuralNet.LoadModel(vectorModelPath, modelConfig);
+        break;
+      }
+    }
+  }
   ASSERT_EQ(RESULT_OK, loadResult);
   
   const std::string peopleFilePath = Util::FileUtils::FullFilePath({TestPaths::ImagePath, "people"});
@@ -238,6 +258,115 @@ GTEST_TEST(NeuralNets, PersonDetection)
     
     timestamp += 10;
   }
+}
+
+
+GTEST_TEST(NeuralNets, MultipleModels)
+{
+  using namespace Anki;
+  
+  class TestMain : public NeuralNets::INeuralNetMain
+  {
+  public:
+    TestMain() { }
+    
+    Result ReadResult(const std::string& resultFilename, std::vector<Vision::SalientPoint>& salientPoints)
+    {
+      Json::Reader reader;
+      Json::Value detectionResult;
+      std::ifstream file(resultFilename);
+      const bool success = reader.parse(file, detectionResult);
+      file.close();
+      if(!success)
+      {
+        PRINT_NAMED_ERROR("NeuralNetRunner.Model.FailedToReadJSON", "%s", resultFilename.c_str());
+        return RESULT_FAIL;
+      }
+      else
+      {
+        // Translate JSON into a SalientPoint and put it in the output
+        const Json::Value& salientPointsJson = detectionResult["salientPoints"];
+        if(salientPointsJson.isArray())
+        {
+          for(auto const& salientPointJson : salientPointsJson)
+          {
+            Vision::SalientPoint salientPoint;
+            const bool success = salientPoint.SetFromJSON(salientPointJson);
+            if(!success)
+            {
+              PRINT_NAMED_ERROR("NeuralNetRunner.Model.FailedToSetFromJSON", "");
+              return RESULT_FAIL;
+            }
+            
+            salientPoints.emplace_back(std::move(salientPoint));
+          }
+        }
+      }
+      
+      Util::FileUtils::DeleteFile(resultFilename);
+      return RESULT_OK;
+    }
+    
+  protected:
+    
+    virtual bool ShouldShutdown() override
+    {
+      // NOTE: ShouldShutdown is superfluous because this test provides an input file, so
+      //       Run() will always stop immediately after processing that one file.
+      return false;
+    }
+    
+    virtual Util::ILoggerProvider* GetLoggerProvider() override
+    {
+      return Anki::Util::gLoggerProvider;
+    }
+    
+    virtual int GetPollPeriod_ms(const Json::Value& config) const override
+    {
+      assert(config.isMember(NeuralNets::JsonKeys::PollingPeriod));
+      return config[NeuralNets::JsonKeys::PollingPeriod].asInt();
+    }
+    
+    virtual void Step(int pollPeriod_ms) override
+    {
+      
+    }
+    
+  private:
+    std::unique_ptr<Util::PrintfLoggerProvider> _logger;
+  };
+  
+  
+  const std::string configFilename = Util::FileUtils::FullFilePath({TestPaths::TestRoot, "test_config.json"});
+  ASSERT_TRUE(Util::FileUtils::FileExists(configFilename));
+  
+  TestMain testMain;
+  
+  const std::string testImageFile = Util::FileUtils::FullFilePath({TestPaths::ImagePath, "cat.jpg"});
+  const Result initResult = testMain.Init(configFilename, TestPaths::ModelPath, TestPaths::CachePath, testImageFile);
+  ASSERT_EQ(RESULT_OK, initResult);
+  
+  // Running on a test file like this should not delete it
+  ASSERT_TRUE(Util::FileUtils::FileExists(testImageFile));
+  const Result runResult = testMain.Run();
+  ASSERT_EQ(RESULT_OK, runResult);
+  
+  std::vector<Vision::SalientPoint> salientPoints;
+  
+  const std::vector<std::string> resultFilenames =  {
+    Util::FileUtils::FullFilePath({TestPaths::CachePath, "quantized", NeuralNets::Filenames::Result}),
+    Util::FileUtils::FullFilePath({TestPaths::CachePath, "non-quantized", NeuralNets::Filenames::Result}),
+  };
+  
+  for(const auto& resultFilename : resultFilenames)
+  {
+    ASSERT_TRUE(Util::FileUtils::FileExists(resultFilename));
+    const Result readResult = testMain.ReadResult(resultFilename, salientPoints);
+    ASSERT_EQ(RESULT_OK, readResult);
+    ASSERT_FALSE(Util::FileUtils::FileExists(resultFilename));
+  }
+  
+  ASSERT_EQ(2, salientPoints.size());
 }
 
 

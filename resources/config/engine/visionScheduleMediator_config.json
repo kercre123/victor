@@ -186,7 +186,7 @@
       "relativeCost" : 1
     },
     {
-      "mode"         : "RunningNeuralNet",
+      "mode"         : "DetectingPeople",
       "low"          : 4,
       "med"          : 2,
       "high"         : 1,

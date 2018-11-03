@@ -250,6 +250,22 @@ namespace Anki {
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
       return vizID;
     }
+
+    void VizManager::DrawFrameAxes2D(const std::string identifier, const Pose3d& pose, const f32 scale_mm, const f32 zHeight_mm)
+    {
+      // note: ignore the z() fields of passed in pose
+      // we want to draw the frame at an *absolute* zHeight
+      Point3f origin(pose.GetTranslation().x(), pose.GetTranslation().y(), 0.f);
+      Point3f unitX(scale_mm, 0.f, 0.f);
+      Point3f unitY(0.f, scale_mm, 0.f);
+
+      Point3f xHead = pose * unitX;
+      Point3f yHead = pose * unitY;
+
+      DrawSegment(identifier, origin, xHead, NamedColors::RED, true, zHeight_mm);
+      DrawSegment(identifier, origin, yHead, NamedColors::GREEN, false, zHeight_mm);
+      // TODO: add some arrow head decorations?
+    }
     
     void VizManager::DrawCameraOval(const Point2f &center,
                                     float xRadius, float yRadius,

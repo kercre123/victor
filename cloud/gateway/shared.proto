@@ -227,6 +227,9 @@ message GatewayWrapper {
     AlexaOptInRequest             alexa_opt_in_request               = 202;
     AlexaOptInResponse            alexa_opt_in_response              = 203;
 
+    // ------------ Eye color (SDK only) ------------
+    SetEyeColorRequest            set_eye_color_request              = 220;
+    SetEyeColorResponse           set_eye_color_response             = 221;
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

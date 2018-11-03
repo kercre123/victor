@@ -33,7 +33,7 @@ class Events(Enum):
     """List of events available."""
 
     # Robot
-    robot_state = "robot_state"     #: Robot event containing changes to the robot's state.
+    robot_state = "robot_state"       #: Robot event containing changes to the robot's state.
 
     # Objects
     object_available = "object_available"               #: After the ConnectCube process is started, all available light cubes in range will broadcast an availability message through the Robot.
@@ -56,6 +56,7 @@ class Events(Enum):
     object_appeared = "object_appeared"             #: Python event triggered when an object first receives robot_observed_object.
     object_disappeared = "object_disappeared"       #: Python event triggered when an object has not received a robot_observed_object for a specified time.
     object_finished_move = "object_finished_move"   #: Python event triggered in response to object_stopped_moving with duration data.
+    nav_map_update = "nav_map_update"               #: Python event containing nav map data.
 
 
 class EventHandler:

@@ -11,6 +11,7 @@ import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
 
+
 def main():
     args = anki_vector.util.parse_command_args()
 

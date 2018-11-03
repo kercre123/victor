@@ -109,6 +109,11 @@ namespace {
 
   // How long the button needs to be pressed for before it should trigger shutdown animation
   CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
+#if ANKI_DEV_CHEATS
+  // Fake one of several types of button presses. This value will get reset immediately, so to
+  // run it again from the web interface, first set it to NoOp
+  CONSOLE_VAR_ENUM(int, kFakeButtonPressType, "FaceInfoScreenManager", 0, "NoOp,singlePressDetected,doublePressDetected");
+#endif
 }
 
 
@@ -868,6 +873,16 @@ void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed,
     doublePressDetected = false;
     shutdownSent        = true;
   }
+  
+#if ANKI_DEV_CHEATS
+  if( kFakeButtonPressType == 1 ) { // single press
+    singlePressDetected = true;
+    kFakeButtonPressType = 0;
+  } else if( kFakeButtonPressType == 2 ) { // double press
+    doublePressDetected = true;
+    kFakeButtonPressType = 0;
+  }
+#endif
 }
 
 void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()

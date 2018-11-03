@@ -62,7 +62,7 @@ namespace Vector {
   const f32 DRIVE_CENTER_OFFSET = -16.f;
   const f32 DRIVE_CENTER_OFFSET_CARRYING_CUBE = -16.f;
 #else
-  const f32 DRIVE_CENTER_OFFSET = -20.f;
+  const f32 DRIVE_CENTER_OFFSET = -25.f;
   const f32 DRIVE_CENTER_OFFSET_CARRYING_CUBE = 0.f;
 #endif // SIMULATOR
   

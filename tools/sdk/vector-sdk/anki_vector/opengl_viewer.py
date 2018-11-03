@@ -57,6 +57,7 @@ import collections
 import concurrent
 import inspect
 import math
+import sys
 from typing import List
 
 from .events import Events
@@ -72,9 +73,10 @@ try:
                            glMultMatrixf, glPolygonMode, glPopMatrix, glPushMatrix,
                            glScalef)
     from OpenGL.GLUT import (GLUT_ACTIVE_ALT, GLUT_ACTIVE_CTRL, GLUT_ACTIVE_SHIFT, GLUT_DOWN, GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON,
-                             glutCheckLoop, glutLeaveMainLoop, glutGetModifiers,
+                             GLUT_VISIBLE,
+                             glutCheckLoop, glutLeaveMainLoop, glutGetModifiers, glutIdleFunc,
                              glutKeyboardFunc, glutKeyboardUpFunc, glutMainLoop, glutMouseFunc, glutMotionFunc, glutPassiveMotionFunc,
-                             glutSpecialFunc, glutSpecialUpFunc)
+                             glutPostRedisplay, glutSpecialFunc, glutSpecialUpFunc, glutVisibilityFunc)
     from OpenGL.error import NullFunctionError
 
 except ImportError as import_exc:
@@ -87,6 +89,34 @@ class VectorException(BaseException):
     """Raised by a failure in the owned Vector thread while the openGL viewer is running."""
 
 
+class _RobotControlIntents():  # pylint: disable=too-few-public-methods
+    """Input intents for controlling the robot.
+
+    These are sent from the OpenGL thread, and consumed by the SDK thread for
+    issuing movement commands on Vector (to provide a remote-control interface).
+    """
+
+    def __init__(self, left_wheel_speed=0.0, right_wheel_speed=0.0,
+                 lift_speed=0.0, head_speed=0.0):
+        self.left_wheel_speed = left_wheel_speed
+        self.right_wheel_speed = right_wheel_speed
+        self.lift_speed = lift_speed
+        self.head_speed = head_speed
+
+
+def _glut_install_instructions():
+    if sys.platform.startswith('linux'):
+        return "Install freeglut: `sudo apt-get install freeglut3`"
+    if sys.platform.startswith('darwin'):
+        return "GLUT should already be installed by default on macOS!"
+    if sys.platform in ('win32', 'cygwin'):
+        return "Install freeglut: You can download it from http://freeglut.sourceforge.net/ \n"\
+            "You just need the `freeglut.dll` file, from any of the 'Windows binaries' downloads. "\
+            "Place the DLL next to your Python script, or install it somewhere in your PATH "\
+            "to allow any script to use it."
+    return "(Instructions unknown for platform %s)" % sys.platform
+
+
 class _OpenGLViewController():
     """Controller that registeres for keyboard and mouse input through GLUT, and uses them to update
     the camera and listen for a shutdown cue.
@@ -96,6 +126,12 @@ class _OpenGLViewController():
     """
 
     def __init__(self, shutdown_delegate: callable, camera: opengl.Camera):
+
+        self._logger = util.get_class_logger(__name__, self)
+        self._input_intent_queue = collections.deque(maxlen=1)
+        self._last_robot_control_intents = _RobotControlIntents()
+        self._is_keyboard_control_enabled = False
+
         # Keyboard
         self._is_key_pressed = {}
         self._is_alt_down = False
@@ -112,6 +148,8 @@ class _OpenGLViewController():
 
         self._camera = camera
 
+    #### Public Properties ####
+
     @property
     def last_robot_position(self):
         return self._last_robot_position
@@ -119,6 +157,8 @@ class _OpenGLViewController():
     @last_robot_position.setter
     def last_robot_position(self, last_robot_position):
         self._last_robot_position = last_robot_position
+
+    #### Public Methods ####
 
     def initialize(self):
         """Sets up the openGL window and binds input callbacks to it
@@ -131,15 +171,66 @@ class _OpenGLViewController():
         try:
             if bool(glutKeyboardUpFunc):
                 glutKeyboardUpFunc(self._on_key_up)
+                has_keyboard_up = True
             if bool(glutSpecialUpFunc):
                 glutSpecialUpFunc(self._on_special_key_up)
+                has_special_up = True
         except NullFunctionError:
             # Methods aren't available on this GLUT version
             pass
 
+        if not has_keyboard_up or not has_special_up:
+            # Warn on old GLUT implementations that don't implement much of the interface.
+            self._logger.warning("Warning: Old GLUT implementation detected - keyboard remote control of Vector disabled."
+                                 "We recommend installing freeglut. %s", _glut_install_instructions())
+            self._is_keyboard_control_enabled = False
+        else:
+            self._is_keyboard_control_enabled = True
+
         glutMouseFunc(self._on_mouse_button)
         glutMotionFunc(self._on_mouse_move)
         glutPassiveMotionFunc(self._on_mouse_move)
+
+        glutIdleFunc(self._idle)
+        glutVisibilityFunc(self._visible)
+
+    def update(self, robot: Robot):
+        """Reads most recently stored user-triggered intents, and sends
+        motor messages to the robot if the intents should effect the robot's
+        current motion.
+
+        :param robot: the robot being updated by this View Controller
+
+        Called on SDK thread, for controlling robot from input intents
+        pushed from the OpenGL thread.
+        """
+
+        try:
+            input_intents = self._input_intent_queue.popleft()  # type: RobotControlIntents
+        except IndexError:
+            # no new input intents - do nothing
+            return
+
+        # Track last-used intents so that we only issue motor controls
+        # if different from the last frame (to minimize it fighting with an SDK
+        # program controlling the robot):
+        old_intents = self._last_robot_control_intents
+        self._last_robot_control_intents = input_intents
+
+        if (old_intents.left_wheel_speed != input_intents.left_wheel_speed or
+                old_intents.right_wheel_speed != input_intents.right_wheel_speed):
+            robot.conn.run_soon(robot.motors.set_wheel_motors(input_intents.left_wheel_speed,
+                                                              input_intents.right_wheel_speed,
+                                                              input_intents.left_wheel_speed * 4,
+                                                              input_intents.right_wheel_speed * 4))
+
+        if old_intents.lift_speed != input_intents.lift_speed:
+            robot.conn.run_soon(robot.motors.set_lift_motor(input_intents.lift_speed))
+
+        if old_intents.head_speed != input_intents.head_speed:
+            robot.conn.run_soon(robot.motors.set_head_motor(input_intents.head_speed))
+
+    #### Private Methods ####
 
     def _update_modifier_keys(self):
         """Updates alt, ctrl, and shift states.
@@ -256,6 +347,56 @@ class _OpenGLViewController():
             else:
                 self._camera.turn(mouse_delta.x * MOUSE_ROTATE_SCALAR, mouse_delta.y * MOUSE_ROTATE_SCALAR)
 
+    def _update_intents_for_robot(self):
+        # Update driving intents based on current input, and pass to SDK thread
+        # so that it can pass the input on to the robot.
+        def get_intent_direction(key1, key2):
+            # Helper for keyboard inputs that have 1 positive and 1 negative input
+            pos_key = self._is_key_pressed.get(key1, False)
+            neg_key = self._is_key_pressed.get(key2, False)
+            return pos_key - neg_key
+
+        drive_dir = get_intent_direction(b'w', b's')
+        turn_dir = get_intent_direction(b'd', b'a')
+        lift_dir = get_intent_direction(b'r', b'f')
+        head_dir = get_intent_direction(b't', b'g')
+        if drive_dir < 0:
+            # It feels more natural to turn the opposite way when reversing
+            turn_dir = -turn_dir
+
+        # Scale drive speeds with SHIFT (faster) and ALT (slower)
+        if self._is_shift_down:
+            speed_scalar = 2.0
+        elif self._is_alt_down:
+            speed_scalar = 0.5
+        else:
+            speed_scalar = 1.0
+
+        drive_speed = 75.0 * speed_scalar
+        turn_speed = 100.0 * speed_scalar
+
+        left_wheel_speed = (drive_dir * drive_speed) + (turn_speed * turn_dir)
+        right_wheel_speed = (drive_dir * drive_speed) - (turn_speed * turn_dir)
+        lift_speed = 4.0 * lift_dir * speed_scalar
+        head_speed = head_dir * speed_scalar
+
+        control_intents = _RobotControlIntents(left_wheel_speed, right_wheel_speed,
+                                               lift_speed, head_speed)
+        self._input_intent_queue.append(control_intents)
+
+    def _idle(self):
+        if self._is_keyboard_control_enabled:
+            self._update_intents_for_robot()
+        glutPostRedisplay()
+
+    def _visible(self, vis):
+        # Called from OpenGL when visibility changes (windows are either visible
+        # or completely invisible/hidden)
+        if vis == GLUT_VISIBLE:
+            glutIdleFunc(self._idle)
+        else:
+            glutIdleFunc(None)
+
 
 class _ExternalRenderCallFunctor():  # pylint: disable=too-few-public-methods
     """Externally specified OpenGL render function.
@@ -346,6 +487,7 @@ class OpenGLViewer():
             lights = default_lights
 
         # Queues from SDK thread to OpenGL thread
+        self._nav_map_queue = collections.deque(maxlen=1)
         self._world_frame_queue = collections.deque(maxlen=1)
 
         self._logger = util.get_class_logger(__name__, self)
@@ -371,7 +513,7 @@ class OpenGLViewer():
 
         self._view_controller = _OpenGLViewController(self.close, self._camera)
 
-        self._latest_world_frame = None  # type: WorldRenderFrame
+        self._latest_world_frame: opengl_vector.WorldRenderFrame = None
 
     def add_render_call(self, render_function: callable, *args):
         """Allows external functions to be injected into the viewer which
@@ -407,17 +549,21 @@ class OpenGLViewer():
         :param world_frame: frame to render
         """
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-        glEnable(GL_LIGHTING)
         glEnable(GL_NORMALIZE)  # to re-scale scaled normals
 
         light_cube_view = self._vector_view_manifest.light_cube_view
         unit_cube_view = self._vector_view_manifest.unit_cube_view
         robot_view = self._vector_view_manifest.robot_view
+        nav_map_view = self._vector_view_manifest.nav_map_view
 
         robot_frame = world_frame.robot_frame
         robot_pose = robot_frame.pose
 
         try:
+            glDisable(GL_LIGHTING)
+            nav_map_view.display()
+
+            glEnable(GL_LIGHTING)
             # Render the cube
             for obj in world_frame.cube_frames:
                 cube_pose = obj.pose
@@ -489,6 +635,14 @@ class OpenGLViewer():
         except IndexError:
             world_frame = self._latest_world_frame
 
+        try:
+            new_nav_map = self._nav_map_queue.popleft()
+            if new_nav_map is not None:
+                self._vector_view_manifest.nav_map_view.build_from_nav_map(new_nav_map)
+        except IndexError:
+            # no new nav map - queue is empty
+            pass
+
         if world_frame is not None:
             self._render_world_frame(world_frame)
 
@@ -535,6 +689,7 @@ class OpenGLViewer():
         # Register for robot state events
         robot = self._robot
         robot.events.subscribe(self._on_robot_state_update, Events.robot_state)
+        robot.events.subscribe(self._on_nav_map_update, Events.nav_map_update)
 
         # Determine how many arguments the function accepts
         function_args = []
@@ -548,6 +703,8 @@ class OpenGLViewer():
 
         try:
             robot.conn.run_coroutine(delegate_function(*function_args))
+            # @TODO: Unsubscribe and shut down when the delegate function finishes
+            #  This became an issue when the concurrent.future changes were added.
 
             self._main_window.initialize(self._on_window_update)
             self._view_controller.initialize()
@@ -588,3 +745,12 @@ class OpenGLViewer():
 
         world_frame = opengl_vector.WorldRenderFrame(self._robot)
         self._world_frame_queue.append(world_frame)
+        self._view_controller.update(self._robot)
+
+    def _on_nav_map_update(self, _, msg):  # pylint: disable=unused-argument
+        """Called from SDK whenever the nav map is updated.
+        Note: This is called from the SDK thread, so only access safe things
+        We can safely capture any robot and world state here, and push to OpenGL
+        (main) thread via a thread-safe queue.
+        """
+        self._nav_map_queue.append(msg.nav_map)

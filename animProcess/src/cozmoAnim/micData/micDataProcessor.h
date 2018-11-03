@@ -89,6 +89,8 @@ public:
   RobotTimeStamp_t CreateStreamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
                                   uint32_t overlapLength_ms = 0);
   
+  void SetAlexaActive(bool active);
+  
   void FakeTriggerWordDetection() { TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f); }
   
 private:
@@ -129,7 +131,7 @@ private:
   bool _wasSpeakerActive = false;
   bool _isInLowPowerMode = false;
   uint32_t _speakerCooldownCnt = 0;
-
+  bool _buttonPressIsAlexa = false;
 
 #if ANKI_DEV_CHEATS
   static constexpr uint32_t kTriggerAudioLength_ms = kTriggerAudioLengthDebug_ms;
@@ -191,8 +193,12 @@ private:
   
   void UpdateBeatDetector(const AudioUtil::AudioSample* const samples, const uint32_t nSamples);
   
+  void UpdateAlexaInput(const AudioUtil::AudioSample* const samples, size_t nSamples);
+  
   void SetActiveMicDataProcessingState(ProcessingState state);
   const char* GetProcessingStateName(ProcessingState state) const;
+  
+  void NotifyAlexaOfButtonPress();
   
   void SetupConsoleFuncs();
 };

@@ -426,7 +426,12 @@ def go_testdirs(dir, exclude):
     gopath_src = os.path.join(gopaths[0], "src")
     search_base = os.path.join(gopath_src, dir)
 
-    all_subdirs = check_output("find {} -type d -mindepth 1".format(search_base).split(' ')).split('\n')
+    all_subdirs = check_output("find {} -mindepth 1 -type d".format(search_base).split(' ')).split('\n')
+    # only include subdirs with go files
+    def has_go_files(dir):
+        contents = os.listdir(dir)
+        return len([x for x in contents if x.endswith('.go')]) > 0
+    all_subdirs = [x for x in all_subdirs if has_go_files(x)]
     # map full path subdirs to relative package paths
     all_packages = [os.path.relpath(x, gopath_src) for x in all_subdirs]
     def has_test_files(pkg):

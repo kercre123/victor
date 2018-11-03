@@ -829,6 +829,27 @@ message CameraFeedResponse {
   bytes                    data = 4;
 }
 
+message SetEyeColorRequest {
+  float hue = 1;
+  float saturation = 2;
+}
+
+message SetEyeColorResponse {
+  ResponseStatus status = 1;
+}
+
+message SDKInitializationRequest {
+  string sdk_module_version = 1;
+  string python_version = 2;
+  string python_implementation = 3;
+  string os_version = 4;
+  string cpu_version = 5;
+}
+
+message SDKInitializationResponse {
+  ResponseStatus status = 1;
+}
+
 // *** App only proto below ***
 
 message FeatureStatus {
