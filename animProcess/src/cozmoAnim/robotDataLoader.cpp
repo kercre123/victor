@@ -195,13 +195,17 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
     return;
   }
   CannedAnimationLoader animLoader(_platform,
-                                   _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                   _spritePaths.get(), _spriteSequenceContainer.get(),
                                    _loadingCompleteRatio, _abortLoad);
-  
+
   animLoader.LoadAnimationIntoContainer(path, _cannedAnimations.get());
 
   const auto animName = Util::FileUtils::GetFileName(path, true, true);
-  const auto* anim = _cannedAnimations->GetAnimation(animName);
+  const auto * anim = _cannedAnimations->GetAnimation(animName);
+  if (anim == nullptr) {
+    LOG_ERROR("RobotDataLoader.LoadAnimationFile", "Failed to load %s from %s", animName.c_str(), path.c_str());
+    return;
+  }
   NotifyAnimAdded(animName, anim->GetLastKeyFrameEndTime_ms());
 }
 
