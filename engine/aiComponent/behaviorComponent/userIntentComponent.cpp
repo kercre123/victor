@@ -60,7 +60,8 @@ static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
 static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
 
-static const float kDefaultIntentFeedbackShutoffTime     = 3.0f;
+static const float kDefaultIntentFeedbackShutoffTime     =  5.0f;
+static const float kIntentFeedbackTransitionShutoffTime  =  2.0f;
 
   CONSOLE_VAR(bool, kStreamAfterDevWakeWord, "UserIntentComponent", false);
   CONSOLE_VAR(bool, kPlayGetInAfterDevWakeWord, "UserIntentComponent", false);
@@ -212,8 +213,12 @@ UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, 
   // track the owner for easier debugging
   _activeIntentOwner = owner;
 
-  if( showFeedback ){
+  if( showFeedback ) {
     _activeIntentFeedback.Activate(userIntent, autoShutoffFeedback);
+  }
+  else {
+    // just in case we were told to transition, let's stop it
+    _activeIntentFeedback.StopTransitionIntoActive();
   }
 
   return _activeIntent;
@@ -249,12 +254,22 @@ void UserIntentComponent::StopActiveUserIntentFeedback()
   _activeIntentFeedback.Deactivate(UserIntentTag::INVALID);
 }
 
+void UserIntentComponent::StartTransitionIntoActiveUserIntentFeedback()
+{
+  // don't transition if no intent is pending else we'll never clear it
+  if (IsAnyUserIntentPending()) {
+    _activeIntentFeedback.StartTransitionIntoActive();
+  }
+}
+
 // todo: remove this when we decide what we're doing with the lights
 #define USE_CUSTOM_BP_ANIM 0
 
 UserIntentComponent::ActiveIntentFeedback::ActiveIntentFeedback() :
   robot(nullptr),
   activatedIntentTag(UserIntentTag::INVALID),
+  isTransitionActive(false),
+  transitionShutOffTime(0.0f),
   feedbackShutOffTime(0.0f)
 {
 
@@ -264,6 +279,42 @@ void UserIntentComponent::ActiveIntentFeedback::Init(Robot* robot)
 {
   this->robot = robot;
   DEV_ASSERT( this->robot != nullptr, "UserIntentComponent.ActiveIntentFeedback.Init: Invalid Robot pointer" );
+}
+
+void UserIntentComponent::ActiveIntentFeedback::StartTransitionIntoActive()
+{
+  //
+  //    static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
+  //    {
+  //      .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+  //      .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+  //      .onPeriod_ms            = {{0,0,0}},
+  //      .offPeriod_ms           = {{0,0,0}},
+  //      .transitionOnPeriod_ms  = {{0,0,0}},
+  //      .transitionOffPeriod_ms = {{0,0,0}},
+  //      .offset                 = {{0,0,0}}
+  //    };
+
+  if (!IsActive()) {
+    BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+    bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
+
+    const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    transitionShutOffTime = (currentTime + kIntentFeedbackTransitionShutoffTime);
+
+    isTransitionActive = true;
+  }
+}
+
+void UserIntentComponent::ActiveIntentFeedback::StopTransitionIntoActive()
+{
+  if (isTransitionActive) {
+    // clear out our transition lights (or any lights since we're going to stomp them anyway
+    BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+    bplComponent.ClearAllBackpackLightConfigs();
+
+    isTransitionActive = false;
+  }
 }
 
 void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userIntent, bool autoShutoff)
@@ -276,6 +327,8 @@ void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userInten
   // some behavior have nested "intent activations" and we only care about the first one
   if (!IsActive())
   {
+    StopTransitionIntoActive();
+
     #if USE_CUSTOM_BP_ANIM
     {
       static const BackpackLightAnimation::BackpackAnimation kActiveStateLights =
@@ -290,7 +343,7 @@ void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userInten
       };
 
       BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
-      bplComponent.StartLoopingBackpackAnimation( kActiveStateLights, lightsHandle );
+      bplComponent.StartLoopingBackpackAnimation( kActiveStateLights, activeLightsHandle );
     }
     #else
     {
@@ -328,10 +381,10 @@ void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userInt
   {
     #if USE_CUSTOM_BP_ANIM
     {
-      if ( lightsHandle.IsValid() )
+      if ( activeLightsHandle.IsValid() )
       {
         BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
-        bplComponent.StopLoopingBackpackAnimation( lightsHandle );
+        bplComponent.StopLoopingBackpackAnimation( activeLightsHandle );
       }
     }
     #else
@@ -357,12 +410,24 @@ void UserIntentComponent::ActiveIntentFeedback::Update()
   }
 
   // if we were told to automatically shut off at a certain point, check for that here
-  if (IsActive() && (feedbackShutOffTime > 0.0f))
-  {
-    const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if (currentTime >= feedbackShutOffTime)
-    {
-      Deactivate( UserIntentTag::INVALID );
+  if (IsActive()) {
+    if (feedbackShutOffTime > 0.0f) {
+      const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (currentTime >= feedbackShutOffTime) {
+        Deactivate( UserIntentTag::INVALID );
+      }
+    }
+  }
+  else {
+    if (isTransitionActive) {
+      const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (currentTime >= transitionShutOffTime) {
+        StopTransitionIntoActive();
+
+        LOG_WARNING("UserIntentComponent.ActiveIntentFeedback.Update.ActiveIntentFeedbackTransition.Warn",
+                    "Active Intent Feedback transition lights were not cleared in %.2fs.  Force clearing them now.",
+                    kIntentFeedbackTransitionShutoffTime);
+      }
     }
   }
 }
@@ -393,6 +458,9 @@ void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
 {
   if (IsUserIntentPending(userIntent)) {
     _pendingIntent.reset();
+
+    // just in case we were told to transition, let's stop it as a new one is about to begin
+    _activeIntentFeedback.StopTransitionIntoActive();
   }
 
   LOG_WARNING("UserIntentComponent.DropUserIntent.NotPending",
@@ -408,7 +476,11 @@ void UserIntentComponent::DropAnyUserIntent()
     LOG_WARNING("UserIntentComponent.DropAnyUserIntent.IntentNotSet",
                 "Trying to clear a pending intent but the intent isn't set. This is likely a bug");
   }
+
   _pendingIntent.reset();
+
+  // just in case we were told to transition, let's stop it as a new one is about to begin
+  _activeIntentFeedback.StopTransitionIntoActive();
 }
 
 bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const
@@ -463,6 +535,9 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
 
   _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
   _pendingIntentTimeoutEnabled = true;
+
+  // just in case we were told to transition, let's stop it as a new one is about to begin
+  _activeIntentFeedback.StopTransitionIntoActive();
 
   // notify the whiteboard
   if( _robot && _robot->HasComponent<AIComponent>() ) {
@@ -818,9 +893,8 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
                    "Source of the intent that was dropped (e.g. App, Voice)");
         DASMSG_SEND_WARNING();
 
-        _pendingIntent.reset();
+        DropAnyUserIntent();
         _wasIntentUnclaimed = true;
-
       }
     }
   }

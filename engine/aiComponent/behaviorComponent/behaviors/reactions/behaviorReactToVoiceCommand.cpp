@@ -786,9 +786,13 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
     PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Heard",
                    "Heard an intent");
 
+    bool shouldTransitionToIntentFeedback = true;
+
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if ( uic.IsUserIntentPending( unmatched ) )
     {
+      shouldTransitionToIntentFeedback = false;
+
       SmartActivateUserIntent( unmatched, false );
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
       PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Unknown",
@@ -798,12 +802,20 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
     static const UserIntentTag silence = USER_INTENT(silence);
     if ( uic.IsUserIntentPending( silence ) )
     {
+      shouldTransitionToIntentFeedback = false;
+
       SmartActivateUserIntent( silence, false );
       _dVars.intentStatus = EIntentStatus::SilenceTimeout;
       PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Silence",
                      "Got response declaring silence timeout occurred");
     }
 
+    // so we're assuming that a behavior is going to come along and consume this pending intent, so we want to
+    // transition our streaming lights into the intent feedback lights
+    if ( shouldTransitionToIntentFeedback )
+    {
+      uic.StartTransitionIntoActiveUserIntentFeedback();
+    }
   }
   else if( uic.WasUserIntentError() ) {
     uic.ResetUserIntentError();

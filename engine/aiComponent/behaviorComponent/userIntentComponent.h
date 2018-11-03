@@ -165,6 +165,10 @@ public:
   // handling the intent has stopped).
   void DeactivateUserIntent(UserIntentTag userIntent);
 
+  // there is a period of time between getting an intent back and and actually activating it and this let's us know
+  // that we expect the intent to become active, so start the transition
+  void StartTransitionIntoActiveUserIntentFeedback();
+
   // The "active user intent state" is used to convey to the user that Vector is actively carrying out the user's
   // voice intent, which is triggered by passing in showFeedback = true to ActivateUserIntent(...)
   // This funciton allows us to stop displaying this feedback to the user, but still keeping the user
@@ -305,6 +309,9 @@ private:
       ActiveIntentFeedback();
       void Init(Robot* robot);
 
+      void StartTransitionIntoActive();
+      void StopTransitionIntoActive();
+
       // activating/deactivating this state will cause vector to convey to the user that he is responding to an active user intent
       void Activate(UserIntentTag userIntent, bool autoShutoff);
       void Deactivate(UserIntentTag userIntent);
@@ -316,8 +323,10 @@ private:
 
       Robot* robot;
       UserIntentTag activatedIntentTag;
-      BackpackLightDataLocator lightsHandle;
+      BackpackLightDataLocator activeLightsHandle;
 
+      bool isTransitionActive = false;
+      float transitionShutOffTime = 0.0f;
       float feedbackShutOffTime = 0.0f;
   } _activeIntentFeedback;
 
