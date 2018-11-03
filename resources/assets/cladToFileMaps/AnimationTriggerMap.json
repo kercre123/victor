@@ -336,6 +336,58 @@
     "AnimName": "ag_dancebeat_nobeatdetected"
   },
   {
+    "CladEvent": "ReactToShake_GetIn",
+    "AnimName": "ag_rtshake_getin"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1Loop",
+    "AnimName": "ag_rtshake_lv1loop"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1Waiting",
+    "AnimName": "ag_rtshake_lv1pregetout"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1InHand",
+    "AnimName": "ag_rtshake_lv1rtonhand"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1OnGround",
+    "AnimName": "ag_rtshake_lv1rtonground"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2Loop",
+    "AnimName": "ag_rtshake_lv2loop"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2Waiting",
+    "AnimName": "ag_rtshake_lv2pregetout"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2InHand",
+    "AnimName": "ag_rtshake_lv2rtonhand"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2OnGround",
+    "AnimName": "ag_rtshake_lv2rtonground"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3Loop",
+    "AnimName": "ag_rtshake_lv3loop"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3Waiting",
+    "AnimName": "ag_rtshake_lv3pregetout"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3InHand",
+    "AnimName": "ag_rtshake_lv3rtonhand"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3OnGround",
+    "AnimName": "ag_rtshake_lv3rtonground"
+  },
+  {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
     "AnimName": "ag_dizzy_reaction_hard"
   },

@@ -17,31 +17,37 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "coretech/common/engine/jsonTools.h"
+
 
 namespace Anki {
 namespace Vector {
   
-namespace{
-const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
+namespace {
+  const char* kKeyAccelMagnitude = "minAccelMagnitudeThreshold";
+  const float kDefaultAccelThreshold = 16000.f;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionRobotShaken::ConditionRobotShaken(const Json::Value& config)
-: IBEICondition(config)
+ConditionRobotShaken::ConditionRobotShaken( const Json::Value& config ) :
+  IBEICondition( config ),
+  _minTriggerMagnitude( kDefaultAccelThreshold )
 {
+  JsonTools::GetValueOptional( config, kKeyAccelMagnitude, _minTriggerMagnitude );
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ConditionRobotShaken::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool ConditionRobotShaken::AreConditionsMetInternal( BehaviorExternalInterface& behaviorExternalInterface ) const
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   // trigger this behavior when the filtered total accelerometer magnitude data exceeds a threshold
-  bool shouldTrigger = (robotInfo.GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold);
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const bool isShaken = ( robotInfo.GetHeadAccelMagnitudeFiltered() >= _minTriggerMagnitude );
+  const bool isOffTreads = robotInfo.IsPickedUp();
   
   // add a check for offTreadsState?
-  return shouldTrigger;
+  return ( isShaken && isOffTreads );
 }
 
 } // namespace Vector
