@@ -901,11 +901,11 @@ func (service *rpcService) checkConnectionID(id string) bool {
 
 // SDK-only message to pass version info for device OS, Python version, etc.
 func (service *rpcService) SDKInitialization(ctx context.Context, in *extint.SDKInitializationRequest) (*extint.SDKInitializationResponse, error) {
-	log.Das("robot.sdk_module_version", (&log.DasFields{}).SetStrings(in.SdkModuleVersion))
-	log.Das("robot.sdk_python_version", (&log.DasFields{}).SetStrings(in.PythonVersion))
-	log.Das("robot.sdk_python_implementation", (&log.DasFields{}).SetStrings(in.PythonImplementation))
-	log.Das("robot.sdk_os_version", (&log.DasFields{}).SetStrings(in.OsVersion))
-	log.Das("robot.sdk_cpu_version", (&log.DasFields{}).SetStrings(in.CpuVersion))
+	log.Das("sdk.module_version", (&log.DasFields{}).SetStrings(in.SdkModuleVersion))
+	log.Das("sdk.python_version", (&log.DasFields{}).SetStrings(in.PythonVersion))
+	log.Das("sdk.python_implementation", (&log.DasFields{}).SetStrings(in.PythonImplementation))
+	log.Das("sdk.os_version", (&log.DasFields{}).SetStrings(in.OsVersion))
+	log.Das("sdk.cpu_version", (&log.DasFields{}).SetStrings(in.CpuVersion))
 
 	return &extint.SDKInitializationResponse{
 		Status: &extint.ResponseStatus{
@@ -1106,7 +1106,17 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 	return nil
 }
 
+// SDK-only method. SDK DAS connect/disconnect events are sent from here.
 func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalInterface_BehaviorControlServer) error {
+	sdkStartTime := time.Now()
+
+	log.Das("sdk.connection_started", (&log.DasFields{}).SetStrings(""))
+
+	defer func() {
+		sdkElapsedSeconds := time.Since(sdkStartTime)
+		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String()))
+	}()
+
 	if disableStreams {
 		// Disabled for Vector 1.0 release
 		return grpc.Errorf(codes.Unimplemented, "BehaviorControl disabled in message_handler.go")

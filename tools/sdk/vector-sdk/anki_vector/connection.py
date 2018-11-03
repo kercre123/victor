@@ -352,6 +352,8 @@ class Connection:
             if protocol_version.result != protocol.ProtocolVersionResponse.SUCCESS:  # pylint: disable=no-member
                 raise exceptions.VectorInvalidVersionException(version, protocol_version)
 
+            self._control_stream_task = self._loop.create_task(self._open_connections())
+
             # Initialze SDK
             sdk_module_version = __version__
             python_version = platform.python_version()
@@ -365,7 +367,6 @@ class Connection:
                                                            cpu_version=cpu_version)
             self._loop.run_until_complete(self._interface.SDKInitialization(initialize))
 
-            self._control_stream_task = self._loop.create_task(self._open_connections())
             self._loop.run_until_complete(self._request_control(timeout=timeout))
         except Exception as e:  # pylint: disable=broad-except
             # Propagate the errors to the calling thread
