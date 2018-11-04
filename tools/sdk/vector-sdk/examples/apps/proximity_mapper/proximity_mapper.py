@@ -238,7 +238,7 @@ async def scan_area(robot: anki_vector.robot.Robot, state: MapState):
 #: Top level call to perform exploration and environment mapping
 async def map_explorer(robot: anki_vector.robot.Robot, viewer: OpenGLViewer):
     # Drop the lift, so that it does not block the proximity sensor
-    await robot.behavior.set_lift_height(30.0)
+    await robot.behavior.set_lift_height(0.0)
 
     # Create the map state, and add it's rendering function to the viewer's render pipeline
     state = MapState()

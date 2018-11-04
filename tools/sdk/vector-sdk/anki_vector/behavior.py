@@ -32,11 +32,34 @@ The :class:`BehaviorComponent` class in this module contains
 functions for all the behaviors.
 """
 
-__all__ = ["BehaviorComponent"]
+__all__ = ["BehaviorComponent", "MAX_HEAD_ANGLE", "MAX_LIFT_HEIGHT", "MAX_LIFT_HEIGHT_MM",
+           "MIN_HEAD_ANGLE", "MIN_LIFT_HEIGHT", "MIN_LIFT_HEIGHT_MM"]
 
 
 from . import connection, objects, util
 from .messaging import protocol
+
+# Constants
+
+#: The minimum angle the robot's head can be set to
+# TODO Clamp to this value.
+MIN_HEAD_ANGLE = util.degrees(-22)
+
+#: The maximum angle the robot's head can be set to
+# TODO Clamp to this value.
+MAX_HEAD_ANGLE = util.degrees(45)
+
+# The lowest height-above-ground that lift can be moved to in millimeters.
+MIN_LIFT_HEIGHT_MM = 32.0
+
+#: The lowest height-above-ground that lift can be moved to
+MIN_LIFT_HEIGHT = util.distance_mm(MIN_LIFT_HEIGHT_MM)
+
+# The largest height-above-ground that lift can be moved to in millimeters.
+MAX_LIFT_HEIGHT_MM = 92.0
+
+#: The largest height-above-ground that lift can be moved to
+MAX_LIFT_HEIGHT = util.distance_mm(MAX_LIFT_HEIGHT_MM)
 
 
 class BehaviorComponent(util.Component):
@@ -355,6 +378,7 @@ class BehaviorComponent(util.Component):
         .. testcode::
 
             import anki_vector
+            from anki_vector.util import degrees
 
             with anki_vector.Robot() as robot:
                 robot.behavior.turn_in_place(degrees(90))
@@ -369,6 +393,7 @@ class BehaviorComponent(util.Component):
 
         return await self.grpc_interface.TurnInPlace(turn_in_place_request)
 
+    # TODO Clamp angle to MIN_HEAD_ANGLE and MAX_HEAD_ANGLE.
     @connection.on_connection_thread()
     async def set_head_angle(self,
                              angle: util.Angle,
@@ -392,6 +417,7 @@ class BehaviorComponent(util.Component):
         .. testcode::
 
             import anki_vector
+            from anki_vector.util import degrees
 
             with anki_vector.Robot() as robot:
                 robot.behavior.set_head_angle(degrees(50.0))
@@ -431,8 +457,18 @@ class BehaviorComponent(util.Component):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                robot.behavior.set_lift_height(100.0)
+                robot.behavior.set_lift_height(1.0)
         """
+
+        if height < 0.0:
+            self.logger.warning("lift height %s too small, should be in 0..1 range - clamping", height)
+            height = MIN_LIFT_HEIGHT_MM
+        elif height > 1.0:
+            self.logger.warning("lift height %s too large, should be in 0..1 range - clamping", height)
+            height = MAX_LIFT_HEIGHT_MM
+        else:
+            height = MIN_LIFT_HEIGHT_MM + (height * (MAX_LIFT_HEIGHT_MM - MIN_LIFT_HEIGHT_MM))
+
         set_lift_height_request = protocol.SetLiftHeightRequest(height_mm=height,
                                                                 max_speed_rad_per_sec=max_speed,
                                                                 accel_rad_per_sec2=accel,

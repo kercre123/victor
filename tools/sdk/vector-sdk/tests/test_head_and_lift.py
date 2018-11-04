@@ -26,7 +26,7 @@ def main():
 
         robot.behavior.set_head_angle(degrees(0.0))
 
-        robot.behavior.set_lift_height(100.0)
+        robot.behavior.set_lift_height(1.0)
 
         robot.behavior.set_lift_height(0.0)
 

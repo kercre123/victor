@@ -17,7 +17,7 @@ The main robot class for managing Vector.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['MAX_HEAD_ANGLE', 'MIN_HEAD_ANGLE', 'AsyncRobot', 'Robot']
+__all__ = ['AsyncRobot', 'Robot']
 
 import concurrent
 import configparser
@@ -29,14 +29,6 @@ from . import (animation, audio, behavior, camera,
                motors, nav_map, screen, photos, proximity,
                touch, util, viewer, vision, world)
 from .messaging import protocol
-
-# Constants
-
-#: The minimum angle the robot's head can be set to
-MIN_HEAD_ANGLE = util.degrees(-22)
-
-#: The maximum angle the robot's head can be set to
-MAX_HEAD_ANGLE = util.degrees(45)
 
 
 class Robot:
@@ -99,11 +91,11 @@ class Robot:
                  behavior_activation_timeout: int = 10,
                  cache_animation_list: bool = True,
                  enable_face_detection: bool = False,
-                 enable_custom_object_detection: bool = False,
                  enable_camera_feed: bool = False,
                  enable_audio_feed: bool = False,
-                 enable_nav_map_feed: bool = False,
-                 show_viewer: bool = False):
+                 show_viewer: bool = False,
+                 enable_custom_object_detection: bool = False,
+                 enable_nav_map_feed: bool = False):
 
         if default_logging:
             util.setup_basic_logging()

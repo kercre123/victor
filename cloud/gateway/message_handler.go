@@ -1117,11 +1117,6 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String()))
 	}()
 
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "BehaviorControl disabled in message_handler.go")
-	}
-
 	done := make(chan struct{})
 
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
@@ -1132,11 +1127,6 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 }
 
 func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlRequest, out extint.ExternalInterface_AssumeBehaviorControlServer) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "AssumeBehaviorControl disabled in message_handler.go")
-	}
-
 	done := make(chan struct{})
 
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
@@ -1156,11 +1146,6 @@ func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlReque
 }
 
 func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffChargerRequest) (*extint.DriveOffChargerResponse, error) {
-	if disableStreams {
-		// Disable for Vector 1.0 release
-		return nil, grpc.Errorf(codes.Unimplemented, "DriveOffCharger disabled in message_handler.go")
-	}
-
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOffChargerResponse{}, 1)
 	defer f()
 
@@ -1184,11 +1169,6 @@ func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.Drive
 }
 
 func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnChargerRequest) (*extint.DriveOnChargerResponse, error) {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return nil, grpc.Errorf(codes.Unimplemented, "DriveOnCharger disabled in message_handler.go")
-	}
-
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOnChargerResponse{}, 1)
 	defer f()
 
@@ -2092,11 +2072,6 @@ func UnpackAudioChunk(audioChunk *extint.AudioChunk, cache *AudioFeedCache) bool
 
 // Long running message for sending audio feed to listening sdk users
 func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.ExternalInterface_AudioFeedServer) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "AudioFeed disabled in message_handler.go")
-	}
-
 	// @TODO: Expose other audio processing modes
 	//
 	// The composite multi-microphone non-beamforming (AUDIO_VOICE_DETECT_MODE) mode has been identified as the best for voice detection,
@@ -2236,11 +2211,6 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 
 // Long running message for sending camera feed to listening sdk users
 func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "CameraFeed disabled in message_handler.go")
-	}
-
 	// Enable video stream
 	err := ImageSendModeRequest(extint.ImageRequest_STREAM)
 	if err != nil {

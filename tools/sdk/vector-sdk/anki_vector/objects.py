@@ -1334,6 +1334,8 @@ class FixedCustomObject(util.Component):
     .. testcode::
 
         import anki_vector
+        from anki_vector.util import degrees
+
         with anki_vector.Robot() as robot:
             robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                    10, 100, 100, relative_to_robot=True)
@@ -1373,6 +1375,8 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
+            from anki_vector.util import degrees
+
             with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
@@ -1394,6 +1398,8 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
+            from anki_vector.util import degrees
+
             with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
@@ -1408,6 +1414,8 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
+            from anki_vector.util import degrees
+
             with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
@@ -1422,6 +1430,8 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
+            from anki_vector.util import degrees
+
             with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
@@ -1436,6 +1446,8 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
+            from anki_vector.util import degrees
+
             with anki_vector.Robot() as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
