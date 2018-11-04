@@ -34,7 +34,7 @@ TEST(TestMaybe, Variant)
   
   Nothing nada;
 
-  x.SetTo( nada );
+  x = nada;
   bool test = x.Match(
     [] (Nothing n) { return n.IsJust(); },
     [] (Just n)    { return n.IsJust(); }
@@ -43,7 +43,7 @@ TEST(TestMaybe, Variant)
 
   EXPECT_TRUE(!test);
 
-  x.SetTo( Just() );
+  x = Just();
   test = x.Match(
     [] (auto m) { return m.IsJust(); } 
   );
@@ -65,8 +65,8 @@ TEST(TestMaybe, Variant)
   using RecordTypes = SumType<int, std::string>;
   RecordTypes records(5);
 
-  records.SetTo(5); 
-  records.SetTo(std::string("Michael")); 
+  records = 5;
+  records = std::string("Michael");
 
   
   struct Empty;
@@ -85,10 +85,9 @@ TEST(TestMaybe, Variant)
   insert = [&] (Tree& t, int v) { 
     return t.Match(
       [&] (Empty x) -> Tree { return Leaf{v}; },
+      [&] (Node  x) -> Tree { return Node{std::make_shared<Tree>(insert(*x.left, v)), x.right}; },
       [&] (Leaf  x) -> Tree { return (v < x.val) ? Node{std::make_shared<Tree>(Leaf{v}), std::make_shared<Tree>(x)} 
-                                                 : Node{std::make_shared<Tree>(x), std::make_shared<Tree>(Leaf{v})}; 
-                            },
-      [&] (Node  x) -> Tree { return Node{std::make_shared<Tree>(insert(*x.left, v)), x.right}; }
+                                                 : Node{std::make_shared<Tree>(x), std::make_shared<Tree>(Leaf{v})}; }
     );
   };
 
@@ -97,7 +96,7 @@ TEST(TestMaybe, Variant)
     return t.Match(
       [&] (Empty x) { return 0; },
       [&] (Leaf  x) { return 1; },
-      [&] (Node  x) { return size(*x.left) + size(*x.right); }  // segfaulting?
+      [&] (Node  x) { return size(*x.left) + size(*x.right); }
     );
   };
 
@@ -106,8 +105,8 @@ TEST(TestMaybe, Variant)
   newTree = insert(newTree, 2);
   newTree = insert(newTree, 6);
   newTree = insert(newTree, 3);
-  newTree = insert(newTree, 3);
-  newTree = insert(newTree, 3);
+  newTree = insert(newTree, 1);
+  newTree = insert(newTree, 9);
 
   n = 0;
   newTree.Match( [&] (auto) { ++n; } );

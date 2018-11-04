@@ -191,16 +191,16 @@ namespace {
   template <typename T, typename... Types>
   struct SumType_helper<0, T, Types...> {
     inline static void copy(std::size_t, void* t0, const void* t1) {
-      t0 = new T( *reinterpret_cast<const T*>(t1) );
+      new (t0) T( *reinterpret_cast<const T*>(t1) );
     }
+
+    inline static void move(std::size_t i, void* t0, void* t1) {
+      new (t0) T( std::move(*reinterpret_cast<T*>(t1)) ); 
+	  }
 
     inline static void destroy(std::size_t, void* t) {
       reinterpret_cast<T*>(t)->~T();
     }
-        
-    inline static void move(std::size_t i, void* t0, void* t1) {
-      new (t0) T( std::move(*reinterpret_cast<T*>(t1)) ); 
-	  }
 
     template <typename... Funcs>
     inline static decltype(auto) match(size_t idx, void* t, Funcs&&... fs) {
@@ -228,8 +228,13 @@ public:
   }
 
   SumType(const SumType<Types...>& other) {
-    this->_idx = other._idx;
+    _idx = other._idx;
     helper_t::copy(_idx, &_data, &other._data);
+  }
+
+  SumType(SumType<Types...>&& other) {
+    _idx = other._idx;
+    helper_t::move(_idx, &_data, &other._data);
   }
 
   ~SumType() {
@@ -240,25 +245,28 @@ public:
             int TypeIdx = GetPackIdx<InitType, Types...>::value,
             typename = std::enable_if_t<TypeIdx < sizeof...(Types)> >
   SumType<Types...>& operator=(InitType val) {
-    SetTo(val);
-    return *this;
-  }
-
-  SumType<Types...>& operator=(const SumType<Types...>& other) {
-    this->_idx = other._idx;
-    // CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
-    SumType_helper<sizeof...(Types)-1, Types...>::copy(_idx, &_data, &other._data);
-    return *this;
-  }
-
-  template <typename InitType, 
-            int TypeIdx = GetPackIdx<InitType, Types...>::value,
-            typename = std::enable_if_t<TypeIdx < sizeof...(Types)> >
-  void SetTo(InitType val) {
     helper_t::destroy(_idx, &_data);
-
     _idx = TypeIdx;
     new (&_data) InitType( val );
+
+    return *this;
+  }
+    
+  template <typename InitType, typename... Args, 
+            int TypeIdx = GetPackIdx<InitType, Types...>::value,
+            typename = std::enable_if_t<TypeIdx < sizeof...(Types)> >
+	void emplace(Args&&... args)
+	{
+		// First we destroy the current contents    
+		helper_t::destroy(_idx, &_data);      
+    _idx = TypeIdx;
+		new (&_data) InitType(std::forward<Args>(args)...);
+	}
+
+  SumType<Types...>& operator=(const SumType<Types...>& other) {
+    _idx = other._idx;
+    helper_t::copy(_idx, &_data, &other._data);
+    return *this;
   }
 
   template <typename... Funcs>
@@ -270,13 +278,9 @@ public:
   }
 
 private:
-  // static constexpr auto indices = GetIndices<Types...>{};
-
-
-	static const size_t data_size  = _max<sizeof(Types)...>::value;
-	static const size_t data_align = _max<alignof(Types)...>::value;
-	using data_t = typename std::aligned_storage<data_size, data_align>::type;
+	using data_t = typename std::aligned_storage<_max<sizeof(Types)...>::value, _max<alignof(Types)...>::value>::type;
   using helper_t = SumType_helper<sizeof...(Types)-1, Types...>;
+  
 	data_t _data;
   size_t _idx;
 };
