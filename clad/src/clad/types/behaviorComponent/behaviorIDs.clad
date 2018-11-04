@@ -93,7 +93,11 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/danceToTheBeat/dances
   DanceBig,
+  DanceForwardBackFlower,
+  DanceFrontRightLeftPoint,
+  DanceSTwoways,
   DanceSwell,
+  DanceWiggleForwardWiggleBack,
 
   // victorBehaviorTree/danceToTheBeat
   ListenForBeats,
