@@ -156,80 +156,56 @@ namespace {
     _prepend< AcceptIdx<T1, FPack>::value, typename MapFuncs<TypePack<Types...>, FPack>::type> {};
   
 
-  template <size_t I>
-  struct FindType {
-    template <typename... Types, typename... Funcs>
-    inline static decltype(auto) visit(size_t idx, std::tuple<Types*...>& tup, Funcs&&... fs) {
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // helpers for accessing elements in aligned storage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+  template <size_t I, typename... Types>
+  struct SumType_helper {
+    using T = typename GetPackElement<I, Types...>::type;
+
+    inline static void copy(std::size_t i, void* t0, const void* t1) {
+      if (i == I) { new (t0) T( *reinterpret_cast<const T*>(t1) ); }
+      else        { SumType_helper<I - 1, Types...>::copy(i, t0, t1); }
+    }
+        
+    inline static void move(std::size_t i, void* t0, void* t1) {
+      if (i == I) { new (t0) T( std::move(*reinterpret_cast<T*>(t1)) ); }
+      else        { SumType_helper<I - 1, Types...>::move(i, t0, t1); } 
+	  }
+
+    inline static void destroy(std::size_t i, void* t) {
+      if (i == I) { reinterpret_cast<T*>(t)->~T(); }
+      else        { SumType_helper<I - 1, Types...>::destroy(i, t); }
+    }
+    
+    template <typename... Funcs>
+    inline static decltype(auto) match(size_t idx, void* t, Funcs&&... fs) {
       using FIdx = _get<I, typename MapFuncs<TypePack<Types...>, TypePack<Funcs...>>::type>;
-      return (idx == I) ? std::get< FIdx::value >(std::tuple<Funcs...>(std::forward<Funcs>(fs)...))(*std::get<I>(tup))
-                        : FindType<I - 1>::template visit(idx, tup, std::forward<Funcs>(fs)...);
+      return (idx == I) ? std::get< FIdx::value >( std::forward_as_tuple(fs...) )(*reinterpret_cast<T*>(t))
+                        : SumType_helper<I - 1, Types...>::match(idx, t, std::forward<Funcs>(fs)...);
     }
   };
 
-  template <>
-  struct FindType<0> {
-    template <typename... Types, typename... Funcs>
-    inline static decltype(auto) visit(size_t idx, std::tuple<Types*...>& tup, Funcs&&... fs) { 
-      using FIdx = _get<0, typename MapFuncs<TypePack<Types...>, TypePack<Funcs...>>::type>;
-      return std::get< FIdx::value >(std::tuple<Funcs...>(std::forward<Funcs>(fs)...))(*std::get<0>(tup));
+  template <typename T, typename... Types>
+  struct SumType_helper<0, T, Types...> {
+    inline static void copy(std::size_t, void* t0, const void* t1) {
+      t0 = new T( *reinterpret_cast<const T*>(t1) );
     }
-  };
 
-  template <size_t I>
-  struct FindType_Ptr {
-    template <typename... Types, typename... Funcs, typename... Is>
-    inline static decltype(auto) visit(size_t idx, void* t, Funcs&&... fs) {
-      using FIdx = _get<I, typename MapFuncs<TypePack<Types...>, TypePack<Funcs...>>::type>;
-      using T = typename GetPackElement<I, Types...>::type;
-      return (idx == I) ? std::get< FIdx::value >(std::tuple<Funcs...>(std::forward<Funcs>(fs)...))(*reinterpret_cast<T*>(t))
-                        : FindType_Ptr<I - 1>::template visit<Types...>(idx, t, std::forward<Funcs>(fs)...);
+    inline static void destroy(std::size_t, void* t) {
+      reinterpret_cast<T*>(t)->~T();
     }
-  };
+        
+    inline static void move(std::size_t i, void* t0, void* t1) {
+      new (t0) T( std::move(*reinterpret_cast<T*>(t1)) ); 
+	  }
 
-  template <>
-  struct FindType_Ptr<0> {
-    template <typename... Types, typename... Funcs>
-    inline static decltype(auto) visit(size_t idx, void* t, Funcs&&... fs) {
-      using FIdx = _get<0, typename MapFuncs<TypePack<Types...>, TypePack<Funcs...>>::type>;
-      using T = typename GetPackElement<0, Types...>::type;
-      return std::get< FIdx::value >(std::tuple<Funcs...>(std::forward<Funcs>(fs)...))(*reinterpret_cast<T*>(t));
-    }
-  };
-
-  template <size_t I>
-  struct DeleteType {
-    template <typename Tup>
-    inline static void visit(size_t idx, Tup& tup) {
-      (idx == I) ? delete std::get<I>(tup) : DeleteType<I - 1>::template visit(idx, tup);
-    }
-  };
-
-  template <>
-  struct DeleteType<0> {
-    template <typename Tup>
-    inline static void visit(size_t idx, Tup& tup) { delete std::get<0>(tup); }
-  };
-
-  template <size_t I>
-  struct CopyType {
-    template <typename Tup>
-    inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) {
-    // inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) {
-      using T = std::remove_pointer_t<std::tuple_element_t<I, Tup>>;
-      if (idx == I) {
-        std::get<I>(tup0) = new T( *std::get<I>(tup1) );
-      } else {
-        CopyType<I - 1>::template visit(idx, tup0, tup1);
-      }
-    }
-  };
-
-  template <>
-  struct CopyType<0> {
-    template <typename Tup>
-    inline static void visit(size_t idx, Tup& tup0, const Tup& tup1) { 
-      using T = std::remove_pointer_t<std::tuple_element_t<0, Tup>>;
-      std::get<0>(tup0) = new T( *std::get<0>(tup1) ); 
+    template <typename... Funcs>
+    inline static decltype(auto) match(size_t idx, void* t, Funcs&&... fs) {
+      using FIdx = _get<0, typename MapFuncs<TypePack<T, Types...>, TypePack<Funcs...>>::type>;
+      return std::get< FIdx::value >( std::forward_as_tuple(fs...) )(*reinterpret_cast<T*>(t));
     }
   };
 
@@ -246,19 +222,18 @@ public:
             typename = std::enable_if_t<TypeIdx < sizeof...(Types)> >
   SumType(InitType val) {
     static_assert(IsUniqueList<Types...>::value, "Cannot resolve addresses of a SumType with duplicate types.");
-    SetTo(val);
+
+    _idx = TypeIdx;
+    new (&_data) InitType( val );
   }
 
   SumType(const SumType<Types...>& other) {
-    this->idx = other.idx;
-    // CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
-    copy_ptr(idx, &_data, &other._data, indices);
+    this->_idx = other._idx;
+    helper_t::copy(_idx, &_data, &other._data);
   }
 
   ~SumType() {
-    // DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
-
-    delete_ptr(idx, &_data, indices);
+    helper_t::destroy(_idx, &_data);
   }
 
   template <typename InitType, 
@@ -270,9 +245,9 @@ public:
   }
 
   SumType<Types...>& operator=(const SumType<Types...>& other) {
-    this->idx = other.idx;
+    this->_idx = other._idx;
     // CopyType<sizeof...(Types)-1>::template visit(idx, concrete, other.concrete);
-    copy_ptr(idx, &_data, &other._data, indices);
+    SumType_helper<sizeof...(Types)-1, Types...>::copy(_idx, &_data, &other._data);
     return *this;
   }
 
@@ -280,11 +255,10 @@ public:
             int TypeIdx = GetPackIdx<InitType, Types...>::value,
             typename = std::enable_if_t<TypeIdx < sizeof...(Types)> >
   void SetTo(InitType val) {
-    // DeleteType<sizeof...(Types)-1>::template visit(idx, concrete);
+    helper_t::destroy(_idx, &_data);
 
-    idx = TypeIdx;
-    // std::get<TypeIdx>( concrete ) = new InitType( val );
-    copy_ptr(idx, &_data, &val, indices);
+    _idx = TypeIdx;
+    new (&_data) InitType( val );
   }
 
   template <typename... Funcs>
@@ -292,54 +266,19 @@ public:
     static_assert(AcceptsAll<TypePack<Types...>, Funcs...>::value,  "Function list does not match all types of variant"); 
     static_assert(AcceptsOnce<TypePack<Types...>, Funcs...>::value, "Function list contains ambiguous Argument types"); 
     
-    return FindType_Ptr<sizeof...(Types)-1>::template visit<Types...>(idx, &_data, std::forward<Funcs>(fs)...);
-    // return FindType<sizeof...(Types)-1>::template visit(idx, concrete, std::forward<Funcs>(fs)...);
+    return helper_t::match(_idx, &_data, std::forward<Funcs>(fs)...);
   }
 
 private:
-  // TODO: we could make this a union. Otherwise this class could be a wrapper for std::variant
-  //       see https://gist.github.com/tibordp/6909880 for variant implementation
-
-  static constexpr auto indices = GetIndices<Types...>{};
-  // std::tuple<Types*...> concrete;
-  size_t idx;
+  // static constexpr auto indices = GetIndices<Types...>{};
 
 
 	static const size_t data_size  = _max<sizeof(Types)...>::value;
 	static const size_t data_align = _max<alignof(Types)...>::value;
 	using data_t = typename std::aligned_storage<data_size, data_align>::type;
+  using helper_t = SumType_helper<sizeof...(Types)-1, Types...>;
 	data_t _data;
-
-  // template <size_t...Is, typename... Funcs>
-  // static void visit_ptr(std::size_t i, void* t0, Funcs&&... fs, IndexPack<Is...>) {
-  //   [](...){}( (i == Is &&
-  //       (t0 = new GetPackElement<Is, Types>( *reinterpret_cast<const GetPackElement<Is, Types>*>(t1) ))
-  //     )...
-  //   );
-  // } 
-
-  template <size_t...Is>
-  static void copy_ptr(std::size_t i, void* t0, const void* t1, IndexPack<Is...>) {
-    [](...){}( (i == Is &&
-        (new (t0) GetPackElement<Is, Types>( *reinterpret_cast<const GetPackElement<Is, Types>*>(t1) ))
-      )...
-    );
-  } 
-  
-  template <size_t...Is>
-  static void delete_ptr(std::size_t i, void* t, IndexPack<Is...>) {
-    [](...){}( 
-        (i == Is && (delete_helper<GetPackElement<Is, Types>>(t))
-      )...
-    );
-  } 
-  
-  template <typename T>
-  inline static bool delete_helper(void* t) {
-    // delete reinterpret_cast<T*>(t);
-    reinterpret_cast<T*>(t)->~T();
-    return true;
-  }
+  size_t _idx;
 };
 
 

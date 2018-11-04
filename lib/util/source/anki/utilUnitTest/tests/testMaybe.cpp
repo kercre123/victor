@@ -84,11 +84,11 @@ TEST(TestMaybe, Variant)
   std::function<Tree(Tree&, int)> insert;
   insert = [&] (Tree& t, int v) { 
     return t.Match(
-      [&] (Empty x) -> Tree { ++n; return Leaf{v}; },
-      [&] (Leaf  x) -> Tree { ++n; return (v < x.val) ? Node{std::make_shared<Tree>(Leaf{v}), std::make_shared<Tree>(x)} 
+      [&] (Empty x) -> Tree { return Leaf{v}; },
+      [&] (Leaf  x) -> Tree { return (v < x.val) ? Node{std::make_shared<Tree>(Leaf{v}), std::make_shared<Tree>(x)} 
                                                  : Node{std::make_shared<Tree>(x), std::make_shared<Tree>(Leaf{v})}; 
                             },
-      [&] (Node  x) -> Tree { ++n; return Node{std::make_shared<Tree>(insert(*x.left, v)), x.right}; }
+      [&] (Node  x) -> Tree { return Node{std::make_shared<Tree>(insert(*x.left, v)), x.right}; }
     );
   };
 
@@ -106,11 +106,13 @@ TEST(TestMaybe, Variant)
   newTree = insert(newTree, 2);
   newTree = insert(newTree, 6);
   newTree = insert(newTree, 3);
+  newTree = insert(newTree, 3);
+  newTree = insert(newTree, 3);
 
   n = 0;
   newTree.Match( [&] (auto) { ++n; } );
 
-  // EXPECT_EQ(3, size(newTree)) << "failed to count nested tree";
+  EXPECT_EQ(5, size(newTree)) << "failed to count nested tree";
   EXPECT_EQ(1, n) << "bad void";
 }
 	
