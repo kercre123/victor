@@ -2765,7 +2765,10 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
   Result result = GetStateHistory()->ComputeStateAt(timestamp, t, histState);
   if (RESULT_OK != result)
   {
-    LOG_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u", (TimeStamp_t)timestamp);
+    LOG_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u, oldest:%u newest:%u",
+                (TimeStamp_t)timestamp,
+                (TimeStamp_t)GetStateHistory()->GetOldestTimeStamp(),
+                (TimeStamp_t)GetStateHistory()->GetNewestTimeStamp());
     absPanAngle = GetPose().GetRotation().GetAngleAroundZaxis();
     absTiltAngle = GetComponent<FullRobotPose>().GetHeadAngle();
     return result;

@@ -44,7 +44,7 @@ struct IsConnected
   template <typename image_view_type>
   bool operator() (const image_view_type& img, const dlib::point& a, const dlib::point& b) const
   {
-      return Util::IsNear(img[a.y()][a.x()], img[b.y()][b.x()], epsilon);
+    return Util::IsNear(img[a.y()][a.x()], img[b.y()][b.x()], epsilon);
   }
 
 private:
@@ -56,11 +56,11 @@ private:
  */
 struct IsBackground
 {
-    template <typename image_view_type>
-    bool operator() (const image_view_type& img, const dlib::point& p) const
-    {
-      return img[p.y()][p.x()] < 0.f;
-    }
+  template <typename image_view_type>
+  bool operator() (const image_view_type& img, const dlib::point& p) const
+  {
+    return img[p.y()][p.x()] < 0.f;
+  }
 };
 #endif
 
