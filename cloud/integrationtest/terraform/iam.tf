@@ -1,5 +1,13 @@
 // This role specifies what other services the ECS load test task can access, in this case
 // assuming the cross-account Kinesis logging for development.
+data "template_file" "ecs_task_role" {
+  template = "${file("policy/AmazonECSTaskRolePolicy.json")}"
+
+  vars {
+    logging_role = "${var.logging_role}"
+  }
+}
+
 resource "aws_iam_role" "ecs_task" {
   name = "ecs_task_role"
   assume_role_policy = "${file("policy/AmazonECSTaskRole.json")}"
@@ -7,7 +15,7 @@ resource "aws_iam_role" "ecs_task" {
 
 resource "aws_iam_policy" "ecs_task" {
   name = "ecs_task_policy"
-  policy = "${file("policy/AmazonECSTaskRolePolicy.json")}"
+  policy = "${data.template_file.ecs_task_role.rendered}"
 }
 
 resource "aws_iam_policy_attachment" "ecs_task" {

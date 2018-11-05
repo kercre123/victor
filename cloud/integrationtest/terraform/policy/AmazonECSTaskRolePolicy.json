@@ -4,7 +4,7 @@
       {
         "Effect": "Allow",
         "Action": "sts:AssumeRole",
-        "Resource": "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-development"
+        "Resource": "${logging_role}"
       }
     ]
 }

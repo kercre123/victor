@@ -30,7 +30,7 @@ variable "app_image" {
 }
 
 variable "logging_role" {
-  default = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-development"
+  default = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-loadtest"
 }
 
 // Note: determines if a new account is created as part of the test action

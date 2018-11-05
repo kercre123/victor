@@ -59,7 +59,7 @@
             },
             {
                 "name": "LOG_KINESIS_STREAM",
-                "value": "splunk_logs_development"
+                "value": "splunk_logs_loadtest"
             },
             {
                 "name": "LOG_KINESIS_ROLE_ARN",
@@ -67,7 +67,7 @@
             },
             {
                 "name": "LOG_SOURCE",
-                "value": "sai_loadtest"
+                "value": "robot_fleet"
             },
             {
                 "name": "LOG_SOURCETYPE",
