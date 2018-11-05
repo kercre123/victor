@@ -560,7 +560,8 @@ type rpcService struct{}
 
 func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.ProtocolVersionRequest) (*extint.ProtocolVersionResponse, error) {
 	return &extint.ProtocolVersionResponse{
-		Result: extint.ProtocolVersionResponse_SUCCESS,
+		Result:      extint.ProtocolVersionResponse_SUCCESS,
+		HostVersion: hostProtocolVersion,
 	}, nil
 }
 

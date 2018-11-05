@@ -36,6 +36,9 @@ from . import exceptions, util
 from .messaging import client, protocol
 from .version import __version__
 
+CLIENT_VERSION = 1
+MIN_HOST_VERSION = 0
+
 
 class CONTROL_PRIORITY_LEVEL(Enum):
     """Enum used to specify the priority level for the program."""
@@ -347,9 +350,9 @@ class Connection:
             self._interface = client.ExternalInterfaceStub(self._channel)
 
             # Verify Vector and the SDK have compatible protocol versions
-            version = protocol.ProtocolVersionRequest(client_version=0, min_host_version=0)
+            version = protocol.ProtocolVersionRequest(client_version=CLIENT_VERSION, min_host_version=MIN_HOST_VERSION)
             protocol_version = self._loop.run_until_complete(self._interface.ProtocolVersion(version))
-            if protocol_version.result != protocol.ProtocolVersionResponse.SUCCESS:  # pylint: disable=no-member
+            if protocol_version.result != protocol.ProtocolVersionResponse.SUCCESS or MIN_HOST_VERSION > protocol_version.host_version:  # pylint: disable=no-member
                 raise exceptions.VectorInvalidVersionException(version, protocol_version)
 
             self._control_stream_task = self._loop.create_task(self._open_connections())
