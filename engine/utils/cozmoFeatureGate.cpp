@@ -140,6 +140,7 @@ namespace {
 }
 
 static const char* kConsoleFeatureGroup = "FeatureGate";
+
 const char* InitFeatureEnumString() {
   std::vector<std::string> featureNames;
   featureNames.reserve(FeatureTypeNumEntries);
