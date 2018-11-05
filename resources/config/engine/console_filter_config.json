@@ -13,11 +13,18 @@
   {
     "channels":
     [
-      { "channel": "CpuProfiler",                       "enabled": true },
-      { "channel": "Keyboard",                          "enabled": true },
-      { "channel": "MessageProfiler",                   "enabled": true },
-      { "channel": "MicData",                           "enabled": true },
-      { "channel": "PerfMetric",                        "enabled": true },
+      { "channel": "Actions",                           "enabled": false },
+      { "channel": "Behaviors",                         "enabled": false },
+      { "channel": "BlockPool",                         "enabled": false },
+      { "channel": "CpuProfiler",                       "enabled": true  },
+      { "channel": "FaceRecognizer",                    "enabled": false },
+      { "channel": "Keyboard",                          "enabled": true  },
+      { "channel": "MessageProfiler",                   "enabled": true  },
+      { "channel": "MicData",                           "enabled": true  },
+      { "channel": "PerfMetric",                        "enabled": true  },
+      { "channel": "PoseConfirmer",                     "enabled": false },
+      { "channel": "VisionComponent",                   "enabled": false },
+      { "channel": "VisionSystem",                      "enabled": false },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
@@ -34,9 +41,16 @@
   {
     "channels":
     [
-      { "channel": "CpuProfiler",                       "enabled": true },
-      { "channel": "MessageProfiler",                   "enabled": true },
-      { "channel": "PerfMetric",                        "enabled": true },
+      { "channel": "Actions",                           "enabled": false },
+      { "channel": "Behaviors",                         "enabled": false },
+      { "channel": "BlockPool",                         "enabled": false },
+      { "channel": "CpuProfiler",                       "enabled": true  },
+      { "channel": "FaceRecognizer",                    "enabled": false },
+      { "channel": "MessageProfiler",                   "enabled": true  },
+      { "channel": "PerfMetric",                        "enabled": true  },
+      { "channel": "PoseConfirmer",                     "enabled": false },
+      { "channel": "VisionComponent",                   "enabled": false },
+      { "channel": "VisionSystem",                      "enabled": false },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
