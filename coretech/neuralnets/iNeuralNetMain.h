@@ -19,11 +19,9 @@
 #include "coretech/common/shared/types.h"
 
 #include <list>
+#include <map>
 #include <string>
 
-namespace cv {
-  class Mat;
-}
 
 namespace Json {
   class Value;
@@ -98,14 +96,12 @@ private:
   
   static bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults);
   
-  std::unique_ptr<NeuralNetModel> _neuralNet;
+  std::map<std::string, std::unique_ptr<NeuralNetModel>> _neuralNets;
   
+  std::string _cachePath;
   std::string _imageFilename;
-  std::string _timestampFilename;
-  std::string _jsonFilename;
   
-  int  _pollPeriod_ms = 10;
-  bool _imageFileprovided = false;
+  int  _pollPeriod_ms = std::numeric_limits<int>::max();
   bool _isInitialized = false;
   
 };

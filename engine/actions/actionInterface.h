@@ -298,6 +298,9 @@ namespace Anki {
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
 
       virtual void Reset(bool shouldUnlockTracks = true) override final;
+      
+      // Retrieves the number of seconds elapsed since the action started updating.
+      f32 GetCurrentRunTimeSeconds() const;
 
       // A random number generator all subclasses can share
       Util::RandomGenerator& GetRNG() const;

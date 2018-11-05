@@ -19,10 +19,12 @@ syntax = "proto3";
 package Anki.Vector.external_interface;
 
 import "google/api/annotations.proto";
+import "alexa.proto";
 import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
-import "settings.proto";
+import "nav_map.proto";
+import "settings.proto"; // App only
 import "shared.proto";
 
 // The grpc-defined connection between the SDK and Anki's Vector robot.
@@ -32,6 +34,14 @@ service ExternalInterface {
   rpc ProtocolVersion(ProtocolVersionRequest) returns (ProtocolVersionResponse) {
     option (google.api.http) = {
       post: "/v1/protocol_version",
+      body: "*"
+    };
+  }
+
+  // SDK-only message to pass version info for device OS, Python version, etc.
+  rpc SDKInitialization(SDKInitializationRequest) returns (SDKInitializationResponse) {
+    option (google.api.http) = {
+      post: "/v1/sdk_initialization",
       body: "*"
     };
   }
@@ -87,12 +97,6 @@ service ExternalInterface {
     };
   }
 
-  rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
-    option (google.api.http) = {
-      post: "/v1/app_intent",
-      body: "*"
-    };
-  }
   rpc CancelFaceEnrollment(CancelFaceEnrollmentRequest) returns (CancelFaceEnrollmentResponse) {
     option (google.api.http) = {
       post: "/v1/cancel_face_enrollment",
@@ -179,20 +183,6 @@ service ExternalInterface {
     };
   }
 
-  rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
-    option (google.api.http) = {
-      post: "/v1/get_onboarding_state",
-      body: "*"
-    };
-  }
-
-  rpc SendOnboardingInput(OnboardingInputRequest) returns (OnboardingInputResponse) {
-    option (google.api.http) = {
-      post: "/v1/send_onboarding_input",
-      body: "*"
-    };
-  }
-
   // Get the photos info.
   rpc PhotosInfo(PhotosInfoRequest) returns (PhotosInfoResponse) {
     option (google.api.http) = {
@@ -221,41 +211,6 @@ service ExternalInterface {
   rpc DeletePhoto(DeletePhotoRequest) returns (DeletePhotoResponse) {
     option (google.api.http) = {
       post: "/v1/delete_photo",
-      body: "*"
-    };
-  }
-
-  rpc GetLatestAttentionTransfer(LatestAttentionTransferRequest) returns (LatestAttentionTransferResponse) {
-    option (google.api.http) = {
-      post: "/v1/get_latest_attention_transfer",
-      body: "*"
-    };
-  }
-
-  rpc PullJdocs(PullJdocsRequest) returns (PullJdocsResponse) {
-    option (google.api.http) = {
-      post: "/v1/pull_jdocs",
-      body: "*"
-    };
-  }
-
-  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
-    option (google.api.http) = {
-      post: "/v1/update_settings",
-      body: "*"
-    };
-  }
-
-  rpc UpdateAccountSettings(UpdateAccountSettingsRequest) returns (UpdateAccountSettingsResponse) {
-    option (google.api.http) = {
-      post: "/v1/update_account_settings",
-      body: "*"
-    };
-  }
-
-  rpc UpdateUserEntitlements(UpdateUserEntitlementsRequest) returns (UpdateUserEntitlementsResponse) {
-    option (google.api.http) = {
-      post: "/v1/update_user_entitlements",
       body: "*"
     };
   }
@@ -366,6 +321,30 @@ service ExternalInterface {
     };
   }
 
+  // Causes the robot to forget about custom objects it currently knows about.
+  rpc DeleteCustomObjects(DeleteCustomObjectsRequest) returns (DeleteCustomObjectsResponse) {
+    option (google.api.http) = {
+      post: "/v1/delete_custom_objects",
+      body: "*"
+    };
+  }
+
+  // Creates a permanent custom object instance in the robot's world, with no connection to the vision system.
+  rpc CreateFixedCustomObject(CreateFixedCustomObjectRequest) returns (CreateFixedCustomObjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/create_fixed_custom_object",
+      body: "*"
+    };
+  }
+
+  // Creates a custom object with distinct custom marker(s).
+  rpc DefineCustomObject(DefineCustomObjectRequest) returns (DefineCustomObjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/define_custom_object",
+      body: "*"
+    };
+  }
+
   // Set each of the lights on the currently connected cube based on two
   // rgb values each and timing data for how to transition between them.
   rpc SetCubeLights(SetCubeLightsRequest) returns (SetCubeLightsResponse) {}
@@ -385,6 +364,72 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  // Set Vector's eye color.
+  rpc SetEyeColor(SetEyeColorRequest) returns (SetEyeColorResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_eye_color",
+      body: "*"
+    };
+  }
+
+  // *** App only proto below ***
+
+  rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
+    option (google.api.http) = {
+      post: "/v1/app_intent",
+      body: "*"
+    };
+  }  
+
+  rpc GetOnboardingState(OnboardingStateRequest) returns (OnboardingStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/get_onboarding_state",
+      body: "*"
+    };
+  }
+
+  rpc SendOnboardingInput(OnboardingInputRequest) returns (OnboardingInputResponse) {
+    option (google.api.http) = {
+      post: "/v1/send_onboarding_input",
+      body: "*"
+    };
+  }  
+
+  rpc GetLatestAttentionTransfer(LatestAttentionTransferRequest) returns (LatestAttentionTransferResponse) {
+    option (google.api.http) = {
+      post: "/v1/get_latest_attention_transfer",
+      body: "*"
+    };
+  }
+
+  rpc PullJdocs(PullJdocsRequest) returns (PullJdocsResponse) {
+    option (google.api.http) = {
+      post: "/v1/pull_jdocs",
+      body: "*"
+    };
+  }
+
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_settings",
+      body: "*"
+    };
+  }
+
+  rpc UpdateAccountSettings(UpdateAccountSettingsRequest) returns (UpdateAccountSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_account_settings",
+      body: "*"
+    };
+  }
+
+  rpc UpdateUserEntitlements(UpdateUserEntitlementsRequest) returns (UpdateUserEntitlementsResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_user_entitlements",
+      body: "*"
+    };
+  }  
 
   // CheckUpdateStatus tells if the robot is ready to reboot and update.
   rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
@@ -414,4 +459,33 @@ service ExternalInterface {
       body: "*"
     };
   }
+
+  rpc GetFeatureFlag(FeatureFlagRequest) returns (FeatureFlagResponse) {
+    option (google.api.http) = {
+      post: "/v1/feature_flag",
+      body: "*"
+    };
+  }
+
+  rpc GetAlexaAuthState(AlexaAuthStateRequest) returns (AlexaAuthStateResponse) {
+    option (google.api.http) = {
+      post: "/v1/alexa_auth_state",
+      body: "*"
+    };
+  }
+
+  rpc AlexaOptIn(AlexaOptInRequest) returns (AlexaOptInResponse) {
+    option (google.api.http) = {
+      post: "/v1/alexa_opt_in",
+      body: "*"
+    };
+  }
+
+  rpc NavMapFeed(NavMapFeedRequest) returns (stream NavMapFeedResponse) {
+    option (google.api.http) = {
+      post: "/v1/nav_map_feed",
+      body: "*"
+    };
+  }
+  
 }

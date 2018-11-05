@@ -21,6 +21,7 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "proto/external_interface/messages.pb.h"
 #include "proto/external_interface/settings.pb.h"
 
 #include "json/json.h"

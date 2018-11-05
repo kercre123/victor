@@ -17,6 +17,7 @@ namespace Anki {
 namespace Vector {
 
 // Forward declarations
+class AlexaComponent;
 class BehaviorComponent;
 class ContinuityComponent;
 class FaceSelectionComponent;
@@ -29,6 +30,7 @@ class SalientPointsComponent;
 } // namespace Vector
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
+LINK_COMPONENT_TYPE_TO_ENUM(AlexaComponent,                    AIComponentID, AlexaComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BehaviorComponent,                 AIComponentID, BehaviorComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(ContinuityComponent,               AIComponentID, ContinuityComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceSelectionComponent,            AIComponentID, FaceSelection)
@@ -47,6 +49,7 @@ std::string GetComponentStringForID<Vector::AIComponentID>(Vector::AIComponentID
 {
   #define CASE(id) case Vector::AIComponentID::id: { return #id; }
   switch (enumID) {
+    CASE(AlexaComponent)
     CASE(BehaviorComponent)
     CASE(ContinuityComponent)
     CASE(FaceSelection)

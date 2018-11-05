@@ -331,7 +331,7 @@ async def test_message(robot, message_name, message_input, test_class, errors):
         "Sending: \"{0}\"".format(MessageToJson(message_input,
                                                 including_default_value_fields=True,
                                                 preserving_proto_field_name=True)))
-    result = await message_call(message_input)
+    result = robot.conn.run_coroutine(message_call(message_input)).result()
     print(
         "Received: \"{0}\"".format(MessageToJson(result,
                                                  including_default_value_fields=True,
@@ -421,11 +421,13 @@ def main():
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
+    loop = asyncio.get_event_loop()
+
     with anki_vector.Robot(args.serial, default_logging=False) as robot:
         print("------ beginning tests ------")
 
         future = asyncio.Future()
-        robot.loop.run_until_complete(run_message_tests(robot, future))
+        loop.run_until_complete(run_message_tests(robot, future))
 
         test_results = future.result()
         warnings = test_results['warnings']

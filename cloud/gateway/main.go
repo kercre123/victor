@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"anki/log"
 	"anki/robot"
@@ -21,6 +22,7 @@ import (
 
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -30,7 +32,6 @@ import (
 // Most useful for debugging the json output being sent to the app.
 const (
 	logVerbose     = false
-	disableStreams = false
 )
 
 var (
@@ -38,6 +39,8 @@ var (
 	signalHandler      chan os.Signal
 	demoKeyPair        *tls.Certificate
 	demoCertPool       *x509.CertPool
+	cloudCheckLimiter  *MultiLimiter
+	debugLogLimiter    *MultiLimiter
 	switchboardManager SwitchboardIpcManager
 	engineProtoManager EngineProtoIpcManager
 	tokenManager       ClientTokenManager
@@ -182,6 +185,16 @@ func main() {
 	}
 
 	log.Println("Sockets successfully created")
+
+	cloudCheckLimiter = NewMultiLimiter(
+		rate.NewLimiter(rate.Every(10*time.Second), 1),
+		rate.NewLimiter(rate.Every(time.Minute), 3),
+	)
+
+	debugLogLimiter = NewMultiLimiter(
+		rate.NewLimiter(rate.Every(time.Minute), 1),
+		rate.NewLimiter(rate.Every(time.Hour), 3),
+	)
 
 	creds, err := credentials.NewServerTLSFromFile(robot.GatewayCert, robot.GatewayKey)
 	if err != nil {

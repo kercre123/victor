@@ -728,6 +728,13 @@ autounion MessageEngineToGame
   ObjectAccel                       ObjectAccel                        = 0x0F, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
   RobotObservedObject               RobotObservedObject                = 0x10, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectAvailable                   ObjectAvailable                    = 0x11,
+  RobotDeletedFixedCustomObjects    RobotDeletedFixedCustomObjects     = 0x12,
+  RobotDeletedCustomMarkerObjects   RobotDeletedCustomMarkerObjects    = 0x13,
+  CreatedFixedCustomObject          CreatedFixedCustomObject           = 0x14,
+  DefinedCustomObject               DefinedCustomObject                = 0x15,
+  MemoryMapMessageBegin             MemoryMapMessageBegin              = 0x16,
+  MemoryMapMessage                  MemoryMapMessage                   = 0x17,
+  MemoryMapMessageEnd               MemoryMapMessageEnd                = 0x18,
 }
 
 } // namespace ExternalInterface

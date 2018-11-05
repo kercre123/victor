@@ -20,3 +20,7 @@ func (c *cladClient) connect(socketName string) error {
 
 	return err
 }
+
+func (c *cladClient) close() {
+	c.conn.Close()
+}

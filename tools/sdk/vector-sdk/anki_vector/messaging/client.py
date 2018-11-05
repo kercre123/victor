@@ -18,9 +18,11 @@ Protobuf messages exposed to the Vector Python SDK.
 import sys
 import inspect
 
+from .alexa_pb2_grpc import *
 from .behavior_pb2_grpc import *
 from .cube_pb2_grpc import *
 from .messages_pb2_grpc import *
+from .nav_map_pb2_grpc import *
 from .settings_pb2_grpc import *
 from .shared_pb2_grpc import *
 from .external_interface_pb2_grpc import *

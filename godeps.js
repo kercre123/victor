@@ -279,6 +279,9 @@ function runRoutine(args) {
   const normalDeps = execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + allGoDirs).split('\n');
   const testDeps = allGoTestPackages ?
     execSyncTrim('go list -test -f \'{{ join .Deps "\\n" }}\' ' + allGoTestPackages).split('\n')
+    .filter(pkg => !stdLibPackages.includes(pkg) && !normalDeps.includes(pkg))
+    // -test adds a line for test packages like 'anki/util_test [anki/util.test]' - we don't want those
+    .filter(pkg => !pkg.endsWith(']'))
     : [];
   const allDeps = [...new Set(normalDeps.concat(testDeps, extraIncludes))]
     .filter(dep => !stdLibPackages.includes(dep)).sort();

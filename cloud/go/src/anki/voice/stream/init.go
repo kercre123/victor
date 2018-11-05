@@ -11,7 +11,9 @@ func (strm *Streamer) init(streamSize int) {
 	}
 
 	// connect to server
-	if err := strm.connect(); err != nil {
+	var err *CloudError
+	if strm.conn, err = strm.opts.connectFn(strm.ctx); err != nil {
+		strm.receiver.OnError(err.Kind, err.Err)
 		strm.cancel()
 		return
 	}

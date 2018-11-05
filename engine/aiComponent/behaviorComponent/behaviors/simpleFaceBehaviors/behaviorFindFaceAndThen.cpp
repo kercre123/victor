@@ -152,7 +152,7 @@ void BehaviorFindFaceAndThen::GetBehaviorOperationModifiers(BehaviorOperationMod
     modifiers.visionModesForActivatableScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::Low} );
   }
   if( _iConfig.useBodyDetector ) {
-    modifiers.visionModesForActiveScope->insert( {VisionMode::RunningNeuralNet, EVisionUpdateFrequency::Med} );
+    modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingPeople, EVisionUpdateFrequency::Med} );
   }
   
   modifiers.behaviorAlwaysDelegates = false;
@@ -629,6 +629,7 @@ void BehaviorFindFaceAndThen::RunSearchFaceBehavior()
   } else {
     PRINT_NAMED_WARNING( "BehaviorFindFaceAndThen.RunSearchFaceBehavior.SearchDoesntWantToActivate",
                          "Search behavior %s doesn't want to activate", _iConfig.searchBehaviorID.c_str() );
+    CancelSelf();
   }
 }
 
@@ -674,6 +675,10 @@ void BehaviorFindFaceAndThen::RunFindFaceFromBodyAction()
                      "Behavior SearchWithinBoundingBox ended unexpectedly. Recovering" );
       if( _dVars.currentState == State::SearchForFace ) {
         RunSearchFaceBehavior();
+      }
+      else{
+        // We're coming from the LookForFaceInMicDirection state, lets go on to search more generally.
+        TransitionToSearchingForFace();
       }
     });
   } else {

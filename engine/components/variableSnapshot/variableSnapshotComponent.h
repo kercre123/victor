@@ -5,13 +5,10 @@
  * Created: 5/31/2018
  *
  * Description: This is a component meant to provide persistence across boots for data within other 
- * 				      components (like timers or faces) that could probably be remembered by the robot. 
+ *              components (like timers or faces) that could probably be remembered by the robot. 
  *              Snapshots are currently loaded into memory upon robot startup (so there is no load 
  *              function).
  *
- * Note: The Variable Snapshot Component stores the versioning information of the build: the OS build
- *       version and the robot build SHA. If the version information changes, then all data is erased
- *       unless the kResetDataOnNewBuildVersion console variable is set to false.
  *
  * Copyright: Anki, Inc. 2018
  */

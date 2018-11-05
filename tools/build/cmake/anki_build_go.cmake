@@ -118,7 +118,7 @@ macro(__anki_run_go_test package_name extra_deps)
   add_custom_command(
     OUTPUT ${__gobuild_out}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__cppflags_env} ${__ldflags_env} ${__cxxflags_env}
-                             ${GOROOT}/bin/go test ${package_name} -test -c
+                             ${GOROOT}/bin/go test ${package_name} -test -c -cover
                              ${__ldflags_str} ${__go_build_ldflags} ${__go_build_flags}
     DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps} ${extra_deps} ${GO_VERSION_FILE}
   )
@@ -340,8 +340,9 @@ macro(anki_build_go_test_exe package_name target_name extra_deps)
 
   enable_testing()
   add_test(NAME ${target_name}
-    COMMAND ${target_name}
+    COMMAND ${target_name} -test.v -test.coverprofile=${CMAKE_CURRENT_BINARY_DIR}/testbin/${target_name}.cover
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testbin
   )
+  set_tests_properties(${target_name} PROPERTIES TIMEOUT 20)
 
 endmacro()

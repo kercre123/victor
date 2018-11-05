@@ -22,7 +22,7 @@ namespace Vector {
   
 namespace external_interface {
   class GatewayWrapper;
-  enum class GatewayWrapperTag : uint8_t;
+  enum class GatewayWrapperTag : uint16_t;
 }
 
 class IGatewayInterface {

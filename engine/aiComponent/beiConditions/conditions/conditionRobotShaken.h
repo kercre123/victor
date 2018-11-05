@@ -27,6 +27,7 @@ public:
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
+  float _minTriggerMagnitude;
 };
 
 

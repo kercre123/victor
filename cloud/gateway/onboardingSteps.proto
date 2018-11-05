@@ -18,6 +18,8 @@ syntax = "proto3";
 
 package Anki.Vector.external_interface;
 
+// *** App only proto below ***
+
 enum OnboardingSteps {
   STEP_INVALID = 0;
 

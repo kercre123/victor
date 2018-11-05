@@ -30,18 +30,14 @@ public:
   
   ImageCache();
   
-  // Invalidate all cached data and start with new image data at ImageCacheSize::Sensor.
-  // 'fullScaleMethod' is largely ignored (TODO VIC-8309 to remove)
+  // Invalidate all cached data and start with new image data at ImageCacheSize::Full.
+  // Will use 'method' when resizing the image
   // May not release associated image memory.
-  void Reset(const Image& imgGray,
-             const ResizeMethod fullScaleMethod = ResizeMethod::Linear);
+  void Reset(const Image& imgGray, ResizeMethod method = ResizeMethod::Linear);
   
-  void Reset(const ImageRGB& imgColor,
-             const ResizeMethod fullScaleMethod = ResizeMethod::Linear);
+  void Reset(const ImageRGB& imgColor, ResizeMethod method = ResizeMethod::Linear);
 
-  void Reset(const ImageBuffer& buffer,
-             const ResizeMethod fullScaleMethod = ResizeMethod::Linear);
-
+  void Reset(const ImageBuffer& buffer);
   
   // Invalidate the cache and release all the memory associated with it.
   void ReleaseMemory();
@@ -57,16 +53,18 @@ public:
   // NOTE: Does not actually create a cache entry for the specified size, if none exists yet. (I.e., like a "peek" op)
   s32 GetNumRows(const ImageCacheSize atSize) const;
   s32 GetNumCols(const ImageCacheSize atSize) const;
+
+  // Returns true or false depending on whether or not 'method' was set
+  bool GetResizeMethod(ResizeMethod& method) const;
   
-  // Look up a Size enum, given a subsample increment and resize method
+  // Look up a Size enum, given a subsample increment
   // NOTE: subsample = 1 always means "Full" processing resolution, irrespective of the relationship
   //       between Full and Sensor resolution. Size::Sensor will never be returned.
-  static ImageCacheSize GetSize(s32 subsample, ResizeMethod method);
+  static ImageCacheSize GetSize(s32 subsample);
   
-  // Interprets a scale string and a method string into a Size enum
-  // Valid scales are: "full", "half", "quarter"
-  // Valid methods are: "nearest", "linear", "area" (ignored for "full")
-  static ImageCacheSize StringToSize(const std::string& scaleStr, const std::string& methodStr);
+  // Interprets a scale string into a Size enum
+  // Valid scales are: "full", "half", "quarter", and "eighth"
+  static ImageCacheSize StringToSize(const std::string& scaleStr);
 
   // For unit tests to verify expected behavior
   enum class GetType : u8
@@ -98,8 +96,7 @@ private:
   s32          _sensorNumCols = 0;
   bool         _hasColor = false;
   TimeStamp_t  _timeStamp = 0;
-  ResizeMethod _fullScaleMethod = ResizeMethod::Linear;
-
+  
   // When we are Reset with an image buffer, we need keep a copy of it around to
   // give to any newly created ResizedEntrys
   ImageBuffer  _buffer;
@@ -112,7 +109,6 @@ private:
   {
     ImageBuffer    _buffer;
     ImageCacheSize _size;
-    ResizeMethod   _resizeMethod;
     
     Image     _gray;
     bool     _hasValidGray = false;
@@ -122,9 +118,9 @@ private:
     
   public:
     template<class ImageType>
-    ResizedEntry(const ImageType& origImg, ImageCacheSize size, ResizeMethod method)
+    ResizedEntry(const ImageType& origImg, ImageCacheSize size)
     {
-      Update(origImg, size, method);
+      Update(origImg, size);
     }
     
     void Invalidate() { _hasValidGray = false; _hasValidRGB = false; _buffer.Invalidate(); }
@@ -136,7 +132,7 @@ private:
     bool IsValid() const { return (_hasValidRGB || _hasValidGray || _buffer.HasValidData()); }
 
     template<class ImageType>
-    void Update(const ImageType& origImg, ImageCacheSize size, ResizeMethod method);
+    void Update(const ImageType& origImg, ImageCacheSize size);
   };
 
   using ResizeVersionsMap = std::map<ImageCacheSize, ResizedEntry>;
@@ -145,7 +141,7 @@ private:
   ResizeMethod GetMethod(ImageCacheSize size) const;
   
   template<class ImageType>
-  void ResetHelper(const ImageType& img, const ResizeMethod fullScaleMethod);
+  void ResetHelper(const ImageType& img);
   
   template<class ImageType>
   const ImageType& GetImageHelper(ImageCacheSize size, GetType& getType);

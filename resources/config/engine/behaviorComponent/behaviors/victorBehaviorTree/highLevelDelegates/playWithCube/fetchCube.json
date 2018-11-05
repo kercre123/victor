@@ -1,5 +1,10 @@
 {
   "behaviorID" : "FetchCube",
   "behaviorClass" : "FetchCube",
-  "associatedActiveFeature" : "FindCube"
+  "associatedActiveFeature" : "FetchCube",
+
+  "wantsToBeActivatedCondition" : {
+    "conditionType" : "FeatureGate",
+    "feature" : "FetchCube"
+  }
 }

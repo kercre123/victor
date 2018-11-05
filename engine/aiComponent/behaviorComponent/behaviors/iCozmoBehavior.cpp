@@ -76,13 +76,13 @@ namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
 
-static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
-static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfCondition";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
+static const char* kDisplayIntentActivity            = "showActiveIntentFeedback";
+static const char* kIntentActivityShutOff            = "autoShutOffIntentFeedback";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
@@ -272,8 +272,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 , _intentToDeactivate( UserIntentTag::INVALID )
 , _respondToTriggerWord( false )
 , _emotionEventOnActivated("")
-, _requiredRecentDriveOffCharger_sec(-1.0f)
-, _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
 {
   if(!ReadFromJson(config)){
@@ -285,25 +283,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 {
-  // - - - - - - - - - -
-  // Got off charger timer
-  const Json::Value& requiredDriveOffChargerJson = config[kRequiredDriveOffChargerKey];
-  if (!requiredDriveOffChargerJson.isNull())
-  {
-    DEV_ASSERT_MSG(requiredDriveOffChargerJson.isNumeric(), "ICozmoBehavior.ReadFromJson", "Not a float: %s",
-                   kRequiredDriveOffChargerKey);
-    _requiredRecentDriveOffCharger_sec = requiredDriveOffChargerJson.asFloat();
-  }
-
-  // - - - - - - - - - -
-  // Required recent parent switch
-  const Json::Value& requiredSwitchToParentJson = config[kRequiredParentSwitchKey];
-  if (!requiredSwitchToParentJson.isNull()) {
-    DEV_ASSERT_MSG(requiredSwitchToParentJson.isNumeric(), "ICozmoBehavior.ReadFromJson", "Not a float: %s",
-                   kRequiredParentSwitchKey);
-    _requiredRecentSwitchToParent_sec = requiredSwitchToParentJson.asFloat();
-  }
-
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
   // Load any changes to the default values of behavior modifiers from the JSON config
@@ -344,6 +323,10 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
       _wantsToBeActivatedConditions.push_back( cond );
     }
   }
+
+  // set our feedback response type based on our config bools.
+  JsonTools::GetValueOptional(config, kDisplayIntentActivity, _showActiveIntentFeedback);
+  JsonTools::GetValueOptional(config, kIntentActivityShutOff, _autoShutOffActiveIntentFeedback);
 
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
 
@@ -420,7 +403,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
       }
     }
   }
-  
+
   return true;
 }
 
@@ -459,14 +442,14 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
   static const char* baseKeys[] = {
     kBehaviorClassKey,
     kBehaviorIDConfigKey,
-    kRequiredDriveOffChargerKey,
-    kRequiredParentSwitchKey,
     kAlwaysStreamlineKey,
     kBehaviorModifiersMapKey,
     kWantsToBeActivatedCondConfigKey,
     kWantsToCancelSelfConfigKey,
     kRespondToUserIntentsKey,
     kRespondToTriggerWordKey,
+    kDisplayIntentActivity,
+    kIntentActivityShutOff,
     kEmotionEventOnActivatedKey,
     kResetTimersKey,
     kAnonymousBehaviorMapKey,
@@ -1091,37 +1074,6 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
     return false;
   }
 
-  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-  // if there's a timer requiring a recent drive off the charger, check with whiteboard
-  const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
-  if ( requiresRecentDriveOff )
-  {
-    const float lastDriveOff = GetAIComp<AIWhiteboard>().GetTimeAtWhichRobotGotOffCharger();
-    const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
-    if ( !hasDrivenOff ) {
-      // never driven off the charger, can't run
-      return false;
-    }
-
-    const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
-    if ( !isRecent ) {
-      // driven off, but not recently enough
-      return false;
-    }
-  }
-
-  // if there's a timer requiring a recent parent switch
-  const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
-  if ( requiresRecentParentSwitch ) {
-    const float lastTime = 0.f;// robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
-    const float changedAgoSecs = curTime - lastTime;
-    const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
-    if ( !isSwitchRecent ) {
-      return false;
-    }
-  }
-
   //check if the behavior runs while in the air
   if(GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads
       && !_operationModifiers.wantsToBeActivatedWhenOffTreads){
@@ -1287,7 +1239,6 @@ void ICozmoBehavior::UpdateInternal()
         return;
       }
     }
-
   } // end IsActivated
 }
 
@@ -1679,22 +1630,42 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag)
 {
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  return SmartActivateUserIntent(tag, _showActiveIntentFeedback);
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UserIntentPtr ICozmoBehavior::SmartActivateUserIntent(UserIntentTag tag, bool showFeedback)
+{
   // track the tag so that we can automatically deactivate it when this behavior deactivates
   _intentToDeactivate = tag;
 
-  return uic.ActivateUserIntent(tag, GetDebugLabel());
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  return uic.ActivateUserIntent(tag, GetDebugLabel(), showFeedback, _autoShutOffActiveIntentFeedback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartDeactivateUserIntent()
 {
   if( _intentToDeactivate != UserIntentTag::INVALID ) {
-    auto& uic = GetBehaviorComp<UserIntentComponent>();
-    uic.DeactivateUserIntent( _intentToDeactivate );
+    DeactivateUserIntentHelper(_intentToDeactivate);
     _intentToDeactivate = UserIntentTag::INVALID;
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UserIntentPtr ICozmoBehavior::ActivateUserIntentHelper(UserIntentTag tag, const std::string& owner)
+{
+  const std::string& ownerLabel = owner.empty() ? GetDebugLabel() : owner;
+
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  return uic.ActivateUserIntent(tag, ownerLabel, _showActiveIntentFeedback, _autoShutOffActiveIntentFeedback);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::DeactivateUserIntentHelper(UserIntentTag tag)
+{
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  uic.DeactivateUserIntent(tag);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

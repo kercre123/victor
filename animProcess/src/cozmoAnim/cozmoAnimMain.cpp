@@ -21,6 +21,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
+#include "util/logging/channelFilter.h"
 #include "util/logging/victorLogger.h"
 #include "util/string/stringUtils.h"
 
@@ -129,6 +130,30 @@ int main(void)
 
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
+
+  // - console filter for logs
+  {
+    using namespace Anki::Util;
+    ChannelFilter* consoleFilter = new ChannelFilter();
+    
+    // load file config
+    Json::Value consoleFilterConfig;
+    const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
+    if (!dataPlatform->readAsJson(Anki::Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
+    {
+      LOG_ERROR("cozmo_start", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+    }
+    
+    // initialize console filter for this platform
+    const std::string& platformOS = dataPlatform->GetOSPlatformString();
+    const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
+    consoleFilter->Initialize(consoleFilterConfigOnPlatform);
+    
+    // set filter in the loggers
+    std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
+
+    Anki::Util::gLoggerProvider->SetFilter(filterPtr);
+  }
 
   // Create and init AnimEngine
   AnimEngine * animEngine = new AnimEngine(dataPlatform);

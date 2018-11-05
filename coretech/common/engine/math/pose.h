@@ -113,7 +113,7 @@ namespace Anki {
     // Either store "somePoseWrtRoot" and then get Foo& from it, or make Foo a copy.
     Pose2d GetWithRespectToRoot() const;
 
-    void Print(const std::string& channel = DEFAULT_CHANNEL_NAME, const std::string& eventName = "Pose3d.Print") const;
+    void Print(const std::string& channel = "Pose", const std::string& eventName = "Pose3d.Print") const;
     
   protected:
     
@@ -285,7 +285,7 @@ namespace Anki {
     
     // TODO: Provide IsSameAs_WithAmbiguity() wrappers that don't require Tdiff/angleDiff outputs
 
-    void Print(const std::string& channel = DEFAULT_CHANNEL_NAME, const std::string& eventName = "Pose3d.Print") const;
+    void Print(const std::string& channel = "Pose", const std::string& eventName = "Pose3d.Print") const;
     
   protected:
     

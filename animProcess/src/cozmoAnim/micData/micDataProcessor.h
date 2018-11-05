@@ -46,7 +46,7 @@ namespace Anki {
     namespace RobotInterface {
       struct MicData;
     }
-    class SpeechRecognizerTHF;
+    class SpeechRecognizerSystem;
   }
   namespace Util {
     class Locale;
@@ -59,13 +59,12 @@ namespace MicData {
 
 class MicDataProcessor {
 public:
-  MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, 
-                   const std::string& writeLocation, const std::string& triggerWordDataDir);
+  MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, const std::string& writeLocation);
   ~MicDataProcessor();
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
 
-  void Init(const RobotDataLoader& dataLoader, const Util::Locale& locale);
+  void Init();
 
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
@@ -85,24 +84,21 @@ public:
   
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
 
-  // Note: 'Count' and '-1' values indicate to use default
-  // Return true for success
-  bool UpdateTriggerForLocale(Util::Locale newLocale,
-                              MicTriggerConfig::ModelType modelType = MicTriggerConfig::ModelType::Count,
-                              int searchFileIndex = -1);
-
   // Create and start stream audio data job
   // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
   RobotTimeStamp_t CreateStreamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
                                   uint32_t overlapLength_ms = 0);
+  
+  void SetAlexaActive(bool active);
   
   void FakeTriggerWordDetection() { TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f); }
   
 private:
   const AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;
+  SpeechRecognizerSystem* _speechRecognizerSystem = nullptr;
+  
   std::string _writeLocationDir = "";
-  std::string _triggerWordDataDir = "";
   // Members for caching off lookup indices for mic processing results
   int _bestSearchBeamIndex = 0;
   int _bestSearchBeamConfidence = 0;
@@ -114,12 +110,10 @@ private:
   // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
   bool _inProcessAudioBlockFirstHalf = true;
-  std::unique_ptr<SpeechRecognizerTHF> _recognizer;
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
   uint32_t _vadCountdown = 0;
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
-  std::unique_ptr<MicTriggerConfig> _micTriggerConfig;
 
   static constexpr uint32_t kRawAudioBufferSize = kRawAudioPerBuffer_ms / kTimePerChunk_ms;
   float _rawAudioBufferFullness[2] = { 0.f, 0.f };
@@ -137,7 +131,7 @@ private:
   bool _wasSpeakerActive = false;
   bool _isInLowPowerMode = false;
   uint32_t _speakerCooldownCnt = 0;
-
+  bool _buttonPressIsAlexa = false;
 
 #if ANKI_DEV_CHEATS
   static constexpr uint32_t kTriggerAudioLength_ms = kTriggerAudioLengthDebug_ms;
@@ -170,11 +164,6 @@ private:
 
   // Aubio beat detector
   std::unique_ptr<BeatDetector> _beatDetector;
-
-  // For tracking and altering the trigger model being used
-  MicTriggerConfig::TriggerDataPaths _currentTriggerPaths;
-  MicTriggerConfig::TriggerDataPaths _nextTriggerPaths;
-  std::mutex _triggerModelMutex;
   
   enum class TriggerWordDetectSource : uint8_t {
     Invalid=0,
@@ -183,8 +172,6 @@ private:
   };
   
   void InitVAD();
-  
-  void TriggerWordVoiceCallback(const char* resultFound, float score) { TriggerWordDetectCallback( TriggerWordDetectSource::Voice, score ); }
   
   void TriggerWordDetectCallback(TriggerWordDetectSource source, float score);
   
@@ -206,8 +193,12 @@ private:
   
   void UpdateBeatDetector(const AudioUtil::AudioSample* const samples, const uint32_t nSamples);
   
+  void UpdateAlexaInput(const AudioUtil::AudioSample* const samples, size_t nSamples);
+  
   void SetActiveMicDataProcessingState(ProcessingState state);
   const char* GetProcessingStateName(ProcessingState state) const;
+  
+  void NotifyAlexaOfButtonPress();
   
   void SetupConsoleFuncs();
 };

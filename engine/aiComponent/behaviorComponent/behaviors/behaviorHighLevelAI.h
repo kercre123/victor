@@ -60,6 +60,9 @@ private:
     float playWithCubeCooldown_s;
     float playWithCubeOnChargerCooldown_s;
     float maxFaceDistanceToSocialize_mm;
+
+    // for logging only
+    float lastExploringCooldownPrinted = -1.0f;
     
     std::unordered_map< PostBehaviorSuggestions, StateID > pbsResumeOverrides;
   } _params;

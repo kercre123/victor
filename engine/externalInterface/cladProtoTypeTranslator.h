@@ -17,6 +17,7 @@
 #include "proto/external_interface/messages.pb.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/alexaTypes.h"
 #include "clad/types/behaviorComponent/attentionTransferTypes.h"
 
 
@@ -35,6 +36,10 @@ namespace CladProtoTypeTranslator {
   
   constexpr external_interface::FaceEnrollmentResult ToProtoEnum( FaceEnrollmentResult value ){
     return static_cast<external_interface::FaceEnrollmentResult>( static_cast<std::underlying_type_t<FaceEnrollmentResult>>(value) );
+  }
+  
+  constexpr external_interface::AlexaAuthState ToProtoEnum( AlexaAuthState value ){
+    return static_cast<external_interface::AlexaAuthState>( static_cast<std::underlying_type_t<AlexaAuthState>>(value) );
   }
 
   #define CLAD_PROTO_COMPARE_ASSERT(T,V) static_assert(ToProtoEnum(T::V) == external_interface::T::V, "Invalid cast " #T "::" #V )
@@ -61,6 +66,12 @@ namespace CladProtoTypeTranslator {
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, NameInUse, NAME_IN_USE);
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, NamedStorageFull, NAMED_STORAGE_FULL);
   CLAD_PROTO_COMPARE_ASSERT2(FaceEnrollmentResult, UnknownFailure, UNKNOWN_FAILURE);
+  
+  CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, Invalid, ALEXA_AUTH_INVALID);
+  CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, Uninitialized, ALEXA_AUTH_UNINITIALIZED);
+  CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, RequestingAuth, ALEXA_AUTH_REQUESTING_AUTH);
+  CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, WaitingForCode, ALEXA_AUTH_WAITING_FOR_CODE);
+  CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, Authorized, ALEXA_AUTH_AUTHORIZED);
 }
 
 

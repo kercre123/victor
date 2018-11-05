@@ -87,7 +87,7 @@ namespace Anki {
       // Charger has no accelerometer so it should never be considered moving nor used for localization
       virtual bool IsMoving(RobotTimeStamp_t* t = nullptr) const override { return false; }
       virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) override { }
-      virtual bool CanBeUsedForLocalization() const override { return false; }
+      virtual bool CanBeUsedForLocalization() const override;
       
       
       constexpr static f32 GetLength() { return kLength; }

@@ -244,17 +244,6 @@ const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::stri
   static const std::string empty("");
   return empty;
 }
-
-  
-void AnimationComponent::NotifyComponentOfAnimationStartedByAnimProcess(const std::string& animName, Tag animationTag)
-{  
-  if(IsPlayingAnimation()){
-    StopAnimByName(_currAnimName);
-  }
-  _currAnimName = animName;
-  _currAnimTag = animationTag;
-}
-
   
 Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           int numLoops,
@@ -901,10 +890,17 @@ void AnimationComponent::HandleAnimAdded(const AnkiEvent<RobotInterface::RobotTo
 void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const auto & payload = message.GetData().Get_animStarted();
+
+  // the trigger word get-in is started in the anim process without our knowledge, so if we see it being started,
+  // let's not complain about it since it's expected
+  // note: we could have a "started" callback for this similar to _triggerWordGetInCallbackFunction
+  //       this way UserIntentComponent knows exactly when the trigger word anim starts instead of just assuming
+  const bool isTriggerWordGetIn = (payload.tag == _tagForTriggerWordGetInCallbacks);
+
   auto it = _callbackMap.find(payload.tag);
-  if (it != _callbackMap.end()) {
+  if (it != _callbackMap.end() || isTriggerWordGetIn) {
     PRINT_CH_INFO("AnimationComponent", "AnimStarted.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
-  } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM) ) {
+  } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM)) {
     PRINT_NAMED_WARNING("AnimationComponent.AnimStarted.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     return;
   }
@@ -936,6 +932,8 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
 
   // Special callback for the trigger word response that persists
   if(payload.tag == _tagForTriggerWordGetInCallbacks){
+    // this wont be in our _callbackMap, so for debug's sake let's print this out
+    PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     atLeastOneCallback = true;
     _triggerWordGetInCallbackFunction();
   }
@@ -947,6 +945,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   }
 
   _isAnimating = false;
+
   DEV_ASSERT_MSG(_currAnimName.empty() || _currAnimName == payload.animName, "AnimationComponent.AnimEnded.UnexpectedName", "Got %s, expected %s", payload.animName.c_str(), _currAnimName.c_str());
   DEV_ASSERT_MSG(_currAnimTag == kNotAnimatingTag || _currAnimTag == payload.tag, "AnimationComponent.AnimEnded.UnexpectedTag", "Got %d, expected %d", payload.tag, _currAnimTag);
 

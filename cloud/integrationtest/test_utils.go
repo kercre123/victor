@@ -6,33 +6,9 @@ import (
 
 	"github.com/anki/sai-go-cli/config"
 	"github.com/anki/sai-go-util/http/apiclient"
-	"github.com/anki/sai-go-util/log"
 	"github.com/anki/sai-token-service/client/token"
 	"github.com/anki/sai-token-service/model"
-	"github.com/go-redis/redis"
 )
-
-func init() {
-	alog.ToStdout()
-}
-
-func logIfNoError(err error, userName, action, format string, a ...interface{}) {
-	if err != nil {
-		alog.Error{
-			"action":         action,
-			"test_user_name": userName,
-			"status":         "error",
-			"error":          err,
-		}.Log()
-	} else {
-		alog.Info{
-			"action":         action,
-			"test_user_name": userName,
-			"status":         "ok",
-			"message":        fmt.Sprintf(format, a...),
-		}.Log()
-	}
-}
 
 func getCredentials(tokenClient *tokenClient) (*model.Token, error) {
 	jwtResponse, err := tokenClient.Jwt()
@@ -41,12 +17,6 @@ func getCredentials(tokenClient *tokenClient) (*model.Token, error) {
 	}
 
 	return token.NewValidator().TokenFromString(jwtResponse.JwtToken)
-}
-
-func getUniqueTestID(address string) (int, error) {
-	client := redis.NewClient(&redis.Options{Addr: address})
-	id, err := client.Incr("test_id").Result()
-	return int(id), err
 }
 
 func createTestAccount(envName, userName, password string) (apiclient.Json, error) {

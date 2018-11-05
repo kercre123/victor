@@ -19,9 +19,11 @@
 #if (defined(VICOS) && defined(USE_GOOGLE_BREAKPAD))
 #include <client/linux/handler/exception_handler.h>
 #include <client/linux/handler/minidump_descriptor.h>
+#include "util/string/stringUtils.h"
 
 #include <chrono>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <fcntl.h>
 #include <unistd.h>
@@ -42,6 +44,9 @@ static char dumpName[BUFSIZ];
 static char dumpPath[1024];
 static int fd = -1;
 static google_breakpad::ExceptionHandler* exceptionHandler;
+
+constexpr const char* kRobotVersionFile = "/anki/etc/version";
+constexpr const char* kDigits = "0123456789";
 
 std::string GetDateTimeString()
 {
@@ -65,6 +70,33 @@ std::string GetDateTimeString()
   return stringStream.str();
 }
 
+//
+// Capture recent log messages into given file
+//
+void DumpLogMessages(const std::string & path)
+{
+  // If activation socket exists, activate anki-crash-log.service.
+  // This allows unprivileged processes (vic-cloud, vic-gateway)
+  // to fetch log messages with reading /var/log/messages directly.
+  //
+  // Anki-crash-log.service is only available on developer builds.
+  // Crash reports from a production build will not include log messages.
+  //
+  static const char * socket = "/run/anki-crash-log";
+  if (!Anki::Util::FileUtils::FileExists(socket)) {
+    LOG_WARNING("GoogleBreakpad.DumpLogMessages", "Unable to dump log messages");
+    return;
+  }
+
+  FILE * fp = fopen(socket, "w");
+  if (fp == nullptr) {
+    LOG_WARNING("GoogleBreakpad.DumpLogMessages", "Unable to open %s", socket);
+    return;
+  }
+  fprintf(fp, "%s\n", path.c_str());
+  fclose(fp);
+}
+
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
                   void* context, bool succeeded)
 {
@@ -81,6 +113,15 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
   DASMSG_SET(s2, dumpName, "Crash name");
   DASMSG_SEND_ERROR();
 
+  //
+  // Flush logs to file system.  There is some latency in syslog so there's still no
+  // guarantee that latest messages will appear in log files. :(
+  //
+  sync();
+
+  // Capture recent log messages
+  DumpLogMessages(dumpPath);
+
   // Return false (not handled) so breakpad will chain to next handler.
   return false;
 }
@@ -93,8 +134,16 @@ void InstallGoogleBreakpad(const char* filenamePrefix)
   const std::string & path = "/data/data/com.anki.victor/cache/crashDumps/";
   Anki::Util::FileUtils::CreateDirectory(path);
 
+  std::string buildVersion;
+  std::ifstream ifs(kRobotVersionFile);
+  ifs >> buildVersion;
+  const size_t lastDigitIndex = buildVersion.find_last_of(kDigits);
+  const size_t firstDigitIndex = buildVersion.find_last_not_of(kDigits, lastDigitIndex) + 1;
+  const size_t len = lastDigitIndex - firstDigitIndex + 1;
+  buildVersion = buildVersion.substr(firstDigitIndex, len);
   const std::string & crashTag = filenamePrefix;
-  const std::string & crashName = crashTag + "-" + GetDateTimeString() + ".dmp";
+  const std::string & crashName = crashTag + "-V" + buildVersion +
+                                  "-" + GetDateTimeString() + ".dmp";
   const std::string & crashFile = path + crashName;
 
   // Save these strings for later

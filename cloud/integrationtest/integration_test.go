@@ -5,7 +5,7 @@ package main
 
 import (
 	"anki/robot"
-	"anki/token"
+	"anki/token/identity"
 	"ankidev/accounts"
 	"clad/cloud"
 	"testing"
@@ -15,6 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+type testIDProvider struct{}
+
+func (testIDProvider) provideUniqueTestID() (int, error) {
+	return 0, nil
+}
 
 type IntegrationTestSuite struct {
 	suite.Suite
@@ -29,12 +35,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.options = newFromEnvironment(app)
 
+	var provider testIDProvider
+	s.options.finalizeIdentity(provider)
+
 	// Enable client certs and set custom key pair dir (for this user)
-	token.UseClientCert = true
+	identity.UseClientCert = true
 	robot.DefaultCloudDir = *s.options.defaultCloudDir
 
-	s.robotInstance = &testableRobot{}
-	go s.robotInstance.run(*s.options.urlConfigFile)
+	s.robotInstance = newTestableRobot(*s.options.testID, *s.options.urlConfigFile)
+	go s.robotInstance.run()
 
 	s.robotInstance.waitUntilReady()
 
@@ -151,6 +160,11 @@ func (s *IntegrationTestSuite) TestTokenRefresh() {
 	jwtResponse, err := s.robotInstance.tokenClient.Jwt()
 	s.logIfNoError(err, "token_jwt", "Token Jwt response=%v\n", jwtResponse)
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestMicConnectionCheck() {
+	err := s.robotInstance.micClient.connectionCheck()
+	s.logIfNoError(err, "mic_connection_check", "Microphone connection checked\n")
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

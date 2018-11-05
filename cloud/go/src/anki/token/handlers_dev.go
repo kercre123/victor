@@ -3,7 +3,7 @@
 package token
 
 import (
-	"anki/token/jwt"
+	"anki/token/identity"
 	"clad/cloud"
 	"fmt"
 	"net/http"
@@ -16,8 +16,19 @@ func init() {
 }
 
 func provisionHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: can we pass this in so we have only a single instance?
+	// Create identity provider pointing to default JWT path and device certs
+	identityProvider, err := identity.NewFileProvider("", "")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Error initializing identity provider: ", err)
+		return
+
+	}
+	identityProvider.Init()
+
 	// See if we already have a JWT token and there's no reason for us to re-auth
-	existing := jwt.GetToken()
+	existing := identityProvider.GetToken()
 	if existing != nil {
 		// If the existing JWT token has an empty user ID, it's a dummy token we should
 		// replace with a real one - if non-empty, we don't need to re-auth

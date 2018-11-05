@@ -21,8 +21,8 @@ subscribes to event 'robot_observed_face'. When that event is dispatched,
 method 'on_robot_observed_face' is called, which prints text to the console.
 """
 
-import asyncio
 import functools
+import time
 
 import anki_vector
 from anki_vector.events import Events
@@ -35,7 +35,7 @@ def main():
         print("Vector sees a face")
 
     args = anki_vector.util.parse_command_args()
-    with anki_vector.Robot(args.serial, enable_vision_mode=True) as robot:
+    with anki_vector.Robot(args.serial, enable_face_detection=True) as robot:
         # If necessary, Move Vector's Head and Lift to make it easy to see his face
         robot.behavior.set_head_angle(degrees(50.0))
         robot.behavior.set_lift_height(0.0)
@@ -47,7 +47,7 @@ def main():
 
         try:
             # Wait 5 seconds to see a face
-            robot.loop.run_until_complete(asyncio.sleep(5))
+            time.sleep(5)
         except KeyboardInterrupt:
             pass
 

@@ -58,18 +58,18 @@ def main():
     print("------ Asynchronous Robot using with ------")
     with anki_vector.AsyncRobot(args.serial) as robot:
         robot.events.subscribe(test_subscriber, Events.robot_state)
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(-100.0, 100.0).wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").result()
+        robot.motors.set_wheel_motors(-100.0, 100.0).result()
 
     time.sleep(2)
 
     print("------ Asynchronous Robot using try finally ------")
     robot = anki_vector.AsyncRobot(args.serial)
-    robot.events.subscribe(Events.robot_state, test_subscriber)
+    robot.events.subscribe(test_subscriber, Events.robot_state)
     try:
         robot.connect()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(100.0, -100.0).wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").result()
+        robot.motors.set_wheel_motors(100.0, -100.0).result()
     finally:
         robot.disconnect()
 
@@ -79,8 +79,8 @@ def main():
     # Reuse the same robot from a previous connection
     try:
         robot.connect()
-        robot.anim.play_animation("anim_blackjack_victorwin_01").wait_for_completed()
-        robot.motors.set_wheel_motors(0.0, 0.0).wait_for_completed()
+        robot.anim.play_animation("anim_blackjack_victorwin_01").result()
+        robot.motors.set_wheel_motors(0.0, 0.0).result()
     finally:
         robot.disconnect()
 

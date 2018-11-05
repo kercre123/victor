@@ -1,0 +1,16 @@
+{
+  "behaviorClass": "ReactToRobotShaken",
+  "behaviorID": "ReactToRobotShaken",
+
+  "associatedActiveFeature": "RobotShaken",
+
+  "shakeThresholdStop"    : 13000,
+  "shakeThresholdMedium"  : 19000,
+  "shakeThresholdHard"    : 22000,
+
+  "wantsToBeActivatedCondition":
+  {
+    "conditionType" : "RobotShaken",
+    "minAccelMagnitudeThreshold" : 16000
+  }
+}

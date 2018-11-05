@@ -22,8 +22,11 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/navMap/mapComponent.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
@@ -279,10 +282,34 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
 
     GetBEI().GetMoodManager().TriggerEmotionEvent("DrivingToFace");
 
-    // set pose now (rather than when anim finishes) in case the anim turns the robot
-    Pose3d pose = GetBEI().GetRobotInfo().GetPose();
-    pose.TranslateForward( distToHead - _iConfig.minDriveToFaceDistance_mm );
-    action->AddAction(new DriveToPoseAction( pose, true ));
+    // Set pose now (rather than when anim finishes) in case the anim turns the robot.
+    // Do not pick a pose that would cross a cliff.
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+    
+    auto crossesCliff = [this, &robotPose] (const auto& candidatePose) {
+      auto isCliffType = [] (const auto& data) { return (data->type == MemoryMapTypes::EContentType::Cliff); };
+      const auto& mapComp = GetBEI().GetMapComponent();
+      return mapComp.CheckForCollisions(FastPolygon({robotPose.GetTranslation(), candidatePose.GetTranslation()}),
+                                        isCliffType);
+    };
+    
+    float distanceToTranslate = std::max(0.f, distToHead - _iConfig.minDriveToFaceDistance_mm);
+    auto targetPose = robotPose;
+    targetPose.TranslateForward(distanceToTranslate);
+    
+    if (crossesCliff(targetPose)) {
+      // Refine the target pose so that it is close to the cliff but does not cross it (binary search)
+      size_t nIterations = 6;
+      for (int i=0 ; i < nIterations ; i++) {
+        distanceToTranslate /= 2;
+        targetPose.TranslateForward(crossesCliff(targetPose) ? -distanceToTranslate : distanceToTranslate);
+      }
+      // Move the target pose back away from the cliff a bit
+      const float minDistanceFromCliff = 60.f;
+      targetPose.TranslateForward(-minDistanceFromCliff);
+    }
+    
+    action->AddAction(new DriveToPoseAction( targetPose, true ));
     CancelDelegates(false);
     DelegateIfInControl(action, [this](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {
@@ -412,10 +439,9 @@ bool BehaviorDriveToFace::IsRobotAlreadyCloseEnoughToFace(Vision::FaceID_t faceI
 bool BehaviorDriveToFace::CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance)
 {
   // Get the distance between the robot and the head's pose on the X/Y plane
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( _dVars.targetFace );
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( faceID);
   if(facePtr != nullptr){
     const auto& robotInfo = GetBEI().GetRobotInfo();
-
     
     Pose3d headPoseModified = facePtr->GetHeadPose();
     headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),

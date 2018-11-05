@@ -60,7 +60,6 @@ std::string HexDump(const void *value, const size_t len, char delimiter)
 ITickTimeProvider * gTickTimeProvider = nullptr;
 ILoggerProvider * gLoggerProvider = nullptr;
 IEventProvider * gEventProvider = nullptr;
-ChannelFilter gChannelFilter;
 
 // Has an error been reported?
 bool _errG = false;
@@ -133,27 +132,14 @@ void LogChanneledInfo(const char* channel, const char* name, const KVV& keyvals,
   }
 
   // set tick count and channel name if available
-  std::ostringstream finalLogStr;
   if (gTickTimeProvider != nullptr) {
+    std::ostringstream finalLogStr;
     AddTickCount(finalLogStr);
+    finalLogStr << logString;
+    gLoggerProvider->PrintChanneledLogI(channel, name, keyvals, finalLogStr.str().c_str());
+  } else {
+    gLoggerProvider->PrintChanneledLogI(channel, name, keyvals, logString);
   }
-
-  if (gChannelFilter.IsInitialized()) {
-    std::string channelNameString(channel);
-    if (!gChannelFilter.IsChannelRegistered(channelNameString)) {
-      PRINT_NAMED_ERROR("UnregisteredChannel", "Channel @%s not registered!", channel);
-    } else {
-      if (!gChannelFilter.IsChannelEnabled(channelNameString)) {
-        return;
-      }
-    }
-    finalLogStr << "[@";
-    finalLogStr << channel;
-    finalLogStr << "] ";
-  }
-  finalLogStr << logString;
-
-  gLoggerProvider->PrintChanneledLogI(channel, name, keyvals, finalLogStr.str().c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -332,7 +318,7 @@ void sInfo(const char* name, const KVV& keyvals, const char* strval)
   }
 
   // log it
-  LogChanneledInfo(DEFAULT_CHANNEL_NAME, name, keyvals, strval);
+  LogChanneledInfo(name, name, keyvals, strval);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

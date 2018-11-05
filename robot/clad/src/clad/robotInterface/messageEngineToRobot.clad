@@ -214,6 +214,11 @@ message CalmPowerMode
   bool calibOnDisable,
 }
 
+message AutoCalmOnCharger
+{
+  bool suppress
+}
+
 // Tells syscon to pull the plug
 message Shutdown
 {
@@ -443,6 +448,14 @@ message ResetBeatDetector
 {
 }
 
+message SetAlexaUsage
+{
+  bool optedIn
+}
+message CancelPendingAlexaAuth
+{
+}
+
 structure ColorRGB
 {
   uint_8 r,
@@ -666,6 +679,7 @@ union EngineToRobot
   SyncRobot                     syncRobot                   = 0x02,
   Shutdown                      shutdown                    = 0x03,
   CalmPowerMode                 calmPowerMode               = 0x04,
+  AutoCalmOnCharger             autoCalmOnCharger           = 0x05,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,
@@ -779,6 +793,9 @@ union EngineToRobot
   SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
+
+  SetAlexaUsage                 setAlexaUsage               = 0x9D,
+  CancelPendingAlexaAuth        cancelPendingAlexaAuth      = 0x9E,
 
   SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,

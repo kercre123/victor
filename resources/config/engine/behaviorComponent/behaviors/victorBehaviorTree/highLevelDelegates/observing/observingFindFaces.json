@@ -6,5 +6,10 @@
   "maxFaceAgeToLook_ms": 15000,
 
   "stoppingCondition": "None",
-  "searchBehavior": "LookInPlaceHeadUp" 
+  "searchBehavior": "LookInPlaceHeadUp",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  }
 }

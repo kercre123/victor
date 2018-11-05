@@ -36,6 +36,8 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
+// For getting uuid
+#include <uuid/uuid.h>
 
 
 #ifndef SIMULATOR
@@ -92,6 +94,26 @@ namespace {
   std::function<void(const Json::Value&)> _webServiceCallback = nullptr;
 
 } // namespace
+  
+std::string GetSerialNumberInternal()
+{
+  const std::string defaultSerial = "12345";
+  
+  struct timespec timeSpec = {
+    .tv_sec = 2,
+    .tv_nsec = 0
+  };
+  uuid_t uuid;
+  
+  if( gethostuuid(uuid, &timeSpec) != 0 ) {
+    return defaultSerial;
+  } else {
+    uuid_string_t uuidString;
+    uuid_unparse_upper(uuid, uuidString);
+    
+    return uuidString;
+  }
+}
 
 OSState::OSState()
 {
@@ -105,7 +127,7 @@ OSState::OSState()
   }
 
   // Set simulated attributes
-  _serialNumString = "12345";
+  _serialNumString = GetSerialNumberInternal();
   _osBuildVersion = "12345";
   _robotVersion = "0.0.0";
   _ipAddress = "127.0.0.1";

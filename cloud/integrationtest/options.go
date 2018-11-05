@@ -2,18 +2,22 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/jawher/mow.cli"
 )
 
+type uniqueIDProvider interface {
+	provideUniqueTestID() (int, error)
+}
+
 type options struct {
 	envName *string
 
-	defaultTestID *int
+	testID *int
 
-	enableAccountCreation *bool
+	enableDistributedControl *bool
+	enableAccountCreation    *bool
 
 	redisAddress    *string
 	defaultCloudDir *string
@@ -24,10 +28,29 @@ type options struct {
 	testUserName     *string
 	testUserPassword *string
 
-	heartBeatInterval    *int
-	jdocsInterval        *int
-	logCollectorInterval *int
-	tokenRefreshInterval *int
+	heartBeatInterval       time.Duration
+	heartBeatStdDev         time.Duration
+	tokenRefreshInterval    time.Duration
+	tokenRefreshStdDev      time.Duration
+	jdocsInterval           time.Duration
+	jdocsStdDev             time.Duration
+	logCollectorInterval    time.Duration
+	logCollectorStdDev      time.Duration
+	connectionCheckInterval time.Duration
+	connectionCheckStdDev   time.Duration
+}
+
+func parseIntervalString(intervalStr *string) time.Duration {
+	if intervalStr == nil {
+		return 0
+	}
+
+	duration, err := time.ParseDuration(*intervalStr)
+	if err != nil {
+		return 0
+	}
+
+	return duration
 }
 
 func newFromEnvironment(app *cli.Cli) *options {
@@ -40,11 +63,25 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "loadtest",
 	})
 
-	options.defaultTestID = app.Int(cli.IntOpt{
+	options.testID = app.Int(cli.IntOpt{
 		Name:   "i test-id",
 		Desc:   "Test ID (used for identifying user)",
 		EnvVar: "TEST_ID",
 		Value:  1,
+	})
+
+	options.enableAccountCreation = app.Bool(cli.BoolOpt{
+		Name:   "a account-creation",
+		Desc:   "Enables account creation as part of test",
+		EnvVar: "ENABLE_ACCOUNT_CREATION",
+		Value:  false,
+	})
+
+	options.enableDistributedControl = app.Bool(cli.BoolOpt{
+		Name:   "a account-creation",
+		Desc:   "Enables remote control for starting/stopping",
+		EnvVar: "ENABLE_DISTRIBUTED_CONTROL",
+		Value:  false,
 	})
 
 	options.redisAddress = app.String(cli.StringOpt{
@@ -52,13 +89,6 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Desc:   "Redis host and port",
 		EnvVar: "REDIS_ADDRESS",
 		Value:  "localhost:6379",
-	})
-
-	options.numberOfCerts = app.Int(cli.IntOpt{
-		Name:   "n num-certs",
-		Desc:   "The number of provisioned robot certs (0000..NNNN)",
-		EnvVar: "NUMBER_OF_CERTS",
-		Value:  1000,
 	})
 
 	options.defaultCloudDir = app.String(cli.StringOpt{
@@ -81,6 +111,13 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "/var/log/syslog",
 	})
 
+	options.numberOfCerts = app.Int(cli.IntOpt{
+		Name:   "n num-certs",
+		Desc:   "The number of provisioned robot certs (0000..NNNN)",
+		EnvVar: "NUMBER_OF_CERTS",
+		Value:  1000,
+	})
+
 	options.testUserName = app.String(cli.StringOpt{
 		Name:   "u username",
 		Desc:   "Username for test accounts",
@@ -94,57 +131,106 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  "ankisecret",
 	})
 
-	options.enableAccountCreation = app.Bool(cli.BoolOpt{
-		Name:   "a account-creation",
-		Desc:   "Enables account creation as part of test",
-		EnvVar: "ENABLE_ACCOUNT_CREATION",
-		Value:  false,
-	})
-
-	options.heartBeatInterval = app.Int(cli.IntOpt{
-		Name:   "h heart-beat-interval",
-		Desc:   "Periodic heart beat interval",
+	heartBeatInterval := app.String(cli.StringOpt{
+		Name:   "heart-beat-interval",
+		Desc:   "Periodic heart beat interval (time.Duration string)",
 		EnvVar: "HEART_BEAT_INTERVAL",
-		Value:  int(30 * time.Second),
+		Value:  "30s",
 	})
 
-	options.jdocsInterval = app.Int(cli.IntOpt{
-		Name:   "j jdocs-interval",
-		Desc:   "Periodic interval for JDOCS read / write",
+	jdocsInterval := app.String(cli.StringOpt{
+		Name:   "jdocs-interval",
+		Desc:   "Periodic interval for JDOCS read / write (time.Duration string)",
 		EnvVar: "JDOCS_INTERVAL",
-		Value:  int(5 * time.Minute),
+		Value:  "5m",
 	})
 
-	options.logCollectorInterval = app.Int(cli.IntOpt{
-		Name:   "l log-collector-interval",
-		Desc:   "Periodic interval for log collector upload",
+	logCollectorInterval := app.String(cli.StringOpt{
+		Name:   "log-collector-interval",
+		Desc:   "Periodic interval for log collector upload (time.Duration string)",
 		EnvVar: "LOG_COLLECTOR_INTERVAL",
-		Value:  int(30 * time.Minute),
+		Value:  "30m",
 	})
 
-	options.tokenRefreshInterval = app.Int(cli.IntOpt{
-		Name:   "t token-refresh-interval",
-		Desc:   "Periodic interval for token refresh",
+	tokenRefreshInterval := app.String(cli.StringOpt{
+		Name:   "token-refresh-interval",
+		Desc:   "Periodic interval for token refresh (time.Duration string)",
 		EnvVar: "TOKEN_REFRESH_INTERVAL",
-		Value:  0,
+		Value:  "0",
 	})
+
+	connectionCheckInterval := app.String(cli.StringOpt{
+		Name:   "connection-check-interval",
+		Desc:   "Periodic interval for voice connection check (time.Duration string)",
+		EnvVar: "CONNECTION_CHECK_INTERVAL",
+		Value:  "5m",
+	})
+
+	heartBeatStdDev := app.String(cli.StringOpt{
+		Name:   "heart-beat-stddev",
+		Desc:   "Periodic standard deviation for heart beat (time.Duration string)",
+		EnvVar: "HEART_BEAT_STDDEV",
+		Value:  "0",
+	})
+
+	jdocsStdDev := app.String(cli.StringOpt{
+		Name:   "jdocs-stddev",
+		Desc:   "Periodic standard deviation for JDOCS read / write (time.Duration string)",
+		EnvVar: "JDOCS_STDDEV",
+		Value:  "0",
+	})
+
+	logCollectorStdDev := app.String(cli.StringOpt{
+		Name:   "log-collector-stddev",
+		Desc:   "Periodic standard deviation for log collector upload (time.Duration string)",
+		EnvVar: "LOG_COLLECTOR_STDDEV",
+		Value:  "0",
+	})
+
+	tokenRefreshStdDev := app.String(cli.StringOpt{
+		Name:   "token-refresh-stddev",
+		Desc:   "Periodic standard deviation for token refresh (time.Duration string)",
+		EnvVar: "TOKEN_REFRESH_STDDEV",
+		Value:  "0",
+	})
+
+	connectionCheckStdDev := app.String(cli.StringOpt{
+		Name:   "connection-check-stddev",
+		Desc:   "Periodic standrd deviation for voice connection check (time.Duration string)",
+		EnvVar: "CONNECTION_CHECK_STDDEV",
+		Value:  "5m",
+	})
+
+	// Note this only works for environment variables
+	options.heartBeatInterval = parseIntervalString(heartBeatInterval)
+	options.jdocsInterval = parseIntervalString(jdocsInterval)
+	options.logCollectorInterval = parseIntervalString(logCollectorInterval)
+	options.tokenRefreshInterval = parseIntervalString(tokenRefreshInterval)
+	options.connectionCheckInterval = parseIntervalString(connectionCheckInterval)
+
+	options.heartBeatStdDev = parseIntervalString(heartBeatStdDev)
+	options.jdocsStdDev = parseIntervalString(jdocsStdDev)
+	options.logCollectorStdDev = parseIntervalString(logCollectorStdDev)
+	options.tokenRefreshStdDev = parseIntervalString(tokenRefreshStdDev)
+	options.connectionCheckStdDev = parseIntervalString(connectionCheckStdDev)
 
 	return options
 }
 
-func (o *options) finalizeIdentity() {
-	testID, err := getUniqueTestID(*o.redisAddress)
+func (o *options) finalizeIdentity(idProvider uniqueIDProvider) {
+	testID, err := idProvider.provideUniqueTestID()
 	if err == nil {
 		testID %= *o.numberOfCerts
+		*o.testID = testID
 	} else {
-		testID = *o.defaultTestID
+		testID = *o.testID
+
 		fmt.Printf("Could not assign unique testID (defaulting to %d), error: %v\n", testID, err)
 	}
 
 	if *o.defaultCloudDir == "" {
-		paddedIntFormatStr := fmt.Sprintf("%%0%dd", int(math.Log10(float64(*o.numberOfCerts)))+1)
 		o.defaultCloudDir = new(string)
-		*o.defaultCloudDir = fmt.Sprintf("/device_certs/"+paddedIntFormatStr, testID)
+		*o.defaultCloudDir = fmt.Sprintf("/device_certs/%08d", testID)
 	}
 
 	if *o.testUserName == "" {

@@ -6,10 +6,10 @@ import (
 	"anki/robot"
 	"anki/util"
 	"clad/cloud"
+	"context"
 	"crypto/tls"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gwatts/rootcerts"
@@ -23,26 +23,22 @@ const (
 	HeadRequestTimeout = 8 * time.Second
 )
 
-func (strm *Streamer) connect() error {
+func (strm *Streamer) newChipperConn(ctx context.Context) (Conn, *CloudError) {
 	if strm.opts.checkOpts != nil {
-		// for connection check, first try the OTA CDN with no tls
-		otaBase := strings.Split(config.Env.OTA, ":")[0]
-		// construct a HTTP URL from OTA address (something like `ota-cdn.anki.com:443`)
-		otaURL := "http://" + otaBase
+		// for connection check, first try the connection check URL with no tls
+		otaURL := "http://" + config.Env.Check
 		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
 			log.Println("Error creating CDN server http head request:", err)
-			strm.receiver.OnError(cloud.ErrorType_Connectivity, err)
-			return err
-		} else if resp, err := http.DefaultClient.Do(req.WithContext(strm.ctx)); err != nil {
+			return nil, &CloudError{cloud.ErrorType_Connectivity, err}
+		} else if resp, err := http.DefaultClient.Do(req.WithContext(ctx)); err != nil {
 			log.Println("Error requesting head of CDN server:", err)
-			strm.receiver.OnError(cloud.ErrorType_Connectivity, err)
-			return err
+			return nil, &CloudError{cloud.ErrorType_Connectivity, err}
 		} else {
 			resp.Body.Close()
 			log.Println("Successfully dialed CDN")
 		}
 
-		// for connection check, next try a simple https connection to our OTA CDN
+		// for connection check, next try a simple https connection to our connection check endpoint
 		httpsClient := &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -50,16 +46,15 @@ func (strm *Streamer) connect() error {
 				},
 			},
 		}
-		// construct a HTTPS URL from OTA address (something like `ota-cdn.anki.com:443`)
-		otaURL = "https://" + otaBase
+
+		otaURL = "https://" + config.Env.Check
 		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
 			log.Println("Error creating CDN server https head request:", err)
-			strm.receiver.OnError(cloud.ErrorType_TLS, err)
-			return err
-		} else if resp, err := httpsClient.Do(req.WithContext(strm.ctx)); err != nil {
+			return nil, &CloudError{cloud.ErrorType_TLS, err}
+		} else if resp, err := httpsClient.Do(req.WithContext(ctx)); err != nil {
 			log.Println("Error requesting head of CDN server over https:", err)
 			strm.receiver.OnError(cloud.ErrorType_TLS, err)
-			return err
+			return nil, &CloudError{cloud.ErrorType_TLS, err}
 		} else {
 			resp.Body.Close()
 			log.Println("Successfully dialed CDN over https")
@@ -79,18 +74,19 @@ func (strm *Streamer) connect() error {
 			err = errors.New("token required, got empty string")
 		}
 		if err != nil {
-			strm.receiver.OnError(cloud.ErrorType_Token, err)
-			return err
+			return nil, &CloudError{cloud.ErrorType_Token, err}
 		}
 	}
 
 	sessionID := uuid.New().String()[:16]
+	var c chipperConn
+	var cerr *CloudError
 	connectTime := util.TimeFuncMs(func() {
-		strm.conn, strm.stream, err = strm.openStream(creds, sessionID)
+		c.conn, c.stream, cerr = strm.openChipperStream(ctx, creds, sessionID)
 	})
-	if err != nil {
-		log.Println("Error creating Chipper:", err)
-		return err
+	if cerr != nil {
+		log.Println("Error creating Chipper:", cerr.Err)
+		return nil, cerr
 	}
 
 	// signal to engine that we got a connection; the _absence_ of this will
@@ -99,10 +95,12 @@ func (strm *Streamer) connect() error {
 
 	logVerbose("Received hotword event", strm.opts.mode, "created session", sessionID, "in",
 		int(connectTime), "ms (token", int(tokenTime), "ms)")
-	return nil
+	return &c, nil
 }
 
-func (strm *Streamer) openStream(creds credentials.PerRPCCredentials, sessionID string) (*chipper.Conn, chipper.Stream, error) {
+func (strm *Streamer) openChipperStream(ctx context.Context, creds credentials.PerRPCCredentials,
+	sessionID string) (*chipper.Conn, chipper.Stream, *CloudError) {
+
 	opts := platformOpts
 	if grpcOpts := util.CommonGRPC(); grpcOpts != nil {
 		opts = append(opts, chipper.WithGrpcOptions(grpcOpts...))
@@ -113,23 +111,21 @@ func (strm *Streamer) openStream(creds credentials.PerRPCCredentials, sessionID 
 	opts = append(opts, chipper.WithSessionID(sessionID))
 	opts = append(opts, chipper.WithFirmwareVersion(robot.OSVersion()))
 	opts = append(opts, chipper.WithBootID(robot.BootID()))
-	conn, err := chipper.NewConn(strm.ctx, strm.opts.url, strm.opts.secret, opts...)
+	conn, err := chipper.NewConn(ctx, strm.opts.url, strm.opts.secret, opts...)
 	if err != nil {
 		log.Println("Error getting chipper connection:", err)
-		strm.receiver.OnError(cloud.ErrorType_Connecting, err)
-		return nil, nil, err
+		return nil, nil, &CloudError{cloud.ErrorType_Connecting, err}
 	}
 	var stream chipper.Stream
 	if strm.opts.checkOpts != nil {
-		stream, err = conn.NewConnectionStream(strm.ctx, *strm.opts.checkOpts)
+		stream, err = conn.NewConnectionStream(ctx, *strm.opts.checkOpts)
 	} else if strm.opts.mode == cloud.StreamType_KnowledgeGraph {
-		stream, err = conn.NewKGStream(strm.ctx, strm.opts.streamOpts.StreamOpts)
+		stream, err = conn.NewKGStream(ctx, strm.opts.streamOpts.StreamOpts)
 	} else {
-		stream, err = conn.NewIntentStream(strm.ctx, strm.opts.streamOpts)
+		stream, err = conn.NewIntentStream(ctx, strm.opts.streamOpts)
 	}
 	if err != nil {
-		strm.receiver.OnError(cloud.ErrorType_NewStream, err)
-		return nil, nil, err
+		return nil, nil, &CloudError{cloud.ErrorType_NewStream, err}
 	}
-	return conn, stream, err
+	return conn, stream, nil
 }

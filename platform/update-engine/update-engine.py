@@ -54,8 +54,18 @@ def make_blocking(pipe, blocking):
     else:
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
+#
+# Return milliseconds since boot for use as hardware timestamp.
+#
+def das_uptime_ms():
+  try:
+      up, _ = [float(field) for field in open("/proc/uptime").read().split()]
+  except (IOError, ValueError):
+      return 0
+  return long(up*1000)
+
 def das_event(name, s1 = "", s2 = "", s3 = "", s4 = "", i1 = "", i2 = "", i3 = "", i4 = ""):
-    fmt = "\n@{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\n"
+    fmt = "\n@{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\n"
     s1 = s1.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     s2 = s2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     s3 = s3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
@@ -64,7 +74,7 @@ def das_event(name, s1 = "", s2 = "", s3 = "", s4 = "", i1 = "", i2 = "", i3 = "
     i2 = i2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     i3 = i3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
     i4 = i4.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    sys.stdout.write(fmt.format(name, s1, s2, s3, s4, i1, i2, i3, i4))
+    sys.stdout.write(fmt.format(name, s1, s2, s3, s4, i1, i2, i3, i4, das_uptime_ms()))
     sys.stdout.flush()
 
 
@@ -135,7 +145,7 @@ def zero_slot(target_slot):
 
 
 def call(*args):
-    "Simple wrapper arround subprocess.call to make ret=0 -> True"
+    "Simple wrapper around subprocess.call to make ret=0 -> True"
     return subprocess.call(*args) == 0
 
 
@@ -285,7 +295,7 @@ def open_url_stream(url):
         assert url.startswith("http")  # Accepts http and https but not ftp or file
         os_version = get_prop("ro.anki.version")
         victor_version = get_prop("ro.anki.victor.version")
-        if '?' in url:  # Already has a querry string
+        if '?' in url:  # Already has a query string
             if not url.endswith('?'):
                 url += '&'
         else:

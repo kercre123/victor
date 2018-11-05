@@ -46,6 +46,8 @@ import math
 import os
 import sys
 
+from .messaging import protocol
+
 try:
     from PIL import Image, ImageDraw
 except ImportError:
@@ -62,11 +64,15 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
     is specified, we next attempt to read the robot serial number from environment variable ANKI_ROBOT_SERIAL.
     If ANKI_ROBOT_SERIAL is specified, the value will be used as the robot's serial number.
 
-    .. code-block:: python
+    .. testcode::
+
+        import anki_vector
+
+        import argparse
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--new_param")
-        args = util.parse_command_args(parser)
+        args = anki_vector.util.parse_command_args(parser)
 
     :param parser: To add new command line arguments,
          pass an argparse parser with the new options
@@ -83,10 +89,6 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
                         target: object = None):
     """Helper to perform basic setup of the Python logger.
 
-    .. code-block:: python
-
-        util.setup_basic_logging()
-
     :param custom_handler: provide an external logger for custom logging locations
     :param general_log_level: 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
             constant from the :mod:`logging` module. If None then a
@@ -94,7 +96,7 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
     :param target: The stream to send the log data to; defaults to stderr
     """
     if general_log_level is None:
-        general_log_level = os.environ.get('VICTOR_LOG_LEVEL', logging.DEBUG)
+        general_log_level = os.environ.get('VECTOR_LOG_LEVEL', logging.DEBUG)
 
     handler = custom_handler
     if handler is None:
@@ -111,9 +113,11 @@ def setup_basic_logging(custom_handler: logging.Handler = None,
 def get_class_logger(module: str, obj: object) -> logging.Logger:
     """Helper to create logger for a given class (and module).
 
-    .. code-block:: python
+    .. testcode::
 
-        logger = util.get_class_logger(module_name, my_object)
+        import anki_vector
+
+        logger = anki_vector.util.get_class_logger("module_name", "object_name")
 
     :param module: The name of the module to which the object belongs.
     :param obj: the object that owns the logger.
@@ -131,8 +135,8 @@ class Vector2:
     __slots__ = ('_x', '_y')
 
     def __init__(self, x: float, y: float):
-        self._x = x
-        self._y = y
+        self._x = float(x)
+        self._y = float(y)
 
     def set_to(self, rhs):
         """Copy the x and y components of the given Vector2 instance.
@@ -140,8 +144,8 @@ class Vector2:
         :param rhs: The right-hand-side of this assignment - the
                 source Vector2 to copy into this Vector2 instance.
         """
-        self._x = rhs.x
-        self._y = rhs.y
+        self._x = float(rhs.x)
+        self._y = float(rhs.y)
 
     @property
     def x(self) -> float:
@@ -193,9 +197,9 @@ class Vector3:
     __slots__ = ('_x', '_y', '_z')
 
     def __init__(self, x: float, y: float, z: float):
-        self._x = x
-        self._y = y
-        self._z = z
+        self._x = float(x)
+        self._y = float(y)
+        self._z = float(z)
 
     def set_to(self, rhs):
         """Copy the x, y and z components of the given Vector3 instance.
@@ -203,9 +207,9 @@ class Vector3:
         :param rhs: The right-hand-side of this assignment - the
                 source Vector3 to copy into this Vector3 instance.
         """
-        self._x = rhs.x
-        self._y = rhs.y
-        self._z = rhs.z
+        self._x = float(rhs.x)
+        self._y = float(rhs.y)
+        self._z = float(rhs.z)
 
     @property
     def x(self) -> float:
@@ -262,7 +266,7 @@ class Vector3:
         return self._x, self._y, self._z
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} x: {self.x:.2} y: {self.y:.2} z: {self.z:.2}>"
+        return f"<{self.__class__.__name__} x: {self.x:.2f} y: {self.y:.2f} z: {self.z:.2f}>"
 
     def __add__(self, other):
         if not isinstance(other, Vector3):
@@ -320,7 +324,7 @@ class Angle:
         return self._radians / math.pi * 180
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} Radians: {self.radians:.2} Degrees: {self.degrees:.2}>"
+        return f"<{self.__class__.__name__} Radians: {self.radians:.2f} Degrees: {self.degrees:.2f}>"
 
     def __add__(self, other):
         if not isinstance(other, Angle):
@@ -384,29 +388,29 @@ class Matrix44:
                  'm03', 'm13', 'm23', 'm33')
 
     def __init__(self,
-                 m00, m10, m20, m30,
-                 m01, m11, m21, m31,
-                 m02, m12, m22, m32,
-                 m03, m13, m23, m33):
-        self.m00 = m00
-        self.m10 = m10
-        self.m20 = m20
-        self.m30 = m30
+                 m00: float, m10: float, m20: float, m30: float,
+                 m01: float, m11: float, m21: float, m31: float,
+                 m02: float, m12: float, m22: float, m32: float,
+                 m03: float, m13: float, m23: float, m33: float):
+        self.m00 = float(m00)
+        self.m10 = float(m10)
+        self.m20 = float(m20)
+        self.m30 = float(m30)
 
-        self.m01 = m01
-        self.m11 = m11
-        self.m21 = m21
-        self.m31 = m31
+        self.m01 = float(m01)
+        self.m11 = float(m11)
+        self.m21 = float(m21)
+        self.m31 = float(m31)
 
-        self.m02 = m02
-        self.m12 = m12
-        self.m22 = m22
-        self.m32 = m32
+        self.m02 = float(m02)
+        self.m12 = float(m12)
+        self.m22 = float(m22)
+        self.m32 = float(m32)
 
-        self.m03 = m03
-        self.m13 = m13
-        self.m23 = m23
-        self.m33 = m33
+        self.m03 = float(m03)
+        self.m13 = float(m13)
+        self.m23 = float(m23)
+        self.m33 = float(m33)
 
     def __repr__(self):
         return ("<%s: "
@@ -465,9 +469,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m00 = x
-        self.m01 = y
-        self.m02 = z
+        self.m00 = float(x)
+        self.m01 = float(y)
+        self.m02 = float(z)
 
     def set_left(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's left vector.
@@ -476,9 +480,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m10 = x
-        self.m11 = y
-        self.m12 = z
+        self.m10 = float(x)
+        self.m11 = float(y)
+        self.m12 = float(z)
 
     def set_up(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's up vector.
@@ -487,9 +491,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m20 = x
-        self.m21 = y
-        self.m22 = z
+        self.m20 = float(x)
+        self.m21 = float(y)
+        self.m22 = float(z)
 
     def set_pos(self, x: float, y: float, z: float):
         """Set the x,y,z components representing the matrix's position vector.
@@ -498,9 +502,9 @@ class Matrix44:
         :param y: The Y component.
         :param z: The Z component.
         """
-        self.m30 = x
-        self.m31 = y
-        self.m32 = z
+        self.m30 = float(x)
+        self.m31 = float(y)
+        self.m32 = float(z)
 
 
 class Quaternion:
@@ -521,10 +525,10 @@ class Quaternion:
                 raise TypeError("Unsupported type for angle_z expected Angle")
             q0, q1, q2, q3 = angle_z_to_quaternion(angle_z)
 
-        self._q0 = q0
-        self._q1 = q1
-        self._q2 = q2
-        self._q3 = q3
+        self._q0 = float(q0)
+        self._q1 = float(q1)
+        self._q2 = float(q2)
+        self._q3 = float(q3)
 
     @property
     def q0(self) -> float:
@@ -600,14 +604,14 @@ class Quaternion:
         m21 = (q2q3x2 - q0q1x2)
         m22 = (q0q0 - q1q1 - q2q2 + q3q3)
 
-        return Matrix44(m00, m10, m20, pos_x,
-                        m01, m11, m21, pos_y,
-                        m02, m12, m22, pos_z,
+        return Matrix44(m00, m10, m20, float(pos_x),
+                        m01, m11, m21, float(pos_y),
+                        m02, m12, m22, float(pos_z),
                         0.0, 0.0, 0.0, 1.0)
 
     def __repr__(self):
-        return (f"<{self.__class__.__name__} q0: {self.q0:.2} q1: {self.q1:.2}"
-                f" q2: {self.q2:.2} q3: {self.q3:.2} {self.angle_z}>")
+        return (f"<{self.__class__.__name__} q0: {self.q0:.2f} q1: {self.q1:.2f}"
+                f" q2: {self.q2:.2f} q3: {self.q3:.2f} {self.angle_z}>")
 
 
 class Position(Vector3):
@@ -638,10 +642,13 @@ class Pose:
 
     Only poses of the same origin_id can safely be compared or operated on.
 
-    .. code-block:: python
+    .. testcode::
 
-        pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
-        robot.behavior.go_to_pose(pose)
+        import anki_vector
+
+        with anki_vector.Robot() as robot:
+            pose = anki_vector.util.Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
+            robot.behavior.go_to_pose(pose)
     """
     __slots__ = ('_position', '_rotation', '_origin_id')
 
@@ -673,10 +680,10 @@ class Pose:
     def define_pose_relative_this(self, new_pose):
         """Creates a new pose such that new_pose's origin is now at the location of this pose.
 
-        :param new_pose: The pose which origin is being changed. Type is Pose.
+        :param anki_vector.util.Pose new_pose: The pose which origin is being changed.
 
         Returns:
-            A :class:`anki_vector.util.pose` object for which the origin was this pose's origin.
+            A :class:`anki_vector.util.Pose` object for which the origin was this pose's origin.
         """
         if not isinstance(new_pose, Pose):
             raise TypeError("Unsupported type for new_origin, must be of type Pose")
@@ -710,19 +717,31 @@ class Pose:
         :param other_pose: The other pose to compare against. Type is Pose.
 
         Returns:
-            bool: True if the two poses are comparable, False otherwise.
+            True if the two poses are comparable, False otherwise.
         """
         return (self.is_valid and other_pose.is_valid and
                 (self.origin_id == other_pose.origin_id))
 
-    def to_matrix(self):
+    def to_matrix(self) -> Matrix44:
         """Convert the Pose to a Matrix44.
 
         Returns:
-            :class:`anki_vector.util.Matrix44`: A matrix representing this Pose's
-            position and rotation.
+            A matrix representing this Pose's position and rotation.
         """
         return self.rotation.to_matrix(*self.position.x_y_z)
+
+    def to_proto_pose_struct(self) -> protocol.PoseStruct:
+        """Converts the Pose into the robot's messaging pose format.
+        """
+        return protocol.PoseStruct(
+            x=self._position.x,
+            y=self._position.y,
+            z=self._position.z,
+            q0=self._rotation.q0,
+            q1=self._rotation.q1,
+            q2=self._rotation.q2,
+            q3=self._rotation.q3,
+            origin_id=self._origin_id)
 
 
 class ImageRect:
@@ -730,11 +749,11 @@ class ImageRect:
 
     __slots__ = ('_x_top_left', '_y_top_left', '_width', '_height')
 
-    def __init__(self, x_top_left, y_top_left, width, height):
-        self._x_top_left = x_top_left
-        self._y_top_left = y_top_left
-        self._width = width
-        self._height = height
+    def __init__(self, x_top_left: float, y_top_left: float, width: float, height: float):
+        self._x_top_left = float(x_top_left)
+        self._y_top_left = float(y_top_left)
+        self._width = float(width)
+        self._height = float(height)
 
     @property
     def x_top_left(self) -> float:
@@ -781,7 +800,7 @@ class Distance:
 
         if distance_inches is not None:
             distance_mm = distance_inches * 25.4
-        self._distance_mm = distance_mm
+        self._distance_mm = float(distance_mm)
 
     def __repr__(self):
         return "<%s %.2f mm (%.2f inches)>" % (self.__class__.__name__, self.distance_mm, self.distance_inches)
@@ -843,7 +862,7 @@ class Speed:
     def __init__(self, speed_mmps: float = None):  # pylint: disable=redefined-outer-name
         if speed_mmps is None:
             raise ValueError("Expected speed_mmps keyword argument")
-        self._speed_mmps = speed_mmps
+        self._speed_mmps = float(speed_mmps)
 
     def __repr__(self):
         return "<%s %.2f mmps>" % (self.__class__.__name__, self.speed_mmps)
@@ -950,6 +969,14 @@ class Component:
     @property
     def robot(self):
         return self._robot
+
+    @property
+    def conn(self):
+        return self._robot.conn
+
+    @property
+    def force_async(self):
+        return self._robot.force_async
 
     @property
     def grpc_interface(self):

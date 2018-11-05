@@ -86,6 +86,7 @@ void TextToSpeechProviderImpl::Cleanup()
 {
   // Free memory allocated by BABILE_init
   if (nullptr != _BAB_Obj) {
+    BABILE_reset(_BAB_Obj);
     BABILE_free(_BAB_Obj, _BAB_MemRec);
     _BAB_Obj = nullptr;
     _BAB_MemRec = nullptr;

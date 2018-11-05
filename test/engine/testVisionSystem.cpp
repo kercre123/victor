@@ -24,6 +24,8 @@
 #include "engine/vision/laserPointDetector.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
+
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
@@ -646,8 +648,10 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   
   // Load vision_config.json file and get NeuralNets section
   const Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
-  ASSERT_TRUE(config.isMember("NeuralNets"));
-  const Json::Value& neuralNetConfig = config["NeuralNets"];
+  ASSERT_TRUE(config.isMember(NeuralNets::JsonKeys::NeuralNets));
+  const Json::Value& neuralNetConfig = config[NeuralNets::JsonKeys::NeuralNets];
+  ASSERT_TRUE(neuralNetConfig.isMember(NeuralNets::JsonKeys::Models));
+  const Json::Value& allModelsConfig = neuralNetConfig[NeuralNets::JsonKeys::Models];
   
   const std::string visionConfigPath = Util::FileUtils::FullFilePath({"config", "engine", "vision"});
   const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
@@ -656,23 +660,27 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
   const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
   
-  // Make sure "NeuralNetRunner" load succeeds, given all the current params in vision_config.json
-  Vision::NeuralNetRunner neuralNetRunner;
-  const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, neuralNetConfig);
-  ASSERT_EQ(RESULT_OK, loadRunnerResult);
-  
-  ASSERT_TRUE(neuralNetConfig.isMember("graphFile"));
-  const std::string modelFileName = neuralNetConfig["graphFile"].asString();
-  
-  // Make sure we have correct extension
-  const size_t extIndex = modelFileName.find_last_of(".");
-  ASSERT_NE(std::string::npos, extIndex); // must have extension
-  const std::string extension = modelFileName.substr(extIndex, std::string::npos);
-  ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
-  
-  // Make sure model file exists
-  const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
-  ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+  // Make sure "NeuralNetRunner" load succeeds for each model, given all the current params in vision_config.json
+  ASSERT_TRUE(allModelsConfig.isArray());
+  for(const auto& modelConfig : allModelsConfig)
+  {
+    Vision::NeuralNetRunner neuralNetRunner;
+    const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, modelConfig);
+    ASSERT_EQ(RESULT_OK, loadRunnerResult);
+    
+    ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
+    const std::string modelFileName = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
+    
+    // Make sure we have correct extension
+    const size_t extIndex = modelFileName.find_last_of(".");
+    ASSERT_NE(std::string::npos, extIndex); // must have extension
+    const std::string extension = modelFileName.substr(extIndex, std::string::npos);
+    ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
+    
+    // Make sure model file exists
+    const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
+    ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+  }
 }
 
 GTEST_TEST(VisionModeSet, BasicFunctionality)

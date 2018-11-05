@@ -1,0 +1,49 @@
+{
+  // This is a copy of ObservingLookAtFaces that should only be activated
+  // when the tread state is InAir, and is part of whileInAirResponses
+  "behaviorID": "ObservingLookAtFacesInAir",
+  "behaviorClass": "ObservingLookAtFaces",
+
+  // Because this behavior runs in the air, it must delegate to a copy
+  // of FindFaces that can also run only while the robot is in the air
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "ObservingFindFacesInAirInternal",
+      "behaviorClass": "FindFaces",
+
+      "maxFaceAgeToLook_ms": 15000,
+
+      "stoppingCondition": "None",
+      "searchBehavior": "LookInPlaceHeadUpInAir"
+    }
+  ],
+
+  // NOTE: The InAir tread state requirement is enforced in WhileInAirDispatcher
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        // No point in trying to look around if being held by body, rather than
+        // held in hand.
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "CliffDetected"
+        }
+      },
+      {
+        "conditionType": "FeatureGate",
+        "feature": "FindFacesWhileHeld",
+        "expected": true
+      }
+    ]
+  },
+  
+  // The turn in place actions commanded by FindFaces might cause the robot to rotate
+  // into a position where we could almost fall off the user's hand, so stop all motion
+  // if we start detecting cliffs.
+  "wantsToCancelSelfCondition": {
+    "conditionType": "CliffDetected"
+  },
+  
+  "searchBehavior": "ObservingFindFacesInAirInternal"
+}

@@ -1,7 +1,7 @@
 package token
 
 import (
-	"anki/token/jwt"
+	"anki/token/identity"
 	"anki/util"
 	"clad/cloud"
 	"fmt"
@@ -13,10 +13,13 @@ import (
 type Accessor interface {
 	Credentials() (gc.PerRPCCredentials, error)
 	GetStsCredentials() (*ac.Credentials, error)
+	IdentityProvider() identity.Provider
 	UserID() string
 }
 
-type accessor struct{}
+type accessor struct {
+	identityProvider identity.Provider
+}
 
 func (accessor) Credentials() (gc.PerRPCCredentials, error) {
 	req := cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{})
@@ -31,20 +34,24 @@ func (accessor) Credentials() (gc.PerRPCCredentials, error) {
 	return tokenMetadata(resp.GetJwt().JwtToken), nil
 }
 
-func (accessor) GetStsCredentials() (*ac.Credentials, error) {
-	return getStsCredentials()
+func (a accessor) GetStsCredentials() (*ac.Credentials, error) {
+	return getStsCredentials(a)
 }
 
-func (accessor) UserID() string {
-	token := jwt.GetToken()
+func (a accessor) UserID() string {
+	token := a.identityProvider.GetToken()
 	if token == nil {
 		return ""
 	}
 	return token.UserID()
 }
 
-func GetAccessor() Accessor {
-	return accessor{}
+func (a accessor) IdentityProvider() identity.Provider {
+	return a.identityProvider
+}
+
+func GetAccessor(identityProvider identity.Provider) Accessor {
+	return accessor{identityProvider}
 }
 
 func tokenMetadata(jwtToken string) util.MapCredentials {

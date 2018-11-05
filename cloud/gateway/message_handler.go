@@ -133,6 +133,78 @@ func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.M
 	})
 }
 
+func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
+	return &gw_clad.PoseStruct3d{
+		X:        msg.X,
+		Y:        msg.Y,
+		Z:        msg.Z,
+		Q0:       msg.Q0,
+		Q1:       msg.Q1,
+		Q2:       msg.Q2,
+		Q3:       msg.Q3,
+		OriginID: msg.OriginId,
+	}
+}
+
+func ProtoCreateFixedCustomObjectToClad(msg *extint.CreateFixedCustomObjectRequest) *gw_clad.MessageExternalToRobot {
+	return gw_clad.NewMessageExternalToRobotWithCreateFixedCustomObject(&gw_clad.CreateFixedCustomObject{
+		Pose:    *ProtoPoseToClad(msg.Pose),
+		XSizeMm: msg.XSizeMm,
+		YSizeMm: msg.YSizeMm,
+		ZSizeMm: msg.ZSizeMm,
+	})
+}
+
+func ProtoDefineCustomBoxToClad(msg *extint.DefineCustomObjectRequest, def *extint.CustomBoxDefinition) *gw_clad.MessageExternalToRobot {
+	// Convert from the proto defined CustomObject enum to the more general clad ObjectType enum space
+	object_type := gw_clad.ObjectType(int(msg.CustomType) - int(extint.CustomType_CUSTOM_TYPE_00) + int(gw_clad.ObjectType_CustomType00))
+
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomBox(&gw_clad.DefineCustomBox{
+		CustomType:     object_type,
+		MarkerFront:    gw_clad.CustomObjectMarker(def.MarkerFront - 1),
+		MarkerBack:     gw_clad.CustomObjectMarker(def.MarkerBack - 1),
+		MarkerTop:      gw_clad.CustomObjectMarker(def.MarkerTop - 1),
+		MarkerBottom:   gw_clad.CustomObjectMarker(def.MarkerBottom - 1),
+		MarkerLeft:     gw_clad.CustomObjectMarker(def.MarkerLeft - 1),
+		MarkerRight:    gw_clad.CustomObjectMarker(def.MarkerRight - 1),
+		XSizeMm:        def.XSizeMm,
+		YSizeMm:        def.YSizeMm,
+		ZSizeMm:        def.ZSizeMm,
+		MarkerWidthMm:  def.MarkerWidthMm,
+		MarkerHeightMm: def.MarkerHeightMm,
+		IsUnique:       msg.IsUnique,
+	})
+}
+
+func ProtoDefineCustomCubeToClad(msg *extint.DefineCustomObjectRequest, def *extint.CustomCubeDefinition) *gw_clad.MessageExternalToRobot {
+	// Convert from the proto defined CustomObject enum to the more general clad ObjectType enum space
+	object_type := gw_clad.ObjectType(int(msg.CustomType) - int(extint.CustomType_CUSTOM_TYPE_00) + int(gw_clad.ObjectType_CustomType00))
+
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomCube(&gw_clad.DefineCustomCube{
+		CustomType:     object_type,
+		Marker:         gw_clad.CustomObjectMarker(def.Marker - 1),
+		SizeMm:         def.SizeMm,
+		MarkerWidthMm:  def.MarkerWidthMm,
+		MarkerHeightMm: def.MarkerHeightMm,
+		IsUnique:       msg.IsUnique,
+	})
+}
+
+func ProtoDefineCustomWallToClad(msg *extint.DefineCustomObjectRequest, def *extint.CustomWallDefinition) *gw_clad.MessageExternalToRobot {
+	// Convert from the proto defined CustomObject enum to the more general clad ObjectType enum space
+	object_type := gw_clad.ObjectType(int(msg.CustomType) - int(extint.CustomType_CUSTOM_TYPE_00) + int(gw_clad.ObjectType_CustomType00))
+
+	return gw_clad.NewMessageExternalToRobotWithDefineCustomWall(&gw_clad.DefineCustomWall{
+		CustomType:     object_type,
+		Marker:         gw_clad.CustomObjectMarker(def.Marker - 1),
+		WidthMm:        def.WidthMm,
+		HeightMm:       def.HeightMm,
+		MarkerWidthMm:  def.MarkerWidthMm,
+		MarkerHeightMm: def.MarkerHeightMm,
+		IsUnique:       msg.IsUnique,
+	})
+}
+
 func SliceToArray(msg []uint32) [3]uint32 {
 	var arr [3]uint32
 	copy(arr[:], msg)
@@ -284,6 +356,24 @@ func CladRobotObservedObjectToProto(msg *gw_clad.RobotObservedObject) *extint.Ro
 	}
 }
 
+func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
+	return &extint.NavMapInfo{
+		RootDepth:   int32(msg.RootDepth),
+		RootSizeMm:  msg.RootSizeMm,
+		RootCenterX: msg.RootCenterX,
+		RootCenterY: msg.RootCenterY,
+		RootCenterZ: 0.0,
+	}
+}
+
+func CladMemoryMapQuadInfoToProto(msg *gw_clad.MemoryMapQuadInfo) *extint.NavMapQuadInfo {
+	return &extint.NavMapQuadInfo{
+		Content:   extint.NavNodeContentType(msg.Content), // Not incrementing this one because the CLAD enum has 0 as unknown
+		Depth:     uint32(msg.Depth),
+		ColorRgba: msg.ColorRGBA,
+	}
+}
+
 func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingCompleteResponse{}, 1)
 	defer f()
@@ -410,6 +500,16 @@ func SendOnboardingGetStep(in *extint.GatewayWrapper_OnboardingGetStep) (*extint
 			},
 		}, nil
 	}
+}
+
+func SendAppDisconnected() {
+	msg := &extint.GatewayWrapper_AppDisconnected{
+		AppDisconnected: &extint.AppDisconnected{},
+	}
+	engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: msg,
+	})
+	// no error handling
 }
 
 func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.OnboardingInputResponse, error) {
@@ -759,6 +859,8 @@ func (service *rpcService) onConnect(id string) {
 
 // Should be called on WiFi disconnect.
 func (service *rpcService) onDisconnect() {
+	// Message engine that app disconnected
+	SendAppDisconnected()
 	// Call DAS WiFi connection event to indicate stop of a WiFi connection
 	log.Das("wifi_conn_id.stop", (&log.DasFields{}).SetStrings(""))
 	connectionId = ""
@@ -795,6 +897,21 @@ func (service *rpcService) checkConnectionID(id string) bool {
 	}
 	connectionId = id
 	return true
+}
+
+// SDK-only message to pass version info for device OS, Python version, etc.
+func (service *rpcService) SDKInitialization(ctx context.Context, in *extint.SDKInitializationRequest) (*extint.SDKInitializationResponse, error) {
+	log.Das("sdk.module_version", (&log.DasFields{}).SetStrings(in.SdkModuleVersion))
+	log.Das("sdk.python_version", (&log.DasFields{}).SetStrings(in.PythonVersion))
+	log.Das("sdk.python_implementation", (&log.DasFields{}).SetStrings(in.PythonImplementation))
+	log.Das("sdk.os_version", (&log.DasFields{}).SetStrings(in.OsVersion))
+	log.Das("sdk.cpu_version", (&log.DasFields{}).SetStrings(in.CpuVersion))
+
+	return &extint.SDKInitializationResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
 }
 
 // Long running message for sending events to listening sdk users
@@ -989,11 +1106,16 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 	return nil
 }
 
+// SDK-only method. SDK DAS connect/disconnect events are sent from here.
 func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalInterface_BehaviorControlServer) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "BehaviorControl disabled in message_handler.go")
-	}
+	sdkStartTime := time.Now()
+
+	log.Das("sdk.connection_started", (&log.DasFields{}).SetStrings(""))
+
+	defer func() {
+		sdkElapsedSeconds := time.Since(sdkStartTime)
+		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String()))
+	}()
 
 	done := make(chan struct{})
 
@@ -1005,11 +1127,6 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 }
 
 func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlRequest, out extint.ExternalInterface_AssumeBehaviorControlServer) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "AssumeBehaviorControl disabled in message_handler.go")
-	}
-
 	done := make(chan struct{})
 
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
@@ -1029,11 +1146,6 @@ func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlReque
 }
 
 func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffChargerRequest) (*extint.DriveOffChargerResponse, error) {
-	if disableStreams {
-		// Disable for Vector 1.0 release
-		return nil, grpc.Errorf(codes.Unimplemented, "DriveOffCharger disabled in message_handler.go")
-	}
-
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOffChargerResponse{}, 1)
 	defer f()
 
@@ -1057,11 +1169,6 @@ func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.Drive
 }
 
 func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveOnChargerRequest) (*extint.DriveOnChargerResponse, error) {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return nil, grpc.Errorf(codes.Unimplemented, "DriveOnCharger disabled in message_handler.go")
-	}
-
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOnChargerResponse{}, 1)
 	defer f()
 
@@ -1870,11 +1977,21 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 	if err != nil {
 		return nil, err
 	}
-	payload, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	done := false
+	var sayTextResponse *extint.SayTextResponse
+	for !done {
+		payload, ok := <-responseChan
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
+		sayTextResponse = payload.GetSayTextResponse()
+		state := sayTextResponse.GetState()
+		if state == extint.SayTextResponse_FINISHED {
+			done = true
+		} else if state == extint.SayTextResponse_INVALID {
+			return nil, grpc.Errorf(codes.Internal, "Failed to say text")
+		}
 	}
-	sayTextResponse := payload.GetSayTextResponse()
 	sayTextResponse.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
@@ -1955,11 +2072,6 @@ func UnpackAudioChunk(audioChunk *extint.AudioChunk, cache *AudioFeedCache) bool
 
 // Long running message for sending audio feed to listening sdk users
 func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.ExternalInterface_AudioFeedServer) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "AudioFeed disabled in message_handler.go")
-	}
-
 	// @TODO: Expose other audio processing modes
 	//
 	// The composite multi-microphone non-beamforming (AUDIO_VOICE_DETECT_MODE) mode has been identified as the best for voice detection,
@@ -2099,11 +2211,6 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 
 // Long running message for sending camera feed to listening sdk users
 func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
-	if disableStreams {
-		// Disabled for Vector 1.0 release
-		return grpc.Errorf(codes.Unimplemented, "CameraFeed disabled in message_handler.go")
-	}
-
 	// Enable video stream
 	err := ImageSendModeRequest(extint.ImageRequest_STREAM)
 	if err != nil {
@@ -2191,8 +2298,11 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 }
 
 // UploadDebugLogs will upload debug logs to S3, and return a url to the caller.
-// TODO This is exposed as an external API. Prevent users from spamming this by internally rate-limiting or something?
 func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.UploadDebugLogsRequest) (*extint.UploadDebugLogsResponse, error) {
+	if !debugLogLimiter.Allow() {
+		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum upload rate exceeded. Please wait and try again later.")
+	}
+
 	url, err := loguploader.UploadDebugLogs()
 	if err != nil {
 		log.Println("MessageHandler.UploadDebugLogs.Error: " + err.Error())
@@ -2207,9 +2317,25 @@ func (service *rpcService) UploadDebugLogs(ctx context.Context, in *extint.Uploa
 	return response, nil
 }
 
+var lastResult *extint.CheckCloudResponse
+
 // CheckCloudConnection is used to verify Vector's connection to the Anki Cloud
 // Its main use is to be called by the app during setup, but is fine for use by the outside world.
 func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.CheckCloudRequest) (*extint.CheckCloudResponse, error) {
+	if !cloudCheckLimiter.Allow() {
+		if lastResult == nil {
+			lastResult = &extint.CheckCloudResponse{
+				Status: &extint.ResponseStatus{
+					Code: extint.ResponseStatus_UNKNOWN,
+				},
+				Code: extint.CheckCloudResponse_UNKNOWN,
+			}
+		}
+		return lastResult, nil
+		// TODO: change this back to a resource exhausted error after app properly handles the error
+		// return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum check rate exceeded. Please wait and try again later.")
+	}
+
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CheckCloudResponse{}, 1)
 	defer f()
 
@@ -2229,9 +2355,290 @@ func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.
 	cloudResponse.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
+	lastResult = cloudResponse
 	return cloudResponse, nil
+}
+
+func (service *rpcService) DeleteCustomObjects(ctx context.Context, in *extint.DeleteCustomObjectsRequest) (*extint.DeleteCustomObjectsResponse, error) {
+	var responseMessageType gw_clad.MessageRobotToExternalTag
+	var cladMsg *gw_clad.MessageExternalToRobot
+
+	switch in.Mode {
+	case extint.CustomObjectDeletionMode_DELETION_MASK_ARCHETYPES:
+		responseMessageType = gw_clad.MessageRobotToExternalTag_RobotDeletedCustomMarkerObjects
+		cladMsg = gw_clad.NewMessageExternalToRobotWithUndefineAllCustomMarkerObjects(
+			&gw_clad.UndefineAllCustomMarkerObjects{})
+		break
+	case extint.CustomObjectDeletionMode_DELETION_MASK_FIXED_CUSTOM_OBJECTS:
+		responseMessageType = gw_clad.MessageRobotToExternalTag_RobotDeletedFixedCustomObjects
+		cladMsg = gw_clad.NewMessageExternalToRobotWithDeleteFixedCustomObjects(
+			&gw_clad.DeleteFixedCustomObjects{})
+		break
+	case extint.CustomObjectDeletionMode_DELETION_MASK_CUSTOM_MARKER_OBJECTS:
+		responseMessageType = gw_clad.MessageRobotToExternalTag_RobotDeletedCustomMarkerObjects
+		cladMsg = gw_clad.NewMessageExternalToRobotWithDeleteCustomMarkerObjects(
+			&gw_clad.DeleteCustomMarkerObjects{})
+		break
+	}
+
+	f, responseChan := engineCladManager.CreateChannel(responseMessageType, 1)
+	defer f()
+
+	_, err := engineCladManager.Write(cladMsg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+
+	return &extint.DeleteCustomObjectsResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+	}, nil
+}
+
+func (service *rpcService) CreateFixedCustomObject(ctx context.Context, in *extint.CreateFixedCustomObjectRequest) (*extint.CreateFixedCustomObjectResponse, error) {
+	f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_CreatedFixedCustomObject, 1)
+	defer f()
+
+	cladData := ProtoCreateFixedCustomObjectToClad(in)
+
+	_, err := engineCladManager.Write(cladData)
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetCreatedFixedCustomObject()
+
+	return &extint.CreateFixedCustomObjectResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		ObjectId: response.ObjectID,
+	}, nil
+}
+
+func (service *rpcService) DefineCustomObject(ctx context.Context, in *extint.DefineCustomObjectRequest) (*extint.DefineCustomObjectResponse, error) {
+	var cladMsg *gw_clad.MessageExternalToRobot
+
+	f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_DefinedCustomObject, 1)
+	defer f()
+
+	switch x := in.CustomObjectDefinition.(type) {
+	case *extint.DefineCustomObjectRequest_CustomBox:
+		cladMsg = ProtoDefineCustomBoxToClad(in, in.GetCustomBox())
+		break
+	case *extint.DefineCustomObjectRequest_CustomCube:
+		cladMsg = ProtoDefineCustomCubeToClad(in, in.GetCustomCube())
+		break
+	case *extint.DefineCustomObjectRequest_CustomWall:
+		cladMsg = ProtoDefineCustomWallToClad(in, in.GetCustomWall())
+		break
+	default:
+		return nil, grpc.Errorf(codes.InvalidArgument, "DefineCustomObjectRequest has unexpected type %T", x)
+	}
+
+	_, err := engineCladManager.Write(cladMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	chanResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := chanResponse.GetDefinedCustomObject()
+
+	return &extint.DefineCustomObjectResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		Success: response.Success,
+	}, nil
+}
+
+// FeatureFlag is used to check what features are enabled on the robot
+func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.FeatureFlagRequest) (*extint.FeatureFlagResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FeatureFlagRequest{
+			FeatureFlagRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetFeatureFlagResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+// AlexaAuthState is used to check the alexa authorization state
+func (service *rpcService) GetAlexaAuthState(ctx context.Context, in *extint.AlexaAuthStateRequest) (*extint.AlexaAuthStateResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AlexaAuthStateResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AlexaAuthStateRequest{
+			AlexaAuthStateRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetAlexaAuthStateResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+// AlexaOptIn is used to check the alexa authorization state
+func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptInRequest) (*extint.AlexaOptInResponse, error) {
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AlexaOptInRequest{
+			AlexaOptInRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.AlexaOptInResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
+func SetNavMapBroadcastFrequency(frequency float32) error {
+	log.Println("Setting NavMapBroadcastFrequency to (", frequency, ") seconds")
+
+	cladMsg := gw_clad.NewMessageExternalToRobotWithSetMemoryMapBroadcastFrequencySec(&gw_clad.SetMemoryMapBroadcastFrequency_sec{
+		Frequency: frequency,
+	})
+	_, err := engineCladManager.Write(cladMsg)
+
+	return err
+}
+
+func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extint.ExternalInterface_NavMapFeedServer) error {
+
+	// Enable nav map stream
+	err := SetNavMapBroadcastFrequency(in.Frequency)
+	if err != nil {
+		return err
+	}
+
+	// Disable nav map stream when the RPC exits
+	defer SetNavMapBroadcastFrequency(-1.0)
+
+	f1, memoryMapMessageBegin := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageBegin, 1)
+	defer f1()
+
+	// Every frame the engine can send up to: (Anki::Comms::MsgPacket::MAX_SIZE-3)/sizeof(QuadInfoVector::value_type) quads.
+	// 50 feels like a reasonable educated guess.
+	f2, memoryMapMessageData := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessage, 50)
+	defer f2()
+
+	f3, memoryMapMessageEnd := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageEnd, 1)
+	defer f3()
+
+	var pendingMap *extint.NavMapFeedResponse = nil
+
+	for {
+		select {
+		case chanResponse, ok := <-memoryMapMessageBegin:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			if pendingMap != nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapBegin recieved from engine while still processing a pending memory map; discarding pending map.")
+			}
+
+			response := chanResponse.GetMemoryMapMessageBegin()
+			pendingMap = &extint.NavMapFeedResponse{
+				OriginId:  response.OriginId,
+				MapInfo:   CladMemoryMapBeginToProtoNavMapInfo(response),
+				QuadInfos: []*extint.NavMapQuadInfo{},
+			}
+
+		case chanResponse, ok := <-memoryMapMessageData:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			if pendingMap == nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapData recieved from engine with no pending content to add to.")
+			} else {
+				response := chanResponse.GetMemoryMapMessage()
+				for i := 0; i < len(response.QuadInfos); i++ {
+					newQuad := CladMemoryMapQuadInfoToProto(&response.QuadInfos[i])
+					pendingMap.QuadInfos = append(pendingMap.QuadInfos, newQuad)
+				}
+			}
+
+		case _, ok := <-memoryMapMessageEnd:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+
+			if pendingMap == nil {
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapEnd recieved from engine with no pending content to send.")
+			} else if err := stream.Send(pendingMap); err != nil {
+				return err
+			} else if err = stream.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
+
+			pendingMap = nil
+		}
+	}
+
+	errMsg := "NavMemoryMap engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return grpc.Errorf(codes.Internal, errMsg)
 }
 
 func newServer() *rpcService {
 	return new(rpcService)
+}
+
+// Set Eye Color (SDK only)
+// TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control (e.g., in go code or when SDK behavior deactivates)
+func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeColorRequest) (*extint.SetEyeColorResponse, error) {
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetEyeColorRequest{
+			SetEyeColorRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.SetEyeColorResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
 }

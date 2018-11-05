@@ -38,7 +38,8 @@ enum uint_8 MotorCalibrationReason
   BehaviorReactToUncalibratedHeadAndLift,
   BehaviorReactToOnFace,
   BehaviorReactToOnBack,
-  BehaviorReactToPutDown
+  BehaviorReactToPutDown,
+  BehaviorReactToCliff
 }
 
 } // namespace Vector

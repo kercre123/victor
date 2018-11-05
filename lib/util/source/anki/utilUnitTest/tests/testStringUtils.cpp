@@ -1,4 +1,4 @@
-﻿//
+//
 //  testStringUtils.cpp
 //
 //  Created by Stuart Eichert on 11/11/15.
@@ -117,6 +117,26 @@ TEST_F(StringUtilsTest, UTF8Emoji)
 
   uint8_t heart[3] = {0xe2, 0x99, 0xa5};
   ASSERT_TRUE(IsValidUTF8(heart, sizeof(heart)));
+}
+  
+TEST_F(StringUtilsTest, StringSplit)
+{
+  char c = '|';
+  std::string ss = "hello|world|and|universe";
+  std::vector<std::string> split = StringSplit(ss, c);
+  ASSERT_EQ( split.size(), 4 );
+  EXPECT_EQ( split[0], "hello" );
+  EXPECT_EQ( split[1], "world" );
+  EXPECT_EQ( split[2], "and" );
+  EXPECT_EQ( split[3], "universe" );
+  
+  c = ',';
+  ss = ",,";
+  split = StringSplit(ss, c);
+  ASSERT_EQ( split.size(), 3 );
+  EXPECT_EQ( split[0], "" );
+  EXPECT_EQ( split[1], "" );
+  EXPECT_EQ( split[2], "" );
 }
 
 } // namespace Util

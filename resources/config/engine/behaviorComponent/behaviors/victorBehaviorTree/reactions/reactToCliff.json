@@ -10,8 +10,7 @@
 
   "wantsToBeActivatedCondition": {
     "conditionType": "OffTreadsState",
-    "targetState": "OnTreads",
-    "minTimeSinceChange_ms": 500
+    "targetState": "OnTreads"
   },
 
   "wantsToCancelSelfCondition": {

@@ -27,7 +27,11 @@ func (d *DoOnce) Do() {
 }
 
 // CanSelect is a helper for struct{} channels that checks if the channel can be
-// pulled from in a select statement
+// pulled from in a select statement. It is recommended to use this only for channels
+// whose purpose is signaling (i.e. closing the given channel when something is done,
+// at which point it can always be selected, rather than transmitting actual struct{}
+// values), since using this with actual struct{} values would cause a value to get
+// pulled off the channel and potentially mess up synchronization.
 func CanSelect(ch <-chan struct{}) bool {
 	select {
 	case <-ch:
@@ -59,23 +63,6 @@ func NewChanWriter(ch chan<- []byte) io.Writer {
 	return chanWriter{ch}
 }
 
-// AsyncWriter returns a wrapper around the given Writer that makes it
-// write asynchronously (starts a new goroutine for writes and returns assumption of success)
-func AsyncWriter(writer io.Writer) io.Writer {
-	return asyncWriter{writer}
-}
-
-type asyncWriter struct {
-	io.Writer
-}
-
-func (w asyncWriter) Write(p []byte) (int, error) {
-	go func() {
-		w.Writer.Write(p)
-	}()
-	return len(p), nil
-}
-
 // SleepSelect is like calling time.Sleep() with an early exit if the given
 // channel ch is closed. It can be used for situations such as a goroutine
 // wanting to sleep while still responding quickly if it receives a signal
@@ -92,4 +79,10 @@ func SleepSelect(dur time.Duration, ch <-chan struct{}) bool {
 		}
 		return true
 	}
+}
+
+// ErrorListener defines an interface that can be used as a common definition to inject error
+// handlers into dependent modules
+type ErrorListener interface {
+	OnError(error)
 }

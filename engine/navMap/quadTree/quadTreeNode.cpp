@@ -276,7 +276,7 @@ QuadTreeNode::NodeCPtrVector QuadTreeNode::GetNeighbors() const
   if (plusX ) { plusX->AddSmallestDescendants(EDirection::MinusX, neighbors);  }
   if (minusX) { minusX->AddSmallestDescendants(EDirection::PlusX, neighbors);  }
   if (minuxY) { minuxY->AddSmallestDescendants(EDirection::PlusY,  neighbors); }
-  if (plusX ) { plusY->AddSmallestDescendants(EDirection::MinusY,  neighbors); }
+  if (plusY ) { plusY->AddSmallestDescendants(EDirection::MinusY,  neighbors); }
 
   return neighbors;
 }

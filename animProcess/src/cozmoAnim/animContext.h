@@ -38,6 +38,7 @@ class AudioMultiplexer;
 
 namespace Vector {
 
+class Alexa;
 namespace MicData {
   class MicDataSystem;
 }
@@ -86,6 +87,7 @@ public:
   ShowAudioStreamStateManager*          GetShowAudioStreamStateManager() const { return _showStreamStateManager.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
   Audio::AudioPlaybackSystem*           GetAudioPlaybackSystem() const { return _audioPlayer.get(); }
+  Alexa*                                GetAlexa() const { return _alexa.get(); }
 
   void SetRandomSeed(uint32_t seed);
 
@@ -111,6 +113,7 @@ private:
   std::unique_ptr<ShowAudioStreamStateManager>   _showStreamStateManager;
   std::unique_ptr<WebService::WebService>        _webService;
   std::unique_ptr<Audio::AudioPlaybackSystem>    _audioPlayer;
+  std::unique_ptr<Alexa>                         _alexa;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

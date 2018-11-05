@@ -1,10 +1,9 @@
 package token
 
 import (
-	"anki/config"
 	"anki/ipc"
 	"anki/log"
-	"anki/token/jwt"
+	"anki/token/identity"
 	"bytes"
 	"clad/cloud"
 	"context"
@@ -14,9 +13,8 @@ import (
 // Init initializes the token service in advance of other services that depend on it
 var initialized = false
 
-func Init() error {
-	url = config.Env.Token
-	if err := jwt.Init(); err != nil {
+func Init(identityProvider identity.Provider) error {
+	if err := identityProvider.Init(); err != nil {
 		log.Println("Error initializing jwt store:", err)
 		return err
 	}
@@ -32,21 +30,33 @@ func Run(ctx context.Context, optionValues ...Option) {
 		o(&opts)
 	}
 
+	identityProvider := opts.identityProvider
+	if identityProvider == nil {
+		log.Println("Error initializing identity provider")
+		return
+	}
+
 	if !initialized {
-		if err := jwt.Init(); err != nil {
+		if err := identityProvider.Init(); err != nil {
 			return
 		}
 	}
 
-	if err := queueInit(ctx); err != nil {
+	var queue tokenQueue
+	if err := queue.init(ctx, identityProvider); err != nil {
 		log.Println("Error initializing request queue:", err)
 		return
 	}
 
-	initRefresher(ctx)
+	initRefresher(ctx, identityProvider)
 
 	if opts.server {
-		serv, err := initServer(ctx)
+		socketName := "token_server"
+		if opts.socketNameSuffix != "" {
+			socketName = fmt.Sprintf("%s_%s", socketName, opts.socketNameSuffix)
+		}
+
+		serv, err := initServer(ctx, socketName)
 		if err != nil {
 			log.Println("Error creating token server:", err)
 			return
@@ -102,8 +112,8 @@ func handleRequest(m *cloud.TokenRequest) (*cloud.TokenResponse, error) {
 	return resp.resp, resp.err
 }
 
-func initServer(ctx context.Context) (ipc.Server, error) {
-	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("token_server"))
+func initServer(ctx context.Context, socketName string) (ipc.Server, error) {
+	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath(socketName))
 	if err != nil {
 		return nil, err
 	}

@@ -72,7 +72,8 @@ public:
                                     const Json::Value* jdocBody,
                                     const bool saveToDiskImmediately,
                                     const bool saveToCloudImmediately,
-                                    const bool setCloudDirtyIfNotImmediate = true);
+                                    const bool setCloudDirtyIfNotImmediate = true,
+                                    const bool sendJdocsChangedMessage = false);
   bool                ClearJdocBody(const external_interface::JdocType jdocTypeKey);
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
@@ -89,6 +90,10 @@ public:
   using FormatMigrationCallback = std::function<void(void)>;
   void RegisterFormatMigrationCallback(const external_interface::JdocType jdocTypeKey,
                                        const FormatMigrationCallback cb);
+
+  using ShutdownCallback = std::function<void(void)>;
+  void RegisterShutdownCallback(const external_interface::JdocType jdocTypeKey,
+                                const ShutdownCallback cb);
 
 private:
 
@@ -109,12 +114,14 @@ private:
   void HandleThingResponse(const JDocs::ThingResponse& thingResponse);
   void SubmitJdocToCloud(const external_interface::JdocType jdocTypeKey, const bool isJdocNewInCloud);
   bool CopyJdocFromCloud(const external_interface::JdocType jdocTypeKey, const JDocs::Doc& doc);
+  void SendJdocsChangedMessage(const std::vector<external_interface::JdocType>& jdocTypes);
 
   external_interface::JdocType JdocTypeFromDocName(const std::string& docName) const;
 
   Robot*                    _robot = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   std::string               _savePath;
+  bool                      _cloudJdocResetRequested = false;
   LocalUdpClient            _udpClient;
   std::string               _userID;
   std::string               _thingID;
@@ -122,6 +129,7 @@ private:
   // We save currTime_s here each tick, because we need it in the destructor, and by then BasetationTimer is gone
   float                     _currTime_s;
   float                     _nextUserLoginCheckTime_s;
+  uint32_t                  _minCloudGetPeriod_s; // Minimum time between 'get latest jdocs from cloud'
 
   struct JdocInfo
   {
@@ -152,6 +160,7 @@ private:
     float                     _nextCloudSaveTime; // Time of next cloud save ("at this time or after")
     bool                      _pendingCloudSave;  // True when cloud save is awaiting response from prior cloud save
     external_interface::JdocResolveMethod _resolveMethod;   // Resolve method to use when cloud has newer version of this jdoc
+    uint32_t                  _lastCloudGetTime;  // Timestamp of last request to cloud to get latest version
 
     struct CloudAbuseDetectionConfig
     {
@@ -181,6 +190,7 @@ private:
 
     OverwriteNotificationCallback _overwrittenCB; // Called when this jdoc is overwritten from the cloud
     FormatMigrationCallback   _formatMigrationCB; // Called when this jdoc needs a format migration
+    ShutdownCallback          _shutdownCB;        // Called on shutdown for this jdoc
   };
 
   using Jdocs = std::map<external_interface::JdocType, JdocInfo>;

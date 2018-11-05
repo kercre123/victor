@@ -4,6 +4,9 @@
 
   // path to save the images on the robot relative to "<reourceCacheDir>/camera/images"
   "save_path": "employee_data",
+  
+  // use a special persistent save prefix stored in "<persistentDir>/devImageCapturePrefix.txt"
+  "use_save_prefix": true,
 
   // class names to cycle through by raising lift, used as subdirs to above path when saving
   "class_names": ["hand", "cat", "dog", "person", "background"],
@@ -13,9 +16,6 @@
 
   // image save scale: any scale valid with ImageCache::StringToSize
   "image_scale": "full",
-
-  // image scaling method: any method valid with ImageCache::StringToSize
-  "resize_method": "linear",
 
   // whether or not to use capacitive touch to trigger saving
   // if 0, uses power button istead
@@ -28,6 +28,9 @@
   // Play a shutter sound each time he takes an image in single-shot mode (including one sound for each
   // capture in multi-image mode, as defined below)
   "use_shutter_sound" : true,
+  
+  // Turn on/off the ability to save "streams" of images by holding the button down
+  "allow_streaming" : false, 
   
   // When enabled and single-shot saving is used, this will move the robot and take additional images from
   // random poses using the given ranges. If the both elements of a range are the same, that disables that
@@ -43,5 +46,5 @@
   // other than "SavingImages" and "MirrorMode" (which are always enabled)
   // see visionModes.clad/h for the names of available vision modes
   // NOTE: modes will be scheduled with "Standard" frequency
-  "vision_modes": []  // e.g. ["RunningNeuralNet", "DetectingMarkers", "DetectingFaces"]
+  "vision_modes": []  // e.g. ["DetectingPeople", "DetectingMarkers", "DetectingFaces"]
 }

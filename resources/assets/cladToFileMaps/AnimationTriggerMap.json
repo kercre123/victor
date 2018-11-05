@@ -333,7 +333,59 @@
   },
   {
     "CladEvent" : "DanceBeatNoBeatDetected",
-    "AnimName": "ag_communication_cantdothat"
+    "AnimName": "ag_dancebeat_nobeatdetected"
+  },
+  {
+    "CladEvent": "ReactToShake_GetIn",
+    "AnimName": "ag_rtshake_getin"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1Loop",
+    "AnimName": "ag_rtshake_lv1loop"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1Waiting",
+    "AnimName": "ag_rtshake_lv1pregetout"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1InHand",
+    "AnimName": "ag_rtshake_lv1rtonhand"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl1OnGround",
+    "AnimName": "ag_rtshake_lv1rtonground"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2Loop",
+    "AnimName": "ag_rtshake_lv2loop"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2Waiting",
+    "AnimName": "ag_rtshake_lv2pregetout"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2InHand",
+    "AnimName": "ag_rtshake_lv2rtonhand"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl2OnGround",
+    "AnimName": "ag_rtshake_lv2rtonground"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3Loop",
+    "AnimName": "ag_rtshake_lv3loop"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3Waiting",
+    "AnimName": "ag_rtshake_lv3pregetout"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3InHand",
+    "AnimName": "ag_rtshake_lv3rtonhand"
+  },
+  {
+    "CladEvent": "ReactToShake_Lvl3OnGround",
+    "AnimName": "ag_rtshake_lv3rtonground"
   },
   {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
@@ -512,12 +564,12 @@
     "AnimName": "ag_pounceonmotionfail"
   },
   {
-    "CladEvent": "FetchCubeFrustrated",
-    "AnimName": "ag_reacttoblock_frustrated"
+    "CladEvent": "FetchCubeSetDown",
+    "AnimName": "ag_reacttoblock_dropsuccess"
   },
   {
     "CladEvent": "FetchCubeSuccess",
-    "AnimName": "ag_greeting_imhome"
+    "AnimName": "ag_knowledgegraph_success_01"
   },
   {
     "CladEvent": "FindCubeReactToCube",
@@ -1689,5 +1741,25 @@
   {
     "CladEvent": "VC_SleepingToListeningGetOut",
     "AnimName": "ag_wakeword_groggyeyes_getout"
+  },
+  {
+    "CladEvent": "VolumeLevel1",
+    "AnimName": "ag_volume_stage_01"
+  },
+  {
+    "CladEvent": "VolumeLevel2",
+    "AnimName": "ag_volume_stage_02"
+  },
+  {
+    "CladEvent": "VolumeLevel3",
+    "AnimName": "ag_volume_stage_03"
+  },
+  {
+    "CladEvent": "VolumeLevel4",
+    "AnimName": "ag_volume_stage_04"
+  },
+  {
+    "CladEvent": "VolumeLevel5",
+    "AnimName": "ag_volume_stage_05"
   }
 ]

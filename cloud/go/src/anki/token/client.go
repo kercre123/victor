@@ -1,8 +1,8 @@
 package token
 
 import (
-	"anki/log"
 	"anki/robot"
+	"anki/token/identity"
 	"anki/util"
 	"context"
 	"io/ioutil"
@@ -17,8 +17,8 @@ type conn struct {
 	client pb.TokenClient
 }
 
-func newConn(serverURL string, creds credentials.PerRPCCredentials) (*conn, error) {
-	dialOpts, err := getDialOptions(creds)
+func newConn(identityProvider identity.Provider, serverURL string, creds credentials.PerRPCCredentials) (*conn, error) {
+	dialOpts, err := getDialOptions(identityProvider, creds)
 	if err != nil {
 		return nil, err
 	}
@@ -93,14 +93,9 @@ func (c *conn) Close() error {
 	return c.conn.Close()
 }
 
-func getDialOptions(creds credentials.PerRPCCredentials) ([]grpc.DialOption, error) {
+func getDialOptions(identityProvider identity.Provider, creds credentials.PerRPCCredentials) ([]grpc.DialOption, error) {
 	var dialOpts []grpc.DialOption
-	certCreds, err := getTLSCert()
-	if err != nil {
-		log.Println("Error getting TLS cert:", err)
-		return nil, err
-	}
-	dialOpts = append(dialOpts, grpc.WithTransportCredentials(certCreds))
+	dialOpts = append(dialOpts, grpc.WithTransportCredentials(identityProvider.TransportCredentials()))
 	if creds != nil {
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
 	}

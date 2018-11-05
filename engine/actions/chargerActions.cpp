@@ -212,7 +212,7 @@ ActionResult TurnToAlignWithChargerAction::Init()
   // This value is the distance from the origin into the charger of the point that the
   // robot should angle towards. Setting this distance to 0 means the robot will angle
   // itself toward the charger origin.
-  const float distanceIntoChargerToAimFor_mm = 30.f;
+  const float distanceIntoChargerToAimFor_mm = 10.f;
   Pose3d poseToAngleToward(0.f, Z_AXIS_3D(),
                            {distanceIntoChargerToAimFor_mm, 0.f, 0.f});
   poseToAngleToward.PreComposeWith(charger->GetPose());

@@ -2,38 +2,43 @@ package main
 
 import (
 	"anki/robot"
-	"anki/token"
+	"anki/token/identity"
 	"ankidev/accounts"
 	"clad/cloud"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
+	scli "github.com/anki/sai-go-util/cli"
 	stoken "github.com/anki/sai-token-service/client/token"
-	cli "github.com/jawher/mow.cli"
+	mcli "github.com/jawher/mow.cli"
 )
 
 type robotSimulator struct {
-	simulator
+	*simulator
 
 	options *options
 
 	robotInstance *testableRobot
 }
 
+var signalChannel chan os.Signal
+
+func init() {
+	signalChannel = make(chan os.Signal, 1)
+
+	scli.InitLogFlags("")
+}
+
 func newRobotSimulator(options *options) (*robotSimulator, error) {
-	simulator := new(robotSimulator)
+	simulator := &robotSimulator{
+		simulator:     newSimulator(),
+		options:       options,
+		robotInstance: newTestableRobot(*options.testID, *options.urlConfigFile),
+	}
 
-	simulator.options = options
-
-	// Enable client certs and set custom key pair dir (for this user)
-	token.UseClientCert = true
-	robot.DefaultCloudDir = *options.defaultCloudDir
-
-	simulator.robotInstance = &testableRobot{}
-	go simulator.robotInstance.run(*options.urlConfigFile)
+	go simulator.robotInstance.run()
 
 	simulator.robotInstance.waitUntilReady()
 
@@ -154,6 +159,12 @@ func (s *robotSimulator) testTokenRefresh() error {
 	return err
 }
 
+func (s *robotSimulator) testMicConnectionCheck() error {
+	err := s.robotInstance.micClient.connectionCheck()
+	s.logIfNoError(err, "mic_connection_check", "Microphone connection checked\n")
+	return err
+}
+
 func (s *robotSimulator) heartBeat() error {
 	var err error
 	s.logIfNoError(err, "heart_beat", "Heart beat")
@@ -161,7 +172,6 @@ func (s *robotSimulator) heartBeat() error {
 }
 
 func waitForSignal() {
-	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
 
 	<-signalChannel
@@ -170,7 +180,11 @@ func waitForSignal() {
 }
 
 func simulate(options *options) {
-	options.finalizeIdentity()
+	controller := newDistributedController(*options.redisAddress)
+
+	options.finalizeIdentity(controller)
+
+	robot.DefaultCloudDir = *options.defaultCloudDir
 
 	simulator, err := newRobotSimulator(options)
 	simulator.logIfNoError(err, "main", "New robot created")
@@ -182,12 +196,18 @@ func simulate(options *options) {
 	simulator.addSetupAction(simulator.testPrimaryPairingSequence)
 
 	// After that we periodically run the following actions
-	simulator.addPeriodicAction(time.Duration(*options.heartBeatInterval), simulator.heartBeat)
-	simulator.addPeriodicAction(time.Duration(*options.jdocsInterval), simulator.testJdocsReadAndWriteSettings)
-	simulator.addPeriodicAction(time.Duration(*options.logCollectorInterval), simulator.testLogCollector)
-	simulator.addPeriodicAction(time.Duration(*options.tokenRefreshInterval), simulator.testTokenRefresh)
+	simulator.addPeriodicAction("heart_beat", options.heartBeatInterval, options.heartBeatStdDev, simulator.heartBeat)
+	simulator.addPeriodicAction("jdocs", options.jdocsInterval, options.jdocsStdDev, simulator.testJdocsReadAndWriteSettings)
+	simulator.addPeriodicAction("logging", options.logCollectorInterval, options.logCollectorStdDev, simulator.testLogCollector)
+	simulator.addPeriodicAction("token_refresh", options.tokenRefreshInterval, options.tokenRefreshStdDev, simulator.testTokenRefresh)
+	simulator.addPeriodicAction("mic_connection_check", options.connectionCheckInterval, options.connectionCheckStdDev, simulator.testMicConnectionCheck)
 
-	simulator.start()
+	if *options.enableDistributedControl {
+		fmt.Println("Listening for external simulation commands")
+		controller.forwardCommands(simulator)
+	} else {
+		simulator.start()
+	}
 
 	waitForSignal()
 
@@ -197,9 +217,16 @@ func simulate(options *options) {
 }
 
 func main() {
-	app := cli.App("robot_simulator", "Robot cloud simulation tool")
+	// init logging and make sure it gets cleaned up
+	scli.SetupLogging()
+	defer scli.CleanupAndExit()
+
+	app := mcli.App("robot_simulator", "Robot cloud simulation tool")
 
 	options := newFromEnvironment(app)
+
+	// Enable client certs and set custom key pair dir (for this user)
+	identity.UseClientCert = true
 
 	app.Action = func() {
 		simulate(options)

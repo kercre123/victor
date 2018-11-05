@@ -124,6 +124,11 @@ namespace Anki {
                              const Point3f& size,
                              const Pose3d& pose,
                              const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
+
+      // Draws XYZ axes as corresponding RGB lines
+      void DrawFrameAxes(const std::string identifier, 
+                         const Pose3d& pose, 
+                         const f32 scale_mm = 100.f);
       
       void DrawCameraFace(const Vision::TrackedFace& face,
                           const ColorRGBA& color);

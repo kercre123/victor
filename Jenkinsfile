@@ -1,4 +1,10 @@
 #!/usr/bin/env groovy
+import java.util.UUID
+import hudson.model.*
+import jenkins.model.*
+import hudson.slaves.*
+import hudson.plugins.sshslaves.verifiers.*
+
 @NonCPS
 def getListOfOnlineNodesForLabel(label) {
   def nodes = []
@@ -28,6 +34,67 @@ def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
 
 def primaryStageName = ''
+def vSphereServer = 'ankicore'
+
+class EphemeralAgent {
+    private String IPAddress;
+    private String MachineName;
+
+    EphemeralAgent() {
+        this.MachineName = "jenkins-" + UUID.randomUUID().toString()
+    }
+
+    String getIPAddress() {
+        return this.IPAddress;
+    }
+
+    String getMachineName() {
+        return this.MachineName;
+    }
+
+    void setIPAddress(String ip) {
+        this.IPAddress = ip
+    }
+
+    void Attach() {
+        SshHostKeyVerificationStrategy hostKeyVerificationStrategy = new NonVerifyingKeyVerificationStrategy()
+        ComputerLauncher launcher = new hudson.plugins.sshslaves.SSHLauncher(
+            this.IPAddress, // Host
+            22, // Port
+            "92b3994b-c270-4088-acc9-d85d6a2c7f50", // Credentials
+            (String)null, // JVM Options
+            (String)null, // JavaPath
+            (String)null, // Prefix Start Slave Command
+            (String)null, // Suffix Start Slave Command
+            (Integer)null, // Connection Timeout in Seconds
+            (Integer)null, // Maximum Number of Retries
+            (Integer)null, // The number of seconds to wait between retries
+            hostKeyVerificationStrategy // Host Key Verification Strategy
+        )
+
+
+        Slave agent = new DumbSlave(
+                this.MachineName,
+                "/home/build/jenkins",
+                launcher)
+        agent.nodeDescription = "dynamic build agent"
+        agent.numExecutors = 1
+        agent.labelString = "reserved"
+        agent.mode = Node.Mode.EXCLUSIVE
+        agent.retentionStrategy = new RetentionStrategy.Always()
+
+        Jenkins.instance.addNode(agent)
+    }
+
+    void Detach() {
+        for (s in hudson.model.Hudson.instance.slaves) {
+            if (s.name == this.MachineName) {
+                s.getComputer().doDoDelete()
+            }
+        }
+    }
+
+}
 
 if (env.CHANGE_ID) {
     primaryStageName = 'Pull Request'
@@ -107,10 +174,36 @@ stage("${primaryStageName} Build") {
             }
         }
     }*/
-    node('victor-shipping') {
+    agent = new EphemeralAgent()
+    node('master') {
+        stage('Spin up ephemeral VM') {
+            uuid = agent.getMachineName()
+            vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
+                customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
+                linkedClone: true, powerOn: true, resourcePool: 'vic-os',
+                sourceName: 'photonos-test', timeoutInSeconds: 60], serverName: vSphereServer
+
+            try {
+                def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
+                agent.setIPAddress(buildAgentIP)
+            } catch (e) {
+                throw e
+            }
+        }
+        stage('Attach ephemeral build agent VM to Jenkins') {
+            agent.Attach()
+        }
+    }
+    node(uuid) {
         try {
             withDockerEnv {
                 buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                stage('DAS Unit Tests') {
+                    withEnv(["CXX=clang++", "LDFLAGS=-lpthread -luuid -lcurl -stdlib=libc++ -v"]) {
+                        sh "make -C ./lib/das-client/unix run-unit-tests"
+                        sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
+                    }
+                }
                 //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
         } catch (exc) {
@@ -119,12 +212,18 @@ stage("${primaryStageName} Build") {
             stage('Cleaning slave workspace') {
                 cleanWs()
             }
-            stage('Cleaning master workspace') {
-                node('master') {
+            node('master') {
+                stage('Cleaning master workspace') {
                     def workspace = pwd()
                     dir("${workspace}@script") {
                         deleteDir()
                     }
+                }
+                stage('Destroy ephemeral VM') {
+                    vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+                }
+                stage('Detach ephemeral build agent from Jenkins') {
+                    agent.Detach()
                 }
             }
         }

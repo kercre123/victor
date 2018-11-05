@@ -68,7 +68,8 @@ public:
   bool DoesSettingUpdateCloudImmediately(const external_interface::RobotSetting key) const;
 
   bool UpdateSettingsJdoc(const bool saveToCloudImmediately,
-                          const bool setCloudDirtyIfNotImmediate);
+                          const bool setCloudDirtyIfNotImmediate,
+                          const bool sendJdocsChangedMessage = false);
 
   //////
   // Some user settings need to be triggered from behaviors; these function help in dealing with latent setting change
@@ -87,9 +88,10 @@ public:
   bool ApplyPendingSettingsUpdate(const external_interface::RobotSetting setting, const bool clearRequest = true);
   //////
 
+  void ApplyAllCurrentSettings();
+
 private:
 
-  void ApplyAllCurrentSettings();
   bool ApplyRobotSetting(const external_interface::RobotSetting robotSetting, bool force = true);
   bool ApplySettingMasterVolume();
   bool ApplySettingEyeColor();

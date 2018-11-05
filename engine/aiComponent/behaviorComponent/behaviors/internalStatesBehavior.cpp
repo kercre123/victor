@@ -38,6 +38,8 @@
 
 #include <cctype>
 
+#define LOG_CHANNEL "Behaviors"
+
 namespace {
   #define CONSOLE_GROUP "Behaviors.InternalStatesBehavior"
   CONSOLE_VAR(bool, kDebugInternalStatesBehavior, CONSOLE_GROUP, false);
@@ -63,6 +65,7 @@ constexpr const char* kGetInBehaviorKey = "getInBehavior";
 constexpr const char* kResetBehaviorTimerKey = "resetBehaviorTimer";
 constexpr const char* kCancelSelfKey = "cancelSelf";
 constexpr const char* kIgnoreMissingTransitionsKey = "ignoreMissingTransitions";
+constexpr const char* kEnsureMinStimKey = "ensureMinStimValue";
 
 static const BackpackLightAnimation::BackpackAnimation kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -156,6 +159,8 @@ public:
 
   std::string _getInBehaviorName;
   ICozmoBehaviorPtr _getInBehavior;
+
+  float _ensureMinStim = -1.0f;
 
   BehaviorTimerTypes _behaviorTimer = BehaviorTimerTypes::Invalid;
 
@@ -393,6 +398,13 @@ void InternalStatesBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) co
 
 void InternalStatesBehavior::OnBehaviorActivated()
 {
+  OnBehaviorActivatedInternal();
+
+  if (_firstTimeActivated_s < 0.0f ) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _firstTimeActivated_s = currTime_s;
+  }
+
   if( _useDebugLights ) {
     // force an update
     _debugLightsDirty = true;
@@ -755,6 +767,7 @@ InternalStatesBehavior::State::State(const Json::Value& config)
 {
   _name = JsonTools::ParseString(config, kStateNameConfigKey, "InternalStatesBehavior.StateConfig");
   _getInBehaviorName = config.get(kGetInBehaviorKey, "").asString();
+  _ensureMinStim = config.get(kEnsureMinStimKey, -1.0f).asFloat(); // -1 means disabled
 
   _behaviorName = config.get(kBehaviorKey, "").asString();
 
@@ -829,7 +842,14 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
   if( _activateIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsUserIntentPending( _activateIntent ) ) {
-      uic.ActivateUserIntent( _activateIntent, ("InternalState:" + _name) );
+      // if we have a behavior associated with this state, activate the intent through it so that
+      // it can control how it wants to display the active intent feedback
+      if( nullptr != _behavior ) {
+        _behavior->ActivateUserIntentHelper( _activateIntent, ("InternalState:" + _name) );
+      }
+      else {
+        uic.ActivateUserIntent( _activateIntent, ("InternalState:" + _name), true );
+      }
     }
   }
 
@@ -867,6 +887,19 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
                      pausedFor_s);
     }
   }
+
+  if( !isResuming && _ensureMinStim > 0.0f ) {
+    auto& moodManager = bei.GetMoodManager();
+    const float currStim = moodManager.GetEmotionValue(EmotionType::Stimulated);
+    if( currStim < _ensureMinStim ) {
+      LOG_DEBUG("InternalStatesBehavior.State.OnActivated.EnsureMinStim",
+                "State '%s': stim was %f, bringing up to min of %f",
+                _name.c_str(),
+                currStim,
+                _ensureMinStim);
+      moodManager.SetEmotion(EmotionType::Stimulated, _ensureMinStim, "MinStimForInternalState");
+    }
+  }
 }
 
 void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei)
@@ -880,7 +913,13 @@ void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei
   if( _activateIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsUserIntentActive( _activateIntent ) ) {
-      uic.DeactivateUserIntent( _activateIntent );
+      // if the behavior activated the intent, it needs to deactivate it
+      if( nullptr != _behavior ) {
+        _behavior->DeactivateUserIntentHelper( _activateIntent );
+      }
+      else {
+        uic.DeactivateUserIntent( _activateIntent );
+      }
     }
   }
 
@@ -901,15 +940,39 @@ float InternalStatesBehavior::State::GetTimeActive()
   return returnTime;
 }
 
-bool InternalStatesBehavior::StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun) const
+bool InternalStatesBehavior::StateExitCooldownExpired(StateID state,
+                                                      float timeout,
+                                                      InternalStatesBehavior::StateCooldownDefault neverRunDefault) const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool neverRun = valueIfNeverRun && (_states->at(state)._lastTimeEnded_s < 0.0f);
-  if( neverRun || (_states->at(state)._lastTimeEnded_s + timeout <= currTime_s) ) {
-    return true;
+
+  const auto it = _states->find(state);
+  if( it != _states->end() &&
+      it->second._lastTimeEnded_s >= 0.0f) {
+    const float endTime = it->second._lastTimeEnded_s;
+    const bool cooldownExpired = (endTime + timeout <= currTime_s);
+    return cooldownExpired;
   }
   else {
-    return false;
+    // never run
+    switch(neverRunDefault) {
+      case StateCooldownDefault::True:
+        return true;
+
+      case StateCooldownDefault::False:
+        return false;
+
+      case StateCooldownDefault::UseBehaviorActivationTime: {
+        const float lastTime = GetTimeActivated_s();
+        const bool cooldownExpired = (lastTime + timeout <= currTime_s);
+        return cooldownExpired;
+      }
+
+      case StateCooldownDefault::UseFirstBehaviorActivationTime: {
+        const bool cooldownExpired = (_firstTimeActivated_s + timeout <= currTime_s);
+        return cooldownExpired;
+      }
+    }
   }
 }
 

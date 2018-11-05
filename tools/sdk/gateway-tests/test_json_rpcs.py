@@ -218,3 +218,37 @@ def test_update_and_restart(vector_connection):
 
 def test_check_cloud_connection(vector_connection):
     vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())
+
+@pytest.mark.parametrize("data,result", [
+    ('{"feature_name":"TestFeature"}',1),
+    ('{"feature_name":"NotAFeature"}',0)
+])
+def test_feature_flag(vector_connection, data, result):
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+        data = json.loads(response.content)
+        assert "valid_feature" in data
+        assert "feature_enabled" in data
+        assert data["valid_feature"] == result
+        assert data["feature_enabled"] == 0
+    vector_connection.send_raw("v1/feature_flag", data, p.FeatureFlagResponse(), callback=callback)
+
+def test_alexa_auth_state(vector_connection):
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+    vector_connection.send("v1/alexa_auth_state", p.AlexaAuthStateRequest(), p.AlexaAuthStateResponse(), callback=callback)
+
+@pytest.mark.parametrize("data", [
+    '{"opt_in":true}'
+])
+def test_alexa_opt_in(vector_connection, data):
+    vector_connection.send_raw("v1/alexa_opt_in", data, p.AlexaOptInResponse())
+
+@pytest.mark.parametrize("data", [
+    '{"opt_in":false}'
+])
+def test_alexa_opt_out(vector_connection, data):
+    vector_connection.send_raw("v1/alexa_opt_in", data, p.AlexaOptInResponse())
+
+def test_set_eye_color(vector_connection):
+    vector_connection.send("v1/set_eye_color", p.SetEyeColorRequest(), p.SetEyeColorResponse())

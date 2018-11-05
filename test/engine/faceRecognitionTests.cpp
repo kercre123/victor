@@ -5,6 +5,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/components/visionComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/cozmoContext.h"
@@ -385,8 +386,8 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     robot.GetVisionComponent().InitDependent(&robot, dependentComps);
     
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
-    robot.GetVisionComponent().DisableAllModes();
-    robot.GetVisionComponent().EnableMode(VisionMode::DetectingFaces, true);
+    robot.GetVisionScheduleMediator().DevOnly_ReleaseAllSubscriptions();
+    robot.GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode({VisionMode::DetectingFaces});
     robot.GetVisionComponent().Enable(true);
     
     if(iReload == 0)

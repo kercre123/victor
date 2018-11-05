@@ -1,13 +1,27 @@
 {
   "behaviorID" : "WhileInAirResponses",
-  "behaviorClass" : "AnimSequence",
+  "behaviorClass" : "DispatcherStrictPriority",
+  
+  "interruptActiveBehavior": true,
 
+  "behaviors": [
+    "ObservingLookAtFacesInAir",
+    "ReactToPickupAnimLoopInternal"
+  ],
+  
   "wantsToBeActivatedCondition":  {
     "conditionType": "FeatureGate",
     "feature": "PRDemo",
     "expected": false
   },
-
-  "animTriggers": ["ReactToPickupLoop"],
-  "num_loops": 0 // loop forever
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "ReactToPickupAnimLoopInternal",
+      "behaviorClass" : "AnimSequence",
+      
+      "animTriggers": ["ReactToPickupLoop"],
+      "num_loops": 0 // loop forever
+    }
+  ]
 }

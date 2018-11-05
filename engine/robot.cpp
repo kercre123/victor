@@ -91,8 +91,6 @@
 namespace Anki {
 namespace Vector {
 
-CONSOLE_VAR(bool, kFakeRobotBeingHeld, "Robot", false);
-
 CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 
 // if false, vision system keeps running while picked up, on side, etc.
@@ -411,6 +409,10 @@ Robot::~Robot()
   _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
   _components->RemoveComponent(RobotComponentID::PathPlanning);
 
+  // Ensure JdocsManager destructor gets called before the destructors of the
+  // four components that it needs to talk to
+  _components->RemoveComponent(RobotComponentID::JdocsManager);
+
   LOG_INFO("robot.destructor", "%d", GetID());
 }
 
@@ -557,13 +559,11 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         // Re-enable vision if we've returned to treads
         GetVisionComponent().Pause(false);
       }
-
-      DEV_ASSERT(!IsLocalized(), "Robot should be delocalized when first put back down!");
-
+      
       // If we are not localized and there is nothing else left in the world that
       // we could localize to, then go ahead and mark us as localized (via
       // odometry alone)
-      if (false == GetBlockWorld().AnyRemainingLocalizableObjects()) {
+      if (!IsLocalized() && !GetBlockWorld().AnyRemainingLocalizableObjects()) {
         LOG_INFO("Robot.UpdateOfftreadsState.NoMoreRemainingLocalizableObjects",
                  "Marking previously-unlocalized robot %d as localized to odometry because "
                  "there are no more objects to localize to in the world.", GetID());
@@ -758,6 +758,12 @@ void Robot::Delocalize(bool isCarryingObject)
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized()));
+  
+  DASMSG(robot_delocalized,
+         "robot.delocalized",
+         "The robot has delocalized. This event occurs any time the robot delocalizes.");
+  DASMSG_SET(i1, isCarryingObject, "1 if carrying an object, null if not");
+  DASMSG_SEND();
 
 } // Delocalize()
 
@@ -769,6 +775,12 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
     _localizedToID.UnSet();
     _isLocalized = true;
     return RESULT_OK;
+  }
+  
+  // Do not allow localizing if we're not on treads
+  if (_offTreadsState != OffTreadsState::OnTreads) {
+    LOG_ERROR("Robot.SetLocalizedTo.OffTreads", "Cannot localize while off treads");
+    return RESULT_FAIL;
   }
 
   if (object->GetID().IsUnknown()) {
@@ -810,6 +822,14 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
                                          GetPoseOriginList().GetSize(),
                                          GetWorldOrigin().GetName().c_str());
 
+  DASMSG(robot_localized_to_object, "robot.localized_to_object", "The robot has localized to an object");
+  DASMSG_SET(s1, EnumToString(object->GetType()), "object type");
+  DASMSG_SET(i1, object->GetPose().GetTranslation().x(), "x coordinate of object pose");
+  DASMSG_SET(i2, object->GetPose().GetTranslation().y(), "y coordinate of object pose");
+  DASMSG_SET(i3, object->GetPose().GetTranslation().z(), "z coordinate of object pose");
+  DASMSG_SET(i4, GetPose().GetTranslation().z(), "z coordinate of robot pose");
+  DASMSG_SEND();
+  
   return RESULT_OK;
 
 } // SetLocalizedTo()
@@ -1243,8 +1263,13 @@ Result Robot::Update()
   CameraService::getInstance()->Update();
   ToFSensor::getInstance()->Update();
 
-  const Result factoryRes = UpdateStartupChecks();
-  if(factoryRes != RESULT_OK)
+  Result factoryRes;
+  const bool checkDone = UpdateStartupChecks(factoryRes);
+  if(!checkDone)
+  {
+    return RESULT_OK;
+  }
+  else if(factoryRes != RESULT_OK)
   {
     return factoryRes;
   }
@@ -1719,6 +1744,11 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     return RESULT_FAIL;
   }
 
+  if (histStatePtr->WasPickedUp() || (_offTreadsState != OffTreadsState::OnTreads)) {
+    LOG_INFO("Robot.LocalizeToObject.OffTreads", "Not localizing to object since we are not on treads");
+    return RESULT_OK;
+  }
+  
   // Mark the robot as now being localized to this object
   // NOTE: this should be _after_ calling AddVisionOnlyStateToHistory, since
   //    that function checks whether the robot is already localized
@@ -2231,9 +2261,6 @@ Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 at
 
 OffTreadsState Robot::GetOffTreadsState() const
 {
-  if(kFakeRobotBeingHeld){
-    return OffTreadsState::Held;
-  }
   return _offTreadsState;
 }
 
@@ -2564,6 +2591,11 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
     srcProxData.isTooPitched);
   msg->set_allocated_prox_data(dstProxData);
 
+  auto* dstTouchData = new external_interface::TouchData(
+    GetTouchSensorComponent().GetLatestRawTouchValue(),
+    GetTouchSensorComponent().GetIsPressed());
+  msg->set_allocated_touch_data(dstTouchData);
+
   return msg;
 }
 
@@ -2756,7 +2788,7 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
                                             shouldManage);
 }
 
-Result Robot::UpdateCameraStartupChecks()
+bool Robot::UpdateCameraStartupChecks(Result& res)
 {
   enum State {
     FAILED = -1,
@@ -2800,10 +2832,11 @@ Result Robot::UpdateCameraStartupChecks()
     }
   }
 
-  return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  res = (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  return (state != State::WAITING);
 }
 
-Result Robot::UpdateGyroCalibChecks()
+bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
   // should be displaying the gyro not calibrated image
@@ -2841,21 +2874,29 @@ Result Robot::UpdateGyroCalibChecks()
 
   }
 
-  return RESULT_OK;
+  res = RESULT_OK;
+  return true;
 }
 
-Result Robot::UpdateStartupChecks()
+bool Robot::UpdateStartupChecks(Result& res)
 {
-#define RUN_CHECK(func)  \
-  res = func();          \
-  if(res != RESULT_OK) { \
-    return res;          \
+#define RUN_CHECK(func)        \
+  {                            \
+    Result result = RESULT_OK; \
+    checkDone &= func(result); \
+    if(checkDone) {            \
+      res = result;            \
+      if(res != RESULT_OK) {   \
+        return res;            \
+      }                        \
+    }                          \
   }
 
-  Result res = RESULT_OK;
+  bool checkDone = true;
+  res = RESULT_OK;
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
-  return res;
+  return checkDone;
 
 #undef RUN_CHECK
 }
@@ -2892,7 +2933,8 @@ void Robot::SetImageSendMode(ImageSendMode newMode)
 {
   _imageSendMode = newMode;
   // TODO: VIC-5159 fix this to work with SingleShot
-  GetVisionComponent().EnableMode(VisionMode::ImageViz, (newMode != ImageSendMode::Off));
+  const bool enable = (newMode != ImageSendMode::Off);
+  GetVisionComponent().EnableImageSending(enable);
 }
 
 } // namespace Vector

@@ -150,6 +150,7 @@ void NeuralNetModel::ScaleImage(Vision::ImageRGB& img)
   if(_params.useFloatInput)
   {
     float* scaledInputData = _interpreter->typed_tensor<float>(inputIndex);
+    DEV_ASSERT(scaledInputData != nullptr, "NeuralNetModel.ScaleImage.NullInputData");
     
     // Resize uint8 image data, and *then* convert smaller image to float below
     // TODO: Resize and convert directly into the scaledInputData (ideally using NEON?)

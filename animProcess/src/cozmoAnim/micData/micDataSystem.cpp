@@ -23,6 +23,7 @@
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 
 #include "audioEngine/plugins/ankiPluginInterface.h"
 
@@ -96,7 +97,8 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
   const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
   _writeLocationDir = dataWriteLocation;
-  _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation, triggerDataDir));
+  _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation));
+  _speechRecognizerSystem.reset(new SpeechRecognizerSystem(_context, this, triggerDataDir));
 
   if (!_writeLocationDir.empty())
   {
@@ -118,7 +120,8 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
-  _micDataProcessor->Init(dataLoader, _locale);
+  _speechRecognizerSystem->Init(dataLoader, _locale);
+  _micDataProcessor->Init();
 }
 
 MicDataSystem::~MicDataSystem()
@@ -669,6 +672,13 @@ void MicDataSystem::ResetBeatDetector()
 {
   _micDataProcessor->GetBeatDetector().Start();
 }
+  
+void MicDataSystem::SetAlexaActive(bool active)
+{
+  // Tell micDataProcessor Alexa is active
+  _micDataProcessor->SetAlexaActive(active);
+  // TODO: toggle "Alexa" wake word in SpeechRecognizerSystem
+}
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 {
@@ -680,7 +690,7 @@ void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
 {
   _locale = newLocale;
-  _micDataProcessor->UpdateTriggerForLocale(newLocale);
+  _speechRecognizerSystem->UpdateTriggerForLocale(newLocale);
 }
 
 bool MicDataSystem::IsSpeakerPlayingAudio() const

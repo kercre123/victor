@@ -1465,7 +1465,7 @@ namespace Anki {
             }
 
             // Check that the object has moved at all in certain time window before we started calling Verify().
-            // If it hasn't moved at all we probably missed.
+            // If it hasn't moved at all we probably missed, note the outcome and retry.
             else if (VerifyCarryingComponentValid() &&
                      (_firstVerifyCallTime > lastMovingTime + (_dockAction == DockAction::DA_PICKUP_LOW ? kMaxObjectHasntMovedBeforeRobotStopTime_ms : kMaxObjectHasntMovedBeforeRobotStopTimeForHighPickup_ms))) {
               _carryingComponentPtr->SetCarriedObjectAsUnattached(true);

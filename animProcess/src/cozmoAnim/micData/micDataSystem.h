@@ -45,6 +45,7 @@ namespace Anki {
       struct MicData;
       struct RobotToEngine;
     }
+    class SpeechRecognizerSystem;
   }
   namespace Util {
     namespace Data {
@@ -69,6 +70,9 @@ public:
 
   void Init(const RobotDataLoader& dataLoader);
 
+  MicData::MicDataProcessor* GetMicDataProcessor() const { return _micDataProcessor.get(); }
+  SpeechRecognizerSystem* GetSpeechRecognizerSystem() const { return _speechRecognizerSystem.get(); }
+  
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
@@ -95,6 +99,8 @@ public:
   const Anki::Vector::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
+  
+  void SetAlexaActive(bool active);
 
   void UpdateLocale(const Util::Locale& newLocale);
   
@@ -141,8 +147,9 @@ private:
   size_t _streamingAudioIndex = 0;
   Util::Locale _locale = {"en", "US"};
 
-  std::unique_ptr<MicDataProcessor> _micDataProcessor;
-  std::unique_ptr<LocalUdpServer> _udpServer;
+  std::unique_ptr<MicDataProcessor>       _micDataProcessor;
+  std::unique_ptr<SpeechRecognizerSystem> _speechRecognizerSystem;
+  std::unique_ptr<LocalUdpServer>         _udpServer;
 
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;

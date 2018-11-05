@@ -6,165 +6,43 @@
   //      "enabled": true/false
   //    },
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // ----------------------------------------------------------
   //
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  "osx" :
+  // ----------------------------------------------------------
+  "osx":
   {
     "channels":
     [
-      { "channel": "Unnamed" ,             "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "CoreTech",             "enabled": false },
-      { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
-      { "channel": "CpuProfiler",          "enabled": true  },
-      { "channel": "Keyboard",             "enabled": true },
-      { "channel": "Puzzle",               "enabled": false },
-      { "channel": "Network",              "enabled": false },
-      { "channel": "Profiler",             "enabled": false },
-      { "channel": "Unity"   ,             "enabled": false },
-      { "channel": "VisionComponent",      "enabled": false },
-      { "channel": "VisionSystem",         "enabled": false },
-      { "channel": "UnlockComponent",      "enabled": false },
-      { "channel": "Actions",              "enabled": false },
-      { "channel": "Behaviors",            "enabled": false },
-      { "channel": "BehaviorSystem",       "enabled": false },
-      { "channel": "BehaviorHelpers",      "enabled": false },
-      { "channel": "BuildPyramid",         "enabled": false },
-      { "channel": "AIWhiteboard",         "enabled": false },
-      { "channel": "AIInfoAnalysis",       "enabled": false },
-      { "channel": "Audio",                "enabled": false },
-      { "channel": "FaceRecognizer",       "enabled": false },
-      { "channel": "Feeding",              "enabled": false },
-      { "channel": "UiComms",              "enabled": false },
-      { "channel": "Mood",                 "enabled": false },
-      { "channel": "PoseConfirmer",        "enabled": false },
-      { "channel": "BlockWorld",           "enabled": false },
-      { "channel": "BlockPool",            "enabled": false },
-      { "channel": "NVStorage",            "enabled": false },
-      { "channel": "Animations",           "enabled": false }, // Print every animation that is triggered
-      { "channel": "Planner",              "enabled": false },
-      { "channel": "CubeLightComponent",   "enabled": false },
-      { "channel": "BackpackLightComponent",   "enabled": false },
-      { "channel": "ReactionTriggers",     "enabled": false },
-      { "channel": "Loading",              "enabled": false },
-      { "channel": "RobotStateHistory",    "enabled": false },
-      { "channel": "PublicStateBroadcast", "enabled": false },
-      { "channel": "CubeAccelComponent",   "enabled": false },
-      { "channel": "PerfMetric",           "enabled": true },
-      { "channel": "VoiceCommands",        "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false },
-      { "channel": "MicData",              "enabled": true },
-      { "channel": "FaceInfoScreenManager", "enabled": false },
-      { "channel": "RobotStats",            "enabled": false },
-      { "channel": "KnowledgeGraph",       "enabled": false },
-      { "channel": "PowerStates",          "enabled": false },
-      { "channel": "Demo",                 "enabled": true }
+      { "channel": "CpuProfiler",                       "enabled": true },
+      { "channel": "Keyboard",                          "enabled": true },
+      { "channel": "MessageProfiler",                   "enabled": true },
+      { "channel": "MicData",                           "enabled": true },
+      { "channel": "PerfMetric",                        "enabled": true },
+      { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
     [
-      { "level" : "event", "enabled" : true },
-      { "level" : "debug", "enabled" : false }
+      { "level": "event", "enabled": true },
+      { "level": "debug", "enabled": false }
     ]
   },
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // ----------------------------------------------------------
   //
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  "android" :
+  // ----------------------------------------------------------
+  "vicos":
   {
     "channels":
     [
-      { "channel": "Unnamed",              "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
-      { "channel": "CpuProfiler",          "enabled": true  },
-      { "channel": "Network",              "enabled": false },
-      { "channel": "Profiler",             "enabled": false },
-      { "channel": "Unity"   ,             "enabled": false },
-      { "channel": "VisionComponent",      "enabled": false },
-      { "channel": "VisionSystem",         "enabled": false },
-      { "channel": "UnlockComponent",      "enabled": false },
-      { "channel": "Actions",              "enabled": false },
-      { "channel": "Behaviors",            "enabled": false },
-      { "channel": "BehaviorHelpers",      "enabled": false },
-      { "channel": "BuildPyramid",         "enabled": false },
-      { "channel": "AIWhiteboard",         "enabled": false },
-      { "channel": "AIInfoAnalysis",       "enabled": false },
-      { "channel": "Audio",                "enabled": false },
-      { "channel": "FaceRecognizer",       "enabled": false },
-      { "channel": "Feeding",              "enabled": false },
-      { "channel": "UiComms",              "enabled": false },
-      { "channel": "Mood",                 "enabled": false },
-      { "channel": "PoseConfirmer",        "enabled": false },
-      { "channel": "BlockWorld",           "enabled": false },
-      { "channel": "BlockPool",            "enabled": false },
-      { "channel": "NVStorage",            "enabled": false },
-      { "channel": "Animations",           "enabled": false },
-      { "channel": "CubeLightComponent",   "enabled": false },
-      { "channel": "BackpackLightComponent",   "enabled": false },
-      { "channel": "ReactionTriggers",     "enabled": false },
-      { "channel": "RobotStateHistory",    "enabled": false },
-      { "channel": "PublicStateBroadcast", "enabled": false },
-      { "channel": "CubeAccelComponent",   "enabled": false },
-      { "channel": "PerfMetric",           "enabled": true },
-      { "channel": "VoiceCommands",        "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false },
-      { "channel": "KnowledgeGraph",       "enabled": true }
+      { "channel": "CpuProfiler",                       "enabled": true },
+      { "channel": "MessageProfiler",                   "enabled": true },
+      { "channel": "PerfMetric",                        "enabled": true },
+      { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
     [
-      { "level" : "event", "enabled" : true },
-      { "level" : "debug", "enabled" : false }
-    ]
-  },
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  //
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  "ios" :
-  {
-    "channels":
-    [
-      { "channel": "Unnamed",              "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
-      { "channel": "CpuProfiler",          "enabled": true  },
-      { "channel": "Network",              "enabled": false },
-      { "channel": "Profiler",             "enabled": false },
-      { "channel": "Unity"   ,             "enabled": false },
-      { "channel": "VisionComponent",      "enabled": false },
-      { "channel": "VisionSystem",         "enabled": false },
-      { "channel": "UnlockComponent",      "enabled": false },
-      { "channel": "Actions",              "enabled": false },
-      { "channel": "Behaviors",            "enabled": false },
-      { "channel": "BehaviorHelpers",      "enabled": false },
-      { "channel": "BuildPyramid",         "enabled": false },
-      { "channel": "AIWhiteboard",         "enabled": false },
-      { "channel": "AIInfoAnalysis",       "enabled": false },
-      { "channel": "Audio",                "enabled": false },
-      { "channel": "FaceRecognizer",       "enabled": false },
-      { "channel": "Feeding",              "enabled": false },
-      { "channel": "UiComms",              "enabled": false },
-      { "channel": "Mood",                 "enabled": false },
-      { "channel": "PoseConfirmer",        "enabled": false },
-      { "channel": "BlockWorld",           "enabled": false },
-      { "channel": "BlockPool",            "enabled": false },
-      { "channel": "NVStorage",            "enabled": false },
-      { "channel": "Animations",           "enabled": false },
-      { "channel": "CubeLightComponent",   "enabled": false },
-      { "channel": "BackpackLightComponent",   "enabled": false },
-      { "channel": "ReactionTriggers",     "enabled": false },
-      { "channel": "RobotStateHistory",    "enabled": false },
-      { "channel": "PublicStateBroadcast", "enabled": false },
-      { "channel": "CubeAccelComponent",   "enabled": false },
-      { "channel": "PerfMetric",           "enabled": true },
-      { "channel": "VoiceCommands",        "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false },
-      { "channel": "KnowledgeGraph",       "enabled": true }
-    ],
-    "levels":
-    [
-      { "level" : "event", "enabled" : true },
-      { "level" : "debug", "enabled" : false }
+      { "level": "event", "enabled": true },
+      { "level": "debug", "enabled": false }
     ]
   }
-
 }

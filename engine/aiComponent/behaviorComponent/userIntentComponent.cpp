@@ -12,19 +12,25 @@
 
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/utils/cozmoFeatureGate.h"
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 
+#include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTriggerResponse.h"
 #include "clad/types/behaviorComponent/userIntent.h"
@@ -53,6 +59,9 @@ static const float kTimeToClearWaitingForTriggerWordGetIn_s = 3.0f;
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
 static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
+
+static const float kDefaultIntentFeedbackShutoffTime     =  5.0f;
+static const float kIntentFeedbackTransitionShutoffTime  =  2.0f;
 
   CONSOLE_VAR(bool, kStreamAfterDevWakeWord, "UserIntentComponent", false);
   CONSOLE_VAR(bool, kPlayGetInAfterDevWakeWord, "UserIntentComponent", false);
@@ -133,16 +142,9 @@ void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream)
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // assume get in animation is playing
-  _waitingForTriggerWordGetInToFinish = true;
+  _waitingForTriggerWordGetInToFinish = HasAnimResponseToTriggerWord();
   _waitingForTriggerWordGetInToFinish_setTime_s = currTime_s;
 
-  if(!_responseToTriggerWordMap.empty()){
-    // TODO: VIC-5733 This also needs to either check if _responseToTriggerWordMap contains an empty anim, or listen
-    // for playing anims and compare tags
-    auto lastElemIter = _responseToTriggerWordMap.rbegin();
-    _robot->GetAnimationComponent().NotifyComponentOfAnimationStartedByAnimProcess(
-      lastElemIter->response.getInAnimationName, lastElemIter->response.getInAnimationTag);
-  }
   if (!GetEngineShouldRespondToTriggerWord()) {
     LOG_DEBUG("UserIntentComponent.SetPendingTrigger.TriggerWordDetectionDisabled",
               "Trigger word detection disabled, so ignoring message");
@@ -180,7 +182,8 @@ bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent) const
   return (_pendingIntent != nullptr) && (_pendingIntent->intent.GetTag() == userIntent);
 }
 
-UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner)
+UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, const std::string& owner,
+                                                      bool showFeedback, bool autoShutoffFeedback)
 {
   if (!IsUserIntentPending(userIntent)) {
     LOG_ERROR("UserIntentComponent.ActivateIntent.NoActive",
@@ -210,11 +213,24 @@ UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, 
   // track the owner for easier debugging
   _activeIntentOwner = owner;
 
+  if( showFeedback ) {
+    _activeIntentFeedback.Activate(userIntent, autoShutoffFeedback);
+  }
+  else {
+    // just in case we were told to transition, let's stop it
+    _activeIntentFeedback.StopTransitionIntoActive();
+  }
+
   return _activeIntent;
 }
 
 void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
 {
+  // we can have nested activate calls, and we want to be able to deactivate "older" activated intents
+  if (userIntent != UserIntentTag::INVALID) {
+    _activeIntentFeedback.Deactivate(userIntent);
+  }
+    
   if (!IsUserIntentActive(userIntent)) {
     LOG_ERROR("UserIntentComponent.DeactivateUserIntent.NotActive",
               "Attempting to deactivate intent '%s' (activated by %s) but '%s' is active",
@@ -233,6 +249,200 @@ void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
 
 }
 
+void UserIntentComponent::StopActiveUserIntentFeedback()
+{
+  _activeIntentFeedback.Deactivate(UserIntentTag::INVALID);
+}
+
+void UserIntentComponent::StartTransitionIntoActiveUserIntentFeedback()
+{
+  // don't transition if no intent is pending else we'll never clear it
+  if (IsAnyUserIntentPending()) {
+    _activeIntentFeedback.StartTransitionIntoActive();
+  }
+}
+
+// todo: remove this when we decide what we're doing with the lights
+#define USE_CUSTOM_BP_ANIM 0
+
+UserIntentComponent::ActiveIntentFeedback::ActiveIntentFeedback() :
+  robot(nullptr),
+  activatedIntentTag(UserIntentTag::INVALID),
+  isTransitionActive(false),
+  transitionShutOffTime(0.0f),
+  feedbackShutOffTime(0.0f)
+{
+
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Init(Robot* robot)
+{
+  this->robot = robot;
+  DEV_ASSERT( this->robot != nullptr, "UserIntentComponent.ActiveIntentFeedback.Init: Invalid Robot pointer" );
+}
+
+void UserIntentComponent::ActiveIntentFeedback::StartTransitionIntoActive()
+{
+  //
+  //    static const BackpackLightAnimation::BackpackAnimation kStreamingLights =
+  //    {
+  //      .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+  //      .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+  //      .onPeriod_ms            = {{0,0,0}},
+  //      .offPeriod_ms           = {{0,0,0}},
+  //      .transitionOnPeriod_ms  = {{0,0,0}},
+  //      .transitionOffPeriod_ms = {{0,0,0}},
+  //      .offset                 = {{0,0,0}}
+  //    };
+
+  if (!IsActive()) {
+    BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+    bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
+
+    const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    transitionShutOffTime = (currentTime + kIntentFeedbackTransitionShutoffTime);
+
+    isTransitionActive = true;
+  }
+}
+
+void UserIntentComponent::ActiveIntentFeedback::StopTransitionIntoActive()
+{
+  if (isTransitionActive) {
+    // clear out our transition lights (or any lights since we're going to stomp them anyway
+    BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+    bplComponent.ClearAllBackpackLightConfigs();
+
+    isTransitionActive = false;
+  }
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userIntent, bool autoShutoff)
+{
+  if (!IsEnabled()) {
+    return;
+  }
+
+  // don't activate if we're currently actiavted
+  // some behavior have nested "intent activations" and we only care about the first one
+  if (!IsActive())
+  {
+    StopTransitionIntoActive();
+
+    #if USE_CUSTOM_BP_ANIM
+    {
+      static const BackpackLightAnimation::BackpackAnimation kActiveStateLights =
+      {
+        .onColors               = {{NamedColors::WHITE,NamedColors::WHITE,NamedColors::WHITE}},
+        .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+        .onPeriod_ms            = {{1000,1000,1000}},
+        .offPeriod_ms           = {{250,250,250}},
+        .transitionOnPeriod_ms  = {{500,500,500}},
+        .transitionOffPeriod_ms = {{500,500,500}},
+        .offset                 = {{0,0,0}}
+      };
+
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.StartLoopingBackpackAnimation( kActiveStateLights, activeLightsHandle );
+    }
+    #else
+    {
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
+    }
+    #endif
+
+    // send audio state begin event
+//    const AudioMetaData::GameEvent::GenericEvent startEvent = AudioMetaData::GameEvent::GenericEvent::Play_Robot_Vic_SfxWorking_Loop_Play;
+//    robot->GetAudioClient()->PostEvent(startEvent, AudioMetaData::GameObjectType::Behavior);
+
+    // store who activated the state so only it may deactivate it
+    activatedIntentTag = userIntent;
+    feedbackShutOffTime = 0.0f; // default this to off
+
+    // have the user intent feedback shut itself off after a set amount of time
+    if (autoShutoff)
+    {
+      const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      feedbackShutOffTime = (currentTime + kDefaultIntentFeedbackShutoffTime);
+    }
+  }
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userIntent)
+{
+  if (!IsEnabled()) {
+    return;
+  }
+
+  // only deactivate if a) we're currently active, and b) this is the same intent that activated us
+  // UserIntentTag::INVALID intent will force deactivation
+  if (IsActive() && ((userIntent == activatedIntentTag) || (userIntent == UserIntentTag::INVALID)))
+  {
+    #if USE_CUSTOM_BP_ANIM
+    {
+      if ( activeLightsHandle.IsValid() )
+      {
+        BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+        bplComponent.StopLoopingBackpackAnimation( activeLightsHandle );
+      }
+    }
+    #else
+    {
+      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+      bplComponent.ClearAllBackpackLightConfigs();
+    }
+    #endif
+
+    // send audio state end event
+//    const AudioMetaData::GameEvent::GenericEvent startEvent = AudioMetaData::GameEvent::GenericEvent::StopRobot_Vic_Sfx_Working_Loop_Stop;
+//    robot->GetAudioClient()->PostEvent(startEvent, AudioMetaData::GameObjectType::Behavior);
+
+    activatedIntentTag = UserIntentTag::INVALID;
+    feedbackShutOffTime = 0.0f;
+  }
+}
+
+void UserIntentComponent::ActiveIntentFeedback::Update()
+{
+  if (!IsEnabled()) {
+    return;
+  }
+
+  // if we were told to automatically shut off at a certain point, check for that here
+  if (IsActive()) {
+    if (feedbackShutOffTime > 0.0f) {
+      const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (currentTime >= feedbackShutOffTime) {
+        Deactivate( UserIntentTag::INVALID );
+      }
+    }
+  }
+  else {
+    if (isTransitionActive) {
+      const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (currentTime >= transitionShutOffTime) {
+        StopTransitionIntoActive();
+
+        LOG_WARNING("UserIntentComponent.ActiveIntentFeedback.Update.ActiveIntentFeedbackTransition.Warn",
+                    "Active Intent Feedback transition lights were not cleared in %.2fs.  Force clearing them now.",
+                    kIntentFeedbackTransitionShutoffTime);
+      }
+    }
+  }
+}
+
+bool UserIntentComponent::ActiveIntentFeedback::IsEnabled() const
+{
+  return ( (nullptr != robot)
+        && robot->GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ActiveIntentFeedback) );
+}
+
+bool UserIntentComponent::ActiveIntentFeedback::IsActive() const
+{
+  return activatedIntentTag != UserIntentTag::INVALID;
+}
+
 bool UserIntentComponent::IsUserIntentActive(UserIntentTag userIntent) const
 {
   return ( _activeIntent != nullptr ) && ( _activeIntent->intent.GetTag() == userIntent );
@@ -244,15 +454,13 @@ UserIntentPtr UserIntentComponent::GetUserIntentIfActive(UserIntentTag forIntent
   return ret;
 }
 
-UserIntentPtr UserIntentComponent::GetActiveUserIntent() const
-{
-  return _activeIntent;
-}
-
 void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
 {
   if (IsUserIntentPending(userIntent)) {
     _pendingIntent.reset();
+
+    // just in case we were told to transition, let's stop it as a new one is about to begin
+    _activeIntentFeedback.StopTransitionIntoActive();
   }
 
   LOG_WARNING("UserIntentComponent.DropUserIntent.NotPending",
@@ -268,7 +476,11 @@ void UserIntentComponent::DropAnyUserIntent()
     LOG_WARNING("UserIntentComponent.DropAnyUserIntent.IntentNotSet",
                 "Trying to clear a pending intent but the intent isn't set. This is likely a bug");
   }
+
   _pendingIntent.reset();
+
+  // just in case we were told to transition, let's stop it as a new one is about to begin
+  _activeIntentFeedback.StopTransitionIntoActive();
 }
 
 bool UserIntentComponent::IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const
@@ -323,6 +535,15 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
 
   _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
   _pendingIntentTimeoutEnabled = true;
+
+  // just in case we were told to transition, let's stop it as a new one is about to begin
+  _activeIntentFeedback.StopTransitionIntoActive();
+
+  // notify the whiteboard
+  if( _robot && _robot->HasComponent<AIComponent>() ) {
+    _robot->GetComponent<AIComponent>().GetComponent<AIWhiteboard>().NotifyNewUserIntentPending(
+      _pendingIntent->intent.GetTag() );
+  }
 }
 
 void UserIntentComponent::DevSetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source)
@@ -455,6 +676,8 @@ void UserIntentComponent::InitDependent( Vector::Robot* robot, const BCCompMap& 
   };
 
   _tagForTriggerWordGetInCallbacks = _robot->GetAnimationComponent().SetTriggerWordGetInCallback(callback);
+
+  _activeIntentFeedback.Init(robot);
 }
 
 bool UserIntentComponent::SetCloudIntentPendingFromString(const std::string& cloudStr)
@@ -670,12 +893,13 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
                    "Source of the intent that was dropped (e.g. App, Voice)");
         DASMSG_SEND_WARNING();
 
-        _pendingIntent.reset();
+        DropAnyUserIntent();
         _wasIntentUnclaimed = true;
-
       }
     }
   }
+
+  _activeIntentFeedback.Update();
 }
 
 
@@ -684,7 +908,7 @@ void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType strea
   RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType), playGetInFromAnimProcess};
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
   if (playGetInFromAnimProcess) {
-    _waitingForTriggerWordGetInToFinish = playGetInFromAnimProcess;
+    _waitingForTriggerWordGetInToFinish = playGetInFromAnimProcess && HasAnimResponseToTriggerWord();
     _waitingForTriggerWordGetInToFinish_setTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
@@ -844,6 +1068,18 @@ void UserIntentComponent::PushResponseToTriggerWordInternal(const std::string& i
   _robot->SendMessage(RobotInterface::EngineToRobot( std::move(intentionalCopy)) );
   _responseToTriggerWordMap.emplace_back(TriggerWordResponseEntry(id, std::move(response)));
 
+}
+
+bool UserIntentComponent::HasAnimResponseToTriggerWord() const
+{
+  // if we have a trigger word response set, and that response has an anim specified
+  if (!_responseToTriggerWordMap.empty()) {
+    const TriggerWordResponseEntry& response = _responseToTriggerWordMap.back();
+    return !response.response.getInAnimationName.empty();
+  }
+
+  LOG_DEBUG("UserIntentComponent.HasAnimResponseToTriggerWord", "No anim reponse to trigger word set");
+  return false;
 }
 
 

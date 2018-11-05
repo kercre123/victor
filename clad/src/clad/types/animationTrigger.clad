@@ -142,7 +142,7 @@ enum int_32 AnimationTrigger
   FailedToRightFromFace,
 
   FetchCubeFailure,
-  FetchCubeFrustrated,
+  FetchCubeSetDown,
   FetchCubeSuccess,
 
   FoundFace,
@@ -272,17 +272,18 @@ enum int_32 AnimationTrigger
   PickupCubePreperation,
   PickupCubeRetry,
   PickupCubeSuccess,
-  PokeObjectGetIn,
-  PokeObjectDriveLoop,
-  PokeObjectGetOut,
-  
+
   PlaceCubeByChargerFail,
   PlaceCubeByChargerReactToCharger,
   PlaceCubeByChargerSuccess,
-  
+
   PlanningGetIn,
   PlanningLoop,
   PlanningGetOut,
+
+  PokeObjectGetIn,
+  PokeObjectDriveLoop,
+  PokeObjectGetOut,
 
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,
@@ -341,6 +342,20 @@ enum int_32 AnimationTrigger
   ReactToPickupInitial,
   ReactToPickupLoop,
   ReactToPutDown,
+
+  ReactToShake_GetIn,
+  ReactToShake_Lvl1Loop,
+  ReactToShake_Lvl1Waiting,
+  ReactToShake_Lvl1InHand,
+  ReactToShake_Lvl1OnGround,
+  ReactToShake_Lvl2Loop,
+  ReactToShake_Lvl2Waiting,
+  ReactToShake_Lvl2InHand,
+  ReactToShake_Lvl2OnGround,
+  ReactToShake_Lvl3Loop,
+  ReactToShake_Lvl3Waiting,
+  ReactToShake_Lvl3InHand,
+  ReactToShake_Lvl3OnGround,
 
   RTS_OffCharger_Sleep_Ambient,
   RTS_OffCharger_Sleep_Front,
@@ -441,6 +456,11 @@ enum int_32 AnimationTrigger
   VC_SleepingToListeningLoop,
   VC_SleepingToListeningGetOut,
   VC_IntentNeutral,
+  VolumeLevel1,
+  VolumeLevel2,
+  VolumeLevel3,
+  VolumeLevel4,
+  VolumeLevel5,
   WakeupGetout,
 
   // Animation triggers not currently used in Victor, but which we'll probably need eventually

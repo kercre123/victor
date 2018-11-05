@@ -5,6 +5,7 @@ import (
 	"anki/log"
 	"anki/logcollector"
 	"anki/token"
+	"anki/token/identity"
 	"anki/voice"
 	"context"
 	"sync"
@@ -27,19 +28,35 @@ func Run(ctx context.Context, procOptions ...Option) {
 		})
 	}
 	// start token service synchronously since everything else depends on it
-	if err := token.Init(); err != nil {
+	identityProvider := opts.identityProvider
+	if identityProvider == nil {
+		// If the identity provider is not provided as an option, we create a default
+		// file backed identity provider with platform specific storage paths for JWT
+		// and certs (see getcert_*.go files)
+		var err error
+		if identityProvider, err = identity.NewFileProvider("", ""); err != nil {
+			log.Println("Fatal error initializing default identity provider:", err)
+			return
+		}
+	}
+
+	if err := token.Init(identityProvider); err != nil {
 		log.Println("Fatal error initializing token service:", err)
 		return
 	}
 	addHandlers(token.GetDevHandlers)
 	launchProcess(&wg, func() {
-		token.Run(ctx, opts.tokenOpts...)
+		tokenOpts := append([]token.Option{token.WithIdentityProvider(identityProvider)},
+			opts.tokenOpts...)
+		token.Run(ctx, tokenOpts...)
 	})
-	tokener := token.GetAccessor()
+	tokener := token.GetAccessor(identityProvider)
+	errorListener := token.ErrorListener()
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
 			// provide default token accessor
-			voiceOpts := append([]voice.Option{voice.WithTokener(tokener)},
+			voiceOpts := append([]voice.Option{voice.WithTokener(tokener),
+				voice.WithErrorListener(errorListener)},
 				opts.voiceOpts...)
 			opts.voice.Run(ctx, voiceOpts...)
 		})
@@ -47,14 +64,16 @@ func Run(ctx context.Context, procOptions ...Option) {
 	if opts.jdocOpts != nil {
 		launchProcess(&wg, func() {
 			// provide default token accessor
-			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener)},
+			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener),
+				jdocs.WithErrorListener(errorListener)},
 				opts.jdocOpts...)
 			jdocs.Run(ctx, jdocOpts...)
 		})
 	}
 	if opts.logcollectorOpts != nil {
 		launchProcess(&wg, func() {
-			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener)},
+			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener),
+				logcollector.WithErrorListener(errorListener)},
 				opts.logcollectorOpts...)
 			logcollector.Run(ctx, logcollectorOpts...)
 		})

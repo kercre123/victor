@@ -185,7 +185,8 @@ bool AccountSettingsManager::SetAccountSetting(const external_interface::Account
   {
     const bool saveToCloudImmediately = DoesSettingUpdateCloudImmediately(accountSetting);
     const bool setCloudDirtyIfNotImmediate = saveToCloudImmediately;
-    success = UpdateAccountSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate);
+    static const bool sendJdocsChangedMessage = true;
+    success = UpdateAccountSettingsJdoc(saveToCloudImmediately, setCloudDirtyIfNotImmediate, sendJdocsChangedMessage);
   }
 
   return success;
@@ -246,14 +247,16 @@ bool AccountSettingsManager::DoesSettingUpdateCloudImmediately(const external_in
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AccountSettingsManager::UpdateAccountSettingsJdoc(const bool saveToCloudImmediately,
-                                                       const bool setCloudDirtyIfNotImmediate)
+                                                       const bool setCloudDirtyIfNotImmediate,
+                                                       const bool sendJdocsChangedMessage)
 {
   static const bool saveToDiskImmediately = true;
   const bool success = _jdocsManager->UpdateJdoc(external_interface::JdocType::ACCOUNT_SETTINGS,
                                                  &_currentAccountSettings,
                                                  saveToDiskImmediately,
                                                  saveToCloudImmediately,
-                                                 setCloudDirtyIfNotImmediate);
+                                                 setCloudDirtyIfNotImmediate,
+                                                 sendJdocsChangedMessage);
   return success;
 }
 

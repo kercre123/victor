@@ -90,6 +90,16 @@ enum uint_16 BehaviorID {
   DanceToTheBeat,
   DanceToTheBeatCoordinator,
   DanceToTheBeatVoiceCommand,
+
+  // victorBehaviorTree/danceToTheBeat/dances
+  DanceBig,
+  DanceForwardBackFlower,
+  DanceFrontRightLeftPoint,
+  DanceSTwoways,
+  DanceSwell,
+  DanceWiggleForwardWiggleBack,
+
+  // victorBehaviorTree/danceToTheBeat
   ListenForBeats,
   ListenForBeatsLong,
 
@@ -155,6 +165,7 @@ enum uint_16 BehaviorID {
   InteractWithStaticCube,
   InvestigateCubeConnectionGate,
   InvestigateHeldCube,
+  MoveCube,
   PlaceCubeByCharger,
   RollBlockIfNotVertical,
   TurnToLastFace,
@@ -168,6 +179,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   LookInPlaceHeadUp,
+  LookInPlaceHeadUpInAir,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
@@ -189,6 +201,7 @@ enum uint_16 BehaviorID {
   ObservingEyeContact,
   ObservingFindFaces,
   ObservingLookAtFaces,
+  ObservingLookAtFacesInAir,
   ObservingOffChargerHeadOnly,
   ObservingOnCharger,
   ObservingOnChargerEyeContact,
@@ -201,6 +214,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
+  PickupCubeNoInitialReaction,
 
   // victorBehaviorTree/highLevelDelegates/playWithCube/activeCubeBehaviors
   CubeSpinnerConnectionGate,
@@ -210,12 +224,11 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/playWithCube
   FetchCube,
   FindCube,
+  FindCubeAndThen,
   FindFacesFetchCube,
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
-  PopAWheelieVoiceCommand,
-  RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/pounceWithProx
   SingletonPounceApproachWithProx,
@@ -226,6 +239,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   PutDownBlock,
+  PutDownBlockAtPose,
   PutDownDispatch_LookForFaceAndCube,
   SayName,
   ShortLookAroundForFaceAndCube,
@@ -253,12 +267,16 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   BlackJackVoiceCommand,
   DoATrickVoiceCommand,
+  FetchCubeVoiceCommand,
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
   GoHomeVoiceCommand,
   KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
+  PickUpCubeVoiceCommand,
   PlayAGameVoiceCommand,
+  PopAWheelieVoiceCommand,
+  RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands/trickDispatchers
   CubeTrickDispatcher,
@@ -342,6 +360,7 @@ enum uint_16 BehaviorID {
   ReactToAffirmative,
   ReactToApology,
   ReactToCliff,
+  ReactToCliffDuringFetch,
   ReactToDarkness,
   ReactToFrustrationMajor,
   ReactToGoodBye,
@@ -356,6 +375,7 @@ enum uint_16 BehaviorID {
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
+  ReactToRobotShaken,
   ReactToSoundAsleep,
   ReactToSoundAwake,
   ReactToSoundDirectionAsleep,
@@ -399,6 +419,11 @@ enum uint_16 BehaviorID {
   UserDefinedBehaviorTreeConfirmNewBehavior,
   UserDefinedBehaviorTreeRouter,
   UserDefinedBehaviorTreeTextToSpeech,
+
+  // victorBehaviorTree/volume
+  Volume,
+
+  // victorBehaviorTree
   Wait,
 
   // victorBehaviorTree/weather/genericResponses

@@ -67,7 +67,8 @@ public:
   bool DoesSettingUpdateCloudImmediately(const external_interface::AccountSetting key) const;
 
   bool UpdateAccountSettingsJdoc(const bool saveToCloudImmediately,
-                                 const bool setCloudDirtyIfNotImmediate);
+                                 const bool setCloudDirtyIfNotImmediate,
+                                 const bool sendJdocsChangedMessage = false);
 
 private:
 

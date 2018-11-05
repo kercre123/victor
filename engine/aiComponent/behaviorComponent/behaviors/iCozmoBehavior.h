@@ -53,7 +53,6 @@ namespace Vector {
 class ActionableObject;
 class ConditionUserIntentPending;
 class DriveToObjectAction;
-enum class ObjectInteractionIntention;
 class UnitTestKey;
 enum class ActiveFeature : uint32_t;
 enum class BehaviorStat : uint32_t;
@@ -216,7 +215,7 @@ public:
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedInternal() const override final;
 
-  BehaviorID         GetID()      const { return _id; }
+  BehaviorID GetID() const { return _id; }
 
   const std::string& GetDebugStateName() const { return _debugStateName;}
   const BehaviorClass GetClass() const { return _behaviorClassID; }
@@ -235,6 +234,7 @@ public:
                                              bool& alreadyInPosition);
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
+  // TODO:(bn) this is likely unused and should be deleted (we tend to use direct casts to behavior types now)
   virtual void AddListener(ISubtaskListener* listener)
                 { DEV_ASSERT(false, "AddListener.FrustrationListener.Unimplemented"); }
   virtual void AddListener(IReactToFaceListener* listener)
@@ -262,6 +262,9 @@ public:
 
   // if an active feature is associated with this behavior, return true and set it in arguments
   bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
+
+  UserIntentPtr ActivateUserIntentHelper(UserIntentTag tag, const std::string& owner = "");
+  void DeactivateUserIntentHelper(UserIntentTag tag);
   
   std::map<std::string,ICozmoBehaviorPtr> TESTONLY_GetAnonBehaviors( UnitTestKey key ) const;
 
@@ -498,6 +501,7 @@ protected:
   // deactivated. For convenience (in the case where there is extra intent data), a pointer the the intent is
   // returned. This pointer will be null if the intent couldn't be activated (i.e. it wasn't pending)
   UserIntentPtr SmartActivateUserIntent(UserIntentTag tag);
+  UserIntentPtr SmartActivateUserIntent(UserIntentTag tag, bool showFeedback);
   
   // de-activate an intent activated through the smart function above.
   void SmartDeactivateUserIntent();
@@ -541,7 +545,10 @@ protected:
   T& GetBehaviorComp() const {
     return GetBEI().GetAIComponent().GetComponent<BehaviorComponent>(). template GetComponent<T>();
   }
-  
+
+  // NOTE: this is old functionality from Cozmo sparks, but may become useful again if we want a way to
+  // "streamline" certain behaviors (i.e. skip some of the animations / reactions that can slow things down).
+  // BN: as of 1.0.1 this is only ever used in a single behavior (pickupCube) and maybe not intentionally so...
   bool ShouldStreamline() const { return (_alwaysStreamline); }
     
   // make a member variable a console var that is only around as long as its class instance is
@@ -601,6 +608,8 @@ private:
   //    the absence of other negative conditions), and
   // 2) Clear the intent when the behavior is activated
   std::shared_ptr< ConditionUserIntentPending > _respondToUserIntent;
+  bool _showActiveIntentFeedback = true;
+  bool _autoShutOffActiveIntentFeedback = false;
 
   // The tag of the intent that should be deactivated when this behavior deactivates
   UserIntentTag _intentToDeactivate;
@@ -626,16 +635,6 @@ private:
 
   // If non-empty, trigger this emotion event when this behavior activated
   std::string _emotionEventOnActivated;
-  
-  // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only activatable if last time the robot got off the charger by
-  // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
-  float _requiredRecentDriveOffCharger_sec;
-  
-  // if _requiredRecentSwitchToParent_sec is greater than 0, this behavior is only activatable if last time its parent behavior
-  // chooser was activated happened less than this time ago. Eg: a value of 1 means 'if the parent got activated less
-  // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for activities)
-  // TODO rsam: differentiate between (de)activation and interruption
-  float _requiredRecentSwitchToParent_sec;
 
   int _startCount = 0;
 

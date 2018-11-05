@@ -4,6 +4,7 @@
  */
 
 
+#include "clad/types/alexaTypes.clad"
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/types/beatDetectorTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
@@ -35,6 +36,15 @@ message PrepForShutdown
 
 message RobotPoked
 {
+}
+
+message AlexaAuthChanged {
+  AlexaAuthState state,
+  string extra,
+}
+
+message AlexaUXChanged {
+  AlexaUXState state,
 }
 
 // Indicates the robot has heard the trigger word
@@ -185,7 +195,9 @@ union RobotToEngine {
 
   RobotServerDisconnect      robotServerDisconnect  = 0xCD,
 
-  // FREE SLOTS 0xCE to 0xD2
+  AlexaAuthChanged           alexaAuthChanged       = 0xCE,
+
+  AlexaUXChanged             alexaUXChanged         = 0xCF,
 
   // Messages from animation process to engine
   StartShutdownAnim          startShutdownAnim      = 0xD0,

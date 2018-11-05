@@ -29,6 +29,8 @@
 #include "cozmoAnim/backpackLights/backpackLightAnimationContainer.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 
+#include "osState/osState.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/fileUtils/fileUtils.h"
@@ -106,6 +108,23 @@ void RobotDataLoader::LoadConfigData()
                 triggerConfigFile.c_str());
     }
   }
+  // Alexa config
+  {
+#ifdef SHIPPING
+    const std::string& alexaConfigFile = "config/alexa/alexa_prod.json";
+#else
+    const std::string& alexaConfigFile = "config/alexa/alexa_dev.json";
+#endif
+    auto path = _platform->pathToResource(Util::Data::Scope::Resources, alexaConfigFile);
+    
+    if( Util::FileUtils::FileExists( path ) ) {
+      _alexaConfig = Util::FileUtils::ReadFile( path );
+    } else {
+      LOG_ERROR("RobotDataLoader.AlexaConfigNotFound",
+                "Alexa config file %s not found or failed to parse",
+                path.c_str());
+    }
+  }
 }
 
 void RobotDataLoader::LoadNonConfigData()
@@ -176,13 +195,17 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
     return;
   }
   CannedAnimationLoader animLoader(_platform,
-                                   _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                   _spritePaths.get(), _spriteSequenceContainer.get(),
                                    _loadingCompleteRatio, _abortLoad);
-  
+
   animLoader.LoadAnimationIntoContainer(path, _cannedAnimations.get());
 
   const auto animName = Util::FileUtils::GetFileName(path, true, true);
-  const auto* anim = _cannedAnimations->GetAnimation(animName);
+  const auto * anim = _cannedAnimations->GetAnimation(animName);
+  if (anim == nullptr) {
+    LOG_ERROR("RobotDataLoader.LoadAnimationFile", "Failed to load %s from %s", animName.c_str(), path.c_str());
+    return;
+  }
   NotifyAnimAdded(animName, anim->GetLastKeyFrameEndTime_ms());
 }
 

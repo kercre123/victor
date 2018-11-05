@@ -57,6 +57,7 @@ public:
     dependencies.insert(RobotComponentID::NVStorage);
     dependencies.insert(RobotComponentID::Vision);
     dependencies.insert(RobotComponentID::VariableSnapshotComponent);
+    dependencies.insert(RobotComponentID::RobotStatsTracker);
   };
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
@@ -79,6 +80,7 @@ public:
   using UnreliableComponent<BCComponentID>::GetInitDependencies;
   using UnreliableComponent<BCComponentID>::UpdateDependent;
   using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
+  using UnreliableComponent<BCComponentID>::IsComponentValid;
   //////
   // end IDependencyManagedComponent functions
   //////

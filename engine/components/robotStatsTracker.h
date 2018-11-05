@@ -54,6 +54,8 @@ public:
 
   void IncreaseOdometer(float lWheelDelta_mm, float rWheelDelta_mm, float bodyDelta_mm);
 
+  float GetNumHoursAlive() const;
+
   ////////////////////////////////////////////////////////////////////////////////
 
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
@@ -83,9 +85,15 @@ private:
 
   void DoJdocFormatMigration();
 
+  void AddRemainingAliveTimeOnShutdown();
+
   bool _dirtyJdoc = false;
   JdocsManager* _jdocsManager = nullptr;
   float _timeOfNextAliveTimeCheck = 0.0f;
+  // We store the current basestation time each tick, because we need it in the shutdown
+  // callback (AddRemainingAliveTimeOnShutdown) and by the time that executes, basestation
+  // timer is already destroyed
+  float _currTime_s = 0.0f;
 };
 
 }

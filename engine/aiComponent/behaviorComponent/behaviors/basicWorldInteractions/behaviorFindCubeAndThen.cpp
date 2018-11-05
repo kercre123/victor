@@ -4,8 +4,8 @@
  * Author: Sam Russell
  * Created: 2018-08-20
  *
- * Description: If Vector thinks he know's where a cube is, visually verify that its there. Otherwise, 
- *   search quickly for a cube. Go to the pre-dock pose if found/known, delegate to next behavior if specified
+ * Description: Run BehaviorFindCube. Upon locating a cube, go to the pre-dock pose if found/known, connect to the cube,
+ *              (visiblly if this behavior was user driven) then delegate to the followUp behavior, if specified.
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -20,11 +20,14 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindCube.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
+
+#define LOG_CHANNEL "Behaviors"
 
 #define SET_STATE(s) do{ \
                           _dVars.state = FindCubeState::s; \
@@ -36,30 +39,19 @@ namespace Vector {
 
 namespace{
 const char* const kFollowUpBehaviorKey = "followUpBehaviorID";
-
-static const float kDistThreshold_mm = 2.0f;
-static const float kAngleThreshold_deg = 2.0f;
-static const float kProxBackupThreshold_mm = 90.0f;
-static const float kMinSearchAngle = 330.0f;
-static const int   kMaxNumSearchTurns = 10;
-static const int   kNumImagesToWaitDuringSearch = 2;
+const char* const kSkipConnectToCubeBehaviorKey = "skipConnectToCubeBehavior";
 } // namespace
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindCubeAndThen::InstanceConfig::InstanceConfig()
-: cubesFilter(std::make_unique<BlockWorldFilter>())
+: skipConnectToCubeBehavior(true) //default to true and override for user driven instances
 {
-  cubesFilter->AddAllowedFamily(ObjectFamily::LightCube);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindCubeAndThen::DynamicVariables::DynamicVariables()
-: state(FindCubeState::GetIn)
+: state(FindCubeState::FindCube)
 , cubePtr(nullptr)
-, cubeState(CubeObservationState::Unreliable)
-, lastPoseCheckTimestamp(0)
-, angleSwept_deg(0.0f)
-, numTurnsCompleted(0)
 {
 }
 
@@ -68,6 +60,7 @@ BehaviorFindCubeAndThen::BehaviorFindCubeAndThen(const Json::Value& config)
  : ICozmoBehavior(config)
 {
   JsonTools::GetValueOptional(config, kFollowUpBehaviorKey, _iConfig.followUpBehaviorID);
+  JsonTools::GetValueOptional(config, kSkipConnectToCubeBehaviorKey, _iConfig.skipConnectToCubeBehavior);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,8 +77,6 @@ bool BehaviorFindCubeAndThen::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindCubeAndThen::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::FullFrameMarkerDetection,EVisionUpdateFrequency::High });
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenCarryingObject = false; 
   modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
@@ -95,7 +86,7 @@ void BehaviorFindCubeAndThen::GetBehaviorOperationModifiers(BehaviorOperationMod
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindCubeAndThen::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert(_iConfig.driveOffChargerBehavior.get());
+  delegates.insert(_iConfig.findCubeBehavior.get());
   delegates.insert(_iConfig.connectToCubeBehavior.get());
   if(nullptr != _iConfig.followUpBehavior){
     delegates.insert(_iConfig.followUpBehavior.get());
@@ -106,7 +97,8 @@ void BehaviorFindCubeAndThen::GetAllDelegates(std::set<IBehavior*>& delegates) c
 void BehaviorFindCubeAndThen::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kFollowUpBehaviorKey
+    kFollowUpBehaviorKey,
+    kSkipConnectToCubeBehaviorKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -116,10 +108,12 @@ void BehaviorFindCubeAndThen::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
 
-  _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(DriveOffChargerCube));
-  DEV_ASSERT(nullptr != _iConfig.driveOffChargerBehavior,
-             "BehaviorFindCubeAndThen.InitBehavior.NullDriveOffChargerBehavior");
-
+  BC.FindBehaviorByIDAndDowncast<BehaviorFindCube>(BEHAVIOR_ID(FindCube),
+                                                   BEHAVIOR_CLASS(FindCube),
+                                                   _iConfig.findCubeBehavior);
+  DEV_ASSERT(nullptr != _iConfig.findCubeBehavior,
+             "BehaviorFindCubeAndThen.InitBehavior.NullFindCubeBehavior");
+             
   _iConfig.connectToCubeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ConnectToCube));
   DEV_ASSERT(nullptr != _iConfig.connectToCubeBehavior,
              "BehaviorFindCubeAndThen.InitBehavior.NullConnectToCubeBehavior");
@@ -137,12 +131,7 @@ void BehaviorFindCubeAndThen::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
 
-  if(GetBEI().GetRobotInfo().IsOnChargerContacts() || GetBEI().GetRobotInfo().IsOnChargerPlatform()) {
-    TransitionToDriveOffCharger();
-  }
-  else {
-    TransitionToVisuallyCheckLastKnown();
-  } 
+  TransitionToFindCube();
 }
 
 
@@ -152,135 +141,22 @@ void BehaviorFindCubeAndThen::BehaviorUpdate()
   if( !IsActivated() ) {
     return;
   }
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindCubeAndThen::TransitionToFindCube()
+{
+  SET_STATE(FindCube);
 
-  if( FindCubeState::CheckForCubeInFront == _dVars.state || 
-      FindCubeState::QuickSearchForCube  == _dVars.state ){
-    auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
-    uint16_t proxDist_mm = 0;
-    if( proxSensor.GetLatestDistance_mm(proxDist_mm) && ( proxDist_mm < kProxBackupThreshold_mm ) ){
-      TransitionToBackUpAndCheck();
-    }
-
-    // If we don't have a target yet, check if a cube has been seen in the last frame 
-    if(nullptr == _dVars.cubePtr){
-      UpdateTargetCube();
-      // If we just got a target for the first time, move on to approaching it
-      if(nullptr != _dVars.cubePtr){
-        CancelDelegates(false);
-        TransitionToReactToCube();
-      }
-    }
-    else{
-      // Otherwise, we already had a target but it wasn't found where expected during VisuallyVerify.
-      // Watch for new observations and pose updates
-      if(_dVars.cubePtr->GetLastObservedTime() > _dVars.lastPoseCheckTimestamp){
-        _dVars.lastPoseCheckTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-        Pose3d cubePose = _dVars.cubePtr->GetPose();
-        if( !cubePose.IsSameAs(_dVars.cubePoseAtSearchStart, kDistThreshold_mm, DEG_TO_RAD(kAngleThreshold_deg)) ){
-          CancelDelegates(false);
-          TransitionToReactToCube();
+  if(_iConfig.findCubeBehavior->WantsToBeActivated()){
+    DelegateIfInControl(_iConfig.findCubeBehavior.get(),
+      [this](){
+        _dVars.cubePtr = _iConfig.findCubeBehavior->GetFoundCube();
+        if(nullptr != _dVars.cubePtr){ //else just exit, the get-out will have been handled by the findCubeBehavior
+          TransitionToDriveToPredockPose();
         }
-      }
-    }
+      });
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::TransitionToDriveOffCharger()
-{
-  SET_STATE(DriveOffCharger);
-
-  if(_iConfig.driveOffChargerBehavior->WantsToBeActivated()){
-    DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(),
-                        &BehaviorFindCubeAndThen::TransitionToVisuallyCheckLastKnown);
-  }
-  else{
-    PRINT_NAMED_ERROR("BehaviorFindCubeAndThen.TransitionError", "Behavior %s did not want to be activated",
-                      _iConfig.driveOffChargerBehavior->GetDebugLabel().c_str());
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::TransitionToVisuallyCheckLastKnown()
-{
-  SET_STATE(VisuallyCheckLastKnown);
-
-  if(UpdateTargetCube()){
-    bool visuallyVerify = true;
-    TurnTowardsObjectAction* visualCheckAction = new TurnTowardsObjectAction(_dVars.cubePtr->GetID(),
-                                                                             Radians{M_PI_F},
-                                                                             visuallyVerify);
-    DelegateIfInControl(visualCheckAction, [this](ActionResult result){
-      if(ActionResult::SUCCESS == result){
-        TransitionToReactToCube();
-      }
-      else{
-        TransitionToCheckForCubeInFront();
-      }
-    });
-  }
-  else{
-    TransitionToCheckForCubeInFront();
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::TransitionToCheckForCubeInFront()
-{
-  SET_STATE(CheckForCubeInFront);
-
-  const bool isAbsolute = false;
-  auto searchInFrontAction = new CompoundActionSequential({
-    new MoveHeadToAngleAction(0.0f),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
-    new TurnInPlaceAction(DEG_TO_RAD(30.0f), isAbsolute),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
-    new TurnInPlaceAction(DEG_TO_RAD(-60.0f), isAbsolute),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
-  });
-
-  if(nullptr != _dVars.cubePtr){
-    // If we made it here then the visual verification failed, so the cube pose is antequated and wrong
-    // Make a note of it, and don't trust the cube pose until it is updated, indicating new observations.
-    _dVars.cubePoseAtSearchStart = _dVars.cubePtr->GetPose();
-    _dVars.lastPoseCheckTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-  }
-
-  DelegateIfInControl(searchInFrontAction, &BehaviorFindCubeAndThen::TransitionToQuickSearchForCube);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::TransitionToQuickSearchForCube()
-{
-  SET_STATE(QuickSearchForCube);
-  StartNextTurn();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::TransitionToBackUpAndCheck()
-{
-  SET_STATE(BackUpAndCheck);
-  CancelDelegates(false);
-
-  CompoundActionSequential* backupAndCheckAction = new CompoundActionSequential();
-  backupAndCheckAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToObstacle));
-
-  auto* loopAndWaitAction = new CompoundActionParallel();
-  loopAndWaitAction->AddAction(new TriggerAnimationAction(AnimationTrigger::ChargerDockingSearchWaitForImages));
-  loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
-  backupAndCheckAction->AddAction(loopAndWaitAction);
-
-  DelegateIfInControl(backupAndCheckAction, &BehaviorFindCubeAndThen::TransitionToQuickSearchForCube);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::TransitionToReactToCube()
-{
-  SET_STATE(ReactToCube);
-
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::FindCubeReactToCube),
-                      &BehaviorFindCubeAndThen::TransitionToDriveToPredockPose);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -297,21 +173,24 @@ void BehaviorFindCubeAndThen::TransitionToAttemptConnection()
 {
   SET_STATE(AttemptConnection);
 
-  if(_iConfig.connectToCubeBehavior->WantsToBeActivated()){
-    DelegateIfInControl(_iConfig.connectToCubeBehavior.get(),
-      [this](){
-        auto& ccc = GetBEI().GetCubeConnectionCoordinator();
-        if(ccc.IsConnectedToCube()){
-          // Convert the background subscription to foreground
-          ccc.SubscribeToCubeConnection(this);
-        }
-
-        TransitionToFollowUpBehavior();
-      });
+  if(_iConfig.skipConnectToCubeBehavior){
+    auto& ccc = GetBEI().GetCubeConnectionCoordinator();
+    ccc.SubscribeToCubeConnection(this);
+    TransitionToFollowUpBehavior();
   }
   else{
-    PRINT_NAMED_ERROR("BehaviorFindCubeAndThen.TransitionError", "Behavior %s did not want to be activated",
-                      _iConfig.connectToCubeBehavior->GetDebugLabel().c_str());
+    if(_iConfig.connectToCubeBehavior->WantsToBeActivated()){
+      DelegateIfInControl(_iConfig.connectToCubeBehavior.get(),
+        [this](){
+          auto& ccc = GetBEI().GetCubeConnectionCoordinator();
+          if(ccc.IsConnectedToCube()){
+            // Convert the background subscription to foreground
+            ccc.SubscribeToCubeConnection(this);
+          }
+
+          TransitionToFollowUpBehavior();
+        });
+    }
   }
 }
 
@@ -331,69 +210,6 @@ void BehaviorFindCubeAndThen::TransitionToGetOutFailure()
 {
   SET_STATE(GetOutFailure);
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::FetchCubeFailure));
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindCubeAndThen::StartNextTurn()
-{
-  // Have we turned enough to sweep the required angle?
-  // Or have we exceeded the max number of turns?
-  const bool sweptEnough = (_dVars.angleSwept_deg > kMinSearchAngle);
-  const bool exceededMaxTurns = (_dVars.numTurnsCompleted >= kMaxNumSearchTurns);
-
-  if (sweptEnough || exceededMaxTurns) {
-    // If we made it all the way through the search without finding anything, call it a failure
-    TransitionToGetOutFailure();
-    PRINT_CH_INFO("Behaviors", "BehaviorFindCubeAndThen.TransitionToSearchTurn.CompletedQuickSearch",
-                  "We have completed a full search. Played %d turn animations (max is %d), "
-                  "and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
-                  _dVars.numTurnsCompleted,
-                  kMaxNumSearchTurns,
-                  _dVars.angleSwept_deg,
-                  kMinSearchAngle);
-  } else {
-    auto* action = new CompoundActionSequential();
-
-    // Always do the "search turn"
-    action->AddAction(new TriggerAnimationAction(AnimationTrigger::FindCubeTurns));
-
-    auto* loopAndWaitAction = new CompoundActionParallel();
-    loopAndWaitAction->AddAction(new TriggerAnimationAction(AnimationTrigger::FindCubeWaitLoop));
-    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
-    action->AddAction(loopAndWaitAction);
-
-    // Keep track of the pose before the robot starts turning
-    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-    const auto startHeading = robotPose.GetRotation().GetAngleAroundZaxis();
-
-    DelegateIfInControl(action,
-      [this, startHeading]() {
-        ++_dVars.numTurnsCompleted;
-        const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-        const auto endHeading = robotPose.GetRotation().GetAngleAroundZaxis();
-        const auto angleSwept_deg = (endHeading - startHeading).getDegrees();
-        DEV_ASSERT(angleSwept_deg < 0.f, "BehaviorQuickSearchForCube.TransitionToSearchTurn.ShouldTurnClockwise");
-        if (std::abs(angleSwept_deg) > 75.f) {
-          PRINT_NAMED_WARNING("BehaviorQuickSearchForCube.TransitionToSearchTurn.TurnedTooMuch",
-                              "The last turn swept an angle of %.2f deg - may have missed seeing the charger due to the camera's limited FOV",
-                              std::abs(angleSwept_deg));
-        }
-        _dVars.angleSwept_deg += std::abs(angleSwept_deg);
-        StartNextTurn();
-      });
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFindCubeAndThen::UpdateTargetCube()
-{
-  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-  _dVars.cubePtr = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.cubesFilter);
-  if(nullptr == _dVars.cubePtr){
-    return false;
-  }
-
-  return true;
 }
 
 } // namespace Vector

@@ -1,7 +1,7 @@
 [
   {
     "locale":"en-US",
-    "defaultModelType":"size_1mb",
+    "defaultModelType":"size_500kb",
     "modelList": [
       {
         "modelType":"size_1mb",
@@ -87,7 +87,7 @@
         "modelType":"size_500kb",
         "dataDirectory":"hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a35efdb2",
         "netFileName":"anki_x_hey_vector_enUS_sfs14_a35efdb2_delivery01s_am.raw",
-        "defaultSearchFileIndex":5,
+        "defaultSearchFileIndex":18,
         "searchFileList": [
           {
             "searchFileName":"anki_x_hey_vector_enUS_sfs14_a35efdb2_delivery01s_search_1.raw",
@@ -261,7 +261,7 @@
         "modelType":"size_1mb",
         "dataDirectory":"hey_vector/trigger_anki_x_enUS_02s_hey_vector_sfs14_a326a14b",
         "netFileName":"anki_x_hey_vector_enUS_sfs14_a326a14b_delivery02s_am.raw",
-        "defaultSearchFileIndex":5,
+        "defaultSearchFileIndex":10,
         "searchFileList": [
           {
             "searchFileName":"anki_x_hey_vector_enUS_sfs14_a326a14b_delivery02s_search_1.raw",

@@ -8,7 +8,7 @@
  **/
 
 #include "DAS.h"
-
+#include "json/json.h"
 #include <time.h>
 
 namespace Anki {
@@ -30,6 +30,19 @@ uint64_t UptimeMS()
   clock_gettime(CLOCK, &ts);
   return (ts.tv_sec * 1000) + (ts.tv_nsec/1000000);
 }
+
+std::string Escape(const char * str)
+{
+  // Use JsonCpp to quote string, then remove surrounding quotes
+  const std::string & quotedString = Json::valueToQuotedString(str ? str : "");
+  return quotedString.substr(1, quotedString.size()-2);
+}
+
+std::string Escape(const std::string & str)
+{
+  return Escape(str.c_str());
+}
+
 
 } // end namespace DAS
 } // end namespace Util
