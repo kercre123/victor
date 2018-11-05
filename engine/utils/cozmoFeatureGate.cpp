@@ -22,6 +22,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 namespace Anki {
 namespace Vector {
@@ -129,7 +130,7 @@ namespace {
     {
       sFeatureTypeOverrides[i] = FeatureTypeOverride::Default;
     }
-
+    
     const std::string& fileName = "featureGateOverrides.ini";
     sOverrideSaveFilename = platform->pathToResource( Anki::Util::Data::Scope::Cache, fileName );
 
@@ -139,33 +140,18 @@ namespace {
 }
 
 static const char* kConsoleFeatureGroup = "FeatureGate";
-static const char* kFeatureEnumString =
-  "Invalid,"
-  "Laser,"
-  "Exploring,"
-  "FetchCube,"
-  "FindCube,"
-  "Keepaway,"
-  "ReactToHeldCube,"
-  "RollCube,"
-  "MoveCube,"
-  "Messaging,"
-  "ReactToIllumination,"
-  "KnowledgeGraph,"
-  "Dancing,"
-  "CubeSpinner,"
-  "GreetAfterLongTime,"
-  "AttentionTransfer,"
-  "UserDefinedBehaviorTree,"
-  "PopAWheelie,"
-  "ActiveIntentFeedback,"
-  "Alexa,"
-  "FindFacesWhileHeld,"
-  "TestFeature,"
-  "Volume,"
-  "PRDemo";
-
-CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, kFeatureEnumString );
+const char* InitFeatureEnumString() {
+  std::vector<std::string> featureNames;
+  featureNames.reserve(FeatureTypeNumEntries);
+  // Append names of all feature types to console drop-down selection tool
+  for ( uint8_t i = 0; i < FeatureTypeNumEntries; ++i )
+  {
+    featureNames.emplace_back(FeatureTypeToString(static_cast<FeatureType>(i)));
+  }
+  static const std::string& kFeatureEnumString = Util::StringJoin(featureNames, ',');
+  return kFeatureEnumString.c_str();
+}
+CONSOLE_VAR_ENUM( uint8_t,  kFeatureToEdit,   kConsoleFeatureGroup,  0, InitFeatureEnumString() );
 
 void EnableFeature( ConsoleFunctionContextRef context )
 {
