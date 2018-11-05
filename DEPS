@@ -57,7 +57,7 @@
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "110"
+                "version": "111"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
