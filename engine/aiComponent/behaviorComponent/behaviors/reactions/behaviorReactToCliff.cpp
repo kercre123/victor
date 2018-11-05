@@ -257,6 +257,11 @@ void BehaviorReactToCliff::TransitionToStuckOnEdge()
 {
   DEBUG_SET_STATE(StuckOnEdge);
 
+  const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
+  DASMSG(behavior_cliff_stuck_on_edge, "behavior.cliff_stuck_on_edge", "The robot appears to be stuck on the edge of a surface");
+  DASMSG_SET(i1, cliffComp.GetCliffDetectedFlags(), "Cliff detected flags");
+  DASMSG_SEND();
+  
   ANKI_VERIFY(_iConfig.stuckOnEdgeBehavior->WantsToBeActivated(),
               "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated", 
               "");

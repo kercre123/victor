@@ -887,7 +887,10 @@ void MapComponent::SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const
         activeDuration_ms = it->second.activeDuration_ms;
       }
       
-      DASMSG(robot_delocalized_env, "robot.delocalized_env", "When the robot is delocalized, information about the environment");
+      DASMSG(robot_delocalized_map_info,
+             "robot.delocalized_map_info",
+             "When the robot is delocalized, this contains information about the nav map. This occurs when the robot "
+             "delocalizes due to being picked up");
       DASMSG_SET(i1, (int64_t)explored_mm2, "Total surface area known (mm2)");
       DASMSG_SET(i2, (int64_t)collision_mm2, "Total surface area that is an obstacle (mm2), a subset of i1");
       DASMSG_SET(i3, (int64_t)activeDuration_ms, "Duration (ms) of the map, perhaps after multiple delocalizations" );
