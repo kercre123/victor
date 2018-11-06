@@ -187,6 +187,7 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks(bool emptySprite
         // Each step is reliant on the previous one's value being set
         if(layerPair.second.GetFrame(spriteBoxPair.first, 0, handle) &&
            handle->GetFullSpritePath(fullSpritePath) &&
+           _spriteCache &&
            _spriteCache->GetSpritePathMap()->GetKeyForValueConst(fullSpritePath, spriteName)){
           baseChunk.spriteName = spriteName;
         }else if(!emptySpriteBoxesAreValid){
