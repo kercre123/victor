@@ -463,12 +463,21 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
 
   if (settings.oneof_master_volume_case() == external_interface::RobotSettingsConfig::OneofMasterVolumeCase::kMasterVolume)
   {
+    // record the old volume setting, for the DAS event
+    const uint32_t oldVol = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
     const auto masterVolume = static_cast<uint32_t>(settings.master_volume());
     if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::master_volume,
                                         Json::Value(masterVolume)))
     {
       updateSettingsJdoc = true;
       saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::master_volume);
+      // read the new volume setting, for the DAS event
+      const uint32_t newVol = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+      DASMSG(robot_settings_volume, "robot.settings.volume", "The robot's volume setting was changed");
+      DASMSG_SET(i1, oldVol, "Old volume");
+      DASMSG_SET(i2, newVol, "New volume");
+      DASMSG_SET(s1, "app", "Source of the change (app, voice, or SDK)");
+      DASMSG_SEND();
     }
   }
 

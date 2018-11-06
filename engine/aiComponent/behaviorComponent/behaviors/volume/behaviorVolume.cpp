@@ -19,6 +19,7 @@
 #include "engine/components/settingsManager.h"
 #include "engine/robot.h"
 #include "proto/external_interface/settings.pb.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 
@@ -127,8 +128,20 @@ void BehaviorVolume::OnBehaviorActivated()
     return;
   }
 
-  // set desired volume
-  SetVolume(desiredVolume);
+  SettingsManager& settings = GetBEI().GetSettingsManager();
+  const uint32_t oldVol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+  if (static_cast<uint32_t>(desiredVolume) != oldVol){
+    // set desired volume
+    SetVolume(desiredVolume);
+  }
+  const uint32_t newVol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+  // issue DAS event
+  DASMSG(robot_settings_volume, "robot.settings.volume", "The robot's volume setting was changed");
+  DASMSG_SET(i1, oldVol, "Old volume");
+  DASMSG_SET(i2, newVol, "New volume");
+  // NOTE: once we also respond to app changes here, we'll have to be more careful about this source
+  DASMSG_SET(s1, "voice", "Source of the change (app, voice, or SDK)");
+  DASMSG_SEND();
 
   // delegate to play an animation (sequence)
   const auto it = kVolumeLevelAnimMap.find(desiredVolume);
