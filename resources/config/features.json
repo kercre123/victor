@@ -69,7 +69,7 @@
   },
   {
     "feature": "Alexa",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "FindFacesWhileHeld",
