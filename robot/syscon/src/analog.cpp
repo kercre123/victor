@@ -21,7 +21,6 @@ static const int SELECTED_CHANNELS = 0
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
-static const uint16_t DISCHARGED_BATTERY = ADC_VOLTS(3.7);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 static const int      MINIMUM_ON_CHARGER = 5;
 
@@ -36,8 +35,7 @@ static const int OVERHEAT_SHUTDOWN = 200 * 30;
 
 static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int MAX_CHARGE_TIME = 200 * 60 * 30;           // 30 minutes
-static const int START_DISCHARGE = 200 * 60 * 60 * 24 * 3;  // 3 Days
+static const int MAX_CHARGE_TIME = 200 * 60 * 25;           // 25 minutes
 static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
 static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
 
@@ -250,7 +248,7 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
   return heat_counter > MAX_HEAT_COUNTDOWN;
 }
 
-static bool handleTemperature() {
+static void handleTemperature() {
   // Temperature logic
   int32_t temp_now = *TEMP30_CAL_ADDR - ((EXACT_ADC(ADC_TEMP) * TEMP_VOLT_ADJ) >> 16);
   temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 16) + 30;
@@ -258,7 +256,7 @@ static bool handleTemperature() {
   // We are running way too hot, have a bowl of boot loops.
   if (temp_now >= 70) {
     Power::setMode(POWER_STOP);
-    return true;
+    return ;
   }
 
   static int samples = 0;
@@ -292,14 +290,6 @@ static bool handleTemperature() {
   if (overheated > 0 && --overheated == 0) {
     Power::setMode(POWER_STOP);
   }
-
-  if (temperature >= 47) {
-    too_hot = true;
-  } else if (temperature <= 42) {
-    too_hot = false;
-  }
-
-  return too_hot;
 }
 
 static void handleLowBattery() {
@@ -350,24 +340,26 @@ void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
-  static bool discharge_battery = false;
 
   updateADCCompensate();
   debounceVEXT();
   handleButton();
   handleLowBattery();
+  handleTemperature();
 
-  // Handle our temperature / contact time thresholds
-  bool prevent_charge = handleTemperature() 
+  if (temperature > 41 && on_charger_time < 200) {
+    too_hot = true;
+  } else {
+    too_hot = false;
+  }
+
+  bool prevent_charge = too_hot
     || disable_charger;
 
   if (on_charger) {
-    if (!prevent_charge) {
-      if (++on_charger_time == START_DISCHARGE) {
-        discharge_battery = true;
-      } else if (on_charger_time >= TOP_OFF_TIME) {
-        on_charger_time = 0;
-      }
+    // This holds the on_charger_time at zero if charging is disabled
+    if (!prevent_charge && on_charger_time++ >= TOP_OFF_TIME) {
+      on_charger_time = 0;
     }
   } else if (++off_charger_time >= ON_CHARGER_RESET) {
     on_charger_time = 0;
@@ -394,7 +386,7 @@ void Analog::tick(void) {
     overheated = 0;
     heat_counter = 0;
     is_charging = false;
-  } else if (!on_charger || discharge_battery) {
+  } else if (!on_charger) {
     // Powered on, off charger
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
@@ -402,10 +394,6 @@ void Analog::tick(void) {
     nCHG_PWR::set();
 
     NVIC_DisableIRQ(ADC1_IRQn);
-
-    if (EXACT_ADC(ADC_VMAIN) <= DISCHARGED_BATTERY) {
-      discharge_battery = false;
-    }
 
     delay_disable = true;
     is_charging = false;
