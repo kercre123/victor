@@ -13,11 +13,21 @@
   {
     "channels":
     [
-      { "channel": "CpuProfiler",                       "enabled": true },
-      { "channel": "Keyboard",                          "enabled": true },
-      { "channel": "MessageProfiler",                   "enabled": true },
-      { "channel": "MicData",                           "enabled": true },
-      { "channel": "PerfMetric",                        "enabled": true },
+      { "channel": "Actions",                           "enabled": true  },
+      { "channel": "AIWhiteboard",                      "enabled": true  },
+      { "channel": "Behaviors",                         "enabled": true  },
+      { "channel": "BlockPool",                         "enabled": true  },
+      { "channel": "BlockWorld",                        "enabled": true  },
+      { "channel": "CpuProfiler",                       "enabled": true  },
+      { "channel": "FaceRecognizer",                    "enabled": true  },
+      { "channel": "FaceWorld",                         "enabled": true  },
+      { "channel": "Keyboard",                          "enabled": true  },
+      { "channel": "MessageProfiler",                   "enabled": true  },
+      { "channel": "MicData",                           "enabled": true  },
+      { "channel": "PerfMetric",                        "enabled": true  },
+      { "channel": "PoseConfirmer",                     "enabled": true  },
+      { "channel": "VisionComponent",                   "enabled": true  },
+      { "channel": "VisionSystem",                      "enabled": true  },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
@@ -34,9 +44,19 @@
   {
     "channels":
     [
-      { "channel": "CpuProfiler",                       "enabled": true },
-      { "channel": "MessageProfiler",                   "enabled": true },
-      { "channel": "PerfMetric",                        "enabled": true },
+      { "channel": "Actions",                           "enabled": false },
+      { "channel": "AIWhiteboard",                      "enabled": false },
+      { "channel": "Behaviors",                         "enabled": false },
+      { "channel": "BlockPool",                         "enabled": false },
+      { "channel": "BlockWorld",                        "enabled": false },
+      { "channel": "CpuProfiler",                       "enabled": true  },
+      { "channel": "FaceRecognizer",                    "enabled": false },
+      { "channel": "FaceWorld",                         "enabled": false },
+      { "channel": "MessageProfiler",                   "enabled": true  },
+      { "channel": "PerfMetric",                        "enabled": true  },
+      { "channel": "PoseConfirmer",                     "enabled": false },
+      { "channel": "VisionComponent",                   "enabled": false },
+      { "channel": "VisionSystem",                      "enabled": false },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
