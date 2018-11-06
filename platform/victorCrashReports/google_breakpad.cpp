@@ -83,7 +83,7 @@ void DumpLogMessages(const std::string & path)
   // Crash reports from a production build will not include log messages.
   //
   static const char * socket = "/run/anki-crash-log";
-  if (!Anki::Util::FileUtils::FileExists(socket)) {
+  if (!Anki::Util::FileUtils::PathExists(socket)) {
     LOG_WARNING("GoogleBreakpad.DumpLogMessages", "Unable to dump log messages");
     return;
   }

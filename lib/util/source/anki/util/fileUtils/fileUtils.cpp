@@ -29,7 +29,17 @@ namespace {
   const char kFileSeparator = '/';
 # endif
 } // anonymous namespace
-  
+
+bool FileUtils::PathExists(const std::string &path)
+{
+  struct stat info;
+  bool exists = false;
+  if (stat(path.c_str(), &info) == 0) {
+    exists = true;
+  }
+  return exists;
+}
+
 bool FileUtils::DirectoryExists(const std::string &path)
 {
   struct stat info;
@@ -93,7 +103,7 @@ bool FileUtils::CreateDirectory(const std::string &path,
   }
   return true;
 }
-  
+
 void FileUtils::RemoveDirectory(const std::string &path)
 {
   if( DirectoryExists(path) ) {
@@ -153,7 +163,7 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
   }
   return FileUtils::FilesInDirectory(path, useFullPath, withExtensions, recurse);
 }
-  
+
 std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
                                                      bool useFullPath,
                                                      const std::vector<const char*>& withExtensions,
@@ -161,11 +171,11 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
 {
   // We always want to useFullPath when looking for files recursively
   useFullPath |= recurse;
-  
+
   std::vector<std::string> files;
-  
+
   std::function<bool(const char* fname)> FilterFilename = [](const char*) { return true; };
-  
+
   if(!withExtensions.empty()) {
     FilterFilename = [&withExtensions](const char* fname) {
       for(auto* ext : withExtensions) {
@@ -176,7 +186,7 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
       return false;
     };
   }
-  
+
   DIR* listingDir = opendir(path.c_str());
   if( listingDir ) {
     struct dirent *info;
@@ -201,7 +211,7 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
     }
     closedir(listingDir);
   }
-  
+
   return files;
 }
 
@@ -248,7 +258,7 @@ std::string FileUtils::ReadFile(const std::string& fileName)
     return body;
   }
 }
-  
+
 std::vector<uint8_t> FileUtils::ReadFileAsBinary(const std::string& fileName)
 {
   std::ifstream fileIn;
@@ -270,7 +280,7 @@ bool FileUtils::WriteFile(const std::string &fileName, const std::string &body, 
   copy(body.begin(), body.end(), back_inserter(bytes));
   return WriteFile(fileName, bytes, append);
 }
-  
+
 bool FileUtils::WriteFile(const std::string &fileName, const std::vector<uint8_t> &body, bool append)
 {
   bool success = false;
@@ -390,14 +400,14 @@ void FileUtils::DeleteFile(const std::string &fileName)
 {
   (void) remove(fileName.c_str());
 }
- 
+
 void FileUtils::ListAllDirectories( const std::string& path, std::vector<std::string>& directories )
 {
   if ( !directories.empty() )
   {
     directories.clear();
   }
-  
+
   if( FileUtils::DirectoryExists(path) )
   {
     DIR* dir = opendir(path.c_str());
@@ -424,35 +434,35 @@ bool FileUtils::FilenameHasSuffix(const char* inFilename, const char* inSuffix)
 {
   const size_t filenameLen = strlen(inFilename);
   const size_t suffixLen   = strlen(inSuffix);
-  
+
   if (filenameLen < suffixLen)
   {
     return false;
   }
-  
+
   const int cmp = strcmp(&inFilename[filenameLen-suffixLen], inSuffix);
   return (cmp == 0);
 }
 
-  
+
 namespace {
   inline void RemoveFileSeparators(std::string& str, bool removeLeading = true)
   {
     if(!str.empty())
     {
       const auto strLen = str.length();
-      
+
       const bool hasLeading = removeLeading && (str[0] == kFileSeparator);
       const bool hasTrailing = (str.back() == kFileSeparator);
-      
+
       const auto start = (hasLeading  ? 1        : 0);
       const auto end   = (hasTrailing ? strLen-1 : strLen);
-      
+
       str = str.substr(start, end-start);
     }
   }
 } // anonymous namespace
-  
+
 std::string FileUtils::FullFilePath(std::vector<std::string>&& names)
 {
   std::string fullpath;
@@ -460,19 +470,19 @@ std::string FileUtils::FullFilePath(std::vector<std::string>&& names)
   if(!names.empty())
   {
     auto nameIter = names.begin();
-    
+
     fullpath = *nameIter;
 
     // NOTE: Leave leading fileSep for first entry only
     RemoveFileSeparators(fullpath, false);
-    
+
     ++nameIter;
     while(nameIter != names.end())
     {
       if(!nameIter->empty())
       {
         RemoveFileSeparators(*nameIter);
-        
+
         if(!fullpath.empty()) {
           fullpath += kFileSeparator;
         }
@@ -498,7 +508,7 @@ std::string FileUtils::GetFileName(const std::string& fullPath, bool mustHaveExt
       return potentialFile;
     }
   }
-  
+
   return("");
 }
 
@@ -511,6 +521,6 @@ std::string FileUtils::AddTrailingFileSeparator(const std::string& path)
   }
   return newPath;
 }
-  
+
 }
 }

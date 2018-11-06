@@ -21,6 +21,11 @@ namespace Util {
 
 class FileUtils{
 public:
+
+  // Return true if path resolves to a valid inode of any type
+  static bool PathExists(const std::string & path);
+
+  // Return true if path resolves to a directory
   static bool DirectoryExists(const std::string& path);
 
   static bool DirectoryDoesNotExist(const std::string& path) { return !DirectoryExists(path); }
@@ -29,24 +34,24 @@ public:
   // dashP (-p)    - Create intermediate directories as required.  If this option is not specified,
   // the full path prefix of each operand must already exist.  On the other hand, with this
   // option specified, no error will be reported if a directory given as an operand already exists.
-  // mode          - Create directory with specified mode for permissions. Note that the underlying 
-  //                 call to mkdir(...) will mask this value with the current umask 
+  // mode          - Create directory with specified mode for permissions. Note that the underlying
+  //                 call to mkdir(...) will mask this value with the current umask
   //                 (mode & ~umask & 0777)
   static bool CreateDirectory(const std::string& path,
                               const bool stripFilename = false,
                               bool dashP = true,
                               const mode_t mode = S_IRWXU|S_IRWXG);
-  
+
   static void RemoveDirectory(const std::string& path);
 
   static ssize_t GetDirectorySize(const std::string& path);
 
   static int64_t GetDirectoryFreeSize(const std::string& path);
-  
+
   // If useFullPath is true, the returned vector will contain full paths to each file found
   // (i.e., path/to/file/filename.ext). If extensions are provided (with or without "."), only
   // files with any of those extensions (case sensitive) will be returned. Use nullptr or "" for
-  // withExtension to accept any extension. Enabling recure will also enable useFullPath.
+  // withExtension to accept any extension. Enabling recurse will also enable useFullPath.
   static std::vector<std::string> FilesInDirectory(const std::string& path, bool useFullPath = false,
                                                    const char* withExtension = nullptr, bool recurse = false);
   static std::vector<std::string> FilesInDirectory(const std::string& path, bool useFullPath,
@@ -55,6 +60,7 @@ public:
   static bool TouchFile(const std::string& fileName,
                         mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
+  // Return true if path resolves to a regular file
   static bool FileExists(const std::string& fileName);
 
   static ssize_t GetFileSize(const std::string& fileName);
@@ -66,9 +72,9 @@ public:
   static std::vector<uint8_t> ReadFileAsBinary(const std::string& fileName);
 
   static bool WriteFile(const std::string& fileName, const std::string& body, bool append = false);
-  
+
   static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body, bool append = false);
-  
+
   static bool WriteFileAtomic(const std::string& fileName, const std::string& body);
 
   static bool WriteFileAtomic(const std::string& fileName, const std::vector<uint8_t>& body);
@@ -88,12 +94,12 @@ public:
   static bool MoveFile(const std::string& dest, const std::string& srcFileName);
 
   static void DeleteFile(const std::string& fileName);
-  
+
   static void ListAllDirectories( const std::string& path, std::vector<std::string>& directories );
-  
+
   static bool FilenameHasSuffix(const char* inFilename, const char* inSuffix);
-  
-  // Insert a platform-specific file separater between the strings in the given vector.
+
+  // Insert a platform-specific file separator between the strings in the given vector.
   // Example FullFilePath({"path", "to", "file.txt"}) will return "path\\to\\file.txt" on
   // Windows and "path/to/file.txt" on other platforms. More complicated cases are
   // also handled, where the passed-in strings may or may not already have leading/trailing
@@ -108,7 +114,7 @@ public:
   static std::string GetFileName(const std::string& fullPath, bool mustHaveExtension = false, bool removeExtension = false);
 
   static std::string AddTrailingFileSeparator(const std::string& path);
-  
+
 };
 
 } // namespace Util
