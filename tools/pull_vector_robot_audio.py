@@ -83,13 +83,10 @@ def generate_folder_name_by_date(robot_path, recordings_folder_path):
     final_folder_name = "{}-{}".format(first_created_date, last_created_date)
     return final_folder_name
 
-def get_dropbox_path(dropbox_path):
-    new_dropbox_path = dropbox_path
+def check_dropbox_path(dropbox_path):
     if not os.path.exists(dropbox_path):
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        new_dropbox_path = "{}{}".format(dir_path, dropbox_path)
-        create_folder(new_dropbox_path)
-    return new_dropbox_path
+        print("Dropbox folder does not exist, make sure you input the correct one.")
+        sys.exit(1)
 
 def filter_recordings_by_channel(robot_path, recordings_folder, raw_folder, robot_folder):
     copy_all_recordings(robot_path, REMOTE_DEBUG_CAPTURE_PATH, TEMP_FOLDER_PATH)
@@ -118,17 +115,17 @@ def clean_up_recordings(temp_path, robot_path, recordings_remote_path):
     execute_command_line(command_text)
 
 def grab_recordings(robot_path, dropbox_recordings_path):
-    new_dropbox_path = get_dropbox_path(dropbox_recordings_path)
+    check_dropbox_path(dropbox_recordings_path)
     try:
         folder_name = generate_folder_name_by_date(robot_path, REMOTE_DEBUG_CAPTURE_PATH)
         raw_folder_path = "{}/{}".format(RAW_FOLDER_PATH, folder_name)
         robot_folder_path = "{}/{}".format(ROBOT_FOLDER_PATH, folder_name)
 
         filter_recordings_by_channel(robot_path, LOCAL_DEBUG_CAPTURE_PATH, raw_folder_path, robot_folder_path)
-        process_recordings(raw_folder_path, robot_folder_path, new_dropbox_path)
+        process_recordings(raw_folder_path, robot_folder_path, dropbox_recordings_path)
         clean_up_recordings(TEMP_FOLDER_PATH, robot_path, REMOTE_DEBUG_CAPTURE_PATH)
         print("All recordings have been separated and moved to Dropbox folder with path: {}" \
-              .format(new_dropbox_path))
+              .format(dropbox_recordings_path))
     except Exception as e:
         print("An error occurred: {}".format(e))
 
