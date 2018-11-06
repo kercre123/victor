@@ -14,10 +14,13 @@
     "channels":
     [
       { "channel": "Actions",                           "enabled": true  },
+      { "channel": "AIWhiteboard",                      "enabled": true  },
       { "channel": "Behaviors",                         "enabled": true  },
       { "channel": "BlockPool",                         "enabled": true  },
+      { "channel": "BlockWorld",                        "enabled": true  },
       { "channel": "CpuProfiler",                       "enabled": true  },
       { "channel": "FaceRecognizer",                    "enabled": true  },
+      { "channel": "FaceWorld",                         "enabled": true  },
       { "channel": "Keyboard",                          "enabled": true  },
       { "channel": "MessageProfiler",                   "enabled": true  },
       { "channel": "MicData",                           "enabled": true  },
@@ -42,10 +45,13 @@
     "channels":
     [
       { "channel": "Actions",                           "enabled": false },
+      { "channel": "AIWhiteboard",                      "enabled": false },
       { "channel": "Behaviors",                         "enabled": false },
       { "channel": "BlockPool",                         "enabled": false },
+      { "channel": "BlockWorld",                        "enabled": false },
       { "channel": "CpuProfiler",                       "enabled": true  },
       { "channel": "FaceRecognizer",                    "enabled": false },
+      { "channel": "FaceWorld",                         "enabled": false },
       { "channel": "MessageProfiler",                   "enabled": true  },
       { "channel": "PerfMetric",                        "enabled": true  },
       { "channel": "PoseConfirmer",                     "enabled": false },
