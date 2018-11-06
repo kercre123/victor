@@ -385,7 +385,10 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamBeginTime_ns = currTime_nanosec;
 
         // Send out the message announcing the trigger word has been detected
-        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString(), !_enableDataCollection};
+        // TODO: Pass correct timezone from robot settings to vic-cloud!
+        const std::string timezone;
+        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString(),
+                                    timezone, !_enableDataCollection};
         if (_currentStreamingJob != nullptr) {
           hw.mode = _currentStreamingJob->_type;
         }
@@ -672,7 +675,7 @@ void MicDataSystem::ResetBeatDetector()
 {
   _micDataProcessor->GetBeatDetector().Start();
 }
-  
+
 void MicDataSystem::SetAlexaActive(bool active)
 {
   // Tell micDataProcessor Alexa is active

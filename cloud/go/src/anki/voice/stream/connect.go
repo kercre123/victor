@@ -119,10 +119,12 @@ func (strm *Streamer) openChipperStream(ctx context.Context, creds credentials.P
 	var stream chipper.Stream
 	if strm.opts.checkOpts != nil {
 		stream, err = conn.NewConnectionStream(ctx, *strm.opts.checkOpts)
-	} else if strm.opts.mode == cloud.StreamType_KnowledgeGraph {
-		stream, err = conn.NewKGStream(ctx, strm.opts.streamOpts.StreamOpts)
+	} else if strm.opts.kgOpts != nil {
+		stream, err = conn.NewKGStream(ctx, *strm.opts.kgOpts)
+	} else if strm.opts.intentOpts != nil {
+		stream, err = conn.NewIntentStream(ctx, *strm.opts.intentOpts)
 	} else {
-		stream, err = conn.NewIntentStream(ctx, strm.opts.streamOpts)
+		err = errors.New("fatal error: all stream option types are nil")
 	}
 	if err != nil {
 		return nil, nil, &CloudError{cloud.ErrorType_NewStream, err}

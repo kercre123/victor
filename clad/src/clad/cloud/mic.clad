@@ -38,6 +38,7 @@ structure StreamOpen {
 structure Hotword {
 	StreamType mode,
 	string locale,
+	string timezone,
 	bool noLogging,
 }
 

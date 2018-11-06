@@ -211,7 +211,10 @@ procloop:
 
 				var option stream.Option
 				if mode == cloud.StreamType_KnowledgeGraph {
-					option = stream.WithKnowledgeGraphOptions(chipperOpts)
+					option = stream.WithKnowledgeGraphOptions(chipper.KGOpts{
+						StreamOpts: chipperOpts,
+						Timezone:   hw.Timezone,
+					})
 				} else {
 					option = stream.WithIntentOptions(chipper.IntentOpts{
 						StreamOpts: chipperOpts,

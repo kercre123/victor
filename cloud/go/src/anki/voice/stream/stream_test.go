@@ -277,7 +277,7 @@ func TestKnowledgeGraph(t *testing.T) {
 	conn, fn, trigger := connector()
 
 	strm := stream.NewStreamer(context.Background(), receiver, 100, stream.WithConnectFunc(fn),
-		stream.WithKnowledgeGraphOptions(chipper.StreamOpts{}))
+		stream.WithKnowledgeGraphOptions(chipper.KGOpts{}))
 	trigger()
 
 	const sends = 100

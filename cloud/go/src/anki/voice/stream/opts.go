@@ -17,8 +17,10 @@ type options struct {
 	requireToken bool
 	mode         cloud.StreamType
 	connOpts     []chipper.ConnOpt
-	streamOpts   chipper.IntentOpts
+	intentOpts   *chipper.IntentOpts
+	kgOpts       *chipper.KGOpts
 	checkOpts    *chipper.ConnectOpts
+	streamOpts   *chipper.StreamOpts
 	url          string
 	secret       string
 	connectFn    ConnectFunc
@@ -36,20 +38,23 @@ func WithTokener(t token.Accessor, require bool) Option {
 func WithIntentOptions(opts chipper.IntentOpts, mode cloud.StreamType) Option {
 	return func(o *options) {
 		o.mode = mode
-		o.streamOpts = opts
+		o.intentOpts = &opts
+		o.streamOpts = &opts.StreamOpts
 	}
 }
 
-func WithKnowledgeGraphOptions(opts chipper.StreamOpts) Option {
+func WithKnowledgeGraphOptions(opts chipper.KGOpts) Option {
 	return func(o *options) {
 		o.mode = cloud.StreamType_KnowledgeGraph
-		o.streamOpts.StreamOpts = opts
+		o.kgOpts = &opts
+		o.streamOpts = &opts.StreamOpts
 	}
 }
 
 func WithConnectionCheckOptions(opts chipper.ConnectOpts) Option {
 	return func(o *options) {
 		o.checkOpts = &opts
+		o.streamOpts = &opts.StreamOpts
 	}
 }
 

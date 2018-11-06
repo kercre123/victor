@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+
+	"github.com/anki/sai-chipper-voice/client/chipper"
 )
 
 func NewStreamer(ctx context.Context, receiver Receiver, streamSize int, opts ...Option) *Streamer {
@@ -16,6 +18,7 @@ func NewStreamer(ctx context.Context, receiver Receiver, streamSize int, opts ..
 
 	// set default connector before applying options
 	strm.opts.connectFn = strm.newChipperConn
+	strm.opts.streamOpts = new(chipper.StreamOpts)
 	for _, o := range opts {
 		o(&strm.opts)
 	}
