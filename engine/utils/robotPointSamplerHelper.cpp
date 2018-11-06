@@ -14,10 +14,13 @@
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/pose.h"
+#include "engine/charger.h"
 #include "engine/navMap/iNavMap.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "util/random/randomGenerator.h"
 #include "util/logging/logging.h"
+
+#define LOG_CHANNEL "RobotPointSampler"
 
 namespace Anki {
 namespace Vector {
@@ -113,7 +116,7 @@ bool RejectIfWouldCrossCliff::operator()( const Point2f& sampledPos )
     if( intersects ) {
       // confirm intersection point lies on cliff edge
       if (!AreVectorsAligned( (intersectionPoint - cliffPos), cliffEdgeDirection, 0.001f )) {
-        PRINT_NAMED_WARNING("RejectIfWouldCrossCliff.CallOperator.BadIntersection", "vectors not aligned" );
+        LOG_WARNING("RejectIfWouldCrossCliff.CallOperator.BadIntersection", "vectors not aligned" );
       }
       // if the intersection pos is close to the cliff pos, reject. If it's far, accept. interpolate in between.
       const float distFromCliffSq = (intersectionPoint - cliffPos).LengthSq();
@@ -200,6 +203,53 @@ bool RejectIfNotInRange::operator()( const Point2f& sampledPos )
   return (distSq >= _minDistSq) && (distSq <= _maxDistSq);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RejectIfChargerOutOfView::RejectIfChargerOutOfView()
+{ }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RejectIfChargerOutOfView::operator()( const Point2f& sampledPos )
+{
+  DEV_ASSERT(_setChargerPose, "RejectIfChargerOutOfView.CallOperator.ChargerPoseUninitialized" );
+  if (_pAccept == 1.f) {
+    return true;
+  }
+  
+  Pose3d samplePose;
+  samplePose.SetParent(_chargerPose.GetParent());
+  samplePose.SetTranslation({sampledPos.x(), sampledPos.y(), _chargerPose.GetTranslation().z()});
+  Pose3d sampleWrtCharger;
+  if (!samplePose.GetWithRespectTo(_chargerPose, sampleWrtCharger)) {
+    LOG_ERROR("RejectIfChargerOutOfView.FailedGetWithRespectToCharger",
+              "Could not get samplePose w.r.t. charger pose");
+    return false;
+  }
+  
+  // The charger's origin is at the front of the 'lip' of the charger, and the x axis points inward toward the marker.
+  // Therefore if the relative x position of the sample point is negative, we should be able to see the marker.
+  const bool chargerInView = sampleWrtCharger.GetTranslation().x() < 0.f;
+  
+  if (!chargerInView && (_rng != nullptr)) {
+    return _rng->RandDbl() <= _pAccept;
+  }
+  return chargerInView;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RejectIfChargerOutOfView::SetChargerPose(const Pose3d& pose)
+{
+  _chargerPose = pose;
+  _setChargerPose = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RejectIfChargerOutOfView::SetAcceptanceProbability( float p, RandomGenerator& rng )
+{
+  _rng = &rng;
+  _pAccept = p;
+  DEV_ASSERT( _pAccept >= 0.0f && _pAccept <= 1.0f, "RejectIfChargerOutOfView.SetAcceptanceProbability.InvalidP" );
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RejectIfCollidesWithMemoryMap::RejectIfCollidesWithMemoryMap( const MemoryMapTypes::FullContentArray& collisionTypes )
   : _collisionTypes( collisionTypes )

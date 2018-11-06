@@ -207,4 +207,79 @@ TEST( TestRobotPosSampler, RejectIfNotInRange )
   
 }
 
+TEST( TestRobotPosSampler, ChargerNotInView )
+{
+  using namespace Anki;
+  
+  // parent for the charger pose
+  Pose3d parentPose;
+  
+  Anki::Util::RandomGenerator rng(123);
+  const float minDist_mm = 0.5f;
+  const float maxDist_mm = 1000.0f;
+  
+  RobotPointSamplerHelper::RejectIfChargerOutOfView rejectIfChargerOutOfView;
+  
+  // Place charger at (0, 0, 0) with angle of 0.
+  Pose3d chargerPose(0.f, Z_AXIS_3D(), {0.f, 0.f, 0.f});
+  chargerPose.SetParent(parentPose);
+  
+  rejectIfChargerOutOfView.SetChargerPose(chargerPose);
+  
+  // Generate some test samples which are definitely in range or out of range
+  // The charger's origin is at the front of the charger 'lip', and the x axis points into the charger (toward the
+  // marker). The z axis points up.
+  //
+  // This means that points that are in front of the charger should have negative x coordinates
+  const size_t nSamples = 25;
+  std::vector<Point2f> inViewSamples;
+  std::vector<Point2f> notInViewSamples;
+  
+  std::generate_n(std::back_inserter(inViewSamples), nSamples,
+                  [&](){
+                    Point2f pt;
+                    do {
+                      pt = RobotPointSamplerHelper::SamplePointInAnnulus(rng, minDist_mm, maxDist_mm);
+                    } while (pt.x() >= 0);
+                    return pt; // pt.x() should be negative here, which should satisfy the condition
+                  });
+  std::generate_n(std::back_inserter(notInViewSamples), nSamples,
+                  [&](){
+                    Point2f pt;
+                    do {
+                      pt = RobotPointSamplerHelper::SamplePointInAnnulus(rng, minDist_mm, maxDist_mm);
+                    } while (pt.x() < 0);
+                    return pt; // pt.x() should be positive here, which should fail to satisfy the condition
+                  });
+  
+  for (const auto& pt : inViewSamples) {
+    EXPECT_TRUE(rejectIfChargerOutOfView(pt)) << "Sample point " << pt << "unexpectedly returned false for rejectIfChargerOutOfView";
+  }
+  for (const auto& pt : notInViewSamples) {
+    EXPECT_FALSE(rejectIfChargerOutOfView(pt)) << "Sample point " << pt << "unexpectedly returned true for rejectIfChargerOutOfView";
+  }
+  
+  // Flip the charger around 180 degrees and the results should be the opposite.
+  chargerPose.SetRotation(M_PI_F, Z_AXIS_3D());
+  rejectIfChargerOutOfView.SetChargerPose(chargerPose);
+  
+  for (const auto& pt : inViewSamples) {
+    EXPECT_FALSE(rejectIfChargerOutOfView(pt)) << "Sample point " << pt << "unexpectedly returned true for rejectIfChargerOutOfView";
+  }
+  for (const auto& pt : notInViewSamples) {
+    EXPECT_TRUE(rejectIfChargerOutOfView(pt)) << "Sample point " << pt << "unexpectedly returned false for rejectIfChargerOutOfView";
+  }
+  
+  // If we set the acceptance probability to 1, everything should be accepted
+  auto otherRng = Anki::Util::RandomGenerator(456);
+  rejectIfChargerOutOfView.SetAcceptanceProbability(1.f, otherRng);
+  
+  for (const auto& pt : inViewSamples) {
+    EXPECT_TRUE(rejectIfChargerOutOfView(pt)) << "Sample point " << pt << "unexpectedly returned false for rejectIfChargerOutOfView";
+  }
+  for (const auto& pt : notInViewSamples) {
+    EXPECT_TRUE(rejectIfChargerOutOfView(pt)) << "Sample point " << pt << "unexpectedly returned false for rejectIfChargerOutOfView";
+  }
+}
+
 // todo: more tests

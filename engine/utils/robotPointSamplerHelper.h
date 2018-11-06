@@ -15,6 +15,7 @@
 
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "util/random/rejectionSamplerHelper.h"
 
@@ -112,6 +113,28 @@ class RejectIfNotInRange : public Anki::Util::RejectionSamplingCondition<Point2f
     bool _setOtherPos = false;
 };
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class RejectIfChargerOutOfView : public Anki::Util::RejectionSamplingCondition<Point2f>
+{
+public:
+  RejectIfChargerOutOfView();
+  
+  void SetChargerPose(const Pose3d& pose);
+  
+  // If not set, any sample from which the charger is out of view is rejected. If set, it is accepted with probability p
+  void SetAcceptanceProbability( float p, Util::RandomGenerator& rng );
+  
+  // Will reject any position from which the charger would not be visible. Note that this does not check distance to
+  // charger, just that the marker would be visible from the given position.
+  virtual bool operator()( const Point2f& sampledPos ) override;
+  
+private:
+  Pose3d _chargerPose;
+  bool _setChargerPose = false;
+  Util::RandomGenerator* _rng = nullptr;
+  float _pAccept = 0.0f;
+};
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class RejectIfCollidesWithMemoryMap : public Anki::Util::RejectionSamplingCondition<Poly2f>
 {

@@ -227,6 +227,10 @@ void BehaviorExploring::InitBehavior()
   );
   _iConfig.condHandleCliffs->SetAcceptanceInterpolant( kMaxCliffPenaltyDist_mm, GetRNG() );
   
+  _iConfig.condHandleChargerOutOfView = _iConfig.openSpacePointEvaluator->AddCondition(
+    std::make_shared<RejectIfChargerOutOfView>()
+  );
+  
   _iConfig.condHandleCollisions = _iConfig.openSpacePolyEvaluator->AddCondition(
     std::make_shared<RejectIfCollidesWithMemoryMap>( kTypesToBlockSampling )
   );
@@ -719,7 +723,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
     SampleVisitLocationsOpenSpace( memoryMap,
                                    tooFarFromCharger,
                                    chargerEqualsRobot,
-                                   chargerPos,
+                                   chargerPose,
                                    currRobotPos,
                                    retPoses );
   }
@@ -736,7 +740,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
 void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INavMap> memoryMap,
                                                        bool tooFarFromCharger,
                                                        bool chargerEqualsRobot,
-                                                       const Point2f& chargerPos,
+                                                       const Pose3d& chargerPose,
                                                        const Point2f& robotPos,
                                                        std::vector<Pose3d>& retPoses ) const
 {
@@ -759,7 +763,15 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INa
   _iConfig.condHandleCliffs->UpdateCliffs( memoryMap );
   
   // update charger position
-  _iConfig.condHandleNearCharger->SetOtherPosition( chargerPos );
+  Point2f chargerPosition(chargerPose.GetTranslation());
+  _iConfig.condHandleNearCharger->SetOtherPosition( chargerPosition );
+  
+  _iConfig.condHandleChargerOutOfView->SetChargerPose( chargerPose );
+  // If the charger pose is actually just the robot pose, then we don't want this check. So set the acceptance
+  // probability to 1.
+  if (chargerEqualsRobot) {
+    _iConfig.condHandleChargerOutOfView->SetAcceptanceProbability(1.f, GetRNG());
+  }
   
   // update memory map
   _iConfig.condHandleCollisions->SetMemoryMap( memoryMap );
@@ -768,7 +780,7 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INa
   for( unsigned int cnt=0; cnt<kNumSampleSteps; ++cnt ) {
     
     // sample a point based on either the robot position or charger position
-    Point2f sampledPos = tooFarFromCharger ? chargerPos : robotPos;
+    Point2f sampledPos = tooFarFromCharger ? chargerPosition : robotPos;
     {
       const Point2f pt = RobotPointSamplerHelper::SamplePointInAnnulus( GetRNG(), r1, r2 );
       sampledPos.x() += pt.x();

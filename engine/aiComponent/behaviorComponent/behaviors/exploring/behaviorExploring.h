@@ -28,6 +28,7 @@ struct PathMotionProfile;
 namespace RobotPointSamplerHelper {
   class RejectIfNotInRange;
   class RejectIfWouldCrossCliff;
+  class RejectIfChargerOutOfView;
   class RejectIfCollidesWithMemoryMap;
 }
 
@@ -100,7 +101,7 @@ private:
   void SampleVisitLocationsOpenSpace( std::shared_ptr<const INavMap> memoryMap,
                                       bool tooFarFromCharger,
                                       bool chargerEqualsRobot,
-                                      const Point2f& chargerPos,
+                                      const Pose3d& chargerPose,
                                       const Point2f& robotPos,
                                       std::vector<Pose3d>& retPoses ) const;
   
@@ -139,6 +140,7 @@ private:
     std::unique_ptr<Util::RejectionSamplerHelper<Poly2f>> openSpacePolyEvaluator;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfNotInRange> condHandleNearCharger;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff> condHandleCliffs;
+    std::shared_ptr<RobotPointSamplerHelper::RejectIfChargerOutOfView> condHandleChargerOutOfView;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleCollisions;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleUnknowns;
   };
