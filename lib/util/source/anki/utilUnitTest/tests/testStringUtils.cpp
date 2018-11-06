@@ -138,6 +138,30 @@ TEST_F(StringUtilsTest, StringSplit)
   EXPECT_EQ( split[1], "" );
   EXPECT_EQ( split[2], "" );
 }
+  
+TEST_F(StringUtilsTest, StringJoin)
+{
+  std::vector<std::string> test = {{"one"}, {"two"}, {"three"}};
+  char c = ',';
+  std::string res = StringJoin(test, c);
+  EXPECT_EQ( res, "one,two,three" );
+  
+  test = {{"one"}, {"two"}};
+  c = '|';
+  res = StringJoin(test, c);
+  EXPECT_EQ( res, "one|two" );
+  
+  test = {{"one"}, {""}, {""}};
+  c = ',';
+  res = StringJoin(test, c);
+  EXPECT_EQ( res, "one,," );
+  
+  test = {{""}, {""}, {""}};
+  c = ',';
+  res = StringJoin(test, c);
+  EXPECT_EQ( res, ",," );
+  
+}
 
 } // namespace Util
 } // namespace Anki

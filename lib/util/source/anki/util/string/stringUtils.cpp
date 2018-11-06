@@ -396,12 +396,14 @@ std::string UrlEncodeString(const std::string &str)
 std::string StringJoin(const std::vector<std::string>& strings, char delim)
 {
   std::string result;
+  bool first = true;
 
   for(const auto& str : strings) {
-    if(!result.empty()) {
+    if(!first) {
       result.append(std::string(1, delim));
     }
     result.append(str);
+    first = false;
   }
 
   return result;
