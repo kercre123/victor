@@ -109,6 +109,7 @@ void RobotDataLoader::LoadConfigData()
     }
   }
   // Alexa config
+  // TODO: VIC-11301 Add Alexa trigger config
   {
 #ifdef SHIPPING
     const std::string& alexaConfigFile = "config/alexa/alexa_prod.json";

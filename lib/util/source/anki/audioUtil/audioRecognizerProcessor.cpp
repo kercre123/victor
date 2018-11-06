@@ -78,7 +78,7 @@ void AudioRecognizerProcessor::SetSpeechRecognizer(SpeechRecognizer* newRecog)
   _recognizer = newRecog;
   if (_recognizer)
   {
-    _recognizer->SetCallback(std::bind(&AudioRecognizerProcessor::AddRecognizerResult, this, std::placeholders::_1, std::placeholders::_2));
+    _recognizer->SetCallback(std::bind(&AudioRecognizerProcessor::AddRecognizerResult, this, std::placeholders::_1));
   }
 }
 
@@ -151,12 +151,12 @@ void AudioRecognizerProcessor::AudioSamplesCallback(const AudioSample* buffer, u
   }
 }
                            
-void AudioRecognizerProcessor::AddRecognizerResult(const char* data, float score)
+void AudioRecognizerProcessor::AddRecognizerResult(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)
 {
   std::lock_guard<std::mutex> lock(_resultMutex);
   if (_capturingAudio)
   {
-    _procResults.push_back( {data, score} );
+    _procResults.push_back( {info.result, info.score} );
   }
 }
 

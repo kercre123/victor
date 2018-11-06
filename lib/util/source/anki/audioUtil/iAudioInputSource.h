@@ -31,7 +31,7 @@ public:
   IAudioInputSource(IAudioInputSource&& other) = default;
   IAudioInputSource& operator=(IAudioInputSource&& other) = default;
   
-  using DataCallback = std::function<void(const AudioSample* ,uint32_t)>;
+  using DataCallback = std::function<void(const AudioSample* samples, uint32_t size)>;
   void SetCallback(DataCallback newCallback)
   {
     std::lock_guard<std::mutex> lock(_callbackMutex);

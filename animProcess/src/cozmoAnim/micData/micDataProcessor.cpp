@@ -17,7 +17,6 @@
 #include "policy_actions.h"
 #include "se_diag.h"
 
-#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/beatDetector/beatDetector.h"
@@ -131,12 +130,6 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
   _selectedSearchBeamConfidence = SEDiagGetIndex("search_result_best_beam_confidence");
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
   _policyFallbackFlag = SEDiagGetIndex("policy_fallback_flag");
-
-  // Start the thread doing the SE processing of audio
-  _processThread = std::thread(&MicDataProcessor::ProcessRawLoop, this);
-
-  // Start the thread doing the Sensory processing of audio
-  _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
   
   SetupConsoleFuncs();
 }
@@ -146,16 +139,18 @@ void MicDataProcessor::Init()
   ASSERT_NAMED(_micDataSystem != nullptr, "MicDataProcessor.Init._micDataSystem.IsNull");
   ASSERT_NAMED(_micDataSystem->GetSpeechRecognizerSystem() != nullptr,
                "MicDataProcessor.Init._micDataSystem.GetSpeechRecognizerSystem.IsNull");
-  // Setup detection Callback
+  // Link recognizer
   _speechRecognizerSystem = _micDataSystem->GetSpeechRecognizerSystem();
-  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const SpeechRecognizerSystem::TriggerWordDetectedInfo& info) {
-    TriggerWordDetectCallback( TriggerWordDetectSource::Voice, info.score );
-  };
-  _speechRecognizerSystem->SetTriggerWordDetectedCallback( callback );
   
   // Set initial processing state
   SetPreferredMicDataProcessingState(kDefaultProcessingState);
   SetActiveMicDataProcessingState(kDefaultProcessingState);
+  
+  // Start the thread doing the SE processing of audio
+  _processThread = std::thread(&MicDataProcessor::ProcessRawLoop, this);
+  
+  // Start the thread doing the Sensory processing of audio
+  _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
 }
 
 void MicDataProcessor::InitVAD()
@@ -169,15 +164,26 @@ void MicDataProcessor::InitVAD()
   _sVadConfig->HangoverCountDownStart = 10;  // was 25, make 25 blocks (1/4 second) to see it actually end a couple times
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
-  
-void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source, float score)
+
+void MicDataProcessor::VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)
 {
-  const bool isButtonPress = (source == TriggerWordDetectSource::Button);
-  if( isButtonPress && _buttonPressIsAlexa ) {
-    NotifyAlexaOfButtonPress();
-    return;
-  }
+  TriggerWordDetectCallback(TriggerWordDetectSource::Voice, info);
+}
   
+void MicDataProcessor::FakeTriggerWordDetection()
+{
+  const AudioUtil::SpeechRecognizer::SpeechCallbackInfo info {
+    .result       = "",
+    .startTime_ms = 0,
+    .endTime_ms   = 0,
+    .score        = 0.0f
+  };
+  TriggerWordDetectCallback(TriggerWordDetectSource::Button, info);
+}
+  
+void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
+                                                 const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)
+{
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming
   if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
@@ -208,8 +214,8 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.direction = currentDirection;
-  twDetectedMessage.isButtonPress = isButtonPress;
-  twDetectedMessage.triggerScore = (uint32_t) score;
+  twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
+  twDetectedMessage.triggerScore = (uint32_t) info.score;
   twDetectedMessage.willOpenStream = willStreamAudio;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
@@ -229,12 +235,6 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
                     "Direction index %d",
                     currentDirection);
-}
-
-void MicDataProcessor::SetAlexaActive(bool active)
-{
-  // for now, pretend we received a message from the app specifying what the backpack button should do
-  _buttonPressIsAlexa = active;
 }
   
 RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamType,
@@ -803,14 +803,13 @@ void MicDataProcessor::ProcessTriggerLoop()
       job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
     }
     
-    UpdateAlexaInput( processedAudio.data(), processedAudio.size() );
-
     // Run the trigger detection, which will use the callback defined above
-    // Note we skip it if there is no activity as of the latest processed audioblock
-    if (_micImmediateDirection->GetLatestSample().activeState != 0)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
-      _speechRecognizerSystem->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+      // Note we skip it if there is no activity as of the latest processed audioblock
+      _speechRecognizerSystem->Update(processedAudio.data(),
+                                      (unsigned int)processedAudio.size(),
+                                      (_micImmediateDirection->GetLatestSample().activeState != 0));
     }
 
     // Now we're done using this audio with the recognizer, so let it go
@@ -842,15 +841,6 @@ void MicDataProcessor::UpdateBeatDetector(const AudioUtil::AudioSample* const sa
       auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
       _micDataSystem->SendMessageToEngine(std::move(engineMessage));
     }
-  }
-}
-  
-void MicDataProcessor::UpdateAlexaInput(const AudioUtil::AudioSample* const samples, size_t nSamples)
-{
-  auto* alexa = _context->GetAlexa();
-  if (alexa != nullptr) {
-    // this will not go any further if the user has not opted in
-    alexa->AddMicrophoneSamples(samples, nSamples);
   }
 }
   
@@ -923,14 +913,7 @@ const char* MicDataProcessor::GetProcessingStateName(MicDataProcessor::Processin
   }
   return "";
 }
-  
-void MicDataProcessor::NotifyAlexaOfButtonPress()
-{
-  auto* alexa = _context->GetAlexa();
-  if (alexa != nullptr) {
-    alexa->NotifyOfTapToTalk();
-  }
-}
+
 
 } // namespace MicData
 } // namespace Vector

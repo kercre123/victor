@@ -175,6 +175,8 @@ private:
 
   bool _batteryLow = false;
   bool _enableDataCollection = false;
+  bool _alexaActive = false;
+  bool _buttonPressIsAlexa = false;
 
   void SetWillStream(bool willStream) const;
 

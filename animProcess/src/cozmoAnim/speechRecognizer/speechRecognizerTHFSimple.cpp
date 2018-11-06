@@ -17,6 +17,7 @@
 #include "speechRecognizerTHFTypesSimple.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/string/stringUtils.h"
 
 #include <algorithm>
 #include <array>
@@ -330,9 +331,10 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   {
     float score = 0;
     const char* foundStringRaw = nullptr;
+    const char* wordAlign = nullptr;
     if (sPhraseForceHeard.empty())
     {
-      if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundStringRaw, NULL, NULL, NULL, NULL, NULL, NULL))
+      if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundStringRaw, &wordAlign, NULL, NULL, NULL, NULL, NULL))
       {
         PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
       }
@@ -346,10 +348,28 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     
     if (foundStringRaw != nullptr && foundStringRaw[0] != '\0' && kNotaString.compare(foundStringRaw) != 0)
     {
+      // Get results for callback struct
       std::string foundString{foundStringRaw};
       std::replace(foundString.begin(), foundString.end(), '_', ' ');
-      DoCallback(foundString.c_str(), score);
-      PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString.c_str());
+      AudioUtil::SpeechRecognizer::SpeechCallbackInfo info {
+        .result       = foundString.c_str(),
+        .startTime_ms = 0,
+        .endTime_ms   = 0,
+        .score        = score
+      };
+      
+      if( wordAlign != nullptr ) {
+        std::string wordTimesS{wordAlign};
+        // example: "21795 22440 hey_vector 0.00"
+        auto split = Util::StringSplit(wordTimesS, ' ' );
+        if( split.size() >= 2 ) {
+          info.startTime_ms = std::atoi(split[0].c_str());
+          info.endTime_ms = std::atoi(split[1].c_str()); // hope these are ints
+        }
+      }
+      
+      DoCallback(info);
+      PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer -  %s", info.Description().c_str());
     }
     
     // If the current recognizer allows a followup recognizer to immediately take over

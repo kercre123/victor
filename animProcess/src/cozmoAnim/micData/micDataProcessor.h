@@ -20,6 +20,7 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "cozmoAnim/micData/micTriggerConfig.h"
 #include "audioUtil/audioDataTypes.h"
+#include "audioUtil/speechRecognizer.h"
 #include "clad/cloud/mic.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
@@ -88,11 +89,12 @@ public:
   // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
   RobotTimeStamp_t CreateStreamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
                                   uint32_t overlapLength_ms = 0);
-  
-  void SetAlexaActive(bool active);
-  
-  void FakeTriggerWordDetection() { TriggerWordDetectCallback(TriggerWordDetectSource::Button, 0.f); }
-  
+
+  void VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
+
+  void FakeTriggerWordDetection();
+
+
 private:
   const AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;
@@ -131,7 +133,6 @@ private:
   bool _wasSpeakerActive = false;
   bool _isInLowPowerMode = false;
   uint32_t _speakerCooldownCnt = 0;
-  bool _buttonPressIsAlexa = false;
 
 #if ANKI_DEV_CHEATS
   static constexpr uint32_t kTriggerAudioLength_ms = kTriggerAudioLengthDebug_ms;
@@ -171,9 +172,11 @@ private:
     Button,
   };
   
+
   void InitVAD();
   
-  void TriggerWordDetectCallback(TriggerWordDetectSource source, float score);
+  void TriggerWordDetectCallback(TriggerWordDetectSource source,
+                                 const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
   
   // Return 0 if the stream job can not be created
   RobotTimeStamp_t CreateTriggerWordDetectedJobs();
@@ -192,8 +195,6 @@ private:
   void ProcessTriggerLoop();
   
   void UpdateBeatDetector(const AudioUtil::AudioSample* const samples, const uint32_t nSamples);
-  
-  void UpdateAlexaInput(const AudioUtil::AudioSample* const samples, size_t nSamples);
   
   void SetActiveMicDataProcessingState(ProcessingState state);
   const char* GetProcessingStateName(ProcessingState state) const;

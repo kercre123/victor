@@ -14,6 +14,7 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 #include "coretech/messaging/shared/socketConstants.h"
 
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
@@ -120,7 +121,11 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
-  _speechRecognizerSystem->Init(dataLoader, _locale);
+  // SpeechRecognizerSystem
+  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+    _micDataProcessor->VoiceTriggerWordDetection( info );
+  };
+  _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
   _micDataProcessor->Init();
 }
 
@@ -196,7 +201,16 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
-  _micDataProcessor->FakeTriggerWordDetection();
+  if (_buttonPressIsAlexa) {
+    // "Alexa" button press
+    const Alexa* alexa = _context->GetAlexa();
+    ASSERT_NAMED(alexa != nullptr, "");
+    alexa->NotifyOfTapToTalk();
+  }
+  else {
+    // "Hey Vector" button press
+    _micDataProcessor->FakeTriggerWordDetection();
+  }
 }
 
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)
@@ -678,9 +692,22 @@ void MicDataSystem::ResetBeatDetector()
 
 void MicDataSystem::SetAlexaActive(bool active)
 {
-  // Tell micDataProcessor Alexa is active
-  _micDataProcessor->SetAlexaActive(active);
-  // TODO: toggle "Alexa" wake word in SpeechRecognizerSystem
+  _alexaActive = active;
+  // TODO: for now, pretend we received a message from the app specifying what the backpack button should do
+  _buttonPressIsAlexa = active;
+  
+  if (_alexaActive) {
+    RobotDataLoader *dataLoader = _context->GetDataLoader();
+    const auto callback = [] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+      LOG_WARNING("MicDataSystem.SetAlexaActive.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
+      // TODO: Do Alexa stuff here
+    };
+    _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
+  }
+  else {
+    // Disable "Alexa" wake word in SpeechRecognizerSystem
+    _speechRecognizerSystem->DisableAlexa();
+  }
 }
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
@@ -707,7 +734,6 @@ bool MicDataSystem::IsSpeakerPlayingAudio() const
       }
     }
   }
-
   return false;
 }
 

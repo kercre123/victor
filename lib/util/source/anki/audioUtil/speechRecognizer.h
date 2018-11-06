@@ -16,6 +16,7 @@
 #include "audioDataTypes.h"
   
 #include <functional>
+#include <string>
 
 namespace Anki {
 namespace AudioUtil {
@@ -30,7 +31,17 @@ public:
   SpeechRecognizer(SpeechRecognizer&& other) = default;
   SpeechRecognizer& operator=(SpeechRecognizer&& other) = default;
   
-  using SpeechCallback = std::function<void(const char*,float)>;
+  // Trigger Callback types
+  struct SpeechCallbackInfo {
+    const char* result;
+    int startTime_ms;
+    int endTime_ms;
+    float score;
+    
+    const std::string Description() const;
+  };
+  using SpeechCallback = std::function<void(const SpeechCallbackInfo& info)>;
+  
   void SetCallback(SpeechCallback callback = SpeechCallback{} ) { _speechCallback = callback; }
   void Start();
   void Stop();
@@ -48,7 +59,7 @@ protected:
   virtual void StartInternal() { }
   virtual void StopInternal() { }
   
-  void DoCallback(const char* callbackArg, float score);
+  void DoCallback(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
   
 private:
   SpeechCallback _speechCallback;

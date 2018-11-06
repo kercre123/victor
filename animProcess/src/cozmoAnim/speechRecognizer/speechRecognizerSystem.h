@@ -23,6 +23,7 @@
 
 namespace Anki {
   namespace Vector {
+    class Alexa;
     class AnimContext;
     namespace MicData {
       class MicDataSystem;
@@ -50,47 +51,55 @@ public:
   SpeechRecognizerSystem(const SpeechRecognizerSystem& other) = delete;
   SpeechRecognizerSystem& operator=(const SpeechRecognizerSystem& other) = delete;
   
-  void Init(const RobotDataLoader& dataLoader, const Util::Locale& locale);
+  using TriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)>;
+  
+  // Init Vector trigger detector
+  // Note: This always happens at boot
+  void InitVector(const RobotDataLoader& dataLoader,
+                  const Util::Locale& locale,
+                  TriggerWordDetectedCallback callback);
+  
+  // Init Alexa trigger detector
+  // Note: This is done after Alex user has been authicated
+  void InitAlexa(const RobotDataLoader& dataLoader,
+                 const Util::Locale& locale,
+                 TriggerWordDetectedCallback callback);
+  
+  // Disable Alexa trigger
+  void DisableAlexa();
   
   // Update recognizer audio
   // NOTE: Always call from tne same thread
-  void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen);
+  void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen, bool vadActive);
   
   // Set Default models for locale
   // Return true when locale file was found and is different then current locale
   // NOTE: Locale is not updated until the next Update() call
   bool UpdateTriggerForLocale(Util::Locale newLocale);
-  
-  // Trigger Callback types
-  struct TriggerWordDetectedInfo {
-    const char* result;
-    float startTime_ms;
-    float endTime_ms;
-    float score;
-  };
-  using TriggerWordDetectedCallback = std::function<void(const TriggerWordDetectedInfo& info)>;
-  
-  // Assign callback for trigger detection
-  void SetTriggerWordDetectedCallback(TriggerWordDetectedCallback callback) { _triggerCallback = callback; }
 
 
 private:
   
+  // Trigger context
+  struct TriggerContext {
+    std::unique_ptr<SpeechRecognizerTHF>        recognizer;
+    std::unique_ptr<MicData::MicTriggerConfig>  micTriggerConfig;
+    // For tracking and altering the trigger model being used
+    MicData::MicTriggerConfig::TriggerDataPaths currentTriggerPaths;
+    MicData::MicTriggerConfig::TriggerDataPaths nextTriggerPaths;
+    
+    TriggerContext();
+  };
+  
   const AnimContext*                          _context = nullptr;
   MicData::MicDataSystem*                     _micDataSystem = nullptr;
-  std::unique_ptr<SpeechRecognizerTHF>        _recognizer;
-  std::unique_ptr<MicData::MicTriggerConfig>  _micTriggerConfig;
-  TriggerWordDetectedCallback                 _triggerCallback = nullptr;
+  std::unique_ptr<TriggerContext>             _victorTrigger;
+  std::unique_ptr<TriggerContext>             _alexaTrigger;
+  Alexa*                                      _alexaComponent = nullptr;
   std::string                                 _triggerWordDataDir;
   
-  // For tracking and altering the trigger model being used
-  MicData::MicTriggerConfig::TriggerDataPaths _currentTriggerPaths;
-  MicData::MicTriggerConfig::TriggerDataPaths _nextTriggerPaths;
   std::mutex                                  _triggerModelMutex;
   std::atomic<bool>                           _isPendingLocaleUpdate{ false };
-  
-  // Handle callbacks from SpeechRecognizer
-  void TriggerWordVoiceCallback(const char* resultFound, float score);
   
   // Set custom model and search files for locale
   // Return true when locale file was found and is different then current locale

@@ -36,7 +36,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "184"
+                "version": "188"
             },
             "victor-animation-assets": {
                 "additional_files": [
