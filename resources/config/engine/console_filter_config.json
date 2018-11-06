@@ -13,18 +13,18 @@
   {
     "channels":
     [
-      { "channel": "Actions",                           "enabled": false },
-      { "channel": "Behaviors",                         "enabled": false },
-      { "channel": "BlockPool",                         "enabled": false },
+      { "channel": "Actions",                           "enabled": true  },
+      { "channel": "Behaviors",                         "enabled": true  },
+      { "channel": "BlockPool",                         "enabled": true  },
       { "channel": "CpuProfiler",                       "enabled": true  },
-      { "channel": "FaceRecognizer",                    "enabled": false },
+      { "channel": "FaceRecognizer",                    "enabled": true  },
       { "channel": "Keyboard",                          "enabled": true  },
       { "channel": "MessageProfiler",                   "enabled": true  },
       { "channel": "MicData",                           "enabled": true  },
       { "channel": "PerfMetric",                        "enabled": true  },
-      { "channel": "PoseConfirmer",                     "enabled": false },
-      { "channel": "VisionComponent",                   "enabled": false },
-      { "channel": "VisionSystem",                      "enabled": false },
+      { "channel": "PoseConfirmer",                     "enabled": true  },
+      { "channel": "VisionComponent",                   "enabled": true  },
+      { "channel": "VisionSystem",                      "enabled": true  },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
