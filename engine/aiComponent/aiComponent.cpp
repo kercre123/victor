@@ -35,6 +35,8 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotStateHistory.h"
 
+#include "util/logging/DAS.h"
+
 namespace {
 static const int kLowQualityProxDistance_mm   = 300;   // Assumed distance if prox reading is low quality
 static const int kObsSampleWindow_ms          = 300;   // sample all measurements over this period
@@ -141,8 +143,12 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
     angleVec.push_back(state.GetPose().GetRotationAngle<'Z'>());
     const auto& proxData = state.GetProxSensorData();
 
-    // Ignore readings where lift was in fov or it's too pitched
-    if (proxData.isLiftInFOV || proxData.isTooPitched) {
+    // Ignore readings where lift was in fov or it's too pitched.
+    // Also ignore readings for which the lift was moving and could have been occluding the prox sensor. If the timing
+    // of prox measurements is off a bit, the lift may actually have been in front of the sensor at the time the reading
+    // was taken even though the lift height suggests otherwise.
+    const bool liftMovingNearProx = (state.GetLiftHeight_mm() <= LIFT_HEIGHT_ABOVE_PROX) && state.WasLiftMoving();
+    if (proxData.isLiftInFOV || proxData.isTooPitched || liftMovingNearProx) {
       continue;
     }
 
@@ -202,9 +208,13 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
                             (latestDistance_mm   <= kObsMaxObjectDistance_mm);
 
   if (_suddenObstacleDetected) {
-    Anki::Util::sInfoF("robot.obstacle_detected", {},
-                       "dist: %4.2f objSpeed: %4.2f robotSpeed: %4.2f",
-                       avgProxValue_mm, avgObjectSpeed_mmps, avgRobotSpeed_mmps);
+    DASMSG(robot_obstacle_detected,
+           "robot.obstacle_detected",
+           "The robot has detected (with his prox sensor) that an obstacle has suddenly appeared in front of him");
+    DASMSG_SET(i1, static_cast<int64_t>(avgProxValue_mm), "Average prox sensor value in the recent past (mm)");
+    DASMSG_SET(i2, static_cast<int64_t>(avgObjectSpeed_mmps), "Average object speed in the recent past (mm/sec)");
+    DASMSG_SET(i3, static_cast<int64_t>(avgRobotSpeed_mmps), "Average robot speed in the recent past (mm/sec)");
+    DASMSG_SEND();
     PRINT_NAMED_INFO("AIComponent.Update.CheckForSuddenObstacle","SuddenObstacleDetected");
   }
 }
