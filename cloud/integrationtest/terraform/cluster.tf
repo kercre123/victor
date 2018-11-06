@@ -12,7 +12,12 @@ data "template_file" "load_test" {
 
     image = "${var.app_image}"
 
-    logging_role = "${var.logging_role}"
+    logging_role = "${var.logging["role"]}"
+    logging_source = "${var.logging["source"]}"
+    logging_stream = "${var.logging["stream"]}"
+    logging_index = "${var.logging["index"]}"
+    logging_type = "${var.logging["type"]}"
+    logging_source_type = "${var.logging["source_type"]}"
 
     robots_per_process = "${var.robots_per_process}"
 

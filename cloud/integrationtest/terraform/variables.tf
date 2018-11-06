@@ -29,8 +29,16 @@ variable "app_image" {
   default = "649949066229.dkr.ecr.us-west-2.amazonaws.com/load_test:latest"
 }
 
-variable "logging_role" {
-  default = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-loadtest"
+variable "logging" {
+  type    = "map"
+  default = {
+    role = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-loadtest"
+    source = "robot_fleet"
+    stream = "splunk_logs_loadtest"
+    index = "sai_loadtest"
+    type = "kinesis"
+    source_type = "sai_go_general"
+  }
 }
 
 // Note: determines if a new account is created as part of the test action

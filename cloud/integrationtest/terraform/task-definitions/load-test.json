@@ -55,11 +55,11 @@
             },
             {
                 "name": "LOG_TYPE",
-                "value": "kinesis"
+                "value": "${logging_type}"
             },
             {
                 "name": "LOG_KINESIS_STREAM",
-                "value": "splunk_logs_loadtest"
+                "value": "${logging_stream}"
             },
             {
                 "name": "LOG_KINESIS_ROLE_ARN",
@@ -67,15 +67,15 @@
             },
             {
                 "name": "LOG_SOURCE",
-                "value": "robot_fleet"
+                "value": "${logging_source}"
             },
             {
                 "name": "LOG_SOURCETYPE",
-                "value": "sai_go_general"
+                "value": "${logging_source_type}"
             },
             {
                 "name": "LOG_INDEX",
-                "value": "sai_loadtest"
+                "value": "${logging_index}"
             },
             {
                 "name": "ENABLE_ACCOUNT_CREATION",
