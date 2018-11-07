@@ -135,6 +135,8 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   SettingsManager& settings = GetBEI().GetSettingsManager();
   settings.ApplyAllCurrentSettings();
 
+  // Release all track locks which may have been acquired by an SDK user
+  robotInfo.GetMoveComponent().UnlockAllTracks();
   // Do not permit low level movement commands/actions to run since SDK behavior is no longer active.
   SetAllowExternalMovementCommands(false);
 }
