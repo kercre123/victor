@@ -61,6 +61,13 @@ namespace {
   // robot should consider itself "OnTreads" for at least this number of ms to
   // prevent interrupting the `ReactToPlacedOnSlope` behavior.
   const u16 kMinTimeSinceOffTreads_ms = 1000;
+  
+  // When the behavior wants to delegate to a behavior that asks for help because
+  // it thinks the robot is stuck on an edge, we should wait for a certain
+  // period of time to make sure that the robot is stationary (not picked up)
+  // before delegating to the StuckOnEdge behavior, or else that behavior will
+  // not activate or cancel itself if the robot is teetering on an edge.
+  const u16 kMinTimeToValidateStuckOnEdge_ms = 200;
 
   // If the value of the cliff when it started stopping is
   // this much less than the value when it stopped, then
@@ -256,16 +263,49 @@ void BehaviorReactToCliff::OnBehaviorActivated()
 void BehaviorReactToCliff::TransitionToStuckOnEdge()
 {
   DEBUG_SET_STATE(StuckOnEdge);
-
-  const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
-  DASMSG(behavior_cliff_stuck_on_edge, "behavior.cliff_stuck_on_edge", "The robot appears to be stuck on the edge of a surface");
-  DASMSG_SET(i1, cliffComp.GetCliffDetectedFlags(), "Cliff detected flags");
-  DASMSG_SEND();
   
-  ANKI_VERIFY(_iConfig.stuckOnEdgeBehavior->WantsToBeActivated(),
-              "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated", 
-              "");
-  DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
+  // Wait function to allow the robot to stop teetering on an edge if it is stuck.
+  auto waitForStationaryLambda = [this](Robot& robot) {
+    const auto& robotInfo = GetBEI().GetRobotInfo();
+    const bool areWheelsMoving = robotInfo.GetMoveComponent().AreWheelsMoving();
+    const auto timeSinceLastTreadStateChange_ms =
+        BaseStationTimer::getInstance()->GetCurrentTimeStamp() - robotInfo.GetOffTreadsStateLastChangedTime_ms();
+    if ( areWheelsMoving ||
+         robotInfo.IsPickedUp() ||
+         timeSinceLastTreadStateChange_ms < kMinTimeToValidateStuckOnEdge_ms) {
+      PRINT_PERIODIC_CH_INFO(5, "Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.WaitForStationary",
+                             "Wheels moving? %d, Picked up? %d, Last time tread's state changed? %u ms",
+                             areWheelsMoving, robotInfo.IsPickedUp(), static_cast<u32>(timeSinceLastTreadStateChange_ms));
+      return false;
+    }
+    // Once we've stabilized, double check that we're still detecting cliffs underneath the robot.
+    const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+    if (!cliffComp.IsCliffDetected()) {
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.QuittingDueToNoCliff", "");
+      _dVars.quitReaction = true;
+    }
+    return true;
+  };
+  
+  WaitForLambdaAction* waitForStationaryAction = new WaitForLambdaAction(waitForStationaryLambda);
+  DelegateIfInControl(waitForStationaryAction, [this](const ActionResult& res){
+    if (!_dVars.quitReaction) {
+      const auto& robotInfo = GetBEI().GetRobotInfo();
+      DASMSG(behavior_cliff_stuck_on_edge, "behavior.cliff_stuck_on_edge", "The robot is stuck on the edge of a surface");
+      DASMSG_SET(i1, robotInfo.GetCliffSensorComponent().GetCliffDetectedFlags(), "Cliff detected flags");
+      DASMSG_SEND();
+      
+      if (ANKI_VERIFY(_iConfig.stuckOnEdgeBehavior->WantsToBeActivated(),
+                      "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated",
+                      "Re-starting cliff reaction")) {
+        DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
+      } else {
+        TransitionToPlayingCliffReaction();
+      }
+    }
+  });
+
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -321,7 +361,17 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
                        cliffDetectedFlags);
       TransitionToStuckOnEdge();
     } else {
-      DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToFaceAndBackAwayCliff);
+      DelegateIfInControl(action, [this](const ActionResult& res){
+        if (res == ActionResult::SUCCESS || !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected() ) {
+          // The action reported success or partially succeeded moving the robot enough to get it away from the cliff.
+          TransitionToFaceAndBackAwayCliff();
+        } else {
+          // Cliff reaction failed for some reason, something might be preventing the robot from moving away from
+          // the cliff (e.g. the robot was teetering and unsure of whether it's been picked up, or the treads
+          // slipped and got the robot stuck on the edge of a cliff).
+          TransitionToStuckOnEdge();
+        }
+      });
     }
   }
 }
