@@ -95,6 +95,34 @@ target_include_directories(cti_common_robot
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
 
+#
+# cti_common_shared
+#
+
+anki_build_cxx_library(cti_common_shared ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_common_shared "ANKI")
+
+target_link_libraries(cti_common_shared
+  PUBLIC
+  util
+  PRIVATE
+)
+
+target_compile_definitions(cti_common_shared
+  PUBLIC
+  ANKICORETECH_USE_OPENCV=0
+  ANKICORETECH_USE_MATLAB=0
+  ANKICORETECH_EMBEDDED_USE_OPENCV=0
+  ANKICORETECH_EMBEDDED_USE_MATLAB=0
+  PRIVATE
+  CORETECH_SHARED
+)
+
+target_include_directories(cti_common_shared
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
+)
+
 
 if (MACOSX)
 

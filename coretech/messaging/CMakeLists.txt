@@ -43,3 +43,22 @@ target_link_libraries(cti_messaging_robot
   PUBLIC
   cti_common_robot
 )
+
+anki_build_cxx_library(cti_messaging_shared ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_messaging_shared "ANKI")
+
+target_compile_definitions(cti_messaging_shared
+  PRIVATE
+  CORETECH_SHARED
+)
+
+target_include_directories(cti_messaging_shared
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/util/source/anki>
+)
+
+target_link_libraries(cti_messaging_shared
+  PUBLIC
+  cti_common_shared
+)
