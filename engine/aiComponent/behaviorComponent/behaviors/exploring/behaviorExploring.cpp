@@ -19,6 +19,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
+#include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploringExamineObstacle.h"
@@ -59,8 +60,6 @@ namespace {
   const float kMaxScanAngle = DEG_TO_RAD( 140.0f );
   constexpr float kMinCliffPenaltyDist_mm = 100.0f;
   constexpr float kMaxCliffPenaltyDist_mm = 600.0f;
-  const float kTimeBeforeConfirmCharger_s = 10*60.0f;
-  const float kTimeBeforeConfirmCube_s = 2*60.0f;
   const float kProxPoseOffset_mm = 120.0f;
   const float kMaxDistToProxPose_mm = 750.0f;
   const float kMinDistToProxPose_mm = 100.0f;
@@ -73,6 +72,10 @@ namespace {
   // if no face is known (meaning we can't run the referencing behavior) then run a short face search (at
   // most) this often (instead of driving to a new pose)
   const float kPeriodToCheckForFaces_s = 30.0f;
+  
+  // If we have driven this far since the last time we looked at the charger, then we should turn and look at the
+  // charger before driving again. This helps keep the nav map accurate.
+  const float kReferenceChargerDistanceThreshold_mm = 200.f;
 
   static_assert( kMinCliffPenaltyDist_mm < kMaxCliffPenaltyDist_mm, "Max must be > min" );
   
@@ -144,13 +147,14 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   posesHaveBeenPruned = false;
   distToGoal_mm = -1.0f;
   
-  numDriveAttemps = 0;
+  numDriveAttempts = 0;
   hasTakenPitStop = false;
-  timeFinishedConfirmCharger_s = -1.0f;
-  timeFinishedConfirmCube_s = -1.0f;
   endReason = "";
   
   devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
+  
+  lastSearchForFaceTime_s = -1.f;
+  
   timeDeactivated_s = -1.0f;
 
   gentleInterruptionOKUntilTick = 0;
@@ -205,9 +209,6 @@ void BehaviorExploring::InitBehavior()
   _iConfig.referenceHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ExploringReferenceHuman) );
   _iConfig.searchForHumanBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ShortLookAroundForFaceAndCube) );
   
-  _iConfig.confirmChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCharger) );
-  _iConfig.confirmCubeBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(ConfirmCube) );
-  
   using namespace RobotPointSamplerHelper;
   _iConfig.openSpacePointEvaluator.reset( new Util::RejectionSamplerHelper<Point2f>() );
   _iConfig.openSpacePolyEvaluator.reset( new Util::RejectionSamplerHelper<Poly2f>() );
@@ -258,8 +259,6 @@ void BehaviorExploring::GetBehaviorOperationModifiers(BehaviorOperationModifiers
 void BehaviorExploring::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert( _iConfig.examineBehavior.get() );
-  delegates.insert( _iConfig.confirmChargerBehavior.get() );
-  delegates.insert( _iConfig.confirmCubeBehavior.get() );
   delegates.insert( _iConfig.referenceHumanBehavior.get() );
   delegates.insert( _iConfig.searchForHumanBehavior.get() );
 }
@@ -293,8 +292,7 @@ void BehaviorExploring::OnBehaviorActivated()
 
   // reset dynamic variables
   _dVars = DynamicVariables();
-  _dVars.timeFinishedConfirmCharger_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _dVars.timeFinishedConfirmCube_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.lastSearchForFaceTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   if( _iConfig.customMotionProfile != nullptr ) {
     SmartSetMotionProfile( *_iConfig.customMotionProfile );
@@ -355,14 +353,14 @@ void BehaviorExploring::BehaviorUpdate()
     PRINT_NAMED_WARNING("BehaviorExploring.BehaviorUpdate.WasNonInterrupted",
                         "Behavior assumed an interruption that didn't occur. This could mean the robot stops driving");
     _dVars.devWarnIfNotInterruptedByTick = std::numeric_limits<size_t>::max();
-    if( _dVars.numDriveAttemps <= 2 ) {
+    if( _dVars.numDriveAttempts <= 2 ) {
       SampleAndDrive();
     } else {
-      // numDriveAttemps is reset every activation, so this should only happen if something internal
+      // numDriveAttempts is reset every activation, so this should only happen if something internal
       // is cancelling the driving
       PRINT_NAMED_WARNING("BehaviorExploring.BehaviorUpdate.InterruptedMultiple",
                           "Could not start a path without interruption after %d attempts",
-                          _dVars.numDriveAttemps);
+                          _dVars.numDriveAttempts);
       _dVars.endReason = "MultipleInterruptions";
       CancelSelf();
     }
@@ -392,35 +390,6 @@ void BehaviorExploring::BehaviorUpdate()
   if( !isChargerPositionKnown && !_iConfig.allowNoCharger ) {
     _dVars.endReason = "ChargerUnknown";
     CancelSelf();
-  }
-  
-  const bool controlDelegated = IsControlDelegated();
-  const float nextTimeShouldConfirmCharger = _dVars.timeFinishedConfirmCharger_s + kTimeBeforeConfirmCharger_s;
-  const float nextTimeShouldConfirmCube = _dVars.timeFinishedConfirmCube_s + kTimeBeforeConfirmCube_s;
-  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  if( !controlDelegated
-      && (currTime >= nextTimeShouldConfirmCharger)
-      && isChargerPositionKnown
-      && _iConfig.confirmChargerBehavior->WantsToBeActivated() )
-  {
-    DelegateNow( _iConfig.confirmChargerBehavior.get(), [this]() {
-      _dVars.timeFinishedConfirmCharger_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      RegainedControl();
-    });
-    return;
-  }
-  
-  if( !controlDelegated
-      && (currTime >= nextTimeShouldConfirmCube)
-      && IsCubeNearCharger()
-      && _iConfig.confirmCubeBehavior->WantsToBeActivated() )
-  {
-    DelegateNow( _iConfig.confirmCubeBehavior.get(), [this]() {
-      _dVars.timeFinishedConfirmCube_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      RegainedControl();
-    });
-    return;
   }
   
   // adjust cached poses
@@ -532,13 +501,30 @@ bool BehaviorExploring::IsCubeNearCharger() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::SampleAndDrive()
 {
-
   // if we don't have a face (can't run the referencing behavior) then we should occasionally search for
   // faces. Check that here
   if( ! _iConfig.referenceHumanBehavior->WantsToBeActivated() ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s - _dVars.lastSearchForFaceTime_s >= kPeriodToCheckForFaces_s ) {
       TransitionToHumanSearch();
+      return;
+    }
+  }
+  
+  const auto* charger = GetCharger();
+  if (charger != nullptr) {
+    // See if we've traveled far enough away from the last pose at which we looked at the charger
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+    f32 distance = 0.f;
+    const bool distanceValid = ComputeDistanceBetween(_dVars.lastReferenceChargerPose, robotPose, distance);
+    const bool shouldReferenceCharger = !distanceValid || (distance > kReferenceChargerDistanceThreshold_mm);
+
+    if (shouldReferenceCharger) {
+      auto* action = new CompoundActionSequential();
+      action->AddAction(new TurnTowardsObjectAction(charger->GetID()));
+      action->AddAction(new VisuallyVerifyObjectAction(charger->GetID()));
+      DelegateIfInControl(action, &BehaviorExploring::SampleAndDrive);
+      _dVars.lastReferenceChargerPose = robotPose;
       return;
     }
   }
@@ -592,7 +578,7 @@ void BehaviorExploring::RegainedControl()
 void BehaviorExploring::TransitionToDriving()
 {
   SET_STATE(Driving);
-  ++_dVars.numDriveAttemps;
+  ++_dVars.numDriveAttempts;
   
   
   auto* action = new CompoundActionSequential();
@@ -614,7 +600,7 @@ void BehaviorExploring::TransitionToDriving()
       // this can happen if we cleared all but one of the goal poses, then the robot stopped to
       // examine something midway, then when trying to start again, there is no path to the selected
       // goal. try a couple more times (maybe this needs more precise ActionResult types?)
-      if( _dVars.numDriveAttemps <= 5 ) {
+      if( _dVars.numDriveAttempts <= 5 ) {
         if( (res == ActionResult::PATH_PLANNING_FAILED_ABORT) || (res == ActionResult::FAILED_TRAVERSING_PATH) ) {
           // it's possible noise from the prox sensor is causing a legitimate planner failure (timeout), so
           // do a quick point turn to hopefully find an escape before continuing
@@ -630,7 +616,7 @@ void BehaviorExploring::TransitionToDriving()
       } else {
         LOG_INFO("BehaviorExploring.TransitionToDriving.NoPath",
                  "Could not plan a path after %d attempts",
-                 _dVars.numDriveAttemps);
+                 _dVars.numDriveAttempts);
         _dVars.endReason = "CouldNotPlan";
         CancelSelf();
       }
@@ -647,7 +633,7 @@ void BehaviorExploring::TransitionToArrived(const bool forceReferencing)
   SET_STATE(Arrived);
   _dVars.sampledPoses.clear();
   _dVars.distToGoal_mm = -1.0f;
-  _dVars.numDriveAttemps = 0;
+  _dVars.numDriveAttempts = 0;
   
   auto callback = [this]() {
     auto* action = new CompoundActionSequential();

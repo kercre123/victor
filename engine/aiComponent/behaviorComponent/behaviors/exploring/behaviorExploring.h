@@ -128,8 +128,6 @@ private:
     float pAcceptKnownAreas;
     
     std::shared_ptr<BehaviorExploringExamineObstacle> examineBehavior;
-    ICozmoBehaviorPtr confirmChargerBehavior;
-    ICozmoBehaviorPtr confirmCubeBehavior;
     
     ICozmoBehaviorPtr referenceHumanBehavior;
     ICozmoBehaviorPtr searchForHumanBehavior;
@@ -153,14 +151,15 @@ private:
     std::vector<Pose3d> sampledPoses;
     bool posesHaveBeenPruned; // true if poses now contains only the selected goal
     float distToGoal_mm; // the distance to the selected goal, if posesHaveBeenPruned, otherwise negative
-    int numDriveAttemps;
+    int numDriveAttempts;
     bool hasTakenPitStop;
-    float timeFinishedConfirmCharger_s;
-    float timeFinishedConfirmCube_s;
     std::string endReason; // for DAS
     
     size_t devWarnIfNotInterruptedByTick;
 
+    // The robot pose at which we last looked at the charger to confirm its position
+    Pose3d lastReferenceChargerPose;
+    
     float lastSearchForFaceTime_s;
     float timeDeactivated_s;
 
