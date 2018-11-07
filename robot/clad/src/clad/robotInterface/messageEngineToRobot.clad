@@ -444,6 +444,17 @@ message SetTriggerWordResponse
   string getInAnimationName,
 }
 
+message SetAlexaUXResponses
+{
+  // each array value is for a transition from Idle to
+  // 0: Listening
+  // 1: Thinking
+  // 2: Speaking
+  AudioEngine::Multiplexer::PostAudioEvent postAudioEvents[3],
+  uint_8 getInAnimTags[3],
+  string csvGetInAnimNames, // comma separated animation names
+}
+
 message ResetBeatDetector
 {
 }
@@ -791,6 +802,7 @@ union EngineToRobot
 
   StartWakeWordlessStreaming    startWakeWordlessStreaming = 0x99,
   SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
+  SetAlexaUXResponses           setAlexaUXResponses        = 0x9B,
 
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 

@@ -202,10 +202,13 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 void MicDataSystem::FakeTriggerWordDetection()
 {
   if (_buttonPressIsAlexa) {
-    // "Alexa" button press
-    const Alexa* alexa = _context->GetAlexa();
-    ASSERT_NAMED(alexa != nullptr, "");
-    alexa->NotifyOfTapToTalk();
+    ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+    if( showStreamState->HasAnyAlexaResponse() ) {
+      // "Alexa" button press
+      const Alexa* alexa = _context->GetAlexa();
+      ASSERT_NAMED(alexa != nullptr, "");
+      alexa->NotifyOfTapToTalk();
+    }
   }
   else {
     // "Hey Vector" button press

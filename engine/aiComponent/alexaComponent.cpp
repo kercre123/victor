@@ -12,27 +12,43 @@
 
 #include "engine/aiComponent/alexaComponent.h"
 
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
+#include "clad/audio/audioEventTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/components/animationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "proto/external_interface/shared.pb.h"
 #include "util/console/consoleInterface.h"
+#include "util/string/stringUtils.h"
 
 namespace Anki {
 namespace Vector {
   
 namespace {
+  #define LOG_CHANNEL "Alexa"
   const UserIntentTag kSignInIntent = USER_INTENT(amazon_signin);
   const UserIntentTag kSignOutIntent = USER_INTENT(amazon_signout);
+  
+  const float kAnimTimeout_s = 3.0f;
+  const AnimationTag kInvalidAnimationTag = AnimationComponent::GetInvalidTag();
+  
+  // this class assumes that Listneing, Thinking, and Speaking are 0,1,2 when sending indices to animProcess
+  // and when getting a tag array from AnimationComponent, so it doesn't need to know about AlexaUXState.
+  static_assert( static_cast<uint8_t>(AlexaUXState::Listening) == 0, "Expected 0");
+  static_assert( static_cast<uint8_t>(AlexaUXState::Thinking) == 1,  "Expected 1");
+  static_assert( static_cast<uint8_t>(AlexaUXState::Speaking) == 2,  "Expected 2");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -40,6 +56,7 @@ AlexaComponent::AlexaComponent(Robot& robot)
   : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::AlexaComponent)
   , _robot(robot)
   , _authState( AlexaAuthState::Uninitialized )
+  , _uxState( AlexaUXState::Idle )
 {
 }
   
@@ -84,6 +101,14 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
     // authenticated, force logout of alexa
     SetAlexaOption( false );
   }
+  
+  // setup anim tags for getins to various ux states
+  auto& animComponent = robot->GetAnimationComponent();
+  _animTags = animComponent.SetAlexaUXResponseCallback([this](unsigned int idx){
+    const auto uxState = static_cast<AlexaUXState>(idx);
+    _uxResponseInfo[uxState].waitingForGetInCompletion = false;
+    _uxResponseInfo[uxState].timeout_s = false;
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,6 +137,14 @@ void AlexaComponent::UpdateDependent(const AICompMap& dependentComps)
       SetAlexaOption( false );
     }
     uic.DropUserIntent( kSignOutIntent );
+  }
+  
+  // check timeout for waitingForGetInCompletion
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  for( auto& response : _uxResponseInfo ) {
+    if( (response.second.timeout_s > 0.0f) && (currTime_s > response.second.timeout_s) ) {
+      response.second.waitingForGetInCompletion = false;
+    }
   }
   
 }
@@ -170,9 +203,7 @@ void AlexaComponent::HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEn
       SendAuthStateToApp( isResponse );
     }
   } else if( msg.GetTag() == RobotInterface::RobotToEngineTag::alexaUXChanged ) {
-    const auto& state = msg.Get_alexaUXChanged().state;
-    // TODO: cache so behaviors can access it. for now, print so it can be seen in webots
-    PRINT_NAMED_WARNING("AlexaComponent.HandleAnimEvents.UXState", "State=%s", AlexaUXStateToString(state) );
+    HandleNewUXState( msg.Get_alexaUXChanged().state );
   }
 }
   
@@ -230,6 +261,118 @@ void AlexaComponent::SendCancelPendingAuth() const
 {
   // send anim message to cancel pending authorization
   _robot.SendMessage( RobotInterface::EngineToRobot( RobotInterface::CancelPendingAlexaAuth() ) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::SetAlexaUXResponses( const std::unordered_map<AlexaUXState,AlexaUXResponse>& responses )
+{
+  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+  
+  _uxResponseInfo.clear();
+  
+  // initially reset to nothing
+  RobotInterface::SetAlexaUXResponses msg;
+  for( size_t i=0; i<3; ++i ) {
+    msg.getInAnimTags[i] = kInvalidAnimationTag;
+    msg.postAudioEvents[i] = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Invalid,
+                                                         AudioMetaData::GameObjectType::Behavior,
+                                                         0 );
+    // msg.csvGetInAnimNames is set below
+  }
+  
+  std::vector<std::string> animNames;
+  animNames.resize(3);
+  for( const auto& response : responses ) {
+    const unsigned int idx = static_cast<unsigned int>(response.first);
+    if( !ANKI_VERIFY( (idx < 3), "AlexaComponent.SetAlexaUXResponses.Invalid", 
+                      "Invalid state %hhu. Allowed values are Listening, Speaking, Thinking", response.first ) )
+    {
+      continue;
+    }
+    
+    const std::string animName = GetAnimName( response.second.animTrigger );
+    const bool hasAnim = !animName.empty();
+    const bool hasAudio = (response.second.audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid);
+    
+    if( !hasAudio && !hasAnim ) {
+      LOG_WARNING("AlexaComponent.SetAlexaUXResponses.Unnecessary",
+                  "You should just supply those states you want to have a response");
+      continue;
+    }
+    
+    msg.postAudioEvents[idx] = AECH::CreatePostAudioEvent( response.second.audioEvent,
+                                                           AudioMetaData::GameObjectType::Behavior,
+                                                           0 );
+    
+    _uxResponseInfo[response.first].hasAnim = hasAnim;
+    // always send this tag when there is any response, even when there is no anim, so animProc knows
+    // if there is a valid response
+    msg.getInAnimTags[idx] = _animTags[idx];
+    animNames[idx] = animName;
+  }
+  msg.csvGetInAnimNames = Util::StringJoin(animNames, ',');
+  
+  _robot.SendMessage( RobotInterface::EngineToRobot( std::move(msg) ) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::HandleNewUXState( AlexaUXState state )
+{
+  // TODO (VIC-11517): downgrade. for now this is useful in webots
+  PRINT_NAMED_WARNING("AlexaComponent.HandleNewUXState", "State=%s", AlexaUXStateToString(state) );
+  
+  if( (_uxState == AlexaUXState::Idle) && (_uxState != state) ) {
+    // alexa exited from idle. the anim process is likely playing some getin right now if we pushed one.
+    auto it = _uxResponseInfo.find( state );
+    if( it != _uxResponseInfo.end() ) {
+      it->second.waitingForGetInCompletion = it->second.hasAnim;
+      // if the ux state change happens before anim has received our new anim response, anim and engine
+      // will be out of sync. Just in case, make sure this times out in a few seconds.
+      it->second.timeout_s = kAnimTimeout_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    }
+  }
+  _uxState = state;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaComponent::IsIdle() const
+{
+  const bool isIdle = (_uxState == AlexaUXState::Idle);
+  return isIdle;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaComponent::IsUXStateGetInPlaying( AlexaUXState state ) const
+{
+  const auto it = _uxResponseInfo.find( state );
+  if( it != _uxResponseInfo.end() ) {
+    return (it->second.hasAnim && it->second.waitingForGetInCompletion);
+  } else {
+    return false;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string AlexaComponent::GetAnimName( AnimationTrigger trigger ) const
+{
+  std::string animName;
+  const auto* dataLoader = _robot.GetContext()->GetDataLoader();
+  if( dataLoader->HasAnimationForTrigger( trigger ) ) {
+    const auto groupName = dataLoader->GetAnimationForTrigger( trigger );
+    if( !groupName.empty() ) {
+      animName = _robot.GetAnimationComponent().GetAnimationNameFromGroup( groupName );
+      if( animName.empty() ) {
+        LOG_WARNING( "AlexaComponent.GetAnimName.AnimationNotFound",
+                     "No animation returned for group %s",
+                     groupName.c_str() );
+      }
+    } else {
+      LOG_WARNING( "AlexaComponent.GetAnimName.GroupNotFound",
+                   "Group not found for trigger %s",
+                   AnimationTriggerToString( trigger ) );
+    }
+  }
+  return animName;
 }
 
   

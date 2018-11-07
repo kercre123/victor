@@ -23,6 +23,7 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -268,8 +269,21 @@ void Alexa::SetAlexaFace( ScreenName screenName, std::string url, const std::str
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
 {
+  const auto oldState = _uxState;
   _uxState = newState;
+  
+  // send engine the UX state before starting any animations so that it knows what to do with animation end events
   SendUXState();
+  
+  if( (oldState == AlexaUXState::Idle) && (_uxState != AlexaUXState::Idle) ) {
+    // when transitioning out of idle, play a getin animation, if there is one.
+    auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
+    if( showStreamStateManager != nullptr ) {
+      if( showStreamStateManager->HasValidAlexaUXResponse( _uxState ) ) {
+        showStreamStateManager->StartAlexaResponse( _uxState );
+      }
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

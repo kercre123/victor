@@ -21,6 +21,7 @@ namespace Anki {
 namespace Vector {
 
 class AnimationStreamer;
+enum class AlexaUXState : uint8_t;
 
 namespace Audio {
 class EngineRobotAudioInput;
@@ -44,6 +45,8 @@ public:
   
   void SetTriggerWordResponse(const RobotInterface::SetTriggerWordResponse& msg);
   
+  void SetAlexaUXResponses(const RobotInterface::SetAlexaUXResponses& msg);
+  
   // Start the robot's response to the trigger in order to indicate that the robot may be streaming audio
   // The GetInAnimation is optional, the earcon and backpack lights are not
   using OnTriggerAudioCompleteCallback = std::function<void(bool success)>;
@@ -59,6 +62,12 @@ public:
   bool ShouldStreamAfterTriggerWordResponse();
   
   bool ShouldSimulateStreamAfterTriggerWord();
+  
+  // with the exception of HasAnyAlexaResponse, alexa methods should be called on the main thread.
+  // This is only because the current Alexa implementation fits this constraint, so I'm assuming it here.
+  bool HasAnyAlexaResponse() const; // ok to call off thread
+  bool HasValidAlexaUXResponse(AlexaUXState state) const;
+  bool StartAlexaResponse(AlexaUXState state);
 
 private:
 
@@ -77,10 +86,22 @@ private:
 
   // Trigger word responses are triggered via callbacks from the trigger word detector thread
   // so we need to be thread safe and have pending responses to be executed on the main thread in Update
-  std::recursive_mutex _triggerResponseMutex;
+  mutable std::recursive_mutex _triggerResponseMutex;
   bool _havePendingTriggerResponse = false;
   bool _pendingTriggerResponseHasGetIn = false;
   OnTriggerAudioCompleteCallback _responseCallback;
+  
+  // Alexa-specific get-ins and audio info
+  struct AlexaInfo
+  {
+    AlexaUXState state; // a transition from Idle to this state will trigger the below response
+    Anki::AudioEngine::Multiplexer::PostAudioEvent audioEvent;
+    uint8_t getInAnimTag;
+    std::string getInAnimName;
+  };
+  std::vector<AlexaInfo> _alexaResponses;
+  
+  
 };
 
 } // namespace Vector

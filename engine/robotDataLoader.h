@@ -99,9 +99,9 @@ public:
   AnimationTriggerMap* GetAnimationTriggerMap() const { return _animationTriggerMap.get(); }
   CubeAnimationTriggerMap* GetCubeAnimationTriggerMap() const { return _cubeAnimationTriggerMap.get(); }
 
-  bool HasAnimationForTrigger( AnimationTrigger ev );
-  std::string GetAnimationForTrigger( AnimationTrigger ev );
-  std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
+  bool HasAnimationForTrigger( AnimationTrigger ev ) const;
+  std::string GetAnimationForTrigger( AnimationTrigger ev ) const;
+  std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev ) const;
   
   const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
   const std::set<std::string>& GetDasBlacklistedAnimationNames() const { return _dasBlacklistedAnimationNames; }

@@ -19,6 +19,9 @@ enum uint_8 BehaviorClass {
   ResetState,
   Wait,
 
+  // alexa
+  Alexa,
+
   // animationWrappers
   AnimGetInLoop,
   AnimSequence,

@@ -237,6 +237,10 @@ public:
   // The animation tag returned is what should be associated with any animations that want to call this callback when they
   // complete
   AnimationTag SetTriggerWordGetInCallback(std::function<void()> callbackFunction);
+  
+  // Similar to above, but returns a animation tags corresponding to Alexa's Listening, Thinking, and Speaking
+  // UX states. The callback passes 0, 1, and 2 corresponding to the same
+  std::array<AnimationTag,3> SetAlexaUXResponseCallback(std::function<void(unsigned int)> callback);
 
 
   // Accessors for latest animState values
@@ -265,6 +269,8 @@ public:
                                       AnimationComponent::AnimationCompleteCallback callback,
                                       bool callEvenIfAnimCanceled = false);
 
+  static Tag GetInvalidTag();
+  
 private:
   
   // Returns Tag if animation is playing.
@@ -369,6 +375,11 @@ private:
   // Special tag associated with the userIntentComponent's triggerWordGetInAnimation
   AnimationTag _tagForTriggerWordGetInCallbacks;
   std::function<void()> _triggerWordGetInCallbackFunction;
+  
+  AnimationTag _tagForAlexaListening;
+  AnimationTag _tagForAlexaThinking;
+  AnimationTag _tagForAlexaSpeaking;
+  std::function<void(unsigned int)> _alexaResponseCallback;
   
   int _compositeImageID;
 

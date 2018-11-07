@@ -14,17 +14,25 @@
 #define __Engine_AiComponent_AlexaComponent_H__
 #pragma once
 
+#include "anki/cozmo/shared/animationTag.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <list>
+#include <unordered_map>
+#include <array>
 
 namespace Anki {
 
 namespace Util {
   class IConsoleFunction;
+}
+namespace AudioMetaData {
+  namespace GameEvent {
+    enum class GenericEvent : uint32_t;
+  }
 }
   
 namespace Vector {
@@ -38,7 +46,9 @@ namespace RobotInterface {
 
   
 enum class AlexaAuthState : uint8_t;
-
+enum class AlexaUXState : uint8_t;
+enum class AnimationTrigger : int32_t;
+  
 template<typename T>
 class AnkiEvent;
 
@@ -54,6 +64,24 @@ public:
   virtual void AdditionalUpdateAccessibleComponents(AICompIDSet& components) const override;
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
 
+  
+  struct AlexaUXResponse
+  {
+    AnimationTrigger animTrigger;
+    AudioMetaData::GameEvent::GenericEvent audioEvent;
+  };
+  // Set and reset get in anims and audio events for transitions from Idle to: Listening, Thinking, Speaking.
+  // If the a given state is not provided as a key, it will have no response (anim nor audio). You can also
+  // play audio without an anim by passing InvalidAnimTrigger.
+  // Note this doesn't match the stack-style responses used in UserIntentComponent, because we only expect one
+  // alexa behavior for now, and hence one response
+  void SetAlexaUXResponses( const std::unordered_map<AlexaUXState,AlexaUXResponse>& responses );
+  void ResetAlexaUXResponses() { SetAlexaUXResponses({}); }
+  
+  AlexaUXState GetUXState() const { return _uxState; }
+  bool IsIdle() const;
+  bool IsUXStateGetInPlaying( AlexaUXState state ) const;
+
 private:
   
   void SetAlexaOption( bool optedIn ) const;
@@ -61,10 +89,14 @@ private:
   void HandleAppEvents( const AnkiEvent<external_interface::GatewayWrapper>& event );
   void HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEngine>& event );
   
+  void HandleNewUXState( AlexaUXState state);
+  
   void SendAuthStateToApp( bool isResponse ) const;
   
   // tell anim to cancel any pending auth, but not any completed auth
   void SendCancelPendingAuth() const;
+  
+  std::string GetAnimName( AnimationTrigger trigger ) const;
   
   Robot& _robot;
   std::list<Signal::SmartHandle> _signalHandles;
@@ -72,6 +104,18 @@ private:
   
   AlexaAuthState _authState;
   std::string _authStateExtra;
+  
+  AlexaUXState _uxState;
+  
+  struct AlexaUXResponseInfo
+  {
+    bool waitingForGetInCompletion = false;
+    bool hasAnim = false;
+    float timeout_s = -1.0f;
+  };
+  std::unordered_map<AlexaUXState, AlexaUXResponseInfo> _uxResponseInfo;
+  std::array<AnimationTag,3> _animTags;
+  
   
   bool _featureFlagEnabled = false;
   

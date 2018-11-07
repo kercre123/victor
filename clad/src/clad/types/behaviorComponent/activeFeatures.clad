@@ -41,6 +41,7 @@ enum uint_32 ActiveFeature {
 
   NoFeature = 0,
   
+  Alexa,
   AskForHelp,
   BeQuiet,
   Blackjack,
@@ -97,6 +98,7 @@ enum uint_32 ActiveFeature {
 enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   NoFeature = verbatim ActiveFeatureType::System,
   
+  Alexa                   = verbatim ActiveFeatureType::Utility,
   AskForHelp              = verbatim ActiveFeatureType::Failure,
   BeQuiet                 = verbatim ActiveFeatureType::Autonomous,
   Blackjack               = verbatim ActiveFeatureType::Play,

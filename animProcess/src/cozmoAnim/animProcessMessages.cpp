@@ -435,6 +435,14 @@ void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTrigg
 
   showStreamStateManager->SetTriggerWordResponse(msg);
 }
+  
+void Process_setAlexaUXResponses(const Anki::Vector::RobotInterface::SetAlexaUXResponses& msg)
+{
+  auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
+  if( showStreamStateManager != nullptr ) {
+    showStreamStateManager->SetAlexaUXResponses( msg );
+  }
+}
 
 void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDetector& msg)
 {

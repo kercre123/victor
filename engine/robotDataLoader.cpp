@@ -1174,15 +1174,15 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
   return true;
 }
 
-bool RobotDataLoader::HasAnimationForTrigger( AnimationTrigger ev )
+bool RobotDataLoader::HasAnimationForTrigger( AnimationTrigger ev ) const
 {
   return _animationTriggerMap->HasKey(ev);
 }
-std::string RobotDataLoader::GetAnimationForTrigger( AnimationTrigger ev )
+std::string RobotDataLoader::GetAnimationForTrigger( AnimationTrigger ev ) const
 {
   return _animationTriggerMap->GetValue(ev);
 }
-std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
+std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev ) const
 {
   return _cubeAnimationTriggerMap->GetValue(ev);
 }

@@ -22,10 +22,13 @@ enum uint_8 AlexaAuthState
 
 enum uint_8 AlexaUXState
 {
-  Idle,
-  Listening,
+  // NOTE: retain the order of the first three states.
+  // Their underlying types are used as indices in some 3-element arrays
+  Listening = 0,
   Thinking,
   Speaking,
+
+  Idle,
 }
 
 } // namespace Vector
