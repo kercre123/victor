@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
 
 CUSTOM_ANIM_FOLDER = Path("test_assets", "custom_animations")

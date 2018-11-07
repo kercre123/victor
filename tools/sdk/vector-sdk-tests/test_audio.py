@@ -14,7 +14,6 @@ try:
 except ImportError as exc:
     sys.exit("Cannot import scipy: Do `pip3 install scipy` to install")
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import anki_vector  # pylint: disable=wrong-import-position
 
 output_filename = 'audiosample.wav'

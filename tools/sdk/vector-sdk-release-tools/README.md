@@ -24,15 +24,7 @@ These instructions build the SDK and its documentation and produce a compressed 
     git checkout -- cloud/gateway/
     git clean -f -d -x cloud/gateway/
 
-3. On victor master branch, delete `victor/tools/sdk/vector-sdk/tests` folder as we don't want to ship this folder.
-    cd victor
-    rm -rf tools/sdk/vector-sdk/tests
-
-4. On victor master branch, delete sign language example as we need to confirm this is working on Mac (and ideally other OSes) before shipping.
-    cd victor
-    rm -rf tools/sdk/vector-sdk/examples/experimental
-
-5. On victor master branch, from the following files, remove all messages marked "App only". This removes proto messages that we don't want to expose. Do not commit these changes to victor master.
+3. On victor master branch, from the following files, remove all messages marked "App only". This removes proto messages that we don't want to expose. Do not commit these changes to victor master.
 
   `cloud/gateway/external_interface.proto` (Keep the ending curly brace)
   `cloud/gateway/messages.proto`
@@ -40,38 +32,38 @@ These instructions build the SDK and its documentation and produce a compressed 
   `cloud/gateway/settings.proto`
   `cloud/gateway/shared.proto`
 
-6. Run `victor/tools/sdk/scripts/update_proto.sh`. Be sure there are no warnings or errors before continuing.
+4. Run `victor/tools/sdk/scripts/update_proto.sh`. Be sure there are no warnings or errors before continuing.
 
-7. Pull latest `vector-python-sdk-private` master branch.
+5. Pull latest `vector-python-sdk-private` master branch.
 
-8. Create a branch off master in`vector-python-sdk-private` named `release/{version}`.
+6. Create a branch off master in`vector-python-sdk-private` named `release/{version}`.
 
-9. Delete all local files from `vector-python-sdk-private`. Do not revert.
+7. Delete all local files from `vector-python-sdk-private`. Do not revert.
 
-10. Copy contents of `victor/tools/sdk/vector-sdk/` to `vector-python-sdk-private`.
+8. Copy contents of `victor/tools/sdk/vector-sdk/` to `vector-python-sdk-private`.
 
-11. Locally delete `anki_vector/messaging/.gitignore` from repo `vector-python-sdk-private`
+9. Locally delete `anki_vector/messaging/.gitignore` from repo `vector-python-sdk-private`
 
-12. In `vector-python-sdk-private` repo:
+10. In `vector-python-sdk-private` repo:
     ** update version in `anki_vector/version.py`
     ** Update version throughout docs, like on Mac, Win and Linux install pages.
 
-13. In `vector-python-sdk-private` repo, navigate to `docs` and run: `make html`.
+11. In `vector-python-sdk-private` repo, navigate to `docs` and run: `make html`.
 
-14. Delete any __pycache__ folders.
+12. Delete any __pycache__ folders.
 
-15. Delete all `.DS_Store` files from the `vector-python-sdk-private` repo:
+13. Delete all `.DS_Store` files from the `vector-python-sdk-private` repo:
       `cd vector-python-sdk-private`
       `find . -name '.DS_Store' -type f -delete`
 
-16. Use the diff of all files in the repo to help collect release notes if you don't have them already.
+14. Use the diff of all files in the repo to help collect release notes if you don't have them already.
 
-17. Create zip and tar files (e.g. vector_python_sdk_0.4.0.zip and vector_python_sdk_0.4.0.tar):
+15. Create zip and tar files (e.g. vector_python_sdk_0.4.0.zip and vector_python_sdk_0.4.0.tar):
       `cd vector-python-sdk-private`
       `zip -r ~/Desktop/vector_python_sdk_{version}.zip *`
       `tar -zcvf ~/Desktop/vector_python_sdk_{version}.tar.gz *`
 
-18. Create boss file, review it and commit it.
+16. Create boss file, review it and commit it.
   a. Unzip the zip file
   b. cd inside the zip file
   c. Run: `find . -type f > ../boss.txt`
