@@ -64,7 +64,7 @@ BehaviorFetchCube::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFetchCube::DynamicVariables::DynamicVariables()
 : state(FetchState::GetIn)
-, cubePtr(nullptr)
+, cubeID()
 , attemptsAtCurrentAction(0)
 , startedOnCharger(false)
 {
@@ -277,10 +277,11 @@ void BehaviorFetchCube::TransitionToFindCube()
   if(_iConfig.findCubeBehavior->WantsToBeActivated()){
     DelegateIfInControl(_iConfig.findCubeBehavior.get(),
       [this](){
-        _dVars.cubePtr = _iConfig.findCubeBehavior->GetFoundCube();
-        if(nullptr != _dVars.cubePtr){// else just exit, the get out will have been handled by the findCubeBehavior
+        _dVars.cubeID = _iConfig.findCubeBehavior->GetFoundCubeID();
+        auto* targetCube = GetTargetCube();
+        if(nullptr != targetCube){
           TransitionToAttemptConnection();
-        }
+        } //else just exit, the get-out will have been handled by the findCubeBehavior since it didn't find anything
       });
   }
 }
@@ -322,18 +323,14 @@ void BehaviorFetchCube::TransitionToPickUpCube()
   SET_STATE(PickUpCube);
 
   // Attempt to pick up the cube
-  ObjectID cubeID;
-  if(nullptr != _dVars.cubePtr){
-    cubeID = _dVars.cubePtr->GetID();
-  }
-  else{
+  if(nullptr == GetTargetCube()){
     // CancelSelf
     LOG_ERROR("BehaviorFetchCube.PickUpCube.NoCubeFound",
               "No cube was available, should not have made it to this state of the behavior");
     return;
   }
 
-  _iConfig.pickUpCubeBehavior->SetTargetID(cubeID);
+  _iConfig.pickUpCubeBehavior->SetTargetID(_dVars.cubeID);
   if (_iConfig.pickUpCubeBehavior->WantsToBeActivated()) {
     DelegateIfInControl(_iConfig.pickUpCubeBehavior.get(),
                         [this]() {
@@ -446,6 +443,12 @@ bool BehaviorFetchCube::ComputeFaceBasedTargetPose()
   _dVars.destination = destinationPose.GetWithRespectToRoot();
 
   return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObservableObject* BehaviorFetchCube::GetTargetCube()
+{
+  return GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.cubeID);
 }
 
 } // namespace Vector

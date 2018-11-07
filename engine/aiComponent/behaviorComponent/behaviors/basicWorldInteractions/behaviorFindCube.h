@@ -32,7 +32,7 @@ public:
   virtual ~BehaviorFindCube();
   virtual bool WantsToBeActivatedBehavior() const override;
 
-  ObservableObject* GetFoundCube() { return _dVars.cubePtr; }
+  ObjectID GetFoundCubeID() { return _dVars.cubeID; }
 
 protected:
 
@@ -77,7 +77,7 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     FindCubeState        state;
-    ObservableObject*    cubePtr;
+    ObjectID             cubeID;
     CubeObservationState cubeState;
     Pose3d               cubePoseAtSearchStart;
     RobotTimeStamp_t     lastPoseCheckTimestamp;
@@ -100,6 +100,9 @@ private:
 
   // Returns true if worldViz returned a valid pointer stored in _dVars.cubePtr
   bool UpdateTargetCube();
+
+  // Returns a pointer to the object belonging with ID == _dVars.cubeID, nullptr if none is found
+  ObservableObject* GetTargetCube();
 };
 
 } // namespace Vector
