@@ -46,20 +46,28 @@ namespace {
 MicTriggerConfig::MicTriggerConfig() = default;
 MicTriggerConfig::~MicTriggerConfig() = default;
 
-bool MicTriggerConfig::Init(const Json::Value& initData)
+bool MicTriggerConfig::Init(const std::string& triggerKey, const Json::Value& initData)
 {
   _localeTriggerDataMap.clear();
-
+  
+  // Verify this is a object of triggers
+  if (!initData.isObject())
+  {
+    PRINT_NAMED_ERROR("MicTriggerConfig.Init.JsonData", "Mic init data is not an object.");
+    return false;
+  }
+  
+  const Json::Value& triggerData = initData[triggerKey];
+  
   // Verify this is a list of locale data
-  if (!initData.isArray())
+  if (!triggerData.isArray())
   {
     PRINT_NAMED_ERROR("MicTriggerConfig.Init.JsonData", "Mic trigger data is not an array.");
     return false;
   }
-    
-  for (int i=0; i < initData.size(); ++i)
+
+  for (const Json::Value& localeData : triggerData)
   {
-    const Json::Value& localeData = initData[i];
     if (!localeData.isObject())
     {
       PRINT_NAMED_ERROR("MicTriggerConfig.Init.JsonData", "Locale config data is not an object.");
@@ -74,7 +82,7 @@ bool MicTriggerConfig::Init(const Json::Value& initData)
                         Json::StyledWriter().write(localeData).c_str());
       continue;
     }
-    auto nextLocale = Util::Locale::LocaleFromString(localeData[kLocaleKey].asString());
+    const auto& nextLocale = Util::Locale::LocaleFromString(localeData[kLocaleKey].asString());
     if (_localeTriggerDataMap.find(nextLocale) != _localeTriggerDataMap.end())
     {
       PRINT_NAMED_ERROR("MicTriggerConfig.LocaleTypeUnique",

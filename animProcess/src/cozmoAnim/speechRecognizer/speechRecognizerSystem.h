@@ -75,7 +75,7 @@ public:
   // Set Default models for locale
   // Return true when locale file was found and is different then current locale
   // NOTE: Locale is not updated until the next Update() call
-  bool UpdateTriggerForLocale(Util::Locale newLocale);
+  bool UpdateTriggerForLocale(const Util::Locale newLocale);
 
 
 private:
@@ -104,14 +104,20 @@ private:
   // Set custom model and search files for locale
   // Return true when locale file was found and is different then current locale
   // NOTE: This only sets the _nextTriggerPaths the locale will be updated in the Update() call
-  bool UpdateTriggerForLocale(Util::Locale newLocale,
-                              MicData::MicTriggerConfig::ModelType modelType,
-                              int searchFileIndex);
+  bool UpdateTriggerForLocale(TriggerContext& trigger,
+                              const Util::Locale newLocale,
+                              const MicData::MicTriggerConfig::ModelType modelType,
+                              const int searchFileIndex);
   
   // This should only be called from the Update() methods, needs to be performed on the same thread
   void ApplyLocaleUpdate();
   
+  // Console Var methods
+  // NOTE: These methods provide no functionality when ANKI_DEV_CHEATS is turned off
   void SetupConsoleFuncs();
+  std::string UpdateRecognizerHelper(size_t& inOut_modelIdx, size_t new_modelIdx,
+                                     int& inOut_searchIdx, int new_searchIdx,
+                                     SpeechRecognizerSystem::TriggerContext& trigger);
 };
 
 

@@ -35,7 +35,7 @@ public:
   MicTriggerConfig();
   ~MicTriggerConfig();
   
-  bool Init(const Json::Value& initData);
+  bool Init(const std::string& triggerKey, const Json::Value& initData);
 
   enum class ModelType {
     size_1mb,
