@@ -86,7 +86,7 @@ public:
   // Callback setters
   
   // this callback should not call AuthDelegate methods
-  using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&)>;
+  using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&, bool)>;
   void SetOnAlexaAuthStateChanged( const OnAlexaAuthStateChanged& callback ) { _onAlexaAuthStateChanged = callback; }
   
   using OnAlexaUXStateChanged = std::function<void(AlexaUXState)>;
@@ -100,7 +100,7 @@ private:
   
   void OnDirective(const std::string& directive, const std::string& payload);
   
-  void SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code );
+  void SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag );
   
   // considers media player state and dialog state to determine _uxState
   void CheckForUXStateChange();

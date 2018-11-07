@@ -13,6 +13,9 @@
 #include "engine/aiComponent/alexaComponent.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/behaviorComponent/userIntent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -26,6 +29,11 @@
 
 namespace Anki {
 namespace Vector {
+  
+namespace {
+  const UserIntentTag kSignInIntent = USER_INTENT(amazon_signin);
+  const UserIntentTag kSignOutIntent = USER_INTENT(amazon_signout);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaComponent::AlexaComponent(Robot& robot)
@@ -35,6 +43,7 @@ AlexaComponent::AlexaComponent(Robot& robot)
 {
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps)
 {
   // setup event handlers
@@ -77,6 +86,36 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::AdditionalUpdateAccessibleComponents(AICompIDSet& components) const
+{
+  components.insert( AIComponentID::BehaviorComponent );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::UpdateDependent(const AICompMap& dependentComps)
+{
+  
+  // no behavior handles the intents kSignInIntent or kSignOutIntent. We just message the anim process
+  // of the request to sign in/out, and depending on its state, it will either not do anything, or
+  // send a message back to the engine switch stacks into a face screen-style Wait behavior for alexa pairing
+  auto& BC = dependentComps.GetComponent<BehaviorComponent>();
+  auto& uic = BC.GetComponent<UserIntentComponent>();
+  
+  if( uic.IsUserIntentPending(kSignInIntent) ) {
+    if( _featureFlagEnabled ) {
+      SetAlexaOption( true );
+    }
+    uic.DropUserIntent( kSignInIntent );
+  } else if( uic.IsUserIntentPending(kSignOutIntent) ) {
+    if( _featureFlagEnabled ) {
+      SetAlexaOption( false );
+    }
+    uic.DropUserIntent( kSignOutIntent );
+  }
+  
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaComponent::SetAlexaOption( bool optedIn ) const
 {

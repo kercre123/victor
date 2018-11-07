@@ -15,7 +15,6 @@
 
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/types/alexaTypes.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -143,20 +142,6 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
       _robot.GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus,
                                                setConnectionStatusCallback)
     );
-    
-    // Go to the Wait behavior when the Alexa pairing screen is shown. This behavior ends when
-    // an exit debugScreenMode is received. This asymmetry is explained in debugScreenModeHandler
-    auto enterAlexaPairing = [this, &bContainer, &bsm](const RobotToEngineEvent& event) {
-      const auto& state = event.GetData().Get_alexaAuthChanged().state;
-      if( state == AlexaAuthState::WaitingForCode ) {
-        OnEnterInfoFace( bContainer, bsm );
-      }
-    };
-    _eventHandles.push_back(
-      _robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::alexaAuthChanged,
-                                                 enterAlexaPairing)
-    );
-
 
     // =========== Handle DebugScreenMode message =================
     // TODO: VIC-2416 - Rename this class since it is used in release.
@@ -174,16 +159,19 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
 
     // Go to freeplayBehavior as defined in victor_behavior_config.json
     // when leaving debug screens.
-    auto debugScreenModeHandler = [this, &bsm, &behaviorsBootLoader, &uic](const RobotToEngineEvent& event) {
+    auto debugScreenModeHandler = [this, &bContainer, &bsm, &behaviorsBootLoader, &uic](const RobotToEngineEvent& event) {
       const auto& msg = event.GetData().Get_debugScreenMode();
-      LOG_DEBUG("BehaviorComponentMessageHandler.DebugScreenModeChange", "%d", msg.enabled);
-      if (!msg.enabled) {
+      LOG_DEBUG("BehaviorComponentMessageHandler.DebugScreenModeChange", "isDebug=%d isAlexa=%d", msg.isDebug, msg.isAlexa);
+      if (!msg.isDebug) {
         // We only care if the debug screen is disabled.
         // We don't use this same message (with enabled == true) for going into the wait behavior
         // because of a race condition which could result in an animation being played from
         // engine _after_ the anim process has already played a face animation for the
         // pairing screen.
         OnExitInfoFace(bsm, behaviorsBootLoader, uic);
+      } else if (msg.isAlexa) {
+        // If the face is an Alexa face, enter the Wait behavior
+        OnEnterInfoFace( bContainer, bsm );
       }
     };
     _eventHandles.push_back(

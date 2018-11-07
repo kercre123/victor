@@ -462,21 +462,29 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   // to me: "Waiting for user to authorize the specified code pair."
   if( (error != Error::SUCCESS) && (error != Error::AUTHORIZATION_PENDING) ) {
     LOG_ERROR( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
-    SetAuthState( AlexaAuthState::Uninitialized, "", "" );
+    const bool errFlag = true;
+    SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
     return;
   }
   
   switch( newState ) {
     case State::UNINITIALIZED:
+    {
+      const bool errFlag = false;
+      SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
+    }
+      break;
     case State::EXPIRED:
     case State::UNRECOVERABLE_ERROR:
     {
-      SetAuthState( AlexaAuthState::Uninitialized, "", "" );
+      const bool errFlag = true;
+      SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
     }
       break;
     case State::REFRESHED:
     {
-      SetAuthState( AlexaAuthState::Authorized, "", "" );
+      const bool errFlag = false;
+      SetAuthState( AlexaAuthState::Authorized, "", "", errFlag );
     }
       break;
   }
@@ -485,7 +493,8 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnRequestAuthorization( const std::string& url, const std::string& code )
 {
-  SetAuthState( AlexaAuthState::WaitingForCode, url, code );
+  const bool errFlag = false;
+  SetAuthState( AlexaAuthState::WaitingForCode, url, code, errFlag );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -570,13 +579,13 @@ void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code )
+void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
   // always send WaitingForCode in case url or code changed
   const bool changed = (_authState != state) || (state == AlexaAuthState::WaitingForCode);
   _authState = state;
-  if( (_onAlexaAuthStateChanged != nullptr) && changed ) {
-    _onAlexaAuthStateChanged( state, url, code );
+  if( (_onAlexaAuthStateChanged != nullptr) && (changed || errFlag) ) {
+    _onAlexaAuthStateChanged( state, url, code, errFlag );
   }
 }
   

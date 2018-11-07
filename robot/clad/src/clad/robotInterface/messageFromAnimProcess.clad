@@ -82,7 +82,8 @@ message StreamCameraImages
 // is in pairing, customer care, or debug screen
 message DebugScreenMode
 {
-  bool enabled,
+  bool isDebug,
+  bool isAlexa,
 }
 
 message RobotAvailable

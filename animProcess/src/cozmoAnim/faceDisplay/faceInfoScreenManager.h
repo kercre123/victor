@@ -85,7 +85,7 @@ public:
   
   // When enabled, switches to a screen showing the alexa pairing code, and optionally the URL,
   // depending on how the auth process originated (app or voice command)
-  void EnableAlexaScreen(bool enable, const std::string& code, const std::string& url);
+  void EnableAlexaScreen(ScreenName screenName, const std::string& code, const std::string& url);
 
   // When enabled, switches to a special camera screen used to show
   // the vision system's "mirror mode", which displays the camera feed
@@ -134,6 +134,9 @@ private:
   // Returns true if screenName is one of the screens that allow the user to enter pairing when
   // double pressing the backpack and on the charger
   bool CanEnterPairingFromScreen( const ScreenName& screenName) const;
+  
+  // Returns true if screenName is an Alexa screen
+  bool IsAlexaScreen(const ScreenName& screenName) const;
 
   // Process wheel, head, lift, button motion for menu navigation
   void ProcessMenuNavigation(const RobotState& state);

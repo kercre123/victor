@@ -106,6 +106,8 @@ namespace {
   // How often connectivity checks are performed while on 
   // Main and Network screens.
   const u32 kIPCheckPeriod_sec = 20;
+  
+  const f32 kAlexaTimeout_s = 5.0f;
 
   // How long the button needs to be pressed for before it should trigger shutdown animation
   CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
@@ -199,6 +201,9 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(MotorInfo, MicInfo);
   ADD_SCREEN(MirrorMode, MirrorMode);
   ADD_SCREEN(AlexaPairing, AlexaPairing);
+  ADD_SCREEN(AlexaPairingSuccess, AlexaPairingSuccess);
+  ADD_SCREEN(AlexaPairingFailed, AlexaPairingFailed);
+  ADD_SCREEN(AlexaPairingExpired, AlexaPairingExpired);
   
   if (hideSpecialDebugScreens) {
     ADD_SCREEN(MicInfo, Main); // Last screen cycles back to Main
@@ -346,11 +351,17 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   DISABLE_TIMEOUT(MirrorMode); // Let toggling the associated VisionMode handle turning this on/off
   
   // === AlexaPairing ===
-  auto alexaPairingEnterAction = [this]() {
+  auto alexaEnterAction = [this]() {
     DrawAlexaFace();
   };
-  SET_ENTER_ACTION(AlexaPairing, alexaPairingEnterAction);
+  SET_ENTER_ACTION(AlexaPairing,        alexaEnterAction);
+  SET_ENTER_ACTION(AlexaPairingSuccess, alexaEnterAction);
+  SET_ENTER_ACTION(AlexaPairingFailed,  alexaEnterAction);
+  SET_ENTER_ACTION(AlexaPairingExpired, alexaEnterAction);
   DISABLE_TIMEOUT(AlexaPairing); // let the authorization process handle timeout
+  SET_TIMEOUT(AlexaPairingSuccess, kAlexaTimeout_s, None);
+  SET_TIMEOUT(AlexaPairingFailed,  kAlexaTimeout_s, None);
+  SET_TIMEOUT(AlexaPairingExpired, kAlexaTimeout_s, None);
   
   // === Camera Motor Test ===
   // Add menu item to camera screen to start a test mode where the motors run back and forth
@@ -443,6 +454,7 @@ bool FaceInfoScreenManager::IsDebugScreen(ScreenName screen) const
 void FaceInfoScreenManager::SetScreen(ScreenName screen)
 {
   bool prevScreenIsDebug = false;
+  bool prevScreenIsAlexa = false;
 
   // Call ExitScreen
   // _currScreen may be null on the first call of this function
@@ -452,6 +464,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     }
     _currScreen->ExitScreen();
     prevScreenIsDebug = IsDebugScreen(GetCurrScreenName());
+    prevScreenIsAlexa = IsAlexaScreen(GetCurrScreenName());
   }
 
   _currScreen = GetScreen(screen);
@@ -465,12 +478,13 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     _currScreen = GetScreen(ScreenName::FAC);
   }
 
-  // Check if transitioning between a debug and non-debug screen
-  // and tell engine so that behaviors can be appropriately enabled/disabled
+  // Tell engine if the screen changes so behaviors can be appropriately enabled/disabled
   bool currScreenIsDebug = IsDebugScreen(GetCurrScreenName());
-  if (currScreenIsDebug != prevScreenIsDebug) {
+  bool currScreenIsAlexa = IsAlexaScreen(GetCurrScreenName());
+  if ((currScreenIsDebug != prevScreenIsDebug) || (currScreenIsAlexa != prevScreenIsAlexa)) {
     DebugScreenMode msg;
-    msg.enabled = currScreenIsDebug;
+    msg.isDebug = currScreenIsDebug;
+    msg.isAlexa = currScreenIsAlexa;
     RobotInterface::SendAnimToEngine(std::move(msg));
   }
 
@@ -485,7 +499,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   _scratchDrawingImg->FillWith(0);
   DrawScratch();
 
-  LOG_INFO("FaceInfoScreenManager.SetScreen.EnteringScreen", "%d", GetCurrScreenName());
+  LOG_INFO("FaceInfoScreenManager.SetScreen.EnteringScreen", "%hhu", GetCurrScreenName());
   _currScreen->EnterScreen();
 
   ResetObservedHeadAndLiftAngles();
@@ -1397,11 +1411,53 @@ void FaceInfoScreenManager::DrawCustomText()
   
 void FaceInfoScreenManager::DrawAlexaFace()
 {
-  std::vector<std::string> textVec;
-  textVec.push_back(_alexaCode);
-  if (!_alexaUrl.empty()) {
-    textVec.push_back(_alexaUrl);
+  if( _currScreen == nullptr ) {
+    return;
   }
+  
+  // todo: top image and horizontally centered text.
+  // the text below matches PRD but has ugly formatting
+  
+  // todo: localization
+  
+  std::vector<std::string> textVec;
+  
+  switch( _currScreen->GetName() ) {
+    case ScreenName::AlexaPairing:
+    {
+      if (!_alexaUrl.empty()) {
+        textVec.push_back("Go to " + _alexaUrl);
+        textVec.push_back("and enter this code:");
+      }
+      textVec.push_back(_alexaCode);
+    }
+      break;
+    case ScreenName::AlexaPairingSuccess:
+    {
+      textVec.push_back("You're ready to use Alexa.");
+      textVec.push_back("Check out the Alexa App");
+      textVec.push_back("for things to try.");
+    }
+      break;
+    case ScreenName::AlexaPairingExpired:
+    {
+      textVec.push_back("The code has expired.");
+      textVec.push_back("Retry to generate a new code.");
+    }
+      break;
+    case ScreenName::AlexaPairingFailed:
+    {
+      textVec.push_back("Something's gone wrong.");
+      textVec.push_back("Please try again.");
+    }
+      break;
+    default:
+    {
+      ANKI_VERIFY(false && "Unexpected alexa face", "FaceInfoScreenManager.DrawAlexaFace.Unexpected", "");
+    }
+      break;
+  }
+  
   DrawTextOnScreen(textVec);
   
   RobotInterface::SetHeadAngle headAction;
@@ -1489,15 +1545,34 @@ void FaceInfoScreenManager::EnablePairingScreen(bool enable)
   }
 }
   
-void FaceInfoScreenManager::EnableAlexaScreen(bool enable, const std::string& code, const std::string& url)
+void FaceInfoScreenManager::EnableAlexaScreen(ScreenName screenName, const std::string& code, const std::string& url)
 {
-  if (enable && GetCurrScreenName() != ScreenName::AlexaPairing) {
+  const bool validNewScreen = IsAlexaScreen(screenName) || (screenName == ScreenName::None);
+  if (!ANKI_VERIFY(validNewScreen, "FaceInfoScreenManager.EnableAlexaPairingScreen.Invalid",
+                   "Screen %d is invalid", (int)screenName))
+  {
+    return;
+  }
+  
+  const auto currScreen = GetCurrScreenName();
+  const bool isAlexaScreen = IsAlexaScreen(currScreen);
+  
+  if ((screenName == ScreenName::AlexaPairing) && (GetCurrScreenName() != ScreenName::AlexaPairing)) {
     _alexaCode = code;
     _alexaUrl = url;
-    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Enable", "");
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Code", "");
     SetScreen(ScreenName::AlexaPairing);
-  } else if (!enable && GetCurrScreenName() == ScreenName::AlexaPairing) {
-    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Disable", "");
+  } else if ((screenName == ScreenName::AlexaPairingSuccess) && (currScreen != ScreenName::AlexaPairingSuccess)) {
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Success", "");
+    SetScreen(ScreenName::AlexaPairingSuccess);
+  } else if ((screenName == ScreenName::AlexaPairingFailed) && (currScreen != ScreenName::AlexaPairingFailed)) {
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Failed", "");
+    SetScreen(ScreenName::AlexaPairingFailed);
+  } else if ((screenName == ScreenName::AlexaPairingExpired) && (currScreen != ScreenName::AlexaPairingExpired)) {
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Expired", "");
+    SetScreen(ScreenName::AlexaPairingExpired);
+  } else if ((screenName == ScreenName::None) && isAlexaScreen) {
+    LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Done", "");
     SetScreen(ScreenName::None);
   }
 }
@@ -1618,6 +1693,22 @@ bool FaceInfoScreenManager::CanEnterPairingFromScreen( const ScreenName& screenN
     case ScreenName::CustomText:
     case ScreenName::Pairing:
     case ScreenName::AlexaPairing:
+    case ScreenName::AlexaPairingSuccess:
+    case ScreenName::AlexaPairingFailed:
+    case ScreenName::AlexaPairingExpired:
+      return true;
+    default:
+      return false;
+  }
+}
+  
+bool FaceInfoScreenManager::IsAlexaScreen(const ScreenName& screenName) const
+{
+  switch (screenName) {
+    case ScreenName::AlexaPairing:
+    case ScreenName::AlexaPairingSuccess:
+    case ScreenName::AlexaPairingFailed:
+    case ScreenName::AlexaPairingExpired:
       return true;
     default:
       return false;

@@ -50,6 +50,9 @@ public:
   ~AlexaComponent() = default;
   
   virtual void InitDependent(Robot* robot, const AICompMap& dependentComps) override;
+  
+  virtual void AdditionalUpdateAccessibleComponents(AICompIDSet& components) const override;
+  virtual void UpdateDependent(const AICompMap& dependentComps) override;
 
 private:
   

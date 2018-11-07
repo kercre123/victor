@@ -1,6 +1,14 @@
 {
   "user_intent_map": [
     {
+      "cloud_intent": "intent_amazon_signin",
+      "user_intent": "amazon_signin"
+    },
+    {
+      "cloud_intent": "intent_amazon_signout",
+      "user_intent": "amazon_signout"
+    },
+    {
       "cloud_intent": "intent_play_anytrick",
       "user_intent": "play_anytrick"
     },

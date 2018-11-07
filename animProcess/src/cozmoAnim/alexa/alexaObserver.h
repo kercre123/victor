@@ -71,7 +71,7 @@ public:
   using OnRequestAuthorizationFunc = std::function<void(const std::string&,const std::string&)>;
   using OnAuthStateChangeFunc = std::function<void(alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::State,
                                                    alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::Error)>;
-  using OnSourcePlaybackChange = std::function<void(alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId,bool errFlag)>;
+  using OnSourcePlaybackChange = std::function<void(alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId,bool playing)>;
   void Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
              const OnRequestAuthorizationFunc& onRequestAuthorization,
              const OnAuthStateChangeFunc& onAuthStateChange,

@@ -21,6 +21,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -146,7 +147,8 @@ void Alexa::CreateImpl()
   _impl->SetOnAlexaAuthStateChanged( std::bind( &Alexa::OnAlexaAuthChanged, this,
                                                 std::placeholders::_1,
                                                 std::placeholders::_2,
-                                                std::placeholders::_3 ) );
+                                                std::placeholders::_3,
+                                                std::placeholders::_4) );
   _impl->SetOnAlexaUXStateChanged( std::bind( &Alexa::OnAlexaUXStateChanged, this, std::placeholders::_1 ) );
   const bool success = _impl->Init( _context );
   if( !success ) {
@@ -165,8 +167,11 @@ void Alexa::DeleteImpl()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code )
+void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
+  const auto oldState = _authState;
+  bool codeExpired = false;
+  
   LOG_INFO( "Alexa.OnAlexaAuthChanged", "%d url='%s' code='%s'", (int)(state), url.c_str(), code.c_str() );
   switch( state ) {
     case AlexaAuthState::Uninitialized:
@@ -193,6 +198,7 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
         // this is not the first code, which means the first one expired. we don't have a good way of telling
         // the user that, so cancel authentication
         SetAlexaActive( false );
+        codeExpired = true;
       }
     }
       break;
@@ -209,6 +215,27 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
     case AlexaAuthState::Invalid:
       break;
   }
+  
+  
+  // set face info screen. only show faces if the user opted in via app or voice command
+  if( _userOptedIn ) {
+    // this uses state and oldState since one of the calls to SetAlexaActive above may
+    // have changed _authState.
+    if( errFlag ) {
+      SetAlexaFace( ScreenName::AlexaPairingFailed );
+    } else if( codeExpired ) {
+      SetAlexaFace( ScreenName::AlexaPairingExpired );
+    } else if( oldState != state ) {
+      if( state == AlexaAuthState::WaitingForCode ) {
+        SetAlexaFace( ScreenName::AlexaPairing, url, code );
+      } else if( state == AlexaAuthState::Authorized ) {
+        SetAlexaFace( ScreenName::AlexaPairingSuccess );
+      } else if( state == AlexaAuthState::Uninitialized ) {
+        // note: face info screen manager considers None as "not alexa," but might not switch to None
+        SetAlexaFace( ScreenName::None );
+      }
+    }
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -218,24 +245,24 @@ void Alexa::SetAuthState( AlexaAuthState state, const std::string& url, const st
   if( _authState != state ) {
     _authState = state;
     SendAuthState();
-    
-    const bool showAlexaFace = _authState == AlexaAuthState::WaitingForCode;
-    if( showAlexaFace ) {
-      std::string shortUrl;
-      if( url.find("https://") != std::string::npos ) {
-        shortUrl = url.substr(8);
-      } else if( url.find("http://") != std::string::npos ) {
-        shortUrl = url.substr(7);
-      } else {
-        shortUrl = url;
-      }
-      // note: order of params is flipped since url may or may not be displayed
-      FaceInfoScreenManager::getInstance()->EnableAlexaScreen( showAlexaFace, code, shortUrl );
-    } else {
-      FaceInfoScreenManager::getInstance()->EnableAlexaScreen( false, "", "" );
-    }
   }
+}
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::SetAlexaFace( ScreenName screenName, std::string url, const std::string& code ) const
+{
+  const bool showCodeFace = screenName == ScreenName::AlexaPairing;
+  if( showCodeFace ) {
+    if( url.find("https://") != std::string::npos ) {
+      url = url.substr(8);
+    } else if( url.find("http://") != std::string::npos ) {
+      url = url.substr(7);
+    }
+    // note: order of params is flipped since url may or may not be displayed
+    FaceInfoScreenManager::getInstance()->EnableAlexaScreen( screenName, code, url );
+  } else {
+    FaceInfoScreenManager::getInstance()->EnableAlexaScreen( screenName, "", "" );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -17,7 +17,7 @@ namespace Anki {
 namespace Vector {
   
 // The names of all the screens that are supported
-enum class ScreenName {
+enum class ScreenName : uint8_t {
   None = 0,
   FAC  = 1, // Needs to be after None
 
@@ -40,7 +40,10 @@ enum class ScreenName {
   MicDirectionClock,
   CustomText,
   MirrorMode, // Like Camera but without links to other screens
-  AlexaPairing,
+  AlexaPairing,        // pairing in progress (no timeout)
+  AlexaPairingSuccess, // completed pairing (has timeout)
+  AlexaPairingExpired, // code expires (has timeout)
+  AlexaPairingFailed,  // server error (has timeout)
   
   Count
 };

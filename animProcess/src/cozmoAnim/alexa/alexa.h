@@ -28,6 +28,7 @@ class AlexaImpl;
 class AnimContext;
 enum class AlexaAuthState : uint8_t;
 enum class AlexaUXState : uint8_t;
+enum class ScreenName : uint8_t;
 
 class Alexa
 {
@@ -65,7 +66,7 @@ private:
   void SetAlexaActive(bool active);
   
   // called when SDK auth state changes
-  void OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code );
+  void OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag );
   
   // called when SDK dialog or media player state changes
   void OnAlexaUXStateChanged( AlexaUXState newState );
@@ -80,6 +81,9 @@ private:
   // messages engine
   void SendAuthState();
   void SendUXState();
+  
+  // Sets the face info screen to screenName, possibly with a url (intentional copy) and code
+  void SetAlexaFace( ScreenName screenName, std::string url="", const std::string& code="" ) const;
   
   // helpers for the file that indicates whether the last robot run ended during an authenticated session
   const std::string& GetOptInFilePath() const;
