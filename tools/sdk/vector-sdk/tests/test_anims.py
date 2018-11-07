@@ -58,9 +58,6 @@ def on_close(ws):
 
 def on_aux_message(ws, message):
     json_data = json.loads(message)
-    if "animations" == json_data['module']:
-        print(json_data["data"][ANIMATION])
-        print(json_data["data"]["type"])
     check_animation(message)
     send_keep_alive(ws)
 
@@ -87,7 +84,7 @@ def wait_for_lock(lock_name):
     return retVal
 
 def wait_for_animation():
-    return wait_for_lock('animation')
+    return wait_for_lock(ANIMATION)
 
 def check_animation(message):
     anim_data = check_lock_and_parse(ANIMATION, 'animations', message)
@@ -131,7 +128,7 @@ def main():
     good_animations = []
     args = anki_vector.util.parse_command_args()
     websocket = init_socket(args.ip, AUX_PORT)
-    with anki_vector.Robot(args.serial, default_logging= False) as robot:
+    with anki_vector.Robot(args.serial, default_logging = False) as robot:
         robot.behavior.drive_off_charger()
         anim_names = robot.anim.anim_list
         for idx, animation in enumerate(anim_names):
@@ -142,7 +139,7 @@ def main():
             else:
                 bad_animations.append(animation)
         if len(bad_animations) > 0:
-            print(f"RESULT : {len(bad_animations)}/{len(anim_names)} animations work not well as below  :\n{str(bad_animations)}")
+            print(f"RESULT : {len(bad_animations)}/{len(anim_names)} animations did not work well as below :\n{str(bad_animations)}")
         else:
             print(f"RESULT : {len(anim_names)} animations worked well.")
     websocket.close()
