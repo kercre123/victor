@@ -2,12 +2,11 @@ PROTO WhiskeyToF_AboveBelow [
   field SFVec3f    translation 0 0 0
   field SFRotation rotation 1 0 0 0
 
-  # 12.5 degree rotation
   field SFVec3f    rightTranslation 0 0.005 0
-  field SFRotation rightRotation 0 1 0 0.1658062789
+  field SFRotation rightRotation 0 1 0 0.418879
 
   field SFVec3f    leftTranslation 0 -0.005 0
-  field SFRotation leftRotation 0 1 0 -0.1658062789
+  field SFRotation leftRotation 0 1 0 0.0872665
 
   field SFFloat fov 0.3316
   field SFFloat minRange 0.0011

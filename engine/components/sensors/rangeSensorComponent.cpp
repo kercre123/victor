@@ -50,6 +50,8 @@ std::string RangeSensorComponent::GetLogRow()
 
 void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
+  // TODO: use historical data for all pose stuff...
+
   const RangeDataRaw data = ToFSensor::getInstance()->GetData();
  
   Pose3d co = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle());
@@ -72,16 +74,12 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
   // Construct left and right sensor poses parented to the rotated camera pose
   Pose3d lp(leftAngle,
             axis,
-            {TOF_LEFT_TRANS_REL_CAMERA_MM[0],
-             TOF_LEFT_TRANS_REL_CAMERA_MM[1],
-             TOF_LEFT_TRANS_REL_CAMERA_MM[2]},
+            Point3f{ TOF_LEFT_TRANS_REL_CAMERA_MM },
             c,
             "leftProx");
   Pose3d rp(rightAngle,
             axis,
-            {TOF_RIGHT_TRANS_REL_CAMERA_MM[0],
-             TOF_RIGHT_TRANS_REL_CAMERA_MM[1],
-             TOF_RIGHT_TRANS_REL_CAMERA_MM[2]},
+            Point3f{ TOF_RIGHT_TRANS_REL_CAMERA_MM },
             c,
             "rightProx");
 
@@ -101,8 +99,8 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 
     for(int c = 0; c < TOF_RESOLUTION; c++)
     {
-      Point3f left;
-      Point3f right;
+      // Point3f left;
+      // Point3f right;
       
       const f32 yaw = sin(kPixToAngle[c]);
 
@@ -129,32 +127,43 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 }
 
 namespace {
-  Point3f lineIntersection(Point3f lineOrigin, Vec3f lineDirection) {
-
-    if (lineDirection.z() == 0) {
-        return {0,0,0};
-    }
-
-    Point3f normal(0,0,1);
-    float t = DotProduct(normal, lineOrigin) / DotProduct(normal, lineDirection);
-    return lineOrigin + (lineDirection * t);
+  inline Point3f groundIntersection(Point3f lineOrigin, Vec3f lineDirection) {
+    return (lineDirection.z() == 0) ? Point3f{0,0,0}
+                                    : lineOrigin - lineDirection * (lineOrigin.z() / lineDirection.z());
   }
 } 
 
 void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data)
 {
-  int n = 0;
-  std::vector<Point2f> groundPlane, cliffPoints;
-  Point3f robotPt = _robot->GetPose().GetTranslation();
-  Point3f camera = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle()).GetTranslation() + _robot->GetPose().GetTranslation();
+  // int n = 0;
+  std::vector<Point2f> groundPlane, cliffPoints, obstaclePoints;
+  const Point3f robotPt = _robot->GetPose().GetTranslation();
+  
+  Pose3d co = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle());
+  // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
+  // also account for angle tof sensor is relative to camera
+  Pose3d c(TOF_ANGLE_DOWN_REL_CAMERA_RAD, Y_AXIS_3D(), {0, 0, 0}, co);
+  c.RotateBy(Rotation3d(DEG_TO_RAD(-90), Y_AXIS_3D()));
+  c.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
+
+  const Point3f camera = c.GetWithRespectToRoot().GetTranslation();
+
+
+  // vizm->DrawFrameAxes(id, pose);
+
   for(const auto& pt : data) {
-    _robot->GetContext()->GetVizManager()->DrawCuboid(n++, {3, 3, 3}, Pose3d(0, Z_AXIS_3D(), pt), NEAR(pt.z(), 0.f, 2) ? NamedColors::GREEN : NamedColors::RED);
-    if (NEAR(pt.z(), 0.f, 2) && ((pt - robotPt).Length() < 500)) { groundPlane.emplace_back(pt); }
+    // _robot->GetContext()->GetVizManager()->DrawCuboid(n++, {3, 3, 3}, Pose3d(0, Z_AXIS_3D(), pt), NEAR(pt.z(), 0.f, 2) ? NamedColors::GREEN : NamedColors::RED);
+
+    if (NEAR(pt.z(), 0.f, 2) && ((pt - robotPt).Length() < 500)) { 
+      groundPlane.emplace_back(pt); 
+    }
+
+    if (FLT_GT(pt.z(), 5.f) && ((pt - robotPt).Length() < 500)) { 
+      obstaclePoints.emplace_back(pt); 
+    }
+
     if (FLT_LT(pt.z(), -10.f)) { 
-      // Get ground plane intersection
-      Vec3f ray = pt - camera;
-      ray.MakeUnitLength();
-      cliffPoints.emplace_back( lineIntersection(camera, ray) ); 
+      cliffPoints.emplace_back( groundIntersection(camera, pt - camera) ); 
     }
   }
 
@@ -162,15 +171,22 @@ void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data)
     auto ch = ConvexPolygon::ConvexHull( std::move(groundPlane) );
 
     // TODO: get actual message timestamp from incoming message
-    _robot->GetMapComponent().InsertData(ch, MemoryMapData(MemoryMapTypes::EContentType::ClearOfObstacle, _robot->GetLastMsgTimestamp()));
+    _robot->GetMapComponent().InsertData(ch, MemoryMapData(MemoryMapTypes::EContentType::ClearOfCliff, _robot->GetLastMsgTimestamp()));
   }
 
   for(const auto& pt : cliffPoints) {
-    Ball2f b( pt, 4.f );
-    Pose3d cliffPose(0.f, Z_AXIS_3D(), Point3f(pt.x(), pt.y(), 0.f));
+    Ball2f b( pt, 8.f );
 
-    // TODO: get actual message timestamp from incoming message
+    Pose3d cliffPose(0.f, Z_AXIS_3D(), Point3f(pt.x(), pt.y(), 0.f));
     _robot->GetMapComponent().InsertData( b, MemoryMapData_Cliff(cliffPose, _robot->GetLastMsgTimestamp()) );
+  }
+
+
+  for(const auto& pt : obstaclePoints) {
+    Ball2f b( pt, 5.f );
+
+    Pose2d proxPose(0.f, pt);
+    _robot->GetMapComponent().InsertData( b, MemoryMapData_ProxObstacle(MemoryMapData_ProxObstacle::NOT_EXPLORED, proxPose, _robot->GetLastMsgTimestamp()) );
   }
 
 }
