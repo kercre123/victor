@@ -26,6 +26,7 @@
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "webServerProcess/src/webService.h"
 
 
 
@@ -35,6 +36,7 @@ namespace Vector {
 namespace {
   const std::string kAlexaPath = "alexa";
   const std::string kOptedInFile = "optedIn";
+  const std::string kWebVizModuleName = "alexa";
   #define LOG_CHANNEL "Alexa"
 }
 
@@ -299,6 +301,7 @@ void Alexa::SendUXState()
     _pendingUXMsgs = true;
     LOG_INFO( "Alexa.SendUXState", "Pending state = %s", EnumToString(_uxState) );
   }
+  SendStatesToWebViz();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -363,10 +366,25 @@ void Alexa::SendAuthState()
     msg.extra_length = _authExtra.length();
 
     RobotInterface::SendAnimToEngine( msg );
-    LOG_INFO( "Alexa.SendAuthState", "Sending state = %d", (int)_authState);
+    LOG_INFO( "Alexa.SendAuthState", "Sending state = %s", EnumToString(_authState));
   } else {
     _pendingAuthMsgs = true;
-    LOG_INFO( "Alexa.SendAuthState", "Pending state = %d", (int)_authState);
+    LOG_INFO( "Alexa.SendAuthState", "Pending state = %s", EnumToString(_authState));
+  }
+  SendStatesToWebViz();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::SendStatesToWebViz() const
+{
+  if( _context != nullptr ) {
+    auto* webService = _context->GetWebService();
+    if( webService != nullptr && webService->IsWebVizClientSubscribed( kWebVizModuleName ) ) {
+      Json::Value data;
+      data["authState"] = EnumToString( _authState );
+      data["uxState"] = EnumToString( _uxState );
+      webService->SendToWebViz( kWebVizModuleName, data );
+    }
   }
 }
   

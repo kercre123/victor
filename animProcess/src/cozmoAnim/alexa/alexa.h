@@ -81,6 +81,8 @@ private:
   // messages engine
   void SendAuthState();
   void SendUXState();
+
+  void SendStatesToWebViz() const;
   
   // Sets the face info screen to screenName, possibly with a url (intentional copy) and code
   void SetAlexaFace( ScreenName screenName, std::string url="", const std::string& code="" ) const;
