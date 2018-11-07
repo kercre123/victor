@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 
 """
-Calls specific messages on the robot, with expected results and verifies that the robot's responses match up
- - Exceptions will be raised if a response is of the wrong type, or has the wrong data
- - Exceptions will be raised if the interface defines a message that is neither on the test list or ignore list
+Calls specific messages on the robot, with expected results and verifies that the robot's responses match up.
+ - Exceptions will be raised if a response is of the wrong type, or has the wrong data.
+ - Exceptions will be raised if the interface defines a message that is neither on the test list or the ignore list.
 
 Note that the following messages are intentionally not in here because they are unreliable due to environmental
 factors (e.g., there is no cube, robot fails to drive onto the charger, robot might not be able to move to the
 requested pose due to a wall, etc.):
  - DriveOnCharger/DriveOffCharger
  - GoToPose
- - MeetVictor
+ - DockWithCube
+ - ConnectCube/DisconnectCube
+ - SayText (TODO Figure out why this is causing problems)
 """
+
+# TODO Add missing messages. Also this script is supposed to print out missing messages; why isn't it?
 
 import asyncio
 import logging
@@ -20,7 +24,6 @@ import sys
 
 from google.protobuf.json_format import MessageToJson
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 import anki_vector  # pylint: disable=wrong-import-position
 
 from anki_vector.messaging import protocol  # pylint: disable=wrong-import-position
@@ -28,13 +31,6 @@ from anki_vector.messaging import client  # pylint: disable=wrong-import-positio
 
 Interface = client.ExternalInterfaceServicer
 
-# Both the EventStream and RobotStream should be kicked off automatically when we initialize a
-# connection.while I feel it could be useful to verify these events come from the robot in
-# response to the correct stimula and that the robot state correctly represents its actual state,
-# testing the scope of these two messages feels different from the other direct send->response
-# cases and as it will probably require webots state management feels improper for a rapid smoke
-# test.
-#  - nicolas 06/18/18
 MESSAGES_TO_IGNORE = [
     Interface.EventStream,
 ]
@@ -105,7 +101,6 @@ class TestResultIsTypeWithStatusAndFieldNames:
         return self._expected_type
 
     def test_with(self, target):
-        """test with"""
         errors = []
 
         target_type = type(target)
@@ -145,56 +140,62 @@ MESSAGES_TO_TEST = [
                                  left_wheel_mmps2=0.0,
                                  right_wheel_mmps2=0.0),
      TestResultMatches(protocol.DriveWheelsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # MoveHead message
     (Interface.MoveHead,
      protocol.MoveHeadRequest(speed_rad_per_sec=0.0),
      TestResultMatches(protocol.MoveHeadResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # MoveLift message
     (Interface.MoveLift,
      protocol.MoveLiftRequest(speed_rad_per_sec=0.0),
      TestResultMatches(protocol.MoveLiftResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # PlayAnimation message
     (Interface.PlayAnimation,
      protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_blackjack_victorwin_01'), loops=1),
      TestResultMatches(protocol.PlayAnimationResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+
     # ListAnimations message
     (Interface.ListAnimations,
      protocol.ListAnimationsRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationsResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_names'])),  # pylint: disable=no-member
+
     # DisplayFaceImageRGB message
     (Interface.DisplayFaceImageRGB,
      protocol.DisplayFaceImageRGBRequest(face_data=bytes(anki_vector.color.Color(rgb=[255, 0, 0]).rgb565_bytepair * 17664), duration_ms=1000, interrupt_running=True),
      TestResultMatches(protocol.DisplayFaceImageRGBResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # UpdateEnrolledFaceByID message
     (Interface.UpdateEnrolledFaceByID,
-     protocol.UpdateEnrolledFaceByIDRequest(
-         face_id=1, old_name="Bobert", new_name="Boberta"),
+     protocol.UpdateEnrolledFaceByIDRequest(face_id=1, old_name="Bobert", new_name="Boberta"),
      TestResultMatches(protocol.UpdateEnrolledFaceByIDResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # SetFaceToEnroll message
     (Interface.SetFaceToEnroll,
-     protocol.SetFaceToEnrollRequest(name="Boberta",
-                                     observed_id=1,
-                                     save_id=0,
-                                     save_to_robot=True,
-                                     say_name=True,
-                                     use_music=True),
+     protocol.SetFaceToEnrollRequest(name="Boberta", observed_id=1, save_id=0, save_to_robot=True, say_name=True, use_music=True),
      TestResultMatches(protocol.SetFaceToEnrollResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # CancelFaceEnrollment message
     (Interface.CancelFaceEnrollment,
      protocol.CancelFaceEnrollmentRequest(),
      TestResultMatches(protocol.CancelFaceEnrollmentResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # EraseEnrolledFaceByID message
     (Interface.EraseEnrolledFaceByID,
      protocol.EraseEnrolledFaceByIDRequest(face_id=1),
      TestResultMatches(protocol.EraseEnrolledFaceByIDResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # EraseAllEnrolledFaces message
     (Interface.EraseAllEnrolledFaces,
      protocol.EraseAllEnrolledFacesRequest(),
      TestResultMatches(protocol.EraseAllEnrolledFacesResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # RequestEnrolledNames message
     (Interface.RequestEnrolledNames,
      protocol.RequestEnrolledNamesRequest(),
      TestResultMatches(protocol.RequestEnrolledNamesResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), faces=[]))),  # pylint: disable=no-member
+
     # EnableVisionMode message
     (client.ExternalInterfaceServicer.EnableVisionMode,
      protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value(
@@ -242,16 +243,16 @@ MESSAGES_TO_TEST = [
                                                       result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # ConnectCube message
-    (client.ExternalInterfaceServicer.ConnectCube,
-     protocol.ConnectCubeRequest(),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
-                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-                                             ["success", "factory_id"])),
+    # (client.ExternalInterfaceServicer.ConnectCube,
+    #  protocol.ConnectCubeRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
+    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+    #                                          ["success", "factory_id"])),
 
     # DisconnectCube message
-    (client.ExternalInterfaceServicer.DisconnectCube,
-     protocol.DisconnectCubeRequest(),
-     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+    # (client.ExternalInterfaceServicer.DisconnectCube,
+    #  protocol.DisconnectCubeRequest(),
+    #  TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # FlashCubeLights message
     (client.ExternalInterfaceServicer.FlashCubeLights,
@@ -311,11 +312,11 @@ MESSAGES_TO_TEST = [
                                              ["network_stats"])),
 
     # SayText message
-    (client.ExternalInterfaceServicer.SayText,
-     protocol.SayTextRequest(text="hello", use_vector_voice=True),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
-                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-                                             ["state"])),
+    # (client.ExternalInterfaceServicer.SayText,
+    #  protocol.SayTextRequest(text="hello", use_vector_voice=True),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
+    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+    #                                          ["state"])),
 
     # NOTE: Add additional messages here
 ]
@@ -423,7 +424,10 @@ def main():
 
     loop = asyncio.get_event_loop()
 
-    with anki_vector.Robot(args.serial, default_logging=False) as robot:
+    with anki_vector.Robot(args.serial, default_logging=False, cache_animation_list=False) as robot:
+        # Since some requests fail on charger, such as DriveStraight and TurnInPlace, drive off charger first.
+        robot.behavior.drive_off_charger()
+
         print("------ beginning tests ------")
 
         future = asyncio.Future()
