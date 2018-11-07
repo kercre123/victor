@@ -26,6 +26,7 @@ namespace Vector {
     Benchmarking,
     SavingImages,
     DetectingPeople,
+    DetectingHands,
     DetectingIllumination,
     ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
     MirrorMode,                  // Draw images/detections on the robot's face, mirrored

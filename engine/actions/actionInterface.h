@@ -273,6 +273,10 @@ namespace Anki {
       // By default, we assume that no vision modes are required for the action
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const { }
       
+      // Normally, actions unsubscribe from vision modes automatically when they destruct.
+      // Call this from a derived class to unsubscribe early.
+      void UnsubscribeFromVisionModes();
+      
       // If the derived action needs to fail if the robot's tread state transitions from OnTreads to any other
       // state at runtime, then the action returns an action result of INVALID_OFF_TREADS_STATE. The check to verify
       // this is handled by IAction::UpdateInternal, which calls IAction::IsCurrentTreadStateValid. By default,

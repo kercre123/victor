@@ -90,6 +90,10 @@
   {
     "feature": "Volume",
     "enabled": false
+  },
+  {
+    "feature": "HandDetection",
+    "enabled": false
   }
 ]
 

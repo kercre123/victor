@@ -567,7 +567,7 @@ namespace Anki {
     {
       // release any subscriptions held by the VSM for this Action
       if(HasRobot() && !_requiredVisionModes.empty()) {
-        PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.UnSettingVisionModes",
+        PRINT_CH_DEBUG(kLogChannelName, "IAction.Destructor.UnSettingVisionModes",
                         "Action %s [%d] Releasing VisionModes",
                         GetName().c_str(),
                         GetTag());
@@ -575,6 +575,18 @@ namespace Anki {
       }
     }
 
+    void IAction::UnsubscribeFromVisionModes()
+    {
+      if(HasRobot() && !_requiredVisionModes.empty())
+      {
+        PRINT_CH_DEBUG(kLogChannelName, "IAction.UnsubscribeFromVisionModes",
+                       "Action %s [%d] releasing VisionModes",
+                       GetName().c_str(), GetTag());
+        GetRobot().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+        _requiredVisionModes.clear(); 
+      }
+    }
+    
     void IAction::Reset(bool shouldUnlockTracks)
     {
       PRINT_CH_DEBUG(kLogChannelName, "IAction.Reset",

@@ -2735,6 +2735,14 @@ namespace Anki {
               }
             }
           }
+          
+          if(_numModeFramesSeen >= _numFramesToWaitFor)
+          {
+            // Release subscriptions immediately in the callback to avoid possibly waiting an extra
+            // tick to call to CheckIfDone() and having the requested VisionMode(s) run any more
+            // than absolutely necessary.
+            UnsubscribeFromVisionModes();
+          }
         }
       };
       

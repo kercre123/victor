@@ -53,6 +53,7 @@
 #include "util/helpers/cleanupHelper.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
+#include "util/random/randomGenerator.h" // DEBUG
 
 #include <thread>
 #include <fstream>
@@ -113,6 +114,11 @@ CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::
 
 // The percentage of the width of the image that will remain after cropping
 CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 2.f / 3.f, 0.f, 1.f);
+
+// Fake hand and pet detections for testing behaviors while we don't have reliable neural net models
+CONSOLE_VAR_RANGED(f32, kFakeHandDetectionProbability, "Vision.NeuralNets", 0.f, 0.f, 1.f);
+CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
+CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
   
@@ -1262,15 +1268,61 @@ void VisionSystem::CheckForNeuralNetResults()
       if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
                      neuralNetRunner.first.c_str()))
       {
+        
         for(auto & mode : modes)
         {
           _currentResult.modesProcessed.Insert(mode);
+        }
+        
+        if(ANKI_DEV_CHEATS)
+        {
+          AddFakeDetections(modes);
         }
       }
     }
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
+{
+  // DEBUG: Randomly fake detections of hands and pets if this network was registered to those modes
+  if(Util::IsFltGTZero(kFakeHandDetectionProbability) ||
+     Util::IsFltGTZero(kFakeCatDetectionProbability) ||
+     Util::IsFltGTZero(kFakeDogDetectionProbability))
+  {
+    std::vector<Vision::SalientPointType> fakeDetectionsToAdd;
+    for(auto & mode : modes)
+    {
+      _currentResult.modesProcessed.Insert(mode);
+      
+      static Util::RandomGenerator rng;
+      if((VisionMode::DetectingHands == mode) && (rng.RandDbl() < kFakeHandDetectionProbability))
+      {
+        fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Hand);
+      }
+      if((VisionMode::DetectingPets == mode) && (rng.RandDbl() < kFakeCatDetectionProbability))
+      {
+        fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Cat);
+      }
+      if((VisionMode::DetectingPets == mode) && (rng.RandDbl() < kFakeDogDetectionProbability))
+      {
+        fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Dog);
+      }
+    }
+    for(const auto& type : fakeDetectionsToAdd)
+    {
+      // Simple full-image "classification" SalientPoint
+      Vision::SalientPoint salientPoint(u32(_neuralNetRunnerTimestamp),
+                                        0.5f, 0.5f, 1.f, 1.f,
+                                        type, EnumToString(type),
+                                        {CladPoint2d{0.f,0.f}, CladPoint2d{0.f,1.f}, CladPoint2d{1.f,1.f}, CladPoint2d{1.f,0.f}},
+                                        0);
+      _currentResult.salientPoints.emplace_back(std::move(salientPoint));
+    }
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vision::ImageCache& imageCache)
 {

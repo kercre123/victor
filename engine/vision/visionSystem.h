@@ -338,6 +338,7 @@ namespace Vector {
     Result UpdateGroundPlaneClassifier(Vision::ImageCache& image);
     
     void CheckForNeuralNetResults();
+    void AddFakeDetections(const std::set<VisionMode>& modes); // For debugging
     
     Result SaveSensorData() const;
     

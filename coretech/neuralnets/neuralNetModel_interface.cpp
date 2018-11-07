@@ -18,6 +18,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 #include "opencv2/imgcodecs/imgcodecs.hpp"
 
@@ -97,7 +98,11 @@ void INeuralNetModel::ClassificationOutputHelper(const T* outputData, TimeStamp_
   const Rectangle<int32_t> imgRect(0.f,0.f,1.f,1.f);
   const Poly2i imgPoly(imgRect);
   
-  if(labelIndex >= 0)
+  // Special case: If the first label is "background", don't report it
+  DEV_ASSERT(!_labels.empty(), "INeuralNetModel.ClassificationOutputHelper.EmptyLabels");
+  static const bool minLabel = (Util::StringCaseInsensitiveEquals(_labels.front(), "background") ? 1 : 0);
+  
+  if(labelIndex >= minLabel)
   {
     Vision::SalientPoint salientPoint(timestamp, 0.5f, 0.5f, maxScore, 1.f,
                                       Vision::SalientPointType::Object,

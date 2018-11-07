@@ -14,10 +14,12 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorExploringExamineObstacle__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Vector {
   
+class CompoundActionSequential;
 class IActionRunner;
 
 class BehaviorExploringExamineObstacle : public ICozmoBehavior
@@ -49,6 +51,9 @@ private:
   
   void TransitionToNextAction();
   
+  void CreateReactToHandAction(std::unique_ptr<CompoundActionSequential>& action,
+                               std::function<void(void)>& extraCallback);
+  
   // true if a poly of the width of the robot to a point dist_mm away is free of obstacles
   bool RobotPathFreeOfObstacle( float dist_mm, bool useRobotWidth ) const;
   
@@ -64,6 +69,7 @@ private:
   enum class State : uint8_t {
     Initial=0,
     DriveToObstacle,
+    CheckForHand,
     FirstTurn,
     ReturnToCenter,
     SecondTurn,
@@ -71,6 +77,7 @@ private:
     ReferenceHuman,
     Bumping,
     QuickAnim,
+    ReactToHand,
   };
 
   struct InstanceConfig {
@@ -89,6 +96,7 @@ private:
     float totalObjectAngle_rad; // sum of abs of left and right turns
     std::weak_ptr<IActionRunner> scanCenterAction;
     bool playingScanSound;
+    RobotTimeStamp_t lastImageTime;
     
     struct Persistent {
       bool canSeeSideObstacle;

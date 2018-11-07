@@ -5,6 +5,9 @@ cxx_project(
     ['engine', 'shared', 'robot'],
     excludes=['robot/mex/**']
   ),
+  data = glob([
+                'clad_src/clad/**/*.clad',              
+              ]),
   platform_srcs = [
   ],
   headers = cxx_header_glob(

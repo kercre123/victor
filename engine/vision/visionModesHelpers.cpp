@@ -26,8 +26,8 @@ IMPLEMENT_ENUM_INCREMENT_OPERATORS(VisionMode);
 // VisionModes _can_ refer to the same network name.
 static const Util::SymmetricMap<VisionMode, std::string> sNetModeLUT{
   {VisionMode::DetectingPeople, "person_detector"},
-  // {VisionMode::DetectingHands, "pet_and_hand_classifier"},
-  // {VisionMode::DetectingPets,  "pet_and_hand_classifier"},
+  {VisionMode::DetectingHands,  "hand_detector"},
+  {VisionMode::DetectingPets,   "mobilenet"}, // TODO: Update to real network
 };
   
 bool GetNeuralNetsForVisionMode(const VisionMode mode, std::set<std::string>& networkNames)

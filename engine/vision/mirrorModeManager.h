@@ -51,7 +51,7 @@ private:
   
   void DrawVisionMarkers(const std::list<Vision::ObservedMarker>& visionMarkers);
   void DrawFaces(const std::list<Vision::TrackedFace>& faceDetections);
-  void DrawSalientPoints(const std::list<Vision::SalientPoint>& salientPoints);
+  void DrawSalientPoints(const VisionProcessingResult& procResult);
   void DrawAutoExposure(const VisionProcessingResult& procResult);
   
 };

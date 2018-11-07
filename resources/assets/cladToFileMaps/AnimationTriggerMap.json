@@ -532,6 +532,30 @@
     "AnimName": "ag_explorer_scan_short"
   },
   {
+   "CladEvent": "ExploringHandTouchLiftGetIn",
+   "AnimName": "ag_handdetection_getin_lift"
+  },
+  {
+   "CladEvent": "ExploringHandTouchLiftGetOut",
+   "AnimName": "ag_handdetection_getout_lift"
+  },
+  {
+   "CladEvent": "ExploringHandTouchLiftLoop",
+   "AnimName": "ag_handdetection_loop_lift"
+  },
+  {
+    "CladEvent": "ExploringHandSlowPokeGetIn",
+    "AnimName": "ag_handdetection_getin_slowpoke"
+  },
+  {
+   "CladEvent": "ExploringHandSlowPokeGetOut",
+   "AnimName": "ag_handdetection_getout_slowpoke"
+  },
+  {
+   "CladEvent": "ExploringHandSlowPokeLoop",
+   "AnimName": "ag_handdetection_loop_slowpoke"
+  },
+  {
     "CladEvent": "ExploringScanToLeft",
     "AnimName": "ag_explorer_scan_left"
   },

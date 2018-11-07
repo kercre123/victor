@@ -15,6 +15,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "engine/vision/mirrorModeManager.h"
+#include "engine/vision/visionModesHelpers.h"
 #include "engine/vision/visionSystem.h"
 #include "util/console/consoleInterface.h"
 
@@ -151,7 +152,7 @@ void MirrorModeManager::DrawAutoExposure(const VisionProcessingResult& procResul
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MirrorModeManager::DrawSalientPoints(const std::list<Vision::SalientPoint>& salientPoints)
+void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResult)
 {
   const EngineTimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
@@ -161,30 +162,41 @@ void MirrorModeManager::DrawSalientPoints(const std::list<Vision::SalientPoint>&
   if(usingFixedDrawTime)
   {
     auto iter = _salientPointsToDraw.begin();
-    while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kDrawMirrorModeSalientPointsFor_ms)
+    while(iter != _salientPointsToDraw.end())
     {
-      iter = _salientPointsToDraw.erase(iter);
+      if(currentTime_ms > (iter->first + kDrawMirrorModeSalientPointsFor_ms)) {
+        iter = _salientPointsToDraw.erase(iter);
+      } else {
+        ++iter;
+      }
     }
-  }
-  else
-  {
-    _salientPointsToDraw.clear();
   }
   
-  // Update the list of points to draw
-  for(auto const& salientPoint_norm : salientPoints)
-  {   
-    // Salient points are in normalized coordinates, so scale directly to screen image size
-    auto salientPoint = salientPoint_norm;
-    salientPoint.x_img *= _screenImg.GetNumCols();
-    salientPoint.y_img *= _screenImg.GetNumRows();
-    for(auto &pt : salientPoint.shape)
+  if(procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors) ||
+     procResult.modesProcessed.ContainsAnyOf(GetVisionModesUsingNeuralNets()))
+  {
+    if(!usingFixedDrawTime)
     {
-      pt.x *= DEFAULT_CAMERA_RESOLUTION_WIDTH;
-      pt.y *= DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      // If not using a fixed draw time, clear next time we get salient points
+      _salientPointsToDraw.clear();
     }
     
-    _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
+    // Update the list of points to draw
+    const std::list<Vision::SalientPoint>& salientPoints = procResult.salientPoints;
+    for(auto const& salientPoint_norm : salientPoints)
+    {
+      // Salient points are in normalized coordinates, so scale directly to screen image size
+      auto salientPoint = salientPoint_norm;
+      salientPoint.x_img *= _screenImg.GetNumCols();
+      salientPoint.y_img *= _screenImg.GetNumRows();
+      for(auto &pt : salientPoint.shape)
+      {
+        pt.x *= DEFAULT_CAMERA_RESOLUTION_WIDTH;
+        pt.y *= DEFAULT_CAMERA_RESOLUTION_HEIGHT;
+      }
+      
+      _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
+    }
   }
   
   // Draw whatever is left in the list to draw
@@ -232,7 +244,7 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
   {
     DrawVisionMarkers(visionProcResult.observedMarkers);
     DrawFaces(visionProcResult.faces);
-    DrawSalientPoints(visionProcResult.salientPoints);
+    DrawSalientPoints(visionProcResult);
   }
   
   if(kDisplayExposureInMirrorMode)

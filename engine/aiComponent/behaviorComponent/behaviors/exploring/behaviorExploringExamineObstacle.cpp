@@ -22,11 +22,13 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/drivingAnimationHandler.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
@@ -40,6 +42,8 @@
 #include "clad/types/featureGateTypes.h"
 #include "engine/cozmoContext.h"
 #include "engine/utils/cozmoFeatureGate.h"
+
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -63,6 +67,17 @@ namespace {
   // BN: disabled because it looks much nicer when he bumps right after the scan, so instead I've got it set
   // to reference _after_ the bump from within the bump behavior
   CONSOLE_VAR_RANGED( float, kProbReferenceBeforeBump, "BehaviorExploring", 0.0f, 0.0f, 1.0f);
+  
+  CONSOLE_VAR_RANGED( float, kHandReaction_DriveForwardSpeed_mmps, "BehaviorExploring", 100.0f, 0.f, MAX_SAFE_WHEEL_SPEED_MMPS);
+  
+  // If enabled, use built-in driving animation manager. Otherwise, just play the looping animation in parallel
+  // with a DriveStraightAction
+  CONSOLE_VAR(bool,  kHandReaction_UseDrivingAnimation, "BehaviorExploring", false);
+  
+  // Use these to disable the fist bump request / purring reactions when seeing a hand
+  // TODO: Remove once we settle on the "right" reaction
+  CONSOLE_VAR(bool, kHandReaction_AllowPurring,  "BehaviorExploring", true);
+  CONSOLE_VAR(bool, kHandReaction_AllowFistBump, "BehaviorExploring", true);
   
   const float kProbScan = 0.7f;
   
@@ -238,30 +253,62 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
   }
   
   // if we're here, we either skipped or have finished the initial approach maneuver
-  if( _dVars.state == State::QuickAnim ) {
+  if( (_dVars.state == State::QuickAnim) || (_dVars.state == State::ReactToHand) ) {
     CancelSelf();
     return;
   }
   auto action = std::make_unique<CompoundActionSequential>();
-  if( (_dVars.state == State::Initial) || (_dVars.state == State::DriveToObstacle) ) {
+  std::function<void(void)> extraCallback = nullptr;
+  
+  const auto* featureGate = GetBEI().GetRobotInfo().GetContext()->GetFeatureGate();
+  const bool handDetectionEnabled = featureGate->IsFeatureEnabled(FeatureType::HandDetection);
+  const bool firstAction = (_dVars.state == State::Initial) || (_dVars.state == State::DriveToObstacle);
+  if(firstAction && handDetectionEnabled) {
     
-    if( GetRNG().RandDbl() < kProbScan ) {
-      
-      SET_STATE( FirstTurn );
-      
-      AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
-                                  ? AnimationTrigger::ExploringScanToLeft
-                                  : AnimationTrigger::ExploringScanToRight;
-      action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
-      
-      // we manually trigger the audio since the looping scan animation doesn't always precede a
-      // followup animation that could be used to stop the audio
-      const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
-      GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
-      _dVars.playingScanSound = true;
+    // Decide if this is a hand by running a single image through the hand detection vision mode.
+    // TODO: Add some kind of parallel face/sound animation while we wait for hand result to come back?
+    SET_STATE(CheckForHand);
+    _dVars.lastImageTime = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
+    action->AddAction( new WaitForImagesAction(1, VisionMode::DetectingHands, _dVars.lastImageTime) );
+    
+  } else if(_dVars.state == State::CheckForHand || (firstAction && !handDetectionEnabled)) {
+    
+    // See if we saw a hand or not, to decide what to do next
+    // NOTE: If hand detection was not enabled, we will start here and handsFound will remain empty,
+    //       meaning we will go straight to scan-and-bump below. 
+    std::list<Vision::SalientPoint> handsFound;
+    if(handDetectionEnabled)
+    {
+      const auto& salientPtsComponent = GetAIComp<SalientPointsComponent>();
+      salientPtsComponent.GetSalientPointSinceTime(handsFound,
+                                                   Vision::SalientPointType::Hand,
+                                                   _dVars.lastImageTime );
+    }
+    
+    if(handsFound.empty())
+    {
+      // No hand (or handDetection disabled): Scan and bump whatever is in front of us
+      if( GetRNG().RandDbl() < kProbScan ) {
+        
+        SET_STATE( FirstTurn );
+        
+        AnimationTrigger turnAnim = _dVars.firstTurnDirectionIsLeft
+                                    ? AnimationTrigger::ExploringScanToLeft
+                                    : AnimationTrigger::ExploringScanToRight;
+        action->AddAction( new TriggerLiftSafeAnimationAction{ turnAnim } );
+        
+        // we manually trigger the audio since the looping scan animation doesn't always precede a
+        // followup animation that could be used to stop the audio
+        const auto event = GE::Play__Robot_Vic_Sfx__Planning_Loop_Play;
+        GetBEI().GetRobotAudioClient().PostEvent( event, GO::Behavior );
+        _dVars.playingScanSound = true;
+      } else {
+        SET_STATE( QuickAnim );
+        action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::ExploringQuickScan } );
+      }
     } else {
-      SET_STATE( QuickAnim );
-      action->AddAction( new TriggerLiftSafeAnimationAction{ AnimationTrigger::ExploringQuickScan } );
+      // Hand found: play hand-specific animation sequence
+      CreateReactToHandAction(action, extraCallback);
     }
     
   } else if( (_dVars.state == State::FirstTurn)
@@ -387,12 +434,150 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     }
   }
   
-  DelegateNow(action.release(), [&](ActionResult res) {
+  DelegateNow(action.release(), [&,extraCallback](ActionResult res) {
     // if we got here, it wasn't canceled because of the absence of an obstacle.
+    if(extraCallback != nullptr)
+    {
+      extraCallback();
+    }
     TransitionToNextAction();
   });
 }
 
+void BehaviorExploringExamineObstacle::CreateReactToHandAction(std::unique_ptr<CompoundActionSequential>& action,
+                                                               std::function<void(void)>& extraCallback)
+{
+  // TODO: Make these configurable or unify this with the BumpObject behavior?
+  //       (Idea: Make one "DriveForwardWithProx" behavior and two JSON configurations of it,
+  //        one for BumpObject and another for InteractWithHand?)
+  
+  SET_STATE( ReactToHand );
+  
+  // Get distance to hand:
+  auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+  uint16_t proxDist_mm = 0;
+  if( !proxSensor.GetLatestDistance_mm( proxDist_mm ) ) {
+    PRINT_NAMED_WARNING("BehaviorExploringExamineObstacle.TransitionToNextAction.InvalidProxReadingToHand",
+                        "%s started but has an invalid sensor reading. Cancelling.",
+                        GetDebugLabel().c_str() );
+    
+    // TODO: should probably handle this failure differently (and have it impact which hand reaction we choose
+    //       for now (for review/test) just fake a distance
+    proxDist_mm = 10;
+  }
+  
+  // For testing, cycle between options: slow poke, touch with lift, Fist Bump request, and purring
+  // This should all go away and get a lot simpler once we decide what the actual reaction will be.
+  struct ReactionOption {
+    const std::string name;
+    f32 driveForwardFraction;   // Fraction of proxDist to drive
+    AnimationTrigger handReactGetIn;
+    AnimationTrigger handReactLoop;
+    AnimationTrigger handReactGetOut;
+  };
+  
+  static const std::list<ReactionOption> options{
+    ReactionOption{"SlowPoke", 1.f,
+      AnimationTrigger::ExploringHandSlowPokeGetIn,
+      AnimationTrigger::ExploringHandSlowPokeLoop,
+      AnimationTrigger::ExploringHandSlowPokeGetOut,
+    },
+    ReactionOption{"TouchWithLift", 1.f,
+      AnimationTrigger::ExploringHandTouchLiftGetIn,
+      AnimationTrigger::ExploringHandTouchLiftLoop,
+      AnimationTrigger::ExploringHandTouchLiftGetOut,
+    },
+    ReactionOption{"FistBumpRequest", 0.25f,
+      AnimationTrigger::Count,
+      AnimationTrigger::Count,
+      AnimationTrigger::FistBumpRequestOnce,
+    },
+    ReactionOption{"Purring", 0.f,
+      AnimationTrigger::PettingLevel4,
+      AnimationTrigger::PettingBlissLoop,
+      AnimationTrigger::PettingBlissGetout,
+    },
+  };
+
+  static std::list<ReactionOption>::const_iterator optionIter = options.begin();
+  const float driveForwardFraction = optionIter->driveForwardFraction;
+  const AnimationTrigger handReactGetIn  = optionIter->handReactGetIn;
+  const AnimationTrigger handReactLoop   = optionIter->handReactLoop;
+  const AnimationTrigger handReactGetOut = optionIter->handReactGetOut;
+  
+  LOG_INFO("BehaviorExploringExamineObstacle.CreateReactToHandAction.ReactionOption",
+           "Reacting with %s", optionIter->name.c_str());
+  
+  // Circularly increment to next reaction for next time, skipping any disallowed reactions based on console vars
+  // TODO: This will get a lot simpler once we remove all these ReactionOptions that are just for testing/review
+  std::set<std::string> disallowedNames;
+  if(!kHandReaction_AllowFistBump) {
+    disallowedNames.insert("FistBumpRequest");
+  }
+  if(!kHandReaction_AllowPurring) {
+    disallowedNames.insert("Purring");
+  }
+  
+  do {
+  ++optionIter;
+    if(optionIter == options.end())
+    {
+      optionIter = options.begin();
+    }
+  } while(disallowedNames.count(optionIter->name)>0);
+  
+  IActionRunner* driveAction = nullptr;
+  if(Util::IsFltGTZero(driveForwardFraction))
+  {
+    const float driveForwardDist_mm = static_cast<float>(proxDist_mm) * driveForwardFraction;
+    if( AnimationTrigger::Count != handReactLoop)
+    {
+      if(kHandReaction_UseDrivingAnimation)
+      {
+        const DrivingAnimationHandler::DrivingAnimations kHandDrivingAnimations {
+          AnimationTrigger::Count,
+          handReactLoop,
+          AnimationTrigger::Count
+        };
+        GetBEI().GetRobotInfo().GetDrivingAnimationHandler().PushDrivingAnimations( kHandDrivingAnimations, GetDebugLabel() );
+        extraCallback = [this]()
+        {
+          this->GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(this->GetDebugLabel());
+        };
+        driveAction = new DriveStraightAction( driveForwardDist_mm, kHandReaction_DriveForwardSpeed_mmps, true);
+      }
+      else
+      {
+        // If not using driving animations to handle the animation, just play a looping animation in parallel with
+        // the drive action
+        CompoundActionParallel* driveAndAnimate = new CompoundActionParallel({
+          new DriveStraightAction( driveForwardDist_mm, kHandReaction_DriveForwardSpeed_mmps, false),
+          new ReselectingLoopAnimationAction{handReactLoop},
+        });
+        driveAndAnimate->SetShouldEndWhenFirstActionCompletes(true); // Looping animation will never complete!
+        driveAction = driveAndAnimate;
+      }
+    }
+    else
+    {
+      driveAction = new DriveStraightAction( driveForwardDist_mm, kHandReaction_DriveForwardSpeed_mmps);
+    }
+  }
+  
+  // Bookend the driving with a get-in and get-out animation
+  if( AnimationTrigger::Count != handReactGetIn )
+  {
+    action->AddAction( new TriggerLiftSafeAnimationAction{handReactGetIn} );
+  }
+  if(nullptr != driveAction)
+  {
+    action->AddAction( driveAction );
+  }
+  if( AnimationTrigger::Count != handReactGetOut )
+  {
+    action->AddAction( new TriggerLiftSafeAnimationAction{handReactGetOut} );
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploringExamineObstacle::BehaviorUpdate() 
@@ -434,7 +619,6 @@ void BehaviorExploringExamineObstacle::BehaviorUpdate()
       }
     }
   }
-  
   
   if( (_dVars.state == State::FirstTurn) || (_dVars.state == State::SecondTurn) ) {
     // while in the middle of a turn, if no prox obstacle is seen, we can stop turning

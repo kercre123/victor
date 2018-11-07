@@ -1212,13 +1212,18 @@ namespace Vector {
     if(usingFixedDrawTime)
     {
       auto iter = _salientPointsToDraw.begin();
-      while(iter != _salientPointsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingSalientPointsFor_ms)
+      while(iter != _salientPointsToDraw.end())
       {
-        iter = _salientPointsToDraw.erase(iter);
+        if(currentTime_ms > (iter->first + kKeepDrawingSalientPointsFor_ms)) {
+          iter = _salientPointsToDraw.erase(iter);
+        } else {
+          ++iter;
+        }
       }
     }
-
-    if(procResult.modesProcessed.Contains(VisionMode::DetectingPeople)
+    
+    const auto& visionModesUsingNeuralNets = GetVisionModesUsingNeuralNets();
+    if(procResult.modesProcessed.ContainsAnyOf(visionModesUsingNeuralNets)
        || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors))
     {
       if(!usingFixedDrawTime)

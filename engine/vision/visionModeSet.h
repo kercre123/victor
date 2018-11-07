@@ -50,6 +50,9 @@ public:
   
   bool Contains(VisionMode mode) const { return (_modes.count(mode) > 0); };
   
+  template<class Container>
+  bool ContainsAnyOf(const Container& modes) const;
+  
   bool IsEmpty() const { return _modes.empty(); }
   void Clear() { _modes.clear(); }
   
@@ -96,6 +99,22 @@ void VisionModeSet::Insert(const Container& modes)
                 {
                   Insert(mode);
                 });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class Container>
+bool VisionModeSet::ContainsAnyOf(const Container& modes) const
+{
+  static_assert(std::is_same<typename Container::value_type, VisionMode>::value,
+                "Not a container of VisionModes");
+  for(const auto& mode : modes)
+  {
+    if(Contains(mode))
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

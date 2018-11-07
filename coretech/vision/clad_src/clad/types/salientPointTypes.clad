@@ -11,10 +11,12 @@ enum uint_8 SalientPointType
   Unknown, // Generally means something is wrong
   Object,  // For general "objectness" (vs. specific known object types)
   Person,
+  Hand,
+  Cat,
+  Dog,
   BrightColors  // For brightly colored areas
 
   // TODO:
-  // Hand,
   // Text,
 
 }

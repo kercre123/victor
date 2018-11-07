@@ -25,6 +25,7 @@ enum uint_8 FeatureType {
   Alexa,
   FindFacesWhileHeld,
   Volume,
+  HandDetection,
   
   TestFeature,
   PRDemo,
