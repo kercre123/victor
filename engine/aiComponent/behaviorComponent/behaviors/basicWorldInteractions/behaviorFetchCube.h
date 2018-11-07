@@ -84,13 +84,13 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    FetchState        state;
-    ObservableObject* cubePtr;
-    SmartFaceID       targetFace;
-    Pose3d            poseAtStartOfBehavior;
-    Pose3d            destination;
-    int               attemptsAtCurrentAction;
-    bool              startedOnCharger;
+    FetchState   state;
+    ObjectID     cubeID;
+    SmartFaceID  targetFace;
+    Pose3d       poseAtStartOfBehavior;
+    Pose3d       destination;
+    int          attemptsAtCurrentAction;
+    bool         startedOnCharger;
   };
 
   InstanceConfig _iConfig;
@@ -111,6 +111,9 @@ private:
   void TransitionToGetOutFailure();
 
   bool ComputeFaceBasedTargetPose();
+
+  // Returns a pointer to the object belonging with ID == _dVars.cubeID, nullptr if none is found
+  ObservableObject* GetTargetCube();
 };
 
 } // namespace Vector

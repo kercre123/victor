@@ -51,7 +51,7 @@ BehaviorFindCubeAndThen::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindCubeAndThen::DynamicVariables::DynamicVariables()
 : state(FindCubeState::FindCube)
-, cubePtr(nullptr)
+, cubeID()
 {
 }
 
@@ -151,10 +151,11 @@ void BehaviorFindCubeAndThen::TransitionToFindCube()
   if(_iConfig.findCubeBehavior->WantsToBeActivated()){
     DelegateIfInControl(_iConfig.findCubeBehavior.get(),
       [this](){
-        _dVars.cubePtr = _iConfig.findCubeBehavior->GetFoundCube();
-        if(nullptr != _dVars.cubePtr){ //else just exit, the get-out will have been handled by the findCubeBehavior
+        _dVars.cubeID = _iConfig.findCubeBehavior->GetFoundCubeID();
+        auto* targetCube = GetTargetCube(); 
+        if(nullptr != targetCube){
           TransitionToDriveToPredockPose();
-        }
+        } //else just exit, the get-out will have been handled by the findCubeBehavior since it didn't find anything
       });
   }
 }
@@ -164,8 +165,8 @@ void BehaviorFindCubeAndThen::TransitionToDriveToPredockPose()
 {
   SET_STATE(DriveToPredockPose);
 
-  DelegateIfInControl(new DriveToObjectAction(_dVars.cubePtr->GetID(), PreActionPose::ActionType::DOCKING),
-                      &BehaviorFindCubeAndThen::TransitionToAttemptConnection);
+  DelegateIfInControl( new DriveToObjectAction( _dVars.cubeID, PreActionPose::ActionType::DOCKING ),
+                       &BehaviorFindCubeAndThen::TransitionToAttemptConnection );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -210,6 +211,12 @@ void BehaviorFindCubeAndThen::TransitionToGetOutFailure()
 {
   SET_STATE(GetOutFailure);
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::FetchCubeFailure));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObservableObject* BehaviorFindCubeAndThen::GetTargetCube()
+{
+  return GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.cubeID);
 }
 
 } // namespace Vector

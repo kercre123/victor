@@ -67,8 +67,8 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    FindCubeState        state;
-    ObservableObject*    cubePtr;
+    FindCubeState state;
+    ObjectID      cubeID;
   };
 
   InstanceConfig _iConfig;
@@ -79,6 +79,9 @@ private:
   void TransitionToAttemptConnection();
   void TransitionToFollowUpBehavior();
   void TransitionToGetOutFailure();
+
+  // Returns a pointer to the object belonging with ID == _dVars.cubeID, nullptr if none is found
+  ObservableObject* GetTargetCube();
 };
 
 } // namespace Vector

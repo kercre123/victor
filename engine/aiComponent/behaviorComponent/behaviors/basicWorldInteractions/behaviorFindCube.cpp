@@ -59,7 +59,7 @@ BehaviorFindCube::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindCube::DynamicVariables::DynamicVariables()
 : state(FindCubeState::GetIn)
-, cubePtr(nullptr)
+, cubeID()
 , cubeState(CubeObservationState::Unreliable)
 , lastPoseCheckTimestamp(0)
 , angleSwept_deg(0.0f)
@@ -153,10 +153,12 @@ void BehaviorFindCube::BehaviorUpdate()
     }
 
     // If we don't have a target yet, check if a cube has been seen in the last frame 
-    if(nullptr == _dVars.cubePtr){
+    auto* targetCube = GetTargetCube();
+    if(nullptr == targetCube){
       UpdateTargetCube();
+      targetCube = GetTargetCube();
       // If we just got a target for the first time, move on to approaching it
-      if(nullptr != _dVars.cubePtr){
+      if(nullptr != targetCube){
         CancelDelegates(false);
         TransitionToReactToCube();
       }
@@ -164,9 +166,9 @@ void BehaviorFindCube::BehaviorUpdate()
     else{
       // Otherwise, we already had a target but it wasn't found where expected during VisuallyVerify.
       // Watch for new observations and pose updates
-      if(_dVars.cubePtr->GetLastObservedTime() > _dVars.lastPoseCheckTimestamp){
+      if(targetCube->GetLastObservedTime() > _dVars.lastPoseCheckTimestamp){
         _dVars.lastPoseCheckTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-        Pose3d cubePose = _dVars.cubePtr->GetPose();
+        Pose3d cubePose = targetCube->GetPose();
         if( !cubePose.IsSameAs(_dVars.cubePoseAtSearchStart, kDistThreshold_mm, DEG_TO_RAD(kAngleThreshold_deg)) ){
           CancelDelegates(false);
           TransitionToReactToCube();
@@ -198,7 +200,7 @@ void BehaviorFindCube::TransitionToVisuallyCheckLastKnown()
 
   if(UpdateTargetCube()){
     bool visuallyVerify = true;
-    TurnTowardsObjectAction* visualCheckAction = new TurnTowardsObjectAction(_dVars.cubePtr->GetID(),
+    TurnTowardsObjectAction* visualCheckAction = new TurnTowardsObjectAction(_dVars.cubeID,
                                                                              Radians{M_PI_F},
                                                                              visuallyVerify);
     DelegateIfInControl(visualCheckAction, [this](ActionResult result){
@@ -230,10 +232,11 @@ void BehaviorFindCube::TransitionToCheckForCubeInFront()
     new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
   });
 
-  if(nullptr != _dVars.cubePtr){
+  auto* targetCube = GetTargetCube();
+  if(nullptr != targetCube){
     // If we made it here then the visual verification failed, so the cube pose is antequated and wrong
     // Make a note of it, and don't trust the cube pose until it is updated, indicating new observations.
-    _dVars.cubePoseAtSearchStart = _dVars.cubePtr->GetPose();
+    _dVars.cubePoseAtSearchStart = targetCube->GetPose();
     _dVars.lastPoseCheckTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
   }
 
@@ -338,12 +341,19 @@ void BehaviorFindCube::StartNextTurn()
 bool BehaviorFindCube::UpdateTargetCube()
 {
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-  _dVars.cubePtr = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.cubesFilter);
-  if(nullptr == _dVars.cubePtr){
+  auto* targetCube = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.cubesFilter);
+  if(nullptr == targetCube){
     return false;
   }
 
+  _dVars.cubeID = targetCube->GetID();
   return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObservableObject* BehaviorFindCube::GetTargetCube()
+{
+  return GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.cubeID);
 }
 
 } // namespace Vector
