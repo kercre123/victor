@@ -95,11 +95,10 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
   if( ctx != nullptr ) {
     const auto* featureGate = ctx->GetFeatureGate();
     _featureFlagEnabled = featureGate->IsFeatureEnabled( FeatureType::Alexa );
-  }
-  if( !_featureFlagEnabled ) {
-    // just in case the feature flag changed, but animProcess still has a file indicating that we used to be
-    // authenticated, force logout of alexa
-    SetAlexaOption( false );
+    // if !_featureFlagEnabled, now would be a good time to tell anim that alexa is disabled, just in case the
+    // feature flag was disabled, but animProcess still has a file indicating that we used to be
+    // authenticated. However, messaging to anim might not be init'd yet. Instead, SendAuthStateToApp will
+    // check the feature flag and disable alexa if it some how ends up initialized without the feature flag.
   }
   
   // setup anim tags for getins to various ux states
@@ -350,6 +349,17 @@ bool AlexaComponent::IsUXStateGetInPlaying( AlexaUXState state ) const
   } else {
     return false;
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaComponent::IsAnyUXStateGetInPlaying() const
+{
+  for( const auto& entry : _uxResponseInfo ) {
+    if( entry.second.hasAnim && entry.second.waitingForGetInCompletion ) {
+      return true;
+    }
+  }
+  return false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

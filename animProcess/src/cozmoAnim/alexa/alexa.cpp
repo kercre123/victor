@@ -293,11 +293,11 @@ void Alexa::SendUXState()
     RobotInterface::AlexaUXChanged msg;
     msg.state = _uxState;
     RobotInterface::SendAnimToEngine( msg );
-    LOG_INFO( "Alexa.SendUXState", "Sending state = %d", (int)_uxState );
+    LOG_INFO( "Alexa.SendUXState", "Sending state = %s", EnumToString(_uxState) );
   } else {
     // the ux state can change before engine init if a timer goes off, for example
     _pendingUXMsgs = true;
-    LOG_INFO( "Alexa.SendUXState", "Pending state = %d", (int)_uxState );
+    LOG_INFO( "Alexa.SendUXState", "Pending state = %s", EnumToString(_uxState) );
   }
 }
   

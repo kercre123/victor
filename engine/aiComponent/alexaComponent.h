@@ -16,12 +16,12 @@
 
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
+#include "engine/aiComponent/alexaComponentTypes.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <list>
-#include <unordered_map>
 #include <array>
 
 namespace Anki {
@@ -64,23 +64,19 @@ public:
   virtual void AdditionalUpdateAccessibleComponents(AICompIDSet& components) const override;
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
 
-  
-  struct AlexaUXResponse
-  {
-    AnimationTrigger animTrigger;
-    AudioMetaData::GameEvent::GenericEvent audioEvent;
-  };
+
   // Set and reset get in anims and audio events for transitions from Idle to: Listening, Thinking, Speaking.
   // If the a given state is not provided as a key, it will have no response (anim nor audio). You can also
   // play audio without an anim by passing InvalidAnimTrigger.
   // Note this doesn't match the stack-style responses used in UserIntentComponent, because we only expect one
   // alexa behavior for now, and hence one response
-  void SetAlexaUXResponses( const std::unordered_map<AlexaUXState,AlexaUXResponse>& responses );
+  void SetAlexaUXResponses( const AlexaResponseMap& responses );
   void ResetAlexaUXResponses() { SetAlexaUXResponses({}); }
   
   AlexaUXState GetUXState() const { return _uxState; }
   bool IsIdle() const;
   bool IsUXStateGetInPlaying( AlexaUXState state ) const;
+  bool IsAnyUXStateGetInPlaying() const;
 
 private:
   

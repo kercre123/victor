@@ -12,6 +12,20 @@ enum int_32 AnimationTrigger
   InvalidAnimTrigger, // default value of 0 == invalid
 
   // Animation triggers, sorted alphabetically
+  
+  AlexaIdle2Listen,
+  AlexaIdle2Speak,
+  AlexaListen2Idle,
+  AlexaListen2Speak,
+  AlexaListen2Think,
+  AlexaListenLoop,
+  AlexaSpeakLoop,
+  AlexaSpeak2Idle,
+  AlexaSpeak2Listen,
+  AlexaThinkLoop,
+  AlexaThink2Idle,
+  AlexaThink2Speak,
+  
   AlreadyAtFace,
   AudioOnlyHuh,
 
