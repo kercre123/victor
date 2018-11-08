@@ -125,9 +125,9 @@ class EventHandler:
             subscribers = self.subscribers[event_name].copy()
             for func in subscribers:
                 if asyncio.iscoroutinefunction(func):
-                    await func(event_name, event_data)
+                    self._conn.run_soon(func(event_name, event_data))
                 elif asyncio.iscoroutine(func):
-                    await func
+                    self._conn.run_soon(func)
                 else:
                     func(event_name, event_data)
 
@@ -161,7 +161,6 @@ class EventHandler:
             async for evt in self._conn.grpc_interface.EventStream(req):
                 if not self.listening_for_events:
                     break
-
                 try:
                     unpackaged_event_key, unpackaged_event_data = self._unpackage_event('event_type', evt.event)
                     await self.dispatch_event_by_name(unpackaged_event_data, unpackaged_event_key)

@@ -23,6 +23,7 @@ import asyncio
 from concurrent import futures
 from enum import Enum
 import functools
+import inspect
 import logging
 import platform
 import sys
@@ -181,6 +182,7 @@ class Connection:
         self._ready_signal: threading.Event = threading.Event()
         self._done_signal: asyncio.Event = None
         self._conn_exception = False
+        self.active_commands = []
 
     @property
     def loop(self) -> asyncio.BaseEventLoop:
@@ -270,7 +272,7 @@ class Connection:
 
         :param timeout: The time allotted to attempt a connection, in seconds.
         """
-        self.run_soon(self._request_control(timeout=timeout))
+        self.run_coroutine(self._request_control(timeout=timeout))
 
     async def _request_control(self, timeout: float = 10.0):
         self._control_events.request()
@@ -402,11 +404,18 @@ class Connection:
                 if response_type == 'control_granted_response':
                     self._logger.debug(response)
                     self._control_events.update(True)
-                elif response_type == 'control_lost_response':
+                elif response_type == 'control_lost_event':
+                    self._cancel_active()
                     self._logger.debug(response)
                     self._control_events.update(False)
         except futures.CancelledError:
             self._logger.debug('Behavior handler task was cancelled. This is expected during disconnection.')
+
+    def _cancel_active(self):
+        for fut in self.active_commands:
+            if not fut.done():
+                fut.cancel()
+        self.active_commands = []
 
     def close(self):
         """Cleanup the connection, and shutdown all the even handlers.
@@ -432,6 +441,7 @@ class Connection:
         if self._control_stream_task:
             self._control_stream_task.cancel()
             self.run_coroutine(self._control_stream_task).result()
+        self._cancel_active()
         if self._channel:
             self.run_coroutine(self._channel.close()).result()
         self.run_coroutine(self._done_signal.set)
@@ -455,6 +465,9 @@ class Connection:
 
         :param coro: The coroutine, task or any awaitable to schedule for execution on the connection thread.
         """
+        if coro is None or not inspect.isawaitable(coro):
+            raise Exception(f"\n\n{coro.__name__ if hasattr(coro, '__name__') else coro} is not awaitable, so cannot be ran with run_soon.\n")
+
         def soon():
             try:
                 asyncio.ensure_future(coro)
@@ -504,7 +517,7 @@ class Connection:
         return asyncio.run_coroutine_threadsafe(coro, self._loop)
 
 
-def on_connection_thread(log_messaging: bool = True) -> Callable[[Coroutine[util.Component, Any, None]], Any]:
+def on_connection_thread(log_messaging: bool = True, requires_control: bool = True) -> Callable[[Coroutine[util.Component, Any, None]], Any]:
     """A decorator generator used internally to denote which functions will run on
     the connection thread. This unblocks the caller of the wrapped function
     and allows them to continue running while the messages are being processed.
@@ -544,17 +557,22 @@ def on_connection_thread(log_messaging: bool = True) -> Callable[[Coroutine[util
                             "Make sure the function is defined using 'async def'.".format(func.__name__ if hasattr(func, "__name__") else func))
 
         @functools.wraps(func)
-        async def log_handler(func: Coroutine, logger: logging.Logger, *args: List[Any], **kwargs: Dict[str, Any]) -> Coroutine:
+        async def log_handler(conn: Connection, func: Coroutine, logger: logging.Logger, *args: List[Any], **kwargs: Dict[str, Any]) -> Coroutine:
             """Wrap the provided coroutine to better express exceptions as specific :class:`anki_vector.exceptions.VectorException`s, and
             adds logging to incoming (from the robot) and outgoing (to the robot) messages.
             """
             result = None
+            # TODO: only have the request wait for control if we're not done. If done raise an exception.
+            control = conn._control_events.granted_event  # pylint: disable=protected-access
+            if requires_control and not control.is_set():
+                logger.debug(f"Delaying {func.__name__} until behavior control is granted")
+                await conn._control_events.granted_event.wait()  # pylint: disable=protected-access
             logger.debug(f'Outgoing {func.__name__}: {args[1:] if log_messaging else "size = {} bytes".format(sys.getsizeof(args[1:]))}')
             try:
                 result = await func(*args, **kwargs)
             except grpc.RpcError as rpc_error:
                 raise exceptions.connection_error(rpc_error) from rpc_error
-            logger.debug(f'Incoming {type(result).__name__}: {str(result).strip() if log_messaging else "size = {} bytes".format(sys.getsizeof(result))}')
+            logger.debug(f'Incoming {func.__name__}: {type(result).__name__} ({str(result).strip() if log_messaging else "size = {} bytes".format(sys.getsizeof(result))})')
             return result
 
         @functools.wraps(func)
@@ -568,15 +586,25 @@ def on_connection_thread(log_messaging: bool = True) -> Callable[[Coroutine[util
                 when the robot is an :class:`anki_vector.robot.AsyncRobot`, and when
                 called from the connection thread respectively."""
             self = args[0]  # Get the self reference from the function call
-            wrapped_coroutine = log_handler(func, self.logger, *args, **kwargs)
+            wrapped_coroutine = log_handler(self.conn, func, self.logger, *args, **kwargs)
             if threading.current_thread() == self.conn.thread:
                 if self.conn.loop.is_running():
-                    return wrapped_coroutine
+                    return asyncio.ensure_future(wrapped_coroutine, loop=self.conn.loop)
                 raise Exception("\n\nThe connection thread loop is not running, but a "
                                 "function '{}' is being invoked on that thread.\n".format(func.__name__ if hasattr(func, "__name__") else func))
             future = asyncio.run_coroutine_threadsafe(wrapped_coroutine, self.conn.loop)
+            if requires_control:
+                self.conn.active_commands.append(future)
+
+                def clear_when_done(fut):
+                    self.conn.active_commands.remove(fut)
+                future.add_done_callback(clear_when_done)
             if self.force_async:
                 return future
-            return future.result()
+            try:
+                return future.result()
+            except futures.CancelledError:
+                self.logger.warning(f"{func.__name__} cancelled because behavior control was lost")
+                return None
         return result
     return _on_connection_thread_decorator

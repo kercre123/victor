@@ -96,7 +96,7 @@ class Face(objects.ObservableObject):
         self._nose = nose
         self._mouth = mouth
 
-        self.conn.run_soon(self._on_observed(pose, image_rect, instantiation_timestamp))
+        self._on_observed(pose, image_rect, instantiation_timestamp)
 
         self._robot.events.subscribe(
             self._on_face_observed,
