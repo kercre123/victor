@@ -62,14 +62,6 @@ Supervisor {
     %{ end }%  # for iReceiver loop
 
   ]
-  
-  boundingObject Box {
-    size 0.000001 0.000001 0.000001
-  }
-  physics Physics {
-    mass 0.00001
-    density -1
-  }
 
 
   # Referencing a field that is used in code but not in the proto model

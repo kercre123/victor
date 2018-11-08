@@ -31,14 +31,6 @@ Supervisor {
       translation 0.012 0 0
     }
   ]
-  
-  boundingObject Box {
-    size 0.000001 0.000001 0.000001
-  }
-  physics Physics {
-    mass 0.00001
-    density -1
-  }
 
 } # Supervisor definition
 } # PROTO definition
