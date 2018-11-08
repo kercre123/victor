@@ -13,6 +13,7 @@
 #include "engine/components/sensors/rangeSensorComponent.h"
 
 #include "engine/cozmoContext.h"
+#include "engine/robotStateHistory.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
@@ -53,8 +54,22 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
   // TODO: use historical data for all pose stuff...
 
   const RangeDataRaw data = ToFSensor::getInstance()->GetData();
+
+
+  RobotTimeStamp_t t, msgT;
+  msgT = _robot->GetLastImageTimeStamp();
+  HistRobotState state;
+  _robot->GetStateHistory()->ComputeStateAt(data.time, t, state);
+
+  if (msgT != t) {
+    const auto msgTc = msgT;
+    const auto tc = data.time;
+    auto nop = tc + msgTc;
+    nop = tc;
+  }
  
-  Pose3d co = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle());
+  Pose3d robotPose = state.GetPose().GetWithRespectToRoot();
+  Pose3d co = _robot->GetHistoricalCameraPose(state, t).GetWithRespectToRoot();
   // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
   // also account for angle tof sensor is relative to camera
   Pose3d c(TOF_ANGLE_DOWN_REL_CAMERA_RAD, Y_AXIS_3D(), {0, 0, 0}, co);
@@ -123,7 +138,8 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
     }
   }
 
-  UpdateNavMap(navMapData);
+  
+  UpdateNavMap(navMapData, c.GetWithRespectToRoot().GetTranslation(), robotPose.GetTranslation());
 }
 
 namespace {
@@ -133,32 +149,18 @@ namespace {
   }
 } 
 
-void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data)
+void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data, const Point3f& camera, const Point3f& robot)
 {
-  // int n = 0;
   std::vector<Point2f> groundPlane, cliffPoints, obstaclePoints;
-  const Point3f robotPt = _robot->GetPose().GetTranslation();
-  
-  Pose3d co = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle());
-  // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
-  // also account for angle tof sensor is relative to camera
-  Pose3d c(TOF_ANGLE_DOWN_REL_CAMERA_RAD, Y_AXIS_3D(), {0, 0, 0}, co);
-  c.RotateBy(Rotation3d(DEG_TO_RAD(-90), Y_AXIS_3D()));
-  c.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
-
-  const Point3f camera = c.GetWithRespectToRoot().GetTranslation();
-
-
-  // vizm->DrawFrameAxes(id, pose);
-
+  // int n = 0;
   for(const auto& pt : data) {
     // _robot->GetContext()->GetVizManager()->DrawCuboid(n++, {3, 3, 3}, Pose3d(0, Z_AXIS_3D(), pt), NEAR(pt.z(), 0.f, 2) ? NamedColors::GREEN : NamedColors::RED);
 
-    if (NEAR(pt.z(), 0.f, 2) && ((pt - robotPt).Length() < 500)) { 
+    if (NEAR(pt.z(), 0.f, 2) && ((pt - robot).Length() < 500)) { 
       groundPlane.emplace_back(pt); 
     }
 
-    if (FLT_GT(pt.z(), 5.f) && ((pt - robotPt).Length() < 500)) { 
+    if (FLT_GT(pt.z(), 5.f) && ((pt - robot).Length() < 500)) { 
       obstaclePoints.emplace_back(pt); 
     }
 
@@ -180,7 +182,6 @@ void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data)
     Pose3d cliffPose(0.f, Z_AXIS_3D(), Point3f(pt.x(), pt.y(), 0.f));
     _robot->GetMapComponent().InsertData( b, MemoryMapData_Cliff(cliffPose, _robot->GetLastMsgTimestamp()) );
   }
-
 
   for(const auto& pt : obstaclePoints) {
     Ball2f b( pt, 5.f );

@@ -61,7 +61,7 @@ private:
   //   Pose3d sensorPoint;
   //   Pose3d worldPoint;
   // };
-  void UpdateNavMap(const std::vector<Point3f>& data);
+  void UpdateNavMap(const std::vector<Point3f>& data, const Point3f& cameraPose, const Point3f& robot);
 
   Robot* _robot = nullptr;
   

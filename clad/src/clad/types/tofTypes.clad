@@ -2,7 +2,8 @@ namespace Anki {
 namespace Vector {
 
 structure RangeDataRaw {
-  float_32 data[32]
+  float_32 data[32],
+  float_32 time
 }
 
 } // namespace Vector

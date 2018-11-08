@@ -87,7 +87,9 @@ Result ToFSensor::Update()
 
 RangeDataRaw ToFSensor::GetData()
 {
+  using namespace std::chrono;
   RangeDataRaw rangeData;
+  rangeData.time = duration<milliseconds>(steady_clock::now()).time_since_epoch().count();
 
   const float* rightImage = rightSensor_->getRangeImage();
   const float* leftImage = leftSensor_->getRangeImage();
