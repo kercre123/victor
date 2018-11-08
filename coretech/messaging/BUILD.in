@@ -18,3 +18,13 @@ cxx_project(
     platform_headers = [
     ]
 )
+
+cxx_project(
+    name = 'cti_messaging_shared',
+    srcs = cxx_src_glob(['shared']),
+    platform_srcs = [
+    ],
+    headers = cxx_header_glob(['shared']),
+    platform_headers = [
+    ]
+)

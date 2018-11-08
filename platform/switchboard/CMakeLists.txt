@@ -24,8 +24,7 @@ PRIVATE
   ${PLATFORM_LIBS}
   sdk_clad_cpp
   robot_clad_cpplite
-  cti_common
-  cti_messaging
+  cti_messaging_shared
   engine_clad
   ${SODIUM_LIBS}
   jsoncpp
@@ -84,7 +83,7 @@ target_link_libraries(vic-switchboard
   ${PLATFORM_LIBS}
   sdk_clad_cpp
   robot_clad_cpplite
-  cti_messaging
+  cti_messaging_shared
   engine_clad
   ${SODIUM_LIBS}
   jsoncpp
