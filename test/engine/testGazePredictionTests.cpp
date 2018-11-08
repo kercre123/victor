@@ -532,7 +532,8 @@ TEST(FaceDirection, FaceDirectionVisionComponent)
 
   // TODO this needs to be the correct directory 
   // const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "test/faceRecVideoTests/");
-  const std::string dataPath = "/var/tmp/face_direction/interact_with_phone";
+  // const std::string dataPath = "/var/tmp/face_direction/interact_with_phone";
+  const std::string dataPath = "/var/tmp/data/gaze/experiment_3";
   
   Vision::Image img;
   
@@ -547,14 +548,19 @@ TEST(FaceDirection, FaceDirectionVisionComponent)
   config["InitialModeSchedules"]["DetectingGaze"] = 1;
   config["InitialModeSchedules"]["DetectingFaces"] = 1;
 
-  // TODO this calibration is likely incorrect  
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-  
+  /*
+    640x360 camera calibration from robot. (fx: 374.087524, fy: 371.608002, cx: 336.922882,
+    cy: 194.383331, distCoeffs: [-0.14264, -0.0979581, 0.000778199, 0.000669306, 0.0574143, 0, 0, 0])
+  */
+
+  // This was taken from robot with ESN 00E201BB
+  const u16 HEAD_CAM_CALIB_WIDTH  = 640;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 360;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 374.087524f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 371.608002f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 336.922882f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 194.383331f;
+ 
   auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
                                                               HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
                                                               HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);

@@ -19,14 +19,13 @@ namespace Vision {
 
 namespace {
   CONSOLE_VAR(u32, kHistorySize,                      "Vision.FaceNormalDirectedAtRobot3d",  6);
-  CONSOLE_VAR(f32, kInlierDistanceSq,                 "Vision.EyeContact",  100.f);
-  CONSOLE_VAR(u32, kMinNumberOfInliers,               "Vision.EyeContact",  3);
-  CONSOLE_VAR(f32, kFaceDirectedAtRobotDistanceSq,    "Vision.EyeContact",  11.f*11.f);
-  CONSOLE_VAR(f32, kFaceDirectedAtRobotYawAbsThres,   "Vision.EyeContact",  10.f);
-  CONSOLE_VAR(f32, kFaceDirectedAtRobotPitchAbsThres, "Vision.EyeContact",  25.f);
-  CONSOLE_VAR(f32, kFaceDirectedRightYawAbsThres,     "Vision.EyeContact",  15.f);
-  CONSOLE_VAR(f32, kFaceDirectedLeftYawAbsThres,      "Vision.EyeContact", -15.f);
-  CONSOLE_VAR(u32, kExpireThreshold,                  "Vision.EyeContact",  50);
+  CONSOLE_VAR(f32, kInlierDistanceSq,                 "Vision.FaceNormalDirectedAtRobot3d",  100.f);
+  CONSOLE_VAR(u32, kMinNumberOfInliers,               "Vision.FaceNormalDirectedAtRobot3d",  2);
+  CONSOLE_VAR(u32, kExpireThreshold,                  "Vision.FaceNormalDirectedAtRobot3d",  50);
+  CONSOLE_VAR(f32, kInlierXThreshold,                 "Vision.FaceNormalDirectedAtRobot3d",  300.f);
+  CONSOLE_VAR(f32, kInlierYThreshold,                 "Vision.FaceNormalDirectedAtRobot3d",  100.f);
+  CONSOLE_VAR(f32, kInlierZThreshold,                 "Vision.FaceNormalDirectedAtRobot3d",  20.f);
+  CONSOLE_VAR(f32, kShiftOutputPointX_mm,             "Vision.FaceNormalDirectedAtRobot3d",  100.f);
 }
 
 FaceNormalDirectedAtRobot3d::FaceNormalDirectedAtRobot3d()
@@ -56,6 +55,10 @@ void FaceNormalDirectedAtRobot3d::Update(const TrackedFace& face,
   // angles are range limited without a wrap around we will
   // be able to treat them as Cartesian coordinates
 
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.FaceAngles",
+                   "yaw=%.3f, pitch=%.3f, roll=%.3f", RAD_TO_DEG(face.GetHeadYaw().ToFloat()),
+                   RAD_TO_DEG(face.GetHeadPitch().ToFloat()), RAD_TO_DEG(face.GetHeadRoll().ToFloat()));
+
   Point3f faceDirectionPoint;
   bool include = GetPointFromHeadPose(_headPose, faceDirectionPoint);
 
@@ -65,22 +68,15 @@ void FaceNormalDirectedAtRobot3d::Update(const TrackedFace& face,
                    RAD_TO_DEG(_face.GetHeadPitch().ToFloat()));
   */
   _faceDirectionHistory[_currentIndex].Update(faceDirectionPoint,
-                                              RAD_TO_DEG(face.GetHeadPitch().ToFloat()),
                                               RAD_TO_DEG(face.GetHeadYaw().ToFloat()),
+                                              RAD_TO_DEG(face.GetHeadPitch().ToFloat()),
                                               include);
 
   _faceDirectionAverage = ComputeEntireFaceDirectionAverage();
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.AverageYawAndPitch",
-                   "average x=%.3f, average y=%.3f, average z=%.3f", _faceDirectionAverage.x(),
-                   _faceDirectionAverage.y(), _faceDirectionAverage.z());
   _numberOfInliers = FindInliers(_faceDirectionAverage);
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.NumberOfInliers",
                    "Number of Inliers = %d", _numberOfInliers);
   _faceDirectionAverage = RecomputeFaceDirectionAverage();
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.RecomputedAverageYawAndPitch",
-                   "average x=%.3f, average y=%.3f, average z=%.3f", _faceDirectionAverage.x(),
-                   _faceDirectionAverage.y(), _faceDirectionAverage.z());
-  _faceDirection = DetermineFaceDirection();
 
   _currentIndex += 1;
 }
@@ -101,8 +97,10 @@ Point3f FaceNormalDirectedAtRobot3d::ComputeFaceDirectionAverage(const bool filt
   for (const auto& faceDirection: _faceDirectionHistory) {
     if (faceDirection.include) {
       if (filterOutliers) {
-        pointsInAverage += 1;
-        averageFaceDirection += faceDirection.point;
+        if (faceDirection.inlier) {
+          pointsInAverage += 1;
+          averageFaceDirection += faceDirection.point;
+        }
       } else {
         pointsInAverage += 1;
         averageFaceDirection += faceDirection.point;
@@ -124,16 +122,23 @@ int FaceNormalDirectedAtRobot3d::FindInliers(const Point3f& faceDirectionAverage
 {
   int numberOfInliers = 0;
   for (auto& faceDirection: _faceDirectionHistory) {
-    PRINT_NAMED_DEBUG("FaceNormalDirectedAtRobot3d.Update.FindInliers",
-                      "direction x=%.3f, y=%.3f, z=%.3f", faceDirection.point.x(),
-                      faceDirection.point.y(), faceDirection.point.z());
+    /*
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.FindInliers.PointHistory",
+                     "direction x=%.3f, y=%.3f, z=%.3f", faceDirection.point.x(),
+                     faceDirection.point.y(), faceDirection.point.z());
+    */
 
     if (!faceDirection.include) {
       continue;
     }
                       
     auto difference = faceDirection.point - faceDirectionAverage;
-    if (difference.x() < 300 && difference.y() < 100 && difference.z() < 20) {
+    /*
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.FindInliers.Difference",
+                     "direction x=%.3f, y=%.3f, z=%.3f", difference.x(),
+                     difference.y(), difference.z());
+    */
+    if (difference.x() < kInlierXThreshold && difference.y() < kInlierYThreshold && difference.z() < kInlierZThreshold) {
       faceDirection.inlier = true;
       numberOfInliers += 1;
     } else {
@@ -148,32 +153,6 @@ Point3f FaceNormalDirectedAtRobot3d::RecomputeFaceDirectionAverage()
   return ComputeFaceDirectionAverage(true);
 }
 
-TrackedFace::FaceDirection FaceNormalDirectedAtRobot3d::DetermineFaceDirection()
-{
-  if (_numberOfInliers > kMinNumberOfInliers) {
-    bool withinDistance = std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotYawAbsThres;
-    withinDistance &= std::abs(_faceDirectionAverage.x()) < kFaceDirectedAtRobotPitchAbsThres;
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.DetermineFaceDirection.Distance",
-                     "threshold yaw=%.3f, threshold pitch=%.3f",
-                     kFaceDirectedAtRobotYawAbsThres, kFaceDirectedAtRobotPitchAbsThres);
-    if (withinDistance) {
-      return TrackedFace::FaceDirection::AtRobot;
-    }
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.DetermineFaceDirection.Threshold",
-                     "threshold yaw=%.3f", kFaceDirectedRightYawAbsThres);
-    if (_faceDirectionAverage.x() > kFaceDirectedRightYawAbsThres) {
-      return TrackedFace::FaceDirection::RightOfRobot;
-    }
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.DetermineFaceDirection.Threshold",
-                     "threshold yaw=%.3f", kFaceDirectedLeftYawAbsThres);
-    if (_faceDirectionAverage.x() < kFaceDirectedLeftYawAbsThres) {
-      return TrackedFace::FaceDirection::LeftOfRobot;
-    }
-  }
-
-  return TrackedFace::FaceDirection::None;
-}
-
 bool FaceNormalDirectedAtRobot3d::GetExpired(const TimeStamp_t currentTime) const
 {
   return (currentTime - _lastUpdated) > kExpireThreshold;
@@ -181,123 +160,69 @@ bool FaceNormalDirectedAtRobot3d::GetExpired(const TimeStamp_t currentTime) cons
 
 bool FaceNormalDirectedAtRobot3d::GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint)
 {
-  // TODO look over history and determine if it's above or below the horizon
-  bool aboveHorizon = IsFaceDirectionAboveHorizon();
+  Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, 500.f, 0.f)));
+  translatedPose.SetParent(headPose);
+  auto point = translatedPose.GetWithRespectToRoot().GetTranslation();
+  auto translation = headPose.GetTranslation();
 
-  // TODO here is where I should determine whether to do ground plane or
-  // follow the ray and look for a face
-  /*
-  auto rotationX = headPose.GetRotationAngle<'X'>();
-  auto rotationY = headPose.GetRotationAngle<'Y'>();
-  auto rotationZ = headPose.GetRotationAngle<'Z'>();
-  auto quatnerion = headPose.GetRotation().GetQuaternion();
-  auto w = quatnerion.w();
-  auto x = quatnerion.x();
-  auto y = quatnerion.y();
-  auto z = quatnerion.z();
-  */
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.Translation",
+                   "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.SecondPoint",
+                   "x: %.3f, y:%.3f, z:%.3f", point.x(), point.y(), point.z());
 
-  // I think all of these should be cosine's but this should probably
-  // be double checked.
-  if (aboveHorizon) {
-    auto rotationMatrix = headPose.GetRotationMatrix();
-    auto faceRay = rotationMatrix * Vec3f(1200.f, 0.f, 0.f);
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.DirectionAboveHorizon",
-                     "x: %.3f, y:%.3f, z:%.3f", faceRay.x(), faceRay.y(), faceRay.z());
-    // determine units of translation ... probably in mm or cm
-    faceDirectionPoint = headPose.GetTranslation() + faceRay;
+  float alpha = ( -point.z() ) / ( translation.z() - point.z() );
+
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.Alpha",
+                   "alpha: %.3f", alpha);
+
+  auto groundPlanePoint = translation * alpha + point * (1 - alpha);
+
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.GroundPlanePoint",
+                   "x: %.3f, y:%.3f, z:%.3f", groundPlanePoint.x(), groundPlanePoint.y(),
+                   groundPlanePoint.z());
+
+
+  // Alpha less than one means that the ground plane point we found is either
+  // in the line segment between our two points (0 < alpha < 1) or in the ray
+  // starting at the first point and extending in the same direction as the segment.
+  // This avoids finding a intersection with the ground plane when face normal is
+  // directed above the horizon.
+  if (alpha > 1) {
+    faceDirectionPoint = groundPlanePoint;
+    return true;
   } else {
-    auto rotationMatrix = headPose.GetRotationMatrix();
-    auto faceRay = rotationMatrix * Vec3f(1.f, 0.f, 0.f);
-    if (faceRay.z() < 0) {
-      PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceRay",
-                       "x: %.3f, y:%.3f, z:%.3f", faceRay.x(), faceRay.y(), faceRay.z());
-      if (!NEAR_ZERO(faceRay.z())) {
-        float distance = headPose.GetTranslation().z() / -faceRay.z();
-        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.Distance",
-                         "distance: %.3f", distance);
-        Point3f a = headPose.GetTranslation();
-        Point3f b = a + (rotationMatrix * Vec3f(distance, 0.f, 0.f));
-        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceTranslation",
-                         "x: %.3f, y:%.3f, z:%.3f", a.x(), a.y(), a.z());
-        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.SecondPoint",
-                         "x: %.3f, y:%.3f, z:%.3f", b.x(), b.y(), b.z());
-        /*
-        auto groundPoint = IntersectionDirectionWithGroundPlane(a, b, distance);
-        PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.DirectionBelowHorizon",
-                         "x: %.3f, y:%.3f, z:%.3f", groundPoint.x(), groundPoint.y(), groundPoint.z());
-        */
-        faceDirectionPoint = b; 
-        return true;
-      }
-    } else {
-      // Can't do anything there won't be an intersection
-      return false;
-    }
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceRayLessThanZero", "");
+    // Can't do anything there won't be an intersection
+    return false;
   }
-  return false;
-}
-
-Point3f FaceNormalDirectedAtRobot3d::IntersectionDirectionWithGroundPlane(const Point3f& a,
-                                                                          const Point3f b,
-                                                                          const float distance)
-{
-  Vec3f groundPlaneNormal(0.f, 0.f, 1.f);
-  double numerator = ((groundPlaneNormal.x() * a.x()) + (groundPlaneNormal.y() * a.y()) + (groundPlaneNormal.z() * a.z()));
-  double denominator = ((groundPlaneNormal.x()* (a.x() - b.x())) + (groundPlaneNormal.y() * (a.y() - b.y()))
-                  + (groundPlaneNormal.z() * (a.z() - b.z())));
-  /*
-  double u = ((groundPlaneNormal.x() * a.x()) + (groundPlaneNormal.y() * a.y()) + (groundPlaneNormal.z() * a.z()))
-               / ((groundPlaneNormal.x()* (a.x() - b.x())) + (groundPlaneNormal.y() * (a.y() - b.y()))
-                  + (groundPlaneNormal.z() * (a.z() - b.z())));
-  */
-  double u = numerator / denominator;
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.IntersectionDirectionWithGroundPlane.Intermediate",
-                   "numerator: %.3f denominator: %.3f u: %.3f", numerator, denominator, u);
-
-  // TODO i am pretty sure this part is wrong
-  return Point3f(
-    u * a.x() + (1-u) * b.x(),
-    u * a.y() + (1-u) * b.y(),
-    u * a.z() + (1-u) * b.z()
-  );
-}
-
-bool FaceNormalDirectedAtRobot3d::IsFaceDirectionAboveHorizon()
-{
-  // TODO look over the history of head poses and determine
-  // whether we think the face is directed above or below the horizon
-  // which will influence whether we try to interesect the direction
-  // with a specific distance of the ground plane
-
-  Point2f averageFaceDirection = Point2f(0.f, 0.f);
-  auto numberInAverage = 0;
-  for (auto & entry: _faceDirectionHistory)
-  {
-    averageFaceDirection += entry.angles;
-  }
-  if (numberInAverage != 0) {
-    averageFaceDirection /= numberInAverage;
-  }
-
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.IsFaceDirectionAboveHorizon.AverageFaceAngles",
-                   "yaw: %.3f pitch: %.3f", averageFaceDirection.x(), averageFaceDirection.y());
-
-  return false;
 }
 
 bool FaceNormalDirectedAtRobot3d::IsFaceFocused() const
 {
-  // TODO i don't think we want to use face direction for this, however
-  // that was what we were using in the first version of this
-  // return ( _faceDirection != TrackedFace::FaceDirection::None );
-
   // TODO for some reason there isn't the right number of inliers
   // so i'm just going to make this 2
   // return ( _numberOfInliers > kHistorySize *.6);
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.IsFaceFocused.NumberOfInliers",
                    "Number of Inliers = %d", _numberOfInliers);
-  return ( (_numberOfInliers > 2) && _initialized );
+  return ( (_numberOfInliers > kMinNumberOfInliers) && _initialized );
+}
+
+Point3f FaceNormalDirectedAtRobot3d::GetFaceDirectionAverage() const
+{
+  auto shiftedFaceAverage = _faceDirectionAverage + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetFaceDirectionAverage.ReturnedPoint",
+                   "x: %.3f, y:%.3f, z:%.3f", shiftedFaceAverage.x(), shiftedFaceAverage.y(),
+                   shiftedFaceAverage.z());
+  return shiftedFaceAverage;
+}
+
+Point3f FaceNormalDirectedAtRobot3d::GetCurrentFaceDirection() const
+{
+  auto shiftedFaceDirection = _faceDirectionHistory[_currentIndex].point + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetCurrentFaceDirection.ReturnedPoint",
+                   "x: %.3f, y:%.3f, z:%.3f", shiftedFaceDirection.x(), shiftedFaceDirection.y(),
+                   shiftedFaceDirection.z());
+  return shiftedFaceDirection;
 }
 
 } // namespace Vision

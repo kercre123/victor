@@ -26,9 +26,25 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/faceWorld.h"
 
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Vector {
+
+namespace {
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres,           "Vision.FaceNormalDirectedAtRobot3d", -200.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres,           "Vision.FaceNormalDirectedAtRobot3d",  50.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres,           "Vision.FaceNormalDirectedAtRobot3d", -100.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres,           "Vision.FaceNormalDirectedAtRobot3d",  100.f);
+  CONSOLE_VAR(bool, kTurnBackToFace,                         "Vision.FaceNormalDirectedAtRobot3d",  false);
+  CONSOLE_VAR(f32,  kTurnWaitAfterFinalTurn_s,               "Vision.FaceNormalDirectedAtRobot3d",  1.f);
+  CONSOLE_VAR(f32,  kTurnWaitAfterInitialTurn_s,             "Vision.FaceNormalDirectedAtRobot3d",  1.f);
+  CONSOLE_VAR(f32,  kTurnWaitAfterInitialLookBackAtFace_s,   "Vision.FaceNormalDirectedAtRobot3d",  2.f);
+  CONSOLE_VAR(f32,  kSleepTimeAfterActionCompleted_s,        "Vision.FaceNormalDirectedAtRobot3d",  2.f);
+  CONSOLE_VAR(f32,  kMaxPanSpeed_radPerSec,                  "Vision.FaceNormalDirectedAtRobot3d",  MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
+  CONSOLE_VAR(f32, kMaxPanAccel_radPerSec2,                  "Vision.FaceNormalDirectedAtRobot3d",  10.f);
+  CONSOLE_VAR(bool, kUseEyeContact,                          "Vision.FaceNormalDirectedAtRobot3d",  true);
+}
 
 #define LOG_CHANNEL "Behaviors"
 
@@ -104,23 +120,101 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
   Pose3d faceFocusPose;
   SmartFaceID faceID;
   if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose, faceID)) {
-    auto robotPose = GetBEI().GetRobotInfo().GetPose();
-    Pose3d faceFocusPoseWRTRobot;
-    if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
-      faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
+    auto translation = faceFocusPose.GetTranslation();
+    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.Translation",
+             "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
+    auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(500);
+    if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres) && FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres) ) &&
+         (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres) && FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres)) )
+          || ( makingEyeContact && kUseEyeContact) ) {
+
+      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingAtRobot",
+               "min x: %.3f, max x: %.3f, min y: %.3f, max y: %.3f", kFaceDirectedAtRobotMinXThres,
+               kFaceDirectedAtRobotMaxXThres, kFaceDirectedAtRobotMinYThres, kFaceDirectedAtRobotMaxYThres);
       CompoundActionSequential* turnAction = new CompoundActionSequential();
-      turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
-      // TODO most likely will need to have a sleep here to make things "moar natural"
-      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.FaceID",
-               "smart face id %s", faceID.GetDebugStr().c_str());
-      turnAction->AddAction(new WaitAction(2));
-      turnAction->AddAction(new TurnTowardsFaceAction(faceID));
+      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorGetIn));
+      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorReaction));
+      turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+      turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
+
+      turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
       DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+
     } else {
-      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
+      auto robotPose = GetBEI().GetRobotInfo().GetPose();
+      Pose3d faceFocusPoseWRTRobot;
+
+      if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
+
+        if ( FLT_LT(translation.y(), 0.f) ) {
+          LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingLeftTest", "");
+          faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
+          CompoundActionSequential* turnAction = new CompoundActionSequential();
+          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInRight));
+
+          // Do an initial turn if we want to
+          if (kTurnBackToFace) {
+            turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
+            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
+            turnAction->AddAction(new TurnTowardsFaceAction(faceID));
+            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+          }
+
+          // TODO do we want this to be the same point as before
+          TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(faceFocusPoseWRTRobot);
+          turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
+          turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
+          CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+            turnTowardsPose,
+            new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight}
+          });
+          turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+          turnAction->AddAction(turnAndAnimate);
+          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+          turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+          turnAction->AddAction(new TurnTowardsFaceAction(faceID));
+
+          turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
+          DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+        } else {
+
+          LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingRightTest", "");
+          faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
+          CompoundActionSequential* turnAction = new CompoundActionSequential();
+          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
+
+          // Do an initial turn if we want to
+          if (kTurnBackToFace) {
+            turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
+            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
+            turnAction->AddAction(new TurnTowardsFaceAction(faceID));
+            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+          }
+
+          // TODO do we want this to be the same point as before
+          TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(faceFocusPoseWRTRobot);
+          turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
+          turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
+          CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+            turnTowardsPose,
+            new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft}
+          });
+          turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+          turnAction->AddAction(turnAndAnimate);
+
+          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+          turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+          turnAction->AddAction(new TurnTowardsFaceAction(faceID));
+
+          turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
+          DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+        }
+      } else {
+        LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
+      }
     }
   } else {
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.NoFaceFocus", "");
+    // LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.NoFaceFocus", "");
   }
 }
 

@@ -973,7 +973,25 @@ namespace Vision {
     // Yaw angle maps without change onto our coordinate system, while the roll and pitch
     // need to be switched and negated to map correctly from the okao coordinate system
     // to the anki coordindate system.
-    const RotationMatrix3d rotation(-face.GetHeadPitch(), -face.GetHeadRoll(), face.GetHeadYaw());
+    //const RotationMatrix3d rotation(-face.GetHeadRoll(), -face.GetHeadPitch(), face.GetHeadYaw());
+    //const RotationMatrix3d rotation(-face.GetHeadPitch(), -face.GetHeadYaw(), face.GetHeadRoll());
+    //const RotationMatrix3d rotation(-face.GetHeadPitch(), face.GetHeadYaw(), -face.GetHeadRoll());
+    //const RotationMatrix3d rotation(face.GetHeadPitch(), -face.GetHeadYaw(), -face.GetHeadRoll());
+
+    // Using openGL coordinates, and okao docs this is what i woudl expect to work
+    // const RotationMatrix3d rotation(face.GetHeadPitch(), face.GetHeadYaw(), face.GetHeadRoll());
+
+    // Using anki world coordinates x out of robot face, y left of robot, z above robot,
+    // this is what i would expect to work
+    // const RotationMatrix3d rotation(face.GetHeadRoll(), face.GetHeadPitch(), face.GetHeadYaw() + M_PI);
+
+    // Testing history with webots
+    // const RotationMatrix3d rotation(face.GetHeadRoll(), -face.GetHeadPitch(), face.GetHeadYaw());
+    // const RotationMatrix3d rotation(face.GetHeadRoll(), face.GetHeadPitch(), face.GetHeadYaw());
+
+    // This one works ... i think still would like to verify i bit more, but have verfied in viz, 
+    // and the unit test for gazing ... head direction
+    const RotationMatrix3d rotation(-face.GetHeadPitch(), face.GetHeadRoll(), face.GetHeadYaw());
     headPose.SetRotation(headPose.GetRotation() * rotation);
 
     headPose.SetParent(_camera.GetPose());
@@ -1096,6 +1114,8 @@ namespace Vision {
       return RESULT_FAIL;
     }
     Toc("FaceDetect");
+    PRINT_NAMED_WARNING("FaceTrackerImpl.Update.NumDetections",
+                        "Number of detections=%d", numDetections);
 
     // Figure out which detected faces we already recognize
     // so that we can choose to run recognition more selectively in the loop below,

@@ -66,6 +66,7 @@ namespace Vector {
   static const char * const kIsSessionOnlyStringDAS = "0";
 
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
+  static const Point3f kGazeGroundPointSize{100.f, 100.f, 100.f};
   
   static const std::string kWebVizObservedObjectsName = "observedobjects";
   static const std::string kWebVizNavMapName = "navmap";
@@ -522,6 +523,43 @@ namespace Vector {
                                                                                    kHumanHeadSize,
                                                                                    faceEntry->face.GetHeadPose(),
                                                                                    ::Anki::NamedColors::DARKGRAY);
+
+        auto& entry = _facesDirectedAtRobot3d[face.GetID()];
+        const auto currentFaceDirection = entry.GetCurrentFaceDirection();
+        Pose3d currentGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentFaceDirection));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2345,
+                                                                                 kGazeGroundPointSize,
+                                                                                 currentGPPose,
+                                                                                 ::Anki::NamedColors::ORANGE);
+
+        const auto averageFaceDirection = entry.GetFaceDirectionAverage();
+        Pose3d averageGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageFaceDirection));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2346,
+                                                                                 kGazeGroundPointSize,
+                                                                                 averageGPPose,
+                                                                                 ::Anki::NamedColors::GREEN);
+
+        /*
+        Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, -500.f, 0.f)));
+        translatedPose.SetParent(faceEntry->face.GetHeadPose());
+        auto point = translatedPose.GetWithRespectToRoot().GetTranslation();
+        auto translation = faceEntry->face.GetHeadPose().GetTranslation();
+        float alpha = ( -point.z() ) / ( translation.z() - point.z() );
+        auto groundPlanePoint = translation * alpha + point * (1 - alpha);
+        Pose3d groundPlanePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), groundPlanePoint));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2345,
+                                                                                 kGazeGroundPointSize,
+                                                                                 groundPlanePose,
+                                                                                 ::Anki::NamedColors::ORANGE);
+        */
+
+        auto rotationMatrix = faceEntry->face.GetHeadPose().GetRotationMatrix();
+        PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.RotationMatrixAngles",
+                         "angle: %.3f, x: %.3f, y: %.3f, z: %.3f", rotationMatrix.GetAngle().getDegrees(),
+                         rotationMatrix.GetAngleAroundXaxis().getDegrees(),
+                         rotationMatrix.GetAngleAroundYaxis().getDegrees(),
+                         rotationMatrix.GetAngleAroundZaxis().getDegrees());
+        
       }
 
       // Draw face in 3D and in camera
@@ -625,8 +663,12 @@ namespace Vector {
     face.SetFaceFocused(faceFocused);
     if (faceFocused)
     {
-      //face.SetFaceFocusPose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), entry.GetFaceDirectionAverage()));
-      Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(1022.112f, 393.799f, 0.f)));
+      auto faceDirectionAverage = entry.GetFaceDirectionAverage();
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceDirectionAverage",
+                          "x: %.3f, y: %.3f, z: %.3f", faceDirectionAverage.x(), faceDirectionAverage.y(),
+                          faceDirectionAverage.z());
+      Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), faceDirectionAverage));
+      // Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(1022.112f, 393.799f, 0.f)));
       // set the pose ... i think this is right but ... let's verify
       focusPose.SetParent(_robot->GetWorldOrigin());
       // _robot->GetPoseOriginList().GetOriginByID(histOriginID));

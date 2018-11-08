@@ -35,7 +35,6 @@ struct FaceDirectionData
 };
 
 
-
 class FaceNormalDirectedAtRobot
 {
 public:

@@ -40,7 +40,7 @@ struct FaceDirectionData3d
       angles(Point2f(kYawMin_deg, kPitchMin_deg))
       {}
   // TODO naming is terrible
-  void Update(const Point3f& p, float pitch, float yaw, bool i)
+  void Update(const Point3f& p, float yaw, float pitch, bool i)
   {
     point = p;
     inlier = false;
@@ -58,8 +58,8 @@ public:
   void Update(const TrackedFace& headPose,
               const TimeStamp_t timeStamp);
 
-  TrackedFace::FaceDirection GetFaceDirection() const {return _faceDirection;}
-  Point3f GetFaceDirectionAverage() const {return _faceDirectionAverage;}
+  Point3f GetFaceDirectionAverage() const;
+  Point3f GetCurrentFaceDirection() const;
   bool GetExpired(const TimeStamp_t currentTime) const;
   std::vector<FaceDirectionData3d> const& GetFaceDirectionHistory() {return _faceDirectionHistory;}
   bool IsFaceFocused() const;
@@ -67,22 +67,16 @@ public:
 private:
   int FindInliers(const Point3f& faceDirectionAverage);
 
-  TrackedFace::FaceDirection DetermineFaceDirection();
-
   bool GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint);
   Point3f ComputeEntireFaceDirectionAverage();
   Point3f ComputeFaceDirectionAverage(const bool filterOutliers);
   Point3f RecomputeFaceDirectionAverage();
-  Point3f IntersectionDirectionWithGroundPlane(const Point3f& a, const Point3f b, const float distance);
-
-  bool IsFaceDirectionAboveHorizon();
 
   Pose3d _headPose;
   TimeStamp_t _lastUpdated;
 
   int _currentIndex = 0;
   int _numberOfInliers = 0;
-  TrackedFace::FaceDirection _faceDirection;
   bool _initialized = false;
 
   std::vector<FaceDirectionData3d> _faceDirectionHistory;

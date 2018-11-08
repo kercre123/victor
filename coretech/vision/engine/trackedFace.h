@@ -154,7 +154,7 @@ namespace Vision {
     void SetEyeContact(const bool eyeContact);
 
     // Face focused
-    bool IsFaceFocused() const { return _isFaceFocused; }
+    bool IsFaceFocused() const { return _isFaceFocused && _isFacingCamera; }
     void SetFaceFocused(const bool eyeContact);
 
     // Face direction

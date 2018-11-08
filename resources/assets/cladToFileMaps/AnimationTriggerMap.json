@@ -1663,6 +1663,34 @@
     "AnimName": "ag_nowifi_icon"
   },
   {
+    "CladEvent": "GazingLookAtSurfacesGetInLeft",
+    "AnimName" : "ag_gazing_lookatsurfaces_getin_left"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfacesGetInRight",
+    "AnimName" : "ag_gazing_lookatsurfaces_getin_right"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfaceReaction",
+    "AnimName" : "ag_gazing_lookatsurface_reaction"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfaceTurnLeft",
+    "AnimName" : "ag_gazing_lookatsurface_turn_left"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfacesTurnRight",
+    "AnimName" : "ag_gazing_lookatsurfaces_turn_right"
+  },
+  {
+    "CladEvent": "GazingLookAtVectorGetIn",
+    "AnimName" : "ag_gazing_lookatvector_getin"
+  },
+  {
+    "CladEvent": "GazingLookAtVectorReaction",
+    "AnimName" : "ag_gazing_lookatvector_reaction"
+  },
+  {
     "CladEvent": "GreetAfterLongTime",
     "AnimName" : "ag_greeting_imhome"
   },
