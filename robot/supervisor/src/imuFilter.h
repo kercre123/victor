@@ -48,8 +48,12 @@ namespace Anki {
       // Rotation speed in rad/sec
       f32 GetRotationSpeed();
 
-      // Angle above gravity horizontal
+      // Angle above gravity horizontal, in radians
       f32 GetPitch();
+      
+      // Angle around gravity horizontal, "roll", in radians. When the robot is on its right side,
+      // the angle should be exactly +pi/2 radians (+90 deg), and -pi/2 (-90 deg) when on its left side.
+      f32 GetRoll();
 
       // Starts recording a buffer of data for the specified time and sends it to basestation
       void RecordAndSend( const u32 length_ms );

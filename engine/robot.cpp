@@ -2601,7 +2601,7 @@ RobotState Robot::GetDefaultRobotState()
   const auto kDefaultStatus = (Util::EnumToUnderlying(RobotStatusFlag::HEAD_IN_POS) |
                                Util::EnumToUnderlying(RobotStatusFlag::LIFT_IN_POS));
 
-  const RobotPose kDefaultPose(0.f, 0.f, 0.f, 0.f, 0.f);
+  const RobotPose kDefaultPose(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
 
   std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
   defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());

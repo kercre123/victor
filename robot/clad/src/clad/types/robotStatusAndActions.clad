@@ -76,6 +76,7 @@ structure RobotPose
   float_32 z,
   float_32 angle,
   float_32 pitch_angle,
+  float_32 roll_angle,
 }
 
 structure RobotState
