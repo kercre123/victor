@@ -16,6 +16,7 @@
 #include "log.h"
 #include "cutils/properties.h"
 #include "switchboardd/pairingMessages.h"
+#include "anki-wifi/fileutils.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -74,7 +75,7 @@ RtsKeys SavedSessionManager::LoadRtsKeysFactory() {
   fin.open(kRtsKeyPath, kReadMode);
 
   if(!fin.is_open()) {
-    Log::Error("File is not open.");
+    Log::Error("Failed to open %s.", kRtsKeyPath.c_str());
     free(buffer);
     return savedData;
   }
@@ -83,7 +84,7 @@ RtsKeys SavedSessionManager::LoadRtsKeysFactory() {
   fin.read(buffer, fileSize);
 
   if(fin.fail()) {
-    Log::Error("Failed to read.");
+    Log::Error("Failed to read %s.", kRtsKeyPath.c_str());
     free(buffer);
     fin.close();
     savedData.keys.version = -1;
@@ -131,7 +132,7 @@ RtsKeys SavedSessionManager::LoadRtsKeys() {
   fin.open(kRtsKeyDataFile, kReadMode);
 
   if(!fin.is_open()) {
-    Log::Error("File is not open.");
+    Log::Error("Failed to open %s.", kRtsKeyDataFile.c_str());
     free(buffer);
     return savedData;
   }
@@ -141,7 +142,7 @@ RtsKeys SavedSessionManager::LoadRtsKeys() {
   fin.seekg(0, fin.beg);
 
   if(realFileSize < sizeof(savedData.keys)) {
-    Log::Error("File size is smaller than minimum expected.");
+    Log::Error("File size is smaller than minimum expected for %s.", kRtsKeyDataFile.c_str());
     free(buffer);
     fin.close();
     savedData.keys.version = -1;
@@ -211,7 +212,7 @@ void SavedSessionManager::ClearRtsKeysFactory() {
   fout.open(kRtsKeyPath, kWriteMode);
 
   if(!fout.is_open()) {
-    Log::Error("Could not open file.");
+    Log::Error("Failed to open %s.", kRtsKeyPath.c_str());
     return;
   }
 
@@ -242,14 +243,19 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   // Write file with Rts data
   std::ofstream fout;
 
-  if(!MakeDirectory(kRtsKeyDataPath)) {
-    Log::Write("Could not make directory.");
+  int rc = CreateDirectory(kRtsKeyDataPath,
+                           kModeUserReadWriteExecute,
+                           kNetUid,
+                           kAnkiGid);
+  if (rc) {
+    Log::Write("Could not create %s. rc = %d", kRtsKeyDataPath.c_str(), rc);
+    return;
   }
 
   fout.open(kRtsKeyDataFile, kWriteMode);
 
   if(!fout.is_open()) {
-    Log::Error("Could not open file.");
+    Log::Error("Failed to open %s.", kRtsKeyDataFile.c_str());
     return;
   }
 
@@ -272,16 +278,6 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   }
 
   fout.close();
-}
-
-bool SavedSessionManager::MakeDirectory(std::string directory) {
-  int status = mkdir(directory.c_str(), S_IRUSR | S_IWUSR);
-
-  if(status != -1 || errno == EEXIST) {
-    return true;
-  } else {
-    return false;
-  }
 }
 
 } // Switchboard

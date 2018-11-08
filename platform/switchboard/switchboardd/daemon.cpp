@@ -529,14 +529,12 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
     return;
   }
   int rc;
-  // Create the switchboard runtime directory if it doesn't exist
-  rc = CreateDirectory(kSwitchboardRunPath);
-  if (rc) {
-    HandleOtaUpdateExit(rc);
-    return;
-  }
   // Disable update-engine from running automatically
-  rc = WriteFileAtomically(kUpdateEngineDisablePath, "1");
+  rc = WriteFileAtomically(kUpdateEngineDisablePath,
+                           "1",
+                           kModeUserGroupReadWrite,
+                           kNetUid,
+                           kAnkiGid);
   if (rc) {
     HandleOtaUpdateExit(rc);
     return;
@@ -554,7 +552,11 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   updateEngineEnv << "UPDATE_ENGINE_ENABLED=True" << std::endl;
   updateEngineEnv << "UPDATE_ENGINE_MAX_SLEEP=1" << std::endl; // No sleep, execute right away
   updateEngineEnv << "UPDATE_ENGINE_URL=\"" << url << "\"" << std::endl;
-  rc = WriteFileAtomically(kUpdateEngineEnvPath, updateEngineEnv.str());
+  rc = WriteFileAtomically(kUpdateEngineEnvPath,
+                           updateEngineEnv.str(),
+                           kModeUserGroupReadWrite,
+                           kNetUid,
+                           kAnkiGid);
   if (rc) {
     HandleOtaUpdateExit(rc);
     return;
