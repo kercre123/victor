@@ -258,11 +258,11 @@ namespace Vector {
 
   #if TOF_CONFIGURATION == TOF_SIDE_BY_SIDE
   
-  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -5, 0};
+  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -8.45, 0};
   const f32 TOF_LEFT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(-10);
-  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 5, 0};
+  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 8.45, 0};
   const f32 TOF_RIGHT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(10);
-  const f32 TOF_ANGLE_DOWN_REL_CAMERA_RAD = DEG_TO_RAD(8);
+  const f32 TOF_ANGLE_DOWN_REL_CAMERA_RAD = DEG_TO_RAD(8); // camera is already 4° down, for a total of 12°
   
   #elif TOF_CONFIGURATION == TOF_ABOVE_BELOW
 
