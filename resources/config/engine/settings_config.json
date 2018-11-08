@@ -40,5 +40,12 @@
   {
     "defaultValue" : "America/Los_Angeles",
     "updateCloudOnChange" : true
+  },
+  "button_wakeword" :
+  {
+    "defaultValue" : 0,
+    // if a user clears user data, alexa will be disabled by default, so it's
+    // not necessary to restore the robot value from the cloud
+    "updateCloudOnChange" : false
   }
 }

@@ -143,6 +143,8 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _settingSetters[external_interface::RobotSetting::locale]        = { false, &SettingsManager::ValidateSettingLocale,       &SettingsManager::ApplySettingLocale       };
   _settingSetters[external_interface::RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
   _settingSetters[external_interface::RobotSetting::default_location] = { false, &SettingsManager::ValidateSettingDefaultLocation, nullptr                              };
+  _settingSetters[external_interface::RobotSetting::button_wakeword]
+    = { false, &SettingsManager::ValidateSettingButtonWakeWord, &SettingsManager::ApplySettingButtonWakeWord };
 
   _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
@@ -423,6 +425,45 @@ bool SettingsManager::ApplySettingEyeColor()
   _robot->SendRobotMessage<RobotInterface::SetFaceHue>(hue);
   _robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(saturation);
 
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ValidateSettingButtonWakeWord()
+{
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::button_wakeword);
+  const auto& value = _currentSettings[key].asUInt();
+  if (!external_interface::ButtonWakeWord_IsValid(value))
+  {
+    LOG_ERROR("SettingsManager.ApplySettingButtonWakeWord.Invalid", "Invalid button wake word value %i", value);
+    return false;
+  }
+
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SettingsManager::ApplySettingButtonWakeWord()
+{
+  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::button_wakeword);
+  const auto value = static_cast<external_interface::ButtonWakeWord>(_currentSettings[key].asUInt());
+  bool isAlexa = false;
+  switch( value ) {
+    default:
+    case external_interface::BUTTON_WAKEWORD_HEY_VECTOR:
+    {
+      isAlexa = false;
+    }
+      break;
+    case external_interface::BUTTON_WAKEWORD_ALEXA:
+    {
+      isAlexa = true;
+    }
+      break;
+  }
+  
+  _robot->SendRobotMessage<RobotInterface::SetButtonWakeWord>(isAlexa);
   return true;
 }
 

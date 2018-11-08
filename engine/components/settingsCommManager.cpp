@@ -72,6 +72,17 @@ namespace
                                                            kUpdateSettingsJdoc);
   }
   CONSOLE_FUNC(DebugSetEyeColor, kConsoleGroup);
+  
+  // NOTE: Need to keep kButtonWakeWords in sync with enum ButtonWakeWord in settings.proto
+  constexpr const char* kButtonWakeWords = "BUTTON_WAKEWORD_HEY_VECTOR,BUTTON_WAKEWORD_ALEXA";
+  CONSOLE_VAR_ENUM(u8, kButtonWakeWord, kConsoleGroup, 0, kButtonWakeWords);
+  void DebugSetButtonWakeWord(ConsoleFunctionContextRef context)
+  {
+    s_SettingsCommManager->HandleRobotSettingChangeRequest(external_interface::RobotSetting::button_wakeword,
+                                                           Json::Value(kButtonWakeWord),
+                                                           kUpdateSettingsJdoc);
+  }
+  CONSOLE_FUNC(DebugSetButtonWakeWord, kConsoleGroup);
 
   void DebugSetLocale(ConsoleFunctionContextRef context)
   {
@@ -349,6 +360,9 @@ void SettingsCommManager::RefreshConsoleVars()
 
   const auto& eyeColorValue = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::eye_color);
   kEyeColor = static_cast<u8>(eyeColorValue);
+  
+  const auto& buttonWakeWordValue = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::button_wakeword);
+  kButtonWakeWord = static_cast<u8>(buttonWakeWordValue);
 #endif
 }
 
@@ -498,6 +512,16 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
     {
       updateSettingsJdoc = true;
       saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::time_zone);
+    }
+  }
+  
+  if (settings.oneof_button_wakeword_case() == external_interface::RobotSettingsConfig::OneofButtonWakewordCase::kButtonWakeword)
+  {
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::button_wakeword,
+                                        Json::Value(settings.button_wakeword())))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::button_wakeword);
     }
   }
 

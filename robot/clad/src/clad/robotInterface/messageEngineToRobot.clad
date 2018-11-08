@@ -509,6 +509,12 @@ message SetFaceSaturation
     float_32 saturation // [0,1]
 }
 
+message SetButtonWakeWord
+{
+    // no enum for now unless we add a third wakeword. true if alexa, false if "hey vector"
+    bool isAlexa,
+}
+
 // Play animation as part of a composite image
 // Image chunks are sent separately
 message PlayCompositeAnimation
@@ -782,6 +788,8 @@ union EngineToRobot
   UpdateCompositeImage             updateCompositeImage                = 0x64,
   PlayCompositeAnimation           playCompositeAnimation              = 0x65,
   EnableMirrorModeScreen           enableMirrorModeScreen              = 0x66,
+
+  SetButtonWakeWord                setButtonWakeWord                   = 0x67,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

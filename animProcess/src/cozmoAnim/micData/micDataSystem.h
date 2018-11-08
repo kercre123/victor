@@ -101,6 +101,8 @@ public:
   void ResetBeatDetector();
   
   void SetAlexaActive(bool active);
+  
+  void SetButtonWakeWordIsAlexa(bool isAlexa);
 
   void UpdateLocale(const Util::Locale& newLocale);
   

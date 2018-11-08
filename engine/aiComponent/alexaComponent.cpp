@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/settingsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -149,10 +150,16 @@ void AlexaComponent::UpdateDependent(const AICompMap& dependentComps)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaComponent::SetAlexaOption( bool optedIn ) const
+void AlexaComponent::SetAlexaOption( bool optedIn )
 {
+  _pendingAuthIsFromOptIn = optedIn;
   // send anim message to opt IN/OUT
   _robot.SendMessage( RobotInterface::EngineToRobot( RobotInterface::SetAlexaUsage(optedIn) ) );
+  if( !optedIn ) {
+    // make sure backpack button setting is back to hey vector
+    static const bool kButtonIsAlexa = false;
+    ToggleButtonWakewordSetting( kButtonIsAlexa );
+  }
 }
   
   
@@ -198,6 +205,18 @@ void AlexaComponent::HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEn
     if( (newState != _authState) || (newExtra != _authStateExtra) ) {
       _authState = msg.Get_alexaAuthChanged().state;
       _authStateExtra = msg.Get_alexaAuthChanged().extra;
+      
+      if( (_authState == AlexaAuthState::Authorized) && _pendingAuthIsFromOptIn ) {
+        // the user opted in, and now we're authorized. Design calls for switching the backpack button
+        // functionality to Alexa, so save that setting now. Note that the app may be displaying a
+        // successful login screen that contains a toggle for this setting. In case things occur out of
+        // order, the app assumes that a successful authentication implies that the setting is now Alexa.
+        // If the below code is removed, the app will need to change as well
+        _pendingAuthIsFromOptIn = false;
+        static const bool kButtonIsAlexa = true;
+        ToggleButtonWakewordSetting( kButtonIsAlexa );
+      }
+      
       const bool isResponse = false;
       SendAuthStateToApp( isResponse );
     }
@@ -207,7 +226,23 @@ void AlexaComponent::HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEn
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaComponent::SendAuthStateToApp( bool isResponse ) const
+void AlexaComponent::ToggleButtonWakewordSetting( bool isAlexa ) const
+{
+  auto* settings = _robot.GetComponentPtr<SettingsManager>();
+  const bool updateSettingsJdoc = true;
+  bool ignoredDueToNoChange;
+  const auto newSetting = isAlexa ? external_interface::BUTTON_WAKEWORD_ALEXA : external_interface::BUTTON_WAKEWORD_HEY_VECTOR;
+  const bool success = settings->SetRobotSetting( external_interface::RobotSetting::button_wakeword,
+                                                  newSetting,
+                                                  updateSettingsJdoc,
+                                                  ignoredDueToNoChange );
+  ANKI_VERIFY( success || ignoredDueToNoChange,
+               "AlexaComponent.HandleAnimEvents.SettingFail",
+               "Could not set the functionality of the backpack button to alexa" );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::SendAuthStateToApp( bool isResponse )
 {
   // quick sanity check for feature flag and alexa state
   if( _authState != AlexaAuthState::Uninitialized ) {

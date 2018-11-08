@@ -97,10 +97,12 @@ private:
   bool ApplySettingEyeColor();
   bool ApplySettingLocale();
   bool ApplySettingTimeZone();
+  bool ApplySettingButtonWakeWord();
   bool ValidateSettingMasterVolume();
   bool ValidateSettingEyeColor();
   bool ValidateSettingLocale();
   bool ValidateSettingDefaultLocation();
+  bool ValidateSettingButtonWakeWord();
   bool ExecCommand(const std::vector<std::string>& args);
 
   // request that the specified RobotSetting is not immediately applied, but some other source will apply it
@@ -116,7 +118,7 @@ private:
   using SettingFunction = bool (SettingsManager::*)();
   struct SettingSetter
   {
-    bool                    isLatentApplication;
+    bool                    isLatentApplication; // if true, setting will be pending and must be claimed
     SettingFunction         validationFunction;
     SettingFunction         applicationFunction;
   };

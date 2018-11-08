@@ -80,17 +80,19 @@ public:
 
 private:
   
-  void SetAlexaOption( bool optedIn ) const;
+  void SetAlexaOption( bool optedIn );
   
   void HandleAppEvents( const AnkiEvent<external_interface::GatewayWrapper>& event );
   void HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEngine>& event );
   
   void HandleNewUXState( AlexaUXState state);
   
-  void SendAuthStateToApp( bool isResponse ) const;
+  void SendAuthStateToApp( bool isResponse );
   
   // tell anim to cancel any pending auth, but not any completed auth
   void SendCancelPendingAuth() const;
+  
+  void ToggleButtonWakewordSetting( bool isAlexa ) const;
   
   std::string GetAnimName( AnimationTrigger trigger ) const;
   
@@ -112,6 +114,7 @@ private:
   std::unordered_map<AlexaUXState, AlexaUXResponseInfo> _uxResponseInfo;
   std::array<AnimationTag,3> _animTags;
   
+  bool _pendingAuthIsFromOptIn = false;
   
   bool _featureFlagEnabled = false;
   

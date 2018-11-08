@@ -696,8 +696,6 @@ void MicDataSystem::ResetBeatDetector()
 void MicDataSystem::SetAlexaActive(bool active)
 {
   _alexaActive = active;
-  // TODO: for now, pretend we received a message from the app specifying what the backpack button should do
-  _buttonPressIsAlexa = active;
   
   if (_alexaActive) {
     RobotDataLoader *dataLoader = _context->GetDataLoader();
@@ -711,6 +709,11 @@ void MicDataSystem::SetAlexaActive(bool active)
     // Disable "Alexa" wake word in SpeechRecognizerSystem
     _speechRecognizerSystem->DisableAlexa();
   }
+}
+  
+void MicDataSystem::SetButtonWakeWordIsAlexa(bool isAlexa)
+{
+  _buttonPressIsAlexa = isAlexa;
 }
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)

@@ -459,6 +459,14 @@ void Process_setAlexaUsage(const Anki::Vector::RobotInterface::SetAlexaUsage& ms
     alexa->SetAlexaUsage( msg.optedIn );
   }
 }
+  
+void Process_setButtonWakeWord(const Anki::Vector::RobotInterface::SetButtonWakeWord& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr) {
+    micDataSystem->SetButtonWakeWordIsAlexa( msg.isAlexa );
+  }
+}
 
 void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPendingAlexaAuth& msg)
 {
