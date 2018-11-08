@@ -541,7 +541,7 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   }
 
   // Stop any running instance of update-engine
-  rc = ExecCommand({"/bin/systemctl", "stop", "update-engine.service"});
+  rc = ExecCommand({"sudo", "/bin/systemctl", "stop", "update-engine.service"});
   if (rc) {
     HandleOtaUpdateExit(rc);
     return;
@@ -569,7 +569,7 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   (void) unlink(kUpdateEngineDisablePath.c_str());
 
   // Restart the update-engine service so that our new config will be loaded
-  rc = ExecCommand({"/bin/systemctl", "start", "update-engine.service"});
+  rc = ExecCommand({"sudo", "/bin/systemctl", "start", "update-engine.service"});
 
   if (rc != 0) {
     HandleOtaUpdateExit(rc);
@@ -672,7 +672,7 @@ void Daemon::HandleReboot() {
 
   // trigger reboot
   sync(); sync(); sync();
-  int status = ExecCommand({"/sbin/reboot"});
+  int status = ExecCommand({"sudo", "/sbin/reboot"});
 
 
   if (!status) {

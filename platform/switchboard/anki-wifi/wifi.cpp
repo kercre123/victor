@@ -1500,7 +1500,7 @@ void RecoverNetworkServices() {
   DASMSG(recover_network_services, "wifi.recover_network_services", "Attempt to recover network services");
     DASMSG_SEND();
 
-  ExecCommandInBackground({ "/bin/systemctl", "restart", "wpa_supplicant", "connman" }, nullptr);
+  ExecCommandInBackground({"sudo", "/bin/systemctl", "restart", "wpa_supplicant", "connman" }, nullptr);
 }
 
 void WpaSupplicantScan() {
