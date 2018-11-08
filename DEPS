@@ -10,6 +10,15 @@
                 "package_name": "protocCppPlugin",
                 "version": "3"
             },
+	    "avs-device-sdk": {
+		"build_type_id": "anki",
+                "checksums": {
+                    "sha256": "aef6286afa9ced65b16a374fe11163d940eea90541ccd42777a7d4e36e6ce29a"
+                },
+                "extension": "tar.gz",
+                "package_name": "avs-device-sdk",
+                "version": "1"
+            },
             "tensorflow": {
                 "build_type_id": "anki",
                 "checksums": {
