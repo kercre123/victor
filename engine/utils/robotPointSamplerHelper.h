@@ -35,11 +35,17 @@ class INavMap;
   
 namespace RobotPointSamplerHelper {
   
-// uniformly sample a point on circle of radius (0, radius)
-Point2f SamplePointInCircle( Util::RandomGenerator& rng, f32 radius );
+// uniformly sample a point on circle of radius (0, radius). Optionally supply minTheta and maxTheta to only sample
+// points in a semi-circle where theta is in [minTheta, maxTheta)
+Point2f SamplePointInCircle( Util::RandomGenerator& rng,
+                             f32 radius,
+                             f32 minTheta = -M_PI_F, f32 maxTheta = M_PI_F );
 
-// uniformly sample a point on an annulus between radii (minRadius, maxRadius)
-Point2f SamplePointInAnnulus( Util::RandomGenerator& rng, f32 minRadius, f32 maxRadius );
+// uniformly sample a point on an annulus between radii (minRadius, maxRadius). Optionally supply minTheta and maxTheta
+// to only sample points in a semi-annulus where theta is in [minTheta, maxTheta)
+Point2f SamplePointInAnnulus( Util::RandomGenerator& rng,
+                              f32 minRadius, f32 maxRadius,
+                              f32 minTheta = -M_PI_F, f32 maxTheta = M_PI_F );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class RejectIfWouldCrossCliff : public Anki::Util::RejectionSamplingCondition<Point2f>

@@ -61,12 +61,6 @@ private:
     GetOutFailure
   };
 
-  enum class CubeObservationState{
-    Unreliable,
-    ObservedRecently,
-    Confirmed
-  };
-
   struct InstanceConfig {
     InstanceConfig();
     std::unique_ptr<BlockWorldFilter> cubesFilter;
@@ -78,7 +72,6 @@ private:
     DynamicVariables();
     FindCubeState        state;
     ObjectID             cubeID;
-    CubeObservationState cubeState;
     Pose3d               cubePoseAtSearchStart;
     RobotTimeStamp_t     lastPoseCheckTimestamp;
     float                angleSwept_deg;

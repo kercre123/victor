@@ -37,7 +37,7 @@ public:
   // bits which are not as random as the higher bits.
   double RandDbl(double maxVal = 1.0) const;
 
-  // Returns a random floating point number in the range [minVal, maxVal]
+  // Returns a random floating point number in the range [minVal, maxVal)
   double RandDblInRange(double minVal, double maxVal) const;
 
   // Returns a random integer in the range [0,numVals-1]

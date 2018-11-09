@@ -27,6 +27,10 @@
 
 namespace Anki {
   
+  namespace Util {
+    class RandomGenerator;
+  }
+  
   namespace Vector {
   
     class Robot;
@@ -67,6 +71,10 @@ namespace Anki {
       // Returns a quad describing the area in front of the charger
       // that must be clear before the robot can dock with the charger.
       Quad2f GetDockingAreaQuad() const;
+      
+      // Randomly generate some poses from which to observe the charger for the purpose of verifying its position
+      // (e.g. before attempting to dock with it)
+      std::vector<Pose3d> GenerateObservationPoses(Util::RandomGenerator& rng, const size_t nPoses = 10) const;
       
       //
       // Inherited Virtual Methods

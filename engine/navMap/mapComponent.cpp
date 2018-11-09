@@ -174,12 +174,12 @@ decltype(auto) GetChargerRegion(const Pose3d& poseWRTRoot)
   //    (x := marker normal, y := marker horizontal)
   const Vec3f kInteriorChargerOffsetBR = {-12.f, -12.f, 0.f};
   const Vec3f kInteriorChargerOffsetBL = {-12.f,  12.f, 0.f};
-  const Vec3f kInteriorChargerOffsetFL = { 26.f,  12.f, 0.f};
-  const Vec3f kInteriorChargerOffsetFR = { 26.f, -12.f, 0.f};
+  const Vec3f kInteriorChargerOffsetFL = {  5.f,  12.f, 0.f};
+  const Vec3f kInteriorChargerOffsetFR = {  5.f, -12.f, 0.f};
   const Vec3f kExteriorChargerOffsetBR = {  0.f,   0.f, 0.f};
   const Vec3f kExteriorChargerOffsetBL = {  0.f,   0.f, 0.f};
-  const Vec3f kExteriorChargerOffsetFL = { 26.f,   0.f, 0.f};
-  const Vec3f kExteriorChargerOffsetFR = { 26.f,   0.f, 0.f};
+  const Vec3f kExteriorChargerOffsetFL = {  5.f,   0.f, 0.f};
+  const Vec3f kExteriorChargerOffsetFR = {  5.f,   0.f, 0.f};
 
   const std::vector<Point3f>& corners = Charger().GetCanonicalCorners();
   const Point2f exteriorBL = poseWRTRoot * (corners[0] + kExteriorChargerOffsetBL);

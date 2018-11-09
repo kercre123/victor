@@ -105,6 +105,7 @@ private:
   
   void TransitionToCheckDockingArea();
   void TransitionToPlacingCubeOnGround();
+  void TransitionToObserveCharger();
   void TransitionToDriveToCharger();
   void TransitionToCheckPreTurnPosition();
   void TransitionToTurn();

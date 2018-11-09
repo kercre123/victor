@@ -68,6 +68,11 @@ namespace {
   // with the GoHome behavior, since we may be stuck in a loop.
   const float kRepeatedActivationCheckWindow_sec = 60.f;
   const size_t kNumRepeatedActivationsAllowed = 3;
+  
+  // If we are too far from the charger at the beginning of the behavior, or we have not observed the charger in a
+  // while, then first try to drive to a pose from which to verify the charger's location before trying to dock to it.
+  const float kFarFromChargerThreshold_mm = 200.f;
+  const TimeStamp_t kRecentlyObservedChargerThreshold_ms = 30*1000;
 }
 
 
@@ -223,21 +228,8 @@ void BehaviorGoHome::OnBehaviorActivated()
   // causing the robot to fail to plan a path to the charger (VIC-2978)
   GetBEI().GetMapComponent().RemoveAllProxObstacles();
   
-  // First turn toward the charger. This will hopefully update its pose
-  // to be more accurate before interacting with it.
-  auto* turnToAction = new TurnTowardsObjectAction(_dVars.chargerID);
-  DelegateIfInControl(turnToAction,
-                      [this]() {
-                        // We don't care if the turn action failed or not, just
-                        // continue with the behavior. Check if we're carrying
-                        // an object and put it down next to the charger if so
-                        const auto& robotInfo = GetBEI().GetRobotInfo();
-                        if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
-                          TransitionToPlacingCubeOnGround();
-                        } else {
-                          TransitionToCheckDockingArea();
-                        }
-                      });
+  // First, re-observe the charger to confirm its location
+  TransitionToObserveCharger();
 }
 
 
@@ -252,6 +244,48 @@ void BehaviorGoHome::OnBehaviorDeactivated()
     DASMSG_SET(i1, _dVars.HasSucceeded(), "Success or failure to get onto the charger (1 for success, 0 for failure)");
     DASMSG_SEND();
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorGoHome::TransitionToObserveCharger()
+{
+  LOG_FUNCTION_NAME();
+  
+  // First turn toward the charger. This will hopefully update its pose to be more accurate before interacting with it.
+  auto* turnToAction = new TurnTowardsObjectAction(_dVars.chargerID);
+  DelegateIfInControl(turnToAction, [this](){
+    // If we have not observed the charger recently or we are too far away, then drive to a pose from which to try and
+    // observe the charger and confirm its pose.
+    const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID,
+                                                                                                     ObjectFamily::Charger));
+    if (charger == nullptr) {
+      PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Null charger!");
+      return;
+    }
+    const auto& robotInfo = GetBEI().GetRobotInfo();
+    
+    auto afterObservationCallback = [&, this]() {
+      if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
+        TransitionToPlacingCubeOnGround();
+      } else {
+        TransitionToCheckDockingArea();
+      }
+    };
+    
+    const auto& robotPose = robotInfo.GetPose();
+    const bool farFromCharger = ComputeDistanceBetween(charger->GetPose(), robotPose) > kFarFromChargerThreshold_mm;
+    const bool observedRecently = robotInfo.GetLastMsgTimestamp() - charger->GetLastObservedTime() < kRecentlyObservedChargerThreshold_ms;
+    if (farFromCharger || !observedRecently) {
+      const bool forceHeadDown = false;
+      auto* action = new CompoundActionSequential();
+      action->AddAction(new DriveToPoseAction(charger->GenerateObservationPoses(GetRNG()), forceHeadDown));
+      action->AddAction(new VisuallyVerifyObjectAction(charger->GetID()));
+      DelegateIfInControl(action, afterObservationCallback);
+    } else {
+      afterObservationCallback();
+    }
+  });
 }
 
 
@@ -374,7 +408,8 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                       });
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToCheckPreTurnPosition()
 {
   LOG_FUNCTION_NAME();

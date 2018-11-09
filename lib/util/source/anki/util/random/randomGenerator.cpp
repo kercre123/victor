@@ -52,7 +52,7 @@ double RandomGenerator::RandDbl(double maxVal) const
 }
 
 
-// Returns a random floating point number in the range [minVal, maxVal]
+// Returns a random floating point number in the range [minVal, maxVal)
 double RandomGenerator::RandDblInRange(double minVal, double maxVal) const
 {
   return RandDbl(maxVal-minVal) + minVal;

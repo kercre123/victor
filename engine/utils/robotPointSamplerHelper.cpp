@@ -34,12 +34,14 @@ namespace RobotPointSamplerHelper {
 using RandomGenerator = Util::RandomGenerator;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Point2f SamplePointInCircle( Util::RandomGenerator& rng, f32 radius )
+Point2f SamplePointInCircle( Util::RandomGenerator& rng, f32 radius , f32 minTheta, f32 maxTheta )
 {
   // (there's another way to do this without the sqrt, but it requires three
   // uniform r.v.'s, and some quick tests show that that ends up being slower)
+  DEV_ASSERT((radius > 0.f) && (minTheta < maxTheta) && (minTheta + M_TWO_PI_F >= maxTheta),
+             "RobotPointSamplerHelper.SamplePointInCircle.InvalidArgs");
   Point2f ret;
-  const float theta = M_TWO_PI_F * static_cast<float>( rng.RandDbl() );
+  const float theta = static_cast<float>( rng.RandDblInRange(minTheta, maxTheta) );
   const float u = static_cast<float>( rng.RandDbl() );
   const float r = radius * std::sqrtf( u );
   ret.x() = r * cosf(theta);
@@ -48,11 +50,13 @@ Point2f SamplePointInCircle( Util::RandomGenerator& rng, f32 radius )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Point2f SamplePointInAnnulus( Util::RandomGenerator& rng, f32 minRadius, f32 maxRadius )
+Point2f SamplePointInAnnulus( Util::RandomGenerator& rng, f32 minRadius, f32 maxRadius , f32 minTheta, f32 maxTheta)
 {
+  DEV_ASSERT((minRadius >= 0.f) && (minRadius < maxRadius) && (minTheta < maxTheta) && (minTheta + M_TWO_PI_F >= maxTheta),
+             "RobotPointSamplerHelper.SamplePointInAnnulus.InvalidArgs");
   Point2f ret;
   const f32 minRadiusSq = minRadius * minRadius;
-  const float theta = M_TWO_PI_F * static_cast<float>( rng.RandDbl() );
+  const float theta = static_cast<float>( rng.RandDblInRange(minTheta, maxTheta) );
   const float u = static_cast<float>( rng.RandDbl() );
   const float r = std::sqrtf( minRadiusSq + (maxRadius*maxRadius - minRadiusSq)*u );
   ret.x() = r * cosf(theta);

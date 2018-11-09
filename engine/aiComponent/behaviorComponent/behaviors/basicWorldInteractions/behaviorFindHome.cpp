@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/navMap/mapComponent.h"
@@ -406,12 +407,10 @@ void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
   // If we have a charger in the map, first try to drive to a position in front of it to
   // begin a search. Only do this if we haven't recently visited the charger's location.
   const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const auto* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
+  const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter));
   if ((charger != nullptr) &&
       (now_sec > _dVars.persistent.lastVisitedOldChargerTime + _iConfig.recentSearchWindow_sec)) {
-    Pose3d inFrontOfCharger(0.f, Z_AXIS_3D(), {-150.f,0.f,0.f});
-    inFrontOfCharger.SetParent(charger->GetPose());
-    outPoses.push_back(std::move(inFrontOfCharger));
+    outPoses = charger->GenerateObservationPoses(GetRNG());
     _dVars.persistent.lastVisitedOldChargerTime = now_sec;
     return;
   }
