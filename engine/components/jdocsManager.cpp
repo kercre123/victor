@@ -17,6 +17,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/messaging/shared/socketConstants.h"
+#include "engine/ankiEventUtil.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/robot.h"
@@ -26,6 +27,7 @@
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 #define LOG_CHANNEL "JdocsManager"
 
@@ -63,7 +65,6 @@ namespace
   static const std::string kCloudJdocResetRequestFile = "cloudjdocreset.txt";
 
   static const std::string kNotLoggedIn = "NotLoggedIn";
-  static const float kUserLoginCheckPeriod_s = 3.0f;
 
   JdocsManager* s_JdocsManager = nullptr;
 
@@ -98,7 +99,7 @@ namespace
 
   void DebugCheckForUser(ConsoleFunctionContextRef context)
   {
-    s_JdocsManager->DebugCheckForUser();
+    s_JdocsManager->CheckForUserLoggedIn();
   }
   CONSOLE_FUNC(DebugCheckForUser, kConsoleGroup);
 
@@ -154,6 +155,10 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 {
   _robot = robot;
   s_JdocsManager = this;
+
+  using namespace ExternalInterface;
+  auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::UserLoggedIn>();
 
   _platform = robot->GetContextDataPlatform();
   DEV_ASSERT(_platform != nullptr, "JdocsManager.InitDependent.DataPlatformIsNull");
@@ -328,14 +333,26 @@ void JdocsManager::DebugFakeUserLogOut()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::DebugCheckForUser()
+void JdocsManager::CheckForUserLoggedIn()
 {
-  LOG_INFO("JdocsManager.DebugCheckForUser", "Re-requesting user id from vic-cloud");
-  _userID = emptyString;  // Reset user ID so we can make the request again
-
-  // Now queue up a request to the jdocs server (vic-cloud) for the userID
-  const auto userReq = JDocs::DocRequest::Createuser(Void{});
-  SendJdocsRequest(userReq);
+  if (_userID == kNotLoggedIn)
+  {
+    // A prior check for userID has failed
+    LOG_INFO("JdocsManager.CheckForUserLoggedIn", "Requesting user id from vic-cloud");
+    _userID = emptyString;  // Reset user ID so we can make the request again
+    // Now queue up a request to the jdocs server (vic-cloud) for the userID
+    const auto userReq = JDocs::DocRequest::Createuser(Void{});
+    SendJdocsRequest(userReq);
+  }
+  else if (_userID.empty())
+  {
+    // At this point we're either early on in startup and haven't got the userID, or there is a pending userID request
+    LOG_INFO("JdocsManager.CheckForUserLoggedIn", "Ignoring request because a userID request is already pending");
+  }
+  else
+  {
+    LOG_INFO("JdocsManager.CheckForUserLoggedIn", "User is already logged in with userID %s", _userID.c_str());
+  }
 }
 
 
@@ -403,6 +420,15 @@ void JdocsManager::RegisterShutdownCallback(const external_interface::JdocType j
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void JdocsManager::HandleMessage(const ExternalInterface::UserLoggedIn& msg)
+{
+  LOG_INFO("JdocsManager.HandleMessage.UserLoggedIn", "Received UserLoggedIn signal from vic-gateway");
+  CheckForUserLoggedIn();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
   _currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -437,13 +463,7 @@ void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   if (_udpClient.IsConnected())
   {
-    if (_userID == kNotLoggedIn && _currTime_s > _nextUserLoginCheckTime_s)
-    {
-      _userID = emptyString;  // Reset user ID so we can make the request again
-      const auto userReq = JDocs::DocRequest::Createuser(Void{});
-      SendJdocsRequest(userReq);
-    }
-    else if (!_userID.empty() && _gotLatestCloudJdocsAtStartup)
+    if (!_userID.empty() && _gotLatestCloudJdocsAtStartup)
     {
       UpdatePeriodicCloudSaves();
     }
@@ -1448,11 +1468,10 @@ void JdocsManager::HandleErrResponse(const JDocs::DocRequest& docRequest, const 
     case JDocs::DocRequestTag::thing:
     {
       // This is generally not simply 'user not logged in', because if that's the case, we get a UserResponse
-      // (with an empty string for user ID), and we handle that in HandleUserResponse.  But in case we do get
-      // this error response message, just keep polling for user log-in.  We handle 'thing id' requests that
-      // get this error response in the same way
+      // with an empty string for user ID, and we handle that in HandleUserResponse.  But in case we do get
+      // this error response message, just mark us as not logged in and wait for the new 'UserLoggedIn'
+      // message.  We handle 'thing id' requests that get this error response in the same way.
       _userID = kNotLoggedIn;
-      _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
     }
     break;
 
@@ -1468,9 +1487,8 @@ void JdocsManager::HandleUserResponse(const JDocs::UserResponse& userResponse)
   _userID = userResponse.userId;
   if (_userID.empty())
   {
-    LOG_ERROR("JdocsManager.HandleUserResponse.Error", "Received user response from jdocs server, but ID is empty (not logged in?)");
+    LOG_ERROR("JdocsManager.HandleUserResponse.Error", "Received user response from jdocs server, but ID is empty (not logged in)");
     _userID = kNotLoggedIn;
-    _nextUserLoginCheckTime_s = _currTime_s + kUserLoginCheckPeriod_s;
     return;
   }
 

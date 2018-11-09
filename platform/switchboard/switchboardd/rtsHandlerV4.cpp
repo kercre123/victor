@@ -16,6 +16,7 @@
 #include "switchboardd/rtsHandlerV4.h"
 #include "util/logging/DAS.h"
 #include "engine/clad/gateway/switchboard.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include <sstream>
 #include <cutils/properties.h>
 
@@ -475,6 +476,12 @@ void RtsHandlerV4::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenE
       }
       _hasCloudAuthed = true;
       _hasOwner = true;
+      if (_engineClient != nullptr) {
+        // Send message to engine to notify we are logged in
+        Log::Write("Sending UserLoggedIn message to engine");
+        const auto msg = Anki::Vector::ExternalInterface::MessageGameToEngine::CreateUserLoggedIn({});
+        _engineClient->SendMessage(msg);
+      }
       break;
     case Anki::Vector::TokenError::InvalidToken:
       Log::Error("CloudAuth - vic-cloud received invalid token.");

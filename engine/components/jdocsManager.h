@@ -22,6 +22,8 @@
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/signalHolder.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include "proto/external_interface/settings.pb.h"
 
@@ -29,6 +31,7 @@
 
 #include <map>
 #include <queue>
+#include <list>
 
 namespace Anki {
 namespace Vector {
@@ -78,9 +81,10 @@ public:
 
   bool SendJdocsRequest(const JDocs::DocRequest& docRequest);
 
+  void CheckForUserLoggedIn();
+
   // For testing and development:
   void DebugFakeUserLogOut();
-  void DebugCheckForUser();
   void DeleteJdocInCloud(const external_interface::JdocType jdocTypeKey);
 
   using OverwriteNotificationCallback = std::function<void(void)>;
@@ -94,6 +98,10 @@ public:
   using ShutdownCallback = std::function<void(void)>;
   void RegisterShutdownCallback(const external_interface::JdocType jdocTypeKey,
                                 const ShutdownCallback cb);
+
+  // template for events we subscribe to
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 private:
 
@@ -123,12 +131,11 @@ private:
   std::string               _savePath;
   bool                      _cloudJdocResetRequested = false;
   LocalUdpClient            _udpClient;
-  std::string               _userID;
-  std::string               _thingID;
+  std::string               _userID = "";
+  std::string               _thingID = "";
   bool                      _gotLatestCloudJdocsAtStartup = false;
   // We save currTime_s here each tick, because we need it in the destructor, and by then BasetationTimer is gone
   float                     _currTime_s;
-  float                     _nextUserLoginCheckTime_s;
   uint32_t                  _minCloudGetPeriod_s; // Minimum time between 'get latest jdocs from cloud'
 
   struct JdocInfo
@@ -201,6 +208,8 @@ private:
 
   using UnsentDocRequestQueue = std::queue<JDocs::DocRequest>;
   UnsentDocRequestQueue       _unsentDocRequestQueue; // Unsent requests that are waiting for connection
+
+  std::list<Signal::SmartHandle> _eventHandles;
 };
 
 
