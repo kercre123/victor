@@ -1,5 +1,3 @@
-set(SIGNALESSENCE_HOME "${ANKI_EXTERNAL_DIR}/anki-thirdparty/signalEssence")
-
 set(SIGNALESSENCE_EXTRA_INCLUDE_DIR "")
 set(SIGNALESSENCE_LIB_PATH "")
 set(SIGNALESSENCE_PLATFORM_DIR "")
@@ -11,6 +9,16 @@ elseif (MACOSX)
   set(SIGNALESSENCE_PLATFORM_DIR "mac")
   set(SIGNALESSENCE_EXTRA_INCLUDE_DIR "cpu_none")
 endif()
+
+# Signal Essence Lib Version
+option(SE_ECHO_LIB "Use Signal Essence Echo Canceling lib version" OFF)
+set(SIGNALESSENCE_VERSION_PATH "v005") # Current v1.1 release version 
+if (SE_ECHO_LIB)
+  set(SIGNALESSENCE_VERSION_PATH "v008") # Updated prototype version with Echo Cancelation
+  set (SE_ECHO_ENABLED 0)
+endif()
+
+set(SIGNALESSENCE_HOME "${ANKI_EXTERNAL_DIR}/anki-thirdparty/signalEssence/${SIGNALESSENCE_VERSION_PATH}")
 
 set(SIGNALESSENCE_LIB_PATH "${SIGNALESSENCE_HOME}/${SIGNALESSENCE_PLATFORM_DIR}/platform/anki_victor_example/build")
 

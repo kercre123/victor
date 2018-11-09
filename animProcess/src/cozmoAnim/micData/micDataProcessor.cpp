@@ -53,6 +53,12 @@ namespace {
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
   CONSOLE_VAR_RANGED(uint32_t, kMicData_QuietTimeCooldown_ms, CONSOLE_GROUP, 1000, 500, 10000);
+  
+#ifdef SE_ECHO_ENABLED
+  bool kEnableRobotNoiseMicProcLogic = true;
+#else
+  bool kEnableRobotNoiseMicProcLogic = false;
+#endif
 
 #if ANKI_DEV_CHEATS
 
@@ -66,7 +72,6 @@ namespace {
   CONSOLE_VAR_ENUM(uint8_t, kDevForceProcessState, CONSOLE_GROUP, _currentDevForcedProcesState,
                    "NormalOperation,None,NoProcessingSingleMic,SigEsBeamformingOff,SigEsBeamformingOn");
   
-  bool kEnableRobotNoiseMicProcLogic = false;
   std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 
 #endif // ANKI_DEV_CHEATS
@@ -561,13 +566,16 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     _isInLowPowerMode = isLowPowerMode;
   }
 
-#if ANKI_DEV_CHEATS
+  // I'm temporarily adding this to work with our shipping build while we test
+//#if ANKI_DEV_CHEATS
   // NOTE: This logic goes with the statement above ^^^^^^
   else if (kEnableRobotNoiseMicProcLogic && !isLowPowerMode) {
     // Update preferred processing state for robot noise state
     processingState = hasRobotNoise ? ProcessingState::SigEsBeamformingOff : ProcessingState::SigEsBeamformingOn;
     SetPreferredMicDataProcessingState(processingState);
   }
+  
+#if ANKI_DEV_CHEATS
   
   // Allow overriding (for testing) to force enable or disable mic data processing & force processing state
   if (kMicData_ForceEnableMicDataProc)
@@ -890,8 +898,14 @@ void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::Process
       case ProcessingState::SigEsBeamformingOn:
       {
         const bool shouldUseFallbackPolicy = (state == ProcessingState::SigEsBeamformingOff);
-        const int32_t newSetting = shouldUseFallbackPolicy ? 1 : 0;
-        SEDiagSetInt32(_policyFallbackFlag, newSetting);
+        
+#ifdef SE_ECHO_ENABLED
+        const FallbackFlag_t policySetting = shouldUseFallbackPolicy ? FBF_FORCE_ECHO_CANCEL : FBF_AUTO_SELECT;
+        SEDiagSetEnumAsInt(_policyFallbackFlag, policySetting);
+#else
+        const int32_t policySetting = shouldUseFallbackPolicy ? 1 : 0;
+        SEDiagSetInt32(_policyFallbackFlag, policySetting);
+#endif
         break;
       }
     }
