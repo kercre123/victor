@@ -102,12 +102,17 @@ void BehaviorReactToPutDown::TransitionToHeadCalibration()
 void BehaviorReactToPutDown::TransitionToPlayingWaitAnimation()
 {
   DEBUG_SET_STATE(Waiting);
- 
-  // Play the waiting animation.
-  if (ANKI_VERIFY(_iConfig.waitInternalBehavior->WantsToBeActivated(),
-                  "BehaviorReactToPutDown.TransitionToPlayingWaitAnimation.WaitDoesNotWantToBeActivated", "")) {
-    DelegateIfInControl(_iConfig.waitInternalBehavior.get());
-  }
+
+  // first move the head back up (since it just calibrated)
+  DelegateIfInControl(
+    new TriggerAnimationAction(AnimationTrigger::ObservingLookUp),
+    [this]() {
+      // Now the waiting animation behavior.
+      if (ANKI_VERIFY(_iConfig.waitInternalBehavior->WantsToBeActivated(),
+                      "BehaviorReactToPutDown.TransitionToPlayingWaitAnimation.WaitDoesNotWantToBeActivated", "")) {
+        DelegateIfInControl(_iConfig.waitInternalBehavior.get());
+      }
+    });
 }
 
 }
