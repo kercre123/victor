@@ -613,6 +613,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Vo__Temp_Fist_Bump = 1376298574,
   Play__Robot_Vic__External_Alexa_Playback_Alerts = 4194581029,
   Play__Robot_Vic__External_Alexa_Playback_Media = 365203236,
+  Play__Robot_Vic__External_Alexa_Playback_Notifications = 1124200756,
   Play__Robot_Vic__External_Alexa_Playback_Voice = 3957605846,
   Play__Robot_Vic__External_Voice_Message = 3168753800,
   Play__Robot_Vic__External_Voice_Text = 2774572774,
@@ -658,6 +659,7 @@ enum uint_32 Robot_Vic
 {
   External_Alexa_Playback_Alerts = 4194581029,
   External_Alexa_Playback_Media = 365203236,
+  External_Alexa_Playback_Notifications = 1124200756,
   External_Alexa_Playback_Voice = 3957605846,
   External_Voice_Message = 3168753800,
   External_Voice_Text = 2774572774,

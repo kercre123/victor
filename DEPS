@@ -10,8 +10,8 @@
                 "package_name": "protocCppPlugin",
                 "version": "3"
             },
-	    "avs-device-sdk": {
-		"build_type_id": "anki",
+            "avs-device-sdk": {
+                "build_type_id": "anki",
                 "checksums": {
                     "sha256": "aef6286afa9ced65b16a374fe11163d940eea90541ccd42777a7d4e36e6ce29a"
                 },
@@ -66,7 +66,7 @@
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "116"
+                "version": "117"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
