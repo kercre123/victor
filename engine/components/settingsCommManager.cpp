@@ -485,8 +485,12 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
     {
       updateSettingsJdoc = true;
       saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::master_volume);
-      // read the new volume setting, for the DAS event
+      // read the new volume setting, for the DAS event and reactor callbacks
       const uint32_t newVol = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+      // notify reactors
+      for(auto vcr : _volumeChangeReactors) {
+        vcr.callback(newVol);
+      }
       DASMSG(robot_settings_volume, "robot.settings.volume", "The robot's volume setting was changed");
       DASMSG_SET(i1, oldVol, "Old volume");
       DASMSG_SET(i2, newVol, "New volume");
@@ -629,6 +633,45 @@ void SettingsCommManager::OnRequestCheckCloud(const external_interface::CheckClo
   //    actual cloud -> cloud -> anim -> engine -> gateway -> app
   // See "reportCloudConnectivity" in this file
   _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CheckCloudConnectivity{}));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SettingsReactorId SettingsCommManager::RegisterVolumeChangeReactor(OnVolumeChangedCallback callback)
+{
+  static SettingsReactorId sLastId = 0;
+
+  // get the next good id
+  ++sLastId;
+  // we'll have a problem if we register 4294967295 listeners without unregistering any
+  // (we could avoid the find if we weren't worried about the possibility of duplicate ids,
+  // which will only happen if we roll over 4294967295 listeners)
+  while ( std::find_if( _volumeChangeReactors.begin(), _volumeChangeReactors.end(),
+                        [](auto sr) {return sr.id == sLastId;} )
+          != _volumeChangeReactors.end() ) {
+    ++sLastId;
+  }
+  // sLastId is now a good id to use
+  _volumeChangeReactors.push_back( { sLastId, callback } );
+  return sLastId;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SettingsCommManager::UnRegisterVolumeChangeReactor(SettingsReactorId id)
+{
+  for (size_t index = _volumeChangeReactors.size(); index > 0;)
+  {
+    --index;
+    if (id == _volumeChangeReactors[index].id) {
+      _volumeChangeReactors[index] = _volumeChangeReactors.back();
+      _volumeChangeReactors.pop_back();
+
+      return;
+    }
+  }
+
+  LOG_WARNING("SettingsCommManager.UnRegisterVolumeChangeReactor", "No VolumeChangeReactor found with id %d", (int)id);
 }
 
 

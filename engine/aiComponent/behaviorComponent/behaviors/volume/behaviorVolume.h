@@ -49,12 +49,26 @@ protected:
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
 
 private:
+
+  struct DynamicVariables {
+    DynamicVariables();
+    float lastVolumeChangeNotification_s;
+    uint32_t volumeChangeReactorId;
+  };
+
   bool SetVolume(EVolumeLevel desiredVolume);
   EVolumeLevel ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData, bool& valid);
   EVolumeLevel ComputeDesiredVolumeFromIncrement(bool positiveIncrement);
+  void OnVolumeChange(uint32_t newVolume);
+  bool ExternalNotificationPending() const;
+
+  DynamicVariables _dVars;
 };
 
 } // namespace Vector

@@ -42,10 +42,20 @@ namespace external_interface {
   class UpdateSettingsRequest;
 }
 
+// callback signature for being notified of a volume change
+using OnVolumeChangedCallback = std::function<void(uint32_t)>;
+using SettingsReactorId = uint32_t;
+
 class SettingsCommManager : public IDependencyManagedComponent<RobotComponentID>,
                             private Anki::Util::noncopyable
 {
 public:
+  struct VolumeChangeReactorHandle
+  {
+    SettingsReactorId id;
+    OnVolumeChangedCallback callback;
+  };
+
   SettingsCommManager();
 
   //////
@@ -81,6 +91,13 @@ public:
 
   void RefreshConsoleVars();
 
+  // for volume change notifications
+  // we do notifications from settingsCommManager and not settingsManager because we're interested in being
+  // notified of volume changes coming in from the app and other sources that use that interface,
+  // not voice commands which (through behaviorVolume) go directly to settingsManager
+  SettingsReactorId RegisterVolumeChangeReactor(OnVolumeChangedCallback callback);
+  void UnRegisterVolumeChangeReactor(SettingsReactorId id);
+
 private:
 
   void HandleEvents                   (const AnkiEvent<external_interface::GatewayWrapper>& event);
@@ -98,6 +115,9 @@ private:
   IGatewayInterface*       _gatewayInterface = nullptr;
 
   std::vector<Signal::SmartHandle> _signalHandles;
+
+  std::vector<VolumeChangeReactorHandle> _volumeChangeReactors;
+
 };
 
 

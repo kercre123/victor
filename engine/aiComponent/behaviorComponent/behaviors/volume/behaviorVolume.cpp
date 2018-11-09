@@ -13,9 +13,11 @@
 
 #include "behaviorVolume.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/components/settingsCommManager.h"
 #include "engine/components/settingsManager.h"
 #include "engine/robot.h"
 #include "proto/external_interface/settings.pb.h"
@@ -54,7 +56,14 @@ namespace {
                                                                     {EVolumeLevel::MED, AnimationTrigger::VolumeLevel3},
                                                                     {EVolumeLevel::MEDHIGH, AnimationTrigger::VolumeLevel4},
                                                                     {EVolumeLevel::MAX, AnimationTrigger::VolumeLevel5}};
+  const float kVolumeChangeNotificationAgeLimit_s = 2.0;
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorVolume::DynamicVariables::DynamicVariables()
+  : lastVolumeChangeNotification_s(0.0)
+{}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -77,8 +86,9 @@ bool BehaviorVolume::WantsToBeActivatedBehavior() const
   const bool volumeLevelPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumelevel));
   const bool volumeUpPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumeup));
   const bool volumeDownPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumedown));
+  const bool externalNotificationPending = ExternalNotificationPending();
   
-  return volumeLevelPending || volumeUpPending || volumeDownPending;
+  return volumeLevelPending || volumeUpPending || volumeDownPending || externalNotificationPending;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,54 +117,97 @@ void BehaviorVolume::OnBehaviorActivated()
   // to get the identity of the pending intent I basically have to do this check again
   UserIntentPtr intentData = nullptr;
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  EVolumeLevel desiredVolume;
-  if(uic.IsUserIntentPending(USER_INTENT(imperative_volumelevel))){
-    intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumelevel));
-    bool valid = false;
-    desiredVolume = ComputeDesiredVolumeFromLevelIntent(intentData, valid);
-    // if it's invalid, don't set the volume or do the animation
-    if (!valid){
+  SettingsManager& settings = GetBEI().GetSettingsManager();
+  EVolumeLevel newVolumeLevel;
+
+  if (ExternalNotificationPending()) {
+    // a little quirk: we don't use the volume from the volume change notification.
+    // instead, we read it again from settings, to get the most up to date volume
+    // (one less piece of state to keep around in a potentially invalid state...)
+    const uint32_t newVol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+    newVolumeLevel = static_cast<EVolumeLevel>(newVol);
+  } else {
+    EVolumeLevel desiredVolume;
+    if (uic.IsUserIntentPending(USER_INTENT(imperative_volumelevel))) {
+      intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumelevel));
+      bool valid = false;
+      desiredVolume = ComputeDesiredVolumeFromLevelIntent(intentData, valid);
+      // if it's invalid, don't set the volume or do the animation
+      if (!valid) {
+        return;
+      }
+    } else if (uic.IsUserIntentPending(USER_INTENT(imperative_volumeup))) {
+      intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumeup));
+      desiredVolume = ComputeDesiredVolumeFromIncrement(true); // increment
+    } else if (uic.IsUserIntentPending(USER_INTENT(imperative_volumedown))) {
+      intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumedown));
+      desiredVolume = ComputeDesiredVolumeFromIncrement(false); // decrement
+    } else {
+      LOG_WARNING("BehaviorVolume.OnBehaviorActivated.NoRecognizedPendingIntent",
+                  "No recognized pending intent for volume. (Or maybe an external notification expired.)");
       return;
     }
-  } else if(uic.IsUserIntentPending(USER_INTENT(imperative_volumeup))){
-    intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumeup));
-    desiredVolume = ComputeDesiredVolumeFromIncrement(true); // increment
-  } else if(uic.IsUserIntentPending(USER_INTENT(imperative_volumedown))){
-    intentData = SmartActivateUserIntent(USER_INTENT(imperative_volumedown));
-    desiredVolume = ComputeDesiredVolumeFromIncrement(false); // decrement
-  } else {
-    LOG_WARNING("BehaviorVolume.OnBehaviorActivated.NoRecognizedPendingIntent",
-                "No recognized pending intent for volume.");
-    return;
-  }
 
-  SettingsManager& settings = GetBEI().GetSettingsManager();
-  const uint32_t oldVol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
-  if (static_cast<uint32_t>(desiredVolume) != oldVol){
-    // set desired volume
-    SetVolume(desiredVolume);
-  }
-  const uint32_t newVol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
-  // issue DAS event
-  DASMSG(robot_settings_volume, "robot.settings.volume", "The robot's volume setting was changed");
-  DASMSG_SET(i1, oldVol, "Old volume");
-  DASMSG_SET(i2, newVol, "New volume");
-  // NOTE: once we also respond to app changes here, we'll have to be more careful about this source
-  DASMSG_SET(s1, "voice", "Source of the change (app, voice, or SDK)");
-  DASMSG_SEND();
+    const uint32_t oldVol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+    if (static_cast<uint32_t>(desiredVolume) != oldVol){
+      // set desired volume
+      SetVolume(desiredVolume);
+    }
+    const uint32_t newVol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+    newVolumeLevel = static_cast<EVolumeLevel>(newVol);
+    if (newVolumeLevel != desiredVolume) {
+      LOG_WARNING("BehaviorVolume.OnBehavrioActivated.setFailed",
+                  "New volume level %u does not match desired volume level %u", newVolumeLevel, desiredVolume);
+    }
+    // issue DAS event
+    DASMSG(robot_settings_volume, "robot.settings.volume", "The robot's volume setting was changed");
+    DASMSG_SET(i1, oldVol, "Old volume");
+    DASMSG_SET(i2, newVol, "New volume");
+    // NOTE: once we also respond to app changes here, we'll have to be more careful about this source
+    DASMSG_SET(s1, "voice", "Source of the change (app, voice, or SDK)");
+    DASMSG_SEND();
+  } // close else (externalVolumeChangeNotificationPending)
 
   // delegate to play an animation (sequence)
-  const auto it = kVolumeLevelAnimMap.find(desiredVolume);
+  const auto it = kVolumeLevelAnimMap.find(newVolumeLevel);
   if(it == kVolumeLevelAnimMap.end()){
     // we don't have an anim designated for this volume level (probably because it's MUTE)
     LOG_WARNING("BehaviorVolume.OnBehaviorActivated.NoAnimForLevel",
-                "No animation mapped for volume level %u", desiredVolume);
+                "No animation mapped for volume level %u", newVolumeLevel);
     return;
   }
   const AnimationTrigger animTrigger = it->second;
   TriggerLiftSafeAnimationAction* animation = new TriggerLiftSafeAnimationAction(animTrigger);
   DelegateIfInControl(animation);
                      
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVolume::OnBehaviorDeactivated()
+{
+  // clear lastVolumeChangeNotification_s here! that will clear any pending notifications
+  _dVars.lastVolumeChangeNotification_s = 0;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVolume::OnBehaviorEnteredActivatableScope()
+{
+  // register volume change notification callback here
+  SettingsCommManager& settingsCommManager = GetBEI().GetSettingsCommManager(); // TODO: this call doesn't exist yet
+  _dVars.volumeChangeReactorId = settingsCommManager.RegisterVolumeChangeReactor( std::bind( &BehaviorVolume::OnVolumeChange,
+                                                                                             this,
+                                                                                             std::placeholders::_1) );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVolume::OnBehaviorLeftActivatableScope()
+{
+  // unregister volume change notification callback here
+  SettingsCommManager& settingsCommManager = GetBEI().GetSettingsCommManager(); // TODO: this call doesn't exist yet
+  settingsCommManager.UnRegisterVolumeChangeReactor(_dVars.volumeChangeReactorId);
 }
 
 
@@ -235,7 +288,10 @@ EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromLevelIntent(UserIntentPtr i
   return desiredVol;
 }
 
-EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromIncrement(bool positiveIncrement) {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromIncrement(bool positiveIncrement)
+{
   // read volume from settings
   SettingsManager& settings = GetBEI().GetSettingsManager();
   uint32_t vol = settings.GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
@@ -269,6 +325,20 @@ EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromIncrement(bool positiveIncr
   return desiredVolume;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVolume::OnVolumeChange(uint32_t newVolume)
+{
+  _dVars.lastVolumeChangeNotification_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorVolume::ExternalNotificationPending() const
+{
+  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  return ( _dVars.lastVolumeChangeNotification_s + kVolumeChangeNotificationAgeLimit_s ) > currentTime_s;
+}
 
 }
 }
