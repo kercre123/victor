@@ -186,7 +186,8 @@ void populate_boot_body_data(const struct SpineMessageHeader* hdr)
     //extract button data from stub packet and put in fake full packet
     uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
     BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
-    BootBodyData_.micError = ~BootBodyData_.micError; //prevent stuck bits
+    BootBodyData_.micError[0] = ~BootBodyData_.micError[0]; //prevent stuck bits
+    BootBodyData_.micError[1] = ~BootBodyData_.micError[1];
     bodyData_ = &BootBodyData_;
   }
 }
