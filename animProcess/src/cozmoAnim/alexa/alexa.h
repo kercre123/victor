@@ -6,7 +6,7 @@
  *
  * Description: Wrapper for component that integrates the Alexa Voice Service (AVS) SDK. Alexa is an opt-in
  *              feature, so this class handles communication with the engine to opt in and out, and is
- *              otherwise primarily a pimpl wrapper.
+ *              otherwise a pimpl-style wrapper, although this class does a fair amount since the impl can be deleted
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -27,6 +27,7 @@ namespace Vector {
 class AlexaImpl;
 class AnimContext;
 enum class AlexaAuthState : uint8_t;
+enum class AlexaNetworkErrorType : uint8_t;
 enum class AlexaUXState : uint8_t;
 enum class ScreenName : uint8_t;
 
@@ -62,14 +63,21 @@ protected:
   
 private:
   
-  // decides whether to create/destroy the impl
-  void SetAlexaActive(bool active);
+  // decides whether to create/destroy the impl. If !active, then deleteUserData decides whether user data will be cleared
+  void SetAlexaActive( bool active, bool deleteUserData = false );
   
   // called when SDK auth state changes
   void OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag );
   
-  // called when SDK dialog or media player state changes
+  // called when SDK dialog or media player state changes. Note this will never send Error. The state should
+  // be switch to Error only when OnAlexaNetworkError is called
   void OnAlexaUXStateChanged( AlexaUXState newState );
+  
+  // called when there is a user-facing error. This will set the ux state to Error for some period of time
+  void OnAlexaNetworkError( AlexaNetworkErrorType errorType );
+  
+  // called when SDK requests that we logout
+  void OnLogout();
   
   void CreateImpl();
   void DeleteImpl();
@@ -77,6 +85,11 @@ private:
   
   // sets this class's _authState and messages engine if it changes
   void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );
+  // sets this class's _uxState and messages engine if it changes
+  void SetUXState( AlexaUXState newState );
+  
+  void PlayErrorAudio( AlexaNetworkErrorType errorType );
+  bool IsErrorPlaying() const { return (_timeToEndError_s >= 0.0f); }
   
   // messages engine
   void SendAuthState();
@@ -92,7 +105,7 @@ private:
   void TouchOptInFile() const;
   bool DidAuthenticatePreviously() const;
   void DeleteOptInFile() const;
-  
+  void DeleteUserFolder() const;
   
   std::unique_ptr<AlexaImpl> _impl;
   
@@ -105,10 +118,15 @@ private:
   bool _pendingUXMsgs = false;
   
   AlexaUXState _uxState;
+  AlexaUXState _pendingUXState; // during AlexaUXState::Error, this is pending to be re-assigned to _uxState
   
+  // If non-negative, turn on the wakeword at this time, even if not connected, so we can play error states
+  float _timeEnableWakeWord_s = -1.0f;
+  // If non-negative, this is the time that the AlexaUXState::Error ends, restoring _pendingUXState
+  float _timeToEndError_s = -1.0f;
   
-  // whether a message was received from engine saying to opt in
-  bool _userOptedIn = false;
+  // whether a message was received from engine saying to opt in. this gets reset after auth completes
+  bool _authStartedByUser = false;
   // if during an authentication the state was ever WaitingForCode, this is the most recent code
   std::string _previousCode;
   

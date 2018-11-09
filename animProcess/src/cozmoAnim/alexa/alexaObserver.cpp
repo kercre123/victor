@@ -57,12 +57,20 @@ AlexaObserver::AlexaObserver()
 void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
                           const OnRequestAuthorizationFunc& onRequestAuthorization,
                           const OnAuthStateChangeFunc& onAuthStateChange,
-                          const OnSourcePlaybackChange& onSourcePlaybackChange )
+                          const OnSourcePlaybackChange& onSourcePlaybackChange,
+                          const OnInternetConnectionChanged& onInternetConnectionChanged,
+                          const OnAVSConnectionChanged& onAVSConnectionChanged,
+                          const OnSendCompleted& onSendCompleted,
+                          const OnLogout& onLogout )
 {
   _onDialogUXStateChanged = onDialogUXStateChanged;
   _onRequestAuthorization = onRequestAuthorization;
   _onAuthStateChange = onAuthStateChange;
   _onSourcePlaybackChange = onSourcePlaybackChange;
+  _onInternetConnectionChanged = onInternetConnectionChanged;
+  _onAVSConnectionChanged = onAVSConnectionChanged;
+  _onSendCompleted = onSendCompleted;
+  _onLogout = onLogout;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,9 +115,14 @@ void AlexaObserver::onDialogUXStateChanged( DialogUXState state )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaObserver::onConnectionStatusChanged( const Status status, const ChangedReason reason )
+void AlexaObserver::onConnectionStatusChanged( const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status status,
+                                               const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason )
 {
-  auto func = [this, status]() {
+  auto func = [this, status, reason]() {
+    if( _onAVSConnectionChanged != nullptr ) {
+      _onAVSConnectionChanged( status, reason );
+    }
+    
     if (_connectionStatus == status) {
       return;
     }
@@ -218,6 +231,8 @@ void AlexaObserver::onCapabilitiesStateChange( CapabilitiesObserverInterface::St
                                              CapabilitiesObserverInterface::Error newError)
 {
   auto func = [this, newState, newError]() {
+    // TODO (VIC-11517): downgrade. for now this is useful in webots
+    LOG_WARNING("AlexaObserver.onCapabilitiesStateChange", "capabilityiesStateChange: newState=%d, newError=%d", (int)newState, (int)newError);
     if ((_capabilitiesState != newState) && (_capabilitiesError != newError)) {
       _capabilitiesState = newState;
       _capabilitiesError = newError;
@@ -277,6 +292,45 @@ void AlexaObserver::onPlaybackError( SourceId id,
   };
   AddToQueue( std::move(func) );
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onConnectionStatusChanged(bool connected)
+{
+  auto func = [this,connected]() {
+    if( _onInternetConnectionChanged != nullptr ) {
+      _onInternetConnectionChanged( connected );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onLogout()
+{
+  auto func = [this]() {
+    if( _onLogout != nullptr ) {
+      _onLogout();
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onSendCompleted( avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status )
+{
+  auto func = [this,status]() {
+    if( _onSendCompleted != nullptr ) {
+      _onSendCompleted( status );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onExceptionReceived( const std::string& exceptionMessage )
+{
+  LOG_WARNING( "AlexaObserver.onExceptionReceived", "SDK exception: %s", exceptionMessage.c_str() );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaObserver::PrintState()
@@ -292,6 +346,9 @@ void AlexaObserver::PrintState()
         return;
       case DialogUXState::LISTENING:
         CONSOLE_LOG("Listening...");
+        return;
+      case DialogUXState::EXPECTING:
+        CONSOLE_LOG("Expecting...");
         return;
       case DialogUXState::THINKING:
         CONSOLE_LOG("Thinking...");

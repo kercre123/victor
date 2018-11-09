@@ -66,7 +66,6 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
   , _context(std::make_unique<AnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
-  , _backpackLightComponent(std::make_unique<BackpackLightComponent>(_context.get()))
 {
 #if ANKI_CPU_PROFILER_ENABLED
   // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
@@ -126,7 +125,7 @@ Result AnimEngine::Init()
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init(_ttsComponent.get());
-  _backpackLightComponent->Init();
+  _context->GetBackpackLightComponent()->Init();
 
   // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
@@ -181,7 +180,6 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   DEV_ASSERT(_ttsComponent, "AnimEngine.Update.InvalidTTSComponent");
   DEV_ASSERT(_animationStreamer, "AnimEngine.Update.InvalidAnimationStreamer");
   DEV_ASSERT(_streamingAnimationModifier, "AnimEngine.Update.InvalidStreamingAnimationModifier");
-  DEV_ASSERT(_backpackLightComponent, "AnimEngine.Update.InvalidBackpackLightComponent");
 
 #if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
   {
@@ -250,7 +248,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   }
 
   // Update backpack lights
-  _backpackLightComponent->Update();
+  _context->GetBackpackLightComponent()->Update();
 
 #if ENABLE_RUN_TIME_DIAGNOSTICS
   {

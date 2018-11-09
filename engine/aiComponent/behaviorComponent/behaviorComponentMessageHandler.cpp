@@ -161,7 +161,7 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
     // when leaving debug screens.
     auto debugScreenModeHandler = [this, &bContainer, &bsm, &behaviorsBootLoader, &uic](const RobotToEngineEvent& event) {
       const auto& msg = event.GetData().Get_debugScreenMode();
-      LOG_DEBUG("BehaviorComponentMessageHandler.DebugScreenModeChange", "isDebug=%d isAlexa=%d", msg.isDebug, msg.isAlexa);
+      LOG_DEBUG("BehaviorComponentMessageHandler.DebugScreenModeChange", "isDebug=%d needsWait=%d", msg.isDebug, msg.needsWait);
       if (!msg.isDebug) {
         // We only care if the debug screen is disabled.
         // We don't use this same message (with enabled == true) for going into the wait behavior
@@ -169,7 +169,7 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
         // engine _after_ the anim process has already played a face animation for the
         // pairing screen.
         OnExitInfoFace(bsm, behaviorsBootLoader, uic);
-      } else if (msg.isAlexa) {
+      } else if (msg.needsWait) {
         // If the face is an Alexa face, enter the Wait behavior
         OnEnterInfoFace( bContainer, bsm );
       }

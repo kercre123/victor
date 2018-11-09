@@ -13,16 +13,22 @@ enum int_32 AnimationTrigger
 
   // Animation triggers, sorted alphabetically
   
+  AlexaErrorLoop,
+  AlexaError2Idle,
+  AlexaIdle2Error,
   AlexaIdle2Listen,
   AlexaIdle2Speak,
+  AlexaListenLoop,
+  AlexaListen2Error,
   AlexaListen2Idle,
   AlexaListen2Speak,
   AlexaListen2Think,
-  AlexaListenLoop,
   AlexaSpeakLoop,
+  AlexaSpeak2Error,
   AlexaSpeak2Idle,
   AlexaSpeak2Listen,
   AlexaThinkLoop,
+  AlexaThink2Error,
   AlexaThink2Idle,
   AlexaThink2Speak,
   

@@ -21,7 +21,7 @@ We don't (and can't!) sync robot settings with alexa settings, so things like ti
 
 This is still in design at the time of writing. 
 
-You can either use the Chewie app to logout, or use the engine console var `ForceAlexaOptOut` under the category `Alexa`, or delete the persistent alexa folder, which is located at `/data/data/com.anki.victor/alexa` on the robot or at `simulator/controllers/webotsCtrlAnim/persistent/alexa` on mac.
+You can either use the Chewie app to logout, or use the engine console var `ForceAlexaOptOut` under the category `Alexa`, or delete the persistent alexa folder, which is located at `/data/data/com.anki.victor/persistent/alexa` on the robot or at `simulator/controllers/webotsCtrlAnim/persistent/alexa` on mac.
 
 
 ### SDK Details

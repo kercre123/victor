@@ -542,10 +542,10 @@ void Process_textToSpeechCancel(const RobotInterface::TextToSpeechCancel& msg)
 void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetConnectionStatus& msg)
 {
   using namespace SwitchboardInterface;
-  auto& bc = _animEngine->GetBackpackLightComponent();
-  bc.SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
-                      msg.status == ConnectionStatus::SHOW_PRE_PIN ||
-                      msg.status == ConnectionStatus::SHOW_PIN));
+  auto* bc = _context->GetBackpackLightComponent();
+  bc->SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
+                       msg.status == ConnectionStatus::SHOW_PRE_PIN ||
+                       msg.status == ConnectionStatus::SHOW_PIN));
 
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
@@ -573,13 +573,13 @@ void Process_setLocale(const RobotInterface::SetLocale& msg)
 
 void Process_batteryStatus(const RobotInterface::BatteryStatus& msg)
 {
-  _animEngine->GetBackpackLightComponent().UpdateBatteryStatus(msg);
+  _context->GetBackpackLightComponent()->UpdateBatteryStatus(msg);
   _context->GetMicDataSystem()->SetBatteryLowStatus(msg.isLow);
 }
 
 void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnimation& msg)
 {
-  _animEngine->GetBackpackLightComponent().SetBackpackAnimation(msg.trigger);
+  _context->GetBackpackLightComponent()->SetBackpackAnimation(msg.trigger);
 }
 
 void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
@@ -626,7 +626,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
     case RobotInterface::EngineToRobot::Tag_setBackpackLights:
     {
       // Intercept the SetBackpackLights message from engine
-      _animEngine->GetBackpackLightComponent().SetBackpackAnimation({msg.setBackpackLights});
+      _context->GetBackpackLightComponent()->SetBackpackAnimation({msg.setBackpackLights});
       break;
     }
 

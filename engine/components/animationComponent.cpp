@@ -66,6 +66,7 @@ AnimationComponent::AnimationComponent()
 , _tagForAlexaListening(GetNextTag())
 , _tagForAlexaThinking(GetNextTag())
 , _tagForAlexaSpeaking(GetNextTag())
+, _tagForAlexaError(GetNextTag())
 , _compositeImageID(0)
 {
 
@@ -770,10 +771,10 @@ AnimationTag AnimationComponent::SetTriggerWordGetInCallback(std::function<void(
   return _tagForTriggerWordGetInCallbacks;
 }
   
-std::array<AnimationTag,3> AnimationComponent::SetAlexaUXResponseCallback(std::function<void(unsigned int)> callback)
+std::array<AnimationTag,4> AnimationComponent::SetAlexaUXResponseCallback(std::function<void(unsigned int)> callback)
 {
   _alexaResponseCallback = callback;
-  const std::array<AnimationTag,3> tags = {{_tagForAlexaListening, _tagForAlexaThinking, _tagForAlexaSpeaking}};
+  const std::array<AnimationTag,4> tags = {{_tagForAlexaListening, _tagForAlexaThinking, _tagForAlexaSpeaking, _tagForAlexaError}};
   return tags;
 }
 
@@ -910,12 +911,10 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
   //       this way UserIntentComponent knows exactly when the trigger word anim starts instead of just assuming
   const bool isTriggerWordGetIn = (payload.tag == _tagForTriggerWordGetInCallbacks);
   // same thing for alexa
-  const bool isAlexaListening = (payload.tag == _tagForAlexaListening);
-  const bool isAlexaThinking = (payload.tag == _tagForAlexaThinking);
-  const bool isAlexaSpeaking = (payload.tag == _tagForAlexaSpeaking);
+  const bool isAlexa = TagIsAlexa( payload.tag );
 
   auto it = _callbackMap.find(payload.tag);
-  if (it != _callbackMap.end() || isTriggerWordGetIn || isAlexaListening || isAlexaThinking || isAlexaSpeaking) {
+  if (it != _callbackMap.end() || isTriggerWordGetIn || isAlexa) {
     PRINT_CH_INFO("AnimationComponent", "AnimStarted.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
   } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM)) {
     PRINT_NAMED_WARNING("AnimationComponent.AnimStarted.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
@@ -953,18 +952,18 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
     PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     atLeastOneCallback = true;
     _triggerWordGetInCallbackFunction();
-  } else if( (payload.tag == _tagForAlexaListening)
-             || (payload.tag == _tagForAlexaThinking)
-             || (payload.tag == _tagForAlexaSpeaking) )
-  {
+  } else if( TagIsAlexa(payload.tag) ) {
     atLeastOneCallback = true;
     if( _alexaResponseCallback ) {
+      // must match order in clad file
       if( payload.tag == _tagForAlexaListening ) {
         _alexaResponseCallback( 0 );
       } else if( payload.tag == _tagForAlexaThinking ) {
         _alexaResponseCallback( 1 );
       } else if( payload.tag == _tagForAlexaSpeaking ) {
         _alexaResponseCallback( 2 );
+      } else if( payload.tag == _tagForAlexaError ) {
+        _alexaResponseCallback( 3 );
       }
     }
   }
@@ -1055,6 +1054,15 @@ void AnimationComponent::AddAdditionalAnimationCallback(const std::string& name,
 AnimationComponent::Tag AnimationComponent::GetInvalidTag()
 {
   return kInvalidAnimationTag;
+}
+  
+bool AnimationComponent::TagIsAlexa( AnimationTag tag ) const
+{
+  const bool isAlexa = (tag == _tagForAlexaListening)
+                       || (tag == _tagForAlexaThinking)
+                       || (tag == _tagForAlexaSpeaking)
+                       || (tag == _tagForAlexaError);
+  return isAlexa;
 }
 
 

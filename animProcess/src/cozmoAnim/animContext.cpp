@@ -5,6 +5,7 @@
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/audio/audioPlaybackSystem.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
@@ -40,6 +41,7 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _webService(new WebService::WebService())
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
   , _alexa(new Alexa())
+  , _backpackLightComponent(new BackpackLightComponent(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
   InitAudio(_dataPlatform);

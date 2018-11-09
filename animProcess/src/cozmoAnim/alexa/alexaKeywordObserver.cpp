@@ -68,7 +68,9 @@ void AlexaKeywordObserver::onKeyWordDetected( std::shared_ptr<avsCommon::avs::Au
     }
 
     if( _client ) {
-      _client->NotifyOfWakeWord( _audioProvider, beginIndex, endIndex, keyword, espData, KWDMetadata );
+      // TODO(ACSDK-1976): We need to take into consideration the keyword duration.
+      auto startOfSpeechTimestamp = std::chrono::steady_clock::now();
+      _client->NotifyOfWakeWord( _audioProvider, beginIndex, endIndex, keyword, startOfSpeechTimestamp, espData, KWDMetadata );
     }
   }
 }

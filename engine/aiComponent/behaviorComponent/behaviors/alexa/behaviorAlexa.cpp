@@ -187,7 +187,7 @@ void BehaviorAlexa::OnBehaviorActivated()
   auto& alexaComp = GetAIComp<AlexaComponent>();
   const auto currUxState = alexaComp.GetUXState();
   
-  if( !alexaComp.IsUXStateGetInPlaying( _dVars.uxState ) ) {
+  if( !alexaComp.IsUXStateGetInPlaying( currUxState ) ) {
     // there was no get-in from idle for this state, or it somehow finished really quickly
     TransitionTo_StateLoop( currUxState );
   } else {
@@ -204,13 +204,16 @@ void BehaviorAlexa::BehaviorUpdate()
     return;
   }
   
+  // TODO: to deal with eye color changes, we will need to replace the existing get-in anims with
+  // anims for the current eye color whenever the setting changes
+  
   const auto& alexaComp = GetAIComp<AlexaComponent>();
   
   const auto oldState = _dVars.uxState;
   const auto newState = alexaComp.GetUXState();
   const bool uxChanged = oldState != newState;
   // don't actually change _dVars.uxState. That only happens when starting an animation
-  const bool animsComplete = !IsControlDelegated();
+  const bool animsComplete = !IsControlDelegated() && !alexaComp.IsAnyUXStateGetInPlaying();
   
   
   if( uxChanged ) {

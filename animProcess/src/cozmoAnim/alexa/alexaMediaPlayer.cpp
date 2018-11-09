@@ -88,21 +88,15 @@ namespace {
   // how many frames should be buffered before hitting "play" in wwise
   constexpr uint32_t kMinPlayableFrames = 81920;
   
-  // use Vector's TTS for everything until new plugins are made
-  constexpr AudioMetaData::GameEvent::GenericEvent kGameObjectTTS = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic__External_Voice_Text;
-  constexpr AudioMetaData::GameEvent::GenericEvent kGameObjectAlerts = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic__External_Voice_Text;
-  constexpr AudioMetaData::GameEvent::GenericEvent kGameObjectAudio = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic__External_Voice_Text;
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdTTS = 0;
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAlerts = 0;
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAudio = 0;
-  const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::TextToSpeech );
-  //constexpr AudioMetaData::GameEvent::GenericEvent kGameObjectTTS = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_01;
-  //constexpr AudioMetaData::GameEvent::GenericEvent kGameObjectAlerts = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_02;
-  //constexpr AudioMetaData::GameEvent::GenericEvent kGameObjectAudio = GameEvent::GenericEvent::Play__Dev_Robot_Vic__External_Alexa_Playback_03;
-  //constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdTTS = 5;
-  //constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAlerts = 6;
-  //constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAudio = 7;
-  //const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
+  using AGE = AudioMetaData::GameEvent::GenericEvent;
+  constexpr AGE kGameObjectTTS = AGE::Play__Robot_Vic__External_Alexa_Playback_Voice;
+  constexpr AGE kGameObjectAudio = AGE::Play__Robot_Vic__External_Alexa_Playback_Media;
+  constexpr AGE kGameObjectAlerts = AGE::Play__Robot_Vic__External_Alexa_Playback_Alerts;
+  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdTTS = 10;
+  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAudio = 11;
+  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAlerts = 12;
+  // TODO (VIC-11585): use a different game object
+  const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
   
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("Alexa.SpeakerInfo", "%s: " x, _name.c_str(), ##__VA_ARGS__)

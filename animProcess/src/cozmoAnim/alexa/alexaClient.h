@@ -35,7 +35,6 @@
 
 // todo: forward declare where possible. this is insane
 #include <ACL/AVSConnectionManager.h>
-#include <ACL/Transport/MessageRouter.h>
 #include <ACL/Transport/PostConnectSynchronizer.h>
 #include <ACL/Transport/PostConnectSynchronizerFactory.h>
 #include <ADSL/DirectiveSequencer.h>
@@ -58,8 +57,8 @@
 #include <AVSCommon/SDKInterfaces/CapabilitiesDelegateInterface.h>
 #include <AVSCommon/SDKInterfaces/CapabilitiesObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/RevokeAuthorizationObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/SingleSettingObserverInterface.h>
-#include <AVSCommon/SDKInterfaces/TemplateRuntimeObserverInterface.h>
 #include <AVSCommon/Utils/DeviceInfo.h>
 #include <AVSCommon/Utils/LibcurlUtils/HTTPContentFetcherFactory.h>
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerInterface.h>
@@ -89,6 +88,9 @@
 namespace Anki {
 namespace Vector {
   
+class AlexaMessageRouter;
+class AlexaRevokeAuthHandler;
+  
 class AlexaClient : private Util::noncopyable
                   , public alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface
                   , public std::enable_shared_from_this<AlexaClient>
@@ -105,24 +107,30 @@ public:
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
+                                             std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface>> messageRequestObservers,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
-                                              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker );
+                                              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+                                              std::shared_ptr<alexaClientSDK::avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
+                                              alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion );
   
   void Connect( const std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface>& capabilitiesDelegate );
   
   std::future<bool> NotifyOfTapToTalk( alexaClientSDK::capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
                                        alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex
-                                         = alexaClientSDK::capabilityAgents::aip::AudioInputProcessor::INVALID_INDEX );
+                                         = alexaClientSDK::capabilityAgents::aip::AudioInputProcessor::INVALID_INDEX,
+                                       std::chrono::steady_clock::time_point startOfSpeechTimestamp = std::chrono::steady_clock::now());
+  std::future<bool> NotifyOfTapToTalkEnd();
   
   std::future<bool> NotifyOfWakeWord( alexaClientSDK::capabilityAgents::aip::AudioProvider wakeWordAudioProvider,
                                       alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex,
                                       alexaClientSDK::avsCommon::avs::AudioInputStream::Index endIndex,
                                       const std::string& keyword,
+                                      std::chrono::steady_clock::time_point startOfSpeechTimestamp,
                                       const alexaClientSDK::capabilityAgents::aip::ESPData espData
                                         = alexaClientSDK::capabilityAgents::aip::ESPData::getEmptyESPData(),
                                       std::shared_ptr<const std::vector<char>> KWDMetadata = nullptr );
@@ -132,12 +140,20 @@ public:
   
   void StopForegroundActivity();
   
+  std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager> GetRegistrationManager();
+  
   void AddSpeakerManagerObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerManagerObserverInterface> observer );
   
   void AddAlexaDialogStateObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface> observer );
   
+  void AddInternetConnectionObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::InternetConnectionObserverInterface> observer );
+  
+  void AddRevokeAuthorizationObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::RevokeAuthorizationObserverInterface> observer );
+  
   using OnDirectiveFunc = std::function<void(const std::string&,const std::string&)>;
   void SetDirectiveCallback(const OnDirectiveFunc& onDirective) { _onDirectiveFunc = onDirective; }
+  
+  bool IsAVSConnected() const;
 
 private:
   
@@ -151,13 +167,16 @@ private:
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
+             std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface>> messageRequestObservers,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
              std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
              std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
              std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
-             std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker );
+             std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+             std::shared_ptr<alexaClientSDK::avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
+             alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion );
   
   void AddConnectionObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface> observer );
   
@@ -165,7 +184,7 @@ private:
   
   std::shared_ptr<alexaClientSDK::acl::PostConnectSynchronizerFactory> _postConnectSynchronizerFactory;
   
-  std::shared_ptr<alexaClientSDK::acl::MessageRouter> _messageRouter;
+  std::shared_ptr<AlexaMessageRouter> _messageRouter;
   
   std::shared_ptr<alexaClientSDK::acl::AVSConnectionManager> _connectionManager;
   
@@ -194,6 +213,16 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::playbackController::PlaybackController> _playbackController;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::audioPlayer::AudioPlayer> _audioPlayer;
+  
+  std::shared_ptr<alexaClientSDK::avsCommon::utils::network::InternetConnectionMonitor> _internetConnectionMonitor;
+  
+  std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager> _registrationManager;
+  
+  std::shared_ptr<alexaClientSDK::capabilityAgents::interactionModel::InteractionModelCapabilityAgent> _interactionCapabilityAgent;
+  
+  std::shared_ptr<alexaClientSDK::capabilityAgents::system::SoftwareInfoSender> _softwareInfoSender;
+  
+  std::shared_ptr<AlexaRevokeAuthHandler> _revokeAuthorizationHandler;
   
   OnDirectiveFunc _onDirectiveFunc;
 };

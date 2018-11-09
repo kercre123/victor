@@ -61,6 +61,12 @@ public:
   // Turn the pairing light on/off
   // Pairing light is the highest priority system light
   void SetPairingLight(bool on);
+  
+  // Set backpack lights to indicate whether the microphone / wake word is muted
+  void SetMicMute(bool muted) { _micMuted = muted; }
+  
+  // Set backpack lights to indicate whether alexa is streaming
+  void SetAlexaStreaming(bool streaming) { _alexaStreaming = streaming; }
 
   // Update battery status as we need to know when to play charging/low battery lights
   // Priority of battery related lights Low Battery > Charging > Fully Charged (Off)
@@ -90,7 +96,7 @@ private:
   BackpackLightDataRefWeak GetBestLightConfig();
 
   // Updates the critical backpack light config if neccessary
-  void UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen);
+  void UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen, bool isMicMuted);
 
   // Updates the current system light pattern if neccessary
   void UpdateSystemLightState(bool isCloudStreamOpen);
@@ -141,6 +147,9 @@ private:
   // State for streaming lights
   bool _willStreamOpen = false;
   bool _isStreaming = false;
+  bool _alexaStreaming = false; // separate state in case we decide to change lights
+  bool _micMuted = false;
+  
 
 };
 

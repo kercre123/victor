@@ -31,6 +31,8 @@
 #include "cozmoAnim/alexa/alexaClient.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/alexa/alexaCapabilityWrapper.h"
+#include "cozmoAnim/alexa/alexaMessageRouter.h"
+#include "cozmoAnim/alexa/alexaRevokeAuthHandler.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -55,8 +57,13 @@
 #include <Notifications/SQLiteNotificationsStorage.h>
 #include <SQLiteStorage/SQLiteMiscStorage.h>
 #include <Settings/SQLiteSettingStorage.h>
+#include <System/EndpointHandler.h>
+#include <System/SystemCapabilityProvider.h>
 #include <DefaultClient/DefaultClient.h>
 #include <SpeechSynthesizer/SpeechSynthesizer.h>
+#include <ACL/Transport/PostConnectSynchronizer.h>
+#include <AVSCommon/Utils/LibcurlUtils/LibcurlHTTP2ConnectionFactory.h>
+#include <AVSCommon/SDKInterfaces/RevokeAuthorizationObserverInterface.h>
 
 #include <memory>
 #include <vector>
@@ -67,6 +74,7 @@ namespace Vector {
 using namespace alexaClientSDK;
   
 namespace {
+  #define LOG_CHANNEL "Alexa"
   #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
 }
   
@@ -81,13 +89,16 @@ std::unique_ptr<AlexaClient>
                       std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                       std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                       std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
+                      std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::MessageRequestObserverInterface>> messageRequestObservers,
                       std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
                       std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                       std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
                       std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
                       std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
                       std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
-                      std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker )
+                      std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+                      std::shared_ptr<avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
+                      avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion )
 {
   std::unique_ptr<AlexaClient> client( new AlexaClient{} );
   if( !client->Init( deviceInfo,
@@ -98,13 +109,16 @@ std::unique_ptr<AlexaClient>
                      audioFactory,
                      alexaDialogStateObservers,
                      connectionObservers,
+                     messageRequestObservers,
                      capabilitiesDelegate,
                      ttsMediaPlayer,
                      alertsMediaPlayer,
                      audioMediaPlayer,
                      ttsSpeaker,
                      alertsSpeaker,
-                     audioSpeaker ) )
+                     audioSpeaker,
+                     internetConnectionMonitor,
+                     firmwareVersion ) )
   {
     return nullptr;
   }
@@ -155,6 +169,9 @@ AlexaClient::~AlexaClient()
   if( _userInactivityMonitor ) {
     _userInactivityMonitor->shutdown();
   }
+  if( _softwareInfoSender ) {
+    _softwareInfoSender->shutdown();
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -166,14 +183,19 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
                         std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                         std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                         std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
+                        std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::MessageRequestObserverInterface>> messageRequestObservers,
                         std::shared_ptr<avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
-                        std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker )
+                        std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+                        std::shared_ptr<avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
+                        avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion)
 {
+  
+  _internetConnectionMonitor = internetConnectionMonitor;
   
   _dialogUXStateAggregator = std::make_shared<avsCommon::avs::DialogUXStateAggregator>();
   
@@ -199,12 +221,17 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   _postConnectSynchronizerFactory = acl::PostConnectSynchronizerFactory::create( contextManager );
   
   // Create a factory to create objects that establish a connection with AVS.
-  auto transportFactory = std::make_shared<acl::HTTP2TransportFactory>( _postConnectSynchronizerFactory );
+  auto postConnectSynchronizerFactory = acl::PostConnectSynchronizerFactory::create(contextManager);
+  
+  // Create a factory to create objects that establish a connection with AVS.
+  auto transportFactory
+    = std::make_shared<acl::HTTP2TransportFactory>( std::make_shared<avsCommon::utils::libcurlUtils::LibcurlHTTP2ConnectionFactory>(),
+                                                    postConnectSynchronizerFactory );
   
   // Creating the message router - This component actually maintains the connection to AVS over HTTP2. It is created
   // using the auth delegate, which provides authorization to connect to AVS, and the attachment manager, which helps
   // ACL write attachments received from AVS.
-  _messageRouter = std::make_shared<acl::MessageRouter>( authDelegate, attachmentManager, transportFactory );
+  _messageRouter = std::make_shared<AlexaMessageRouter>( messageRequestObservers, authDelegate, attachmentManager, transportFactory );
   
   // Creating the connection manager - This component is the overarching connection manager that glues together all
   // the other networking components into one easy-to-use component.
@@ -244,6 +271,12 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   auto messageInterpreter = std::make_shared<adsl::MessageInterpreter>( _exceptionSender, _directiveSequencer, attachmentManager );
   _connectionManager->addMessageObserver( messageInterpreter );
   
+  // Creating the Registration Manager - This component is responsible for implementing any customer registration
+  // operation such as login and logout
+  _registrationManager = std::make_shared<registrationManager::RegistrationManager>( _directiveSequencer,
+                                                                                     _connectionManager,
+                                                                                     customerDataManager);
+  
   // Creating the Audio Activity Tracker - This component is responsibly for reporting the audio channel focus
   //  information to AVS.
   _audioActivityTracker = afml::AudioActivityTracker::create( contextManager );
@@ -277,7 +310,6 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateAudioInputProcessor"));
     return false;
   }
-  
   _audioInputProcessor->addObserver( _dialogUXStateAggregator );
 
   // Creating the Speech Synthesizer - This component is the Capability Agent that implements the SpeechSynthesizer
@@ -357,9 +389,61 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   
   AddConnectionObserver( _dialogUXStateAggregator );
   
+  // The Interaction Model Capability Agent provides a way for AVS cloud initiated actions to be executed by the client.
+  _interactionCapabilityAgent
+    = capabilityAgents::interactionModel::InteractionModelCapabilityAgent::create( _directiveSequencer, _exceptionSender );
+  if( !_interactionCapabilityAgent ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateInteractionModelCapabilityAgent"));
+    return false;
+  }
+  
+  // Creating the Endpoint Handler - This component is responsible for handling directives from AVS instructing the
+  // client to change the endpoint to connect to.
+  auto endpointHandler = capabilityAgents::system::EndpointHandler::create( _connectionManager, _exceptionSender );
+  if( !endpointHandler ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateEndpointHandler"));
+    return false;
+  }
+  
+  // Creating the SystemCapabilityProvider - This component is responsible for publishing information about the System
+  // capability agent.
+  auto systemCapabilityProvider = capabilityAgents::system::SystemCapabilityProvider::create();
+  if( !systemCapabilityProvider ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSystemCapabilityProvider"));
+    return false;
+  }
+  
+  // Creating the RevokeAuthorizationHandler - This component is responsible for handling RevokeAuthorization
+  // directives from AVS to notify the client to clear out authorization and re-enter the registration flow.
+  _revokeAuthorizationHandler = AlexaRevokeAuthHandler::create( _exceptionSender );
+  if( !_revokeAuthorizationHandler ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateRevokeAuthorizationHandler"));
+    return false;
+  }
+  
+  if( avsCommon::sdkInterfaces::softwareInfo::isValidFirmwareVersion(firmwareVersion) ) {
+    const bool sendSoftwareInfoOnConnected = true;
+    _softwareInfoSender = capabilityAgents::system::SoftwareInfoSender::create( firmwareVersion,
+                                                                                sendSoftwareInfoOnConnected,
+                                                                                nullptr, // softwareInfoSenderObserver
+                                                                                _connectionManager,
+                                                                                _connectionManager,
+                                                                                _exceptionSender );
+    if( !_softwareInfoSender ) {
+      ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSoftwareInfoSender"));
+      return false;
+    }
+  } else {
+    LOG_WARNING("AlexaClient.Init.InvalidFirmwareVersion", "SDK rejected firmware version %d", firmwareVersion);
+    return false;
+  }
+  
+  
   // Register directives
   
   // This creates a directive wrapper that lets us snoop on directives json sent to capabilities
+  // The nameSpace is the namespace constant defined at the top of each capabilities' cpp file.
+  // TODO: expose this through a change to the SDK.
   #define MAKE_WRAPPER(nameSpace, handler) std::make_shared<AlexaCapabilityWrapper>(nameSpace, handler, _exceptionSender, _onDirectiveFunc)
   
   if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("SpeechSynthesizer", _speechSynthesizer) ) ) {
@@ -376,6 +460,14 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
+  // Note: I've never actually seen this one receive the "RevokeAuthorization" directive we need
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("System", _revokeAuthorizationHandler) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "RevokeAuthorizationHandler"));
+      return false;
+  }
+  
   if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("System", _userInactivityMonitor) ) ) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
@@ -390,6 +482,13 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("System", endpointHandler) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "EndpointHandler"));
+    return false;
+  }
+  
   if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("AudioPlayer", _audioPlayer) ) ) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
@@ -401,6 +500,13 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
                 .d("directiveHandler", "SpeakerManager"));
+    return false;
+  }
+  
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("InteractionModel", _interactionCapabilityAgent) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "InteractionModelCapabilityAgent"));
     return false;
   }
   
@@ -447,8 +553,23 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   }
   
   if( !capabilitiesDelegate->registerCapability(_speakerManager) ) {
-    ACSDK_ERROR(
-                LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "Speaker"));
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "Speaker"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(_interactionCapabilityAgent) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "Interaction"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(systemCapabilityProvider) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "System"));
     return false;
   }
   
@@ -466,9 +587,16 @@ void AlexaClient::Connect( const std::shared_ptr<avsCommon::sdkInterfaces::Capab
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::future<bool> AlexaClient::NotifyOfTapToTalk( capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
-                                                  avsCommon::avs::AudioInputStream::Index beginIndex )
+                                                  avsCommon::avs::AudioInputStream::Index beginIndex,
+                                                  std::chrono::steady_clock::time_point startOfSpeechTimestamp )
 {
-  return _audioInputProcessor->recognize(tapToTalkAudioProvider, capabilityAgents::aip::Initiator::TAP, beginIndex);
+  return _audioInputProcessor->recognize(tapToTalkAudioProvider, capabilityAgents::aip::Initiator::TAP, startOfSpeechTimestamp, beginIndex);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::future<bool> AlexaClient::NotifyOfTapToTalkEnd()
+{
+  return _audioInputProcessor->stopCapture();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -476,6 +604,7 @@ std::future<bool> AlexaClient::NotifyOfWakeWord( capabilityAgents::aip::AudioPro
                                                  avsCommon::avs::AudioInputStream::Index beginIndex,
                                                  avsCommon::avs::AudioInputStream::Index endIndex,
                                                  const std::string& keyword,
+                                                 std::chrono::steady_clock::time_point startOfSpeechTimestamp,
                                                  const capabilityAgents::aip::ESPData espData,
                                                  std::shared_ptr<const std::vector<char>> KWDMetadata )
 {
@@ -498,6 +627,7 @@ std::future<bool> AlexaClient::NotifyOfWakeWord( capabilityAgents::aip::AudioPro
 
   return _audioInputProcessor->recognize( wakeWordAudioProvider,
                                           capabilityAgents::aip::Initiator::WAKEWORD,
+                                          startOfSpeechTimestamp,
                                           beginIndex,
                                           endIndex,
                                           keyword,
@@ -558,6 +688,40 @@ void AlexaClient::AddAlexaDialogStateObserver( std::shared_ptr<avsCommon::sdkInt
   {
     _dialogUXStateAggregator->addObserver( observer );
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::AddInternetConnectionObserver( std::shared_ptr<avsCommon::sdkInterfaces::InternetConnectionObserverInterface> observer )
+{
+  if( ANKI_VERIFY(_internetConnectionMonitor != nullptr,
+                  "AlexaClient.AddInternetConnectionObserver.Null",
+                  "Internet monitor is null") )
+  {
+    _internetConnectionMonitor->addInternetConnectionObserver( observer );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::AddRevokeAuthorizationObserver( std::shared_ptr<avsCommon::sdkInterfaces::RevokeAuthorizationObserverInterface> observer )
+{
+  if( !_revokeAuthorizationHandler ) {
+    ACSDK_ERROR(LX("addRevokeAuthorizationObserver").d("reason", "revokeAuthorizationNotSupported"));
+    return;
+  }
+  _revokeAuthorizationHandler->addObserver( observer );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::shared_ptr<registrationManager::RegistrationManager> AlexaClient::GetRegistrationManager()
+{
+  return _registrationManager;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaClient::IsAVSConnected() const
+{
+  return _connectionManager && _connectionManager->isConnected();
 }
   
 } // namespace Vector

@@ -112,7 +112,7 @@ void DrawWifiScreen(AnimationStreamer* animStreamer)
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0, shouldInterrupt,
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0, 0, shouldInterrupt,
                                       shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
@@ -124,7 +124,7 @@ void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0, shouldInterrupt,
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0, 0, shouldInterrupt,
                                       shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
@@ -136,7 +136,7 @@ void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0, shouldInterrupt,
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0, 0, shouldInterrupt,
                                       shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
@@ -148,7 +148,7 @@ void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0, shouldInterrupt,
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0, 0, shouldInterrupt,
                                       shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 

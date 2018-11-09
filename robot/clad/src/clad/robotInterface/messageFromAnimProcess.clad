@@ -83,7 +83,7 @@ message StreamCameraImages
 message DebugScreenMode
 {
   bool isDebug,
-  bool isAlexa,
+  bool needsWait,
 }
 
 message RobotAvailable

@@ -12,21 +12,23 @@
     "Listening": {
       "fromIdle": {
         "animTrigger": "AlexaIdle2Listen",
-        "audioEvent": "Play__Robot_Vic_Sfx__Wake_Word_On"
+        "audioEvent": "Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound"
       },
       "loop": "AlexaListenLoop",
       "transitions": {
         "Idle":     "AlexaListen2Idle",
         "Thinking": "AlexaListen2Think",
-        "Speaking": "AlexaListen2Speak"
+        "Speaking": "AlexaListen2Speak",
+        "Error":    "AlexaListen2Error"
       }
     },
     "Thinking": {
-      // no from idle animation
+      // no from-idle animation
       "loop": "AlexaThinkLoop",
       "transitions": {
         "Idle":     "AlexaThink2Idle",
-        "Speaking": "AlexaThink2Speak"
+        "Speaking": "AlexaThink2Speak",
+        "Error":    "AlexaThink2Error"
       }
     },
     "Speaking": {
@@ -36,8 +38,21 @@
       "loop": "AlexaSpeakLoop",
       "transitions": {
         "Idle":      "AlexaSpeak2Idle",
-        "Listening": "AlexaSpeak2Listen"
+        "Listening": "AlexaSpeak2Listen",
+        "Error":     "AlexaSpeak2Error"
+      }
+    },
+    "Error": {
+      "fromIdle": {
+        "animTrigger": "AlexaIdle2Error"
+        // anim process will play the error audio clip based on the error
+      },
+      "loop": "AlexaErrorLoop",
+      "transitions": {
+        "Idle":      "AlexaError2Idle"
       }
     }
-  }
+  },
+  
+  "postBehaviorSuggestion": "Socialize"
 }

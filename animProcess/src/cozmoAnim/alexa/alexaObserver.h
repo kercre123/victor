@@ -37,6 +37,7 @@
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/AuthObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/InternetConnectionMonitorInterface.h>
 #include <AVSCommon/SDKInterfaces/NotificationsObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/SingleSettingObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/SpeakerInterface.h>
@@ -44,6 +45,8 @@
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
 #include <AVSCommon/Utils/Threading/Executor.h>
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
+#include <RegistrationManager/RegistrationObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
 
 #include <queue>
 
@@ -60,6 +63,9 @@ class AlexaObserver
   , public alexaClientSDK::avsCommon::sdkInterfaces::NotificationsObserverInterface
   , public alexaClientSDK::authorization::cblAuthDelegate::CBLAuthRequesterInterface
   , public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerObserverInterface
+  , public alexaClientSDK::avsCommon::sdkInterfaces::InternetConnectionObserverInterface
+  , public alexaClientSDK::registrationManager::RegistrationObserverInterface
+  , public alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface
   
 {
 public:
@@ -72,14 +78,24 @@ public:
   using OnAuthStateChangeFunc = std::function<void(alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::State,
                                                    alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::Error)>;
   using OnSourcePlaybackChange = std::function<void(alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId,bool playing)>;
+  using OnInternetConnectionChanged = std::function<void(bool connected)>;
+  using OnAVSConnectionChanged = std::function<void(const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status status,
+                                                    const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason)>;
+  using OnSendCompleted = std::function<void(alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status)>;
+  using OnLogout = std::function<void(void)>;
   void Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
              const OnRequestAuthorizationFunc& onRequestAuthorization,
              const OnAuthStateChangeFunc& onAuthStateChange,
-             const OnSourcePlaybackChange& onSourcePlaybackChange );
+             const OnSourcePlaybackChange& onSourcePlaybackChange,
+             const OnInternetConnectionChanged& onInternetConnectionChanged,
+             const OnAVSConnectionChanged& onAVSConnectionChanged,
+             const OnSendCompleted& onSendCompleted,
+             const OnLogout& onLogout );
   
   virtual void onDialogUXStateChanged( DialogUXState state ) override;
   
-  virtual void onConnectionStatusChanged( const Status status, const ChangedReason reason ) override;
+  virtual void onConnectionStatusChanged( const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status status,
+                                          const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason ) override;
   
   virtual void onSettingChanged( const std::string& key, const std::string& value ) override;
   
@@ -106,6 +122,16 @@ public:
   virtual void onPlaybackError( SourceId id,
                                 const alexaClientSDK::avsCommon::utils::mediaPlayer::ErrorType& type,
                                 std::string error ) override;
+  
+  // internet connection monitoring
+  virtual void onConnectionStatusChanged(bool connected) override;
+  
+  // registration monitoring
+  virtual void onLogout() override;
+  
+  // message request monitoring
+  virtual void onSendCompleted( alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status ) override;
+  virtual void onExceptionReceived( const std::string &exceptionMessage ) override;
   
 private:
   using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
@@ -138,6 +164,10 @@ private:
   OnRequestAuthorizationFunc _onRequestAuthorization;
   OnAuthStateChangeFunc _onAuthStateChange;
   OnSourcePlaybackChange _onSourcePlaybackChange;
+  OnInternetConnectionChanged _onInternetConnectionChanged;
+  OnAVSConnectionChanged _onAVSConnectionChanged;
+  OnSendCompleted _onSendCompleted;
+  OnLogout _onLogout;
   
   std::mutex _mutex;
   std::queue<std::function<void(void)>> _workQueue;

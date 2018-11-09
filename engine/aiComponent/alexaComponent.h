@@ -112,7 +112,7 @@ private:
     float timeout_s = -1.0f;
   };
   std::unordered_map<AlexaUXState, AlexaUXResponseInfo> _uxResponseInfo;
-  std::array<AnimationTag,3> _animTags;
+  std::array<AnimationTag,4> _animTags;
   
   bool _pendingAuthIsFromOptIn = false;
   

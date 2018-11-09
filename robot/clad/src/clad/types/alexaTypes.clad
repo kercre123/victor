@@ -22,13 +22,30 @@ enum uint_8 AlexaAuthState
 
 enum uint_8 AlexaUXState
 {
-  // NOTE: retain the order of the first three states.
-  // Their underlying types are used as indices in some 3-element arrays
+  // NOTE: retain the order of the first four states.
+  // Their underlying types are used as indices in some 4-element arrays
   Listening = 0,
   Thinking,
   Speaking,
+  Error,
 
   Idle,
+}
+
+enum uint_8 AlexaSimpleState
+{
+  Disabled = 0, // not opted in or authorized
+  Idle,         // opted in and authorized, but not active
+  Active,       // active interaction
+}
+
+enum uint_8 AlexaNetworkErrorType
+{
+  NoError=0,
+  NoInitialConnection,   // no internet on boot
+  LostConnection,        // lost connection to internet
+  HavingTroubleThinking, // lost connection to AVS, or server error
+  AuthRevoked,           // this device was remotely de-registered
 }
 
 } // namespace Vector

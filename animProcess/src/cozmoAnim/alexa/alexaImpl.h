@@ -34,15 +34,18 @@
 #include "util/helpers/noncopyable.h"
 
 #include <AVSCommon/SDKInterfaces/AuthObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/SoftwareInfoSenderObserverInterface.h>
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
 
 #include <functional>
 #include <string>
 #include <set>
 
-namespace alexaClientSDK{
-  namespace capabilitiesDelegate {class CapabilitiesDelegate; }
+namespace alexaClientSDK {
+  namespace capabilitiesDelegate { class CapabilitiesDelegate; }
   namespace capabilityAgents { namespace aip { class AudioProvider; } }
   namespace avsCommon {
     namespace utils{ namespace mediaPlayer { class MediaPlayerInterface; } }
@@ -55,6 +58,7 @@ namespace Vector {
 
 class AlexaAudioInput;
 enum class AlexaAuthState : uint8_t;
+enum class AlexaNetworkErrorType : uint8_t;
 enum class AlexaUXState : uint8_t;
 class AlexaClient;
 class AlexaKeywordObserver;
@@ -70,9 +74,11 @@ public:
   
   ~AlexaImpl();
   
-  bool Init(const AnimContext* context);
+  bool Init( const AnimContext* context );
   
   void Update();
+  
+  void Logout();
   
   void StopForegroundActivity();
   
@@ -89,8 +95,15 @@ public:
   using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&, bool)>;
   void SetOnAlexaAuthStateChanged( const OnAlexaAuthStateChanged& callback ) { _onAlexaAuthStateChanged = callback; }
   
+  // will never call back with ux state Error. see comment in method SetNetworkError.
   using OnAlexaUXStateChanged = std::function<void(AlexaUXState)>;
   void SetOnAlexaUXStateChanged( const OnAlexaUXStateChanged& callback ) { _onAlexaUXStateChanged = callback; }
+  
+  using OnLogout = std::function<void(void)>;
+  void SetOnLogout( const OnLogout& callback ) { _onLogout = callback; }
+  
+  using OnNetworkError = std::function<void(AlexaNetworkErrorType)>;
+  void SetOnNetworkError( const OnNetworkError& callback ) { _onNetworkError = callback; }
   
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
@@ -105,13 +118,23 @@ private:
   // considers media player state and dialog state to determine _uxState
   void CheckForUXStateChange();
   
+  void SetNetworkError( AlexaNetworkErrorType errorType );
+  
   // things we care about called by AlexaObserver
   void OnDialogUXStateChanged( DialogUXState state );
   void OnRequestAuthorization( const std::string& url, const std::string& code );
   void OnAuthStateChange( alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::State newState,
                           alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::Error newError );
   void OnSourcePlaybackChange( SourceId id, bool playing );
+  void OnInternetConnectionChanged( bool connected );
+  void OnAVSConnectionChanged( const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status status,
+                               const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason );
+  void OnSendComplete( alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status );
+  void OnSDKLogout();
   
+  
+  // readable version int
+  alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion GetFirmwareVersion() const;
   
   const AnimContext* _context = nullptr;
   std::string _alexaPersistentFolder;
@@ -123,12 +146,18 @@ private:
   AlexaUXState _uxState;
   // ux state (may be IDLE when audio is playing)
   DialogUXState _dialogState;
+  // if the sdk has been able to ping a specific amazon.com endpoint (not the AVS endpoint)
+  bool _internetConnected = false;
+  // if the sdk was ever connected to AVS
+  bool _avsEverConnected = false;
   // sources that are playing (or paused?)
   std::set<SourceId> _playingSources;
   // the last BS time that the sdk received a "Play" or "Speak" directive
   float _lastPlayDirective_s = -1.0f;
   // if non-negative, the update loop with automatically set the ux state to Idle at this time
   float _timeToSetIdle_s = -1.0f;
+  // tap to talk is active
+  bool _isTapOccurring = false;
   
   std::shared_ptr<AlexaClient> _client;
   
@@ -147,6 +176,8 @@ private:
   // callbacks
   OnAlexaAuthStateChanged _onAlexaAuthStateChanged;
   OnAlexaUXStateChanged _onAlexaUXStateChanged;
+  OnLogout _onLogout;
+  OnNetworkError _onNetworkError;
 };
 
 

@@ -179,16 +179,16 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
   _alexaResponses.clear();
   const std::string csvResponses{msg.csvGetInAnimNames, msg.csvGetInAnimNames_length};
   const std::vector<std::string> animNames = Util::StringSplit(csvResponses, ',');
-  int maxAnims = 3;
-  if( !ANKI_VERIFY(animNames.size() == 3,
+  int maxAnims = 4;
+  if( !ANKI_VERIFY(animNames.size() == 4,
                    "ShowAudioStreamStateManager.SetAlexaUXResponses.UnexpectedCnt",
-                   "Expecting 3 anim names, received %zu",
+                   "Expecting 4 anim names, received %zu",
                    animNames.size()) )
   {
-    maxAnims = std::min((int)animNames.size(), 3);
+    maxAnims = std::min((int)animNames.size(), 4);
   }
-  static_assert( sizeof(msg.postAudioEvents) / sizeof(msg.postAudioEvents[0]) == 3, "Expected 3 elems" );
-  static_assert( sizeof(msg.getInAnimTags) / sizeof(msg.getInAnimTags[0]) == 3, "Expected 3 elems" );
+  static_assert( sizeof(msg.postAudioEvents) / sizeof(msg.postAudioEvents[0]) == 4, "Expected 4 elems" );
+  static_assert( sizeof(msg.getInAnimTags) / sizeof(msg.getInAnimTags[0]) == 4, "Expected 4 elems" );
   for( int i=0; i<maxAnims; ++i ) {
     AlexaInfo info;
     info.state = static_cast<AlexaUXState>(i);
@@ -249,7 +249,8 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state)
                      "ShowAudioStreamStateManager.StartAlexaResponse.NoValidGetInAnim",
                      "Animation not found for get in %s", response->getInAnimName.c_str() ) )
     {
-      _streamer->SetStreamingAnimation( response->getInAnimName, response->getInAnimTag );
+      // start animation, but don't render in eye hue
+      _streamer->SetStreamingAnimation( response->getInAnimName, response->getInAnimTag, 1, 0, true, true, false );
     }
   }
   

@@ -28,6 +28,7 @@ set(AVS_LIBS
   CertifiedSender
   ContextManager
   ESP
+  InteractionModel
   PlaybackController
   PlaylistParser
   RegistrationManager

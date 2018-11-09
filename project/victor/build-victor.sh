@@ -210,9 +210,12 @@ for feature in ${FEATURES} ; do
   esac
 done
 
-# until the CTE build works again (BI-1614), extract precompiled libs and headers for now
-# TODO: remove this and instead use DEPS
-tar xf TEMP-avs-device-sdk.tar.gz -C EXTERNALS/coretech_external/build/
+# Until the coretech-external (CTE) build works again (BI-1614), copy the Alexa
+# SDK libs and headers from artifactory into where CTE build artifacts normally
+# live. Only copy src files if changed, and delete any dst files not in src.
+rsync -raz --delete \
+  ${TOPLEVEL}/EXTERNALS/avs-device-sdk/avs-device-sdk \
+  ${TOPLEVEL}/EXTERNALS/coretech_external/build/
 
 #
 # Get short commit sha

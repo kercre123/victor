@@ -137,6 +137,10 @@ private:
   
   // Returns true if screenName is an Alexa screen
   bool IsAlexaScreen(const ScreenName& screenName) const;
+  
+  // Returns true if screenName is a screen that should cause the behavior system to Wait.
+  // Note that Pairing is handled another way, so is not included here.
+  bool ScreenNeedsWait(const ScreenName& screenName) const;
 
   // Process wheel, head, lift, button motion for menu navigation
   void ProcessMenuNavigation(const RobotState& state);
@@ -164,6 +168,7 @@ private:
   void DrawMotorInfo(const RobotState& state);
   void DrawCustomText();
   void DrawAlexaFace();
+  void DrawMuteAnimation(AnimationStreamer* animStreamer);
 
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();

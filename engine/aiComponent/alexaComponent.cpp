@@ -45,11 +45,14 @@ namespace {
   const float kAnimTimeout_s = 3.0f;
   const AnimationTag kInvalidAnimationTag = AnimationComponent::GetInvalidTag();
   
-  // this class assumes that Listneing, Thinking, and Speaking are 0,1,2 when sending indices to animProcess
+  // this class assumes that Listening, Thinking, Speaking, and Error are 0,1,2,3 when sending indices to animProcess
   // and when getting a tag array from AnimationComponent, so it doesn't need to know about AlexaUXState.
+  // IMPORTANT: If you hit this, please also change AnimationComponent's _tagForAlexa*, which only use indices and
+  // not AlexaUXState's.
   static_assert( static_cast<uint8_t>(AlexaUXState::Listening) == 0, "Expected 0");
-  static_assert( static_cast<uint8_t>(AlexaUXState::Thinking) == 1,  "Expected 1");
-  static_assert( static_cast<uint8_t>(AlexaUXState::Speaking) == 2,  "Expected 2");
+  static_assert( static_cast<uint8_t>(AlexaUXState::Thinking)  == 1, "Expected 1");
+  static_assert( static_cast<uint8_t>(AlexaUXState::Speaking)  == 2, "Expected 2");
+  static_assert( static_cast<uint8_t>(AlexaUXState::Error)     == 3, "Expected 3");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -315,11 +318,12 @@ void AlexaComponent::SetAlexaUXResponses( const std::unordered_map<AlexaUXState,
   }
   
   std::vector<std::string> animNames;
-  animNames.resize(3);
+  static_assert( AlexaUXStateNumEntries == 5, "New states need changing the size below (decremented by one)" );
+  animNames.resize(4); // don't include Idle
   for( const auto& response : responses ) {
     const unsigned int idx = static_cast<unsigned int>(response.first);
-    if( !ANKI_VERIFY( (idx < 3), "AlexaComponent.SetAlexaUXResponses.Invalid", 
-                      "Invalid state %hhu. Allowed values are Listening, Speaking, Thinking", response.first ) )
+    if( !ANKI_VERIFY( (idx < 4), "AlexaComponent.SetAlexaUXResponses.Invalid",
+                      "Invalid state %hhu. Allowed values are Listening, Speaking, Thinking, Error", response.first ) )
     {
       continue;
     }

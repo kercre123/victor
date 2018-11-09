@@ -46,6 +46,7 @@ namespace Anki {
       struct RobotToEngine;
     }
     class SpeechRecognizerSystem;
+    enum class AlexaSimpleState : uint8_t;
   }
   namespace Util {
     namespace Data {
@@ -100,10 +101,13 @@ public:
   
   void ResetBeatDetector();
   
-  void SetAlexaActive(bool active);
+  void SetAlexaState(AlexaSimpleState state);
   
   void SetButtonWakeWordIsAlexa(bool isAlexa);
-
+  
+  void ToggleMicMute();
+  bool IsMicMuted() const { return _micMuted; }
+  
   void UpdateLocale(const Util::Locale& newLocale);
   
   bool IsSpeakerPlayingAudio() const;
@@ -177,8 +181,10 @@ private:
 
   bool _batteryLow = false;
   bool _enableDataCollection = false;
-  bool _alexaActive = false;
   bool _buttonPressIsAlexa = false;
+  AlexaSimpleState _alexaState;
+  
+  std::atomic<bool> _micMuted;
 
   void SetWillStream(bool willStream) const;
 

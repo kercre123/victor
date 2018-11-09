@@ -240,7 +240,7 @@ public:
   
   // Similar to above, but returns a animation tags corresponding to Alexa's Listening, Thinking, and Speaking
   // UX states. The callback passes 0, 1, and 2 corresponding to the same
-  std::array<AnimationTag,3> SetAlexaUXResponseCallback(std::function<void(unsigned int)> callback);
+  std::array<AnimationTag,4> SetAlexaUXResponseCallback(std::function<void(unsigned int)> callback);
 
 
   // Accessors for latest animState values
@@ -291,6 +291,8 @@ private:
                             bool callbackStillValidEvenIfTagIsNot = false);
 
   Result SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0);
+  
+  bool TagIsAlexa( AnimationTag tag ) const;
   
   static constexpr float _kDefaultTimeout_sec = 60.f;
 
@@ -379,6 +381,7 @@ private:
   AnimationTag _tagForAlexaListening;
   AnimationTag _tagForAlexaThinking;
   AnimationTag _tagForAlexaSpeaking;
+  AnimationTag _tagForAlexaError;
   std::function<void(unsigned int)> _alexaResponseCallback;
   
   int _compositeImageID;

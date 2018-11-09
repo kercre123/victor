@@ -108,6 +108,7 @@ namespace {
   const u32 kIPCheckPeriod_sec = 20;
   
   const f32 kAlexaTimeout_s = 5.0f;
+  const f32 kToggleMuteTimeout_s = 2.0f;
 
   // How long the button needs to be pressed for before it should trigger shutdown animation
   CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
@@ -204,6 +205,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(AlexaPairingSuccess, AlexaPairingSuccess);
   ADD_SCREEN(AlexaPairingFailed, AlexaPairingFailed);
   ADD_SCREEN(AlexaPairingExpired, AlexaPairingExpired);
+  ADD_SCREEN(ToggleMute, ToggleMute);
   
   if (hideSpecialDebugScreens) {
     ADD_SCREEN(MicInfo, Main); // Last screen cycles back to Main
@@ -363,6 +365,13 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_TIMEOUT(AlexaPairingFailed,  kAlexaTimeout_s, None);
   SET_TIMEOUT(AlexaPairingExpired, kAlexaTimeout_s, None);
   
+  // === Toggling mute ===
+  auto toggleMuteEnterAction = [this, animStreamer]() {
+    DrawMuteAnimation( animStreamer );
+  };
+  SET_ENTER_ACTION(ToggleMute, toggleMuteEnterAction);
+  SET_TIMEOUT(ToggleMute, kToggleMuteTimeout_s, None);
+  
   // === Camera Motor Test ===
   // Add menu item to camera screen to start a test mode where the motors run back and forth
   // and camera images are streamed to the face
@@ -406,6 +415,7 @@ bool FaceInfoScreenManager::IsActivelyDrawingToScreen() const
   switch(GetCurrScreenName()) {
     case ScreenName::None:
     case ScreenName::Pairing:
+    case ScreenName::ToggleMute:
       return false;
     default:
       return true;
@@ -454,7 +464,7 @@ bool FaceInfoScreenManager::IsDebugScreen(ScreenName screen) const
 void FaceInfoScreenManager::SetScreen(ScreenName screen)
 {
   bool prevScreenIsDebug = false;
-  bool prevScreenIsAlexa = false;
+  bool prevScreenNeedsWait = false;
 
   // Call ExitScreen
   // _currScreen may be null on the first call of this function
@@ -464,7 +474,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     }
     _currScreen->ExitScreen();
     prevScreenIsDebug = IsDebugScreen(GetCurrScreenName());
-    prevScreenIsAlexa = IsAlexaScreen(GetCurrScreenName());
+    prevScreenNeedsWait = ScreenNeedsWait(GetCurrScreenName());
   }
 
   _currScreen = GetScreen(screen);
@@ -480,11 +490,11 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
 
   // Tell engine if the screen changes so behaviors can be appropriately enabled/disabled
   bool currScreenIsDebug = IsDebugScreen(GetCurrScreenName());
-  bool currScreenIsAlexa = IsAlexaScreen(GetCurrScreenName());
-  if ((currScreenIsDebug != prevScreenIsDebug) || (currScreenIsAlexa != prevScreenIsAlexa)) {
+  bool currScreenNeedsWait = ScreenNeedsWait(GetCurrScreenName());
+  if ((currScreenIsDebug != prevScreenIsDebug) || (currScreenNeedsWait != prevScreenNeedsWait)) {
     DebugScreenMode msg;
     msg.isDebug = currScreenIsDebug;
-    msg.isAlexa = currScreenIsAlexa;
+    msg.needsWait = currScreenNeedsWait;
     RobotInterface::SendAnimToEngine(std::move(msg));
   }
 
@@ -954,6 +964,15 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
                   "Remove FORCE_TRANSITION_TO_PAIRING when switchboard is working");
       SetScreen(ScreenName::Pairing);
     }
+  }
+  else if(doublePressDetected &&
+          !isOnCharger && // while user-facing instructions may say "pick up the robot and double press," it's really just off charger
+          CanEnterPairingFromScreen(currScreenName))
+  {
+    _context->GetMicDataSystem()->ToggleMicMute();
+    // Drawing a mute/unmute animation is handled here, rather than as an engine behavior, since it is
+    // something that should always be done no matter what the state of the engine or behavior system is
+    SetScreen(ScreenName::ToggleMute);
   }
 
   // Check for button press to go to next debug screen
@@ -1467,6 +1486,23 @@ void FaceInfoScreenManager::DrawAlexaFace()
   headAction.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
   SendAnimToRobot(std::move(headAction));
 }
+  
+void FaceInfoScreenManager::DrawMuteAnimation(AnimationStreamer* animStreamer)
+{
+  if( _currScreen == nullptr ) {
+    return;
+  }
+  const bool muted = _context->GetMicDataSystem()->IsMicMuted();
+  // The value of muted was set prior to this method call, so indicates a transition _to_ that state,
+  // so play the on/off or off/on anim to reflect that
+  const std::string animName = muted ? "anim_pairing_icon_wifi" : "anim_pairing_icon_update";
+  const bool shouldInterrupt = true;
+  const bool shouldOverrideEyeHue = true;
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetStreamingAnimation(animName, 0, 0, shouldInterrupt,
+                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
+  
+}
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
 // in textColor with a background of bgColor.
@@ -1696,6 +1732,7 @@ bool FaceInfoScreenManager::CanEnterPairingFromScreen( const ScreenName& screenN
     case ScreenName::AlexaPairingSuccess:
     case ScreenName::AlexaPairingFailed:
     case ScreenName::AlexaPairingExpired:
+    case ScreenName::ToggleMute:
       return true;
     default:
       return false;
@@ -1709,6 +1746,20 @@ bool FaceInfoScreenManager::IsAlexaScreen(const ScreenName& screenName) const
     case ScreenName::AlexaPairingSuccess:
     case ScreenName::AlexaPairingFailed:
     case ScreenName::AlexaPairingExpired:
+      return true;
+    default:
+      return false;
+  }
+}
+  
+bool FaceInfoScreenManager::ScreenNeedsWait(const ScreenName& screenName) const
+{
+  switch (screenName) {
+    case ScreenName::AlexaPairing:
+    case ScreenName::AlexaPairingSuccess:
+    case ScreenName::AlexaPairingFailed:
+    case ScreenName::AlexaPairingExpired:
+    case ScreenName::ToggleMute:
       return true;
     default:
       return false;

@@ -85,7 +85,7 @@ void BackpackLightComponent::Init()
 }
 
 
-void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen)
+void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen, bool isMicMuted)
 {
   const AnimTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
  
@@ -102,6 +102,10 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   else if(_isBatteryLow && !_isBatteryCharging)
   {
     trigger = BackpackAnimationTrigger::LowBattery;
+  }
+  else if(isMicMuted)
+  {
+    trigger = BackpackAnimationTrigger::Muted;
   }
   // If we have been offline for long enough
   else if(_offlineAtTime_ms > 0 &&
@@ -157,8 +161,8 @@ void BackpackLightComponent::Update()
 
   // Consider stream to be open when the trigger word is detected or we are actually
   // streaming. Trigger word stays detected until the stream state is updated
-  const bool isCloudStreamOpen = (_willStreamOpen || _isStreaming);
-  UpdateCriticalBackpackLightConfig(isCloudStreamOpen);
+  const bool isCloudStreamOpen = (_willStreamOpen || _isStreaming || _alexaStreaming);
+  UpdateCriticalBackpackLightConfig(isCloudStreamOpen, _micMuted);
 
   UpdateSystemLightState(isCloudStreamOpen);
   
@@ -453,6 +457,7 @@ void BackpackLightComponent::UpdateBatteryStatus(const RobotInterface::BatterySt
   _isOnChargerContacts = msg.onChargerContacts;
   _isBatteryFull = msg.isBatteryFull;
 }
+
 
 }
 }

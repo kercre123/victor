@@ -450,8 +450,9 @@ message SetAlexaUXResponses
   // 0: Listening
   // 1: Thinking
   // 2: Speaking
-  AudioEngine::Multiplexer::PostAudioEvent postAudioEvents[3],
-  uint_8 getInAnimTags[3],
+  // 3: Error
+  AudioEngine::Multiplexer::PostAudioEvent postAudioEvents[4],
+  uint_8 getInAnimTags[4],
   string csvGetInAnimNames, // comma separated animation names
 }
 

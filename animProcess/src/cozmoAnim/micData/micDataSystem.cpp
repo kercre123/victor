@@ -18,6 +18,7 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/beatDetector/beatDetector.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataInfo.h"
@@ -93,6 +94,8 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
                              const AnimContext* context)
 : _udpServer(new LocalUdpServer())
 , _fftResultData(new FFTResultData())
+, _alexaState(AlexaSimpleState::Disabled)
+, _micMuted(false)
 , _context(context)
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
@@ -123,6 +126,10 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
   // SpeechRecognizerSystem
   SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+    if( _micMuted || (_alexaState == AlexaSimpleState::Active) ) {
+      // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
+      return;
+    }
     _micDataProcessor->VoiceTriggerWordDetection( info );
   };
   _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
@@ -201,7 +208,10 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
-  if (_buttonPressIsAlexa) {
+  if( _micMuted ) {
+    return;
+  }
+  if( _buttonPressIsAlexa ) {
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
@@ -212,7 +222,11 @@ void MicDataSystem::FakeTriggerWordDetection()
   }
   else {
     // "Hey Vector" button press
-    _micDataProcessor->FakeTriggerWordDetection();
+    // This next check is probably not necessary, but for symmetry, the hey vector button press shouldn't trigger
+    // if alexa is in the middle of an interaction
+    if( _alexaState != AlexaSimpleState::Active ) {
+      _micDataProcessor->FakeTriggerWordDetection();
+    }
   }
 }
 
@@ -692,22 +706,52 @@ void MicDataSystem::ResetBeatDetector()
 {
   _micDataProcessor->GetBeatDetector().Start();
 }
-
-void MicDataSystem::SetAlexaActive(bool active)
-{
-  _alexaActive = active;
   
-  if (_alexaActive) {
+void MicDataSystem::SetAlexaState(AlexaSimpleState state)
+{
+  const auto oldState = _alexaState;
+  _alexaState = state;
+  const bool enabled = (_alexaState != AlexaSimpleState::Disabled);
+  
+  if ((oldState == AlexaSimpleState::Disabled) && enabled) {
     RobotDataLoader *dataLoader = _context->GetDataLoader();
-    const auto callback = [] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-      LOG_WARNING("MicDataSystem.SetAlexaActive.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
-      // TODO: Do Alexa stuff here
+    const auto callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+      PRINT_NAMED_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
+      
+      if( _micMuted || HasStreamingJob() ) {
+        // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
+        return;
+      }
+      const Alexa* alexa = _context->GetAlexa();
+      ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+      if( (alexa != nullptr) && showStreamState->HasAnyAlexaResponse() ) {
+        alexa->NotifyOfWakeWord( info.startTime_ms, info.endTime_ms );
+      }
     };
     _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
+
   }
-  else {
+  else if((oldState != AlexaSimpleState::Disabled) && !enabled) {
     // Disable "Alexa" wake word in SpeechRecognizerSystem
     _speechRecognizerSystem->DisableAlexa();
+  }
+}
+  
+void MicDataSystem::ToggleMicMute()
+{
+  // TODO (VIC-11587): we could save some CPU if the wake words recognizers are actually disabled here.
+  // for now, we just ignore its callbacks if _micMuted is true
+  _micMuted = !_micMuted;
+  // Note that Alexa also has a method to stopStreamingMicrophoneData, but without the wakeword,
+  // the samples go no where. Also check if it saves CPU to drop samples. Note that the time indices
+  // for the wake word bookends might be wrong afterwards.
+  
+  // toggle backpack lights
+  if( _context != nullptr ) {
+    auto* bplComp = _context->GetBackpackLightComponent();
+    if( bplComp != nullptr ) {
+      bplComp->SetMicMute( _micMuted );
+    }
   }
 }
   
@@ -715,6 +759,7 @@ void MicDataSystem::SetButtonWakeWordIsAlexa(bool isAlexa)
 {
   _buttonPressIsAlexa = isAlexa;
 }
+
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 {
