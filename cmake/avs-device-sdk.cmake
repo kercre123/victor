@@ -29,6 +29,7 @@ set(AVS_LIBS
   ContextManager
   ESP
   InteractionModel
+  Notifications
   PlaybackController
   PlaylistParser
   RegistrationManager

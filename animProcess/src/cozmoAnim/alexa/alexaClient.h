@@ -104,6 +104,7 @@ public:
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
                                               std::shared_ptr<alexaClientSDK::certifiedSender::MessageStorageInterface> messageStorage,
                                               std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface>   alertStorage,
+                                              std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -112,9 +113,11 @@ public:
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
+                                             std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> notificationsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+                                             std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> notificationsSpeaker,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
                                               alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion );
   
@@ -150,6 +153,8 @@ public:
   
   void AddRevokeAuthorizationObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::RevokeAuthorizationObserverInterface> observer );
   
+  void AddNotificationsObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::NotificationsObserverInterface> observer );
+  
   using OnDirectiveFunc = std::function<void(const std::string&,const std::string&)>;
   void SetDirectiveCallback(const OnDirectiveFunc& onDirective) { _onDirectiveFunc = onDirective; }
   
@@ -164,6 +169,7 @@ private:
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
              std::shared_ptr<alexaClientSDK::certifiedSender::MessageStorageInterface> messageStorage,
              std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
+             std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -172,9 +178,11 @@ private:
              std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
              std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
              std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
+             std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> notificationsMediaPlayer,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+             std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> notificationsSpeaker,
              std::shared_ptr<alexaClientSDK::avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
              alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion );
   
@@ -221,6 +229,8 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::interactionModel::InteractionModelCapabilityAgent> _interactionCapabilityAgent;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::system::SoftwareInfoSender> _softwareInfoSender;
+  
+  std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsCapabilityAgent> _notificationsCapabilityAgent;
   
   std::shared_ptr<AlexaRevokeAuthHandler> _revokeAuthorizationHandler;
   

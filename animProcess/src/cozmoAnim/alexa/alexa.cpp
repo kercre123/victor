@@ -229,6 +229,7 @@ void Alexa::CreateImpl()
   _impl->SetOnAlexaUXStateChanged( std::bind( &Alexa::OnAlexaUXStateChanged, this, std::placeholders::_1 ) );
   _impl->SetOnLogout( std::bind( &Alexa::OnLogout, this) );
   _impl->SetOnNetworkError( std::bind( &Alexa::OnAlexaNetworkError, this, std::placeholders::_1 ) );
+  _impl->SetOnNotificationsChanged( std::bind( &Alexa::OnNotificationsChanged, this, std::placeholders::_1 ) );
   const bool success = _impl->Init( _context );
   if( success ) {
     // initialization was successful.
@@ -345,6 +346,22 @@ void Alexa::OnLogout()
 {
   bool deleteUserData = true;
   SetAlexaActive( false, deleteUserData );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::OnNotificationsChanged( bool hasNotification ) const
+{
+  // set backpack lights state
+  auto* bplComp = _context->GetBackpackLightComponent();
+  if( bplComp != nullptr ) {
+    bplComp->SetAlexaNotification( hasNotification );
+  }
+  if( hasNotification ) {
+    // play some animation for the user.
+    // If animators want to avoid alexa "eye" pops, a queued notification would have to be separate
+    // AlexaUXState. That would also mean more behavior work though...
+    FaceInfoScreenManager::getInstance()->StartAlexaNotification();
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

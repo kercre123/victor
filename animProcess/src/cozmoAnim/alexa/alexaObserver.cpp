@@ -61,7 +61,8 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
                           const OnInternetConnectionChanged& onInternetConnectionChanged,
                           const OnAVSConnectionChanged& onAVSConnectionChanged,
                           const OnSendCompleted& onSendCompleted,
-                          const OnLogout& onLogout )
+                          const OnLogout& onLogout,
+                          const OnNotificationIndicator& onNotificationIndicator )
 {
   _onDialogUXStateChanged = onDialogUXStateChanged;
   _onRequestAuthorization = onRequestAuthorization;
@@ -71,6 +72,7 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
   _onAVSConnectionChanged = onAVSConnectionChanged;
   _onSendCompleted = onSendCompleted;
   _onLogout = onLogout;
+  _onNotificationIndicator = onNotificationIndicator;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -159,10 +161,10 @@ void AlexaObserver::onSpeakerSettingsChanged( const SpeakerManagerObserverInterf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaObserver::onSetIndicator( avsCommon::avs::IndicatorState state )
 {
-  auto func = [state]() {
-    std::ostringstream oss;
-    oss << "NOTIFICATION INDICATOR STATE: " << state;
-    CONSOLE_LOG(oss.str());
+  auto func = [this,state]() {
+    if( _onNotificationIndicator ) {
+      _onNotificationIndicator( state );
+    }
   };
   AddToQueue( std::move(func) );
 }

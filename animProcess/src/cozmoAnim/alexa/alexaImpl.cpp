@@ -60,6 +60,7 @@
 #include <Audio/AudioFactory.h>
 #include <CBLAuthDelegate/CBLAuthDelegate.h>
 #include <CBLAuthDelegate/SQLiteCBLAuthDelegateStorage.h>
+#include <Notifications/SQLiteNotificationsStorage.h>
 #include <CapabilitiesDelegate/CapabilitiesDelegate.h>
 #include <SQLiteStorage/SQLiteMiscStorage.h>
 #include <Settings/SQLiteSettingStorage.h>
@@ -96,10 +97,10 @@ namespace {
   
   // If the DialogUXState is set to Idle, but a directive was received to Play, then wait this long before
   // setting to idle
-  CONSOLE_VAR_RANGED(float, kAlexaIdleDelay_s, "Alexa", 1.0f, 0.0f, 10.0f);
+  CONSOLE_VAR_RANGED(float, kAlexaIdleDelay_s, "Alexa", 2.0f, 0.0f, 10.0f);
   // If the DialogUXState was set to Idle, but the last Play directive was older than this amount, then
   // switch to Idle
-  CONSOLE_VAR_RANGED(float, kAlexaMaxIdleDelay_s, "Alexa", 2.0f, 0.0f, 10.0f);
+  CONSOLE_VAR_RANGED(float, kAlexaMaxIdleDelay_s, "Alexa", 3.0f, 0.0f, 10.0f);
   
   CONSOLE_VAR(bool, kLogAlexaDirectives, "Alexa", false);
 }
@@ -109,6 +110,7 @@ AlexaImpl::AlexaImpl()
   : _authState{ AlexaAuthState::Uninitialized }
   , _uxState{ AlexaUXState::Idle }
   , _dialogState{ DialogUXState::IDLE }
+  , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
 {
   static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
                  "Our shorthand SourceId type differs" );
@@ -135,6 +137,9 @@ AlexaImpl::~AlexaImpl()
   }
   if( _audioMediaPlayer ) {
     _audioMediaPlayer->shutdown();
+  }
+  if( _notificationsMediaPlayer ) {
+    _notificationsMediaPlayer->shutdown();
   }
   
   avsCommon::avs::initialization::AlexaClientSDKInit::uninitialize();
@@ -192,7 +197,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                    std::bind(&AlexaImpl::OnInternetConnectionChanged, this, std::placeholders::_1),
                    std::bind(&AlexaImpl::OnAVSConnectionChanged, this, std::placeholders::_1, std::placeholders::_2),
                    std::bind(&AlexaImpl::OnSendComplete, this, std::placeholders::_1),
-                   std::bind(&AlexaImpl::OnSDKLogout, this) );
+                   std::bind(&AlexaImpl::OnSDKLogout, this),
+                   std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1) );
   
   const auto& rootConfig = avsCommon::utils::configuration::ConfigurationNode::getRoot();
   
@@ -251,6 +257,9 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   auto messageStorage = certifiedSender::SQLiteMessageStorage::create( rootConfig );
   
+  auto notificationsStorage
+    = capabilityAgents::notifications::SQLiteNotificationsStorage::create( rootConfig );
+  
   // Creating the alert storage object to be used for rendering and storing alerts.
   auto audioFactory = std::make_shared<applicationUtilities::resources::audio::AudioFactory>();
   auto alertStorage
@@ -270,10 +279,15 @@ bool AlexaImpl::Init( const AnimContext* context )
                                                           "Audio",
                                                           httpContentFetcherFactory );
   _audioMediaPlayer->Init( context );
+  _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
+                                                                  "Notifications",
+                                                                  httpContentFetcherFactory );
+  _notificationsMediaPlayer->Init( context );
   
-  // the alerts/audio speakers dont change UX so we observe them
+  // the alerts/audio/notifications speakers dont change UX so we observe them
   _alertsMediaPlayer->setObserver( _observer );
   _audioMediaPlayer->setObserver( _observer );
+  _notificationsMediaPlayer->setObserver( _observer );
   
   
   // Create an internet connection monitor that will notify the _observer when internet connectivity changes.
@@ -293,6 +307,7 @@ bool AlexaImpl::Init( const AnimContext* context )
                                  authDelegate,
                                  std::move(messageStorage),
                                  std::move(alertStorage),
+                                 std::move(notificationsStorage),
                                  audioFactory,
                                  {_observer},
                                  {_observer},
@@ -301,9 +316,11 @@ bool AlexaImpl::Init( const AnimContext* context )
                                  _ttsMediaPlayer,
                                  _alertsMediaPlayer,
                                  _audioMediaPlayer,
+                                 _notificationsMediaPlayer,
                                  std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_ttsMediaPlayer),
                                  std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_alertsMediaPlayer),
                                  std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_audioMediaPlayer),
+                                 std::static_pointer_cast<avsCommon::sdkInterfaces::SpeakerInterface>(_notificationsMediaPlayer),
                                  std::move(internetConnectionMonitor),
                                  firmwareVersion );
   
@@ -316,6 +333,7 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   _client->AddSpeakerManagerObserver( _observer );
   _client->AddInternetConnectionObserver( _observer );
+  _client->AddNotificationsObserver( _observer );
   
    // Creating the revoke authorization observer.
   auto revokeObserver = std::make_shared<AlexaRevokeAuthObserver>( _client->GetRegistrationManager() );
@@ -405,6 +423,9 @@ void AlexaImpl::Update()
   }
   if( _audioMediaPlayer != nullptr ) {
     _audioMediaPlayer->Update();
+  }
+  if( _notificationsMediaPlayer != nullptr ) {
+    _notificationsMediaPlayer->Update();
   }
   
   // check if the idle timer _timeToSetIdle_s has expired
@@ -682,10 +703,25 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnSDKLogout()
 {
-  LOG_INFO( "AlexaImpl.OnLogout", "User logged out" );
+  // TODO (VIC-11517): downgrade. for now this is useful in webots
+  LOG_WARNING( "AlexaImpl.OnLogout", "User logged out" );
   if( _onLogout != nullptr ) {
     _onLogout();
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::OnNotificationsIndicator( avsCommon::avs::IndicatorState state )
+{
+  // TODO (VIC-11517): downgrade. for now this is useful in webots
+  LOG_WARNING( "AlexaImpl.OnNotificationsIndicator", "Indicator: %d", (int)state );
+  
+  const bool changed = (_notificationsIndicator != state);
+  if( changed && _onNotificationsChanged ) {
+    const bool hasIndicator = (state == avsCommon::avs::IndicatorState::ON);
+    _onNotificationsChanged( hasIndicator );
+  }
+  _notificationsIndicator = state;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

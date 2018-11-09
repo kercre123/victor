@@ -86,6 +86,8 @@ public:
   // When enabled, switches to a screen showing the alexa pairing code, and optionally the URL,
   // depending on how the auth process originated (app or voice command)
   void EnableAlexaScreen(ScreenName screenName, const std::string& code, const std::string& url);
+  
+  void StartAlexaNotification();
 
   // When enabled, switches to a special camera screen used to show
   // the vision system's "mirror mode", which displays the camera feed
@@ -169,7 +171,8 @@ private:
   void DrawCustomText();
   void DrawAlexaFace();
   void DrawMuteAnimation(AnimationStreamer* animStreamer);
-
+  void DrawAlexaNotification(AnimationStreamer* animStreamer);
+  
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();
 

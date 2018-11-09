@@ -83,6 +83,7 @@ public:
                                                     const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason)>;
   using OnSendCompleted = std::function<void(alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status)>;
   using OnLogout = std::function<void(void)>;
+  using OnNotificationIndicator = std::function<void(alexaClientSDK::avsCommon::avs::IndicatorState)>;
   void Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
              const OnRequestAuthorizationFunc& onRequestAuthorization,
              const OnAuthStateChangeFunc& onAuthStateChange,
@@ -90,7 +91,8 @@ public:
              const OnInternetConnectionChanged& onInternetConnectionChanged,
              const OnAVSConnectionChanged& onAVSConnectionChanged,
              const OnSendCompleted& onSendCompleted,
-             const OnLogout& onLogout );
+             const OnLogout& onLogout,
+             const OnNotificationIndicator& onNotificationIndicator );
   
   virtual void onDialogUXStateChanged( DialogUXState state ) override;
   
@@ -102,8 +104,6 @@ public:
   virtual void onSpeakerSettingsChanged( const alexaClientSDK::avsCommon::sdkInterfaces::SpeakerManagerObserverInterface::Source& source,
                                          const alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type& type,
                                          const alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::SpeakerSettings& settings ) override;
-  
-  virtual void onSetIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state ) override;
   
   virtual void onRequestAuthorization(const std::string& url, const std::string& code) override;
   virtual void onCheckingForAuthorization() override;
@@ -132,6 +132,9 @@ public:
   // message request monitoring
   virtual void onSendCompleted( alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status ) override;
   virtual void onExceptionReceived( const std::string &exceptionMessage ) override;
+  
+  // notifications
+  virtual void onSetIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state ) override;
   
 private:
   using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
@@ -168,6 +171,7 @@ private:
   OnAVSConnectionChanged _onAVSConnectionChanged;
   OnSendCompleted _onSendCompleted;
   OnLogout _onLogout;
+  OnNotificationIndicator _onNotificationIndicator;
   
   std::mutex _mutex;
   std::queue<std::function<void(void)>> _workQueue;

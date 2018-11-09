@@ -92,9 +92,11 @@ namespace {
   constexpr AGE kGameObjectTTS = AGE::Play__Robot_Vic__External_Alexa_Playback_Voice;
   constexpr AGE kGameObjectAudio = AGE::Play__Robot_Vic__External_Alexa_Playback_Media;
   constexpr AGE kGameObjectAlerts = AGE::Play__Robot_Vic__External_Alexa_Playback_Alerts;
+  constexpr AGE kGameObjectNotifications = AGE::Play__Robot_Vic__External_Alexa_Playback_Notifications;
   constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdTTS = 10;
   constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAudio = 11;
   constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAlerts = 12;
+  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdNotifications = 13;
   // TODO (VIC-11585): use a different game object
   const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
   
@@ -190,6 +192,8 @@ void AlexaMediaPlayer::Update()
       event = kGameObjectAlerts;
     } else if( _name == "Audio" ) {
       event = kGameObjectAudio;
+    } else if( _name == "Notifications" ) {
+      event = kGameObjectNotifications;
     }
     const auto eventID = ToAudioEventId( event );
     auto* callbackContext = new AudioCallbackContext();
@@ -313,6 +317,8 @@ bool AlexaMediaPlayer::play( SourceId id )
         pluginID = kPluginIdAlerts;
       } else if( _name == "Audio" ) {
         pluginID = kPluginIdAudio;
+      } else if( _name == "Notifications" ) {
+        pluginID = kPluginIdNotifications;
       }
       plugin->ClearAudioData( pluginID );
       plugin->AddDataInstance( _waveData, pluginID );

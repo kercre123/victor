@@ -39,6 +39,7 @@
 #include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/SoftwareInfoSenderObserverInterface.h>
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
+#include <AVSCommon/AVS/IndicatorState.h>
 
 #include <functional>
 #include <string>
@@ -105,6 +106,9 @@ public:
   using OnNetworkError = std::function<void(AlexaNetworkErrorType)>;
   void SetOnNetworkError( const OnNetworkError& callback ) { _onNetworkError = callback; }
   
+  using OnNotificationsChanged = std::function<void(bool hasNotification)>;
+  void SetOnNotificationsChanged( const OnNotificationsChanged& callback ) { _onNotificationsChanged = callback; }
+  
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
   using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
@@ -131,6 +135,7 @@ private:
                                const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason );
   void OnSendComplete( alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status );
   void OnSDKLogout();
+  void OnNotificationsIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state );
   
   
   // readable version int
@@ -159,6 +164,8 @@ private:
   // tap to talk is active
   bool _isTapOccurring = false;
   
+  alexaClientSDK::avsCommon::avs::IndicatorState _notificationsIndicator;
+  
   std::shared_ptr<AlexaClient> _client;
   
   std::shared_ptr<AlexaObserver> _observer;
@@ -168,16 +175,18 @@ private:
   std::shared_ptr<AlexaMediaPlayer> _ttsMediaPlayer;
   std::shared_ptr<AlexaMediaPlayer> _alertsMediaPlayer;
   std::shared_ptr<AlexaMediaPlayer> _audioMediaPlayer;
+  std::shared_ptr<AlexaMediaPlayer> _notificationsMediaPlayer;
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _tapToTalkAudioProvider;
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _wakeWordAudioProvider;
   std::shared_ptr<AlexaKeywordObserver> _keywordObserver;
   std::shared_ptr<AlexaAudioInput> _microphone;
   
-  // callbacks
+  // callbacks to impl parent Alexa
   OnAlexaAuthStateChanged _onAlexaAuthStateChanged;
   OnAlexaUXStateChanged _onAlexaUXStateChanged;
   OnLogout _onLogout;
   OnNetworkError _onNetworkError;
+  OnNotificationsChanged _onNotificationsChanged;
 };
 
 

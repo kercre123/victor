@@ -85,7 +85,7 @@ void BackpackLightComponent::Init()
 }
 
 
-void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen, bool isMicMuted)
+void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStreamOpen, bool isMicMuted, bool isNotificationPending)
 {
   const AnimTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
  
@@ -112,6 +112,10 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
           ((TimeStamp_t)curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))
   {
     trigger = BackpackAnimationTrigger::Offline; 
+  }
+  else if(isNotificationPending)
+  {
+    trigger = BackpackAnimationTrigger::AlexaNotification;
   }
   // If we are on the charger and charging
   else if(_isOnChargerContacts &&
@@ -162,7 +166,7 @@ void BackpackLightComponent::Update()
   // Consider stream to be open when the trigger word is detected or we are actually
   // streaming. Trigger word stays detected until the stream state is updated
   const bool isCloudStreamOpen = (_willStreamOpen || _isStreaming || _alexaStreaming);
-  UpdateCriticalBackpackLightConfig(isCloudStreamOpen, _micMuted);
+  UpdateCriticalBackpackLightConfig(isCloudStreamOpen, _micMuted, _hasNotification);
 
   UpdateSystemLightState(isCloudStreamOpen);
   

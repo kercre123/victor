@@ -79,6 +79,9 @@ private:
   // called when SDK requests that we logout
   void OnLogout();
   
+  // called when SDK changes whether an indicator for notifications should be shown
+  void OnNotificationsChanged( bool hasNotification ) const;
+  
   void CreateImpl();
   void DeleteImpl();
   bool HasImpl() const { return _impl != nullptr; }

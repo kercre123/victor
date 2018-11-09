@@ -16,6 +16,9 @@
   "alertsCapabilityAgent":{
     "databaseFilePath":"<ALEXA_STORAGE_PATH>/alerts.db"
   },
+  "notifications":{
+    "databaseFilePath":"<ALEXA_STORAGE_PATH>/notifications.db"
+  },
   "miscDatabase": {
     "databaseFilePath":"<ALEXA_STORAGE_PATH>/miscDatabase.db" // this path gets replaced at runtime
   },

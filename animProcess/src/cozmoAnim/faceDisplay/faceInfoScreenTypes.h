@@ -40,6 +40,7 @@ enum class ScreenName : uint8_t {
   MicDirectionClock,
   CustomText,
   MirrorMode, // Like Camera but without links to other screens
+  AlexaNotification,   // quick face screen that alexa has a notification (todo: remove)
   AlexaPairing,        // pairing in progress (no timeout)
   AlexaPairingSuccess, // completed pairing (has timeout)
   AlexaPairingExpired, // code expires (has timeout)

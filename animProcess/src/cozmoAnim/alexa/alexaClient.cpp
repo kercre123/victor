@@ -86,6 +86,7 @@ std::unique_ptr<AlexaClient>
                       std::shared_ptr<avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
                       std::shared_ptr<certifiedSender::MessageStorageInterface> messageStorage,
                       std::shared_ptr<capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
+                      std::shared_ptr<capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
                       std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                       std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                       std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -94,9 +95,11 @@ std::unique_ptr<AlexaClient>
                       std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                       std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
                       std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
+                      std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> notificationsMediaPlayer,
                       std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
                       std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
                       std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+                      std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> notificationsSpeaker,
                       std::shared_ptr<avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
                       avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion )
 {
@@ -106,6 +109,7 @@ std::unique_ptr<AlexaClient>
                      authDelegate,
                      messageStorage,
                      alertStorage,
+                     notificationsStorage,
                      audioFactory,
                      alexaDialogStateObservers,
                      connectionObservers,
@@ -114,9 +118,11 @@ std::unique_ptr<AlexaClient>
                      ttsMediaPlayer,
                      alertsMediaPlayer,
                      audioMediaPlayer,
+                     notificationsMediaPlayer,
                      ttsSpeaker,
                      alertsSpeaker,
                      audioSpeaker,
+                     notificationsSpeaker,
                      internetConnectionMonitor,
                      firmwareVersion ) )
   {
@@ -166,6 +172,10 @@ AlexaClient::~AlexaClient()
     ACSDK_DEBUG5(LX("PlaybackRouterShutdown."));
     _playbackRouter->shutdown();
   }
+  if( _notificationsCapabilityAgent ) {
+    ACSDK_DEBUG5(LX("NotificationsShutdown."));
+    _notificationsCapabilityAgent->shutdown();
+  }
   if( _userInactivityMonitor ) {
     _userInactivityMonitor->shutdown();
   }
@@ -180,6 +190,7 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
                         std::shared_ptr<avsCommon::sdkInterfaces::AuthDelegateInterface> authDelegate,
                         std::shared_ptr<certifiedSender::MessageStorageInterface> messageStorage,
                         std::shared_ptr<capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
+                        std::shared_ptr<capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
                         std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                         std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                         std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -188,9 +199,11 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
                         std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
+                        std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerInterface> notificationsMediaPlayer,
                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
                         std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
+                        std::shared_ptr<avsCommon::sdkInterfaces::SpeakerInterface> notificationsSpeaker,
                         std::shared_ptr<avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
                         avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion)
 {
@@ -359,7 +372,8 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     ttsSpeaker,
     alertsSpeaker,
     audioSpeaker,
-    // unused speaker types supported by SDK: notificationsSpeaker, bluetoothSpeaker, ringtoneSpeaker
+    notificationsSpeaker,
+    // unused speaker types supported by SDK: bluetoothSpeaker, ringtoneSpeaker
   };
   
   // Creating the SpeakerManager Capability Agent - This component is the Capability Agent that implements the
@@ -388,6 +402,21 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   }
   
   AddConnectionObserver( _dialogUXStateAggregator );
+  
+  // Creating the Notifications Capability Agent - This component is the Capability Agent that implements the
+  // Notifications interface of AVS.
+  _notificationsCapabilityAgent = capabilityAgents::notifications::NotificationsCapabilityAgent::create(
+    notificationsStorage,
+    capabilityAgents::notifications::NotificationRenderer::create(notificationsMediaPlayer),
+    contextManager,
+    _exceptionSender,
+    audioFactory->notifications(),
+    customerDataManager );
+  
+  if( !_notificationsCapabilityAgent ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateNotificationsCapabilityAgent"));
+    return false;
+  }
   
   // The Interaction Model Capability Agent provides a way for AVS cloud initiated actions to be executed by the client.
   _interactionCapabilityAgent
@@ -503,6 +532,13 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("Notifications", _notificationsCapabilityAgent) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "NotificationsCapabilityAgent"));
+    return false;
+  }
+  
   if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("InteractionModel", _interactionCapabilityAgent) ) ) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterDirectiveHandler")
@@ -542,6 +578,13 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   if( !capabilitiesDelegate->registerCapability(_audioPlayer) ) {
     ACSDK_ERROR(
                 LX("initializeFailed").d("reason", "unableToRegisterCapability").d("capabilitiesDelegate", "AudioPlayer"));
+    return false;
+  }
+  
+  if( !capabilitiesDelegate->registerCapability(_notificationsCapabilityAgent) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "Notifications"));
     return false;
   }
   
@@ -709,6 +752,17 @@ void AlexaClient::AddRevokeAuthorizationObserver( std::shared_ptr<avsCommon::sdk
     return;
   }
   _revokeAuthorizationHandler->addObserver( observer );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::AddNotificationsObserver( std::shared_ptr<avsCommon::sdkInterfaces::NotificationsObserverInterface> observer )
+{
+  if( ANKI_VERIFY(_notificationsCapabilityAgent != nullptr,
+                  "AlexaClient.AddNotificationsObserver.Null",
+                  "Notifications agent is null") )
+  {
+    _notificationsCapabilityAgent->addObserver( observer );
+  }
 }
 
 

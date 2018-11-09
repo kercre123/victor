@@ -108,7 +108,8 @@ namespace {
   const u32 kIPCheckPeriod_sec = 20;
   
   const f32 kAlexaTimeout_s = 5.0f;
-  const f32 kToggleMuteTimeout_s = 2.0f;
+  CONSOLE_VAR_RANGED(f32, kToggleMuteTimeout_s, "FaceInfoScreenManager", 0.25f, 0.001f, 3.0f);
+  CONSOLE_VAR_RANGED(f32, kAlexaNotificationTimeout_s, "FaceInfoScreenManager", 1.0f, 0.001f, 3.0f);
 
   // How long the button needs to be pressed for before it should trigger shutdown animation
   CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
@@ -206,6 +207,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(AlexaPairingFailed, AlexaPairingFailed);
   ADD_SCREEN(AlexaPairingExpired, AlexaPairingExpired);
   ADD_SCREEN(ToggleMute, ToggleMute);
+  ADD_SCREEN(AlexaNotification, AlexaNotification);
   
   if (hideSpecialDebugScreens) {
     ADD_SCREEN(MicInfo, Main); // Last screen cycles back to Main
@@ -370,7 +372,15 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     DrawMuteAnimation( animStreamer );
   };
   SET_ENTER_ACTION(ToggleMute, toggleMuteEnterAction);
+  // TODO (VIC-11606): don't use timeout and instead wait for mute anim to end
   SET_TIMEOUT(ToggleMute, kToggleMuteTimeout_s, None);
+  
+  // === AlexaNotification ===
+  auto alexaNotification = [this, animStreamer]() {
+    DrawAlexaNotification( animStreamer );
+  };
+  SET_ENTER_ACTION(AlexaNotification, alexaNotification);
+  SET_TIMEOUT(AlexaNotification, kAlexaNotificationTimeout_s, None);
   
   // === Camera Motor Test ===
   // Add menu item to camera screen to start a test mode where the motors run back and forth
@@ -416,6 +426,7 @@ bool FaceInfoScreenManager::IsActivelyDrawingToScreen() const
     case ScreenName::None:
     case ScreenName::Pairing:
     case ScreenName::ToggleMute:
+    case ScreenName::AlexaNotification:
       return false;
     default:
       return true;
@@ -1495,13 +1506,26 @@ void FaceInfoScreenManager::DrawMuteAnimation(AnimationStreamer* animStreamer)
   const bool muted = _context->GetMicDataSystem()->IsMicMuted();
   // The value of muted was set prior to this method call, so indicates a transition _to_ that state,
   // so play the on/off or off/on anim to reflect that
-  const std::string animName = muted ? "anim_pairing_icon_wifi" : "anim_pairing_icon_update";
+  const std::string animName = muted ? "anim_mutemic_micoff_01" : "anim_mutemic_micon_01";
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation(animName, 0, 0, shouldInterrupt,
+  animStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt,
                                       shouldOverrideEyeHue, shouldRenderInEyeHue);
   
+}
+  
+void FaceInfoScreenManager::DrawAlexaNotification(AnimationStreamer* animStreamer)
+{
+  if( _currScreen == nullptr ) {
+    return;
+  }
+  const std::string animName = "anim_mutemic_micoff_01"; // todo: change this
+  const bool shouldInterrupt = true;
+  const bool shouldOverrideEyeHue = true;
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt,
+                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
@@ -1611,6 +1635,11 @@ void FaceInfoScreenManager::EnableAlexaScreen(ScreenName screenName, const std::
     LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Done", "");
     SetScreen(ScreenName::None);
   }
+}
+  
+void FaceInfoScreenManager::StartAlexaNotification()
+{
+  SetScreen(ScreenName::AlexaNotification);
 }
   
 void FaceInfoScreenManager::EnableMirrorModeScreen(bool enable)
@@ -1733,6 +1762,7 @@ bool FaceInfoScreenManager::CanEnterPairingFromScreen( const ScreenName& screenN
     case ScreenName::AlexaPairingFailed:
     case ScreenName::AlexaPairingExpired:
     case ScreenName::ToggleMute:
+    case ScreenName::AlexaNotification:
       return true;
     default:
       return false;
@@ -1760,6 +1790,7 @@ bool FaceInfoScreenManager::ScreenNeedsWait(const ScreenName& screenName) const
     case ScreenName::AlexaPairingFailed:
     case ScreenName::AlexaPairingExpired:
     case ScreenName::ToggleMute:
+    case ScreenName::AlexaNotification:
       return true;
     default:
       return false;
