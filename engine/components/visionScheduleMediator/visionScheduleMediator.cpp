@@ -189,32 +189,38 @@ void VisionScheduleMediator::AddAndUpdateVisionModeSubscriptions(IVisionModeSubs
   UpdateModeDataMapWithRequests(subscriber, requests);
 }
 
-void VisionScheduleMediator::RemoveVisionModeSubscriptions(IVisionModeSubscriber* subscriber,
-                                                          const std::set<VisionMode>& modes)
+bool VisionScheduleMediator::RemoveVisionModeSubscriptions(IVisionModeSubscriber* subscriber,
+                                                           const std::set<VisionMode>& modes)
 {
   // Prevent subscriptions using nullptr
   DEV_ASSERT(nullptr != subscriber, "VisionScheduleMediator.NullVisionModeSubscriber");
   if(nullptr == subscriber)
   {
-    return;
+    return false;
   }
 
+  bool res = false;
   for(const auto& mode : modes)
   {
     auto modeDataIterator = _modeDataMap.find(mode);
     if(modeDataIterator == _modeDataMap.end())
     {
-      PRINT_NAMED_ERROR("VisionScheduleMediator.RemoveVisionModeSubscription.UnknownVisionMode",
+      // Don't really care if someone is trying to remove a vision mode we don't have settings for
+      // Only matters if they try to subscribe to a mode we don't have settings for
+      PRINT_NAMED_DEBUG("VisionScheduleMediator.RemoveVisionModeSubscription.UnknownVisionMode",
                         "Vision mode %s was requested by a subscriber, missing settings in visionScheduleMediator_config.json",
                         EnumToString(mode));
     }
     else
     {
-      modeDataIterator->second.requestMap.erase(subscriber);
+      const size_t numErased = modeDataIterator->second.requestMap.erase(subscriber);
+      res = (numErased > 0);
       modeDataIterator->second.dirty = true;
       _subscriptionRecordIsDirty = true;
     }
   }
+  
+  return res;
 }
 
 void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const VisionModeSet& modes)

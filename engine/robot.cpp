@@ -2926,14 +2926,5 @@ void Robot::Shutdown(ShutdownReason reason)
   _shutdownReason = reason;
 }
 
-void Robot::SetImageSendMode(ImageSendMode newMode)
-{
-  _imageSendMode = newMode;
-  // TODO: VIC-5159 fix this to work with SingleShot
-  const bool enable = (newMode != ImageSendMode::Off);
-  GetVisionComponent().EnableImageSending(enable);
-}
-
-
 } // namespace Vector
 } // namespace Anki

@@ -83,7 +83,8 @@ public:
   void AddAndUpdateVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionModeRequest>& requests);
 
   // Removes subscriptions to specified modes for the subscriber
-  void RemoveVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionMode>& modes);
+  // Returns true if a subscription was actually removed
+  bool RemoveVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionMode>& modes);
   
   // Remove all existing subscriptions for the pertinent subscriber
   void ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber);

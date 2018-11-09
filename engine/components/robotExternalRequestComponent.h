@@ -37,7 +37,6 @@ public:
   void GetNetworkState(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void GetBatteryState(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void SayText(const AnkiEvent<external_interface::GatewayWrapper>& event);
-  void ImageRequest(const AnkiEvent<external_interface::GatewayWrapper>& imageRequest);
   void SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
 private:  

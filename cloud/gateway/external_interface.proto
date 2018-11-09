@@ -143,10 +143,37 @@ service ExternalInterface {
     };
   }
 
-  // Turns on the provided vision mode.
-  rpc EnableVisionMode(EnableVisionModeRequest) returns (EnableVisionModeResponse) {
+  rpc EnableMarkerDetection(EnableMarkerDetectionRequest) returns (EnableMarkerDetectionResponse) {
     option (google.api.http) = {
-      post: "/v1/enable_vision_mode",
+      post: "/v1/enable_marker_detection",
+      body: "*"
+    };
+  }
+
+  rpc EnableFaceDetection(EnableFaceDetectionRequest) returns (EnableFaceDetectionResponse) {
+    option (google.api.http) = {
+      post: "/v1/enable_face_detection",
+      body: "*"
+    };
+  }
+  
+  rpc EnableMotionDetection(EnableMotionDetectionRequest) returns (EnableMotionDetectionResponse) {
+    option (google.api.http) = {
+      post: "/v1/enable_motion_detection",
+      body: "*"
+    };
+  }
+  
+  rpc EnableMirrorMode(EnableMirrorModeRequest) returns (EnableMirrorModeResponse) {
+    option (google.api.http) = {
+      post: "/v1/enable_mirror_mode",
+      body: "*"
+    };
+  }
+  
+  rpc EnableImageStreaming(EnableImageStreamingRequest) returns (EnableImageStreamingResponse) {
+    option (google.api.http) = {
+      post: "/v1/enable_image_streaming",
       body: "*"
     };
   }

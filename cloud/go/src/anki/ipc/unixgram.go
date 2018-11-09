@@ -23,6 +23,9 @@ func NewUnixgramClient(path string, name string) (Conn, error) {
 		return nil, err
 	}
 
+	// Set receive buffer size to 64k (defaults to 4k)
+	conn.SetReadBuffer(64 * 1024)
+
 	return newDatagramClient(conn)
 }
 

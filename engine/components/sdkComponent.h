@@ -12,6 +12,9 @@
 #define __Engine_Components_SDKComponent_H_
 
 #include "engine/robotComponents_fwd.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
+
+#include "clad/types/visionModes.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -36,6 +39,7 @@ class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class SDKComponent : public IDependencyManagedComponent<RobotComponentID>
+                   , public IVisionModeSubscriber
 {
 public:
 
@@ -52,12 +56,15 @@ public:
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
   // Event/Message handling
-  void HandleMessage(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void HandleProtoMessage(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
   bool SDKWantsControl();
   void SDKBehaviorActivation(bool enabled);
 
   void OnActionCompleted(ExternalInterface::RobotCompletedAction msg);
+
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 private:
 
@@ -65,10 +72,20 @@ private:
   bool _sdkWantsControl = false;
   bool _sdkBehaviorActivated = false;
 
+  bool _captureSingleImage = false;
+  
   std::vector<::Signal::SmartHandle> _signalHandles;
+
+  // Set of vision modes that we are waiting to appear/disappear from the VisionProcessingResult message
+  // If bool is true then we are waiting for the mode to appear in the result message
+  // If bool is false then we are waiting for the mode to disappear from the result message
+  std::set<std::pair<VisionMode, bool>> _visionModesWaitingToChange;
 
   void OnSendAudioModeRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void DispatchSDKActivationResult(bool enabled);
+  // Returns true if the subscription was actually updated
+  bool SubscribeToVisionMode(bool subscribe, VisionMode mode, bool updateWaitingToChangeSet = true);
+  void DisableMirrorMode();
 };
 
 } // namespace Vector

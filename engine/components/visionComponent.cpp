@@ -967,12 +967,10 @@ namespace Vector {
         tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SavingImages});
         tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::DetectingIllumination});
 
-        if(ANKI_DEV_CHEATS) {
-          // Note: we always run this because it handles switching to the mirror mode debug screen
-          // It internally checks whether the MirrorMode flag is set in modesProcessed
-          tryAndReport(&VisionComponent::UpdateMirrorMode,           {}); // Use empty set to always run
-        }
-        
+        // Note: we always run this because it handles switching to the mirror mode debug screen
+        // It internally checks whether the MirrorMode flag is set in modesProcessed
+        tryAndReport(&VisionComponent::UpdateMirrorMode,           {}); // Use empty set to always run
+                
 #       undef ToVisionModeMask
                 
         // Store frame rate and last image processed time. Time should only move forward.
@@ -1467,6 +1465,22 @@ namespace Vector {
       _robot->SendRobotMessage<RobotInterface::EnableMirrorModeScreen>(isMirrorModeEnabled);
       wasMirrorModeEnabled = isMirrorModeEnabled;
     }
+
+    // If MirrorMode is no longer scheduled then don't bother trying to draw anything
+    // Normally you would only need to check if MirrorMode was in the processed vision modes, however,
+    // due to a timing issue between anim and engine when entering pairing from the mirror mode screen
+    // we need to check the schedule instead of processed vision modes.
+    // Ex: MirrorMode enabled, double press backpack button, switchboard sends down enter pairing message, engine gets it
+    // first and unsubscribes from MirrorMode, anim then gets the message and draws the pairing screen, then on the next
+    // tick VisionSystem comes back with a processed image from when MirrorMode was still enabled and we send that image
+    // to be drawn on the face overriding the pairing screen.
+    // The bug technically lies in anim process for still drawing the face image even though it is on the pairing screens
+    // but it feels safer to "fix" it here instead of messing with animStreamer, faceInfoScreenManager, and connectionFlow.
+    const AllVisionModesSchedule& schedule = _robot->GetVisionScheduleMediator().GetSchedule();
+    if(!schedule.GetScheduleForMode(VisionMode::MirrorMode).WillEverRun())
+    {
+      return RESULT_OK;
+    }
     
     // Send as face display animation
     auto & animComponent = _robot->GetAnimationComponent();
@@ -1560,14 +1574,14 @@ namespace Vector {
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
-
-    if((quality == 0) || (_robot->GetImageSendMode() == ImageSendMode::Off))
+    if(quality == 0)
     {
       // Don't send anything
       return RESULT_OK;
     }
 
-    if(!_robot->HasExternalInterface()) {
+    if(!_robot->HasExternalInterface())
+    {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
     }
@@ -1580,13 +1594,15 @@ namespace Vector {
     }
 
     ImageChunk m;
-    const bool sdkRequestingImage = _robot->GetSDKRequestingImage();
     const bool vizConnected = _robot->GetContext()->GetVizManager()->IsConnected();
+    if(!vizConnected && !_sendProtoImageChunks)
+    {
+      return RESULT_OK;
+    }
+
     std::string data;
     external_interface::ImageChunk* imageChunk = nullptr;
     external_interface::GatewayWrapper wrapper;
-
-    //DEV_ASSERT(sdkRequestingImage || vizConnected, "VisionComponent.CompressAndSendImage.CompressWithoutBroadcasting");
 
     const std::vector<int> compressionParams = {
       CV_IMWRITE_JPEG_QUALITY, quality
@@ -1631,7 +1647,8 @@ namespace Vector {
     }
 
     // Construct a clad ImageChunk
-    if(vizConnected) {
+    if(vizConnected)
+    {
       m.height = img.GetNumRows();
       m.width  = img.GetNumCols();
 
@@ -1650,7 +1667,8 @@ namespace Vector {
     }
     
     // Construct a proto ImageChunk
-    if (sdkRequestingImage) {
+    if(_sendProtoImageChunks)
+    {
       imageChunk = new external_interface::ImageChunk();
       imageChunk->set_height((u32)img.GetNumRows());
       imageChunk->set_width((u32)img.GetNumCols());
@@ -1673,7 +1691,8 @@ namespace Vector {
       auto startIt = compressedBuffer.begin() + (compressedBuffer.size() - bytesRemainingToSend);
       auto endIt = startIt + chunkSize;
       
-      if (sdkRequestingImage) {
+      if(_sendProtoImageChunks)
+      {
         imageChunk->set_chunk_id((u32)chunkId);
         data.assign(startIt, endIt);
         imageChunk->set_data(std::move(data));

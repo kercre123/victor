@@ -38,7 +38,6 @@ namespace Vector {
                                                                                                       kBuildVersion};
     external_interface::GatewayWrapper wrapper;
     wrapper.set_allocated_version_state_response(response);
-
     Robot* robot = _context->GetRobotManager()->GetRobot();
     robot->GetGatewayInterface()->Broadcast(wrapper);  
   }
@@ -95,19 +94,6 @@ namespace Vector {
                                                         processingStyle,
                                                         request.duration_scalar(),
                                                         ttsCallback);
-  }
-
-  void RobotExternalRequestComponent::ImageRequest(const AnkiEvent<external_interface::GatewayWrapper>& imageRequest) {
-    Robot* robot = _context->GetRobotManager()->GetRobot();
-    external_interface::ImageRequest request = imageRequest.GetData().image_request();
-    ImageSendMode sendMode = ImageSendMode(request.mode());
-    if (sendMode == ImageSendMode::Off) {
-      robot->SetSDKRequestingImage(false);
-    }
-    else {
-      robot->SetSDKRequestingImage(true);
-    }
-    robot->SetImageSendMode(sendMode);
   }
 
   // TODO Only allow this if the SDK behavior is activated.

@@ -65,8 +65,25 @@ def test_erase_all_enrolled_faces(vector_connection):
 def test_set_face_to_enroll(vector_connection, data):
     vector_connection.send_raw("v1/set_face_to_enroll", data, p.SetFaceToEnrollResponse())
 
-def test_enable_vision_mode(vector_connection):
-    vector_connection.send("v1/enable_vision_mode", p.EnableVisionModeRequest(), p.EnableVisionModeResponse())
+def test_enable_marker_detection(vector_connection):
+    vector_connection.send("v1/enable_marker_detection", p.EnableMarkerDetectionRequest(enable=True), p.EnableMarkerDetectionResponse())
+    vector_connection.send("v1/enable_marker_detection", p.EnableMarkerDetectionRequest(enable=False), p.EnableMarkerDetectionResponse())
+
+def test_enable_face_detection(vector_connection):
+    vector_connection.send("v1/enable_face_detection", p.EnableFaceDetectionRequest(enable=True, enable_smile_detection=True, enable_expression_estimation=True, enable_blink_detection=True, enable_gaze_detection=True), p.EnableFaceDetectionResponse())
+    vector_connection.send("v1/enable_face_detection", p.EnableFaceDetectionRequest(enable=False), p.EnableFaceDetectionResponse())
+    
+def test_enable_motion_detection(vector_connection):
+    vector_connection.send("v1/enable_motion_detection", p.EnableMotionDetectionRequest(enable=True), p.EnableMotionDetectionResponse())
+    vector_connection.send("v1/enable_motion_detection", p.EnableMotionDetectionRequest(enable=False), p.EnableMotionDetectionResponse())
+    
+def test_enable_mirror_mode(vector_connection):
+    vector_connection.send("v1/enable_mirror_mode", p.EnableMirrorModeRequest(enable=True), p.EnableMirrorModeResponse())
+    vector_connection.send("v1/enable_mirror_mode", p.EnableMirrorModeRequest(enable=False), p.EnableMirrorModeResponse())
+
+def test_enable_image_streaming(vector_connection):
+    vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=True), p.EnableImageStreamingResponse())
+    vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=False), p.EnableImageStreamingResponse())
 
 # TODO: add behavior control or else this does nothing
 # @pytest.mark.parametrize("data", [

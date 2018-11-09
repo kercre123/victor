@@ -63,6 +63,8 @@ message Event {
     ConnectionResponse               connection_response                 = 13;
     JdocsChanged                     jdocs_changed                       = 14;
     AlexaAuthEvent                   alexa_auth_event                    = 15;
+    MirrorModeDisabled               mirror_mode_disabled                = 16;
+    VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
   }
 }
 
@@ -202,8 +204,17 @@ message GatewayWrapper {
     BehaviorControlResponse       behavior_control_response          = 1002;
 
     // ------------ Image chunks sent from the vision component ------------
-    ImageRequest                  image_request                      = 1100;
     ImageChunk                    image_chunk                        = 1101;
+    EnableMarkerDetectionRequest  enable_marker_detection_request    = 1102;
+    EnableMarkerDetectionResponse enable_marker_detection_response   = 1103;
+    EnableFaceDetectionRequest    enable_face_detection_request      = 1104;
+    EnableFaceDetectionResponse   enable_face_detection_response     = 1105;
+    EnableMotionDetectionRequest  enable_motion_detection_request    = 1106;
+    EnableMotionDetectionResponse enable_motion_detection_response   = 1107;
+    EnableMirrorModeRequest       enable_mirror_mode_request         = 1108;
+    EnableMirrorModeResponse      enable_mirror_mode_response        = 1109;
+    EnableImageStreamingRequest   enable_image_streaming_request     = 1110;
+    EnableImageStreamingResponse  enable_image_streaming_response    = 1111;
 
     // ------------ Message and response for cloud connectivity check ------------
     CheckCloudRequest             check_cloud_request                = 1200;

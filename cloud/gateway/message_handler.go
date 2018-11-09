@@ -126,13 +126,6 @@ func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.Messa
 	return gw_clad.NewMessageExternalToRobotWithRequestAvailableAnimations(&gw_clad.RequestAvailableAnimations{})
 }
 
-func ProtoEnableVisionModeToClad(msg *extint.EnableVisionModeRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithEnableVisionMode(&gw_clad.EnableVisionMode{
-		Mode:   gw_clad.VisionMode(msg.Mode - 1), // Outside interface still has Idle=0; Engine does not. Remap. Gross.
-		Enable: msg.Enable,
-	})
-}
-
 func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
 	return &gw_clad.PoseStruct3d{
 		X:        msg.X,
@@ -1419,21 +1412,6 @@ func (service *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *e
 	}, nil
 }
 
-func (service *rpcService) EnableVisionMode(ctx context.Context, in *extint.EnableVisionModeRequest) (*extint.EnableVisionModeResponse, error) {
-	if in.Mode == extint.VisionMode_VISION_MODE_UNKNOWN {
-		return nil, grpc.Errorf(codes.InvalidArgument, "Unknown vision mode")
-	}
-	_, err := engineCladManager.Write(ProtoEnableVisionModeToClad(in))
-	if err != nil {
-		return nil, err
-	}
-	return &extint.EnableVisionModeResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-	}, nil
-}
-
 func (service *rpcService) ConnectCube(ctx context.Context, in *extint.ConnectCubeRequest) (*extint.ConnectCubeResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ConnectCubeResponse{}, 1)
 	defer f()
@@ -2137,19 +2115,161 @@ func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.
 	return grpc.Errorf(codes.Internal, errMsg)
 }
 
-// TODO: Add option to request a single image from the robot(SingleShot) once VIC-5159 is resolved.
-func ImageSendModeRequest(mode extint.ImageRequest_ImageSendMode) error {
-	log.Println("Requesting ImageRequest with mode(", mode, ")")
+func (service *rpcService) EnableMarkerDetection(ctx context.Context, request *extint.EnableMarkerDetectionRequest) (*extint.EnableMarkerDetectionResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMarkerDetectionResponse{}, 1)
+	defer f()
 
 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_ImageRequest{
-			ImageRequest: &extint.ImageRequest{
-				Mode: mode,
-			},
+		OneofMessageType: &extint.GatewayWrapper_EnableMarkerDetectionRequest{
+			EnableMarkerDetectionRequest: request,
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+
+	response := payload.GetEnableMarkerDetectionResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+
+	return response, nil
+}
+
+func (service *rpcService) EnableFaceDetection(ctx context.Context, request *extint.EnableFaceDetectionRequest) (*extint.EnableFaceDetectionResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableFaceDetectionResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EnableFaceDetectionRequest{
+			EnableFaceDetectionRequest: request,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+
+	response := payload.GetEnableFaceDetectionResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+
+	return response, nil
+}
+
+func (service *rpcService) EnableMotionDetection(ctx context.Context, request *extint.EnableMotionDetectionRequest) (*extint.EnableMotionDetectionResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMotionDetectionResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EnableMotionDetectionRequest{
+			EnableMotionDetectionRequest: request,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+
+	response := payload.GetEnableMotionDetectionResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+
+	return response, nil
+}
+
+func (service *rpcService) EnableMirrorMode(ctx context.Context, request *extint.EnableMirrorModeRequest) (*extint.EnableMirrorModeResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMirrorModeResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EnableMirrorModeRequest{
+			EnableMirrorModeRequest: request,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+
+	response := payload.GetEnableMirrorModeResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+
+	return response, nil
+}
+
+// TODO support CaptureSingleImage
+// func (service *rpcService) CaptureSingleImage(ctx context.Context, request *extint.CaptureSingleImageRequest) (*extint.CaptureSingleImageResponse, error) {
+// 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CaptureSingleImageResponse{}, 1)
+// 	defer f()
+
+// 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+// 		OneofMessageType: &extint.GatewayWrapper_CaptureSingleImageRequest{
+// 			CaptureSingleImageRequest: request,
+// 		},
+// 	})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	payload, ok := <-responseChan
+// 	if !ok {
+// 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+// 	}
+
+// 	payload.GetCaptureSingleImageResponse().Status = &extint.ResponseStatus{
+// 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+// 	}
+
+// 	return payload.GetCaptureSingleImageResponse(), nil
+// }
+
+// TODO VIC-11579 Support specifying streaming resolution
+func (service *rpcService) EnableImageStreaming(ctx context.Context, request *extint.EnableImageStreamingRequest) (*extint.EnableImageStreamingResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableImageStreamingResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EnableImageStreamingRequest{
+			EnableImageStreamingRequest: request,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+
+	response := payload.GetEnableImageStreamingResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+
+	return response, nil
 }
 
 type CameraFeedCache struct {
@@ -2213,13 +2333,18 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 // Long running message for sending camera feed to listening sdk users
 func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
 	// Enable video stream
-	err := ImageSendModeRequest(extint.ImageRequest_STREAM)
+	_, err := service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
+		Enable: true,
+	})
+
 	if err != nil {
 		return err
 	}
 
 	// Disable video stream
-	defer ImageSendModeRequest(extint.ImageRequest_OFF)
+	defer service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
+		Enable: false,
+	})
 
 	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
 	defer f()

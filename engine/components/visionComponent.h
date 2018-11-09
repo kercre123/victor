@@ -325,6 +325,8 @@ struct DockingErrorSignal;
 
     void EnableImageSending(bool enable);
     void EnableMirrorMode(bool enable);
+
+    void EnableSendingSDKImageChunks(bool enable) { _sendProtoImageChunks = enable; }
     
   protected:
     
@@ -424,6 +426,8 @@ struct DockingErrorSignal;
     bool _enableImageCapture = true;
 
     bool _captureOneImage = false;
+
+    bool _sendProtoImageChunks = false; 
 
     #if REMOTE_CONSOLE_ENABLED
     // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes

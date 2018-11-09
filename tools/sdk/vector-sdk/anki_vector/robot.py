@@ -596,6 +596,8 @@ class Robot:
         self._enable_camera_feed = enable
         if self.enable_camera_feed:
             self.camera.init_camera_feed()
+        else:
+            self.camera.close_camera_feed()
 
     # Unpack streamed data to robot's internal properties
     def _unpack_robot_state(self, _, msg):
@@ -673,7 +675,8 @@ class Robot:
             self.nav_map.init_nav_map_feed()
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self.vision.set_vision_mode(detect_faces=self.enable_face_detection, detect_custom_objects=self.enable_custom_object_detection)
+        self.vision.enable_face_detection(detect_faces=self.enable_face_detection, estimate_expression=False)
+        self.vision.enable_custom_object_detection(detect_custom_objects=self.enable_custom_object_detection)
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
@@ -689,7 +692,7 @@ class Robot:
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
         """
-        vision_mode = self.vision.set_vision_mode(detect_faces=False, detect_custom_objects=False)
+        vision_mode = self.vision.disable_all_vision_modes()
         if isinstance(vision_mode, concurrent.futures.Future):
             vision_mode.result()
 

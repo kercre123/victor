@@ -552,8 +552,6 @@ public:
 
   RobotInterface::MessageHandler* GetRobotMessageHandler() const;
   RobotEventHandler& GetRobotEventHandler();
-  void SetImageSendMode(ImageSendMode newMode);
-  const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   void SetSDKRequestingImage(bool requestingImage) { _sdkRequestingImage = requestingImage; }
   const bool GetSDKRequestingImage() const { return _sdkRequestingImage; }
 
@@ -647,7 +645,6 @@ protected:
   ObjectID         _chargerID;
 
   // State
-  ImageSendMode      _imageSendMode             = ImageSendMode::Off;
   bool               _powerButtonPressed        = false;
   EngineTimeStamp_t  _timePowerButtonPressed_ms = 0;
   bool               _isPickedUp                = false;
