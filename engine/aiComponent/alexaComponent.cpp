@@ -309,13 +309,11 @@ void AlexaComponent::SetAlexaUXResponses( const std::unordered_map<AlexaUXState,
   
   // initially reset to nothing
   RobotInterface::SetAlexaUXResponses msg;
-  for( size_t i=0; i<3; ++i ) {
-    msg.getInAnimTags[i] = kInvalidAnimationTag;
-    msg.postAudioEvents[i] = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Invalid,
-                                                         AudioMetaData::GameObjectType::Behavior,
-                                                         0 );
-    // msg.csvGetInAnimNames is set below
-  }
+  msg.getInAnimTags = {{kInvalidAnimationTag}};
+  msg.postAudioEvents = {{AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Invalid,
+                                                      AudioMetaData::GameObjectType::Behavior,
+                                                      0 )}};
+  // msg.csvGetInAnimNames is set below
   
   std::vector<std::string> animNames;
   static_assert( AlexaUXStateNumEntries == 5, "New states need changing the size below (decremented by one)" );
@@ -349,6 +347,10 @@ void AlexaComponent::SetAlexaUXResponses( const std::unordered_map<AlexaUXState,
     animNames[idx] = animName;
   }
   msg.csvGetInAnimNames = Util::StringJoin(animNames, ',');
+
+  // TODO (VIC-11517): downgrade. for now this is useful in webots
+  PRINT_NAMED_WARNING("AlexaComponent.SetUXResponses", "new response get-ins: %s", msg.csvGetInAnimNames.c_str());
+
   
   _robot.SendMessage( RobotInterface::EngineToRobot( std::move(msg) ) );
 }

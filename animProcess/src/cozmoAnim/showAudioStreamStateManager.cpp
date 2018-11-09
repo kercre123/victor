@@ -195,6 +195,14 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
     info.audioEvent = msg.postAudioEvents[i];
     info.getInAnimTag = msg.getInAnimTags[i];
     info.getInAnimName = animNames[i];
+
+    // TODO (VIC-11517): downgrade. for now this is useful in webots
+    LOG_WARNING( "Alexa.SetAlexaUXResponses.response",
+                 "%d: %s (tag %d)",
+                 i,
+                 info.getInAnimName.c_str(),
+                 info.getInAnimTag);
+
     _alexaResponses.push_back( std::move(info) );
   }
 }

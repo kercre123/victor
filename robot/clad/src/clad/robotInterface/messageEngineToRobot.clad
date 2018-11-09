@@ -453,7 +453,7 @@ message SetAlexaUXResponses
   // 3: Error
   AudioEngine::Multiplexer::PostAudioEvent postAudioEvents[4],
   uint_8 getInAnimTags[4],
-  string csvGetInAnimNames, // comma separated animation names
+  string csvGetInAnimNames, // comma separated animation names (cpp-lite can't handle more than one string per message)
 }
 
 message ResetBeatDetector
