@@ -31,3 +31,48 @@ We use a fork of the avs-device-sdk repo, which is built as part of coretech-ext
 [SDK repo](https://github.com/anki/avs-device-sdk)
 
 [SDK documentation](https://alexa.github.io/avs-device-sdk/)
+
+### Troubleshooting
+
+#### Anim process crashes with HTTP error
+
+If you see something like this in the log (along with an 800 on the robot)
+
+```
+11-08 12:11:18.000 info logwrapper 2614 2614 vic-anim: /anki/bin/vic-anim: symbol lookup error: /anki/bin/vic-anim: undefined symbol: _ZTVN14alexaClientSDK9avsCommon5utils12libcurlUtils29LibcurlHTTP2ConnectionFactoryE
+```
+
+You probably have a stale library in the build directory. Quick fix is to run:
+
+```
+find _build/ -name '*.so' -exec rm {} \;
+```
+
+to delete all *.so files in _build and then re-build and re-deploy
+
+#### Webots mac build curl HTTP2 error
+
+If you see an error like:
+
+```
+```[webotsCtrlAnim] 2018-11-09 04:29:10.149 [  1] E AlexaClientSdkInit:initializeFailed:reason=curlDoesNotSupportHTTP2
+[webotsCtrlAnim] 2018-11-09 04:29:10.149 [  1] C ../../../animProcess/src/cozmoAnim/alexa/alexaImpl.cpp:Failed to initialize SDK!
+[webotsCtrlAnim] 2018-11-09 04:29:10.149 [  1] E AlexaClientSdkInit:initializeError:reason=notInitialized```
+```
+
+You have a version of libcurl without HTTP2 support. Fix is to run:
+
+```
+$ brew install curl --with-nghttp2
+$ brew link curl --force
+```
+
+Then test with:
+
+```
+$ curl curl --http2 http://google.com/
+```
+
+If you get errors there about not knowing about http2, you may need to `brew uninstall curl` and try again (seems that brew won't over-write it's own curl if the version doesn't update, so if you have the same version but without http2, you need to make it rebuild. There may be a smarter way to do this in brew, but uninstall and reinstall works)
+
+Afterwards, you'll need to rebuild
