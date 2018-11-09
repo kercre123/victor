@@ -1520,7 +1520,7 @@ void FaceInfoScreenManager::DrawAlexaNotification(AnimationStreamer* animStreame
   if( _currScreen == nullptr ) {
     return;
   }
-  const std::string animName = "anim_mutemic_micoff_01"; // todo: change this
+  const std::string animName = "anim_avs_notification_loop_01";
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
