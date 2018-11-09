@@ -8,11 +8,8 @@
 #include "util/global/globalDefinitions.h"
 
 #ifndef ANKI_MESSAGE_PROFILER_ENABLED
-#if ANKI_PROFILING_ENABLED
-  #define ANKI_MESSAGE_PROFILER_ENABLED 1
-#else
-  #define ANKI_MESSAGE_PROFILER_ENABLED 0
-#endif
+// enabled in all builds by default, disabled for shipping builds in victor_build_shipping.sh
+#define ANKI_MESSAGE_PROFILER_ENABLED 1
 #endif
 
 #ifndef __Util_MessageProfiler_MessageProfiler_H__
