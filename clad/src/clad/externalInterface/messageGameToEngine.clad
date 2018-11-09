@@ -200,14 +200,6 @@ message ImageRequest {
     ImageSendMode mode
 }
 
-// SetRobotImageSendMode
-// NOTE: This can enable/disable streaming of images from the physical robot.
-//       It is intended for dev use since the robot will likely always stream
-//       its image in the product.
-message SetRobotImageSendMode {
-    ImageSendMode mode
-}
-
 // SaveImages (via VizController)
 message SaveImages {
     ImageSendMode mode,                    // For single image vs. streaming (aka continuous saving)

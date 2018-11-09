@@ -69,6 +69,8 @@ public:
 
   // Returns string in the form "mode1+mode2+...+modeN", for all N modes in the set
   std::string ToString() const;
+
+  const std::set<VisionMode>& GetSet() const { return _modes; }
   
   // Direct container access to use STL helpers
   using const_iterator = std::set<VisionMode>::const_iterator;

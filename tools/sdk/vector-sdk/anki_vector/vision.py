@@ -24,7 +24,7 @@ processing on the robot.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['VisionComponent']
 
-from . import util, connection
+from . import util, connection, events
 from .messaging import protocol
 
 
@@ -41,7 +41,22 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
 
         self._detect_faces = False
         self._detect_custom_objects = False
+        # TODO implement
+        # self._detect_motion = False
+        self._display_camera_feed_on_face = False
 
+        robot.events.subscribe(self._handle_mirror_mode_disabled_event, events.Events.mirror_mode_disabled)
+        robot.events.subscribe(self._handle_vision_modes_auto_disabled_event, events.Events.vision_modes_auto_disabled)
+
+    def _handle_mirror_mode_disabled_event(self, _, msg):
+        self._display_camera_feed_on_face = False
+
+    def _handle_vision_modes_auto_disabled_event(self, _, msg):
+        self._detect_faces = False
+        self._detect_custom_objects = False
+        # self._detect_motion = False
+        self._display_camera_feed_on_face = False
+        
     @property
     def detect_faces(self):
         return self._detect_faces
@@ -50,27 +65,108 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
     def detect_custom_objects(self):
         return self._detect_custom_objects
 
-    @connection.on_connection_thread()
-    async def set_vision_mode(self, detect_faces: bool = True, detect_custom_objects: bool = False):
-        """Enable facial and/or custom object detection on the robot's camera
+    # TODO implement
+    # @property
+    # def detect_motion(self):
+    #     return self._detect_motion
 
-        :param detect_faces: Specify whether we want the robot to detect faces.
+    @property
+    def display_camera_feed_on_face(self):
+        return self._display_camera_feed_on_face
+
+    @connection.on_connection_thread()
+    async def disable_all_vision_modes(self):
+        if self.detect_faces:
+            await self.enable_face_detection(False, False)
+        if self.detect_custom_objects:
+            await self.enable_custom_object_detection(False)
+        # if self.detect_motion:
+        #     await self.enable_motion_detection(False)
+        if self.display_camera_feed_on_face:
+            await self.enable_display_camera_feed_on_face(False)
+    
+    @connection.on_connection_thread()
+    async def enable_custom_object_detection(self, detect_custom_objects: bool = True):
+        """Enable custom object detection on the robot's camera
+
         :param detect_custom_objects: Specify whether we want the robot to detect custom objects.
 
         .. testcode::
 
             import anki_vector
             with anki_vector.Robot() as robot:
-                robot.set_vision_mode(detect_faces=True)
+                robot.enable_custom_object_detection(detect_custom_objects=True)
         """
-        self._detect_faces = detect_faces
         self._detect_custom_objects = detect_custom_objects
 
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_MARKERS"), enable=detect_custom_objects)
-        await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
+        enable_marker_detection_request = protocol.EnableMarkerDetectionRequest(enable=detect_custom_objects)
+        await self.grpc_interface.EnableMarkerDetection(enable_marker_detection_request)
+        
+    @connection.on_connection_thread()
+    async def enable_face_detection(
+            self,
+            detect_faces: bool = True,
+            # detect_smile: bool = False,
+            estimate_expression: bool = False,
+            # detect_blink: bool = False,
+            # detect_gaze: bool = False
+    ):
+        """Enable face detection on the robot's camera
 
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_FULL_FRAME_MARKER_DETECTION"), enable=detect_custom_objects)
-        await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
+        :param detect_faces: Specify whether we want the robot to detect faces.
+        :param detect_smile: Specify whether we want the robot to detect smiles in detected faces.
+        :param estimate_expression: Specify whether we want the robot to estimate what expression detected faces are showing.
+        :param detect_blink: Specify whether we want the robot to detect how much detected faces are blinking.
+        :param detect_gaze: Specify whether we want the robot to detect where detected faces are looking.
 
-        enable_vision_mode_request = protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value("VISION_MODE_DETECTING_FACES"), enable=detect_faces)
-        return await self.grpc_interface.EnableVisionMode(enable_vision_mode_request)
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot() as robot:
+                robot.enable_face_detection(detect_faces=True, detect_smile=True, estimate_emotion=False, detect_blink=True)
+        """
+        self._detect_faces = detect_faces
+
+        enable_face_detection_request = protocol.EnableFaceDetectionRequest(
+            enable=detect_faces,
+            enable_smile_detection=False,
+            enable_expression_estimation=estimate_expression,
+            enable_blink_detection=False,
+            enable_gaze_detection=False)
+        await self.grpc_interface.EnableFaceDetection(enable_face_detection_request)
+
+    # TODO implement 
+    # @connection.on_connection_thread()
+    # async def enable_motion_detection(self, detect_motion: bool = True):
+    #     """Enable motion detection on the robot's camera
+
+    #     :param detect_motion: Specify whether we want the robot to detect motion.
+
+    #     .. testcode::
+
+    #         import anki_vector
+    #         with anki_vector.Robot() as robot:
+    #             robot.enable_motion_detection(detect_motion=True)
+    #     """
+    #     self._detect_motion = detect_motion
+
+    #     enable_motion_detection_request = protocol.EnableMotionDetectionRequest(enable=detect_motion)
+    #     await self.grpc_interface.EnableMotionDetection(enable_motion_detection_request)
+
+    @connection.on_connection_thread()
+    async def enable_display_camera_feed_on_face(self, display_camera_feed_on_face: bool = True):
+        """Display the robot's camera feed on its face along with any detections (if enabled)
+
+        :param display_camera_feed_on_face: Specify whether we want to display the robot's camera feed on its face.
+
+        .. testcode::
+
+            import anki_vector
+            with anki_vector.Robot() as robot:
+                robot.display_camera_feed_on_face(display_camera_feed_on_face=True)
+        """
+        self._display_camera_feed_on_face = display_camera_feed_on_face
+
+        display_camera_feed_request = protocol.EnableMirrorModeRequest(enable=display_camera_feed_on_face)
+        await self.grpc_interface.EnableMirrorMode(display_camera_feed_request)
+

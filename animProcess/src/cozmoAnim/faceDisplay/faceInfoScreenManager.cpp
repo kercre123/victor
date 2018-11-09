@@ -1645,9 +1645,11 @@ void FaceInfoScreenManager::StartAlexaNotification()
 void FaceInfoScreenManager::EnableMirrorModeScreen(bool enable)
 {
   // As long as we're not in a screen that's already doing mirror mode
+  // and we are not on the pairing screen
   // don't jump to the mirror mode screen
   if (GetCurrScreenName() != ScreenName::Camera && 
-      GetCurrScreenName() != ScreenName::CameraMotorTest) {  
+      GetCurrScreenName() != ScreenName::CameraMotorTest &&
+      GetCurrScreenName() != ScreenName::Pairing) {  
 
     if (enable && GetCurrScreenName() != ScreenName::MirrorMode) {
       LOG_INFO("FaceInfoScreenManager.EnableMirrorModeScreen.Enable", "");
@@ -1757,6 +1759,7 @@ bool FaceInfoScreenManager::CanEnterPairingFromScreen( const ScreenName& screenN
     case ScreenName::FAC:
     case ScreenName::CustomText:
     case ScreenName::Pairing:
+    case ScreenName::MirrorMode:
     case ScreenName::AlexaPairing:
     case ScreenName::AlexaPairingSuccess:
     case ScreenName::AlexaPairingFailed:

@@ -163,7 +163,6 @@ protected:
   void SendEnableLiftPower(bool enable);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
-  void SendSetRobotImageSendMode(ImageSendMode mode);
   void SendSaveImages(ImageSendMode imageMode, const std::string& path = "", const int8_t qualityOnRobot = -1,
                       const bool removeRadialDistortion = false);
   void SendSaveState(bool enabled, const std::string& path = "");

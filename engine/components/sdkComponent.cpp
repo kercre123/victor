@@ -25,6 +25,8 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/visionComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotEventHandler.h"
@@ -63,21 +65,53 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
   auto* gi = robot->GetGatewayInterface();
   if (gi != nullptr)
   {
-    auto callback = std::bind(&SDKComponent::HandleMessage, this, std::placeholders::_1);
+    auto callback = std::bind(&SDKComponent::HandleProtoMessage, this, std::placeholders::_1);
 
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kControlRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kControlRelease, callback));
 
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kGoToPoseRequest, callback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kDockWithCubeRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kGoToPoseRequest,      callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kDockWithCubeRequest,  callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kDriveStraightRequest, callback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnInPlaceRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnInPlaceRequest,   callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetLiftHeightRequest, callback));
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetHeadAngleRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetHeadAngleRequest,  callback));
 
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kAudioSendModeRequest, callback));
+
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableMarkerDetectionRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableFaceDetectionRequest,   callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableMotionDetectionRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableMirrorModeRequest,      callback));
+    // _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kCaptureSingleImageRequest,    callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableImageStreamingRequest,  callback));
   }
+
+  auto* context = _robot->GetContext();
+  if(context != nullptr && context->GetExternalInterface() != nullptr)
+  {
+    using namespace ExternalInterface;
+    auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
+
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotProcessedImage>();
+  }
+
+  // Disable/Unsubscribe from MirrorMode when we enter pairing.
+  // This is to prevent SDK requested MirrorMode from drawing over the pairing screens
+  auto setConnectionStatusCallback = [this](const GameToEngineEvent& event) {
+     const auto& msg = event.GetData().Get_SetConnectionStatus();
+     if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
+         msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
+         msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING)
+     {
+       DisableMirrorMode();
+     }
+   };
+
+  _signalHandles.push_back(_robot->GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus,
+                                                                     setConnectionStatusCallback));
 }
+
 // @TODO: JMRivas - Delete this static and replace with a better way to store whether the audio processing mode on the
 // robot/animProcess is considered to be under SDK control.
 static bool _SDK_WANTS_AUDIO = false;
@@ -173,9 +207,11 @@ void SDKComponent::OnSendAudioModeRequest(const AnkiEvent<external_interface::Ga
   gi->Broadcast(ExternalMessageRouter::WrapResponse(changedEvent));
 }
 
-void SDKComponent::HandleMessage(const AnkiEvent<external_interface::GatewayWrapper>& event)
+void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
-
+  using namespace external_interface;
+  auto* gi = _robot->GetGatewayInterface();
+    
   switch(event.GetData().GetTag()){
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
@@ -200,9 +236,199 @@ void SDKComponent::HandleMessage(const AnkiEvent<external_interface::GatewayWrap
       OnSendAudioModeRequest(event);
       break;
 
+    // All of the vision mode requests are gated behind the sdk behavior being activated
+    // to prevent enabling of unnecessary modes that may have performance impact.
+    // The modes are automatically removed when the behavior is deactivated.
+    // Except for ImageViz since the SDK still wants to receive images while the robot is
+    // doing his normal things
+    #define SEND_FORBIDDEN(RESPONSE_TYPE) {                                     \
+        ResponseStatus* status = new ResponseStatus(ResponseStatus::FORBIDDEN); \
+        auto* msg = new RESPONSE_TYPE();                                        \
+        msg->set_allocated_status(status);                                      \
+        gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));                \
+      }
+      
+    case external_interface::GatewayWrapperTag::kEnableMarkerDetectionRequest:
+      {
+        if(_sdkBehaviorActivated)
+        {
+          const auto& enable = event.GetData().enable_marker_detection_request().enable();
+          SubscribeToVisionMode(enable, VisionMode::DetectingMarkers);
+          SubscribeToVisionMode(enable, VisionMode::FullFrameMarkerDetection);
+        }
+        else
+        {
+          SEND_FORBIDDEN(EnableMarkerDetectionResponse);
+        }
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kEnableFaceDetectionRequest:
+      {
+        if(_sdkBehaviorActivated)
+        {
+          const auto& msg = event.GetData().enable_face_detection_request();
+          SubscribeToVisionMode(msg.enable(), VisionMode::DetectingFaces);
+          SubscribeToVisionMode(msg.enable_smile_detection(), VisionMode::DetectingSmileAmount);
+          SubscribeToVisionMode(msg.enable_expression_estimation(), VisionMode::EstimatingFacialExpression);
+          SubscribeToVisionMode(msg.enable_blink_detection(), VisionMode::DetectingBlinkAmount);
+          SubscribeToVisionMode(msg.enable_gaze_detection(), VisionMode::DetectingGaze);
+        }
+        else
+        {
+          SEND_FORBIDDEN(EnableFaceDetectionResponse);
+        }
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kEnableMotionDetectionRequest:
+      {
+        if(_sdkBehaviorActivated)
+        {
+          const auto& enable = event.GetData().enable_motion_detection_request().enable();
+          SubscribeToVisionMode(enable, VisionMode::DetectingMotion);
+        }
+        else
+        {
+          SEND_FORBIDDEN(EnableMotionDetectionResponse);
+        }
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kEnableMirrorModeRequest:
+      {
+        if(_sdkBehaviorActivated)
+        {
+          const auto& enable = event.GetData().enable_mirror_mode_request().enable();
+          SubscribeToVisionMode(enable, VisionMode::MirrorMode);
+        }
+        else
+        {
+          SEND_FORBIDDEN(EnableMirrorModeResponse);
+        }
+      }
+      break;
+
+    // TODO VIC-11579 Support CaptureSingleImage
+    // case external_interface::GatewayWrapperTag::kCaptureSingleImageRequest:
+    //   {
+    //     SubscribeToVisionMode(true, VisionMode::ImageViz);
+    //     _robot->GetVisionComponent().EnableSendingSDKImageChunks(true);
+    //     _captureSingleImage = true;
+    //   }
+    //   break;
+
+    case external_interface::GatewayWrapperTag::kEnableImageStreamingRequest:
+      {
+        // Allowed to be controlled even when the behavior is not active
+        const auto& enable = event.GetData().enable_image_streaming_request().enable();
+        SubscribeToVisionMode(enable, VisionMode::ImageViz);
+        _robot->GetVisionComponent().EnableSendingSDKImageChunks(enable);
+      }
+      break;
+      
     default:
       _robot->GetRobotEventHandler().HandleMessage(event);
       break;
+  }
+
+  #undef SEND_FORBIDDEN
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& msg)
+{
+  // For all of the vision modes we are waiting to change, check if they have appeared or disappeared
+  // from the RobotProcessedImage result. If they did what we were expecting then send a Response message
+  // for that mode
+  // Note: There is one frame of lag between when a VisionMode Request is made, when the detection is sent, and when
+  // the Response is sent. The RobotProcessedImage message comes from VisionComponent after any messages
+  // for things actually detected in that frame. So if an SDK program is waiting for a Response message,
+  // they could miss the detections from the first frame.
+  auto waitingIter = _visionModesWaitingToChange.begin();
+  while(waitingIter != _visionModesWaitingToChange.end())
+  {
+    const auto& iter = std::find(msg.visionModes.begin(), msg.visionModes.end(), waitingIter->first);
+    const bool modeWasProcessed = (iter != msg.visionModes.end()); 
+
+    if(modeWasProcessed == waitingIter->second)
+    {
+      using namespace external_interface;
+      auto* gi = _robot->GetGatewayInterface();
+
+      bool eraseFromSet = true;
+      ResponseStatus* status = new ResponseStatus(ResponseStatus::OK);
+      switch(waitingIter->first)
+      {
+        case VisionMode::DetectingMarkers:
+          {
+            auto* msg = new EnableMarkerDetectionResponse();
+            msg->set_allocated_status(status);
+            gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+          }
+          break;
+        case VisionMode::DetectingFaces:
+          {
+            auto* msg = new EnableFaceDetectionResponse();
+            msg->set_allocated_status(status);
+            gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+          }
+          break;
+        case VisionMode::DetectingMotion:
+          {
+            auto* msg = new EnableMotionDetectionResponse();
+            msg->set_allocated_status(status);
+            gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+          }
+          break;
+        case VisionMode::MirrorMode:
+          {
+            auto* msg = new EnableMirrorModeResponse();
+            msg->set_allocated_status(status);
+            gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+          }
+          break;
+        case VisionMode::ImageViz:
+          {
+            // if(_captureSingleImage)
+            // {
+            //   auto* msg = new CaptureSingleImageResponse();
+            //   msg->set_allocated_status(status);
+            //   gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+
+            //   const bool updateWaitingSet = false;
+            //   SubscribeToVisionMode(false, VisionMode::ImageViz, updateWaitingSet);
+            //   _robot->GetVisionComponent().EnableSendingSDKImageChunks(false);
+            //   _captureSingleImage = false;
+            // }
+            // else
+            {
+              auto* msg = new EnableImageStreamingResponse();
+              msg->set_allocated_status(status);
+              gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+            }
+          }
+          break;
+        
+        default:
+          eraseFromSet = false;
+          Util::SafeDelete(status);
+          break;
+      }
+
+      if(eraseFromSet)
+      {
+        waitingIter = _visionModesWaitingToChange.erase(waitingIter);
+      }
+      else
+      {
+        waitingIter++;
+      }
+    }
+    else
+    {
+      waitingIter++;
+    }
   }
 }
 
@@ -216,6 +442,26 @@ void SDKComponent::SDKBehaviorActivation(bool enabled)
 {
   _sdkBehaviorActivated = enabled;
   DispatchSDKActivationResult(_sdkBehaviorActivated);
+
+  // If sdk behavior is being deactivated...
+  if(!_sdkBehaviorActivated)
+  {
+    // ...unsubscribe from MirrorMode. This is to make sure the robot
+    // will display eyes when the sdk no longer has control.
+    DisableMirrorMode();
+
+    // Remove all other vision modes except for ImageViz in order
+    // to allow SDK users to still receive images when the SDK does not have
+    // control.
+    VisionModeSet modes;
+    modes.InsertAllModes();
+    modes.Remove(VisionMode::ImageViz);
+    _robot->GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, modes.GetSet());    
+
+    auto* gi = _robot->GetGatewayInterface();
+    auto* msg = new external_interface::Event(new external_interface::VisionModesAutoDisabled());
+    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+  }
 }
 
 void SDKComponent::DispatchSDKActivationResult(bool enabled) {
@@ -281,6 +527,40 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
       }
       return;
     }
+  }
+}
+
+bool SDKComponent::SubscribeToVisionMode(bool subscribe, VisionMode mode, bool updateWaitingToChangeSet)
+{
+  bool res = false;
+  if(subscribe)
+  {
+    _robot->GetVisionScheduleMediator().AddAndUpdateVisionModeSubscriptions(this,
+                                                                            {{.mode = mode,
+                                                                              .frequency = EVisionUpdateFrequency::High}});
+    res = true;
+  }
+  else
+  {
+    res = _robot->GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, {mode});
+  }
+
+  if(updateWaitingToChangeSet)
+  {
+    _visionModesWaitingToChange.insert({mode, subscribe});
+  }
+  
+  return res;
+}
+
+void SDKComponent::DisableMirrorMode()
+{
+  const bool subscriptionUpdated = SubscribeToVisionMode(false, VisionMode::MirrorMode);
+  if(subscriptionUpdated)
+  {
+    auto* gi = _robot->GetGatewayInterface();
+    auto* msg = new external_interface::Event(new external_interface::MirrorModeDisabled());
+    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
   }
 }
 

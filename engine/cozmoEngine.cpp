@@ -242,7 +242,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RedirectViz>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
@@ -673,24 +672,11 @@ Robot* CozmoEngine::GetRobot() {
 }
 
 template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
-{
-  const ImageSendMode newMode = msg.mode;
-  Robot* robot = GetRobot();
-
-  if(robot != nullptr) {
-    robot->SetImageSendMode(newMode);
-    // TODO: Can get rid of one of ExternalInterface::SetRobotImageSendMode or
-    // ExternalInterfaceImageRequest since they seem to do the same thing now.
-  }
-}
-
-template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
 {
   Robot* robot = GetRobot();
   if(robot != nullptr) {
-    return robot->SetImageSendMode(msg.mode);
+    return robot->GetVisionComponent().EnableImageSending(msg.mode == ImageSendMode::Stream);
   }
 }
 

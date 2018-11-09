@@ -428,22 +428,6 @@ message PhotoTaken {
   uint32 photo_id = 1;
 }
 
-enum VisionMode {
-  VISION_MODE_UNKNOWN                     = 0;
-  VISION_MODE_DETECTING_MARKERS           = 1;
-  VISION_MODE_DETECTING_FACES             = 2;
-  VISION_MODE_FULL_FRAME_MARKER_DETECTION = 22;
-}
-
-message EnableVisionModeRequest {
-  VisionMode mode = 1;
-  bool       enable = 2;
-}
-
-message EnableVisionModeResponse {
-  ResponseStatus status = 1;
-}
-
 // Struct containing all the information relevant to how a 
 // path should be modified or traversed.
 message PathMotionProfile {
@@ -780,15 +764,80 @@ message AudioFeedResponse {
   uint32 noise_floor_power   = 7; // power value, convert to db with log_10(value)
 }
 
-// Request how the robot should send image data
-message ImageRequest {
-  enum ImageSendMode {
-    OFF                          = 0;
-    STREAM                       = 1;
-    SINGLE_SHOT                  = 2;
-    SINGLE_SHOT_WITH_SENSOR_DATA = 3;
-  }
-  ImageSendMode mode = 1;
+
+// When enabled, RobotObservedObject messages will be produced
+message EnableMarkerDetectionRequest
+{
+  bool enable = 1;
+}
+
+message EnableMarkerDetectionResponse
+{
+  ResponseStatus status = 1;
+}
+
+// When enabled, RobotObservedFace messages will be produced
+message EnableFaceDetectionRequest
+{
+  bool enable = 1;
+
+  bool enable_smile_detection = 2;
+  bool enable_expression_estimation = 3;
+  bool enable_blink_detection = 4;
+  bool enable_gaze_detection = 5;
+}
+
+message EnableFaceDetectionResponse
+{
+  ResponseStatus status = 1;
+}
+
+// When enabled, RobotObservedMotion messages will be produced
+message EnableMotionDetectionRequest
+{
+  bool enable = 1;
+}
+
+message EnableMotionDetectionResponse
+{
+  ResponseStatus status = 1;
+}
+
+// When enabled, camera feed will appear on the robot's face, along with any 
+// detections that are enabled from above messages
+message EnableMirrorModeRequest
+{
+  bool enable = 1;
+}
+
+message EnableMirrorModeResponse
+{
+  ResponseStatus status = 1;
+}
+
+// Sent if MirrorMode (camera feed displayed on face) is currently enabled but is automatically
+// being disabled
+message MirrorModeDisabled
+{
+
+}
+
+// Toggle image streaming at the given resolution
+message EnableImageStreamingRequest
+{
+  bool enable = 1;
+}
+
+message EnableImageStreamingResponse
+{
+  ResponseStatus status = 1;
+}
+
+// Sent when vision modes are automatically disabled due to the SDK no longer having control
+// of the robot
+message VisionModesAutoDisabled
+{
+
 }
 
 // One frame of image data and associated metadata

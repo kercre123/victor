@@ -212,7 +212,6 @@ namespace Anki {
     void UiGameController::HandleRobotConnectedBase(const ExternalInterface::RobotConnectionResponse& msg)
     {
       // Once robot connects, set resolution
-      //SendSetRobotImageSendMode(ISM_STREAM);
       _firstRobotPoseUpdate = true;
       HandleRobotConnected(msg);
       
@@ -1015,14 +1014,6 @@ namespace Anki {
       SendMessage(message);
       
       _isStreamingImages = (mode == ImageSendMode::Stream);
-    }
-    
-    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode)
-    {
-      ExternalInterface::SetRobotImageSendMode m(mode);
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetRobotImageSendMode(m);
-      SendMessage(message);
     }
     
     void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path, const int8_t qualityOnRobot,
