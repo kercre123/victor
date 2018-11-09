@@ -45,6 +45,20 @@ private:
   bool ShouldExecuteEmergencyTurn() const;
   bool ShouldAskForHelp() const;
   
+  void TransitionToEmergencyTurn();
+  void TransitionToSlowlyBackUp();
+  void TransitionToCheckIfStillStuck();
+  void TransitionToAskForHelp();
+  
+  enum class State {
+    SlowlyBackingUp,
+    EmergencyPointTurn,
+    CheckingIfStillStuck,
+    AskingForHelp
+  };
+  
+  void SetInternalState(State state, const std::string& stateName);
+  
   struct InstanceConfig {
     InstanceConfig();
     InstanceConfig(const Json::Value& config, const std::string& debugName);
@@ -61,11 +75,17 @@ private:
     float retreatDistance_mm = 0.f;
     float retreatSpeed_mmps = 0.f;
     
+    float pointTurnAngle_rad = 0.f;
+    
     ICozmoBehaviorPtr askForHelpBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables() {}
+    struct Persistent {
+      State state;
+    };
+    Persistent persistent;
   };
 
   InstanceConfig _iConfig;

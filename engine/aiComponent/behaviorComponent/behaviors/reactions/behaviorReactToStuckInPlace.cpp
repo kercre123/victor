@@ -19,6 +19,8 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#define SET_STATE(s) SetInternalState(State::s, #s)
+
 namespace Anki {
 namespace Vector {
   
@@ -27,6 +29,8 @@ namespace {
   const char* kFailureActivationHistoryTrackerKey = "failureActivationHistoryTracker";
   const char* kRetreatDistanceKey = "retreatDistance_mm";
   const char* kRetreatSpeedKey = "retreatSpeed_mmps";
+  const char* kPointTurnAngleKey = "pointTurnAngle_deg";
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,6 +62,7 @@ BehaviorReactToStuckInPlace::InstanceConfig::InstanceConfig(const Json::Value& c
               "Behavior specified invalid recent occurrence config for checking for excessive activations");
   failureActivationHandle = activationHistoryTracker.GetHandle(numRepeatedActivationsAllowed, failureActivationCheckWindow_sec);
 
+  // Configure settings for retreating driving action that is triggered if this behavior is activated too frequently
   retreatDistance_mm = JsonTools::ParseFloat(config, kRetreatDistanceKey, debugName);
   if (!ANKI_VERIFY(Util::IsFltGTZero(retreatDistance_mm),
                    (debugName + ".NonPositiveDistance").c_str(),
@@ -73,6 +78,19 @@ BehaviorReactToStuckInPlace::InstanceConfig::InstanceConfig(const Json::Value& c
                    retreatSpeed_mmps))
   {
     retreatSpeed_mmps *= -1.0;
+  }
+  
+  // Convert user input setting from degrees to radians
+  float possiblePointTurnAngle_rad = std::fabs( DEG_TO_RAD( JsonTools::ParseFloat(config,
+                                                                                  kPointTurnAngleKey,
+                                                                                  debugName)));
+  if (!ANKI_VERIFY(Util::IsFltLE(possiblePointTurnAngle_rad, M_PI_F), (debugName + ".InvalidPointTurnAngle").c_str(),
+                   "Point turn angle magnitude should be less than PI radians (not %f). Clamping to PI radians.",
+                   possiblePointTurnAngle_rad))
+  {
+    pointTurnAngle_rad = M_PI_F;
+  } else {
+    pointTurnAngle_rad = possiblePointTurnAngle_rad;
   }
   
 }
@@ -115,7 +133,8 @@ void BehaviorReactToStuckInPlace::GetBehaviorJsonKeys(std::set<const char*>& exp
     kFrequentActivationHistoryTrackerKey,
     kFailureActivationHistoryTrackerKey,
     kRetreatDistanceKey,
-    kRetreatSpeedKey
+    kRetreatSpeedKey,
+    kPointTurnAngleKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -139,17 +158,7 @@ void BehaviorReactToStuckInPlace::OnBehaviorActivated()
                   _iConfig.activationHistoryTracker.GetCurrentSize(),
                   _iConfig.failureActivationCheckWindow_sec);
 
-    if (ANKI_VERIFY(_iConfig.askForHelpBehavior->WantsToBeActivated(),
-                    "BehaviorReactToStuckInPlace.DelegateToAskForHelp",
-                    "Behavior %s does not want to activate! Canceling self.",
-                    _iConfig.askForHelpBehavior->GetDebugLabel().c_str())) {
-      // Reset the records of activation times prior to delegating to prevent retriggering this delegation if the
-      // ReactToStuckInPlace is reactivated sometime in the near future.
-      _iConfig.activationHistoryTracker.Reset();
-      DelegateIfInControl(_iConfig.askForHelpBehavior.get());
-    } else {
-      CancelSelf();
-    }
+    TransitionToAskForHelp();
   } else if (ShouldExecuteEmergencyTurn()) {
     // Scenario 2: Activated somewhat frequently, perform fast fixed-angle point turn, then try to quickly move
     // forward or backward to get untangled from cord/wire that may be caught in treads.
@@ -157,30 +166,32 @@ void BehaviorReactToStuckInPlace::OnBehaviorActivated()
                   "Activated %zu times in the past %.1f seconds.",
                   _iConfig.activationHistoryTracker.GetCurrentSize(),
                   _iConfig.frequentActivationCheckWindow_sec);
-    CompoundActionSequential* seq_action = new CompoundActionSequential({
-      new TurnInPlaceAction(M_PI/3.f, false),
-      new DriveStraightAction(2.f * _iConfig.retreatDistance_mm, 5.f * _iConfig.retreatSpeed_mmps)
-    });
-    DelegateIfInControl(seq_action);
+    TransitionToEmergencyTurn();
   } else {
     // Scenario 3: No frequent activations detected, just raise the lift and back up slowly,
     // the lift may have snagged on something.
-    CompoundActionSequential* seq_action = new CompoundActionSequential({
-      new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
-      new DriveStraightAction(-_iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
-    DelegateIfInControl(seq_action);
+    TransitionToSlowlyBackUp();
   }
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToStuckInPlace::BehaviorUpdate() 
 {
   // TODO: monitor for things you care about here
   if( IsActivated() ) {
-    // TODO: do stuff here if the behavior is active
+    if (GetBEI().GetMovementComponent().IsUnexpectedMovementDetected()) {
+      switch (_dVars.persistent.state) {
+        case State::SlowlyBackingUp:
+          TransitionToEmergencyTurn();
+          break;
+        case State::CheckingIfStillStuck:
+          TransitionToAskForHelp();
+          break;
+        default:
+          break;
+      }
+    }
   }
-  // TODO: delete this function if you don't need it
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -193,6 +204,100 @@ bool BehaviorReactToStuckInPlace::ShouldExecuteEmergencyTurn() const
 bool BehaviorReactToStuckInPlace::ShouldAskForHelp() const
 {
   return _iConfig.failureActivationHandle->AreConditionsMet();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToStuckInPlace::TransitionToEmergencyTurn()
+{
+  CompoundActionSequential* seq_action = new CompoundActionSequential({
+    new TurnInPlaceAction(_iConfig.pointTurnAngle_rad, false),
+    new DriveStraightAction(2.f * _iConfig.retreatDistance_mm, 5.f * _iConfig.retreatSpeed_mmps)
+  });
+  DelegateIfInControl(seq_action, [this](ActionResult res) {
+    if( res == ActionResult::SUCCESS) {
+      // We were able to back up successfully, double check that we can rotate without any unexpected movement
+      TransitionToCheckIfStillStuck();
+    } else {
+      // Either action failed. Escalate to the next emergency maneuver.
+      TransitionToAskForHelp();
+    }
+  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToStuckInPlace::TransitionToSlowlyBackUp()
+{
+  SET_STATE(SlowlyBackingUp);
+  CompoundActionSequential* seq_action = new CompoundActionSequential({
+    new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
+    new DriveStraightAction(-_iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
+  DelegateIfInControl(seq_action, [this](ActionResult res) {
+    if( res == ActionResult::SUCCESS) {
+      // We were able to back up successfully, double check that we can rotate without any unexpected movement
+      TransitionToCheckIfStillStuck();
+    } else {
+      // Either action failed. Escalate to the next emergency maneuver.
+      TransitionToEmergencyTurn();
+    }
+  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToStuckInPlace::TransitionToCheckIfStillStuck()
+{
+  const State prevState = _dVars.persistent.state;
+  SET_STATE(CheckingIfStillStuck);
+  CompoundActionSequential* seq_action = new CompoundActionSequential({
+    new TurnInPlaceAction(_iConfig.pointTurnAngle_rad, false),
+    new TurnInPlaceAction(-2 * _iConfig.pointTurnAngle_rad, false),
+  });
+  DelegateIfInControl(seq_action, [this, prevState](ActionResult res) {
+    if( res != ActionResult::SUCCESS) {
+      switch (prevState) {
+        case State::SlowlyBackingUp:
+          TransitionToEmergencyTurn();
+          break;
+        case State::EmergencyPointTurn:
+          TransitionToAskForHelp();
+          break;
+        default:
+          PRINT_CH_INFO("Behaviors",
+                        "BehaviorReactToStuckInPlace.TransitionToCheckIfStillStuck.InvalidPrevState",
+                        "Previous internal state not valid, canceling behavior.");
+          break;
+      }
+    } else {
+      // Behavior was able to get robot unstuck, reset activation history so that the next activation
+      // has the behavior restarting the cycle of backing up, executing point-turns, etc.
+      _iConfig.activationHistoryTracker.Reset();
+      // TODO(GB): Trigger anim event for successfully getting unstuck. Celebrate!
+    }
+  });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToStuckInPlace::TransitionToAskForHelp()
+{
+  SET_STATE(AskingForHelp);
+  if (ANKI_VERIFY(_iConfig.askForHelpBehavior->WantsToBeActivated(),
+                  "BehaviorReactToStuckInPlace.DelegateToAskForHelp",
+                  "Behavior %s does not want to activate! Canceling self.",
+                  _iConfig.askForHelpBehavior->GetDebugLabel().c_str())) {
+    // Reset the records of activation times prior to delegating to prevent retriggering this delegation if the
+    // ReactToStuckInPlace is reactivated sometime in the near future.
+    _iConfig.activationHistoryTracker.Reset();
+    DelegateIfInControl(_iConfig.askForHelpBehavior.get());
+  } else {
+    CancelSelf();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToStuckInPlace::SetInternalState(BehaviorReactToStuckInPlace::State state,
+                                                   const std::string& stateName)
+{
+  _dVars.persistent.state = state;
+  SetDebugStateName(stateName);
 }
 
 }
