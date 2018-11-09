@@ -62,7 +62,6 @@ private:
   static bool HasMigrated();
   static RtsKeys LoadRtsKeysFactory();
   static void ClearRtsKeysFactory();
-  static bool MakeDirectory(std::string directory);
 
   static const std::string kSaveFolder;
   static const std::ios_base::openmode kWriteMode;

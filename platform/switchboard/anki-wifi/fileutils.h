@@ -22,6 +22,8 @@ namespace Anki {
 
 const uid_t kRootUid = 0;
 const gid_t kRootGid = 0;
+const uid_t kNetUid = 2905;
+const gid_t kAnkiGid = 2901;
 const mode_t kModeUserReadWrite = (S_IRUSR | S_IWUSR);
 const mode_t kModeUserReadWriteExecute = (kModeUserReadWrite | S_IXUSR);
 const mode_t kModeUserGroupReadWrite = (kModeUserReadWrite | S_IRGRP | S_IWGRP);

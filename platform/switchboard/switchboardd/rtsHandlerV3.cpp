@@ -367,14 +367,7 @@ void RtsHandlerV3::HandleRtsWifiForgetRequest(const Vector::ExternalComms::RtsCo
     Anki::Vector::ExternalComms::RtsWifiForgetRequest forgetMsg = msg.Get_RtsWifiForgetRequest();
 
     if(forgetMsg.deleteAll) {
-      // remove all 
-      const std::string connmanDir = "/data/lib/connman";
-      std::vector<std::string> configs;
-      Anki::Util::FileUtils::ListAllDirectories(connmanDir, configs);
-
-      for(int i = 0; i < configs.size(); i++) {
-        Anki::Util::FileUtils::RemoveDirectory(connmanDir + "/" + configs[i]);
-      }
+      (void) ExecCommand({"sudo", "/sbin/wipe-all-wifi-configs"});
 
       SendRtsMessage<RtsWifiForgetResponse>(true, forgetMsg.wifiSsidHex);
     } else {
@@ -407,7 +400,7 @@ void RtsHandlerV3::HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsCon
   }
 
   if(_state == RtsPairingPhase::ConfirmedSharedSecret && _isOtaUpdating) {
-    (void) ExecCommand({"/bin/systemctl", "stop", "update-engine.service"});
+    (void) ExecCommand({"sudo", "/bin/systemctl", "stop", "update-engine.service"});
     _isOtaUpdating = false;
     Log::Write("Terminating OTA Update Engine");
   } else {

@@ -331,7 +331,7 @@ void RtsHandlerV2::HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsCon
   }
 
   if(_state == RtsPairingPhase::ConfirmedSharedSecret && _isOtaUpdating) {
-    (void) ExecCommand({"/bin/systemctl", "stop", "update-engine.service"});
+    (void) ExecCommand({"sudo", "/bin/systemctl", "stop", "update-engine.service"});
     _isOtaUpdating = false;
     Log::Write("Terminating OTA Update Engine");
   } else {
