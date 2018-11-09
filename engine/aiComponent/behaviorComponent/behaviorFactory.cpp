@@ -133,6 +133,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToStuckInPlace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUncalibratedHeadAndLift.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
@@ -922,6 +923,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToSound:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToStuckInPlace:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToStuckInPlace(config));
       break;
     }
     

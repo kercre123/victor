@@ -194,6 +194,7 @@ enum uint_8 BehaviorClass {
   ReactToRobotOnSide,
   ReactToRobotShaken,
   ReactToSound,
+  ReactToStuckInPlace,
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
