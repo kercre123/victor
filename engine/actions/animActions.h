@@ -187,7 +187,6 @@ namespace Anki {
       struct AnimParams {
         AnimationTrigger animEvent;
         bool interruptRunning;
-        u8 tracksToLock;
         float timeout_sec;
         bool strictCooldown;
       };
@@ -201,12 +200,6 @@ namespace Anki {
       bool       _renderInEyeHue = true;
       
     };
-
-    #pragma mark ---- DeviceAudioAction ----
-    // TODO: JIRA VIC-29 - Reimplement DeviceAudioAction
-    
-    #pragma mark ---- RobotAudioAction ----
-    // TODO: VIC-30 - Implement RobotAudioAction
 
   }
 }

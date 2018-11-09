@@ -353,7 +353,6 @@ namespace Anki {
     {
       _animParams.animEvent = animEvent;
       _animParams.interruptRunning = interruptRunning;
-      _animParams.tracksToLock = tracksToLock;
       _animParams.timeout_sec = timeout_sec;
       _animParams.strictCooldown = strictCooldown;
       
@@ -395,7 +394,8 @@ namespace Anki {
       _subAction.reset( new TriggerLiftSafeAnimationAction{_animParams.animEvent,
                                                            1, // only one loop here!
                                                            _animParams.interruptRunning,
-                                                           _animParams.tracksToLock,
+                                                           // track locking is done by this action, don't double-lock
+                                                           (u8)AnimTrackFlag::NO_TRACKS,
                                                            _animParams.timeout_sec,
                                                            _animParams.strictCooldown} );
       _subAction->SetRenderInEyeHue(_renderInEyeHue);

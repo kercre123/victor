@@ -8,6 +8,8 @@
     { "type": "imperative_quiet" }
   ],
 
+  "autoShutOffIntentFeedback": true,
+
   "emotionEventOnActivated": "BeQuietVoiceCommand",
 
   "activeTime_s": 1800.0,
@@ -20,7 +22,6 @@
       "audioAllowed": false
     },
     {
-      // TODO:(bn) this is missing wakeword das events (VIC-6339)
       "behavior": "TriggerWordDetected",
       "audioAllowed": true
     },
