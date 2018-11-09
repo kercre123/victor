@@ -51,6 +51,10 @@ The license used is on the [caution list](https://ankiinc.atlassian.net/wiki/spa
 
 A more severe warning than the previous message, the license used is on the [stop list](https://ankiinc.atlassian.net/wiki/spaces/ET/pages/380436502/Open+Source+Software) and needs approval.
 
+### `"<library> is not a recognised system lib and does not have cmake configuration including licensing information"`
+
+If this a new Vicos SDK library add it to the list of exceptions at https://github.com/anki/victor/blob/470d07552c8238c3fdc0301f86167daa409ff717/cmake/license.cmake#L324
+
 # Licenses
 
 ## sources

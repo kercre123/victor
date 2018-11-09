@@ -47,6 +47,14 @@ The preferred way to write logs is to declare a log channel using `#define LOG_C
   LOG_INFO("SomeInfo", "An event happened that everyone should know about");
 ```
 
+## Enabling
+
+To change which channels are logged at runtime use consolevars exposed through webservices:
+
+[Channels console vars](images/HOW-channels.png)
+
+Note: these can be persisted through the `LOAD console vars` and `SAVE console vars` buttons.
+
 ## Logging system details
 
 ### liblog
