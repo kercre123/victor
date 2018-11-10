@@ -48,15 +48,15 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         robot.events.subscribe(self._handle_mirror_mode_disabled_event, events.Events.mirror_mode_disabled)
         robot.events.subscribe(self._handle_vision_modes_auto_disabled_event, events.Events.vision_modes_auto_disabled)
 
-    def _handle_mirror_mode_disabled_event(self, _, msg):
+    def _handle_mirror_mode_disabled_event(self, _, _msg):
         self._display_camera_feed_on_face = False
 
-    def _handle_vision_modes_auto_disabled_event(self, _, msg):
+    def _handle_vision_modes_auto_disabled_event(self, _, _msg):
         self._detect_faces = False
         self._detect_custom_objects = False
         # self._detect_motion = False
         self._display_camera_feed_on_face = False
-        
+
     @property
     def detect_faces(self):
         return self._detect_faces
@@ -84,7 +84,7 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         #     await self.enable_motion_detection(False)
         if self.display_camera_feed_on_face:
             await self.enable_display_camera_feed_on_face(False)
-    
+
     @connection.on_connection_thread()
     async def enable_custom_object_detection(self, detect_custom_objects: bool = True):
         """Enable custom object detection on the robot's camera
@@ -100,8 +100,8 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         self._detect_custom_objects = detect_custom_objects
 
         enable_marker_detection_request = protocol.EnableMarkerDetectionRequest(enable=detect_custom_objects)
-        await self.grpc_interface.EnableMarkerDetection(enable_marker_detection_request)
-        
+        return await self.grpc_interface.EnableMarkerDetection(enable_marker_detection_request)
+
     @connection.on_connection_thread()
     async def enable_face_detection(
             self,
@@ -133,9 +133,9 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
             enable_expression_estimation=estimate_expression,
             enable_blink_detection=False,
             enable_gaze_detection=False)
-        await self.grpc_interface.EnableFaceDetection(enable_face_detection_request)
+        return await self.grpc_interface.EnableFaceDetection(enable_face_detection_request)
 
-    # TODO implement 
+    # TODO implement
     # @connection.on_connection_thread()
     # async def enable_motion_detection(self, detect_motion: bool = True):
     #     """Enable motion detection on the robot's camera
@@ -151,7 +151,7 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
     #     self._detect_motion = detect_motion
 
     #     enable_motion_detection_request = protocol.EnableMotionDetectionRequest(enable=detect_motion)
-    #     await self.grpc_interface.EnableMotionDetection(enable_motion_detection_request)
+    #     return await self.grpc_interface.EnableMotionDetection(enable_motion_detection_request)
 
     @connection.on_connection_thread()
     async def enable_display_camera_feed_on_face(self, display_camera_feed_on_face: bool = True):
@@ -168,5 +168,4 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         self._display_camera_feed_on_face = display_camera_feed_on_face
 
         display_camera_feed_request = protocol.EnableMirrorModeRequest(enable=display_camera_feed_on_face)
-        await self.grpc_interface.EnableMirrorMode(display_camera_feed_request)
-
+        return await self.grpc_interface.EnableMirrorMode(display_camera_feed_request)

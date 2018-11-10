@@ -332,7 +332,7 @@ class World(util.Component):
         req = protocol.FlashCubeLightsRequest()
         return await self.grpc_interface.FlashCubeLights(req)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def forget_preferred_cube(self) -> protocol.ForgetPreferredCubeResponse:
         """Forget preferred cube.
 
@@ -350,7 +350,7 @@ class World(util.Component):
         req = protocol.ForgetPreferredCubeRequest()
         return await self.grpc_interface.ForgetPreferredCube(req)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def set_preferred_cube(self, factory_id: str) -> protocol.SetPreferredCubeResponse:
         """Set preferred cube.
 
@@ -372,7 +372,7 @@ class World(util.Component):
         req = protocol.SetPreferredCubeRequest(factory_id=factory_id)
         return await self.grpc_interface.SetPreferredCube(req)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def delete_custom_objects(self,
                                     delete_custom_marker_objects: bool = True,
                                     delete_fixed_custom_objects: bool = True,
@@ -408,7 +408,7 @@ class World(util.Component):
 
         return last_blocking_call
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def define_custom_box(self,
                                 custom_object_type: objects.CustomObjectTypes,
                                 marker_front: objects.CustomObjectMarkers,
@@ -507,7 +507,7 @@ class World(util.Component):
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
         return None
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def define_custom_cube(self,
                                  custom_object_type: objects.CustomObjectTypes,
                                  marker: objects.CustomObjectMarkers,
@@ -574,7 +574,7 @@ class World(util.Component):
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
         return None
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def define_custom_wall(self,
                                  custom_object_type: objects.CustomObjectTypes,
                                  marker: objects.CustomObjectMarkers,
@@ -648,7 +648,7 @@ class World(util.Component):
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
         return None
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def create_custom_fixed_object(self,
                                          pose: util.Pose,
                                          x_size_mm: float,

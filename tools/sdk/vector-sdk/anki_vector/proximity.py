@@ -178,15 +178,13 @@ class ProximityComponent(util.Component):
         self._last_sensor_reading = None
 
         # Subscribe to a callback that updates the robot's local properties - which includes proximity data.
-        self._robot.events.subscribe(
-            self._on_robot_state,
-            Events.robot_state)
+        self._robot.events.subscribe(self._on_robot_state,
+                                     Events.robot_state)
 
     def close(self):
         """Closing the touch component will unsubscribe from robot state updates."""
-        self._robot.events.unsubscribe(
-            self._on_robot_state,
-            Events.robot_state)
+        self._robot.events.unsubscribe(self._on_robot_state,
+                                       Events.robot_state)
 
     @property
     def last_sensor_reading(self) -> ProximitySensorData:

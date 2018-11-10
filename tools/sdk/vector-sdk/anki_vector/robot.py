@@ -75,13 +75,14 @@ class Robot:
                    where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
                    when his backpack is double-clicked on the charger, and :code:`guid` is the authorization token
                    that identifies the SDK user. Note: Never share your authentication credentials with anyone.
-    :param default_logging: Disable default logging.
+    :param default_logging: Toggle default logging.
     :param behavior_activation_timeout: The time to wait for control of the robot before failing.
     :param enable_face_detection: Turn on face detection.
     :param enable_camera_feed: Turn camera feed on/off.
     :param enable_audio_feed: Turn audio feed on/off.
     :param enable_nav_map_feed: Turn nav map feed on/off.
-    :param show_viewer: Render camera feed on/off."""
+    :param show_viewer: Render camera feed on/off.
+    :param requires_behavior_control: Request control of Vector's behavior system."""
 
     def __init__(self,
                  serial: str = None,
@@ -95,7 +96,8 @@ class Robot:
                  enable_audio_feed: bool = False,
                  show_viewer: bool = False,
                  enable_custom_object_detection: bool = False,
-                 enable_nav_map_feed: bool = False):
+                 enable_nav_map_feed: bool = False,
+                 requires_behavior_control: bool = True):
 
         if default_logging:
             util.setup_basic_logging()
@@ -119,7 +121,7 @@ class Robot:
                              '{"name":"Vector-XXXX", "ip":"XX.XX.XX.XX", "cert":"/path/to/cert_file", "guid":"<secret_key>"}')
 
         #: :class:`anki_vector.connection.Connection`: The active connection to the robot.
-        self._conn = connection.Connection(self._name, ':'.join([self._ip, self._port]), self._cert_file, self._guid)
+        self._conn = connection.Connection(self._name, ':'.join([self._ip, self._port]), self._cert_file, self._guid, requires_behavior_control=requires_behavior_control)
         self._events = events.EventHandler()
 
         # placeholders for components before they exist
@@ -692,7 +694,7 @@ class Robot:
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
         """
-        vision_mode = self.vision.disable_all_vision_modes()
+        vision_mode = self.vision.disable_all_vision_modes()  # pylint: disable=assignment-from-no-return
         if isinstance(vision_mode, concurrent.futures.Future):
             vision_mode.result()
 
@@ -721,7 +723,7 @@ class Robot:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
         """Check the current state of the battery.
 
@@ -736,7 +738,7 @@ class Robot:
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.grpc_interface.BatteryState(get_battery_state_request)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def get_version_state(self) -> protocol.VersionStateResponse:
         """Get the versioning information for Vector.
 
@@ -749,7 +751,7 @@ class Robot:
         get_version_state_request = protocol.VersionStateRequest()
         return await self.conn.grpc_interface.VersionState(get_version_state_request)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def get_network_state(self) -> protocol.NetworkStateResponse:
         """Get the network information for Vector.
 
@@ -824,12 +826,13 @@ class AsyncRobot(Robot):
                    where :code:`cert` is the certificate to identify Vector, :code:`name` is the name on Vector's face
                    when his backpack is double-clicked on the charger, and :code:`guid` is the authorization token
                    that identifies the SDK user. Note: Never share your authentication credentials with anyone.
-    :param default_logging: Disable default logging.
+    :param default_logging: Toggle default logging.
     :param behavior_activation_timeout: The time to wait for control of the robot before failing.
     :param enable_face_detection: Turn on face detection.
     :param enable_camera_feed: Turn camera feed on/off.
     :param enable_audio_feed: Turn audio feed on/off.
-    :param show_viewer: Render camera feed on/off."""
+    :param show_viewer: Render camera feed on/off.
+    :param requires_behavior_control: Request control of Vector's behavior system."""
 
     @functools.wraps(Robot.__init__)
     def __init__(self, *args, **kwargs):

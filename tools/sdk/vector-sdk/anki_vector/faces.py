@@ -322,7 +322,7 @@ class Face(objects.ObservableObject):
 class FaceComponent(util.Component):
     """Manage the state of the faces on the robot."""
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def request_enrolled_names(self) -> protocol.RequestEnrolledNamesRequest:
         """Asks the robot for the list of names attached to faces that it can identify.
 
@@ -336,7 +336,7 @@ class FaceComponent(util.Component):
         req = protocol.RequestEnrolledNamesRequest()
         return await self.grpc_interface.RequestEnrolledNames(req)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def update_enrolled_face_by_id(self, face_id: int, old_name: str, new_name: str):
         """Update the name enrolled for a given face.
 
@@ -355,7 +355,7 @@ class FaceComponent(util.Component):
                                                      old_name=old_name, new_name=new_name)
         return await self.grpc_interface.UpdateEnrolledFaceByID(req)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def erase_enrolled_face_by_id(self, face_id: int):
         """Erase the enrollment (name) record for the face with this ID.
 
@@ -371,7 +371,7 @@ class FaceComponent(util.Component):
         req = protocol.EraseEnrolledFaceByIDRequest(face_id=face_id)
         return await self.grpc_interface.EraseEnrolledFaceByID(req)
 
-    @connection.on_connection_thread()
+    @connection.on_connection_thread(requires_control=False)
     async def erase_all_enrolled_faces(self):
         """Erase the enrollment (name) records for all faces.
 

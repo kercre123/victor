@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """
+.. _behavior:
+
 Behavior related classes and functions.
 
 Behaviors represent a complex task which requires Vector's
