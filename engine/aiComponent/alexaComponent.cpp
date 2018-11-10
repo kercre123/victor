@@ -91,6 +91,10 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
     SetAlexaOption( false );
   };
   _consoleFuncs.emplace_front( "ForceAlexaOptOut", std::move(forceOptOut), "Alexa", "" );
+  auto fakeAppDisconnect = [this](ConsoleFunctionContextRef context) {
+    SendCancelPendingAuth();
+  };
+  _consoleFuncs.emplace_front( "FakeAppDisconnect", std::move(fakeAppDisconnect), "Alexa", "" );
   
   
   

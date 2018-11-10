@@ -188,8 +188,10 @@ void Alexa::CancelPendingAlexaAuth()
     case AlexaAuthState::RequestingAuth:
     case AlexaAuthState::WaitingForCode:
     {
-      // if the robot is authorizing, cancel it
-      SetAlexaActive( false );
+      // if the robot is authorizing, cancel it. go through this method instead of SetAlexaActive so that any code face
+      // is removed
+      const bool errFlag = false;
+      OnAlexaAuthChanged( AlexaAuthState::Uninitialized, "", "", errFlag );
     }
       break;
     case AlexaAuthState::Uninitialized:
