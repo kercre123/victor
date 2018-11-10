@@ -4,6 +4,8 @@ import hudson.model.*
 import jenkins.model.*
 import hudson.slaves.*
 import hudson.plugins.sshslaves.verifiers.*
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurperClassic 
 
 @NonCPS
 def getListOfOnlineNodesForLabel(label) {
@@ -33,8 +35,83 @@ enum buildConfig {
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
 
-def primaryStageName = ''
+primaryStageName = ''
 def vSphereServer = 'ankicore'
+
+slackNotificationChannel = "#build-eng-pr-notices"
+
+def notifySlack(text, channel, attachments) {
+    def slackURL = "https://anki.slack.com/services/hooks/jenkins-ci?token="
+    def jenkinsIcon = 'https://jenkins.io/images/jenkins-x-logo.png'
+
+    def payload = JsonOutput.toJson([text: text,
+        channel: channel,
+        username: "Jenkins-Buildbot",
+        icon_url: jenkinsIcon,
+        attachments: [attachments]
+    ])
+    withCredentials([string(credentialsId: 'jenkins-professional', variable: 'TOKEN')]) {
+        sh "curl -X POST --data-urlencode \'payload=${payload}\' ${slackURL}${TOKEN}"
+    }
+}
+
+def getCommitDetails(project, commit) {
+    withCredentials([string(credentialsId: 'github-jenkins-pat', variable: 'TOKEN')]) {
+        def payload = sh (
+            script: "curl --user \"nakkapeddi:${TOKEN}\" https://api.github.com/repos/anki/${project}/commits/${commit}",
+            returnStdout: true
+        ).trim()
+        return payload
+    }
+}
+
+@NonCPS
+def jsonParsePayload(def json) {
+    new groovy.json.JsonSlurperClassic().parseText(json)
+}
+
+def notifyBuildStatus(status) {
+    def jobName = "${env.JOB_NAME}"
+    jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
+    def pullRequestURL = "https://github.com/anki/${jobName}/pull/${env.CHANGE_ID}"
+    def commitSHA = sh(returnStdout: true, script: "git rev-list --no-walk HEAD^")
+    def commitInfo = getCommitDetails(jobName, commitSHA)
+    def commitObj = jsonParsePayload(commitInfo)
+    def slackColorMapping = [
+        Success: "good",
+        Failure: "danger",
+        Aborted: "warning"
+    ]
+
+    notifySlack("", slackNotificationChannel, 
+        [
+            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+            title_link: "${env.BUILD_URL}",
+            color: slackColorMapping[status],
+            text: "${status}\nAuthor: ${commitObj.commit.author.name} <${commitObj.commit.author.email}>",
+            mrkdwn_in: ["fields"],
+            fields: [
+                [
+                    title: "View on Github",
+                    value: "${pullRequestURL}",
+                    short: true
+                ],
+                [
+                    title: "Commit Msg",
+                    value: "${commitObj.commit.message}",
+                    short: false
+                ],
+                [
+                    title: "Stats (LoC)",
+                    value: ":heavy_plus_sign: ${commitObj.stats.additions} / :heavy_minus_sign: ${commitObj.stats.deletions}",
+                    short: false
+                ]
+            ]
+        ]
+    )
+    
+}
+
 
 class EphemeralAgent {
     private String IPAddress;
@@ -204,9 +281,14 @@ stage("${primaryStageName} Build") {
                         sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
                     }
                 }
+                notifyBuildStatus('Success')
                 //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
+        } catch (hudson.AbortException ae) {
+            notifyBuildStatus('Aborted')
+            throw ae
         } catch (exc) {
+            notifyBuildStatus('Failure')
             throw exc
         } finally {
             stage('Cleaning slave workspace') {
