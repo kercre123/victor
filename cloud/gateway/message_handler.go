@@ -1660,6 +1660,10 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 		return nil, grpc.Errorf(codes.Internal, "User authentication is only available on the robot")
 	}
 
+	if !userAuthLimiter.Allow() {
+		return nil, grpc.Errorf(codes.ResourceExhausted, "Maximum auth rate exceeded. Please wait and try again later.")
+	}
+
 	f, authChan := switchboardManager.CreateChannel(gw_clad.SwitchboardResponseTag_AuthResponse, 1)
 	defer f()
 
