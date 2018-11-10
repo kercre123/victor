@@ -383,7 +383,18 @@ void BehaviorSleepCycle::OnBehaviorDeactivated()
     case SleepStateID::DeepSleep:
     case SleepStateID::LightSleep: {
 
-      PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
+      switch( _dVars.reactionState ) {
+        case SleepReactionType::NotReacting:
+        case SleepReactionType::WiggleOntoCharger:
+          PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
+          break;
+
+        case SleepReactionType::Sound:
+        case SleepReactionType::TriggerWord:
+        case SleepReactionType::Alexa:
+          // no wake up anim here
+          break;
+      }
 
 #if ANKI_DEV_CHEATS
       _dVars.lastWakeReason = WakeReason::Interrupted;
