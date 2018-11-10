@@ -410,7 +410,7 @@ Result spine_get_frame() {
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
         populate_boot_body_data(hdr);
-        //N.B. All the data in the resulting fake frame is 0,except for button state. This will
+        //N.B. All the data in the resulting fake frame is 0, except for buttonPressed & micError. This will
         //only happen if body is in bootloader & nonfunctional, so it shouldn't matter, but be aware.
         result = RESULT_OK;
       }
