@@ -23,6 +23,8 @@
 
 namespace Anki {
 namespace Vector {
+  
+CONSOLE_VAR_EXTERN(bool, kAllowAudioOnCharger);
 
 ShowAudioStreamStateManager::ShowAudioStreamStateManager(const AnimContext* context)
 : _context(context)
@@ -262,14 +264,16 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state)
     }
   }
   
-  Audio::CozmoAudioController* controller = _context->GetAudioController();
-  if( ANKI_VERIFY(nullptr != controller, "ShowAudioStreamStateManager.StartAlexaResponse.NullAudioController",
-                  "The CozmoAudioController is null so the audio event cannot be played" ) )
-  {
-    using namespace AudioEngine;
-    controller->PostAudioEvent( ToAudioEventId( response->audioEvent.audioEvent ),
-                                ToAudioGameObject( response->audioEvent.gameObject ) );
-    
+  if( kAllowAudioOnCharger || !_onCharger ) {
+    Audio::CozmoAudioController* controller = _context->GetAudioController();
+    if( ANKI_VERIFY(nullptr != controller, "ShowAudioStreamStateManager.StartAlexaResponse.NullAudioController",
+                    "The CozmoAudioController is null so the audio event cannot be played" ) )
+    {
+      using namespace AudioEngine;
+      controller->PostAudioEvent( ToAudioEventId( response->audioEvent.audioEvent ),
+                                  ToAudioGameObject( response->audioEvent.gameObject ) );
+      
+    }
   }
   
   return true;

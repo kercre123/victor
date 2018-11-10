@@ -28,6 +28,8 @@ class AudioLayerManager : public ITrackLayerManager<RobotAudioKeyFrame>
 {
 public:
   
+  void SetNoMovementMode(bool enabled) { _noMovementMode = enabled; }
+  
   AudioLayerManager(const Util::RandomGenerator& rng);
   
   // Add Audio Keyframes for Eye Blink
@@ -50,6 +52,9 @@ public:
   // animation tracks
   void GenerateGlitchAudio(u32 numFramesToGen,
                            Animations::Track<RobotAudioKeyFrame>& outTrack) const;
+  
+private:
+  bool _noMovementMode = false;
 
 };
 

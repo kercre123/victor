@@ -79,6 +79,7 @@ private:
   const BehaviorContainer* _behaviorContainer = nullptr;
   
   IBehavior* _bootBehavior = nullptr;
+  BehaviorID _bootBehaviorID;
   IBehavior* _behaviorToSwitchTo = nullptr;
   IBehavior* _overrideBehavior = nullptr;
   
@@ -88,6 +89,9 @@ private:
   
   // The return value of GetBootBehavior() wasn't switched to, and won't be until SetNewBehavior is called again
   bool _pendingBehavior = false;
+  Robot* _robot = nullptr;
+  
+  int _wasOnboarding = -1; // to detect change from bool
   
   std::string _saveFolder;
   

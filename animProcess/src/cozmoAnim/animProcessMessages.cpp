@@ -414,6 +414,11 @@ void Process_startRecordingMicsProcessed(const Anki::Vector::RobotInterface::Sta
                                       std::string(msg.path,
                                                   msg.path_length));
 }
+  
+  void Process_noMovementMode(const Anki::Vector::RobotInterface::NoMovementMode& msg)
+  {
+    _animStreamer->NoMovementModeAllowed( msg.enabled );
+  }
 
 void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::StartWakeWordlessStreaming& msg)
 {
@@ -711,7 +716,15 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     {
       HandleRobotStateUpdate(msg.state);
       const bool onChargerContacts = (msg.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
-      _animStreamer->SetBodyWhitelistActive(onChargerContacts);
+      auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
+      if(showStreamStateManager != nullptr){
+        showStreamStateManager->SetOnCharger(onChargerContacts);
+      }
+      auto* alexa = _context->GetAlexa();
+      if( alexa != nullptr ) {
+        alexa->SetOnCharger( onChargerContacts );
+      }
+      _animStreamer->SetNoMovementMode(onChargerContacts);
     }
     break;
     case RobotInterface::RobotToEngine::Tag_robotStopped:

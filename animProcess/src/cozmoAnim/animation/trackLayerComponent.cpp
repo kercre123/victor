@@ -451,5 +451,11 @@ void TrackLayerComponent::ApplyFaceLayersToAnim(Animation* anim,
 }
 
 
+void TrackLayerComponent::SetNoMovementMode(bool enabled) {
+  if( _audioLayerManager ) {
+    _audioLayerManager->SetNoMovementMode(enabled);
+  }
+}
+  
 }
 }

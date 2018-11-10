@@ -3,12 +3,82 @@
   "behaviorClass" : "DispatcherStrictPriority",
 
   "interruptActiveBehavior": true,
-
+  
   "behaviors": [
-    "SingletonPoweringRobotOff",
-    "EmergencyMode",
-    "ShutUpMode",
-    "QuietMode",
-    "SleepCycle"
+  // normal mode (what used to be ModeSelector)
+    "ModeSelectorInternal",
+  // wakeword testing on charger (Alexa and Wait)
+    "OnChargerInternal",
+  // backup
+    "Wait"
+  ],
+
+  "anonymousBehaviors": [
+    // OFF CHARGER ONLY:
+    {
+      "behaviorName" : "ModeSelectorInternal",
+      "behaviorClass" : "DispatcherStrictPriority",
+      
+      "wantsToBeActivatedCondition": {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OnCharger"
+        }
+      },
+      "wantsToCancelSelfCondition": {
+        "conditionType" : "OnCharger"
+      },
+      
+      "interruptActiveBehavior": true,
+      
+      "behaviors": [
+        "SingletonPoweringRobotOff",
+        "EmergencyMode",
+        "ShutUpMode",
+        "QuietMode",
+        "SleepCycle"
+      ]
+    },
+    
+    // ON CHARGER ONLY: a queue that moves the head up then does alexa behaviors and nothing else
+    {
+      "behaviorName" : "OnChargerInternal",
+      "behaviorClass" : "DispatcherQueue",
+      
+      "wantsToBeActivatedCondition": {
+        "conditionType" : "OnCharger"
+      },
+      "wantsToCancelSelfCondition": {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OnCharger"
+        }
+      },
+      
+      "behaviors": [
+        "WiggleBackOntoChargerFromPlatform",
+        "MoveHeadUpInternal",
+        "AlexaInternal"
+      ],
+      
+      "anonymousBehaviors": [
+        {
+          "behaviorName": "MoveHeadUpInternal",
+          "behaviorClass": "MoveHeadToAngle",
+          "headAngle_deg": 45.0
+        },
+        {
+          "behaviorName" : "AlexaInternal",
+          "behaviorClass" : "DispatcherStrictPriority",
+          
+          "interruptActiveBehavior": true,
+          
+          "behaviors": [
+            "Alexa",
+            "Wait"
+          ]
+        }
+      ]
+    }
   ]
 }

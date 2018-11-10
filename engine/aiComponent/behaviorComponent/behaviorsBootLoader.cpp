@@ -78,6 +78,7 @@ BehaviorsBootLoader::BehaviorsBootLoader( IBehavior* overrideBehavior, const Uni
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependentComps )
 {
+  _robot = robot;
   using namespace Util;
   const Data::DataPlatform* platform = robot->GetContextDataPlatform();
   _saveFolder = platform->pathToResource( Data::Scope::Persistent, BehaviorOnboarding1p0::kOnboardingFolder );
@@ -201,6 +202,16 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
       SetNewBehavior( _behaviors.onboardingBehavior );
     }
   }
+  
+  // wait until we know we can communicate with anim to send anything
+  if( _robot->GetSyncRobotAcked() ) {
+    const bool isOnboarding = (_bootBehaviorID == _behaviors.onboardingBehavior);
+    if( isOnboarding != _wasOnboarding ) {
+      _wasOnboarding = isOnboarding;
+    }
+    RobotInterface::NoMovementMode msg{!isOnboarding};
+    _robot->SendMessage( RobotInterface::EngineToRobot( std::move(msg) ) );
+  }
 }
   
 void BehaviorsBootLoader::InitOnboarding()
@@ -270,6 +281,7 @@ IBehavior* BehaviorsBootLoader::GetBootBehavior()
 void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID, bool requestStackReset)
 {
   DEV_ASSERT(_behaviorContainer != nullptr, "BehaviorsBootLoader.SetNewBehavior.NoBC");
+  _bootBehaviorID = behaviorID;
   
   IBehavior* behavior = _behaviorContainer->FindBehaviorByID(behaviorID).get();
   if( ANKI_VERIFY(behavior != nullptr,

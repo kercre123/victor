@@ -68,6 +68,8 @@ public:
   bool HasAnyAlexaResponse() const; // ok to call off thread
   bool HasValidAlexaUXResponse(AlexaUXState state) const;
   bool StartAlexaResponse(AlexaUXState state);
+  
+  void SetOnCharger(bool onCharger) { _onCharger = onCharger; }
 
 private:
 
@@ -77,6 +79,8 @@ private:
 
   const AnimContext* _context = nullptr;
   AnimationStreamer* _streamer = nullptr;
+  
+  bool _onCharger = false;
 
   Anki::AudioEngine::Multiplexer::PostAudioEvent _postAudioEvent;
   bool _shouldTriggerWordStartStream;

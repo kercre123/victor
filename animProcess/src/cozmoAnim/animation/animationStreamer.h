@@ -197,7 +197,7 @@ namespace Vector {
     // for display on a debug screen
     void RedirectFaceImagesToDebugScreen(bool redirect) { _redirectFaceImagesToDebugScreen = redirect; }
     
-    void SetBodyWhitelistActive(bool active) { _bodyWhiteListActive = active; }
+    void SetNoMovementMode(bool active);
 
     // Procedural Eye
     void ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg);
@@ -205,6 +205,7 @@ namespace Vector {
     void ProcessAddSquint(const RobotInterface::AddSquint& msg);
     void ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg);
 
+    void NoMovementModeAllowed(bool allowed ) { _noMovementModeAllowed = allowed; }
 
   private:
     const AnimContext* _context = nullptr;
@@ -326,7 +327,8 @@ namespace Vector {
 
     std::vector<NewAnimationCallback> _newAnimationCallbacks;
     
-    bool _bodyWhiteListActive = false;
+    bool _noMovementMode = false;
+    bool _noMovementModeAllowed = true; // allowed by default. onboarding might turn it off
 
     static bool IsTrackLocked(u8 lockedTracks, u8 trackFlagToCheck) {
       return ((lockedTracks & trackFlagToCheck) == trackFlagToCheck);

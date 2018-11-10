@@ -14,6 +14,8 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 #include "coretech/messaging/shared/socketConstants.h"
 
+#include "audioEngine/audioCallback.h"
+#include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -742,6 +744,19 @@ void MicDataSystem::ToggleMicMute()
   // TODO (VIC-11587): we could save some CPU if the wake words recognizers are actually disabled here.
   // for now, we just ignore its callbacks if _micMuted is true
   _micMuted = !_micMuted;
+  
+  // play audio event for changing mic mute state
+  auto* audioController = _context->GetAudioController();
+  if (audioController != nullptr) {
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    const auto eventID = ToAudioEventId( _micMuted
+                                         ? GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_On
+                                         : GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_Off );
+    const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
+    audioController->PostAudioEvent( eventID, gameObject );
+  }
+  
   // Note that Alexa also has a method to stopStreamingMicrophoneData, but without the wakeword,
   // the samples go no where. Also check if it saves CPU to drop samples. Note that the time indices
   // for the wake word bookends might be wrong afterwards.
@@ -753,6 +768,7 @@ void MicDataSystem::ToggleMicMute()
       bplComp->SetMicMute( _micMuted );
     }
   }
+
 }
   
 void MicDataSystem::SetButtonWakeWordIsAlexa(bool isAlexa)

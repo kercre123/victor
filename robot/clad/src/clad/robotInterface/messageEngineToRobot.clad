@@ -38,6 +38,10 @@ message CheckCloudConnectivity
 {
 }
 
+message NoMovementMode {
+  bool enabled
+}
+
 message StartMotorCalibration
 {
   bool calibrateHead,
@@ -822,6 +826,7 @@ union EngineToRobot
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,
   AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
+  NoMovementMode noMovementMode = 0xA4,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 

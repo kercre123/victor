@@ -33,11 +33,14 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
+#include "util/console/consoleInterface.h"
 
 
 
 namespace Anki {
 namespace Vector {
+  
+  CONSOLE_VAR_EXTERN(bool, kAllowAudioOnCharger);
   
 namespace {
   const std::string kAlexaPath = "alexa";
@@ -444,6 +447,28 @@ void Alexa::SetUXState( AlexaUXState newState )
       }
     }
   }
+  
+  if( kAllowAudioOnCharger || !_onCharger ) {
+    // special cases to play audio events not handled by our getin process
+    // Speaking to Listening
+    // Listrnig to thinking
+    if( (oldState == AlexaUXState::Speaking) && (_uxState == AlexaUXState::Listening) ) {
+      using namespace AudioEngine;
+      using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+      auto* audioController = _context->GetAudioController();
+      const auto eventID = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound );
+      const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
+      audioController->PostAudioEvent( eventID, gameObject );
+    } else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+      using namespace AudioEngine;
+      using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+      auto* audioController = _context->GetAudioController();
+      const auto eventID = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing );
+      const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
+      audioController->PostAudioEvent( eventID, gameObject );
+    }
+  }
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

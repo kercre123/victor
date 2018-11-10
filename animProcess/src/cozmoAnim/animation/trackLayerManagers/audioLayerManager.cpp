@@ -35,6 +35,9 @@ AudioLayerManager::AudioLayerManager(const Util::RandomGenerator& rng)
                                                     const BlinkEventList& eventList,
                                                     const TimeStamp_t timeSinceAnimStart_ms)
 {
+  if( _noMovementMode ) {
+    return RESULT_OK;
+  }
   using namespace AudioKeyFrameType;
   using namespace AudioMetaData;
   Animations::Track<RobotAudioKeyFrame> audioTrack;
@@ -64,6 +67,10 @@ Result AudioLayerManager::AddEyeDartToAudioTrack(const std::string& layerName,
                                                  const TimeStamp_t interpolationTime_ms,
                                                  const TimeStamp_t timeSinceAnimStart_ms)
 {
+  if( _noMovementMode ) {
+    return RESULT_OK;
+  }
+  
   using namespace AudioKeyFrameType;
   using namespace AudioMetaData;
   RobotAudioKeyFrame frame;
@@ -89,6 +96,9 @@ Result AudioLayerManager::AddEyeDartToAudioTrack(const std::string& layerName,
 Result AudioLayerManager::AddEyeSquintToAudioTrack(const std::string& layerName,
                                                    const TimeStamp_t timeSinceAnimStart_ms)
 {
+  if( _noMovementMode ) {
+    return RESULT_OK;
+  }
   using namespace AudioKeyFrameType;
   using namespace AudioMetaData;
   Animations::Track<RobotAudioKeyFrame> audioTrack;
