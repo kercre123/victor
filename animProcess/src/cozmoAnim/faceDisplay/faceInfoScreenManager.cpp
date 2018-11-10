@@ -108,7 +108,8 @@ namespace {
   const u32 kIPCheckPeriod_sec = 20;
   
   const f32 kAlexaTimeout_s = 5.0f;
-  CONSOLE_VAR_RANGED(f32, kToggleMuteTimeout_s, "FaceInfoScreenManager", 0.25f, 0.001f, 3.0f);
+  // TODO (VIC-11606): don't use timeout for mute
+  CONSOLE_VAR_RANGED(f32, kToggleMuteTimeout_s, "FaceInfoScreenManager", 1.2f, 0.001f, 3.0f);
   CONSOLE_VAR_RANGED(f32, kAlexaNotificationTimeout_s, "FaceInfoScreenManager", 1.0f, 0.001f, 3.0f);
 
   // How long the button needs to be pressed for before it should trigger shutdown animation
