@@ -2412,7 +2412,10 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 	if _, err := os.Stat("/run/update-engine/done"); err == nil {
 		go func() {
 			<-time.After(5 * time.Second)
-			exec.Command("/sbin/reboot").Run()
+			err := exec.Command("/usr/bin/sudo", "/sbin/reboot").Run()
+			if (err != nil) {
+				log.Errorf("Reboot attempt failed: %s\n", err)
+			}
 		}()
 		return &extint.UpdateAndRestartResponse{
 			Status: &extint.ResponseStatus{
