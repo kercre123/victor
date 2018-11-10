@@ -1,7 +1,9 @@
 {
   "behaviorID" : "EmergencyMode",
-  "behaviorClass": "DispatcherQueue",
- 
+  "behaviorClass": "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
     "and": [
@@ -52,9 +54,20 @@
     "streamAndLightEffect": "StreamingDisabledButWithLight",
     "getInTrigger": "VC_ListeningGetIn"
   },
-  
-  "behaviors" : [
-    "EmergencyModeAnimDispatcher",
-    "EmergencyModeOffCharger"
+
+  "behaviors": [
+    "Alexa",
+    "EmergencyModeInternal"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "EmergencyModeInternal",
+      "behaviorClass": "DispatcherQueue",
+      "behaviors": [
+        "EmergencyModeAnimDispatcher",
+        "EmergencyModeOffCharger"
+      ]
+    }
   ]
 }
