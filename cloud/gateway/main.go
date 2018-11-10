@@ -43,6 +43,7 @@ var (
 	demoCertPool       *x509.CertPool
 	cloudCheckLimiter  *MultiLimiter
 	debugLogLimiter    *MultiLimiter
+	userAuthLimiter    *MultiLimiter
 	switchboardManager SwitchboardIpcManager
 	engineProtoManager EngineProtoIpcManager
 	tokenManager       ClientTokenManager
@@ -196,6 +197,11 @@ func main() {
 	debugLogLimiter = NewMultiLimiter(
 		rate.NewLimiter(rate.Every(time.Minute), 1),
 		rate.NewLimiter(rate.Every(time.Hour), 3),
+	)
+
+	userAuthLimiter = NewMultiLimiter(
+		rate.NewLimiter(rate.Every(10*time.Second), 10),
+		rate.NewLimiter(rate.Every(10*time.Minute), 25),
 	)
 
 	creds, err := credentials.NewServerTLSFromFile(robot.GatewayCert, robot.GatewayKey)
