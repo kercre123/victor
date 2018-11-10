@@ -660,10 +660,19 @@ message TriggerBackpackAnimation {
   BackpackAnimationTrigger trigger,
 }
 
-// Currently this is only providing one setting for Mic System, if we need more Account Settings in Anim Process
-// expand on this message and update the Process_updatedAccountSettings() method
-message UpdatedAccountSettings {
-  bool enableDataCollection
+// Because we're running low on message tags, expand this enum and message as we add more settings
+// that we want to send to anim/robot.  To expand, update the Process_updatedSettings() method.
+// We're not using the proto enums for the settings here, because it's proto, not clad, and because
+// we're already dealing with two types of settings (robot settings and account settings)
+enum uint_8 SettingBeingChanged {
+  SETTING_ENABLE_DATA_COLLECTION,
+  SETTING_TIME_ZONE,
+}
+
+message UpdatedSettings {
+  SettingBeingChanged settingBeingChanged,
+  bool                enableDataCollection,
+  string              timeZone,
 }
 
 // ====================================================
@@ -833,7 +842,7 @@ union EngineToRobot
 
   CheckCloudConnectivity checkCloudConnectivity = 0xAE,
 
-  UpdatedAccountSettings updatedAccountSettings = 0xAF,
+  UpdatedSettings updatedSettings = 0xAF,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

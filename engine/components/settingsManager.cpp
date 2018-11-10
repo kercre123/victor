@@ -526,13 +526,20 @@ bool SettingsManager::ApplySettingTimeZone()
   auto & robotHealthReporter = _robot->GetRobotHealthReporter();
   robotHealthReporter.OnSetTimeZone(value);
 
-  return true;
+  // Send message to mic system in anim process
+  using namespace RobotInterface;
+  // This message is 'overloaded' because we're running out of message tags
+  static const bool kPlaceholder = false;
+  const auto msg = EngineToRobot::CreateupdatedSettings(UpdatedSettings(SettingBeingChanged::SETTING_TIME_ZONE,
+                                                                        kPlaceholder, value));
+  _robot->SendMessage(std::move(msg));
 
 #else
   LOG_INFO("SettingsManager.ApplySettingTimeZone.NotInWebots",
               "Applying time zone setting is not supported in webots");
-  return true;
 #endif
+
+  return true;
 }
 
 
