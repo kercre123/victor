@@ -26,11 +26,11 @@ namespace Vector {
   
 namespace {
   const char* kFrequentActivationHistoryTrackerKey = "frequentActivationHistoryTracker";
-  const char* kFailureActivationHistoryTrackerKey = "failureActivationHistoryTracker";
-  const char* kRetreatDistanceKey = "retreatDistance_mm";
-  const char* kRetreatSpeedKey = "retreatSpeed_mmps";
-  const char* kPointTurnAngleKey = "pointTurnAngle_deg";
-  
+  const char* kFailureActivationHistoryTrackerKey =  "failureActivationHistoryTracker";
+  const char* kRetreatDistanceKey =                  "retreatDistance_mm";
+  const char* kRetreatSpeedKey =                     "retreatSpeed_mmps";
+  const char* kPointTurnAngleKey =                   "pointTurnAngle_deg";
+  const char* kPointTurnMotionProfileKey =           "pointTurnMotionProfile";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -93,6 +93,11 @@ BehaviorReactToStuckInPlace::InstanceConfig::InstanceConfig(const Json::Value& c
     pointTurnAngle_rad = possiblePointTurnAngle_rad;
   }
   
+  // Retrieve custom motion profile for point-turns
+  pointTurnCustomMotionProfile = std::make_unique<PathMotionProfile>();
+  ANKI_VERIFY(pointTurnCustomMotionProfile->SetFromJSON(config[kPointTurnMotionProfileKey]),
+              (debugName + ".InvalidPointTurnMotionProfile").c_str(),
+              "Configuration specified invalid motion profile for point turns");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,7 +139,8 @@ void BehaviorReactToStuckInPlace::GetBehaviorJsonKeys(std::set<const char*>& exp
     kFailureActivationHistoryTrackerKey,
     kRetreatDistanceKey,
     kRetreatSpeedKey,
-    kPointTurnAngleKey
+    kPointTurnAngleKey,
+    kPointTurnMotionProfileKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -145,12 +151,16 @@ void BehaviorReactToStuckInPlace::OnBehaviorActivated()
   // Reset dynamic variables
   _dVars = DynamicVariables();
   
+  if( _iConfig.pointTurnCustomMotionProfile != nullptr ) {
+    SmartSetMotionProfile( *_iConfig.pointTurnCustomMotionProfile );
+  }
+  
   // Update activation history
   _iConfig.activationHistoryTracker.AddOccurrence();
   
   // Depending on the number/frequency of activations of this behavior, delegate control to an appropriate action:
   
-  // Scenario 1: Activated extremely frequently, even emergency point-turn maneuevers are failing to get robot unstuck,
+  // Scenario 1: Activated extremely frequently, even emergency point-turn maneuvers are failing to get robot unstuck,
   // delegate to a behavior that asks the user for help getting the robot un-stuck.
   if (ShouldAskForHelp()) {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToUnexpectedMovement.OnBehaviorActivated.RepeatedlyActivated",
@@ -180,7 +190,7 @@ void BehaviorReactToStuckInPlace::BehaviorUpdate()
   // TODO: monitor for things you care about here
   if( IsActivated() ) {
     if (GetBEI().GetMovementComponent().IsUnexpectedMovementDetected()) {
-      switch (_dVars.persistent.state) {
+      switch (_dVars.state) {
         case State::SlowlyBackingUp:
           TransitionToEmergencyTurn();
           break;
@@ -245,7 +255,7 @@ void BehaviorReactToStuckInPlace::TransitionToSlowlyBackUp()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToStuckInPlace::TransitionToCheckIfStillStuck()
 {
-  const State prevState = _dVars.persistent.state;
+  const State prevState = _dVars.state;
   SET_STATE(CheckingIfStillStuck);
   CompoundActionSequential* seq_action = new CompoundActionSequential({
     new TurnInPlaceAction(_iConfig.pointTurnAngle_rad, false),
@@ -296,7 +306,7 @@ void BehaviorReactToStuckInPlace::TransitionToAskForHelp()
 void BehaviorReactToStuckInPlace::SetInternalState(BehaviorReactToStuckInPlace::State state,
                                                    const std::string& stateName)
 {
-  _dVars.persistent.state = state;
+  _dVars.state = state;
   SetDebugStateName(stateName);
 }
 

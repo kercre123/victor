@@ -76,16 +76,14 @@ private:
     float retreatSpeed_mmps = 0.f;
     
     float pointTurnAngle_rad = 0.f;
+    std::unique_ptr<PathMotionProfile> pointTurnCustomMotionProfile;
     
     ICozmoBehaviorPtr askForHelpBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables() {}
-    struct Persistent {
-      State state;
-    };
-    Persistent persistent;
+    State state;
   };
 
   InstanceConfig _iConfig;
