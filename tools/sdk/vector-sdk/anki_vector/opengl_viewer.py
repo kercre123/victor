@@ -118,7 +118,7 @@ def _glut_install_instructions():
 
 
 class _OpenGLViewController():
-    """Controller that registeres for keyboard and mouse input through GLUT, and uses them to update
+    """Controller that registers for keyboard and mouse input through GLUT, and uses them to update
     the camera and listen for a shutdown cue.
 
     :param shutdown_delegate: Function to call when we want to exit the host OpenGLViewer.
@@ -467,7 +467,7 @@ class OpenGLViewer():
             viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
-    :param robot: the robot object being used by the OpenGL viewer
+    :param robot: The robot object being used by the OpenGL viewer
     """
 
     def __init__(self,

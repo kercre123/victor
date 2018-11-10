@@ -170,22 +170,22 @@ class ObservableObject(util.Component):
 
         .. testcode::
 
-        import anki_vector
-        import time
+            import anki_vector
+            import time
 
-        # First, place a cube directly in front of Vector so he can observe it.
+            # First, place a cube directly in front of Vector so he can observe it.
 
-        with anki_vector.Robot(args.serial) as robot:
-            connectionResult = robot.world.connect_cube()
-            connected_cube = robot.world.connected_light_cube
-
-            for _ in range(16):
+            with anki_vector.Robot(args.serial) as robot:
+                connectionResult = robot.world.connect_cube()
                 connected_cube = robot.world.connected_light_cube
-                if connected_cube:
-                    print(connected_cube)
-                    print("last observed timestamp: " + str(connected_cube.last_observed_time) + ", robot timestamp: " + str(connected_cube.last_observed_robot_timestamp))
-                    print(robot.world.connected_light_cube.pose)
-                time.sleep(0.5)
+
+                for _ in range(16):
+                    connected_cube = robot.world.connected_light_cube
+                    if connected_cube:
+                        print(connected_cube)
+                        print("last observed timestamp: " + str(connected_cube.last_observed_time) + ", robot timestamp: " + str(connected_cube.last_observed_robot_timestamp))
+                        print(robot.world.connected_light_cube.pose)
+                    time.sleep(0.5)
         """
         return self._pose
 
