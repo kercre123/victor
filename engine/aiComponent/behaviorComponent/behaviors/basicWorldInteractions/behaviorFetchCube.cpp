@@ -194,7 +194,8 @@ void BehaviorFetchCube::BehaviorUpdate()
     return;
   }
 
-  if(_iConfig.reactToCliffBehavior->WantsToBeActivated()){
+  if(!_iConfig.reactToCliffBehavior->IsActivated() &&
+      _iConfig.reactToCliffBehavior->WantsToBeActivated()){
     LOG_INFO("BehaviorFetchCube.CliffDetected", "Delegating to reactToCliffBehavior");
     CancelDelegates(false);
     DelegateIfInControl(_iConfig.reactToCliffBehavior.get(),
