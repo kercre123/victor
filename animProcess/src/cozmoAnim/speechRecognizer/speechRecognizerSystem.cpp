@@ -46,6 +46,8 @@ enum class SupportedLocales
   enUS_500kb,
   enUS_250kb,
   enUS_Alt_1mb,
+  enUS_Alt_500kb,
+  enUS_Alt_250kb,
   enUK,
   enAU,
   frFR,
@@ -72,6 +74,8 @@ const TriggerModelTypeData kTriggerModelDataList[] =
   // This is a hack to add a second en_US model, it will appear in console vars as `enUS_Alt_1mb`
   // This is delivery 2 model
   { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_1mb, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_500kb, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_250kb, .searchFileIndex = -1 },
   // Other Locales
   { .locale = Util::Locale("en","GB"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
   { .locale = Util::Locale("en","AU"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
@@ -81,7 +85,9 @@ const TriggerModelTypeData kTriggerModelDataList[] =
 constexpr size_t kTriggerDataListLen = sizeof(kTriggerModelDataList) / sizeof(kTriggerModelDataList[0]);
 static_assert(kTriggerDataListLen == (size_t) SupportedLocales::Count, "Need trigger data for each supported locale");
 
-const char* kRecognizerModelStr = "enUS_1mb, enUS_500kb, enUS_250kb, enUS_Alt_1mb, enUK, enAU, frFR, deDE";
+const char* kRecognizerModelStr = "enUS_1mb, enUS_500kb, enUS_250kb, \
+                                   enUS_Alt_1mb, enUS_Alt_500kb, enUS_Alt_250kb, \
+                                   enUK, enAU, frFR, deDE";
 const char* kRecognizerModelSensitivityStr = "default,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20";
   
 size_t _vectorRecognizerModelTypeIndex = (size_t) SupportedLocales::enUS_500kb;
@@ -156,7 +162,7 @@ std::string result;
                                                 newTypeData.modelType,
                                                 sensitivitySearchFileIdx);
     if (success && (trigger.nextTriggerPaths._netFile.empty())) {
-      result = "Recognizer modle or search file was not found, therefore, recognizer was Cleared";
+      result = "Recognizer modle or search file was not found, therefore, recognizer was cleared";
     }
     else {
       result = (success ? "success!" : "fail :(");
