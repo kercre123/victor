@@ -79,12 +79,14 @@ namespace{
     BEHAVIOR_ID(ReactToDarkness)            // user hand near camera may trigger darkened condition
   }};
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenDancingToTheBeat = {
+    BEHAVIOR_ID(ReactToObstacle),
     BEHAVIOR_ID(ReactToSoundAwake),
   };
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenGoingHome = {
     BEHAVIOR_ID(DanceToTheBeatCoordinator),
     BEHAVIOR_ID(ListenForBeats),
     BEHAVIOR_ID(DanceToTheBeat),
+    BEHAVIOR_ID(ReactToObstacle),
   };
 }
 
