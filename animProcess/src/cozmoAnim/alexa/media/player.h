@@ -56,7 +56,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
 
-#include "util/container/fixedCircularBuffer.h"
+
 
 namespace Anki {
 
@@ -74,7 +74,6 @@ class AnimContext;
 namespace Audio {
   class CozmoAudioController;
 }
-class AudioDataBuffer;
 
 class AlexaMediaPlayer : public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
                        , public alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface

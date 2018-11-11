@@ -4,7 +4,7 @@
  * Author: ross
  * Date:   Jun 9 2018
  *
- * Description: Ring buffer with contiguous READ memory.
+ * Description: Ring buffer with contiguous READ memory of a guaranteed minimum size.
  *              The size of the backing buffer is increased by the expected max read size.
  *              This is intended for use with routines that need access to C arrays.
  *              Unlike CircularBuffer and FixedCircularBuffer, you will not be able to
@@ -79,9 +79,9 @@ public:
   }
   
   // Returns null if can't read length len
-  const T* ReadData( const unsigned int len )
+  const T* ReadData( const unsigned int len ) const
   {
-    assert( len <= _maxReadSize );
+    assert( len <= GetContiguousSize() );
     if( IsEmpty() ) {
       return nullptr;
     } else if( _head > _tail ) {
@@ -94,7 +94,7 @@ public:
     } else {
       // tail >= head (tail in front, possibly full)
       if( len <= GetNumUsed() ) {
-        assert( len < _actualSize - _tail );
+        assert( len <= _actualSize - _tail );
         return _buffer.data() + _tail;
       } else {
         return nullptr;
@@ -120,7 +120,7 @@ public:
       size_t maxNumRead = GetNumUsed();
       if( len <= maxNumRead ) {
         _full = false;
-        assert( len < _actualSize - _tail );
+        assert( len <= _actualSize - _tail );
         _tail += len;
         if( _tail >= _capacity ) {
           _tail = _tail % _capacity;
@@ -130,6 +130,22 @@ public:
         return false;
       }
     }
+  }
+  
+  // This class guarantees at least _maxReadSize contiguous elements on a read as long as there are
+  // at least that many elements written. But the contiguous region may be larger. Check the size here.
+  size_t GetContiguousSize() const
+  {
+    size_t contiguousSize;
+    if( IsEmpty() ) {
+      contiguousSize = 0;
+    } else if( _head > _tail ) {
+      contiguousSize = _head - _tail;
+    } else {
+      contiguousSize = std::min( Size(), _actualSize - _tail );
+    }
+    assert( contiguousSize >= std::min(Size(), _maxReadSize) );
+    return contiguousSize;
   }
   
   inline size_t Capacity() const { return _capacity; }

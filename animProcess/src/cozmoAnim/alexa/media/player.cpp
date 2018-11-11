@@ -79,11 +79,12 @@ using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInter
 SourceId AlexaMediaPlayer::_sourceID = 1; // 0 is invalid
 
 namespace {
-  // TODO (VIC-9853): this is too big because we read all data from an internet stream instead of only when wwise needs new data.
-  constexpr int kAudioBufferSize = 1 << 18;
+  constexpr int kAudioBufferSize = 1 << 16;
 
   // max read size for _mp3Buffer
-  constexpr size_t kMaxReadSize = 8192;
+  constexpr size_t kMaxReadSize = 16384;
+  constexpr size_t kMinAudioToDecode = 8192;
+  constexpr size_t kDownloadSize = 8192;
 
   // context for mp3 decoder
   mp3dec_t mp3d;
@@ -160,8 +161,6 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
       if( Util::FileUtils::FileExists(ss) ) {
         Util::FileUtils::DeleteFile( ss );
         Util::FileUtils::DeleteFile( _saveFolder + "speaker_" + _name + std::to_string(i) + ".pcm" );
-      } else {
-        break;
       }
     }
 #endif
@@ -325,7 +324,7 @@ bool AlexaMediaPlayer::play( SourceId id )
 
     // buffer to read mp3 data from source. this is an unnecessary copy if RingBuffContiguousRead had a
     // raw writable pointer
-    std::array<uint8_t,kMaxReadSize> input;
+    std::array<uint8_t,kDownloadSize> input;
 
     int numBlocks = 0;
     const int kMaxBlocks = 10000; // number of times we can try to check a blocking reader before giving up
@@ -344,18 +343,27 @@ bool AlexaMediaPlayer::play( SourceId id )
       bool statusOK = false;
 
       const auto& reader = _readers[id];
-      const auto size = reader->GetNumUnreadBytes();
-
-      // it's possible that size==0 if the download hasn't started. ignore size for now, and try reading below,
-      // and use the readStatus of that to determine what to do
-      const size_t toRead = (size == 0) ? input.size() : std::min(size, input.size());
+      
       AlexaReader::Status readStatus = AlexaReader::Status::Ok;
-      auto bytesRead = reader->Read( input.data(), toRead, readStatus );
-      if( bytesRead > 0 ) {
-        // this won't add if it's full! which is not what we want unless it's a streaming radio station
-        _mp3Buffer->AddData( input.data(), (int)bytesRead );
+      while( true ) {
+        const size_t spaceForWrite = _mp3Buffer->Capacity() - _mp3Buffer->Size();
+        const auto numUnreadInStream = reader->GetNumUnreadBytes();
+        // it's possible that size==0 if the download hasn't started. ignore size for now, and try reading below,
+        // and use the readStatus of that to determine what to do
+        const size_t toReadFromStream = (numUnreadInStream == 0) ? input.size() : std::min(numUnreadInStream, input.size());
+        if( spaceForWrite < toReadFromStream ) {
+          break;
+        }
+        const auto bytesRead = reader->Read( input.data(), toReadFromStream, readStatus );
+        if( bytesRead > 0 ) {
+          // this won't add if there aren't bytesRead available space, hence the compairson to spaceForWrite above
+          _mp3Buffer->AddData( input.data(), (int)bytesRead );
+        }
+        if( readStatus != AlexaReader::Status::Ok ) {
+          break;
+        }
       }
-
+      
       statusOK = (readStatus == AlexaReader::Status::Ok) || (readStatus == AlexaReader::Status::WouldBlock);
       if( readStatus == AlexaReader::Status::WouldBlock ) {
         if( ++numBlocks > kMaxBlocks ) {
@@ -374,7 +382,7 @@ bool AlexaMediaPlayer::play( SourceId id )
       _offset_ms += timeDecoded_ms;
 
       // sleep to avoid downloading data faster than it is played. todo: not this...
-      const int sleepFor_ms = 0.8f * timeDecoded_ms;
+      const int sleepFor_ms = 0.6f * timeDecoded_ms;
       if( !flush && sleepFor_ms > 0 ) {
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
       }
@@ -493,9 +501,14 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
   float decoded_ms = 0.0f;
 
   while( true ) {
+    
+    // unless we're flushing, don't bother decoding without a minimum amount of data in buffer
+    if( !flush && (_mp3Buffer->Size() < kMinAudioToDecode) ) {
+      break;
+    }
 
-    // it would also make sense to exit this loop if not flush and Size() < kMaxReadSize
-    size_t buffSize = std::min(_mp3Buffer->Size(), kMaxReadSize);
+    // it may also make sense to exit this loop if not flush and Size() < kMaxReadSize
+    size_t buffSize = _mp3Buffer->GetContiguousSize(); // guaranteed to be at least min{Size(), kMaxReadSize}
     const unsigned char* inputBuff = (buffSize == 0) ? nullptr : _mp3Buffer->ReadData( (int)buffSize );
 
     if( inputBuff == nullptr ) {
@@ -504,20 +517,17 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
     }
 
     int samples = mp3dec_decode_frame(&mp3d, inputBuff, (int)buffSize, pcm, &info);
+    
     int consumed = info.frame_bytes;
-    if( info.frame_bytes > 0  ) {
+    if( info.frame_bytes > 0 ) {
 
-      if( samples > 0 || flush ) {
-        SaveMP3( inputBuff, consumed );
+      
+      SaveMP3( inputBuff, consumed );
 
-        bool success = _mp3Buffer->AdvanceCursor( consumed );
-        if( !success ) {
-          PRINT_NAMED_ERROR( "AlexaMediaPlayer.Decode.ReadPtr", "Could not move read pointer by %d (size=%zu)",
-                             consumed, _mp3Buffer->Size() );
-        }
-      } else {
-        // no samples
-        break;
+      bool success = _mp3Buffer->AdvanceCursor( consumed );
+      if( !success ) {
+        PRINT_NAMED_ERROR( "AlexaMediaPlayer.Decode.ReadPtr", "Could not move read pointer by %d (size=%zu)",
+                           consumed, _mp3Buffer->Size() );
       }
 
       if( samples > 0 ) {
