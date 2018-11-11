@@ -4,7 +4,6 @@
 Test playing and listing animations
 """
 
-import os
 from pathlib import Path
 import sys
 

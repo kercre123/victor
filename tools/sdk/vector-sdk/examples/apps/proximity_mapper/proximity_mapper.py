@@ -17,7 +17,7 @@
 """Maps a region around Vector using the proximity sensor.
 
 Vector will turn in place and use his sensor to detect walls in his
-local environment.  These walls are displayed in a 3d viewer.  The
+local environment.  These walls are displayed in the 3D Viewer.  The
 visualizer does not effect the robot's internal state or behavior.
 
 Vector expects this environment to be static - if objects are moved
@@ -316,10 +316,10 @@ if __name__ == '__main__':
     with anki_vector.Robot(args.serial, enable_camera_feed=True, show_viewer=True) as robotInstance:
         import time
         time.sleep(1)
-        # Creates a 3d viewer for the connected robot.
-        viewerInstance = OpenGLViewer(robot=robotInstance)
+        # Creates the 3D Viewer for the connected robot.
+        viewerInstance = OpenGLViewer(robot=robotInstance, show_viewer_controls=False)
 
-        # The opengl 3d viewer has to run on the main thread, so control is given to
+        # The OpenGLViewer has to run on the main thread, so control is given to
         # it via the blocking 'run' call.  The core loop of our program is injected into
         # this call to run in parallel on a secondary thread.  When the injected function
         # finishes, the viewer will automatically shut down and relinquish control of the

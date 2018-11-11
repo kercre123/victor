@@ -268,7 +268,7 @@ class World(util.Component):
     def get_face(self, face_id: int) -> faces.Face:
         """Fetches a Face instance with the given id.
 
-        .. code-block:: python
+        .. testcode::
 
             with anki_vector.Robot() as robot:
                 my_face = robot.world.get_face(previously_observed_face_id)

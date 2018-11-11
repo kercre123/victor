@@ -238,13 +238,13 @@ class Robot:
     def camera(self) -> camera.CameraComponent:
         """The camera instance used to control Vector's camera feed.
 
-        .. code-block:: python
+        .. testcode::
 
             with anki_vector.Robot() as robot:
+                time.sleep(1)
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
-        # TODO When latest_image is ready, convert `.. code-block:: python` to `.. testcode::`
         if self._camera is None:
             raise exceptions.VectorNotReadyException("CameraComponent is not yet initialized")
         return self._camera

@@ -186,7 +186,6 @@ class Connection:
     :param loop: The asyncio loop for the control events to run inside.
     :param requires_behavior_control: True if the connection requires behavior control.
     """
-    # TODO When sample code is ready, convert `.. code-block:: python` to `.. testcode::`
 
     def __init__(self, name: str, host: str, cert_file: str, guid: str, requires_behavior_control: bool = True):
         if cert_file is None:
@@ -214,7 +213,7 @@ class Connection:
         """A direct reference to the loop on the connection thread.
         Can be used to run functions in on thread.
 
-        .. code-block:: python
+        .. testcode::
 
             import anki_vector
             import asyncio
@@ -280,8 +279,7 @@ class Connection:
 
         For more information about behavior control, see :ref:`behavior <behavior>`
 
-        .. code-block:: python
-            :emphasize-lines: 6,10
+        .. testcode::
 
             import anki_vector
 
@@ -568,7 +566,7 @@ class Connection:
     def run_soon(self, coro: Awaitable) -> None:
         """Schedules the given awaitable to run on the event loop for the connection thread.
 
-        .. code-block:: python
+        .. testcode::
 
             import anki_vector
 
@@ -599,7 +597,7 @@ class Connection:
         """Runs a given awaitable on the connection thread's event loop.
         Cannot be called from within the connection thread.
 
-        .. code-block:: python
+        .. testcode::
 
             import anki_vector
 
@@ -640,7 +638,6 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
     and allows them to continue running while the messages are being processed.
 
     .. code-block:: python
-
 
         import anki_vector
 

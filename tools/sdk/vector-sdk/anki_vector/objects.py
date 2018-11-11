@@ -1058,11 +1058,10 @@ class CustomObject(ObservableObject):
 
         This value can only be assigned once as it is static on the robot.
 
-        .. code-block:: python
+        .. testcode::
 
             import anki_vector
             with anki_vector.Robot() as robot:
-
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
                                                size_mm=20.0,
@@ -1090,7 +1089,7 @@ class CustomObject(ObservableObject):
     def archetype(self) -> CustomObjectArchetype:
         """Archetype defining this custom object's properties.
 
-        .. code-block:: python
+        .. testcode::
 
             import anki_vector
             with anki_vector.Robot() as robot:
@@ -1111,7 +1110,7 @@ class CustomObject(ObservableObject):
     def descriptive_name(self) -> str:
         """A descriptive name for this CustomObject instance.
 
-        .. code-block:: python
+        .. testcode::
 
             import anki_vector
             with anki_vector.Robot() as robot:

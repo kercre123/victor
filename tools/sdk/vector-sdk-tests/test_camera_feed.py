@@ -4,8 +4,6 @@
 Test camera feed
 """
 
-import os
-import sys
 import time
 
 import anki_vector  # pylint: disable=wrong-import-position

@@ -11,15 +11,12 @@ NOTE: Currently, Vector's default eye animations will override the solid colors,
 #        message at the start of this program, and a complimentary "turn back on default eye stuff"
 #        message when it stops.
 
-import os
-import sys
 import time
 
 import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     with anki_vector.Robot(args.serial) as robot:

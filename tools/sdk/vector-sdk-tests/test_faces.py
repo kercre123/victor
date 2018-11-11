@@ -5,8 +5,6 @@ Test subscribing to seen faces
 """
 
 import functools
-import os
-import sys
 import time
 
 from anki_vector.events import Events  # pylint: disable=wrong-import-position

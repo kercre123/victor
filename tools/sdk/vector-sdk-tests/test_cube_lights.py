@@ -7,8 +7,6 @@ Attempts to connect to a cube.
 If successful sets its lights all to yellow for 2.5 seconds, then red, green, blue & white for 2.5 seconds
 """
 
-import os
-import sys
 import time
 
 import anki_vector  # pylint: disable=wrong-import-position

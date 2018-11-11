@@ -4,9 +4,6 @@
 Prints out the battery voltage on the robot & cube.
 """
 
-import os
-import sys
-
 import anki_vector  # pylint: disable=wrong-import-position
 
 

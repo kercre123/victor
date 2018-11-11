@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test 3d viewer
+Test the 3D Viewer class, OpenGLViewer
 """
 
 import asyncio
@@ -11,8 +11,8 @@ from anki_vector.objects import CustomObjectTypes, CustomObjectMarkers
 
 
 async def my_function(robot):  # pylint: disable=unused-argument
+    # TODO 3D Viewer needs to shut down when this function completes. Not currently working.
     await asyncio.sleep(20)
-    # @TODO: 3d viewer needs to shut down when this function completes
     print("done")
 
 
@@ -22,6 +22,7 @@ def main():
 
     with anki_vector.Robot(args.serial, show_viewer=True, enable_camera_feed=True, enable_face_detection=True, enable_custom_object_detection=True, enable_nav_map_feed=True) as robot:
 
+        # TODO Do we see this cube in the world? Seems like we should but we don't?
         robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                        marker=CustomObjectMarkers.Circles2,
                                        size_mm=100.0,
