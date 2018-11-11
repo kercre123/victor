@@ -751,6 +751,7 @@ void AlexaImpl::NotifyOfTapToTalk()
           SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
         }
       } else {
+        _client->StopForegroundActivity();
         ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
                      "AlexaImpl.NotifyOfTapToTalk.Failed",
                      "Failed to notify tap to talk" );
