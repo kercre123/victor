@@ -55,7 +55,7 @@ foreach(LIB ${AVS_LIBS})
 endforeach()
 
 if (VICOS)
-  # add SQLite 
+  # add SQLite
   list(APPEND AVS_LIBS sqlite3)
   add_library(sqlite3 SHARED IMPORTED)
   set_target_properties(sqlite3 PROPERTIES
@@ -72,26 +72,24 @@ if (TARGET copy_avs_libs)
     return()
 endif()
 
-set(INSTALL_LIBS
-  "${AVS_LIBS}")
+message(STATUS "avs libs: ${AVS_LIBS}")
 
-message(STATUS "avs libs: ${INSTALL_LIBS}")
+set(AVS_LIB_NAMES "")
+set(AVS_LIB_PATHS "")
 
-set(OUTPUT_FILES "")
-
-foreach(lib ${INSTALL_LIBS})
-    get_target_property(LIB_PATH ${lib} IMPORTED_LOCATION)
-    get_filename_component(LIB_FILENAME ${LIB_PATH} NAME)
-    set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_FILENAME}") 
-    message(STATUS "copy avs lib: ${lib} ${LIB_PATH} -> ${DST_PATH}")
+foreach(lib ${AVS_LIBS})
+    get_target_property(libimport ${lib} IMPORTED_LOCATION)
+    get_filename_component(libname ${libimport} NAME)
+    set(libpath "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${libname}")
     add_custom_command(
-        OUTPUT "${DST_PATH}"
-        COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_if_different "${LIB_PATH}" "${DST_PATH}"
-        COMMENT "copy ${LIB_PATH}"
+        OUTPUT ${libpath}
+        DEPENDS ${libimport}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${libimport} ${libpath}
+        COMMENT "install ${libname}"
         VERBATIM
     )
-    list(APPEND OUTPUT_FILES ${DST_PATH})
-endforeach() 
+    list(APPEND AVS_LIB_NAMES ${libname})
+    list(APPEND AVS_LIB_PATHS ${libpath})
+endforeach()
 
-add_custom_target(copy_avs_libs ALL DEPENDS ${OUTPUT_FILES})
+add_custom_target(copy_avs_libs ALL DEPENDS ${AVS_LIB_PATHS})

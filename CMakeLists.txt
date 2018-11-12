@@ -139,11 +139,12 @@ add_subdirectory("victor-clad") # includes clad via message-buffers
 # Current DEFAULT (android or mac platforms)
 set(CLEAN_CLAD_TARGETS TRUE)
 
-import(util "lib/util")
 include(audio) # See ./cmake/audio.cmake for definitions and lib
 include(wwise) # for Wwise targets
 include(protobuf) # for protobuf target
 include(breakpad) # for breakpad targets
+include(avs-device-sdk)
+
 import(util "lib/util")
 import(ble_cozmo "lib/BLECozmo")
 import(DAS "lib/das-client")
@@ -223,7 +224,6 @@ include(sodium)
 include(aubio)
 include(sensory)
 include(signalessence)
-include(avs-device-sdk)
 
 write_license_html()
 check_licenses()
