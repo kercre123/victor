@@ -47,6 +47,7 @@ namespace {
 
 static void Shutdown(int signum)
 {
+  Anki::Util::DropBreadcrumb(false, nullptr, -1);
   LOG_INFO("CozmoAnimMain.Shutdown", "Shutdown on signal %d", signum);
   gShutdown = true;
 }

@@ -24,6 +24,12 @@
 #define LOG_CHANNEL "NeuralNets"
 
 namespace Anki {
+namespace Util {
+  bool DropBreadcrumb(bool result, const char* file, int line);
+}
+}
+
+namespace Anki {
 
 class VicNeuralNetProcess : public NeuralNets::INeuralNetMain
 {
@@ -71,6 +77,7 @@ private:
   
   static void TriggerShutdown(int signum)
   {
+    Anki::Util::DropBreadcrumb(false, nullptr, -1);
     LOG_INFO("VicNeuralNets.Shutdown", "Shutdown on signal %d", signum);
     sShouldShutdown = true;
   }

@@ -32,8 +32,18 @@
 #define ALLOW_DEBUG_LOGGING ANKI_DEVELOPER_CODE
 #endif
 
+#if !defined(ANKI_BREADCRUMBS)
+#define ANKI_BREADCRUMBS 1
+#endif
+
 namespace Anki {
 namespace Util {
+
+#if ANKI_BREADCRUMBS
+bool DropBreadcrumb(bool result, const char* file, int line);
+#else
+static inline bool DropBreadcrumb(bool result, const char*, int) { return result; }
+#endif
 
 class ITickTimeProvider;
 class ILoggerProvider;
@@ -121,9 +131,12 @@ void sChanneledDebugV(const char* channel, const char* name, const KVPairVector 
 __attribute__((__used__))
 void sChanneledDebug(const char* channel, const char* name, const KVPairVector & keyvals, const char* strval);
 
+// Helper for use with ANKI_VERIFY macro. Always returns true.
+bool sVerifySucceededReturnTrue(const char* file, int line);
+
 // Helper for use with ANKI_VERIFY macro. Always returns false.
 __attribute__((__used__))
-bool sVerifyFailedReturnFalse(const char* name, const char* format, ...) __attribute__((format(printf,2,3)));
+bool sVerifyFailedReturnFalse(const char* file, int line, const char* name, const char* format, ...) __attribute__((format(printf,4,5)));
 
 
 void sSetGlobal(const char* key, const char* value);
@@ -170,6 +183,7 @@ __attribute__((noreturn)) void sAbort();
 // Logging with names.
 //
 #define PRINT_NAMED_ERROR(name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); \
   ::Anki::Util::sSetErrG(); \
   if (::Anki::Util::_errBreakOnError) { \
@@ -178,19 +192,22 @@ __attribute__((noreturn)) void sAbort();
 } while(0)
 
 #define PRINT_NAMED_WARNING(name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sWarningF(name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
 #define PRINT_NAMED_INFO(name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledInfoF(name, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_NAMED_DEBUG(name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledDebugF(name, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 #else
-#define PRINT_NAMED_DEBUG(name, format, ...)
+#define PRINT_NAMED_DEBUG(name, format, ...) ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__)
 #endif
 
 //
@@ -234,21 +251,23 @@ __attribute__((noreturn)) void sAbort();
 // This prevents analyzers from generating bogus warnings caused by impossible code paths.
 //
 #define ANKI_VERIFY(expr, name, format, ...) \
-  (expr ? true : (::Anki::Util::sVerifyFailedReturnFalse(name, "VERIFY(%s): " format, #expr, ##__VA_ARGS__) && false))
+ (expr ? ::Anki::Util::sVerifySucceededReturnTrue(__FILE__, __LINE__) : (::Anki::Util::sVerifyFailedReturnFalse(__FILE__, __LINE__, name, "VERIFY(%s): " format, #expr, ##__VA_ARGS__) && false))
 
 //
 // Logging with channels.
 //
 #define PRINT_CH_INFO(channel, name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_CH_DEBUG(channel, name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 #else
-#define PRINT_CH_DEBUG(channel, name, format, ...)
+#define PRINT_CH_DEBUG(channel, name, format, ...) ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__)
 #endif
 
 //
@@ -259,6 +278,7 @@ __attribute__((noreturn)) void sAbort();
 #define PRINT_PERIODIC_CH_HELPER(func, period, channel, name, format, ...) \
 { static u16 cnt = period;                                                 \
   if (++cnt >= period) {                                                   \
+    ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__);                 \
     ::Anki::Util::func(channel, name, {}, format, ##__VA_ARGS__);          \
     cnt = 0;                                                               \
   }                                                                        \
@@ -274,22 +294,26 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 // Streams
 #define PRINT_STREAM_ERROR(name, args) do{         \
       std::stringstream ss; ss<<args;                   \
+      ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sError(name, {}, ss.str().c_str()); \
     } while(0)
 
 #define PRINT_STREAM_WARNING(name, args) do{       \
       std::stringstream ss; ss<<args;                   \
+      ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sWarning(name, {}, ss.str().c_str()); \
     } while(0)
 
 #define PRINT_STREAM_INFO(name, args) do{          \
       std::stringstream ss; ss<<args;                   \
+      ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sChanneledInfo(name, name, {}, ss.str().c_str()); \
     } while(0)
 
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_STREAM_DEBUG(name, args) do {         \
       std::stringstream ss; ss<<args;                   \
+      ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sChanneledDebug(name, name, {}, ss.str().c_str()); \
     } while(0)
 #else
@@ -317,6 +341,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 #endif
 
 #define ASSERT_NAMED(expr, name) do {                       \
+  ::Anki::Util::DropBreadcrumb(expr ? true : false, __FILE__, __LINE__); \
   if (!(expr)) {                                            \
     PRINT_NAMED_ERROR(name, "Assertion Failed: %s", #expr); \
     Anki::Util::sDumpCallstack("AssertCallstack");          \
@@ -326,6 +351,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 } while(0)
 
 #define ASSERT_NAMED_AND_RETURN_FALSE_IF_FAIL(exp, name) do { \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__);    \
   if(!(exp)) {                                              \
     PRINT_NAMED_ERROR(name, "Assertion Failed: %s", #exp);  \
     Anki::Util::sDumpCallstack("AssertCallstack");          \
@@ -337,6 +363,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 
 
 #define ASSERT_NAMED_EVENT(expr, name, format, ...) do {                      \
+  ::Anki::Util::DropBreadcrumb(expr ? true : false, __FILE__, __LINE__);        \
   if (!(expr)) {                                                              \
     PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #expr, ##__VA_ARGS__);  \
     Anki::Util::sDumpCallstack("AssertCallstack");                            \
@@ -347,6 +374,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 
 
 #define ASSERT_NAMED_EVENT_AND_RETURN_FALSE_IF_FAIL(exp, name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(exp ? true : false, __FILE__, __LINE__);         \
   if(!(exp)) {                                                                \
     PRINT_NAMED_ERROR(name, "ASSERT ( %s ): " format, #exp, ##__VA_ARGS__);   \
     Anki::Util::sDumpCallstack("AssertCallstack");                            \
@@ -371,6 +399,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 #if ANKI_DEV_ASSERT_ENABLED
 
 #define DEV_ASSERT_MSG(expr, name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(expr ? true : false, __FILE__, __LINE__); \
   if (!(expr)) { \
     PRINT_NAMED_ERROR(name, "ASSERT(%s): " format, #expr, ##__VA_ARGS__); \
     Anki::Util::sDumpCallstack("ASSERT"); \
@@ -388,6 +417,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 // but the entire block will be discarded by the optimizer because it can't be executed.
 //
 #define DEV_ASSERT_MSG(expr, name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(expr ? true : false, __FILE__, __LINE__); \
   if (false) { \
     if (!(expr)) { \
       PRINT_NAMED_ERROR(name, "ASSERT(%s): " format, #expr, ##__VA_ARGS__); \
