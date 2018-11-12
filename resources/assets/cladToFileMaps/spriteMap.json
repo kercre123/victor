@@ -560,6 +560,10 @@
     "SpriteName" : "blackjack_vector_flipover"
   },
   {
+    "CladEvent" : "Face_Alexa_Icon",
+    "SpriteName" : "face_alexa_icon"
+  },
+  {
     "CladEvent" : "Face_Alexa_Listen2weather",
     "SpriteName" : "face_alexa_listen2weather"
   },

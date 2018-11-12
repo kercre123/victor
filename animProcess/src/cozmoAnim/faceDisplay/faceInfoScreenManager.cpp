@@ -22,11 +22,13 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/robotDataLoader.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/image_impl.h"
 #include "micDataTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
@@ -41,6 +43,7 @@
 #include "json/json.h"
 #include "osState/osState.h"
 #include "osState/wallTime.h"
+#include "opencv2/highgui.hpp"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
@@ -1442,55 +1445,101 @@ void FaceInfoScreenManager::DrawCustomText()
   
 void FaceInfoScreenManager::DrawAlexaFace()
 {
-  if( _currScreen == nullptr ) {
+  if ( nullptr == _currScreen )
+  {
     return;
   }
-  
-  // todo: top image and horizontally centered text.
-  // the text below matches PRD but has ugly formatting
-  
+
+  static const int        kScreenTop            = 0;
+  static const int        kIconToTextSpacing    = 0;
+  static const float      kDefaultTextScale     = 0.4f;
+  static const ColorRGBA& kTextColor            = NamedColors::WHITE;
+  static const int        kTextSpacing          = 14;
+  static const int        kTextLineThickness    = 1;
+
+  // draw the alexa icon ...
+
+  Vision::ImageRGBA alexaIcon;
+  alexaIcon.Load( _context->GetDataLoader()->GetSpritePaths()->GetValue( Vision::SpriteName::Face_Alexa_Icon ) );
+
+  const int kIconTop  = kScreenTop;
+  const int iconLeft  = ( FACE_DISPLAY_WIDTH - alexaIcon.GetNumCols() )  / 2.0f;
+  const Point2f iconTopLeft( iconLeft, kIconTop );
+
+  _scratchDrawingImg->DrawSubImage( Vision::ImageRGB565( alexaIcon ), iconTopLeft );
+
+  // draw the texzt ...
   // todo: localization
+
+  struct TextDataLine
+  {
+    std::string   text;
+    float         scale = 1.0f;
+  };
+  std::vector<TextDataLine> textVec;
   
-  std::vector<std::string> textVec;
-  
-  switch( _currScreen->GetName() ) {
+  switch ( _currScreen->GetName() )
+  {
     case ScreenName::AlexaPairing:
     {
-      if (!_alexaUrl.empty()) {
-        textVec.push_back("Go to " + _alexaUrl);
-        textVec.push_back("and enter this code:");
-      }
-      textVec.push_back(_alexaCode);
-    }
+      // we have confirmed it's ok to hardcode this url, but if it's been set for us already, use that
+      const std::string& url = _alexaUrl.empty() ? "amazon.com/code" : _alexaUrl;
+      textVec.push_back( { "Go to " + url } );
+      textVec.push_back( { _alexaCode, 1.5f } );
+
       break;
+    }
+
     case ScreenName::AlexaPairingSuccess:
     {
-      textVec.push_back("You're ready to use Alexa.");
-      textVec.push_back("Check out the Alexa App");
-      textVec.push_back("for things to try.");
-    }
+      textVec.push_back( { "You're ready to use Alexa." } );
+      textVec.push_back( { "Check out the Alexa App" } );
+      textVec.push_back( { "for things to try." } );
+
       break;
+    }
+
     case ScreenName::AlexaPairingExpired:
     {
-      textVec.push_back("The code has expired.");
-      textVec.push_back("Retry to generate a new code.");
-    }
+      textVec.push_back( { "The code has expired." } );
+      textVec.push_back( { "Retry to generate" } );
+      textVec.push_back( { "a new code." } );
+
       break;
+    }
+
     case ScreenName::AlexaPairingFailed:
     {
-      textVec.push_back("Something's gone wrong.");
-      textVec.push_back("Please try again.");
-    }
+      textVec.push_back( { "Something's gone wrong." } );
+      textVec.push_back( { "Please try again." } );
+
       break;
+    }
+
     default:
     {
-      ANKI_VERIFY(false && "Unexpected alexa face", "FaceInfoScreenManager.DrawAlexaFace.Unexpected", "");
-    }
+      ANKI_VERIFY( false && "Unexpected alexa face", "FaceInfoScreenManager.DrawAlexaFace.Unexpected", "" );
       break;
+    }
   }
-  
-  DrawTextOnScreen(textVec);
-  
+
+  // loop through our lines of text and draw them centered on the screen
+  int textLocationY = ( kIconTop + alexaIcon.GetNumRows() + kIconToTextSpacing );
+  for ( const auto& line : textVec )
+  {
+    textLocationY += ( kTextSpacing * line.scale );
+    _scratchDrawingImg->DrawTextCenteredHorizontally( line.text,
+                                                      CV_FONT_NORMAL,
+                                                      kDefaultTextScale * line.scale,
+                                                      kTextLineThickness,
+                                                      kTextColor,
+                                                      textLocationY,
+                                                      false );
+  }
+
+  // This actually draws the scratch image to the screen
+  DrawScratch();
+
   RobotInterface::SetHeadAngle headAction;
   headAction.angle_rad = MAX_HEAD_ANGLE;
   headAction.duration_sec = 1.0;
