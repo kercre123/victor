@@ -163,7 +163,8 @@ void BehaviorVolume::OnBehaviorActivated()
     DASMSG(robot_settings_volume, "robot.settings.volume", "The robot's volume setting was changed");
     DASMSG_SET(i1, oldVol, "Old volume");
     DASMSG_SET(i2, newVol, "New volume");
-    // NOTE: once we also respond to app changes here, we'll have to be more careful about this source
+    // NOTE: we only do this for voice-sourced intents. DAS for app-sourced happens in SettingsCommManager
+    // and we only need to do the animation (below)
     DASMSG_SET(s1, "voice", "Source of the change (app, voice, or SDK)");
     DASMSG_SEND();
   } // close else (externalVolumeChangeNotificationPending)
