@@ -29,10 +29,12 @@
  */
 
 #include "cozmoAnim/alexa/alexaClient.h"
-#include "cozmoAnim/alexa/alexaObserver.h"
+
 #include "cozmoAnim/alexa/alexaCapabilityWrapper.h"
 #include "cozmoAnim/alexa/alexaMessageRouter.h"
+#include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/alexa/alexaRevokeAuthHandler.h"
+#include "cozmoAnim/alexa/alexaTemplateRuntimeStub.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -310,7 +312,7 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
-  // Creating the Audio Input Processor - This component is the Capability Agent that implments the SpeechRecognizer
+  // Creating the Audio Input Processor - This component is the Capability Agent that implements the SpeechRecognizer
   // interface of AVS.
   _audioInputProcessor = capabilityAgents::aip::AudioInputProcessor::create( _directiveSequencer,
                                                                              _connectionManager,
@@ -466,7 +468,16 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     LOG_WARNING("AlexaClient.Init.InvalidFirmwareVersion", "SDK rejected firmware version %d", firmwareVersion);
     return false;
   }
-  
+
+
+  #ifndef DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
+    #warning "DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER is not defined, defaulting to off"
+    #define DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER 0
+  #endif
+
+  #if DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
+  _templateRuntime = std::make_shared<AlexaTemplateRuntimeStub>( _exceptionSender );
+  #endif
   
   // Register directives
   
@@ -545,6 +556,15 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
                 .d("directiveHandler", "InteractionModelCapabilityAgent"));
     return false;
   }
+
+  #if DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
+  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("TemplateRuntime", _templateRuntime) ) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterDirectiveHandler")
+                .d("directiveHandler", "TemplateRuntime"));
+    return false;
+  }
+  #endif
   
   // Register capabilities
   
@@ -615,6 +635,15 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
                 .d("capabilitiesDelegate", "System"));
     return false;
   }
+
+  #if DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
+  if (!(capabilitiesDelegate->registerCapability(_templateRuntime))) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "TemplateRuntime"));
+    return false;
+  }
+  #endif
   
   return true;
 }
@@ -625,6 +654,9 @@ void AlexaClient::Connect( const std::shared_ptr<avsCommon::sdkInterfaces::Capab
   // try connecting
   if( capabilitiesDelegate != nullptr ) {
     capabilitiesDelegate->publishCapabilitiesAsyncWithRetries();
+  }
+  else {
+    LOG_ERROR("AlexaClient.Connect.NoCapabilities", "no capabilities delegate, can't register capabilities");
   }
 }
 
@@ -651,6 +683,14 @@ std::future<bool> AlexaClient::NotifyOfWakeWord( capabilityAgents::aip::AudioPro
                                                  const capabilityAgents::aip::ESPData espData,
                                                  std::shared_ptr<const std::vector<char>> KWDMetadata )
 {
+
+  LOG_INFO("AlexaClient.NotifyOfWakeWord", "keyword='%s', beginIDx=%llu, endIdx=%llu, connected=%d",
+           keyword.c_str(),
+           beginIndex,
+           endIndex,
+           _connectionManager->isConnected());
+
+
   if( !_connectionManager->isConnected() ) {
     std::promise<bool> ret;
     static const std::string ALEXA_STOP_KEYWORD = "STOP";

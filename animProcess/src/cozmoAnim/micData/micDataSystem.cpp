@@ -718,7 +718,8 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
     RobotDataLoader *dataLoader = _context->GetDataLoader();
     const auto callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-      PRINT_NAMED_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
+      PRINT_CH_INFO("Alexa", "MicDataSystem.SetAlexaState.TriggerWordDetectCallback",
+                    "info - %s", info.Description().c_str());
       
       if( _micMuted || HasStreamingJob() ) {
         // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted

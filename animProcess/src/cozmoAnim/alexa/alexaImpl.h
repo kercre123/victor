@@ -180,6 +180,9 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _wakeWordAudioProvider;
   std::shared_ptr<AlexaKeywordObserver> _keywordObserver;
   std::shared_ptr<AlexaAudioInput> _microphone;
+
+  // copy that can be used to dump audio to file. Only used if a console var is set
+  std::shared_ptr<AlexaAudioInput> _debugMicrophone;
   
   // callbacks to impl parent Alexa
   OnAlexaAuthStateChanged _onAlexaAuthStateChanged;

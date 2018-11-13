@@ -165,6 +165,7 @@ AlexaMediaPlayer::AlexaMediaPlayer( Type type,
                                     std::shared_ptr<avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory )
   : avsCommon::utils::RequiresShutdown{"AlexaMediaPlayer_" + sAudioInfo.at(type).name}
   , _type( type )
+  , _state(State::Idle)
   , _mp3Buffer( new Util::RingBuffContiguousRead<uint8_t>{ kAudioBufferSize, kMaxReadSize } )
   , _dispatchQueue(Util::Dispatch::Create("AlexaMediaPlayer"))
   , _contentFetcherFactory( contentFetcherFactory )

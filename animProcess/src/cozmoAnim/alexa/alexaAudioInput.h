@@ -59,6 +59,10 @@ public:
   // Starts streaming from the microphone. returns whether the start was successful.
   // (note: the micDataSystem job was added before this was called, but we just drop all incoming data)
   virtual bool startStreamingMicrophoneData() override;
+
+  // For debug purposes, expose the reader for this mic data. Note that reading from this reader will drain it
+  // (so for debugging purposes, we make a copy of this whole object)
+  std::unique_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream::Reader> GetReader();
   
 private:
   

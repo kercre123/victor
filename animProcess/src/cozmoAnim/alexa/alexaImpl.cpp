@@ -67,6 +67,7 @@
 #include <ESP/DummyESPDataProvider.h>
 
 #include <chrono>
+#include <fstream>
 
 namespace Anki {
 namespace Vector {
@@ -101,8 +102,44 @@ namespace {
   // If the DialogUXState was set to Idle, but the last Play directive was older than this amount, then
   // switch to Idle
   CONSOLE_VAR_RANGED(float, kAlexaMaxIdleDelay_s, "Alexa", 3.0f, 0.0f, 10.0f);
-  
-  CONSOLE_VAR(bool, kLogAlexaDirectives, "Alexa", false);
+
+  // enable to log directives received into a directives.txt file in the cache
+  CONSOLE_VAR(bool, kLogAlexaDirectives, "Alexa", false );
+
+  // enable to save a copy of the mic data out to the cache folder when we detect an "alexa" wake word
+  // NOTE: only valid and read during Init, so make sure to save the console var to enable it (or edit the value here)
+  CONSOLE_VAR(bool, kDumpAlexaTriggerAudio, "Alexa.Init", false);
+
+  const char* DialogUXStateToString( const avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState& duxState ) {
+    switch( duxState ) {
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED: return "FINISHED";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE: return "IDLE";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING: return "THINKING";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING: return "LISTENING";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::EXPECTING: return "EXPECTING";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING: return "SPEAKING";
+    }
+  }
+
+  const char* MessageStatusToString(const avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status& status ) {
+    switch( status ) {
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::PENDING: return "PENDING";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SUCCESS: return "SUCCESS";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SUCCESS_NO_CONTENT: return "SUCCESS_NO_CONTENT";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::NOT_CONNECTED: return "NOT_CONNECTED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::NOT_SYNCHRONIZED: return "NOT_SYNCHRONIZED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::TIMEDOUT: return "TIMEDOUT";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::PROTOCOL_ERROR: return "PROTOCOL_ERROR";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INTERNAL_ERROR: return "INTERNAL_ERROR";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_INTERNAL_ERROR_V2: return "SERVER_INTERNAL_ERROR_V2";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::REFUSED: return "REFUSED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::CANCELED: return "CANCELED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::THROTTLED: return "THROTTLED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::BAD_REQUEST: return "BAD_REQUEST";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_OTHER_ERROR: return "SERVER_OTHER_ERROR";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INVALID_AUTH: return "INVALID_AUTH";
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -396,6 +433,16 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   _microphone = AlexaAudioInput::Create( sharedDataStream );
   _microphone->startStreamingMicrophoneData();
+
+
+  if( ANKI_DEV_CHEATS && kDumpAlexaTriggerAudio ) {
+    auto debugBuffer = std::make_shared<avsCommon::avs::AudioInputStream::Buffer>( bufferSize );
+
+    std::shared_ptr<avsCommon::avs::AudioInputStream> debugDataStream
+      = avsCommon::avs::AudioInputStream::create( debugBuffer, kWordSize, kMaxReaders );
+    _debugMicrophone = AlexaAudioInput::Create( debugDataStream );
+    _debugMicrophone->startStreamingMicrophoneData();
+  }
   
   _capabilitiesDelegate->addCapabilitiesObserver( _client );
   
@@ -457,6 +504,11 @@ void AlexaImpl::AddMicrophoneSamples( const AudioUtil::AudioSample* const sample
   if( _microphone != nullptr ) {
     _microphone->AddSamples( samples, nSamples );
   }
+#if ANKI_DEV_CHEATS
+  if( _debugMicrophone != nullptr ) {
+    _debugMicrophone->AddSamples( samples, nSamples );
+  }
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -494,10 +546,13 @@ void AlexaImpl::OnDirective(const std::string& directive, const std::string& pay
   if( kLogAlexaDirectives ) {
     Json::Value json;
     Json::Reader reader;
+    const float bsTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     bool success = reader.parse( payload, json );
     if( success ) {
       const bool append = true;
-      Util::FileUtils::WriteFile( _alexaCacheFolder + kDirectivesFile, directive + ": " + json.toStyledString(), append );
+      Util::FileUtils::WriteFile( _alexaCacheFolder + kDirectivesFile,
+                                  std::to_string(bsTime) + " " + directive + ": " + json.toStyledString(),
+                                  append );
     }
   }
 }
@@ -554,6 +609,11 @@ void AlexaImpl::OnRequestAuthorization( const std::string& url, const std::strin
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 {
+  LOG_INFO("AlexaImpl.OnDialogUXStateChanged", "from '%s' to '%s'",
+           DialogUXStateToString(_dialogState),
+           DialogUXStateToString(state));
+
+
   _dialogState = state;
   if( _dialogState != DialogUXState::LISTENING ) {
     _isTapOccurring = false;
@@ -660,7 +720,7 @@ void AlexaImpl::OnAVSConnectionChanged( const avsCommon::sdkInterfaces::Connecti
 void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status )
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING("AlexaImpl.OnSendComplete", "status=%d", status);
+  LOG_WARNING("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
   switch( status ) {
     case Status::PENDING: // The message has not yet been processed for sending.
@@ -780,7 +840,8 @@ void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
     
   avsCommon::avs::AudioInputStream::Index fromIndex;
   avsCommon::avs::AudioInputStream::Index toIndex;
-  
+
+  // add this many samples to either side of the window as padding
   const int kWindowHalfBuffer = 100;
   
   if ( from_ms < 0 ) {
@@ -788,6 +849,10 @@ void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
   } else {
     fromIndex = from_ms; // first move into larger type
     fromIndex = kMillisToSamples*fromIndex; // milliseconds to samples @ 16k audio
+    // LOG_INFO("AlexaImpl.NotifyOfWakeWord.fromIndex",
+    //          "from_ms = %zu, fromIndex = %zu",
+    //          (size_t)from_ms,
+    //          (size_t)fromIndex);
     if( fromIndex > kWindowHalfBuffer ) {
       fromIndex -= kWindowHalfBuffer;
     }
@@ -800,6 +865,11 @@ void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
   } else {
     toIndex = to_ms;
     toIndex = kMillisToSamples*toIndex + kWindowHalfBuffer;
+    // LOG_INFO("AlexaImpl.NotifyOfWakeWord.toIndex",
+    //          "to_ms=%zu, toIndex=%zu, totalSamples=%zu",
+    //          (size_t)to_ms,
+    //          (size_t)toIndex,
+    //          (size_t)totalNumSamples);
     if( toIndex > totalNumSamples ) {
       toIndex = totalNumSamples;
     }
@@ -809,10 +879,64 @@ void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
   // To get around this, we simply take the size (in # samples) of the window and
   // back up from the most recent sample by that amount. It seems to work...
   if ( from_ms >= 0 && to_ms >= 0 ) {
+
     avsCommon::avs::AudioInputStream::Index dIndex = toIndex - fromIndex;
     toIndex = totalNumSamples;
     fromIndex = toIndex - dIndex;
+    LOG_INFO("AlexaImpl.NotifyOfWakeWord.AdjustIndex",
+             "fromIndex = %llu, toIndex = %llu (dIndex %llu)",
+             fromIndex,
+             toIndex,
+             dIndex);
+
   }
+
+#if ANKI_DEV_CHEATS
+  if( _debugMicrophone ) {
+    ANKI_VERIFY(totalNumSamples == _debugMicrophone->GetTotalNumSamples(),
+                "AlexaImpl.NotifyOfWakeWord.DebugMicrophoneError",
+                "real mic has %zu samples, but debug mic has %zu",
+                totalNumSamples,
+                _debugMicrophone->GetTotalNumSamples());
+
+    static int sAudioDumpIdx = 0;
+    const std::string filename = _alexaCacheFolder + "audioInput_" + std::to_string(sAudioDumpIdx++) + ".pcm";
+    std::ofstream fileOut;
+    std::ios_base::openmode mode = std::ios::out | std::ofstream::binary;
+    fileOut.open(filename,mode);
+    if( fileOut.is_open() ) {
+      const size_t buffSizebytes = 1024 * 1024;
+      char buf[buffSizebytes] = {0};
+
+      // TODO:(bn) move this code to a thread or dispatch queue?
+      auto reader = _debugMicrophone->GetReader();
+      auto wordSize = reader->getWordSize();
+      auto numWords = buffSizebytes / wordSize;
+      size_t totalNumRead = 0;
+
+      ssize_t numRead = 1;
+      BOUNDED_WHILE ( 1000, numRead > 0 ) {
+        numRead = reader->read(buf, numWords);
+        if( numRead <= 0 ) {
+          break;
+        }
+        totalNumRead += numRead;
+        fileOut.write(buf, numRead * wordSize);
+      }
+      fileOut.flush();
+      fileOut.close();
+
+      // "absolute" index is total bytes ever, not the current size of the ring buffer
+      const size_t debugEndIdx =  totalNumRead - (totalNumSamples - (size_t)toIndex);
+      const size_t debugStartIdx =  debugEndIdx - ((size_t)toIndex - (size_t)fromIndex);
+      LOG_INFO("AlexaImpl.WroteAudioInput",
+               "Wrote mic data to file '%s'. Trigger range %zu to %zu",
+               filename.c_str(),
+               debugStartIdx,
+               debugEndIdx);
+    }
+  }
+#endif
   
   // this can generate SdsReader:seekFailed:reason=seekOverwrittenData if the time indices contain overwritten data
   _keywordObserver->onKeyWordDetected( _wakeWordAudioProvider->stream, "ALEXA", fromIndex, toIndex, nullptr);
