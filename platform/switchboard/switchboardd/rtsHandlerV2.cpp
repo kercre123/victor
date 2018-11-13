@@ -389,7 +389,7 @@ void RtsHandlerV2::HandleRtsLogRequest(const Vector::ExternalComms::RtsConnectio
     return;
   }
 
-  int exitCode = ExecCommand({"/anki/bin/diagnostics-logger"});
+  int exitCode = ExecCommand({"sudo", "/anki/bin/diagnostics-logger"});
 
   std::vector<uint8_t> logBytes;
 
