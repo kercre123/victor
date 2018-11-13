@@ -11,6 +11,7 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/engine/brightColorDetector.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
@@ -25,6 +26,10 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/calib3d.hpp>
+
+#include "json/json.h"
+
+#include <fstream>
 
 using Anki::CladPoint2d;
 using Anki::ColorRGBA;
@@ -42,6 +47,24 @@ using Anki::Vision::PixelRGB;
 using Anki::Vision::SalientPoint;
 
 extern Anki::Vector::CozmoContext* cozmoContext;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/**
+ * @brief Struct for containing label information
+ */
+struct LabelRegion
+{
+  std::string label;
+  Anki::Rectangle<s32> rectangle;
+};
+
+struct LabelStats
+{
+  std::string label;
+  std::vector<cv::Vec3f> samples;
+  cv::Vec3f mean;
+  cv::Matx33f cov;
+};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /**
@@ -218,6 +241,78 @@ bool RotateImageOntoWhite(const ImageRGB& inputImage, const PixelRGB& white, Ima
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/**
+ * @brief Load labels from a Labelme json file
+ */
+bool LoadLabels(const std::string& filename, std::unordered_map<std::string,std::vector<LabelRegion>>& labels)
+{
+  Json::CharReaderBuilder rbuilder;
+  rbuilder["collectComments"] = false;
+  std::string errs;
+  std::ifstream is(filename);
+  Json::Value root;
+
+  if (!Json::parseFromStream(rbuilder, is, &root, &errs))
+  {
+    return false;
+  }
+
+  Json::Value shapes = root.get("shapes",Json::Value::null);
+  if (shapes.isNull() || !shapes.isArray())
+  {
+    return false;
+  }
+
+  for (auto ii = 0; ii < shapes.size(); ++ii)
+  {
+    LabelRegion newLabel;
+
+    Json::Value shape = shapes[ii];
+
+    Json::Value type = shape.get("shape_type",Json::Value::null);
+    if (type.isNull() || !type.isString() || type.asString() != "rectangle")
+    {
+      continue;
+    }
+
+    Json::Value label = shape.get("label",Json::Value::null);
+    if (label.isNull() || !label.isString())
+    {
+      continue;
+    }
+    newLabel.label = label.asString();
+
+    Json::Value points = shape.get("points",Json::Value::null);
+    if (points.isNull() || !points.isArray() || points.size() != 2)
+    {
+      continue;
+    }
+    Json::Value p0 = points[0];
+    Json::Value p1 = points[1];
+    if (!p0.isArray() || p0.size() != 2 || !p1.isArray() || p1.size() != 2)
+    {
+      continue;
+    }
+
+    float x0 = p0[0].asInt();
+    float y0 = p0[1].asInt();
+    float x1 = p1[0].asInt();
+    float y1 = p1[1].asInt();
+
+    newLabel.rectangle = Anki::Rectangle<s32>(x0, y0, x1-x0, y1-y0);
+
+    auto iter = labels.find(newLabel.label);
+    if (iter == labels.end())
+    {
+      labels.emplace(newLabel.label, std::vector<LabelRegion>());
+    }
+    labels[newLabel.label].push_back(newLabel);
+  }
+
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if 0
 TEST(BrightColorDetector, EvaluateImages)
 {
@@ -255,6 +350,7 @@ TEST(BrightColorDetector, EvaluateImages)
 #endif
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#if 0
 TEST(BrightColorDetector, WhiteBalance)
 {
   Camera camera;
@@ -290,13 +386,12 @@ TEST(BrightColorDetector, WhiteBalance)
     // Rotate a copy of the input image into the white direction
     bool rotated = RotateImageOntoWhite(inputImage, white, colorRotatedImage);
 
-    // Rotate the image color
+#if 0
     if (!rotated)
     {
-#if 0
       std::cerr<<"White is already on axis"<<std::endl;
-#endif
     }
+#endif
 
     inputImage.Display("Input Image", 0);
     colorRotatedImage.Display("Color Adjusted Image", 0);
@@ -316,7 +411,207 @@ TEST(BrightColorDetector, WhiteBalance)
     outputImage.Display("Output Image", 0);
     drawSalientPoints(modifiedImageSalientPoints, colorRotatedImage);
     colorRotatedImage.Display("Color Adjusted Output Image", 0);
-
-    // Adjust the white balance of the original image based on what we know 'white' to be
   }
 }
+#endif
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void GetSamples(const ImageRGB& image, LabelRegion& region, LabelStats& stats)
+{
+  ImageRGB subimage = image.GetROI(region.rectangle);
+  for (int row = 0; row < subimage.GetNumRows(); ++row)
+  {
+    for (int col = 0; col < subimage.GetNumCols(); ++col)
+    {
+      PixelRGB& pixel = subimage(row,col);
+      cv::Vec3f rgb(pixel.r() / 255.f, pixel.g() / 255.f, pixel.b() / 255.f);
+      stats.samples.push_back(rgb);
+    }
+  }
+}
+
+void FillOutStats(LabelStats& stats)
+{
+  cv::Mat covar, mean;
+  int flags = CV_COVAR_NORMAL | CV_COVAR_ROWS;
+  int ctype = CV_32FC1;
+  // TODO figure out why the channels don't work
+  cv::calcCovarMatrix(cv::Mat((int)stats.samples.size(),3,CV_32F,stats.samples.data()), covar,mean,flags, ctype);
+
+  stats.mean = mean;
+  stats.cov = covar;
+
+  cv::Mat w,u,vt;
+  cv::SVD::compute(covar, w, u, vt, cv::SVD::FULL_UV);
+
+  std::cerr<<"w: "<<std::endl<<w<<std::endl;
+  std::cerr<<"u: "<<std::endl<<u<<std::endl;
+  std::cerr<<"vt: "<<std::endl<<vt<<std::endl;
+}
+
+#if 1
+TEST(BrightColorDetector, ColorStats)
+{
+  Camera camera;
+  MarkerDetector markerDetector(camera);
+  ASSERT_EQ(markerDetector.Init(1280,720), Anki::Result::RESULT_OK);
+
+  ImageRGB inputImage, outputImage, colorRotatedImage;
+  Image grayImage;
+
+  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(
+      Anki::Util::Data::Scope::Resources,
+      "test/brightColorTests/");
+
+  std::vector<std::string> imageFilenames;
+  std::vector<std::string> labelFilenames;
+  {
+    bool useFullPath = true;
+    bool recursive = true;
+    imageFilenames = Anki::Util::FileUtils::FilesInDirectory(dataPath,useFullPath,"jpg",recursive);
+    labelFilenames = Anki::Util::FileUtils::FilesInDirectory(dataPath,useFullPath,"json",recursive);
+    std::sort(imageFilenames.begin(), imageFilenames.end());
+    std::sort(labelFilenames.begin(), labelFilenames.end());
+    ASSERT_EQ((int)imageFilenames.size(), (int)labelFilenames.size());
+  }
+
+  std::string windowName = "BrightColors with White Balance";
+  std::unordered_map<std::string, LabelStats> inputImageStats;
+  std::unordered_map<std::string, LabelStats> rotatedImageStats;
+
+  for (auto index = 0; index < imageFilenames.size(); ++index)
+  {
+    const std::string& imageFilename = imageFilenames[index];
+    const std::string& labelFilename = labelFilenames[index];
+
+    ASSERT_EQ(inputImage.Load(imageFilename), Anki::Result::RESULT_OK);
+    inputImage.CopyTo(outputImage);
+
+    // Get the reference white color from the image
+    PixelRGB white = GetWhite(inputImage, markerDetector);
+
+    // Rotate a copy of the input image into the white direction
+    bool rotated = RotateImageOntoWhite(inputImage, white, colorRotatedImage);
+    if (!rotated)
+    {
+      // Skip ones that don't get rotated
+      continue;
+    }
+
+    std::unordered_map<std::string,std::vector<LabelRegion>> labels;
+    bool loaded = LoadLabels(labelFilename, labels);
+    if (!loaded || labels.empty())
+    {
+      // Skip the ones without labels
+      continue;
+    }
+
+
+    // Get the samples for all the label regions
+
+    for (auto& kv : labels)
+    {
+      const std::string& label = kv.first;
+      std::vector<LabelRegion>& regions = kv.second;
+
+      // Add stats if they don't exist
+
+      {
+        auto iter = inputImageStats.find(label);
+        if (iter == inputImageStats.end())
+        {
+          LabelStats stats;
+          stats.label = label;
+          inputImageStats.emplace(label,stats);
+        }
+      }
+
+      {
+        auto iter = rotatedImageStats.find(label);
+        if (iter == rotatedImageStats.end())
+        {
+          LabelStats stats;
+          stats.label = label;
+          rotatedImageStats.emplace(label,stats);
+        }
+      }
+
+
+      for (auto& region : regions)
+      {
+        GetSamples(inputImage,region,inputImageStats[label]);
+        GetSamples(colorRotatedImage, region, rotatedImageStats[label]);
+      }
+    }
+  }
+
+  // We now have all the samples inside the image stats for each label
+
+
+  // Collect all the labels in a list
+  std::vector<std::string> labels;
+  std::transform(inputImageStats.begin(), inputImageStats.end(), std::back_inserter(labels),
+                 [](const auto& pair){ return pair.first; });
+
+  for (const auto& label : labels)
+  {
+    // Input Image Stats
+    {
+      LabelStats& stats = inputImageStats.at(label);
+      FillOutStats(stats);
+    }
+
+    // Rotated Image Stats
+    {
+      LabelStats& stats = rotatedImageStats.at(label);
+      FillOutStats(stats);
+    }
+  }
+
+
+  std::cerr<<"--- --- --- - Input - --- --- ---"<<std::endl;
+  for (const auto& label : labels)
+  {
+    LabelStats& stats = inputImageStats.at(label);
+    std::cerr<<"--- "<<stats.label<<" --- "<<std::endl
+        <<"mean: "<<stats.mean<<std::endl
+        <<"covar: "<<std::endl<<stats.cov<<std::endl;
+  }
+
+  std::cerr<<"--- --- --- - Rotated - --- --- ---"<<std::endl;
+  for (const auto& label : labels)
+  {
+    LabelStats& stats = rotatedImageStats.at(label);
+    std::cerr<<"--- "<<stats.label<<" --- "<<std::endl
+        <<"mean: "<<stats.mean<<std::endl
+        <<"covar: "<<std::endl<<stats.cov<<std::endl;
+  }
+
+#if 0
+  cv::Mat rgb[] = {
+      cv::Mat(subimage.GetNumRows(),subimage.GetNumCols(),CV_8U),
+      cv::Mat(subimage.GetNumRows(),subimage.GetNumCols(),CV_8U),
+      cv::Mat(subimage.GetNumRows(),subimage.GetNumCols(),CV_8U)
+  };
+
+  cv::split(subimage.get_CvMat_(), rgb);
+  rgb[0].reshape(1);
+  rgb[1].reshape(1);
+  rgb[2].reshape(1);
+
+
+  cv::Mat combined;
+  cv::hconcat(rgb, 3, combined);
+
+  cv::Mat covar(3,3,CV_32F);
+  cv::Mat mean(3,1,CV_32F);
+  int flags = CV_COVAR_NORMAL;
+
+  cv::calcCovarMatrix(combined, covar, mean, flags, CV_32F);
+
+  std::cerr<<"PDORAN "<<"GetStats"<<std::endl;
+#endif
+}
+
+#endif

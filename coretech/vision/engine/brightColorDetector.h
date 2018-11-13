@@ -2,7 +2,7 @@
  * File: brightColorDetector.h
  *
  * Author: Patrick Doran
- * Date: 08/22/2018
+ * Date: 10/22/2018
  *
  * Description: Detector for bright colors
  *
