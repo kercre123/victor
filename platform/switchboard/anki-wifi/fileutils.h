@@ -25,8 +25,11 @@ const gid_t kRootGid = 0;
 const uid_t kNetUid = 2905;
 const gid_t kAnkiGid = 2901;
 const mode_t kModeUserReadWrite = (S_IRUSR | S_IWUSR);
+const mode_t kModeGroupReadWrite = (S_IRGRP | S_IWGRP);
 const mode_t kModeUserReadWriteExecute = (kModeUserReadWrite | S_IXUSR);
-const mode_t kModeUserGroupReadWrite = (kModeUserReadWrite | S_IRGRP | S_IWGRP);
+const mode_t kModeGroupReadWriteExecute = (kModeGroupReadWrite | S_IXGRP);
+const mode_t kModeUserGroupReadWrite = (kModeUserReadWrite | kModeGroupReadWrite);
+const mode_t kModeUserGroupReadWriteExecute = (kModeUserReadWriteExecute | kModeGroupReadWriteExecute);
 
 int WriteFileAtomically(const std::string& path,
                         const std::string& data,
@@ -38,6 +41,8 @@ int CreateDirectory(const std::string& path,
                     mode_t mode = kModeUserReadWriteExecute,
                     uid_t owner = kRootUid,
                     gid_t group = kRootGid);
+
+bool DirectoryExists(const std::string& path);
 
 bool ReadFileIntoVector(const std::string& pathToFile,
                         std::vector<uint8_t>& data);
