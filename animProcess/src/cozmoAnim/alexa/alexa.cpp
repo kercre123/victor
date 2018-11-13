@@ -134,8 +134,15 @@ void Alexa::SetAlexaUsage(bool optedIn)
   LOG_INFO( "Alexa.SetAlexaUsage.Opting",
             "User requests to log %s",
             optedIn ? "in" : "out" );
-  
+
+  // need to do this before we reset _authStartedByUser
+  if( !optedIn ) {
+    // if we were in the process of authenticating alexa, cancel that now (does nothing if not loggin in)
+    CancelPendingAlexaAuth();
+  }
+
   _authStartedByUser = optedIn;
+
   const bool loggingOut = !optedIn && HasImpl();
   if( loggingOut ) {
     // log out of amazon. this should delete persistent data, but we also nuke the folder just in case
