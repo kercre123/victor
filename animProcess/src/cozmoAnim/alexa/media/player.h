@@ -59,6 +59,15 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "util/container/fixedCircularBuffer.h"
 
 namespace Anki {
+  
+namespace AudioMetaData {
+  namespace GameEvent {
+    enum class GenericEvent : uint32_t;
+  }
+  namespace GameParameter {
+    enum class ParameterType : uint32_t;
+  }
+}
 
 namespace Util {
   namespace Dispatch {
@@ -122,6 +131,13 @@ private:
   using StreamingWaveDataPtr = std::shared_ptr<AudioEngine::StreamingWaveDataInstance>;
   using AudioController = Audio::CozmoAudioController;
   using DispatchQueue = Util::Dispatch::Queue;
+  
+  // Set audio variables for Media Player based off it's _name
+  void SetMediaPlayerAudioEvents();
+  
+  // Set the volume in Audio Controller for Media Player
+  // NOTE: Acceptable volume value [0.0, 1.0]
+  void SetPlayerVolume( float volume );
 
   // decodes from _mp3Buffer into data, returns millisec decoded
   int Decode( const StreamingWaveDataPtr& data, bool flush = false );
@@ -138,7 +154,7 @@ private:
     Preparing,
     Playable,
     Playing,
-    // TODO (VIC-9881): pausing
+    Paused
   };
   std::atomic<State> _state;
 
@@ -171,6 +187,13 @@ private:
 
   // audio controller provided by context
   AudioController* _audioController = nullptr;
+  
+  // Audio play control events
+  AudioMetaData::GameEvent::GenericEvent      _playEvent;
+  AudioMetaData::GameEvent::GenericEvent      _pauseEvent;
+  AudioMetaData::GameEvent::GenericEvent      _resumeEvent;
+  AudioMetaData::GameParameter::ParameterType _volumeParameter;
+  uint8_t                                     _pluginId;
 
   /// Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;

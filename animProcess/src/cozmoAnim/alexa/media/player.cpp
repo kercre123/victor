@@ -44,6 +44,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
+#include "clad/audio/audioParameterTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
@@ -90,18 +91,9 @@ namespace {
 
   // how many frames should be buffered before hitting "play" in wwise
   constexpr uint32_t kMinPlayableFrames = 81920;
-
-  using AGE = AudioMetaData::GameEvent::GenericEvent;
-  constexpr AGE kGameObjectTTS = AGE::Play__Robot_Vic__External_Alexa_Playback_Voice;
-  constexpr AGE kGameObjectAudio = AGE::Play__Robot_Vic__External_Alexa_Playback_Media;
-  constexpr AGE kGameObjectAlerts = AGE::Play__Robot_Vic__External_Alexa_Playback_Alerts;
-  constexpr AGE kGameObjectNotifications = AGE::Play__Robot_Vic__External_Alexa_Playback_Notifications;
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdTTS = 10;
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAudio = 11;
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdAlerts = 12;
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kPluginIdNotifications = 13;
+  
   // TODO (VIC-11585): use a different game object
-  const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Default );
+  const auto kGameObject = AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
 
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("Alexa.SpeakerInfo", "%s: " x, _name.c_str(), ##__VA_ARGS__)
@@ -120,8 +112,11 @@ AlexaMediaPlayer::AlexaMediaPlayer( avsCommon::sdkInterfaces::SpeakerInterface::
   , _name( name )
   , _dispatchQueue(Util::Dispatch::Create("AlexaMediaPlayer"))
 {
+  SetMediaPlayerAudioEvents();
+  
   _mp3Buffer.reset( new Util::RingBuffContiguousRead<uint8_t>{ kAudioBufferSize, kMaxReadSize } );
 
+  // FIXME: How do we get the inital state from persistant storage
   _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
   _settings.mute = false;
 
@@ -186,23 +181,13 @@ void AlexaMediaPlayer::Update()
 
   if( needsToPlay ) {
     // post event
-    using namespace Anki::AudioMetaData;
     using namespace AudioEngine;
-    GameEvent::GenericEvent event = GameEvent::GenericEvent::Invalid;
-    if( _name == "TTS" ) {
-      event = kGameObjectTTS;
-    } else if( _name == "Alerts" ) {
-      event = kGameObjectAlerts;
-    } else if( _name == "Audio" ) {
-      event = kGameObjectAudio;
-    } else if( _name == "Notifications" ) {
-      event = kGameObjectNotifications;
-    }
-    const auto eventID = ToAudioEventId( event );
+    const auto eventID = ToAudioEventId( _playEvent );
     auto* callbackContext = new AudioCallbackContext();
     callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
     callbackContext->SetExecuteAsync( false ); // run on main thread
-    callbackContext->SetEventCallbackFunc( [this, id = _playingSource]( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo ) {
+    callbackContext->SetEventCallbackFunc( [this, id = _playingSource]( const AudioCallbackContext* thisContext,
+                                                                        const AudioCallbackInfo& callbackInfo ) {
       CallOnPlaybackFinished( id );
     });
 
@@ -257,7 +242,6 @@ SourceId AlexaMediaPlayer::setSource( const std::string &url, std::chrono::milli
     return 0;
   }
 
-
   if( _urlConverter != nullptr ) {
     _urlConverter->shutdown();
   }
@@ -309,18 +293,8 @@ bool AlexaMediaPlayer::play( SourceId id )
       auto* pluginInterface = _audioController->GetPluginInterface();
       DEV_ASSERT(nullptr != pluginInterface, "TextToSpeechComponent.PrepareAudioEngine.InvalidPluginInterface");
       auto* plugin = pluginInterface->GetStreamingWavePortalPlugIn();
-      int pluginID = 0;
-      if( _name == "TTS" ) {
-        pluginID = kPluginIdTTS;
-      } else if( _name == "Alerts" ) {
-        pluginID = kPluginIdAlerts;
-      } else if( _name == "Audio" ) {
-        pluginID = kPluginIdAudio;
-      } else if( _name == "Notifications" ) {
-        pluginID = kPluginIdNotifications;
-      }
-      plugin->ClearAudioData( pluginID );
-      plugin->AddDataInstance( _waveData, pluginID );
+      plugin->ClearAudioData( _pluginId );
+      plugin->AddDataInstance( _waveData, _pluginId );
     }
 
     // buffer to read mp3 data from source. this is an unnecessary copy if RingBuffContiguousRead had a
@@ -406,6 +380,7 @@ bool AlexaMediaPlayer::stop( SourceId id )
 {
   LOG( "stop" );
 
+  // FIXME: This should only stop the event that this media player is playing not all every Alexa events
   _audioController->StopAllAudioEvents( kGameObject );
 
   _executor.submit([id, this]() {
@@ -425,19 +400,27 @@ bool AlexaMediaPlayer::pause( SourceId id )
   LOG( "pause NOT IMPLEMENTED" );
 
   if( _readers.find( id ) == _readers.end() ) {
+    // LOG( "pause FAIL _readers.find( id ) == _readers.end()" );
     return false;
   }
 
   if( _state == State::Idle ) {
+    // LOG( "pause FAIL _state == State::Idle" );
     return false;
   }
 
   _executor.submit([id, this]() {
+    SetState(State::Paused);
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackPaused for source %d", (int)id );
       observer->onPlaybackPaused( id );
     }
   });
+  
+  const auto eventID = AudioEngine::ToAudioEventId( _pauseEvent );
+  _audioController->PostAudioEvent(eventID, kGameObject );
+  // LOG( "pause return TRUE");
+  
   return true;
 }
 
@@ -447,19 +430,27 @@ bool AlexaMediaPlayer::resume( SourceId id )
   LOG( "resume NOT IMPLEMENTED" );
 
   if( _readers.find( id ) == _readers.end() ) {
+    // LOG( "resume _readers.find( id ) == _readers.end()" );
     return false;
   }
 
-  if( _state != State::Idle ) {
+  if( _state != State::Paused ) {
+    // LOG( "resume _state != State::Paused" );
     return false;
   }
 
   _executor.submit([id, this]() {
+    SetState( State::Playing );
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackResumed for source %d", (int)id );
       observer->onPlaybackResumed( id );
     }
   });
+  
+  const auto eventID = AudioEngine::ToAudioEventId( _resumeEvent );
+  _audioController->PostAudioEvent(eventID, kGameObject );
+  
+  // LOG( "resume RETURN True" );
   return true;
 }
 
@@ -480,6 +471,66 @@ uint64_t AlexaMediaPlayer::getNumBytesBuffered()
 void AlexaMediaPlayer::setObserver( std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerObserverInterface> playerObserver )
 {
   _observers.insert( playerObserver );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::SetMediaPlayerAudioEvents()
+{
+  using AGE = AudioMetaData::GameEvent::GenericEvent;
+  using AGP = AudioMetaData::GameParameter::ParameterType;
+  
+  // Stream Plugin Ids
+  using PluginId_t = Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t;
+  static_assert(std::is_same< decltype( _pluginId ), PluginId_t >::value,
+                "AlexaMediaPlayer.SetMediaPlayerAudioEvents._volumeParameter.InvalidType");
+  constexpr PluginId_t kPluginIdTTS = 10;
+  constexpr PluginId_t kPluginIdAudio = 11;
+  constexpr PluginId_t kPluginIdAlerts = 12;
+  constexpr PluginId_t kPluginIdNotifications = 13;
+  
+  if( _name == "TTS" ) {
+    _playEvent = AGE::Play__Robot_Vic_Alexa__External_Voice_Play;
+    _pauseEvent = AGE::Play__Robot_Vic_Alexa__External_Voice_Pause;
+    _resumeEvent = AGE::Play__Robot_Vic_Alexa__External_Voice_Resume;
+    _pluginId = kPluginIdTTS;
+    _volumeParameter = AGP::Robot_Alexa_Volume_Master;
+  }
+  else if( _name == "Alerts" ) {
+    _playEvent = AGE::Play__Robot_Vic_Alexa__External_Alerts_Play;
+    _pauseEvent = AGE::Play__Robot_Vic_Alexa__External_Alerts_Pause;
+    _resumeEvent = AGE::Play__Robot_Vic_Alexa__External_Alerts_Resume;
+    _pluginId = kPluginIdAlerts;
+    _volumeParameter = AGP::Robot_Alexa_Volume_Alerts;
+  }
+  else if( _name == "Audio" ) {
+    _playEvent = AGE::Play__Robot_Vic_Alexa__External_Media_Play;
+    _pauseEvent = AGE::Play__Robot_Vic_Alexa__External_Media_Pause;
+    _resumeEvent = AGE::Play__Robot_Vic_Alexa__External_Media_Resume;
+    _pluginId = kPluginIdAudio;
+    _volumeParameter = AGP::Robot_Alexa_Volume_Master;
+  }
+  else if( _name == "Notifications" ) {
+    _playEvent = AGE::Play__Robot_Vic_Alexa__External_Notifications_Play;
+    _pauseEvent = AGE::Play__Robot_Vic_Alexa__External_Notifications_Pause;
+    _resumeEvent = AGE::Play__Robot_Vic_Alexa__External_Notifications_Resume;
+    _pluginId = { kPluginIdNotifications };
+    _volumeParameter = AGP::Robot_Alexa_Volume_Master;
+  }
+  else {
+    _playEvent = AGE::Invalid;
+    _pauseEvent = AGE::Invalid;
+    _resumeEvent = AGE::Invalid;
+    _volumeParameter = AGP::Invalid;
+    LOG_WARNING("AlexaMediaPlayer.SetMediaPlayerAudioEvents", "Invalid Media Player name '%s'", _name.c_str());
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::SetPlayerVolume(float volume)
+{
+  const auto parameterId = AudioEngine::ToAudioParameterId( _volumeParameter );
+  const auto parameterValue = AudioEngine::ToAudioRTPCValue( volume );
+  _audioController->SetParameter( parameterId, parameterValue, AudioEngine::kInvalidAudioGameObject );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -579,6 +630,7 @@ const char* const AlexaMediaPlayer::StateToString() const
     case State::Preparing: return "Preparing";
     case State::Playable: return "Playable";
     case State::Playing: return "Playing";
+    case State::Paused: return "Paused";
   };
 }
 
@@ -642,7 +694,8 @@ bool AlexaMediaPlayer::getSpeakerSettings( SpeakerSettings *settings )
 bool AlexaMediaPlayer::setVolume( int8_t volume )
 {
   _settings.volume = volume;
-  LOG( "setting volume to %d UNIMPLEMENTED", _settings.volume );
+  LOG( "setting volume to %d", _settings.volume );
+  SetPlayerVolume( _settings.volume / 100.0f );
   return true;
 }
 
@@ -656,7 +709,8 @@ bool AlexaMediaPlayer::adjustVolume( int8_t delta )
   if( _settings.volume > avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX ) {
     _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
   }
-  LOG( "adjusting volume by %d to %d UNIMPLEMENTED", delta, _settings.volume );
+  LOG( "adjusting volume by %d to %d", delta, _settings.volume );
+  SetPlayerVolume( _settings.volume / 100.0f );
   return true;
 }
 
@@ -664,7 +718,9 @@ bool AlexaMediaPlayer::adjustVolume( int8_t delta )
 bool AlexaMediaPlayer::setMute( bool mute )
 {
   _settings.mute = mute;
-  LOG( "setting mute=%d UNIMPLEMENTED", mute );
+  LOG( "setting mute=%d ", mute );
+  const int8_t volume = _settings.mute ? 0 : _settings.volume;
+  SetPlayerVolume( volume / 100.0f );
   return true;
 }
 
