@@ -243,13 +243,15 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   // Write file with Rts data
   std::ofstream fout;
 
-  int rc = CreateDirectory(kRtsKeyDataPath,
-                           kModeUserReadWriteExecute,
-                           kNetUid,
-                           kAnkiGid);
-  if (rc) {
-    Log::Write("Could not create %s. rc = %d", kRtsKeyDataPath.c_str(), rc);
-    return;
+  if (!DirectoryExists(kRtsKeyDataPath)) {
+    int rc = CreateDirectory(kRtsKeyDataPath,
+                             kModeUserGroupReadWriteExecute,
+                             kNetUid,
+                             kAnkiGid);
+    if (rc) {
+      Log::Write("Could not create %s. rc = %d", kRtsKeyDataPath.c_str(), rc);
+      return;
+    }
   }
 
   fout.open(kRtsKeyDataFile, kWriteMode);
