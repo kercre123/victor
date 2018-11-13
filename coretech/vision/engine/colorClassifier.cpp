@@ -1,12 +1,13 @@
 /**
- * File: myClassifier.cpp
+ * File: colorClassifier.cpp
  *
  * Author: Patrick Doran
  * Date: 2018-11-08
  */
 
-#include "coretech/vision/engine/myClassifier.h"
+#include "coretech/vision/engine/colorClassifier.h"
 #include "util/math/math.h"
+#include "util/jsonWriter/jsonWriter.h"
 
 #include "json/json.h"
 
@@ -14,13 +15,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <random>
-
+#include <fstream>
 
 // TODO: Remove
 #include <iostream>
-#include <fstream>
-#include <unordered_map>
 
 namespace Anki
 {
@@ -30,7 +28,7 @@ namespace Vision
 #if 0
 namespace
 {
-std::ostream& operator<<(std::ostream& os, const MyClassifier::LabelStats& stats)
+std::ostream& operator<<(std::ostream& os, const ColorClassifier::LabelStats& stats)
 {
   os<<"Mean:            "<<stats.mean<<std::endl;
   os<<"Covariance: "<<std::endl<<stats.covariance<<std::endl;
@@ -44,27 +42,33 @@ std::ostream& operator<<(std::ostream& os, const MyClassifier::LabelStats& stats
 }
 #endif
 
-MyClassifier::MyClassifier ()
+ColorClassifier::ColorClassifier ()
 {
   Reset();
 }
 
-MyClassifier::~MyClassifier ()
+ColorClassifier::ColorClassifier (const Json::Value& config)
+{
+  Load(config);
+}
+
+ColorClassifier::~ColorClassifier ()
 {
 }
 
-void MyClassifier::Reset()
+void ColorClassifier::Reset()
 {
   _stats.clear();
   _dimensionality = 0;
 }
 
-bool MyClassifier::Train (const std::vector<cv::Mat>& samples)
+bool ColorClassifier::Train (const std::vector<cv::Mat>& samples)
 {
   if (samples.empty())
     return false;
 
-  _stats.clear();
+  Reset();
+
   _stats.resize(static_cast<std::vector<LabelStats>::size_type>(samples.size()));
 
   // Sanity check sample matrices
@@ -83,17 +87,12 @@ bool MyClassifier::Train (const std::vector<cv::Mat>& samples)
     stats.denominator = std::sqrt(std::pow(2*M_PI, _dimensionality));
     stats.determinant_log = log(stats.determinant);
     cv::eigen(stats.covariance, stats.eigenvalues, stats.eigenvectors);
-
-#if 0
-    std::cerr<<" ---- Stats["<<index<<"] ---- "<<std::endl;
-    std::cerr<<stats<<std::endl;
-#endif
   }
 
-  return false;
+  return true;
 }
 
-void MyClassifier::Predict (const cv::Mat& samples, cv::Mat& labels) const
+void ColorClassifier::Predict (const cv::Mat& samples, cv::Mat& labels) const
 {
   for (auto index = 0; index < _stats.size(); ++index)
   {
@@ -114,7 +113,7 @@ void MyClassifier::Predict (const cv::Mat& samples, cv::Mat& labels) const
   }
 }
 
-void MyClassifier::Classify (const cv::Mat& samples, cv::Mat& labelings, s32 unknown) const
+void ColorClassifier::Classify (const cv::Mat& samples, cv::Mat& labelings, s32 unknown) const
 {
   // Calculate the Mahalanobis distance to each cluster
   cv::Mat distances = cv::Mat::ones(samples.rows, static_cast<int>(_stats.size()), CV_64FC1);
@@ -156,9 +155,22 @@ void MyClassifier::Classify (const cv::Mat& samples, cv::Mat& labelings, s32 unk
   }
 }
 
-void MyClassifier::Save (const std::string& filename)
+bool ColorClassifier::Save (const std::string& filename)
 {
   Json::Value root(Json::ValueType::objectValue);
+
+  if (Save(root))
+  {
+    std::ofstream os(filename);
+    Json::StyledWriter writer;
+    os << writer.write(root);
+    return true;
+  }
+  return false;
+}
+
+bool ColorClassifier::Save(Json::Value& config)
+{
   Json::Value clusters(Json::ValueType::arrayValue);
   for (auto label = 0; label < _stats.size(); ++label)
   {
@@ -185,40 +197,42 @@ void MyClassifier::Save (const std::string& filename)
     clusters.append(cluster);
   }
 
-  root["dimensionality"] = Json::Value(_dimensionality);
-  root["clusters"] = clusters;
-
-  std::ofstream os(filename);
-  Json::StyledWriter writer;
-  os << writer.write(root);
+  config["dimensionality"] = Json::Value(_dimensionality);
+  config["clusters"] = clusters;
+  return true;
 }
 
-void MyClassifier::Load (const std::string& filename)
+bool ColorClassifier::Load (const std::string& filename)
 {
   Json::CharReaderBuilder rbuilder;
   rbuilder["collectComments"] = false;
   std::string errs;
   std::ifstream is(filename);
-  Json::Value root;
+  Json::Value config;
 
-  if (!Json::parseFromStream(rbuilder, is, &root, &errs))
+  if (!Json::parseFromStream(rbuilder, is, &config, &errs))
   {
-    return; // fail
+    return false; // fail
+  }
+  return Load(config);
+}
+
+bool ColorClassifier::Load(const Json::Value& config)
+{
+  Json::Value jsonClusters = config.get("clusters",Json::Value::null);
+  if (jsonClusters.isNull() || !jsonClusters.isArray())
+  {
+    std::cerr<<"failure 6"<<std::endl;
+    return false; // fail;
   }
 
-  Json::Value jsonClusters = root.get("clusters",Json::Value::null);
-  if (jsonClusters.isNull() || jsonClusters.type() != Json::ValueType::arrayValue)
+  Json::Value jsonDimensionality = config.get("dimensionality",Json::Value::null);
+  if (jsonDimensionality.isNull() || !jsonDimensionality.isInt())
   {
-    return; // fail;
-  }
-
-  Json::Value jsonDimensionality = root.get("dimensionality",Json::Value::null);
-  if (jsonDimensionality.isNull() || jsonDimensionality.type() != Json::ValueType::arrayValue)
-  {
-    return; // fail;
+    std::cerr<<"failure 7"<<std::endl;
+    return false; // fail;
   }
   s32 dimensionality = jsonDimensionality.asInt();
-
 
   std::vector<LabelStats> allStats;
 
@@ -229,32 +243,37 @@ void MyClassifier::Load (const std::string& filename)
     Json::Value jsonMean = jsonCluster.get("mean",Json::Value::null);
     Json::Value jsonCovariance = jsonCluster.get("covariance",Json::Value::null);
 
-    if (jsonMean.isNull() || jsonMean.type() != Json::ValueType::arrayValue)
+    if (jsonMean.isNull() || !jsonMean.isArray())
     {
-      return; // fail
+      std::cerr<<"failure 8"<<std::endl;
+      return false; // fail
     }
-    if (jsonCovariance.isNull() || jsonCovariance.type() != Json::ValueType::objectValue)
+    if (jsonCovariance.isNull() || !jsonCovariance.isObject())
     {
-      return; // fail
+      std::cerr<<"failure 9"<<std::endl;
+      return false; // fail
     }
     Json::Value jsonRows = jsonCovariance.get("rows",Json::Value::null);
-    if (jsonRows.isNull() || jsonRows.isInt())
+    if (jsonRows.isNull() || !jsonRows.isInt())
     {
-      return; //fail
+      std::cerr<<"failure 10"<<std::endl;
+      return false; //fail
     }
     int rows = jsonRows.asInt();
 
     Json::Value jsonCols = jsonCovariance.get("cols",Json::Value::null);
-    if (jsonCols.isNull() || jsonCols.isInt())
+    if (jsonCols.isNull() || !jsonCols.isInt())
     {
-      return; //fail
+      std::cerr<<"failure 11"<<std::endl;
+      return false; //fail
     }
     int cols = jsonCols.asInt();
 
-    Json::Value jsonData = jsonCovariance.get("rows",Json::Value::null);
-    if (jsonData.isNull() || jsonData.type() != Json::ValueType::arrayValue || jsonData.size() != rows*cols)
+    Json::Value jsonData = jsonCovariance.get("data",Json::Value::null);
+    if (jsonData.isNull() || !jsonData.isArray() || jsonData.size() != rows*cols)
     {
-      return; // fail
+      std::cerr<<"failure 12"<<std::endl;
+      return false; // fail
     }
 
     for (const Json::Value& value : jsonMean)
@@ -262,13 +281,16 @@ void MyClassifier::Load (const std::string& filename)
       stats.mean.push_back(value.asDouble());
     }
 
-    for (const Json::Value& value : jsonCovariance)
+    for (const Json::Value& value : jsonData)
     {
       stats.covariance.push_back(value.asDouble());
     }
 
-    stats.mean.reshape(1,{1,cols});
-    stats.covariance.reshape(1,{rows,cols});
+    stats.mean = stats.mean.t();
+    stats.covariance = stats.covariance.reshape(1,{rows,cols});
+
+    std::cerr<<"Mean: "<<stats.mean<<std::endl;
+    std::cerr<<"Covariance: "<<std::endl<<stats.covariance<<std::endl;
 
     allStats.push_back(stats);
   }
@@ -286,6 +308,7 @@ void MyClassifier::Load (const std::string& filename)
   Reset();
   _stats = allStats;
   _dimensionality = dimensionality;
+  return true;
 }
 
 } /* namespace Vision */

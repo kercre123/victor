@@ -1,5 +1,5 @@
 /**
- * File: testColorDetector.cpp
+ * File: testColorClassifier.cpp
  *
  * Author: Patrick Doran
  * Date: 2018/11/08
@@ -12,7 +12,7 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/vision/engine/myClassifier.h"
+#include "coretech/vision/engine/colorClassifier.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
 
@@ -41,7 +41,7 @@ using Anki::Vision::ImageRGB;
 using Anki::Vision::PixelHSV;
 using Anki::Vision::PixelRGB;
 
-using Anki::Vision::MyClassifier;
+using Anki::Vision::ColorClassifier;
 
 extern Anki::Vector::CozmoContext* cozmoContext;
 
@@ -117,7 +117,7 @@ bool LoadLabels(const std::string& filename, std::unordered_map<std::string,std:
   return true;
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImageToSamples(const ImageRGB& inputImage, cv::Mat& samples)
 {
   cv::Mat red(inputImage.GetNumRows(),inputImage.GetNumCols(),CV_8U);
@@ -142,6 +142,7 @@ void ImageToSamples(const ImageRGB& inputImage, cv::Mat& samples)
   samples = converted;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ColorLabelImage(const cv::Mat& labelings,
                      const std::vector<std::string>& labels,
                      const std::unordered_map<std::string, PixelRGB>& colors,
@@ -162,6 +163,7 @@ void ColorLabelImage(const cv::Mat& labelings,
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(ColorClassifier, LabelImages)
 {
   ImageRGB inputImage, outputImage;
@@ -248,7 +250,7 @@ TEST(ColorClassifier, LabelImages)
 
   // Train the classifier
 
-  MyClassifier classifier;
+  ColorClassifier classifier;
   {
     std::vector<cv::Mat> trainingSamples;
     for (auto& label : labels)

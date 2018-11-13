@@ -1,28 +1,31 @@
 /**
- * File: myClassifier.h
+ * File: colorClassifer.h
  *
  * Author: Patrick Doran
  * Date: 2018-11-08
  */
 
-#ifndef __Anki_Vision_MyClassifier_H__
-#define __Anki_Vision_MyClassifier_H__
+#ifndef __Anki_Vision_ColorClassifier_H__
+#define __Anki_Vision_ColorClassifier_H__
 
 #include "coretech/common/shared/types.h"
 
 #include <vector>
 #include <opencv2/core/mat.hpp>
 
+#include "json/json.h"
+
 namespace Anki
 {
 namespace Vision
 {
 
-class MyClassifier
+class ColorClassifier
 {
 public:
-  MyClassifier ();
-  virtual ~MyClassifier ();
+  ColorClassifier ();
+  ColorClassifier (const Json::Value& config);
+  virtual ~ColorClassifier ();
 
   /**
    * @brief Train a model based on samples and labels
@@ -49,8 +52,11 @@ public:
    */
   void Classify(const cv::Mat& samples, cv::Mat& labels, s32 unknown = -1) const;
 
-  void Save(const std::string& filename);
-  void Load(const std::string& filename);
+  bool Save(const std::string& filename);
+  bool Load(const std::string& filename);
+
+  bool Save(Json::Value& config);
+  bool Load(const Json::Value& config);
 
 private:
   struct LabelStats
@@ -78,4 +84,4 @@ private:
 } /* namespace Vision */
 } /* namespace Anki */
 
-#endif /* __Anki_Vision_MyClassifier_H__ */
+#endif /* __Anki_Vision_ColorClassifier_H__ */

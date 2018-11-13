@@ -8,16 +8,44 @@
 #ifndef __Anki_Vision_ColorDetector_H__
 #define __Anki_Vision_ColorDetector_H__
 
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/colorClassifier.h"
+#include "coretech/vision/engine/colorPixelTypes.h"
+
+#include "json/json.h"
+
+#include <list>
+
 namespace Anki
 {
 namespace Vision
 {
 
+class ImageRGB;
+
 class ColorDetector
 {
 public:
-  ColorDetector ();
+  ColorDetector (const Json::Value& config);
   virtual ~ColorDetector ();
+
+  Result Init();
+  Result Detect(const ImageRGB& inputImage, ImageRGB& outputImage);
+
+private:
+  // TODO: Decide what we really care about. Label names or colors.
+  struct Label
+  {
+    std::string name;
+    PixelRGB color;
+  };
+
+  bool Load(const Json::Value& config);
+
+  ColorClassifier _classifier;
+
+  std::vector<Label> _labels;
+
 };
 
 } /* namespace Vision */
