@@ -622,7 +622,7 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
     });
     
     const auto eventID = GetErrorAudioEvent( errorType );
-    const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
+    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
     audioController->PostAudioEvent( eventID, gameObject, callbackContext );
   }
   
