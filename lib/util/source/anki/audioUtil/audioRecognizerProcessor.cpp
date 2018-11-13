@@ -151,7 +151,7 @@ void AudioRecognizerProcessor::AudioSamplesCallback(const AudioSample* buffer, u
   }
 }
                            
-void AudioRecognizerProcessor::AddRecognizerResult(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)
+void AudioRecognizerProcessor::AddRecognizerResult(const AudioUtil::SpeechRecognizerCallbackInfo& info)
 {
   std::lock_guard<std::mutex> lock(_resultMutex);
   if (_capturingAudio)

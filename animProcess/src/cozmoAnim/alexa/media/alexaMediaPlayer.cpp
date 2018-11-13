@@ -1034,7 +1034,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
             }
 
             // Set callback for this thread
-            SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+            SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
               _detectedTriggers_ms.push({_offset_ms + info.startTime_ms, _offset_ms + info.endTime_ms});
               LOG("Decode.Recognizer.Callback: offset, start, end %d %d %d",
                 (int)_offset_ms, info.startTime_ms, info.endTime_ms);

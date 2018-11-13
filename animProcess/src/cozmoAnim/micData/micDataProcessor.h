@@ -19,8 +19,6 @@
 #include "micDataTypes.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "cozmoAnim/micData/micTriggerConfig.h"
-#include "audioUtil/audioDataTypes.h"
-#include "audioUtil/speechRecognizer.h"
 #include "clad/cloud/mic.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
@@ -37,6 +35,10 @@
 
 // Declarations
 namespace Anki {
+  namespace AudioUtil {
+    class SpeechRecognizer;
+    struct SpeechRecognizerCallbackInfo;
+  }
   namespace Vector {
     class BeatDetector;
     namespace MicData {
@@ -90,7 +92,7 @@ public:
   RobotTimeStamp_t CreateStreamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
                                   uint32_t overlapLength_ms = 0);
 
-  void VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
+  void VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizerCallbackInfo& info);
 
   void FakeTriggerWordDetection(bool fromMute = false);
 
@@ -179,7 +181,7 @@ private:
   void InitVAD();
   
   void TriggerWordDetectCallback(TriggerWordDetectSource source,
-                                 const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
+                                 const AudioUtil::SpeechRecognizerCallbackInfo& info);
   
   // Return 0 if the stream job can not be created
   RobotTimeStamp_t CreateTriggerWordDetectedJobs(bool shouldStream);

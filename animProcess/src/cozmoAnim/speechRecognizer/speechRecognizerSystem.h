@@ -13,7 +13,7 @@
 #ifndef __AnimProcess_VictorAnim_SpeechRecognizerSystem_H_
 #define __AnimProcess_VictorAnim_SpeechRecognizerSystem_H_
 
-#include "audioUtil/speechRecognizer.h"
+#include "audioUtil/audioDataTypes.h"
 #include "cozmoAnim/micData/micTriggerConfig.h"
 #include <atomic>
 #include <functional>
@@ -22,6 +22,10 @@
 #include <string>
 
 namespace Anki {
+  namespace AudioUtil {
+    class SpeechRecognizer;
+    struct SpeechRecognizerCallbackInfo;
+  }
   namespace Vector {
     class Alexa;
     class AnimContext;
@@ -52,7 +56,7 @@ public:
   SpeechRecognizerSystem(const SpeechRecognizerSystem& other) = delete;
   SpeechRecognizerSystem& operator=(const SpeechRecognizerSystem& other) = delete;
   
-  using TriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)>;
+  using TriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info)>;
   
   // Init Vector trigger detector
   // Note: This always happens at boot

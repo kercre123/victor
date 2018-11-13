@@ -14,6 +14,7 @@
 #include "audioPlaybackJob.h"
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/audioWaveFileReader.h"
+#include "audioUtil/audioDataTypes.h"
 #include "audioUtil/waveFile.h"
 #include "micDataTypes.h"
 

@@ -14,6 +14,8 @@
 */
 
 #include "speechRecognizerTHFSimple.h"
+
+#include "audioUtil/speechRecognizer.h"
 #include "speechRecognizerTHFTypesSimple.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
@@ -385,7 +387,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       // Get results for callback struct
       std::string foundString{foundStringRaw};
       std::replace(foundString.begin(), foundString.end(), '_', ' ');
-      AudioUtil::SpeechRecognizer::SpeechCallbackInfo info {
+      AudioUtil::SpeechRecognizerCallbackInfo info {
         .result       = foundString.c_str(),
         .startTime_ms = 0,
         .endTime_ms   = 0,
