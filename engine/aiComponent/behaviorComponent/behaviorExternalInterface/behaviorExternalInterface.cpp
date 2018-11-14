@@ -96,6 +96,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        robot->GetComponentPtr<VariableSnapshotComponent>(),
        robot->GetComponentPtr<VisionComponent>(),
        robot->GetComponentPtr<VisionScheduleMediator>(),
+       robot->GetComponentPtr<SettingsCommManager>(),
        robot->GetComponentPtr<SettingsManager>(),
        sleepTracker);
 }
@@ -138,6 +139,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      VariableSnapshotComponent*     variableSnapshotComponent,
                                      VisionComponent*               visionComponent,
                                      VisionScheduleMediator*        visionScheduleMediator,
+                                     SettingsCommManager*           settingsCommManager,
                                      SettingsManager*               settingsManager,
                                      SleepTracker*                  sleepTracker)
 {
@@ -177,6 +179,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      variableSnapshotComponent,
                                                      visionComponent,
                                                      visionScheduleMediator,
+                                                     settingsCommManager,
                                                      settingsManager,
                                                      sleepTracker);
 }
@@ -230,6 +233,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               VariableSnapshotComponent*     variableSnapshotComponent,
                                                               VisionComponent*               visionComponent,
                                                               VisionScheduleMediator*        visionScheduleMediator,
+                                                              SettingsCommManager*           settingsCommManager,
                                                               SettingsManager*               settingsManager,
                                                               SleepTracker*                  sleepTracker)
 : _array({
@@ -264,6 +268,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::RobotAudioClient,          BEIComponentWrapper(robotAudioClient)},
     {BEIComponentID::RobotInfo,                 BEIComponentWrapper(robotInfo)},
     {BEIComponentID::SDK,                       BEIComponentWrapper(sdkComponent)},
+    {BEIComponentID::SettingsCommManager,       BEIComponentWrapper(settingsCommManager)},
     {BEIComponentID::SettingsManager,           BEIComponentWrapper(settingsManager)},
     {BEIComponentID::SleepTracker,              BEIComponentWrapper(sleepTracker)},
     {BEIComponentID::TextToSpeechCoordinator,   BEIComponentWrapper(textToSpeechCoordinator)},

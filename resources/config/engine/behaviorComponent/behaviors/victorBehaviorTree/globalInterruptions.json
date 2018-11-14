@@ -20,6 +20,7 @@
     "ReactToObstacle",
     "InterruptingVoiceReactions",
     "ChangeEyeColor",
+    "Volume",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
     "WhileInAirDispatcher",

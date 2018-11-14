@@ -49,6 +49,7 @@ class CubeConnectionCoordinator;
 class CubeInteractionTracker;
 class CubeLightComponent;
 class CliffSensorComponent;
+class DataAccessorComponent;
 class DelegationComponent;
 class FaceWorld;
 class HabitatDetectorComponent;
@@ -65,8 +66,8 @@ class PowerStateManager;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
 class SDKComponent;
+class SettingsCommManager;
 class SettingsManager;
-class DataAccessorComponent;
 class TextToSpeechCoordinator;
 class TouchSensorComponent;
 class VariableSnapshotComponent;
@@ -166,6 +167,7 @@ public:
             VariableSnapshotComponent*     variableSnapshotComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator,
+            SettingsCommManager*           settingsCommManager,
             SettingsManager*               settingsManager,
             SleepTracker*                  sleepTracker);
     
@@ -269,6 +271,9 @@ public:
   inline bool HasSDKComponent() const { return GetComponentWrapper(BEIComponentID::SDK).IsComponentValid();}
   SDKComponent& GetSDKComponent() const {return GetComponentWrapper(BEIComponentID::SDK).GetComponent<SDKComponent>();}
 
+  inline bool HasSettingsCommManager() const { return GetComponentWrapper(BEIComponentID::SettingsCommManager).IsComponentValid();}
+  SettingsCommManager& GetSettingsCommManager() const {return GetComponentWrapper(BEIComponentID::SettingsCommManager).GetComponent<SettingsCommManager>();}
+
   inline bool HasSettingsManager() const { return GetComponentWrapper(BEIComponentID::SettingsManager).IsComponentValid();}
   SettingsManager& GetSettingsManager() const {return GetComponentWrapper(BEIComponentID::SettingsManager).GetComponent<SettingsManager>();}
 
@@ -321,6 +326,7 @@ private:
                        VariableSnapshotComponent*     variableSnapshotComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator,
+                       SettingsCommManager*           settingsCommManager,
                        SettingsManager*               settingsManager,
                        SleepTracker*                  sleepTracker);
       ~CompArrayWrapper(){};

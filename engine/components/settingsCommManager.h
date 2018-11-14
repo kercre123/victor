@@ -42,10 +42,25 @@ namespace external_interface {
   class UpdateSettingsRequest;
 }
 
+// callback signature for being notified of a volume change
+using OnVolumeChangedCallback = std::function<void()>;
+using SettingsReactorId = uint32_t;
+// we'll have a problem if we register 4294967295 listeners
+// if we were really worried we could use uuids with a larger range for ids,
+// and/or check for duplicate ids when we roll over.
+// But if we registered reactors at 10Hz it would take about 13 years to exhaust a uint32.
+
+
 class SettingsCommManager : public IDependencyManagedComponent<RobotComponentID>,
                             private Anki::Util::noncopyable
 {
 public:
+  struct VolumeChangeReactorHandle
+  {
+    SettingsReactorId id;
+    OnVolumeChangedCallback callback;
+  };
+
   SettingsCommManager();
 
   //////
@@ -81,6 +96,13 @@ public:
 
   void RefreshConsoleVars();
 
+  // for volume change notifications
+  // we do notifications from settingsCommManager and not settingsManager because we're interested in being
+  // notified of volume changes coming in from the app and other sources that use that interface,
+  // not voice commands which (through behaviorVolume) go directly to settingsManager
+  SettingsReactorId RegisterVolumeChangeReactor(OnVolumeChangedCallback callback);
+  void UnRegisterVolumeChangeReactor(SettingsReactorId id);
+
 private:
 
   void HandleEvents                   (const AnkiEvent<external_interface::GatewayWrapper>& event);
@@ -98,6 +120,9 @@ private:
   IGatewayInterface*       _gatewayInterface = nullptr;
 
   std::vector<Signal::SmartHandle> _signalHandles;
+
+  std::vector<VolumeChangeReactorHandle> _volumeChangeReactors;
+
 };
 
 
