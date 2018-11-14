@@ -77,6 +77,4 @@ known behavior classes.
 
 [User/cloud/app intents in the behavior system](/docs/architecture/behaviors_intents.md)
 
-You can run the [plotBehaviorTree.sh](/tools/ai/plotBehaviorTree.sh) function with no arguments to see the
-entire tree, or give it a filename as the single argument to output a pdf of the tree. Look at that script to
-see more about underling arguments and how to plot other things
+You can run the [plotBehaviorTree.sh](/tools/ai/plotBehaviorTree.sh) function with no arguments to see the entire tree, or give it a filename as the single argument to output a pdf of the tree. Look at that script to see more about underling arguments and how to plot other things. Note that plotting the behavior tree relies on artifacts from running the engine unit tests. You can run engine unit tests with [project/buildServer/steps/unittestsEngine.sh](/project/buildServer/steps/unittestsEngine.sh).
