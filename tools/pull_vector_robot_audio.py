@@ -9,7 +9,7 @@ import wave
 import shutil
 import datetime
 import subprocess
-from datetime import datetime
+import datetime
 
 TEMP_FOLDER_PATH          = "/tmp/temp"
 RAW_FOLDER_PATH           = "{}/Raw".format(TEMP_FOLDER_PATH)
@@ -69,10 +69,10 @@ def get_channel_number_of_recordings(recordings_path):
     return channel_number
 
 def get_created_date_of_recordings_folder(robot_path, recordings_folder_path):
-    command_text = [SSH_KEYWORD, robot_path, 'stat -c \"%y\" {}'.format(recordings_folder_path)]
-    created_date = str(execute_command_line(command_text)).split(" ")[0]
-    created_date = datetime.strptime(created_date, '%Y-%m-%d').strftime('%m%d%Y')
-    return created_date
+    command_text = [SSH_KEYWORD, robot_path, 'stat -c \"%Y\" {}'.format(recordings_folder_path)]
+    created_date = int(execute_command_line(command_text))
+    output = datetime.datetime.fromtimestamp(created_date).strftime('%m%d%Y_%H%M%S')
+    return output
 
 def generate_folder_name_by_date(robot_path, recordings_folder_path):
     list_folder_name = get_list_recordings_folder_name(robot_path, recordings_folder_path).split("\n")
@@ -89,17 +89,21 @@ def check_dropbox_path(dropbox_path):
         sys.exit(1)
 
 def filter_recordings_by_channel(robot_path, recordings_folder, raw_folder, robot_folder):
-    copy_all_recordings(robot_path, REMOTE_DEBUG_CAPTURE_PATH, TEMP_FOLDER_PATH)
-    create_folder(raw_folder)
-    create_folder(robot_folder)
-    for path, subdirs, files in os.walk(recordings_folder):
-        for name in files:
-            recordings_path = os.path.join(path, name)
-            channel_number = get_channel_number_of_recordings(recordings_path)
-            if channel_number == ONE_CHANNEL:
-                shutil.move(recordings_path, robot_folder)
-            elif channel_number == FOUR_CHANNEL:
-                shutil.move(recordings_path, raw_folder)
+    try:
+        copy_all_recordings(robot_path, REMOTE_DEBUG_CAPTURE_PATH, TEMP_FOLDER_PATH)
+        create_folder(raw_folder)
+        create_folder(robot_folder)
+        for path, subdirs, files in os.walk(recordings_folder):
+            for name in files:
+                recordings_path = os.path.join(path, name)
+                channel_number = get_channel_number_of_recordings(recordings_path)
+                if channel_number == ONE_CHANNEL:
+                    shutil.move(recordings_path, robot_folder)
+                elif channel_number == FOUR_CHANNEL:
+                    shutil.move(recordings_path, raw_folder)
+    except Exception:
+        shutil.rmtree(TEMP_FOLDER_PATH)
+        sys.exit()
 
 def process_recordings(raw_folder_path, robot_folder_path, dropbox_path):
     dropbox_raw_path = "{}/Raw".format(dropbox_path)
