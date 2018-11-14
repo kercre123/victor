@@ -606,7 +606,8 @@ void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
       _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
       break;
     case SettingBeingChanged::SETTING_TIME_ZONE:
-      _context->GetMicDataSystem()->UpdateTimeZone(msg.timeZone);
+      std::string timeZone{msg.timeZone, msg.timeZone_length};
+      _context->GetMicDataSystem()->UpdateTimeZone(timeZone);
       break;
   }
 }
