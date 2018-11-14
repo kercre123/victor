@@ -51,6 +51,9 @@ namespace {
   const char* kPlayListeningGetOutKey             = "playListeningGetOut";
   const char* kMaxRepromptKey                     = "maxNumberOfReprompts";
   constexpr float kMaxRecordTime_s                = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
+
+  // when we heard something but don't have a matching intent, do we want to stop immediately or wait for animation timeout?
+  const bool kStopListeningOnUnknownIntent        = false;
 }
 
 #define SET_STATE(s) do{ \
@@ -270,10 +273,14 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
     }
 
     CheckForPendingIntents();
-    if((EIntentStatus::IntentHeard == _dVars.intentStatus) && (_iConfig.stopListeningOnIntents)){
-      // End the listening anim, which should push us into Thinking
-      CancelDelegates();
-      TransitionToThinking();
+    if(_iConfig.stopListeningOnIntents){
+      const bool intentHeard = (EIntentStatus::IntentHeard == _dVars.intentStatus);
+      const bool intentUnknown = (EIntentStatus::IntentUnknown == _dVars.intentStatus) && kStopListeningOnUnknownIntent;
+      if(intentHeard || intentUnknown){
+        // End the listening anim, which should push us into Thinking
+        CancelDelegates(false);
+        TransitionToThinking();
+      }
     }
   } else if(EState::Thinking == _dVars.state){
     CheckForPendingIntents();
@@ -297,7 +304,7 @@ void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if(uic.IsUserIntentPending(unmatched))
     {
-      SmartActivateUserIntent(unmatched);
+      uic.DropUserIntent(unmatched);
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
     }
   }
