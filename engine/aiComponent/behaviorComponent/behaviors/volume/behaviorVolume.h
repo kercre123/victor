@@ -65,7 +65,7 @@ private:
   bool SetVolume(EVolumeLevel desiredVolume);
   EVolumeLevel ComputeDesiredVolumeFromLevelIntent(UserIntentPtr intentData, bool& valid);
   EVolumeLevel ComputeDesiredVolumeFromIncrement(bool positiveIncrement);
-  void OnVolumeChange(uint32_t newVolume);
+  void OnVolumeChange();
   bool ExternalNotificationPending() const;
 
   DynamicVariables _dVars;

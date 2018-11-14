@@ -43,8 +43,13 @@ namespace external_interface {
 }
 
 // callback signature for being notified of a volume change
-using OnVolumeChangedCallback = std::function<void(uint32_t)>;
+using OnVolumeChangedCallback = std::function<void()>;
 using SettingsReactorId = uint32_t;
+// we'll have a problem if we register 4294967295 listeners
+// if we were really worried we could use uuids with a larger range for ids,
+// and/or check for duplicate ids when we roll over.
+// But if we registered reactors at 10Hz it would take about 13 years to exhaust a uint32.
+
 
 class SettingsCommManager : public IDependencyManagedComponent<RobotComponentID>,
                             private Anki::Util::noncopyable

@@ -488,8 +488,8 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
       // read the new volume setting, for the DAS event and reactor callbacks
       const uint32_t newVol = _settingsManager->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
       // notify reactors
-      for(auto vcr : _volumeChangeReactors) {
-        vcr.callback(newVol);
+      for(auto& vcr : _volumeChangeReactors) {
+        vcr.callback();
       }
       DASMSG(robot_settings_volume, "robot.settings.volume", "The robot's volume setting was changed");
       DASMSG_SET(i1, oldVol, "Old volume");
@@ -643,15 +643,14 @@ SettingsReactorId SettingsCommManager::RegisterVolumeChangeReactor(OnVolumeChang
 
   // get the next good id
   ++sLastId;
-  // we'll have a problem if we register 4294967295 listeners without unregistering any
-  // (we could avoid the find if we weren't worried about the possibility of duplicate ids,
-  // which will only happen if we roll over 4294967295 listeners)
-  while ( std::find_if( _volumeChangeReactors.begin(), _volumeChangeReactors.end(),
-                        [](auto sr) {return sr.id == sLastId;} )
-          != _volumeChangeReactors.end() ) {
-    ++sLastId;
+  // we'll have a problem if we register 4294967295 listeners
+  // if we were really worried we could use uuids with a larger range for ids,
+  // and/or check for duplicate ids when we roll over.
+  // But if we registered reactors at 10Hz it would take about 13 years to exhaust a uint32.
+  if (sLastId == 0) {
+    LOG_WARNING("SettingsCommManager.RegisterVolumeChangeReactor.IdOverflow",
+        "VolumeChange SettingsReactorId overflowed its range. This probably indicates a pathological number of reactor registrations.");
   }
-  // sLastId is now a good id to use
   _volumeChangeReactors.push_back( { sLastId, callback } );
   return sLastId;
 }

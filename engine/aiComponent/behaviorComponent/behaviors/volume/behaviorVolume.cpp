@@ -196,10 +196,9 @@ void BehaviorVolume::OnBehaviorDeactivated()
 void BehaviorVolume::OnBehaviorEnteredActivatableScope()
 {
   // register volume change notification callback here
-  SettingsCommManager& settingsCommManager = GetBEI().GetSettingsCommManager(); // TODO: this call doesn't exist yet
-  _dVars.volumeChangeReactorId = settingsCommManager.RegisterVolumeChangeReactor( std::bind( &BehaviorVolume::OnVolumeChange,
-                                                                                             this,
-                                                                                             std::placeholders::_1) );
+  SettingsCommManager& settingsCommManager = GetBEI().GetSettingsCommManager();
+  _dVars.volumeChangeReactorId = settingsCommManager.RegisterVolumeChangeReactor(
+      std::bind( &BehaviorVolume::OnVolumeChange, this) );
 }
 
 
@@ -207,7 +206,7 @@ void BehaviorVolume::OnBehaviorEnteredActivatableScope()
 void BehaviorVolume::OnBehaviorLeftActivatableScope()
 {
   // unregister volume change notification callback here
-  SettingsCommManager& settingsCommManager = GetBEI().GetSettingsCommManager(); // TODO: this call doesn't exist yet
+  SettingsCommManager& settingsCommManager = GetBEI().GetSettingsCommManager();
   settingsCommManager.UnRegisterVolumeChangeReactor(_dVars.volumeChangeReactorId);
 }
 
@@ -328,7 +327,7 @@ EVolumeLevel BehaviorVolume::ComputeDesiredVolumeFromIncrement(bool positiveIncr
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVolume::OnVolumeChange(uint32_t newVolume)
+void BehaviorVolume::OnVolumeChange()
 {
   _dVars.lastVolumeChangeNotification_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
@@ -337,7 +336,7 @@ void BehaviorVolume::OnVolumeChange(uint32_t newVolume)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorVolume::ExternalNotificationPending() const
 {
-  float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   return ( _dVars.lastVolumeChangeNotification_s + kVolumeChangeNotificationAgeLimit_s ) > currentTime_s;
 }
 
