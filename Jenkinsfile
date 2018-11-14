@@ -5,7 +5,8 @@ import jenkins.model.*
 import hudson.slaves.*
 import hudson.plugins.sshslaves.verifiers.*
 import groovy.json.JsonOutput
-import groovy.json.JsonSlurperClassic 
+import groovy.json.JsonSlurperClassic
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 @NonCPS
 def getListOfOnlineNodesForLabel(label) {
@@ -50,8 +51,9 @@ def notifySlack(text, channel, attachments) {
         icon_url: jenkinsIcon,
         attachments: [attachments]
     ])
+    writeFile file: 'slackPayload.json', text: payload
     withCredentials([string(credentialsId: 'jenkins-professional', variable: 'TOKEN')]) {
-        sh "curl -X POST --data-urlencode \'payload=${payload}\' ${slackURL}${TOKEN}"
+        sh "curl -X POST -d @slackPayload.json ${slackURL}${TOKEN}"
     }
 }
 
@@ -65,6 +67,19 @@ def getCommitDetails(project, commit) {
     }
 }
 
+def parseCommitDetails(jobName, commitSHA) {
+    def commitInfo = getCommitDetails(jobName, commitSHA)
+    def commitObj = jsonParsePayload(commitInfo)
+
+    if (commitObj.message) {
+        println commitObj.message
+        def firstAncestorSHA = sh(returnStdout: true, script: "git rev-list --no-walk HEAD^")
+        return parseCommitDetails(jobName, firstAncestorSHA)
+    }
+
+    return commitObj
+}
+
 @NonCPS
 def jsonParsePayload(def json) {
     new groovy.json.JsonSlurperClassic().parseText(json)
@@ -74,9 +89,12 @@ def notifyBuildStatus(status) {
     def jobName = "${env.JOB_NAME}"
     jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
     def pullRequestURL = "https://github.com/anki/${jobName}/pull/${env.CHANGE_ID}"
-    def commitSHA = sh(returnStdout: true, script: "git rev-list --no-walk HEAD^")
-    def commitInfo = getCommitDetails(jobName, commitSHA)
-    def commitObj = jsonParsePayload(commitInfo)
+    def latestCommitSHA = sh(returnStdout: true, script: "git rev-list --no-walk HEAD")
+    if (!env.CHANGE_ID) {
+        pullRequestURL = "https://github.com/anki/${jobName}/commit/${latestCommitSHA}"
+    }
+    def commitObj = parseCommitDetails(jobName, latestCommitSHA)
+
     def slackColorMapping = [
         Success: "good",
         Failure: "danger",
@@ -281,10 +299,10 @@ stage("${primaryStageName} Build") {
                         sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
                     }
                 }
-                notifyBuildStatus('Success')
                 //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
-        } catch (hudson.AbortException ae) {
+            notifyBuildStatus('Success')
+        } catch (FlowInterruptedException ae) {
             notifyBuildStatus('Aborted')
             throw ae
         } catch (exc) {
