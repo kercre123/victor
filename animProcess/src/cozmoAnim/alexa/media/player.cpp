@@ -58,6 +58,12 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <AVSCommon/AVS/SpeakerConstants/SpeakerConstants.h>
 #include <AVSCommon/Utils/SDS/ReaderPolicy.h>
 
+// HACK
+#include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerTHFSimple.h"
+#include "speex/speex_resampler.h"
+
 // include minimp3
 // TODO: minimp3 should be able to convert directly to float by adding a flag. this would save a copy.
 #define MINIMP3_IMPLEMENTATION
@@ -155,7 +161,7 @@ namespace {
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("Alexa.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
-  const bool kSaveDebugAudio = true;
+  const bool kSaveDebugAudio = true; // FIXME we probably don't want to be shiping this!!
 #endif
 }
 
@@ -181,6 +187,10 @@ AlexaMediaPlayer::~AlexaMediaPlayer()
 {
   Util::Dispatch::Stop(_dispatchQueue);
   Util::Dispatch::Release(_dispatchQueue);
+
+  if (_speexState != nullptr) {
+    speex_resampler_destroy(_speexState);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -212,6 +222,15 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
     }
 #endif
   }
+
+  if (_type == AlexaMediaPlayer::Type::TTS) {
+    auto* dataPlatform = context->GetDataLoader();
+    _speechRegSys = context->GetMicDataSystem()->GetSpeechRecognizerSystem();
+    // Setup Callback when stream starts, want it to happen on the same thread
+    _speechRegSys->InitAlexaPlayback(*dataPlatform, nullptr);
+    _recognizer = _speechRegSys->GetAlexaPlaybackRecognizer();
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -239,6 +258,7 @@ void AlexaMediaPlayer::Update()
     callbackContext->SetExecuteAsync( false ); // run on main thread
     callbackContext->SetEventCallbackFunc( [this, id = _playingSource]( const AudioCallbackContext* thisContext,
                                                                         const AudioCallbackInfo& callbackInfo ) {
+      // FIXME: this might be a bug. Need to check callback purpose, may be setting bad state
       CallOnPlaybackFinished( id );
     });
 
@@ -336,6 +356,10 @@ bool AlexaMediaPlayer::play( SourceId id )
     _offset_ms = 0;
     _firstPass = true;
     _mp3Buffer->Reset();
+    _detectedTriggers_ms = decltype(_detectedTriggers_ms){};
+    if (_recognizer != nullptr) {
+      _recognizer->Reset();
+    }
 
     // new waveData instance to hold data passed to wwise
     _waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
@@ -355,7 +379,10 @@ bool AlexaMediaPlayer::play( SourceId id )
     int numBlocks = 0;
     const int kMaxBlocks = 10000; // number of times we can try to check a blocking reader before giving up
 
+    float lastPlayedMs = 0;
     while( (_state == State::Preparing) || (_state == State::Playing) || (_state == State::Playable) ) {
+
+      UpdateDetectorState(lastPlayedMs);
 
       if( !sentPlaybackStarted ) {
         for( auto& observer : _observers ) {
@@ -430,6 +457,17 @@ bool AlexaMediaPlayer::play( SourceId id )
     _readers[id]->Close();
     _readers[id].reset();
 
+    while (!_detectedTriggers_ms.empty()) {
+      if (_state == State::Idle) {
+        break;
+      }
+      UpdateDetectorState(lastPlayedMs);
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    // don't let wake word stay disabled if something weird happened
+    if (_speechRegSys != nullptr) {
+      _speechRegSys->ReEnableAlexa();
+    }
   });
 
   return true;
@@ -544,11 +582,9 @@ void AlexaMediaPlayer::SetPlayerVolume(float volume)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 {
-  mp3dec_frame_info_t info;
-
   using namespace AudioEngine;
-  short pcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
-
+  
+  mp3dec_frame_info_t info;
   float decoded_ms = 0.0f;
 
   while( true ) {
@@ -567,7 +603,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
       break;
     }
 
-    int samples = mp3dec_decode_frame(&mp3d, inputBuff, (int)buffSize, pcm, &info);
+    int samples = mp3dec_decode_frame(&mp3d, inputBuff, (int)buffSize, _decodedPcm, &info);
 
     int consumed = info.frame_bytes;
     if( info.frame_bytes > 0 ) {
@@ -587,6 +623,30 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
           _firstPass = false;
           LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps );
 
+          // HACK
+          if (_speexState != nullptr) {
+            speex_resampler_destroy(_speexState);
+            _speexState = nullptr;
+          }
+          if (_type == AlexaMediaPlayer::Type::TTS) {
+            int error = 0;
+            _speexState = speex_resampler_init(
+                                               1, // num channels
+                                               info.hz, // in rate, int
+                                               16000, // out rate, int
+                                               10, // quality 0-10
+                                               &error);
+
+            PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
+
+            // Set callback for this thread
+            SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+              _detectedTriggers_ms.push({_offset_ms + info.startTime_ms, _offset_ms + info.endTime_ms});
+              LOG_WARNING("AlexaMediaPlayer.Decode.Recognizer.Callback", "offset, start, end %d %d %d",
+                (int)_offset_ms, info.startTime_ms, info.endTime_ms);
+            };
+            _recognizer->SetCallback(callback);
+          }
         }
 
         decoded_ms += 1000 * float(samples) / info.hz;
@@ -598,25 +658,45 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
           // audio engine only supports mono
           int j = 0;
           for( int i=0; i<samples; i += 2, j += 1) {
-            short left = pcm[i];
-            short right = pcm[i + 1];
+            short left = _decodedPcm[i];
+            short right = _decodedPcm[i + 1];
             short monoSample = (int(left) + right) / 2;
-            pcm[j] = monoSample;
+            _decodedPcm[j] = monoSample;
           }
           samples = samples/2;
           info.channels = 1;
         }
 
-        if( samples > 0 ) {
-          SavePCM( pcm, samples );
-        }
+//        if( samples > 0 ) {
+//          SavePCM( pcm, samples );
+//        }
 
         // todo: minimp3 should be able to output in float to avoid this allocation and copy, but it
         // seems to clip for me when in float
         StandardWaveDataContainer waveContainer(info.hz, info.channels, samples);
-        waveContainer.CopyWaveData( pcm, samples );
+        waveContainer.CopyWaveData( _decodedPcm, samples );
 
         data->AppendStandardWaveData( std::move(waveContainer) );
+
+        // HACK
+        if ( _speexState != nullptr ) {
+
+          // Resample stream audio for detector
+//          ANKI_CPU_PROFILE("ResampleAudioChunk");
+          uint32_t numSamplesProcessed = samples;
+          uint32_t numSamplesWritten = _kResampleMaxSize;
+          speex_resampler_process_interleaved_int(_speexState,
+                                                  _decodedPcm, &numSamplesProcessed,
+                                                  _resampledPcm, &numSamplesWritten);
+          ANKI_VERIFY(numSamplesProcessed == samples,
+                      "MicDataProcessor.ResampleAudioChunk.SamplesProcessed",
+                      "Expected %d processed only processed %d", samples, numSamplesProcessed);
+
+          if( numSamplesWritten > 0 ) {
+            _recognizer->Update(_resampledPcm, numSamplesWritten);
+            SavePCM( _resampledPcm, numSamplesWritten );
+          }
+        }
 
         const auto numFrames = data->GetNumberOfFramesReceived();
         if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {
@@ -757,6 +837,26 @@ void AlexaMediaPlayer::SetState( State state )
 {
   _state = state;
   LOG("State: %s", StateToString());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::UpdateDetectorState(float& inout_lastPlayedMs)
+{
+  auto playedMs = _waveData->GetSampleRate() > 0 ?
+  (1000 * (float)_waveData->GetNumberOfFramesPlayed() / _waveData->GetSampleRate()) : 0;
+  if (!_detectedTriggers_ms.empty()) {
+    const auto& firstTrigger = _detectedTriggers_ms.front();
+    if (inout_lastPlayedMs < firstTrigger.first && playedMs >= firstTrigger.first) {
+      LOG("Disabling wake word @ %d ms", (int)playedMs);
+      _speechRegSys->DisableAlexaTemporarily();
+    }
+    else if (inout_lastPlayedMs < firstTrigger.second && playedMs >= firstTrigger.second) {
+      LOG("Re-enabling wake word @ %d ms", (int)playedMs);
+      _detectedTriggers_ms.pop();
+      _speechRegSys->ReEnableAlexa();
+    }
+  }
+  inout_lastPlayedMs = playedMs;
 }
 
 

@@ -64,10 +64,11 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   std::map<IndexType, RecogDataSP>  _thfAllRecogs;
   mutable std::recursive_mutex      _recogMutex;
   const recog_t*                    _lastUsedRecognizer = nullptr;
-
-  size_t _sampleRate_kHz;
-  size_t _sampleIndex = 0;
-  size_t _lastResetSampleIndex = 0;
+  size_t                            _sampleRate_kHz = 0;
+  size_t                            _sampleIndex = 0;
+  size_t                            _lastResetSampleIndex = 0;
+  bool                              _disabled = false;
+  bool                              _reset = false;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
 };
@@ -324,12 +325,19 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   // NOTE: on a 32 bit system with 16Khz audio this could overflow in 3 days....
   _impl->_sampleIndex += audioDataLen;
   
+  if (_impl->_disabled)
+  {
+    // Don't process audio data in recognizer
+    return;
+  }
+  
   // If the recognizer has changed since last update, we need to potentially reset and store it again
   auto* const currentRecognizer = currentRecogSP->GetRecognizer();
-  if (currentRecognizer != _impl->_lastUsedRecognizer)
+  if (_impl->_reset || currentRecognizer != _impl->_lastUsedRecognizer)
   {
     // If we actually had a last recognizer set, then we need to reset
-    if (_impl->_lastUsedRecognizer) {
+    if (_impl->_reset || _impl->_lastUsedRecognizer)
+    {
       if(thfRecogReset(_impl->_thfSession, currentRecognizer))
       {
         _impl->_lastResetSampleIndex = _impl->_sampleIndex;
@@ -339,8 +347,8 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
         PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
       }
     }
-    
     _impl->_lastUsedRecognizer = currentRecognizer;
+    _impl->_reset = false;
   }
   
   auto recogPipeMode = currentRecogSP->IsPhraseSpotted() ? RECOG_ONLY : SDET_RECOG;
@@ -439,5 +447,23 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   }
 }
   
+void SpeechRecognizerTHF::StartInternal()
+{
+  if (_impl->_disabled) {
+    _impl->_reset = true;
+  }
+  _impl->_disabled = false;
+}
+
+void SpeechRecognizerTHF::StopInternal()
+{
+  _impl->_disabled = true;
+}
+
+void SpeechRecognizerTHF::Reset()
+{
+  _impl->_reset = true;
+}
+
 } // end namespace Vector
 } // end namespace Anki

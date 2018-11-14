@@ -41,6 +41,8 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <unordered_set>
 #include <atomic>
 #include <map>
+#include <mutex>
+#include <queue>
 
 
 #include <AVSCommon/SDKInterfaces/SpeakerInterface.h>
@@ -56,6 +58,9 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
 
+// TEMP
+struct SpeexResamplerState_;
+typedef struct SpeexResamplerState_ SpeexResamplerState;
 
 
 namespace Anki {
@@ -84,6 +89,9 @@ struct AudioInfo;
 namespace Audio {
   class CozmoAudioController;
 }
+class SpeechRecognizerSystem;
+class SpeechRecognizerTHF;
+
 
 class AlexaMediaPlayer : public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
                        , public alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface
@@ -167,6 +175,7 @@ private:
   SourceId _playingSource = 0;
 
   std::map<SourceId, std::unique_ptr< AlexaReader >> _readers;
+  short _decodedPcm[1152*2]; // Got value from minimp3.h MINIMP3_MAX_SAMPLES_PER_FRAME
 
   // An internal executor that performs execution of callable objects passed to it sequentially but asynchronously.
   alexaClientSDK::avsCommon::utils::threading::Executor _executor;
@@ -196,6 +205,17 @@ private:
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
 
   const AudioInfo& _audioInfo;
+
+  // TEMP
+  SpeechRecognizerTHF*            _recognizer = nullptr;
+  SpeexResamplerState*            _speexState = nullptr;
+  SpeechRecognizerSystem*         _speechRegSys = nullptr;
+  static constexpr size_t         _kResampleMaxSize = 2000;
+  short                           _resampledPcm[_kResampleMaxSize];
+  std::queue<std::pair<int, int>> _detectedTriggers_ms;
+  
+  void UpdateDetectorState(float& inout_lastPlayedMs);
+  
 };
 
 } // namespace Vector
