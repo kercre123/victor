@@ -108,7 +108,11 @@ namespace Anki {
         // If it exceeds this value, applied power should decay to this value when in position.
         // This value should be slightly less than the motor burnout protection threshold (POWER_THRESHOLD[])
         // in syscon's motors.cpp since the actual applied power can be slightly more than this.
-        const f32 MAX_POWER_IN_POSITION = 0.24f;
+        const f32 MAX_POWER_IN_POSITION_WHILE_CARRYING = 0.24f;
+
+        // If not carrying an object, the max power threshold should be 10% 
+        // so that syscon can disable the encoders.
+        const f32 MAX_POWER_IN_POSITION = 0.1f;
 
         // Motor burnout protection
         u32 potentialBurnoutStartTime_ms_ = 0;
@@ -198,6 +202,9 @@ namespace Anki {
         void (*checkForLoadCallback_)(bool) = NULL;
         const u32 CHECKING_FOR_LOAD_TIMEOUT_MS = 500;
         const f32 CHECKING_FOR_LOAD_ANGLE_DIFF_THRESH = DEG_TO_RAD_F32(1.f);
+
+        // True if encoder was reported as invalid by HAL and has not been calibrated since
+        bool encoderInvalid_ = false;
 
       } // "private" members
 
@@ -374,6 +381,7 @@ namespace Anki {
               firstCalibration_ = false;
               calState_ = LCS_IDLE;
               inPosition_ = true;
+              encoderInvalid_ = false;
               break;
             }
 
@@ -714,6 +722,11 @@ namespace Anki {
 
         PoseAndSpeedFilterUpdate();
 
+        // Check encoder validity
+        if (HAL::IsLiftEncoderInvalid()) {
+          encoderInvalid_ = true;
+        }
+
         if (!IsCalibrated()) {
           return RESULT_OK;
         }
@@ -821,8 +834,11 @@ namespace Anki {
         if((ABS(angleError) < LIFT_ANGLE_TOL) && (desiredAngle_rad_ == currDesiredAngle_rad_)) {
 
           // Decay angleErrorSum as long as power exceeds MAX_POWER_IN_POSITION
-          if (ABS(power_) > MAX_POWER_IN_POSITION) {
-            const f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (angleErrorSum_ > 0 ? 1.f : -1.f);
+          const float maxPowerInPosition = PickAndPlaceController::IsCarryingBlock() ? 
+                                           MAX_POWER_IN_POSITION_WHILE_CARRYING : 
+                                           MAX_POWER_IN_POSITION;
+          if (ABS(power_) > maxPowerInPosition) {
+            const f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (power_ > 0 ? 1.f : -1.f);
             angleErrorSum_ -= decay;
           } else if (checkForLoadWhenInPosition_ && !IsMoving()) {
             checkingForLoadStartTime_ = currTime;
@@ -907,6 +923,11 @@ namespace Anki {
         checkingForLoadStartTime_ = 0;
         checkForLoadCallback_ = callback;
 #endif
+      }
+
+      bool IsEncoderInvalid()
+      {
+        return encoderInvalid_;
       }
 
     } // namespace LiftController

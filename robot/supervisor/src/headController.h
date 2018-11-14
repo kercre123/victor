@@ -90,7 +90,11 @@ namespace Anki {
       
       // Stop nodding or any movement immediately
       void Stop();
-      
+
+      // Returns true if motor hasn't been calibrated since the last time
+      // sycon reported that the encoder is invalid
+      bool IsEncoderInvalid();
+
     } // namespace HeadController
   } // namespace Vector
 } // namespace Anki

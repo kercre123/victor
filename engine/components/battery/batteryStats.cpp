@@ -68,6 +68,21 @@ void BatteryStats::Update(const float batteryTemp_degC, const float batteryVolts
 }
 
 
+void BatteryStats::UpdateEncoderStats(bool encodersDisabled, bool calmMode)
+{
+  if (calmMode) {
+    ++_encoderCalmCount;
+
+    // Approximation! In calm mode, one RobotState message is received for every 8 that normally would be
+    // so increase the total sample count since this is our approximate measure of time.
+    _encoderStateSamples += 7;
+  } else if (encodersDisabled) {
+    ++_encoderDisabledCount;
+  }
+
+  ++_encoderStateSamples;
+}
+
 void BatteryStats::LogToDas()
 {
   if (_temperatureStats_degC->GetNum() > 0) {
@@ -87,6 +102,19 @@ void BatteryStats::LogToDas()
     DASMSG_SET(i3, std::round(1000.f * _voltageStats->GetMean()), "Average battery voltage experienced (mV)");
     DASMSG_SET(i4, _voltageStats->GetNum(), "Total number of samples");
     DASMSG_SEND();
+  }
+
+  if (_encoderStateSamples > 0) {
+    DASMSG(battery_encoder_power_stats, "battery.encoder_power_stats", "Encoder power statistics");
+    DASMSG_SET(i1, (100 * _encoderDisabledCount) / _encoderStateSamples, "Percentage of time encoders were disabled while off charger" );
+    DASMSG_SET(i2, (100 * _encoderCalmCount) / _encoderStateSamples, "Percentage of time encoders were disabled due to calm while off charger" );
+    DASMSG_SET(i3, _encoderDisabledCount, "Number of encoder disabled samples");
+    DASMSG_SET(i4, _encoderStateSamples, "Number of samples");
+    DASMSG_SEND();
+
+    _encoderStateSamples = 0;
+    _encoderDisabledCount = 0;
+    _encoderCalmCount = 0;
   }
   
   _temperatureStats_degC->Clear();

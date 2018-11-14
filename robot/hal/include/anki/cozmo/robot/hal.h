@@ -139,6 +139,21 @@ f32 MotorGetPosition(const MotorID motor);
 s32 MotorGetLoad();
 
 /************************************************************************
+ * \section Encoder state
+ */
+
+// Whether or not the encoders have been "disabled". 
+// (In reality they are operating at a lower frequency so that motion can be detected.)
+// This happens normally if the motors are not actively being driven.
+bool AreEncodersDisabled();
+
+// Whether or not the head/lift was detected to have moved while the encoders were "disabled"
+// i.e. Calibration is necessary!
+// Note: This gets cleared as soon as the motor is driven again
+bool IsHeadEncoderInvalid();
+bool IsLiftEncoderInvalid();
+
+/************************************************************************
  * \section Proximity / Cliff sensors
  */
 

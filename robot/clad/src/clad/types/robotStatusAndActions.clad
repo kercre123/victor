@@ -31,6 +31,10 @@ enum uint_32 RobotStatusFlag {
     IS_BEING_HELD           = 0x00010000,
     IS_MOTION_DETECTED      = 0x00020000, // whether the IMU detects motion
     IS_BATTERY_OVERHEATED   = 0x00040000,
+
+    ENCODERS_DISABLED       = 0x00100000,
+    ENCODER_HEAD_INVALID    = 0x00200000,
+    ENCODER_LIFT_INVALID    = 0x00400000,
 }
 
 enum uint_8 DockAction
