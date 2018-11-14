@@ -59,7 +59,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 
 
 namespace Anki {
-  
+
 namespace AudioMetaData {
   namespace GameEvent {
     enum class GenericEvent : uint32_t;
@@ -80,6 +80,7 @@ namespace Vector {
 
 class AlexaReader;
 class AnimContext;
+struct AudioInfo;
 namespace Audio {
   class CozmoAudioController;
 }
@@ -93,8 +94,14 @@ class AlexaMediaPlayer : public alexaClientSDK::avsCommon::utils::mediaPlayer::M
   using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
 public:
 
-  AlexaMediaPlayer( alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type type,
-                    const std::string& name,
+  enum class Type : uint8_t {
+    TTS,
+    Alerts,
+    Audio,
+    Notifications
+  };
+
+  AlexaMediaPlayer( Type type,
                     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory );
   ~AlexaMediaPlayer();
 
@@ -118,7 +125,7 @@ public:
   virtual bool adjustVolume( int8_t delta ) override;
   virtual bool setMute( bool mute ) override;
   virtual bool getSpeakerSettings( SpeakerSettings* settings ) override;
-  virtual Type getSpeakerType() override { return _type; }
+  virtual alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type getSpeakerType() override;
   virtual void onError() override;
   virtual void doShutdown() override;
 
@@ -130,10 +137,7 @@ private:
   using StreamingWaveDataPtr = std::shared_ptr<AudioEngine::StreamingWaveDataInstance>;
   using AudioController = Audio::CozmoAudioController;
   using DispatchQueue = Util::Dispatch::Queue;
-  
-  // Set audio variables for Media Player based off it's _name
-  void SetMediaPlayerAudioEvents();
-  
+
   // Set the volume in Audio Controller for Media Player
   // NOTE: Acceptable volume value [0.0, 1.0]
   void SetPlayerVolume( float volume );
@@ -177,8 +181,6 @@ private:
 
   StreamingWaveDataPtr _waveData;
 
-  const std::string _name;
-
   std::string _saveFolder;
 
   // worker thread
@@ -186,19 +188,14 @@ private:
 
   // audio controller provided by context
   AudioController* _audioController = nullptr;
-  
-  // Audio play control events
-  AudioMetaData::GameEvent::GenericEvent      _playEvent;
-  AudioMetaData::GameEvent::GenericEvent      _pauseEvent;
-  AudioMetaData::GameEvent::GenericEvent      _resumeEvent;
-  AudioMetaData::GameParameter::ParameterType _volumeParameter;
-  uint8_t                                     _pluginId;
 
   /// Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;
 
   /// Used to stream urls into attachments
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
+
+  const AudioInfo& _audioInfo;
 };
 
 } // namespace Vector

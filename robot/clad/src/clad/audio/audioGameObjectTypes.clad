@@ -15,7 +15,11 @@ enum uint_64 GameObjectType
   TextToSpeech,
   VoiceRecording,
   Alexa,
-  
+  AlexaVoice,
+  AlexaMedia,
+  AlexaNotifications,
+  AlexaAlerts,
+
   End, // Need end val so I can enumerate through GameObjects
 
 }

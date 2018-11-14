@@ -267,20 +267,16 @@ bool AlexaImpl::Init( const AnimContext* context )
                                                                      audioFactory->alerts() );
   // setup media player interfaces
   auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
-  _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
-                                                        "TTS",
+  _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::TTS,
                                                         httpContentFetcherFactory );
   _ttsMediaPlayer->Init(context);
-  _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_ALERTS_VOLUME,
-                                                           "Alerts",
+  _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Alerts,
                                                            httpContentFetcherFactory );
   _alertsMediaPlayer->Init( context );
-  _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
-                                                          "Audio",
+  _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Audio,
                                                           httpContentFetcherFactory );
   _audioMediaPlayer->Init( context );
-  _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
-                                                                  "Notifications",
+  _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Notifications,
                                                                   httpContentFetcherFactory );
   _notificationsMediaPlayer->Init( context );
   
