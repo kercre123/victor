@@ -1219,7 +1219,8 @@ namespace Vector {
     }
 
     if(procResult.modesProcessed.Contains(VisionMode::DetectingPeople)
-       || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors))
+       || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors)
+       || procResult.modesProcessed.Contains(VisionMode::DetectingColors))
     {
       if(!usingFixedDrawTime)
       {

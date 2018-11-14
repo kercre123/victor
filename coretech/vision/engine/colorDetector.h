@@ -8,9 +8,11 @@
 #ifndef __Anki_Vision_ColorDetector_H__
 #define __Anki_Vision_ColorDetector_H__
 
+#include "clad/types/salientPointTypes.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/colorClassifier.h"
 #include "coretech/vision/engine/colorPixelTypes.h"
+#include "engine/debugImageList.h"
 
 #include "json/json.h"
 
@@ -30,7 +32,9 @@ public:
   virtual ~ColorDetector ();
 
   Result Init();
-  Result Detect(const ImageRGB& inputImage, ImageRGB& outputImage);
+  Result Detect(const ImageRGB& inputImage,
+                std::list<SalientPoint>& salientPoints,
+                std::list<std::pair<std::string, ImageRGB>>& debugImageRGBs);
 
 private:
   // TODO: Decide what we really care about. Label names or colors.

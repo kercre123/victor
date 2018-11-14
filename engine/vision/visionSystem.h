@@ -31,6 +31,7 @@
 #include "coretech/common/engine/matlabInterface.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/brightColorDetector.h"
+#include "coretech/vision/engine/colorDetector.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/imageCache.h"
@@ -59,6 +60,7 @@ namespace Anki {
 namespace Vision {
   class Benchmark;
   class BrightColorDetector;
+  class ColorDetector;
   class CameraParamsController;
   class FaceTracker;
   class ImageCache;
@@ -253,6 +255,7 @@ namespace Vector {
     std::unique_ptr<Vision::PetTracker>             _petTracker;
     std::unique_ptr<Vision::MarkerDetector>         _markerDetector;
     std::unique_ptr<Vision::BrightColorDetector>    _brightColorDetector;
+    std::unique_ptr<Vision::ColorDetector>          _colorDetector;
     std::unique_ptr<LaserPointDetector>             _laserPointDetector;
     std::unique_ptr<MotionDetector>                 _motionDetector;
     std::unique_ptr<OverheadEdgesDetector>          _overheadEdgeDetector;
@@ -327,6 +330,9 @@ namespace Vector {
 
     // Uses color
     Result DetectBrightColors(Vision::ImageCache& imageCache);
+
+    // Uses color
+    Result DetectColors(Vision::ImageCache& imageCache);
 
     // Uses grayscale
     Result DetectIllumination(Vision::ImageCache& imageCache);

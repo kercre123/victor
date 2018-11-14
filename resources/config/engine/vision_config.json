@@ -84,6 +84,11 @@
   	"MaxValue"          : 3.0,    // The higher this value, the sooner peripheral motion detection will be triggered
     "CentroidStability" : 0.6     // How quickly should peripheral motion detection track the source of motion.
   },
+  
+  "ColorDetector" :
+  {
+    "config"            : "config/engine/vision/colorDetector/colorDetector.json"
+  },
 
   "OverheadMap" :
   {

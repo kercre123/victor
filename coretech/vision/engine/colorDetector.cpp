@@ -5,10 +5,18 @@
  * Date: 2018/11/12
  */
 
+#include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/engine/colorDetector.h"
-
 #include "coretech/vision/engine/image.h"
+#include "util/math/math.h"
 
+
+#include <dlib/opencv.h>
+#include <dlib/image_transforms/label_connected_blobs.h>
+
+#include <tuple>
+
+// TODO: remove this
 #include <iostream>
 
 namespace Anki
@@ -18,6 +26,35 @@ namespace Vision
 
 namespace
 {
+
+class value_pixels_are_background
+{
+public:
+  value_pixels_are_background(s32 value) : _value(value) {}
+  template <typename image_view_type>
+  bool operator() (const image_view_type& img, const dlib::point& p) const
+  {
+    return img[p.y()][p.x()] == _value;
+  }
+private:
+  s32 _value;
+
+};
+
+struct ColorRegion
+{
+  ColorRegion() : color(), count(0), points() {}
+
+  PixelRGB color;
+
+  /**
+   * @brief Number of pixels classified into this region
+   */
+  u32 count;
+
+  std::vector<cv::Point2i> points;
+};
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /**
  * @brief Convert an ImageRGB to an Nx3 matrix where each row is one pixel in RGB order
@@ -66,13 +103,121 @@ void LabelToImage(const cv::Mat& labelings,
   }
 }
 
+void LabelToSalientPoints(const ImageRGB& inputImage,
+                          const cv::Mat& labelings,
+                          const std::vector<PixelRGB>& colors,
+                          std::list<SalientPoint>& salientPoints)
+{
+  // Label the connected blobs. There may be multiple blobs of the same color
+
+  dlib::array2d<u32> blobs(labelings.rows, labelings.cols);
+  unsigned long numBlobs = dlib::label_connected_blobs(dlib::cv_image<s32>(labelings),
+                                                       value_pixels_are_background(-1),
+                                                       dlib::neighbors_8(),
+                                                       dlib::connected_if_equal(),
+                                                       blobs);
+
+  // Aggregate the data for each blob
+
+  std::vector<ColorRegion> regions(numBlobs);
+  for (u32 row = 0; row < blobs.nr(); ++row)
+  {
+    for (u32 col = 0; col < blobs.nc(); ++col)
+    {
+      const s32 label = labelings.at<s32>(row,col);
+
+      // Skip background pixels
+      if (label == -1)
+      {
+        continue;
+      }
+
+      const u32 blob = blobs[row][col];
+      ColorRegion& region = regions[blob];
+
+      region.count++;
+
+      region.color = colors[label];
+
+      // Add four corners of the location to make sure we can always get a polygon around the grid location
+      region.points.emplace_back(col,   row);
+      region.points.emplace_back(col+1, row);
+      region.points.emplace_back(col+1, row+1);
+      region.points.emplace_back(col,   row+1);
+    }
+  }
+
+  // TODO: Can someone explain why the first one doesn't compile?
+  // Compiler error:
+  //      no known conversion from 'const std::__1::__wrap_iter<cv::Point_<int> *>' to 'const cv::Point2i' (aka 'const Point_<int>')
+
+  // Create the salient point from each region
+  // blob 0 is the background, so skip it.
+  // SalientPoint polygon is the bounding rectangle, could also do convex hull or the contour
+  const u32 timestamp = inputImage.GetTimestamp();
+  const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
+  const char* typeString = EnumToString(type);
+  const float kWidthScale = 1.f/labelings.cols;
+  const float kHeightScale = 1.f/labelings.rows;
+
+  for (u32 blob = 1; blob < numBlobs; ++blob){
+    ColorRegion& region = regions[blob];
+
+    // TODO: move this number to configuration
+    if (region.count < 4)
+    {
+      continue; // skip small regions, assume it's noise.
+    }
+    f32 left, top, right, bottom;
+    {
+      cv::Rect2f rect = cv::boundingRect(region.points);
+
+      // TODO: Not sure why I have to shift everything left and up by one to get the intended result.
+      left = rect.x;
+      right = left + (rect.width - 1);
+      top = rect.y;
+      bottom = top + (rect.height - 1);
+    }
+
+    left = Util::Clamp(left * kWidthScale, 0.f, 1.f);
+    right = Util::Clamp(right * kWidthScale, 0.f, 1.f);
+    top = Util::Clamp(top * kHeightScale, 0.f, 1.f);
+    bottom = Util::Clamp(bottom * kHeightScale, 0.f, 1.f);
+
+    std::vector<Anki::CladPoint2d> poly;
+    poly.emplace_back(left,top);
+    poly.emplace_back(right,top);
+    poly.emplace_back(right,bottom);
+    poly.emplace_back(left,bottom);
+
+    f32 centerX = (right+left)/2.f;
+    f32 centerY = (bottom+top)/2.f;
+
+    // Coordinates are in [[0,0] - [1,1]] so the area_fraction is just the bounding rectangle's size
+    f32 area_fraction = (right-left)*(bottom-top);
+
+    // TODO: Replace with something from the probability of each blob's label.
+    f32 score = 1.f;
+
+    u32 rgba = ColorRGBA(region.color.r(),region.color.g(),region.color.b(),255).AsRGBA();
+
+    salientPoints.emplace_back(timestamp,
+                               centerX, centerY,
+                               score,
+                               area_fraction,
+                               type,
+                               typeString,
+                               poly,
+                               rgba);
+  }
+}
+
 } /* anonymous namespace */
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ColorDetector::ColorDetector (const Json::Value& config)
 {
-  bool loaded = Load(config);
-  std::cerr<<"Loaded: "<<loaded<<std::endl;
+  DEV_ASSERT(Load(config),"Failed to load ColorDetector config");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -86,8 +231,7 @@ bool ColorDetector::Load (const Json::Value& config)
   Json::Value jsonLabels = config.get("labels",Json::Value::null);
   if (jsonLabels.isNull() || !jsonLabels.isArray())
   {
-    std::cerr<<"failure 0"<<std::endl;
-    return false; // fail;
+    return false;
   }
 
   std::vector<Label> labels;
@@ -95,14 +239,12 @@ bool ColorDetector::Load (const Json::Value& config)
   {
     if (!jsonLabel.isObject())
     {
-      std::cerr<<"failure 1"<<std::endl;
       return false;
     }
 
     Json::Value jsonName = jsonLabel.get("name",Json::Value::null);
     if (jsonName.isNull() || !jsonName.isString())
     {
-      std::cerr<<"failure 2"<<std::endl;
       return false;
     }
     std::string name = jsonName.asString();
@@ -110,7 +252,6 @@ bool ColorDetector::Load (const Json::Value& config)
     Json::Value jsonColor = jsonLabel.get("color",Json::Value::null);
     if (jsonColor.isNull() || !jsonColor.isArray() || jsonColor.size() != 3)
     {
-      std::cerr<<"failure 3"<<std::endl;
       return false;
     }
     PixelRGB color(jsonColor[0].asUInt(), jsonColor[1].asUInt(), jsonColor[2].asUInt());
@@ -123,14 +264,12 @@ bool ColorDetector::Load (const Json::Value& config)
   Json::Value jsonClassifier = config.get("classifier",Json::Value::null);
   if (jsonClassifier.isNull() || !jsonClassifier.isObject())
   {
-    std::cerr<<"failure 4"<<std::endl;
     return false;
   }
 
   ColorClassifier classifier;
   if (!classifier.Load(jsonClassifier))
   {
-    std::cerr<<"failure 5"<<std::endl;
     return false;
   }
 
@@ -147,10 +286,12 @@ Result ColorDetector::Init ()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ColorDetector::Detect (const ImageRGB& inputImage, ImageRGB& outputImage)
+Result ColorDetector::Detect (const ImageRGB& inputImage,
+                              std::list<SalientPoint>& salientPoints,
+                              std::list<std::pair<std::string, ImageRGB>>& debugImageRGBs)
 {
   // TODO: Make smaller image size configurable
-  ImageRGB smallerImage(100,100);
+  ImageRGB smallerImage(16,16);
   inputImage.Resize(smallerImage, ResizeMethod::NearestNeighbor);
 
   cv::Mat samples;
@@ -166,28 +307,22 @@ Result ColorDetector::Detect (const ImageRGB& inputImage, ImageRGB& outputImage)
   PixelRGB unknown(0,0,0);
 
   // TODO: Move this transform somewhere, it needs only be done once. Or pass _labels vector to LabelToImage function
-  auto xform = [](const Label& lbl) -> PixelRGB {
-    return lbl.color;
-  };
+  auto xform = [](const Label& lbl) -> PixelRGB { return lbl.color; };
   std::vector<PixelRGB> colors;
   std::transform(_labels.begin(),_labels.end(), std::back_inserter(colors), xform);
 
   LabelToImage(labelings, colors, PixelRGB(0,0,0), smallerImage);
 
-#if 0
-  {
-    double minVal;
-    double maxVal;
-    cv::Point minLoc;
-    cv::Point maxLoc;
-    cv::minMaxLoc(labelings, &minVal, &maxVal, &minLoc, &maxLoc);
-    std::cerr<<"Min: "<<minVal<<std::endl;
-    std::cerr<<"Max: "<<maxVal<<std::endl;
-  }
+#if 1
+  ImageRGB labelImage(inputImage.GetNumRows(), inputImage.GetNumCols());
+  smallerImage.Resize(labelImage, ResizeMethod::NearestNeighbor);
+  debugImageRGBs.emplace_back(std::make_pair("ColorLabel",labelImage));
+#elif
+  debugImageRGBs.emplace_back(std::make_pair("ColorLabel",smallerImage));
 #endif
 
-  outputImage = ImageRGB(inputImage.GetNumRows(), inputImage.GetNumCols());
-  smallerImage.Resize(outputImage, ResizeMethod::NearestNeighbor);
+  // Create salient points
+  LabelToSalientPoints(smallerImage, labelings, colors, salientPoints);
 
   return RESULT_OK;
 }

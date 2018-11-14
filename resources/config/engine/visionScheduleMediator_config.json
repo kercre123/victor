@@ -103,6 +103,14 @@
       "relativeCost" : 4
     },
     {
+      "mode"         : "DetectingColors",
+      "low"          : 4,
+      "med"          : 2,
+      "high"         : 1,
+      "standard"     : 2,
+      "relativeCost" : 4
+    },
+    {
       "mode"         : "DetectingOverheadEdges",
       "low"          : 4,
       "med"          : 2,

@@ -222,14 +222,12 @@ bool ColorClassifier::Load(const Json::Value& config)
   Json::Value jsonClusters = config.get("clusters",Json::Value::null);
   if (jsonClusters.isNull() || !jsonClusters.isArray())
   {
-    std::cerr<<"failure 6"<<std::endl;
     return false; // fail;
   }
 
   Json::Value jsonDimensionality = config.get("dimensionality",Json::Value::null);
   if (jsonDimensionality.isNull() || !jsonDimensionality.isInt())
   {
-    std::cerr<<"failure 7"<<std::endl;
     return false; // fail;
   }
   s32 dimensionality = jsonDimensionality.asInt();
@@ -245,18 +243,15 @@ bool ColorClassifier::Load(const Json::Value& config)
 
     if (jsonMean.isNull() || !jsonMean.isArray())
     {
-      std::cerr<<"failure 8"<<std::endl;
       return false; // fail
     }
     if (jsonCovariance.isNull() || !jsonCovariance.isObject())
     {
-      std::cerr<<"failure 9"<<std::endl;
       return false; // fail
     }
     Json::Value jsonRows = jsonCovariance.get("rows",Json::Value::null);
     if (jsonRows.isNull() || !jsonRows.isInt())
     {
-      std::cerr<<"failure 10"<<std::endl;
       return false; //fail
     }
     int rows = jsonRows.asInt();
@@ -264,7 +259,6 @@ bool ColorClassifier::Load(const Json::Value& config)
     Json::Value jsonCols = jsonCovariance.get("cols",Json::Value::null);
     if (jsonCols.isNull() || !jsonCols.isInt())
     {
-      std::cerr<<"failure 11"<<std::endl;
       return false; //fail
     }
     int cols = jsonCols.asInt();
@@ -272,7 +266,6 @@ bool ColorClassifier::Load(const Json::Value& config)
     Json::Value jsonData = jsonCovariance.get("data",Json::Value::null);
     if (jsonData.isNull() || !jsonData.isArray() || jsonData.size() != rows*cols)
     {
-      std::cerr<<"failure 12"<<std::endl;
       return false; // fail
     }
 
@@ -288,9 +281,6 @@ bool ColorClassifier::Load(const Json::Value& config)
 
     stats.mean = stats.mean.t();
     stats.covariance = stats.covariance.reshape(1,{rows,cols});
-
-    std::cerr<<"Mean: "<<stats.mean<<std::endl;
-    std::cerr<<"Covariance: "<<std::endl<<stats.covariance<<std::endl;
 
     allStats.push_back(stats);
   }
