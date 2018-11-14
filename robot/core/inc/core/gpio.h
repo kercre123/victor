@@ -18,9 +18,9 @@ typedef struct GPIO_t* GPIO;
 
 /************* GPIO Interface ***************/
 
-GPIO gpio_create(int gpio_number, enum Gpio_Dir isOutput, enum Gpio_Level initial_value);
+int gpio_create(int gpio_number, enum Gpio_Dir isOutput, enum Gpio_Level initial_value, GPIO* gp_out);
 
-GPIO gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value);
+int gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value, GPIO* gp_out);
 
 void gpio_set_direction(GPIO gp, enum Gpio_Dir isOutput);
 

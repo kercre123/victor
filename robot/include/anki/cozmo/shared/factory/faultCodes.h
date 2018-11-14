@@ -35,7 +35,7 @@ enum : uint16_t {
 
   //Use higher numbers for head self-tests
   //display precedence over (external) body tests
-  DISPLAY_FAILURE       = 990, //nobody will ever see this :(
+  DISPLAY_FAILURE       = 990,
 
   CAMERA_STOPPED        = 981,
   CAMERA_FAILURE        = 980,

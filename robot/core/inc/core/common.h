@@ -30,7 +30,17 @@ typedef enum CoreAppErrorCode_t {
 
 void error_exit(CoreAppErrorCode, const char*, ...);
 
-/// Applications must implement this
+#define error_return(code, msg, ...)     \
+  {                                      \
+    printf("Error %d: ", code);          \
+    printf(msg, ##__VA_ARGS__);          \
+    printf("\n\n");                      \
+    core_common_on_exit();               \
+    return code;                         \
+  }
+
+
+// Applications must implement this
 // it should cleanup any open resources
 extern void core_common_on_exit(void);
 

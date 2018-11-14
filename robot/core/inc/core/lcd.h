@@ -27,7 +27,7 @@ int lcd_init(void);
 void lcd_clear_screen(void);
 void lcd_draw_frame(const LcdFrame* frame);
 void lcd_draw_frame2(const uint16_t* frame, size_t size);
-void lcd_set_brightness(int b); //0..20
+int lcd_set_brightness(int b); //0..20
 void lcd_shutdown(void);
 
 #ifdef __cplusplus
