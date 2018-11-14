@@ -83,6 +83,17 @@ int CreateDirectory(const std::string& path,
   return 0;
 }
 
+bool DirectoryExists(const std::string& path)
+{
+  struct stat info = {0};
+  if (!stat(path.c_str(), &info)) {
+    if (info.st_mode & S_IFDIR) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool ReadFileIntoVector(const std::string& pathToFile,
                         std::vector<uint8_t>& data)
 {
