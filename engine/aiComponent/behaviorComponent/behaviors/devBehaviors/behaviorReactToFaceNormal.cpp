@@ -42,8 +42,18 @@ namespace {
   CONSOLE_VAR(f32,  kTurnWaitAfterInitialLookBackAtFace_s,   "Vision.FaceNormalDirectedAtRobot3d",  2.f);
   CONSOLE_VAR(f32,  kSleepTimeAfterActionCompleted_s,        "Vision.FaceNormalDirectedAtRobot3d",  2.f);
   CONSOLE_VAR(f32,  kMaxPanSpeed_radPerSec,                  "Vision.FaceNormalDirectedAtRobot3d",  MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
-  CONSOLE_VAR(f32, kMaxPanAccel_radPerSec2,                  "Vision.FaceNormalDirectedAtRobot3d",  10.f);
+  CONSOLE_VAR(f32,  kMaxPanAccel_radPerSec2,                 "Vision.FaceNormalDirectedAtRobot3d",  10.f);
   CONSOLE_VAR(bool, kUseEyeContact,                          "Vision.FaceNormalDirectedAtRobot3d",  true);
+  CONSOLE_VAR(f32,  kDistanceForAboveHorizonSearch_mm2,      "Vision.FaceNormalDirectedAtRobot3d",  1000000.f);
+  CONSOLE_VAR(f32,  kConeFor180TurnForFaceSearch_deg,        "Vision.FaceNormalDirectedAtRobot3d",  30.f);
+  CONSOLE_VAR(f32,  kSearchForFaceTurnRightAngle_deg,        "Vision.FaceNormalDirectedAtRobot3d",  -90.f);
+  CONSOLE_VAR(f32,  kSearchForFaceTurnLeftAngle_deg,         "Vision.FaceNormalDirectedAtRobot3d",  90.f);
+  CONSOLE_VAR(f32,  kSearchForFaceTurnAroundAngle_deg,       "Vision.FaceNormalDirectedAtRobot3d",  180.f);
+  CONSOLE_VAR(bool, kSearchForFaceUseThreeTurns,             "Vision.FaceNormalDirectedAtRobot3d",  true);
+  CONSOLE_VAR(f32,  kConeFor135TurnForFaceSearch_deg,        "Vision.FaceNormalDirectedAtRobot3d",  60.f);
+  CONSOLE_VAR(f32,  kSearchForFaceThirdAngle_deg,            "Vision.FaceNormalDirectedAtRobot3d",  135.f);
+  CONSOLE_VAR(s32,  kSearchForFaceNumberOfImagesToWait,      "Vision.FaceNormalDirectedAtRobot3d",  5);
+  CONSOLE_VAR(bool, kFindSurfacePointsUsingFaceDirection,    "Vision.FaceNormalDirectedAtRobot3d",  false);
 }
 
 #define LOG_CHANNEL "Behaviors"
@@ -118,100 +128,154 @@ bool BehaviorReactToFaceNormal::CheckIfShouldStop()
 void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
 {
   Pose3d faceFocusPose;
-  SmartFaceID faceID;
-  if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose, faceID)) {
-    auto translation = faceFocusPose.GetTranslation();
-    LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.Translation",
-             "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
-    auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(500);
-    if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres) && FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres) ) &&
-         (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres) && FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres)) )
-          || ( makingEyeContact && kUseEyeContact) ) {
+  // SmartFaceID faceID;
+  if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose, _faceIDToTurnBackTo)) {
+    auto robotPose = GetBEI().GetRobotInfo().GetPose();
+    Pose3d faceFocusPoseWRTRobot;
 
-      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingAtRobot",
-               "min x: %.3f, max x: %.3f, min y: %.3f, max y: %.3f", kFaceDirectedAtRobotMinXThres,
-               kFaceDirectedAtRobotMaxXThres, kFaceDirectedAtRobotMinYThres, kFaceDirectedAtRobotMaxYThres);
-      CompoundActionSequential* turnAction = new CompoundActionSequential();
-      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorGetIn));
-      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorReaction));
-      turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-      turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
+    if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
+      auto translation = faceFocusPoseWRTRobot.GetTranslation();
+      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.TranslationWRTRobot",
+               "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
+      auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(500);
 
-      turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
-      DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+      if (translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2) {
+        LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GazeFarEnoughToLookUp", "");
+        LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.DistanceFromRobot",
+                 "distance: %.3f", translation.LengthSq());
 
-    } else {
-      auto robotPose = GetBEI().GetRobotInfo().GetPose();
-      Pose3d faceFocusPoseWRTRobot;
-
-      if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
-
-        if ( FLT_LT(translation.y(), 0.f) ) {
-          LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingLeftTest", "");
-          faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
-          CompoundActionSequential* turnAction = new CompoundActionSequential();
-          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInRight));
-
-          // Do an initial turn if we want to
-          if (kTurnBackToFace) {
-            turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
-            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
-            turnAction->AddAction(new TurnTowardsFaceAction(faceID));
-            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+        // Compute angle
+        // If angle is within the turn around cone then turn around and look for face
+        Radians turnAngle;
+        Radians gazeAngle = atan2f(translation.y(), translation.x());
+        LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GazeAngle",
+                 "angle: %.3f", RAD_TO_DEG(gazeAngle.ToFloat()));
+        auto angleDifference = Radians(DEG_TO_RAD(180)) - gazeAngle;
+        LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.AngleDifference",
+                 "angle: %.3f", RAD_TO_DEG(angleDifference.ToFloat()));
+        if ( (angleDifference <= Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) &&
+             (angleDifference >= -Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) ) {
+          if (angleDifference < 0) {
+            turnAngle = DEG_TO_RAD(-kSearchForFaceTurnAroundAngle_deg);
+          } else {
+            turnAngle = DEG_TO_RAD(kSearchForFaceTurnAroundAngle_deg);
           }
+        } else if ( (angleDifference <= Radians(DEG_TO_RAD(kConeFor135TurnForFaceSearch_deg/2.f))) &&
+                    (angleDifference >= -Radians(DEG_TO_RAD(kConeFor135TurnForFaceSearch_deg/2.f))) &&
+                    kSearchForFaceUseThreeTurns) {
+          if (angleDifference < 0) {
+            turnAngle = DEG_TO_RAD(-kSearchForFaceThirdAngle_deg);
+          } else {
+            turnAngle = DEG_TO_RAD(kSearchForFaceThirdAngle_deg);
+          }
+        } else if (translation.y() < 0) {
+          turnAngle = DEG_TO_RAD(kSearchForFaceTurnRightAngle_deg);
+        } else {
+          turnAngle = DEG_TO_RAD(kSearchForFaceTurnLeftAngle_deg);
+        }
+        LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.TurnAngle",
+                 "angle: %.3f", RAD_TO_DEG(turnAngle.ToFloat()));
 
-          // TODO do we want this to be the same point as before
-          TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(faceFocusPoseWRTRobot);
-          turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
-          turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
-          CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
-            turnTowardsPose,
-            new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight}
-          });
-          turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
-          turnAction->AddAction(turnAndAnimate);
-          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+        CompoundActionSequential* turnAction = new CompoundActionSequential();
+        turnAction->AddAction(new TurnInPlaceAction(turnAngle.ToFloat(), false));
+        turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
+        // TODO is this how we set it to find a new face? seems like the face it would try to find
+        // is the last face it saw ... how is that not the face it was looking at last ... maybe
+        // we need to add a wait
+        // There is a wait in TurnTowardsFaceAction and i can change the max frames to wait
+        TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(SmartFaceID(), M_PI_2);
+        turnTowardsFace->SetRequireFaceConfirmation(true);
+        turnAction->AddAction(turnTowardsFace);
+        DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::FoundNewFace);
+
+      } else {
+
+        if (!kFindSurfacePointsUsingFaceDirection) {
+          return;
+        }
+
+        if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres) && FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres) ) &&
+             (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres) && FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres)) )
+              || ( makingEyeContact && kUseEyeContact) ) {
+
+          CompoundActionSequential* turnAction = new CompoundActionSequential();
+          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorGetIn));
+          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorReaction));
           turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-          turnAction->AddAction(new TurnTowardsFaceAction(faceID));
+          turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
 
           turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
           DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+
         } else {
 
-          LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingRightTest", "");
-          faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
-          CompoundActionSequential* turnAction = new CompoundActionSequential();
-          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
+          if ( FLT_LT(translation.y(), 0.f) ) {
+            LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingLeftTest", "");
+            faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
+            CompoundActionSequential* turnAction = new CompoundActionSequential();
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInRight));
 
-          // Do an initial turn if we want to
-          if (kTurnBackToFace) {
-            turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
-            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
-            turnAction->AddAction(new TurnTowardsFaceAction(faceID));
-            turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+            // Do an initial turn if we want to
+            if (kTurnBackToFace) {
+              turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
+              turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
+              turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+              turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+            }
+
+            // TODO do we want this to be the same point as before
+            TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(faceFocusPoseWRTRobot);
+            turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
+            turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
+            CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+              turnTowardsPose,
+              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight}
+            });
+            turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+            turnAction->AddAction(turnAndAnimate);
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+            turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+            turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+
+            turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
+            DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+          } else {
+
+            LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.LookingRightTest", "");
+            faceFocusPoseWRTRobot.Print("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
+            CompoundActionSequential* turnAction = new CompoundActionSequential();
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
+
+            // Do an initial turn if we want to
+            if (kTurnBackToFace) {
+              turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
+              turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
+              turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+              turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+            }
+
+            // TODO do we want this to be the same point as before
+            TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(faceFocusPoseWRTRobot);
+            turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
+            turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
+            CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+              turnTowardsPose,
+              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft}
+            });
+            turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+            turnAction->AddAction(turnAndAnimate);
+
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+            turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+            turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+
+            turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
+            DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
           }
-
-          // TODO do we want this to be the same point as before
-          TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(faceFocusPoseWRTRobot);
-          turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
-          turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
-          CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
-            turnTowardsPose,
-            new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft}
-          });
-          turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
-          turnAction->AddAction(turnAndAnimate);
-
-          turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
-          turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-          turnAction->AddAction(new TurnTowardsFaceAction(faceID));
-
-          turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
-          DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
         }
-      } else {
-        LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
       }
+    } else {
+      LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
     }
   } else {
     // LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.NoFaceFocus", "");
@@ -254,6 +318,21 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirectionOld()
 void BehaviorReactToFaceNormal::TransitionToCompleted()
 {
   //CancelDelegates(false);
+}
+
+void BehaviorReactToFaceNormal::FoundNewFace(ActionResult result)
+{
+
+  if (ActionResult::NO_FACE == result) {
+    LOG_INFO("BehaviorReactToFaceNormal.FoundNewFace.Result", "No Face %d", result);
+    DelegateIfInControl(new TurnTowardsFaceAction(_faceIDToTurnBackTo), &BehaviorReactToFaceNormal::TransitionToCompleted);
+  } else if (ActionResult::SUCCESS == result) {
+    LOG_INFO("BehaviorReactToFaceNormal.FoundNewFace.Result", "Success %d", result);
+    BehaviorReactToFaceNormal::TransitionToCompleted();
+  } else {
+    LOG_INFO("BehaviorReactToFaceNormal.FoundNewFace.Result", "Other: %d", result);
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

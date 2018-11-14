@@ -525,19 +525,27 @@ namespace Vector {
                                                                                    ::Anki::NamedColors::DARKGRAY);
 
         auto& entry = _facesDirectedAtRobot3d[face.GetID()];
-        const auto currentFaceDirection = entry.GetCurrentFaceDirection();
-        Pose3d currentGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentFaceDirection));
+        const auto currentFaceDirectionSurface = entry.GetCurrentFaceDirectionSurface();
+        Pose3d currentGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentFaceDirectionSurface));
         faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2345,
                                                                                  kGazeGroundPointSize,
                                                                                  currentGPPose,
                                                                                  ::Anki::NamedColors::ORANGE);
 
-        const auto averageFaceDirection = entry.GetFaceDirectionAverage();
-        Pose3d averageGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageFaceDirection));
+        const auto averageFaceDirectionSurface = entry.GetFaceDirectionSurfaceAverage();
+        Pose3d averageGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageFaceDirectionSurface));
         faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2346,
                                                                                  kGazeGroundPointSize,
                                                                                  averageGPPose,
                                                                                  ::Anki::NamedColors::GREEN);
+
+        const auto currentFaceDirectionAboveHorizon = entry.GetCurrentFaceDirectionAboveHorizon();
+        Pose3d currentAHPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentFaceDirectionAboveHorizon));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2347,
+                                                                                 kGazeGroundPointSize,
+                                                                                 currentAHPose,
+                                                                                 ::Anki::NamedColors::BLUE);
+
 
         /*
         Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, -500.f, 0.f)));
@@ -663,7 +671,7 @@ namespace Vector {
     face.SetFaceFocused(faceFocused);
     if (faceFocused)
     {
-      auto faceDirectionAverage = entry.GetFaceDirectionAverage();
+      auto faceDirectionAverage = entry.GetFaceDirectionSurfaceAverage();
       PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceDirectionAverage",
                           "x: %.3f, y: %.3f, z: %.3f", faceDirectionAverage.x(), faceDirectionAverage.y(),
                           faceDirectionAverage.z());

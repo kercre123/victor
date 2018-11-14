@@ -58,10 +58,12 @@ public:
   void Update(const TrackedFace& headPose,
               const TimeStamp_t timeStamp);
 
-  Point3f GetFaceDirectionAverage() const;
-  Point3f GetCurrentFaceDirection() const;
+  Point3f GetFaceDirectionSurfaceAverage() const;
+  Point3f GetCurrentFaceDirectionSurface() const;
+  Point3f GetCurrentFaceDirectionAboveHorizon() const;
   bool GetExpired(const TimeStamp_t currentTime) const;
-  std::vector<FaceDirectionData3d> const& GetFaceDirectionHistory() {return _faceDirectionHistory;}
+  bool IsDirectedBelowHorizon() { return _directedBelowHorizon; }
+  std::vector<FaceDirectionData3d> const& GetFaceDirectionHistory() {return _faceDirectionSurfaceHistory;}
   bool IsFaceFocused() const;
 
 private:
@@ -79,8 +81,11 @@ private:
   int _numberOfInliers = 0;
   bool _initialized = false;
 
-  std::vector<FaceDirectionData3d> _faceDirectionHistory;
-  Point3f _faceDirectionAverage;
+  std::vector<FaceDirectionData3d> _faceDirectionSurfaceHistory;
+  std::vector<FaceDirectionData3d> _faceDirectionAboveHorizonHistory;
+  Point3f _faceDirectionSurfaceAverage;
+  Point3f _faceDirectionAboveHorizonAverage;
+  bool _directedBelowHorizon;
 };
 
 }

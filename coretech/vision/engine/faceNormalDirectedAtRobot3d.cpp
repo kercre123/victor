@@ -29,11 +29,15 @@ namespace {
 }
 
 FaceNormalDirectedAtRobot3d::FaceNormalDirectedAtRobot3d()
-  : _faceDirectionAverage(Point3f(FaceDirectionData3d::kDefaultDistance_cm,
-                                  FaceDirectionData3d::kDefaultDistance_cm,
-                                  FaceDirectionData3d::kDefaultDistance_cm))
+  : _faceDirectionSurfaceAverage(Point3f(FaceDirectionData3d::kDefaultDistance_cm,
+                                 FaceDirectionData3d::kDefaultDistance_cm,
+                                 FaceDirectionData3d::kDefaultDistance_cm)),
+  _faceDirectionAboveHorizonAverage(Point3f(FaceDirectionData3d::kDefaultDistance_cm,
+                                    FaceDirectionData3d::kDefaultDistance_cm,
+                                    FaceDirectionData3d::kDefaultDistance_cm))
 {
-  _faceDirectionHistory.resize(kHistorySize);
+  _faceDirectionSurfaceHistory.resize(kHistorySize);
+  _faceDirectionAboveHorizonHistory.resize(kHistorySize);
 }
 
 void FaceNormalDirectedAtRobot3d::Update(const TrackedFace& face,
@@ -67,16 +71,22 @@ void FaceNormalDirectedAtRobot3d::Update(const TrackedFace& face,
                    "Yaw=%.3f, Pitch=%.3f", RAD_TO_DEG(_face.GetHeadYaw().ToFloat()),
                    RAD_TO_DEG(_face.GetHeadPitch().ToFloat()));
   */
-  _faceDirectionHistory[_currentIndex].Update(faceDirectionPoint,
+  _faceDirectionSurfaceHistory[_currentIndex].Update(faceDirectionPoint,
                                               RAD_TO_DEG(face.GetHeadYaw().ToFloat()),
                                               RAD_TO_DEG(face.GetHeadPitch().ToFloat()),
                                               include);
 
-  _faceDirectionAverage = ComputeEntireFaceDirectionAverage();
-  _numberOfInliers = FindInliers(_faceDirectionAverage);
+  _faceDirectionAboveHorizonHistory[_currentIndex].Update(faceDirectionPoint,
+                                                          RAD_TO_DEG(face.GetHeadYaw().ToFloat()),
+                                                          RAD_TO_DEG(face.GetHeadPitch().ToFloat()),
+                                                          !include);
+
+
+  _faceDirectionSurfaceAverage = ComputeEntireFaceDirectionAverage();
+  _numberOfInliers = FindInliers(_faceDirectionSurfaceAverage);
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.NumberOfInliers",
                    "Number of Inliers = %d", _numberOfInliers);
-  _faceDirectionAverage = RecomputeFaceDirectionAverage();
+  _faceDirectionSurfaceAverage = RecomputeFaceDirectionAverage();
 
   _currentIndex += 1;
 }
@@ -94,7 +104,7 @@ Point3f FaceNormalDirectedAtRobot3d::ComputeFaceDirectionAverage(const bool filt
   // coordinates instead traditional angles because the
   // range of value does not include a wrap around
   u32 pointsInAverage = 0;
-  for (const auto& faceDirection: _faceDirectionHistory) {
+  for (const auto& faceDirection: _faceDirectionSurfaceHistory) {
     if (faceDirection.include) {
       if (filterOutliers) {
         if (faceDirection.inlier) {
@@ -121,7 +131,7 @@ Point3f FaceNormalDirectedAtRobot3d::ComputeFaceDirectionAverage(const bool filt
 int FaceNormalDirectedAtRobot3d::FindInliers(const Point3f& faceDirectionAverage)
 {
   int numberOfInliers = 0;
-  for (auto& faceDirection: _faceDirectionHistory) {
+  for (auto& faceDirection: _faceDirectionSurfaceHistory) {
     /*
     PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.FindInliers.PointHistory",
                      "direction x=%.3f, y=%.3f, z=%.3f", faceDirection.point.x(),
@@ -191,8 +201,8 @@ bool FaceNormalDirectedAtRobot3d::GetPointFromHeadPose(const Pose3d& headPose, P
     faceDirectionPoint = groundPlanePoint;
     return true;
   } else {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceRayLessThanZero", "");
-    // Can't do anything there won't be an intersection
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceRayAboveHorizon", "");
+    faceDirectionPoint = point;
     return false;
   }
 }
@@ -207,22 +217,27 @@ bool FaceNormalDirectedAtRobot3d::IsFaceFocused() const
   return ( (_numberOfInliers > kMinNumberOfInliers) && _initialized );
 }
 
-Point3f FaceNormalDirectedAtRobot3d::GetFaceDirectionAverage() const
+Point3f FaceNormalDirectedAtRobot3d::GetFaceDirectionSurfaceAverage() const
 {
-  auto shiftedFaceAverage = _faceDirectionAverage + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
+  auto shiftedFaceAverage = _faceDirectionSurfaceAverage + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetFaceDirectionAverage.ReturnedPoint",
                    "x: %.3f, y:%.3f, z:%.3f", shiftedFaceAverage.x(), shiftedFaceAverage.y(),
                    shiftedFaceAverage.z());
   return shiftedFaceAverage;
 }
 
-Point3f FaceNormalDirectedAtRobot3d::GetCurrentFaceDirection() const
+Point3f FaceNormalDirectedAtRobot3d::GetCurrentFaceDirectionSurface() const
 {
-  auto shiftedFaceDirection = _faceDirectionHistory[_currentIndex].point + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
+  auto shiftedFaceDirection = _faceDirectionSurfaceHistory[_currentIndex].point + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetCurrentFaceDirection.ReturnedPoint",
                    "x: %.3f, y:%.3f, z:%.3f", shiftedFaceDirection.x(), shiftedFaceDirection.y(),
                    shiftedFaceDirection.z());
   return shiftedFaceDirection;
+}
+
+Point3f FaceNormalDirectedAtRobot3d::GetCurrentFaceDirectionAboveHorizon() const
+{
+  return _faceDirectionAboveHorizonHistory[_currentIndex].point;
 }
 
 } // namespace Vision

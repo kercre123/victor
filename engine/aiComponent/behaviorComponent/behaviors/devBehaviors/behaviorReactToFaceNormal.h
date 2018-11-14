@@ -14,6 +14,7 @@
 
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/smartFaceId.h"
 
 namespace Anki {
 namespace Vector {
@@ -43,15 +44,19 @@ private:
   void TransitionToCheckFaceDirection();
   void TransitionToCheckFaceDirectionOld();
   void TransitionToCompleted();
+  void FoundNewFace(ActionResult result);
   bool CheckIfShouldStop();
+
+  SmartFaceID _faceIDToTurnBackTo;
 
   enum class State : uint8_t {
 
     // TODO add state for eye contact
     NotStarted,
-    CheckingFaceNormalDirectedAtRobot,
-    CheckingFaceNormalDirectedLeft,
-    CheckingFaceNormalDirectedRight,
+    FaceNormalDirectedAtRobot,
+    FaceNormalDirectedAtSurfaceLeft,
+    FaceNormalDirectedAtSurfaceRight,
+    
   };
 
   struct InstanceConfig
