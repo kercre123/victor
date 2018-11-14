@@ -119,7 +119,6 @@ def play_and_check_animation(robot, animation):
     is_good = False
     expect_animation(animation)
     robot.anim.play_animation(animation)
-    time.sleep(1)
     is_good = wait_for_animation()
     return is_good
 
@@ -139,7 +138,8 @@ def main():
             else:
                 bad_animations.append(animation)
         if len(bad_animations) > 0:
-            print(f"RESULT : {len(bad_animations)}/{len(anim_names)} animations did not work well as below :\n{str(bad_animations)}")
+            print(f"RESULT : {len(bad_animations)}/{len(anim_names)} animations did not work well as below :\n"\
+                  f"{str(bad_animations)}")
         else:
             print(f"RESULT : {len(anim_names)} animations worked well.")
     websocket.close()
