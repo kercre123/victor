@@ -225,12 +225,9 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
   if (_type == AlexaMediaPlayer::Type::TTS) {
     auto* dataPlatform = context->GetDataLoader();
     auto* speechRegSys = context->GetMicDataSystem()->GetSpeechRecognizerSystem();
-    SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-      LOG_WARNING("AlexaMediaPlayer.Init.Recognizer.Callback", "info = %s", info.Description().c_str());
-    };
-    speechRegSys->InitAlexaPlayback(*dataPlatform, callback);
+    // Setup Callback when stream starts, want it to happen on the same thread
+    speechRegSys->InitAlexaPlayback(*dataPlatform, nullptr);
     _recognizer = speechRegSys->GetAlexaPlaybackRecognizer();
-    
   }
 
 }
@@ -435,6 +432,13 @@ bool AlexaMediaPlayer::play( SourceId id )
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
       }
 
+      // HACK
+      // 1. Need to keep pulling _waveData while playing to see where the playback is
+      // 2. When _detectedTriggers_ms.front() time is near tell micDataSystem to suppress Alexa trigger
+      // 3. If trigger is recongnize stop suppressing trigger
+      // 4. Otherwise need a cool down period for Alexa trigger so it will still work for "Bardge In"
+      
+      
       if( flush ) {
         _waveData->DoneProducingData();
         break;
@@ -624,6 +628,19 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
                                                &error);
             
             PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
+            
+            // Set callback for this thread
+            SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this, &decoded_ms] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+              std::lock_guard<std::mutex> lock(_detectedTriggerMutex);
+              _detectedTriggers_ms.push(decoded_ms);
+              LOG_WARNING("AlexaMediaPlayer.Decode.Recognizer.Callback", "decode ms %f \n info = %s",
+                          decoded_ms, info.Description().c_str());
+            };
+            _recognizer->SetCallback(callback);
+            std::lock_guard<std::mutex> lock(_detectedTriggerMutex);
+            while ( !_detectedTriggers_ms.empty() ) {
+              _detectedTriggers_ms.pop();
+            }
           }
         }
 
@@ -659,8 +676,6 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
         // HACK
         if ( _speexState != nullptr ) {
           
-          
-          
           // Resample
 //          ANKI_CPU_PROFILE("ResampleAudioChunk");
           static const int kResampleMaxSize = 2000;
@@ -684,11 +699,8 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
             
             SavePCM( resampledPcm, numSamplesWritten );
           }
-
         }
         
-        
-
         const auto numFrames = data->GetNumberOfFramesReceived();
         if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {
           SetState(State::Playable);

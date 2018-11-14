@@ -41,6 +41,8 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <unordered_set>
 #include <atomic>
 #include <map>
+#include <mutex>
+#include <queue>
 
 
 #include <AVSCommon/SDKInterfaces/SpeakerInterface.h>
@@ -203,9 +205,10 @@ private:
   const AudioInfo& _audioInfo;
   
   // TEMP
-  SpeechRecognizerTHF* _recognizer = nullptr;
-  SpeexResamplerState* _speexState = nullptr;
-
+  SpeechRecognizerTHF*  _recognizer = nullptr;
+  SpeexResamplerState*  _speexState = nullptr;
+  std::queue<float>     _detectedTriggers_ms;
+  std::mutex            _detectedTriggerMutex;
 };
 
 } // namespace Vector
