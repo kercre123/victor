@@ -58,6 +58,12 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <AVSCommon/AVS/SpeakerConstants/SpeakerConstants.h>
 #include <AVSCommon/Utils/SDS/ReaderPolicy.h>
 
+// HACK
+#include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerTHFSimple.h"
+#include "speex/speex_resampler.h"
+
 // include minimp3
 // TODO: minimp3 should be able to convert directly to float by adding a flag. this would save a copy.
 #define MINIMP3_IMPLEMENTATION
@@ -155,7 +161,7 @@ namespace {
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("Alexa.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
-  const bool kSaveDebugAudio = true;
+  const bool kSaveDebugAudio = true; // FIXME we probably don't want to be shiping this!!
 #endif
 }
 
@@ -180,6 +186,10 @@ AlexaMediaPlayer::~AlexaMediaPlayer()
 {
   Util::Dispatch::Stop(_dispatchQueue);
   Util::Dispatch::Release(_dispatchQueue);
+
+  if (_speexState != nullptr) {
+    speex_resampler_destroy(_speexState);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -211,6 +221,18 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
     }
 #endif
   }
+  
+  if (_type == AlexaMediaPlayer::Type::TTS) {
+    auto* dataPlatform = context->GetDataLoader();
+    auto* speechRegSys = context->GetMicDataSystem()->GetSpeechRecognizerSystem();
+    SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+      LOG_WARNING("AlexaMediaPlayer.Init.Recognizer.Callback", "info = %s", info.Description().c_str());
+    };
+    speechRegSys->InitAlexaPlayback(*dataPlatform, callback);
+    _recognizer = speechRegSys->GetAlexaPlaybackRecognizer();
+    
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -238,6 +260,7 @@ void AlexaMediaPlayer::Update()
     callbackContext->SetExecuteAsync( false ); // run on main thread
     callbackContext->SetEventCallbackFunc( [this, id = _playingSource]( const AudioCallbackContext* thisContext,
                                                                         const AudioCallbackInfo& callbackInfo ) {
+      // FIXME: this might be a bug. Need to check callback purpose, may be setting bad state
       CallOnPlaybackFinished( id );
     });
 
@@ -586,6 +609,22 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
           _firstPass = false;
           LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps );
 
+          // HACK
+          if (_speexState != nullptr) {
+            speex_resampler_destroy(_speexState);
+            _speexState = nullptr;
+          }
+          if (_type == AlexaMediaPlayer::Type::TTS) {
+            int error = 0;
+            _speexState = speex_resampler_init(
+                                               1, // num channels
+                                               info.hz, // in rate, int
+                                               16000, // out rate, int
+                                               10, // quality 0-10
+                                               &error);
+            
+            PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
+          }
         }
 
         decoded_ms += 1000 * float(samples) / info.hz;
@@ -599,23 +638,56 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
           for( int i=0; i<samples; i += 2, j += 1) {
             short left = pcm[i];
             short right = pcm[i + 1];
-            short monoSample = (int(left) + right) / 2;
+            short monoSample = (int(left) + right) / 2;       // FIXME: This might be a bug with stearo sources
             pcm[j] = monoSample;
           }
           samples = samples/2;
           info.channels = 1;
         }
 
-        if( samples > 0 ) {
-          SavePCM( pcm, samples );
-        }
+//        if( samples > 0 ) {
+//          SavePCM( pcm, samples );
+//        }
 
         // todo: minimp3 should be able to output in float to avoid this allocation and copy, but it
         // seems to clip for me when in float
         StandardWaveDataContainer waveContainer(info.hz, info.channels, samples);
         waveContainer.CopyWaveData( pcm, samples );
-
+        
         data->AppendStandardWaveData( std::move(waveContainer) );
+        
+        // HACK
+        if ( _speexState != nullptr ) {
+          
+          
+          
+          // Resample
+//          ANKI_CPU_PROFILE("ResampleAudioChunk");
+          static const int kResampleMaxSize = 2000;
+          short resampledPcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
+          uint32_t numSamplesProcessed = samples;
+          uint32_t numSamplesWritten = kResampleMaxSize;
+          speex_resampler_process_interleaved_int(_speexState,
+                                                  pcm, &numSamplesProcessed,
+                                                  resampledPcm, &numSamplesWritten);
+          ANKI_VERIFY(numSamplesProcessed == samples,
+                      "MicDataProcessor.ResampleAudioChunk.SamplesProcessed",
+                      "Expected %d processed only processed %d", samples, numSamplesProcessed);
+        
+//          ANKI_VERIFY(numSamplesProcessed == kResampleMaxSize,
+//                      "MicDataProcessor.ResampleAudioChunk.SamplesWritten",
+//                      "Expected %d written only wrote %d", kResampleMaxSize, numSamplesWritten);
+          
+          if( numSamplesWritten > 0 ) {
+            
+            _recognizer->Update(resampledPcm, numSamplesWritten);
+            
+            SavePCM( resampledPcm, numSamplesWritten );
+          }
+
+        }
+        
+        
 
         const auto numFrames = data->GetNumberOfFramesReceived();
         if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {

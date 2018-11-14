@@ -65,6 +65,12 @@ public:
                  const Util::Locale& locale,
                  TriggerWordDetectedCallback callback);
   
+  // Init Alex playback trigger detector
+  // Run trigger detection on playback audio
+  // Note: This is done after Alex user has been authicated
+  void InitAlexaPlayback(const RobotDataLoader& dataLoader,
+                         TriggerWordDetectedCallback callback);
+  
   // Disable Alexa trigger
   void DisableAlexa();
   
@@ -76,6 +82,10 @@ public:
   // Return true when locale file was found and is different then current locale
   // NOTE: Locale is not updated until the next Update() call
   bool UpdateTriggerForLocale(const Util::Locale newLocale);
+  
+  // HACK: Test using a detector on playback audio
+  // Return null when recognizer
+  SpeechRecognizerTHF* GetAlexaPlaybackRecognizer();
 
 
 private:
@@ -96,6 +106,7 @@ private:
   std::unique_ptr<TriggerContext>             _victorTrigger;
   std::unique_ptr<TriggerContext>             _alexaTrigger;
   Alexa*                                      _alexaComponent = nullptr;
+  std::unique_ptr<TriggerContext>             _alexaPlaybackTrigger;
   std::string                                 _triggerWordDataDir;
   
   std::mutex                                  _triggerModelMutex;

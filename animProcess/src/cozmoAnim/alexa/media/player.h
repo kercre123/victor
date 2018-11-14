@@ -56,6 +56,9 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
 
+// TEMP
+struct SpeexResamplerState_;
+typedef struct SpeexResamplerState_ SpeexResamplerState;
 
 
 namespace Anki {
@@ -84,6 +87,8 @@ struct AudioInfo;
 namespace Audio {
   class CozmoAudioController;
 }
+class SpeechRecognizerTHF;
+
 
 class AlexaMediaPlayer : public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
                        , public alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface
@@ -196,6 +201,11 @@ private:
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
 
   const AudioInfo& _audioInfo;
+  
+  // TEMP
+  SpeechRecognizerTHF* _recognizer = nullptr;
+  SpeexResamplerState* _speexState = nullptr;
+
 };
 
 } // namespace Vector
