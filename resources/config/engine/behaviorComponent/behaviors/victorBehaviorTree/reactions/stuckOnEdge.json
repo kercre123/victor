@@ -9,7 +9,8 @@
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",
     "not": {
-      "conditionType": "StuckOnEdge"
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
     }
   }
 }

@@ -40,12 +40,12 @@ bool ConditionStuckOnEdge::AreConditionsMetInternal(BehaviorExternalInterface& b
   const auto& powerSaveManager = behaviorExternalInterface.GetPowerStateManager();
   const bool inSysconCalmMode = powerSaveManager.InSysconCalmMode();
   
+  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const bool isPickedUp = robotInfo.IsPickedUp();
+  
   // We can only check the cliff sensor components if Syscon is not in Calm Mode.
   if (!inSysconCalmMode) {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
     auto& cliffComp = robotInfo.GetCliffSensorComponent();
-    const bool isPickedUp = robotInfo.IsPickedUp();
-
     static const uint8_t kLeftCliffSensors  = (1 << static_cast<int>(CliffSensor::CLIFF_FL)) | (1 << static_cast<int>(CliffSensor::CLIFF_BL));
     static const uint8_t kRightCliffSensors = (1 << static_cast<int>(CliffSensor::CLIFF_FR)) | (1 << static_cast<int>(CliffSensor::CLIFF_BR));
     const bool stuckOnEdge = cliffComp.GetCliffDetectedFlags() == kLeftCliffSensors ||

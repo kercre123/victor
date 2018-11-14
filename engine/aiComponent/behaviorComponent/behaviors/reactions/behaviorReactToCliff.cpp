@@ -85,9 +85,13 @@ namespace {
   const f32 kBodyTurnSpeedForCliffSearch_degPerSec = 120.0f;
 
   // If this many RobotStopped messages are received
-  // while activated, then just give up and go to StuckOnEdge.
+  // while activated, then just give up and go to StuckOnEdge/AskForHelp.
   // It's probably too dangerous to keep trying anything
   CONSOLE_VAR(uint32_t, kMaxNumRobotStopsBeforeGivingUp, CONSOLE_GROUP, 5);
+  
+  // If the behavior encounters this many failures with the animations or actions
+  // while activated, then just give up and go to StuckOnEdge/AskForHelp.
+  CONSOLE_VAR(uint32_t, kMaxNumCliffReactAttemptsBeforeGivingUp, CONSOLE_GROUP, 2);
 
   // whether this experimental feature whereby the robot uses vision
   // to extend known cliffs via edge detection is active
@@ -151,6 +155,7 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
   const auto kInitVal = std::numeric_limits<u16>::max();
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
   persistent.numStops = 0;
+  persistent.numCliffReactAttempts = 0;
   persistent.lastStopTime_sec = 0.f;
   persistent.putDownOnCliff = false;
   persistent.lastPutDownOnCliffTime_sec = 0.f;
@@ -175,6 +180,7 @@ void BehaviorReactToCliff::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.stuckOnEdgeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(StuckOnEdge));
+  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(AskForHelp));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -198,6 +204,7 @@ bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorActivated()
 {
+  DEBUG_SET_STATE(Activating);
   // reset dvars
   const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
@@ -263,49 +270,28 @@ void BehaviorReactToCliff::OnBehaviorActivated()
 void BehaviorReactToCliff::TransitionToStuckOnEdge()
 {
   DEBUG_SET_STATE(StuckOnEdge);
-  
-  // Wait function to allow the robot to stop teetering on an edge if it is stuck.
-  auto waitForStationaryLambda = [this](Robot& robot) {
+  if ( _iConfig.stuckOnEdgeBehavior->WantsToBeActivated() ) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
-    const bool areWheelsMoving = robotInfo.GetMoveComponent().AreWheelsMoving();
-    const auto timeSinceLastTreadStateChange_ms =
-        BaseStationTimer::getInstance()->GetCurrentTimeStamp() - robotInfo.GetOffTreadsStateLastChangedTime_ms();
-    if ( areWheelsMoving ||
-         robotInfo.IsPickedUp() ||
-         timeSinceLastTreadStateChange_ms < kMinTimeToValidateStuckOnEdge_ms) {
-      PRINT_PERIODIC_CH_INFO(5, "Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.WaitForStationary",
-                             "Wheels moving? %d, Picked up? %d, Last time tread's state changed? %u ms",
-                             areWheelsMoving, robotInfo.IsPickedUp(), static_cast<u32>(timeSinceLastTreadStateChange_ms));
-      return false;
+    DASMSG(behavior_cliff_stuck_on_edge, "behavior.cliff_stuck_on_edge", "The robot is stuck on the edge of a surface");
+    DASMSG_SET(i1, robotInfo.GetCliffSensorComponent().GetCliffDetectedFlags(), "Cliff detected flags");
+    DASMSG_SEND();
+    
+    DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
+  } else {
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated",
+                  "Behavior %s does not want to be activated, re-starting cliff reaction",
+                  _iConfig.stuckOnEdgeBehavior->GetDebugLabel().c_str());
+    // We should ALWAYS be able to delegate to the AskForHelp behavior,
+    // i.e. no activation conditions should block this delegation
+    if (ANKI_VERIFY(_iConfig.askForHelpBehavior->WantsToBeActivated(),
+                    "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated",
+                    "Behavior %s does not want to be activated!!",
+                    _iConfig.askForHelpBehavior->GetDebugLabel().c_str()))
+    {
+      DelegateIfInControl(_iConfig.askForHelpBehavior.get());
     }
-    // Once we've stabilized, double check that we're still detecting cliffs underneath the robot.
-    const auto& cliffComp = robotInfo.GetCliffSensorComponent();
-    if (!cliffComp.IsCliffDetected()) {
-      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.QuittingDueToNoCliff", "");
-      _dVars.quitReaction = true;
-    }
-    return true;
-  };
-  
-  WaitForLambdaAction* waitForStationaryAction = new WaitForLambdaAction(waitForStationaryLambda);
-  DelegateIfInControl(waitForStationaryAction, [this](const ActionResult& res){
-    if (!_dVars.quitReaction) {
-      const auto& robotInfo = GetBEI().GetRobotInfo();
-      DASMSG(behavior_cliff_stuck_on_edge, "behavior.cliff_stuck_on_edge", "The robot is stuck on the edge of a surface");
-      DASMSG_SET(i1, robotInfo.GetCliffSensorComponent().GetCliffDetectedFlags(), "Cliff detected flags");
-      DASMSG_SEND();
-      
-      if (ANKI_VERIFY(_iConfig.stuckOnEdgeBehavior->WantsToBeActivated(),
-                      "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated",
-                      "Re-starting cliff reaction")) {
-        DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
-      } else {
-        TransitionToPlayingCliffReaction();
-      }
-    }
-  });
-
-  
+  }
+  // Behavior will cancel itself if it reaches this point
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -329,7 +315,18 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
 
   GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::ReactedToCliff);
   
+  // Have we tried executing too many cliff reaction animations/actions for this
+  // activation of the behavior? We must either be in a "cliffy" area, or somehow stuck in
+  // some orientation that StuckOnEdge is not detecting. Just go to StuckOnEdge to be safe.
+  if (_dVars.persistent.numCliffReactAttempts > kMaxNumCliffReactAttemptsBeforeGivingUp) {
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.TooManyCliffReactionAttempts", "");
+    TransitionToStuckOnEdge();
+    return;
+  }
+  
   if(ShouldStreamline()){
+    // If we skip over the animation, we still count the recovery backup as the cliff reaction attempt.
+    ++_dVars.persistent.numCliffReactAttempts;
     TransitionToRecoveryBackup();
   } else {
     Anki::Util::sInfo("robot.cliff_detected", {}, "");
@@ -361,25 +358,61 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
                        cliffDetectedFlags);
       TransitionToStuckOnEdge();
     } else {
+      ++_dVars.persistent.numCliffReactAttempts;
       DelegateIfInControl(action, [this](const ActionResult& res){
-        if (res == ActionResult::SUCCESS || !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected() ) {
+        if ( !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected() ) {
           // The action reported success or partially succeeded moving the robot enough to get it away from the cliff.
           TransitionToFaceAndBackAwayCliff();
         } else {
           // Cliff reaction failed for some reason, something might be preventing the robot from moving away from
           // the cliff (e.g. the robot was teetering and unsure of whether it's been picked up, or the treads
           // slipped and got the robot stuck on the edge of a cliff).
-          TransitionToStuckOnEdge();
+          TransitionToWaitForNoMotion();
         }
       });
     }
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::TransitionToWaitForNoMotion()
+{
+  DEBUG_SET_STATE(WaitForNoMotion);
+  
+  // Wait function to allow the robot to stop teetering on an edge if it is stuck.
+  auto waitForStationaryLambda = [this](Robot& robot) {
+    const auto& robotInfo = GetBEI().GetRobotInfo();
+    const bool areWheelsMoving = robotInfo.GetMoveComponent().AreWheelsMoving();
+    const auto timeSinceLastTreadStateChange_ms =
+    BaseStationTimer::getInstance()->GetCurrentTimeStamp() - robotInfo.GetOffTreadsStateLastChangedTime_ms();
+    if ( areWheelsMoving ||
+        robotInfo.IsPickedUp() ||
+        timeSinceLastTreadStateChange_ms < kMinTimeToValidateStuckOnEdge_ms) {
+      PRINT_PERIODIC_CH_INFO(5, "Behaviors", "BehaviorReactToCliff.WaitForNoMotion",
+                             "Wheels moving? %d, Picked up? %d, Last time tread's state changed? %u ms",
+                             areWheelsMoving, robotInfo.IsPickedUp(), static_cast<u32>(timeSinceLastTreadStateChange_ms));
+      return false;
+    }
+    // Once we've stabilized, double check that we're still detecting cliffs underneath the robot.
+    const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+    if (!cliffComp.IsCliffDetected()) {
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.WaitForNoMotion.QuittingDueToNoCliff", "");
+      _dVars.quitReaction = true;
+    }
+    return true;
+  };
+  
+  WaitForLambdaAction* waitForStationaryAction = new WaitForLambdaAction(waitForStationaryLambda);
+  // NOTE: If, after waiting for all motion to stop, the robot is actually stuck on an edge, TransitionToPlayingCliffReaction
+  // will catch this and call TransitionToStuckOnEdge (see above).
+  DelegateIfInControl(waitForStationaryAction, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToRecoveryBackup()
 {
+  DEBUG_SET_STATE(RecoveryBackup);
   auto& robotInfo = GetBEI().GetRobotInfo();
 
   // if the animation doesn't drive us backwards enough, do it manually
@@ -403,7 +436,7 @@ void BehaviorReactToCliff::TransitionToRecoveryBackup()
                           cliffComponent.GetCliffDetectedFlags());
         TransitionToStuckOnEdge();
       } else if (_dVars.persistent.putDownOnCliff) {
-          TransitionToHeadCalibration();
+        TransitionToHeadCalibration();
       } else {
         TransitionToVisualExtendCliffs();
       }
@@ -503,6 +536,7 @@ void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorDeactivated()
 {
+  DEBUG_SET_STATE(Inactive);
   // reset dvars
   _dVars = DynamicVariables();
 }
@@ -511,6 +545,7 @@ void BehaviorReactToCliff::OnBehaviorDeactivated()
 void BehaviorReactToCliff::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.stuckOnEdgeBehavior.get());
+  delegates.insert(_iConfig.askForHelpBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -697,6 +732,7 @@ IActionRunner* BehaviorReactToCliff::GetCliffReactAction(uint8_t cliffDetectedFl
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToFaceAndBackAwayCliff()
 {
+  DEBUG_SET_STATE(FaceAndBackAwayCliff);
   auto action = new CompoundActionSequential();
 
   // Turn to face cliff

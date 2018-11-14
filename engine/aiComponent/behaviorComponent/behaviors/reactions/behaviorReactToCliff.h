@@ -53,6 +53,7 @@ protected:
 private:
   using base = ICozmoBehavior;
   
+  void TransitionToWaitForNoMotion();
   void TransitionToStuckOnEdge();
   void TransitionToPlayingCliffReaction();
   void TransitionToRecoveryBackup();
@@ -73,6 +74,7 @@ private:
     InstanceConfig(const Json::Value& config, const std::string& debugName);
     
     ICozmoBehaviorPtr stuckOnEdgeBehavior;
+    ICozmoBehaviorPtr askForHelpBehavior;
     
     float cliffBackupDist_mm;
     float cliffBackupSpeed_mmps;
@@ -97,6 +99,7 @@ private:
 
     struct Persistent {
       int numStops;
+      int numCliffReactAttempts;
       float lastStopTime_sec;
       bool  putDownOnCliff;
       float lastPutDownOnCliffTime_sec;
