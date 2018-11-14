@@ -84,6 +84,11 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
             c,
             "rightProx");
 
+  #ifndef SIMULATOR
+  rp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
+  lp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
+  #endif
+  
   // 
   const f32 kInnerAngle_rad = TOF_FOV_RAD / 8.f;
   const f32 kOuterAngle_rad = kInnerAngle_rad * 3.f;

@@ -16,6 +16,8 @@
 #include "whiskeyToF/vicos/vl53l1_tools/inc/stmvl53l1_if.h"
 #include "whiskeyToF/vicos/vl53l1_tools/inc/stmvl53l1_internal_if.h"
 
+#include "util/console/consoleInterface.h"
+#include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 
 #include <sys/ioctl.h>
@@ -50,6 +52,8 @@ std::mutex _mutex;
 bool _stopProcessing = false;
 
 RangeDataRaw _latestData;
+
+CONSOLE_VAR(bool, kStartToF, "ToF", false);
 }
 
 ToFSensor* ToFSensor::_instance = nullptr;
@@ -137,6 +141,17 @@ int distance_mode_set(const int dev, const int mode) {
 }
 
 
+int output_mode_set(const int dev, const int mode)
+{
+  struct stmvl53l1_parameter params;
+
+  params.is_read = 0;
+  params.name = VL53L1_OUTPUTMODE_PAR;
+  params.value = mode;
+
+  return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);  
+}
+
 /// Setup grid of ROIs for scanning
 int setup_roi_grid(const int dev, const int rows, const int cols) {
   struct stmvl53l1_roi_full_t ioctl_roi;
@@ -213,7 +228,7 @@ int setup(void) {
 
   // Setup timing budget
   PRINT_NAMED_ERROR("","set timing budget\n");
-  rc = timing_budget_set(fd, 16*1000);
+  rc = timing_budget_set(fd, 16*2000);
   return_if_not(rc == 0, -1, "ioctl error setting timing budged: %d", errno);
 
   // Set distance mode
@@ -221,6 +236,11 @@ int setup(void) {
   rc = distance_mode_set(fd, VL53L1_DISTANCEMODE_SHORT);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
+  // Set output mode
+  PRINT_NAMED_ERROR("","set output mode\n");
+  rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
+  return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
+  
   // Start the sensor
   PRINT_NAMED_ERROR("","start ranging\n");
   rc = start_ranging(fd);
@@ -249,20 +269,32 @@ RangeDataRaw ReadData()
       rc = get_mz_data(tof_fd, 1, &mz_data);
       if(rc == 0)
       {
-        rangeData.data[i*8 + j] = 2;
-        rangeData.data[i*8 + j + 4] = 2;
+        rangeData.data[i*8 + j] = 0;
+        rangeData.data[i*8 + j + 4] = 0;
 
         if(mz_data.NumberOfObjectsFound > 0)
         {
-          int16_t minDist = std::numeric_limits<int16_t>::max();
+          int16_t minDist = 2000;
           for(int r = 0; r < mz_data.NumberOfObjectsFound; r++)
           {
-            const int16_t dist = mz_data.RangeData[r].RangeMilliMeter;
-            PRINT_NAMED_WARNING("","I:%d R:%d D:%d", i*4 + j, r, dist);
-            if(dist < minDist)
+            if(mz_data.RangeData[r].RangeStatus == 0)
             {
-              minDist = dist;
+              const int16_t dist = mz_data.RangeData[r].RangeMilliMeter;
+              PRINT_NAMED_WARNING("","I:%d R:%d D:%d", i*4 + j, r, dist);
+              if(dist < minDist)
+              {
+                minDist = dist;
+              }
             }
+            else if(mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_OUTOFBOUNDS_FAIL ||
+                    mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID_MIN_RANGE_CLIPPED)
+            {
+              minDist = 1999;
+            }
+          }
+          if(minDist >= 2000)
+          {
+            minDist = 0;
           }
           rangeData.data[i*8 + j] = minDist / 1000.f;
           rangeData.data[i*8 + j + 4] = minDist / 1000.f;
@@ -275,6 +307,11 @@ RangeDataRaw ReadData()
 
 void ProcessLoop()
 {
+  while(!kStartToF)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+    
   tof_fd = setup();
   if(tof_fd < 0)
   {
