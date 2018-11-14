@@ -18,6 +18,7 @@ enum uint_8 AnimEvent {
   CUBE_LIGHT_TOGGLE,
   TTS_BEGIN,
   CHANGE_EYE_COLOR,
+  FLIP_DOWN_BEGIN,   // For OnBack and OnFace reactions, when the robot is about to flip back onto his treads
 
   Count
 }

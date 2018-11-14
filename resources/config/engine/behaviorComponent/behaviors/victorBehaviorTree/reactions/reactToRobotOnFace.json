@@ -4,12 +4,16 @@
   "associatedActiveFeature": "NoFeature",
 
   "wantsToBeActivatedCondition": {
-    "conditionType" : "BeingHeld",
-    "shouldBeHeld" : false
-  },
-
-  "wantsToCancelSelfCondition": {
-    "conditionType": "OffTreadsState",
-    "targetState": "OnTreads"
+    "conditionType" : "Compound",
+    "and" : [
+      {
+        "conditionType" : "BeingHeld",
+        "shouldBeHeld" : false
+      },
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "OnFace"
+      }
+    ]
   }
 }

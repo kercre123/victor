@@ -37,16 +37,28 @@ protected:
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
-  virtual void OnBehaviorEnteredActivatableScope() override;
-  virtual void OnBehaviorLeftActivatableScope() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
-
+  virtual void BehaviorUpdate() override;
+  virtual void HandleWhileActivated(const RobotToEngineEvent& event) override;
+  
 private:
 
-  IBEIConditionPtr _offTreadsCondition;
-  bool _exitIfHeld;
+  struct InstanceConfig {
+    bool exitIfHeld = false;
+  };
   
+  InstanceConfig _iConfig;
+  
+  struct DynamicVariables {
+    // If true, we cancel the behavior if we detect that the OffTreadsState is no longer OnBack. Note that we set this
+    // to false when the animation is about to flip the robot down, since at that point the OffTreadsState is expected
+    // to change.
+    bool cancelIfNotOnBack = true;
+  };
+  
+  DynamicVariables _dVars;
+
   void FlipDownIfNeeded();
   void DelayThenFlipDown();
   
