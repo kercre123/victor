@@ -84,6 +84,8 @@ class Robot:
     :param show_viewer: Render camera feed on/off.
     :param requires_behavior_control: Request control of Vector's behavior system."""
 
+    # TODO For both Robot and AsyncRobot, consider adding equivalent of use_3d_viewer param so OpenGLViewer starts automatically.
+
     def __init__(self,
                  serial: str = None,
                  ip: str = None,

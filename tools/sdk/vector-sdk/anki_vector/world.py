@@ -392,8 +392,6 @@ class World(util.Component):
             self._custom_object_archetypes.clear()
             req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_ARCHETYPES"))
             last_blocking_call = await self.grpc_interface.DeleteCustomObjects(req)
-
-            # Without their referenced archetypes removed, custom marker objects become nonsensical
             delete_custom_marker_objects = True
 
         if delete_custom_marker_objects:
@@ -448,7 +446,7 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_box(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
                                               marker_front=  anki_vector.objects.CustomObjectMarkers.Circles2,
                                               marker_back=   anki_vector.objects.CustomObjectMarkers.Circles3,
@@ -457,7 +455,7 @@ class World(util.Component):
                                               marker_left=   anki_vector.objects.CustomObjectMarkers.Triangles2,
                                               marker_right=  anki_vector.objects.CustomObjectMarkers.Triangles3,
                                               depth_mm=20.0, width_mm=20.0, height_mm=20.0,
-                                              marker_width_mm=10.0, marker_height_mm=10.0)
+                                              marker_width_mm=50.0, marker_height_mm=50.0)
 
         Returns:
             CustomObject instance with the specified dimensions.
@@ -532,11 +530,11 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_cube(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
                                                marker=anki_vector.objects.CustomObjectMarkers.Circles2,
                                                size_mm=20.0,
-                                               marker_width_mm=10.0, marker_height_mm=10.0)
+                                               marker_width_mm=50.0, marker_height_mm=50.0)
 
         Returns:
             CustomObject instance with the specified dimensions.
@@ -603,11 +601,11 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_wall(custom_object_type=anki_vector.objects.CustomObjectTypes.CustomType00,
                                                marker=anki_vector.objects.CustomObjectMarkers.Circles2,
                                                width_mm=20.0, height_mm=20.0,
-                                               marker_width_mm=10.0, marker_height_mm=10.0)
+                                               marker_width_mm=50.0, marker_height_mm=50.0)
 
         Returns:
             CustomObject instance with the specified dimensions.
