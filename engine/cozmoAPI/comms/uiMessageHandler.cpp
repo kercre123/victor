@@ -127,7 +127,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
 #if FACTORY_TEST
       if(type != UiConnectionType::Switchboard)
       {
-        #warning Allowing all UiConnectionTypes
+        #pragma message "Allowing all UiConnectionTypes"
         //return nullptr;
       }
 #endif
