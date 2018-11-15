@@ -471,6 +471,7 @@ Event,,Play__Robot_Vic_Sfx__Power_Off_End,1545176977,Robot_Vic_Sfx,Power_Off_End
 Event,,Play__Robot_Vic_Sfx__Power_On,2179926555,Robot_Vic_Sfx,Power_On,
 Event,,Play__Robot_Vic_Sfx__Purr_Increase_Level,2071056089,Robot_Vic_Sfx,Purr_Increase_Level,
 Event,,Play__Robot_Vic_Sfx__Purr_Loop_Play,3953422061,Robot_Vic_Sfx,Purr_Loop_Play,
+Event,,Play__Robot_Vic_Sfx__Purr_Single,41581170,Robot_Vic_Sfx,Purr_Single,
 Event,,Play__Robot_Vic_Sfx__Scan_Face_Fail,152409978,Robot_Vic_Sfx,Scan_Face_Fail,
 Event,,Play__Robot_Vic_Sfx__Scan_Face_Loop_Play,3711429789,Robot_Vic_Sfx,Scan_Face_Loop_Play,
 Event,,Play__Robot_Vic_Sfx__Scan_Face_Success,1554373331,Robot_Vic_Sfx,Scan_Face_Success,
