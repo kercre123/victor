@@ -92,6 +92,7 @@ public:
 
   bool IsMakingEyeContact() const {return _isMakingEyeContact;}
   Point2f GetGazeAverage() const {return _gazeAverage;}
+  int GetNumberOfInliers() const {return _numberOfInliers;}
   bool GetExpired(const TimeStamp_t currentTime) const;
   std::vector<GazeData> const& GetGazeHistory() {return _gazeHistory;}
 

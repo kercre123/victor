@@ -23,6 +23,7 @@
 #include "coretech/common/shared/radians.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -1177,6 +1178,28 @@ namespace Vector {
           return true;
         } else {
           PRINT_NAMED_WARNING("FaceWorld.GetFaceFocusPose.FaceIsNotFocused", "");
+        }
+      }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
+                                  const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const
+  {
+    for (const auto& entry: _faceEntries)
+    {
+      const auto& headPose = entry.second.face.GetHeadPose();
+      Pose3d headPoseWRTRobot;
+      if (headPose.GetWithRespectTo(robotPose, headPoseWRTRobot))
+      {
+        const Radians& horizontalFOV = _robot->GetVisionComponent().GetCamera().GetCalibration()->ComputeHorizontalFOV();
+        const Radians faceTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(headPoseWRTRobot.GetTranslation());
+        if ( (turnAngle - faceTurnAngle) <= (horizontalFOV/2.f) )
+        {
+          faceIDToTurnTowards.Reset(*_robot, entry.second.face.GetID());
+          return true;
         }
       }
     }

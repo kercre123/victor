@@ -54,6 +54,8 @@ namespace {
   CONSOLE_VAR(f32,  kSearchForFaceThirdAngle_deg,            "Vision.FaceNormalDirectedAtRobot3d",  135.f);
   CONSOLE_VAR(s32,  kSearchForFaceNumberOfImagesToWait,      "Vision.FaceNormalDirectedAtRobot3d",  5);
   CONSOLE_VAR(bool, kFindSurfacePointsUsingFaceDirection,    "Vision.FaceNormalDirectedAtRobot3d",  false);
+  CONSOLE_VAR(bool, kFindFacesUsingFaceDirection,            "Vision.FaceNormalDirectedAtRobot3d",  true);
+  CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.FaceNormalDirectedAtRobot3d",  true);
 }
 
 #define LOG_CHANNEL "Behaviors"
@@ -130,7 +132,7 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
   Pose3d faceFocusPose;
   // SmartFaceID faceID;
   if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose, _faceIDToTurnBackTo)) {
-    auto robotPose = GetBEI().GetRobotInfo().GetPose();
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d faceFocusPoseWRTRobot;
 
     if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
@@ -139,7 +141,8 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
                "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
       auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(500);
 
-      if (translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2) {
+
+      if (translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2 && kFindFacesUsingFaceDirection) {
         LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GazeFarEnoughToLookUp", "");
         LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.DistanceFromRobot",
                  "distance: %.3f", translation.LengthSq());
@@ -176,23 +179,83 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
         LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.TurnAngle",
                  "angle: %.3f", RAD_TO_DEG(turnAngle.ToFloat()));
 
-        CompoundActionSequential* turnAction = new CompoundActionSequential();
-        turnAction->AddAction(new TurnInPlaceAction(turnAngle.ToFloat(), false));
-        turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
-        // TODO is this how we set it to find a new face? seems like the face it would try to find
-        // is the last face it saw ... how is that not the face it was looking at last ... maybe
-        // we need to add a wait
-        // There is a wait in TurnTowardsFaceAction and i can change the max frames to wait
-        TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(SmartFaceID(), M_PI_2);
-        turnTowardsFace->SetRequireFaceConfirmation(true);
-        turnAction->AddAction(turnTowardsFace);
-        DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::FoundNewFace);
+        SmartFaceID faceToTurnTowards;
+        if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _faceIDToTurnBackTo, robotPose, faceToTurnTowards)
+            && kUseExistingFacesWhenSearchingForFaces) {
+          if (turnAngle > 0) {
+            CompoundActionSequential* turnAction = new CompoundActionSequential();
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInLeft));
 
-      } else {
+            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(faceToTurnTowards, M_PI_2);
+            turnTowardsFace->SetRequireFaceConfirmation(true);
+            CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+              turnTowardsFace,
+              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnLeft}
+            });
+            turnAction->AddAction(turnAndAnimate);
 
-        if (!kFindSurfacePointsUsingFaceDirection) {
-          return;
+            DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::FoundNewFace);
+
+          } else {
+            CompoundActionSequential* turnAction = new CompoundActionSequential();
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInRight));
+
+            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(faceToTurnTowards, M_PI_2);
+            turnTowardsFace->SetRequireFaceConfirmation(true);
+            CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+              turnTowardsFace,
+              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnRight}
+            });
+            turnAction->AddAction(turnAndAnimate);
+
+            DelegateIfInControl(turnTowardsFace, &BehaviorReactToFaceNormal::FoundNewFace);
+
+          }
+
+        } else {
+
+          if (turnAngle > 0) {
+            CompoundActionSequential* turnAction = new CompoundActionSequential();
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInLeft));
+
+            CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+              new TurnInPlaceAction(turnAngle.ToFloat(), false),
+              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnLeft}
+            });
+            turnAction->AddAction(turnAndAnimate);
+            turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
+            // TODO is this how we set it to find a new face? seems like the face it would try to find
+            // is the last face it saw ... how is that not the face it was looking at last ... maybe
+            // we need to add a wait
+            // There is a wait in TurnTowardsFaceAction and i can change the max frames to wait
+            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(SmartFaceID(), M_PI_2);
+            turnTowardsFace->SetRequireFaceConfirmation(true);
+            turnAction->AddAction(turnTowardsFace);
+            DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::FoundNewFace);
+
+          } else {
+            CompoundActionSequential* turnAction = new CompoundActionSequential();
+            turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInRight));
+
+            CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
+              new TurnInPlaceAction(turnAngle.ToFloat(), false),
+              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnRight}
+            });
+            turnAction->AddAction(turnAndAnimate);
+            turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
+            // TODO is this how we set it to find a new face? seems like the face it would try to find
+            // is the last face it saw ... how is that not the face it was looking at last ... maybe
+            // we need to add a wait
+            // There is a wait in TurnTowardsFaceAction and i can change the max frames to wait
+            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(SmartFaceID(), M_PI_2);
+            turnTowardsFace->SetRequireFaceConfirmation(true);
+            turnAction->AddAction(turnTowardsFace);
+            DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::FoundNewFace);
+
+          }
         }
+
+      } else if (kFindSurfacePointsUsingFaceDirection) {
 
         if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres) && FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres) ) &&
              (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres) && FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres)) )

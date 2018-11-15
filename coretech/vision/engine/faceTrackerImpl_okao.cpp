@@ -691,8 +691,11 @@ namespace Vision {
     return RESULT_OK;
   }
 
-  bool FaceTracker::Impl::DetectEyeContact(const TrackedFace& face,
-                                           const TimeStamp_t& timeStamp)
+  void FaceTracker::Impl::DetectEyeContact(const TrackedFace& face,
+                                           const TimeStamp_t& timeStamp,
+                                           bool& isMakingEyeContact,
+                                           Point2f& eyeGazeAverage,
+                                           s32& numberOfEyeGazeInliers)
   {
     DEV_ASSERT(face.IsTranslationSet(), "FaceTrackerImpl.DetectEyeContact.FaceTranslationNotSet");
     auto& entry = _facesEyeContact[face.GetID()];
@@ -700,6 +703,9 @@ namespace Vision {
 
     // Check if the face is stale
     bool eyeContact = false;
+    s32 inliers = 0;
+    // TODO need to read this values from somewhere else
+    Point2f gazeAverage(-30.f, -20.f);
     if (entry.GetExpired(timeStamp))
     {
       _facesEyeContact.erase(face.GetID());
@@ -707,8 +713,10 @@ namespace Vision {
     else
     {
       eyeContact = entry.IsMakingEyeContact();
+      inliers = entry.GetNumberOfInliers();
+      gazeAverage = entry.GetGazeAverage();
     }
-    return eyeContact;
+    isMakingEyeContact = eyeContact;
   }
 
   void FaceTracker::Impl::FaceDirection(TrackedFace& face,
@@ -779,6 +787,10 @@ namespace Vision {
     // We don't know anything about orientation without parts, so don't update it and assume
     // _not_ facing the camera (without actual evidence that we are)
     face.SetIsFacingCamera(false);
+
+    // Same as set pose with parts not sure if this is where this should live
+    // but it is going to live here for now
+    face.SetFacePartsFound(false);
 
     return RESULT_OK;
   }
@@ -1024,6 +1036,10 @@ namespace Vision {
       }, TrackedFace::FeatureName::UpperLip, face);
     }
 
+    // Not sure the best place to put this but it's going to live here for
+    // now.
+    face.SetFacePartsFound(true);
+
     return RESULT_OK;
   }
 
@@ -1194,6 +1210,9 @@ namespace Vision {
 
       face.SetIsBeingTracked(detectionInfo.nDetectionMethod != DET_METHOD_DETECTED_HIGH);
 
+      // Set the detection pose
+      face.SetDetectionPoseInfo(detectionInfo.nPose);
+
       POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
       okaoResult = OKAO_CO_ConvertCenterToSquare(detectionInfo.ptCenter,
                                                  detectionInfo.nHeight,
@@ -1285,7 +1304,14 @@ namespace Vision {
           // This needs to happen after setting the pose.
           // There is a assert in there that should catch if the pose is uninitialized but
           // won't catch on going cases of the dependence.
-          face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
+          // TODO make be worth putting these in their own structure ... maybe
+          bool isMakingEyeContact = false;
+          Point2f eyeGazeAverage(-30.f, -20.f);
+          s32 numberOfEyeGazeInliers = 0;
+          DetectEyeContact(face, frameOrig.GetTimestamp(), isMakingEyeContact, eyeGazeAverage, numberOfEyeGazeInliers);
+          face.SetEyeContact(isMakingEyeContact);
+          face.SetEyeGazeAverage(eyeGazeAverage);
+          face.SetNumberOfEyeGazeInliers(numberOfEyeGazeInliers);
         }
 
         // TODO this shoudl be wrapped in a conditional ... maybe? who knows

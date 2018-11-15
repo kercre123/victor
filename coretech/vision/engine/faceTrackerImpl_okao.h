@@ -130,8 +130,11 @@ namespace Vision {
     Result DetectGazeAndBlink(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                               Vision::TrackedFace& face);
 
-    bool DetectEyeContact(const TrackedFace& face,
-                          const TimeStamp_t& frameOrig);
+    void DetectEyeContact(const TrackedFace& face,
+                          const TimeStamp_t& frameOrig,
+                          bool& isMakingEyeContact,
+                          Point2f& eyeGazeAverage,
+                          s32& numberOfEyeGazeInliers);
   
     void FaceDirection(TrackedFace& face, const TimeStamp_t& frameOrig);
     void FaceDirection3d(const TrackedFace& face, const TimeStamp_t& frameOrig);
