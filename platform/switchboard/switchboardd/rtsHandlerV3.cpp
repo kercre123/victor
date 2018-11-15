@@ -11,7 +11,6 @@
  **/
 
 #include "exec_command.h"
-#include "anki-wifi/fileutils.h"
 #include "util/fileUtils/fileUtils.h"
 #include "switchboardd/rtsHandlerV3.h"
 #include <sstream>
@@ -568,11 +567,10 @@ void RtsHandlerV3::HandleRtsLogRequest(const Vector::ExternalComms::RtsConnectio
 
   int exitCode = ExecCommand({"sudo", "/anki/bin/diagnostics-logger"});
 
-  std::vector<uint8_t> logBytes;
+  std::vector<uint8_t> logBytes
+    = Anki::Util::FileUtils::ReadFileAsBinary("/data/diagnostics/logs.tar.bz2");
 
-  bool readSuccess = ReadFileIntoVector("/data/diagnostics/logs.tar.bz2", logBytes);
-
-  if(!readSuccess) {
+  if (logBytes.empty()) {
     exitCode = -1;
   }
 
