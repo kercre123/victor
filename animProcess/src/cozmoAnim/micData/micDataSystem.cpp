@@ -728,7 +728,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       const Alexa* alexa = _context->GetAlexa();
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
       if( (alexa != nullptr) && showStreamState->HasAnyAlexaResponse() ) {
-        alexa->NotifyOfWakeWord( info.startTime_ms, info.endTime_ms );
+        alexa->NotifyOfWakeWord( info.startSampleIndex, info.endSampleIndex );
       }
     };
     _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);

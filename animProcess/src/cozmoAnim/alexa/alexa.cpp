@@ -622,14 +622,14 @@ void Alexa::NotifyOfTapToTalk() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfWakeWord( long from_ms, long to_ms ) const
+void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) const
 {
   std::lock_guard<std::mutex> lg{ _implMutex };
   if( ANKI_VERIFY( _impl != nullptr,
                    "Alexa.NotifyOfWakeWord.Disabled",
                    "Wake word was issued when alexa was disabled" ) )
   {
-    _impl->NotifyOfWakeWord( from_ms, to_ms );
+    _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
   }
 }
   

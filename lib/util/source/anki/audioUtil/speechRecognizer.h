@@ -36,6 +36,10 @@ public:
     const char* result;
     int startTime_ms;
     int endTime_ms;
+
+    size_t startSampleIndex;
+    size_t endSampleIndex;
+
     float score;
     
     const std::string Description() const;

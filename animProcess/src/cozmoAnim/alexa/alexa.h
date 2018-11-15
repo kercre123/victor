@@ -54,7 +54,7 @@ public:
   
   void NotifyOfTapToTalk() const;
   
-  void NotifyOfWakeWord( long from_ms, long to_ms ) const;
+  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) const;
   
   void SetOnCharger(bool onCharger) { _onCharger = onCharger; }
 

@@ -277,13 +277,17 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   // Update recognizer
   if (vadActive) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
-    if (_alexaTrigger) {
-      _alexaTrigger->recognizer->Update(audioData, audioDataLen);
-    }
   }
-  // Send all audio to Alexa
-  if (_alexaComponent != nullptr) {
+
+  if (_alexaComponent != nullptr && _alexaTrigger != nullptr) {
+    // Update both the alexa SDK and the trigger word at the same time with the same data. This is critical so
+    // that their internal sample counters line up
     _alexaComponent->AddMicrophoneSamples(audioData, audioDataLen);
+    _alexaTrigger->recognizer->Update(audioData, audioDataLen);
+
+    // NOTE: for the listed reason above, I'm not running the VAD in front of the alexa trigger. If we want to
+    // turn that back on, it should be possible, we'd just need to count how many samples were skipped so we
+    // could reconcile the sample counters
   }
 }
 

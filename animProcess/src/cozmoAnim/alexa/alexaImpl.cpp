@@ -90,8 +90,6 @@ namespace {
   static const std::chrono::seconds kBufferDuration_s = std::chrono::seconds(15);
   // The size of the ring buffer.
   static const size_t kBufferSize = (kSampleRate_Hz)*kBufferDuration_s.count();
-  // Conversion factor from milliseconds to samples
-  static const unsigned int kMillisToSamples = kSampleRate_Hz / 1000;
   
   const std::string kDirectivesFile = "directives.txt";
   const std::string kAlexaFolder = "alexa";
@@ -821,7 +819,7 @@ void AlexaImpl::NotifyOfTapToTalk()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
+void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
@@ -836,68 +834,10 @@ void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
     
     return;
   }
-  
-    
-  avsCommon::avs::AudioInputStream::Index fromIndex;
-  avsCommon::avs::AudioInputStream::Index toIndex;
-
-  // add this many samples to either side of the window as padding
-  const int kWindowHalfBuffer = 100;
-  
-  if ( from_ms < 0 ) {
-    fromIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
-  } else {
-    fromIndex = from_ms; // first move into larger type
-    fromIndex = kMillisToSamples*fromIndex; // milliseconds to samples @ 16k audio
-    // LOG_INFO("AlexaImpl.NotifyOfWakeWord.fromIndex",
-    //          "from_ms = %zu, fromIndex = %zu",
-    //          (size_t)from_ms,
-    //          (size_t)fromIndex);
-    if( fromIndex > kWindowHalfBuffer ) {
-      fromIndex -= kWindowHalfBuffer;
-    }
-  }
-  
-  const size_t totalNumSamples = _microphone->GetTotalNumSamples();
-  
-  if ( to_ms < 0 ) {
-    toIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
-  } else {
-    toIndex = to_ms;
-    toIndex = kMillisToSamples*toIndex + kWindowHalfBuffer;
-    // LOG_INFO("AlexaImpl.NotifyOfWakeWord.toIndex",
-    //          "to_ms=%zu, toIndex=%zu, totalSamples=%zu",
-    //          (size_t)to_ms,
-    //          (size_t)toIndex,
-    //          (size_t)totalNumSamples);
-    if( toIndex > totalNumSamples ) {
-      toIndex = totalNumSamples;
-    }
-  }
-  
-  // NOTE: this only works if our extra VAD is off, since otherwise the mic samples wont match the sample indices provided by sensory.
-  // To get around this, we simply take the size (in # samples) of the window and
-  // back up from the most recent sample by that amount. It seems to work...
-  if ( from_ms >= 0 && to_ms >= 0 ) {
-
-    avsCommon::avs::AudioInputStream::Index dIndex = toIndex - fromIndex;
-    toIndex = totalNumSamples;
-    fromIndex = toIndex - dIndex;
-    LOG_INFO("AlexaImpl.NotifyOfWakeWord.AdjustIndex",
-             "fromIndex = %llu, toIndex = %llu (dIndex %llu)",
-             fromIndex,
-             toIndex,
-             dIndex);
-
-  }
 
 #if ANKI_DEV_CHEATS
   if( _debugMicrophone ) {
-    ANKI_VERIFY(totalNumSamples == _debugMicrophone->GetTotalNumSamples(),
-                "AlexaImpl.NotifyOfWakeWord.DebugMicrophoneError",
-                "real mic has %zu samples, but debug mic has %zu",
-                totalNumSamples,
-                _debugMicrophone->GetTotalNumSamples());
+    const size_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
 
     static int sAudioDumpIdx = 0;
     const std::string filename = _alexaCacheFolder + "audioInput_" + std::to_string(sAudioDumpIdx++) + ".pcm";
@@ -927,8 +867,8 @@ void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
       fileOut.close();
 
       // "absolute" index is total bytes ever, not the current size of the ring buffer
-      const size_t debugEndIdx =  totalNumRead - (totalNumSamples - (size_t)toIndex);
-      const size_t debugStartIdx =  debugEndIdx - ((size_t)toIndex - (size_t)fromIndex);
+      const size_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
+      const size_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
       LOG_INFO("AlexaImpl.WroteAudioInput",
                "Wrote mic data to file '%s'. Trigger range %zu to %zu",
                filename.c_str(),

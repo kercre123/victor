@@ -64,6 +64,10 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   std::map<IndexType, RecogDataSP>  _thfAllRecogs;
   mutable std::recursive_mutex      _recogMutex;
   const recog_t*                    _lastUsedRecognizer = nullptr;
+
+  size_t _sampleRate_kHz;
+  size_t _sampleIndex = 0;
+  size_t _lastResetSampleIndex = 0;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
 };
@@ -231,6 +235,16 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
     cleanupAfterFailure("ERROR thfRecogInit");
     return false;
   }
+
+  // extract sample rate (so it matches file)
+  size_t sampleRate_hz = thfRecogGetSampleRate(_impl->_thfSession, createdRecognizer);
+  if( ! ANKI_VERIFY(sampleRate_hz != 0,
+                    "SpeechRecognizerTHF.Init.NoSampleRate",
+                    "Could not get sample rate from model") ) {
+    // set it to a valid value to avoid divide by 0
+    sampleRate_hz = 16000;
+  }
+  _impl->_sampleRate_kHz = sampleRate_hz / 1000;
   
   if (allowsFollowupRecog)
   {
@@ -305,15 +319,25 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   {
     return;
   }
+
+  // track the total number of samples processed
+  // NOTE: on a 32 bit system with 16Khz audio this could overflow in 3 days....
+  _impl->_sampleIndex += audioDataLen;
   
   // If the recognizer has changed since last update, we need to potentially reset and store it again
   auto* const currentRecognizer = currentRecogSP->GetRecognizer();
   if (currentRecognizer != _impl->_lastUsedRecognizer)
   {
     // If we actually had a last recognizer set, then we need to reset
-    if (_impl->_lastUsedRecognizer && !thfRecogReset(_impl->_thfSession, currentRecognizer))
-    {
-      PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
+    if (_impl->_lastUsedRecognizer) {
+      if(thfRecogReset(_impl->_thfSession, currentRecognizer))
+      {
+        _impl->_lastResetSampleIndex = _impl->_sampleIndex;
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
+      }
     }
     
     _impl->_lastUsedRecognizer = currentRecognizer;
@@ -365,6 +389,10 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
         if( split.size() >= 2 ) {
           info.startTime_ms = std::atoi(split[0].c_str());
           info.endTime_ms = std::atoi(split[1].c_str()); // hope these are ints
+
+          // convert to sample counts
+          info.startSampleIndex = ( info.startTime_ms * _impl->_sampleRate_kHz ) + _impl->_lastResetSampleIndex;
+          info.endSampleIndex   = ( info.endTime_ms   * _impl->_sampleRate_kHz ) + _impl->_lastResetSampleIndex;
         }
       }
       
@@ -398,7 +426,11 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       }
     }
     
-    if (!thfRecogReset(_impl->_thfSession, currentRecognizer))
+    if (thfRecogReset(_impl->_thfSession, currentRecognizer))
+    {
+      _impl->_lastResetSampleIndex = _impl->_sampleIndex;
+    }
+    else
     {
       PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
     }
