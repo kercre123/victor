@@ -35,7 +35,7 @@
                     "sha256": "73dbe001ab6f76696553fcc92b7c1559eb19733337c2a3a7796d891a52c81a06"
                 },
                 "extension": "tar.gz",
-                "package_name": "speexdp-1.2rc3",
+                "package_name": "speexdsp-1.2rc3",
                 "version": "1"
             }
         },
