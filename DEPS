@@ -27,8 +27,7 @@
                 "extension": "tar.gz",
                 "package_name": "tensorflow",
                 "version": "28"
-            }
-        },
+            },
             "speexdsp": {
                 "build_type_id": "anki",
                 "checksums": {
