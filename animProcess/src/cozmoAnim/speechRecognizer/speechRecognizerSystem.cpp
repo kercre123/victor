@@ -319,6 +319,22 @@ void SpeechRecognizerSystem::DisableAlexa()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::DisableAlexaTemporarily()
+{
+  if (_alexaTrigger) {
+    _alexaTrigger->recognizer->Stop();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::ReEnableAlexa()
+{
+  if (_alexaTrigger) {
+    _alexaTrigger->recognizer->Start();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpeechRecognizerTHF* SpeechRecognizerSystem::GetAlexaPlaybackRecognizer() {
   if (_alexaPlaybackTrigger) {
     return _alexaPlaybackTrigger->recognizer.get();

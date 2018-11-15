@@ -221,13 +221,13 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
     }
 #endif
   }
-  
+
   if (_type == AlexaMediaPlayer::Type::TTS) {
     auto* dataPlatform = context->GetDataLoader();
-    auto* speechRegSys = context->GetMicDataSystem()->GetSpeechRecognizerSystem();
+    _speechRegSys = context->GetMicDataSystem()->GetSpeechRecognizerSystem();
     // Setup Callback when stream starts, want it to happen on the same thread
-    speechRegSys->InitAlexaPlayback(*dataPlatform, nullptr);
-    _recognizer = speechRegSys->GetAlexaPlaybackRecognizer();
+    _speechRegSys->InitAlexaPlayback(*dataPlatform, nullptr);
+    _recognizer = _speechRegSys->GetAlexaPlaybackRecognizer();
   }
 
 }
@@ -355,6 +355,10 @@ bool AlexaMediaPlayer::play( SourceId id )
     _offset_ms = 0;
     _firstPass = true;
     _mp3Buffer->Reset();
+    _detectedTriggers_ms = decltype(_detectedTriggers_ms){};
+    if (_recognizer != nullptr) {
+      _recognizer->Reset();
+    }
 
     // new waveData instance to hold data passed to wwise
     _waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
@@ -374,7 +378,29 @@ bool AlexaMediaPlayer::play( SourceId id )
     int numBlocks = 0;
     const int kMaxBlocks = 10000; // number of times we can try to check a blocking reader before giving up
 
+    float lastPlayedMs = 0;
+    auto getPlayed = [this] {
+      return _waveData->GetSampleRate() > 0 ?
+        1000 * (float)_waveData->GetNumberOfFramesPlayed() / _waveData->GetSampleRate()
+      : 0;
+    };
+
     while( (_state == State::Preparing) || (_state == State::Playing) || (_state == State::Playable) ) {
+
+      auto playedMs = getPlayed();
+      if (!_detectedTriggers_ms.empty()) {
+        const auto& firstTrigger = _detectedTriggers_ms.front();
+        if (lastPlayedMs < firstTrigger.first && playedMs >= firstTrigger.first) {
+          LOG("Disabling wake word @ %d ms", (int)playedMs);
+          _speechRegSys->DisableAlexaTemporarily();
+        }
+        else if (lastPlayedMs < firstTrigger.second && playedMs >= firstTrigger.second) {
+          LOG("Re-enabling wake word @ %d ms", (int)playedMs);
+          _detectedTriggers_ms.pop();
+          _speechRegSys->ReEnableAlexa();
+        }
+      }
+      lastPlayedMs = playedMs;
 
       if( !sentPlaybackStarted ) {
         for( auto& observer : _observers ) {
@@ -437,8 +463,8 @@ bool AlexaMediaPlayer::play( SourceId id )
       // 2. When _detectedTriggers_ms.front() time is near tell micDataSystem to suppress Alexa trigger
       // 3. If trigger is recongnize stop suppressing trigger
       // 4. Otherwise need a cool down period for Alexa trigger so it will still work for "Bardge In"
-      
-      
+
+
       if( flush ) {
         _waveData->DoneProducingData();
         break;
@@ -456,6 +482,32 @@ bool AlexaMediaPlayer::play( SourceId id )
     _readers[id]->Close();
     _readers[id].reset();
 
+    while (!_detectedTriggers_ms.empty()) {
+      if (_state == State::Idle) {
+        break;
+      }
+
+      auto playedMs = getPlayed();
+      if (!_detectedTriggers_ms.empty()) {
+        const auto& firstTrigger = _detectedTriggers_ms.front();
+        if (lastPlayedMs < firstTrigger.first && playedMs >= firstTrigger.first) {
+          LOG("Disabling wake word @ %d ms", (int)playedMs);
+          _speechRegSys->DisableAlexaTemporarily();
+        }
+        else if (lastPlayedMs < firstTrigger.second && playedMs >= firstTrigger.second) {
+          LOG("Re-enabling wake word @ %d ms", (int)playedMs);
+          _detectedTriggers_ms.pop();
+          _speechRegSys->ReEnableAlexa();
+        }
+      }
+      lastPlayedMs = playedMs;
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    // don't let wake word stay disabled if something weird happened
+    if (_speechRegSys != nullptr) {
+      _speechRegSys->ReEnableAlexa();
+    }
   });
 
   return true;
@@ -626,21 +678,16 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
                                                16000, // out rate, int
                                                10, // quality 0-10
                                                &error);
-            
+
             PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
-            
+
             // Set callback for this thread
-            SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this, &decoded_ms] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-              std::lock_guard<std::mutex> lock(_detectedTriggerMutex);
-              _detectedTriggers_ms.push(decoded_ms);
-              LOG_WARNING("AlexaMediaPlayer.Decode.Recognizer.Callback", "decode ms %f \n info = %s",
-                          decoded_ms, info.Description().c_str());
+            SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+              _detectedTriggers_ms.push({_offset_ms + info.startTime_ms, _offset_ms + info.endTime_ms});
+              LOG_WARNING("AlexaMediaPlayer.Decode.Recognizer.Callback", "offset, start, end %d %d %d",
+                (int)_offset_ms, info.startTime_ms, info.endTime_ms);
             };
             _recognizer->SetCallback(callback);
-            std::lock_guard<std::mutex> lock(_detectedTriggerMutex);
-            while ( !_detectedTriggers_ms.empty() ) {
-              _detectedTriggers_ms.pop();
-            }
           }
         }
 
@@ -670,12 +717,12 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
         // seems to clip for me when in float
         StandardWaveDataContainer waveContainer(info.hz, info.channels, samples);
         waveContainer.CopyWaveData( pcm, samples );
-        
+
         data->AppendStandardWaveData( std::move(waveContainer) );
-        
+
         // HACK
         if ( _speexState != nullptr ) {
-          
+
           // Resample
 //          ANKI_CPU_PROFILE("ResampleAudioChunk");
           static const int kResampleMaxSize = 2000;
@@ -688,19 +735,17 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
           ANKI_VERIFY(numSamplesProcessed == samples,
                       "MicDataProcessor.ResampleAudioChunk.SamplesProcessed",
                       "Expected %d processed only processed %d", samples, numSamplesProcessed);
-        
+
 //          ANKI_VERIFY(numSamplesProcessed == kResampleMaxSize,
 //                      "MicDataProcessor.ResampleAudioChunk.SamplesWritten",
 //                      "Expected %d written only wrote %d", kResampleMaxSize, numSamplesWritten);
-          
+
           if( numSamplesWritten > 0 ) {
-            
             _recognizer->Update(resampledPcm, numSamplesWritten);
-            
             SavePCM( resampledPcm, numSamplesWritten );
           }
         }
-        
+
         const auto numFrames = data->GetNumberOfFramesReceived();
         if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {
           SetState(State::Playable);

@@ -89,6 +89,7 @@ struct AudioInfo;
 namespace Audio {
   class CozmoAudioController;
 }
+class SpeechRecognizerSystem;
 class SpeechRecognizerTHF;
 
 
@@ -203,12 +204,12 @@ private:
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
 
   const AudioInfo& _audioInfo;
-  
+
   // TEMP
   SpeechRecognizerTHF*  _recognizer = nullptr;
   SpeexResamplerState*  _speexState = nullptr;
-  std::queue<float>     _detectedTriggers_ms;
-  std::mutex            _detectedTriggerMutex;
+  SpeechRecognizerSystem* _speechRegSys = nullptr;
+  std::queue<std::pair<int, int>> _detectedTriggers_ms;
 };
 
 } // namespace Vector

@@ -74,6 +74,11 @@ public:
   // Disable Alexa trigger
   void DisableAlexa();
   
+  // Disable Alexa trigger TEMPORARILY (re-enable with ReEnableAlexa)
+  void DisableAlexaTemporarily();
+  // Re-enable Alexa trigger following call to DisableAlexaTemporarily
+  void ReEnableAlexa();
+
   // Update recognizer audio
   // NOTE: Always call from tne same thread
   void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen, bool vadActive);

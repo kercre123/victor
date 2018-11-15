@@ -64,6 +64,8 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   std::map<IndexType, RecogDataSP>  _thfAllRecogs;
   mutable std::recursive_mutex      _recogMutex;
   const recog_t*                    _lastUsedRecognizer = nullptr;
+  bool                              _disabled = false;
+  bool                              _reset = false;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
 };
@@ -294,6 +296,11 @@ bool SpeechRecognizerTHF::RecogStatusIsEndCondition(uint16_t status)
 
 void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen)
 {
+  if (_impl->_disabled)
+  {
+    return;
+  }
+
   // Intentionally make a local copy of the shared ptr with the current recog data
   RecogDataSP currentRecogSP;
   {
@@ -308,16 +315,17 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   
   // If the recognizer has changed since last update, we need to potentially reset and store it again
   auto* const currentRecognizer = currentRecogSP->GetRecognizer();
-  if (currentRecognizer != _impl->_lastUsedRecognizer)
+  if (_impl->_reset || currentRecognizer != _impl->_lastUsedRecognizer)
   {
-    // If we actually had a last recognizer set, then we need to reset
-    if (_impl->_lastUsedRecognizer && !thfRecogReset(_impl->_thfSession, currentRecognizer))
+    // If we actually had a last recognizer set, or a reset was requested, then we need to reset
+    if ((_impl->_reset || _impl->_lastUsedRecognizer) && !thfRecogReset(_impl->_thfSession, currentRecognizer))
     {
       PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
     }
     
     _impl->_lastUsedRecognizer = currentRecognizer;
   }
+  _impl->_reset = false;
   
   auto recogPipeMode = currentRecogSP->IsPhraseSpotted() ? RECOG_ONLY : SDET_RECOG;
   unsigned short status = RECOG_SILENCE;
@@ -370,6 +378,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       
       DoCallback(info);
       PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer -  %s", info.Description().c_str());
+      PRINT_NAMED_WARNING("AlexaTrigger", "_disabled is: %d", (int)_impl->_disabled);
     }
     
     // If the current recognizer allows a followup recognizer to immediately take over
@@ -407,5 +416,22 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   }
 }
   
+void SpeechRecognizerTHF::StartInternal()
+{
+  PRINT_NAMED_WARNING("AlexaBlah", "enabling");
+  _impl->_disabled = false;
+}
+
+void SpeechRecognizerTHF::StopInternal()
+{
+  PRINT_NAMED_WARNING("AlexaBlah", "disabling");
+  _impl->_disabled = true;
+}
+
+void SpeechRecognizerTHF::Reset()
+{
+  _impl->_reset = true;
+}
+
 } // end namespace Vector
 } // end namespace Anki
