@@ -638,7 +638,7 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
                      std::string(" M:") + std::to_string(*valueIter++) +
                      std::string(" H:") + std::to_string(*valueIter++),
                      NamedColors::RED, 0.45f);
-    _currentResult.debugImageRGBs.emplace_back("ImageHist", histImg);
+    _currentResult.debugImages.emplace_back("ImageHist", histImg);
     
   } // if(DEBUG_IMAGE_HISTOGRAM)
   
@@ -849,7 +849,7 @@ Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
   Result result = RESULT_OK;
   
   _motionDetector->Detect(imageCache, _poseData, _prevPoseData,
-                          _currentResult.observedMotions, _currentResult.debugImageRGBs);
+                          _currentResult.observedMotions, _currentResult.debugImages);
   
   return result;
   
@@ -868,7 +868,7 @@ Result VisionSystem::UpdateOverheadMap(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.UpdateOverheadMap.NoColor");
   const Vision::ImageRGB& image = imageCache.GetRGB();
-  Result result = _overheadMap->Update(image, _poseData, _currentResult.debugImageRGBs);
+  Result result = _overheadMap->Update(image, _poseData, _currentResult.debugImages);
   return result;
 }
 
@@ -876,7 +876,7 @@ Result VisionSystem::UpdateGroundPlaneClassifier(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.UpdateGroundPlaneClassifier.NoColor");
   const Vision::ImageRGB& image = imageCache.GetRGB();
-  Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImageRGBs,
+  Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImages,
                                                  _currentResult.visualObstacles);
   return result;
 }
@@ -889,7 +889,7 @@ Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
   
   Result result = _laserPointDetector->Detect(imageCache, _poseData, isDarkExposure,
                                               _currentResult.laserPoints,
-                                              _currentResult.debugImageRGBs);
+                                              _currentResult.debugImages);
   
   return result;
 }
@@ -1022,7 +1022,7 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
   Toc("CLAHE");
   
   if(DEBUG_DISPLAY_CLAHE_IMAGE) {
-    _currentResult.debugImageRGBs.push_back({"ImageCLAHE", claheImage});
+    _currentResult.debugImages.emplace_back("ImageCLAHE", claheImage);
   }
   
   claheImage.SetTimestamp(inputImageGray.GetTimestamp()); // make sure to preserve timestamp!
@@ -1162,7 +1162,7 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
         dispImg.DrawQuad(marker.GetImageCorners(), NamedColors::RED);
       }
       dispImg.DrawRect(Rectangle<s32>{0,0,cropRect.GetWidth(),cropRect.GetHeight()}, NamedColors::RED);
-      _currentResult.debugImageRGBs.emplace_back("CroppedMarkers", dispImg);
+      _currentResult.debugImages.emplace_back("CroppedMarkers", dispImg);
     }
   }
 
@@ -1346,6 +1346,7 @@ Result VisionSystem::Update(const VisionSystemInput& input)
 
   _modes = input.modesToProcess;
   _futureModes = input.futureModesToProcess;
+  _imageCompressQuality = input.imageCompressQuality;
   
   return Update(input.poseData, *_imageCache);
 }
@@ -1582,7 +1583,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       case CameraCalibrator::CalibTargetType::CHECKERBOARD:
       {
         lastResult = _cameraCalibrator->ComputeCalibrationFromCheckerboard(_currentResult.cameraCalibration,
-                                                                           _currentResult.debugImageRGBs);
+                                                                           _currentResult.debugImages);
         break;
       }
       case CameraCalibrator::CalibTargetType::QBERT:
@@ -1596,7 +1597,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         lastResult = _cameraCalibrator->ComputeCalibrationFromSingleTarget(targetType,
                                                                            _currentResult.observedMarkers,
                                                                            _currentResult.cameraCalibration,
-                                                                           _currentResult.debugImageRGBs);
+                                                                           _currentResult.debugImages);
         break;
       }
     }
@@ -1735,7 +1736,12 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 
   if(IsModeEnabled(VisionMode::ImageViz))
   {
-    _currentResult.displayImg = imageCache.GetRGB();
+    Tic("ImageViz");
+
+    _currentResult.compressedDisplayImg.Compress(imageCache.GetRGB(), _imageCompressQuality);
+
+    Toc("ImageViz");
+
     visionModesProcessed.Insert(VisionMode::ImageViz);
   }
 
@@ -1745,7 +1751,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Vision::ImageRGB imgUndistorted(img.GetNumRows(),img.GetNumCols());
     DEV_ASSERT(_camera.IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
     img.Undistort(*_camera.GetCalibration(), imgUndistorted);
-    _currentResult.debugImageRGBs.push_back({"undistorted", imgUndistorted});
+    _currentResult.debugImages.emplace_back("undistorted", imgUndistorted);
   }
 
   // NOTE: This should come at the end because it relies on elements of the current VisionProcessingResult

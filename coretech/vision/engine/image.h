@@ -179,6 +179,9 @@ namespace Vision {
     // (BGR in general)
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const = 0;
 
+    // Sets image from a showable format (either gray or BGR)
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) = 0;
+
     // Runs a boxFilter of the given size on this image outputing filtered
     virtual void BoxFilter(ImageBase<T>& filtered, u32 size) const;
 
@@ -201,9 +204,6 @@ namespace Vision {
     void DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner, T blankPixelValue, bool drawBlankPixels);
 
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const;
-
-    // Sets image from a showable format (either gray or BGR)
-    virtual void SetFromShowableFormat(const cv::Mat& showImg) = 0;
 
   private:
     TimeStamp_t     _timeStamp = 0;
@@ -280,14 +280,14 @@ namespace Vision {
 
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
 
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
+
     void BoxFilter(ImageBase<u8>& filtered, u32 size) const override;
 
     void ConvertV2RGB565(u8 hue, u8 sat, ImageRGB565& output);
 
   protected:
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;
-
-    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
 
   }; // class Image
 
@@ -345,11 +345,12 @@ namespace Vision {
 
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
 
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
+
     // Conversion from hsv to rgb565
     void ConvertHSV2RGB565(ImageRGB565& output);
 
   protected:
-    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
 
     Image ToGrayFromDoubleGreen() const;         // Return a new gray image from the green channel of this RBG image
     void FillGrayFromDoubleGreen(Image &grayImage) const;        // Fill existing gray image from the green channel of this RGB image
@@ -401,10 +402,10 @@ namespace Vision {
 
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
 
+    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
+    
   protected:
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;
-
-    virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
   };
 
   // RGBA Color image (i.e. RGB + alpha channel), 32bpp
@@ -447,7 +448,6 @@ namespace Vision {
 
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
 
-  protected:
     virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
 
   }; // class ImageRGBA

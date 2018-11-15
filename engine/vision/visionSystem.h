@@ -33,6 +33,7 @@
 #include "coretech/vision/engine/brightColorDetector.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
+#include "coretech/vision/engine/compressedImage.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/trackedFace.h"
@@ -106,12 +107,11 @@ namespace Vector {
     std::list<Vision::SalientPoint>                       salientPoints;
     ExternalInterface::RobotObservedIllumination          illumination;
 
-    Vision::ImageRGB displayImg;
+    Vision::CompressedImage compressedDisplayImg;
     Vision::ImageRGB565 mirrorModeImg;
     
     // Used to pass debug images back to main thread for display:
-    DebugImageList<Vision::Image>    debugImages;
-    DebugImageList<Vision::ImageRGB> debugImageRGBs;
+    DebugImageList<Vision::CompressedImage> debugImages;
   };
   
   class VisionSystem : public Vision::Profiler
@@ -267,6 +267,9 @@ namespace Vector {
     std::map<std::string, std::unique_ptr<Vision::NeuralNetRunner>> _neuralNetRunners;
     
     RobotTimeStamp_t                                _neuralNetRunnerTimestamp = 0;
+
+    Vision::CompressedImage _compressedDisplayImg;
+    s32 _imageCompressQuality = 0;
     
     Result UpdatePoseData(const VisionPoseData& newPoseData);
     Radians GetCurrentHeadAngle();
@@ -341,7 +344,7 @@ namespace Vector {
     void AddFakeDetections(const std::set<VisionMode>& modes); // For debugging
     
     Result SaveSensorData() const;
-    
+
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
     s32 _lastClaheTileSize;

@@ -364,8 +364,8 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
     //dispImg.Display("OverheadImage", 1);
     //dispEdgeImg.Display("OverheadEdgeImage");
-    currentResult.debugImageRGBs.push_back({"OverheadImage", dispImg});
-    currentResult.debugImageRGBs.push_back({"EdgeImage", dispEdgeImg});
+    currentResult.debugImages.emplace_back("OverheadImage", dispImg);
+    currentResult.debugImages.emplace_back("EdgeImage", dispEdgeImg);
   } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
 
   edgeFrame.timestamp = image.GetTimestamp();
