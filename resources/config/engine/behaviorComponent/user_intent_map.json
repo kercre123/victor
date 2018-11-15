@@ -243,6 +243,26 @@
       "user_intent": "imperative_volumedown",
       "cloud_intent": "intent_imperative_volumedown",
       "feature_gate": "Volume"
+    },
+    {
+      "user_intent": "movement_forward",
+      "cloud_intent": "intent_imperative_forward"
+    },
+    {
+      "user_intent": "movement_backward",
+      "cloud_intent": "intent_imperative_backup"
+    },
+    {
+      "user_intent": "movement_turnleft",
+      "cloud_intent": "intent_imperative_turnleft"
+    },
+    {
+      "user_intent": "movement_turnright",
+      "cloud_intent": "intent_imperative_turnright"
+    },
+    {
+      "user_intent": "movement_turnaround",
+      "cloud_intent": "intent_imperative_turnaround"
     }
   ],
 

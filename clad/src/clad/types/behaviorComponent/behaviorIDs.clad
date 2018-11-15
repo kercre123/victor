@@ -298,6 +298,15 @@ enum uint_16 BehaviorID {
   InitPRDemo,
   IntentUnmatched,
   ModeSelector,
+
+  // victorBehaviorTree/movement
+  MovementBackward,
+  MovementForward,
+  MovementTurnAround,
+  MovementTurnLeft,
+  MovementTurnRight,
+
+  // victorBehaviorTree
   NoCloud,
   NoWifi,
   NormalWakeUp,

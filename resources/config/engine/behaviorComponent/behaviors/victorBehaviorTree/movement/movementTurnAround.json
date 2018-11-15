@@ -1,0 +1,14 @@
+{
+  "behaviorID": "MovementTurnAround",
+  "behaviorClass": "AnimSequence",
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  
+  "respondToUserIntents": [
+    { "type": "movement_turnaround" }
+  ],
+
+  "animTriggers": [
+    "MovementTurnAround"
+  ]
+}

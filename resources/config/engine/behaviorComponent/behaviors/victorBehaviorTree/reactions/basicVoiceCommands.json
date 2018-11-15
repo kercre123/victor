@@ -16,7 +16,13 @@
     "ReactToNegative",
     "ReactToAbuse",
     "ReactToApology",
-    "ReactToLove"
+    "ReactToLove",
+
+    "MovementForward",
+    "MovementBackward",
+    "MovementTurnLeft",
+    "MovementTurnRight",
+    "MovementTurnAround"
 
     // NOTE: "goodnight" greeting is handled by the sleep cycle behavior, not here
   ],
