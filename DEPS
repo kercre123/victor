@@ -29,10 +29,10 @@
                 "version": "28"
             }
         },
-            "speexdp": {
+            "speexdsp": {
                 "build_type_id": "anki",
                 "checksums": {
-                    "sha256": "e967aa3b2af1ab0f1dcde1843ba4b2f8ffbb4708c9c8b008430d06967825c293"
+                    "sha256": "73dbe001ab6f76696553fcc92b7c1559eb19733337c2a3a7796d891a52c81a06"
                 },
                 "extension": "tar.gz",
                 "package_name": "speexdp-1.2rc3",
