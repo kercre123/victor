@@ -181,6 +181,42 @@ namespace Vision {
 
   }; // class PixelHSV
 
+  /**
+   * @brief Pixel in YUV format. Values should range from [0,255].
+   */
+  class PixelYUV : public cv::Vec3b
+  {
+  public:
+
+    PixelYUV(u8 y, u8 u, u8 v) : cv::Vec3b(y,u,v) { }
+    PixelYUV() : PixelYUV(0,0,0) { }
+    PixelYUV(const PixelRGB& rgb) : PixelYUV()
+    {
+      FromPixelRGB(rgb);
+    }
+
+    // Const accessors
+    u8 y() const { return this->operator[](0); }
+    u8 u() const { return this->operator[](1); }
+    u8 v() const { return this->operator[](2); }
+
+    // Non-const accessors
+    u8& y() { return this->operator[](0); }
+    u8& u() { return this->operator[](1); }
+    u8& v() { return this->operator[](2); }
+
+    /**
+     * Convert to a PixelRGB
+     */
+    PixelRGB ToPixelRGB() const;
+
+    /**
+     * Convert from a PixelRGB
+     */
+    void FromPixelRGB(const PixelRGB& rgb);
+
+  }; // class PixelHSV
+
   //
   // Inlined implementations
   //

@@ -15,6 +15,7 @@
 namespace Anki {
 namespace Vision {
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PixelHSV::FromPixelRGB(const PixelRGB& rgb)
 {
   float min = rgb.min()/255.f;
@@ -61,6 +62,7 @@ void PixelHSV::FromPixelRGB(const PixelRGB& rgb)
   Util::Clamp(val,0.f,1.f);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PixelRGB PixelHSV::ToPixelRGB() const
 {
   float hue = h()*360.f;
@@ -88,6 +90,32 @@ PixelRGB PixelHSV::ToPixelRGB() const
     case 4:  return PixelRGB(  t,   p, val);
     default: return PixelRGB(val,   p,   q);
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PixelYUV::FromPixelRGB(const PixelRGB& rgb)
+{
+  // ITU.BT-601 Y'CbCr conversions
+  // NOTE: In 8-bit values, YCbCr fall into certain valid ranges:
+  //    Y:      [16,235]
+  //    Cb/Cr:  [16,240]
+  // However, we use the whole 8-bit space [0,255] to represent the values. This has the benefit that it is
+  // compatible with the YCbCr format defined by JPEG compression.
+
+  y() = static_cast<u8>(Util::Clamp(roundf( 0.299f*rgb.r() + 0.587f*rgb.g() + 0.114f*rgb.b()),         0.f, 255.f));
+  u() = static_cast<u8>(Util::Clamp(roundf(-0.169f*rgb.r() - 0.331f*rgb.g() + 0.500f*rgb.b() + 128.f), 0.f, 255.f));
+  v() = static_cast<u8>(Util::Clamp(roundf( 0.500f*rgb.r() - 0.419f*rgb.g() - 0.081f*rgb.b() + 128.f), 0.f, 255.f));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PixelRGB PixelYUV::ToPixelRGB() const
+{
+
+  u8 r = static_cast<u8>(Util::Clamp(roundf(y()                        + 1.402f*(v()+128.f)),   0.f, 255.f));
+  u8 g = static_cast<u8>(Util::Clamp(roundf(y() - 0.34414f*(u()-128.f) - 0.71414f*(v()-128.f)), 0.f, 255.f));
+  u8 b = static_cast<u8>(Util::Clamp(roundf(y() + 1.772f  *(u()-128.f)),                        0.f, 255.f));
+
+  return PixelRGB(r,g,b);
 }
 
 } /* namespace Vision */
