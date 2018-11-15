@@ -231,7 +231,7 @@ void FaceDisplay::FaultCodeLoop()
   while(true)
   {
     // Blocks until there is data available
-    rc = read(_faultCodeFifo, buf, sizeof(buf));
+    rc = (int)(read(_faultCodeFifo, buf, sizeof(buf)));
     if(rc < 0)
     {
       PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.ReadFailed","%d", errno);

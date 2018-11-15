@@ -355,8 +355,7 @@ public:
   
   // True if robot is charging
   bool   IsCharging()          const { return _isCharging; }
-  // True if charger is out of spec
-  bool   IsChargerOOS()        const { return _chargerOOS; }
+
   // Return the message timestamp of the last time the value of IsCharging changed
   TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
   
@@ -544,7 +543,7 @@ public:
 
   // =========  Other State  ============
   f32 GetBatteryVoltage() const { return _battVoltage; }
-      
+
   // Abort everything the robot is doing, including path following, actions,
   // animations, and docking. This is like the big red E-stop button.
   // TODO: Probably need a more elegant way of doing this.
@@ -732,7 +731,6 @@ protected:
   bool             _isOnCharger              = false;
   bool             _isCharging               = false;
   TimeStamp_t      _lastChargingChange_ms    = 0;
-  bool             _chargerOOS               = false;
   f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;

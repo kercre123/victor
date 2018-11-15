@@ -134,9 +134,10 @@ const std::string& OSState::GetSSID(bool update)
   return _ssid;
 }
 
-std::string OSState::GetRobotName() const
+const std::string& OSState::GetRobotName() const
 {
-  return "Vector_0000";
+  static std::string s = "Vector_0000";
+  return s;
 }
 
 bool OSState::IsInRecoveryMode()

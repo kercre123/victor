@@ -54,12 +54,12 @@ TEST(CubeMessages, CompareSizes)
   
   {
     // Base message union
-    MessageCubeToEngine message;
+    //MessageCubeToEngine message;
   
     // CubeAccelData (which is TapCommand in cube firmware)
-    message.Set_accelData(CubeAccelData());
-    TapCommand tapCommand;
-    EXPECT_EQ(message.Size(), sizeof(tapCommand));
+    //message.Set_accelData(CubeAccelData());
+    //TapCommand tapCommand;
+    //EXPECT_EQ(message.Size(), sizeof(tapCommand));
   }
 }
 

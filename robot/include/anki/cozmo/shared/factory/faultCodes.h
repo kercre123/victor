@@ -103,7 +103,7 @@ static int DisplayFaultCode(uint16_t code)
   ssize_t numBytes = write(fifo, &code, sizeof(code));
   if(numBytes != sizeof(code))
   {
-    printf("DisplayFaultCode: Expected to write %u bytes but only wrote %u\n",
+    printf("DisplayFaultCode: Expected to write %zu bytes but only wrote %zd\n",
 	   sizeof(code),
 	   numBytes);
 

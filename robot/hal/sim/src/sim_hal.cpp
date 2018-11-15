@@ -97,8 +97,6 @@ namespace Anki {
 
       bool isInitialized = false;
 
-      u32 tickCnt_ = 0; // increments each robot step (ROBOT_TIME_STEP_MS)
-      
       webots::Supervisor webotRobot_;
 
       s32 robotID_ = -1;
@@ -232,29 +230,6 @@ namespace Anki {
             motorPrevPositions_[i] = pos;
           }
         }
-      }
-      
-      void UpdateSimBatteryVolts()
-      {
-        // Grab the charge rate
-        const auto* chargeRateField = HAL::BatteryIsCharging() ?
-                                      batteryChargeRateField_ :
-                                      batteryDischargeRateField_;
-        const float batteryIncreaseRate_voltsPerMin = chargeRateField->getSFFloat();
-        
-        // Compute delta volts
-        const float updateTime_sec = Util::MilliSecToSec((float) batteryUpdateRate_tics_ * ROBOT_TIME_STEP_MS);;
-        const float batteryDeltaVolts = (batteryIncreaseRate_voltsPerMin / 60.f) * updateTime_sec;
-        float batteryVolts = batteryVoltsField_->getSFFloat() + batteryDeltaVolts;
-        
-        // Clamp to logical voltages
-        const float minBatteryVolts = 3.0f;
-        const float maxBatteryVolts = 4.3f;
-        batteryVolts = Util::Clamp(batteryVolts,
-                                   minBatteryVolts,
-                                   maxBatteryVolts);
-        
-        batteryVoltsField_->setSFFloat(batteryVolts);
       }
       
       void AudioInputCallback(const AudioUtil::AudioSample* data, uint32_t numSamples)
@@ -794,6 +769,21 @@ namespace Anki {
       return proxData;
     }
 
+  f32 HAL::GetTouchSensorFilt()
+  {
+    return GetButtonState(BUTTON_CAPACITIVE);
+  }
+
+  bool HAL::IsTouchSensorValid()
+  {
+    return true;
+  }
+
+  void HAL::UpdateTouchSensorValidRange()
+  {
+    return;
+  }
+
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
       switch(button_id) {
@@ -890,11 +880,6 @@ namespace Anki {
       return HAL::BatteryIsCharging();
     }
     
-    bool HAL::BatteryIsChargerOOS()
-    {
-      return false;
-    }
-
     bool HAL::BatteryIsDisconnected()
     {
       // NOTE: This doesn't simulate syscon cutoff after 30 min
