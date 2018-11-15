@@ -83,6 +83,10 @@ namespace {
 
   // rate of turning the robot while searching for cliffs with vision
   const f32 kBodyTurnSpeedForCliffSearch_degPerSec = 120.0f;
+  
+  // Absolute angular yaw threshold for flagging an unexpectedMovement during a
+  // behavior subaction, such as the cliff reaction animations
+  const f32 kMaxYawErrorDuringSubaction_rad = DEG_TO_RAD(2.5f);
 
   // If this many RobotStopped messages are received
   // while activated, then just give up and go to StuckOnEdge/AskForHelp.
@@ -159,6 +163,7 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
   persistent.lastStopTime_sec = 0.f;
   persistent.putDownOnCliff = false;
   persistent.lastPutDownOnCliffTime_sec = 0.f;
+  persistent.unexpectedMovementDetected = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -279,7 +284,7 @@ void BehaviorReactToCliff::TransitionToStuckOnEdge()
     DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
   } else {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated",
-                  "Behavior %s does not want to be activated, re-starting cliff reaction",
+                  "Behavior %s does not want to be activated, forcing robot to ask for help!",
                   _iConfig.stuckOnEdgeBehavior->GetDebugLabel().c_str());
     // We should ALWAYS be able to delegate to the AskForHelp behavior,
     // i.e. no activation conditions should block this delegation
@@ -324,6 +329,16 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     return;
   }
   
+  // If we've tried executing a cliff reaction previously for this activation of the behavior
+  // that was stopped because of unexpected movement (e.g. treads spinning) then it's best
+  // just to go to StuckOnEdge to be safe and not try to play any further animations/actions
+  // that could destabilize the robot and cause it to fall off the edge of a cliff.
+  if (_dVars.persistent.unexpectedMovementDetected) {
+    PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.TooMuchUnexpectedMovementDetected", "");
+    TransitionToStuckOnEdge();
+    return;
+  }
+  
   if(ShouldStreamline()){
     // If we skip over the animation, we still count the recovery backup as the cliff reaction attempt.
     ++_dVars.persistent.numCliffReactAttempts;
@@ -349,18 +364,18 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     }
 
     // Get the pre-react action/animation to play
-    auto action = GetCliffReactAction(cliffDetectedFlags);
-    if (action == nullptr) {
+    auto cliffReaction = GetCliffReactAction(cliffDetectedFlags);
+    if (cliffReaction == nullptr) {
       // No action was returned because the detected cliffs represent 
       // a precarious situation so just delegate to StuckOnEdge.
       PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.StuckOnEdge", 
-                       "%x", 
-                       cliffDetectedFlags);
+                    "Cliff flags: 0x%X", cliffDetectedFlags);
       TransitionToStuckOnEdge();
     } else {
       ++_dVars.persistent.numCliffReactAttempts;
-      DelegateIfInControl(action, [this](const ActionResult& res){
-        if ( !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected() ) {
+      DelegateIfInControl(cliffReaction, [this](const ActionResult& res){
+        if ( !GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected()
+            && !_dVars.persistent.unexpectedMovementDetected ) {
           // The action reported success or partially succeeded moving the robot enough to get it away from the cliff.
           TransitionToFaceAndBackAwayCliff();
         } else {
@@ -573,21 +588,17 @@ void BehaviorReactToCliff::BehaviorUpdate()
     _dVars.gotStop = false;
     return;
   }
-
-  // TODO: This exit on unexpected movement is probably good to have, 
-  // but it appears the cliff reactions cause unexpected movement to 
-  // trigger falsely, so commenting out until unexpected movement
-  // is modified to have fewer false positives.
-  //  
-  // // Delegate to StuckOnEdge if unexpected motion detected while
-  // // cliff is still detected since it means treads are spinning
-  // const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
-  // const bool cliffDetected = GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
-  // if (unexpectedMovement && cliffDetected) {
-  //   PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.StuckOnEdge", "");
-  //   _iConfig.stuckOnEdgeBehavior->WantsToBeActivated();
-  //   DelegateNow(_iConfig.stuckOnEdgeBehavior.get());
-  // }
+  
+  // Flag any unexpected motion detected while any cliff is still detected since it means treads are spinning
+  // NOTE(GB): This method should not be responsible for cancelling the behavior immediatley if unexpected
+  // motion is detected, since there is other logic that must be checked and different outcomes are possible
+  // depending on what subaction is currently being executed.
+   const bool unexpectedMovement = GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
+   const bool cliffDetected = GetBEI().GetRobotInfo().GetCliffSensorComponent().IsCliffDetected();
+   if (unexpectedMovement && cliffDetected) {
+     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.StuckOnEdge", "");
+     _dVars.persistent.unexpectedMovementDetected = true;
+   }
 
   // Cancel if picked up
   const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
@@ -688,7 +699,9 @@ IActionRunner* BehaviorReactToCliff::GetCliffReactAction(uint8_t cliffDetectedFl
   const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
   const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
 
-  IActionRunner* action = nullptr;
+  IActionRunner* animAction = nullptr;
+  // Track what direction the robot is expected to turn as a result of the animation
+  TurnDirection expectedTurnDirection = TurnDirection::NO_TURN;
 
   PRINT_CH_INFO("Behaviors", "ReactToCliff.GetCliffReactAction.CliffsDetected", "0x%x", cliffDetectedFlags);
 
@@ -698,35 +711,75 @@ IActionRunner* BehaviorReactToCliff::GetCliffReactAction(uint8_t cliffDetectedFl
   switch (cliffDetectedFlags) {
     case (FL | FR):
       // Hit cliff straight-on. Play stop reaction and move on
-      action = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFront);
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFront);
       break;
     case FL:
       // Play stop reaction animation and turn CCW a bit
-      action = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFrontLeft);
+      expectedTurnDirection = TurnDirection::CCW;
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFrontLeft);
       break;
     case FR:
       // Play stop reaction animation and turn CW a bit
-      action = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFrontRight);
+      expectedTurnDirection = TurnDirection::CW;
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffFrontRight);
       break;
     case BL:
       // Drive forward and turn CCW to face the cliff
-      action = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBackLeft);
+      expectedTurnDirection = TurnDirection::CCW;
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBackLeft);
       break;
     case BR:
       // Drive forward and turn CW to face the cliff
-      action = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBackRight);
+      expectedTurnDirection = TurnDirection::CW;
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBackRight);
       break;  
     case (BL | BR):
-      // Hit cliff straight-on driving backwards. Flip around to face the cliff.
-      action = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBack);
+      // Hit cliff straight-on driving backwards. Flip around in a CCW direction to face the cliff.
+      expectedTurnDirection = TurnDirection::CCW;
+      animAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffBack);
       break;
     default:
       // This is some scary configuration that we probably shouldn't move from.
-      delete(action);
+      delete(animAction);
       return nullptr;
   }
+  
+  // As a precaution, run a parallel action that monitors for even slight unexpected movements while turning.
+  // This could happen if the robot is parallel to a cliff, and overhanging enough to not have a tread make
+  // contact with a surface, but not enough to trigger both prox sensors on said side. The result is that
+  // when the robot tries to turn in one direction, it actually turns in the opposite direction, which is
+  // then flagged as part of the persistent set of variables in _dVars, and can be checked by whatever
+  // callback is attached to this action.
+  const auto startAngle = GetBEI().GetRobotInfo().GetPose().GetRotation().GetAngleAroundZaxis();
+  auto monitorForUnexpectedMovementLambda = [this, expectedTurnDirection, startAngle](Robot& robot) {
+    if (!_dVars.persistent.unexpectedMovementDetected) {
+      const auto currentAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      const auto angleTurned = currentAngle - startAngle;
+      bool unexpectedTurnMovement = false;
+      switch (expectedTurnDirection) {
+        case TurnDirection::CCW:
+          unexpectedTurnMovement = (angleTurned < -kMaxYawErrorDuringSubaction_rad);
+        case TurnDirection::CW:
+          unexpectedTurnMovement = (angleTurned > kMaxYawErrorDuringSubaction_rad);
+          break;
+        default:
+          unexpectedTurnMovement = angleTurned.getAbsoluteVal() < kMaxYawErrorDuringSubaction_rad;
+          break;
+      }
+      if (unexpectedTurnMovement) {
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.CliffReaction.UnexpectedTurnMovementDetected", "");
+      }
+      _dVars.persistent.unexpectedMovementDetected = unexpectedTurnMovement;
+    }
+    return false;
+  };
+  WaitForLambdaAction* monitorForUnexpectedMovementAction = new WaitForLambdaAction(monitorForUnexpectedMovementLambda);
+  CompoundActionParallel* cliffReaction = new CompoundActionParallel({animAction, monitorForUnexpectedMovementAction});
+  
+  // The monitoring action will never terminate, so we end this parallel action when the animation is done.
+  cliffReaction->SetShouldEndWhenFirstActionCompletes(true);
 
-  return action;
+  return cliffReaction;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

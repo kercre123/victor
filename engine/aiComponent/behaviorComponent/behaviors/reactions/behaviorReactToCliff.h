@@ -98,14 +98,22 @@ private:
     Pose3d cliffPose;
 
     struct Persistent {
-      int numStops;
-      int numCliffReactAttempts;
+      int   numStops;
+      int   numCliffReactAttempts;
       float lastStopTime_sec;
       bool  putDownOnCliff;
       float lastPutDownOnCliffTime_sec;
+      bool  unexpectedMovementDetected;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
     Persistent persistent;
+  };
+
+  // Turn direction type
+  enum class TurnDirection : u8 {
+    CW,
+    NO_TURN,
+    CCW
   };
   
   DynamicVariables _dVars;
