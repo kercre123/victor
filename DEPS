@@ -29,6 +29,16 @@
                 "version": "28"
             }
         },
+            "speexdp": {
+                "build_type_id": "anki",
+                "checksums": {
+                    "sha256": "e967aa3b2af1ab0f1dcde1843ba4b2f8ffbb4708c9c8b008430d06967825c293"
+                },
+                "extension": "tar.gz",
+                "package_name": "speexdp-1.2rc3",
+                "version": "1"
+            }
+        },
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "files": {
