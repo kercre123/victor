@@ -19,7 +19,6 @@
 #include "anki-ble/common/stringutils.h"
 #include "log.h"
 #include "wifi.h"
-#include "platform/switchboard/anki-wifi/fileutils.h"
 #include "exec_command.h"
 
 #include <algorithm>
