@@ -47,8 +47,8 @@ private:
   bool Load(const Json::Value& config);
 
   ColorClassifier _classifier;
-
   std::vector<Label> _labels;
+  std::string _format;
 
 };
 

@@ -162,8 +162,10 @@ bool ColorClassifier::Save (const std::string& filename)
   if (Save(root))
   {
     std::ofstream os(filename);
-    Json::StyledWriter writer;
-    os << writer.write(root);
+    Json::StreamWriterBuilder builder;
+    builder["indentation"] = "  ";
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    writer->write(root,&os);
     return true;
   }
   return false;

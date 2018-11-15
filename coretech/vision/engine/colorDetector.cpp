@@ -59,7 +59,7 @@ struct ColorRegion
 /**
  * @brief Convert an ImageRGB to an Nx3 matrix where each row is one pixel in RGB order
  */
-void ImageToSamples(const ImageRGB& inputImage, cv::Mat& samples)
+void ImageToSamplesRGB(const ImageRGB& inputImage, cv::Mat& samples)
 {
   cv::Mat red(inputImage.GetNumRows(),inputImage.GetNumCols(),CV_8U);
   cv::Mat green(red.rows,red.cols,CV_8U);
@@ -83,7 +83,44 @@ void ImageToSamples(const ImageRGB& inputImage, cv::Mat& samples)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /**
- * @brief
+ * @brief Convert an ImageRGB to an Nx2 matrix where each row is one pixel in UV (of YUV) order
+ */
+void ImageToSamplesYUV(const ImageRGB& inputImage, cv::Mat& samples)
+{
+  cv::Mat red(inputImage.GetNumRows(),inputImage.GetNumCols(),CV_8U);
+  cv::Mat green(red.rows,red.cols,CV_8U);
+  cv::Mat blue(red.rows,red.cols,CV_8U);
+  cv::split(inputImage.get_CvMat_(), std::vector<cv::Mat>{red, green, blue});
+
+  // Fill out as rows first (should be faster memory copying) and then transpose so that each row is R,G,B
+
+  int rows = inputImage.GetNumRows() * inputImage.GetNumCols();
+  cv::Mat merged = cv::Mat::zeros(3, rows, CV_8UC1);
+  red.reshape(1,1).copyTo(merged.row(0));
+  green.reshape(1,1).copyTo(merged.row(1));
+  blue.reshape(1,1).copyTo(merged.row(2));
+  merged = merged.t();
+
+  // Convert to YUV
+  for (auto row = 0; row < merged.rows; ++row)
+  {
+    PixelYUV yuv;
+    yuv.FromPixelRGB(PixelRGB(merged.at<u8>(row,0), merged.at<u8>(row,1), merged.at<u8>(row,2)));
+    merged.at<u8>(row,0) = yuv.y();
+    merged.at<u8>(row,1) = yuv.u();
+    merged.at<u8>(row,2) = yuv.v();
+  }
+
+  cv::Mat converted;
+  merged.convertTo(converted,CV_64FC1);
+
+  // Drop the Y and copy to the output variable
+  samples = converted.colRange(1,3).clone();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/**
+ * @brief Convert a label image (labelings) to an ImageRGB
  * @todo: Really don't need an unknown value, just set all values of image to that value
  */
 void LabelToImage(const cv::Mat& labelings,
@@ -103,6 +140,9 @@ void LabelToImage(const cv::Mat& labelings,
   }
 }
 
+/**
+ * @brief Turn a label image (labelings) into a list of salient points
+ */
 void LabelToSalientPoints(const ImageRGB& inputImage,
                           const cv::Mat& labelings,
                           const std::vector<PixelRGB>& colors,
@@ -228,11 +268,36 @@ ColorDetector::~ColorDetector ()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ColorDetector::Load (const Json::Value& config)
 {
-  Json::Value jsonLabels = config.get("labels",Json::Value::null);
+  Json::Value jsonModelKey = config.get("model",Json::Value::null);
+  if (jsonModelKey.isNull() || !jsonModelKey.isString())
+  {
+    return false;
+  }
+
+  Json::Value jsonModels = config.get("models",Json::Value::null);
+  if (jsonModels.isNull() || !jsonModels.isObject())
+  {
+    return false;
+  }
+
+  Json::Value jsonModel = jsonModels.get(jsonModelKey.asString(),Json::Value::null);
+  if (jsonModel.isNull() || !jsonModel.isObject())
+  {
+    return false;
+  }
+
+  Json::Value jsonLabels = jsonModel.get("labels",Json::Value::null);
   if (jsonLabels.isNull() || !jsonLabels.isArray())
   {
     return false;
   }
+
+  Json::Value jsonFormat = jsonModel.get("format",Json::Value::null);
+  if (jsonFormat.isNull() || !jsonFormat.isString())
+  {
+    return false;
+  }
+  _format = jsonFormat.asString();
 
   std::vector<Label> labels;
   for (const Json::Value& jsonLabel : jsonLabels)
@@ -259,9 +324,8 @@ bool ColorDetector::Load (const Json::Value& config)
     labels.emplace_back(Label{name, color});
   }
 
-  // TOOD: Load the labels;
-
-  Json::Value jsonClassifier = config.get("classifier",Json::Value::null);
+  // TODO: Replace this with loading a data file (e.g. classifier_rgb.json)
+  Json::Value jsonClassifier = jsonModel.get("classifier",Json::Value::null);
   if (jsonClassifier.isNull() || !jsonClassifier.isObject())
   {
     return false;
@@ -295,7 +359,19 @@ Result ColorDetector::Detect (const ImageRGB& inputImage,
   inputImage.Resize(smallerImage, ResizeMethod::NearestNeighbor);
 
   cv::Mat samples;
-  ImageToSamples(smallerImage, samples);
+  if (_format == "RGB")
+  {
+    ImageToSamplesRGB(smallerImage, samples);
+  }
+  else if (_format == "YUV")
+  {
+    ImageToSamplesYUV(smallerImage, samples);
+  }
+  else
+  {
+    // TODO: never get to this point
+    return RESULT_FAIL;
+  }
 
   cv::Mat labelings(samples.rows,1,CV_32SC1);
 
