@@ -29,7 +29,8 @@ var (
 	connectionId     string
 )
 
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+// TODO: Move someplace that it's accessible to Engine
+/*
 func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
 		LeftWheelMmps:   msg.LeftWheelMmps,
@@ -38,8 +39,10 @@ func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExte
 		RightWheelMmps2: msg.RightWheelMmps2,
 	})
 }
+*/
 
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
+// TODO: Move someplace that it's accessible to Engine
+/*
 func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.MessageExternalToRobot {
 	if msg.Animation == nil {
 		return nil
@@ -52,6 +55,7 @@ func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.Message
 		IgnoreLiftTrack: msg.IgnoreLiftTrack,
 	})
 }
+*/
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
@@ -122,6 +126,8 @@ func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.Mes
 		UseMusic:    msg.UseMusic,
 	})
 }
+
+// TODO: Move someplace that it's accessible to Engine
 
 func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithRequestAvailableAnimations(&gw_clad.RequestAvailableAnimations{})
@@ -570,7 +576,12 @@ func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.Proto
 }
 
 func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
-	_, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
+	//REPLACES: _, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DriveWheelsRequest{
+			DriveWheelsRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +596,12 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 	f, animResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlayAnimationResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoPlayAnimationToClad(in))
+	//REPLACES: _, err := engineCladManager.Write(ProtoPlayAnimationToClad(in))
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PlayAnimationRequest{
+			PlayAnimationRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -600,6 +616,32 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 	}
 	return response, nil
 }
+
+/*
+func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResponse, error) {
+	f, listAnimsResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ListAnimationsResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ListAnimationsRequest{
+			ListAnimationsRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	listAnimationsResponse, ok := <-listAnimsResponseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := listAnimationsResponse.GetPlayAnimationResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+*/
 
 func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResponse, error) {
 	// 50 messages are sent per engine tick, so this channel is set to read 50 at a time
@@ -767,8 +809,8 @@ func (service *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
 			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
-			FaceId: element.FaceID,
-			Name:   element.Name,
+			FaceId:                    element.FaceID,
+			Name:                      element.Name,
 		}
 		faces = append(faces, &newFace)
 	}
@@ -2434,7 +2476,7 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 		go func() {
 			<-time.After(5 * time.Second)
 			err := exec.Command("/usr/bin/sudo", "/sbin/reboot").Run()
-			if (err != nil) {
+			if err != nil {
 				log.Errorf("Reboot attempt failed: %s\n", err)
 			}
 		}()
