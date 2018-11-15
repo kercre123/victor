@@ -45,11 +45,11 @@ namespace {
   CONSOLE_VAR(f32,  kMaxPanAccel_radPerSec2,                 "Vision.FaceNormalDirectedAtRobot3d",  10.f);
   CONSOLE_VAR(bool, kUseEyeContact,                          "Vision.FaceNormalDirectedAtRobot3d",  true);
   CONSOLE_VAR(f32,  kDistanceForAboveHorizonSearch_mm2,      "Vision.FaceNormalDirectedAtRobot3d",  1000000.f);
-  CONSOLE_VAR(f32,  kConeFor180TurnForFaceSearch_deg,        "Vision.FaceNormalDirectedAtRobot3d",  30.f);
+  CONSOLE_VAR(f32,  kConeFor180TurnForFaceSearch_deg,        "Vision.FaceNormalDirectedAtRobot3d",  40.f);
   CONSOLE_VAR(f32,  kSearchForFaceTurnRightAngle_deg,        "Vision.FaceNormalDirectedAtRobot3d",  -90.f);
   CONSOLE_VAR(f32,  kSearchForFaceTurnLeftAngle_deg,         "Vision.FaceNormalDirectedAtRobot3d",  90.f);
   CONSOLE_VAR(f32,  kSearchForFaceTurnAroundAngle_deg,       "Vision.FaceNormalDirectedAtRobot3d",  180.f);
-  CONSOLE_VAR(bool, kSearchForFaceUseThreeTurns,             "Vision.FaceNormalDirectedAtRobot3d",  true);
+  CONSOLE_VAR(bool, kSearchForFaceUseThreeTurns,             "Vision.FaceNormalDirectedAtRobot3d",  false);
   CONSOLE_VAR(f32,  kConeFor135TurnForFaceSearch_deg,        "Vision.FaceNormalDirectedAtRobot3d",  60.f);
   CONSOLE_VAR(f32,  kSearchForFaceThirdAngle_deg,            "Vision.FaceNormalDirectedAtRobot3d",  135.f);
   CONSOLE_VAR(s32,  kSearchForFaceNumberOfImagesToWait,      "Vision.FaceNormalDirectedAtRobot3d",  5);
@@ -182,16 +182,18 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
         SmartFaceID faceToTurnTowards;
         if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _faceIDToTurnBackTo, robotPose, faceToTurnTowards)
             && kUseExistingFacesWhenSearchingForFaces) {
+          LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.FoundAnExistingFaceGoingToTurnTowardsThat", "");
           if (turnAngle > 0) {
             CompoundActionSequential* turnAction = new CompoundActionSequential();
             turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInLeft));
 
-            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(faceToTurnTowards, M_PI_2);
+            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(faceToTurnTowards, M_PI);
             turnTowardsFace->SetRequireFaceConfirmation(true);
             CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
               turnTowardsFace,
-              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnLeft}
+              new TriggerLiftSafeAnimationAction(AnimationTrigger::GazingLookAtFacesTurnLeft)
             });
+            turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
             turnAction->AddAction(turnAndAnimate);
 
             DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::FoundNewFace);
@@ -200,12 +202,13 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
             CompoundActionSequential* turnAction = new CompoundActionSequential();
             turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInRight));
 
-            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(faceToTurnTowards, M_PI_2);
+            TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(faceToTurnTowards, M_PI);
             turnTowardsFace->SetRequireFaceConfirmation(true);
             CompoundActionParallel* turnAndAnimate = new CompoundActionParallel({
               turnTowardsFace,
-              new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnRight}
+              new TriggerLiftSafeAnimationAction(AnimationTrigger::GazingLookAtFacesTurnRight)
             });
+            turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
             turnAction->AddAction(turnAndAnimate);
 
             DelegateIfInControl(turnTowardsFace, &BehaviorReactToFaceNormal::FoundNewFace);
@@ -222,8 +225,10 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
               new TurnInPlaceAction(turnAngle.ToFloat(), false),
               new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnLeft}
             });
+            turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
             turnAction->AddAction(turnAndAnimate);
             turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
+            turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
             // TODO is this how we set it to find a new face? seems like the face it would try to find
             // is the last face it saw ... how is that not the face it was looking at last ... maybe
             // we need to add a wait
@@ -241,7 +246,9 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
               new TurnInPlaceAction(turnAngle.ToFloat(), false),
               new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnRight}
             });
+            turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
             turnAction->AddAction(turnAndAnimate);
+            turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
             turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
             // TODO is this how we set it to find a new face? seems like the face it would try to find
             // is the last face it saw ... how is that not the face it was looking at last ... maybe
@@ -385,7 +392,6 @@ void BehaviorReactToFaceNormal::TransitionToCompleted()
 
 void BehaviorReactToFaceNormal::FoundNewFace(ActionResult result)
 {
-
   if (ActionResult::NO_FACE == result) {
     LOG_INFO("BehaviorReactToFaceNormal.FoundNewFace.Result", "No Face %d", result);
     DelegateIfInControl(new TurnTowardsFaceAction(_faceIDToTurnBackTo), &BehaviorReactToFaceNormal::TransitionToCompleted);

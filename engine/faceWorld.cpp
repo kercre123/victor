@@ -57,6 +57,9 @@ namespace Vector {
   // Ignore faces detected below the robot (except when picked up), to help reduce false positives
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceWorld", true);
 
+  // Only use faces that have parts to update face direction averages
+  CONSOLE_VAR(bool, kFaceDirectionOnlyUseFacesWithParts, "Vision.FaceNormalDirectedAtRobot3d", true);
+
   // Ignore new faces detected while rotating too fast
   CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Head_deg/s",    10.f);
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
@@ -468,8 +471,11 @@ namespace Vector {
 
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
 
-    // This is where I am going to update my faceEntry
-    AddOrUpdateFaceDireciton3d(faceEntry->face, faceEntry->face.GetTimeStamp());
+    // This is where I am going to update my faceEntry, but only
+    // if it has parts (aka has eyes)
+    if (faceEntry->face.HasEyes() || !kFaceDirectionOnlyUseFacesWithParts) {
+      AddOrUpdateFaceDireciton3d(faceEntry->face, faceEntry->face.GetTimeStamp());
+    }
 
     faceEntry->numTimesObserved++;
 
@@ -1195,9 +1201,14 @@ namespace Vector {
       if (headPose.GetWithRespectTo(robotPose, headPoseWRTRobot))
       {
         const Radians& horizontalFOV = _robot->GetVisionComponent().GetCamera().GetCalibration()->ComputeHorizontalFOV();
-        const Radians faceTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(headPoseWRTRobot.GetTranslation());
-        if ( (turnAngle - faceTurnAngle) <= (horizontalFOV/2.f) )
+        const Radians faceTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(headPoseWRTRobot.GetTranslation());
+        PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FaceTurnAngle", "angle %.3f", RAD_TO_DEG(faceTurnAngle.ToFloat()));
+        PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.TurnAngle", "angle %.3f", RAD_TO_DEG(turnAngle.ToFloat()));
+        PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.HorizontalFOV", "angle %.3f", RAD_TO_DEG(horizontalFOV.ToFloat()));
+        if ( (turnAngle - faceTurnAngle) <= (horizontalFOV/2.f) &&
+             !smartFaceIDToIgnore.MatchesFaceID(entry.second.face.GetID()))
         {
+          PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FoundAFaceToTurnTowards", "");
           faceIDToTurnTowards.Reset(*_robot, entry.second.face.GetID());
           return true;
         }
