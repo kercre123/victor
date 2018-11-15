@@ -55,7 +55,6 @@ public:
   static void SaveRtsKeys(RtsKeys& keys);
   static std::string GetRobotName();
   static const std::string kRtsKeyPath;
-  static const std::string kRtsKeyDataPath;
   static const std::string kRtsKeyDataFile;
 
 private:
