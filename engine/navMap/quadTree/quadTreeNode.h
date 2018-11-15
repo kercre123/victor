@@ -71,6 +71,9 @@ public:
   // finds all the leaf nodes that are neighbors with this node
   NodeCPtrVector GetNeighbors() const;
 
+  // find a node at a particular address
+  const QuadTreeNode* GetNodeAtAddress(const NodeAddress& addr) const;
+
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -88,7 +91,7 @@ protected:
   
   // updates the address incase tree structure changes (expands and shifts)
   void ResetAddress();
-  
+
   // find a node at a particular address
   QuadTreeNode* GetNodeAtAddress(const NodeAddress& addr);
   
@@ -98,7 +101,7 @@ protected:
 
   // copys the data of this node to its children, and resets its own data
   void MoveDataToChildren(QuadTreeProcessor& processor);
-  
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

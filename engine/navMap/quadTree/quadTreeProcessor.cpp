@@ -12,6 +12,7 @@
 #include "quadTreeProcessor.h"
 #include "quadTree.h"
 
+#include "coretech/common/engine/math/bresenhamLine2d.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/vision/engine/profiler.h"
@@ -116,6 +117,47 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const
                "QuadTreeProcessor.OnNodeContentTypeChanged.InvalidInsert");
     _nodeSets[newType].insert(node);
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<bool>
+QuadTreeProcessor::AnyOfRays( const Point2f& start, 
+                              const std::vector<Point2f>& ends, 
+                              NodePredicate pred) const
+{
+  std::vector<bool> results(ends.size(), false);
+  std::unordered_map<Point2i ,bool> localCache;
+
+  // start by rasterizing the line described by [start,end]
+  const auto startBres = QuadTreeTypes::GetIntegralCoordinateOfNode(start, 
+    _quadTree->GetCenter(), 
+    _quadTree->GetContentPrecisionMM(), 
+    _quadTree->GetMaxTreeHeight());
+  const auto maxTreeHeight = _quadTree->GetMaxTreeHeight();
+
+  for(int rayIdx = 0; rayIdx<ends.size(); ++rayIdx) {
+    BresenhamLinePixelIterator bresIter(startBres, 
+      QuadTreeTypes::GetIntegralCoordinateOfNode(ends[rayIdx], 
+        _quadTree->GetCenter(), 
+        _quadTree->GetContentPrecisionMM(), 
+        _quadTree->GetMaxTreeHeight()));
+    while(!bresIter.Done()) {
+      const Point2i& rasterPoint = bresIter.Get();
+      decltype(localCache)::const_iterator got = localCache.find(rasterPoint);
+      if(got == localCache.end()) {
+        // compute new result and insert into the cache
+        const auto qnode = ((const QuadTree*)_quadTree)->GetNodeAtAddress(GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
+        const bool result = qnode && pred(qnode->GetData());
+        got = localCache.insert({rasterPoint, result}).first;
+      }
+      if(got->second) {
+        results[rayIdx] = true;
+        break; // skip computing the rest of the ray
+      }
+      bresIter.Next();
+    }
+  }
+  return results;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -112,7 +112,6 @@ enum class EDirection { PlusX, PlusY, MinusX, MinusY };
 // a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
 using NodeAddress = std::vector<EQuadrant>;
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -152,6 +151,40 @@ inline constexpr bool IsSibling(EQuadrant from, EDirection dir)
     case EDirection::PlusY:  { return  ((std::underlying_type<EQuadrant>::type)from & 0b01); }
     case EDirection::MinusY: { return !((std::underlying_type<EQuadrant>::type)from & 0b01); }
   }
+}
+
+// computes the node address relative to the root of a tree whose origin is (0,0)
+// assumes maximum reachable depth is desired
+NodeAddress GetAddressForNodeCenter(const Point2i& nodeCenter, const uint8_t& depth);
+
+std::string ToString(const NodeAddress& addr);
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline Point2i GetIntegralCoordinateOfNode(const Point2f& point, const Point2f& center, const f32 precision, const uint8_t height)
+{
+  // first step:
+  // transform the cartesian input coordinates so that the tree origin  
+  // is at (-0.5, -0.5) and snap to grid coordinates
+  // IMPORTANT: the behavior of std::round causes values to round away from zero
+  // as a result, the integral coordinates line up better when we first transform
+  // s.t. one of the four nearest nodes to the tree center becomes (0,0)
+  const f32 precision2 = (precision/2);
+  const int x = std::round( (point.x() - center.x() - precision2) / precision );
+  const int y = std::round( (point.y() - center.y() - precision2) / precision );
+  // second step:
+  // determine the pose of the FPP (furthest plus-plus node from tree origin) in
+  // the integral coordinates and transform again to make this be the new (0,0)
+  const u32 offset = (1 << (height-1));
+  return Point2i(x + offset, y + offset);  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline Point2f GetCartesianCoordinateOfNode(const Point2i& point, const Point2f& center, const f32 precision, const uint8_t height)
+{
+  // transform the coordinate s.t. (0,0) is now the tree origin
+  const f32 offset = (1<<(height-1)) - 0.5f;
+  return Point2f((point.x() - offset) * precision + center.x(),
+                 (point.y() - offset) * precision + center.y());
 }
 
 } // namespace
