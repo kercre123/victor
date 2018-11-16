@@ -96,7 +96,7 @@ static int PerfMetricWebServerHandler(struct mg_connection *conn, void *cbdata)
   {
     commands = info->query_string;
   }
-  
+
   auto ws = perfMetric->GetContext()->GetWebService();
   const int returnCode = ws->ProcessRequestExternal(conn, cbdata, PerfMetricWebServerImpl, commands);
 
@@ -135,7 +135,9 @@ PerfMetric::~PerfMetric()
     }
   }
 
-  delete _frameBuffer;
+  delete[] _frameBuffer;
+  delete[] _lineBuffer;
+
 #endif
 }
 
@@ -687,10 +689,10 @@ void PerfMetric::WaitTicks(const int ticks)
 int PerfMetric::ParseCommands(std::string& queryString)
 {
   queryString = Util::StringToLower(queryString);
-  
+
   std::vector<PerfMetricCommand> cmds;
   std::string current;
-  
+
   while (!queryString.empty())
   {
     size_t amp = queryString.find('&');
@@ -704,7 +706,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
       current = queryString.substr(0, amp);
       queryString = queryString.substr(amp + 1);
     }
-  
+
     if (current == "status")
     {
       PerfMetricCommand cmd(STATUS);
@@ -786,7 +788,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
       }
     }
   }
-  
+
   // Now that there are no errors, add all parse commands to queue
   for (auto& cmd : cmds)
   {
@@ -794,7 +796,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
   }
   return 1;
 }
-  
+
 
 void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
 {
@@ -836,4 +838,3 @@ void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
 
 } // namespace Vector
 } // namespace Anki
-
