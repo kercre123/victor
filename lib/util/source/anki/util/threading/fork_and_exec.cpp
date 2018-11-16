@@ -87,6 +87,18 @@ int ForkAndExec(const std::vector<std::string>& args)
   return rc;
 }
 
+int ForkAndExecAndForget(const std::vector<std::string>& args)
+{
+  pid_t pid;
+
+  pid = fork();
+  if (pid < 0) {
+    return -1;
+  } else if (!pid) {
+    (void) ExecChild(args);
+  }
+  return 0;
+}
 
 void KillChildProcess() {
   if (sChildPid > 0) {
