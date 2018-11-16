@@ -335,11 +335,9 @@ void BehaviorDriveOffCharger::TransitionToDrivingFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::TransitionToDrivingCube()
 {
-
   BlockWorldFilter filter;
   filter.SetAllowedFamilies( {ObjectFamily::LightCube} );
   
-  std::vector<const ObservableObject*> objects;
   const ObservableObject* obj = GetBEI().GetBlockWorld().FindMostRecentlyObservedObject( filter );
   if( obj != nullptr ) {
     const RobotTimeStamp_t cubeTimeStamp_ms = obj->GetLastObservedTime();
