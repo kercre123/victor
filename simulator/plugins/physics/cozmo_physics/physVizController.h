@@ -70,9 +70,6 @@ private:
   void ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseSegmentPrimitivesMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -145,13 +142,6 @@ private:
   // quad arrays injected by name instead of requiring one ID per quad
   std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapReady;    // ready to draw
   std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapIncoming; // incoming from the socket
-  
-  // memory map quad info data
-  // Maps message sequence number to message. This allows use to check that all messages were received and deals with
-  // out of order messages
-  using MemoryMapQuadInfoVector = std::map<u32, std::vector<ExternalInterface::MemoryMapQuadInfo>>;
-  std::unordered_map<uint32_t, MemoryMapQuadInfoVector> _memoryMapQuadInfoVectorMapIncoming;  // incoming from the socket
-  std::unordered_map<uint32_t, ExternalInterface::MemoryMapInfo> _memoryMapInfo;
   
   struct Segment {
     Segment() : color(0) {}

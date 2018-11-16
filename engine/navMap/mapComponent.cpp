@@ -762,8 +762,10 @@ namespace {
   const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
   const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
   const size_t kQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoVector::value_type);
+  const size_t kFullQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoFullVector::value_type);
 
-  static_assert(kQuadsPerMessage > 0, "MapComponent.Broadcast.InvalidQuadsPerMessage");
+  static_assert(kQuadsPerMessage > 0,     "MapComponent.Broadcast.InvalidQuadsPerMessage");
+  static_assert(kFullQuadsPerMessage > 0, "MapComponent.Broadcast.InvalidFullQuadsPerMessage");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -774,12 +776,12 @@ void MapComponent::BroadcastMapToViz(const MapBroadcastData& mapData) const
   // Send the begin message
   _robot->Broadcast(MessageViz(MemoryMapMessageVizBegin(_currentMapOriginID, mapData.mapInfo)));
   // chunk the quad messages
-  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
+  for(u32 seqNum = 0; seqNum*kFullQuadsPerMessage < mapData.quadInfoFull.size(); seqNum++)
   {
-    auto start = seqNum*kQuadsPerMessage;
-    auto end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
-    _robot->Broadcast(MessageViz(MemoryMapMessageViz(_currentMapOriginID, seqNum,
-      QuadInfoVector(mapData.quadInfo.begin() + start, mapData.quadInfo.begin() + end))));
+    auto start = seqNum*kFullQuadsPerMessage;
+    auto end   = std::min(mapData.quadInfoFull.size(), start + kFullQuadsPerMessage);
+    _robot->Broadcast(MessageViz(MemoryMapMessageViz(_currentMapOriginID,
+      QuadInfoFullVector(mapData.quadInfoFull.begin() + start, mapData.quadInfoFull.begin() + end))));
   }
 
   // Send the end message

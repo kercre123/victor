@@ -70,6 +70,7 @@ struct MapBroadcastData {
   MapBroadcastData() : mapInfo(), quadInfo() {}
   ExternalInterface::MemoryMapInfo                  mapInfo;
   std::vector<ExternalInterface::MemoryMapQuadInfo> quadInfo;
+  std::vector<ExternalInterface::MemoryMapQuadInfoFull> quadInfoFull;
 };
 
 // Provide a custom hasher for unordered sets
@@ -97,6 +98,7 @@ using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)
 using NodePredicate          = std::function<bool (MemoryMapDataConstPtr)>;
 
 using QuadInfoVector         = std::vector<ExternalInterface::MemoryMapQuadInfo>;
+using QuadInfoFullVector     = std::vector<ExternalInterface::MemoryMapQuadInfoFull>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper Functions

@@ -38,6 +38,15 @@ structure MemoryMapQuadInfo
   uint_32              colorRGBA
 }
 
+// Full information including position of center of node and edge length
+structure MemoryMapQuadInfoFull
+{
+  uint_32              colorRGBA,
+  float_32             centerX_mm,
+  float_32             centerY_mm,
+  float_32             edgeLen_mm,
+}
+
 
 } // namespace ExternalInterface
 } // namespace Vector

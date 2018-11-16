@@ -351,10 +351,17 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
       // leaf node
       if ( !node.IsSubdivided() )
       {
+        const auto& vizColor = GetNodeVizColor(node.GetData()).AsRGBA();
+        
         info.quadInfo.emplace_back(
           node.GetData()->GetExternalContentType(), 
           node.GetLevel(), 
-          GetNodeVizColor(node.GetData()).AsRGBA());
+          vizColor);
+        
+        info.quadInfoFull.emplace_back(vizColor,
+                                       node.GetCenter().x(),
+                                       node.GetCenter().y(),
+                                       node.GetSideLen());
       }
     };
 

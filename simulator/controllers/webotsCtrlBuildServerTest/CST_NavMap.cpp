@@ -34,7 +34,7 @@ namespace Vector {
     const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
     const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
     const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
-    const size_t kQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoVector::value_type);
+    const size_t kFullQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoFullVector::value_type);
   }
   
   // ============ Test class declaration ============
@@ -248,11 +248,11 @@ namespace Vector {
 
       using namespace VizInterface;
       _vizm->SendVizMessage(MessageViz(MemoryMapMessageVizBegin(0, data.mapInfo)));
-      for(u32 seqNum = 0; seqNum*kQuadsPerMessage < data.quadInfo.size(); seqNum++)
+      for(u32 seqNum = 0; seqNum*kFullQuadsPerMessage < data.quadInfoFull.size(); seqNum++)
       {
-        auto start = seqNum*kQuadsPerMessage;
-        auto end   = std::min(data.quadInfo.size(), start + kQuadsPerMessage);
-        _vizm->SendVizMessage(MessageViz(MemoryMapMessageViz(0, seqNum, QuadInfoVector(data.quadInfo.begin() + start, data.quadInfo.begin() + end))));
+        auto start = seqNum*kFullQuadsPerMessage;
+        auto end   = std::min(data.quadInfoFull.size(), start + kFullQuadsPerMessage);
+        _vizm->SendVizMessage(MessageViz(MemoryMapMessageViz(0, QuadInfoFullVector(data.quadInfoFull.begin() + start, data.quadInfoFull.begin() + end))));
       }
       _vizm->SendVizMessage(MessageViz(MemoryMapMessageVizEnd(0)));
     }
