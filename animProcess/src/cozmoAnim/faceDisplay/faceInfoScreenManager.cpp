@@ -113,7 +113,7 @@ namespace {
   const f32 kAlexaTimeout_s = 5.0f;
   // TODO (VIC-11606): don't use timeout for mute
   CONSOLE_VAR_RANGED(f32, kToggleMuteTimeout_s, "FaceInfoScreenManager", 1.2f, 0.001f, 3.0f);
-  CONSOLE_VAR_RANGED(f32, kAlexaNotificationTimeout_s, "FaceInfoScreenManager", 1.0f, 0.001f, 3.0f);
+  CONSOLE_VAR_RANGED(f32, kAlexaNotificationTimeout_s, "FaceInfoScreenManager", 2.0f, 0.001f, 3.0f);
 
   // How long the button needs to be pressed for before it should trigger shutdown animation
   CONSOLE_VAR( u32, kButtonPressDurationForShutdown_ms, "FaceInfoScreenManager", 500 );
@@ -1570,11 +1570,12 @@ void FaceInfoScreenManager::DrawAlexaNotification(AnimationStreamer* animStreame
   if( _currScreen == nullptr ) {
     return;
   }
+
   const std::string animName = "anim_avs_notification_loop_01";
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt,
+  animStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt,
                                       shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
