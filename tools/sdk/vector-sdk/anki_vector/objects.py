@@ -38,7 +38,7 @@ Vector connects to his Light Cubes with BLE.
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['LIGHT_CUBE_1_TYPE', 'OBJECT_VISIBILITY_TIMEOUT',
-           'EvtObjectAppeared', 'EvtObjectDisappeared', 'EvtObjectFinishedMove', 'EvtObjectObserved', 
+           'EvtObjectAppeared', 'EvtObjectDisappeared', 'EvtObjectFinishedMove', 'EvtObjectObserved',
            'Charger', 'CustomObjectArchetype', 'CustomObject', 'CustomObjectMarkers', 'CustomObjectTypes',
            'FixedCustomObject', 'LightCube', 'ObservableObject']
 

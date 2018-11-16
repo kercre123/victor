@@ -36,26 +36,27 @@ from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 def handle_object_appeared(event_type, event):
     # This will be called whenever an EvtObjectAppeared is dispatched -
     # whenever an Object comes into view.
-    print(f"Vector started seeing a:\n{event.obj}" )
+    print(f"Vector started seeing a:\n{event.obj}")
 
 
 def handle_object_disappeared(event_type, event):
     # This will be called whenever an EvtObjectDisappeared is dispatched -
     # whenever an Object goes out of view.
-    print(f"Vector stopped seeing a:\n{event.obj}" )
+    print(f"Vector stopped seeing a:\n{event.obj}")
 
 
 async def custom_objects():
     pass
 
+
 def main():
     args = anki_vector.util.parse_command_args()
     with anki_vector.Robot(args.serial,
-                            default_logging=False,
-                            show_viewer=True,
-                            enable_camera_feed=True,
-                            enable_custom_object_detection=True,
-                            enable_nav_map_feed=True) as robot:
+                           default_logging=False,
+                           show_viewer=True,
+                           enable_camera_feed=True,
+                           enable_custom_object_detection=True,
+                           enable_nav_map_feed=True) as robot:
         # Add event handlers for whenever Vector sees a new object
         robot.events.subscribe(handle_object_appeared, anki_vector.events.Events.object_appeared)
         robot.events.subscribe(handle_object_disappeared, anki_vector.events.Events.object_disappeared)
@@ -64,20 +65,20 @@ def main():
         # with a 50mm x 50mm Circles2 image on every face. Note that marker_width_mm and marker_height_mm
         # parameter values must match the dimensions of the printed marker.
         cube_obj = robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
-                                              marker=CustomObjectMarkers.Circles2,
-                                              size_mm=44.0,
-                                              marker_width_mm=50.0,
-                                              marker_height_mm=50.0,
-                                              is_unique=True)
+                                                  marker=CustomObjectMarkers.Circles2,
+                                                  size_mm=44.0,
+                                                  marker_width_mm=50.0,
+                                                  marker_height_mm=50.0,
+                                                  is_unique=True)
 
         # define a unique cube (88mm x 88mm x 88mm) (approximately 2x the size of Vector's light cube)
         # with a 50mm x 50mm Circles3 image on every face.
         big_cube_obj = robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType01,
-                                              marker=CustomObjectMarkers.Circles3,
-                                              size_mm=88.0,
-                                              marker_width_mm=50.0,
-                                              marker_height_mm=50.0,
-                                              is_unique=True)
+                                                      marker=CustomObjectMarkers.Circles3,
+                                                      size_mm=88.0,
+                                                      marker_width_mm=50.0,
+                                                      marker_height_mm=50.0,
+                                                      is_unique=True)
 
         # define a unique wall (150mm x 120mm (x10mm thick for all walls)
         # with a 50mm x 30mm Triangles2 image on front and back
@@ -92,18 +93,18 @@ def main():
         # define a unique box (20mm deep x 20mm width x20mm tall)
         # with a different 50mm x 50mm image on each of the 6 faces
         box_obj = robot.world.define_custom_box(custom_object_type=CustomObjectTypes.CustomType03,
-                                            marker_front=CustomObjectMarkers.Diamonds2,   # front
-                                            marker_back=CustomObjectMarkers.Hexagons2,    # back
-                                            marker_top=CustomObjectMarkers.Hexagons3,     # top
-                                            marker_bottom=CustomObjectMarkers.Hexagons4,  # bottom
-                                            marker_left=CustomObjectMarkers.Triangles3,   # left
-                                            marker_right=CustomObjectMarkers.Triangles4,  # right
-                                            depth_mm=20.0,
-                                            width_mm=20.0,
-                                            height_mm=20.0,
-                                            marker_width_mm=50.0,
-                                            marker_height_mm=50.0,
-                                            is_unique=True)
+                                                marker_front=CustomObjectMarkers.Diamonds2,   # front
+                                                marker_back=CustomObjectMarkers.Hexagons2,    # back
+                                                marker_top=CustomObjectMarkers.Hexagons3,     # top
+                                                marker_bottom=CustomObjectMarkers.Hexagons4,  # bottom
+                                                marker_left=CustomObjectMarkers.Triangles3,   # left
+                                                marker_right=CustomObjectMarkers.Triangles4,  # right
+                                                depth_mm=20.0,
+                                                width_mm=20.0,
+                                                height_mm=20.0,
+                                                marker_width_mm=50.0,
+                                                marker_height_mm=50.0,
+                                                is_unique=True)
 
         if ((cube_obj is not None) and (big_cube_obj is not None) and
                 (wall_obj is not None) and (box_obj is not None)):
