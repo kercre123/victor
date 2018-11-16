@@ -10,6 +10,8 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+#include "util/threading/fork_and_exec.h"
+
 #include "backpackLightController.h"
 #include "dockingController.h"
 #include "liftController.h"
@@ -127,14 +129,32 @@ namespace Anki {
         BackpackLightController::TurnOffAll();
       }
 
+      void SaveWallClockToDisk() {
+        #ifdef VICOS
+        // We don't have a real hardware clock in Victor.  During a full
+        // and proper shutdown we save the current time to disk near the
+        // end of the shutdown process.  We can then reload it on boot.
+        // If we end up shutting down due to the user holding the button
+        // we still want to record the current time to disk to keep our
+        // clock as close to accurate as possible on the next boot.
+        (void) ForkAndExecAndForget({"/bin/systemctl", "start", "fake-hwclock-tick"});
+        #endif
+      }
+
+      void SendPrepForShutdown(ShutdownReason reason)
+      {
+        RobotInterface::PrepForShutdown msg;
+        msg.reason = reason;
+        RobotInterface::SendMessage(msg);
+        SaveWallClockToDisk();
+      }
+
       void CheckForOverheatingBatteryShutdown()
       {
         if (!shutdownInProgress_ && HAL::BatteryIsOverheated()) {
           // Send a shutdown message to anim/engine
           AnkiInfo("CozmoBot.CheckForOverheatingBattery.Shutdown", "Sending PrepForShutdown");
-          RobotInterface::PrepForShutdown msg;
-          msg.reason = ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_TEMP;
-          RobotInterface::SendMessage(msg);
+          SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_TEMP);
 
           shutdownInProgress_ = true;
         }
@@ -155,9 +175,7 @@ namespace Anki {
             if (numTicsBelowThresh > CRITICAL_BATTERY_THRESH_TICS) {
               // Send a shutdown message to anim/engine
               AnkiInfo("CozmoBot.CheckForCriticalBattery.Shutdown", "Sending PrepForShutdown");
-              RobotInterface::PrepForShutdown msg;
-              msg.reason = ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT;
-              RobotInterface::SendMessage(msg);
+              SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT);
 
               shutdownTime_ms = HAL::GetTimeStamp() + HAL_SHUTDOWN_DELAY_MS;
               shutdownInProgress_ = true;
@@ -214,6 +232,7 @@ namespace Anki {
               if(!buttonWasPressed)
               {
                 timeMark_ms = curTime_ms;
+                SaveWallClockToDisk();
               }
               // If button has been held down for more than SHUTDOWN_TIME_MS
               else if(curTime_ms - timeMark_ms > SHUTDOWN_TIME_MS)
@@ -230,10 +249,8 @@ namespace Anki {
                 state = START;
                 // Send a shutdown message to anim/engine
                 AnkiInfo("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
-                RobotInterface::PrepForShutdown msg;
-                msg.reason = ShutdownReason::SHUTDOWN_BUTTON;
-                RobotInterface::SendMessage(msg);
-#endif                
+                SendPrepForShutdown(ShutdownReason::SHUTDOWN_BUTTON);
+#endif
                 shutdownInProgress_ = true;
               }
             }
@@ -311,9 +328,7 @@ namespace Anki {
               if (timeDif_ms > GYRO_NOT_CALIB_PREP_FOR_SHUTDOWN_MS) {
                 // Send a shutdown message to anim/engine
                 AnkiInfo("CozmoBot.CheckForGyroCalibShutdown.Shutdown", "Sending PrepForShutdown");
-                RobotInterface::PrepForShutdown msg;
-                msg.reason = ShutdownReason::SHUTDOWN_GYRO_NOT_CALIBRATING;
-                RobotInterface::SendMessage(msg);
+                SendPrepForShutdown(ShutdownReason::SHUTDOWN_GYRO_NOT_CALIBRATING);
 
                 state = SHUTDOWN;
                 shutdownInProgress_ = true;
