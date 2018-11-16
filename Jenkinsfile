@@ -275,10 +275,15 @@ stage("${primaryStageName} Build") {
             uuid = agent.getMachineName()
             vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
                 customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                linkedClone: true, powerOn: true, resourcePool: 'vic-os',
+                linkedClone: true, powerOn: false, resourcePool: 'vic-os',
                 sourceName: 'photonos-test', timeoutInSeconds: 60], serverName: vSphereServer
 
             try {
+                vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
+                    coresPerSocket: '1', cpuCores: '2']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU 
+
+                vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
+
                 def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
                 agent.setIPAddress(buildAgentIP)
             } catch (e) {
