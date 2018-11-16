@@ -1,5 +1,6 @@
 #!/bin/bash
 
+PATH=$PATH:/usr/sbin:/sbin
 LOG="/var/log/messages"
 LOG_GZ="/var/log/messages.1.gz"
 DIAG="/data/diagnostics"
@@ -14,7 +15,7 @@ delete_output () {
 }
 
 collect_logs () {
-    mkdir -p $DIAG_LOGS
+    mkdir -m 0760 -p $DIAG_LOGS
 
     ps | grep anki > $DIAG_LOGS/ps.txt
     zcat $LOG_GZ >  $DIAG_LOGS/log.txt
@@ -45,3 +46,5 @@ compress () {
 delete_output
 collect_logs
 compress
+chown -R net:anki $DIAG
+chmod -R 0760 $DIAG

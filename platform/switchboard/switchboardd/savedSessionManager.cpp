@@ -16,13 +16,12 @@
 #include "log.h"
 #include "cutils/properties.h"
 #include "switchboardd/pairingMessages.h"
-#include "anki-wifi/fileutils.h"
+#include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
 namespace Switchboard {
 
 const std::string SavedSessionManager::kRtsKeyPath = "/dev/block/bootdevice/by-name/switchboard";
-const std::string SavedSessionManager::kRtsKeyDataPath = "/data/data/com.anki.victor/persistent/switchboard";
 const std::string SavedSessionManager::kRtsKeyDataFile = "/data/data/com.anki.victor/persistent/switchboard/sessions";
 
 const std::ios_base::openmode SavedSessionManager::kWriteMode = std::ios_base::binary | std::ios_base::trunc;
@@ -243,12 +242,8 @@ void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
   // Write file with Rts data
   std::ofstream fout;
 
-  int rc = CreateDirectory(kRtsKeyDataPath,
-                           kModeUserReadWriteExecute,
-                           kNetUid,
-                           kAnkiGid);
-  if (rc) {
-    Log::Write("Could not create %s. rc = %d", kRtsKeyDataPath.c_str(), rc);
+  if (!Anki::Util::FileUtils::CreateDirectory(kRtsKeyDataFile, true)) {
+    Log::Write("Could not create directory for %s.", kRtsKeyDataFile.c_str());
     return;
   }
 

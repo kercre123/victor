@@ -29,7 +29,6 @@
 #include "anki-ble/common/log.h"
 #include "anki-ble/common/anki_ble_uuids.h"
 #include "anki-ble/common/ble_advertise_settings.h"
-#include "anki-wifi/fileutils.h"
 #include "anki-wifi/wifi.h"
 #include "anki-wifi/exec_command.h"
 #include "cutils/properties.h"
@@ -528,20 +527,15 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
                             std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1));
     return;
   }
-  int rc;
+
   // Disable update-engine from running automatically
-  rc = WriteFileAtomically(kUpdateEngineDisablePath,
-                           "1",
-                           kModeUserGroupReadWrite,
-                           kNetUid,
-                           kAnkiGid);
-  if (rc) {
-    HandleOtaUpdateExit(rc);
+  if (!Anki::Util::FileUtils::WriteFileAtomic(kUpdateEngineDisablePath, "1")) {
+    HandleOtaUpdateExit(-1);
     return;
   }
 
   // Stop any running instance of update-engine
-  rc = ExecCommand({"sudo", "/bin/systemctl", "stop", "update-engine.service"});
+  int rc = ExecCommand({"sudo", "/bin/systemctl", "stop", "update-engine.service"});
   if (rc) {
     HandleOtaUpdateExit(rc);
     return;
@@ -552,13 +546,8 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   updateEngineEnv << "UPDATE_ENGINE_ENABLED=True" << std::endl;
   updateEngineEnv << "UPDATE_ENGINE_MAX_SLEEP=1" << std::endl; // No sleep, execute right away
   updateEngineEnv << "UPDATE_ENGINE_URL=\"" << url << "\"" << std::endl;
-  rc = WriteFileAtomically(kUpdateEngineEnvPath,
-                           updateEngineEnv.str(),
-                           kModeUserGroupReadWrite,
-                           kNetUid,
-                           kAnkiGid);
-  if (rc) {
-    HandleOtaUpdateExit(rc);
+  if (!Anki::Util::FileUtils::WriteFileAtomic(kUpdateEngineEnvPath, updateEngineEnv.str())) {
+    HandleOtaUpdateExit(-1);
     return;
   }
 
