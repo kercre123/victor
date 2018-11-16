@@ -7,7 +7,7 @@ These instructions build the SDK and its documentation and produce a compressed 
 
 # Pre-Requisites
 
-* You have ota'd your robot to Victor OS 1.0.1 or later. (TODO: test multiple OS versions? Test latest OS?)
+* You have ota'd your robot to the version of the OS you plan to test with. (Consider: test with multiple versions?)
 * Uninstall any existing representation of the SDK from your computer.
 * You have Python 3.6.1 or later already installed.
 * Decide what version you want to increase the Python SDK to.
@@ -26,11 +26,14 @@ These instructions build the SDK and its documentation and produce a compressed 
 
 3. On victor master branch, from the following files, remove all messages marked "App only". This removes proto messages that we don't want to expose. Do not commit these changes to victor master.
 
+  `cloud/gateway/alexa.proto`
   `cloud/gateway/external_interface.proto` (Keep the ending curly brace)
   `cloud/gateway/messages.proto`
   `cloud/gateway/onboardingSteps.proto`
   `cloud/gateway/settings.proto`
   `cloud/gateway/shared.proto`
+
+  In addition, take care to review and not expose any new endpoints that we don't want exposed from proto files in `cloud/gateway`.
 
 4. Run `victor/tools/sdk/scripts/update_proto.sh`. Be sure there are no warnings or errors before continuing.
 
@@ -50,7 +53,9 @@ These instructions build the SDK and its documentation and produce a compressed 
 
 11. In `vector-python-sdk-private` repo, navigate to `docs` and run: `make html`.
 
-12. Delete any __pycache__ folders.
+12. Delete any __pycache__ folders:
+      `cd vector-python-sdk-private`
+      `find . -name  '__pycache__' -exec rm -rf {} \;`
 
 13. Delete all `.DS_Store` files from the `vector-python-sdk-private` repo:
       `cd vector-python-sdk-private`

@@ -21,7 +21,7 @@ package Anki.Vector.external_interface;
 import "response_status.proto";
 import "extensions.proto";
 import "onboardingSteps.proto";
-import "alexa.proto";
+import "alexa.proto"; // App only
 
 // A null message used by streams to verify that the client is
 // still connected.

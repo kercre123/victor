@@ -20,7 +20,7 @@ package Anki.Vector.external_interface;
 
 import "behavior.proto";
 import "cube.proto";
-import "alexa.proto";
+import "alexa.proto"; // App only
 import "messages.proto";
 import "settings.proto";
 import "extensions.proto";
@@ -61,8 +61,8 @@ message Event {
     CubeBattery                      cube_battery                        = 11;
     KeepAlivePing                    keep_alive                          = 12;
     ConnectionResponse               connection_response                 = 13;
-    JdocsChanged                     jdocs_changed                       = 14;
-    AlexaAuthEvent                   alexa_auth_event                    = 15;
+    JdocsChanged                     jdocs_changed                       = 14; // App only
+    AlexaAuthEvent                   alexa_auth_event                    = 15; // App only
     MirrorModeDisabled               mirror_mode_disabled                = 16;
     VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
   }
