@@ -36,13 +36,13 @@ from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 def handle_object_appeared(event_type, event):
     # This will be called whenever an EvtObjectAppeared is dispatched -
     # whenever an Object comes into view.
-    print(f"Vector started seeing a:\n{event.obj}")
+    print(f"--------- Vector started seeing an object --------- \n{event.obj}")
 
 
 def handle_object_disappeared(event_type, event):
     # This will be called whenever an EvtObjectDisappeared is dispatched -
     # whenever an Object goes out of view.
-    print(f"Vector stopped seeing a:\n{event.obj}")
+    print(f"--------- Vector stopped seeing an object --------- \n{event.obj}")
 
 
 async def custom_objects():
@@ -113,9 +113,9 @@ def main():
             print("One or more object definitions failed!")
             return
 
-        print("\n\nShow the above markers to Vector and you will see the related 3d objects "
-              "display in Vector's 3d_viewer window. You will also see print messages "
-              "every time a custom object enters or exits Vector's view.\n\n")
+        print("\n\nShow a marker specified in the Python script to Vector and you will see the related 3d objects\n"
+              "display in Vector's 3d_viewer window. You will also see messages print every time a custom object\n"
+              "enters or exits Vector's view. Markers can be found from the docs under CustomObjectMarkers.\n\n")
 
         viewer = opengl_viewer.OpenGLViewer(robot=robot)
         viewer.run(custom_objects)

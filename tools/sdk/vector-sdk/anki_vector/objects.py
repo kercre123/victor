@@ -55,6 +55,10 @@ from .events import Events
 
 from .messaging import protocol
 
+#: Length of time in seconds to go without receiving an observed event before
+#: assuming that Vector can no longer see an object.
+OBJECT_VISIBILITY_TIMEOUT = 0.8
+
 
 class EvtObjectObserved():  # pylint: disable=too-few-public-methods
     """Triggered whenever an object is visually identified by the robot.
@@ -119,11 +123,6 @@ class EvtObjectFinishedMove():  # pylint: disable=too-few-public-methods
     def __init__(self, obj, move_duration: float):
         self.obj = obj
         self.move_duration = move_duration
-
-
-#: Length of time in seconds to go without receiving an observed event before
-#: assuming that Vector can no longer see an object.
-OBJECT_VISIBILITY_TIMEOUT = 0.4
 
 
 class ObservableObject(util.Component):
