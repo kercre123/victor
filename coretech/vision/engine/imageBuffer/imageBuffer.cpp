@@ -287,6 +287,18 @@ bool ImageBuffer::GetRGBFromRawGray(ImageRGB& rgb, ImageCacheSize size) const
 
 bool ImageBuffer::GetGrayFromBAYER(Image& gray, ImageCacheSize size) const
 {
+  // Hack special case: compute Full sized gray from RGB
+  if(size == ImageCacheSize::Full)
+  {
+    ImageRGB rgb;
+    const bool success = GetRGBFromBAYER(rgb, size);
+    if(success)
+    {
+      rgb.FillGray(gray);
+    }
+    return success;
+  }
+  
   // For now the only optimized conversion from Bayer to Gray is for halved gray
   // So do that and then resize image if needed
   ImageConversions::HalveBGGR10ToGray(_rawData,
