@@ -84,7 +84,7 @@ namespace Vector {
   CONSOLE_VAR_RANGED(f32, kProcFace_Gamma,              CONSOLE_GROUP, 1.f, 1.f, 4.f);
   
   // for automation to test earcons in dev builds
-  CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", false);
+  CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
 
   enum class FaceGammaType {
     None,
