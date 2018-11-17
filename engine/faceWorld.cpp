@@ -23,6 +23,7 @@
 #include "coretech/common/shared/radians.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -56,6 +57,9 @@ namespace Vector {
   // Ignore faces detected below the robot (except when picked up), to help reduce false positives
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceWorld", true);
 
+  // Only use faces that have parts to update face direction averages
+  CONSOLE_VAR(bool, kFaceDirectionOnlyUseFacesWithParts, "Vision.FaceNormalDirectedAtRobot3d", true);
+
   // Ignore new faces detected while rotating too fast
   CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Head_deg/s",    10.f);
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
@@ -66,6 +70,7 @@ namespace Vector {
   static const char * const kIsSessionOnlyStringDAS = "0";
 
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
+  static const Point3f kGazeGroundPointSize{100.f, 100.f, 100.f};
   
   static const std::string kWebVizObservedObjectsName = "observedobjects";
   static const std::string kWebVizNavMapName = "navmap";
@@ -465,6 +470,13 @@ namespace Vector {
     assert(faceEntry != nullptr);
 
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
+
+    // This is where I am going to update my faceEntry, but only
+    // if it has parts (aka has eyes)
+    if (faceEntry->face.HasEyes() || !kFaceDirectionOnlyUseFacesWithParts) {
+      AddOrUpdateFaceDireciton3d(faceEntry->face, faceEntry->face.GetTimeStamp());
+    }
+
     faceEntry->numTimesObserved++;
 
     // Keep up with how many times non-tracking-only faces have been seen facing
@@ -518,6 +530,51 @@ namespace Vector {
                                                                                    kHumanHeadSize,
                                                                                    faceEntry->face.GetHeadPose(),
                                                                                    ::Anki::NamedColors::DARKGRAY);
+
+        auto& entry = _facesDirectedAtRobot3d[face.GetID()];
+        const auto currentFaceDirectionSurface = entry.GetCurrentFaceDirectionSurface();
+        Pose3d currentGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentFaceDirectionSurface));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2345,
+                                                                                 kGazeGroundPointSize,
+                                                                                 currentGPPose,
+                                                                                 ::Anki::NamedColors::ORANGE);
+
+        const auto averageFaceDirectionSurface = entry.GetFaceDirectionSurfaceAverage();
+        Pose3d averageGPPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageFaceDirectionSurface));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2346,
+                                                                                 kGazeGroundPointSize,
+                                                                                 averageGPPose,
+                                                                                 ::Anki::NamedColors::GREEN);
+
+        const auto currentFaceDirectionAboveHorizon = entry.GetCurrentFaceDirectionAboveHorizon();
+        Pose3d currentAHPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentFaceDirectionAboveHorizon));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2347,
+                                                                                 kGazeGroundPointSize,
+                                                                                 currentAHPose,
+                                                                                 ::Anki::NamedColors::BLUE);
+
+
+        /*
+        Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, -500.f, 0.f)));
+        translatedPose.SetParent(faceEntry->face.GetHeadPose());
+        auto point = translatedPose.GetWithRespectToRoot().GetTranslation();
+        auto translation = faceEntry->face.GetHeadPose().GetTranslation();
+        float alpha = ( -point.z() ) / ( translation.z() - point.z() );
+        auto groundPlanePoint = translation * alpha + point * (1 - alpha);
+        Pose3d groundPlanePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), groundPlanePoint));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2345,
+                                                                                 kGazeGroundPointSize,
+                                                                                 groundPlanePose,
+                                                                                 ::Anki::NamedColors::ORANGE);
+        */
+
+        auto rotationMatrix = faceEntry->face.GetHeadPose().GetRotationMatrix();
+        PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.RotationMatrixAngles",
+                         "angle: %.3f, x: %.3f, y: %.3f, z: %.3f", rotationMatrix.GetAngle().getDegrees(),
+                         rotationMatrix.GetAngleAroundXaxis().getDegrees(),
+                         rotationMatrix.GetAngleAroundYaxis().getDegrees(),
+                         rotationMatrix.GetAngleAroundZaxis().getDegrees());
+        
       }
 
       // Draw face in 3D and in camera
@@ -605,6 +662,38 @@ namespace Vector {
     return RESULT_OK;
   }
 
+  Result FaceWorld::AddOrUpdateFaceDireciton3d(Vision::TrackedFace& face,
+                                               const TimeStamp_t& timeStamp)
+  {
+    auto& entry = _facesDirectedAtRobot3d[face.GetID()];
+    entry.Update(face, timeStamp);
+
+    // TODO need to set direction
+    const bool faceFocused = entry.IsFaceFocused();
+    if (faceFocused) {
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceFocused", "");
+    } else {
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceIsNotFocused", "");
+    }
+    face.SetFaceFocused(faceFocused);
+    if (faceFocused)
+    {
+      auto faceDirectionAverage = entry.GetFaceDirectionSurfaceAverage();
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceDirectionAverage",
+                          "x: %.3f, y: %.3f, z: %.3f", faceDirectionAverage.x(), faceDirectionAverage.y(),
+                          faceDirectionAverage.z());
+      Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), faceDirectionAverage));
+      // Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(1022.112f, 393.799f, 0.f)));
+      // set the pose ... i think this is right but ... let's verify
+      focusPose.SetParent(_robot->GetWorldOrigin());
+      // _robot->GetPoseOriginList().GetOriginByID(histOriginID));
+      // set root?
+      face.SetFaceFocusPose(focusPose);
+    }
+    return RESULT_OK;
+  }
+
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result FaceWorld::Update(const std::list<Vision::TrackedFace>& observedFaces)
   {
@@ -618,6 +707,7 @@ namespace Vector {
         PRINT_NAMED_WARNING("FaceWorld.Update.AddOrUpdateFaceFailed",
                             "ObservedFace ID=%d", obsFace.GetID());
       }
+
     }
 
     const RobotTimeStamp_t lastProcImageTime = _robot->GetVisionComponent().GetLastProcessedImageTimeStamp();
@@ -1071,6 +1161,86 @@ namespace Vector {
     }
     return false;
   }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose, SmartFaceID& faceID) const
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
+
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (ShouldReturnFace(entry.second, recentTime, false))
+      { 
+        if (entry.second.face.IsFaceFocused())
+        {
+          PRINT_NAMED_WARNING("FaceWorld.GetFaceFocusPose.FaceFocused", "");
+          faceFocusPose = entry.second.face.GetFaceFocusPose();
+          faceID = GetSmartFaceID(entry.second.face.GetID());
+          return true;
+        } else {
+          PRINT_NAMED_WARNING("FaceWorld.GetFaceFocusPose.FaceIsNotFocused", "");
+        }
+      }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
+                                  const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const
+  {
+    for (const auto& entry: _faceEntries)
+    {
+      const auto& headPose = entry.second.face.GetHeadPose();
+      Pose3d headPoseWRTRobot;
+      if (headPose.GetWithRespectTo(robotPose, headPoseWRTRobot))
+      {
+        const Radians& horizontalFOV = _robot->GetVisionComponent().GetCamera().GetCalibration()->ComputeHorizontalFOV();
+        const Radians faceTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(headPoseWRTRobot.GetTranslation());
+        PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FaceTurnAngle", "angle %.3f", RAD_TO_DEG(faceTurnAngle.ToFloat()));
+        PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.TurnAngle", "angle %.3f", RAD_TO_DEG(turnAngle.ToFloat()));
+        PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.HorizontalFOV", "angle %.3f", RAD_TO_DEG(horizontalFOV.ToFloat()));
+        if ( (turnAngle - faceTurnAngle) <= (horizontalFOV/2.f) &&
+             !smartFaceIDToIgnore.MatchesFaceID(entry.second.face.GetID()))
+        {
+          PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FoundAFaceToTurnTowards", "");
+          faceIDToTurnTowards.Reset(*_robot, entry.second.face.GetID());
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Vision::TrackedFace::FaceDirection FaceWorld::GetFaceDirection(const u32 withinLast_ms) const
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
+
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (ShouldReturnFace(entry.second, recentTime, false))
+      {
+        auto faceDirection = entry.second.face.GetFaceDirection();
+        if (faceDirection != Vision::TrackedFace::FaceDirection::None)
+        {
+          return faceDirection;
+        }
+      }
+    }
+    return Vision::TrackedFace::FaceDirection::None;
+  }
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::InitLoadedKnownFaces(const std::list<Vision::LoadedKnownFace>& loadedFaces)

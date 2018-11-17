@@ -680,12 +680,16 @@ namespace Vector {
     // We are all set to process this image so lock input
     // so VisionSystem can use it
     _visionSystemInput.locked = true;
+
+    // TODO modify visionSystemInput.buffer to be the input that i set
+    _visionSystemInput.imageBuffer = buffer;
       
     if(_isSynchronous)
     {
       // Process image now
       UpdateVisionSystem(_visionSystemInput);
       ReleaseImage(buffer);
+      _visionSystemInput.locked = false;
     }
     
     return RESULT_OK;

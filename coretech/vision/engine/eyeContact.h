@@ -26,12 +26,12 @@ namespace Vision {
 
 struct GazeData
 {
-  constexpr static const float kleftRightMin_deg = -30.f;
-  constexpr static const float kupDownMin_deg    = -20.f;
+  constexpr static const float kLeftRightMin_deg = -30.f;
+  constexpr static const float kUpDownMin_deg    = -20.f;
   Point2f point;
   bool inlier;
   GazeData()
-    : point(Point2f(kleftRightMin_deg, kupDownMin_deg)),
+    : point(Point2f(kLeftRightMin_deg, kUpDownMin_deg)),
       inlier(false) {}
   void Update(const Point2f& newPoint)
   {
@@ -92,6 +92,7 @@ public:
 
   bool IsMakingEyeContact() const {return _isMakingEyeContact;}
   Point2f GetGazeAverage() const {return _gazeAverage;}
+  int GetNumberOfInliers() const {return _numberOfInliers;}
   bool GetExpired(const TimeStamp_t currentTime) const;
   std::vector<GazeData> const& GetGazeHistory() {return _gazeHistory;}
 

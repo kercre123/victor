@@ -1166,8 +1166,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // TODO: Should this just be a different message? Or one that includes the state message from the robot?
   RobotState stateMsg(msg);
 
-  const u16 imageFramePeriod_ms = Util::numeric_cast<u16>( GetVisionComponent().GetFramePeriod_ms() );
-  const u16 imageProcPeriod_ms  = Util::numeric_cast<u16>( GetVisionComponent().GetProcessingPeriod_ms() );
+  const u16 imageFramePeriod_ms = static_cast<u16>( GetVisionComponent().GetFramePeriod_ms() );
+  const u16 imageProcPeriod_ms  = static_cast<u16>( GetVisionComponent().GetProcessingPeriod_ms() );
 
   // Send state to visualizer for displaying
   VizInterface::RobotStateMessage vizState(stateMsg,

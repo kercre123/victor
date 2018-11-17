@@ -27,6 +27,8 @@
 
 namespace Anki {
 namespace Vision {
+
+  class FaceNormalDirectedAtRobot;
   
   class TrackedFace
   {
@@ -72,6 +74,15 @@ namespace Vision {
       
       NumFeatures
     };
+
+    enum FaceDirection
+    {
+      None = 0,
+      AtRobot,
+      LeftOfRobot,
+      RightOfRobot
+    };
+
     
     using Feature = std::vector<Point2f>;
     
@@ -109,6 +120,10 @@ namespace Vision {
     
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
+
+    // TODO add documentation
+    const Pose3d& GetFaceFocusPose() const;
+    void SetFaceFocusPose(const Pose3d faceFocusPose);
     
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
@@ -141,6 +156,29 @@ namespace Vision {
     bool IsMakingEyeContact() const { return _isMakingEyeContact; }
     void SetEyeContact(const bool eyeContact);
 
+    // Face focused
+    bool IsFaceFocused() const { return _isFaceFocused && _isFacingCamera; }
+    void SetFaceFocused(const bool eyeContact);
+
+    // Face direction
+    TrackedFace::FaceDirection GetFaceDirection() const {return _faceDirection;}
+    void SetFaceDirection(const TrackedFace::FaceDirection faceDirection);
+
+    // Detection Pose Info
+    s32 GetDetectionPoseInfo() const {return _detectionPoseInfo;}
+    void SetDetectionPoseInfo(const s32 detectionPoseInfo);
+
+    // Eye Gaze Average
+    Point2f GetEyeGazeAverage() const {return _eyeGazeAverage;}
+    void SetEyeGazeAverage(const Point2f& eyeGazeAverage);
+
+    // Eye Gaze Inliers
+    s32 GetNumberOfEyeGazeInliers() const {return _numberOfEyeGazeInliers;}
+    void SetNumberOfEyeGazeInliers(const s32 numberOfEyeGazeInliers);
+
+    bool GetFacePartsFound() const {return _facePartsFound;}
+    void SetFacePartsFound(const bool facePartsFound);
+
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
 
@@ -155,8 +193,18 @@ namespace Vision {
     s32            _numEnrollments     = 0;
     bool           _isBeingTracked     = false;
     bool           _isFacingCamera     = false;
+    bool           _facePartsFound     = false;
     bool           _isMakingEyeContact = false;
+    bool           _isFaceFocused      = false;
     bool           _isTranslationSet   = false;
+    Point2f        _eyeGazeAverage;
+    s32            _numberOfEyeGazeInliers = 0;
+    // It's unclear what type this should be and whether we should using or
+    // returning the macros in okao's dectection info
+    s32            _detectionPoseInfo = 0;
+
+    FaceDirection _faceDirection;
+    Pose3d _faceFocusPose;
 
     std::string    _name;
     
@@ -346,7 +394,44 @@ namespace Vision {
   inline void TrackedFace::SetEyeContact(const bool eyeContact) {
     _isMakingEyeContact = eyeContact;
   }
-  
+
+  inline void TrackedFace::SetFaceFocused(const bool isFaceFocused) {
+    _isFaceFocused = isFaceFocused;
+    if (_isFaceFocused) {
+      PRINT_NAMED_INFO("TrackedFace.SetFaceFocused.True", "");
+    } else {
+      PRINT_NAMED_INFO("TrackedFace.SetFaceFocused.False", "");
+    }
+  }
+
+  inline void TrackedFace::SetFaceDirection(const FaceDirection faceDirection) {
+    _faceDirection = faceDirection;
+    PRINT_NAMED_INFO("TrackedFace.SetFaceDirection", "face direction %d", faceDirection);
+  }
+
+  inline void TrackedFace::SetDetectionPoseInfo(const s32 detectionPoseInfo) {
+    _detectionPoseInfo = detectionPoseInfo;
+  }
+
+  inline void TrackedFace::SetEyeGazeAverage(const Point2f& eyeGazeAverage) {
+    _eyeGazeAverage = eyeGazeAverage;
+  }
+
+  inline void TrackedFace::SetNumberOfEyeGazeInliers(const s32 numberOfEyeGazeInliers) {
+    _numberOfEyeGazeInliers = numberOfEyeGazeInliers;
+  }
+
+  inline void TrackedFace::SetFacePartsFound(const bool facePartsFound) {
+    _facePartsFound = facePartsFound;
+  }
+
+  inline const Pose3d& TrackedFace::GetFaceFocusPose() const {
+    return _faceFocusPose;
+  }
+
+  inline void TrackedFace::SetFaceFocusPose(const Pose3d faceFocusPose) {
+    _faceFocusPose = faceFocusPose;
+  }
 } // namespace Vision
 } // namespace Anki
 

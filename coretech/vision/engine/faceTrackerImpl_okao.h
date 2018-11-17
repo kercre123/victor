@@ -14,6 +14,8 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/eyeContact.h"
+#include "coretech/vision/engine/faceNormalDirectedAtRobot.h"
+#include "coretech/vision/engine/faceNormalDirectedAtRobot3d.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/profiler.h"
 
@@ -131,9 +133,15 @@ namespace Vision {
     Result DetectGazeAndBlink(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                               Vision::TrackedFace& face);
 
-    bool DetectEyeContact(const TrackedFace& face,
-                          const TimeStamp_t& frameOrig);
+    void DetectEyeContact(const TrackedFace& face,
+                          const TimeStamp_t& frameOrig,
+                          bool& isMakingEyeContact,
+                          Point2f& eyeGazeAverage,
+                          s32& numberOfEyeGazeInliers);
   
+    void FaceDirection(TrackedFace& face, const TimeStamp_t& frameOrig);
+    void FaceDirection3d(const TrackedFace& face, const TimeStamp_t& frameOrig);
+
     bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face, const f32 intraEyeDist);
 
     void Reset();
@@ -184,6 +192,8 @@ namespace Vision {
     std::unique_ptr<Util::RandomGenerator> _rng;
     
     std::map<FaceID_t, EyeContact> _facesEyeContact;
+    std::map<FaceID_t, FaceNormalDirectedAtRobot> _facesDirectedAtRobot;
+    std::map<FaceID_t, FaceNormalDirectedAtRobot3d> _facesDirectedAtRobot3d;
 
     std::set<FaceID_t> _allowedTrackedFaceID;
   }; // class FaceTracker::Impl

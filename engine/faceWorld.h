@@ -15,6 +15,7 @@
 #ifndef __Anki_Cozmo_FaceWorld_H__
 #define __Anki_Cozmo_FaceWorld_H__
 
+#include "coretech/vision/engine/faceNormalDirectedAtRobot3d.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/trackedFace.h"
 
@@ -85,6 +86,7 @@ namespace Vector {
     
     Result Update(const std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(const Vision::TrackedFace& face);
+    Result AddOrUpdateFaceDireciton3d(Vision::TrackedFace& face, const TimeStamp_t& timeStamp);
   
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
@@ -158,6 +160,11 @@ namespace Vector {
     // eye contact and has a time stamp greater than seenSinceTime_ms
     bool IsMakingEyeContact(const u32 withinLast_ms) const;
 
+    // TOOD add documentation
+    Vision::TrackedFace::FaceDirection GetFaceDirection(const u32 withinLast_ms) const;
+    bool GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose, SmartFaceID& smartFaceID) const;
+    bool FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
+                         const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const;
 
     // Get the wall times that the given face ID has been observed for named faces. This implementation
     // returns at most 2 entries with front() being the wall time that was recorded first. On loading time,
@@ -240,6 +247,8 @@ namespace Vector {
     // faces saved album data for the initial entry so it can work across boots
     using ObservationHistoryMap = std::map<Vision::FaceID_t, ObservationTimeHistory>;
     ObservationHistoryMap _wallTimesObserved;
+
+    std::map<Vision::FaceID_t, Vision::FaceNormalDirectedAtRobot3d> _facesDirectedAtRobot3d;
     
   }; // class FaceWorld
   

@@ -35,7 +35,7 @@ namespace {
 }
 
 EyeContact::EyeContact()
-  : _gazeAverage(Point2f(GazeData::kleftRightMin_deg, GazeData::kupDownMin_deg))
+  : _gazeAverage(Point2f(GazeData::kLeftRightMin_deg, GazeData::kUpDownMin_deg))
 {
   _gazeHistory.resize(kHistorySize);
 }
@@ -101,7 +101,7 @@ Point2f EyeContact::ComputeGazeAverage(const bool filterOutliers)
   if (pointsInAverage != 0) {
     averageGaze *= 1.f/pointsInAverage;
   } else {
-    averageGaze = Point2f(GazeData::kleftRightMin_deg, GazeData::kupDownMin_deg);
+    averageGaze = Point2f(GazeData::kLeftRightMin_deg, GazeData::kUpDownMin_deg);
   }
   return averageGaze;
 }
@@ -135,7 +135,7 @@ bool EyeContact::DetermineMakingEyeContact()
     // because the distance is from (0,0)
     float distance = _gazeAverage.LengthSq();
     if ((distance < kEyeContactDistanceSq) && _initialized && SecondaryContraints()) {
-        eyeContact = true;
+      eyeContact = true;
     }
   }
   return eyeContact;

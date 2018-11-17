@@ -796,6 +796,17 @@ void PhysVizController::DrawHead(float width, float height, float depth)
   }
   glEnd();
 
+  glBegin(GL_LINES);
+
+  // Attempting to draw a face normal ... from the center of the front
+  // ellipse, center of the should be at x = 0.f, y = 0.f, z = 0.f
+  glVertex3f(0.f, 0.f, 0.f);
+  // TODO not sure if -depth is what we want here but we want it to be the
+  // opposite direction of way the two ellipses are connected above
+  glVertex3f(0.f, -.5f * depth, 0.f);
+
+  glEnd();
+
 }
 
 // x,y,z: Position of tetrahedron main tip with respect to its origin

@@ -701,8 +701,11 @@ namespace Vision {
     return RESULT_OK;
   }
 
-  bool FaceTracker::Impl::DetectEyeContact(const TrackedFace& face,
-                                           const TimeStamp_t& timeStamp)
+  void FaceTracker::Impl::DetectEyeContact(const TrackedFace& face,
+                                           const TimeStamp_t& timeStamp,
+                                           bool& isMakingEyeContact,
+                                           Point2f& eyeGazeAverage,
+                                           s32& numberOfEyeGazeInliers)
   {
     DEV_ASSERT(face.IsTranslationSet(), "FaceTrackerImpl.DetectEyeContact.FaceTranslationNotSet");
     auto& entry = _facesEyeContact[face.GetID()];
@@ -710,6 +713,9 @@ namespace Vision {
 
     // Check if the face is stale
     bool eyeContact = false;
+    s32 inliers = 0;
+    // TODO need to read this values from somewhere else
+    Point2f gazeAverage(-30.f, -20.f);
     if (entry.GetExpired(timeStamp))
     {
       _facesEyeContact.erase(face.GetID());
@@ -717,8 +723,37 @@ namespace Vision {
     else
     {
       eyeContact = entry.IsMakingEyeContact();
+      inliers = entry.GetNumberOfInliers();
+      gazeAverage = entry.GetGazeAverage();
     }
-    return eyeContact;
+    isMakingEyeContact = eyeContact;
+  }
+
+  void FaceTracker::Impl::FaceDirection(TrackedFace& face,
+                                        const TimeStamp_t& timeStamp)
+  {
+    DEV_ASSERT(face.IsTranslationSet(), "FaceTrackerImpl.DirectedAtRobot.FaceTranslationNotSet");
+    auto& entry = _facesDirectedAtRobot[face.GetID()];
+    entry.Update(face, timeStamp);
+
+    // Check if the face is stale
+    TrackedFace::FaceDirection faceDirection = TrackedFace::FaceDirection::None;
+    if (entry.GetExpired(timeStamp))
+    {
+      _facesDirectedAtRobot.erase(face.GetID());
+    }
+    else
+    {
+      faceDirection = entry.GetFaceDirection();
+    }
+    face.SetFaceDirection(faceDirection);
+  }
+
+  void FaceTracker::Impl::FaceDirection3d(const TrackedFace& face,
+                                          const TimeStamp_t& timeStamp)
+  {
+    auto& entry = _facesDirectedAtRobot3d[face.GetID()];
+    entry.Update(face, timeStamp);
   }
 
   static Vec3f GetTranslation(const Point2f& leftEye, const Point2f& rightEye, const f32 intraEyeDist,
@@ -762,6 +797,10 @@ namespace Vision {
     // We don't know anything about orientation without parts, so don't update it and assume
     // _not_ facing the camera (without actual evidence that we are)
     face.SetIsFacingCamera(false);
+
+    // Same as set pose with parts not sure if this is where this should live
+    // but it is going to live here for now
+    face.SetFacePartsFound(false);
 
     return RESULT_OK;
   }
@@ -956,7 +995,25 @@ namespace Vision {
     // Yaw angle maps without change onto our coordinate system, while the roll and pitch
     // need to be switched and negated to map correctly from the okao coordinate system
     // to the anki coordindate system.
-    const RotationMatrix3d rotation(-face.GetHeadPitch(), -face.GetHeadRoll(), face.GetHeadYaw());
+    //const RotationMatrix3d rotation(-face.GetHeadRoll(), -face.GetHeadPitch(), face.GetHeadYaw());
+    //const RotationMatrix3d rotation(-face.GetHeadPitch(), -face.GetHeadYaw(), face.GetHeadRoll());
+    //const RotationMatrix3d rotation(-face.GetHeadPitch(), face.GetHeadYaw(), -face.GetHeadRoll());
+    //const RotationMatrix3d rotation(face.GetHeadPitch(), -face.GetHeadYaw(), -face.GetHeadRoll());
+
+    // Using openGL coordinates, and okao docs this is what i woudl expect to work
+    // const RotationMatrix3d rotation(face.GetHeadPitch(), face.GetHeadYaw(), face.GetHeadRoll());
+
+    // Using anki world coordinates x out of robot face, y left of robot, z above robot,
+    // this is what i would expect to work
+    // const RotationMatrix3d rotation(face.GetHeadRoll(), face.GetHeadPitch(), face.GetHeadYaw() + M_PI);
+
+    // Testing history with webots
+    // const RotationMatrix3d rotation(face.GetHeadRoll(), -face.GetHeadPitch(), face.GetHeadYaw());
+    // const RotationMatrix3d rotation(face.GetHeadRoll(), face.GetHeadPitch(), face.GetHeadYaw());
+
+    // This one works ... i think still would like to verify i bit more, but have verfied in viz, 
+    // and the unit test for gazing ... head direction
+    const RotationMatrix3d rotation(-face.GetHeadPitch(), face.GetHeadRoll(), face.GetHeadYaw());
     headPose.SetRotation(headPose.GetRotation() * rotation);
 
     headPose.SetParent(_camera.GetPose());
@@ -988,6 +1045,10 @@ namespace Vision {
         PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
       }, TrackedFace::FeatureName::UpperLip, face);
     }
+
+    // Not sure the best place to put this but it's going to live here for
+    // now.
+    face.SetFacePartsFound(true);
 
     return RESULT_OK;
   }
@@ -1081,6 +1142,8 @@ namespace Vision {
       return RESULT_FAIL;
     }
     Toc("FaceDetect");
+    PRINT_NAMED_WARNING("FaceTrackerImpl.Update.NumDetections",
+                        "Number of detections=%d", numDetections);
 
     // Figure out which detected faces we already recognize
     // so that we can choose to run recognition more selectively in the loop below,
@@ -1158,6 +1221,9 @@ namespace Vision {
       TrackedFace& face = faces.back();
 
       face.SetIsBeingTracked(detectionInfo.nDetectionMethod != DET_METHOD_DETECTED_HIGH);
+
+      // Set the detection pose
+      face.SetDetectionPoseInfo(detectionInfo.nPose);
 
       POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
       okaoResult = OKAO_CO_ConvertCenterToSquare(detectionInfo.ptCenter,
@@ -1275,7 +1341,14 @@ namespace Vision {
           // This needs to happen after setting the pose.
           // There is a assert in there that should catch if the pose is uninitialized but
           // won't catch on going cases of the dependence.
-          face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
+          // TODO make be worth putting these in their own structure ... maybe
+          bool isMakingEyeContact = false;
+          Point2f eyeGazeAverage(-30.f, -20.f);
+          s32 numberOfEyeGazeInliers = 0;
+          DetectEyeContact(face, frameOrig.GetTimestamp(), isMakingEyeContact, eyeGazeAverage, numberOfEyeGazeInliers);
+          face.SetEyeContact(isMakingEyeContact);
+          face.SetEyeGazeAverage(eyeGazeAverage);
+          face.SetNumberOfEyeGazeInliers(numberOfEyeGazeInliers);
         }
 
         
@@ -1288,6 +1361,10 @@ namespace Vision {
                                     ptRightBottom.x-ptLeftTop.x,
                                     ptRightBottom.y-ptLeftTop.y));
         
+        // TODO this shoudl be wrapped in a conditional ... maybe? who knows
+        // FaceDirection(face, frameOrig.GetTimestamp());
+        // FaceDirection3d(face, frameOrig.GetTimestamp());
+
         //
         // Face Recognition:
         //
