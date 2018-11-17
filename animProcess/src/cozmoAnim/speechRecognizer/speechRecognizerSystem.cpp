@@ -302,7 +302,7 @@ void SpeechRecognizerSystem::InitAlexaPlayback(const RobotDataLoader& dataLoader
   // Set init detector using console vars
   UpdateTriggerForLocale(*_alexaPlaybackTrigger,
                          Util::Locale("en","US"),
-                         MicConfigModelType::size_250kb,
+                         MicData::MicTriggerConfig::ModelType::size_250kb,
                          -1);
 }
 
