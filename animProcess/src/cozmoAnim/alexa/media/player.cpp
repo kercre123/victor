@@ -380,9 +380,27 @@ bool AlexaMediaPlayer::play( SourceId id )
     const int kMaxBlocks = 10000; // number of times we can try to check a blocking reader before giving up
 
     float lastPlayedMs = 0;
-    while( (_state == State::Preparing) || (_state == State::Playing) || (_state == State::Playable) ) {
+    auto stateOk = [this] {
+      switch (_state) {
+        case State::Preparing:
+        case State::Playing:
+        case State::Playable:
+        case State::Paused:
+          return true;
+        default:
+          return false;
+      }
+    };
+    while( stateOk() ) {
 
       UpdateDetectorState(lastPlayedMs);
+
+      // todo: not this
+      // loop idle while paused until resumed
+      if( _state == State::Paused ) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        continue;
+      }
 
       if( !sentPlaybackStarted ) {
         for( auto& observer : _observers ) {
@@ -583,7 +601,7 @@ void AlexaMediaPlayer::SetPlayerVolume(float volume)
 int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 {
   using namespace AudioEngine;
-  
+
   mp3dec_frame_info_t info;
   float decoded_ms = 0.0f;
 
@@ -642,7 +660,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
             // Set callback for this thread
             SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
               _detectedTriggers_ms.push({_offset_ms + info.startTime_ms, _offset_ms + info.endTime_ms});
-              LOG_WARNING("AlexaMediaPlayer.Decode.Recognizer.Callback", "offset, start, end %d %d %d",
+              LOG("Decode.Recognizer.Callback: offset, start, end %d %d %d",
                 (int)_offset_ms, info.startTime_ms, info.endTime_ms);
             };
             _recognizer->SetCallback(callback);
