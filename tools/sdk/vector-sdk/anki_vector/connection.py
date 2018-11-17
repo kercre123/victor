@@ -277,7 +277,7 @@ class Connection:
         the :class:`Connection` will try to maintain control of Vector's behavior system even after losing
         control to higher priority robot behaviors such as returning home to charge a low battery.
 
-        For more information about behavior control, see :ref:`behavior <behavior>`
+        For more information about behavior control, see :ref:`behavior <behavior>`.
 
         .. testcode::
 

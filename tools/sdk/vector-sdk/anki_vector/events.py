@@ -50,6 +50,8 @@ class Events(Enum):
     robot_observed_face = "robot_observed_face"                       #: Robot event for when a face is observed by the robot.
     robot_changed_observed_face_id = "robot_changed_observed_face_id"  # : Robot event for when a known face changes its id.
 
+    wake_word = "wake_word"                             #: Robot event triggered when Vector hears "Hey Vector"
+
     # Audio
     audio_send_mode_changed = "audio_send_mode_changed"  #: Robot event containing changes to the robot's audio stream source data processing mode.
 
