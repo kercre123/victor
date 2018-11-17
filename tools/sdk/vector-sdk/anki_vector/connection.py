@@ -281,6 +281,8 @@ class Connection:
 
         .. testcode::
 
+            import time
+
             import anki_vector
 
             with anki_vector.Robot(args.serial, requires_behavior_control=False) as robot:
@@ -292,6 +294,9 @@ class Connection:
 
                 print(robot.conn.requires_behavior_control) # Will print False
                 robot.events.subscribe(callback, anki_vector.events.Events.robot_observed_face)
+
+                # Run for 10 seconds looking for a face
+                time.sleep(10)
         """
         return self._requires_behavior_control
 
