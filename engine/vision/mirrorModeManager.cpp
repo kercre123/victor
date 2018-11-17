@@ -123,11 +123,31 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
     const auto& name = faceDetection.GetName();
 
     _screenImg.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
-                 NamedColors::YELLOW, 3);
+                        NamedColors::YELLOW, 3);
     
-    std::string dispName(name.empty() ? "<unknown>" : name);
-    dispName += "[" + std::to_string(faceID) + "]";
-    _screenImg.DrawText({1.f, _screenImg.GetNumRows()-1}, dispName, NamedColors::YELLOW, 0.6f, true);
+    const auto& debugInfo = faceDetection.GetRecognitionDebugInfo();
+    if(!debugInfo.empty())
+    {
+      const float kFontScale = 0.5f;
+      static const Vec2f fontSize = _screenImg.GetTextSize("Test", kFontScale, 1);
+      s32 line = 1;
+      for(const auto& info : debugInfo)
+      {
+        const std::string& name = info.name;
+        std::string dispName(name.empty() ? "<unknown>" : name);
+        dispName += "[" + std::to_string(info.matchedID) + "]: " + std::to_string(info.score);
+        const Point2f position{1.f, _screenImg.GetNumRows()-1-(debugInfo.size()-line)*(fontSize.y()+1)};
+        _screenImg.DrawText(position, dispName, NamedColors::YELLOW, kFontScale, true);
+        ++line;
+      }
+    }
+    else
+    {
+      const float kFontScale = 0.6f;
+      std::string dispName(name.empty() ? "<unknown>" : name);
+      dispName += "[" + std::to_string(faceID) + "]";
+      _screenImg.DrawText({1.f, _screenImg.GetNumRows()-1}, dispName, NamedColors::YELLOW, kFontScale, true);
+    }
   }
 }
   
