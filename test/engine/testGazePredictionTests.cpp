@@ -17,6 +17,7 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/eyeContact.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "engine/cozmoContext.h"
 
 #include <fstream>
@@ -66,6 +67,8 @@ TEST(EyeContact, GazeEstimationInterface)
   std::vector<std::string> imageFiles = 
     Anki::Util::FileUtils::FilesInDirectory(pathToImages, true, ".jpg");
 
+  Vision::ImageCache imageCache;
+  
   int frameNumber = 0;
   for (auto const& filename : imageFiles) {
     Vision::Image image;
@@ -75,7 +78,8 @@ TEST(EyeContact, GazeEstimationInterface)
     std::list<TrackedFace> faces;
     std::list<UpdatedFaceID> updatedIDs;
     const float cropFactor = 1.f;
-    lastResult = faceTracker.Update(image, cropFactor, faces, updatedIDs);
+    imageCache.Reset(image);
+    lastResult = faceTracker.Update(imageCache, cropFactor, faces, updatedIDs);
     // We don't detect a face in the first frame (even though
     // there is one present) but should find one face in the
     // rest of the frames
