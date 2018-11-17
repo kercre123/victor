@@ -70,7 +70,11 @@ namespace Vision {
   CONSOLE_VAR(bool, kUseUndistortionForFacePose,  "Vision.FaceDetectorCommon", true);
   CONSOLE_VAR(bool, kAdjustEyeDistByYaw,          "Vision.FaceDetectorCommon", true);
   CONSOLE_VAR(bool, kKeepUndistortedFaceFeatures, "Vision.FaceDetectorCommon", false);
-
+  
+  // Use full-resolution image data to extract parts (and do related things like
+  // gaze/smile detection/recognition).
+  CONSOLE_VAR(bool, kUseFullResForFaceParts,      "Vision.FaceDetectorCommon", true);
+  
   namespace DetectParams {
     // Parameters common to all face detection modes
     CONSOLE_VAR_RANGED(s32,                  kMaxDetectedFaces,     "Vision.FaceDetectorCommon", 10, 1, 1023);
@@ -505,11 +509,14 @@ namespace Vision {
 
 
   bool FaceTracker::Impl::DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                                          INT32 detectionIndex,
+                                          POINT& leftTop, POINT& rightTop,
+                                          POINT& leftBottom, POINT& rightBottom,
+                                          INT32 yawPose,
                                           Vision::TrackedFace& face)
   {
-    INT32 okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
-
+    //INT32 okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
+    INT32 okaoResult = OKAO_PT_SetPosition(_okaoPartDetectorHandle, &leftTop, &rightTop, &leftBottom, &rightBottom, yawPose, DTVERSION_SOFT_V6);
+    
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceTrackerImpl.Update.FaceLibSetPositionFail",
                           "FaceLib Result Code=%d", okaoResult);
@@ -517,6 +524,8 @@ namespace Vision {
     }
     okaoResult = OKAO_PT_DetectPoint_GRAY(_okaoPartDetectorHandle, dataPtr,
                                           nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3, _okaoPartDetectionResultHandle);
+    
+    
 
     if(OKAO_NORMAL != okaoResult) {
       if(OKAO_ERR_PROCESSCONDITION != okaoResult) {
@@ -1162,10 +1171,6 @@ namespace Vision {
         return RESULT_FAIL;
       }
 
-      face.SetRect(Rectangle<f32>(ptLeftTop.x, ptLeftTop.y,
-                                  ptRightBottom.x-ptLeftTop.x,
-                                  ptRightBottom.y-ptLeftTop.y));
-
       face.SetTimeStamp(frameOrig.GetTimestamp());
 
       // Do we need to find parts?
@@ -1178,10 +1183,39 @@ namespace Vision {
       
       // Try finding face parts
       bool facePartsFound = false;
+      INT32 nWidthForParts = nWidth;
+      INT32 nHeightForParts = nHeight;
+      RAWIMAGE* dataPtrForParts = dataPtr;
       if(doPartDetection)
       {
+        POINT ptLeftTopForParts(ptLeftTop);
+        POINT ptRightTopForParts(ptRightTop);
+        POINT ptLeftBottomForParts(ptLeftBottom);
+        POINT ptRightBottomForParts(ptRightBottom);
+        
+        if(kUseFullResForFaceParts)
+        {
+          // TODO: Figure out how to get just a crop
+          const Image& fullImage = imageCache.GetGray(ImageCacheSize::Full);
+          nWidthForParts = fullImage.GetNumCols();
+          nHeightForParts = fullImage.GetNumRows();
+          dataPtrForParts = const_cast<UINT8*>(fullImage.GetDataPointer());
+          
+          for(auto pt : {&ptLeftTopForParts, &ptRightTopForParts, &ptLeftBottomForParts, &ptRightBottomForParts})
+          {
+            pt->x *= 2;
+            pt->y *= 2;
+          }
+        }
+        
         Tic("FacePartDetection");
-        facePartsFound = DetectFaceParts(nWidth, nHeight, dataPtr, detectionIndex, face);
+        //facePartsFound = DetectFaceParts(nWidthForParts, nHeightForParts, dataPtrForParts, detectionIndex, face);
+        
+        facePartsFound = DetectFaceParts(nWidthForParts, nHeightForParts, dataPtrForParts,
+                                         ptLeftTopForParts, ptRightTopForParts,
+                                         ptLeftBottomForParts, ptRightBottomForParts,
+                                         detectionInfo.nPose, face);
+        
         Toc("FacePartDetection");
       }
 
@@ -1191,7 +1225,7 @@ namespace Vision {
 
       if(facePartsFound)
       {
-        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
+        SetFacePoseFromParts(nHeightForParts, nWidthForParts, face, intraEyeDist);
 
         //PRINT_NAMED_INFO("FaceTrackerImpl.Update.HeadOrientation",
         //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
@@ -1201,7 +1235,7 @@ namespace Vision {
         {
           // Expression detection
           Tic("ExpressionRecognition");
-          Result expResult = EstimateExpression(nWidth, nHeight, dataPtr, face);
+          Result expResult = EstimateExpression(nWidthForParts, nHeightForParts, dataPtrForParts, face);
           Toc("ExpressionRecognition");
           if(RESULT_OK != expResult) {
             PRINT_NAMED_WARNING("FaceTrackerImpl.Update.EstimateExpressionFailed",
@@ -1213,7 +1247,7 @@ namespace Vision {
         if(_detectSmiling)
         {
           Tic("SmileDetection");
-          Result smileResult = DetectSmile(nWidth, nHeight, dataPtr, face);
+          Result smileResult = DetectSmile(nWidthForParts, nHeightForParts, dataPtrForParts, face);
           Toc("SmileDetection");
 
           if(RESULT_OK != smileResult) {
@@ -1226,7 +1260,7 @@ namespace Vision {
         if(_detectGaze || _detectBlinks) // In OKAO, gaze and blink are part of the same detector
         {
           Tic("GazeAndBlinkDetection");
-          Result gbResult = DetectGazeAndBlink(nWidth, nHeight, dataPtr, face);
+          Result gbResult = DetectGazeAndBlink(nWidthForParts, nHeightForParts, dataPtrForParts, face);
           Toc("GazeAndBlinkDetection");
 
           if(RESULT_OK != gbResult) {
@@ -1244,6 +1278,16 @@ namespace Vision {
           face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
         }
 
+        
+        if(kUseFullResForFaceParts)
+        {
+          face.Scale(0.5f);
+        }
+        
+        face.SetRect(Rectangle<f32>(ptLeftTop.x, ptLeftTop.y,
+                                    ptRightBottom.x-ptLeftTop.x,
+                                    ptRightBottom.y-ptLeftTop.y));
+        
         //
         // Face Recognition:
         //
@@ -1274,7 +1318,11 @@ namespace Vision {
             }
           }
           
-          const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
+          // TODO: need to pass in scaled data here
+          const Vision::Image& imgForRecog = imageCache.GetGray(kUseFullResForFaceParts ?
+                                                                ImageCacheSize::Full :
+                                                                ImageCacheSize::Half );
+          const bool recognizing = _recognizer.SetNextFaceToRecognize(imgForRecog,
                                                                       detectionInfo,
                                                                       _facialParts,
                                                                       _facialPartConfs,
@@ -1298,6 +1346,10 @@ namespace Vision {
       {
         // NOTE: Without parts, we do not do eye contact, gaze, face recognition, etc.
 
+        face.SetRect(Rectangle<f32>(ptLeftTop.x, ptLeftTop.y,
+                                    ptRightBottom.x-ptLeftTop.x,
+                                    ptRightBottom.y-ptLeftTop.y));
+        
         SetFacePoseWithoutParts(nHeight, nWidth, face, intraEyeDist);
       }
 

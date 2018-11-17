@@ -68,9 +68,28 @@ namespace Vision {
         point += shift;
       }
     }
+    _leftEyeCen += shift;
+    _rightEyeCen += shift;
     _rect = Rectangle<f32>(_rect.GetX() + shift.x(), _rect.GetY() + shift.y(),
                            _rect.GetWidth(), _rect.GetHeight());
   }
+  
+  void TrackedFace::Scale(const float scale)
+  {
+    for (auto& feature: _features)
+    {
+      for (auto& point: feature)
+      {
+        point *= scale;
+      }
+    }
+    _leftEyeCen *= scale;
+    _rightEyeCen *= scale;
+    _rect = Rectangle<f32>(_rect.GetX() * scale, _rect.GetY() * scale,
+                           _rect.GetWidth() * scale, _rect.GetHeight() * scale);
+  }
+  
+  
 } // namespace Vision
 } // namespace Anki
 

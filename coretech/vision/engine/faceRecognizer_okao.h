@@ -42,6 +42,8 @@ namespace Json {
 
 namespace Anki {
 namespace Vision {
+  
+  class ImageCache;
 
   class FaceRecognizer : public Profiler
   {
@@ -74,10 +76,12 @@ namespace Vision {
     // otherwise. If true, the caller must not modify the part detection handle
     // while processing is running (i.e. until false is returned).
     // If running synchronously, always returns true.
-    bool SetNextFaceToRecognize(const Image& img,
+    bool SetNextFaceToRecognize(const Vision::Image& img,
                                 const DETECTION_INFO& detectionInfo,
-                                HPTRESULT okaoPartDetectionResultHandle,
+                                POINT* facialParts,     // PT_POINT_KIND_MAX in length
+                                INT32* partConfidences, // PT_POINT_KIND_MAX in length
                                 bool enableEnrollment);
+
     
     // Use faceID = UnknownFaceID to allow enrollments for any face.
     // Use N = -1 to allow ongoing enrollment.
@@ -204,6 +208,9 @@ namespace Vision {
     HFEATURE    _okaoRecogMergeFeatureHandle   = NULL;
     HALBUM      _okaoFaceAlbum                 = NULL;
     
+    POINT       _aptPoint[PT_POINT_KIND_MAX];
+    INT32       _anConfidence[PT_POINT_KIND_MAX];
+
     // Threading
     enum class ProcessingState : u8 {
       Idle,

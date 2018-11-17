@@ -117,7 +117,10 @@ namespace Vision {
     void Deinit();
 
     bool   DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                           INT32 detectionIndex, Vision::TrackedFace& face);
+                           POINT& leftTop, POINT& rightTop,
+                           POINT& leftBottom, POINT& rightBottom,
+                           INT32 yawPose,
+                           Vision::TrackedFace& face);
     
     Result EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                               TrackedFace& face);

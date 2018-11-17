@@ -81,6 +81,9 @@ namespace Vision {
     // Shift both the detection rectangle and features
     void Shift(const Point2f& shift);
     
+    // Scale the detection rectangle and features
+    void Scale(const float scale);
+    
     void AddPointToFeature(FeatureName whichFeature, Point2f&& point);
     void SetFeature(FeatureName whichFeature, Feature&& points);
     

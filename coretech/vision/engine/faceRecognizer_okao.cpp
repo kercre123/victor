@@ -24,6 +24,7 @@
 #include "util/threading/threadPriority.h"
 #include "json/json.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/vision/engine/imageCache.h"
 
 #include "OkaoCoAPI.h"
 
@@ -773,9 +774,9 @@ namespace Vision {
     RAWIMAGE* dataPtr = _img.GetDataPointer();
 
     Tic("OkaoFeatureExtraction");
-    OkaoResult okaoResult = OKAO_FR_ExtractHandle_GRAY(_okaoRecognitionFeatureHandle,
-                                                  dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
-                                                  _okaoPartDetectionResultHandle);
+    OkaoResult okaoResult = OKAO_FR_ExtractPoints_GRAY(_okaoRecognitionFeatureHandle,
+                                                       dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3, PT_POINT_KIND_MAX,
+                                                       _aptPoint, _anConfidence);
     Toc("OkaoFeatureExtraction");
 
     if(kFaceRecognitionSimulatedDelay_ms > 0)
@@ -1040,10 +1041,12 @@ namespace Vision {
     }
   }
 
-  bool FaceRecognizer::SetNextFaceToRecognize(const Image& img,
+  bool FaceRecognizer::SetNextFaceToRecognize(const Vision::Image& img,
                                               const DETECTION_INFO& detectionInfo,
-                                              HPTRESULT okaoPartDetectionResultHandle,
+                                              POINT* facialParts,
+                                              INT32* partConfidences,
                                               bool enableEnrollment)
+
   {
     // Nothing to do if we aren't allowed to enroll anyone and there's nobody
     // in the album yet to match this face to. Also ignore detections that are
@@ -1056,8 +1059,15 @@ namespace Vision {
 
       _mutex.lock();
       img.CopyTo(_img);
+      
+      memcpy(_aptPoint, facialParts, PT_POINT_KIND_MAX*sizeof(POINT));
+      memcpy(_anConfidence, partConfidences, PT_POINT_KIND_MAX*sizeof(INT32));
+      //OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX, _aptPoint, _anConfidence);
+      const Point2f leftEye(_aptPoint[PT_POINT_LEFT_EYE].x, _aptPoint[PT_POINT_LEFT_EYE].y);
+      const Point2f rightEye(_aptPoint[PT_POINT_RIGHT_EYE].x, _aptPoint[PT_POINT_RIGHT_EYE].y);
+
       _isEnrollmentEnabled = enableEnrollment;
-      _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
+      //_okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
       _detectionInfo = detectionInfo;
       _state = ProcessingState::HasNewImage;
       _mutex.unlock();
