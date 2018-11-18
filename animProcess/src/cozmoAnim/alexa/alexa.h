@@ -16,12 +16,16 @@
 #define ANIMPROCESS_COZMO_ALEXA_H
 #pragma once
 
+#include "audioEngine/audioTypes.h"
 #include "audioUtil/audioDataTypes.h"
 #include <memory>
 #include <string>
 #include <mutex>
 
 namespace Anki {
+namespace AudioEngine {
+class AudioCallbackContext;
+}
 namespace Vector {
   
 class AlexaImpl;
@@ -113,6 +117,10 @@ private:
   bool DidAuthenticatePreviously() const;
   void DeleteOptInFile() const;
   void DeleteUserFolder() const;
+  
+  // Play Audio Event Helper
+  // Use new create AudioCallbackContext instance, hand off ownership when passing in to method
+  void PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback = nullptr ) const;
   
   std::unique_ptr<AlexaImpl> _impl;
   

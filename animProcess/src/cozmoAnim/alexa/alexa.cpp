@@ -460,19 +460,15 @@ void Alexa::SetUXState( AlexaUXState newState )
     // Speaking to Listening
     // Listrnig to thinking
     if( (oldState == AlexaUXState::Speaking) && (_uxState == AlexaUXState::Listening) ) {
+      // Play EarCon for follow up question
       using namespace AudioEngine;
       using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-      auto* audioController = _context->GetAudioController();
-      const auto eventID = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound );
-      const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
-      audioController->PostAudioEvent( eventID, gameObject );
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
     } else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+      // Play when listening ends
       using namespace AudioEngine;
       using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-      auto* audioController = _context->GetAudioController();
-      const auto eventID = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing );
-      const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
-      audioController->PostAudioEvent( eventID, gameObject );
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
     }
   }
   
@@ -618,6 +614,10 @@ void Alexa::NotifyOfTapToTalk() const
                    "Tap-to-talk was issued when alexa was disabled" ) )
   {
     _impl->NotifyOfTapToTalk();
+    // Play button EarCon Audio Event
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound_Touch ) );
   }
 }
   
@@ -630,6 +630,10 @@ void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) con
                    "Wake word was issued when alexa was disabled" ) )
   {
     _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
+    // Play speach trigger EarCon Audio Event
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
   }
 }
   
@@ -639,8 +643,7 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
   LOG_INFO( "Alexa.PlayErrorAudio.Type", "Setting error flag %d", (int) errorType );
   DEV_ASSERT( errorType != AlexaNetworkErrorType::NoError, "Alexa.PlayErrorAudio.NotAnError" );
   
-  auto* audioController = _context->GetAudioController();
-  if( !IsErrorPlaying() && (audioController != nullptr) ) {
+  if( !IsErrorPlaying() ) {
     using namespace AudioEngine;
     auto* callbackContext = new AudioCallbackContext();
     callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
@@ -653,15 +656,23 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
       OnAlexaUXStateChanged( _pendingUXState );
     });
     
-    const auto eventID = GetErrorAudioEvent( errorType );
-    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
-    audioController->PostAudioEvent( eventID, gameObject, callbackContext );
+    PlayAudioEvent( GetErrorAudioEvent( errorType ), callbackContext );
   }
   
   // extend timeout
   _timeToEndError_s = kAlexaErrorTimeout_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback ) const
+{
+  auto* audioController = _context->GetAudioController();
+  if ( audioController != nullptr ) {
+    using namespace AudioEngine;
+    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
+    audioController->PostAudioEvent( eventId, gameObject, callback );
+  }
+}
   
 } // namespace Vector
 } // namespace Anki
