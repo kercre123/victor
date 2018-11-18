@@ -265,6 +265,9 @@ namespace Vector {
     Pose3d headPoseWrtWorldOrigin(face.GetHeadPose());
     headPoseWrtWorldOrigin.SetParent(_robot->GetPoseOriginList().GetOriginByID(histOriginID));
 
+    Pose3d eyePoseWrtWorldOrigin(face.GetEyePose());
+    eyePoseWrtWorldOrigin.SetParent(_robot->GetPoseOriginList().GetOriginByID(histOriginID));
+
     const bool robotOnTreads = _robot->GetOffTreadsState() == OffTreadsState::OnTreads;
     const bool headBelowRobot = headPoseWrtWorldOrigin.GetTranslation().z() < 0.f;
     if(kIgnoreFacesBelowRobot && robotOnTreads && headBelowRobot)
@@ -470,6 +473,7 @@ namespace Vector {
     assert(faceEntry != nullptr);
 
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
+    faceEntry->face.SetEyePose(eyePoseWrtWorldOrigin);
 
     // This is where I am going to update my faceEntry, but only
     // if it has parts (aka has eyes)
@@ -546,14 +550,19 @@ namespace Vector {
                                                                                  averageGPPose,
                                                                                  ::Anki::NamedColors::GREEN);
 
-        const auto currentFaceDirectionAboveHorizon = entry.GetCurrentFaceDirectionAboveHorizon();
-        Pose3d currentAHPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentFaceDirectionAboveHorizon));
-        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2347,
+        const auto averageEyeDirection = entry.GetEyeDirectionAverage();
+        Pose3d averageEyePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageEyeDirection));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2348,
                                                                                  kGazeGroundPointSize,
-                                                                                 currentAHPose,
+                                                                                 averageEyePose,
+                                                                                 ::Anki::NamedColors::BLACK);
+
+        const auto currentEyeDirection = entry.GetCurrentEyeDirection();
+        Pose3d currentEyePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentEyeDirection));
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(2349,
+                                                                                 kGazeGroundPointSize,
+                                                                                 currentEyePose,
                                                                                  ::Anki::NamedColors::BLUE);
-
-
         /*
         Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, -500.f, 0.f)));
         translatedPose.SetParent(faceEntry->face.GetHeadPose());
@@ -829,6 +838,7 @@ namespace Vector {
                          "Flattened FaceID:%d w.r.t. %s", pair.first, newOrigin.GetName().c_str());
 
           face.SetHeadPose(poseWrtNewOrigin);
+          face.SetEyePose(poseWrtNewOrigin);
           ++updateCount;
         }
         else

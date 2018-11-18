@@ -118,6 +118,9 @@ namespace Vision {
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
 
+    const Pose3d& GetEyePose() const;
+    void SetEyePose(Pose3d& pose);
+
     // TODO add documentation
     const Pose3d& GetFaceFocusPose() const;
     void SetFaceFocusPose(const Pose3d faceFocusPose);
@@ -221,6 +224,7 @@ namespace Vision {
     Radians _roll, _pitch, _yaw;
     
     Pose3d _headPose;
+    Pose3d _eyePose;
     
     std::list<FaceRecognitionMatch> _debugRecognitionInfo;
     
@@ -339,6 +343,14 @@ namespace Vision {
   inline void TrackedFace::SetHeadPose(Pose3d &pose) {
     _headPose = pose;
     _isTranslationSet = true;
+  }
+
+  inline const Pose3d& TrackedFace::GetEyePose() const {
+    return _eyePose;
+  }
+  
+  inline void TrackedFace::SetEyePose(Pose3d &pose) {
+    _eyePose = pose;
   }
   
   

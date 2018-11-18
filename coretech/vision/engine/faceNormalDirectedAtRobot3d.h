@@ -60,32 +60,43 @@ public:
 
   Point3f GetFaceDirectionSurfaceAverage() const;
   Point3f GetCurrentFaceDirectionSurface() const;
-  Point3f GetCurrentFaceDirectionAboveHorizon() const;
-  bool GetExpired(const TimeStamp_t currentTime) const;
-  bool IsDirectedBelowHorizon() { return _directedBelowHorizon; }
   std::vector<FaceDirectionData3d> const& GetFaceDirectionHistory() {return _faceDirectionSurfaceHistory;}
+
+  Point3f GetEyeDirectionAverage() const;
+  Point3f GetCurrentEyeDirection() const;
+  std::vector<FaceDirectionData3d> const& GetEyeDirectionHistory() {return _eyeDirectionHistory;}
+
+  bool GetExpired(const TimeStamp_t currentTime) const;
   bool IsFaceFocused() const;
 
 private:
   int FindInliers(const Point3f& faceDirectionAverage);
+  int FindEyeDirectionInliers(const Point3f& eyeDirectionAverage);
 
   bool GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint);
   Point3f ComputeEntireFaceDirectionAverage();
   Point3f ComputeFaceDirectionAverage(const bool filterOutliers);
   Point3f RecomputeFaceDirectionAverage();
 
+  bool GetPointFromEyePose(const Pose3d& eyePose, Point3f& eyeDirectionPoint);
+  Point3f ComputeEntireEyeDirectionAverage();
+  Point3f ComputeEyeDirectionAverage(const bool filterOutliers);
+  Point3f RecomputeEyeDirectionAverage();
+
   Pose3d _headPose;
+  Pose3d _eyePose;
   TimeStamp_t _lastUpdated;
 
   int _currentIndex = 0;
   int _numberOfInliers = 0;
+  int _numberOfEyeDirectionsInliers = 0;
   bool _initialized = false;
 
   std::vector<FaceDirectionData3d> _faceDirectionSurfaceHistory;
-  std::vector<FaceDirectionData3d> _faceDirectionAboveHorizonHistory;
   Point3f _faceDirectionSurfaceAverage;
-  Point3f _faceDirectionAboveHorizonAverage;
-  bool _directedBelowHorizon;
+
+  std::vector<FaceDirectionData3d> _eyeDirectionHistory;
+  Point3f _eyeDirectionAverage;
 };
 
 }

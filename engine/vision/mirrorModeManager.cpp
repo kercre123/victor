@@ -121,9 +121,13 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
     const auto& rect = faceDetection.GetRect();
     const auto& name = faceDetection.GetName();
 
+    auto color = NamedColors::RED;
+    if (faceDetection.HasEyes()) {
+      color = NamedColors::YELLOW;
+    } 
     _screenImg.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
-                 NamedColors::YELLOW, 3);
-    
+                        color, 3);
+
     std::string dispName(name.empty() ? "<unknown>" : name);
     dispName += "[" + std::to_string(faceID) + "]";
     _screenImg.DrawText({1.f, _screenImg.GetNumRows()-1}, dispName, NamedColors::YELLOW, 0.6f, true);

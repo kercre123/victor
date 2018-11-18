@@ -784,6 +784,11 @@ namespace Vision {
     headPose.SetParent(_camera.GetPose());
     face.SetHeadPose(headPose);
 
+    Pose3d eyePose = face.GetEyePose();
+    eyePose.SetTranslation(T);
+    eyePose.SetParent(_camera.GetPose());
+    face.SetEyePose(eyePose);
+
     // We don't know anything about orientation without parts, so don't update it and assume
     // _not_ facing the camera (without actual evidence that we are)
     face.SetIsFacingCamera(false);
@@ -1003,11 +1008,26 @@ namespace Vision {
 
     // This one works ... i think still would like to verify i bit more, but have verfied in viz, 
     // and the unit test for gazing ... head direction
-    const RotationMatrix3d rotation(-face.GetHeadPitch(), face.GetHeadRoll(), face.GetHeadYaw());
-    headPose.SetRotation(headPose.GetRotation() * rotation);
+    const RotationMatrix3d faceRotation(-face.GetHeadPitch(), face.GetHeadRoll(), face.GetHeadYaw());
+    headPose.SetRotation(headPose.GetRotation() * faceRotation);
 
     headPose.SetParent(_camera.GetPose());
     face.SetHeadPose(headPose);
+
+    Pose3d eyePose = face.GetEyePose();
+    eyePose.SetTranslation(T);
+    const Gaze& gaze = face.GetGaze();
+    PRINT_NAMED_WARNING("FaceTrackerImpl.SetFacePoseFromParts.SettingEyeGaze",
+                        "upDown=%.3f, leftRight=%.3f", gaze.upDown_deg, gaze.leftRight_deg);
+    Radians upDown_rad = Radians(DEG_TO_RAD(gaze.upDown_deg));
+    Radians leftRight_rad = Radians(DEG_TO_RAD(gaze.leftRight_deg));
+
+    // const RotationMatrix3d eyeRotation(-upDown_rad, 0.f, -leftRight_rad);
+    // const RotationMatrix3d eyeRotation(upDown_rad, 0.f, -leftRight_rad);
+    // const RotationMatrix3d eyeRotation(0.f, 0.f, 0.f);
+    const RotationMatrix3d eyeRotation(-upDown_rad, 0.f, leftRight_rad);
+    eyePose.SetRotation(eyePose.GetRotation() * eyeRotation);
+    face.SetEyePose(eyePose);
 
     if(kKeepUndistortedFaceFeatures)
     {
@@ -1254,7 +1274,8 @@ namespace Vision {
 
       if(facePartsFound)
       {
-        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
+        // This is the orignal location of set face pose from parts
+        // SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
 
         //PRINT_NAMED_INFO("FaceTrackerImpl.Update.HeadOrientation",
         //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
@@ -1299,6 +1320,9 @@ namespace Vision {
           }
         }
 
+        // This is the new location of the set face pose from parts
+        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
+
         if(_detectGaze)
         {
           // This needs to happen after setting the pose.
@@ -1318,11 +1342,11 @@ namespace Vision {
         // FaceDirection(face, frameOrig.GetTimestamp());
         // FaceDirection3d(face, frameOrig.GetTimestamp());
 
+
         //
         // Face Recognition:
         //
         
-
         // Very Verbose:
         //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
         //                          "TrackerID:%d EnableEnrollment:%d",

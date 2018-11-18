@@ -781,12 +781,20 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     headPose.SetParent(_poseData.cameraPose);
     headPose = headPose.GetWithRespectToRoot();
 
+    // Make eye pose w.r.t. the historical world origin
+    Pose3d eyePose = currentFace.GetEyePose();
+    eyePose.SetParent(_poseData.cameraPose);
+    eyePose = eyePose.GetWithRespectToRoot();
+
     DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadHeadPoseParent");
+    DEV_ASSERT(eyePose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadEyePoseParent");
     
     // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
     headPose.ClearParent();
+    eyePose.ClearParent();
     
     currentFace.SetHeadPose(headPose);
+    currentFace.SetEyePose(eyePose);
   }
   
   return RESULT_OK;

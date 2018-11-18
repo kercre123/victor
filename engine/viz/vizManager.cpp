@@ -37,7 +37,11 @@
 namespace Anki {
   namespace Vector {
     
-    CONSOLE_VAR(bool, kSendAnythingToViz, "VizDebug", true);
+    CONSOLE_VAR(bool, kSendAnythingToViz,   "VizDebug", true);
+    CONSOLE_VAR(s32,  kVizGazeBucketsLeft,  "Vision.Vision.FaceNormalDirectedAtRobot3d", 0);
+    CONSOLE_VAR(s32,  kVizGazeBucketsRight, "Vision.Vision.FaceNormalDirectedAtRobot3d", 0);
+    CONSOLE_VAR(s32,  kVizGazeBucketsUp,    "Vision.Vision.FaceNormalDirectedAtRobot3d", 0);
+    CONSOLE_VAR(s32,  kVizGazeBucketsDown,  "Vision.Vision.FaceNormalDirectedAtRobot3d", 0);
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = std::numeric_limits<u32>::max();
     
@@ -318,14 +322,33 @@ namespace Anki {
           DrawCameraLine(feature[crntPoint], feature[nextPoint], color);
         }
       }
-      
+
+      // Add which detector, and bucket gaze ... maybe
+
+      std::string detectionDescription;
+      auto detectionPoseInfo = face.GetDetectionPoseInfo();
+      // TODO should this logic live elsewhere      
+      if (detectionPoseInfo == -90) {
+        detectionDescription = "LF Profile";
+      } else if (detectionPoseInfo == -45) {
+        detectionDescription = "LH Profile";
+      } else if (detectionPoseInfo == 0) {
+        detectionDescription = "Front";
+      } else if (detectionPoseInfo == 45) {
+        detectionDescription = "RH Profile";
+      } else if (detectionPoseInfo == 90) {
+        detectionDescription = "RF Profile";
+      } else if (detectionPoseInfo == -180) {
+        detectionDescription = "Reverse";
+      }
+
       // Draw name
       std::string name;
       if(face.GetName().empty()) {
         if(face.GetID() > 0) {
-          name = "KnownFace[";
+          name = detectionDescription + " KnownFace[";
         } else {
-          name = "UnknownFace[";
+          name = detectionDescription + " UnknownFace[";
         }
         name += std::to_string(face.GetID()) + "]";
       } else {
@@ -438,8 +461,51 @@ namespace Anki {
         
         DrawCameraLine(centerPt, lineEnd, NamedColors::RED);
         DrawCameraOval(centerPt, 1.f, 1.f, NamedColors::RED);
+
+        s32 bucket = 4; // No bucket
+        if (gaze.upDown_deg > kVizGazeBucketsUp) {
+          if (gaze.leftRight_deg > kVizGazeBucketsRight) {
+            bucket = 0;
+          } else if (gaze.leftRight_deg < kVizGazeBucketsLeft) {
+            bucket = 1;
+          }
+        } else if (gaze.upDown_deg < kVizGazeBucketsDown) {
+          if (gaze.leftRight_deg > kVizGazeBucketsRight) {
+            bucket = 3;
+          } else if (gaze.leftRight_deg < kVizGazeBucketsLeft) {
+            bucket = 2;
+          }
+        }
+
+        if (bucket != 4) {
+          if (bucket == 0) {
+            // Draw a dot in the first quadrant of the face detection
+            Point2f topLeft(centerPt.x() + (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (3.f/8.f)*face.GetRect().GetHeight());
+            Point2f botLeft(centerPt.x() + (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (1.f/8.f)*face.GetRect().GetHeight());
+            Point2f topRight(centerPt.x() + (3.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (3.f/8.f)*face.GetRect().GetHeight());
+            Point2f botRight(centerPt.x() + (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (1.f/8.f)*face.GetRect().GetHeight());
+            DrawCameraQuad(Quad2f(topLeft, botLeft, topRight, botRight), color);
+          } else if (bucket == 1) {
+            Point2f topLeft(centerPt.x() - (3.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (3.f/8.f)*face.GetRect().GetHeight());
+            Point2f botLeft(centerPt.x() - (3.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (1.f/8.f)*face.GetRect().GetHeight());
+            Point2f topRight(centerPt.x() - (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (3.f/8.f)*face.GetRect().GetHeight());
+            Point2f botRight(centerPt.x() - (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() - (1.f/8.f)*face.GetRect().GetHeight());
+            DrawCameraQuad(Quad2f(topLeft, botLeft, topRight, botRight), color);
+          } else if (bucket == 2) {
+            Point2f topLeft(centerPt.x() - (3.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (1.f/8.f)*face.GetRect().GetHeight());
+            Point2f botLeft(centerPt.x() - (3.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (3.f/8.f)*face.GetRect().GetHeight());
+            Point2f topRight(centerPt.x() - (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (1.f/8.f)*face.GetRect().GetHeight());
+            Point2f botRight(centerPt.x() - (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (3.f/8.f)*face.GetRect().GetHeight());
+            DrawCameraQuad(Quad2f(topLeft, botLeft, topRight, botRight), color);
+          } else if (bucket == 3) {
+            Point2f topLeft(centerPt.x() + (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (1.f/8.f)*face.GetRect().GetHeight());
+            Point2f botLeft(centerPt.x() + (1.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (3.f/8.f)*face.GetRect().GetHeight());
+            Point2f topRight(centerPt.x() + (3.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (1.f/8.f)*face.GetRect().GetHeight());
+            Point2f botRight(centerPt.x() + (3.f/8.f)*face.GetRect().GetWidth(), centerPt.y() + (3.f/8.f)*face.GetRect().GetHeight());
+            DrawCameraQuad(Quad2f(topLeft, botLeft, topRight, botRight), color);
+          }
+        }
       }
-      
     }
     
     void VizManager::EraseRobot(const u32 robotID)
