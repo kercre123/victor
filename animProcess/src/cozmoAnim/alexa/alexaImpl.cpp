@@ -762,13 +762,21 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
       break;
       
     case Status::NOT_CONNECTED: // The send failed because AVS was not connected.
-    case Status::NOT_SYNCHRONIZED: // The send failed because AVS is not synchronized.
     case Status::TIMEDOUT: // The send failed because of timeout waiting for AVS response.
+    case Status::CANCELED: // The send failed due to server canceling it before the transmission completed.
+    {
+      // may have lost connection. NOTE: these are the statuses I noticed happening when connection was
+      // lost... not sure if there's a better solution here
+
+      SetNetworkConnectionError();
+      break;
+    }
+
+    case Status::NOT_SYNCHRONIZED: // The send failed because AVS is not synchronized.
     case Status::PROTOCOL_ERROR: // The send failed due to an underlying protocol error.
     case Status::INTERNAL_ERROR: // The send failed due to an internal error within ACL.
     case Status::SERVER_INTERNAL_ERROR_V2: // The send failed due to an internal error on the server which sends code 500.
     case Status::REFUSED: // The send failed due to server refusing the request.
-    case Status::CANCELED: // The send failed due to server canceling it before the transmission completed.
     case Status::THROTTLED: // The send failed due to excessive load on the server.
     case Status::BAD_REQUEST: // The send failed due to invalid request sent by the user.
     case Status::SERVER_OTHER_ERROR: // The send failed due to unknown server error.
@@ -829,14 +837,7 @@ void AlexaImpl::NotifyOfTapToTalk()
     if( !_isTapOccurring ) {
       // check info known about connection before trying. these often don't get updated until sending fails
       if( !_client->IsAVSConnected() ) {
-        // check if it's because of the internet (this flag only gets updated every 5 mins, so it gets checked second)
-        if( _internetConnected ) {
-          SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
-        } else if( _avsEverConnected ) {
-          SetNetworkError( AlexaNetworkErrorType::LostConnection );
-        } else {
-          SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
-        }
+        SetNetworkConnectionError();
       } else {
         _client->StopForegroundActivity();
         ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
@@ -856,15 +857,7 @@ void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
-    // check if it's because of the internet (this flag only gets updated every 5 mins, so it gets checked second)
-    if( _internetConnected ) {
-      SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
-    } else if( _avsEverConnected ) {
-      SetNetworkError( AlexaNetworkErrorType::LostConnection );
-    } else {
-      SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
-    }
-    
+    SetNetworkConnectionError();
     return;
   }
 
@@ -934,6 +927,41 @@ avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion AlexaImpl::GetFirmwareVe
   }
   avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion version = std::atoi(concatVersion.c_str());
   return version;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::SetNetworkConnectionError()
+{
+  if( _internetConnected ) {
+    // the AVS internet connection check is slow, so let's double check by getting our IP address
+    const bool updateIPCheck = true;
+    const std::string ip = OSState::getInstance()->GetIPAddress(updateIPCheck);
+    const bool hasIP = !ip.empty();
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.IPCheck", "ip addr: '%s'", ip.c_str());
+
+    if( !hasIP ) {
+      // the internet connection check is pretty slow, and we don't have an IP, so we definitely don't have
+      // internet. Update the status here
+      OnInternetConnectionChanged( hasIP );
+    }
+  }
+  // note that we might have a (local) IP address, but no internet, so don't set us as connected based on the
+  // IP check
+
+  // check if it's because of the internet (this flag only gets updated every 5 mins, so it gets checked second)
+  if( _internetConnected ) {
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.HavingTrouble",
+             "AVS not conntected, but internet reported as being connected");
+    SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+  } else if( _avsEverConnected ) {
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.LostConnection",
+             "AVS not conntected, internet was but is no longer");
+    SetNetworkError( AlexaNetworkErrorType::LostConnection );
+  } else {
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.NoInitialConnection",
+             "AVS not conntected, internet never was");
+    SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

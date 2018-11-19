@@ -121,7 +121,8 @@ private:
   
   // considers media player state and dialog state to determine _uxState
   void CheckForUXStateChange();
-  
+
+  void SetNetworkConnectionError();
   void SetNetworkError( AlexaNetworkErrorType errorType );
   
   // things we care about called by AlexaObserver
