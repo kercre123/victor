@@ -110,6 +110,8 @@ public:
   
   void UpdateLocale(const Util::Locale& newLocale);
   
+  void UpdateTimeZone(const std::string& newTimeZone);
+  
   bool IsSpeakerPlayingAudio() const;
   
   // Get the maximum speaker 'latency', which is the max delay between when we
@@ -152,6 +154,7 @@ private:
 #endif
   size_t _streamingAudioIndex = 0;
   Util::Locale _locale = {"en", "US"};
+  std::string _timeZone = "";
 
   std::unique_ptr<MicDataProcessor>       _micDataProcessor;
   std::unique_ptr<SpeechRecognizerSystem> _speechRecognizerSystem;

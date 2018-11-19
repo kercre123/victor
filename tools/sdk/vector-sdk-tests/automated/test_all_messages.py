@@ -196,11 +196,25 @@ MESSAGES_TO_TEST = [
      protocol.RequestEnrolledNamesRequest(),
      TestResultMatches(protocol.RequestEnrolledNamesResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), faces=[]))),  # pylint: disable=no-member
 
-    # EnableVisionMode message
-    (client.ExternalInterfaceServicer.EnableVisionMode,
-     protocol.EnableVisionModeRequest(mode=protocol.VisionMode.Value(
-         "VISION_MODE_DETECTING_FACES"), enable=True),
-     TestResultMatches(protocol.EnableVisionModeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+    # EnableFaceDetection message
+    (client.ExternalInterfaceServicer.EnableFaceDetection,
+     protocol.EnableFaceDetectionRequest(),
+     TestResultMatches(protocol.EnableFaceDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # EnableMarkerDetection message
+    (client.ExternalInterfaceServicer.EnableMarkerDetection,
+     protocol.EnableMarkerDetectionRequest(),
+     TestResultMatches(protocol.EnableMarkerDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # EnableMotionDetection message
+    (client.ExternalInterfaceServicer.EnableMotionDetection,
+     protocol.EnableMotionDetectionRequest(),
+     TestResultMatches(protocol.EnableMotionDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # EnableMirrorMode message
+    (client.ExternalInterfaceServicer.EnableMirrorMode,
+     protocol.EnableMirrorModeRequest(),
+     TestResultMatches(protocol.EnableMirrorModeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # DriveStraight message
     (client.ExternalInterfaceServicer.DriveStraight,
@@ -411,7 +425,6 @@ async def run_message_tests(robot, future):
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     logger = logging.getLogger('anki_vector')

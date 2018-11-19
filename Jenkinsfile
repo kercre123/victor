@@ -4,6 +4,9 @@ import hudson.model.*
 import jenkins.model.*
 import hudson.slaves.*
 import hudson.plugins.sshslaves.verifiers.*
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurperClassic
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 @NonCPS
 def getListOfOnlineNodesForLabel(label) {
@@ -33,8 +36,100 @@ enum buildConfig {
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
 
-def primaryStageName = ''
+primaryStageName = ''
 def vSphereServer = 'ankicore'
+
+slackNotificationChannel = "#build-eng-pr-notices"
+
+def notifySlack(text, channel, attachments) {
+    def slackURL = "https://anki.slack.com/services/hooks/jenkins-ci?token="
+    def jenkinsIcon = 'https://jenkins.io/images/jenkins-x-logo.png'
+
+    def payload = JsonOutput.toJson([text: text,
+        channel: channel,
+        username: "Jenkins-Buildbot",
+        icon_url: jenkinsIcon,
+        attachments: [attachments]
+    ])
+    writeFile file: 'slackPayload.json', text: payload
+    withCredentials([string(credentialsId: 'jenkins-professional', variable: 'TOKEN')]) {
+        sh "curl -X POST -d @slackPayload.json ${slackURL}${TOKEN}"
+    }
+}
+
+def getCommitDetails(project, commit) {
+    withCredentials([string(credentialsId: 'github-jenkins-pat', variable: 'TOKEN')]) {
+        def payload = sh (
+            script: "curl --user \"nakkapeddi:${TOKEN}\" https://api.github.com/repos/anki/${project}/commits/${commit}",
+            returnStdout: true
+        ).trim()
+        return payload
+    }
+}
+
+def parseCommitDetails(jobName, commitSHA) {
+    def commitInfo = getCommitDetails(jobName, commitSHA)
+    def commitObj = jsonParsePayload(commitInfo)
+
+    if (commitObj.message) {
+        println commitObj.message
+        def firstAncestorSHA = sh(returnStdout: true, script: "git rev-list --no-walk HEAD^")
+        return parseCommitDetails(jobName, firstAncestorSHA)
+    }
+
+    return commitObj
+}
+
+@NonCPS
+def jsonParsePayload(def json) {
+    new groovy.json.JsonSlurperClassic().parseText(json)
+}
+
+def notifyBuildStatus(status) {
+    def jobName = "${env.JOB_NAME}"
+    jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
+    def pullRequestURL = "https://github.com/anki/${jobName}/pull/${env.CHANGE_ID}"
+    def latestCommitSHA = sh(returnStdout: true, script: "git rev-list --no-walk HEAD")
+    if (!env.CHANGE_ID) {
+        pullRequestURL = "https://github.com/anki/${jobName}/commit/${latestCommitSHA}"
+    }
+    def commitObj = parseCommitDetails(jobName, latestCommitSHA)
+
+    def slackColorMapping = [
+        Success: "good",
+        Failure: "danger",
+        Aborted: "warning"
+    ]
+
+    notifySlack("", slackNotificationChannel, 
+        [
+            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+            title_link: "${env.BUILD_URL}",
+            color: slackColorMapping[status],
+            text: "${status}\nAuthor: ${commitObj.commit.author.name} <${commitObj.commit.author.email}>",
+            mrkdwn_in: ["fields"],
+            fields: [
+                [
+                    title: "View on Github",
+                    value: "${pullRequestURL}",
+                    short: true
+                ],
+                [
+                    title: "Commit Msg",
+                    value: "${commitObj.commit.message}",
+                    short: false
+                ],
+                [
+                    title: "Stats (LoC)",
+                    value: ":heavy_plus_sign: ${commitObj.stats.additions} / :heavy_minus_sign: ${commitObj.stats.deletions}",
+                    short: false
+                ]
+            ]
+        ]
+    )
+    
+}
+
 
 class EphemeralAgent {
     private String IPAddress;
@@ -180,10 +275,15 @@ stage("${primaryStageName} Build") {
             uuid = agent.getMachineName()
             vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
                 customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                linkedClone: true, powerOn: true, resourcePool: 'vic-os',
+                linkedClone: true, powerOn: false, resourcePool: 'vic-os',
                 sourceName: 'photonos-test', timeoutInSeconds: 60], serverName: vSphereServer
 
             try {
+                vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
+                    coresPerSocket: '1', cpuCores: '2']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU 
+
+                vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
+
                 def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
                 agent.setIPAddress(buildAgentIP)
             } catch (e) {
@@ -206,7 +306,12 @@ stage("${primaryStageName} Build") {
                 }
                 //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
             }
+            notifyBuildStatus('Success')
+        } catch (FlowInterruptedException ae) {
+            notifyBuildStatus('Aborted')
+            throw ae
         } catch (exc) {
+            notifyBuildStatus('Failure')
             throw exc
         } finally {
             stage('Cleaning slave workspace') {

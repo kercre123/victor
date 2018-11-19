@@ -76,14 +76,6 @@ void PhysVizController::Init() {
   Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageEnd,
     std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageEnd, this, std::placeholders::_1));
 
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizBegin,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessageBegin, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageViz,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizEnd,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessageEnd, this, std::placeholders::_1));
-  
-
   _server.StopListening();
   _server.StartListening((uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
 
@@ -500,72 +492,6 @@ void PhysVizController::ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<Viz
 }
 
 
-// NEW SCHEME for memory map quad display
-  
-void PhysVizController::ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_MemoryMapMessageVizBegin();
-  _memoryMapInfo[payload.originId] = payload.info;
-
-  // clear the vector in Incoming
-  _memoryMapQuadInfoVectorMapIncoming[payload.originId].clear();
-}
-
-void PhysVizController::ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_MemoryMapMessageViz();
-
-  MemoryMapQuadInfoVector& dest = _memoryMapQuadInfoVectorMapIncoming[payload.originId];
-  dest[payload.seqNum] = std::move(payload.quadInfos);
-}
-
-void PhysVizController::ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_MemoryMapMessageVizEnd();
-
-  // Now that we've received the entire list of quad infos, decode them into a list of drawable quads
-  
-  // input  is _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId], and _memoryMapInfo[payload.originId]
-  // output is _simpleQuadVectorMapReady["string"]
-  const auto& iter = _memoryMapInfo.find(payload.originId);
-  if(iter == _memoryMapInfo.end())
-  {
-    dWebotsConsolePrintf("[PhysVizController] [INFO] Didn't get begin memory map begin viz message");
-  }
-  else
-  {
-    const ExternalInterface::MemoryMapInfo& info = iter->second;
-    
-    SimpleQuadVector& destSimpleQuads = _simpleQuadVectorMapReady[info.identifier];
-    destSimpleQuads.clear();
-    
-    Point3f rootCenter(MM_TO_M(info.rootCenterX), MM_TO_M(info.rootCenterY), MM_TO_M(info.rootCenterZ));
-    MemoryMapNode rootNode(info.rootDepth, MM_TO_M(info.rootSize_mm), rootCenter);
-
-    u32 expectedSeqNum = 0;
-    const auto& srcQuadInfos = _memoryMapQuadInfoVectorMapIncoming[payload.originId];
-    for (const auto& quadInfo : srcQuadInfos)
-    {
-      if(quadInfo.first != expectedSeqNum)
-      {
-        dWebotsConsolePrintf("[PhysVizController] [INFO] Dropped memory map viz message, displayed map will be incorrect");
-        break;
-      }
-      else
-      {
-        for (const auto& quad : quadInfo.second)
-        {
-          rootNode.AddChild(destSimpleQuads, quad);
-        }
-        ++expectedSeqNum;
-      }
-    }
-  }
-  
-  _memoryMapQuadInfoVectorMapIncoming.erase(payload.originId);
-  _memoryMapInfo.erase(payload.originId);
-}
-
 void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_EraseObject();
@@ -971,56 +897,6 @@ void PhysVizController::DrawQuadFill(
   glEnd();
 }
 
-
-MemoryMapNode::MemoryMapNode(int depth, float size_m, const Point3f& center)
-{
-  _depth = depth;
-  _size_m = size_m;
-  _center = center;
-  _nextChild = 0;
-}
-
-bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::MemoryMapQuadInfo& quad)
-{
-  using namespace ExternalInterface;
-  
-  if (_depth == quad.depth)
-  {
-    VizInterface::SimpleQuad simpleQuad;
-    simpleQuad.center[0] = _center.x();
-    simpleQuad.center[1] = _center.y();
-    simpleQuad.center[2] = _center.z();
-    simpleQuad.sideSize = _size_m;
-    simpleQuad.color = ColorRGBA(quad.colorRGBA);
-    destSimpleQuads.emplace_back(simpleQuad);
-    return true;
-  }
-  
-  if (_children.empty())
-  {
-    int nextDepth = _depth - 1;
-    float nextSize = _size_m * 0.5f;
-    float offset = nextSize * 0.5f;
-    Point3f center1(_center.x() + offset, _center.y() + offset, _center.z());
-    Point3f center2(_center.x() + offset, _center.y() - offset, _center.z());
-    Point3f center3(_center.x() - offset, _center.y() + offset, _center.z());
-    Point3f center4(_center.x() - offset, _center.y() - offset, _center.z());
-    // this code should probably be optimized to avoid copies but I'm just getting it to work right now
-    
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center1));
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center2));
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center3));
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center4));
-  }
-  
-  if (_children[_nextChild].AddChild(destSimpleQuads, quad))
-  {
-    // All children below this child have been processed
-    _nextChild++;
-  }
-  
-  return (_nextChild > 3);
-}
 
 } // end namespace Vector
 } // end namespace Anki

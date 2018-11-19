@@ -10,7 +10,6 @@ include(text2speech)
 include(sensory)
 include(speexdsp)
 include(robot_core)
-include(avs-device-sdk)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "Creative Commons Zero v1.0 Universal,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE")
@@ -104,6 +103,7 @@ if (VICOS)
     #       wait for a (much) larger cleanup to cmake / clad / coretech.
     cti_common
     jsoncpp
+    ${ANKITRACE}
     ${PLATFORM_LIBS}
   )
 

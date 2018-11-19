@@ -79,13 +79,25 @@ namespace{
     BEHAVIOR_ID(ReactToDarkness)            // user hand near camera may trigger darkened condition
   }};
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenDancingToTheBeat = {
+    BEHAVIOR_ID(ReactToObstacle),
     BEHAVIOR_ID(ReactToSoundAwake),
   };
   static const std::set<BehaviorID> kBehaviorIDsToSuppressWhenGoingHome = {
     BEHAVIOR_ID(DanceToTheBeatCoordinator),
     BEHAVIOR_ID(ListenForBeats),
     BEHAVIOR_ID(DanceToTheBeat),
+    BEHAVIOR_ID(ReactToObstacle),
   };
+
+  static const std::set<UserIntentTag> kUserIntentTagsToSuppressWakeWordTurn = {{
+    USER_INTENT(imperative_findcube),
+    USER_INTENT(system_charger),
+    USER_INTENT(movement_forward),
+    USER_INTENT(movement_backward),
+    USER_INTENT(movement_turnleft),
+    USER_INTENT(movement_turnright),
+    USER_INTENT(movement_turnaround),
+  }};
 }
 
 
@@ -260,6 +272,14 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   {
     auto& uic = GetBehaviorComp<UserIntentComponent>();
 
+    bool shouldSuppressTurn = false;
+
+    // certain intents do not want to turn vector after the wakeword was heard so that they can go
+    // directly into their behavior facing the same direction he was when the wakeword was heard.
+    for( const UserIntentTag& tag : kUserIntentTagsToSuppressWakeWordTurn ) {
+      shouldSuppressTurn |= uic.IsUserIntentPending(tag);
+    }
+
     // If we are responding to "take a photo", and the user is not requesting a selfie
     // Disable the react to voice command turn so that Victor takes the photo in his current direction
     // Exception: If storage is full we want to turn towards the user to let them know
@@ -269,17 +289,10 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       const auto& takeAPhoto = photoIntent.Get_take_a_photo();
       const bool isNotASelfie = takeAPhoto.empty_or_selfie.empty();
       const bool isStorageFull = GetBEI().GetPhotographyManager().IsPhotoStorageFull();
-      if(isNotASelfie && !isStorageFull){
-        const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
-      }
+      shouldSuppressTurn |= (isNotASelfie && !isStorageFull);
     }
 
-    // If we are responding to "go home", disable the voice command turn since we want him to just go directly
-    // into looking for the charger / going to the charger. Also disable dancing to the beat, need to get home
-    // first.  // TODO:(bn) disable others too?
-    const bool isGoHomePending = uic.IsUserIntentPending(USER_INTENT(system_charger));
-    if (isGoHomePending) {
+    if (shouldSuppressTurn) {
       const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
     }
@@ -289,14 +302,6 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       for( const auto& beh : _iConfig.toSuppressWhenGoingHome ) {
         beh->SetDontActivateThisTick(GetDebugLabel() + ": going home");
       }
-    }
-
-    // If we are responding to "find your cube", disable the voice command turn since we want
-    // him to just go directly into looking for the cube
-    const bool isFindCubePending = uic.IsUserIntentPending(USER_INTENT(imperative_findcube));
-    if (isFindCubePending) {
-      const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      _iConfig.reactToVoiceCommandBehavior->DisableTurnForTimestamp(ts);
     }
   }
 

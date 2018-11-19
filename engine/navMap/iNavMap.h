@@ -16,6 +16,8 @@
 #include "memoryMap/memoryMapTypes.h"
 #include "memoryMap/data/memoryMapData.h"
 
+#include "engine/navMap/quadTree/quadTreeTypes.h"
+
 #include "coretech/common/engine/math/fastPolygon2d.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/ball.h"
@@ -46,7 +48,6 @@ public:
   using NodePredicate         = MemoryMapTypes::NodePredicate;
   using MemoryMapDataPtr      = MemoryMapTypes::MemoryMapDataPtr;
   using MemoryMapRegion       = MemoryMapTypes::MemoryMapRegion;
-    
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
@@ -78,6 +79,10 @@ public:
   // returns true if any node that intersects with the provided regions evaluates `func` as true.
   virtual bool AnyOf(const Poly2f& poly, NodePredicate func) const = 0;
   virtual bool AnyOf(const MemoryMapRegion& region, NodePredicate func) const = 0;
+  
+  // multi-ray variant of the AnyOf method
+  // implementation may optimize for this case
+  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const = 0;
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const = 0;

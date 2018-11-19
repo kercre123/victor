@@ -93,8 +93,18 @@ void VizControllerImpl::Init()
   Subscribe(VizInterface::MessageVizTag::EnabledVisionModes,
     std::bind(&VizControllerImpl::ProcessEnabledVisionModes, this, std::placeholders::_1));
 
+  Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
+            std::bind(&VizControllerImpl::ProcessVizSetOriginMessage, this, std::placeholders::_1));
+  
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizBegin,
+            std::bind(&VizControllerImpl::ProcessVizMemoryMapMessageBegin, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageViz,
+            std::bind(&VizControllerImpl::ProcessVizMemoryMapMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizEnd,
+            std::bind(&VizControllerImpl::ProcessVizMemoryMapMessageEnd, this, std::placeholders::_1));
 
   // Get display devices
+  _navMapDisp = _vizSupervisor.getDisplay("nav_map");
   _disp = _vizSupervisor.getDisplay("cozmo_viz_display");
   _dockDisp = _vizSupervisor.getDisplay("cozmo_docking_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
@@ -963,6 +973,94 @@ void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::
 
     ss.str(std::string(""));
   }
+}
+  
+void VizControllerImpl::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface::MessageViz> &msg)
+{
+  const auto& payload = msg.GetData().Get_SetVizOrigin();
+  
+  double translation[3] = { MM_TO_M(payload.trans_x_mm),
+                            MM_TO_M(payload.trans_y_mm),
+                            MM_TO_M(payload.trans_z_mm) };
+  
+  double rotation[4] = { payload.rot_axis_x,
+                         payload.rot_axis_y,
+                         payload.rot_axis_z,
+                         payload.rot_rad };
+
+  _vizSupervisor.getSelf()->getField("translation")->setSFVec3f(translation);
+  _vizSupervisor.getSelf()->getField("rotation")->setSFRotation(rotation);
+}
+  
+void VizControllerImpl::ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  _navMapNodes.clear();
+  _navMapNodes.reserve(1024); // reserve some memory to avoid re-allocations
+}
+
+void VizControllerImpl::ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_MemoryMapMessageViz();
+  _navMapNodes.insert(_navMapNodes.end(),
+                      payload.quadInfos.begin(),
+                      payload.quadInfos.end());
+}
+
+void VizControllerImpl::ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  // Render the quad tree
+  
+  const auto displayWidth = _navMapDisp->getWidth();
+  const auto displayHeight = _navMapDisp->getHeight();
+  _navMapDisp->setOpacity(1.0);
+  
+  // Clear display
+  _navMapDisp->setAlpha(0.0);
+  _navMapDisp->setColor(0);
+  _navMapDisp->fillRectangle(0, 0, displayWidth, displayHeight);
+  
+  // Store the pixel coordinates of the center of the image (for later conversion from x/y to image coordinates)
+  const auto displayCenterX = 0.5 * displayWidth;
+  const auto displayCenterY = 0.5 * displayHeight;
+  
+  // Draw each node
+  for (const auto& node : _navMapNodes) {
+    const auto rgba = node.colorRGBA;
+    const int webotsColor = (rgba>>8); // convert RGBA to RGB
+    const float webotsAlpha = (rgba & 0xFF) / 255.f; // convert alpha to 0.0 to 1.0
+    _navMapDisp->setAlpha(webotsAlpha);
+    _navMapDisp->setColor(webotsColor);
+    
+    // Webots requires the x,y position of the rectangle to be the top left corner, not the center.
+    const auto topLeftCornerX = node.centerX_mm - node.edgeLen_mm/2.f;
+    const auto topLeftCornerY = node.centerY_mm + node.edgeLen_mm/2.f;
+    
+    // Convert x,y (with origin in the center of the image) to image coordinates (top left of image is origin)
+    auto imageX =  topLeftCornerX + displayCenterX;
+    auto imageY = -topLeftCornerY + displayCenterY;
+    
+    // We subtract 1 from the width/height to leave a 'space' between nodes, which allows us to see the individual
+    // quads even if they are the same color.
+    int width = node.edgeLen_mm - 1;
+    int height = node.edgeLen_mm - 1;
+    
+    // If the quad would be off the display plane, we still want to draw as much of it as we can
+    if (imageX < 0) {
+      width -= std::abs(imageX);
+      imageX = 0;
+    }
+    if (imageY < 0) {
+      height -= std::abs(imageY);
+      imageY = 0;
+    }
+    
+    const bool shouldDraw = (height > 0) && (width > 0);
+    
+    if (shouldDraw) {
+      _navMapDisp->fillRectangle(imageX, imageY, width, height);
+    }
+  }
+
 }
 
 } // end namespace Vector

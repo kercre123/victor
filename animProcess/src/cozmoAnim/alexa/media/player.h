@@ -64,6 +64,15 @@ typedef struct SpeexResamplerState_ SpeexResamplerState;
 
 
 namespace Anki {
+  
+namespace AudioMetaData {
+  namespace GameEvent {
+    enum class GenericEvent : uint32_t;
+  }
+  namespace GameParameter {
+    enum class ParameterType : uint32_t;
+  }
+}
 
 namespace AudioMetaData {
   namespace GameEvent {
@@ -145,6 +154,13 @@ private:
   using StreamingWaveDataPtr = std::shared_ptr<AudioEngine::StreamingWaveDataInstance>;
   using AudioController = Audio::CozmoAudioController;
   using DispatchQueue = Util::Dispatch::Queue;
+  
+  // Set audio variables for Media Player based off it's _name
+  void SetMediaPlayerAudioEvents();
+  
+  // Set the volume in Audio Controller for Media Player
+  // NOTE: Acceptable volume value [0.0, 1.0]
+  void SetPlayerVolume( float volume );
 
   // Set the volume in Audio Controller for Media Player
   // NOTE: Acceptable volume value [0.0, 1.0]
@@ -197,6 +213,13 @@ private:
 
   // audio controller provided by context
   AudioController* _audioController = nullptr;
+  
+  // Audio play control events
+  AudioMetaData::GameEvent::GenericEvent      _playEvent;
+  AudioMetaData::GameEvent::GenericEvent      _pauseEvent;
+  AudioMetaData::GameEvent::GenericEvent      _resumeEvent;
+  AudioMetaData::GameParameter::ParameterType _volumeParameter;
+  uint8_t                                     _pluginId;
 
   /// Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;

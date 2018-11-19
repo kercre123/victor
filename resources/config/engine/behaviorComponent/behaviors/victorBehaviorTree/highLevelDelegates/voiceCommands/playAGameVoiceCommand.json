@@ -8,6 +8,8 @@
     }
   ],
 
+  "autoShutOffIntentFeedback": true,
+
   "behaviors" : [
     "DriveOffChargerFace",
     "PlayAGameInternal"

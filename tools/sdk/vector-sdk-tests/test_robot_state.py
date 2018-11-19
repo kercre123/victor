@@ -4,15 +4,12 @@
 Test the robot state
 """
 
-import os
-import sys
 import time
 
 import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     print("------ Fetch robot state from robot's properties ------")

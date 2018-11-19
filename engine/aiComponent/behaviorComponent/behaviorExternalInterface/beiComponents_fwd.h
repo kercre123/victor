@@ -36,6 +36,7 @@ enum class BEIComponentID{
   RobotAudioClient,
   RobotInfo,
   SDK,
+  SettingsCommManager,
   SettingsManager,
   SleepTracker,
   TextToSpeechCoordinator,

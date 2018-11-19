@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module provides a 3D support classes for openGL, used by opengl_viewer.py
+"""This module provides 3D support classes for OpenGL, used by opengl_viewer.py.
 
 It uses PyOpenGL, a Python OpenGL 3D graphics library which is available on most
 platforms. It also depends on the Pillow library for image processing.
@@ -51,7 +51,7 @@ from . import util
 
 
 class InvalidOpenGLGlutImplementation(ImportError):
-    """Raised by opengl viewer if no valid GLUT implementation available."""
+    """Raised by OpenGLViewer if no valid GLUT implementation available."""
 
 
 #: Adds context to exceptions raised from attempts to import OpenGL libraries
@@ -61,7 +61,7 @@ def raise_opengl_or_pillow_import_error(opengl_import_exc):
                                   % opengl_import_exc)
     else:
         # TODO Update to: 'Do `pip3 install --user anki_vector[3dviewer]` from `pip3 install PyOpenGL`
-        raise NotImplementedError('opengl is not available; '
+        raise NotImplementedError('OpenGL is not available; '
                                   'make sure the PyOpenGL and Pillow packages are installed:\n'
                                   'Do `pip3 install PyOpenGL Pillow` to install. Error: %s' % opengl_import_exc)
 
@@ -121,7 +121,7 @@ if not _verify_glut_init():
 
 
 class ResourceManager():
-    """Handles returning file resources by keys.  The current implementation delegates to resource_stream
+    """Handles returning file resources by keys. The current implementation delegates to resource_stream
     directly.
 
     :param context_id: Key used for identifying this context
@@ -139,10 +139,10 @@ class ResourceManager():
         """Loads a resource given a groups of key arguments.
 
         Since the resource_stream path is non_stantard with os.path.join, this resolve is encapsulated inside
-        the resource manager.  The context that these resources are files on disk is similarly encapsulated.
+        the resource manager. The context that these resources are files on disk is similarly encapsulated.
         All client classes only need match keys with returned data.
 
-        :param *args: string keys for identifying the asset.
+        :param args: string keys for identifying the asset.
         """
         resource_path = '/'.join(map(str, args))  # Note: Deliberately not os.path.join, for use with pkg_resources
         return resource_stream(self._context_id, resource_path)
@@ -193,7 +193,7 @@ class DynamicTexture:
 class MaterialLibrary():  # pylint: disable=too-few-public-methods
     """Load a .mtl material asset, and return the contents as a dictionary.
 
-    Supports the subset of MTL required for the Vector 3D viewer assets.
+    Supports the subset of MTL required for the Vector 3D Viewer assets.
 
     :param resource_manager: Manager to load resources from.
     :param asset_key: The key of the asset to load.
@@ -489,7 +489,7 @@ class PrecomputedView():
     @staticmethod
     def _apply_material(material: dict):
         """Utility function to apply a specific MTL material to the current
-        openGL rendering state.
+        OpenGL rendering state.
 
         :param material: A dictionary of MTL attributes defining a material.
         """
@@ -569,7 +569,7 @@ class PrecomputedView():
 
         :param name: the key this pre-computed geometry can be draw from.
         :param f: the function used to create the 3d geometry.
-        :param *args: any parameters the supplied function is expecting.
+        :param args: any parameters the supplied function is expecting.
         """
         new_gl_list = glGenLists(1)  # pylint: disable=assignment-from-no-return
         glNewList(new_gl_list, GL_COMPILE)
@@ -742,7 +742,7 @@ class Light():  # pylint: disable=too-few-public-methods
         self._ambient_color = ambient_color
         self._diffuse_color = diffuse_color
         self._specular_color = specular_color
-        # w coordinate of '1' indicates a positional light in opengl, while '0' would indicate a directional light
+        # w coordinate of '1' indicates a positional light in OpenGL, while '0' would indicate a directional light
         self._position_coords = [position.x, position.y, position.z, 0 if is_directional else 1]
 
     def apply(self, index: int):

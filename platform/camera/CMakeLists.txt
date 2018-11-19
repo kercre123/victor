@@ -51,6 +51,7 @@ if (VICOS)
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS
+        webotsCtrlCommon
         ${OPENCV_LIBS}
         ${WEBOTS_LIBS}
     )

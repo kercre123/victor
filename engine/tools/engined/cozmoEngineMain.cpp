@@ -89,6 +89,7 @@ namespace {
 
 static void sigterm(int)
 {
+  Anki::Util::DropBreadcrumb(false, nullptr, -1);
   LOG_INFO("CozmoEngineMain.SIGTERM", "Shutting down");
   gShutdown = true;
 }

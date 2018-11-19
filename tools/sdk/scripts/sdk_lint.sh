@@ -3,7 +3,7 @@
 set -e
 
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
-FILES="$(find ${SCRIPT_PATH}/../vector-sdk/examples -type f -name "*.py") $(find ${SCRIPT_PATH}/../vector-sdk/tests ${SCRIPT_PATH}/../vector-sdk/anki_vector -type f -d 1 -name "*.py")"
+FILES="$(find ${SCRIPT_PATH}/../vector-sdk/examples -type f -name "*.py") $(find ${SCRIPT_PATH}/../vector-sdk/anki_vector -type f -d 1 -name "*.py")"
 
 function usage() {
     echo "$SCRIPT_NAME [OPTIONS]"

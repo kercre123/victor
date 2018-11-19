@@ -24,6 +24,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "util/threading/threadPriority.h"
+#include "platform/anki-trace/tracing.h"
 #include <chrono>
 
 #if REMOTE_CONSOLE_ENABLED
@@ -274,6 +275,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 //    PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
 //                     TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
 
+    tracepoint(anki_ust, vic_engine_loop_duration, tickDuration_us.count());
 #if ENABLE_RUN_TIME_DIAGNOSTICS
     // Only complain if we're more than 10ms behind
     if (remaining_us < microseconds(-10000))

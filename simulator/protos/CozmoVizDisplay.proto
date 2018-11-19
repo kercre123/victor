@@ -2,6 +2,9 @@
 
 PROTO CozmoVizDisplay 
 [ 
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 0 1 0
+
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
   field SFString streamResolution "QVGA"
@@ -13,29 +16,49 @@ PROTO CozmoVizDisplay
   field SFInt32 numVisionModeLines 32
 
   field SFInt32 numDebugImageDisplays 0 # Vision debug displays in addition to the camera
+  
+  field SFInt32 navMapSize 1500        # Size of the nav map display in pixels. 1 pixel = 1 mm.
+  field SFFloat navMapTransparency 0.0 # The overall transparency of the nav map display
 ]
 {
 Supervisor {
   
+  translation IS translation
+  rotation IS rotation
+  
   children [
+    Display {
+      name "nav_map"
+    
+      translation 0 0 0.002
+      rotation 1 0 0 1.5708
+      width %{= fields.navMapSize.value}%
+      height %{= fields.navMapSize.value}%
+      
+      children [
+        Shape {
+          appearance Appearance {
+            texture ImageTexture {
+              filtering 0
+            }
+            material Material {
+              transparency IS navMapTransparency
+            }
+          }
+          geometry Plane {
+            size %{= fields.navMapSize.value  / 1000 }% %{= fields.navMapSize.value  / 1000 }%
+          }
+          castShadows FALSE
+          isPickable FALSE
+        }
+      ]
+      
+    }
+  
     Display {
       # Hide display plane far away
       translation 1000 0.1 0
 
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
       name "cozmo_docking_display"
       width 200
       height 240
@@ -45,21 +68,7 @@ Supervisor {
     Display {
       # Hide display plane far away
       translation 1000 0.1 0
-
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
+      
       name "cozmo_viz_display"
       width 400
       height 300
@@ -70,21 +79,6 @@ Supervisor {
       Display {
         # Hide display plane far away
         translation 1000 0.1 0
-
-        children [
-          DEF SHAPE Shape {
-            appearance Appearance {
-              material Material {
-                diffuseColor 1 1 1
-                specularColor 0 0 0
-                transparency 0.6
-              }
-            }
-            geometry Plane {
-             size 1 1
-            }
-          }
-        ]
 
         name "%{= 'cozmo_debug_image_display' .. tostring(iDisplay) }%"
 
@@ -116,20 +110,6 @@ Supervisor {
       # Hide display plane far away
       translation 1000 0.1 0
 
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
       name "victor_behavior_stack_display"
       width 220
       # assumes size 8 font
@@ -140,20 +120,6 @@ Supervisor {
       #Hide display plane far away
       translation 1000 0.1 0
 
-      children [
-        DEF SHAPE Shape {
-          appearance Appearance {
-            material Material {
-              diffuseColor 1 1 1
-              specularColor 0 0 0
-              transparency 0.6
-            }
-          }
-          geometry Plane {
-            size 1 1
-          }
-        }
-      ]
       name "victor_vision_mode_display"
       width 240
       #assumes size 8 font

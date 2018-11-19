@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-
 import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     print("------ begin testing fetching robot stats ------")

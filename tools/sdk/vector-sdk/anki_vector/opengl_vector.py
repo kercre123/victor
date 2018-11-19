@@ -12,23 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module provides a 3D support classes for openGL, used by opengl_viewer.py
-
-Warning:
-    This package requires Python to have the PyOpenGL package installed, along
-    with an implementation of GLUT (OpenGL Utility Toolkit).
-
-    To install the Python packages do ``pip install .[3dviewer]``
-
-    On Windows and Linux you must also install freeglut (macOS / OSX has one
-    preinstalled).
-
-    On Linux: ``sudo apt-get install freeglut3``
-
-    On Windows: Go to http://freeglut.sourceforge.net/ to get a ``freeglut.dll``
-    file. It's included in any of the `Windows binaries` downloads. Place the DLL
-    next to your Python script, or install it somewhere in your PATH to allow any
-    script to use it."
+"""This module provides Vector-specific 3D support classes for OpenGL, used by opengl_viewer.py.
 """
 
 # TODO Update install line above to: ``pip3 install --user "anki_vector[3dviewer]"``

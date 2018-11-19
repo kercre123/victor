@@ -16,6 +16,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
 
+#include "coretech/vision/engine/compressedImage.h"
 #include "coretech/vision/engine/image.h"
 
 #include "engine/debugImageList.h"
@@ -51,13 +52,13 @@ public:
                 const VisionPoseData& poseData,
                 const bool isDarkExposure,
                 std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+                DebugImageList<Vision::CompressedImage>& debugImages);
 
   // Same as above, but without the poseData. Searches in the whole image. Used for testing and debug
   Result Detect(Vision::ImageCache&   imageCache,
                 const bool isDarkExposure,
                 std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+                DebugImageList<Vision::CompressedImage>& debugImages);
 
 private:
 

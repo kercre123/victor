@@ -1,0 +1,14 @@
+{
+  "behaviorID": "MovementTurnLeft",
+  "behaviorClass": "AnimSequence",
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  
+  "respondToUserIntents": [
+    { "type": "movement_turnleft" }
+  ],
+
+  "animTriggers": [
+    "MovementTurnLeft"
+  ]
+}

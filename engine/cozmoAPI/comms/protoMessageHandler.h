@@ -4,7 +4,7 @@
  * Author: Shawn Blakesley
  * Date:   6/15/2018
  *
- * Description: Handles messages between gateway and engine just as 
+ * Description: Handles messages between gateway and engine just as
  *              MessageHandler handles messages between basestation and robot.
  *
  * Copyright: Anki, Inc. 2018
@@ -37,6 +37,7 @@ namespace Vector {
 class CozmoContext;
 class Robot;
 class RobotManager;
+class RobotExternalRequestComponent;
 
 class ProtoMessageHandler : public IGatewayInterface
 {
@@ -77,6 +78,8 @@ private:
 
   // ============================== Private Member Vars ==============================
 
+  std::unique_ptr<RobotExternalRequestComponent>          _externalRequestComponent;
+
   std::unique_ptr<ISocketComms>                           _socketComms;
 
   std::vector<Signal::SmartHandle>                        _signalHandles;
@@ -99,10 +102,7 @@ private:
   uint32_t                                                _messageCountOutgoing = 0;
   uint32_t                                                _messageCountIncoming = 0;
 }; // class MessageHandler
-  
-  
-#undef MESSAGE_BASECLASS_NAME
-  
+
 } // namespace Vector
 } // namespace Anki
 

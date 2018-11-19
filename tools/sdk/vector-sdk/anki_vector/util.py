@@ -629,11 +629,11 @@ class Position(Vector3):
 class Pose:
     """Represents where an object is in the world.
 
-    Whenever Vector is de-localized (i.e. whenever Vector no longer knows
+    Whenever Vector is delocalized (i.e. whenever Vector no longer knows
     where he is - e.g. when he's picked up), Vector creates a new pose starting at
     (0,0,0) with no rotation, with origin_id incremented to show that these poses
     cannot be compared with earlier ones. As Vector drives around, his pose (and the
-    pose of other objects he observes - e.g. faces, cubes etc.) is relative to this
+    pose of other objects he observes - e.g. faces, his LightCube, charger, etc.) is relative to this
     initial position and orientation.
 
     The coordinate space is relative to Vector, where Vector's origin is the

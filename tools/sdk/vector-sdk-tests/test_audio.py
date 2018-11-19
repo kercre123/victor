@@ -20,7 +20,6 @@ output_filename = 'audiosample.wav'
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     print("------ begin audio export test ------")

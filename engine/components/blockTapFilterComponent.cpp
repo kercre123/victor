@@ -68,9 +68,10 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
 {
   ANKI_CPU_PROFILE("BlockTapFilterComponent::Update");
   
+  const EngineTimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
   if( !_tapInfo.empty() )
   {
-    const EngineTimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if( currTime > _waitToTime )
     {
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(_tapInfo.back())));
@@ -80,8 +81,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
   
   for(auto& doubleTapInfo : _doubleTapObjects)
   {
-    const EngineTimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    const bool ignoreMovementTimePassed = doubleTapInfo.second.ignoreNextMoveTime <= curTime;
+    const bool ignoreMovementTimePassed = doubleTapInfo.second.ignoreNextMoveTime <= currTime;
     
     // If we were ignoring move messages but the timeout has expired mark the object as dirty
     if(doubleTapInfo.second.isIgnoringMoveMessages &&
@@ -108,7 +108,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
       for(auto& object : matchingObjects)
       {
         if ( object->IsPoseStateKnown() ) {
-          const bool propagateStack = false;
+          static const bool propagateStack = false;
           _robot->GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
         }
       }

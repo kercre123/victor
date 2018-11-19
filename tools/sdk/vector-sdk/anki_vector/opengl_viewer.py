@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module provides a 3D visualizer for Vector's world state.
+"""This module provides a 3D visualizer for Vector's world state and a 2D camera window.
 
 It uses PyOpenGL, a Python OpenGL 3D graphics library which is available on most
 platforms. It also depends on the Pillow library for image processing.
@@ -22,12 +22,20 @@ for a valid robot and call run with a control function injected into it.
 
 Example:
     .. testcode::
+
         import anki_vector
+        from anki_vector import opengl_viewer
+        import asyncio
 
-        def my_function(robot):
-            robot.play_animation("anim_turn_left_01")
+        async def my_function(robot):
+            await asyncio.sleep(20)
+            print("done")
 
-        with anki_vector.Robot() as robot:
+        with anki_vector.Robot(show_viewer=True,
+                                enable_camera_feed=True,
+                                enable_face_detection=True,
+                                enable_custom_object_detection=True,
+                                enable_nav_map_feed=True) as robot:
             viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
@@ -69,12 +77,13 @@ try:
                            GL_FRONT_AND_BACK,
                            GL_LIGHTING, GL_NORMALIZE,
                            GL_TEXTURE_2D,
-                           glBindTexture, glDisable, glEnable,
+                           glBindTexture, glColor3f, glDisable, glEnable,
                            glMultMatrixf, glPolygonMode, glPopMatrix, glPushMatrix,
-                           glScalef)
-    from OpenGL.GLUT import (GLUT_ACTIVE_ALT, GLUT_ACTIVE_CTRL, GLUT_ACTIVE_SHIFT, GLUT_DOWN, GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON,
-                             GLUT_VISIBLE,
-                             glutCheckLoop, glutLeaveMainLoop, glutGetModifiers, glutIdleFunc,
+                           glScalef, glWindowPos2f)
+    from OpenGL.GLUT import (ctypes,
+                             GLUT_ACTIVE_ALT, GLUT_ACTIVE_CTRL, GLUT_ACTIVE_SHIFT, GLUT_BITMAP_9_BY_15,
+                             GLUT_DOWN, GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON, GLUT_VISIBLE,
+                             glutBitmapCharacter, glutCheckLoop, glutLeaveMainLoop, glutGetModifiers, glutIdleFunc,
                              glutKeyboardFunc, glutKeyboardUpFunc, glutMainLoop, glutMouseFunc, glutMotionFunc, glutPassiveMotionFunc,
                              glutPostRedisplay, glutSpecialFunc, glutSpecialUpFunc, glutVisibilityFunc)
     from OpenGL.error import NullFunctionError
@@ -86,7 +95,7 @@ except ImportError as import_exc:
 
 
 class VectorException(BaseException):
-    """Raised by a failure in the owned Vector thread while the openGL viewer is running."""
+    """Raised by a failure in the owned Vector thread while the OpenGL viewer is running."""
 
 
 class _RobotControlIntents():  # pylint: disable=too-few-public-methods
@@ -104,6 +113,19 @@ class _RobotControlIntents():  # pylint: disable=too-few-public-methods
         self.head_speed = head_speed
 
 
+def _draw_text(font, input_str, x, y, line_height=16, r=1.0, g=1.0, b=1.0):
+    """Render text based on window position. The origin is in the bottom-left."""
+    glColor3f(r, g, b)
+    glWindowPos2f(x, y)
+    input_list = input_str.split('\n')
+    y = y + (line_height * (len(input_list) - 1))
+    for line in input_list:
+        glWindowPos2f(x, y)
+        y -= line_height
+        for ch in line:
+            glutBitmapCharacter(font, ctypes.c_int(ord(ch)))
+
+
 def _glut_install_instructions():
     if sys.platform.startswith('linux'):
         return "Install freeglut: `sudo apt-get install freeglut3`"
@@ -118,7 +140,7 @@ def _glut_install_instructions():
 
 
 class _OpenGLViewController():
-    """Controller that registeres for keyboard and mouse input through GLUT, and uses them to update
+    """Controller that registers for keyboard and mouse input through GLUT, and uses them to update
     the camera and listen for a shutdown cue.
 
     :param shutdown_delegate: Function to call when we want to exit the host OpenGLViewer.
@@ -161,13 +183,15 @@ class _OpenGLViewController():
     #### Public Methods ####
 
     def initialize(self):
-        """Sets up the openGL window and binds input callbacks to it
+        """Sets up the OpenGL window and binds input callbacks to it
         """
 
         glutKeyboardFunc(self._on_key_down)
         glutSpecialFunc(self._on_special_key_down)
 
         # [Keyboard/Special]Up methods aren't supported on some old GLUT implementations
+        has_keyboard_up = False
+        has_special_up = False
         try:
             if bool(glutKeyboardUpFunc):
                 glutKeyboardUpFunc(self._on_key_up)
@@ -187,6 +211,11 @@ class _OpenGLViewController():
         else:
             self._is_keyboard_control_enabled = True
 
+        try:
+            GLUT_BITMAP_9_BY_15
+        except NameError:
+            self._logger.warning("Warning: GLUT font not detected. Help message will be unavailable.")
+
         glutMouseFunc(self._on_mouse_button)
         glutMotionFunc(self._on_mouse_move)
         glutPassiveMotionFunc(self._on_mouse_move)
@@ -199,10 +228,10 @@ class _OpenGLViewController():
         motor messages to the robot if the intents should effect the robot's
         current motion.
 
-        :param robot: the robot being updated by this View Controller
-
         Called on SDK thread, for controlling robot from input intents
         pushed from the OpenGL thread.
+
+        :param robot: the robot being updated by this View Controller
         """
 
         try:
@@ -277,6 +306,8 @@ class _OpenGLViewController():
                 self._camera.look_at = self._last_robot_position
         elif ord(key) == 27:  # Escape key
             self._shutdown_delegate()
+        elif ord(key) == 72 or ord(key) == 104:  # H key
+            opengl_viewer.show_controls = not opengl_viewer.show_controls
 
     def _on_special_key_up(self, key, x, y):  # pylint: disable=unused-argument
         """Called by GLUT when a special key is released.
@@ -349,7 +380,7 @@ class _OpenGLViewController():
 
     def _update_intents_for_robot(self):
         # Update driving intents based on current input, and pass to SDK thread
-        # so that it can pass the input on to the robot.
+        # so that it can pass the input onto the robot.
         def get_intent_direction(key1, key2):
             # Helper for keyboard inputs that have 1 positive and 1 negative input
             pos_key = self._is_key_pressed.get(key1, False)
@@ -401,7 +432,7 @@ class _OpenGLViewController():
 class _ExternalRenderCallFunctor():  # pylint: disable=too-few-public-methods
     """Externally specified OpenGL render function.
 
-    Allows extra geometry to be renderd into an openGL viewer
+    Allows extra geometry to be rendered into OpenGLViewer.
 
     :param f: function to call inside the rendering loop
     :param f_args: a list of arguments to supply to the callable function
@@ -416,12 +447,12 @@ class _ExternalRenderCallFunctor():  # pylint: disable=too-few-public-methods
         self._f(*self._f_args)
 
 
-#: A default window resolution provided for opengl Vector programs
+#: A default window resolution provided for OpenGL Vector programs
 #: 800x600 is large enough to see detail, while fitting on the smaller
 #: end of modern monitors.
 default_resolution = [800, 600]
 
-#: A default projector configurate provided for opengl Vector programs
+#: A default projector configurate provided for OpenGL Vector programs
 #: A Field of View of 45 degrees is common for 3d applications,
 #: and a viewable distance range of 1.0 to 1000.0 will provide a
 #: visible space comparable with most physical Vector environments.
@@ -430,7 +461,7 @@ default_projector = opengl.Projector(
     near_clip_plane=1.0,
     far_clip_plane=1000.0)
 
-#: A default camera object provided for opengl Vector programs.
+#: A default camera object provided for OpenGL Vector programs.
 #: Starts close to and looking at the charger.
 default_camera = opengl.Camera(
     look_at=util.Vector3(100.0, -25.0, 0.0),
@@ -439,7 +470,7 @@ default_camera = opengl.Camera(
     pitch=math.radians(40),
     yaw=math.radians(270))
 
-#: A default light group provided for opengl Vector programs.
+#: A default light group provided for OpenGL Vector programs.
 #: Contains one light near the origin.
 default_lights = [opengl.Light(
     ambient_color=[1.0, 1.0, 1.0, 1.0],
@@ -453,21 +484,30 @@ opengl_viewer = None  # type: OpenGLViewer
 
 
 class OpenGLViewer():
-    """OpenGL based 3D Viewer.
+    """OpenGL-based 3D Viewer.
 
     Handles rendering of both a 3D world view and a 2D camera window.
 
     .. testcode::
+
         import anki_vector
+        from anki_vector import opengl_viewer
+        import asyncio
 
-        def my_function(robot):
-            robot.play_animation("anim_turn_left_01")
+        async def my_function(robot):
+            await asyncio.sleep(20)
+            print("done")
 
-        with anki_vector.Robot() as robot:
+        with anki_vector.Robot(show_viewer=True,
+                                enable_camera_feed=True,
+                                enable_face_detection=True,
+                                enable_custom_object_detection=True,
+                                enable_nav_map_feed=True) as robot:
             viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
             viewer.run(my_function)
 
-    :param robot: the robot object being used by the OpenGL viewer
+    :param robot: The robot object being used by the OpenGL viewer
+    :param show_viewer_controls: Specifies whether to draw controls on the view.
     """
 
     def __init__(self,
@@ -475,8 +515,8 @@ class OpenGLViewer():
                  resolution: List[int] = None,
                  projector: opengl.Projector = None,
                  camera: opengl.Camera = None,
-                 lights: List[opengl.Light] = None):
-
+                 lights: List[opengl.Light] = None,
+                 show_viewer_controls: bool = True):
         if resolution is None:
             resolution = default_resolution
         if projector is None:
@@ -496,6 +536,22 @@ class OpenGLViewer():
 
         self._internal_function_finished = False
         self._exit_requested = False
+
+        # Controls
+        self.show_controls = show_viewer_controls
+        self._instructions = '\n'.join(['W, S: Move forward, backward',
+                                        'A, D: Turn left, right',
+                                        'R, F: Lift up, down',
+                                        'T, G: Head up, down',
+                                        '',
+                                        'LMB: Rotate camera',
+                                        'RMB: Move camera',
+                                        'LMB + RMB: Move camera up/down',
+                                        'LMB + Z: Zoom camera',
+                                        'X: same as RMB',
+                                        'TAB: center view on robot',
+                                        '',
+                                        'H: Toggle help'])
 
         global opengl_viewer  # pylint: disable=global-statement
         if opengl_viewer is not None:
@@ -617,12 +673,24 @@ class OpenGLViewer():
 
         glDisable(GL_LIGHTING)
 
+        # Draw the Vector robot to the screen
         robot_view.display(robot_frame.pose, robot_frame.head_angle, robot_frame.lift_position)
+
+        if self.show_controls:
+            self._draw_controls()
+
+    def _draw_controls(self):
+        try:
+            GLUT_BITMAP_9_BY_15
+        except NameError:
+            pass
+        else:
+            _draw_text(GLUT_BITMAP_9_BY_15, self._instructions, x=10, y=10)
 
     def _render_3d_view(self, window: opengl.OpenGLWindow):
         """Renders 3d objects to an openGL window
 
-        :param window: opengl window to render to
+        :param window: OpenGL window to render to
         """
         window.prepare_for_rendering(self._projector, self._camera, self._lights)
 
@@ -658,8 +726,7 @@ class OpenGLViewer():
         window.display_rendered_content()
 
     def _on_window_update(self):
-        """Top level display call which intercepts keyboard interrupts or delegates
-        to the lower level display call.
+        """Top level display call.
         """
         try:
             self._render_3d_view(self._main_window)
@@ -669,15 +736,23 @@ class OpenGLViewer():
             self._request_exit()
 
     def run(self, delegate_function: callable):
-        """Turns control of the main thread over to the openGL viewer
+        """Turns control of the main thread over to the OpenGL viewer
 
         .. testcode::
+
             import anki_vector
+            from anki_vector import opengl_viewer
+            import asyncio
 
-            def my_function(robot):
-                robot.play_animation("anim_turn_left_01")
+            async def my_function(robot):
+                await asyncio.sleep(20)
+                print("done")
 
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(show_viewer=True,
+                                    enable_camera_feed=True,
+                                    enable_face_detection=True,
+                                    enable_custom_object_detection=True,
+                                    enable_nav_map_feed=True) as robot:
                 viewer = anki_vector.opengl_viewer.OpenGLViewer(robot=robot)
                 viewer.run(my_function)
 

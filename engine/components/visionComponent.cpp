@@ -41,6 +41,7 @@
 #include "engine/viz/vizManager.h"
 
 #include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/compressedImage.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/observableObjectLibrary_impl.h"
@@ -1576,26 +1577,12 @@ namespace Vector {
     return img_undistort;
   }
 
-  template<class PixelType>
-  Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
+  Result VisionComponent::SendCompressedImage(const Vision::CompressedImage& img, const std::string& identifier)
   {
-    if(quality == 0)
-    {
-      // Don't send anything
-      return RESULT_OK;
-    }
-
     if(!_robot->HasExternalInterface())
     {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
-    }
-
-    static cv::Mat_<PixelType> sMat(img.GetNumRows(), img.GetNumCols());
-    if(sMat.rows != img.GetNumRows() || sMat.cols != img.GetNumCols())
-    {
-      sMat.release();
-      sMat.create(img.GetNumRows(), img.GetNumCols());
     }
 
     ImageChunk m;
@@ -1605,30 +1592,11 @@ namespace Vector {
       return RESULT_OK;
     }
 
+    const std::vector<u8>& compressedBuffer = img.GetCompressedBuffer();
+
     std::string data;
     external_interface::ImageChunk* imageChunk = nullptr;
     external_interface::GatewayWrapper wrapper;
-
-    const std::vector<int> compressionParams = {
-      CV_IMWRITE_JPEG_QUALITY, quality
-    };
-
-    if(kSendUndistortedImages)
-    {
-      auto img_undistort = GetUndistorted(img, *_camera);
-      
-      // Convert to BGR so that imencode works
-      img_undistort.ConvertToShowableFormat(sMat);
-    }
-    else
-    {
-      // Convert to BGR so that imencode works
-      img.ConvertToShowableFormat(sMat);
-    }
-
-    // TODO: VIC-7268 Move compression to VisionSystem and off main thread
-    std::vector<u8> compressedBuffer;
-    cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);
 
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
@@ -1664,9 +1632,12 @@ namespace Vector {
 
       m.frameTimeStamp = img.GetTimestamp();
       m.imageChunkCount = imageChunkCount;
-      if(img.GetNumChannels() == 1) {
+      if(img.GetNumChannels() == 1)
+      {
         m.imageEncoding = Vision::ImageEncoding::JPEGGray;
-      } else {
+      }
+      else
+      {
         m.imageEncoding = Vision::ImageEncoding::JPEGColor;
       }
     }
@@ -1683,14 +1654,18 @@ namespace Vector {
       imageChunk->set_image_id(imgID);
       imageChunk->set_frame_time_stamp(img.GetTimestamp());
       imageChunk->set_image_chunk_count((u32)imageChunkCount);
-      if(img.GetNumChannels() == 1) {
+      if(img.GetNumChannels() == 1)
+      {
         imageChunk->set_image_encoding(external_interface::ImageChunk_ImageEncoding_JPEG_GRAY);
-      } else {
+      }
+      else
+      {
         imageChunk->set_image_encoding(external_interface::ImageChunk_ImageEncoding_JPEG_COLOR);
       }
     }
 
-    while (bytesRemainingToSend > 0) {
+    while (bytesRemainingToSend > 0)
+    {
       u32 chunkSize = std::min(bytesRemainingToSend, kMaxChunkSize);
 
       auto startIt = compressedBuffer.begin() + (compressedBuffer.size() - bytesRemainingToSend);
@@ -1726,14 +1701,7 @@ namespace Vector {
 
     return RESULT_OK;
 
-  } // CompressAndSendImage()
-
-  // Explicit instantiation for grayscale and RGB
-  template Result VisionComponent::CompressAndSendImage<u8>(const Vision::ImageBase<u8>& img,
-                                                            s32 quality, const std::string& identifier);
-
-  template Result VisionComponent::CompressAndSendImage<Vision::PixelRGB>(const Vision::ImageBase<Vision::PixelRGB>& img,
-                                                                          s32 quality, const std::string& identifier);
+  }
 
   Result VisionComponent::ClearCalibrationImages()
   {
@@ -2798,66 +2766,31 @@ namespace Vector {
       // Display any debug images left by the vision system
       if(kImageCompressQuality > 0)
       {
-        // Send any images in the debug image lists to Viz for display
-        // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
-        const bool kOnlyResizeIfSmaller = true;
-        const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
-        const s32  kDisplayNumCols = 640; //   "
-
-        for(auto & debugGray : result.debugImages) {
-          debugGray.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
-          debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
-                                                 Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
-          CompressAndSendImage(debugGray.second, kImageCompressQuality, debugGray.first);
-        }
-            
-        for(auto & debugRGB : result.debugImageRGBs) {
-          debugRGB.second.SetTimestamp((TimeStamp_t)result.timestamp); // Ensure debug image has timestamp matching result
-          debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
-                                                Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
-          CompressAndSendImage(debugRGB.second, kImageCompressQuality, debugRGB.first);
-        }
-      }
-      else if(kImageCompressQuality == -1)
-      {
-        // Display debug images locally
-        for(auto & debugGray : result.debugImages) {
-          debugGray.second.Display(debugGray.first.c_str());
-        }
-        for(auto & debugRGB : result.debugImageRGBs) {
-          debugRGB.second.Display(debugRGB.first.c_str());
+        for(auto & debugGray : result.debugImages)
+        {
+          SendCompressedImage(debugGray.second, debugGray.first);
         }
       }
     }
-    else if(!result.debugImages.empty() || !result.debugImageRGBs.empty())
+    else if(!result.debugImages.empty())
     {
       // We do not expect to have debug images to draw without dev cheats enabled
-      std::string grayStr;
-      for(auto & debugGray : result.debugImages)
+      std::string str;
+      for(auto & debugImg : result.debugImages)
       {
-        grayStr += debugGray.first;
-        grayStr += " ";
-      }
-
-      std::string rgbStr;
-      for(auto & debugRGB : result.debugImageRGBs)
-      {
-        rgbStr += debugRGB.first;
-        rgbStr += " ";
+        str += debugImg.first;
+        str += " ";
       }
 
       PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.DebugImagesPresent",
-                        "Gray:%s RGB:%s",
-                        grayStr.empty() ? "<none>" : grayStr.c_str(),
-                        rgbStr.empty() ? "<none>" : rgbStr.c_str());
+                        "%s",
+                        str.c_str());
     }
 
-    if(kImageCompressQuality > 0 &&
-       result.modesProcessed.Contains(VisionMode::ImageViz))
+    if(result.modesProcessed.Contains(VisionMode::ImageViz))
     {
-      CompressAndSendImage(result.displayImg, kImageCompressQuality, "camera");
+      SendCompressedImage(result.compressedDisplayImg, "camera");
     }
-
   }
   
   void VisionComponent::UpdateForCalibration()

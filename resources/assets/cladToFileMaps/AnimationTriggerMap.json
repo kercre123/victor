@@ -1857,5 +1857,25 @@
   {
     "CladEvent": "VolumeLevel5",
     "AnimName": "ag_volume_stage_05"
+  },
+  {
+    "CladEvent": "MovementDriveBackward",
+    "AnimName": "ag_movement_backward_01"
+  },
+  {
+    "CladEvent": "MovementDriveForward",
+    "AnimName": "ag_movement_forward_01"
+  },
+  {
+    "CladEvent": "MovementTurnLeft",
+    "AnimName": "ag_movement_left_01"
+  },
+  {
+    "CladEvent": "MovementTurnRight",
+    "AnimName": "ag_movement_right_01"
+  },
+  {
+    "CladEvent": "MovementTurnAround",
+    "AnimName": "ag_movement_turnaround_01"
   }
 ]

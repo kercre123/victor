@@ -30,6 +30,8 @@
 #include <sstream>
 #include <signal.h>
 
+#include <sys/time.h>
+
 namespace Anki {
 namespace Util {
 
@@ -402,8 +404,17 @@ void sChanneledDebug(const char* channel, const char* name, const KVV& keyvals, 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool sVerifyFailedReturnFalse(const char* name, const char* format, ...)
+bool sVerifySucceededReturnTrue(const char* file, int line)
 {
+  Anki::Util::DropBreadcrumb(true, file, line);
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool sVerifyFailedReturnFalse(const char* file, int line, const char* name, const char* format, ...)
+{
+  Anki::Util::DropBreadcrumb(false, file, line);
+
   va_list args;
   va_start(args, format);
   sErrorV(name, {}, format, args);
@@ -593,6 +604,65 @@ void sPopErrG()
   }
 }
 
+#if ANKI_BREADCRUMBS
+bool DropBreadcrumb(bool result, const char* file, int line)
+{
+  static const int BUFFER_SIZE = 16; // number of entries for file/line
+  static const int LOOP_DEPTH = 3; // amount of history to check for dupe file/line
+
+  static const char* files[BUFFER_SIZE] = {0};
+  static int lines[BUFFER_SIZE] = {0};
+  static int counts[BUFFER_SIZE] = {0};
+  static struct timeval time[BUFFER_SIZE];
+
+  // ptr - 1 is the last written entry
+  // ptr +/- 0 is the oldest
+  // ptr + 1 is the next oldest
+  static int ptr = 0;
+  static bool crashed = false;
+
+  if (line == -1 && !crashed) {
+    printf("breadcrumbs (not a stack trace)...\n");
+    const int oldestPtr = ((ptr + 0) + BUFFER_SIZE) % BUFFER_SIZE;
+    for(int i = 0; i < BUFFER_SIZE; ++i) {
+      const int cursor = ((ptr + i) + BUFFER_SIZE) % BUFFER_SIZE;
+      if (files[cursor]) {
+          const int64_t delta_sec = time[cursor].tv_sec - time[oldestPtr].tv_sec;
+          const int64_t delta_usec = (delta_sec * 1000000) + (int64_t)(time[cursor].tv_usec - time[oldestPtr].tv_usec);
+          printf("%d)  %s:%d cnt %d %lld usec\n", i, files[cursor], lines[cursor], counts[cursor], delta_usec);
+      }
+    }
+
+    crashed = true;
+  }
+
+  if (!crashed) {
+    bool loop = false;
+    
+    for(int i = 1; i <= LOOP_DEPTH; ++i) {
+      // ptr is one past the last entry
+      const int prevPtr = ((ptr - i) + BUFFER_SIZE) % BUFFER_SIZE;
+      if (files[prevPtr] == file && lines[prevPtr] == line) {
+        ++counts[prevPtr];
+        loop = true;
+        break;
+      }
+    }
+
+    if (!loop) {
+      // not in a loop
+      files[ptr] = file;
+      lines[ptr] = line;
+      counts[ptr] = 0;
+      gettimeofday(&time[ptr], NULL);
+
+      ptr = (ptr + 1) % BUFFER_SIZE;
+    }
+  }
+
+  return result;
+}
+#endif
 
 } // namespace Util
 } // namespace Anki

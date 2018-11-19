@@ -322,13 +322,14 @@ bool AccountSettingsManager::ApplyAccountSettingDataCollection()
 
   // Publish choice to DAS manager
   EnableDataCollection(value);
+
   // Send message to mic system in anim process
-  ASSERT_NAMED(_robot != nullptr, "AccountSettingsManager.ApplyAccountSettingDataCollection._robot.IsNull");
-  if (_robot != nullptr) {
-    using namespace RobotInterface;
-    const auto msg = EngineToRobot::CreateupdatedAccountSettings(UpdatedAccountSettings(value));
-    _robot->SendMessage(std::move(msg));
-  }
+  using namespace RobotInterface;
+  // This message is 'overloaded' because we're running out of message tags
+  const auto msg = EngineToRobot::CreateupdatedSettings(UpdatedSettings(SettingBeingChanged::SETTING_ENABLE_DATA_COLLECTION,
+                                                                        value, ""));
+  _robot->SendMessage(std::move(msg));
+
   return true;
 }
 

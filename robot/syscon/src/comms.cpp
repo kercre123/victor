@@ -13,6 +13,7 @@
 #include "touch.h"
 #include "vectors.h"
 #include "flash.h"
+#include "encoders.h"
 
 #include "messages.h"
 
@@ -205,6 +206,12 @@ void Comms::tick(void) {
   // Finalize the packet
   int count = sizeof(outboundPacket.sync);
 
+  outboundPacket.sync.payload.flags  = 0
+                                     | (Opto::active ? RUNNING_FLAGS_SENSORS_VALID : 0)
+                                     | (Encoders::disabled ? ENCODERS_DISABLED : 0)
+                                     | (Encoders::head_invalid ? ENCODER_HEAD_INVALID : 0)
+                                     | (Encoders::lift_invalid ? ENCODER_LIFT_INVALID : 0);
+  
   Analog::transmit(&outboundPacket.sync.payload);
   Motors::transmit(&outboundPacket.sync.payload);
   Opto::transmit(&outboundPacket.sync.payload);

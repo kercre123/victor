@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.6)
 
 # config files that live in /anki/etc
+add_subdirectory(anki-trace)
+
 add_subdirectory(config)
 
 add_subdirectory(camera)
@@ -21,32 +23,33 @@ add_subdirectory(vic-log-event)
 
 add_subdirectory(vic-log-upload)
 
+
 #
 # Macro command to create build rules for full symbol files
 #
-macro(add_symbol_target so)
+macro(add_strip_target libname)
   # Add a custom command to generate the .full file,
   # then add a custom target that depends on the file
-  set(lib ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${so})
-  set(libfull ${lib}.full)
+  set(libpath ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${libname})
+  set(libfull ${libpath}.full)
   set(STRIP_CMD "${VICOS_TOOLCHAIN_PREFIX}strip")
   set(OBJCOPY_CMD "${VICOS_TOOLCHAIN_PREFIX}objcopy")
   add_custom_command(
     OUTPUT ${libfull}
-    DEPENDS ${lib}
-    COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${libfull}
-    COMMAND ${STRIP_CMD} --strip-unneeded ${lib}
-    COMMAND ${OBJCOPY_CMD} --add-gnu-debuglink ${libfull} ${lib}
+    DEPENDS ${libpath}
+    COMMAND ${CMAKE_COMMAND} -E copy ${libpath} ${libfull}
+    COMMAND ${STRIP_CMD} --strip-unneeded ${libpath}
+    COMMAND ${OBJCOPY_CMD} --add-gnu-debuglink ${libfull} ${libpath}
     COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${libfull}
-    COMMENT "strip lib ${lib} -> ${libfull}"
+    COMMENT "strip ${libname}"
     VERBATIM
   )
-  add_custom_target(${so} DEPENDS ${libfull})
+  add_custom_target(${libname} ALL DEPENDS ${libfull})
 endmacro()
 
 if (VICOS)
   # For each imported library, create a target to generate the symbol file
-  set(SYMBOL_TARGETS
+  set(STRIP_TARGETS
     libatomic.so.1
     libc++.so.1
     libopencv_calib3d.so.3.4
@@ -61,11 +64,10 @@ if (VICOS)
     libopencv_video.so.3.4
     libopencv_videoio.so.3.4
     libopus.so.0
+    ${AVS_LIB_NAMES}
   )
-  foreach (so ${SYMBOL_TARGETS})
-    add_symbol_target(${so})
+  foreach (target ${STRIP_TARGETS})
+    add_strip_target(${target})
   endforeach()
 
-  # Create one top-level target that depends on all the symbol targets
-  add_custom_target(platform_symbols ALL DEPENDS ${SYMBOL_TARGETS})
 endif()

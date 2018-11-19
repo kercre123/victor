@@ -13,6 +13,9 @@ static const int MAX_ENCODER_FRAMES = 25; // 0.1250s
 static const int MAX_POWER = 0x8000;
 static const uint16_t MOTOR_PERIOD = 20000; // 20khz
 static const int16_t MOTOR_MAX_POWER = SYSTEM_CLOCK / MOTOR_PERIOD;
+static const int DRIVEN_POWER = MOTOR_MAX_POWER / 10;
+
+#define ABS(x) (((x) < 0) ? -(x) : (x))
 
 enum MotorDirection {
   DIRECTION_UNINIT = 0,
@@ -76,6 +79,10 @@ static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
   },
 };
 
+bool Motors::lift_driven;
+bool Motors::head_driven;
+bool Motors::treads_driven;
+
 static MotorStatus motorStatus[MOTOR_COUNT];
 static int16_t motorPower[MOTOR_COUNT];
 static int moterServiced;
@@ -132,6 +139,14 @@ static void Motors::transmit(BodyToHead *payload) {
       state->serviceCountdown = 0;
     }
   }
+
+
+
+  // Flush invalid flags when device is moving
+  Motors::lift_driven = ABS(motorStatus[MOTOR_LIFT].power) > DRIVEN_POWER;
+  Motors::head_driven = ABS(motorStatus[MOTOR_HEAD].power) > DRIVEN_POWER;
+  Motors::treads_driven = ABS(motorStatus[MOTOR_LEFT].power) > DRIVEN_POWER
+                       || ABS(motorStatus[MOTOR_RIGHT].power) > DRIVEN_POWER;
 }
 
 static void configure_timer(TIM_TypeDef* timer) {

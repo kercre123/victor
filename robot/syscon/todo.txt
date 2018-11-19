@@ -1,1 +1,0 @@
-* Fix syscon wake on charger with button

@@ -157,7 +157,6 @@ namespace {
       AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Resume,
       AudioMetaData::GameParameter::ParameterType::Robot_Alexa_Volume_Master}}
   };
-
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("Alexa.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
@@ -177,7 +176,7 @@ AlexaMediaPlayer::AlexaMediaPlayer( Type type,
   , _contentFetcherFactory( contentFetcherFactory )
   , _audioInfo( sAudioInfo.at(_type) )
 {
-  // FIXME: How do we get the inital state from persistant storage
+ // FIXME: How do we get the inital state from persistant storage
   _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
   _settings.mute = false;
 }
@@ -536,8 +535,7 @@ bool AlexaMediaPlayer::pause( SourceId id )
   const auto eventID = AudioEngine::ToAudioEventId( _audioInfo.pauseEvent );
   _audioController->PostAudioEvent(eventID, _audioInfo.gameObject );
   // LOG( "pause return TRUE");
-
-  return true;
+ return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -565,8 +563,7 @@ bool AlexaMediaPlayer::resume( SourceId id )
 
   const auto eventID = AudioEngine::ToAudioEventId( _audioInfo.resumeEvent );
   _audioController->PostAudioEvent(eventID, _audioInfo.gameObject );
-
-  // LOG( "resume RETURN True" );
+ // LOG( "resume RETURN True" );
   return true;
 }
 

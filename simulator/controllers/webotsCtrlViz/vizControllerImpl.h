@@ -111,6 +111,12 @@ private:
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
+  void ProcessVizSetOriginMessage(const AnkiEvent<VizInterface::MessageViz> &msg);
+  
+  void ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
   void DisplayBufferedCameraImage(const RobotTimeStamp_t timestamp);
   void DisplayCameraInfo(const RobotTimeStamp_t timestamp);
   
@@ -125,6 +131,9 @@ private:
 
   webots::Supervisor& _vizSupervisor;
 
+  // For displaying nav map in the 3D view
+  webots::Display* _navMapDisp;
+  
   // For displaying misc debug data
   webots::Display* _disp;
 
@@ -188,6 +197,9 @@ private:
 
   std::string _currAnimName = "";
   u8          _currAnimTag = 0;
+  
+  std::vector<ExternalInterface::MemoryMapQuadInfoFull> _navMapNodes;
+  
 };
 
 } // end namespace Vector

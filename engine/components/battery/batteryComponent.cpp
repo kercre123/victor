@@ -355,6 +355,14 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   UpdateSuggestedChargerTime(wasLowBattery, wasCharging);
 
   _batteryStatsAccumulator->Update(_battTemperature_C, _batteryVoltsFilt);
+
+  // Report encoder stats only while off charger
+  // (Encoders should normally be off while on charger)
+  if (!IsOnChargerContacts()) {
+    bool encodersDisabled = msg.status & (uint32_t)RobotStatusFlag::ENCODERS_DISABLED;
+    bool calmMode         = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
+    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, calmMode);
+  }
 }
 
 

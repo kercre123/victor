@@ -44,18 +44,18 @@ namespace { // "Private members"
   // Whether or not there is a valid syscon application
   // Assume we do until we get a PAYLOAD_BOOT_FRAME
   bool haveValidSyscon_ = true;
-  
+
 #ifdef HAL_DUMMY_BODY
   BodyToHead dummyBodyData_ = {
     .cliffSense = {800, 800, 800, 800}
   };
 #endif
-  
+
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_ = 0;
-  
+
   // Counter for invalid prox sensor readings
   std::unordered_map<RangeStatus, u32> invalidProxSensorStatusCounts;
   TimeStamp_t nextInvalidProxDataReportSendTime_ms_ = 0;
@@ -93,7 +93,7 @@ namespace { // "Private members"
     .battery.main_voltage = (int16_t)(5.0/kBatteryScale),
     .battery.charger      = (int16_t)(5.0/kBatteryScale),
   };
-  
+
 } // "private" namespace
 
 // Forward Declarations
@@ -186,6 +186,8 @@ void populate_boot_body_data(const struct SpineMessageHeader* hdr)
     //extract button data from stub packet and put in fake full packet
     uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
     BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+    BootBodyData_.micError[0] = ~BootBodyData_.micError[0]; //prevent stuck bits
+    BootBodyData_.micError[1] = ~BootBodyData_.micError[1];
     bodyData_ = &BootBodyData_;
   }
 }
@@ -295,7 +297,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 Result HAL::Init(const int * shutdownSignal)
 {
   using Result = Anki::Result;
-  
+
   // Set ID
   robotID_ = Anki::Vector::DEFAULT_ROBOT_ID;
 
@@ -309,7 +311,7 @@ Result HAL::Init(const int * shutdownSignal)
 #ifndef HAL_DUMMY_BODY
   {
     AnkiInfo("HAL.Init.StartingSpineHAL", "");
-    
+
     nextInvalidProxDataReportSendTime_ms_ = GetTimeStamp() + INVALID_PROX_DATA_REPORT_PERIOD_MS;
     invalidProxSensorStatusCounts = {
       {RangeStatus::SIGMA_FAIL, 0},
@@ -408,6 +410,8 @@ Result spine_get_frame() {
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
         populate_boot_body_data(hdr);
+        //N.B. All the data in the resulting fake frame is 0, except for buttonPressed & micError. This will
+        //only happen if body is in bootloader & nonfunctional, so it shouldn't matter, but be aware.
         result = RESULT_OK;
       }
       else {
@@ -445,7 +449,7 @@ void ReportRecentInvalidProxDataReadings()
     DASMSG_SET(i4, invalidProxSensorStatusCounts.at(RangeStatus::PHASE_FAIL), "Number of recent phase failures");
     DASMSG_SEND();
   }
-  
+
   if ( (invalidProxSensorStatusCounts.at(RangeStatus::MIN_RANGE_FAIL) +
         invalidProxSensorStatusCounts.at(RangeStatus::HARDWARE_FAIL) +
         invalidProxSensorStatusCounts.at(RangeStatus::NO_UPDATE)) > 0) {
@@ -507,14 +511,14 @@ Result HAL::Step(void)
       }
       EventStop(EventType::WRITE_SPINE);
     }
-    
+
     // Print warning if power mode is unexpected
     const HAL::PowerState currPowerMode = PowerGetMode();
     if (currPowerMode != desiredPowerMode_) {
-      if ( ((lastPowerSetModeTime_ms_ == 0) && reportUnexpectedPowerMode_) || 
+      if ( ((lastPowerSetModeTime_ms_ == 0) && reportUnexpectedPowerMode_) ||
            ((lastPowerSetModeTime_ms_ > 0) && ((now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_])))
            ) {
-        AnkiWarn("HAL.Step.UnexpectedPowerMode", 
+        AnkiWarn("HAL.Step.UnexpectedPowerMode",
                  "Curr mode: %u, Desired mode: %u, now: %ums, lastSetModeTime: %ums, lastH2BSendTime: %ums",
                  currPowerMode, desiredPowerMode_, now_ms, lastPowerSetModeTime_ms_, lastH2BSendTime_ms_);
         lastPowerSetModeTime_ms_ = 0;  // Reset time to avoid spamming warning
@@ -523,12 +527,12 @@ Result HAL::Step(void)
     } else {
       reportUnexpectedPowerMode_ = true;
     }
-    
+
     // Send DAS msg every 24 hours to report the number of invalid prox sensor readings
     if (now_ms > nextInvalidProxDataReportSendTime_ms_) {
       ReportRecentInvalidProxDataReadings();
     }
-    
+
     struct ContactData* ccc_response = ccc_text_response();
     if (ccc_response) {
       spine_write_ccc_frame(&spine_, ccc_response);
@@ -559,9 +563,9 @@ Result HAL::Step(void)
   ProcessFailureCode();
 
   ProcessMicError();
-  
+
   ProcessTouchLevel(); // filter invalid values from touch sensor
-  
+
 #if(DEBUG_TOUCH_SENSOR)
   static FILE* fp = nullptr;
   if(fp == nullptr) {
@@ -626,7 +630,7 @@ void ProcessFailureCode()
     faultCodeDrawn = true; \
     FaultCode::DisplayFaultCode(fault); \
   }
-  
+
   static bool faultCodeDrawn = false;
   switch(bodyData_->failureCode)
   {
@@ -662,7 +666,7 @@ void ProcessMicError()
   uint32_t sameBits = ~(prevMicError ^ micError);
 
   static uint8_t whichChannelsStuck = 0;
-  
+
   for(int i = 0; i < 32; ++i)
   {
     if((sameBits >> i) & 1)
@@ -678,6 +682,7 @@ void ProcessMicError()
     {
       uint8_t iEven = (i % 2) + 1; // 0b01 if even, 0b10 if odd
       whichChannelsStuck |= (i >= 16 ? (iEven << 2): iEven) ;
+      sameBitsArr[i] = 0; //prevent this channel from warning again for ~1.25s.
     }
   }
 
@@ -685,9 +690,9 @@ void ProcessMicError()
   if(whichChannelsStuck > 0)
   {
     sentDAS = true;
-    
+
     AnkiError("HAL.ProcessMicError.StuckBitDetected", "0x%x", whichChannelsStuck);
-    
+
     DASMSG(mic_stuck_bit,
            "robot.stuck_mic_bit",
            "Indicates that one or more of the microphones is not functioning properly");
@@ -697,7 +702,7 @@ void ProcessMicError()
     DASMSG_SEND_ERROR();
 
   }
-  
+
   prevMicError = micError;
 }
 
@@ -759,7 +764,7 @@ inline u16 FlipBytes(u16 v) {
 inline RangeStatus ConvertToApiRangeStatus(const u8 deviceRangeStatus)
 {
   uint8_t internal_device_range_status = ((deviceRangeStatus & 0x78) >> 3);
-  
+
   // For a more detailed explanation of the failure codes, refer to the VL53L0X API:
   // https://www.st.com/content/ccc/resource/technical/document/user_manual/group0/6b/4e/24/90/d8/05/47/a5/DM00279088/files/DM00279088.pdf/jcr:content/translations/en.DM00279088.pdf
   switch (internal_device_range_status)
@@ -823,7 +828,7 @@ u16 HAL::GetButtonState(const ButtonID button_id)
   }
   return bodyData_->touchLevel[button_id];
 }
-  
+
 u16 HAL::GetRawCliffData(const CliffID cliff_id)
 {
   assert(cliff_id < DROP_SENSOR_COUNT);
@@ -930,6 +935,33 @@ HAL::PowerState HAL::PowerGetMode()
     return POWER_MODE_ACTIVE;
   }
   return (bodyData_->flags & RUNNING_FLAGS_SENSORS_VALID) ? POWER_MODE_ACTIVE : POWER_MODE_CALM;
+}
+
+bool HAL::AreEncodersDisabled()
+{
+  if(bodyData_ != nullptr)
+  {
+    return (bodyData_->flags & ENCODERS_DISABLED);
+  }
+  return true;
+}
+
+bool HAL::IsHeadEncoderInvalid()
+{
+  if(bodyData_ != nullptr)
+  {
+    return (bodyData_->flags & ENCODER_HEAD_INVALID);
+  }
+  return true;
+}
+
+bool HAL::IsLiftEncoderInvalid()
+{
+  if(bodyData_ != nullptr)
+  {
+    return (bodyData_->flags & ENCODER_LIFT_INVALID);
+  }
+  return true;
 }
 
 

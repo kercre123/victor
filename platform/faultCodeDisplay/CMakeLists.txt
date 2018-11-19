@@ -1,37 +1,23 @@
 cmake_minimum_required(VERSION 3.6)
 
-if (VICOS)
-
 project(vic-faultCodeDisplay)
 
 include(anki_build_cxx)
 include(robot_core)
 
-set(PLATFORM_LIBS "")
-set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
-set(PLATFORM_COMPILE_DEFS "")
+if (VICOS)
 
-set(PLATFORM_LIBS
-  robot_core
-)
+  anki_build_cxx_executable(vic-faultCodeDisplay ${ANKI_SRCLIST_DIR})
 
-add_executable(vic-faultCodeDisplay
-  ${CMAKE_SOURCE_DIR}/platform/faultCodeDisplay/faultCodeDisplay.cpp)
+  target_link_libraries(vic-faultCodeDisplay
+    PUBLIC
+    robot_interface
+    robot_core
+    cti_common
+    cti_vision
+    ${ANKITRACE}
+  )
 
-target_link_libraries(vic-faultCodeDisplay
-  PUBLIC
-  robot_interface
-  PRIVATE
-  cti_common
-  cti_vision
-  ${PLATFORM_LIBS}
-)
-
-anki_build_strip(TARGET vic-faultCodeDisplay)
-
-target_compile_definitions(vic-faultCodeDisplay
-  PRIVATE
-  ${PLATFORM_COMPILE_DEFS}
-)
+  anki_build_strip(TARGET vic-faultCodeDisplay)
 
 endif(VICOS)

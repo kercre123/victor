@@ -1,3 +1,4 @@
+import base64
 import configparser
 import json
 import os
@@ -5,6 +6,7 @@ from pathlib import Path
 import sys
 
 try:
+    from PIL import Image
     import pytest
     import requests
     from requests_toolbelt.adapters import host_header_ssl
@@ -12,7 +14,16 @@ except ImportError:
     sys.exit("\n\nThis script requires you to install 'pytest', 'requests' and 'requests_toolbelt'.\n"
              "To do so, please run '{pip_install}'\n"
              "Then try again".format(
-                 pip_install="pip3 install pytest requests requests_toolbelt",
+                 pip_install="pip3 install Pillow pytest requests requests_toolbelt",
+             ))
+
+try:
+    import anki_vector
+except ImportError:
+    sys.exit("\n\nThis script requires you to install the anki_vector sdk'.\n"
+             "To do so, please run '{pip_install}' from the tools/sdk/vector-sdk directory\n"
+             "Then try again".format(
+                 pip_install="pip3 install -e .",
              ))
 
 try:
@@ -57,7 +68,7 @@ class Connection:
     @staticmethod
     def default_callback(response, response_type):
         print("Default response: {}".format(colored(response.content, "cyan")))
-        assert response.status_code == 200, "Received failure status_code: {}".format(response.status_code)
+        assert response.status_code == 200, "Received failure status_code: {} => {}".format(response.status_code, response.content)
         Parse(response.content, response_type, ignore_unknown_fields=True)
         print("Converted Protobuf: {}".format(colored(response_type, "cyan")))
 
@@ -86,7 +97,7 @@ class Connection:
             callback(r, response_type, **{"iterations": stream} if stream is not None else {})
 
     def send(self, url_suffix, message, response_type, stream=None, callback=None):
-        data = MessageToJson(message, including_default_value_fields=True)
+        data = MessageToJson(message, including_default_value_fields=True, preserving_proto_field_name=True)
         return self.send_raw(url_suffix, data, response_type, stream, callback)
 
 @pytest.fixture(scope="module")
@@ -96,6 +107,9 @@ def vector_connection():
         sys.exit("Please set 'ANKI_ROBOT_SERIAL' environment variable with 'export ANKI_ROBOT_SERIAL=<your robot's serial number>'. To run with webots set your serial number to 'Local'")
     return Connection(serial)
 
-def json_from_file(name):
+def image_data_from_file(image_path):
+    return anki_vector.screen.convert_image_to_screen_data(Image.open(image_path))
+
+def data_from_file(name):
     with open(name, 'rb') as f:
         return f.read()

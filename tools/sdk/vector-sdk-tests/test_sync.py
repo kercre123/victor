@@ -9,8 +9,6 @@ Test Synchronizer to make sure it works properly in all combinations:
 * Lastly disconnecting and reconnecting with the same robot
 """
 
-import os
-import sys
 import time
 
 from anki_vector.events import Events  # pylint: disable=wrong-import-position
@@ -18,7 +16,6 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     print("------ begin testing sync ------")

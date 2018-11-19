@@ -71,6 +71,7 @@ public:
 
 private:
 
+  void RemoveOldFiles() const;
   void DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
                    FILE* fd, std::string* resultStr) const;
   bool FrameBufferEmpty() const { return _nextFrameIndex == 0 && !_bufferFilled; }
@@ -110,7 +111,7 @@ private:
   float               _waitTimeToExpire = 0.0f;
 
   const CozmoContext* _context;
-  std::string         _baseLogDir = "";
+  std::string         _fileDir = "";
   static const std::string _logBaseFileName;
   static const int    kNumCharsInLineBuffer = 256;
   char*               _lineBuffer;

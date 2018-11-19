@@ -241,7 +241,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
                                   const VisionPoseData& poseData,
                                   const bool isDarkExposure,
                                   std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                                  DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+                                  DebugImageList<Vision::CompressedImage>& debugImages)
 {
   if(!poseData.groundPlaneVisible)
   {
@@ -376,7 +376,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     //snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, salientPoint.img_x, salientPoint.img_y);
     //cv::putText(saliencyImgDisp.get_CvMat_(), std::string(tempText),
     //            cv::Point(0,saliencyImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
-    debugImageRGBs.push_back({"LaserSaliencyImage", _debugImage});
+    debugImages.emplace_back("LaserSaliencyImage", _debugImage);
 
     Vision::ImageRGB saliencyImageDispGround(poseData.groundPlaneROI.GetOverheadImage(saliencyImageFullSize,
                                                                                       poseData.groundPlaneHomography));
@@ -390,7 +390,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
                (s32)std::round(groundPlaneCentroid.x()), (s32)std::round(groundPlaneCentroid.y()));
       saliencyImageDispGround.DrawText({0.f,poseData.groundPlaneROI.GetWidthFar()}, tempText, NamedColors::GREEN, .4f);
     }
-    debugImageRGBs.push_back({"LaserSaliencyImageGround", saliencyImageDispGround});
+    debugImages.emplace_back("LaserSaliencyImageGround", saliencyImageDispGround);
   }
 
   return RESULT_OK;
@@ -400,7 +400,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
 Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
                                   const bool isDarkExposure,
                                   std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                                  DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+                                  DebugImageList<Vision::CompressedImage>& debugImages)
 {
 
   Point2f centroid(0.f,0.f);
@@ -485,7 +485,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
     }
 
     _debugImage.DrawCircle(centroidInImage * (1.f / (f32)Params::kLaser_scaleMultiplier), NamedColors::RED, 4);
-    debugImageRGBs.push_back({"LaserSaliencyImage", _debugImage});
+    debugImages.emplace_back("LaserSaliencyImage", _debugImage);
   }
 
   return RESULT_OK;

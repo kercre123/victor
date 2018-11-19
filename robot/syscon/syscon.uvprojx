@@ -273,7 +273,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8002000</StartAddress>
-                <Size>0xd000</Size>
+                <Size>0xe000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -355,7 +355,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -367,7 +367,7 @@
             <ScatterFile>.\src\syscon.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc></Misc>
+            <Misc>--datacompressor off</Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings></DisabledWarnings>
           </LDads>
@@ -428,11 +428,6 @@
               <FilePath>.\src\touch.cpp</FilePath>
             </File>
             <File>
-              <FileName>start_mics.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\src\start_mics.s</FilePath>
-            </File>
-            <File>
               <FileName>i2c.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\i2c.cpp</FilePath>
@@ -446,6 +441,16 @@
               <FileName>analog.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\analog.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>fastmic.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\src\fastmic.s</FilePath>
+            </File>
+            <File>
+              <FileName>table.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\src\table.s</FilePath>
             </File>
           </Files>
         </Group>

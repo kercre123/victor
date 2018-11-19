@@ -81,19 +81,16 @@ static int lcd_spi_init()
   // SPI setup
   static const uint8_t    MODE = 0;
   int lcd_fd = open("/dev/spidev1.0", O_RDWR);
-  if (!lcd_fd) {
-    error_exit(app_DEVICE_OPEN_ERROR, "Can't open LCD SPI interface\n");
+  if (lcd_fd < 0) {
+    error_return(app_DEVICE_OPEN_ERROR, "Can't open LCD SPI interface: %d\n", errno);
   }
   ioctl(lcd_fd, SPI_IOC_RD_MODE, &MODE);
-  /* if (err<0) { */
-  /*   error_exit(app_IO_ERROR, "Can't configure LCD SPI. (%d)\n", errno); */
-  /* } */
 
   // Set MAX_TRANSFER size based on the spidev bufsiz parameter
   int bufsiz_fd = open("/sys/module/spidev/parameters/bufsiz", O_RDONLY);
-  if(bufsiz_fd <= 0)
+  if(bufsiz_fd < 0)
   {
-    error_exit(app_DEVICE_OPEN_ERROR, "Can't open SPI bufsiz parameter\n");
+    error_return(app_DEVICE_OPEN_ERROR, "Can't open SPI bufsiz parameter: %d\n", errno);
   }
 
   // bufsiz is stored as a string in the file
@@ -113,7 +110,7 @@ static int lcd_spi_init()
     else if(num_bytes < 0)
     {
       (void)close(bufsiz_fd);
-      error_exit(app_IO_ERROR, "Failed to read from spi bufsiz\n");
+      error_return(app_IO_ERROR, "Failed to read from spi bufsiz: %d\n", errno);
     }
   }
 
@@ -156,12 +153,18 @@ static int lcd_fb_init(void)
 {
   struct fb_fix_screeninfo fixed_info;
   int _fd = open("/dev/fb0", O_RDWR | O_NONBLOCK);
-  if (_fd <= 0)
+  if (_fd < 0)
+  {
+    // This is expected until we decide to use the framebuffer device
+    // error_return(app_DEVICE_OPEN_ERROR, "Can't open LCD FB interface: %d\n", errno);
     return -1;
-
+  }
+  
   if (ioctl(_fd, FBIOGET_FSCREENINFO, &fixed_info) < 0)
-    return -1;
-
+  {
+    error_return(app_IO_ERROR, "Get screen info failed: %d\n", errno);
+  }
+  
   return _fd;
 }
 
@@ -176,6 +179,7 @@ static void lcd_device_init()
   // as the contents of memory are set randomly on
   // power on
   lcd_clear_screen();
+  
   // Turn display on
   lcd_run_script(display_on_scr);
 }
@@ -216,30 +220,47 @@ static const char* BACKLIGHT_DEVICES[] = {
   "/sys/class/leds/face-backlight-right/brightness"
 };
 
-static void _led_set_brightness(const int brightness, const char* led)
+static int _led_set_brightness(const int brightness, const char* led)
 {
   int fd = open(led,O_WRONLY);
-  if (fd) {
-    char buf[3];
-    snprintf(buf,3,"%02d\n",brightness);
-    (void)write(fd, buf, 3);
-    close(fd);
+  if (fd < 0)
+  {
+    error_return(app_DEVICE_OPEN_ERROR, "Failed to open backlight %s: %d\n", led, errno);
   }
+
+  char buf[3];
+  snprintf(buf,3,"%02d\n",brightness);
+  (void)write(fd, buf, 3);
+  close(fd);
+
+  return 0;
 }
 
-void lcd_set_brightness(int brightness)
+int lcd_set_brightness(int brightness)
 {
-  int l;
   brightness = MIN(brightness, 20);
   brightness = MAX(brightness, 0);
+
+  int anyBacklightWorks = 0;
+
+  int l;
   for (l=0; l<2; ++l) {
-    _led_set_brightness(brightness, BACKLIGHT_DEVICES[l]);
+    int res = _led_set_brightness(brightness, BACKLIGHT_DEVICES[l]);
+    anyBacklightWorks |= (res >= 0);
   }
+
+  // If at least one of the backlights work then success otherwise
+  // none of them work so fail
+  return (anyBacklightWorks ? 0 : -1);
 }
 
 int lcd_init(void) {
 
-  lcd_set_brightness(10);
+  int res = lcd_set_brightness(10);
+  if(res < 0)
+  {
+    return res;
+  }
 
   lcd_fd = lcd_fb_init();
   if (lcd_fd > 0) {
@@ -248,13 +269,26 @@ int lcd_init(void) {
   }
 
   // IO Setup
-  DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
+  res = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH, &DnC_PIN);
+  if(res < 0)
+  {
+    error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", GPIO_LCD_WRX, res);
+  }
 
-  RESET_PIN = gpio_create_open_drain_output(GPIO_LCD_RESET, gpio_HIGH);
+  res = gpio_create_open_drain_output(GPIO_LCD_RESET, gpio_HIGH, &RESET_PIN);
+  if(res < 0)
+  {
+    error_return(app_IO_ERROR, "Failed to create GPIO %d: %d\n", GPIO_LCD_RESET, res);
+  }
 
   // SPI setup
 
   lcd_fd = lcd_spi_init();
+
+  if(lcd_fd < 0)
+  {
+    return lcd_fd;
+  }
 
   // Send reset signal
   microwait(50);

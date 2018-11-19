@@ -1,0 +1,14 @@
+# https://help.github.com/articles/about-codeowners/
+
+.github/CODEOWNERS @CodeForCoffee
+*.py @CodeForCoffee
+Jenkinsfile @CodeForCoffee
+project/victor/scripts/* @CodeForCoffee
+
+clad/src/clad/types/behaviorComponent/activeFeatures.clad @dstulic
+
+robot/hal/* @ashelly @DanielCasner
+robot/syscon/* @bryon
+
+# The OTA client
+platform/update-engine/update-engine.py @seichert

@@ -94,7 +94,6 @@ CONSOLE_VAR(float, kHoughMinLineLength_mm,    "MapComponent.VisualEdgeDetection"
 CONSOLE_VAR(float, kHoughMaxLineGap_mm,       "MapComponent.VisualEdgeDetection", 10.0);
 CONSOLE_VAR(float, kEdgeLineLengthToInsert_mm,"MapComponent.VisualEdgeDetection", 200.f);
 CONSOLE_VAR(float, kVisionCliffPadding_mm,    "MapComponent.VisualEdgeDetection", 20.f);
-CONSOLE_VAR(bool,  kVisualCliffObstacleChecking, "MapComponent.VisualEdgeDetection", false);
 
 CONSOLE_VAR(int,   kMaxPixelsUsedForHoughTransform, "MapComponent.VisualEdgeDetection", 160000); // 400 x 400 max size
 
@@ -763,8 +762,10 @@ namespace {
   const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
   const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
   const size_t kQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoVector::value_type);
+  const size_t kFullQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoFullVector::value_type);
 
-  static_assert(kQuadsPerMessage > 0, "MapComponent.Broadcast.InvalidQuadsPerMessage");
+  static_assert(kQuadsPerMessage > 0,     "MapComponent.Broadcast.InvalidQuadsPerMessage");
+  static_assert(kFullQuadsPerMessage > 0, "MapComponent.Broadcast.InvalidFullQuadsPerMessage");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -775,12 +776,12 @@ void MapComponent::BroadcastMapToViz(const MapBroadcastData& mapData) const
   // Send the begin message
   _robot->Broadcast(MessageViz(MemoryMapMessageVizBegin(_currentMapOriginID, mapData.mapInfo)));
   // chunk the quad messages
-  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
+  for(u32 seqNum = 0; seqNum*kFullQuadsPerMessage < mapData.quadInfoFull.size(); seqNum++)
   {
-    auto start = seqNum*kQuadsPerMessage;
-    auto end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
-    _robot->Broadcast(MessageViz(MemoryMapMessageViz(_currentMapOriginID, seqNum,
-      QuadInfoVector(mapData.quadInfo.begin() + start, mapData.quadInfo.begin() + end))));
+    auto start = seqNum*kFullQuadsPerMessage;
+    auto end   = std::min(mapData.quadInfoFull.size(), start + kFullQuadsPerMessage);
+    _robot->Broadcast(MessageViz(MemoryMapMessageViz(_currentMapOriginID,
+      QuadInfoFullVector(mapData.quadInfoFull.begin() + start, mapData.quadInfoFull.begin() + end))));
   }
 
   // Send the end message
@@ -1599,6 +1600,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
                                                                  (data->type == EContentType::ObstacleUnrecognized); };
 
   std::vector<Point2f> validPoints;
+  std::vector<Point2f> imagePoints;
   for( const auto& chain : frameInfo.chains.GetVector() )
   {
     if(!chain.isBorder) {
@@ -1611,20 +1613,17 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
       // so we should ignore this chain
       continue;
     }
-
     for( const auto& imagePt : chain.points) {
       Point2f imagePtOnGround = robotPose * imagePt.position;
+      imagePoints.push_back(std::move(imagePtOnGround));
+    }
+  }
+  std::vector<bool> collisionCheckResults = currentMap->AnyOf(robotPose.GetTranslation(), imagePoints, isCollisionType);
 
-      if(kVisualCliffObstacleChecking) {
-        const bool rayToCliffIsObstructed = currentMap->AnyOf( 
-                                          {robotPose.GetTranslation(), imagePtOnGround}, 
-                                          isCollisionType);
-        if (!rayToCliffIsObstructed) {
-          validPoints.push_back(std::move(imagePtOnGround));
-        }
-      } else {
-        validPoints.push_back(std::move(imagePtOnGround));
-      }
+  validPoints.reserve(imagePoints.size());
+  for(int i=0; i<imagePoints.size(); ++i) {
+    if(!collisionCheckResults[i]) {
+      validPoints.push_back(imagePoints[i]);
     }
   }
 

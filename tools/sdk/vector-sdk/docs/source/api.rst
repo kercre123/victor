@@ -20,6 +20,9 @@ The API
     anki_vector.motors
     anki_vector.nav_map
     anki_vector.objects
+    anki_vector.opengl
+    anki_vector.opengl_vector
+    anki_vector.opengl_viewer
     anki_vector.photos
     anki_vector.proximity
     anki_vector.robot

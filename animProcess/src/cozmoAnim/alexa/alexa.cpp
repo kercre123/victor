@@ -657,6 +657,9 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
     });
     
     PlayAudioEvent( GetErrorAudioEvent( errorType ), callbackContext );
+    const auto eventID = GetErrorAudioEvent( errorType );
+    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
+    audioController->PostAudioEvent( eventID, gameObject, callbackContext );
   }
   
   // extend timeout

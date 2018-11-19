@@ -245,6 +245,12 @@ enum int_32 AnimationTrigger
   MessagingMessageDeletedShort,
   MessagingMessageRewind,
 
+  MovementDriveForward,
+  MovementDriveBackward,
+  MovementTurnLeft,
+  MovementTurnRight,
+  MovementTurnAround,
+
   NoCloudGetIn,
   NoCloudIcon,
 

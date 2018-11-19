@@ -84,6 +84,8 @@ class Robot:
     :param show_viewer: Render camera feed on/off.
     :param requires_behavior_control: Request control of Vector's behavior system."""
 
+    # TODO For both Robot and AsyncRobot, consider adding equivalent of use_3d_viewer param so OpenGLViewer starts automatically.
+
     def __init__(self,
                  serial: str = None,
                  ip: str = None,
@@ -238,13 +240,13 @@ class Robot:
     def camera(self) -> camera.CameraComponent:
         """The camera instance used to control Vector's camera feed.
 
-        .. code-block:: python
+        .. testcode::
 
             with anki_vector.Robot() as robot:
+                time.sleep(1)
                 image = Image.fromarray(robot.camera.latest_image)
                 image.show()
         """
-        # TODO When latest_image is ready, convert `.. code-block:: python` to `.. testcode::`
         if self._camera is None:
             raise exceptions.VectorNotReadyException("CameraComponent is not yet initialized")
         return self._camera
@@ -514,27 +516,27 @@ class Robot:
     def status(self) -> float:
         """Describes Vector's status.
 
-           Possible values include:
-           NoneRobotStatusFlag     = 0
-           IS_MOVING               = 0x1
-           IS_CARRYING_BLOCK       = 0x2
-           IS_PICKING_OR_PLACING   = 0x4
-           IS_PICKED_UP            = 0x8
-           IS_BUTTON_PRESSED       = 0x10
-           IS_FALLING              = 0x20
-           IS_ANIMATING            = 0x40
-           IS_PATHING              = 0x80
-           LIFT_IN_POS             = 0x100
-           HEAD_IN_POS             = 0x200
-           CALM_POWER_MODE         = 0x400
-           IS_BATTERY_DISCONNECTED = 0x800
-           IS_ON_CHARGER           = 0x1000
-           IS_CHARGING             = 0x2000
-           CLIFF_DETECTED          = 0x4000
-           ARE_WHEELS_MOVING       = 0x8000
-           IS_BEING_HELD           = 0x10000
-           IS_MOTION_DETECTED      = 0x20000
-           IS_BATTERY_OVERHEATED   = 0x40000
+        Possible values include:
+         |  NoneRobotStatusFlag     = 0
+         |  IS_MOVING               = 0x1
+         |  IS_CARRYING_BLOCK       = 0x2
+         |  IS_PICKING_OR_PLACING   = 0x4
+         |  IS_PICKED_UP            = 0x8
+         |  IS_BUTTON_PRESSED       = 0x10
+         |  IS_FALLING              = 0x20
+         |  IS_ANIMATING            = 0x40
+         |  IS_PATHING              = 0x80
+         |  LIFT_IN_POS             = 0x100
+         |  HEAD_IN_POS             = 0x200
+         |  CALM_POWER_MODE         = 0x400
+         |  IS_BATTERY_DISCONNECTED = 0x800
+         |  IS_ON_CHARGER           = 0x1000
+         |  IS_CHARGING             = 0x2000
+         |  CLIFF_DETECTED          = 0x4000
+         |  ARE_WHEELS_MOVING       = 0x8000
+         |  IS_BEING_HELD           = 0x10000
+         |  IS_MOTION_DETECTED      = 0x20000
+         |  IS_BATTERY_OVERHEATED   = 0x40000
 
         .. testcode::
 
@@ -677,8 +679,13 @@ class Robot:
             self.nav_map.init_nav_map_feed()
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self.vision.enable_face_detection(detect_faces=self.enable_face_detection, estimate_expression=False)
-        self.vision.enable_custom_object_detection(detect_custom_objects=self.enable_custom_object_detection)
+        if self.conn.requires_behavior_control:
+            face_detection = self.vision.enable_face_detection(detect_faces=self.enable_face_detection, estimate_expression=False)
+            if isinstance(face_detection, concurrent.futures.Future):
+                face_detection.result()
+            object_detection = self.vision.enable_custom_object_detection(detect_custom_objects=self.enable_custom_object_detection)
+            if isinstance(object_detection, concurrent.futures.Future):
+                object_detection.result()
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
@@ -694,9 +701,8 @@ class Robot:
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
         """
-        vision_mode = self.vision.disable_all_vision_modes()  # pylint: disable=assignment-from-no-return
-        if isinstance(vision_mode, concurrent.futures.Future):
-            vision_mode.result()
+        if self.conn.requires_behavior_control:
+            self.vision.close()
 
         # Stop rendering video
         self.viewer.stop_video()
@@ -725,7 +731,14 @@ class Robot:
 
     @connection.on_connection_thread(requires_control=False)
     async def get_battery_state(self) -> protocol.BatteryStateResponse:
-        """Check the current state of the battery.
+        """Check the current state of the robot and cube batteries.
+
+        Vector is considered fully-charged above 4.1 volts. At 3.6V, the robot is approaching low charge.
+
+        Battery_level values are as follows:
+         |  Low = 1: 3.6V or less. If on charger, 4V or less.
+         |  Nominal = 2
+         |  Full = 3: This state can only be achieved when Vector is on the charger.
 
         .. testcode::
 
@@ -733,14 +746,18 @@ class Robot:
             with anki_vector.Robot() as robot:
                 battery_state = robot.get_battery_state()
                 if battery_state:
-                    print("Vector's Battery Voltage: {0}".format(battery_state.battery_volts))
+                    print("Robot battery voltage: {0}".format(battery_state.battery_volts))
+                    print("Robot battery Level: {0}".format(battery_state.battery_level))
+                    print("Robot battery is charging: {0}".format(battery_state.is_charging))
+                    print("Robot is on charger platform: {0}".format(battery_state.is_on_charger_platform))
+                    print("Robot's suggested charger time: {0}".format(battery_state.suggested_charger_sec))
         """
         get_battery_state_request = protocol.BatteryStateRequest()
         return await self.conn.grpc_interface.BatteryState(get_battery_state_request)
 
     @connection.on_connection_thread(requires_control=False)
     async def get_version_state(self) -> protocol.VersionStateResponse:
-        """Get the versioning information for Vector.
+        """Get the versioning information for Vector, including Vector's os_version and engine_build_id.
 
         .. testcode::
 

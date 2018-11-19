@@ -278,6 +278,13 @@ bool MemoryMap::AnyOf(const MemoryMapRegion& r, NodePredicate f) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<bool> MemoryMap::AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const
+{
+  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
+  return _quadTree.GetProcessor().AnyOfRays(start, ends, pred);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float MemoryMap::GetArea(const MemoryMapRegion& region, const NodePredicate& pred) const
 {
   float retv = 0.f;  
@@ -344,10 +351,17 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
       // leaf node
       if ( !node.IsSubdivided() )
       {
+        const auto& vizColor = GetNodeVizColor(node.GetData()).AsRGBA();
+        
         info.quadInfo.emplace_back(
           node.GetData()->GetExternalContentType(), 
           node.GetLevel(), 
-          GetNodeVizColor(node.GetData()).AsRGBA());
+          vizColor);
+        
+        info.quadInfoFull.emplace_back(vizColor,
+                                       node.GetCenter().x(),
+                                       node.GetCenter().y(),
+                                       node.GetSideLen());
       }
     };
 

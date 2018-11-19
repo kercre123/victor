@@ -19,7 +19,7 @@ syntax = "proto3";
 package Anki.Vector.external_interface;
 
 import "google/api/annotations.proto";
-import "alexa.proto";
+import "alexa.proto"; // App only
 import "behavior.proto";
 import "cube.proto";
 import "messages.proto";
@@ -400,6 +400,13 @@ service ExternalInterface {
     };
   }
 
+  rpc NavMapFeed(NavMapFeedRequest) returns (stream NavMapFeedResponse) {
+    option (google.api.http) = {
+      post: "/v1/nav_map_feed",
+      body: "*"
+    };
+  }  
+
   // *** App only proto below ***
 
   rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
@@ -506,13 +513,5 @@ service ExternalInterface {
       post: "/v1/alexa_opt_in",
       body: "*"
     };
-  }
-
-  rpc NavMapFeed(NavMapFeedRequest) returns (stream NavMapFeedResponse) {
-    option (google.api.http) = {
-      post: "/v1/nav_map_feed",
-      body: "*"
-    };
-  }
-  
+  }  
 }

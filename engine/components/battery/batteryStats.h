@@ -31,6 +31,10 @@ public:
   ~BatteryStats();
   
   void Update(const float batteryTemp_degC, const float batteryVolts);
+
+  // TODO: Mooching off of this accumulator to report encoder power stats out of laziness.
+  //       Move to somewhere else!
+  void UpdateEncoderStats(bool encodersDisabled, bool calmMode);
   
 private:
   // Write a DAS event with the current statistics.
@@ -42,6 +46,10 @@ private:
   
   float _lastSampleTime_sec = 0.f;
   float _lastDasSendTime_sec = 0.f;
+
+  unsigned int _encoderStateSamples = 0;
+  unsigned int _encoderDisabledCount = 0;
+  unsigned int _encoderCalmCount = 0;
 };
   
 

@@ -138,6 +138,8 @@ public:
   bool IsLiftCalibrated() const;
   bool IsHeadMotorOutOfBounds() const;
   bool IsLiftMotorOutOfBounds() const;
+  bool IsHeadEncoderInvalid() const;
+  bool IsLiftEncoderInvalid() const;
   bool IsOnChargerContacts() const;
   bool IsOnChargerPlatform() const;
   bool IsPhysical() const;

@@ -68,6 +68,55 @@ QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NodeAddress GetAddressForNodeCenter(const Point2i& nodeCenter, const uint8_t& depth)
+{
+  if(nodeCenter.x() < 0 || nodeCenter.y() < 0) {
+    return NodeAddress();
+  }
+  // (0,0) is the furthest possible leaf node in the MinusXMinusY direction
+  // thus the binary mask of the cell is directly used to compute the address
+  NodeAddress addr(depth+1, EQuadrant::Invalid);
+  addr[0] = EQuadrant::Root;
+  uint32_t dirX = ~nodeCenter.x();
+  uint32_t dirY = ~nodeCenter.y();
+  uint32_t mask = 1;
+  bool minusX, minusY;
+  for(int i=depth; i>=1; --i) {
+    minusX = dirX & mask;
+    minusY = dirY & mask;
+    addr[i] = (EQuadrant) (((minusX) << 1) + minusY);
+    mask = mask << 1;
+  }
+  return addr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string ToString(const NodeAddress& addr)
+{
+  std::stringstream ss;
+  
+  const auto quadrantString = [](const EQuadrant& q) -> std::string {
+    switch(q) {
+      case EQuadrant::PlusXPlusY:   return "++";
+      case EQuadrant::PlusXMinusY:  return "+-";
+      case EQuadrant::MinusXPlusY:  return "-+";
+      case EQuadrant::MinusXMinusY: return "--";
+      case EQuadrant::Root:         return "root";
+      case EQuadrant::Invalid:      return "n/a";
+    }
+    return "";
+  };
+
+  ss << "[";
+  for(int i=0; i<addr.size(); ++i) {
+    ss << quadrantString(addr[i]);
+    ss << (i+1 == addr.size() ? "" : ",");
+  }
+  ss << "]";
+  return ss.str();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static_assert(GetQuadrantInDirection(EQuadrant::PlusXPlusY,   EDirection::PlusX)  == EQuadrant::MinusXPlusY,  "bad quadrant calculation");
 static_assert(GetQuadrantInDirection(EQuadrant::PlusXPlusY,   EDirection::MinusX) == EQuadrant::MinusXPlusY,  "bad quadrant calculation");
 static_assert(GetQuadrantInDirection(EQuadrant::PlusXPlusY,   EDirection::PlusY)  == EQuadrant::PlusXMinusY,  "bad quadrant calculation");

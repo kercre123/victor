@@ -290,7 +290,6 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
     RobotInterface::SendAnimToEngine(std::move(msg));
 
-
     _fftResultData->_fftResultMutex.lock();
   }
   _fftResultData->_fftResultMutex.unlock();
@@ -395,14 +394,13 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
   // lock the job mutex
   {
-
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && HasStreamingJob()
       #if ANKI_DEV_CHEATS
         && !_forceRecordClip
       #endif
-   )
+       )
     {
       #if ANKI_DEV_CHEATS
         endTriggerDispTime_ns = currTime_nanosec + kTriggerDisplayTime_ns;
@@ -418,10 +416,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamBeginTime_ns = currTime_nanosec;
 
         // Send out the message announcing the trigger word has been detected
-        // TODO: Pass correct timezone from robot settings to vic-cloud!
-        const std::string timezone;
         auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString(),
-                                    timezone, !_enableDataCollection};
+                                    _timeZone, !_enableDataCollection};
         if (_currentStreamingJob != nullptr) {
           hw.mode = _currentStreamingJob->_type;
         }
@@ -792,6 +788,11 @@ void MicDataSystem::UpdateLocale(const Util::Locale& newLocale)
 {
   _locale = newLocale;
   _speechRecognizerSystem->UpdateTriggerForLocale(newLocale);
+}
+
+void MicDataSystem::UpdateTimeZone(const std::string& newTimeZone)
+{
+  _timeZone = newTimeZone;
 }
 
 bool MicDataSystem::IsSpeakerPlayingAudio() const

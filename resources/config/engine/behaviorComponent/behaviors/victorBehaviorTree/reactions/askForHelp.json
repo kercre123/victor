@@ -1,7 +1,7 @@
 {
   "behaviorClass": "AskForHelp",
   "behaviorID": "AskForHelp",
-  
+
   "wantsToCancelSelfCondition": {
     "conditionType": "RobotPickedUp"
   }

@@ -602,9 +602,19 @@ void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen
   FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);
 }
 
-void Process_updatedAccountSettings(const RobotInterface::UpdatedAccountSettings& msg)
+void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
 {
-  _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
+  using namespace RobotInterface;
+  switch (msg.settingBeingChanged)
+  {
+    case SettingBeingChanged::SETTING_ENABLE_DATA_COLLECTION:
+      _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
+      break;
+    case SettingBeingChanged::SETTING_TIME_ZONE:
+      std::string timeZone{msg.timeZone, msg.timeZone_length};
+      _context->GetMicDataSystem()->UpdateTimeZone(timeZone);
+      break;
+  }
 }
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)

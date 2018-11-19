@@ -262,12 +262,12 @@
 #else  // ANKI_CPU_PROFILER_ENABLED
 
 
-  #define ANKI_CPU_PROFILE(name)
-  #define ANKI_CPU_PROFILE_START(varName, name)
-  #define ANKI_CPU_PROFILE_STOP(varName)
-  #define ANKI_CPU_TICK(tickName, maxTickTime_ms, logFreq)
-  #define ANKI_CPU_TICK_ONE_TIME(tickName)
-  #define ANKI_CPU_REMOVE_THIS_THREAD()
+  #define ANKI_CPU_PROFILE(name)                           Util::DropBreadcrumb(false, __FILE__, __LINE__)
+  #define ANKI_CPU_PROFILE_START(varName, name)            Util::DropBreadcrumb(false, __FILE__, __LINE__)
+  #define ANKI_CPU_PROFILE_STOP(varName)                   Util::DropBreadcrumb(false, __FILE__, __LINE__)
+  #define ANKI_CPU_TICK(tickName, maxTickTime_ms, logFreq) Util::DropBreadcrumb(false, __FILE__, __LINE__)
+  #define ANKI_CPU_TICK_ONE_TIME(tickName)                 Util::DropBreadcrumb(false, __FILE__, __LINE__)
+  #define ANKI_CPU_REMOVE_THIS_THREAD()                    Util::DropBreadcrumb(false, __FILE__, __LINE__)
 
 
 #endif // ANKI_CPU_PROFILER_ENABLED

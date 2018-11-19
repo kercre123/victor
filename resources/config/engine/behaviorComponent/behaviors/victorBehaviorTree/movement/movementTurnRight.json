@@ -1,0 +1,14 @@
+{
+  "behaviorID": "MovementTurnRight",
+  "behaviorClass": "AnimSequence",
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+
+  "respondToUserIntents": [
+    { "type": "movement_turnright" }
+  ],
+
+  "animTriggers": [
+    "MovementTurnRight"
+  ]
+}

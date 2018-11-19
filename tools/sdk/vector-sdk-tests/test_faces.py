@@ -5,8 +5,6 @@ Test subscribing to seen faces
 """
 
 import functools
-import os
-import sys
 import time
 
 from anki_vector.events import Events  # pylint: disable=wrong-import-position
@@ -14,7 +12,6 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     print("------ begin testing face events ------")
