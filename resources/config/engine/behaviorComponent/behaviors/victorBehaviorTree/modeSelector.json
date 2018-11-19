@@ -21,30 +21,12 @@
       
       "wantsToBeActivatedCondition": {
         "conditionType": "Compound",
-        "or": [
-          {
-            "conditionType" : "AlexaEnabled",
-            "expected" : false
-          },
-          {
-            "conditionType": "Compound",
-            "not": {
-              "conditionType": "OnCharger"
-            }
-          }
-        ]
+        "not": {
+          "conditionType": "OnCharger"
+        }
       },
       "wantsToCancelSelfCondition": {
-        "conditionType": "Compound",
-        "and": [
-          {
-            "conditionType" : "AlexaEnabled",
-            "expected" : true
-          },
-          {
-            "conditionType" : "OnCharger"
-          }
-        ]
+        "conditionType" : "OnCharger"
       },
       
       "interruptActiveBehavior": true,

@@ -78,8 +78,6 @@ public:
   bool IsUXStateGetInPlaying( AlexaUXState state ) const;
   bool IsAnyUXStateGetInPlaying() const;
 
-  bool IsAuthenticated() const;
-
 private:
   
   void SetAlexaOption( bool optedIn );

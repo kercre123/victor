@@ -406,12 +406,6 @@ bool AlexaComponent::IsAnyUXStateGetInPlaying() const
   }
   return false;
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AlexaComponent::IsAuthenticated() const
-{
-  return( AlexaAuthState::Authorized == _authState );
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string AlexaComponent::GetAnimName( AnimationTrigger trigger ) const
