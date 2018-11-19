@@ -757,7 +757,7 @@ class Robot:
 
     @connection.on_connection_thread(requires_control=False)
     async def get_version_state(self) -> protocol.VersionStateResponse:
-        """Get the versioning information for Vector.
+        """Get the versioning information for Vector, including Vector's os_version and engine_build_id.
 
         .. testcode::
 
