@@ -113,7 +113,7 @@ void ColorClassifier::Predict (const cv::Mat& samples, cv::Mat& labels) const
   }
 }
 
-void ColorClassifier::Classify (const cv::Mat& samples, cv::Mat& labelings, s32 unknown) const
+void ColorClassifier::Classify (const cv::Mat& samples, cv::Mat& labelings, f32 threshold, s32 unknown) const
 {
   // Calculate the Mahalanobis distance to each cluster
   cv::Mat distances = cv::Mat::ones(samples.rows, static_cast<int>(_stats.size()), CV_64FC1);
@@ -128,9 +128,6 @@ void ColorClassifier::Classify (const cv::Mat& samples, cv::Mat& labelings, s32 
       distances.at<double>(row,index) = distance;
     }
   }
-
-  // TODO: Make this be a  threshold computed from N where N means "N standard deviations away"
-  float threshold = 0.000002f; // (distance^2)
 
   cv::Mat minDistances = cv::Mat::zeros(labelings.rows,labelings.cols,CV_64FC1);
   cv::Mat maxDistances = cv::Mat::zeros(labelings.rows,labelings.cols,CV_64FC1);

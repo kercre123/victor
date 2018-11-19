@@ -17,6 +17,7 @@
 #include "json/json.h"
 
 #include <list>
+#include <unordered_map>
 
 namespace Anki
 {
@@ -37,6 +38,15 @@ public:
                 std::list<std::pair<std::string, ImageRGB>>& debugImageRGBs);
 
 private:
+  enum class ColorSpace : int {
+    INVALID = -1,
+    RGB = 0,
+    YUV
+  };
+  static const std::unordered_map<std::string,ColorSpace> FORMAT_STR;
+  static ColorSpace StringToColorSpace(const std::string& value);
+
+
   // TODO: Decide what we really care about. Label names or colors.
   struct Label
   {
@@ -48,7 +58,8 @@ private:
 
   ColorClassifier _classifier;
   std::vector<Label> _labels;
-  std::string _format;
+  ColorDetector::ColorSpace _colorSpace;
+  f32 _classifierThreshold;
 
 };
 

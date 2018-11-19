@@ -48,9 +48,10 @@ public:
    * @brief Label a sample as belonging to a class
    * @param samples - NxM matrix of samples; N is the number of samples and M is the length of the feature
    * @param labels - Nx1 matrix (int) of labels for each sample
+   * @param threshold - Distance threshold
    * @param unknown - Label id for samples belonging to no class
    */
-  void Classify(const cv::Mat& samples, cv::Mat& labels, s32 unknown = -1) const;
+  void Classify(const cv::Mat& samples, cv::Mat& labels, f32 threshold, s32 unknown = -1) const;
 
   bool Save(const std::string& filename);
   bool Load(const std::string& filename);

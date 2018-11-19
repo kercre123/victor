@@ -34,13 +34,11 @@ extern Anki::Vector::CozmoContext* cozmoContext;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(ColorDetector, LabelImages)
 {
-
   // Load the configuration
   Json::Value config;
   ASSERT_TRUE(cozmoContext->GetDataPlatform()->readAsJson(Anki::Util::Data::Scope::Resources,
       "config/engine/vision/colorDetector/colorDetector.json",
       config));
-
 
   ColorDetector detector(config);
   ASSERT_EQ(detector.Init(), Anki::Result::RESULT_OK);
@@ -49,7 +47,7 @@ TEST(ColorDetector, LabelImages)
   ImageRGB inputImage, outputImage;
   const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(
       Anki::Util::Data::Scope::Resources,
-      "test/detectColorTests/");
+      "test/colorTests/test");
 
   std::vector<std::string> filenames;
   {

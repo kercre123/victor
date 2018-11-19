@@ -115,7 +115,43 @@ void ImageToSamplesYUV(const ImageRGB& inputImage, cv::Mat& samples)
   merged.convertTo(converted,CV_64FC1);
 
   // Drop the Y and copy to the output variable
-  samples = converted.colRange(1,3).clone();
+  // samples = converted.colRange(1,3).clone();
+  samples = merged;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ApplyThresholdHSV(const ImageRGB& image, cv::Mat& labelings, s32 unknown, f32 lowS, f32 lowV, f32 highV)
+{
+  // Threshold the saturation and value
+  for (auto row = 0; row < image.GetNumRows(); ++row)
+  {
+    for (auto col = 0; col < image.GetNumCols(); ++col)
+    {
+      auto& label = labelings.at<s32>(row,col);
+      
+      // Skip unknowns
+      if (label == unknown)
+      {
+        continue;
+      }
+
+      // Convert to HSV
+      PixelHSV hsv;
+      hsv.FromPixelRGB(image.get_CvMat_().at<PixelRGB>(row,col));
+
+      // Threshold low saturation, making insufficiently colorful things be "unknown"
+      if (hsv.s() < lowS)
+      {
+        label = unknown;
+      }
+
+      // Threshold value to low (dark) and to high (white), making insufficiently color things be "unknown"
+      if (hsv.v() < lowV || hsv.v() > highV)
+      {
+        label = unknown;
+      }
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -146,13 +182,14 @@ void LabelToImage(const cv::Mat& labelings,
 void LabelToSalientPoints(const ImageRGB& inputImage,
                           const cv::Mat& labelings,
                           const std::vector<PixelRGB>& colors,
+                          const s32 unknown,
                           std::list<SalientPoint>& salientPoints)
 {
   // Label the connected blobs. There may be multiple blobs of the same color
 
   dlib::array2d<u32> blobs(labelings.rows, labelings.cols);
   unsigned long numBlobs = dlib::label_connected_blobs(dlib::cv_image<s32>(labelings),
-                                                       value_pixels_are_background(-1),
+                                                       value_pixels_are_background(unknown),
                                                        dlib::neighbors_8(),
                                                        dlib::connected_if_equal(),
                                                        blobs);
@@ -167,7 +204,7 @@ void LabelToSalientPoints(const ImageRGB& inputImage,
       const s32 label = labelings.at<s32>(row,col);
 
       // Skip background pixels
-      if (label == -1)
+      if (label == unknown)
       {
         continue;
       }
@@ -254,6 +291,24 @@ void LabelToSalientPoints(const ImageRGB& inputImage,
 
 } /* anonymous namespace */
 
+const std::unordered_map<std::string,ColorDetector::ColorSpace> ColorDetector::FORMAT_STR = {
+  {"RGB",ColorDetector::ColorSpace::RGB},
+  {"YUV",ColorDetector::ColorSpace::YUV},
+};
+
+ColorDetector::ColorSpace ColorDetector::StringToColorSpace(const std::string& value)
+{
+  auto iter = ColorDetector::FORMAT_STR.find(value);
+  if (iter == ColorDetector::FORMAT_STR.end())
+  {
+    return ColorDetector::ColorSpace::INVALID;
+  }
+  else
+  {
+    return iter->second;
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ColorDetector::ColorDetector (const Json::Value& config)
 {
@@ -292,12 +347,25 @@ bool ColorDetector::Load (const Json::Value& config)
     return false;
   }
 
-  Json::Value jsonFormat = jsonModel.get("format",Json::Value::null);
-  if (jsonFormat.isNull() || !jsonFormat.isString())
+  Json::Value jsonColorSpace = jsonModel.get("colorspace",Json::Value::null);
+  if (jsonColorSpace.isNull() || !jsonColorSpace.isString())
   {
     return false;
   }
-  _format = jsonFormat.asString();
+  std::string strColorSpace = jsonColorSpace.asString();
+  ColorSpace colorSpace = ColorDetector::StringToColorSpace(strColorSpace);
+  if (colorSpace == ColorSpace::INVALID)
+  {
+    return false;
+  }
+  _colorSpace = colorSpace;
+
+  Json::Value jsonClassifierThreshold = jsonModel.get("classifierThreshold",Json::Value::null);
+  if (jsonClassifierThreshold.isNull() || !jsonClassifierThreshold.isDouble())
+  {
+    return false;
+  }
+  _classifierThreshold = jsonClassifierThreshold.asDouble();
 
   std::vector<Label> labels;
   for (const Json::Value& jsonLabel : jsonLabels)
@@ -354,56 +422,64 @@ Result ColorDetector::Detect (const ImageRGB& inputImage,
                               std::list<SalientPoint>& salientPoints,
                               std::list<std::pair<std::string, ImageRGB>>& debugImageRGBs)
 {
+
   // TODO: Make smaller image size configurable
   ImageRGB smallerImage(16,16);
   inputImage.Resize(smallerImage, ResizeMethod::NearestNeighbor);
 
-  cv::Mat samples;
-  if (_format == "RGB")
-  {
-    ImageToSamplesRGB(smallerImage, samples);
-  }
-  else if (_format == "YUV")
-  {
-    ImageToSamplesYUV(smallerImage, samples);
-  }
-  else
-  {
-    // TODO: never get to this point
-    return RESULT_FAIL;
-  }
-
-  cv::Mat labelings(samples.rows,1,CV_32SC1);
-
-  _classifier.Classify(samples,labelings);
-
-  labelings = labelings.reshape(1,{smallerImage.GetNumRows(), smallerImage.GetNumCols()});
-
-  // Color the image
-  PixelRGB unknown(0,0,0);
-
-  // TODO: Move this transform somewhere, it needs only be done once. Or pass _labels vector to LabelToImage function
+    // TODO: Move this transform somewhere, it needs only be done once. Or pass _labels vector to LabelToImage function
   auto xform = [](const Label& lbl) -> PixelRGB { return lbl.color; };
   std::vector<PixelRGB> colors;
   std::transform(_labels.begin(),_labels.end(), std::back_inserter(colors), xform);
 
+  cv::Mat samples;
+  switch (_colorSpace)
+  {
+    case ColorSpace::RGB:
+      ImageToSamplesRGB(smallerImage, samples);
+      break;
+    case ColorSpace::YUV:
+      ImageToSamplesYUV(smallerImage, samples);
+      samples = samples.colRange(1,3).clone();
+      break;
+    default:
+      return RESULT_FAIL;
+  }
+
+  cv::Mat labelings(samples.rows,1,CV_32SC1);
+
+  const s32 unknown = -1;
+  _classifier.Classify(samples,labelings,_classifierThreshold, unknown);
+
+  labelings = labelings.reshape(1,{smallerImage.GetNumRows(), smallerImage.GetNumCols()});
+  
+  const bool debugImages = true;
+  
+  if (debugImages)
+  {
+    ImageRGB copy;
+    smallerImage.CopyTo(copy);
+    LabelToImage(labelings, colors, PixelRGB(0,0,0), copy);
+    ImageRGB labelImage(inputImage.GetNumRows(), inputImage.GetNumCols());
+    copy.Resize(labelImage, ResizeMethod::NearestNeighbor);
+    debugImageRGBs.emplace_back(std::make_pair("InitialLabels", labelImage));
+  }
+
+  ApplyThresholdHSV(smallerImage, labelings, unknown, 0.1f, 0.1f, 0.9f);
+
   LabelToImage(labelings, colors, PixelRGB(0,0,0), smallerImage);
 
-#if 1
-  ImageRGB labelImage(inputImage.GetNumRows(), inputImage.GetNumCols());
-  smallerImage.Resize(labelImage, ResizeMethod::NearestNeighbor);
-  debugImageRGBs.emplace_back(std::make_pair("ColorLabel",labelImage));
-#elif
-  debugImageRGBs.emplace_back(std::make_pair("ColorLabel",smallerImage));
-#endif
-
+  if (debugImages)
+  {
+    ImageRGB labelImage(inputImage.GetNumRows(), inputImage.GetNumCols());
+    smallerImage.Resize(labelImage, ResizeMethod::NearestNeighbor);
+    debugImageRGBs.emplace_back(std::make_pair("FinalLabels", labelImage));
+  }
   // Create salient points
-  LabelToSalientPoints(smallerImage, labelings, colors, salientPoints);
+  LabelToSalientPoints(smallerImage, labelings, colors, unknown, salientPoints);
 
   return RESULT_OK;
 }
-
-
 
 } /* namespace Vision */
 } /* namespace Anki */
