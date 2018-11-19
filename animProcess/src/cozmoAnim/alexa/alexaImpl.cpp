@@ -40,6 +40,7 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "osState/osState.h"
+#include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -107,6 +108,10 @@ namespace {
   // enable to save a copy of the mic data out to the cache folder when we detect an "alexa" wake word
   // NOTE: only valid and read during Init, so make sure to save the console var to enable it (or edit the value here)
   CONSOLE_VAR(bool, kDumpAlexaTriggerAudio, "Alexa.Init", false);
+
+  // every this many seconds (in basestation time), grab the wall time (system clock) and see if it looks like
+  // it may have jumped. IF so, refresh the alexa timers
+  CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
 
   const char* DialogUXStateToString( const avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState& duxState ) {
     switch( duxState ) {
@@ -184,6 +189,9 @@ AlexaImpl::~AlexaImpl()
 bool AlexaImpl::Init( const AnimContext* context )
 {
   _context = context;
+
+  _lastWallTime = WallTime::getInstance()->GetApproximateTime();
+  _lastWallTimeCheck_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   const auto* dataPlatform = _context->GetDataPlatform();
   
@@ -471,12 +479,37 @@ void AlexaImpl::Update()
   
   // check if the idle timer _timeToSetIdle_s has expired
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  if( kAlexaHackCheckForSystemClockSyncPeriod_s > 0.0f &&
+      currTime_s >= _lastWallTimeCheck_s + kAlexaHackCheckForSystemClockSyncPeriod_s ) {
+    // HACK: NTP can cause the time to jump into the future, and the alexa client's timers won't properly ring
+    // if this happens after initialization. OSState::IsWallTimeSynced() exists to try to detect this, but
+    // appears to be unreliable (see JIRA VIC-4527), so use this hack instead.
+
+    constexpr const int kTimeToConsiderJump_s = 5;
+
+    auto wallTime = WallTime::getInstance()->GetApproximateTime();
+    auto delta = wallTime - _lastWallTime;
+    auto deltaSeconds = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
+
+    if( std::abs( deltaSeconds - kAlexaHackCheckForSystemClockSyncPeriod_s ) > kTimeToConsiderJump_s ) {
+      PRINT_NAMED_WARNING("AlexaImpl.Update.TimeJumpDetected.ResetTimers",
+                          "Detected a time jump of %lld seconds (in %f BS seconds), refreshing timers",
+                          deltaSeconds,
+                          kAlexaHackCheckForSystemClockSyncPeriod_s);
+      _client->ReinitializeAllTimers();
+    }
+
+    _lastWallTime = wallTime;
+    _lastWallTimeCheck_s = currTime_s;
+  }
+
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
     _dialogState = DialogUXState::IDLE;
     CheckForUXStateChange();
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Logout()
 {

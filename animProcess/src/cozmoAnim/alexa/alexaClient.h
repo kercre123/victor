@@ -161,6 +161,9 @@ public:
   
   bool IsAVSConnected() const;
 
+  // hack to "reset" all of the timers (for use after time is synced)
+  void ReinitializeAllTimers();
+
 private:
   
   AlexaClient(){}

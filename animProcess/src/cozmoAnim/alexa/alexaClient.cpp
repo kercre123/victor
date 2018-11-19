@@ -817,6 +817,15 @@ bool AlexaClient::IsAVSConnected() const
 {
   return _connectionManager && _connectionManager->isConnected();
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::ReinitializeAllTimers()
+{
+  if( _alertsCapabilityAgent ) {
+    _alertsCapabilityAgent->refreshTimers();
+  }
+}
+
   
 } // namespace Vector
 } // namespace Anki

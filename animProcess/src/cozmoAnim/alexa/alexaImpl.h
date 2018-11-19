@@ -163,6 +163,11 @@ private:
   float _timeToSetIdle_s = -1.0f;
   // tap to talk is active
   bool _isTapOccurring = false;
+
+  // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
+  // on vicos.... so just track if the system clock jumps and if so, refresh the timers
+  std::chrono::time_point<std::chrono::system_clock> _lastWallTime;
+  float _lastWallTimeCheck_s;
   
   alexaClientSDK::avsCommon::avs::IndicatorState _notificationsIndicator;
   
