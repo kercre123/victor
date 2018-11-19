@@ -13,11 +13,11 @@
             "avs-device-sdk": {
                 "build_type_id": "anki",
                 "checksums": {
-                    "sha256": "e7a06346c2234af60b37cf6c02083abcc5a8e8eb7c21adb8a8bbebbcf737cab7"
+                    "sha256": "19d7cdb0ff93590b3f2100e6108f9456f5b11b5f8d396daf38ee87edb27d7231"
                 },
                 "extension": "tar.gz",
                 "package_name": "avs-device-sdk",
-                "version": "2"
+                "version": "4"
             },
             "tensorflow": {
                 "build_type_id": "anki",
