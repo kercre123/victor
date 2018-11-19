@@ -5,10 +5,10 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "Alexa",
     "MandatoryPhysicalReactions",
     "SDK0",
     "TriggerWordDetected",
+    "Alexa",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "DemoTimerUtilityCoordinator",

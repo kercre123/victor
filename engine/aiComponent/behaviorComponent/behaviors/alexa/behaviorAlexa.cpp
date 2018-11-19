@@ -159,10 +159,6 @@ bool BehaviorAlexa::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAlexa::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  // always run
-  modifiers.wantsToBeActivatedWhenCarryingObject = true;
-  modifiers.wantsToBeActivatedWhenOffTreads = true;
-
   modifiers.behaviorAlwaysDelegates = false;
 }
   
