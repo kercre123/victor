@@ -141,7 +141,18 @@ def notifyBuildStatus(status) {
             ]
         ]
     )
-    
+    def commitStatusMsg = "Jenkins ${jobName} ${env.CHANGE_ID} Shipping [build #${env.BUILD_NUMBER}](${env.BUILD_URL})"
+    setGHBuildStatus(commitStatusMsg, status.toUpperCase())
+}
+
+void setGHBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/anki/victor"],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "jenkins-buildbot"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
 }
 
 
