@@ -47,6 +47,8 @@ struct ColorRegion
 
   PixelRGB color;
 
+  std::string label;
+
   /**
    * @brief Number of pixels classified into this region
    */
@@ -182,6 +184,7 @@ void LabelToImage(const cv::Mat& labelings,
 void LabelToSalientPoints(const ImageRGB& inputImage,
                           const cv::Mat& labelings,
                           const std::vector<PixelRGB>& colors,
+                          const std::vector<std::string>& labels,
                           const s32 unknown,
                           std::list<SalientPoint>& salientPoints)
 {
@@ -215,6 +218,7 @@ void LabelToSalientPoints(const ImageRGB& inputImage,
       region.count++;
 
       region.color = colors[label];
+      region.label = labels[label];
 
       // Add four corners of the location to make sure we can always get a polygon around the grid location
       region.points.emplace_back(col,   row);
@@ -233,7 +237,7 @@ void LabelToSalientPoints(const ImageRGB& inputImage,
   // SalientPoint polygon is the bounding rectangle, could also do convex hull or the contour
   const u32 timestamp = inputImage.GetTimestamp();
   const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
-  const char* typeString = EnumToString(type);
+  // const char* typeString = EnumToString(type);
   const float kWidthScale = 1.f/labelings.cols;
   const float kHeightScale = 1.f/labelings.rows;
 
@@ -277,6 +281,8 @@ void LabelToSalientPoints(const ImageRGB& inputImage,
     f32 score = 1.f;
 
     u32 rgba = ColorRGBA(region.color.r(),region.color.g(),region.color.b(),255).AsRGBA();
+
+    std::string typeString = region.label;
 
     salientPoints.emplace_back(timestamp,
                                centerX, centerY,
@@ -428,9 +434,19 @@ Result ColorDetector::Detect (const ImageRGB& inputImage,
   inputImage.Resize(smallerImage, ResizeMethod::NearestNeighbor);
 
     // TODO: Move this transform somewhere, it needs only be done once. Or pass _labels vector to LabelToImage function
-  auto xform = [](const Label& lbl) -> PixelRGB { return lbl.color; };
   std::vector<PixelRGB> colors;
-  std::transform(_labels.begin(),_labels.end(), std::back_inserter(colors), xform);
+  {
+    auto xform = [](const Label& lbl) -> PixelRGB { return lbl.color; };
+    std::transform(_labels.begin(),_labels.end(), std::back_inserter(colors), xform);
+  }
+  std::vector<std::string> labels;
+  {
+    auto xform = [](const Label& lbl) -> std::string { return lbl.name; };
+    std::transform(_labels.begin(),_labels.end(), std::back_inserter(labels), xform);
+  }
+
+
+  
 
   cv::Mat samples;
   switch (_colorSpace)
@@ -476,7 +492,7 @@ Result ColorDetector::Detect (const ImageRGB& inputImage,
     debugImageRGBs.emplace_back(std::make_pair("FinalLabels", labelImage));
   }
   // Create salient points
-  LabelToSalientPoints(smallerImage, labelings, colors, unknown, salientPoints);
+  LabelToSalientPoints(smallerImage, labelings, colors, labels, unknown, salientPoints);
 
   return RESULT_OK;
 }
