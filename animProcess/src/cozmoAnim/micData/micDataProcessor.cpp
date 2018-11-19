@@ -856,10 +856,18 @@ void MicDataProcessor::ProcessMicDataPayload(const RobotInterface::MicData& payl
 {
   // Store off this next job
   std::lock_guard<std::mutex> lock(_rawMicDataMutex);
-  // Use whichever buffer is currently _not_ being processed
-  auto& bufferToUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
-  RobotInterface::MicData& nextJob = bufferToUse.push_back();
-  nextJob = payload;
+  if (!_muteMics) {
+    // Use whichever buffer is currently _not_ being processed
+    auto& bufferToUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
+    RobotInterface::MicData& nextJob = bufferToUse.push_back();
+    nextJob = payload;
+  }
+}
+  
+void MicDataProcessor::MuteMics(bool mute)
+{
+  std::lock_guard<std::mutex> lock(_rawMicDataMutex);
+  _muteMics = mute;
 }
 
 void MicDataProcessor::ResetMicListenDirection()

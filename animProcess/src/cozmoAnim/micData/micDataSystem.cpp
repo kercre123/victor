@@ -128,7 +128,7 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
   // SpeechRecognizerSystem
   SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-    if( _micMuted || (_alexaState == AlexaSimpleState::Active) ) {
+    if( _alexaState == AlexaSimpleState::Active ) {
       // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
       return;
     }
@@ -721,7 +721,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       PRINT_CH_INFO("Alexa", "MicDataSystem.SetAlexaState.TriggerWordDetectCallback",
                     "info - %s", info.Description().c_str());
       
-      if( _micMuted || HasStreamingJob() ) {
+      if( HasStreamingJob() ) {
         // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
         return;
       }
@@ -742,9 +742,12 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   
 void MicDataSystem::ToggleMicMute()
 {
-  // TODO (VIC-11587): we could save some CPU if the wake words recognizers are actually disabled here.
-  // for now, we just ignore its callbacks if _micMuted is true
+  // TODO (VIC-11587): we could save some CPU if the wake words recognizers are actually disabled here. For now, we
+  // don't feed the raw audio buffer when receiving messages from robot process. Which stops running the mic processor
+  // and recognizers methods, therefore, saving CPU. However, mic threads are still runing.
   _micMuted = !_micMuted;
+  
+  _micDataProcessor->MuteMics(_micMuted);
   
   // play audio event for changing mic mute state
   auto* audioController = _context->GetAudioController();
