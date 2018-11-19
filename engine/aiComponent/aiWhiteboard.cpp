@@ -802,35 +802,32 @@ void AIWhiteboard::UpdateExploringTransitionCooldown()
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastExploringCooldownUpdateTime_s = currTime_s;
 
-//  const auto& behaviorComp = _robot.GetComponent<AIComponent>().GetComponent<BehaviorComponent>();
-//  const auto& statsComponent = behaviorComp.GetComponent<RobotStatsTracker>();
-//  const float alive_h =  statsComponent.GetNumHoursAlive();
+  const auto& behaviorComp = _robot.GetComponent<AIComponent>().GetComponent<BehaviorComponent>();
+  const auto& statsComponent = behaviorComp.GetComponent<RobotStatsTracker>();
+  const float alive_h =  statsComponent.GetNumHoursAlive();
 
-  // if( alive_h < 2.0f ) {
-  //   _exploringTransitionCooldownBase_s = 10.0f;
-  // }
-  // else if( alive_h < 24.0f ) {
-  //   _exploringTransitionCooldownBase_s = 20.0f;
-  // }
-  // else if( alive_h < 48.0f ) {
-  //   _exploringTransitionCooldownBase_s = 40.0f;
-  // }
-  // else if( alive_h < 72.0f ) {
-  //   _exploringTransitionCooldownBase_s = 90.0f;
-  // }
-  // else if( alive_h < 120.0f ) {
-  //   _exploringTransitionCooldownBase_s = 120.0f;
-  // }
-  // else if( alive_h < 168.0f ) {
-  //   _exploringTransitionCooldownBase_s = 240.0;
-  // }
-  // else {
-  //   // Explore every 5 minutes after a week, forever!
-  //   _exploringTransitionCooldownBase_s = 300.0f;
-  // }
-  // ALEXA ONLY VIC-11601
-  // every 10 minutes
-  _exploringTransitionCooldownBase_s = 600.0f;
+  if( alive_h < 2.0f ) {
+    _exploringTransitionCooldownBase_s = 10.0f;
+  }
+  else if( alive_h < 24.0f ) {
+    _exploringTransitionCooldownBase_s = 20.0f;
+  }
+  else if( alive_h < 48.0f ) {
+    _exploringTransitionCooldownBase_s = 40.0f;
+  }
+  else if( alive_h < 72.0f ) {
+    _exploringTransitionCooldownBase_s = 90.0f;
+  }
+  else if( alive_h < 120.0f ) {
+    _exploringTransitionCooldownBase_s = 120.0f;
+  }
+  else if( alive_h < 168.0f ) {
+    _exploringTransitionCooldownBase_s = 240.0;
+  }
+  else {
+    // Explore every 5 minutes after a week, forever!
+    _exploringTransitionCooldownBase_s = 300.0f;
+  }
 }
 
 } // namespace Vector
