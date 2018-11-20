@@ -1263,6 +1263,10 @@ void VisionSystem::CheckForNeuralNetResults()
     const bool resultReady = neuralNetRunner.second->GetDetections(_currentResult.salientPoints);
     if(resultReady)
     {
+      PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.CheckForNeuralNetResults.GotDetections",
+                     "Network:%s NumSalientPoints:%zu",
+                     neuralNetRunner.first.c_str(), _currentResult.salientPoints.size());
+      
       std::set<VisionMode> modes;
       const bool success = GetVisionModesForNeuralNet(neuralNetRunner.first, modes);
       if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",

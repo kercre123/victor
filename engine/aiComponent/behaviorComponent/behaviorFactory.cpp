@@ -119,10 +119,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemoBase.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAskForHelp.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorCheckForAndReactToSalientPoint.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToDarkness.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToHand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
@@ -841,6 +843,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::CheckForAndReactToSalientPoint:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCheckForAndReactToSalientPoint(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToCliff:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCliff(config));
@@ -862,6 +870,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToFrustration:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToFrustration(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToHand:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToHand(config));
       break;
     }
     

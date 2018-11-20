@@ -604,28 +604,24 @@
     "AnimName": "ag_explorer_scan_short"
   },
   {
-   "CladEvent": "ExploringHandTouchLiftGetIn",
-   "AnimName": "ag_handdetection_getin_lift"
+   "CladEvent": "ExploringReactToHandGetIn",
+   "AnimName": "ag_handdetection_getin"
   },
   {
-   "CladEvent": "ExploringHandTouchLiftGetOut",
-   "AnimName": "ag_handdetection_getout_lift"
+   "CladEvent": "ExploringReactToHandDrive",
+   "AnimName": "ag_handdetection_drive_loop"
   },
   {
-   "CladEvent": "ExploringHandTouchLiftLoop",
-   "AnimName": "ag_handdetection_loop_lift"
+   "CladEvent": "ExploringReactToHandLift",
+   "AnimName": "ag_handdetection_lift"
   },
   {
-    "CladEvent": "ExploringHandSlowPokeGetIn",
-    "AnimName": "ag_handdetection_getin_slowpoke"
+    "CladEvent": "ExploringReactToHandReaction",
+    "AnimName": "ag_handdetection_reaction"
   },
   {
-   "CladEvent": "ExploringHandSlowPokeGetOut",
-   "AnimName": "ag_handdetection_getout_slowpoke"
-  },
-  {
-   "CladEvent": "ExploringHandSlowPokeLoop",
-   "AnimName": "ag_handdetection_loop_slowpoke"
+   "CladEvent": "ExploringReactToHandGetOut",
+   "AnimName": "ag_handdetection_getout"
   },
   {
     "CladEvent": "ExploringScanToLeft",

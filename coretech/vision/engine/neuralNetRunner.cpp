@@ -264,7 +264,9 @@ bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
     const std::future_status futureStatus = _future.wait_for(kWaitForTime);
     if(std::future_status::ready == futureStatus)
     {
-      salientPoints = _future.get();
+      auto newSalientPoints = _future.get();
+      std::copy(newSalientPoints.begin(), newSalientPoints.end(), std::back_inserter(salientPoints));
+
       DEV_ASSERT(!_future.valid(), "NeuralNetRunner.GetDetections.FutureStillValid");
       
       if(ANKI_DEV_CHEATS && _model->IsVerbose())

@@ -180,10 +180,12 @@ enum uint_8 BehaviorClass {
 
   // reactions
   AskForHelp,
+  CheckForAndReactToSalientPoint,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,
   ReactToFrustration,
+  ReactToHand,
   ReactToMicDirection,
   ReactToMotion,
   ReactToMotorCalibration,
