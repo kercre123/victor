@@ -53,6 +53,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestButton.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestLookAtCharger.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestSoundCheck.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestDriveForwards.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestInitChecks.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestDriftCheck.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestPutOnCharger.h"
@@ -729,10 +732,25 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
 
-    case BehaviorClass::SelfTestDockWithCharger:
-    case BehaviorClass::SelfTestDriveForwards:
-    case BehaviorClass::SelfTestLookAtCharger:
     case BehaviorClass::SelfTestSoundCheck:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestSoundCheck(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestDriveForwards:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestDriveForwards(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestLookAtCharger:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestLookAtCharger(config));
+      break;
+    }
+        
+    case BehaviorClass::SelfTestDockWithCharger:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestWaitToStart(config));
       break;

@@ -275,7 +275,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     GetVisionComponent().Init(GetContext()->GetDataLoader()->GetRobotVisionConfig());
   }
 
-  BEGIN_DONT_RUN_AFTER_PACKOUT
+  //BEGIN_DONT_RUN_AFTER_PACKOUT
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
   _thisRobot = this;
@@ -284,7 +284,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // This will create the AndroidHAL instance if it doesn't yet exist
   CameraService::getInstance();
 
-  END_DONT_RUN_AFTER_PACKOUT
+  //END_DONT_RUN_AFTER_PACKOUT
   
 } // Constructor: Robot
     
@@ -936,6 +936,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
+  _batteryDisconnected = IS_STATUS_FLAG_SET(IS_BATTERY_DISCONNECTED);
 
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
@@ -943,6 +944,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetMoveComponent().Update(msg);
       
   _battVoltage = msg.batteryVoltage;
+  _chargerVoltage = msg.chargerVoltage;
       
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
@@ -1282,12 +1284,12 @@ Result Robot::Update()
     _syncTimeSentTime_sec = 0.0f;
   }
 
-  BEGIN_DONT_RUN_AFTER_PACKOUT
+  //BEGIN_DONT_RUN_AFTER_PACKOUT
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
   UpdateStartupChecks();
-  END_DONT_RUN_AFTER_PACKOUT
+  //END_DONT_RUN_AFTER_PACKOUT
   
   if (!_gotStateMsgAfterTimeSync)
   {
@@ -1313,7 +1315,7 @@ Result Robot::Update()
      lastUpdateTime = currentTime_sec;
   */
 
-  BEGIN_DONT_RUN_AFTER_PACKOUT
+  //  BEGIN_DONT_RUN_AFTER_PACKOUT
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
@@ -1381,7 +1383,7 @@ Result Robot::Update()
   GetProgressionUnlockComponent().Update();
 
   GetBlockTapFilter().Update();
-  END_DONT_RUN_AFTER_PACKOUT
+  //END_DONT_RUN_AFTER_PACKOUT
   std::string currentActivityName;
   
   // Update AI component before behaviors so that behaviors can use the latest information
@@ -1406,19 +1408,20 @@ Result Robot::Update()
   BEGIN_DONT_RUN_AFTER_PACKOUT    
   /////////// Update cube comms ////////////
   GetCubeCommsComponent().Update();
-  
+  END_DONT_RUN_AFTER_PACKOUT
+
   // update and broadcast map
   GetMapComponent().Update();
-  END_DONT_RUN_AFTER_PACKOUT
+  //END_DONT_RUN_AFTER_PACKOUT
   
   /////////// Update AnimationComponent /////////
   GetAnimationComponent().Update();
 
   /////////// Update visualization ////////////
-  BEGIN_DONT_RUN_AFTER_PACKOUT
+  //BEGIN_DONT_RUN_AFTER_PACKOUT
   // Draw All Objects by calling their Visualize() methods.
   GetBlockWorld().DrawAllObjects();
-  END_DONT_RUN_AFTER_PACKOUT
+  //END_DONT_RUN_AFTER_PACKOUT
 
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();
@@ -1494,13 +1497,13 @@ Result Robot::Update()
   GetCubeLightComponent().Update();
   GetBodyLightComponent().Update();
   
-  BEGIN_DONT_RUN_AFTER_PACKOUT
+  //  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Update user facing state information after everything else has been updated
   // so that relevant information is forwarded along to whoever's listening for
   // state changes
   GetPublicStateBroadcaster().Update(*this);
 
-
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states
     BlockWorldFilter filter;

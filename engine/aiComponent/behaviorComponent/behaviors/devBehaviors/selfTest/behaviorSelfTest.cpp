@@ -47,7 +47,7 @@ BehaviorSelfTest::BehaviorSelfTest(const Json::Value& config)
 
 void BehaviorSelfTest::InitBehavior() 
 {
-  //Robot& robot = GetBEI().GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   const BehaviorContainer& BC = GetBEI().GetBehaviorContainer();
   
@@ -63,11 +63,11 @@ void BehaviorSelfTest::InitBehavior()
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPutOnCharger");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(putOnChargerBehavior));
   
-  ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
-  DEV_ASSERT(touchBehavior != nullptr &&
-             touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
-             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
-  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
+  // ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
+  // DEV_ASSERT(touchBehavior != nullptr &&
+  //            touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
+  //            "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
+  // _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
   
   ICozmoBehaviorPtr buttonBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestButton);
   DEV_ASSERT(buttonBehavior != nullptr &&
@@ -75,11 +75,11 @@ void BehaviorSelfTest::InitBehavior()
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestButton");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(buttonBehavior));
 
-  ICozmoBehaviorPtr screenAndBackpackBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestScreenAndBackpack);
-  DEV_ASSERT(screenAndBackpackBehavior != nullptr &&
-             screenAndBackpackBehavior->GetClass() == BehaviorClass::SelfTestScreenAndBackpack,
-             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestScreenAndBackpack");
-  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(screenAndBackpackBehavior));
+  // ICozmoBehaviorPtr screenAndBackpackBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestScreenAndBackpack);
+  // DEV_ASSERT(screenAndBackpackBehavior != nullptr &&
+  //            screenAndBackpackBehavior->GetClass() == BehaviorClass::SelfTestScreenAndBackpack,
+  //            "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestScreenAndBackpack");
+  // _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(screenAndBackpackBehavior));
 
   ICozmoBehaviorPtr initChecksBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestInitChecks);
   DEV_ASSERT(initChecksBehavior != nullptr &&
@@ -99,37 +99,23 @@ void BehaviorSelfTest::InitBehavior()
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestDriftCheck");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(driftCheckBehavior));
 
+  ICozmoBehaviorPtr soundCheckBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestSoundCheck);
+  DEV_ASSERT(soundCheckBehavior != nullptr &&
+             soundCheckBehavior->GetClass() == BehaviorClass::SelfTestSoundCheck,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestSoundCheck");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(soundCheckBehavior));
   
-  
-  // ICozmoBehaviorPtr driftCheckBehavior = BC.FindBehaviorByID(BehaviorID::PlaypenDriftCheck);
-  // DEV_ASSERT(driftCheckBehavior != nullptr &&
-  //            driftCheckBehavior->GetClass() == BehaviorClass::PlaypenDriftCheck,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.PlaypenDriftCheck");
-  // _playpenBehaviors.push_back(std::static_pointer_cast<IBehaviorPlaypen>(driftCheckBehavior));
-  
-  // ICozmoBehaviorPtr cameraCalibBehavior = BC.FindBehaviorByID(BehaviorID::PlaypenCameraCalibration);
-  // DEV_ASSERT(cameraCalibBehavior != nullptr &&
-  //            cameraCalibBehavior->GetClass() == BehaviorClass::PlaypenCameraCalibration,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.PlaypenCameraCalibration");
-  // _playpenBehaviors.push_back(std::static_pointer_cast<IBehaviorPlaypen>(cameraCalibBehavior));
+  ICozmoBehaviorPtr driveFowardsBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestDriveForwards);
+  DEV_ASSERT(driveFowardsBehavior != nullptr &&
+             driveFowardsBehavior->GetClass() == BehaviorClass::SelfTestDriveForwards,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestDriveForwards");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(driveFowardsBehavior));
 
-  // ICozmoBehaviorPtr driveFowardsBehavior = BC.FindBehaviorByID(BehaviorID::PlaypenDriveForwards);
-  // DEV_ASSERT(driveFowardsBehavior != nullptr &&
-  //            driveFowardsBehavior->GetClass() == BehaviorClass::PlaypenDriveForwards,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.PlaypenDriveForwards");
-  // _playpenBehaviors.push_back(std::static_pointer_cast<IBehaviorPlaypen>(driveFowardsBehavior));
-
-  // ICozmoBehaviorPtr soundCheckBehavior = BC.FindBehaviorByID(BehaviorID::PlaypenSoundCheck);
-  // DEV_ASSERT(soundCheckBehavior != nullptr &&
-  //            soundCheckBehavior->GetClass() == BehaviorClass::PlaypenSoundCheck,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.PlaypenSoundCheck");
-  // _playpenBehaviors.push_back(std::static_pointer_cast<IBehaviorPlaypen>(soundCheckBehavior));
-  
-  // ICozmoBehaviorPtr distanceSensorCheck80mm = BC.FindBehaviorByID(BehaviorID::PlaypenDistanceSensor80mm);
-  // DEV_ASSERT(distanceSensorCheck80mm != nullptr &&
-  //            distanceSensorCheck80mm->GetClass() == BehaviorClass::PlaypenDistanceSensor,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.PlaypenDistanceSensor100mm");
-  // _playpenBehaviors.push_back(std::static_pointer_cast<IBehaviorPlaypen>(distanceSensorCheck80mm));
+  ICozmoBehaviorPtr lookAtCharger = BC.FindBehaviorByID(BehaviorID::SelfTestLookAtCharger);
+  DEV_ASSERT(lookAtCharger != nullptr &&
+             lookAtCharger->GetClass() == BehaviorClass::SelfTestLookAtCharger,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestLookAtCharger");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(lookAtCharger));
 
   // ICozmoBehaviorPtr pickupBehavior = BC.FindBehaviorByID(BehaviorID::PlaypenPickupCube);
   // DEV_ASSERT(pickupBehavior != nullptr &&
@@ -146,12 +132,11 @@ void BehaviorSelfTest::InitBehavior()
   _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
   _currentBehavior = *_currentSelfTestBehaviorIter;
 
-  // if(robot.HasExternalInterface())
-  // {
-  //   auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
-  //   helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::PlaypenBehaviorFailed>();
-  //   helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::EnterPairing>();
-  // }
+  if(robot.HasExternalInterface())
+  {
+    auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
+    helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::SelfTestBehaviorFailed>();
+  }
 }
 
 void BehaviorSelfTest::GetAllDelegates(std::set<IBehavior*>& delegates) const
@@ -532,24 +517,24 @@ void BehaviorSelfTest::DisplayResult(FactoryTestResultCode result)
   }
 }
 
-// template<>
-// void BehaviorSelfTest::HandleMessage(const ExternalInterface::PlaypenBehaviorFailed& msg)
-// {
-//   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleMessage.PlaypenBehaviorFailed",
-//                       "Some behavior failed with %s%s",
-//                       EnumToString(msg.result),
-//                       (PlaypenConfig::kIgnoreFailures ? ", ignoring" : ""));
+template<>
+void BehaviorSelfTest::HandleMessage(const ExternalInterface::SelfTestBehaviorFailed& msg)
+{
+  PRINT_NAMED_WARNING("BehaviorSelfTest.HandleMessage.SelfTestBehaviorFailed",
+                      "Some behavior failed with %s%s",
+                      EnumToString(msg.result),
+                      (PlaypenConfig::kIgnoreFailures ? ", ignoring" : ""));
 
-//   if(!PlaypenConfig::kIgnoreFailures)
-//   {
-//     if(_currentBehavior != nullptr)
-//     {
-//       _currentBehavior->OnDeactivated();
-//     }
+  if(!PlaypenConfig::kIgnoreFailures)
+  {
+    if(_currentBehavior != nullptr)
+    {
+      _currentBehavior->OnDeactivated();
+    }
 
-//     HandleResult(msg.result);
-//   }
-// }
+    HandleResult(msg.result);
+  }
+}
 
 // template<>
 // void BehaviorSelfTest::HandleMessage(const SwitchboardInterface::EnterPairing& msg)

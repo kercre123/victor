@@ -149,9 +149,12 @@ private:
   friend class BehaviorSelfTestMotorCalibration;
   friend class BehaviorSelfTestDriftCheck;
   friend class BehaviorSelfTestInitChecks;
+  friend class BehaviorSelfTestSoundCheck;
   friend class BehaviorSelfTestTouch;
   friend class BehaviorSelfTestWaitToStart;
   friend class BehaviorSelfTestButton;
+  friend class BehaviorSelfTestDriveForwards;
+  friend class BehaviorSelfTestLookAtCharger;
   
   Robot& _robot;
 };

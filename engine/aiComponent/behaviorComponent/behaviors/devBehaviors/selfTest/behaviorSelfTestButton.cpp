@@ -33,10 +33,6 @@ Result BehaviorSelfTestButton::OnBehaviorActivatedInternal()
 
   DrawTextOnScreen(robot, {"Press Button"});
   
-  AddTimer(5000, [this](){
-    SELFTEST_SET_RESULT(FactoryTestResultCode::TEST_TIMED_OUT);
-  });
-  
   return RESULT_OK;
 }
 

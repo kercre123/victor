@@ -356,6 +356,10 @@ public:
   // True if robot is charging
   bool   IsCharging()          const { return _isCharging; }
 
+  f32    GetChargerVoltage()   const { return _chargerVoltage; }
+
+  bool   IsBatteryDisconnected() const { return _batteryDisconnected; }
+
   // Return the message timestamp of the last time the value of IsCharging changed
   TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
   
@@ -732,6 +736,8 @@ protected:
   bool             _isCharging               = false;
   TimeStamp_t      _lastChargingChange_ms    = 0;
   f32              _battVoltage              = 5;
+  f32              _chargerVoltage           = 0;
+  bool             _batteryDisconnected      = false;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;
   bool             _powerButtonPressed       = false;

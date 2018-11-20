@@ -35,10 +35,6 @@ Result BehaviorSelfTestTouch::OnBehaviorActivatedInternal()
 
   DrawTextOnScreen(robot, {"Hold Touch"});
   
-  AddTimer(30000, [this](){
-    SELFTEST_SET_RESULT(FactoryTestResultCode::TEST_TIMED_OUT);
-  });
-  
   return RESULT_OK;
 }
 
