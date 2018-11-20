@@ -15,6 +15,7 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/debug/devLoggingSystem.h"
+#include "engine/cozmoAPI/comms/protoCladInterpreter.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -29,6 +30,7 @@
 #include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageGameToEngine_hash.h"
+#include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/externalInterface/messageEngineToGame_hash.h"
 
 #include "util/console/consoleInterface.h"
@@ -316,6 +318,11 @@ namespace Anki {
         }
         bytesRemaining -= bytesUnpacked;
         messagePtr += bytesUnpacked;
+
+        LOG_WARNING("ron_proto_to_clad_testing", "%s", MessageGameToEngineTagToString(message.GetTag()));
+        if (ProtoCladInterpreter::Redirect(message, _context)) {
+          return RESULT_OK;
+        }
 
         HandleProcessedMessage(message, connectionType, bytesUnpacked, handleMessagesFromConnection);
       }
