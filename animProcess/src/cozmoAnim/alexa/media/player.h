@@ -162,10 +162,6 @@ private:
   // NOTE: Acceptable volume value [0.0, 1.0]
   void SetPlayerVolume( float volume );
 
-  // Set the volume in Audio Controller for Media Player
-  // NOTE: Acceptable volume value [0.0, 1.0]
-  void SetPlayerVolume( float volume );
-
   // decodes from _mp3Buffer into data, returns millisec decoded
   int Decode( const StreamingWaveDataPtr& data, bool flush = false );
 
