@@ -85,6 +85,51 @@ def test_enable_image_streaming(vector_connection):
 def test_get_onboarding_state(vector_connection):
     vector_connection.send("v1/get_onboarding_state", p.OnboardingStateRequest(), p.OnboardingStateResponse())
 
+def test_onboarding_complete_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_complete_request = p.OnboardingCompleteRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_wake_up_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_wake_up_request = p.OnboardingWakeUpRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_wake_up_started_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_wake_up_started_request = p.OnboardingWakeUpStartedRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_skip_onboarding(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_skip_onboarding = p.OnboardingSkipOnboarding() ),\
+    p.OnboardingInputResponse())
+
+def test_restart_onboarding(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_restart = p.OnboardingRestart() ),\
+    p.OnboardingInputResponse())
+
+def test_set_onboarding_phase(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_set_phase_request = p.OnboardingSetPhaseRequest(phase=5) ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_phase_progress_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_phase_progress_request = p.OnboardingPhaseProgressRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_charge_info_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_charge_info_request = p.OnboardingChargeInfoRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_mark_complete_and_exit(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_mark_complete_and_exit = p.OnboardingMarkCompleteAndExit() ),\
+    p.OnboardingInputResponse())
+
 def test_photos_info(vector_connection):
     vector_connection.send("v1/photos_info", p.PhotosInfoRequest(), p.PhotosInfoResponse())
 

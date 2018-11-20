@@ -106,13 +106,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorLookForCubePatiently.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboarding.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingActivateCube.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingDetectHabitat.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingInterruptionHead.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboarding1p0.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboardingLookAtPhone.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/behaviorOnboardingCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtPhone1p2.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtUser1p2.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingTeachWakeWord.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorAestheticallyCenterFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemo.h"
@@ -765,33 +764,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::LookForCubePatiently:
+    case BehaviorClass::Onboarding1p0:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorLookForCubePatiently(config));
-      break;
-    }
-    
-    case BehaviorClass::Onboarding:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboarding(config));
-      break;
-    }
-    
-    case BehaviorClass::OnboardingActivateCube:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingActivateCube(config));
-      break;
-    }
-    
-    case BehaviorClass::OnboardingDetectHabitat:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingDetectHabitat(config));
-      break;
-    }
-    
-    case BehaviorClass::OnboardingInterruptionHead:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingInterruptionHead(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboarding1p0(config));
       break;
     }
     
@@ -801,9 +776,27 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::Onboarding1p0:
+    case BehaviorClass::OnboardingCoordinator:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboarding1p0(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingCoordinator(config));
+      break;
+    }
+    
+    case BehaviorClass::OnboardingLookAtPhone1p2:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtPhone1p2(config));
+      break;
+    }
+    
+    case BehaviorClass::OnboardingLookAtUser1p2:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtUser1p2(config));
+      break;
+    }
+    
+    case BehaviorClass::OnboardingTeachWakeWord:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingTeachWakeWord(config));
       break;
     }
     

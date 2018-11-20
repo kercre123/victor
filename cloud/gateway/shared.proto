@@ -109,21 +109,25 @@ message GatewayWrapper {
     Event event                                                      = 1;
 
     // ------------ onboarding requests and responses --------------------
+    // 1p0 backward compatibility enum values vvv
     OnboardingStateRequest        onboarding_state_request           = 2;
     OnboardingState               onboarding_state                   = 3;
-    OnboardingContinue            onboarding_continue                = 4;
-    OnboardingContinueResponse    onboarding_continue_response       = 5;
-    OnboardingSkip                onboarding_skip                    = 6;
     OnboardingSkipOnboarding      onboarding_skip_onboarding         = 7;
     OnboardingRestart             onboarding_restart                 = 8;
-    OnboardingGetStep             onboarding_get_step                = 9;
-    OnboardingStepResponse        onboarding_step_response           = 10;
     OnboardingCompleteRequest     onboarding_complete_request        = 11;
     OnboardingCompleteResponse    onboarding_complete_response       = 12;
     OnboardingWakeUpRequest       onboarding_wake_up_request         = 13;
     OnboardingWakeUpResponse      onboarding_wake_up_response        = 14;
     OnboardingWakeUpStartedRequest  onboarding_wake_up_started_request = 15;
     OnboardingWakeUpStartedResponse onboarding_wake_up_started_response = 16;
+    // 1p0 backward compatibility enum values ^^^
+    OnboardingSetPhaseRequest       onboarding_set_phase_request       = 17;
+    OnboardingSetPhaseResponse      onboarding_set_phase_response      = 18;
+    OnboardingPhaseProgressRequest  onboarding_phase_progress_request  = 19;
+    OnboardingPhaseProgressResponse onboarding_phase_progress_response = 20;
+    OnboardingChargeInfoRequest     onboarding_charge_info_request     = 21;
+    OnboardingChargeInfoResponse    onboarding_charge_info_response    = 22;
+    OnboardingMarkCompleteAndExit   onboarding_mark_complete_and_exit  = 23;
 
     // ------------ Attention transfer -----------------------------------
     LatestAttentionTransferRequest latest_attention_transfer_request = 100;

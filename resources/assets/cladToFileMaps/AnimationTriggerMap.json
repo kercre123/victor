@@ -928,12 +928,28 @@
     "AnimName": "ag_cubetapping_searchforcube"
   },
   {
+    "CladEvent": "OnboardingListenGetIn",
+    "AnimName": "ag_onboarding_wakeword_getin_01"
+  },
+  {
+    "CladEvent": "OnboardingListenGetOut",
+    "AnimName": "ag_onboarding_wakeword_getout_01"
+  },
+  {
+    "CladEvent": "OnboardingReactToFaceHappy",
+    "AnimName": "ag_onboarding_reacttoface_happy"
+  },
+  {
     "CladEvent": "OnboardingWakeUp",
     "AnimName": "ag_onboarding_wakeup"
   },
   {
     "CladEvent": "OnboardingWakeWordGetIn",
     "AnimName": "ag_onboarding_wakeword_getin_01"
+  },  
+  {
+    "CladEvent": "OnboardingWakeWordSuccess",
+    "AnimName": "ag_onboarding_wakeword_success"
   },  
   {
     "CladEvent": "PettingLevel1",

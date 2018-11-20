@@ -1,0 +1,45 @@
+{
+  "behaviorID": "Onboarding1p2",
+  "behaviorClass": "OnboardingCoordinator",
+
+  "associatedActiveFeature": "Onboarding",
+
+  "phases" : [
+    {
+      // The Default phase is the one we initialize to and return to if the app disconnects
+      "phaseName" : "Default",
+      "phaseBehaviorID" : "OnboardingLookAtPhone1p2",
+      // Note that the Default phase doesn't time out, global and AppDisconnect timeouts still apply
+      "phaseTimeout_s" : 0.0,
+      "allowCoordinatorPowerOff" : true
+    },
+    {
+      "phaseName" : "LookAtPhone",
+      "phaseBehaviorID" : "OnboardingLookAtPhone1p2",
+      "phaseTimeout_s" : 60.0,
+      "allowCoordinatorPowerOff" : true
+    }, 
+    {
+      "phaseName" : "WakeUp",
+      "phaseBehaviorID" : "OnboardingWakeUp1p2",
+      "phaseTimeout_s" : 60.0
+    },
+    {
+      "phaseName" : "LookAtUser",
+      "phaseBehaviorID" : "OnboardingLookAtUser1p2",
+      "phaseTimeout_s" : 120.0,
+      "allowCoordinatorPowerOff" : true
+    },
+    {
+      "phaseName" : "TeachWakeWord",
+      "phaseBehaviorID" : "OnboardingTeachWakeWord1p2",
+      "phaseTimeout_s" : 180.0
+    }
+  ],
+
+  "startTimeout_s" : 600.0, // Exit timeout if the app never triggers onboarding.
+  "completionTimeout_s" : 600.0, // Exit timeout after starting, regardless of phase/progression 
+  "appDisconnectTimeout_s" : 180.0, // Exit timeout from default phase if the App disconnects after starting onboarding
+  "idleTimeout_s" : 120.0, // Exit timeout from idle state after phase completion
+  "allowPowerOffFromIdle" : true // Should the power button work if we're idling outside any onboarding phase?
+}

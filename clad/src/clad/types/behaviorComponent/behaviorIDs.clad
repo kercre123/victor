@@ -311,35 +311,21 @@ enum uint_16 BehaviorID {
   NoWifi,
   NormalWakeUp,
 
-  // victorBehaviorTree/onboarding
-  Onboarding1p1,
-  OnboardingActivateCube,
-  OnboardingComeHere,
-  OnboardingComeHereGetOut,
-  OnboardingComeHereResume,
-  OnboardingDetectHabitat,
-  OnboardingFirstTriggerWord,
-  OnboardingHabitatDetected,
-  OnboardingLookAtPhone,
-  OnboardingLookAtUser,
-  OnboardingLookForCube,
-  OnboardingLowBattery,
-  OnboardingPhysicalReactions,
-  OnboardingPickedUp,
-  OnboardingPlacedOnCharger,
-  OnboardingPopAWheelie,
-  OnboardingPowerOff,
-  OnboardingSluggishDriveOffCharger,
-  OnboardingTriggerWord,
-  OnboardingWaitForComeHere,
-  OnboardingWaitForNotFalling,
-  OnboardingWaitForTriggerWord,
-  OnboardingWakeUp,
-  ResetOnboardingSafely,
-
   // victorBehaviorTree/onboarding1p0
   Onboarding,
+  OnboardingLookAtPhone,
+  OnboardingLookAtUser,
   OnboardingLookAtUserOnCharger,
+  OnboardingPowerOff,
+  OnboardingTriggerWord,
+
+  // victorBehaviorTree/onboarding1p2
+  Onboarding1p2,
+  OnboardingLookAtPhone1p2,
+  OnboardingLookAtUser1p2,
+  OnboardingTeachWakeWord1p2,
+  OnboardingWakeUp1p2,
+  ResetOnboarding1p2Safely,
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,

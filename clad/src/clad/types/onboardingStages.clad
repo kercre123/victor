@@ -7,14 +7,10 @@ namespace Vector {
 
 enum uint_8 OnboardingStages
 {
-  // PLEASE KEEP ORDERED CHRONOLOGICALLY AND SEQUENTIALLY (for dev tools to work)
-
-  NotStarted = 0, // hasn't said "come here"
-  FinishedComeHere,
-  FinishedMeetVictor,
-  
-  Complete, // has fully completed robot onboarding (but perhaps not the app onboarding)
-
+  NotStarted = 0, 
+  TimedOut,
+  MaintainNumbering, // Replace this later if so desired, it is kept here to maintain enum values for back compat
+  Complete,
   // if you manually set your state to this, it will start awake with eyes on but motionless
   DevDoNothing,
 }

@@ -5,19 +5,6 @@
   "behaviorID": "OnboardingLookAtUserOnCharger",
   "behaviorClass": "FindFaceAndThen",
 
-  "wantsToBeActivatedCondition": 
-  {
-    "conditionType": "OnChargerPlatform"
-  },
-
-  "wantsToCancelSelfCondition": 
-  {
-    "conditionType": "Compound",
-    "not": {
-      "conditionType": "OnChargerPlatform"
-    }
-  },
-  
   "startsWithMicDirection": false,
   "timeUntilCancelFaceLooking_s": 99999.0,
 

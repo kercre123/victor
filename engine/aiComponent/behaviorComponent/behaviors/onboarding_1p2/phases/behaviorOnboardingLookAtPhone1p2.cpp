@@ -1,55 +1,55 @@
+
 /**
- * File: behaviorOnboardingLookAtPhone.cpp
+ * File: BehaviorOnboardingLookAtPhone1p21p2.h
  *
- * Author: ross
+ * Author: Sam
  * Created: 2018-06-27
  *
- * Description: keeps the head up while displaying a look at phone animation, lowers the head, then ends
+ * Description: keeps the head up while displaying a look at phone animation
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
 
-
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtPhone1p2.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorOnboardingLookAtPhone::InstanceConfig::InstanceConfig()
+BehaviorOnboardingLookAtPhone1p2::InstanceConfig::InstanceConfig()
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorOnboardingLookAtPhone::DynamicVariables::DynamicVariables()
+BehaviorOnboardingLookAtPhone1p2::DynamicVariables::DynamicVariables()
 {
   receivedMessage = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorOnboardingLookAtPhone::BehaviorOnboardingLookAtPhone(const Json::Value& config)
+BehaviorOnboardingLookAtPhone1p2::BehaviorOnboardingLookAtPhone1p2(const Json::Value& config)
  : ICozmoBehavior(config)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::InitBehavior()
+void BehaviorOnboardingLookAtPhone1p2::InitBehavior()
 {
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnboardingLookAtPhone::WantsToBeActivatedBehavior() const
+bool BehaviorOnboardingLookAtPhone1p2::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+void BehaviorOnboardingLookAtPhone1p2::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenOffTreads = true;
@@ -57,18 +57,18 @@ void BehaviorOnboardingLookAtPhone::GetBehaviorOperationModifiers(BehaviorOperat
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::OnBehaviorActivated() 
+void BehaviorOnboardingLookAtPhone1p2::OnBehaviorActivated()
 {
   SmartDisableKeepFaceAlive();
   bool hasRun = _dVars.hasRun;
   _dVars = DynamicVariables();
   _dVars.hasRun = true;
-  
+
   // since this behavior runs on and off charger without any user facing battery alerts, make sure it's in low power
   // mode to avoid overheating the battery. We should be able to still receive app messages during this time to wake
   // up (which ends low power mode).
   SmartRequestPowerSaveMode();
-  
+
   // if the app requests we restart onboarding in the middle of something else, make sure the lift is down
   auto* moveLiftAction = new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::LOW_DOCK );
   DelegateIfInControl( moveLiftAction, [this, hasRun]() {
@@ -80,24 +80,20 @@ void BehaviorOnboardingLookAtPhone::OnBehaviorActivated()
       MoveHeadUp();
     }
   });
-  
+
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::BehaviorUpdate()
+void BehaviorOnboardingLookAtPhone1p2::BehaviorUpdate()
 {
   if( IsActivated() && !IsControlDelegated() ) {
     // this can happen if the robot cancels all actions (like when it detect that it's falling)
-    if( !_dVars.receivedMessage ) {
-      MoveHeadUp();
-    } else {
-      MoveHeadDown();
-    }
+    MoveHeadUp();
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::MoveHeadUp()
+void BehaviorOnboardingLookAtPhone1p2::MoveHeadUp()
 {
   auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneUp };
   action->SetRenderInEyeHue( false );
@@ -105,34 +101,14 @@ void BehaviorOnboardingLookAtPhone::MoveHeadUp()
     RunLoopAction();
   });
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::RunLoopAction()
+void BehaviorOnboardingLookAtPhone1p2::RunLoopAction()
 {
   auto* loopAction = new ReselectingLoopAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneLoop };
   loopAction->SetRenderInEyeHue( false );
   DelegateIfInControl( loopAction ); // loop forever, waiting for a message
 }
- 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::MoveHeadDown()
-{
-  auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneDown };
-  action->SetRenderInEyeHue( false );
-  DelegateNow( action, [this](const ActionResult& res){
-    CancelSelf();
-  });
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingLookAtPhone::ContinueReceived()
-{
-  if( ANKI_VERIFY( IsActivated(), "BehaviorOnboardingLookAtPhone.ContinueReceived.NotActivated", "" ) ) {
-    CancelDelegates(false);
-    _dVars.receivedMessage = true;
-    MoveHeadDown();
-  }
-}
 
-}
-}
+} // namespace Vector
+} // namespace Anki

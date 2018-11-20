@@ -19,12 +19,30 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/alexaTypes.h"
 #include "clad/types/behaviorComponent/attentionTransferTypes.h"
+#include "clad/types/onboardingPhase.h"
+#include "clad/types/onboardingPhaseState.h"
 
 
 namespace Anki {
 namespace Vector {
 
 namespace CladProtoTypeTranslator {
+
+  constexpr external_interface::OnboardingPhase ToProtoEnum( OnboardingPhase value ){
+    return static_cast<external_interface::OnboardingPhase>( static_cast<std::underlying_type_t<OnboardingPhase>>(value) );
+  }
+
+  constexpr OnboardingPhase ToCladEnum( external_interface::OnboardingPhase value ){
+    return static_cast<OnboardingPhase>( static_cast<std::underlying_type_t<external_interface::OnboardingPhase>>(value) );
+  } 
+
+  constexpr external_interface::OnboardingPhaseState ToProtoEnum( OnboardingPhaseState value ){
+    return static_cast<external_interface::OnboardingPhaseState>( static_cast<std::underlying_type_t<OnboardingPhaseState>>(value) );
+  }
+
+  constexpr OnboardingPhaseState ToCladEnum( external_interface::OnboardingPhaseState value ){
+    return static_cast<OnboardingPhaseState>( static_cast<std::underlying_type_t<external_interface::OnboardingPhaseState>>(value) );
+  } 
 
   constexpr external_interface::OnboardingStages ToProtoEnum( OnboardingStages value ){
     return static_cast<external_interface::OnboardingStages>( static_cast<std::underlying_type_t<OnboardingStages>>(value) );
@@ -46,10 +64,20 @@ namespace CladProtoTypeTranslator {
   #define CLAD_PROTO_COMPARE_ASSERT2(T,V,U) static_assert(ToProtoEnum(T::V) == external_interface::T::U, "Invalid cast " #T "::" #V " to " #T "::" #U )
   
   CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, NotStarted);
-  //CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, FinishedComeHere);
-  //CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, FinishedMeetVictor);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, TimedOut);
   CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, Complete);
   CLAD_PROTO_COMPARE_ASSERT(OnboardingStages, DevDoNothing);
+
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, Default);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, LookAtPhone);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, WakeUp);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, LookAtUser);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, TeachWakeWord);
+
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhaseState, PhaseInvalid);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhaseState, PhasePending);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhaseState, PhaseInProgress);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhaseState, PhaseComplete);
 
   CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, Invalid);
   CLAD_PROTO_COMPARE_ASSERT(AttentionTransferReason, NoCloudConnection);

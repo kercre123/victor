@@ -1,5 +1,5 @@
 {
-  "onboardingBehavior"     : "Onboarding",
+  "onboardingBehavior"     : "Onboarding1p2",
   "normalBaseBehavior"     : "InitNormalOperation",
   "devBaseBehavior"        : "DevBaseBehavior",
   "postOnboardingBehavior" : "ModeSelector"

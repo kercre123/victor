@@ -1,0 +1,20 @@
+// Onboarding phases
+// Author: sam
+// Copyright: Anki Inc (c) 2018
+
+namespace Anki {
+namespace Vector {
+  
+enum uint_8 OnboardingPhase
+{
+  InvalidPhase = 0,
+  Default,
+  LookAtPhone,
+  WakeUp,
+  LookAtUser,
+  TeachWakeWord
+}
+
+}
+}
+

@@ -20,7 +20,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboardingLookAtPhone.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/battery/batteryComponent.h"
@@ -126,6 +126,7 @@ void BehaviorOnboarding1p0::InitBehavior()
   _iConfig.behaviorPowerOff = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingPowerOff) );
   
   if( ANKI_DEV_CHEATS ) {
+    // TODO:(STR) reimplement from OnboardingCoordinator or remove entirely
     // this console func names match what the 1.1 onboarding tool will send, to avoid having to change that
     auto continueFunc = [this](ConsoleFunctionContextRef context) {
       // flag to wake up (don't start it now so that app messages and console vars are both applied at the same time)
@@ -133,11 +134,13 @@ void BehaviorOnboarding1p0::InitBehavior()
     };
     _iConfig.consoleFuncs.emplace_front( "Continue", std::move(continueFunc), "Onboarding", "" );
     
+    // TODO:(STR) reimplement from OnboardingCoordinator or remove entirely
     auto setCompleteFunc = [this](ConsoleFunctionContextRef context) {
       SetStage( OnboardingStages::Complete, false );
     };
     _iConfig.consoleFuncs.emplace_front( "SetComplete", std::move(setCompleteFunc), "Onboarding", "" );
     
+    // TODO:(STR) reimplement from OnboardingCoordinator
     auto setDoNothingFunc = [this](ConsoleFunctionContextRef context) {
       SetStage( OnboardingStages::DevDoNothing, false );
     };
