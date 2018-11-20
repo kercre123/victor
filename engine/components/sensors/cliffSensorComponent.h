@@ -19,10 +19,7 @@
 #include "clad/types/proxMessages.h"
 #include "clad/types/robotStatusAndActions.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-
 #include "util/bitFlags/bitFlags.h"
-#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 class Pose3d;
@@ -30,8 +27,6 @@ namespace Vector {
 
 class CliffSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {
-public:
-
 public:
   static const int kNumCliffSensors = static_cast<int>(CliffSensor::CLIFF_COUNT);
   
@@ -61,19 +56,19 @@ protected:
 
 public:
 
-  void SetPause(bool b) { _isPaused = b; }
+  void SetPause(const bool b) { _isPaused = b; }
   
   bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   void SetEnableCliffSensor(const bool val) { _enableCliffSensor = val; }
   
   // Cliff detection based on RobotState
   bool IsCliffDetected() const { return _cliffDetectedFlags.AreAnyFlagsSet(); }
-  bool IsCliffDetected(CliffSensor sensor) const { return _cliffDetectedFlags.IsBitFlagSet(sensor); }
+  bool IsCliffDetected(const CliffSensor sensor) const { return _cliffDetectedFlags.IsBitFlagSet(sensor); }
   uint8_t GetCliffDetectedFlags() const { return _cliffDetectedFlags.GetFlags(); }
   
   // White detection based on RobotState
   bool IsWhiteDetected() const { return _whiteDetectedFlags.AreAnyFlagsSet(); }
-  bool IsWhiteDetected(CliffSensor sensor) const { return _whiteDetectedFlags.IsBitFlagSet(sensor); }
+  bool IsWhiteDetected(const CliffSensor sensor) const { return _whiteDetectedFlags.IsBitFlagSet(sensor); }
   uint8_t GetWhiteDetectedFlags() const { return _whiteDetectedFlags.GetFlags(); }
   
   // Adjusts cliff threshold if necessary
@@ -149,7 +144,7 @@ private:
 };
 
 
-} // Cozmo namespace
+} // Vector namespace
 } // Anki namespace
 
 #endif // __Anki_Cozmo_Basestation_Components_CliffSensorComponent_H__

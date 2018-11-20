@@ -13,8 +13,6 @@
 
 #include "engine/components/sensors/cliffSensorComponent.h"
 
-#include "engine/components/movementComponent.h"
-#include "engine/blockWorld/blockWorld.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/markerlessObject.h"
@@ -27,7 +25,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
-#include "util/console/consoleInterface.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 
 #include "coretech/common/engine/math/polygon_impl.h"
@@ -178,13 +176,15 @@ void CliffSensorComponent::SendCliffDetectThresholdsToRobot()
   }
   
   LOG_DEBUG("CliffSensorComponent.SendCliffDetectThresholdsToRobot.SendThresholds",
-                    "New cliff thresholds being sent to robot: %d %d %d %d",
-                    _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);
+            "New cliff thresholds being sent to robot: %d %d %d %d",
+            _cliffDetectThresholds[0], _cliffDetectThresholds[1], _cliffDetectThresholds[2], _cliffDetectThresholds[3]);
   
   _robot->SendRobotMessage<SetCliffDetectThresholds>(_cliffDetectThresholds);
   
+#if defined(SIMULATOR)
   // Also send to game (for webots tests)
   _robot->Broadcast(ExternalInterface::MessageEngineToGame(SetCliffDetectThresholds(_cliffDetectThresholds)));
+#endif
 }
 
 
@@ -205,10 +205,10 @@ void CliffSensorComponent::SetCliffDetectThreshold(unsigned int ind, uint16_t ne
   auto& curThresh = _cliffDetectThresholds[ind];
   if (curThresh != newThresh) {
     LOG_DEBUG("CliffSensorComponent.SetCliffDetectThreshold.NewThreshold",
-                      "New cliff threshold for %s (old: %d, new %d). Message to robot queued.",
-                      EnumToString(static_cast<CliffSensor>(ind)),
-                      curThresh,
-                      newThresh);
+              "New cliff threshold for %s (old: %d, new %d). Message to robot queued.",
+              EnumToString(static_cast<CliffSensor>(ind)),
+              curThresh,
+              newThresh);
     curThresh = newThresh;
     QueueCliffThresholdUpdate();
   }
@@ -218,10 +218,10 @@ bool CliffSensorComponent::GetCliffPoseRelativeToRobot(const uint8_t cliffDetect
 {
   // The cliff pose depends on which cliff sensors were tripped
   // Bit flags for each of the cliff sensors:
-  const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
-  const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
-  const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
-  const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
+  static const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
+  static const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
+  static const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
+  static const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
   
   // Estimate the cliff's pose with respect to the robot frame of reference
   switch (cliffDetectedFlags) {
@@ -271,20 +271,20 @@ bool CliffSensorComponent::GetCliffPoseRelativeToRobot(const uint8_t cliffDetect
 bool CliffSensorComponent::ComputeCliffPose(uint32_t timestampOfCliff, uint8_t cliffDetectedFlags, Pose3d& cliffPose) const
 {
   if (cliffDetectedFlags == 0) {
-    PRINT_NAMED_WARNING("CliffSensorComponent.ComputeCliffPose.NoCliff",
-                        "CliffEvent::detectedFlags == 0! Can't compute a cliff pose if there was no cliff detected.");
+    LOG_WARNING("CliffSensorComponent.ComputeCliffPose.NoCliff",
+                "CliffEvent::detectedFlags == 0! Can't compute a cliff pose if there was no cliff detected.");
     return false;
   }
   
   // Grab historical state at the time the cliff was detected
   HistRobotState histState;
   RobotTimeStamp_t histTimestamp;
-  const bool useInterp = true;
-  const auto& res = _robot->GetStateHistory()->ComputeStateAt(timestampOfCliff, histTimestamp, histState, useInterp);
+  const bool kUseInterp = true;
+  const auto& res = _robot->GetStateHistory()->ComputeStateAt(timestampOfCliff, histTimestamp, histState, kUseInterp);
   if (res != RESULT_OK) {
-    PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.NoHistoricalPose",
-                      "Could not retrieve historical pose for timestamp %u",
-                      timestampOfCliff);
+    LOG_ERROR("CliffSensorComponent.ComputeCliffPose.NoHistoricalPose",
+              "Could not retrieve historical pose for timestamp %u",
+              timestampOfCliff);
     return false;
   }
   
@@ -293,16 +293,16 @@ bool CliffSensorComponent::ComputeCliffPose(uint32_t timestampOfCliff, uint8_t c
   Pose3d cliffWrtRobot;
   bool isValidPose = GetCliffPoseRelativeToRobot(cliffDetectedFlags, cliffWrtRobot);
   if(!isValidPose) {
-    PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.NoPoseForCliffFlags",
-                      "flags=%hhu", cliffDetectedFlags);
+    LOG_ERROR("CliffSensorComponent.ComputeCliffPose.NoPoseForCliffFlags",
+              "flags=%hhu", cliffDetectedFlags);
     return false;
   }
 
   // Compute the cliff pose with respect to the robot world origin
   cliffWrtRobot.SetParent(robotPoseAtCliff);
   if (!cliffWrtRobot.GetWithRespectTo(_robot->GetWorldOrigin(), cliffPose)) {
-    PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.OriginMismatch",
-                      "cliffWrtRobot and robot.GetWorldOrigin() do not share the same origin!");
+    LOG_ERROR("CliffSensorComponent.ComputeCliffPose.OriginMismatch",
+              "cliffWrtRobot and robot.GetWorldOrigin() do not share the same origin!");
     return false;
   }
 
@@ -328,7 +328,7 @@ void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
 {
   if (_stopOnWhiteEnabled != stopOnWhite) {
     if (stopOnWhite && _robot->IsPickedUp()) {
-      PRINT_NAMED_WARNING("CliffSensorComponent.EnableStopOnWhite.IgnoredDueToPickup", "");
+      LOG_WARNING("CliffSensorComponent.EnableStopOnWhite.IgnoredDueToPickup", "");
     } else {
       LOG_INFO("CliffSensorComponent.EnableStopOnWhite", "%d", stopOnWhite);
       _stopOnWhiteEnabled = stopOnWhite;
@@ -337,5 +337,5 @@ void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
   }
 }
   
-} // Cozmo namespace
+} // Vector namespace
 } // Anki namespace
