@@ -536,11 +536,11 @@ class Connection:
             async for response in self._interface.BehaviorControl(self._request_handler()):
                 response_type = response.WhichOneof("response_type")
                 if response_type == 'control_granted_response':
-                    self._logger.debug(response)
+                    self._logger.info(response)
                     self._control_events.update(True)
                 elif response_type == 'control_lost_event':
                     self._cancel_active()
-                    self._logger.debug(response)
+                    self._logger.info(response)
                     self._control_events.update(False)
         except futures.CancelledError:
             self._logger.debug('Behavior handler task was cancelled. This is expected during disconnection.')
@@ -703,7 +703,7 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
             if requires_control and not control.is_set():
                 if not conn.requires_behavior_control:
                     raise VectorControlException(func.__name__)
-                logger.debug(f"Delaying {func.__name__} until behavior control is granted")
+                logger.info(f"Delaying {func.__name__} until behavior control is granted")
                 await conn.control_granted_event.wait()
             logger.debug(f'Outgoing {func.__name__}: {args[1:] if log_messaging else "size = {} bytes".format(sys.getsizeof(args[1:]))}')
             try:
