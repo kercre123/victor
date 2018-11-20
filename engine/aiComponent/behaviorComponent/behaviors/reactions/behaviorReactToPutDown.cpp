@@ -13,7 +13,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPutDown.h"
 
-#include "anki/cozmo/robot/logging.h"
 #include "clad/types/animationTrigger.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
