@@ -37,7 +37,6 @@ class PhotographComponent(util.Component):
 
         with anki_vector.Robot() as robot:
             if len(robot.photos.photo_info) == 0:
-                print('\n\nNo photos found on Vector. Ask him to take a photo first by saying, "Hey Vector! Take a photo."\n\n')
                 return
             for photo_info in robot.photos.photo_info:
                 print(f"Opening photo {photo_info.photo_id}")
@@ -105,7 +104,6 @@ class PhotographComponent(util.Component):
 
             with anki_vector.Robot() as robot:
                 if len(robot.photos.photo_info) == 0:
-                    print('\n\nNo photos found on Vector. Ask him to take a photo first by saying, "Hey Vector! Take a photo."\n\n')
                     return
                 for photo_info in robot.photos.photo_info:
                     print(f"Opening photo {photo_info.photo_id}")

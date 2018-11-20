@@ -96,7 +96,6 @@ class CameraComponent(util.Component):
 
         return self._latest_image
 
-    # TODO Needs sample code
     @property
     def latest_image_id(self) -> int:
         """The most recently processed image's id received from the robot.
