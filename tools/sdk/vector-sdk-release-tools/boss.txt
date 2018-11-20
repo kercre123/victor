@@ -336,7 +336,8 @@
 ./examples/tutorials/09_show_photo.py
 ./examples/tutorials/10_eye_color.py
 ./examples/tutorials/11_face_event_subscription.py
-./examples/tutorials/12_custom_objects.py
+./examples/tutorials/12_wake_word_subscription.py
+./examples/tutorials/13_custom_objects.py
 ./LICENSE.txt
 ./README.md
 ./requirements.txt
