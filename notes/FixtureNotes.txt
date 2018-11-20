@@ -1,0 +1,48 @@
+Helper - head running  factory ootb firmware + mfg firmware
+ - accepts USB stick w/
+   - signed mfg fw. (signed for integrity, not encrypted)
+   - cloud certificates (unique per robot)
+
+Mfg firmware jump security TBD.
+
+- Tracks logs.   "Ankilog" is factory tool that runs on PCs currently.  A version for the helpers is nice.
+  - Way to add stick and have logs uploaded.
+
+ - owuld be nice if head contains log of the fixtures it encounterd.
+
+
+idiot proof.  ex: When USB stick is plugged in, download what is available, upload what is not htere.
+  - to logs/fixture-id/...
+
+Fixture IDs
+
+LCD -> UI.  Basic    "OK"  EC 310.  GREEN RED.
+
+
+
+Neck UART @ 3Mbaud goes to Fixture with ST micro brain.
+
+ - ST Rom functionality
+
+Fixture is the "boss".
+- ITs Sending ascii - we log it all, and interpret some of it as commnads.
+
+- way to recover bricked fixture
+
+
+
+Fixture -> charge contact -> body - > head under test.
+
+Needs lots of functions.
+
+ Basically a HAL interface.
+ State.
+ 
+
+
+
+ 
+
+
+
+ 

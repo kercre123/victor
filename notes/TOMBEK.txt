@@ -1,0 +1,164 @@
+------- Complete list of  includes
+
+anki.dts
+#include "anki-mtp.dtsi"
+#include "msm8909-pm8916.dtsi"
+#include "anki8909.dtsi"
+#include "anki-pinctrl.dtsi"
+#include "anki-camera-sensor-mtp.dtsi"
+		#include "batterydata-palladium.dtsi"
+#include "msm-pm8916-rpm-regulator.dtsi"
+#include "msm-pm8916.dtsi"
+#include "msm8916-regulator.dtsi"
+#include "msm8909-pm8916-camera.dtsi"
+#include "msm8909-pm8916-pm.dtsi"
+#include "skeleton64.dtsi"
+#include <dt-bindings/clock/msm-clocks-8909.h>
+#include <dt-bindings/clock/msm-clocks-a7.h>
+#include "msm8909-ion.dtsi"
+#include "msm8909-smp2p.dtsi"
+// #include "msm8909-camera.dtsi" // 99% overridden in msm8909-pm8916-camera.dtsi - messy!
+#include "msm8909-ipcrouter.dtsi"
+#include "msm-gdsc-8916.dtsi"
+#include "msm8909-iommu.dtsi"
+#include "msm8909-iommu-domains.dtsi"
+#include "msm8909-gpu.dtsi"
+#include "msm8909-coresight.dtsi"
+#include "msm8909-bus.dtsi"
+#include "msm-iommu-v2.dtsi"
+#include <dt-bindings/msm/msm-bus-ids.h>
+#include <dt-bindings/msm/msm-bus-rule-ops.h>
+
+----------------------------------------
+
+#include "anki-mtp.dtsi"
+
+
+#include "anki8909.dtsi"
+#include "anki-pinctrl.dtsi"
+#include "anki-camera-sensor-mtp.dtsi"
+
+&soc {
+        audio_codec_mtp: sound {
+                compatible = "qcom,msm8x16-audio-codec";
+                qcom,model = "msm8909-snd-card";
+                qcom,msm-snd-card-id = <0>;
+                qcom,msm-codec-type = "internal";
+                qcom,msm-ext-pa = "primary";
+                qcom,msm-mclk-freq = <9600000>;
+                qcom,msm-mbhc-hphl-swh = <0>;
+                qcom,msm-mbhc-gnd-swh = <0>;
+                qcom,msm-hs-micbias-type = "internal";
+                qcom,msm-micbias1-ext-cap;
+                qcom,audio-routing =
+                        "RX_BIAS", "MCLK",
+                        "SPK_RX_BIAS", "MCLK",
+                        "INT_LDO_H", "MCLK",
+                        "MIC BIAS External", "Handset Mic",
+                        "MIC BIAS Internal2", "Headset Mic",
+                        "MIC BIAS External", "Secondary Mic",
+                        "AMIC1", "MIC BIAS External",
+                        "AMIC2", "MIC BIAS Internal2",
+                        "AMIC3", "MIC BIAS External";
+                pinctrl-names = "cdc_lines_act",
+                                "cdc_lines_sus",
+                                "cross_conn_det_act",
+                                "cross_conn_det_sus",
+                                "vdd_spkdrv_act",
+                                "vdd_spkdrv_sus";
+                pinctrl-0 = <&cdc_pdm_lines_act &vdd_spkdrv_act>;
+                pinctrl-1 = <&cdc_pdm_lines_sus &vdd_spkdrv_sus>;
+                pinctrl-2 = <&cross_conn_det_act>;
+                pinctrl-3 = <&cross_conn_det_sus>;
+                qcom,cdc-us-euro-gpios = <&msm_gpio 97 0>;
+                asoc-platform = <&pcm0>, <&pcm1>, <&voip>, <&voice>,
+                                <&loopback>, <&compress>, <&hostless>,
+                                <&afe>, <&lsm>, <&routing>, <&lpa>,
+                                <&voice_svc>;
+                asoc-platform-names = "msm-pcm-dsp.0", "msm-pcm-dsp.1",
+                                "msm-voip-dsp", "msm-pcm-voice", "msm-pcm-loopback",
+                                "msm-compress-dsp", "msm-pcm-hostless", "msm-pcm-afe",
+                                "msm-lsm-client", "msm-pcm-routing", "msm-pcm-lpa",
+                                "msm-voice-svc";
+                asoc-cpu = <&dai_pri_auxpcm>, <&dai_hdmi>,
+                                <&dai_mi2s0>, <&dai_mi2s1>, <&dai_mi2s2>, <&dai_mi2s3>,
+                                <&sb_0_rx>, <&sb_0_tx>, <&sb_1_rx>, <&sb_1_tx>,
+                                <&sb_3_rx>, <&sb_3_tx>, <&sb_4_rx>, <&sb_4_tx>,
+                                <&bt_sco_rx>, <&bt_sco_tx>,<&bt_a2dp_rx>,
+                                <&int_fm_rx>, <&int_fm_tx>,
+                                <&afe_pcm_rx>, <&afe_pcm_tx>, <&afe_proxy_rx>, <&afe_proxy_tx>,
+                                <&incall_record_rx>, <&incall_record_tx>, <&incall_music_rx>,
+                                <&incall_music_2_rx>;
+                asoc-cpu-names = "msm-dai-q6-auxpcm.1", "msm-dai-q6-hdmi.8",
+                                "msm-dai-q6-mi2s.0", "msm-dai-q6-mi2s.1",
+                                "msm-dai-q6-mi2s.2", "msm-dai-q6-mi2s.3",
+                                "msm-dai-q6-dev.16384", "msm-dai-q6-dev.16385",
+                                "msm-dai-q6-dev.16386", "msm-dai-q6-dev.16387",
+                                "msm-dai-q6-dev.16390", "msm-dai-q6-dev.16391",
+                                "msm-dai-q6-dev.16392", "msm-dai-q6-dev.16393",
+                                "msm-dai-q6-dev.12288", "msm-dai-q6-dev.12289",
+                                "msm-dai-q6-dev.12290", "msm-dai-q6-dev.12292",
+                                "msm-dai-q6-dev.12293", "msm-dai-q6-dev.224",
+                                "msm-dai-q6-dev.225", "msm-dai-q6-dev.241",
+                                "msm-dai-q6-dev.240", "msm-dai-q6-dev.32771",
+                                "msm-dai-q6-dev.32772", "msm-dai-q6-dev.32773",
+                                "msm-dai-q6-dev.32770";
+                asoc-codec = <&stub_codec>, <&pm8909_conga_dig>;
+                asoc-codec-names = "msm-stub-codec.1", "tombak_codec";
+        };                                
+
+#include "msm8909-pm8916.dtsi"
+ #include "msm8909-pm8916-pm.dtsi"
+
+/ {
+        model = "ANKI Victor Headboard";
+        compatible = "qcom,apq8009-mtp", "qcom,apq8009", "qcom,mtp";
+        qcom,msm-id = <265 2>;
+        qcom,board-id= <8 0x8>;   // XXX - this should be our own, right?
+};
+
+// The below comes from msm8909-pm8916-mtp - removing disabled hardware
+
+&audio_codec_mtp {
+        status = "ok";
+        qcom,model = "msm8909-pm8916-snd-card";
+        asoc-codec = <&stub_codec>, <&pm8916_tombak_dig>;
+        asoc-codec-names = "msm-stub-codec.1", "tombak_codec";
+};
+
+
+
+
+SPKDRV_P and SPKDRV_M pins are connected to speaker.
+They are driven by RDAC#4 decoding data on rx3_spm on HW core.
+Data provided by CODEC core cdc_m_rx2.
+that input comes from mux of IIR1..2 or RX1..3
+RX1..3 fed by cdc_i2s_rx_[sd0,ws,clk]
+
+
+
+tinymix "PRI_MI2S_RX Audio Mixer MultiMedia1" 1 
+tinymix "RX3 MIX1 INP1" "RX1"
+tinymix "SPK DAC Switch" 1
+
+
+
+-----------------
+
+
+andbuild@10.10.7.39:/mnt/devel/la2.0.2/kernel
+
+
+`source build/envsetup.sh` in kernel directory to set up build tools
+
+project in
+/mnt/devel/la2.0.2/ hardware/qcom/camera/QCamera2/stack/mm-camera-test
+
+mm in project directory to make,
+
+
+output in /mnt/devel/la2.0.2/kernel/out/target/product/msm8909/system/bin
+
+
+
+file produced is  /data/misc/camera/test/main_0002.raw

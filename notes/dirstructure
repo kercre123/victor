@@ -1,0 +1,86 @@
+   |-clad
+   |---src
+   |-----clad
+   |-------spine   //HOW to tie this into syscon cleanly.
+   |
+   |-generated
+   |---clad
+   |-----robot
+   |-------clad
+   |---------spine
+   |
+   |-hal
+   |---dfu
+   |
+   |---include
+   |-----anki
+   |-------cozmo
+   |---------robot
+   |
+   |---sim
+   |-----include
+   |-----src
+   |
+   |---spine
+   |-----build
+   |-----platform
+   |-------android
+   |-------osx
+   |---src
+   |-python
+   |-random
+   |---FSMBReceipt_files
+   |---tinyalsa-ndk
+   |-----include
+   |-------sound
+   |-------tinyalsa
+   |-----jni
+   |-----libs
+   |-------armeabi
+   |-syscon
+   |---RTE
+   |---boot
+   |---build
+   |-----schema
+   |-----sysboot
+   |-----syscon
+   |---common
+   |---crypto
+   |---schema
+   |---src
+   |---tools
+   |-----__pycache__
+   |-----build
+   |-----message-buffers
+   |-------clad
+   |---------__pycache__
+   |---------ply
+   |-----------__pycache__
+   |-----schema
+   |-test
+   |-tools
+
+
+ls
+
+robot2:
+- hal
+ - platform
+  - android
+  - sim
+  - test
+ - spine
+ - 
+
+
+-There are utilities and applications
+utilities:
+  spine data
+  imu
+  lcd
+  audio
+ applications:
+  dfu
+  test
+  robot
+  

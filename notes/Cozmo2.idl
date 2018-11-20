@@ -1,0 +1,188 @@
+namespace Cozmo2
+
+struct RobotLights {
+  front:ushort;
+  middle:ushort;
+  back:ushort;
+  head:ushort;
+}
+
+struct CubeLights {
+  front: ushort;
+  back: ushort;
+  left: ushort;
+  right: ushort;
+}
+
+table CubeCommand {
+  cubeId:ubyte;
+  lights:CubeLights;
+}
+
+struct CubeTapData { //from cube
+  x:byte;
+  y:byte;
+  z:byte;
+  tapCount:ubyte;
+  tapTime:ubyte;
+  tapPos:byte;
+  tapNeg:byte;
+}
+
+table CubeStatus{
+  cubeId:ubyte;
+  tapdata:CubeTapData;
+  battery:ubyte;
+}
+
+table CubeAdvertisement{
+  factoryId:uint;
+  rssi:int;
+}
+
+enum ResetFlags {
+  resetFrameCount,
+  resetLWheelPos,
+  resetRWheelPos,
+  resetLiftPos,
+  resetHeadPos,
+} (bit_flags)
+
+enum CliffId     {
+  CLIFF_FL = 0, ///< Front left
+  CLIFF_FR,     ///< Front right
+  CLIFF_BL,     ///< Back left
+  CLIFF_BR,     ///< Back right
+}
+
+struct MotorPower {
+  leftWheel:float;
+  rightWheel:float;
+  liftMotor:float;
+  headMotor:float;
+}
+
+
+struct MotorPos {
+  leftWheel:float;
+  rightWheel:float;
+  liftMotor:float;
+  headMotor:float;
+}
+
+struct CliffSense {
+  frontLeft:ushort;
+  frontRight:ushort;
+  backLeft:ushort;
+  backRight:ushort;
+}
+table FloatVec {
+  data:[float];
+}
+
+union PU { MotorPower, FloatVec};
+
+enum BatteryFlags: byte {
+  isCharging,
+  isOnCharger,
+  chargerOOS
+} (bit_flags)
+
+enum PowerState {
+  POWER_STATE_OFF               ,
+  POWER_STATE_OFF_WAKE_ON_RADIO ,
+  POWER_STATE_ON                ,
+  POWER_STATE_IDLE              ,
+  POWER_STATE_FORCE_RECOVERY    ,
+  POWER_STATE_OTA_MODE          ,
+  POWER_STATE_CHARGER_TEST_MODE ,
+  POWER_STATE_DTM_MODE          ,
+}
+
+    
+
+table BodyToHead {
+  framecount:uint;
+  audio:[ubyte:560];
+  motorPower:MotorPower;
+  motorPos:MotorPos;
+  buttonPress:bool = 0;
+  cliffSense:CliffSense;
+  batteryVolts:float;
+  batteryFlags:BatteryFlags;
+  watchdogCount:uint;
+  cubeData:CubeStatus;
+  cubesFound:[CubeAdvertisement];
+}
+
+table HeadToBody {
+  framecount:uint;
+  motorPower:MotorPower;
+  powerState:PowerState = POWER_STATE_ON;
+  reset:ResetFlags = 0;
+  ledColors:RobotLights;
+  cubeLights:CubeLights;
+}
+
+
+
+/*------------*/
+
+struct MotorPower {
+    float leftWheel;
+    float rightWheel;
+    float liftMotor;
+    float headMotor;
+};
+
+struct MotorPos {
+    float leftWheel;
+    float rightWheel;
+    float liftMotor;
+    float headMotor;
+};
+
+struct CliffSense {
+  ushort frontLeft;
+  ushort frontRight;
+  ushort backLeft;
+  ushort backRight;
+}
+
+enum BatteryFlags {
+  isCharging = 1<<0,
+  isOnCharger= 1<<1,
+  chargerOOS = 1<<2,
+};
+
+struct CubeTapData { //from cube
+  byte x;
+  byte y;
+  byte z;
+  ubyte tapCount;
+  ubyte tapTime;
+  byte tapPos;
+  byte tapNeg;
+}
+
+table CubeStatus{
+  ubyte cubeId;
+  CubeTapData tapdata;
+  ubyte battery;
+}
+
+
+
+
+struct BodyToHead {
+  uint framecount;
+  ubyte audio[640];
+  MotorPower motorPower;
+  MotorPos motorPos;
+  bool buttonPress;
+  CliffSense cliffSense;
+  float batteryVolts;
+  BatteryFlags batteryFlags;
+  uint watchdogCount;
+  CubeStatus cubeData;
+};  
