@@ -59,6 +59,7 @@ enum uint_16 BehaviorID {
   PuzzleMaze,
   ReactToBody,
   ReactToBrightColor,
+  ReactToColor,
   TestStackMonitors,
 
   // victorBehaviorTree/appBehaviors

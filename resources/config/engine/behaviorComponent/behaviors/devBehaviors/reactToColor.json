@@ -1,0 +1,19 @@
+{
+  "behaviorID" :   "ReactToColor",
+  "behaviorClass": "ReactToColor",
+
+  "numHues": 6,
+  "targetDistance_mm": 75,
+  "celebrationSpins": 2,
+  "salientPointAge_ms":500,
+  "animDetect":"ReactToColorDetect",
+  "animReactColorA":"ReactToColorReactColorA",
+  "animReactColorB":"ReactToColorReactColorB",
+  "animGiveUp":"ReactToColorGiveUp",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType":      "SalientPointDetected",
+    "targetSalientPoint": "Color",
+    "requiredVisionModes": ["DetectingColors"]
+  }
+}

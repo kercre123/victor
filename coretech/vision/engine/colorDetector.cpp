@@ -236,7 +236,7 @@ void LabelToSalientPoints(const ImageRGB& inputImage,
   // blob 0 is the background, so skip it.
   // SalientPoint polygon is the bounding rectangle, could also do convex hull or the contour
   const u32 timestamp = inputImage.GetTimestamp();
-  const Vision::SalientPointType type = Vision::SalientPointType::BrightColors;
+  const Vision::SalientPointType type = Vision::SalientPointType::Color;
   // const char* typeString = EnumToString(type);
   const float kWidthScale = 1.f/labelings.cols;
   const float kHeightScale = 1.f/labelings.rows;
@@ -444,9 +444,6 @@ Result ColorDetector::Detect (const ImageRGB& inputImage,
     auto xform = [](const Label& lbl) -> std::string { return lbl.name; };
     std::transform(_labels.begin(),_labels.end(), std::back_inserter(labels), xform);
   }
-
-
-  
 
   cv::Mat samples;
   switch (_colorSpace)

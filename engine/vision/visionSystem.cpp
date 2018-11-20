@@ -874,10 +874,7 @@ Result VisionSystem::DetectColors(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.DetectColors.NoColor");
   const Vision::ImageRGB& image = imageCache.GetRGB();
-  Vision::ImageRGB output(image.GetNumRows(), image.GetNumCols());
-  PRINT_NAMED_ERROR("VisionSystem.DetectColors.SalientPoints","Before: %d", (int)_currentResult.salientPoints.size());
   Result result = _colorDetector->Detect(image, _currentResult.salientPoints, _currentResult.debugImageRGBs);
-  PRINT_NAMED_ERROR("VisionSystem.DetectColors.SalientPoints","After: %d", (int)_currentResult.salientPoints.size());
   return result;
 } // DetectColors()
 

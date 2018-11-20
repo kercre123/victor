@@ -1264,6 +1264,13 @@ namespace Vector {
                     + "] t:" + std::to_string(object.timestamp);
           break;
         }
+        case Vision::SalientPointType::Color:
+        {
+          color = ColorRGBA(object.color_rgba);
+          caption = object.description + "[" + std::to_string((s32)std::round(object.score))
+                    + "] t:" + std::to_string(object.timestamp);
+          break;
+        }
         default:
         {
           color = (object.description.empty()) ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++);

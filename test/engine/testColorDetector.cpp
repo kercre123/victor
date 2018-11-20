@@ -7,7 +7,6 @@
 
 #include "gtest/gtest.h"
 
-
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/shared/types.h"
