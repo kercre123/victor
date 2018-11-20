@@ -51,6 +51,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenSoundCheck.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTest.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestButton.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestInitChecks.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestDriftCheck.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestPutOnCharger.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestMotorCalibration.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestScreenAndBackpack.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestTouch.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestWaitToStart.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
@@ -665,7 +674,70 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnclaimedIntent(config));
       break;
     }
+
+    case BehaviorClass::SelfTest:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTest(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestButton:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestButton(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestTouch:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestTouch(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestWaitToStart:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestWaitToStart(config));
+      break;
+    }
     
+    case BehaviorClass::SelfTestPutOnCharger:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestPutOnCharger(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestScreenAndBackpack:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestScreenAndBackpack(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestInitChecks:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestInitChecks(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestMotorCalibration:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestMotorCalibration(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestDriftCheck:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestDriftCheck(config));
+      break;
+    }
+
+    case BehaviorClass::SelfTestDockWithCharger:
+    case BehaviorClass::SelfTestDriveForwards:
+    case BehaviorClass::SelfTestLookAtCharger:
+    case BehaviorClass::SelfTestSoundCheck:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestWaitToStart(config));
+      break;
+    }
+
   }
     
   return newBehavior;

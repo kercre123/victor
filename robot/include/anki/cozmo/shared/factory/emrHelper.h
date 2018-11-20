@@ -141,6 +141,9 @@ namespace Factory {
   {
     #ifdef SIMULATOR
       static Factory::EMR emr;
+      emr.fields.PACKED_OUT_FLAG = 1;
+      emr.fields.PLAYPEN_PASSED_FLAG = 1;
+      emr.fields.PLAYPEN_READY_FLAG = 1;
       return &emr;
     #endif
 

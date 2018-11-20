@@ -66,6 +66,8 @@ void FaceInfoScreen::EnterScreen()
 
 void FaceInfoScreen::ExitScreen()
 {
+  _menuCursor = 0;
+  
   if (_exitAction) {
     _exitAction();
   }

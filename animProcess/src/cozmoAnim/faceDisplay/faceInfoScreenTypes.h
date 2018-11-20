@@ -30,6 +30,7 @@ enum class ScreenName {
   ClearUserDataFail,
   Rebooting,
   SelfTest,
+  SelfTestRunning,
   Network,
   SensorInfo,
   IMUInfo,

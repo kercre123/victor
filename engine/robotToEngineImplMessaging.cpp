@@ -258,7 +258,8 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   if (payload.motorID == MotorID::MOTOR_LIFT) {
     robot->SetLiftCalibrated(!payload.calibStarted);
   }
-  
+
+  PRINT_NAMED_WARNING("","MOTOR CALIRATION");
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   

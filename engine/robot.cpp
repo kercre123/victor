@@ -264,7 +264,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   GetProgressionUnlockComponent().Init();
   
   GetInventoryComponent().Init(GetContext()->GetDataLoader()->GetInventoryConfig());
-  
+  END_DONT_RUN_AFTER_PACKOUT
+    
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
   GetVisionComponent().GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
@@ -274,6 +275,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     GetVisionComponent().Init(GetContext()->GetDataLoader()->GetRobotVisionConfig());
   }
 
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
   _thisRobot = this;
@@ -1379,13 +1381,13 @@ Result Robot::Update()
   GetProgressionUnlockComponent().Update();
 
   GetBlockTapFilter().Update();
-
+  END_DONT_RUN_AFTER_PACKOUT
   std::string currentActivityName;
   
   // Update AI component before behaviors so that behaviors can use the latest information
   GetAIComponent().Update(*this, currentActivityName, _behaviorDebugStr);
 
-  END_DONT_RUN_AFTER_PACKOUT
+
 
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
@@ -1398,10 +1400,10 @@ Result Robot::Update()
   /////////// Update NVStorage //////////
   GetNVStorageComponent().Update();
 
-  BEGIN_DONT_RUN_AFTER_PACKOUT
+
   /////////// Update path planning / following ////////////
   GetPathComponent().Update();
-    
+  BEGIN_DONT_RUN_AFTER_PACKOUT    
   /////////// Update cube comms ////////////
   GetCubeCommsComponent().Update();
   

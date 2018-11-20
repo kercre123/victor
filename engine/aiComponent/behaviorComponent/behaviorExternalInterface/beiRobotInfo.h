@@ -143,6 +143,16 @@ private:
   friend class BehaviorPlaypenCameraCalibration;
   friend class BehaviorPlaypenReadToolCode;
 
+  friend class BehaviorSelfTest;
+  friend class BehaviorSelfTestPutOnCharger;
+  friend class BehaviorSelfTestScreenAndBackpack;
+  friend class BehaviorSelfTestMotorCalibration;
+  friend class BehaviorSelfTestDriftCheck;
+  friend class BehaviorSelfTestInitChecks;
+  friend class BehaviorSelfTestTouch;
+  friend class BehaviorSelfTestWaitToStart;
+  friend class BehaviorSelfTestButton;
+  
   Robot& _robot;
 };
 

@@ -55,7 +55,11 @@
 #define LOG_CHANNEL    "FaceInfoScreenManager"
 
 // Remove this when BLE switchboard is working
+#ifdef SIMULATOR
+#define FORCE_TRANSITION_TO_PAIRING 1
+#else
 #define FORCE_TRANSITION_TO_PAIRING 0
+#endif
 
 #if !FACTORY_TEST
 
@@ -168,6 +172,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
   ADD_SCREEN_WITH_TEXT(Rebooting, Rebooting, {"REBOOTING..."});
   ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
+  ADD_SCREEN(SelfTestRunning, SelfTestRunning)
   ADD_SCREEN(Network, SensorInfo);
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
@@ -223,12 +228,18 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   // Main screen menu
   ADD_MENU_ITEM(Main, "EXIT", None);
-  // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
+  ADD_MENU_ITEM(Main, "RUN SELF TEST", SelfTest);
   ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
   
   // Self test screen
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
-  ADD_MENU_ITEM(SelfTest, "CONFIRM", Main);        // TODO: VIC-1498
+  FaceInfoScreen::MenuItemAction confirmSelfTest = []() {
+                                                     PRINT_NAMED_WARNING("","SENDING START SELF TEST");
+    RobotInterface::SendAnimToEngine(RobotInterface::StartSelfTest());
+    return ScreenName::SelfTestRunning;
+  };
+  ADD_MENU_ITEM_WITH_ACTION(SelfTest, "CONFIRM", confirmSelfTest);
+  DISABLE_TIMEOUT(SelfTestRunning);
   
   // Clear User Data menu
   FaceInfoScreen::MenuItemAction confirmClearUserData = [this]() {
@@ -299,6 +310,7 @@ bool FaceInfoScreenManager::IsActivelyDrawingToScreen() const
   switch(GetCurrScreenName()) {
     case ScreenName::None:
     case ScreenName::Pairing:
+    case ScreenName::SelfTestRunning:
       return false;
     default:
       return true;

@@ -99,6 +99,11 @@ message AudioFFTResult
   uint_32 result[4]
 }
 
+message StartSelfTest
+{
+  
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -173,6 +178,8 @@ union RobotToEngine {
   SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,  
   StreamCameraImages         streamCameraImages     = 0xDE,
 
+  StartSelfTest              startSelfTest          = 0xDF,
+  
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
   AudioEngine::Multiplexer::AudioCallbackMarker   audioCallbackMarker   = 0xE1,

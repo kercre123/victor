@@ -375,6 +375,7 @@ namespace Cozmo {
   
   void AnimationStreamer::Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg)
   {
+    PRINT_NAMED_WARNING("","HERE");
     if (msg.imageId != _faceImageRGBId) {
       if (_faceImageRGBChunksReceivedBitMask != 0) {
         PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.UnfinishedFace", 
@@ -392,7 +393,7 @@ namespace Cozmo {
     std::copy_n(msg.faceData, numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
     
     if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
-      //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
+      PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
       SetFaceImage(_faceImageRGB565, msg.duration_ms);
       _faceImageRGBId = 0;
       _faceImageRGBChunksReceivedBitMask = 0;
@@ -1248,8 +1249,10 @@ namespace Cozmo {
         return result;
       }
     }
-    
+
+    PRINT_NAMED_WARNING("","SET FACE IMAGE HELPER");
     if (_streamingAnimation != _proceduralAnimation) {
+      PRINT_NAMED_WARNING("","SET STREAMING");
       result = SetStreamingAnimation(_proceduralAnimation, 0);
     }
     return result;

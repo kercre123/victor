@@ -46,6 +46,21 @@ enum uint_8 BehaviorID {
   PlaypenTest,
   PlaypenWaitToStart,
 
+  // Self Test
+  SelfTest,
+  SelfTestButton,
+  SelfTestDockWithCharger,
+  SelfTestDriveForwards,
+  SelfTestInitChecks,
+  SelfTestLookAtCharger,
+  SelfTestMotorCalibration,
+  SelfTestDriftCheck, 
+  SelfTestPutOnCharger,
+  SelfTestScreenAndBackpack,
+  SelfTestSoundCheck,
+  SelfTestTouch,
+  SelfTestWaitToStart,
+  
   // examples
   ExampleAnimGetInLoop,
   ExampleAnonymousBehaviors,

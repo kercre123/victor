@@ -69,6 +69,21 @@ enum uint_8 BehaviorClass {
   PlaypenTest,
   PlaypenWaitToStart,
 
+  // Self Test
+  SelfTest,
+  SelfTestButton,
+  SelfTestDockWithCharger,
+  SelfTestDriveForwards,
+  SelfTestInitChecks,
+  SelfTestLookAtCharger,
+  SelfTestMotorCalibration,
+  SelfTestDriftCheck,
+  SelfTestPutOnCharger,
+  SelfTestScreenAndBackpack,
+  SelfTestSoundCheck,
+  SelfTestTouch,
+  SelfTestWaitToStart,
+
   // dispatch
   DispatcherQueue,
   DispatcherRandom,
