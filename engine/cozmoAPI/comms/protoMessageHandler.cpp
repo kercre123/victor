@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/cozmoAPI/comms/protoCladInterpreter.h"
 #include "engine/components/robotExternalRequestComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -101,7 +102,6 @@ void ProtoMessageHandler::DeliverToExternal(const external_interface::GatewayWra
   }
 }
 
-
 Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes, const size_t packetSize, bool isSingleMessage)
 {
   ANKI_CPU_PROFILE("ProtoMH::ProcessMessageBytes");
@@ -120,6 +120,15 @@ Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes
       PRINT_STREAM_ERROR("ProtoMessageHandler.MessageBufferParseFailed",
                          "Failed to parse buffer as protobuf message.");
       return RESULT_FAIL;
+    }
+
+    // NOTE FOR CODE REVIEW: I'm failing to broadcast this message because I don't want to risk
+    // one of the subscribers getting some new message that they've never seen before and causing
+    // a new bug. Similarly, I'm returning _before_ ++_messageCountIncoming to avoid making any
+    // change to the existing behaviors. Should I change the order? (I'm guessing, yes.) Is there
+    // something else I need to mangle, after doing so? (Also, guessing yes.)
+    if(ProtoCladInterpreter::Redirect(message, _context)) {
+      return RESULT_OK;
     }
 
     ++_messageCountIncoming;
