@@ -28,7 +28,7 @@ var (
 	connectionId     string
 )
 
-// TODO: Move someplace that it's accessible to Engine
+// TODO: Remove
 /*
 func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
@@ -40,7 +40,7 @@ func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExte
 }
 */
 
-// TODO: Move someplace that it's accessible to Engine
+// TODO: Remove
 /*
 func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.MessageExternalToRobot {
 	if msg.Animation == nil {
@@ -605,32 +605,6 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 	}
 	return response, nil
 }
-
-/*
-func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResponse, error) {
-	f, listAnimsResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ListAnimationsResponse{}, 1)
-	defer f()
-
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_ListAnimationsRequest{
-			ListAnimationsRequest: in,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	listAnimationsResponse, ok := <-listAnimsResponseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-	}
-	response := listAnimationsResponse.GetPlayAnimationResponse()
-	response.Status = &extint.ResponseStatus{
-		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-	}
-	return response, nil
-}
-*/
 
 func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResponse, error) {
 	// 50 messages are sent per engine tick, so this channel is set to read 50 at a time
