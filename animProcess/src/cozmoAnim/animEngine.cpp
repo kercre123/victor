@@ -188,32 +188,6 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   }
 #endif
 
-#if ENABLE_SLEEP_TIME_DIAGNOSTICS || ENABLE_RUN_TIME_DIAGNOSTICS
-  const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-#endif
-#if ENABLE_SLEEP_TIME_DIAGNOSTICS
-  {
-    static bool firstUpdate = true;
-    static double lastUpdateTimeMs = 0.0;
-    //const double currentTimeMs = (double)currTime_nanosec / 1e+6;
-    if (!firstUpdate)
-    {
-      const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
-      if (timeSinceLastUpdate > maxLatency)
-      {
-        DASMSG(cozmo_anim_update_sleep_slow,
-               "cozmo_anim.update.sleep.slow",
-               "This will be shown on the slow updates and as such should not be seen very often")
-        DASMSG_SET(s1, timeSinceLastUpdate, "timeSinceLastUpdate as a float")
-        DASMSG_SEND()
-      }
-    }
-    lastUpdateTimeMs = startUpdateTimeMs;
-    firstUpdate = false;
-  }
-#endif // ENABLE_SLEEP_TIME_DIAGNOSTICS
-
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
 
   _context->GetWebService()->Update();
@@ -249,21 +223,6 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 
   // Update backpack lights
   _context->GetBackpackLightComponent()->Update();
-
-#if ENABLE_RUN_TIME_DIAGNOSTICS
-  {
-    // Update runtime counters
-    const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = ANIM_TIME_STEP_MS;
-    if (updateLengthMs > maxUpdateDuration)
-    {
-      Anki::Util::sInfoF("cozmo_anim.update.run.slow",
-                         {{DDATA,std::to_string(ANIM_TIME_STEP_MS).c_str()}},
-                         "%.2f", updateLengthMs);
-    }
-  }
-#endif // ENABLE_RUN_TIME_DIAGNOSTICS
 
 #if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
   {
