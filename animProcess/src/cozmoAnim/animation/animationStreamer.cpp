@@ -2217,6 +2217,7 @@ namespace Vector {
       "anim_onboarding_wakeup_01",
       "anim_onboarding_driveoff_charger_alt_01",
       "anim_chargerdocking_settle_01",
+      "anim_movement_forward_01",
     };
     if(_bodyWhiteListActive
        && ((_lockedTracks & (u8)AnimTrackFlag::BODY_TRACK) == 0)

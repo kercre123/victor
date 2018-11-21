@@ -3,6 +3,7 @@
   "behaviorClass": "AnimSequence",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  "associatedActiveFeature": "MovementRight",
 
   "respondToUserIntents": [
     { "type": "movement_turnright" }

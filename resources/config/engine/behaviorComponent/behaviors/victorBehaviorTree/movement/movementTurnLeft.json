@@ -3,6 +3,7 @@
   "behaviorClass": "AnimSequence",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  "associatedActiveFeature": "MovementLeft",
   
   "respondToUserIntents": [
     { "type": "movement_turnleft" }
