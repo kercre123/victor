@@ -39,34 +39,13 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-const char* const kNumHuesKey = "numHues";
+
 const char* const kTargetDistanceKey = "targetDistance_mm";
-const char* const kCelebrationSpinsKey = "celebrationSpins";
 const char* const kAnimDetectKey = "animDetect";
-const char* const kAnimReactColorAKey = "animReactColorA";
-const char* const kAnimReactColorBKey = "animReactColorB";
 const char* const kAnimGiveUpKey = "animGiveUp";
+const char* const kAnimReactColorKey = "animReactColor";
 const char* const kSalientPointAgeKey = "salientPointAge_ms";
-
-/**
- * @brief Modify the Vision::SalientPoint such that color is rounded to the nearest Hue
- */
-void RoundToNearestHueImpl(u32 numHues, Vision::SalientPoint& pt) {
-  ColorRGBA color(pt.color_rgba);
-  Vision::PixelHSV hsv(Vision::PixelRGB(color.r(),color.g(),color.b()));
-  hsv.h() = std::roundf(hsv.h() * numHues)/numHues;
-  hsv.s() = 1.f;
-  hsv.v() = 1.f;
-  Vision::PixelRGB rgb = hsv.ToPixelRGB();
-  pt.color_rgba = ColorRGBA(rgb.r(),rgb.g(),rgb.b(),255).AsRGBA();
-}
-
-float GetHue(uint32_t color_rgba){
-  ColorRGBA rgba(color_rgba);
-  Vision::PixelHSV hsv;
-  hsv.FromPixelRGB(Vision::PixelRGB(rgba.r(), rgba.g(), rgba.b()));
-  return hsv.h();
-}
+const char* const kSayLabelKey = "sayLabel";
 
 }
 
@@ -74,32 +53,33 @@ float GetHue(uint32_t color_rgba){
 BehaviorReactToColor::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
   const std::string& debugName = "BehaviorReactToColor.InstanceConfig.LoadConfig";
-  numHues = JsonTools::ParseUInt32(config, kNumHuesKey, debugName);
-  DEV_ASSERT(numHues > 0,"Number of hues must be greater than 0");
 
-  // Because we divide the incoming hues into numHues and round the incoming SalientPoint colors to the nearest hue
-  // we really don't need an epsilon since they *should* be equal. In reality we're comparing floating points so
-  // we need an epsilon, so it might as well be _most_ of the range. By doing 0.4 (or 40% of the space between the
-  // hues that we round to), we're capturing anything within a 40% error. Again, this should not matter because we
-  // are rounding all the incoming colors to the nearest hue. The maximum value for this scalar is 0.5f, otherwise
-  // the error range starts to overlap with the error range for neighboring hues.
-  closeHueEpsilon = (1.f/numHues)*0.4f;
+  sayLabel = JsonTools::ParseBool(config, kSayLabelKey, debugName);
 
   targetDistance_mm = JsonTools::ParseUInt32(config, kTargetDistanceKey, debugName);
-  celebrationSpins = JsonTools::ParseUInt32(config, kCelebrationSpinsKey, debugName);
   salientPointAge_ms = JsonTools::ParseUInt32(config, kSalientPointAgeKey, debugName);
 
   animDetect = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kAnimDetectKey, animDetect, debugName, false);
 
-  animReactColorA = AnimationTrigger::Count;
-  JsonTools::GetCladEnumFromJSON(config, kAnimReactColorAKey, animReactColorA, debugName, false);
-
-  animReactColorB = AnimationTrigger::Count;
-  JsonTools::GetCladEnumFromJSON(config, kAnimReactColorBKey, animReactColorB, debugName, false);
-
   animGiveUp = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kAnimGiveUpKey, animGiveUp, debugName, false);
+
+  Json::Value jsonAnimReactColor = config.get(kAnimReactColorKey,Json::Value::null);
+  if (!jsonAnimReactColor.isNull() && jsonAnimReactColor.isObject())
+  {
+    for (auto iter = jsonAnimReactColor.begin(); iter != jsonAnimReactColor.end(); ++iter)
+    {
+      std::string key = iter.key().asString();
+      AnimationTrigger value = AnimationTrigger::Count;
+      JsonTools::GetCladEnumFromJSON(jsonAnimReactColor, key, value, debugName, false);
+      animReactColor.emplace(key,value);
+    }
+  }
+  else
+  {
+    // TODO: Log error
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -121,7 +101,6 @@ void BehaviorReactToColor::DynamicVariables::Reset(bool keepPersistent)
 BehaviorReactToColor::BehaviorReactToColor(const Json::Value& config)
  : ICozmoBehavior(config), _iConfig(config)
 {
-  PRINT_NAMED_ERROR("BehaviorReactToColor.BehaviorReactToColor","PDORAN 0");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -144,7 +123,6 @@ void BehaviorReactToColor::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToColor::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  PRINT_NAMED_ERROR("BehaviorReactToColor.GetBehaviorOperationModifiers","PDORAN 0");
   modifiers.wantsToBeActivatedWhenCarryingObject = false;
   modifiers.wantsToBeActivatedWhenOffTreads = false;
   modifiers.wantsToBeActivatedWhenOnCharger = false;
@@ -161,12 +139,9 @@ void BehaviorReactToColor::GetAllDelegates(std::set<IBehavior*>& delegates) cons
 void BehaviorReactToColor::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kNumHuesKey,
+    kSayLabelKey,
     kTargetDistanceKey,
-    kCelebrationSpinsKey,
     kAnimDetectKey,
-    kAnimReactColorAKey,
-    kAnimReactColorBKey,
     kAnimGiveUpKey,
     kSalientPointAgeKey
   };
@@ -176,7 +151,6 @@ void BehaviorReactToColor::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToColor::OnBehaviorActivated() 
 {
-  PRINT_NAMED_ERROR("BehaviorReactToColor.OnBehaviorActivated","PDORAN 0");
   // reset dynamic variables
   const bool kKeepPersistent = true;
   _dVars.Reset(kKeepPersistent);
@@ -242,12 +216,6 @@ bool BehaviorReactToColor::CheckIfShouldStop()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToColor::RoundToNearestHue(std::list<Vision::SalientPoint>& points)
-{
-  std::for_each(points.begin(), points.end(), std::bind(RoundToNearestHueImpl, _iConfig.numHues, std::placeholders::_1));
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToColor::FindCurrentColor(Vision::SalientPoint& point)
 {
   auto& component = GetAIComp<SalientPointsComponent>();
@@ -262,14 +230,10 @@ bool BehaviorReactToColor::FindCurrentColor(Vision::SalientPoint& point)
     return false;
   }
 
-  float currHue = GetHue(_dVars.point->color_rgba);
-
-  RoundToNearestHue(latestColors);
-  auto colorCloseEnough = [&](const Vision::SalientPoint& pt) -> bool {
-    float otherHue = GetHue(pt.color_rgba);
-    return Util::IsNear(currHue, otherHue, _iConfig.closeHueEpsilon);
+  auto isColor = [&](const Vision::SalientPoint& pt) -> bool {
+    return _dVars.point->color_rgba = pt.color_rgba;
   };
-  auto iter = std::find_if(latestColors.begin(), latestColors.end(), colorCloseEnough);
+  auto iter = std::find_if(latestColors.begin(), latestColors.end(), isColor);
 
   if (iter == latestColors.end())
   {
@@ -295,10 +259,6 @@ bool BehaviorReactToColor::FindNewColor (Vision::SalientPoint& point)
   {
     return false;
   }
-
-  // Color will fluctuate a lot, so we group Color salient points into their nearest hue so we can act on
-  // those salient points as if they were the same object.
-  RoundToNearestHue(latestColors);
 
   // TODO: In order to not repeatedly react to the same color, we put the color on cooldown and remove it from
   // the list of SalientPoints that we're looking at.
@@ -394,14 +354,6 @@ void BehaviorReactToColor::TransitionToTurnTowardsPoint()
   DEV_ASSERT(_dVars.point != nullptr, "Turning towards point without a point to turn towards");
   PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToTurnTowardsPoint","");
 
-#if 0
-  DEV_ASSERT(_dVars.point != nullptr, "Turning towards point without a point to turn towards");
-  PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToTurnTowardsPoint","");
-  CompoundActionSequential* action = new CompoundActionSequential();
-  action->AddAction(new TurnTowardsImagePointAction(*_dVars.point));
-  DelegateIfInControl(action, &BehaviorReactToColor::TransitionToLookForCurrentColor);
-
-#elif 1
   // We need a more recent point because we just played an animation and may have lost the point due
   // to looking away or simply having lost the history of the robot state due to age. Without that
   // then we don't know where to turn.
@@ -421,7 +373,6 @@ void BehaviorReactToColor::TransitionToTurnTowardsPoint()
   {
     TransitionToGiveUpLostColor();
   }
-#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -516,11 +467,22 @@ void BehaviorReactToColor::TransitionToCheckGotToObject()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToColor::TransitionToCelebrate()
 {
+  // TODO: Map the colors (ints or strings) to animations in the config file
+
   PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCelebrate","");
-  const float hue = GetHue(_dVars.point->color_rgba);
-  // Spint on warm colors vs cool colors
-  const bool isWarm = (hue < 0.25 || hue > 0.75);
-  const AnimationTrigger trigger = (isWarm)? _iConfig.animReactColorA : _iConfig.animReactColorB;
+  AnimationTrigger trigger;
+
+  auto iter = _iConfig.animReactColor.find(_dVars.point->description);
+  if (iter == _iConfig.animReactColor.end())
+  {
+    // TODO: Log the failure - this is primarily a configuration error. There are salient points with labels that are
+    // not in the dictionary of label<-->animations in the config for this behavior.
+    trigger = _iConfig.animGiveUp;
+  }
+  else
+  {
+    trigger = iter->second;
+  }
   auto* action = new TriggerAnimationAction(trigger);
   DelegateIfInControl(action, &BehaviorReactToColor::TransitionToCompleted);
 }

@@ -49,14 +49,11 @@ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
 
-    //! Number of Hues. This is used to round SalientPoint Colors to he nearest hue
-    u32 numHues;
+    //! Set to true to have vector say the label of the salient point
+    bool sayLabel;
 
     //! Target distance to the object to move to in millimeters
     u32 targetDistance_mm;
-
-    //! Number of times to spin when he gets to the bright color
-    u32 celebrationSpins;
 
     //! The age of salient points to consider in ms
     u32 salientPointAge_ms;
@@ -64,17 +61,10 @@ private:
     //! Animation to play when a bright color is first detected
     AnimationTrigger animDetect;
 
-    //! Animation to play when a bright color A is reached
-    AnimationTrigger animReactColorA;
-
-    //! Animation to play when a bright color B is reached
-    AnimationTrigger animReactColorB;
-
     //! Animation to play when giving up for any reason
     AnimationTrigger animGiveUp;
 
-    //! Amount of error for close enough to matching a hue. This is computed from numHues, not set from config.
-    f32 closeHueEpsilon;
+    std::unordered_map<std::string,AnimationTrigger> animReactColor;
   };
 
   struct DynamicVariables {
@@ -88,12 +78,6 @@ private:
     //! The point that started this initial reaction (TODO: replace with optional<Vision::SalientPoint>)
     std::shared_ptr<Vision::SalientPoint> point;
   };
-
-  /**
-   * @brief Round the input SalientPoints that are Colors to the nearest hue. Modifies elements of list.
-   * @see InstanceConfig::numHueSectors
-   */
-  void RoundToNearestHue(std::list<Vision::SalientPoint>& points);
 
   /**
    * @brief Find a salient point for the current color the behavior is interested

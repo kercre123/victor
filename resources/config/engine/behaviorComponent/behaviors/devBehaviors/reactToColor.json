@@ -2,14 +2,16 @@
   "behaviorID" :   "ReactToColor",
   "behaviorClass": "ReactToColor",
 
-  "numHues": 6,
+  "sayLabel":true,
   "targetDistance_mm": 75,
-  "celebrationSpins": 2,
-  "salientPointAge_ms":500,
+  "salientPointAge_ms":750,
   "animDetect":"ReactToColorDetect",
-  "animReactColorA":"ReactToColorReactColorA",
-  "animReactColorB":"ReactToColorReactColorB",
   "animGiveUp":"ReactToColorGiveUp",
+  "animReactColor":{
+    "red":"ReactToColorReactColorA",
+    "green":"ReactToColorReactColorB",
+    "blue":"ReactToColorReactColorA"
+  },
 
   "wantsToBeActivatedCondition": {
     "conditionType":      "SalientPointDetected",

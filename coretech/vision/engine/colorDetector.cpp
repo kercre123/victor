@@ -117,7 +117,6 @@ void ImageToSamplesYUV(const ImageRGB& inputImage, cv::Mat& samples)
   merged.convertTo(converted,CV_64FC1);
 
   // Drop the Y and copy to the output variable
-  // samples = converted.colRange(1,3).clone();
   samples = merged;
 }
 
@@ -454,6 +453,7 @@ Result ColorDetector::Detect (const ImageRGB& inputImage,
     case ColorSpace::YUV:
       ImageToSamplesYUV(smallerImage, samples);
       samples = samples.colRange(1,3).clone();
+      samples.convertTo(samples,CV_64FC1); // need to convert it back to 64FC1 for some reason
       break;
     default:
       return RESULT_FAIL;

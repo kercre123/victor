@@ -1,5 +1,5 @@
 {
-  "model": "rgb",
+  "model": "yuv",
   "models": {
     "rgb": {
       "colorspace": "RGB",
