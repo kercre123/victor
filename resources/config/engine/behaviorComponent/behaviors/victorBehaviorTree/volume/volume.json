@@ -1,7 +1,7 @@
 {
     "behaviorID": "Volume",
     "behaviorClass": "Volume",
-    "associatedActiveFeature": "NoFeature",
+    "associatedActiveFeature": "VolumeAdjustment",
 
     "wantsToBeActivatedCondition":  {
         "conditionType": "FeatureGate",
