@@ -42,7 +42,7 @@ from .exceptions import (connection_error,
 from .messaging import client, protocol
 from .version import __version__
 
-CLIENT_VERSION = 1
+CLIENT_VERSION = 2
 MIN_HOST_VERSION = 0
 
 
