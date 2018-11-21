@@ -53,6 +53,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestButton.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestDockWithCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestLookAtCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestSoundCheck.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestDriveForwards.h"
@@ -752,7 +753,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
         
     case BehaviorClass::SelfTestDockWithCharger:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestWaitToStart(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestDockWithCharger(config));
       break;
     }
 

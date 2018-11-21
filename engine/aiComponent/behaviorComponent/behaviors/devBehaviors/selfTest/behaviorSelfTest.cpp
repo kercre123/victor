@@ -117,17 +117,12 @@ void BehaviorSelfTest::InitBehavior()
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestLookAtCharger");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(lookAtCharger));
 
-  // ICozmoBehaviorPtr pickupBehavior = BC.FindBehaviorByID(BehaviorID::PlaypenPickupCube);
-  // DEV_ASSERT(pickupBehavior != nullptr &&
-  //            pickupBehavior->GetClass() == BehaviorClass::PlaypenPickupCube,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.PlaypenPickupCube");
-  // _playpenBehaviors.push_back(std::static_pointer_cast<IBehaviorPlaypen>(pickupBehavior));
+  ICozmoBehaviorPtr dockWithCharger = BC.FindBehaviorByID(BehaviorID::SelfTestDockWithCharger);
+  DEV_ASSERT(dockWithCharger != nullptr &&
+             dockWithCharger->GetClass() == BehaviorClass::SelfTestDockWithCharger,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestDockWithCharger");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(dockWithCharger));
 
-  // ICozmoBehaviorPtr endChecksBehavior = BC.FindBehaviorByID(BehaviorID::PlaypenEndChecks);
-  // DEV_ASSERT(endChecksBehavior != nullptr &&
-  //            endChecksBehavior->GetClass() == BehaviorClass::PlaypenEndChecks,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.PlaypenEndChecks");
-  // _playpenBehaviors.push_back(std::static_pointer_cast<IBehaviorPlaypen>(endChecksBehavior));
 
   _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
   _currentBehavior = *_currentSelfTestBehaviorIter;
