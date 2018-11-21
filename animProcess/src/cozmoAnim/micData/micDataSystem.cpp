@@ -14,8 +14,6 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 #include "coretech/messaging/shared/socketConstants.h"
 
-#include "audioEngine/audioCallback.h"
-#include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -742,7 +740,6 @@ void MicDataSystem::ToggleMicMute()
   // don't feed the raw audio buffer when receiving messages from robot process. Which stops running the mic processor
   // and recognizers methods, therefore, saving CPU. However, mic threads are still runing.
   _micMuted = !_micMuted;
-  
   _micDataProcessor->MuteMics(_micMuted);
   
   // play audio event for changing mic mute state
@@ -756,7 +753,7 @@ void MicDataSystem::ToggleMicMute()
     const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
     audioController->PostAudioEvent( eventID, gameObject );
   }
-  
+
   // Note that Alexa also has a method to stopStreamingMicrophoneData, but without the wakeword,
   // the samples go no where. Also check if it saves CPU to drop samples. Note that the time indices
   // for the wake word bookends might be wrong afterwards.
@@ -768,7 +765,6 @@ void MicDataSystem::ToggleMicMute()
       bplComp->SetMicMute( _micMuted );
     }
   }
-
 }
   
 void MicDataSystem::SetButtonWakeWordIsAlexa(bool isAlexa)

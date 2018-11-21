@@ -70,7 +70,7 @@ protected:
 private:
   
   bool _onCharger = false;
-  
+
   // decides whether to create/destroy the impl. If !active, then deleteUserData decides whether user data will be cleared
   void SetAlexaActive( bool active, bool deleteUserData = false );
   

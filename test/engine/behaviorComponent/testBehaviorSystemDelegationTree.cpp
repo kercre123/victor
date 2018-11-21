@@ -158,7 +158,7 @@ TEST(DelegationTree, DumpBehaviorTreeBranchesToFile)
   EXPECT_EQ(res, true) << "Error writing file " << outFilename;	
 }
 
-TEST(DelegationTree, DISABLED_CheckActiveFeatures)
+TEST(DelegationTree, CheckActiveFeatures)
 {
   // this test checks that active features are correctly defined, and also dumps the active feature per
   // behavior branch to a file, if specified in the environment

@@ -125,8 +125,6 @@ public:
   
   u32 GetMaxBlinkSpacingTimeForScreenProtection_ms() const;
   
-  void SetNoMovementMode(bool enabled);
-  
 private:
   
   // The KeepFaceAlive system consists of multiple Modifiers applied to the face by the

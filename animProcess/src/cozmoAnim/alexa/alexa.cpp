@@ -33,14 +33,11 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
-#include "util/console/consoleInterface.h"
 
 
 
 namespace Anki {
 namespace Vector {
-  
-  CONSOLE_VAR_EXTERN(bool, kAllowAudioOnCharger);
   
 namespace {
   const std::string kAlexaPath = "alexa";
@@ -471,7 +468,6 @@ void Alexa::SetUXState( AlexaUXState newState )
       PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
     }
   }
-  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
