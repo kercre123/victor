@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -626,6 +627,12 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 			var newAnim = extint.Animation{
 				Name: chanResponse.GetAnimationAvailable().AnimName,
 			}
+
+			if strings.Contains(newAnim.Name, "_avs_") {
+				// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
+				continue
+			}
+
 			anims = append(anims, &newAnim)
 			remaining = remaining - 1
 		case chanResponse, ok := <-endOfMessageResponse:
