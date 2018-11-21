@@ -60,7 +60,6 @@ public:
   
   void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) const;
   
-  void SetOnCharger(bool onCharger) { _onCharger = onCharger; }
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -69,7 +68,6 @@ protected:
   
 private:
   
-  bool _onCharger = false;
 
   // decides whether to create/destroy the impl. If !active, then deleteUserData decides whether user data will be cleared
   void SetAlexaActive( bool active, bool deleteUserData = false );

@@ -452,21 +452,19 @@ void Alexa::SetUXState( AlexaUXState newState )
     }
   }
   
-  if( kAllowAudioOnCharger || !_onCharger ) {
-    // special cases to play audio events not handled by our getin process
-    // Speaking to Listening
-    // Listrnig to thinking
-    if( (oldState == AlexaUXState::Speaking) && (_uxState == AlexaUXState::Listening) ) {
-      // Play EarCon for follow up question
-      using namespace AudioEngine;
-      using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
-    } else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
-      // Play when listening ends
-      using namespace AudioEngine;
-      using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
-    }
+  // special cases to play audio events not handled by our getin process
+  // Speaking to Listening
+  // Listening to thinking
+  if( (oldState == AlexaUXState::Speaking) && (_uxState == AlexaUXState::Listening) ) {
+    // Play EarCon for follow up question
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+  } else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+    // Play when listening ends
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
   }
 }
   
