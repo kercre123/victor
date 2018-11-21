@@ -668,6 +668,14 @@
     "SpriteName" : "face_avs_Listen2Notification"
   },
   {
+    "CladEvent" : "Face_Avs_Error_Getin",
+    "SpriteName" : "face_avs_error_getin"
+  },
+  {
+    "CladEvent" : "Face_Avs_Listen2timer",
+    "SpriteName" : "face_avs_listen2timer"
+  },
+  {
     "CladEvent" : "Face_Avs_Notification2Listen",
     "SpriteName" : "face_avs_notification2Listen"
   },
@@ -710,6 +718,10 @@
   {
     "CladEvent" : "Face_Avs_Think2notification",
     "SpriteName" : "face_avs_think2notification"
+  },
+  {
+    "CladEvent" : "Face_Avs_Think_Loop",
+    "SpriteName" : "face_avs_think_loop"
   },
   {
     "CladEvent" : "Face_Chargerdocking_Severerequest",
@@ -926,10 +938,6 @@
   {
     "CladEvent" : "Face_Windy01",
     "SpriteName" : "face_windy01"
-  },
-  {
-    "CladEvent" : "Fireworks",
-    "SpriteName" : "fireworks"
   },
   {
     "CladEvent" : "Pairing_Icon_Awaiting_App",
