@@ -36,7 +36,8 @@ protected:
   virtual void          OnBehaviorDeactivated() override;
 
 private:
-  
+
+  bool _buttonStartedPressed = false;
   bool _buttonPressed = false;
 
 };

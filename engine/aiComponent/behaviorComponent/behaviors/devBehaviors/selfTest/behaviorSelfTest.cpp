@@ -63,11 +63,11 @@ void BehaviorSelfTest::InitBehavior()
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPutOnCharger");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(putOnChargerBehavior));
   
-  // ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
-  // DEV_ASSERT(touchBehavior != nullptr &&
-  //            touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
-  // _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
+  ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
+  DEV_ASSERT(touchBehavior != nullptr &&
+             touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
   
   ICozmoBehaviorPtr buttonBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestButton);
   DEV_ASSERT(buttonBehavior != nullptr &&
@@ -75,11 +75,11 @@ void BehaviorSelfTest::InitBehavior()
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestButton");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(buttonBehavior));
 
-  // ICozmoBehaviorPtr screenAndBackpackBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestScreenAndBackpack);
-  // DEV_ASSERT(screenAndBackpackBehavior != nullptr &&
-  //            screenAndBackpackBehavior->GetClass() == BehaviorClass::SelfTestScreenAndBackpack,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestScreenAndBackpack");
-  // _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(screenAndBackpackBehavior));
+  ICozmoBehaviorPtr screenAndBackpackBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestScreenAndBackpack);
+  DEV_ASSERT(screenAndBackpackBehavior != nullptr &&
+             screenAndBackpackBehavior->GetClass() == BehaviorClass::SelfTestScreenAndBackpack,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestScreenAndBackpack");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(screenAndBackpackBehavior));
 
   ICozmoBehaviorPtr initChecksBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestInitChecks);
   DEV_ASSERT(initChecksBehavior != nullptr &&

@@ -37,6 +37,7 @@ protected:
 
 private:
 
+  bool _buttonStartedPressed = false;
   bool _buttonPressed = false;
   
 };

@@ -23,7 +23,9 @@ namespace Cozmo {
 BehaviorSelfTestTouch::BehaviorSelfTestTouch(const Json::Value& config)
 : IBehaviorSelfTest(config)
 {
-
+  SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
+                  {ExternalInterface::MessageEngineToGameTag::ChargerEvent,
+                   ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged});
 }
 
 Result BehaviorSelfTestTouch::OnBehaviorActivatedInternal()

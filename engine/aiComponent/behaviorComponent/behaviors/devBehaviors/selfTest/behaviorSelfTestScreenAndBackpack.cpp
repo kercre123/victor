@@ -49,11 +49,9 @@ Result BehaviorSelfTestScreenAndBackpack::OnBehaviorActivatedInternal()
     
   robot.GetBodyLightComponent().SetBackpackLights(lights);
 
-  
-  AddTimer(30000, [this](){
-    SELFTEST_SET_RESULT(FactoryTestResultCode::TEST_TIMED_OUT);
-  });
-  
+  _buttonPressed = robot.IsPowerButtonPressed();
+  _buttonStartedPressed = _buttonPressed;
+
   return RESULT_OK;
 }
 
@@ -65,8 +63,13 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
 
   const bool buttonPressed = robot.IsPowerButtonPressed();
   const bool buttonReleased = _buttonPressed && !buttonPressed;
+
+  if(_buttonStartedPressed && !buttonPressed)
+  {
+    _buttonStartedPressed = false;
+  }
   
-  if(buttonReleased)
+  if(buttonReleased && !_buttonStartedPressed)
   {
     SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
   }
@@ -83,6 +86,9 @@ void BehaviorSelfTestScreenAndBackpack::OnBehaviorDeactivated()
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   robot.GetBodyLightComponent().SetBackpackLights(BodyLightComponent::GetOffBackpackLights());
+
+  _buttonPressed = false;
+  _buttonStartedPressed = false;
 }
 
 }

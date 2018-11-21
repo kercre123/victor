@@ -32,6 +32,9 @@ Result BehaviorSelfTestButton::OnBehaviorActivatedInternal()
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   DrawTextOnScreen(robot, {"Press Button"});
+
+  _buttonPressed = robot.IsPowerButtonPressed();
+  _buttonStartedPressed = _buttonPressed;
   
   return RESULT_OK;
 }
@@ -44,10 +47,15 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
 
   const bool buttonPressed = robot.IsPowerButtonPressed();
 
+  if(_buttonStartedPressed && !buttonPressed)
+  {
+    _buttonStartedPressed = false;
+  }
+
   const bool onCharger = (robot.IsOnCharger() || robot.IsCharging());
 
   const bool buttonReleased = _buttonPressed && !buttonPressed;
-  if(buttonReleased)
+  if(buttonReleased && !_buttonStartedPressed)
   {
     if(onCharger)
     {
@@ -67,6 +75,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
 void BehaviorSelfTestButton::OnBehaviorDeactivated()
 {
   _buttonPressed = false;
+  _buttonStartedPressed = false;
 }
 
 }
