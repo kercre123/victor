@@ -59,6 +59,8 @@ public:
                       const std::string& avsEndpoint = "" );
   
   virtual void sendMessage( std::shared_ptr<alexaClientSDK::avsCommon::avs::MessageRequest> request ) override;
+
+  virtual void consumeMessage(const std::string& contextId, const std::string& message) override;
   
 private:
   

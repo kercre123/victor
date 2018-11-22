@@ -30,6 +30,7 @@
       { "channel": "PoseConfirmer",                     "enabled": true  },
       { "channel": "VisionComponent",                   "enabled": true  },
       { "channel": "VisionSystem",                      "enabled": true  },
+      { "channel": "Alexa",                             "enabled": true  },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
@@ -61,6 +62,7 @@
       { "channel": "PoseConfirmer",                     "enabled": false },
       { "channel": "VisionComponent",                   "enabled": false },
       { "channel": "VisionSystem",                      "enabled": false },
+      { "channel": "Alexa",                             "enabled": false },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":

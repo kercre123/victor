@@ -34,6 +34,7 @@ TEST(RingBuffContiguousRead, EmptyFull)
   EXPECT_EQ( testBuff.Size(), 0 );
   EXPECT_EQ( testBuff.GetNumUsed(), 0 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 10 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 0 );
   
   size_t numAdded = testBuff.AddData( data.data(), 1 );
   EXPECT_EQ( numAdded, 1 );
@@ -42,6 +43,7 @@ TEST(RingBuffContiguousRead, EmptyFull)
   EXPECT_EQ( testBuff.Size(), 1 );
   EXPECT_EQ( testBuff.GetNumUsed(), 1 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 9 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 1 );
   
   numAdded = testBuff.AddData( data.data() + 1, 9 );
   EXPECT_EQ( numAdded, 9 );
@@ -50,6 +52,7 @@ TEST(RingBuffContiguousRead, EmptyFull)
   EXPECT_EQ( testBuff.Size(), 10 );
   EXPECT_EQ( testBuff.GetNumUsed(), 10 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 0 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 10 );
   
   // can't add any more
   numAdded = testBuff.AddData( data.data(), 1 );
@@ -59,6 +62,7 @@ TEST(RingBuffContiguousRead, EmptyFull)
   EXPECT_EQ( testBuff.Size(), 10 );
   EXPECT_EQ( testBuff.GetNumUsed(), 10 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 0 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 10 );
   
   testBuff.Reset();
   EXPECT_TRUE( testBuff.IsEmpty() );
@@ -66,6 +70,7 @@ TEST(RingBuffContiguousRead, EmptyFull)
   EXPECT_EQ( testBuff.Size(), 0 );
   EXPECT_EQ( testBuff.GetNumUsed(), 0 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 10 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 0 );
 
 }
 
@@ -79,6 +84,27 @@ bool CompareData( const int* a, const int* b, int len )
     }
   }
   return success;
+}
+
+// helper to check that calling ReadData on the max contiguous size doesn't read outside owned memory
+// (assumes buff was made with negative integer padding)
+bool ContiguousHasNegativeElements( const RingBuffContiguousRead<int>& buff )
+{
+  const unsigned int readSize = (int)buff.GetContiguousSize();
+  if( readSize == 0 ) {
+    return false;
+  }
+  const int* data = buff.ReadData( readSize );
+  if( data != nullptr ) {
+    for( int i=0; i<readSize; ++i ) {
+      if( data[i] < 0 ) {
+        return true;
+      }
+    }
+    return false;
+  } else {
+    return true;
+  }
 }
 
 TEST(RingBuffContiguousRead, WrappedRead)
@@ -98,6 +124,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 0 );
   EXPECT_EQ( testBuff.GetNumUsed(), 0 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 10 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 0 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   size_t numAdded = testBuff.AddData( writeData, 10 );
   EXPECT_EQ( numAdded, 10 );
@@ -106,6 +134,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 10 );
   EXPECT_EQ( testBuff.GetNumUsed(), 10 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 0 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 10 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   readData = testBuff.ReadData( 5 );
   bool same = CompareData( readData, writeData, 5 );
@@ -116,6 +146,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 10 );
   EXPECT_EQ( testBuff.GetNumUsed(), 10 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 0 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 10 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   // moving the cursor affects cursor placement
   bool advanceAllowed = testBuff.AdvanceCursor( 20 );
   EXPECT_FALSE( advanceAllowed );
@@ -124,6 +156,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 10 );
   EXPECT_EQ( testBuff.GetNumUsed(), 10 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 0 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 10 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   advanceAllowed = testBuff.AdvanceCursor( 5 );
   EXPECT_TRUE( advanceAllowed );
@@ -132,6 +166,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 5 );
   EXPECT_EQ( testBuff.GetNumUsed(), 5 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 5 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 5 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   numAdded = testBuff.AddData( writeData, 5 );
   EXPECT_EQ( numAdded, 5 );
@@ -140,6 +176,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 10 );
   EXPECT_EQ( testBuff.GetNumUsed(), 10 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 0 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 10 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   readData = testBuff.ReadData( 3 );
   std::vector<int> expected = {5,6,7};
@@ -152,6 +190,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 7 );
   EXPECT_EQ( testBuff.GetNumUsed(), 7 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 3 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 7 ); // never less than 5 when there are >= 5 elems
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   // this would normally wrap around, but the read should be contiguous
   readData = testBuff.ReadData( 5 );
@@ -165,6 +205,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 2 );
   EXPECT_EQ( testBuff.GetNumUsed(), 2 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 8 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 2 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   
   // eat up the rest of the data
@@ -181,6 +223,8 @@ TEST(RingBuffContiguousRead, WrappedRead)
   EXPECT_EQ( testBuff.Size(), 0 );
   EXPECT_EQ( testBuff.GetNumUsed(), 0 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 10 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 0 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
 }
 
@@ -201,6 +245,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 0 );
   EXPECT_EQ( testBuff.GetNumUsed(), 0 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 10 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 0 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   size_t numAdded = testBuff.AddData( writeData, 8 );
   EXPECT_EQ( numAdded, 8 );
@@ -209,6 +255,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 8 );
   EXPECT_EQ( testBuff.GetNumUsed(), 8 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 2 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 8 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   readData = testBuff.ReadData( 5 );
   bool same = CompareData( readData, writeData, 5 );
@@ -219,6 +267,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 8 );
   EXPECT_EQ( testBuff.GetNumUsed(), 8 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 2 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 8 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   bool advanceAllowed = testBuff.AdvanceCursor( 5 );
   EXPECT_TRUE( advanceAllowed );
   EXPECT_FALSE( testBuff.IsEmpty() );
@@ -226,6 +276,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 3 );
   EXPECT_EQ( testBuff.GetNumUsed(), 3 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 7 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 3 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   // this write wraps around
   numAdded = testBuff.AddData( writeData, 7 );
@@ -235,6 +287,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 10 );
   EXPECT_EQ( testBuff.GetNumUsed(), 10 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 0 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 10 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   // [0,1,2,3,4,5,6,7,0,1,.... 2,3,4,5,6]
   readData = testBuff.ReadData( 3 );
@@ -248,6 +302,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 7 );
   EXPECT_EQ( testBuff.GetNumUsed(), 7 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 3 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 7 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   // this would normally wrap around, but the read should be contiguous
   readData = testBuff.ReadData( 5 );
@@ -260,6 +316,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 2 );
   EXPECT_EQ( testBuff.GetNumUsed(), 2 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 8 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 2 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
   
   // eat up the rest of the data
@@ -276,6 +334,8 @@ TEST(RingBuffContiguousRead, WrappedWriteAndRead)
   EXPECT_EQ( testBuff.Size(), 0 );
   EXPECT_EQ( testBuff.GetNumUsed(), 0 );
   EXPECT_EQ( testBuff.GetNumAvailable(), 10 );
+  EXPECT_EQ( testBuff.GetContiguousSize(), 0 );
+  EXPECT_FALSE( ContiguousHasNegativeElements( testBuff ) );
   
 }
 

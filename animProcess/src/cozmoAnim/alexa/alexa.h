@@ -16,12 +16,16 @@
 #define ANIMPROCESS_COZMO_ALEXA_H
 #pragma once
 
+#include "audioEngine/audioTypes.h"
 #include "audioUtil/audioDataTypes.h"
 #include <memory>
 #include <string>
 #include <mutex>
 
 namespace Anki {
+namespace AudioEngine {
+class AudioCallbackContext;
+}
 namespace Vector {
   
 class AlexaImpl;
@@ -54,7 +58,8 @@ public:
   
   void NotifyOfTapToTalk() const;
   
-  void NotifyOfWakeWord( long from_ms, long to_ms ) const;
+  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) const;
+  
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -63,6 +68,7 @@ protected:
   
 private:
   
+
   // decides whether to create/destroy the impl. If !active, then deleteUserData decides whether user data will be cleared
   void SetAlexaActive( bool active, bool deleteUserData = false );
   
@@ -109,6 +115,10 @@ private:
   bool DidAuthenticatePreviously() const;
   void DeleteOptInFile() const;
   void DeleteUserFolder() const;
+  
+  // Play Audio Event Helper
+  // Use new create AudioCallbackContext instance, hand off ownership when passing in to method
+  void PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback = nullptr ) const;
   
   std::unique_ptr<AlexaImpl> _impl;
   

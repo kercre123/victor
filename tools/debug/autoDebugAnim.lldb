@@ -1,0 +1,14 @@
+process attach --name "webotsCtrlAnim" --waitfor --include-existing --continue
+
+script
+
+print('attached...')
+
+import os
+import lldb
+
+if lldb.process.exit_state >= 0:
+  print("process stopped cleanly")
+  os._exit(1)
+else:
+  quit()

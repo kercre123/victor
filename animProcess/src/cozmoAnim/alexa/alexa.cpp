@@ -131,8 +131,15 @@ void Alexa::SetAlexaUsage(bool optedIn)
   LOG_INFO( "Alexa.SetAlexaUsage.Opting",
             "User requests to log %s",
             optedIn ? "in" : "out" );
-  
+
+  // need to do this before we reset _authStartedByUser
+  if( !optedIn ) {
+    // if we were in the process of authenticating alexa, cancel that now (does nothing if not loggin in)
+    CancelPendingAlexaAuth();
+  }
+
   _authStartedByUser = optedIn;
+
   const bool loggingOut = !optedIn && HasImpl();
   if( loggingOut ) {
     // log out of amazon. this should delete persistent data, but we also nuke the folder just in case
@@ -444,6 +451,21 @@ void Alexa::SetUXState( AlexaUXState newState )
       }
     }
   }
+  
+  // special cases to play audio events not handled by our getin process
+  // Speaking to Listening
+  // Listening to thinking
+  if( (oldState == AlexaUXState::Speaking) && (_uxState == AlexaUXState::Listening) ) {
+    // Play EarCon for follow up question
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+  } else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+    // Play when listening ends
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -586,18 +608,26 @@ void Alexa::NotifyOfTapToTalk() const
                    "Tap-to-talk was issued when alexa was disabled" ) )
   {
     _impl->NotifyOfTapToTalk();
+    // Play button EarCon Audio Event
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound_Touch ) );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfWakeWord( long from_ms, long to_ms ) const
+void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) const
 {
   std::lock_guard<std::mutex> lg{ _implMutex };
   if( ANKI_VERIFY( _impl != nullptr,
                    "Alexa.NotifyOfWakeWord.Disabled",
                    "Wake word was issued when alexa was disabled" ) )
   {
-    _impl->NotifyOfWakeWord( from_ms, to_ms );
+    _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
+    // Play speach trigger EarCon Audio Event
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
   }
 }
   
@@ -607,8 +637,7 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
   LOG_INFO( "Alexa.PlayErrorAudio.Type", "Setting error flag %d", (int) errorType );
   DEV_ASSERT( errorType != AlexaNetworkErrorType::NoError, "Alexa.PlayErrorAudio.NotAnError" );
   
-  auto* audioController = _context->GetAudioController();
-  if( !IsErrorPlaying() && (audioController != nullptr) ) {
+  if( !IsErrorPlaying() ) {
     using namespace AudioEngine;
     auto* callbackContext = new AudioCallbackContext();
     callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
@@ -621,15 +650,23 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
       OnAlexaUXStateChanged( _pendingUXState );
     });
     
-    const auto eventID = GetErrorAudioEvent( errorType );
-    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
-    audioController->PostAudioEvent( eventID, gameObject, callbackContext );
+    PlayAudioEvent( GetErrorAudioEvent( errorType ), callbackContext );
   }
   
   // extend timeout
   _timeToEndError_s = kAlexaErrorTimeout_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback ) const
+{
+  auto* audioController = _context->GetAudioController();
+  if ( audioController != nullptr ) {
+    using namespace AudioEngine;
+    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
+    audioController->PostAudioEvent( eventId, gameObject, callback );
+  }
+}
   
 } // namespace Vector
 } // namespace Anki

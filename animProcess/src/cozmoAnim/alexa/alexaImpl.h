@@ -88,7 +88,7 @@ public:
   
   void NotifyOfTapToTalk();
   
-  void NotifyOfWakeWord( long from_ms, long to_ms );
+  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
   
   // Callback setters
   
@@ -121,7 +121,8 @@ private:
   
   // considers media player state and dialog state to determine _uxState
   void CheckForUXStateChange();
-  
+
+  void SetNetworkConnectionError();
   void SetNetworkError( AlexaNetworkErrorType errorType );
   
   // things we care about called by AlexaObserver
@@ -163,6 +164,11 @@ private:
   float _timeToSetIdle_s = -1.0f;
   // tap to talk is active
   bool _isTapOccurring = false;
+
+  // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
+  // on vicos.... so just track if the system clock jumps and if so, refresh the timers
+  std::chrono::time_point<std::chrono::system_clock> _lastWallTime;
+  float _lastWallTimeCheck_s;
   
   alexaClientSDK::avsCommon::avs::IndicatorState _notificationsIndicator;
   
@@ -180,6 +186,9 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::aip::AudioProvider> _wakeWordAudioProvider;
   std::shared_ptr<AlexaKeywordObserver> _keywordObserver;
   std::shared_ptr<AlexaAudioInput> _microphone;
+
+  // copy that can be used to dump audio to file. Only used if a console var is set
+  std::shared_ptr<AlexaAudioInput> _debugMicrophone;
   
   // callbacks to impl parent Alexa
   OnAlexaAuthStateChanged _onAlexaAuthStateChanged;

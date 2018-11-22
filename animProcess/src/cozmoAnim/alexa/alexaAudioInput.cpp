@@ -72,12 +72,14 @@ bool AlexaAudioInput::Initialize()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaAudioInput::startStreamingMicrophoneData() {
+  LOG_INFO("Alexa.AlexaAudioInput.StartStreaming", "");
   _streaming = true;
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaAudioInput::stopStreamingMicrophoneData() {
+  LOG_INFO("Alexa.AlexaAudioInput.StopStreaming", "");
   _streaming = false;
   return true;
 }
@@ -92,6 +94,15 @@ void AlexaAudioInput::AddSamples( const AudioUtil::AudioSample* data, size_t siz
   _totalNumSamples += size;
   
   _writer->write( data, size );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::unique_ptr<alexaClientSDK::avsCommon::avs::AudioInputStream::Reader> AlexaAudioInput::GetReader()
+{
+  if( _audioInputStream ) {
+    return _audioInputStream->createReader( AudioInputStream::Reader::Policy::NONBLOCKING );
+  }
+  return {};
 }
 
 }  // namespace Vector

@@ -14,6 +14,8 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 #include "coretech/messaging/shared/socketConstants.h"
 
+#include "audioEngine/audioCallback.h"
+#include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -126,7 +128,7 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
   // SpeechRecognizerSystem
   SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-    if( _micMuted || (_alexaState == AlexaSimpleState::Active) ) {
+    if( _alexaState == AlexaSimpleState::Active ) {
       // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
       return;
     }
@@ -712,16 +714,17 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
     RobotDataLoader *dataLoader = _context->GetDataLoader();
     const auto callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-      PRINT_NAMED_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
+      PRINT_CH_INFO("Alexa", "MicDataSystem.SetAlexaState.TriggerWordDetectCallback",
+                    "info - %s", info.Description().c_str());
       
-      if( _micMuted || HasStreamingJob() ) {
+      if( HasStreamingJob() ) {
         // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
         return;
       }
       const Alexa* alexa = _context->GetAlexa();
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
       if( (alexa != nullptr) && showStreamState->HasAnyAlexaResponse() ) {
-        alexa->NotifyOfWakeWord( info.startTime_ms, info.endTime_ms );
+        alexa->NotifyOfWakeWord( info.startSampleIndex, info.endSampleIndex );
       }
     };
     _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
@@ -735,9 +738,24 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   
 void MicDataSystem::ToggleMicMute()
 {
-  // TODO (VIC-11587): we could save some CPU if the wake words recognizers are actually disabled here.
-  // for now, we just ignore its callbacks if _micMuted is true
+  // TODO (VIC-11587): we could save some CPU if the wake words recognizers are actually disabled here. For now, we
+  // don't feed the raw audio buffer when receiving messages from robot process. Which stops running the mic processor
+  // and recognizers methods, therefore, saving CPU. However, mic threads are still runing.
   _micMuted = !_micMuted;
+  _micDataProcessor->MuteMics(_micMuted);
+  
+  // play audio event for changing mic mute state
+  auto* audioController = _context->GetAudioController();
+  if (audioController != nullptr) {
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    const auto eventID = ToAudioEventId( _micMuted
+                                         ? GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_On
+                                         : GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_Off );
+    const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
+    audioController->PostAudioEvent( eventID, gameObject );
+  }
+
   // Note that Alexa also has a method to stopStreamingMicrophoneData, but without the wakeword,
   // the samples go no where. Also check if it saves CPU to drop samples. Note that the time indices
   // for the wake word bookends might be wrong afterwards.

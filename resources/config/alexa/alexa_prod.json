@@ -25,7 +25,7 @@
   "certifiedSender":{
     "databaseFilePath":"<ALEXA_STORAGE_PATH>/certifiedsender.db" // this path gets replaced at runtime
   },
-  "logging":{
-    "logLevel":"DEBUG9"
+  "logger":{
+    "logLevel":"INFO"
   }
 }

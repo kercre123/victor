@@ -11,7 +11,6 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "platform/anki-trace/tracing.h"
-
 #include "util/threading/fork_and_exec.h"
 
 #include "backpackLightController.h"

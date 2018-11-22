@@ -90,6 +90,7 @@ namespace Vector {
   
 class AlexaMessageRouter;
 class AlexaRevokeAuthHandler;
+class AlexaTemplateRuntimeStub; // (dev only)
   
 class AlexaClient : private Util::noncopyable
                   , public alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface
@@ -159,6 +160,9 @@ public:
   void SetDirectiveCallback(const OnDirectiveFunc& onDirective) { _onDirectiveFunc = onDirective; }
   
   bool IsAVSConnected() const;
+
+  // hack to "reset" all of the timers (for use after time is synced)
+  void ReinitializeAllTimers();
 
 private:
   
@@ -231,6 +235,9 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::system::SoftwareInfoSender> _softwareInfoSender;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsCapabilityAgent> _notificationsCapabilityAgent;
+
+  // DEV-ONLY tool for testing
+  std::shared_ptr<AlexaTemplateRuntimeStub> _templateRuntime;
   
   std::shared_ptr<AlexaRevokeAuthHandler> _revokeAuthorizationHandler;
   

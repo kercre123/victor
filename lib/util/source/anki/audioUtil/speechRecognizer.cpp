@@ -36,7 +36,9 @@ void SpeechRecognizer::DoCallback(const AudioUtil::SpeechRecognizer::SpeechCallb
 const std::string SpeechRecognizer::SpeechCallbackInfo::Description() const
 {
   const auto desc = std::string(result) + " StartTime_ms: " + std::to_string(startTime_ms) + " EndTime_ms: " +
-                    std::to_string(endTime_ms) + " Score: " + std::to_string(score);
+                    std::to_string(endTime_ms) + " Score: " + std::to_string(score) +
+                    " startSample: " + std::to_string(startSampleIndex) +
+                    " endSample: "   + std::to_string(endSampleIndex);
   return desc;
 }
 
