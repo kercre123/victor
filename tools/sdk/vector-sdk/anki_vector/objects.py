@@ -1129,6 +1129,8 @@ class CustomObject(ObservableObject):
         .. testcode::
 
             import anki_vector
+            from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
@@ -1160,6 +1162,8 @@ class CustomObject(ObservableObject):
         .. testcode::
 
             import anki_vector
+            from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
@@ -1180,6 +1184,8 @@ class CustomObject(ObservableObject):
         .. testcode::
 
             import anki_vector
+            from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
@@ -1240,6 +1246,8 @@ class CustomObjectTypes():  # pylint: disable=too-few-public-methods
     .. testcode::
 
         import anki_vector
+        from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
         with anki_vector.Robot(enable_custom_object_detection=True) as robot:
             robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                            marker=CustomObjectMarkers.Circles2,
@@ -1330,6 +1338,8 @@ class CustomObjectMarkers():  # pylint: disable=too-few-public-methods
     .. testcode::
 
         import anki_vector
+        from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
         with anki_vector.Robot(enable_custom_object_detection=True) as robot:
             robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                            marker=CustomObjectMarkers.Circles2,
@@ -1399,9 +1409,11 @@ class FixedCustomObject(util.Component):
     .. testcode::
 
         import anki_vector
-        from anki_vector.util import degrees
+        from anki_vector.util import degrees, Pose
+        import time
 
         with anki_vector.Robot(enable_custom_object_detection=True) as robot:
+            time.sleep(1.0)
             robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                    10, 100, 100, relative_to_robot=True)
     """
@@ -1440,9 +1452,11 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
+                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.object_id))
@@ -1463,9 +1477,11 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
+                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.pose))
@@ -1479,9 +1495,11 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
+                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1495,9 +1513,11 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
+                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1511,9 +1531,11 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
+                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))

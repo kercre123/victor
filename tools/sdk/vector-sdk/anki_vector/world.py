@@ -221,13 +221,12 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
+
+            # First, place Vector directly in front of his charger so he can observe it.
+
             with anki_vector.Robot() as robot:
                 print('most recently observed charger: {0}.'.format(robot.world.charger))
-
-        Raises:
-            :class:`ValueError` if the cube_id is invalid.
         """
-        # Only return the cube if it has an object_id
         if self._charger is not None:
             return self._charger
         return None
@@ -261,6 +260,10 @@ class World(util.Component):
             import anki_vector
 
             with anki_vector.Robot() as robot:
+                # First get an existing object id, for instance:
+                valid_object_id = 1
+
+                # Then use the object_id to retrieve the object instance:
                 my_obj = robot.world.get_object(valid_object_id)
         """
         return self._objects.get(object_id)
@@ -271,6 +274,10 @@ class World(util.Component):
         .. testcode::
 
             with anki_vector.Robot() as robot:
+                # First get an existing face_id, for instance:
+                previously_observed_face_id = 1
+
+                # Then use the face_id to retrieve the Face instance
                 my_face = robot.world.get_face(previously_observed_face_id)
         """
         return self._faces.get(face_id)
@@ -667,9 +674,11 @@ class World(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
             with anki_vector.Robot() as robot:
+                time.sleep(1.0)
                 robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                        x_size_mm=10, y_size_mm=100, z_size_mm=100,
                                                        relative_to_robot=True)

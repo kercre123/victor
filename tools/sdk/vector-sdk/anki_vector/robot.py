@@ -242,8 +242,10 @@ class Robot:
 
         .. testcode::
 
-            with anki_vector.Robot() as robot:
-                image = Image.fromarray(robot.camera.latest_image)
+            import anki_vector
+
+            with anki_vector.Robot(enable_camera_feed=True) as robot:
+                image = robot.camera.latest_image
                 image.show()
         """
         if self._camera is None:
@@ -289,7 +291,7 @@ class Robot:
     def proximity(self) -> proximity.ProximityComponent:
         """Component containing state related to object proximity detection.
 
-        .. testcode::
+        ..code-block ::
 
             import anki_vector
             with anki_vector.Robot() as robot:
@@ -343,7 +345,7 @@ class Robot:
 
             import anki_vector
             with anki_vector.Robot() as robot:
-                robot.vision.set_vision_mode(detect_faces=True)
+                robot.vision.enable_custom_object_detection()
         """
         return self._vision
 

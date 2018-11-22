@@ -339,7 +339,7 @@ class Connection:
 
             async def wait_for_control(conn: anki_vector.connection.Connection):
                 await conn.control_granted_event.wait()
-                // Run commands that require behavior control
+                # Run commands that require behavior control
         """
         return self._control_events.granted_event
 
@@ -389,7 +389,7 @@ class Connection:
 
             async def wait_for_control(conn: anki_vector.connection.Connection):
                 await conn.control_granted_event.wait()
-                // Run commands that require behavior control
+                # Run commands that require behavior control
                 conn.release_control()
 
         :param timeout: The time allotted to attempt to release control, in seconds.
@@ -591,6 +591,7 @@ class Connection:
         .. testcode::
 
             import anki_vector
+            import time
 
             async def my_coroutine():
                 print("Running on the connection thread")
@@ -628,7 +629,6 @@ class Connection:
 
             with anki_vector.Robot() as robot:
                 result = robot.conn.run_coroutine(my_coroutine())
-                print(result)
 
         :param coro: The coroutine, task or any other awaitable which should be executed.
         :returns: The result of the awaitable's execution.
@@ -665,7 +665,7 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
         class MyComponent(anki_vector.util.Component):
             @connection._on_connection_thread()
             async def on_connection_thread(self):
-                // Do work on the connection thread
+                # Do work on the connection thread
 
     :param log_messaging: True if the log output should include the entire message or just the size. Recommended for
         large binary return values.

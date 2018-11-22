@@ -60,7 +60,6 @@ class CameraComponent(util.Component):
     .. testcode::
 
         import anki_vector
-        import time
 
         with anki_vector.Robot(enable_camera_feed=True) as robot:
             image = robot.camera.latest_image

@@ -213,7 +213,7 @@ class ProximityComponent(util.Component):
         """:class:`anki_vector.proximity.ProximitySensorData`: The last reported sensor data
         which is considered useful for object detection.
 
-        .. testcode::
+        ..code-block ::
 
             import anki_vector
 
