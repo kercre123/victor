@@ -255,6 +255,13 @@ void RejectIfChargerOutOfView::SetAcceptanceProbability( float p, RandomGenerato
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RejectIfChargerOutOfView::ClearAcceptanceProbability()
+{
+  _rng = nullptr;
+  _pAccept = 0.f;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RejectIfCollidesWithMemoryMap::RejectIfCollidesWithMemoryMap( const MemoryMapTypes::FullContentArray& collisionTypes )
   : _collisionTypes( collisionTypes )
 {}

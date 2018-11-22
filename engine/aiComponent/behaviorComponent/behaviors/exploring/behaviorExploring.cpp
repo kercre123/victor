@@ -757,6 +757,8 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( std::shared_ptr<const INa
   // probability to 1.
   if (chargerEqualsRobot) {
     _iConfig.condHandleChargerOutOfView->SetAcceptanceProbability(1.f, GetRNG());
+  } else {
+    _iConfig.condHandleChargerOutOfView->ClearAcceptanceProbability();
   }
   
   // update memory map
