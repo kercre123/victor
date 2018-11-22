@@ -908,16 +908,6 @@ void MapComponent::ClearRender()
     // set map as dirty
     _vizMessageDirty = true;
     _gameMessageDirty = true;
-
-    for ( const auto& memMapPair : _navMaps )
-    {
-      // get map Identifier
-      MemoryMapTypes::MapBroadcastData data;
-      memMapPair.second.map->GetBroadcastInfo(data);
-
-      // clear map from VizManager
-      _robot->GetContext()->GetVizManager()->EraseQuadVector(data.mapInfo.identifier);
-    }
   }
 }
 

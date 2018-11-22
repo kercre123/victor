@@ -53,6 +53,11 @@ bool GetFieldAsString(const webots::Node* const rootNode,
                       std::string& outputStr,
                       const bool failOnEmptyString = true);
   
+// Create a new node and append it to the end of the scene tree. The node is defined by nodeStr.
+// Returns the Webots node ID (unique identifier) of the new node.
+int AddSceneTreeNode(const webots::Supervisor& supervisor,
+                     const std::string& nodeStr);
+  
 }; // namespace
 }; // namespace
 

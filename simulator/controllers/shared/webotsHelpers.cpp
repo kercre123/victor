@@ -104,6 +104,26 @@ bool GetFieldAsString(const webots::Node* const rootNode,
 }
 
 
+int AddSceneTreeNode(const webots::Supervisor& supervisor,
+                     const std::string& nodeStr)
+{
+  const auto* rootNode = supervisor.getRoot();
+  DEV_ASSERT(rootNode != nullptr, "WebotsHelpers.AddSceneTreeNode.NullSupervisorRoot");
+  
+  auto* rootChildren = rootNode->getField("children");
+  DEV_ASSERT(rootChildren != nullptr, "WebotsHelpers.AddSceneTreeNode.NullRootChildren");
+  
+  const auto nRootChildren = rootChildren->getCount();
+  
+  rootChildren->importMFNodeFromString(nRootChildren, nodeStr);
+  auto* newNode = rootChildren->getMFNode(nRootChildren);
+  DEV_ASSERT(newNode != nullptr, "WebotsHelpers.AddSceneTreeNode.FailedToAddNode");
+  
+  const int newNodeId = newNode->getId();
+  return newNodeId;
+}
+
+
 }; // namespace
 }; // namespace
 

@@ -20,11 +20,9 @@ namespace Vector {
 const uint32_t VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1] = {
   0,        // VIZ_OBJECT_ROBOT
   10000000, // VIZ_OBJECT_CUBOID
-  20000000, // VIZ_OBJECT_RAMP
   30000000, // VIZ_OBJECT_CHARGER
   40000000, // VIZ_OBJECT_PREDOCKPOSE
   70000000, // VIZ_OBJECT_HUMAN_HEAD
-  80000000, // VIZ_OBJECT_CAMERA_FACE
   std::numeric_limits<uint32_t>::max() - 100 // Last valid object ID allowed
 };
 

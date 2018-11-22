@@ -188,28 +188,6 @@ namespace Anki {
       return vizID;
     }
     
-    VizManager::Handle_t VizManager::DrawRamp(const u32 rampID, const f32 platformLength, const f32 slopeLength,
-      const f32 width, const f32 height, const Pose3d& pose, const ColorRGBA& color)
-    {
-      if (rampID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_RAMP]) {
-        PRINT_NAMED_WARNING("VizManager.DrawRamp.IDtooLarge",
-                            "Specified ramp ID=%d larger than maxID=%d",
-                            rampID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_RAMP]);
-        return INVALID_HANDLE;
-      }
-      
-      // Ramps use one extra parameter which is the ratio of slopeLength to
-      // platformLength, which is stored as the x size.  So slopeLength
-      // can easily be computed from x size internally (in whatever dimensions
-      // the visuzalization uses).
-      f32 params[4] = {slopeLength/platformLength, 0, 0, 0};
-      
-      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_RAMP] + rampID;
-      DrawObject(vizID, VizObjectType::VIZ_OBJECT_RAMP, {platformLength, width, height}, pose, color, params);
-      
-      return vizID;
-    }
-    
     VizManager::Handle_t VizManager::DrawCharger(const u32 chargerID, const f32 platformLength, const f32 slopeLength,
       const f32 width, const f32 height, const Pose3d& pose, const ColorRGBA& color)
     {
@@ -674,59 +652,6 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::EraseSegmentPrimitives{identifier}));
     }
     
-
-    void VizManager::DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads)
-    {
-      ANKI_CPU_PROFILE("VizManager::DrawQuadVector");
-      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageBegin{identifier}));
-      
-      // split quad vector into several messages
-      if ( !quads.empty() )
-      {
-        // calculate some initial sizes
-        const size_t kReservedBytes = 2; // for things like array size
-        const size_t maxBufferSize = Anki::Util::numeric_cast<size_t>((std::underlying_type<VizConstants>::type)VizConstants::MaxMessageSize);
-        const size_t maxBufferForQuads = maxBufferSize - (identifier.length()+1) - kReservedBytes;
-        size_t quadsPerMessage = maxBufferForQuads / sizeof(SimpleQuadVector::value_type);
-        size_t remainingQuads = quads.size();
-        
-        DEV_ASSERT(quadsPerMessage>0, "VizManager.DrawQuadVector.InvalidQuadsPerMessage");
-        
-        // sadly we can't create one message and send it several times, because MessageViz doesn't support it (it needs
-        // to embed the tag) for receiving end processing, and we can't initialize messages with a range of vectors, so
-        // I have to create copies :(
-        SimpleQuadVector partQuads;
-        partQuads.reserve( quadsPerMessage );
-        
-        // while we have quads to send
-        while ( remainingQuads > 0 )
-        {
-          // how many are we sending in this message?
-          quadsPerMessage = Anki::Util::Min(quadsPerMessage, remainingQuads);
-          
-          // clear the destination vector and insert as many as we are sending, from where we left off
-          partQuads.clear();
-          partQuads.insert( partQuads.end(), quads.end() - remainingQuads, quads.end() - remainingQuads + quadsPerMessage );
-          
-          remainingQuads -= quadsPerMessage;
-          
-          // send message
-          ANKI_CPU_PROFILE("VizManager::SimpleQuadVectorMessage");
-          SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessage{identifier, partQuads}));
-        }
-      }
-      
-      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageEnd{identifier}));
-    }
-    
-    void VizManager::EraseQuadVector(const std::string& identifier)
-    {
-      ANKI_CPU_PROFILE("VizManager::EraseQuadVector");
-      
-      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageBegin{identifier}));
-      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessageEnd{identifier}));
-    }
-    
     // =============== Circle methods ==================
     
     void VizManager::EraseCircle(u32 polyID)
@@ -749,24 +674,6 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::SetLabel((uint32_t)labelType, (uint32_t)color, {std::string(buffer)})));
     }
     
-    
-    // ================== Color methods ====================
-    /*
-    // Sets the index colorID to correspond to the specified color vector
-    void VizManager::DefineColor(const u32 colorID,
-                                 const f32 red, const f32 green, const f32 blue,
-                                 const f32 alpha)
-    {
-      VizDefineColor v;
-      v.colorID = colorID;
-      v.r = red;
-      v.g = green;
-      v.b = blue;
-      v.alpha = alpha;
-      
-      SendMessage( GET_MESSAGE_ID(VizDefineColor), &v );
-    }
-    */
     
     // ============== Misc. Debug methods =================
     void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle)

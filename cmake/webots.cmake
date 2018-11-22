@@ -42,6 +42,11 @@ set(WEBOTS_LIB_TARGETS
   "${WEBOTS_SIM_LIBS}"
 )
 
+# Read the Webots version from file
+set(WEBOTS_VER_FILE "${WEBOTS_HOME}/resources/version.txt")
+file(READ ${WEBOTS_VER_FILE} WEBOTS_VER)
+string(STRIP ${WEBOTS_VER} WEBOTS_VER)
+
 foreach(LIB ${WEBOTS_LIB_TARGETS})
     if (NOT TARGET ${LIB})
         add_library(${LIB} SHARED IMPORTED)

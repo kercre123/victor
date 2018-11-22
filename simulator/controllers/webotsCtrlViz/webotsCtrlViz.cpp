@@ -36,6 +36,14 @@ int main(int argc, char **argv)
 
   webots::Supervisor vizSupervisor;
   VizControllerImpl vizController(vizSupervisor);
+  
+  // If we are using Webots R2018b or later, then openGL support is removed and we cannot use the PhysVizController to
+  // draw 3D objects. Instead the VizController should draw such objects.
+  const std::string webotsVer = WEBOTS_VER;
+  const bool isOldVersion = (webotsVer.find("R2018a") != std::string::npos);
+  const bool vizShouldDrawObjects = !isOldVersion;
+  vizController.EnableDrawingObjects(vizShouldDrawObjects);
+  
   const size_t maxPacketSize{(size_t)VizConstants::MaxMessageSize};
   uint8_t data[maxPacketSize]{0};
   ssize_t numBytesRecvd;
@@ -44,9 +52,11 @@ int main(int argc, char **argv)
   UdpServer server("webotsCtrlViz");
   server.StartListening((uint16_t)VizConstants::VIZ_SERVER_PORT);
   
-  // Setup client to forward relevant commands to cozmo_physics plugin
+  // Setup client to forward relevant commands to cozmo_physics plugin (but only if we need it for drawing objects)
   UdpClient physicsClient;
-  physicsClient.Connect("127.0.0.1", (uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
+  if (!vizShouldDrawObjects) {
+    physicsClient.Connect("127.0.0.1", (uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
+  }
   
   vizController.Init();
   
@@ -57,10 +67,13 @@ int main(int argc, char **argv)
   {
     // Any messages received?
     while ((numBytesRecvd = server.Recv((char*)data, maxPacketSize)) > 0) {
-      physicsClient.Send((char*)data, numBytesRecvd);
+      if (!vizShouldDrawObjects) {
+        physicsClient.Send((char*)data, numBytesRecvd);
+      }
       vizController.ProcessMessage(VizInterface::MessageViz(data, numBytesRecvd));
     } // while server.Recv
     
+    vizController.Update();
   } // while step
 
   
