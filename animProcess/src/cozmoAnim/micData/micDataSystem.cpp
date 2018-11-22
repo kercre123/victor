@@ -14,6 +14,8 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 #include "coretech/messaging/shared/socketConstants.h"
 
+#include "audioEngine/audioCallback.h"
+#include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
