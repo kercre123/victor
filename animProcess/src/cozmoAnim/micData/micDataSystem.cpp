@@ -725,7 +725,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
         // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
         return;
       }
-      const Alexa* alexa = _context->GetAlexa();
+      Alexa* alexa = _context->GetAlexa();
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
       if( (alexa != nullptr) && showStreamState->HasAnyAlexaResponse() ) {
         alexa->NotifyOfWakeWord( info.startSampleIndex, info.endSampleIndex );

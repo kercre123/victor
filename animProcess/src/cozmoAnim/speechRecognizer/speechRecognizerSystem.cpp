@@ -312,6 +312,8 @@ void SpeechRecognizerSystem::DisableAlexa()
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
     _alexaTrigger.reset();
+  }
+  if (_alexaPlaybackTrigger) {
     // HACK
     _alexaPlaybackTrigger->recognizer->Stop();
     _alexaPlaybackTrigger.reset();
