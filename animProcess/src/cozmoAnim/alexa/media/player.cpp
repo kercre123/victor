@@ -512,8 +512,6 @@ bool AlexaMediaPlayer::stop( SourceId id )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::pause( SourceId id )
 {
-  LOG( "pause NOT IMPLEMENTED" );
-
   if( _readers.find( id ) == _readers.end() ) {
     // LOG( "pause FAIL _readers.find( id ) == _readers.end()" );
     return false;
@@ -541,8 +539,6 @@ bool AlexaMediaPlayer::pause( SourceId id )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::resume( SourceId id )
 {
-  LOG( "resume NOT IMPLEMENTED" );
-
   if( _readers.find( id ) == _readers.end() ) {
     // LOG( "resume _readers.find( id ) == _readers.end()" );
     return false;

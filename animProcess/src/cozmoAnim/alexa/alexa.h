@@ -32,6 +32,7 @@ class AlexaImpl;
 class AnimContext;
 enum class AlexaAuthState : uint8_t;
 enum class AlexaNetworkErrorType : uint8_t;
+enum class AlexaSimpleState : uint8_t;
 enum class AlexaUXState : uint8_t;
 enum class ScreenName : uint8_t;
 
@@ -58,7 +59,7 @@ public:
   
   void NotifyOfTapToTalk() const;
   
-  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) const;
+  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
   
 
 protected:
@@ -97,6 +98,9 @@ private:
   // sets this class's _uxState and messages engine if it changes
   void SetUXState( AlexaUXState newState );
   
+  // Helper to tell MicDataSystem whether the wake word should be active
+  void SetSimpleState( AlexaSimpleState state ) const;
+  
   void PlayErrorAudio( AlexaNetworkErrorType errorType );
   bool IsErrorPlaying() const { return (_timeToEndError_s >= 0.0f); }
   
@@ -110,11 +114,12 @@ private:
   void SetAlexaFace( ScreenName screenName, std::string url="", const std::string& code="" ) const;
   
   // helpers for the file that indicates whether the last robot run ended during an authenticated session
-  const std::string& GetOptInFilePath() const;
-  void TouchOptInFile() const;
-  bool DidAuthenticatePreviously() const;
+  const std::string& GetPersistentFolder() const;
+  void TouchOptInFiles() const;
+  bool DidAuthenticateEver() const;
+  bool DidAuthenticateLastBoot() const;
   void DeleteOptInFile() const;
-  void DeleteUserFolder() const;
+  void DeleteUserFiles() const;
   
   // Play Audio Event Helper
   // Use new create AudioCallbackContext instance, hand off ownership when passing in to method
@@ -142,6 +147,9 @@ private:
   bool _authStartedByUser = false;
   // if during an authentication the state was ever WaitingForCode, this is the most recent code
   std::string _previousCode;
+  
+  // if the user is currently opted out but was once authenticated, even in a previous boot
+  bool _needsReactivation = false;
   
   mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
 };

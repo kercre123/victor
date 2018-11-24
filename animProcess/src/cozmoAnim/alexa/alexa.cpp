@@ -42,6 +42,7 @@ namespace Vector {
 namespace {
   const std::string kAlexaPath = "alexa";
   const std::string kOptedInFile = "optedIn";
+  const std::string kWasOptedInFile = "wasOptedIn";
   const std::string kWebVizModuleName = "alexa";
   #define LOG_CHANNEL "Alexa"
   
@@ -94,8 +95,17 @@ void Alexa::Init(const AnimContext* context)
   
   // assume opted out. If there's a file indicating opted in, create the impl and try to authorize.
   // otherwise, wait for an engine msg saying to start authorization
-  bool previouslyAuthenticated = DidAuthenticatePreviously();
-  SetAlexaActive( previouslyAuthenticated );
+  bool authenticatedLastBoot = DidAuthenticateLastBoot();
+  _needsReactivation = DidAuthenticateEver();
+  
+  if( authenticatedLastBoot ) {
+    SetAlexaActive( true );
+  } else if( _needsReactivation ) {
+    // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
+    // when they say the wake word, it plays "Your device isnt registered. For help, go it its companion app."
+    // TODO: it might make sense to load the least sensitive model to avoid false positives
+    SetSimpleState( AlexaSimpleState::Idle );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,10 +122,7 @@ void Alexa::Update()
     // TODO (VIC-11517): downgrade. for now this is useful in webots
     LOG_WARNING("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
     // enable the wakeword
-    auto* mds = _context->GetMicDataSystem();
-    if( mds != nullptr ) {
-      mds->SetAlexaState( AlexaSimpleState::Idle );
-    }
+    SetSimpleState( AlexaSimpleState::Idle );
   }
   
   if( (_timeToEndError_s >= 0.0f) && (currTime_s >= _timeToEndError_s) ) {
@@ -132,9 +139,13 @@ void Alexa::SetAlexaUsage(bool optedIn)
             "User requests to log %s",
             optedIn ? "in" : "out" );
 
-  // need to do this before we reset _authStartedByUser
-  if( !optedIn ) {
-    // if we were in the process of authenticating alexa, cancel that now (does nothing if not loggin in)
+  if( optedIn ) {
+    // it's possible that an error condition was playing when we started the auth process. Don't let the callback from
+    // that change the state.
+    _timeToEndError_s = -1.0f;
+  } else {
+    // if we were in the process of authenticating alexa, cancel that now (does nothing if not loggin in).
+    // need to do this before we reset _authStartedByUser
     CancelPendingAlexaAuth();
   }
 
@@ -163,14 +174,14 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
   LOG_INFO( "Alexa.SetAlexaActive", "Internally active = %d", active );
   
   if( active && !HasImpl() ) {
+    // wake word might be enabled because of a previous authentication. disable it while trying the actual auth process
+    SetSimpleState( AlexaSimpleState::Disabled );
+    // create impl
     CreateImpl();
   } else if( !active && HasImpl() ) {
+    const auto simpleState = _needsReactivation ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
+    SetSimpleState( simpleState );
     DeleteImpl();
-    
-    auto* mds = _context->GetMicDataSystem();
-    if( mds != nullptr ) {
-      mds->SetAlexaState( AlexaSimpleState::Disabled );
-    }
   }
   
   if( !active ) {
@@ -180,7 +191,7 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     
     DeleteOptInFile();
     if( deleteUserData ) {
-      DeleteUserFolder();
+      DeleteUserFiles();
     }
     // this is also set in other ways, but just to be sure
     SetAuthState( AlexaAuthState::Uninitialized );
@@ -310,12 +321,9 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
     {
       _timeEnableWakeWord_s = -1.0f;
       SetAuthState( state );
-      TouchOptInFile();
-      auto* mds = _context->GetMicDataSystem();
-      if( mds != nullptr ) {
-        const auto simpleState = (_uxState == AlexaUXState::Idle) ? AlexaSimpleState::Idle : AlexaSimpleState::Active;
-        mds->SetAlexaState( simpleState );
-      }
+      TouchOptInFiles();
+      const auto simpleState = (_uxState == AlexaUXState::Idle) ? AlexaSimpleState::Idle : AlexaSimpleState::Active;
+      SetSimpleState( simpleState );
     }
       break;
     case AlexaAuthState::Invalid:
@@ -435,11 +443,8 @@ void Alexa::SetUXState( AlexaUXState newState )
   }
   
   if( _authState == AlexaAuthState::Authorized ) {
-    auto* mds = _context->GetMicDataSystem();
-    if( mds != nullptr ) {
-      const auto simpleState = (_uxState == AlexaUXState::Idle) ? AlexaSimpleState::Idle : AlexaSimpleState::Active;
-      mds->SetAlexaState( simpleState );
-    }
+    const auto simpleState = (_uxState == AlexaUXState::Idle) ? AlexaSimpleState::Idle : AlexaSimpleState::Active;
+    SetSimpleState( simpleState );
   }
   
   if( (oldState == AlexaUXState::Idle) && (_uxState != AlexaUXState::Idle) ) {
@@ -495,17 +500,25 @@ void Alexa::SendUXState()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::TouchOptInFile() const
+void Alexa::TouchOptInFiles() const
 {
-  const auto& fullPath = GetOptInFilePath();
-  Util::FileUtils::TouchFile( fullPath );
+  const auto& fullPath = GetPersistentFolder();
+  Util::FileUtils::TouchFile( fullPath + kOptedInFile );
+  Util::FileUtils::TouchFile( fullPath + kWasOptedInFile );
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Alexa::DidAuthenticatePreviously() const
+bool Alexa::DidAuthenticateLastBoot() const
 {
-  const auto& fullPath = GetOptInFilePath();
-  // todo (VIC-9837): ensure that when an account is unlinked, this file is deleted too
+  const auto& fullPath = GetPersistentFolder() + kOptedInFile;
+  const bool authenticatedLastBoot = !fullPath.empty() && Util::FileUtils::FileExists( fullPath );
+  return authenticatedLastBoot;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool Alexa::DidAuthenticateEver() const
+{
+  const auto& fullPath = GetPersistentFolder() + kWasOptedInFile;
   const bool authenticatedPreviously = !fullPath.empty() && Util::FileUtils::FileExists( fullPath );
   return authenticatedPreviously;
 }
@@ -513,32 +526,39 @@ bool Alexa::DidAuthenticatePreviously() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::DeleteOptInFile() const
 {
-  const auto& fullPath = GetOptInFilePath();
+  const auto& fullPath = GetPersistentFolder() + kOptedInFile;
   if( Util::FileUtils::FileExists( fullPath) ) {
     Util::FileUtils::DeleteFile( fullPath );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::DeleteUserFolder() const
+void Alexa::DeleteUserFiles() const
 {
-  const auto* dataPlatform = _context->GetDataPlatform();
-  const std::string fullPath = dataPlatform->pathToResource( Util::Data::Scope::Persistent,
-                                                             kAlexaPath );
+  // delete all files except for kWasOptedInFile
+  const std::string fullPath = GetPersistentFolder();
+  const size_t pathLen = fullPath.size();
   if( Util::FileUtils::DirectoryExists( fullPath ) ) {
-    Util::FileUtils::RemoveDirectory( fullPath );
+    const bool useFullPath = true; // ideally this would be false, but with recurse==true this param is forced to true
+    const bool recurse = true;
+    auto files = Util::FileUtils::FilesInDirectory( fullPath, useFullPath, nullptr, recurse);
+    for( const auto& filename : files ) {
+      if( filename.substr( pathLen ) != kWasOptedInFile ) {
+        Util::FileUtils::DeleteFile( filename );
+      }
+    }
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::string& Alexa::GetOptInFilePath() const
+const std::string& Alexa::GetPersistentFolder() const
 {
   static std::string fullPath;
   if( fullPath.empty() ) {
     const auto* dataPlatform = _context->GetDataPlatform();
-    const std::string path = Util::FileUtils::AddTrailingFileSeparator(kAlexaPath) + kOptedInFile;
     fullPath = dataPlatform->pathToResource( Util::Data::Scope::Persistent,
-                                             path.c_str() );
+                                             kAlexaPath.c_str() );
+    fullPath = Util::FileUtils::AddTrailingFileSeparator( fullPath );
   }
   return fullPath;
 }
@@ -616,18 +636,24 @@ void Alexa::NotifyOfTapToTalk() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex ) const
+void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex )
 {
-  std::lock_guard<std::mutex> lg{ _implMutex };
-  if( ANKI_VERIFY( _impl != nullptr,
-                   "Alexa.NotifyOfWakeWord.Disabled",
-                   "Wake word was issued when alexa was disabled" ) )
+  using namespace AudioEngine;
+  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+  
+  bool hasImpl = false;
   {
-    _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
-    // Play speach trigger EarCon Audio Event
-    using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+    std::lock_guard<std::mutex> lg{ _implMutex };
+    if( _impl != nullptr ) {
+      _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
+      // Play speach trigger EarCon Audio Event
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+      hasImpl = true;
+    }
+  }
+  
+  if( !hasImpl && _needsReactivation ) {
+    OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }
   
@@ -645,9 +671,11 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
     callbackContext->SetEventCallbackFunc( [this]( const AudioCallbackContext* thisContext,
                                                    const AudioCallbackInfo& callbackInfo )
     {
-      // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
-      _timeToEndError_s = -1.0f;
-      OnAlexaUXStateChanged( _pendingUXState );
+      if( IsErrorPlaying() ) {
+        // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
+        _timeToEndError_s = -1.0f;
+        OnAlexaUXStateChanged( _pendingUXState );
+      }
     });
     
     PlayAudioEvent( GetErrorAudioEvent( errorType ), callbackContext );
@@ -665,6 +693,15 @@ void Alexa::PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::Audi
     using namespace AudioEngine;
     const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
     audioController->PostAudioEvent( eventId, gameObject, callback );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::SetSimpleState( AlexaSimpleState state ) const
+{
+  auto* mds = _context->GetMicDataSystem();
+  if( mds != nullptr ) {
+    mds->SetAlexaState( state );
   }
 }
   
