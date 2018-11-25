@@ -124,6 +124,9 @@ namespace Vision {
     // TODO add documentation
     const Pose3d& GetFaceFocusPose() const;
     void SetFaceFocusPose(const Pose3d faceFocusPose);
+
+    const Pose3d& GetEyeFocusPose() const;
+    void SetEyeFocusPose(const Pose3d eyeFocusPose);
     
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
@@ -205,6 +208,7 @@ namespace Vision {
 
     FaceDirection _faceDirection;
     Pose3d _faceFocusPose;
+    Pose3d _eyeFocusPose;
 
     std::string    _name;
     
@@ -440,6 +444,14 @@ namespace Vision {
 
   inline void TrackedFace::SetFaceFocusPose(const Pose3d faceFocusPose) {
     _faceFocusPose = faceFocusPose;
+  }
+
+  inline const Pose3d& TrackedFace::GetEyeFocusPose() const {
+    return _eyeFocusPose;
+  }
+
+  inline void TrackedFace::SetEyeFocusPose(const Pose3d eyeFocusPose) {
+    _eyeFocusPose = eyeFocusPose;
   }
 } // namespace Vision
 } // namespace Anki

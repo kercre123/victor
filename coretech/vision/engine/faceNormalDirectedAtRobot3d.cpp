@@ -26,6 +26,9 @@ namespace {
   CONSOLE_VAR(f32, kInlierYThreshold,                 "Vision.FaceNormalDirectedAtRobot3d",  100.f);
   CONSOLE_VAR(f32, kInlierZThreshold,                 "Vision.FaceNormalDirectedAtRobot3d",  20.f);
   CONSOLE_VAR(f32, kShiftOutputPointX_mm,             "Vision.FaceNormalDirectedAtRobot3d",  100.f);
+  CONSOLE_VAR(f32, kGazeAgreementX,                   "Vision.FaceNormalDirectedAtRobot3d",  100.f);
+  CONSOLE_VAR(f32, kGazeAgreementY,                   "Vision.FaceNormalDirectedAtRobot3d",  100.f);
+  CONSOLE_VAR(f32, kGazeAgreementZ,                   "Vision.FaceNormalDirectedAtRobot3d",  100.f);
 }
 
 FaceNormalDirectedAtRobot3d::FaceNormalDirectedAtRobot3d()
@@ -295,7 +298,8 @@ bool FaceNormalDirectedAtRobot3d::GetPointFromHeadPose(const Pose3d& headPose, P
 bool FaceNormalDirectedAtRobot3d::GetPointFromEyePose(const Pose3d& eyePose, Point3f& eyeDirectionPoint)
 {
   // TODO is this too far and do we want to put this on the ground plane?
-  Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, -1000.f, 0.f)));
+  // Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, -1000.f, 0.f)));
+  Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, 500.f, 0.f)));
   translatedPose.SetParent(eyePose);
   auto point = translatedPose.GetWithRespectToRoot().GetTranslation();
   auto translation = eyePose.GetTranslation();
@@ -305,17 +309,14 @@ bool FaceNormalDirectedAtRobot3d::GetPointFromEyePose(const Pose3d& eyePose, Poi
   PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromEyePose.SecondPoint",
                    "x: %.3f, y:%.3f, z:%.3f", point.x(), point.y(), point.z());
 
-  eyeDirectionPoint = point;
-  return true;
-  /*
   float alpha = ( -point.z() ) / ( translation.z() - point.z() );
 
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.Alpha",
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromEyePose.Alpha",
                    "alpha: %.3f", alpha);
 
   auto groundPlanePoint = translation * alpha + point * (1 - alpha);
 
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.GroundPlanePoint",
+  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromEyePose.GroundPlanePoint",
                    "x: %.3f, y:%.3f, z:%.3f", groundPlanePoint.x(), groundPlanePoint.y(),
                    groundPlanePoint.z());
 
@@ -326,14 +327,13 @@ bool FaceNormalDirectedAtRobot3d::GetPointFromEyePose(const Pose3d& eyePose, Poi
   // This avoids finding a intersection with the ground plane when face normal is
   // directed above the horizon.
   if (alpha > 1) {
-    faceDirectionPoint = groundPlanePoint;
+    eyeDirectionPoint = groundPlanePoint;
     return true;
   } else {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointFromHeadPose.FaceRayAboveHorizon", "");
-    faceDirectionPoint = point;
+    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointEyePose.EyeRayAboveHorizon", "");
+    eyeDirectionPoint = point;
     return false;
   }
-  */
 }
 
 bool FaceNormalDirectedAtRobot3d::IsFaceFocused() const
@@ -380,6 +380,43 @@ Point3f FaceNormalDirectedAtRobot3d::GetCurrentEyeDirection() const
                    "x: %.3f, y:%.3f, z:%.3f", point.x(), point.y(), point.z());
   return point;
 }
+
+void FaceNormalDirectedAtRobot3d::DoEyeAndHeadAgree(const Point3f& headPointAverage,
+                                                    const Point3f& eyePointAverage)
+{
+  // If things are close enough say they agree ... does directtionality matter?
+  auto difference = headPointAverage - eyePointAverage;
+  if (difference.x() < kGazeAgreementX && difference.y() < kGazeAgreementY &&
+      difference.z() < kGazeAgreementZ) {
+    _gazeAgreement = true;
+  }
+}
+
+Point3f FaceNormalDirectedAtRobot3d::GetTotalGazeAvergae() const
+{
+  if (_gazeAgreement) {
+    return (GetEyeDirectionAverage() + GetFaceDirectionSurfaceAverage()) * .5f;
+  } else {
+    return GetFaceDirectionSurfaceAverage();
+  }
+}
+
+void FaceNormalDirectedAtRobot3d::ClearHistory() {
+  _initialized = false;
+  for (auto& faceDirection: _faceDirectionSurfaceHistory) {
+      faceDirection.point = Point3f(FaceDirectionData3d::kDefaultDistance_cm, FaceDirectionData3d::kDefaultDistance_cm, FaceDirectionData3d::kDefaultDistance_cm);
+      faceDirection.inlier = false;
+      faceDirection.include  = false;
+      faceDirection.angles = Point2f(FaceDirectionData3d::kYawMin_deg, FaceDirectionData3d::kPitchMin_deg);
+  }
+  for (auto& eyeDirection: _eyeDirectionHistory) {
+      eyeDirection.point = Point3f(FaceDirectionData3d::kDefaultDistance_cm, FaceDirectionData3d::kDefaultDistance_cm, FaceDirectionData3d::kDefaultDistance_cm);
+      eyeDirection.inlier = false;
+      eyeDirection.include  = false;
+      eyeDirection.angles = Point2f(FaceDirectionData3d::kYawMin_deg, FaceDirectionData3d::kPitchMin_deg);
+  }
+}
+
 
 } // namespace Vision
 } // namespace Anki

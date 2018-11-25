@@ -66,8 +66,12 @@ public:
   Point3f GetCurrentEyeDirection() const;
   std::vector<FaceDirectionData3d> const& GetEyeDirectionHistory() {return _eyeDirectionHistory;}
 
+  Point3f GetTotalGazeAvergae() const;
+
   bool GetExpired(const TimeStamp_t currentTime) const;
   bool IsFaceFocused() const;
+
+  void ClearHistory();
 
 private:
   int FindInliers(const Point3f& faceDirectionAverage);
@@ -83,6 +87,8 @@ private:
   Point3f ComputeEyeDirectionAverage(const bool filterOutliers);
   Point3f RecomputeEyeDirectionAverage();
 
+  void DoEyeAndHeadAgree(const Point3f& headPointAverage, const Point3f& eyePointAverage);
+
   Pose3d _headPose;
   Pose3d _eyePose;
   TimeStamp_t _lastUpdated;
@@ -97,6 +103,8 @@ private:
 
   std::vector<FaceDirectionData3d> _eyeDirectionHistory;
   Point3f _eyeDirectionAverage;
+
+  bool _gazeAgreement;
 };
 
 }

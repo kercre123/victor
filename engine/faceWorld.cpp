@@ -691,13 +691,23 @@ namespace Vector {
       PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceDirectionAverage",
                           "x: %.3f, y: %.3f, z: %.3f", faceDirectionAverage.x(), faceDirectionAverage.y(),
                           faceDirectionAverage.z());
-      Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), faceDirectionAverage));
+      Pose3d faceFocusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), faceDirectionAverage));
       // Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(1022.112f, 393.799f, 0.f)));
       // set the pose ... i think this is right but ... let's verify
-      focusPose.SetParent(_robot->GetWorldOrigin());
+      faceFocusPose.SetParent(_robot->GetWorldOrigin());
       // _robot->GetPoseOriginList().GetOriginByID(histOriginID));
       // set root?
-      face.SetFaceFocusPose(focusPose);
+      face.SetFaceFocusPose(faceFocusPose);
+
+      auto eyeDirectionAverage = entry.GetEyeDirectionAverage();
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFaceDireciton3d.FaceDirectionAverage",
+                          "x: %.3f, y: %.3f, z: %.3f", eyeDirectionAverage.x(), eyeDirectionAverage.y(),
+                          eyeDirectionAverage.z());
+      Pose3d eyeFocusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), eyeDirectionAverage));
+      // Pose3d focusPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(1022.112f, 393.799f, 0.f)));
+      // set the pose ... i think this is right but ... let's verify
+      eyeFocusPose.SetParent(_robot->GetWorldOrigin());
+      face.SetEyeFocusPose(eyeFocusPose);
     }
     return RESULT_OK;
   }
@@ -1173,7 +1183,8 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose, SmartFaceID& faceID) const
+  bool FaceWorld::GetFaceFocusPose(const u32 withinLast_ms, Pose3d& faceFocusPose,
+                                   Pose3d& eyeFocusPose, SmartFaceID& faceID) const
   {
     // Loop over all the faces and see if any of them are making eye contact
     const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
@@ -1190,6 +1201,7 @@ namespace Vector {
         {
           PRINT_NAMED_WARNING("FaceWorld.GetFaceFocusPose.FaceFocused", "");
           faceFocusPose = entry.second.face.GetFaceFocusPose();
+          eyeFocusPose = entry.second.face.GetEyeFocusPose();
           faceID = GetSmartFaceID(entry.second.face.GetID());
           return true;
         } else {
@@ -1201,9 +1213,27 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::ClearFaceDirectionHisotry(const SmartFaceID& faceID)
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (faceID.MatchesFaceID(entry.second.face.GetID()))
+      {
+        auto& faceDirectionEntry = _facesDirectedAtRobot3d[entry.second.face.GetID()];
+        faceDirectionEntry.ClearHistory();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool FaceWorld::FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
                                   const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const
   {
+    PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FaceIDToIgnore", "face ID: %s",
+                        smartFaceIDToIgnore.GetDebugStr().c_str());
     for (const auto& entry: _faceEntries)
     {
       const auto& headPose = entry.second.face.GetHeadPose();
@@ -1215,10 +1245,12 @@ namespace Vector {
         PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FaceTurnAngle", "angle %.3f", RAD_TO_DEG(faceTurnAngle.ToFloat()));
         PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.TurnAngle", "angle %.3f", RAD_TO_DEG(turnAngle.ToFloat()));
         PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.HorizontalFOV", "angle %.3f", RAD_TO_DEG(horizontalFOV.ToFloat()));
-        if ( (turnAngle - faceTurnAngle) <= (horizontalFOV/2.f) &&
+        if ( ((turnAngle - faceTurnAngle) <= (horizontalFOV/2.f)) &&
+             ((turnAngle - faceTurnAngle) >= (-horizontalFOV/2.f)) &&
              !smartFaceIDToIgnore.MatchesFaceID(entry.second.face.GetID()))
         {
-          PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FoundAFaceToTurnTowards", "");
+          PRINT_NAMED_WARNING("FaceWorld.FaceInTurnAngle.FoundAFaceToTurnTowards", "face ID: %d",
+                              entry.second.face.GetID());
           faceIDToTurnTowards.Reset(*_robot, entry.second.face.GetID());
           return true;
         }

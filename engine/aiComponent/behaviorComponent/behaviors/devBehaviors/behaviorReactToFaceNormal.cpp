@@ -44,7 +44,7 @@ namespace {
   CONSOLE_VAR(f32,  kMaxPanSpeed_radPerSec,                  "Vision.FaceNormalDirectedAtRobot3d",  MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
   CONSOLE_VAR(f32,  kMaxPanAccel_radPerSec2,                 "Vision.FaceNormalDirectedAtRobot3d",  10.f);
   CONSOLE_VAR(bool, kUseEyeContact,                          "Vision.FaceNormalDirectedAtRobot3d",  true);
-  CONSOLE_VAR(f32,  kDistanceForAboveHorizonSearch_mm2,      "Vision.FaceNormalDirectedAtRobot3d",  1000000.f);
+  CONSOLE_VAR(f32,  kDistanceForAboveHorizonSearch_mm2,      "Vision.FaceNormalDirectedAtRobot3d",  0.f);
   CONSOLE_VAR(f32,  kConeFor180TurnForFaceSearch_deg,        "Vision.FaceNormalDirectedAtRobot3d",  40.f);
   CONSOLE_VAR(f32,  kSearchForFaceTurnRightAngle_deg,        "Vision.FaceNormalDirectedAtRobot3d",  -90.f);
   CONSOLE_VAR(f32,  kSearchForFaceTurnLeftAngle_deg,         "Vision.FaceNormalDirectedAtRobot3d",  90.f);
@@ -55,7 +55,7 @@ namespace {
   CONSOLE_VAR(s32,  kSearchForFaceNumberOfImagesToWait,      "Vision.FaceNormalDirectedAtRobot3d",  5);
   CONSOLE_VAR(bool, kFindSurfacePointsUsingFaceDirection,    "Vision.FaceNormalDirectedAtRobot3d",  false);
   CONSOLE_VAR(bool, kFindFacesUsingFaceDirection,            "Vision.FaceNormalDirectedAtRobot3d",  true);
-  CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.FaceNormalDirectedAtRobot3d",  true);
+  CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.FaceNormalDirectedAtRobot3d",  false);
   CONSOLE_VAR(s32,  kNumberOfTurnsForSurfacePoint,           "Vision.FaceNormalDirectedAtRobot3d",  1);
 }
 
@@ -132,18 +132,24 @@ void BehaviorReactToFaceNormal::TransitionToCheckFaceDirection()
 {
   Pose3d faceFocusPose;
   // SmartFaceID faceID;
-  if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose, _faceIDToTurnBackTo)) {
+  Pose3d eyeFocusPose;
+  if(GetBEI().GetFaceWorld().GetFaceFocusPose(500, faceFocusPose, eyeFocusPose, _faceIDToTurnBackTo)) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d faceFocusPoseWRTRobot;
+    Pose3d eyeFocusPoseWRTRobot;
 
-    if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
+    if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot) &&
+        eyeFocusPose.GetWithRespectTo(robotPose, eyeFocusPoseWRTRobot)) {
       auto translation = faceFocusPoseWRTRobot.GetTranslation();
+      auto eyeTranslation = eyeFocusPoseWRTRobot.GetTranslation();
       LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.TranslationWRTRobot",
                "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
       auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(500);
 
-
-      if (translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2 && kFindFacesUsingFaceDirection) {
+      GetBEI().GetFaceWorldMutable().ClearFaceDirectionHisotry(_faceIDToTurnBackTo);
+      
+      if (((translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2 ||
+            eyeTranslation.LengthSq() > kDistanceForAboveHorizonSearch_mm2) && kFindFacesUsingFaceDirection)) {
         LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.GazeFarEnoughToLookUp", "");
         LOG_INFO("BehaviorReactToFaceNormal.TransitionToCheckFaceDirection.DistanceFromRobot",
                  "distance: %.3f", translation.LengthSq());
