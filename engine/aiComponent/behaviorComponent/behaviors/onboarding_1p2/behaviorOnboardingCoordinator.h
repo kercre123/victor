@@ -43,6 +43,7 @@ namespace Util{
 
 namespace Vector {
 
+class BehaviorOnboarding1p0;
 enum class OnboardingStages : uint8_t;
 enum class OnboardingPhase : uint8_t;
 enum class OnboardingPhaseState : uint8_t;
@@ -51,8 +52,6 @@ class BehaviorOnboardingCoordinator : public ICozmoBehavior
 {
 public:
   virtual ~BehaviorOnboardingCoordinator() = default;
-
-  // void SetOnboardingStage( OnboardingStages stage ) { SaveToDisk(stage); }
 
   const static std::string kOnboardingFolder;
   const static std::string kOnboardingFilename;
@@ -123,6 +122,7 @@ private:
     std::string saveFolder;
 
     ICozmoBehaviorPtr behaviorPowerOff;
+    std::shared_ptr<BehaviorOnboarding1p0> behaviorOnboarding1p0;
 
     float startTimeout_s;
     float completionTimeout_s;

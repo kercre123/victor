@@ -184,14 +184,6 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
     if( _countUntilResetOnboarding > 0 ) {
       // onboarding was just stopped because we plan to reset it. Set the stage
       _stage = OnboardingStages::NotStarted;
-
-      // TODO:(STR) hail mary back compatibility: messaging may not be relevant any more
-      // // explicitly pass the stage so we don't have to worry about when messages are received
-      // std::shared_ptr<BehaviorOnboarding1p0> castPtr;
-      // _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding1p0), castPtr);
-      // if( castPtr != nullptr ) {
-      //   castPtr->SetOnboardingStage(_stage);
-      // }
     }
   }
   
@@ -237,13 +229,6 @@ void BehaviorsBootLoader::InitOnboarding()
                 "Robot booted with onboarding state %s", OnboardingStagesToString(_stage));
   
   if( static_cast<u8>(_stage) < static_cast<u8>(OnboardingStages::Complete) ) {
-    // TODO:(STR) hail mary back compatibility: messaging may not be relevant any more
-    // // explicitly pass the stage so we don't have to worry about when messages are received
-    // std::shared_ptr<BehaviorOnboarding1p0> castPtr;
-    // _behaviorContainer->FindBehaviorByIDAndDowncast(BEHAVIOR_ID(Onboarding), BEHAVIOR_CLASS(Onboarding1p0), castPtr);
-    // if( castPtr != nullptr ) {
-    //   castPtr->SetOnboardingStage(_stage);
-    // }
     SetNewBehavior( _behaviors.onboardingBehavior );
   } else if( _stage == OnboardingStages::Complete ) {
     SetNewBehavior( _behaviors.normalBaseBehavior );

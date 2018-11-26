@@ -39,6 +39,8 @@ public:
   const static std::string kOnboardingFilename;
   const static std::string kOnboardingStageKey;
 
+  void FwdEventToHandleWhileActivated(const AppToEngineEvent& event);
+
 protected:
 
   // Enforce creation through BehaviorFactory
