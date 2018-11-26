@@ -47,9 +47,15 @@ if [ ${INCREMENTAL} -eq 0 ]; then
     fi
 fi
 
+if [ -d ${PYTHON_GEN_OUT} ]; then
+    echo "> Clearing old proto files"
+    rm -f ${PYTHON_GEN_OUT}/*.proto
+    rm -f ${PYTHON_GEN_OUT}/*_pb2*.py
+fi
+
 echo "> Updating proto files"
 mkdir -p ${PYTHON_GEN_OUT}
-cp ${TOPLEVEL}/cloud/gateway/*.proto ${PYTHON_GEN_OUT}
+cp ${TOPLEVEL}/tools/protobuf/gateway/public/*.proto ${PYTHON_GEN_OUT}
 sed -i -e 's/import "\([^\/]*\).proto"/import "anki_vector\/messaging\/\1.proto"/g' ${PYTHON_GEN_OUT}/*.proto
 rm ${PYTHON_GEN_OUT}/*.proto-e
 

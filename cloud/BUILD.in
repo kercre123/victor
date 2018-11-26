@@ -82,10 +82,10 @@ go_project(
 
 cxx_project(
     name = 'gateway_grpc',
-    srcs = ['gateway/external_interface.proto']
+    srcs = ['../tools/protobuf/gateway/public/external_interface.proto']
 )
 
 cxx_project(
     name = 'gateway_proto',
-    srcs = glob(['gateway/*.proto'])
+    srcs = glob(['../tools/protobuf/gateway/public/*.proto'])
 )
