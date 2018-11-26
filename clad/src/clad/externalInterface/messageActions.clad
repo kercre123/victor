@@ -166,6 +166,11 @@ message PlayAnimation {
     bool    ignoreLiftTrack=0
 }
 
+// ListAnimations
+message ListAnimations {
+    
+}
+
 // PlayAnimationGroup
 message PlayAnimationGroup {
     uint_32 numLoops,

@@ -894,7 +894,7 @@ autounion MessageGameToEngine
   MoveLift                           MoveLift                           = 0x04,
   DriveArc                           DriveArc                           = 0x05,
   RobotHistoryRequest                RobotHistoryRequest                = 0x06,
-  // Empty, feel free to use
+  ListAnimations                     ListAnimations                     = 0x07,
   DisplayFaceImageRGBChunk           DisplayFaceImageRGBChunk           = 0x08,
   AppIntent                          AppIntent                          = 0x09,
   CancelFaceEnrollment               CancelFaceEnrollment               = 0x0A,

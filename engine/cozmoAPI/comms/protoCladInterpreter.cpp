@@ -43,15 +43,12 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
     case external_interface::GatewayWrapper::kDriveWheelsRequest:
       ProtoDriveWheelsRequestToClad(proto_message, clad_message);
     break;
-    /*
-    case external_interface::GatewayWrapperTag::kPlayAnimationRequest:
-      ProtoPlayAnimationToClad(clad_message, proto_message);
-      converted_to_clad = true;
+    case external_interface::GatewayWrapper::kPlayAnimationRequest:
+      ProtoPlayAnimationRequestToClad(proto_message, clad_message);
     break;
-    
-    case external_interface::GatewayWrapperTag::kListAnimationsRequest:
-      ListAnimationsRequestToClad(clad_message, proto_message)
-    */
+    case external_interface::GatewayWrapper::kListAnimationsRequest:
+      ProtoListAnimationsRequestToClad(proto_message, clad_message);
+    break;
     default:
       converted_to_clad = false;
     break;
@@ -59,9 +56,10 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
 
   if(converted_to_clad) {
     cozmo_context->GetExternalInterface()->Broadcast(clad_message);
-
+  } 
+  if (converted_to_clad or true) { //DO NOT SUBMIT (make this part of the previous block)
     auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
-    LOG_WARNING("ron_proto_to_clad_testing", "message.descriptor: %d %s %s",
+    LOG_WARNING("ron_proto_to_clad_testing", "In p2c (request) Redirect(): message.descriptor: %d %s %s",
       proto_message.oneof_message_type_case(),
       proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
       proto_message.GetMetadata().descriptor->full_name().c_str());
@@ -74,46 +72,80 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   external_interface::GatewayWrapper proto_message;
   bool converted_to_proto = true;
 
+  LOG_WARNING("ron_proto_to_clad_testing", "In c2p (response) Redirect(). Tag: %d", (int)message.GetTag());
   switch(message.GetTag()) {
     case ExternalInterface::MessageGameToEngineTag::DriveWheels:
-      
+      CladDriveWheelsToProto(message, proto_message);
+    break;
+    case ExternalInterface::MessageGameToEngineTag::PlayAnimation:
+      CladPlayAnimationToProto(message, proto_message);
+    break;
+    case ExternalInterface::MessageGameToEngineTag::RequestAvailableAnimations:
+      CladListAnimationsToProto(message, proto_message);
     break;
     default:
       converted_to_proto = false;
     break;
   }
 
+  LOG_WARNING("ron_proto_to_clad_testing", "In c2p (response) Redirect(). converted_to_proto: %d", converted_to_proto);
+  if(converted_to_proto) {
+    LOG_WARNING("ron_proto_to_clad_testing", "In c2p (response) Redirect(): %s", MessageGameToEngineTagToString(message.GetTag()));
+  }
   return converted_to_proto;
 }
-
 
 void ProtoCladInterpreter::ProtoDriveWheelsRequestToClad(
       const external_interface::GatewayWrapper & proto_message,
       ExternalInterface::MessageGameToEngine & clad_message) {
   Anki::Vector::ExternalInterface::DriveWheels drive_wheels;
-  drive_wheels.lwheel_speed_mmps = proto_message.drive_wheels_request().left_wheel_mmps();
-  drive_wheels.rwheel_speed_mmps = proto_message.drive_wheels_request().right_wheel_mmps();
+  drive_wheels.lwheel_speed_mmps =  proto_message.drive_wheels_request().left_wheel_mmps();
+  drive_wheels.rwheel_speed_mmps =  proto_message.drive_wheels_request().right_wheel_mmps();
   drive_wheels.lwheel_accel_mmps2 = proto_message.drive_wheels_request().right_wheel_mmps2();
   drive_wheels.rwheel_accel_mmps2 = proto_message.drive_wheels_request().left_wheel_mmps2();
   clad_message.Set_DriveWheels(drive_wheels);
 }
 
-/*
-void ProtoCladInterpreter::ProtoPlayAnimationToClad(
-      ExternalInterface::MessageGameToEngine & clad_message
-      const external_interface::GatewayWrapper & proto_message) {
+void ProtoCladInterpreter::ProtoPlayAnimationRequestToClad(
+      const external_interface::GatewayWrapper & proto_message,
+      ExternalInterface::MessageGameToEngine & clad_message) {
   Anki::Vector::ExternalInterface::PlayAnimation play_animation;
-  play_animation.animationName = proto_message.play_animation_request().animation()
+  play_animation.animationName =   proto_message.play_animation_request().animation().name();
+  play_animation.ignoreBodyTrack = proto_message.play_animation_request().ignore_body_track();
+  play_animation.ignoreHeadTrack = proto_message.play_animation_request().ignore_head_track();
+  play_animation.ignoreLiftTrack = proto_message.play_animation_request().ignore_lift_track();
+  play_animation.numLoops =        proto_message.play_animation_request().loops();
   clad_message.Set_PlayAnimation(play_animation);
 }
-*/
+
+void ProtoCladInterpreter::ProtoListAnimationsRequestToClad(
+      const external_interface::GatewayWrapper & proto_message,
+      ExternalInterface::MessageGameToEngine & clad_message) {
+  Anki::Vector::ExternalInterface::ListAnimations list_animations;
+  clad_message.Set_ListAnimations(list_animations);
+}
+
 
 void ProtoCladInterpreter::CladDriveWheelsToProto(
       const ExternalInterface::MessageGameToEngine & clad_message,
-      external_interface::GatewayWrapper & proto_message) {
-  
+      external_interface::GatewayWrapper & proto_message) { 
   external_interface::DriveWheelsResponse drive_wheels_response;
   proto_message = ExternalMessageRouter::WrapResponse(&drive_wheels_response);
+}
+
+void ProtoCladInterpreter::CladPlayAnimationToProto(
+      const ExternalInterface::MessageGameToEngine & clad_message,
+      external_interface::GatewayWrapper & proto_message) { 
+  external_interface::PlayAnimationResponse play_animation_response;
+  //DO NOT SUBMIT until you're sure you have the response correctly formatted. There are two values there.
+  proto_message = ExternalMessageRouter::WrapResponse(&play_animation_response);
+}
+
+void ProtoCladInterpreter::CladListAnimationsToProto(
+      const ExternalInterface::MessageGameToEngine & clad_message,
+      external_interface::GatewayWrapper & proto_message) { 
+  external_interface::ListAnimationsResponse list_animations_response;
+  proto_message = ExternalMessageRouter::WrapResponse(&list_animations_response);
 }
 
 } // namespace Vector

@@ -319,7 +319,6 @@ namespace Anki {
         bytesRemaining -= bytesUnpacked;
         messagePtr += bytesUnpacked;
 
-        LOG_WARNING("ron_proto_to_clad_testing", "%s", MessageGameToEngineTagToString(message.GetTag()));
         if (ProtoCladInterpreter::Redirect(message, _context)) {
           return RESULT_OK;
         }
