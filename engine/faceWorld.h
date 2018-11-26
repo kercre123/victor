@@ -16,6 +16,7 @@
 #define __Anki_Cozmo_FaceWorld_H__
 
 #include "coretech/common/engine/robotTimeStamp.h"
+#include "coretech/vision/engine/gazeDirection.h"
 #include "coretech/vision/engine/trackedFace.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -85,6 +86,7 @@ namespace Vector {
     
     Result Update(const std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(const Vision::TrackedFace& face);
+    Result AddOrUpdateGazeDirection(Vision::TrackedFace& face, const TimeStamp_t& timeStamp);
   
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
@@ -240,6 +242,8 @@ namespace Vector {
     // faces saved album data for the initial entry so it can work across boots
     using ObservationHistoryMap = std::map<Vision::FaceID_t, ObservationTimeHistory>;
     ObservationHistoryMap _wallTimesObserved;
+
+    std::map<Vision::FaceID_t, Vision::GazeDirection> _gazeDirection;
     
   }; // class FaceWorld
   

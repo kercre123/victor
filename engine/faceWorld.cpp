@@ -61,11 +61,14 @@ namespace Vector {
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBackFace,      "WasRotatingTooFast.Face.NumToLookBack", 5);
 
+  CONSOLE_VAR(bool,  kRenderGazeDirectionPoints,      "Vision.GazeDirection", false);
+
   static const char * const kLoggingChannelName = "FaceRecognizer";
   static const char * const kIsNamedStringDAS = "1";
   static const char * const kIsSessionOnlyStringDAS = "0";
 
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
+  static const Point3f kGazeGroundPointSize{100.f, 100.f, 100.f};
   
   static const std::string kWebVizObservedObjectsName = "observedobjects";
   static const std::string kWebVizNavMapName = "navmap";
@@ -467,6 +470,12 @@ namespace Vector {
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
     faceEntry->numTimesObserved++;
 
+    // This is where I am going to update my faceEntry, but only
+    // if it has parts (aka has eyes)
+    if (faceEntry->face.HasEyes()) {
+      AddOrUpdateGazeDirection(faceEntry->face, faceEntry->face.GetTimeStamp());
+    }
+
     // Keep up with how many times non-tracking-only faces have been seen facing
     // facing the camera (and thus potentially recognizable)
     if(faceEntry->face.IsFacingCamera())
@@ -602,6 +611,24 @@ namespace Vector {
       */
     }
 
+    return RESULT_OK;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result FaceWorld::AddOrUpdateGazeDirection(Vision::TrackedFace& face,
+                                             const TimeStamp_t& timeStamp)
+  {
+    auto& entry = _gazeDirection[face.GetID()];
+    entry.Update(face, timeStamp);
+    const bool isGazeStable = entry.IsStable();
+    face.SetGazeDirectionStable(isGazeStable);
+    if (isGazeStable)
+    {
+      auto faceDirectionAverage = entry.GetGazeDirectionAverage();
+      Pose3d gazeDirectionPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), faceDirectionAverage));
+      gazeDirectionPose.SetParent(_robot->GetWorldOrigin());
+      face.SetGazeDirectionPose(gazeDirectionPose);
+    }
     return RESULT_OK;
   }
 
@@ -957,6 +984,24 @@ namespace Vector {
                                                                               kHumanHeadSize,
                                                                               trackedFace.GetHeadPose(),
                                                                               drawFaceColor);
+
+    if (kRenderGazeDirectionPoints) {
+      auto& entry = _gazeDirection[trackedFace.GetID()];
+      const s32 startingObjectId = 2345;
+      const auto currentGazeDirection = entry.GetCurrentGazeDirection();
+      Pose3d currentGazePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentGazeDirection));
+      faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
+                                                                               kGazeGroundPointSize,
+                                                                               currentGazePose,
+                                                                               ::Anki::NamedColors::ORANGE);
+
+      const auto averageGazeDirection = entry.GetGazeDirectionAverage();
+      Pose3d averageGazePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageGazeDirection));
+      faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
+                                                                               kGazeGroundPointSize,
+                                                                               averageGazePose,
+                                                                               ::Anki::NamedColors::GREEN);
+    }
 
     if(drawInImage)
     {

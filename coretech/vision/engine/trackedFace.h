@@ -142,7 +142,7 @@ namespace Vision {
     bool IsMakingEyeContact() const { return _isMakingEyeContact; }
     void SetEyeContact(const bool eyeContact);
 
-    // Face focused
+    // Is gaze direction stable
     bool IsGazeDirectionStable() const { return _isGazeDirectionStable; }
     void SetGazeDirectionStable(const bool gazeDirecitonStable);
 
@@ -170,7 +170,6 @@ namespace Vision {
     Point2f        _eyeGazeAverage;
 
     Pose3d _gazeDirectionPose;
-    Pose3d _eyeFocusPose;
 
     std::string    _name;
     
