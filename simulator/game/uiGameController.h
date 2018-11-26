@@ -329,7 +329,7 @@ protected:
 
   // ====== Accessors =====
   s32 GetStepTimeMS() const;
-  webots::Supervisor* GetSupervisor();
+  webots::Supervisor& GetSupervisor();
 
   PoseOriginList _poseOriginList;
   

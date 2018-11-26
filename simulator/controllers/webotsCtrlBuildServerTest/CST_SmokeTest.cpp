@@ -37,8 +37,8 @@ s32 CST_SmokeTest::UpdateSimInternal()
   const double waitTime_s = 5.0;
   
   if (_startTime_s == 0.0) {
-    _startTime_s = GetSupervisor()->getTime();
-  } else if (GetSupervisor()->getTime() > _startTime_s + waitTime_s) {
+    _startTime_s = GetSupervisor().getTime();
+  } else if (GetSupervisor().getTime() > _startTime_s + waitTime_s) {
     CST_EXIT();
   }
   

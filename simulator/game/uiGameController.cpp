@@ -1738,9 +1738,9 @@ namespace Anki {
       return _stepTimeMS;
     }
     
-    webots::Supervisor* UiGameController::GetSupervisor()
+    webots::Supervisor& UiGameController::GetSupervisor()
     {
-      return &_supervisor;
+      return _supervisor;
     }
     
     const Pose3d& UiGameController::GetRobotPose() const
@@ -1981,7 +1981,7 @@ namespace Anki {
     const std::string UiGameController::GetAnimationTestName() const
     {
       std::string animTestName;
-      WebotsHelpers::GetFieldAsString(_robotNode, "animationTestName", animTestName);
+      WebotsHelpers::GetFieldAsString(*_robotNode, "animationTestName", animTestName);
       return animTestName;
     }
 
@@ -2080,7 +2080,7 @@ namespace Anki {
       << p.GetRotationAxis().x() << " " << p.GetRotationAxis().y() << " " << p.GetRotationAxis().z() << " "
       << p.GetRotationAngle().ToFloat() << " }";
       
-      webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
+      webots::Field* rootChildren = GetSupervisor().getRoot()->getField("children");
       int numRootChildren = rootChildren->getCount();
       rootChildren->importMFNodeFromString(numRootChildren, ss.str());
       

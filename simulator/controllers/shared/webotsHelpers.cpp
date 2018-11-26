@@ -10,6 +10,9 @@
 **/
 
 #include "simulator/controllers/shared/webotsHelpers.h"
+
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/pose.h"
 #include "util/logging/logging.h"
 
 #include <webots/Supervisor.hpp>
@@ -18,11 +21,9 @@
 namespace Anki {
 namespace WebotsHelpers {
 
-std::vector<RootNodeInfo> GetAllSceneTreeNodes(const webots::Supervisor* const supervisor)
+std::vector<RootNodeInfo> GetAllSceneTreeNodes(const webots::Supervisor& supervisor)
 {
-  DEV_ASSERT(supervisor != nullptr, "WebotsHelpers.GetAllSceneTreeNodes.NullSupervisor");
-
-  const auto* rootNode = supervisor->getRoot();
+  const auto* rootNode = supervisor.getRoot();
   DEV_ASSERT(rootNode != nullptr, "WebotsHelpers.GetAllSceneTreeNodes.NullSupervisorRoot");
   
   const auto* rootChildren = rootNode->getField("children");
@@ -41,7 +42,7 @@ std::vector<RootNodeInfo> GetAllSceneTreeNodes(const webots::Supervisor* const s
 }
 
 
-RootNodeInfo GetFirstMatchingSceneTreeNode(const webots::Supervisor* const supervisor, const std::string& typeNameToMatch)
+RootNodeInfo GetFirstMatchingSceneTreeNode(const webots::Supervisor& supervisor, const std::string& typeNameToMatch)
 {
   RootNodeInfo foundNode;
   for (const auto& node : GetAllSceneTreeNodes(supervisor)) {
@@ -54,7 +55,7 @@ RootNodeInfo GetFirstMatchingSceneTreeNode(const webots::Supervisor* const super
 }
 
 
-std::vector<RootNodeInfo> GetMatchingSceneTreeNodes(const webots::Supervisor* const supervisor, const std::string& typeNameToMatch)
+std::vector<RootNodeInfo> GetMatchingSceneTreeNodes(const webots::Supervisor& supervisor, const std::string& typeNameToMatch)
 {
   std::vector<RootNodeInfo> foundNodes;
   for (const auto& node : GetAllSceneTreeNodes(supervisor)) {
@@ -66,22 +67,17 @@ std::vector<RootNodeInfo> GetMatchingSceneTreeNodes(const webots::Supervisor* co
 }
 
 
-bool GetFieldAsString(const webots::Node* const rootNode,
+bool GetFieldAsString(const webots::Node& parentNode,
                       const std::string& fieldName,
                       std::string& outputStr,
                       const bool failOnEmptyString)
 {
-  DEV_ASSERT_MSG(rootNode != nullptr,
-                 "WebotsHelpers.GetFieldAsString.NullRootNode",
-                 "Null root node (field name %s)",
-                 fieldName.c_str());
-
-  const auto* field = rootNode->getField(fieldName);
+  const auto* field = parentNode.getField(fieldName);
   if (field == nullptr) {
     PRINT_NAMED_ERROR("WebotsHelpers.GetFieldAsString.NullField",
-                      "Field named %s does not exist (root node type %s)",
+                      "Field named %s does not exist (parent node type %s)",
                       fieldName.c_str(),
-                      rootNode->getTypeName().c_str());
+                      parentNode.getTypeName().c_str());
     return false;
   } else if (field->getType() != webots::Field::SF_STRING) {
     PRINT_NAMED_ERROR("WebotsHelpers.GetFieldAsString.WrongFieldType",
@@ -121,6 +117,55 @@ int AddSceneTreeNode(const webots::Supervisor& supervisor,
   
   const int newNodeId = newNode->getId();
   return newNodeId;
+}
+
+  
+void GetWebotsTranslation(const Pose3d& poseIn,
+                          double* webotsTranslationOut,
+                          const bool convertToMeters)
+{
+  const auto& trans = poseIn.GetTranslation();
+  for (int i=0 ; i<3 ; i++) {
+    webotsTranslationOut[i] = convertToMeters ? MM_TO_M(trans[i]) : trans[i];
+  }
+}
+
+  
+void GetWebotsRotation(const Pose3d& poseIn,
+                       double* webotsRotationOut)
+{
+  const auto& angle_rad = poseIn.GetRotationAngle().ToDouble();
+  const auto& axis = poseIn.GetRotationAxis();
+  
+  webotsRotationOut[0] = axis.x();
+  webotsRotationOut[1] = axis.y();
+  webotsRotationOut[2] = axis.z();
+  webotsRotationOut[3] = angle_rad;
+}
+
+
+Pose3d ConvertTranslationRotationToPose(const double* transIn,
+                                        const double* rotIn,
+                                        const bool convertToMillimeters)
+{
+  Vec3f translation;
+  for (int i=0 ; i<3 ; i++) {
+    translation[i] = convertToMillimeters ? M_TO_MM(transIn[i]) : transIn[i];
+  }
+  
+  Pose3d outPose(rotIn[3],
+                 Vec3f(rotIn[0], rotIn[1], rotIn[2]),
+                 std::move(translation));
+  
+  return outPose;
+}
+
+  
+void ConvertRgbaToWebotsColorArray(const uint32_t rgbaColor, double* webotsColorOut)
+{
+  webotsColorOut[0] = ((rgbaColor >> 24) & 0xFF) / 255.0;
+  webotsColorOut[1] = ((rgbaColor >> 16) & 0xFF) / 255.0;
+  webotsColorOut[2] = ((rgbaColor >>  8) & 0xFF) / 255.0;
 }
 
 

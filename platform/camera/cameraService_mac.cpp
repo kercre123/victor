@@ -158,7 +158,7 @@ namespace Anki {
           // setVisibility() requires a pointer to the camera NODE, _not_ the camera device (which is of type
           // webots::Camera*). There seems to be no good way to get the underlying node pointer of the camera, so we
           // have to do this somewhat hacky iteration over all of the nodes in the world to find the camera node.
-          const auto& vizNodes = WebotsHelpers::GetMatchingSceneTreeNodes(_engineSupervisor, "CozmoVizDisplay");
+          const auto& vizNodes = WebotsHelpers::GetMatchingSceneTreeNodes(*_engineSupervisor, "CozmoVizDisplay");
           
           webots::Node* cameraNode = nullptr;
           const int maxNodesToSearch = 10000;

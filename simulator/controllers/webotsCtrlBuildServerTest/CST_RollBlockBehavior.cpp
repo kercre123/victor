@@ -115,7 +115,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
                       ExternalInterface::ExecuteBehaviorByID(
                         BehaviorTypesWrapper::BehaviorIDToString(kBehaviorID), -1, false)));
         
-        _behaviorStartedTime = GetSupervisor()->getTime();
+        _behaviorStartedTime = GetSupervisor().getTime();
         SET_TEST_STATE(DontStartBehavior);
       }
       break;
@@ -127,7 +127,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       CST_ASSERT( !_startedBehavior, "Behavior shouldnt start because we delocalized" );
       
       const double timeToWait_s = 2.0;
-      double currTime = GetSupervisor()->getTime();
+      double currTime = GetSupervisor().getTime();
       if( currTime - _behaviorStartedTime > timeToWait_s ) {
         // turn back
         _turnInPlaceResult = ActionResult::RUNNING;
@@ -191,7 +191,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
                                             !wheelsMoving) {
         // Push the block away so that the roll will fail.
         SendApplyForce("cube", 10, -5, 10);
-        _pushedBlockTime = GetSupervisor()->getTime();
+        _pushedBlockTime = GetSupervisor().getTime();
         SET_TEST_STATE(PushBlockToSide)
       }
       break;
@@ -212,7 +212,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       
       // wait a bit for the block to move away after the previous push.
       const double timeToWait_s = 0.5;
-      double currTime = GetSupervisor()->getTime();
+      double currTime = GetSupervisor().getTime();
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(15,
                                             currTime - _pushedBlockTime > timeToWait_s,
                                             nearBlock,

@@ -269,10 +269,10 @@ namespace Vector {
   void WebotsKeyboardController::PreInit()
   {
     // Make root point to WebotsKeyBoardController node
-    root_ = GetSupervisor()->getSelf();
+    root_ = GetSupervisor().getSelf();
 
     // enable keyboard
-    GetSupervisor()->getKeyboard()->enable(GetStepTimeMS());
+    GetSupervisor().getKeyboard()->enable(GetStepTimeMS());
   }
 
   void WebotsKeyboardController::WaitOnKeyboardToConnect()
@@ -298,14 +298,14 @@ namespace Vector {
     bool start = false;
     while( !start && !_shouldQuit ) {
       int key = -1;
-      while((key = GetSupervisor()->getKeyboard()->getKey()) >= 0 && !_shouldQuit) {
+      while((key = GetSupervisor().getKeyboard()->getKey()) >= 0 && !_shouldQuit) {
         if(!start && key == ShiftEnterKey) {
           start = true;
           LOG_INFO("WebotsKeyboardController.StartEngine", "Starting our engines....");
         }
       }
       // manually step simulation
-      GetSupervisor()->step(GetStepTimeMS());
+      GetSupervisor().step(GetStepTimeMS());
     }
   }
 
@@ -317,7 +317,7 @@ namespace Vector {
     const int displayHeight = root_->getField("uiCamDisplayHeight")->getSFInt32();
     if (displayWidth > 0 && displayHeight > 0)
     {
-      uiCamDisplay_ = GetSupervisor()->getDisplay("uiCamDisplay");
+      uiCamDisplay_ = GetSupervisor().getDisplay("uiCamDisplay");
     }
     
     _lastObservedImageCentroid.point = {-1.f,-1.f};
@@ -584,7 +584,7 @@ namespace Vector {
   void WebotsKeyboardController::ExecuteBehavior()
   {
     std::string behaviorName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "behaviorName", behaviorName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "behaviorName", behaviorName)) {
       return;
     }
     
@@ -618,7 +618,7 @@ namespace Vector {
   void WebotsKeyboardController::FakeCloudIntent()
   {
     std::string cloudIntent;
-    if (!WebotsHelpers::GetFieldAsString(root_, "intent", cloudIntent)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "intent", cloudIntent)) {
       return;
     }
     
@@ -631,7 +631,7 @@ namespace Vector {
   void WebotsKeyboardController::FakeUserIntent()
   {
     std::string userIntent;
-    if (!WebotsHelpers::GetFieldAsString(root_, "intent", userIntent)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "intent", userIntent)) {
       return;
     }
     
@@ -643,7 +643,7 @@ namespace Vector {
   void WebotsKeyboardController::SetEmotion()
   {
     std::string emotionName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "emotionName", emotionName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "emotionName", emotionName)) {
       return;
     }
     
@@ -666,7 +666,7 @@ namespace Vector {
   void WebotsKeyboardController::TriggerEmotionEvent()
   {
     std::string emotionEvent;
-    if (!WebotsHelpers::GetFieldAsString(root_, "emotionEvent", emotionEvent)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "emotionEvent", emotionEvent)) {
       return;
     }
     
@@ -1102,7 +1102,7 @@ namespace Vector {
   void WebotsKeyboardController::AssociateNameWithCurrentFace()
   {
     std::string userName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "userName", userName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "userName", userName)) {
       return;
     }
 
@@ -1340,7 +1340,7 @@ namespace Vector {
   void WebotsKeyboardController::PlayAnimation() {
     // Send whatever animation is specified in the animationToSendName field
     std::string animToSendName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "animationToSendName", animToSendName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", animToSendName)) {
       return;
     }
     
@@ -1357,7 +1357,7 @@ namespace Vector {
   {
     // Send whatever animation trigger is specified in the animationToSendName field
     std::string animTriggerName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "animationToSendName", animTriggerName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", animTriggerName)) {
       return;
     }
     
@@ -1374,7 +1374,7 @@ namespace Vector {
   {
     // Send whatever animation group is specified in the animationToSendName field
     std::string animGroupName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "animationToSendName", animGroupName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", animGroupName)) {
       return;
     }
     
@@ -1391,12 +1391,12 @@ namespace Vector {
   {
     // call console function
     std::string funcName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "consoleVarName", funcName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarName", funcName)) {
       return;
     }
     
     std::string funcArgs;
-    if (!WebotsHelpers::GetFieldAsString(root_, "consoleVarValue", funcArgs, false)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarValue", funcArgs, false)) {
       return;
     }
     
@@ -1420,12 +1420,12 @@ namespace Vector {
   {
     // Set console variable
     std::string varName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "consoleVarName", varName)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarName", varName)) {
       return;
     }
     
     std::string tryValue;
-    if (!WebotsHelpers::GetFieldAsString(root_, "consoleVarValue", tryValue)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarValue", tryValue)) {
       return;
     }
     
@@ -1460,7 +1460,7 @@ namespace Vector {
     if(_altKeyPressed) {
       // Send whatever cube animation trigger is specified in the animationToSendName field
       std::string cubeAnimTriggerStr;
-      if (!WebotsHelpers::GetFieldAsString(root_, "animationToSendName", cubeAnimTriggerStr)) {
+      if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", cubeAnimTriggerStr)) {
         return;
       }
       
@@ -1502,7 +1502,7 @@ namespace Vector {
   void WebotsKeyboardController::SayText()
   {
     ExternalInterface::SayText sayTextMsg;
-    if (!WebotsHelpers::GetFieldAsString(root_, "sayString", sayTextMsg.text)) {
+    if (!WebotsHelpers::GetFieldAsString(*root_, "sayString", sayTextMsg.text)) {
       return;
     }
     
@@ -2127,19 +2127,19 @@ namespace Vector {
     _movingHead = false;
     _movingLift = false;
     
-    root_ = GetSupervisor()->getSelf();
+    root_ = GetSupervisor().getSelf();
     
     static bool keyboardRestart = false;
     if (keyboardRestart) {
-      GetSupervisor()->getKeyboard()->disable();
-      GetSupervisor()->getKeyboard()->enable(BS_TIME_STEP_MS);
+      GetSupervisor().getKeyboard()->disable();
+      GetSupervisor().getKeyboard()->enable(BS_TIME_STEP_MS);
       keyboardRestart = false;
     }
     
     // Get all keys pressed this tic
     std::set<int> keysPressed;
     int key;
-    while((key = GetSupervisor()->getKeyboard()->getKey()) >= 0) {
+    while((key = GetSupervisor().getKeyboard()->getKey()) >= 0) {
       keysPressed.insert(key);
     }
     
@@ -2159,7 +2159,7 @@ namespace Vector {
       // Set key to its modifier-less self
       key &= webots::Keyboard::KEY;
       
-      lastKeyPressTime_ = GetSupervisor()->getTime();
+      lastKeyPressTime_ = GetSupervisor().getTime();
 
       // Update _currKey for functions that might care
       _currKey = key;
@@ -2234,9 +2234,9 @@ namespace Vector {
       
       std::string drivingStartAnim, drivingLoopAnim, drivingEndAnim;
       const bool failOnEmptyString = false;
-      WebotsHelpers::GetFieldAsString(root_, "drivingStartAnim", drivingStartAnim, failOnEmptyString);
-      WebotsHelpers::GetFieldAsString(root_, "drivingLoopAnim" , drivingLoopAnim,  failOnEmptyString);
-      WebotsHelpers::GetFieldAsString(root_, "drivingEndAnim"  , drivingEndAnim,   failOnEmptyString);
+      WebotsHelpers::GetFieldAsString(*root_, "drivingStartAnim", drivingStartAnim, failOnEmptyString);
+      WebotsHelpers::GetFieldAsString(*root_, "drivingLoopAnim" , drivingLoopAnim,  failOnEmptyString);
+      WebotsHelpers::GetFieldAsString(*root_, "drivingEndAnim"  , drivingEndAnim,   failOnEmptyString);
       
       if(_drivingStartAnim.compare(drivingStartAnim) != 0 ||
          _drivingLoopAnim.compare(drivingLoopAnim) != 0 ||

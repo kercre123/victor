@@ -155,10 +155,10 @@ void VizControllerImpl::Init()
 
   // Look for controller-less CozmoBot in children.
   // These will be used as visualization robots.
-  auto nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(&_vizSupervisor, "CozmoBot");
+  auto nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(_vizSupervisor, "CozmoBot");
   if (nodeInfo.nodePtr == nullptr) {
     // If there's no Vector, look for a Whiskey
-    nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(&_vizSupervisor, "WhiskeyBot");
+    nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(_vizSupervisor, "WhiskeyBot");
   }
 
   const auto* nd = nodeInfo.nodePtr;
@@ -282,13 +282,12 @@ void VizControllerImpl::SetRobotPose(CozmoBotVizParams& vizParams, const Pose3d&
   }
   lastUpdateTime = currTime;
   
-  const auto& poseTrans = pose.GetTranslation();
-  double trans[3] = {poseTrans.x(), poseTrans.y(), poseTrans.z()};
+  double trans[3] = {0};
+  WebotsHelpers::GetWebotsTranslation(pose, trans);
   vizParams.trans->setSFVec3f(trans);
-
-  const auto poseAngle = pose.GetRotationAngle().ToDouble();
-  const auto& poseAxis = pose.GetRotationAxis();
-  double rot[4] = {poseAxis.x(), poseAxis.y(), poseAxis.z(), poseAngle};
+  
+  double rot[4] = {0};
+  WebotsHelpers::GetWebotsRotation(pose, rot);
   vizParams.rot->setSFRotation(rot);
 
   vizParams.liftAngle->setSFFloat(liftAngle + 0.199763);  // Adding LIFT_LOW_ANGLE_LIMIT since the model's lift angle does not correspond to robot's lift angle.
@@ -983,8 +982,7 @@ void VizControllerImpl::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface:
                          payload.rot_axis_z,
                          payload.rot_rad };
 
-  _vizControllerPose.SetTranslation(Vec3f(translation[0], translation[1], translation[2]));
-  _vizControllerPose.SetRotation(rotation[3], Vec3f(rotation[0], rotation[1], rotation[2]));
+  _vizControllerPose = WebotsHelpers::ConvertTranslationRotationToPose(translation, rotation);
   
   _vizSupervisor.getSelf()->getField("translation")->setSFVec3f(translation);
   _vizSupervisor.getSelf()->getField("rotation")->setSFRotation(rotation);
@@ -1161,21 +1159,17 @@ void VizControllerImpl::DrawObjects()
                 Vec3f(d.rot_axis_x, d.rot_axis_y, d.rot_axis_z),
                 Vec3f(d.x_trans_m, d.y_trans_m, d.z_trans_m));
     pose.PreComposeWith(_vizControllerPose);
-    const auto& transVec = pose.GetTranslation();
-    double trans[3] = { transVec.x(), transVec.y(), transVec.z() };
+    
+    double trans[3] = {0};
+    WebotsHelpers::GetWebotsTranslation(pose, trans);
     nodePtr->getField("translation")->setSFVec3f(trans);
     
-    const auto& rotAxis = pose.GetRotationAxis();
-    const auto& rotAngle = pose.GetRotationAngle().ToDouble();
-    
-    double rot[4] = { rotAxis.x(), rotAxis.y(), rotAxis.z(), rotAngle };
+    double rot[4] = {0};
+    WebotsHelpers::GetWebotsRotation(pose, rot);
     nodePtr->getField("rotation")->setSFRotation(rot);
     
-    // Convert RGBA color to webots R,G,B array
-    double webotsR = ((d.color >> 24) & 0xFF) / 255.0;
-    double webotsG = ((d.color >> 16) & 0xFF) / 255.0;
-    double webotsB = ((d.color >>  8) & 0xFF) / 255.0;
-    double webotsColor[3] = { webotsR, webotsG, webotsB };
+    double webotsColor[3];
+    WebotsHelpers::ConvertRgbaToWebotsColorArray(d.color, webotsColor);
     nodePtr->getField("color")->setSFColor(webotsColor);
     
     // Hide this node from the robot's camera (if any)
