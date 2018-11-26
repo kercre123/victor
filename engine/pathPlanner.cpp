@@ -35,16 +35,15 @@ Planning::GoalID IPathPlanner::ComputeClosestGoalPose(const Pose3d& startPose,
                                                       const std::vector<Pose3d>& targetPoses)
 {
   Planning::GoalID selectedTargetIdx = 0;
-  bool foundTarget = false;
-  f32 shortestDistToPose = -1.f;
+  f32 shortestDistToPose = std::numeric_limits<float>::max();
+
   for(size_t i=0; i<targetPoses.size(); ++i)
   {
     const Pose3d& targetPose = targetPoses[i];
         
     const f32 distToPose = (targetPose.GetTranslation() - startPose.GetTranslation()).LengthSq();
-    if (!foundTarget || distToPose < shortestDistToPose)
+    if (distToPose < shortestDistToPose)
     {
-      foundTarget = true;
       shortestDistToPose = distToPose;
       selectedTargetIdx = i;
     }
@@ -233,7 +232,7 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
         speed_mmps = absSpeed;
       }
       else{
-        PRINT_NAMED_WARNING("IPathPlanner.ApplyMotionProfile", "Tried to set speed to 0! PathMotionProfile.reverseSpeed_mmps = 0! Using speed_mmps instead.");
+        LOG_WARNING("IPathPlanner.ApplyMotionProfile", "Tried to set speed to 0! PathMotionProfile.reverseSpeed_mmps = 0! Using speed_mmps instead.");
       }
     }
     
@@ -317,7 +316,7 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
         break;
       }
       default:
-        PRINT_NAMED_WARNING("IPathPlanner.ApplyMotionProfile.UnknownSegment", "Path has invalid segment");
+        LOG_WARNING("IPathPlanner.ApplyMotionProfile.UnknownSegment", "Path has invalid segment");
         return false;
     }
     

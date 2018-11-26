@@ -227,7 +227,7 @@ private:
 
   // Starts the selected planner with ComputePath, using the params in _currPlanParams, returns true if the
   // selected planner or its fallback starts successfully. The path may still contain obstacles if the
-  // selected planner didnt consider obstacles in its search. If the argument is omitted, the drive center
+  // selected planner didn't consider obstacles in its search. If the argument is omitted, the drive center
   // will be computed from the _robot pose. These functions do not modify _driveToPoseStatus
   bool StartPlanner();
   bool StartPlanner(const Pose3d& driveCenterPose);
