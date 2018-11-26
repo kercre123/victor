@@ -39,6 +39,10 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config
   : ICozmoBehavior(config)
 {
   _iConfig.exitIfHeld = config.get( kExitIfHeldKey, true ).asBool();
+  
+  SubscribeToTags({
+    RobotInterface::RobotToEngineTag::animEvent
+  });
 }
 
 

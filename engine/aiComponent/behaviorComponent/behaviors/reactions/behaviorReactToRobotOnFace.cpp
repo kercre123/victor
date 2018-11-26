@@ -36,6 +36,9 @@ static const float kRobotMinLiftAngleForArmUpAnim_s = 45.f;
 BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  SubscribeToTags({
+    RobotInterface::RobotToEngineTag::animEvent
+  });
 }
 
 
