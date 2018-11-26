@@ -95,7 +95,19 @@ namespace Vision {
     CONSOLE_VAR_ENUM(s32,                    kTrackingAccuracy,     "Vision.FaceDetectorMovie", Okao::GetIndex(Okao::TrackingAccuracy::High), Okao::GetConsoleString<Okao::TrackingAccuracy>().c_str());
     CONSOLE_VAR(     bool,                   kEnableAngleExtension, "Vision.FaceDetectorMovie", false);
     CONSOLE_VAR(     bool,                   kEnablePoseExtension,  "Vision.FaceDetectorMovie", true);
-    CONSOLE_VAR(     bool,                   kUseHeadTracking,      "Vision.FaceDetectorMovie", true);
+    
+    // When setting this to true, we were seeing worse part detection performance while tracking.
+    // The nPose field in the DetectionInfo struct was sometimes "HEAD" (meaning back of head).
+    // From the Omron team:
+    //   It returned "Head" because you set bUseHeadTracking as TRUE of OKAO_DT_MV_SetPoseExtension().
+    //   (It's default value is FALSE.)
+    //   Face Detection engine output "Head" only by tracking, not from the first frame or Still Mode.
+    //   It is good for keeping tracking, but not good for Facial Parts Detection.
+    //   If you give priority to Facial Parts Detection over tracking, you should turn bUseHeadTracking
+    //   off or skip the face.
+    // So I'm defaulting this to false, and it seems to help in testing.
+    CONSOLE_VAR(     bool,                   kUseHeadTracking,      "Vision.FaceDetectorMovie", false);
+    
     CONSOLE_VAR(     bool,                   kDirectionMask,        "Vision.FaceDetectorMovie", false);
 
   }
