@@ -67,9 +67,14 @@ public:
 
   static bool FileDoesNotExist(const std::string& fileName) { return !FileExists(fileName); }
 
+  // Read "n" bytes from a descriptor
+  static ssize_t ReadN(int fd, void *vptr, size_t n);
+
   static std::string ReadFile(const std::string& fileName);
 
-  static std::vector<uint8_t> ReadFileAsBinary(const std::string& fileName);
+  static std::vector<uint8_t> ReadFileAsBinary(const std::string& fileName,
+                                               size_t offset = 0,
+                                               size_t length = SIZE_MAX);
 
   static bool WriteFile(const std::string& fileName, const std::string& body, bool append = false);
 
