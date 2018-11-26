@@ -28,18 +28,36 @@ public:
 
 private:
   ProtoCladInterpreter() {}
+
+  //
+  // Proto-to-Clad interpreters
+  //
   static void ProtoDriveWheelsRequestToClad(
       const external_interface::GatewayWrapper & proto_message,
       ExternalInterface::MessageGameToEngine & clad_message);
-/*
-  static void ProtoPlayAnimationToClad(
+
+  static void ProtoPlayAnimationRequestToClad(
       const external_interface::GatewayWrapper & proto_message,
       ExternalInterface::MessageGameToEngine & clad_message);
-*/
+
+  static void ProtoListAnimationsRequestToClad(
+      const external_interface::GatewayWrapper & proto_message,
+      ExternalInterface::MessageGameToEngine & clad_message);
+
+  //
+  // Clad-to-Proto interpreters
+  //
   static void CladDriveWheelsToProto(
       const ExternalInterface::MessageGameToEngine & clad_message,
       external_interface::GatewayWrapper & proto_message);
 
+  static void CladPlayAnimationToProto(
+      const ExternalInterface::MessageGameToEngine & clad_message,
+      external_interface::GatewayWrapper & proto_message);
+
+  static void CladListAnimationsToProto(
+      const ExternalInterface::MessageGameToEngine & clad_message,
+      external_interface::GatewayWrapper & proto_message);
 
 };
 

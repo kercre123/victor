@@ -126,12 +126,6 @@ func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.Mes
 	})
 }
 
-// TODO: Move someplace that it's accessible to Engine
-
-func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithRequestAvailableAnimations(&gw_clad.RequestAvailableAnimations{})
-}
-
 func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
 	return &gw_clad.PoseStruct3d{
 		X:        msg.X,
@@ -565,12 +559,15 @@ func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.Proto
 }
 
 func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
-	//REPLACES: _, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	//DO NOT SUBMIT(remove this line) REPLACES: _, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
+	log.Printf("ron_proto_to_clad_testing: func (service *rpcService) DriveWheels() - about to Write()") //DO NOT SUBMIT
+	message := &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveWheelsRequest{
 			DriveWheelsRequest: in,
 		},
-	})
+	}
+	_, err := engineProtoManager.Write(message)
+	log.Printf("ron_proto_to_clad_testing: func (service *rpcService) DriveWheels() - Write() complete. %s", message.GetOneofMessageType()) //DO NOT SUBMIT
 	if err != nil {
 		return nil, err
 	}
@@ -585,12 +582,13 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 	f, animResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlayAnimationResponse{}, 1)
 	defer f()
 
-	//REPLACES: _, err := engineCladManager.Write(ProtoPlayAnimationToClad(in))
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	//DO NOT SUBMIT(remove this line) REPLACES: _, err := engineCladManager.Write(ProtoPlayAnimationToClad(in))
+	message := &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PlayAnimationRequest{
 			PlayAnimationRequest: in,
 		},
-	})
+	}
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -607,14 +605,17 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 }
 
 func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResponse, error) {
-	// 50 messages are sent per engine tick, so this channel is set to read 50 at a time
-	f1, animationAvailableResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_AnimationAvailable, 50)
-	defer f1()
+	// 50 messages are sent per engine tick, however, in case it puts out multiple ticks before we drain, we need a buffer to hold lots o' data.
+	delete_listener_callback, animationAvailableResponse := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ListAnimationsResponse{}, 500)
+	defer delete_listener_callback()
 
-	f2, endOfMessageResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_EndOfMessage, 1)
-	defer f2()
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ListAnimationsRequest{
+			ListAnimationsRequest: in,
+		},
+	}
 
-	_, err := engineCladManager.Write(ProtoListAnimationsToClad(in))
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -629,18 +630,14 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 			if !ok {
 				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
-			var newAnim = extint.Animation{
-				Name: chanResponse.GetAnimationAvailable().AnimName,
-			}
-			anims = append(anims, &newAnim)
-			remaining = remaining - 1
-		case chanResponse, ok := <-endOfMessageResponse:
-			if !ok {
-				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-			}
-			if chanResponse.GetEndOfMessage().MessageType == gw_clad.MessageType_AnimationAvailable {
-				remaining = len(animationAvailableResponse)
+			animName := chanResponse.GetListAnimationsResponse().AnimationNames[0].GetName()
+			if animName == "EndOfListAnimationsResponses" {
 				done = true
+			} else {
+				var newAnim = extint.Animation{
+					Name: animName,
+				}
+				anims = append(anims, &newAnim)
 			}
 		case <-time.After(5 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
