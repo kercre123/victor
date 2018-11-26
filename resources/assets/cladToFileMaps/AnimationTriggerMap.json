@@ -384,6 +384,10 @@
     "AnimName": "ag_rtpkeepaway_reacttocube"
   },
   {
+    "CladEvent": "DanceBeatCantDoThat",
+    "AnimName": "ag_dancebeat_cantdothat"
+  },
+  {
     "CladEvent": "DanceBeatEyeHold",
     "AnimName": "ag_dancebeat_eyehold"
   },

@@ -10,7 +10,7 @@
 
   "behaviors" : [
     "DriveOffChargerStraight",
-    "ListenForBeatsLong",
+    "ListenForBeatsVoiceCommand",
     "DanceToTheBeat"
   ]
 }

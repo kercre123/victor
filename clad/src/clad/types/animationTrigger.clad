@@ -114,6 +114,7 @@ enum int_32 AnimationTrigger
   CubePounceReactToCube,
   CubePounceWinHand,
   CubePounceWinSession,
+  DanceBeatCantDoThat,
   DanceBeatEyeHold,
   DanceBeatGetIn,
   DanceBeatGetOut,
