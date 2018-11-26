@@ -2,9 +2,12 @@
   "behaviorID" :   "ReactToColor",
   "behaviorClass": "ReactToColor",
 
+  
   "sayLabel":true,
   "targetDistance_mm": 75,
   "salientPointAge_ms":750,
+  
+  "useIntermediateAnimations":false,
   "animDetect":"ReactToColorDetect",
   "animGiveUp":"ReactToColorGiveUp",
   "animReactColor":{

@@ -14,6 +14,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/sayTextAction.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -40,12 +41,13 @@ namespace Vector {
 
 namespace {
 
+const char* const kSayLabelKey = "sayLabel";
+const char* const kSalientPointAgeKey = "salientPointAge_ms";
 const char* const kTargetDistanceKey = "targetDistance_mm";
 const char* const kAnimDetectKey = "animDetect";
+const char* const kUseIntermediateAnimationsKey = "useIntermediateAnimations";
 const char* const kAnimGiveUpKey = "animGiveUp";
 const char* const kAnimReactColorKey = "animReactColor";
-const char* const kSalientPointAgeKey = "salientPointAge_ms";
-const char* const kSayLabelKey = "sayLabel";
 
 }
 
@@ -55,6 +57,8 @@ BehaviorReactToColor::InstanceConfig::InstanceConfig(const Json::Value& config)
   const std::string& debugName = "BehaviorReactToColor.InstanceConfig.LoadConfig";
 
   sayLabel = JsonTools::ParseBool(config, kSayLabelKey, debugName);
+
+  useIntermediateAnimations = JsonTools::ParseBool(config, kUseIntermediateAnimationsKey, debugName);
 
   targetDistance_mm = JsonTools::ParseUInt32(config, kTargetDistanceKey, debugName);
   salientPointAge_ms = JsonTools::ParseUInt32(config, kSalientPointAgeKey, debugName);
@@ -141,9 +145,11 @@ void BehaviorReactToColor::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
   const char* list[] = {
     kSayLabelKey,
     kTargetDistanceKey,
+    kSalientPointAgeKey,
+    kUseIntermediateAnimationsKey,
     kAnimDetectKey,
     kAnimGiveUpKey,
-    kSalientPointAgeKey
+    kAnimReactColorKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -230,8 +236,18 @@ bool BehaviorReactToColor::FindCurrentColor(Vision::SalientPoint& point)
     return false;
   }
 
+  PRINT_NAMED_ERROR("BehaviorReactToColor.BehaviorUpdate.FindCurrentColor",
+                    "Number of points: %u",(u32)latestColors.size());
+  for (const auto& pt : latestColors)
+  {
+    PRINT_NAMED_ERROR("BehaviorReactToColor.BehaviorUpdate.FindCurrentColor",
+                      "Color: %u",pt.color_rgba);
+  }
+  PRINT_NAMED_ERROR("BehaviorReactToColor.BehaviorUpdate.FindCurrentColor",
+                    "Current: %u",_dVars.point->color_rgba);
+
   auto isColor = [&](const Vision::SalientPoint& pt) -> bool {
-    return _dVars.point->color_rgba = pt.color_rgba;
+    return _dVars.point->color_rgba == pt.color_rgba;
   };
   auto iter = std::find_if(latestColors.begin(), latestColors.end(), isColor);
 
@@ -340,12 +356,15 @@ void BehaviorReactToColor::TransitionToStart()
 void BehaviorReactToColor::TransitionToNoticedColor()
 {
   PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToNoticedColor","");
-#if 1
-  auto* action = new TriggerAnimationAction(_iConfig.animDetect);
-  DelegateIfInControl(action, &BehaviorReactToColor::TransitionToTurnTowardsPoint);
-#elif 0
-  TransitionToTurnTowardsPoint();
-#endif
+  if (_iConfig.useIntermediateAnimations)
+  {
+    auto* action = new TriggerAnimationAction(_iConfig.animDetect);
+    DelegateIfInControl(action, &BehaviorReactToColor::TransitionToTurnTowardsPoint);
+  }
+  else
+  {
+    TransitionToTurnTowardsPoint();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -354,24 +373,30 @@ void BehaviorReactToColor::TransitionToTurnTowardsPoint()
   DEV_ASSERT(_dVars.point != nullptr, "Turning towards point without a point to turn towards");
   PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToTurnTowardsPoint","");
 
-  // We need a more recent point because we just played an animation and may have lost the point due
-  // to looking away or simply having lost the history of the robot state due to age. Without that
-  // then we don't know where to turn.
-  Vision::SalientPoint curr;
-  bool found = FindCurrentColor(curr);
-  if (found)
+  if (_iConfig.useIntermediateAnimations)
   {
-    // Update the current point to be the latest
-    _dVars.point = std::make_shared<Vision::SalientPoint>(curr);
-
-    CompoundActionSequential* action = new CompoundActionSequential();
-    action->AddAction(new TurnTowardsImagePointAction(*_dVars.point));
-
-    DelegateIfInControl(action, &BehaviorReactToColor::TransitionToLookForCurrentColor);
+    // We need a more recent point because we just played an animation and may have lost the point due
+    // to looking away or simply having lost the history of the robot state due to age. Without that
+    // then we don't know where to turn.
+    Vision::SalientPoint curr;
+    bool found = FindCurrentColor(curr);
+    if (found)
+    {
+      // Update the current point to be the latest
+      _dVars.point = std::make_shared<Vision::SalientPoint>(curr);
+      auto* action = new TurnTowardsImagePointAction(*_dVars.point);
+      DelegateIfInControl(action, &BehaviorReactToColor::TransitionToLookForCurrentColor);
+    }
+    else
+    {
+      TransitionToGiveUpLostColor();
+    }
   }
   else
   {
-    TransitionToGiveUpLostColor();
+    // Not playing an intermediate action, just do the turn
+    auto* action = new TurnTowardsImagePointAction(*_dVars.point);
+    DelegateIfInControl(action, &BehaviorReactToColor::TransitionToLookForCurrentColor);
   }
 }
 
@@ -470,21 +495,23 @@ void BehaviorReactToColor::TransitionToCelebrate()
   // TODO: Map the colors (ints or strings) to animations in the config file
 
   PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCelebrate","");
-  AnimationTrigger trigger;
 
   auto iter = _iConfig.animReactColor.find(_dVars.point->description);
+
   if (iter == _iConfig.animReactColor.end())
   {
     // TODO: Log the failure - this is primarily a configuration error. There are salient points with labels that are
     // not in the dictionary of label<-->animations in the config for this behavior.
-    trigger = _iConfig.animGiveUp;
+    auto* action = new TriggerAnimationAction(_iConfig.animGiveUp);
+    DelegateIfInControl(action, &BehaviorReactToColor::TransitionToCompleted);
   }
   else
   {
-    trigger = iter->second;
+    auto* action = new CompoundActionSequential();
+    action->AddAction(new SayTextAction(_dVars.point->description));
+    action->AddAction(new TriggerAnimationAction(iter->second));
+    DelegateIfInControl(action, &BehaviorReactToColor::TransitionToCompleted);
   }
-  auto* action = new TriggerAnimationAction(trigger);
-  DelegateIfInControl(action, &BehaviorReactToColor::TransitionToCompleted);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

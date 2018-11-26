@@ -58,6 +58,9 @@ private:
     //! The age of salient points to consider in ms
     u32 salientPointAge_ms;
 
+    //! Turn on the intermediate animations between detection and celebration/giveup
+    bool useIntermediateAnimations;
+
     //! Animation to play when a bright color is first detected
     AnimationTrigger animDetect;
 
