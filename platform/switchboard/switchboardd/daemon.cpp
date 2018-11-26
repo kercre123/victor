@@ -20,6 +20,7 @@
  **/
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sodium.h>
 #include <signals/simpleSignal.hpp>
 #include <linux/reboot.h>
@@ -61,7 +62,11 @@ void Daemon::Start() {
   _connectionIdManager = std::make_shared<ConnectionIdManager>();
 
   // Saved session manager
-  SavedSessionManager::MigrateKeys();
+  int rc = SavedSessionManager::MigrateKeys();
+  if (rc) {
+    Log::Error("Failed to Migrate Keys. Exiting. rc = %d", rc);
+    exit(EXIT_FAILURE);
+  }
 
   // Initialize Ble Ipc Timer
   ev_timer_init(&_ankibtdTimer, HandleAnkibtdTimer, kRetryInterval_s, kRetryInterval_s);

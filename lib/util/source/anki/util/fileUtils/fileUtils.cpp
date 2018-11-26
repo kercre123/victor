@@ -8,6 +8,7 @@
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeIostream.h"
+#include "util/helpers/temp_failure_retry.h"
 #include "util/math/numericCast.h"
 #include <fstream>
 #include <sys/stat.h>
@@ -244,6 +245,32 @@ bool FileUtils::FileExists(const std::string& fileName)
   return exists;
 }
 
+ssize_t FileUtils::ReadN(int fd, void *vptr, size_t n)
+{
+  size_t  nleft;
+  ssize_t nread;
+  char   *ptr;
+
+  ptr = (char*)vptr;
+  nleft = n;
+  while (nleft > 0) {
+    nread = read(fd, ptr, nleft);
+    if (nread  < 0) {
+      if (errno == EINTR) {
+        nread = 0;      /* and call read() again */
+      } else {
+        return (-1);
+      }
+    } else if (nread == 0) {
+      break;              /* EOF */
+    }
+
+    nleft -= nread;
+    ptr += nread;
+  }
+  return (n - nleft);         /* return >= 0 */
+}
+
 std::string FileUtils::ReadFile(const std::string& fileName)
 {
   std::ifstream fileIn;
@@ -259,19 +286,40 @@ std::string FileUtils::ReadFile(const std::string& fileName)
   }
 }
 
-std::vector<uint8_t> FileUtils::ReadFileAsBinary(const std::string& fileName)
+std::vector<uint8_t> FileUtils::ReadFileAsBinary(const std::string& fileName,
+                                                 size_t offset,
+                                                 size_t length)
 {
-  std::ifstream fileIn;
-  fileIn.open(fileName, std::ios::in | std::ifstream::binary);
-  if( fileIn.is_open() ) {
-    fileIn.unsetf(std::ios::skipws);
-    std::vector<uint8_t> data{std::istreambuf_iterator<char>(fileIn), std::istreambuf_iterator<char>()};
-    fileIn.close();
-    return data;
-  }
-  else {
+  if (offset >= length) {
+    // Reading past the end of the file is not allowed
     return {};
   }
+  int fd = TEMP_FAILURE_RETRY(open(fileName.c_str(), O_RDONLY));
+  if (fd < 0) {
+    return {};
+  }
+  if (length == SIZE_MAX) {
+    off_t seekResult = lseek(fd, (off_t) 0, SEEK_END);
+    if (seekResult == (off_t) -1 || offset >= seekResult) {
+      close(fd);
+      return {};
+    }
+    length = ((size_t) seekResult) - offset;
+  }
+
+  off_t seekResult = lseek(fd, (off_t) offset, SEEK_SET);
+  if (seekResult == (off_t) -1) {
+    close(fd);
+    return {};
+  }
+  std::vector<uint8_t> data(length);
+  ssize_t bytesRead = ReadN(fd, data.data(), length);
+  int r = close(fd);
+  if ((bytesRead < (ssize_t) length) || (r == -1)) {
+    return {};
+  }
+
+  return data;
 }
 
 bool FileUtils::WriteFile(const std::string &fileName, const std::string &body, bool append)
