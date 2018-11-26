@@ -21,7 +21,6 @@ namespace Vision {
   , _gaze(false, 0.f, 0.f)
   , _blinkAmount(false, 0.f, 0.f)
   , _headPose(M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f})
-  , _eyePose(M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f})
   {
     
   }

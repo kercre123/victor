@@ -107,16 +107,10 @@ namespace Vision {
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
 
-    const Pose3d& GetEyePose() const;
-    void SetEyePose(Pose3d& pose);
-
     // TODO add documentation
     const Pose3d& GetGazeDirectionPose() const;
     void SetGazeDirectionPose(const Pose3d gazeDirectionPose);
 
-    const Pose3d& GetEyeFocusPose() const;
-    void SetEyeFocusPose(const Pose3d eyeFocusPose);
-    
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
     void SetIsFacingCamera(bool tf);
@@ -149,23 +143,12 @@ namespace Vision {
     void SetEyeContact(const bool eyeContact);
 
     // Face focused
-    bool IsFaceFocused() const { return _isFaceFocused && _isFacingCamera; }
-    void SetFaceFocused(const bool eyeContact);
-
-    // Detection Pose Info
-    s32 GetDetectionPoseInfo() const {return _detectionPoseInfo;}
-    void SetDetectionPoseInfo(const s32 detectionPoseInfo);
+    bool IsGazeDirectionStable() const { return _isGazeDirectionStable; }
+    void SetGazeDirectionStable(const bool gazeDirecitonStable);
 
     // Eye Gaze Average
     Point2f GetEyeGazeAverage() const {return _eyeGazeAverage;}
     void SetEyeGazeAverage(const Point2f& eyeGazeAverage);
-
-    // Eye Gaze Inliers
-    s32 GetNumberOfEyeGazeInliers() const {return _numberOfEyeGazeInliers;}
-    void SetNumberOfEyeGazeInliers(const s32 numberOfEyeGazeInliers);
-
-    bool GetFacePartsFound() const {return _facePartsFound;}
-    void SetFacePartsFound(const bool facePartsFound);
 
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
@@ -175,21 +158,16 @@ namespace Vision {
     
   private:
     
-    FaceID_t       _id                 = UnknownFaceID;
-    float          _score              = 0.f;
-    TimeStamp_t    _timestamp          = 0;
-    s32            _numEnrollments     = 0;
-    bool           _isBeingTracked     = false;
-    bool           _isFacingCamera     = false;
-    bool           _facePartsFound     = false;
-    bool           _isMakingEyeContact = false;
-    bool           _isFaceFocused      = false;
+    FaceID_t       _id                    = UnknownFaceID;
+    float          _score                 = 0.f;
+    TimeStamp_t    _timestamp             = 0;
+    s32            _numEnrollments        = 0;
+    bool           _isBeingTracked        = false;
+    bool           _isFacingCamera        = false;
+    bool           _isMakingEyeContact    = false;
+    bool           _isGazeDirectionStable = false;
     bool           _isTranslationSet   = false;
     Point2f        _eyeGazeAverage;
-    s32            _numberOfEyeGazeInliers = 0;
-    // It's unclear what type this should be and whether we should using or
-    // returning the macros in okao's dectection info
-    s32            _detectionPoseInfo = 0;
 
     Pose3d _gazeDirectionPose;
     Pose3d _eyeFocusPose;
@@ -212,7 +190,6 @@ namespace Vision {
     Radians _roll, _pitch, _yaw;
     
     Pose3d _headPose;
-    Pose3d _eyePose;
     
     std::list<FaceRecognitionMatch> _debugRecognitionInfo;
     
@@ -333,15 +310,6 @@ namespace Vision {
     _isTranslationSet = true;
   }
 
-  inline const Pose3d& TrackedFace::GetEyePose() const {
-    return _eyePose;
-  }
-  
-  inline void TrackedFace::SetEyePose(Pose3d &pose) {
-    _eyePose = pose;
-  }
-  
-  
   inline const std::string& TrackedFace::GetName() const {
     return _name;
   }
@@ -392,29 +360,12 @@ namespace Vision {
     _isMakingEyeContact = eyeContact;
   }
 
-  inline void TrackedFace::SetFaceFocused(const bool isFaceFocused) {
-    _isFaceFocused = isFaceFocused;
-    if (_isFaceFocused) {
-      PRINT_NAMED_INFO("TrackedFace.SetFaceFocused.True", "");
-    } else {
-      PRINT_NAMED_INFO("TrackedFace.SetFaceFocused.False", "");
-    }
-  }
-
-  inline void TrackedFace::SetDetectionPoseInfo(const s32 detectionPoseInfo) {
-    _detectionPoseInfo = detectionPoseInfo;
+  inline void TrackedFace::SetGazeDirectionStable(const bool isGazeDirectionStable) {
+    _isGazeDirectionStable = isGazeDirectionStable;
   }
 
   inline void TrackedFace::SetEyeGazeAverage(const Point2f& eyeGazeAverage) {
     _eyeGazeAverage = eyeGazeAverage;
-  }
-
-  inline void TrackedFace::SetNumberOfEyeGazeInliers(const s32 numberOfEyeGazeInliers) {
-    _numberOfEyeGazeInliers = numberOfEyeGazeInliers;
-  }
-
-  inline void TrackedFace::SetFacePartsFound(const bool facePartsFound) {
-    _facePartsFound = facePartsFound;
   }
 
   inline const Pose3d& TrackedFace::GetGazeDirectionPose() const {
@@ -425,13 +376,6 @@ namespace Vision {
     _gazeDirectionPose = gazeDirectionPose;
   }
 
-  inline const Pose3d& TrackedFace::GetEyeFocusPose() const {
-    return _eyeFocusPose;
-  }
-
-  inline void TrackedFace::SetEyeFocusPose(const Pose3d eyeFocusPose) {
-    _eyeFocusPose = eyeFocusPose;
-  }
 } // namespace Vision
 } // namespace Anki
 
