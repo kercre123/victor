@@ -568,10 +568,6 @@
     "SpriteName" : "face_alexa_listen2weather"
   },
   {
-    "CladEvent" : "Face_Alexa_Ring_Test",
-    "SpriteName" : "face_alexa_ring_test"
-  },
-  {
     "CladEvent" : "Face_Alexaint_Back2listen",
     "SpriteName" : "face_alexaint_back2listen"
   },
@@ -748,8 +744,16 @@
     "SpriteName" : "face_holiday_lights"
   },
   {
+    "CladEvent" : "Face_Holiday_Lights_01",
+    "SpriteName" : "face_holiday_lights_01"
+  },
+  {
     "CladEvent" : "Face_Holiday_Lights_02",
     "SpriteName" : "face_holiday_lights_02"
+  },
+  {
+    "CladEvent" : "Face_Holiday_Lights_03",
+    "SpriteName" : "face_holiday_lights_03"
   },
   {
     "CladEvent" : "Face_Knowledgegraph_Answer",
