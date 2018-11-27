@@ -150,8 +150,8 @@ private:
   // if during an authentication the state was ever WaitingForCode, this is the most recent code
   std::string _previousCode;
   
-  // if the user is currently opted out but was once authenticated, even in a previous boot
-  bool _needsReactivation = false;
+  // if the user was ever authenticated, even in a previous boot
+  bool _authenticatedEver = false;
   
   mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
 };
