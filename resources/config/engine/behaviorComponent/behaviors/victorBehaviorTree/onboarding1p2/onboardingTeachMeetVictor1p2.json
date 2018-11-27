@@ -1,0 +1,14 @@
+{
+  "behaviorID" : "OnboardingTeachMeetVictor1p2",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+  "linkScope" : false,
+
+  "behaviors" : [
+    "TriggerWordDetected",
+    "ComeHereVoiceCommand",
+    "MeetVictor",
+    "OnboardingLookAtUser"
+  ]
+}

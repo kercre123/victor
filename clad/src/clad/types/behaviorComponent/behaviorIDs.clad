@@ -324,6 +324,8 @@ enum uint_16 BehaviorID {
   Onboarding1p2,
   OnboardingLookAtPhone1p2,
   OnboardingLookAtUser1p2,
+  OnboardingTeachComeHere1p2,
+  OnboardingTeachMeetVictor1p2,
   OnboardingTeachWakeWord1p2,
   OnboardingWakeUp1p2,
   ResetOnboarding1p2Safely,

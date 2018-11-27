@@ -1,0 +1,13 @@
+{
+  "behaviorID" : "OnboardingTeachComeHere1p2",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+  "linkScope" : false,
+
+  "behaviors" : [
+    "TriggerWordDetected",
+    "ComeHereVoiceCommand",
+    "OnboardingLookAtUser"
+  ]
+}

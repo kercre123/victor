@@ -20,7 +20,6 @@ package Anki.Vector.external_interface;
 
 import "response_status.proto";
 import "extensions.proto";
-import "onboarding_steps.proto";
 import "alexa.proto"; // App only
 
 // A null message used by streams to verify that the client is
@@ -951,6 +950,8 @@ enum OnboardingPhase
   WakeUp = 3;
   LookAtUser = 4;
   TeachWakeWord = 5;
+  TeachComeHere = 6;
+  TeachMeetVictor = 7;
 }
 
 enum OnboardingPhaseState

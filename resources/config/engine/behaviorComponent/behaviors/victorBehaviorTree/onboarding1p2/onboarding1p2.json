@@ -34,6 +34,16 @@
       "phaseName" : "TeachWakeWord",
       "phaseBehaviorID" : "OnboardingTeachWakeWord1p2",
       "phaseTimeout_s" : 180.0
+    },
+    {
+      "phaseName" : "TeachComeHere",
+      "phaseBehaviorID" : "OnboardingTeachComeHere1p2",
+      "phaseTimeout_s" : 180.0
+    },
+    {
+      "phaseName" : "TeachMeetVictor",
+      "phaseBehaviorID" : "OnboardingTeachMeetVictor1p2",
+      "phaseTimeout_s" : 180.0
     }
   ],
 
