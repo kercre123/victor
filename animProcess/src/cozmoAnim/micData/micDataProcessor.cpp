@@ -45,6 +45,8 @@ namespace Vector {
 namespace MicData {
 
 namespace {
+  
+#define LOG_CHANNEL "Microphones"
 #define CONSOLE_GROUP "MicData"
 
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
@@ -53,12 +55,6 @@ namespace {
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
   CONSOLE_VAR_RANGED(uint32_t, kMicData_QuietTimeCooldown_ms, CONSOLE_GROUP, 1000, 500, 10000);
-  
-#ifdef SE_ECHO_ENABLED
-  bool kEnableRobotNoiseMicProcLogic = true;
-#else
-  bool kEnableRobotNoiseMicProcLogic = false;
-#endif
 
 #if ANKI_DEV_CHEATS
 
@@ -101,16 +97,7 @@ static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of Mic
 void MicDataProcessor::SetupConsoleFuncs()
 {
 #if ANKI_DEV_CHEATS
-  // Toggle robot noise mic processing logic ON/OFF
-  auto toggleRobotNoiseMicProcLogic = [this](ConsoleFunctionContextRef context) {
-    kEnableRobotNoiseMicProcLogic = !kEnableRobotNoiseMicProcLogic;
-    if (!kEnableRobotNoiseMicProcLogic) {
-      // Set back to default state
-      SetPreferredMicDataProcessingState(kDefaultProcessingState);
-    }
-    context->channel->WriteLog("Toggle Robot Noise Mic Processing Logic %s", (kEnableRobotNoiseMicProcLogic ? "ON" : "OFF"));
-  };
-  sConsoleFuncs.emplace_front("ToggleRobotNoiseMicProcLogic", std::move(toggleRobotNoiseMicProcLogic), CONSOLE_GROUP, "");
+  // TODO: Left method for furture console vars
 #endif
 }
 # undef CONSOLE_GROUP
@@ -148,7 +135,6 @@ void MicDataProcessor::Init()
   _speechRecognizerSystem = _micDataSystem->GetSpeechRecognizerSystem();
   
   // Set initial processing state
-  SetPreferredMicDataProcessingState(kDefaultProcessingState);
   SetActiveMicDataProcessingState(kDefaultProcessingState);
   
   // Start the thread doing the SE processing of audio
@@ -201,13 +187,10 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
     // If we didn't succeed, it means that we didn't have a wake word response setup
     if (success) {
       RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
-      PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
-                       "Timestamp %d",
-                       (TimeStamp_t)mostRecentTimestamp);
+      LOG_INFO("MicDataProcessor.TWCallback", "Timestamp %d", (TimeStamp_t)mostRecentTimestamp);
     }
     else {
-      PRINT_NAMED_WARNING("MicDataProcessor.TWCallback",
-                          "Don't have a wake word response setup");
+      PRINT_NAMED_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
     }
   };
   showStreamState->SetPendingTriggerResponseWithGetIn(earConCallback);
@@ -237,9 +220,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   //   PolicySetKeyPhraseDirection(currentDirection);
   // }
 
-  PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
-                    "Direction index %d",
-                    currentDirection);
+  LOG_INFO("MicDataProcessor.TWCallback", "Direction index %d", currentDirection);
 }
   
 RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamType,
@@ -319,7 +300,7 @@ RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
     // First we create the job responsible for streaming the intent after the trigger
     mostRecentTimestamp = CreateStreamJob(CloudMic::StreamType::Normal, kTriggerOverlapSize_ms);
   } else {
-    PRINT_NAMED_INFO("MicDataProcessor.CreateTriggerWordDetectedJobs.NoStreaming", "Not adding streaming jobs because disabled");
+    LOG_INFO("MicDataProcessor.CreateTriggerWordDetectedJobs.NoStreaming", "Not adding streaming jobs because disabled");
   }
 
   // Now we set up the optional job for recording _just_ the trigger that was just recognized
@@ -484,8 +465,8 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
   const bool robotIsMoving = static_cast<bool>(robotStatus & (uint32_t)RobotStatusFlag::IS_MOVING);
-  const bool isLowPowerMode = static_cast<bool>(robotStatus & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
   const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
+  _isInLowPowerMode = static_cast<bool>(robotStatus & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
   _robotWasMoving = robotIsMoving;
 
   // Check if we are playing audio through the speaker. Add a small delay after the speaker
@@ -559,20 +540,12 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // Determine mic processing state
   ProcessingState processingState = _activeProcState;
 
-  // Check if the power mode state needs to be updated
-  if (isLowPowerMode != _isInLowPowerMode) {
-    // Update Power mode state
-    processingState = isLowPowerMode ? kLowPowerModeProcessingState : _preferredProcState.load();
-    _isInLowPowerMode = isLowPowerMode;
-  }
-
-  // I'm temporarily adding this to work with our shipping build while we test
-//#if ANKI_DEV_CHEATS
-  // NOTE: This logic goes with the statement above ^^^^^^
-  else if (kEnableRobotNoiseMicProcLogic && !isLowPowerMode) {
+  if (!_isInLowPowerMode) {
     // Update preferred processing state for robot noise state
     processingState = hasRobotNoise ? ProcessingState::SigEsBeamformingOff : ProcessingState::SigEsBeamformingOn;
-    SetPreferredMicDataProcessingState(processingState);
+  }
+  else {
+    processingState = kLowPowerModeProcessingState;
   }
   
 #if ANKI_DEV_CHEATS
@@ -591,8 +564,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   if ((kDevForceProcessState > 0) || (kDevForceProcessState != _currentDevForcedProcesState)) {
     switch (kDevForceProcessState) {
       case 0:
-        // Go back to normal operation mode
-        processingState = isLowPowerMode ? kLowPowerModeProcessingState : _preferredProcState.load();
+        // Go back to normal operation mode, do nothing
         break;
       case 1:
         processingState = ProcessingState::None;
@@ -893,7 +865,7 @@ void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::Process
 {
   if (state != _activeProcState) {
     if (ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG) {
-      PRINT_NAMED_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
+      LOG_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
                        GetProcessingStateName(_activeProcState), GetProcessingStateName(state));
     }
     
@@ -905,15 +877,10 @@ void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::Process
       case ProcessingState::SigEsBeamformingOff:
       case ProcessingState::SigEsBeamformingOn:
       {
+        // Setting policy for SE v008
         const bool shouldUseFallbackPolicy = (state == ProcessingState::SigEsBeamformingOff);
-        
-#ifdef SE_ECHO_ENABLED
         const FallbackFlag_t policySetting = shouldUseFallbackPolicy ? FBF_FORCE_ECHO_CANCEL : FBF_AUTO_SELECT;
         SEDiagSetEnumAsInt(_policyFallbackFlag, policySetting);
-#else
-        const int32_t policySetting = shouldUseFallbackPolicy ? 1 : 0;
-        SEDiagSetInt32(_policyFallbackFlag, policySetting);
-#endif
         break;
       }
     }
