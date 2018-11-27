@@ -118,6 +118,8 @@ enum WiFiAuth : uint8_t {
 - (void) handleRequest_3:(Anki::Vector::ExternalComms::RtsConnection_3)msg;
 - (void) handleSecureVersion4: (Anki::Vector::ExternalComms::ExternalComms)extComms;
 - (void) handleRequest_4:(Anki::Vector::ExternalComms::RtsConnection_4)msg;
+- (void) handleSecureVersion5: (Anki::Vector::ExternalComms::ExternalComms)extComms;
+- (void) handleRequest_5:(Anki::Vector::ExternalComms::RtsConnection_5)msg;
 
 - (void) devDownloadOta;
 - (void) handleSend:(const void*)bytes length:(int)n;
@@ -197,6 +199,9 @@ public:
       case 4:
         msg = Anki::Vector::ExternalComms::ExternalComms(Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_4(T(std::forward<Args>(args)...))));
         break;
+      case 5:
+        msg = Anki::Vector::ExternalComms::ExternalComms(Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_5(T(std::forward<Args>(args)...))));
+        break;
       default:
         NSLog(@"The mac client is trying to speak a version we do not know about.");
         break;
@@ -227,6 +232,15 @@ public:
   template<typename T, typename... Args>
   static void SendRtsMessage_4(BleCentral* central, int commVersion, Args&&... args) {
     Anki::Vector::ExternalComms::ExternalComms msg = Anki::Vector::ExternalComms::ExternalComms(Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_4(T(std::forward<Args>(args)...))));
+    
+    std::vector<uint8_t> messageData(msg.Size());
+    const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+    [central send:messageData.data() length:(int)packedSize];
+  }
+  
+  template<typename T, typename... Args>
+  static void SendRtsMessage_5(BleCentral* central, int commVersion, Args&&... args) {
+    Anki::Vector::ExternalComms::ExternalComms msg = Anki::Vector::ExternalComms::ExternalComms(Anki::Vector::ExternalComms::RtsConnection(Anki::Vector::ExternalComms::RtsConnection_5(T(std::forward<Args>(args)...))));
     
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());

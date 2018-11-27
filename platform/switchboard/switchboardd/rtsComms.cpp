@@ -13,6 +13,7 @@
 #include "switchboardd/rtsHandlerV2.h"
 #include "switchboardd/rtsHandlerV3.h"
 #include "switchboardd/rtsHandlerV4.h"
+#include "switchboardd/rtsHandlerV5.h"
 #include "switchboardd/rtsComms.h"
 
 namespace Anki {
@@ -255,6 +256,38 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
           Log::Write("Starting RtsHandler");
           switch(_rtsVersion) {
             case PairingProtocolVersion::CURRENT: {
+              _rtsHandler = (IRtsHandler*)new RtsHandlerV5(_stream, 
+                              _loop,
+                              _engineClient,
+                              _tokenClient,
+                              _gatewayServer,
+                              _connectionIdManager,
+                              _taskExecutor,
+                              _wifiWatcher,
+                              _isPairing,
+                              _isOtaUpdating,
+                              _hasCloudOwner);
+
+              RtsHandlerV5* _v5 = static_cast<RtsHandlerV5*>(_rtsHandler);
+              _pinHandle = _v5->OnUpdatedPinEvent().ScopedSubscribe([this](std::string s){
+                _pin = s;
+                this->OnUpdatedPinEvent().emit(s);
+              });
+              _otaHandle = _v5->OnOtaUpdateRequestEvent().ScopedSubscribe([this](std::string s){
+                this->OnOtaUpdateRequestEvent().emit(s);
+              });
+              _endHandle = _v5->OnStopPairingEvent().ScopedSubscribe([this](){
+                this->OnStopPairingEvent().emit();
+              });
+              _completedPairingHandle = _v5->OnCompletedPairingEvent().ScopedSubscribe([this](){
+                this->OnCompletedPairingEvent().emit();
+              });
+              _resetHandle = _v5->OnResetEvent().ScopedSubscribe(
+                std::bind(&RtsComms::HandleReset, this, std::placeholders::_1));
+
+              break;
+            }
+            case PairingProtocolVersion::V4: {
               _rtsHandler = (IRtsHandler*)new RtsHandlerV4(_stream, 
                               _loop,
                               _engineClient,
@@ -350,6 +383,7 @@ void RtsComms::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
 bool RtsComms::HandleHandshake(uint16_t version) {
   // our supported versions
   if((version == PairingProtocolVersion::CURRENT) ||
+     (version == PairingProtocolVersion::V4) ||
      (version == PairingProtocolVersion::FACTORY)) {
     return true;
   }

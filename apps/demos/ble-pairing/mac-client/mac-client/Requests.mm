@@ -73,6 +73,9 @@
 -(void) handleResponse_4:(RequestId)requestId message:(Anki::Vector::ExternalComms::RtsConnection_4)msg {
 }
 
+-(void) handleResponse_5:(RequestId)requestId message:(Anki::Vector::ExternalComms::RtsConnection_5)msg {
+}
+
 -(Anki::Vector::ExternalComms::RtsStatusResponse_2) getStatus {
   _currentRequest = kStatus;
   [_central async_StatusRequest];

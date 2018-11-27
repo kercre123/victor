@@ -226,16 +226,29 @@ func (manager *SwitchboardIpcManager) Init() {
 
 func (manager *SwitchboardIpcManager) handleSwitchboardMessages(msg *gw_clad.SwitchboardResponse) {
 	switch msg.Tag() {
+	case gw_clad.SwitchboardResponseTag_SdkProxyRequest:
+		request := msg.GetSdkProxyRequest()
+		go func() {
+			manager.Write(
+				gw_clad.NewSwitchboardRequestWithSdkProxyResponse(
+					bleProxy.handle(request),
+				),
+			)
+		}()
 	case gw_clad.SwitchboardResponseTag_ExternalConnectionRequest:
-		manager.Write(gw_clad.NewSwitchboardRequestWithExternalConnectionResponse(&gw_clad.ExternalConnectionResponse{
-			IsConnected:  len(connectionId) != 0,
-			ConnectionId: connectionId,
-		}))
+		manager.Write(gw_clad.NewSwitchboardRequestWithExternalConnectionResponse(
+			&gw_clad.ExternalConnectionResponse{
+				IsConnected:  len(connectionId) != 0,
+				ConnectionId: connectionId,
+			},
+		))
 	case gw_clad.SwitchboardResponseTag_ClientGuidRefreshRequest:
 		response := make(chan struct{})
 		tokenManager.ForceUpdate(response)
 		<-response
-		manager.Write(gw_clad.NewSwitchboardRequestWithClientGuidRefreshResponse(&gw_clad.ClientGuidRefreshResponse{}))
+		manager.Write(gw_clad.NewSwitchboardRequestWithClientGuidRefreshResponse(
+			&gw_clad.ClientGuidRefreshResponse{},
+		))
 	}
 }
 
