@@ -19,15 +19,6 @@
                 "package_name": "avs-device-sdk",
                 "version": "4"
             },
-            "tensorflow": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "b9c50d1e18638d5cf827f946a3b2f79cf6569404929fcfcc1fbd8f1c98185859"
-                },
-                "extension": "tar.gz",
-                "package_name": "tensorflow",
-                "version": "28"
-            },
             "speexdsp": {
                 "build_type_id": "anki",
                 "checksums": {
@@ -36,6 +27,15 @@
                 "extension": "tar.gz",
                 "package_name": "speexdsp-1.2rc3",
                 "version": "1"
+            },
+            "tensorflow": {
+                "build_type_id": "anki",
+                "checksums": {
+                    "sha256": "b9c50d1e18638d5cf827f946a3b2f79cf6569404929fcfcc1fbd8f1c98185859"
+                },
+                "extension": "tar.gz",
+                "package_name": "tensorflow",
+                "version": "28"
             }
         },
         "root_url": "http://10.10.7.40:8081/artifactory"
@@ -75,7 +75,7 @@
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "121"
+                "version": "122"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
