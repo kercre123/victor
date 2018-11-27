@@ -218,11 +218,6 @@ message CalmPowerMode
   bool calibOnDisable,
 }
 
-message AutoCalmOnCharger
-{
-  bool suppress
-}
-
 // Tells syscon to pull the plug
 message Shutdown
 {
@@ -701,7 +696,6 @@ union EngineToRobot
   SyncRobot                     syncRobot                   = 0x02,
   Shutdown                      shutdown                    = 0x03,
   CalmPowerMode                 calmPowerMode               = 0x04,
-  AutoCalmOnCharger             autoCalmOnCharger           = 0x05,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,

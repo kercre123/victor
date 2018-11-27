@@ -22,7 +22,6 @@ namespace Anki {
       
       void EnableActiveMode(bool enable, bool calibOnEnable);
       bool IsActiveModeEnabled();
-      void SuppressAutoDisableOnCharger(bool suppress);
 
       void Update();
       
