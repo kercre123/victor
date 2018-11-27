@@ -1146,7 +1146,7 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::ClearFaceDirectionHistory(const SmartFaceID& faceID)
+  bool FaceWorld::ClearGazeDirectionHistory(const SmartFaceID& faceID)
   {
     // Loop over all the faces and see if any of them are making eye contact
     for (const auto& entry: _faceEntries)
