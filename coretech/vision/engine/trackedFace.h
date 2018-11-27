@@ -107,7 +107,8 @@ namespace Vision {
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
 
-    // TODO add documentation
+    // This is the gaze direction computed using the head pose rotation matrix, and then
+    // projected onto the ground plane
     const Pose3d& GetGazeDirectionPose() const;
     void SetGazeDirectionPose(const Pose3d gazeDirectionPose);
 
