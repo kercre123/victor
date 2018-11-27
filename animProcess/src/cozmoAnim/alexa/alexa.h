@@ -57,7 +57,7 @@ public:
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
   
-  void NotifyOfTapToTalk() const;
+  void NotifyOfTapToTalk();
   
   void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
   
@@ -145,6 +145,14 @@ private:
   // If non-negative, this is the time that the AlexaUXState::Error ends, restoring _pendingUXState
   float _timeToEndError_s = -1.0f;
   
+  enum AlexaNotifyType : uint8_t {
+    None = 0,
+    Voice,
+    Button
+  };
+  
+  AlexaNotifyType _notifyType = None;
+
   // whether a message was received from engine saying to opt in. this gets reset after auth completes
   bool _authStartedByUser = false;
   // if during an authentication the state was ever WaitingForCode, this is the most recent code

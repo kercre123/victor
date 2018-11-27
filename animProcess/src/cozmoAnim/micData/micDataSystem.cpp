@@ -217,7 +217,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
-      const Alexa* alexa = _context->GetAlexa();
+      Alexa* alexa = _context->GetAlexa();
       ASSERT_NAMED(alexa != nullptr, "");
       alexa->NotifyOfTapToTalk();
     }
