@@ -199,7 +199,8 @@ Point3f GazeDirection::GetCurrentGazeDirection() const
   return _gazeDirectionHistory[_currentIndex].point + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
 }
 
-void GazeDirection::ClearHistory() {
+void GazeDirection::ClearHistory()
+{
   _initialized = false;
   for (auto& gazeDirection: _gazeDirectionHistory) {
       gazeDirection.point = Point3f(GazeDirectionData::kDefaultDistance_cm,
