@@ -763,11 +763,19 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
       
     case Status::NOT_CONNECTED: // The send failed because AVS was not connected.
     case Status::TIMEDOUT: // The send failed because of timeout waiting for AVS response.
+    {
+      // consider these a lost connection if we were connected
+      if( _internetConnected ) {
+        OnInternetConnectionChanged(false);
+      }
+
+      SetNetworkConnectionError();
+      break;
+    }
+
     case Status::CANCELED: // The send failed due to server canceling it before the transmission completed.
     {
-      // may have lost connection. NOTE: these are the statuses I noticed happening when connection was
-      // lost... not sure if there's a better solution here
-
+      // may have lost connection, or may be a server-side issue (I think...)
       SetNetworkConnectionError();
       break;
     }
