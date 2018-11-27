@@ -198,11 +198,9 @@ void Power::tick(void) {
     if (currentState == POWER_ACTIVE) {
       Opto::stop();
       Encoders::stop();
-      Mics::reduce(true);
     } else if (desired == POWER_ACTIVE) {
       Encoders::start();
       Opto::start();
-      Mics::reduce(false);
     } 
 
     if (desired == POWER_ERASE) {
