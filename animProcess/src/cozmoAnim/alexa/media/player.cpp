@@ -52,7 +52,10 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "util/container/ringBuffContiguousRead.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
+#include "util/math/math.h"
 #include "util/time/universalTime.h"
 
 #include <AVSCommon/AVS/SpeakerConstants/SpeakerConstants.h>
@@ -106,12 +109,8 @@ namespace {
   constexpr size_t kMaxReadSize = 16384;
   constexpr size_t kMinAudioToDecode = 8192;
   constexpr size_t kDownloadSize = 8192;
-
-  // context for mp3 decoder
-  mp3dec_t mp3d;
-
-  // how many frames should be buffered before hitting "play" in wwise
-  constexpr uint32_t kMinPlayableFrames = 81920;
+  constexpr float  kIdealBufferSize_sec = 2.0f;
+  constexpr float  kMinBufferSize_sec = 2.5f;
 
   // define wwise objects depending on player type
   constexpr PluginId_t kPluginIdTTS = 10;
@@ -159,7 +158,7 @@ namespace {
   };
 
   #define LOG_CHANNEL "Alexa"
-  #define LOG(x, ...) LOG_INFO("Alexa.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
+  #define LOG(x, ...) LOG_INFO("AlexaMediaPlayer.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
   const bool kSaveDebugAudio = true; // FIXME we probably don't want to be shiping this!!
 #endif
@@ -202,7 +201,7 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
   _audioController  = context->GetAudioController();
   DEV_ASSERT_MSG( _audioController != nullptr, "AudioMediaPlayer.Init.InvalidAudioController", "" );
 
-  mp3dec_init( &mp3d );
+  mp3dec_init( &_mp3decoder );
 
   // in dev, remove any debug audio files from last time
   const Util::Data::DataPlatform* platform = context->GetDataPlatform();
@@ -348,6 +347,22 @@ bool AlexaMediaPlayer::play( SourceId id )
   _playingSource = id;
 
   Util::Dispatch::Async( _dispatchQueue, [id, this](){
+
+    const auto threadName = "APlayer_" + _audioInfo.name;
+    Anki::Util::SetThreadName(pthread_self(), threadName.c_str());
+#if defined(ANKI_PLATFORM_VICOS)
+    // Setup the thread's affinity mask
+    // We don't want to run this on the same core as the Audio Engine to reduce stuttering
+    cpu_set_t cpu_set;
+    CPU_ZERO(&cpu_set);
+    CPU_SET(0, &cpu_set);
+    CPU_SET(1, &cpu_set);
+    int error = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set);
+    if (error != 0) {
+      LOG_ERROR("AlexaMediaPlayer.play", "SetAffinityMaskError %d", error);
+    }
+#endif
+
     SetState(State::Preparing);
 
     bool sentPlaybackStarted = false;
@@ -366,7 +381,7 @@ bool AlexaMediaPlayer::play( SourceId id )
     // reset plugin
     {
       auto* pluginInterface = _audioController->GetPluginInterface();
-      DEV_ASSERT(nullptr != pluginInterface, "TextToSpeechComponent.PrepareAudioEngine.InvalidPluginInterface");
+      DEV_ASSERT(nullptr != pluginInterface, "AlexaMediaPlayer.play.InvalidPluginInterface");
       auto* plugin = pluginInterface->GetStreamingWavePortalPlugIn();
       plugin->ClearAudioData( _audioInfo.pluginId );
       plugin->AddDataInstance( _waveData, _audioInfo.pluginId );
@@ -442,6 +457,7 @@ bool AlexaMediaPlayer::play( SourceId id )
           statusOK = false;
         } else {
           // todo: not this
+          // Sleep is to wait for audio to buffer
           std::this_thread::sleep_for( std::chrono::milliseconds(50) );
         }
       }
@@ -453,8 +469,22 @@ bool AlexaMediaPlayer::play( SourceId id )
       _offset_ms += timeDecoded_ms;
 
       // sleep to avoid downloading data faster than it is played. todo: not this...
-      const int sleepFor_ms = 0.6f * timeDecoded_ms;
-      if( !flush && sleepFor_ms > 0 ) {
+      if( !flush && timeDecoded_ms > 0 ) {
+        const auto samplesInBuffer = _waveData->GetNumberOfFramesReceived() - _waveData->GetNumberOfFramesPlayed();
+        size_t sleepFor_ms;
+        if (samplesInBuffer > _idealBufferSampleSize) {
+          // Sleep until we have about _idealBufferSampleSize of samples left in buffer
+          sleepFor_ms = ((samplesInBuffer - _idealBufferSampleSize) * 1000) / _waveData->GetSampleRate();
+        }
+        else if ( _state == State::Preparing ) {
+          // Keep working if are trying to get enough data to start playback
+          sleepFor_ms = 15;
+        }
+        else {
+          // Smaller buffer then we would like
+          sleepFor_ms = Util::Clamp(timeDecoded_ms, 25, static_cast<const int>(timeDecoded_ms * 0.5f));
+        }
+        // LOG("Sleep for %zu ms", sleepFor_ms);
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
       }
 
@@ -617,7 +647,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
       break;
     }
 
-    int samples = mp3dec_decode_frame(&mp3d, inputBuff, (int)buffSize, _decodedPcm, &info);
+    int samples = mp3dec_decode_frame(&_mp3decoder, inputBuff, (int)buffSize, _decodedPcm, &info);
 
     int consumed = info.frame_bytes;
     if( info.frame_bytes > 0 ) {
@@ -635,7 +665,11 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
         // valid wav data!
         if( _firstPass ) {
           _firstPass = false;
-          LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d", info.channels, info.hz, info.layer, info.bitrate_kbps );
+          _idealBufferSampleSize = static_cast<size_t>( info.hz * kIdealBufferSize_sec);
+          _minPlaybackBufferSize = static_cast<size_t>( info.hz * kMinBufferSize_sec );
+          LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d - _minPlaybackBufferSize=%zu,_idealBufferSampleSize=%zu ",
+              info.channels, info.hz, info.layer, info.bitrate_kbps,
+              _minPlaybackBufferSize, _idealBufferSampleSize );
 
           // HACK
           if (_speexState != nullptr) {
@@ -648,7 +682,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
                                                1, // num channels
                                                info.hz, // in rate, int
                                                16000, // out rate, int
-                                               10, // quality 0-10
+                                               5, // quality 0-10
                                                &error);
 
             PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
@@ -713,7 +747,8 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
         }
 
         const auto numFrames = data->GetNumberOfFramesReceived();
-        if( (_state == State::Preparing) && numFrames >= kMinPlayableFrames ) {
+        if( (_state == State::Preparing) && ((numFrames >= _minPlaybackBufferSize) || flush) ) {
+         // LOG("Now Playable, numFrames %d minFrames %zu flush %d", numFrames, _minPlaybackBufferSize, flush );
           SetState(State::Playable);
         }
       }
