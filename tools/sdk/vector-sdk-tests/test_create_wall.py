@@ -14,8 +14,6 @@ def main():
     args = anki_vector.util.parse_command_args()
 
     with anki_vector.Robot(args.serial) as robot: # TODO We aren't enabling custom_object_detection yet
-        time.sleep(1.0)
-
         fixed_object = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                               10, 100, 100, relative_to_robot=True)
         if fixed_object:

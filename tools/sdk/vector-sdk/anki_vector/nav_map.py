@@ -38,6 +38,7 @@ from . import util
 from .events import Events
 from .messaging import protocol
 
+
 class EvtNavMapUpdate():  # pylint: disable=too-few-public-methods
     """Dispatched when a new nav map is received.
 
