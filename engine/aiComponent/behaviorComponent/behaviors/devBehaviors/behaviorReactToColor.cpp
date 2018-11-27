@@ -42,8 +42,10 @@ namespace Vector {
 namespace {
 
 const char* const kSayLabelKey = "sayLabel";
-const char* const kSalientPointAgeKey = "salientPointAge_ms";
 const char* const kTargetDistanceKey = "targetDistance_mm";
+const char* const kSalientPointAgeKey = "salientPointAge_ms";
+const char* const kPostActionColorDetectorDelayKey = "postActionColorDetectorDelay_ms";
+const char* const kMaxRetriesKey = "maxRetries";
 const char* const kAnimDetectKey = "animDetect";
 const char* const kUseIntermediateAnimationsKey = "useIntermediateAnimations";
 const char* const kAnimGiveUpKey = "animGiveUp";
@@ -62,6 +64,8 @@ BehaviorReactToColor::InstanceConfig::InstanceConfig(const Json::Value& config)
 
   targetDistance_mm = JsonTools::ParseUInt32(config, kTargetDistanceKey, debugName);
   salientPointAge_ms = JsonTools::ParseUInt32(config, kSalientPointAgeKey, debugName);
+  postActionColorDetectorDelay_ms = JsonTools::ParseUInt32(config, kPostActionColorDetectorDelayKey, debugName);
+  maxRetries = JsonTools::ParseUInt32(config, kMaxRetriesKey, debugName);
 
   animDetect = AnimationTrigger::Count;
   JsonTools::GetCladEnumFromJSON(config, kAnimDetectKey, animDetect, debugName, false);
@@ -99,6 +103,7 @@ void BehaviorReactToColor::DynamicVariables::Reset(bool keepPersistent)
     persistent.lastSeenTimeStamp = 0;
   }
   point.reset();
+  attempts = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -147,6 +152,8 @@ void BehaviorReactToColor::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kTargetDistanceKey,
     kSalientPointAgeKey,
     kUseIntermediateAnimationsKey,
+    kPostActionColorDetectorDelayKey,
+    kMaxRetriesKey,
     kAnimDetectKey,
     kAnimGiveUpKey,
     kAnimReactColorKey
@@ -358,7 +365,9 @@ void BehaviorReactToColor::TransitionToNoticedColor()
   PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToNoticedColor","");
   if (_iConfig.useIntermediateAnimations)
   {
-    auto* action = new TriggerAnimationAction(_iConfig.animDetect);
+    auto* action = new CompoundActionSequential();
+    action->AddAction(new TriggerAnimationAction(_iConfig.animDetect));
+    action->AddAction(new WaitAction(_iConfig.postActionColorDetectorDelay_ms/1000.f));
     DelegateIfInControl(action, &BehaviorReactToColor::TransitionToTurnTowardsPoint);
   }
   else
@@ -384,7 +393,9 @@ void BehaviorReactToColor::TransitionToTurnTowardsPoint()
     {
       // Update the current point to be the latest
       _dVars.point = std::make_shared<Vision::SalientPoint>(curr);
-      auto* action = new TurnTowardsImagePointAction(*_dVars.point);
+      auto* action = new CompoundActionSequential();
+      action->AddAction(new TurnTowardsImagePointAction(*_dVars.point));
+      action->AddAction(new WaitAction(_iConfig.postActionColorDetectorDelay_ms/1000.f));
       DelegateIfInControl(action, &BehaviorReactToColor::TransitionToLookForCurrentColor);
     }
     else
@@ -394,8 +405,11 @@ void BehaviorReactToColor::TransitionToTurnTowardsPoint()
   }
   else
   {
-    // Not playing an intermediate action, just do the turn
-    auto* action = new TurnTowardsImagePointAction(*_dVars.point);
+    // Not playing an intermediate action, just do the turn and skip to driving towards it. It's highly unlikely that
+    // the turn will take long enough for bright color detection to see the color. Need to insert a pause.
+    auto* action = new CompoundActionSequential();
+    action->AddAction(new TurnTowardsImagePointAction(*_dVars.point));
+    action->AddAction(new WaitAction(_iConfig.postActionColorDetectorDelay_ms/1000.f));
     DelegateIfInControl(action, &BehaviorReactToColor::TransitionToLookForCurrentColor);
   }
 }
@@ -429,6 +443,24 @@ void BehaviorReactToColor::TransitionToDriveTowardsPoint()
   const ProxSensorComponent &prox = GetBEI().GetRobotInfo().GetProxSensorComponent();
   u16 distance_mm = 0;
   f32 targetDistance_mm = 0;
+
+  _dVars.attempts++;
+#if 0
+  // Sometimes "isTooPitched" is true on a level surface, just throw the robot in the air and catch it. If it tucks
+  // its head in, then the imu will have reset whatever is wrong with it.
+  {
+    ProxSensorData data = prox.GetLatestProxData();
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","distance_mm:           %u",data.distance_mm);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","hasValidRangeStatus:   %d",data.hasValidRangeStatus);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","isInValidRange:        %d",data.isInValidRange);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","isLiftInFOV:           %d",data.isLiftInFOV);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","isTooPitched:          %d",data.isTooPitched);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","isValidSignalQuality:  %d",data.isValidSignalQuality);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","signalQuality:         %f",data.signalQuality);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToDriveTowardsPoint","isValid():             %d",data.IsValid());
+  }
+#endif
+
   if (prox.GetLatestDistance_mm(distance_mm))
   {
     if (distance_mm <= _iConfig.targetDistance_mm)
@@ -446,11 +478,19 @@ void BehaviorReactToColor::TransitionToDriveTowardsPoint()
 
     if (shouldGoStraight)
     {
-      CompoundActionSequential * action;
-      // Far enough away that we should drive closer
-      action = new CompoundActionSequential({ new DriveStraightAction(targetDistance_mm) });
-      CancelDelegates(false);
-      DelegateIfInControl(action, &BehaviorReactToColor::TransitionToCheckGotToObject);
+      if (_dVars.attempts > _iConfig.maxRetries)
+      {
+        // Tried to many times, just stop because the object is moving away (or our prox sensor data is inaccurate)
+        TransitionToGiveUpLostObject();
+      }
+      else
+      {
+        // Far enough away that we should drive closer
+        CompoundActionSequential * action;
+        action = new CompoundActionSequential({ new DriveStraightAction(targetDistance_mm) });
+        CancelDelegates(false);
+        DelegateIfInControl(action, &BehaviorReactToColor::TransitionToCheckGotToObject);
+      }
     }
     else
     {
@@ -471,6 +511,23 @@ void BehaviorReactToColor::TransitionToCheckGotToObject()
   PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","");
   const ProxSensorComponent &prox = GetBEI().GetRobotInfo().GetProxSensorComponent();
   u16 distance_mm = 0;
+
+#if 0
+  // Sometimes "isTooPitched" is true on a level surface, just throw the robot in the air and catch it. If it tucks
+  // its head in, then the imu will have reset whatever is wrong with it.
+  {
+    ProxSensorData data = prox.GetLatestProxData();
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","distance_mm:           %u",data.distance_mm);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","hasValidRangeStatus:   %d",data.hasValidRangeStatus);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","isInValidRange:        %d",data.isInValidRange);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","isLiftInFOV:           %d",data.isLiftInFOV);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","isTooPitched:          %d",data.isTooPitched);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","isValidSignalQuality:  %d",data.isValidSignalQuality);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","signalQuality:         %f",data.signalQuality);
+    PRINT_NAMED_ERROR("BehaviorReactToColor.TransitionToCheckGotToObject","isValid():             %d",data.IsValid());
+  }
+#endif
+
   if (prox.GetLatestDistance_mm(distance_mm))
   {
     if (distance_mm <= _iConfig.targetDistance_mm)
@@ -480,8 +537,8 @@ void BehaviorReactToColor::TransitionToCheckGotToObject()
     }
     else
     {
-      // Not close enough, but still in valid range
-      TransitionToGiveUpLostObject();
+      // Not close enough, but still in valid range, so try to drive forward again
+      TransitionToDriveTowardsPoint();
     }
   } else {
     // Not close enough, outside valid range

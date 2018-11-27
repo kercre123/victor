@@ -6,8 +6,10 @@
   "sayLabel":true,
   "targetDistance_mm": 75,
   "salientPointAge_ms":750,
+  "postActionColorDetectorDelay_ms": 250,
+  "maxRetries":3,
   
-  "useIntermediateAnimations":false,
+  "useIntermediateAnimations":true,
   "animDetect":"ReactToColorDetect",
   "animGiveUp":"ReactToColorGiveUp",
   "animReactColor":{

@@ -58,6 +58,12 @@ private:
     //! The age of salient points to consider in ms
     u32 salientPointAge_ms;
 
+    //! The age of salient points to consider in ms
+    u32 postActionColorDetectorDelay_ms;
+
+    //! The max number of retry attempts (excludes first attemp) for driving forward
+    u32 maxRetries;
+
     //! Turn on the intermediate animations between detection and celebration/giveup
     bool useIntermediateAnimations;
 
@@ -80,6 +86,8 @@ private:
 
     //! The point that started this initial reaction (TODO: replace with optional<Vision::SalientPoint>)
     std::shared_ptr<Vision::SalientPoint> point;
+
+    u32 attempts;
   };
 
   /**
