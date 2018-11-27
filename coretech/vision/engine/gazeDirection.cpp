@@ -167,8 +167,6 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDi
     const float alpha = ( -point.z() ) / ( translation.z() - point.z() );
     const auto groundPlanePoint = translation * alpha + point * (1 - alpha);
 
-    PRINT_NAMED_INFO("GazeDirection.GetPointFromHeadPose.Alpha", "%.3f", alpha);
-
     // Alpha less than zero means that the ground plane point we found is "behind"
     // the head pose. For some reason the head pose rotation is such
     // that the face normal is pointed "above" the horizon. If alpha > 0 the point is
