@@ -1219,7 +1219,6 @@ namespace Vector {
     }
 
     if(procResult.modesProcessed.Contains(VisionMode::DetectingPeople)
-       || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors)
        || procResult.modesProcessed.Contains(VisionMode::DetectingColors))
     {
       if(!usingFixedDrawTime)
@@ -1257,13 +1256,6 @@ namespace Vector {
 
       switch(object.salientType)
       {
-        case Vision::SalientPointType::BrightColors:
-        {
-          color = (object.color_rgba == 0) ? NamedColors::BLACK : ColorRGBA(object.color_rgba);
-          caption = object.description + "[" + std::to_string((s32)std::round(object.score))
-                    + "] t:" + std::to_string(object.timestamp);
-          break;
-        }
         case Vision::SalientPointType::Color:
         {
           color = ColorRGBA(object.color_rgba);

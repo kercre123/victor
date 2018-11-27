@@ -11,8 +11,7 @@ enum uint_8 SalientPointType
   Unknown, // Generally means something is wrong
   Object,  // For general "objectness" (vs. specific known object types)
   Person,
-  BrightColors,  // For brightly colored areas (TODO: remove)
-  Color          // For brightly colored areas
+  Color    // For brightly colored areas
 
   // TODO:
   // Hand,
@@ -30,7 +29,7 @@ structure SalientPoint {
     string            description,    
 
     CladPoint2d       shape[uint_8],  // Array of image points defining the shape (for visualization/debugging)
-    uint_32           color_rgba      // Color; only valid if type is BrightColors
+    uint_32           color_rgba      // Color; only valid if type is Color
 }
       
 } // namespace Vision

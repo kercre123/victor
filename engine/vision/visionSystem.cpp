@@ -146,7 +146,6 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
 , _petTracker(new Vision::PetTracker())
 , _markerDetector(new Vision::MarkerDetector(_camera))
-, _brightColorDetector(new Vision::BrightColorDetector(_camera))
 , _colorDetector(nullptr)
 , _laserPointDetector(new LaserPointDetector(_vizManager))
 , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
@@ -861,15 +860,6 @@ Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
 } // DetectMotion()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectBrightColors(Vision::ImageCache& imageCache)
-{
-  DEV_ASSERT(imageCache.HasColor(), "VisionSystem.DetectBrightColors.NoColor");
-  const Vision::ImageRGB& image = imageCache.GetRGB();
-  Result result = _brightColorDetector->Detect(image, _currentResult.salientPoints);
-  return result;
-} // DetectBrightColors()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::DetectColors(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.DetectColors.NoColor");
@@ -1480,21 +1470,6 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Insert(VisionMode::DetectingMotion);
     }
     Toc("TotalDetectingMotion");
-  }
-  if(IsModeEnabled(VisionMode::DetectingBrightColors)){
-    if (imageCache.HasColor()){
-      Tic("TotalDetectingBrightColors");
-      lastResult = DetectBrightColors(imageCache);
-      Toc("TotalDetectingBrightColors");
-      if (lastResult != RESULT_OK){
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectBrightColorsFailed","");
-        anyModeFailures = true;
-      } else {
-        visionModesProcessed.Insert(VisionMode::DetectingBrightColors);
-      }
-    } else {
-      PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process bright colors. No color image!");
-    }
   }
   if(IsModeEnabled(VisionMode::DetectingColors)){
     if (imageCache.HasColor()){

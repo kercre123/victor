@@ -960,22 +960,6 @@
     "AnimName": "ag_putdownblock"
   },
   {
-    "CladEvent": "ReactToBrightColorDetect",
-    "AnimName": "ag_brightcolordetection_detect_01"
-  },
-  {
-    "CladEvent": "ReactToBrightColorReactColorA",
-    "AnimName": "ag_brightcolordetection_react_color_a"
-  },
-  {
-    "CladEvent": "ReactToBrightColorReactColorB",
-    "AnimName": "ag_brightcolordetection_react_color_b"
-  },
-  {
-    "CladEvent": "ReactToBrightColorGiveUp",
-    "AnimName": "ag_brightcolordetection_giveup_01"
-  },
-  {
     "CladEvent": "ReactToColorDetect",
     "AnimName": "ag_brightcolordetection_detect_01"
   },

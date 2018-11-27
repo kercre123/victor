@@ -13,7 +13,6 @@ namespace Vector {
     DetectingMarkers = 0x00,    // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
     DetectingFaces,
     DetectingMotion,
-    DetectingBrightColors,
     DetectingColors,
     DetectingOverheadEdges,
     ComputingCalibration,
