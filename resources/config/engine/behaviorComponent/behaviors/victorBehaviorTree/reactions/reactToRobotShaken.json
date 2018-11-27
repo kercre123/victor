@@ -3,6 +3,8 @@
   "behaviorID": "ReactToRobotShaken",
 
   "associatedActiveFeature": "RobotShaken",
+  "emotionEventOnActivated": "RobotShaken",
+
 
   "shakeThresholdStop"    : 13000,
   "shakeThresholdMedium"  : 19000,
