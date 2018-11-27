@@ -458,18 +458,22 @@ void Alexa::SetUXState( AlexaUXState newState )
     }
   }
   
-  // special cases to play audio events not handled by our getin process
-  // Speaking to Listening
-  // Listening to thinking
-  if( (oldState == AlexaUXState::Speaking) && (_uxState == AlexaUXState::Listening) ) {
-    // Play EarCon for follow up question
-    using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
-  } else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+  using namespace AudioEngine;
+  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+  // Play Audio Event for state change
+  if (_uxState == AlexaUXState::Listening) {
+    if ( (oldState == AlexaUXState::Idle) && (_notifyType != None) ) {
+      // Alexa triggered by voice or button press
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+      _notifyType = None;
+    }
+    else if (oldState == AlexaUXState::Speaking) {
+      // Play EarCon for follow up question
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+    }
+  }
+  else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
     // Play when listening ends
-    using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
     PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
   }
 }
@@ -622,33 +626,26 @@ void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, s
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfTapToTalk() const
+void Alexa::NotifyOfTapToTalk()
 {
   if( ANKI_VERIFY( _impl != nullptr,
                    "Alexa.NotifyOfTapToTalk.Disabled",
                    "Tap-to-talk was issued when alexa was disabled" ) )
   {
+    _notifyType = Button;
     _impl->NotifyOfTapToTalk();
-    // Play button EarCon Audio Event
-    using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound_Touch ) );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex )
 {
-  using namespace AudioEngine;
-  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-  
   bool hasImpl = false;
   {
     std::lock_guard<std::mutex> lg{ _implMutex };
     if( _impl != nullptr ) {
+      _notifyType = Voice;
       _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
-      // Play speach trigger EarCon Audio Event
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
       hasImpl = true;
     }
   }
