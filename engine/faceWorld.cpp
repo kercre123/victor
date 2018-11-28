@@ -1146,7 +1146,7 @@ namespace Vector {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool FaceWorld::GetGazeDirectionPose(const u32 withinLast_ms, Pose3d& faceFocusPose,
-                                       Pose3d& eyeFocusPose, SmartFaceID& faceID) const
+                                       SmartFaceID& faceID) const
   {
     const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
     const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?

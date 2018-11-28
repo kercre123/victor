@@ -32,10 +32,12 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres,           "Vision.GazeDirection", -200.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres,           "Vision.GazeDirection",  50.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres,           "Vision.GazeDirection", -100.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres,           "Vision.GazeDirection",  100.f);
+  // This used to be -200 just a note
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres_mm,        "Vision.GazeDirection", -25.f);
+  // This used to 50 just a note
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres_mm,        "Vision.GazeDirection",  20.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.GazeDirection", -100.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.GazeDirection",  100.f);
   CONSOLE_VAR(bool, kTurnBackToFace,                         "Vision.GazeDirection",  false);
   CONSOLE_VAR(f32,  kTurnWaitAfterFinalTurn_s,               "Vision.GazeDirection",  1.f);
   CONSOLE_VAR(f32,  kTurnWaitAfterInitialTurn_s,             "Vision.GazeDirection",  1.f);
@@ -129,36 +131,31 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
 {
   Pose3d faceFocusPose;
   // SmartFaceID faceID;
-  Pose3d eyeFocusPose;
-  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, faceFocusPose, eyeFocusPose, _dVars.faceIDToTurnBackTo)) {
+  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, faceFocusPose, _dVars.faceIDToTurnBackTo)) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d faceFocusPoseWRTRobot;
-    Pose3d eyeFocusPoseWRTRobot;
 
-    if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot) &&
-        eyeFocusPose.GetWithRespectTo(robotPose, eyeFocusPoseWRTRobot)) {
+    if (faceFocusPose.GetWithRespectTo(robotPose, faceFocusPoseWRTRobot)) {
       auto translation = faceFocusPoseWRTRobot.GetTranslation();
-      auto eyeTranslation = eyeFocusPoseWRTRobot.GetTranslation();
-      LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.TranslationWRTRobot",
+      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.TranslationWRTRobot",
                "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
       auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(500);
 
       GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
       
-      if (((translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2 ||
-            eyeTranslation.LengthSq() > kDistanceForAboveHorizonSearch_mm2) && kFindFacesUsingFaceDirection)) {
-        LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GazeFarEnoughToLookUp", "");
-        LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.DistanceFromRobot",
+      if ((translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2) && kFindFacesUsingFaceDirection) {
+        LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GazeFarEnoughToLookUp", "");
+        LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.DistanceFromRobot",
                  "distance: %.3f", translation.LengthSq());
 
         // Compute angle
         // If angle is within the turn around cone then turn around and look for face
         Radians turnAngle;
         Radians gazeAngle = atan2f(translation.y(), translation.x());
-        LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GazeAngle",
+        LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GazeAngle",
                  "angle: %.3f", RAD_TO_DEG(gazeAngle.ToFloat()));
         auto angleDifference = Radians(DEG_TO_RAD(180)) - gazeAngle;
-        LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.AngleDifference",
+        LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.AngleDifference",
                  "angle: %.3f", RAD_TO_DEG(angleDifference.ToFloat()));
         if ( (angleDifference <= Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) &&
              (angleDifference >= -Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) ) {
@@ -180,13 +177,13 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
         } else {
           turnAngle = DEG_TO_RAD(kSearchForFaceTurnLeftAngle_deg);
         }
-        LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.TurnAngle",
+        LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.TurnAngle",
                  "angle: %.3f", RAD_TO_DEG(turnAngle.ToFloat()));
 
         SmartFaceID faceToTurnTowards;
         if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _dVars.faceIDToTurnBackTo, robotPose, faceToTurnTowards)
             && kUseExistingFacesWhenSearchingForFaces) {
-          LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.FoundAnExistingFaceGoingToTurnTowardsThat", "");
+          LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.FoundAnExistingFaceGoingToTurnTowardsThat", "");
           if (turnAngle > 0) {
             CompoundActionSequential* turnAction = new CompoundActionSequential();
             turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInLeft));
@@ -268,8 +265,10 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
 
       } else if (kFindSurfacePointsUsingFaceDirection) {
 
-        if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres) && FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres) ) &&
-             (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres) && FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres)) )
+        if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres_mm) &&
+                 FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres_mm) ) &&
+             (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres_mm) &&
+              FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres_mm)) )
               || ( makingEyeContact && kUseEyeContact) ) {
 
           CompoundActionSequential* turnAction = new CompoundActionSequential();
@@ -284,7 +283,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
         } else {
 
           if ( FLT_LT(translation.y(), 0.f) ) {
-            LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.LookingLeftTest", "");
+            LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.LookingLeftTest", "");
             faceFocusPoseWRTRobot.Print("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
             CompoundActionSequential* turnAction = new CompoundActionSequential();
             for (int i = 0; i < kNumberOfTurnsForSurfacePoint; ++i) {
@@ -317,7 +316,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
             DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
           } else {
 
-            LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.LookingRightTest", "");
+            LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.LookingRightTest", "");
             faceFocusPoseWRTRobot.Print("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection", "FaceFocusPoseWRTRobot");
             CompoundActionSequential* turnAction = new CompoundActionSequential();
             for (int i = 0; i < kNumberOfTurnsForSurfacePoint; ++i) {
@@ -353,8 +352,9 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
         }
       }
     } else {
-      LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
+      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
     }
+    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.FaceNotFocused", "");
   }
 }
 
@@ -366,13 +366,13 @@ void BehaviorReactToGazeDirection::TransitionToCompleted()
 void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
 {
   if (ActionResult::NO_FACE == result) {
-    LOG_INFO("BehaviorReactToGazeDirection.FoundNewFace.Result", "No Face %d", result);
+    LOG_WARNING("BehaviorReactToGazeDirection.FoundNewFace.Result", "No Face %d", result);
     DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo), &BehaviorReactToGazeDirection::TransitionToCompleted);
   } else if (ActionResult::SUCCESS == result) {
-    LOG_INFO("BehaviorReactToGazeDirection.FoundNewFace.Result", "Success %d", result);
+    LOG_WARNING("BehaviorReactToGazeDirection.FoundNewFace.Result", "Success %d", result);
     BehaviorReactToGazeDirection::TransitionToCompleted();
   } else {
-    LOG_INFO("BehaviorReactToGazeDirection.FoundNewFace.Result", "Other: %d", result);
+    LOG_WARNING("BehaviorReactToGazeDirection.FoundNewFace.Result", "Other: %d", result);
   }
 }
 

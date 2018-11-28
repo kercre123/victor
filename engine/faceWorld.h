@@ -162,7 +162,7 @@ namespace Vector {
 
     // TODO add documentation
     bool GetGazeDirectionPose(const u32 withinLast_ms, Pose3d& faceFocusPose,
-                              Pose3d& eyeFocusPose, SmartFaceID& faceID) const;
+                              SmartFaceID& faceID) const;
     bool ClearGazeDirectionHistory(const SmartFaceID& faceID);
     bool FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
                          const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const;
