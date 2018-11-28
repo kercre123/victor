@@ -132,6 +132,7 @@ func (c *fileProvider) init() error {
 	if err == nil {
 		tok, err := c.parseToken(string(buf))
 		if err != nil {
+			os.Remove(c.tokenFile())
 			return err
 		}
 
@@ -169,7 +170,12 @@ func (c *fileProvider) saveToken(token string) error {
 	if err := os.Mkdir(c.jwtPath, os.ModeDir); err != nil && !os.IsExist(err) {
 		return err
 	}
-	return ioutil.WriteFile(c.tokenFile(), []byte(token), 0777)
+	fileName := c.tokenFile()
+	tmpFileName := fileName + ".tmp"
+	if err := ioutil.WriteFile(tmpFileName, []byte(token), 0777); err != nil {
+		return err
+	}
+	return os.Rename(tmpFileName, fileName)
 }
 
 func logUserID(token *model.Token) {
