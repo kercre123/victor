@@ -240,6 +240,9 @@ void lcd_set_brightness(int brightness)
 
 int lcd_init(void) {
 
+  // No lcd on whiskey prototypes so don't even try
+  return 0;
+  
   lcd_set_brightness(10);
 
   lcd_fd = lcd_fb_init();

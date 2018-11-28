@@ -45,15 +45,28 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  int tof_fd = -1;
+  int tofR_fd = -1;
+  int tofL_fd = -1;
 
-std::thread _processor;
-std::mutex _mutex;
-bool _stopProcessing = false;
+  // thread and mutex for setting up and reading from the sensors
+  std::thread _processor;
+  std::mutex _mutex;
+  bool _stopProcessing = false;
 
-RangeDataRaw _latestData;
+  // The latest available tof data
+  RangeDataRaw _latestData;
 
-CONSOLE_VAR(bool, kStartToF, "ToF", false);
+  // Enum for which sensor we are trying to operate on
+  // Values map directly to corresponsing /dev/stmvl53l1_ranging
+  // and /dev/stmvl53l1_ranging1 devices
+  enum Sensor
+  {
+   RIGHT = 0,
+   LEFT = 1,
+  };
+
+  // Don't setup and read from the sensors until this console var is true
+  CONSOLE_VAR(bool, kStartToF, "ToF", false);
 }
 
 ToFSensor* ToFSensor::_instance = nullptr;
@@ -140,6 +153,19 @@ int distance_mode_set(const int dev, const int mode) {
   return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);
 }
 
+/// Set device reset on stop
+// 0 : Device is ut under reset when stopped
+// 1 : Device is not put under reset when stopped
+int reset_on_stop_set(const int dev, const int val) {
+  struct stmvl53l1_parameter params;
+
+  params.is_read = 0;
+  params.name = VL53L1_FORCEDEVICEONEN_PAR;
+  params.value = val;
+
+  return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);
+}
+
 
 int output_mode_set(const int dev, const int mode)
 {
@@ -203,18 +229,23 @@ int setup_roi_grid(const int dev, const int rows, const int cols) {
 }} while(0)
 
 /// Setup 4x4 multi-zone imaging
-int setup(void) {
+int setup(Sensor which) {
   int fd = -1;
   int rc = 0;
 
   PRINT_NAMED_ERROR("","open dev\n");
-  fd = open_dev(0);
+  fd = open_dev(which);
   return_if_not(fd >= 0, -1, "Could not open VL53L1 device");
 
   // Stop all ranging so we can change settings
   PRINT_NAMED_ERROR("","stop ranging\n");
   rc = stop_ranging(fd);
   return_if_not(rc == 0, -1, "ioctl error stopping ranging: %d", errno);
+
+  // Have the device reset when ranging is stopped
+  PRINT_NAMED_ERROR("","reset on stop\n");
+  rc = reset_on_stop_set(fd, 0);
+  return_if_not(rc == 0, -1, "ioctl error reset on stop: %d", errno);
 
   // Switch to multi-zone scanning mode
   PRINT_NAMED_ERROR("","Switch to multi-zone scanning\n");
@@ -238,14 +269,16 @@ int setup(void) {
 
   // Set output mode
   PRINT_NAMED_ERROR("","set output mode\n");
-  rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
+  rc = output_mode_set(fd, VL53L1_OUTPUTMODE_NEAREST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
-  
+
   // Start the sensor
   PRINT_NAMED_ERROR("","start ranging\n");
   rc = start_ranging(fd);
   return_if_not(rc == 0, -1, "ioctl error starting ranging: %d", errno);
 
+  usleep(1000000);
+  
   return fd;
 }
 
@@ -256,70 +289,123 @@ int get_mz_data(const int dev, const int blocking, VL53L1_MultiRangingData_t *da
 }
 
 
-RangeDataRaw ReadData()
+void ParseData(Sensor whichSensor,
+               VL53L1_MultiRangingData_t& mz_data,
+               RangeDataRaw& rangeData)
 {
-  RangeDataRaw rangeData;
+  // Right sensor is flipped compared to left
+  if(whichSensor == RIGHT)
+  {
+    mz_data.RoiNumber = 15 - mz_data.RoiNumber;
+  }
 
+  const int offset = (whichSensor == LEFT ? 0 : 4);
+  // Convert roi number to index in 8x4 rangeData output array
+  const int index = (mz_data.RoiNumber / 4 * 8) + (mz_data.RoiNumber % 4) + offset;
+
+  rangeData.data[index] = 0;
+
+  if(mz_data.NumberOfObjectsFound > 0)
+  {
+    int16_t minDist = 2000;
+    for(int r = 0; r < mz_data.NumberOfObjectsFound; r++)
+    {
+      // The right sensor reports a lot of invalid RangeStatuses, usually
+      // WRAP_TARGET_FAIL. The range data still appears valid though so we ignore the
+      // invalid status.
+      // Other common invalid status are OUTOFBOUNDS_FAIL and TARGET_PRESENT_LACK_OF_SIGNAL
+      if(mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID ||
+         mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_WRAP_TARGET_FAIL)
+      {
+        const int16_t dist = mz_data.RangeData[r].RangeMilliMeter;
+        if(dist < minDist)
+        {
+          minDist = dist;
+        }
+      }
+      // else
+      // {
+      //   printf("%u %u RangeStatus %u %u %u\n",
+      //          whichSensor,
+      //          r,
+      //          mz_data.RangeData[r].RangeStatus,
+      //          mz_data.RoiStatus,
+      //          mz_data.EffectiveSpadRtnCount);
+      // }
+    }
+    rangeData.data[index] = minDist / 1000.f;
+  }
+}
+
+void ReadDataFromSensor(Sensor which, RangeDataRaw& rangeData)
+{
+  const int fd = (which == LEFT ? tofL_fd : tofR_fd);
+  
   int rc = 0;
-  VL53L1_MultiRangingData_t mz_data;
+  
   for(int i = 0; i < 4; i++)
   {
     for(int j = 0; j < 4; j++)
     {
-      rc = get_mz_data(tof_fd, 1, &mz_data);
+      VL53L1_MultiRangingData_t mz_data;
+      rc = get_mz_data(fd, 1, &mz_data);
       if(rc == 0)
       {
-        rangeData.data[i*8 + j] = 0;
-        rangeData.data[i*8 + j + 4] = 0;
-
-        if(mz_data.NumberOfObjectsFound > 0)
-        {
-          int16_t minDist = 2000;
-          for(int r = 0; r < mz_data.NumberOfObjectsFound; r++)
-          {
-            if(mz_data.RangeData[r].RangeStatus == 0)
-            {
-              const int16_t dist = mz_data.RangeData[r].RangeMilliMeter;
-              PRINT_NAMED_WARNING("","I:%d R:%d D:%d", i*4 + j, r, dist);
-              if(dist < minDist)
-              {
-                minDist = dist;
-              }
-            }
-            else if(mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_OUTOFBOUNDS_FAIL ||
-                    mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID_MIN_RANGE_CLIPPED)
-            {
-              minDist = 1999;
-            }
-          }
-          if(minDist >= 2000)
-          {
-            minDist = 0;
-          }
-          rangeData.data[i*8 + j] = minDist / 1000.f;
-          rangeData.data[i*8 + j + 4] = minDist / 1000.f;
-        }
+        ParseData(which, mz_data, rangeData);
       }
     }
   }
+}
+
+RangeDataRaw ReadData()
+{
+  static RangeDataRaw rangeData;
+
+  // Alternate reading from each sensor
+  static bool b = false;
+  if(b)
+  {
+    ReadDataFromSensor(RIGHT, rangeData);
+  }
+  else
+  {
+    ReadDataFromSensor(LEFT, rangeData);
+  }
+  b = !b;
+  
   return rangeData;
 }
 
 void ProcessLoop()
 {
+  // Only setup the sensors when the console var is true
+  // There used to be issues with starting ranging on startup
+  // due to an unstable driver/daemon (I think these have been fixed...)
   while(!kStartToF)
   {
+    if(_stopProcessing)
+    {
+      return;
+    }
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-    
-  tof_fd = setup();
-  if(tof_fd < 0)
+
+  tofR_fd = setup(RIGHT);
+  if(tofR_fd < 0)
   {
-   PRINT_NAMED_ERROR("","FAILED TO OPEN TOF");
-   return;
+    PRINT_NAMED_ERROR("","FAILED TO OPEN TOF R");
+    return;
+  }
+  
+  tofL_fd = setup(LEFT);
+  if(tofL_fd < 0)
+  {
+    PRINT_NAMED_ERROR("","FAILED TO OPEN TOF L");
+    return;
   }
 
-  while(!_stopProcessing)
+  while(kStartToF && !_stopProcessing)
   {
     RangeDataRaw data = ReadData();
     
@@ -328,11 +414,13 @@ void ProcessLoop()
       _latestData = data;
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+   std::this_thread::sleep_for(std::chrono::milliseconds(32));
   }
 
-  stop_ranging(tof_fd);
-  close(tof_fd);
+  stop_ranging(tofR_fd);
+  stop_ranging(tofL_fd);
+  close(tofR_fd);
+  close(tofL_fd);
 }
 
 
