@@ -64,10 +64,10 @@ func (c *client) handleConn(ctx context.Context) {
 func (c *client) handleRequest(ctx context.Context, msg *cloud.LogCollectorRequest) (*cloud.LogCollectorResponse, error) {
 	cladHandler, err := newCladHandler(c.opts)
 	if err != nil {
-		return connectErrorResponse, err
 		if c.opts.errListener != nil {
 			c.opts.errListener.OnError(err)
 		}
+		return connectErrorResponse, err
 	}
 	return cladHandler.handleRequest(ctx, msg)
 }
