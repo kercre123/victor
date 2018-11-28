@@ -2218,8 +2218,8 @@ namespace Vector {
         static const std::set<std::string> knownIssues = {
           "anim_lookatphone_loop_01",
           "anim_onboarding_wakeword_getin_01",
-          "anim_alexaint_l_getin_03",
-          "anim_alexaint_suddenspeak_03",
+          "anim_avs_l_getin_03",
+          "anim_avs_suddenspeak_03",
           "PROCEDURAL_ANIM",
         };
         if(knownIssues.find(animName) == knownIssues.end()) {
