@@ -82,7 +82,11 @@ public:
 
   void Update(const TrackedFace& headPose);
 
+  // This will return the average found amoung the inliers
+  // this is only accurate if IsStable returns true.
   Point3f GetGazeDirectionAverage() const;
+  // This will return the last point in the history and
+  // is used for debugging and visualization purposes.
   Point3f GetCurrentGazeDirection() const;
 
   bool GetExpired(const TimeStamp_t currentTime) const;

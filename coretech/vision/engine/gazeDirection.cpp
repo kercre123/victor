@@ -53,7 +53,7 @@ void GazeDirection::Update(const TrackedFace& face)
   }
 
   Point3f gazeDirectionPoint;
-  bool include = GetPointFromHeadPose(_headPose, gazeDirectionPoint);
+  const bool include = GetPointFromHeadPose(_headPose, gazeDirectionPoint);
   _gazeDirectionHistory[_currentIndex].Update(gazeDirectionPoint, include);
 
   // This computations only need to happen once we are initialized because

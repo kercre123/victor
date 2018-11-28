@@ -1003,7 +1003,7 @@ namespace Vector {
 
     const auto* featureGate = _robot->GetContext()->GetFeatureGate();
     if (kRenderGazeDirectionPoints && featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
-      auto& entry = _gazeDirection[trackedFace.GetID()];
+      const auto& entry = _gazeDirection[trackedFace.GetID()];
       const s32 startingObjectId = 2345;
 
       const auto currentGazeDirection = entry.GetCurrentGazeDirection();
