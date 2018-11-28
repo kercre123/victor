@@ -29,34 +29,6 @@ var (
 	connectionId     string
 )
 
-// TODO: Remove
-/*
-func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
-		LeftWheelMmps:   msg.LeftWheelMmps,
-		RightWheelMmps:  msg.RightWheelMmps,
-		LeftWheelMmps2:  msg.LeftWheelMmps2,
-		RightWheelMmps2: msg.RightWheelMmps2,
-	})
-}
-*/
-
-// TODO: Remove
-/*
-func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.MessageExternalToRobot {
-	if msg.Animation == nil {
-		return nil
-	}
-	return gw_clad.NewMessageExternalToRobotWithPlayAnimation(&gw_clad.PlayAnimation{
-		NumLoops:        msg.Loops,
-		AnimationName:   msg.Animation.Name,
-		IgnoreBodyTrack: msg.IgnoreBodyTrack,
-		IgnoreHeadTrack: msg.IgnoreHeadTrack,
-		IgnoreLiftTrack: msg.IgnoreLiftTrack,
-	})
-}
-*/
-
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
