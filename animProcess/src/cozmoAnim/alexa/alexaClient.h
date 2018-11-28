@@ -30,7 +30,9 @@
 #ifndef ANIMPROCESS_COZMO_ALEXA_ALEXACLIENT_H
 #define ANIMPROCESS_COZMO_ALEXA_ALEXACLIENT_H
 
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
+
 #include <memory>
 
 // todo: forward declare where possible. this is insane
@@ -90,6 +92,7 @@ namespace Vector {
   
 class AlexaMessageRouter;
 class AlexaRevokeAuthHandler;
+class AlexaTemplateRuntimeStub; // (dev only)
   
 class AlexaClient : private Util::noncopyable
                   , public alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesObserverInterface
@@ -108,16 +111,16 @@ public:
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
-                                             std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface>> messageRequestObservers,
+                                              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface>> messageRequestObservers,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface> capabilitiesDelegate,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> ttsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> alertsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> audioMediaPlayer,
-                                             std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> notificationsMediaPlayer,
+                                              std::shared_ptr<alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface> notificationsMediaPlayer,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> ttsSpeaker,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> alertsSpeaker,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> audioSpeaker,
-                                             std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> notificationsSpeaker,
+                                              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface> notificationsSpeaker,
                                               std::shared_ptr<alexaClientSDK::avsCommon::utils::network::InternetConnectionMonitor> internetConnectionMonitor,
                                               alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion );
   
@@ -159,6 +162,9 @@ public:
   void SetDirectiveCallback(const OnDirectiveFunc& onDirective) { _onDirectiveFunc = onDirective; }
   
   bool IsAVSConnected() const;
+
+  // hack to "reset" all of the timers (for use after time is synced)
+  void ReinitializeAllTimers();
 
 private:
   
@@ -231,6 +237,11 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::system::SoftwareInfoSender> _softwareInfoSender;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsCapabilityAgent> _notificationsCapabilityAgent;
+
+#if ANKI_DEV_CHEATS
+  // DEV-ONLY tool for testing
+  std::shared_ptr<AlexaTemplateRuntimeStub> _templateRuntime;
+#endif
   
   std::shared_ptr<AlexaRevokeAuthHandler> _revokeAuthorizationHandler;
   

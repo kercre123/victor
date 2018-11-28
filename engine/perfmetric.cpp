@@ -96,7 +96,7 @@ static int PerfMetricWebServerHandler(struct mg_connection *conn, void *cbdata)
   {
     commands = info->query_string;
   }
-  
+
   auto ws = perfMetric->GetContext()->GetWebService();
   const int returnCode = ws->ProcessRequestExternal(conn, cbdata, PerfMetricWebServerImpl, commands);
 
@@ -116,7 +116,7 @@ PerfMetric::PerfMetric(const CozmoContext* context)
 , _autoRecord(false)
 #endif
 , _context(context)
-, _baseLogDir()
+, _fileDir()
 , _lineBuffer(nullptr)
 , _queuedCommands()
 {
@@ -128,9 +128,16 @@ PerfMetric::~PerfMetric()
   if (_isRecording)
   {
     Stop();
+    if (_autoRecord)
+    {
+      DumpFiles();
+      RemoveOldFiles();
+    }
   }
 
-  delete _frameBuffer;
+  delete[] _frameBuffer;
+  delete[] _lineBuffer;
+
 #endif
 }
 
@@ -144,7 +151,9 @@ void PerfMetric::Init()
 
   _lineBuffer = new char[kNumCharsInLineBuffer];
 
-  _baseLogDir = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Cache, "");
+  _fileDir = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Cache, "")
+             + "/perfMetricLogs";
+  Util::FileUtils::CreateDirectory(_fileDir);
 
   const auto& webService = _context->GetWebService();
   webService->RegisterRequestHandler("/perfmetric", PerfMetricWebServerHandler, this);
@@ -607,10 +616,8 @@ void PerfMetric::DumpFiles() const
   const auto now_time = std::chrono::system_clock::to_time_t(now);
   const auto tm = *std::localtime(&now_time);
 
-  std::string logDir = _baseLogDir + "/perfMetricLogs";
-  Util::FileUtils::CreateDirectory(logDir);
   std::ostringstream sstr;
-  sstr << logDir << "/" << _logBaseFileName << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+  sstr << _fileDir << "/" << _logBaseFileName << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
 #if defined(NDEBUG)
   sstr << "_R";
 #else
@@ -630,6 +637,27 @@ void PerfMetric::DumpFiles() const
   Dump(DT_FILE_CSV, kDumpAll, &logFileNameCSV);
   LOG_INFO("PerfMetric.DumpFiles", "File written to %s", logFileNameCSV.c_str());
 }
+
+
+void PerfMetric::RemoveOldFiles() const
+{
+  static const bool kUseFullPath = true;
+  auto fileList = Util::FileUtils::FilesInDirectory(_fileDir, kUseFullPath);
+
+  static const int kMaxNumFilesToKeep = 50;
+  const int numFilesToRemove = static_cast<int>(fileList.size()) - kMaxNumFilesToKeep;
+  if (numFilesToRemove > 0)
+  {
+    // Since the filenames are structured with date/time in them, we can
+    // sort alphabetically to get a date/time-sorted list
+    std::sort(fileList.begin(), fileList.end());
+    for (int i = 0; i < numFilesToRemove; i++)
+    {
+      Util::FileUtils::DeleteFile(fileList[i]);
+    }
+  }
+}
+
 
 void PerfMetric::WaitSeconds(const float seconds)
 {
@@ -661,10 +689,10 @@ void PerfMetric::WaitTicks(const int ticks)
 int PerfMetric::ParseCommands(std::string& queryString)
 {
   queryString = Util::StringToLower(queryString);
-  
+
   std::vector<PerfMetricCommand> cmds;
   std::string current;
-  
+
   while (!queryString.empty())
   {
     size_t amp = queryString.find('&');
@@ -678,7 +706,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
       current = queryString.substr(0, amp);
       queryString = queryString.substr(amp + 1);
     }
-  
+
     if (current == "status")
     {
       PerfMetricCommand cmd(STATUS);
@@ -760,7 +788,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
       }
     }
   }
-  
+
   // Now that there are no errors, add all parse commands to queue
   for (auto& cmd : cmds)
   {
@@ -768,7 +796,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
   }
   return 1;
 }
-  
+
 
 void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
 {
@@ -810,4 +838,3 @@ void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
 
 } // namespace Vector
 } // namespace Anki
-

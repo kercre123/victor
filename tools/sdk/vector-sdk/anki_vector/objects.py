@@ -28,17 +28,23 @@ class, such as object_appeared (of type EvtObjectAppeared), and
 object_disappeared (of type EvtObjectDisappeared), which are broadcast
 based on both robot originating events and local state.
 
-All observable objects have a marker of a known size attached to them,
-which allows Vector to recognize the object and its position and rotation("pose").
+All observable objects have a marker of a known size attached to them, which allows Vector
+to recognize the object and its position and rotation ("pose").  You can attach
+markers to your own objects for Vector to recognize by printing them out from the
+online documentation.  They will be detected as :class:`CustomObject` instances.
 
 Vector connects to his Light Cubes with BLE.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['LIGHT_CUBE_1_TYPE', 'OBJECT_VISIBILITY_TIMEOUT',
-           'EvtObjectObserved', 'EvtObjectAppeared', 'EvtObjectDisappeared', 'EvtObjectFinishedMove',
+           'EvtObjectAppeared', 'EvtObjectDisappeared', 'EvtObjectFinishedMove', 'EvtObjectObserved',
            'Charger', 'CustomObjectArchetype', 'CustomObject', 'CustomObjectMarkers', 'CustomObjectTypes',
            'FixedCustomObject', 'LightCube', 'ObservableObject']
+
+# TODO Curious why events like the following aren't listed? At least some do seem to be supported in other parts of anki_vector.
+# EvtObjectTapped, EvtObjectConnectChanged, EvtObjectConnected, EvtObjectLocated, EvtObjectMoving, EvtObjectMovingStarted
+
 
 import collections
 import math
@@ -48,6 +54,10 @@ from . import connection, lights, util
 from .events import Events
 
 from .messaging import protocol
+
+#: Length of time in seconds to go without receiving an observed event before
+#: assuming that Vector can no longer see an object.
+OBJECT_VISIBILITY_TIMEOUT = 0.8
 
 
 class EvtObjectObserved():  # pylint: disable=too-few-public-methods
@@ -115,11 +125,6 @@ class EvtObjectFinishedMove():  # pylint: disable=too-few-public-methods
         self.move_duration = move_duration
 
 
-#: Length of time in seconds to go without receiving an observed event before
-#: assuming that Vector can no longer see an object.
-OBJECT_VISIBILITY_TIMEOUT = 0.4
-
-
 class ObservableObject(util.Component):
     """Represents any object Vector can see in the world."""
 
@@ -175,7 +180,7 @@ class ObservableObject(util.Component):
 
             # First, place a cube directly in front of Vector so he can observe it.
 
-            with anki_vector.Robot(args.serial) as robot:
+            with anki_vector.Robot() as robot:
                 connectionResult = robot.world.connect_cube()
                 connected_cube = robot.world.connected_light_cube
 
@@ -212,7 +217,9 @@ class ObservableObject(util.Component):
 
             import anki_vector
 
-            last_seen_time = obj.time_since_last_seen
+            with anki_vector.Robot(enable_face_detection=True) as robot:
+                for face in robot.world.visible_faces:
+                    print(f"time_since_last_seen: {face.time_since_last_seen}")
         """
         if self._last_observed_time is None:
             return math.inf
@@ -271,6 +278,16 @@ LIGHT_CUBE_1_TYPE = protocol.ObjectType.Value("BLOCK_LIGHTCUBE1")
 
 class LightCube(ObservableObject):
     """Represents Vector's Cube.
+
+    The LightCube object has four LEDs that Vector can actively manipulate and communicate with.
+
+    As Vector drives around, he uses the position of objects that he recognizes, including his cube,
+    to localize himself, taking note of the :class:`anki_vector.util.Pose` of the objects.
+
+    You can subscribe to cube events including :class:`anki_vector.events.Events.object_tapped`,
+    :class:`anki_vector.events.Events.object_appeared`, and :class:`anki_vector.events.Events.object_disappeared`.
+
+    Vector supports 1 LightCube.
 
     See parent class :class:`ObservableObject` for additional properties
     and methods.
@@ -413,7 +430,6 @@ class LightCube(ObservableObject):
             import time
 
             with anki_vector.Robot() as robot:
-                # ensure we are connected to a cube
                 robot.world.connect_cube()
 
                 if robot.world.connected_light_cube:
@@ -424,6 +440,8 @@ class LightCube(ObservableObject):
                                            anki_vector.lights.red_light,
                                            anki_vector.lights.white_light)
                     time.sleep(3)
+
+                    cube.set_lights_off()
 
         :param light1: The settings for the first light.
         :param light2: The settings for the second light.
@@ -457,7 +475,6 @@ class LightCube(ObservableObject):
             import time
 
             with anki_vector.Robot() as robot:
-                # ensure we are connected to a cube
                 robot.world.connect_cube()
 
                 if robot.world.connected_light_cube:
@@ -466,6 +483,8 @@ class LightCube(ObservableObject):
                     # Set cube lights to yellow
                     cube.set_lights(anki_vector.lights.yellow_light)
                     time.sleep(3)
+
+                    cube.set_lights_off()
 
         :param light: The settings for the lights
         :param color_profile: The profile to be used for the cube lights
@@ -482,7 +501,6 @@ class LightCube(ObservableObject):
             import time
 
             with anki_vector.Robot() as robot:
-                # ensure we are connected to a cube
                 robot.world.connect_cube()
 
                 if robot.world.connected_light_cube:
@@ -516,7 +534,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_tapped_time = robot.world.connected_light_cube.last_tapped_time
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_tapped_time}")
         """
         return self._last_tapped_time
 
@@ -529,7 +550,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_tapped_robot_timestamp = robot.world.connected_light_cube.last_tapped_robot_timestamp
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_tapped_robot_timestamp}")
         """
         return self._last_tapped_robot_timestamp
 
@@ -542,7 +566,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_moved_time = robot.world.connected_light_cube.last_moved_time
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_moved_time}")
         """
         return self._last_moved_time
 
@@ -555,7 +582,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_moved_robot_timestamp = robot.world.connected_light_cube.last_moved_robot_timestamp
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_moved_robot_timestamp}")
         """
         return self._last_moved_robot_timestamp
 
@@ -568,7 +598,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_moved_start_time = robot.world.connected_light_cube.last_moved_start_time
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_moved_start_time}")
         """
         return self._last_moved_start_time
 
@@ -581,7 +614,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_moved_start_robot_timestamp = robot.world.connected_light_cube.last_moved_start_robot_timestamp
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_moved_start_robot_timestamp}")
         """
         return self._last_moved_start_robot_timestamp
 
@@ -594,7 +630,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_up_axis_changed_time = robot.world.connected_light_cube.last_up_axis_changed_time
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_up_axis_changed_time}")
         """
         return self._last_up_axis_changed_time
 
@@ -607,7 +646,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                last_up_axis_changed_robot_timestamp = robot.world.connected_light_cube.last_up_axis_changed_robot_timestamp
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.last_up_axis_changed_robot_timestamp}")
         """
         return self._last_up_axis_changed_robot_timestamp
 
@@ -620,7 +662,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                up_axis = robot.world.connected_light_cube.up_axis
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.up_axis}")
         """
         return self._up_axis
 
@@ -633,7 +678,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                is_moving = robot.world.connected_light_cube.is_moving
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.is_moving}")
         """
         return self._is_moving
 
@@ -646,7 +694,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                is_connected = robot.world.connected_light_cube.is_connected
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.is_connected}")
         """
         return self._is_connected
 
@@ -659,7 +710,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                top_face_orientation_rad = robot.world.connected_light_cube.top_face_orientation_rad
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.top_face_orientation_rad}")
         """
         return self._top_face_orientation_rad
 
@@ -672,7 +726,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                factory_id = robot.world.connected_light_cube.factory_id
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.factory_id}")
         """
         return self._factory_id
 
@@ -692,7 +749,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                descriptive_name = robot.world.connected_light_cube.descriptive_name
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.descriptive_name}")
         """
         return "{0} id={1} factory_id={2} is_connected={3}".format(self.__class__.__name__, self._object_id, self._factory_id, self._is_connected)
 
@@ -707,7 +767,10 @@ class LightCube(ObservableObject):
             import anki_vector
 
             with anki_vector.Robot() as robot:
-                object_id = robot.world.connected_light_cube.object_id
+                robot.world.connect_cube()
+                if robot.world.connected_light_cube:
+                    cube = robot.world.connected_light_cube
+                    print(f"{cube.object_id}")
         """
         return self._object_id
 
@@ -822,6 +885,8 @@ class Charger(ObservableObject):
     .. testcode::
 
         import anki_vector
+
+        # Position Vector so he can see his charger
         with anki_vector.Robot() as robot:
             if robot.world.charger:
                 print('Robot is aware of charger: {0}'.format(robot.world.charger))
@@ -853,9 +918,12 @@ class Charger(ObservableObject):
         .. testcode::
 
             import anki_vector
+
+            # Position Vector so he can see his charger
             with anki_vector.Robot() as robot:
                 if robot.world.charger:
                     charger_object_id = robot.world.charger.object_id
+                    print(f"charger_object_id: {charger_object_id}")
 
         This value can only be assigned once as it is static on the robot.
         """
@@ -928,7 +996,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with type: {0}'.format(obj.custom_type))
         """
@@ -941,7 +1009,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
         """
@@ -954,7 +1022,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
         """
@@ -967,7 +1035,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with dimensions: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
         """
@@ -980,7 +1048,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with marker size: {0}mm x {1}mm'.format(obj.marker_width_mm, obj.marker_height_mm))
         """
@@ -993,7 +1061,7 @@ class CustomObjectArchetype():
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 for obj in robot.world.custom_object_archetypes:
                     print('custom object archetype defined with marker size: {0}mm x {1}mm'.format(obj.marker_width_mm, obj.marker_height_mm))
         """
@@ -1061,11 +1129,13 @@ class CustomObject(ObservableObject):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
                                                size_mm=20.0,
-                                               marker_width_mm=10.0, marker_height_mm=10.0)
+                                               marker_width_mm=50.0, marker_height_mm=50.0)
 
                 # have the robot observe a custom object in the real world with the Circles2 marker
 
@@ -1092,12 +1162,13 @@ class CustomObject(ObservableObject):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
                                                size_mm=20.0,
-                                               marker_width_mm=10.0, marker_height_mm=10.0)
+                                               marker_width_mm=50.0, marker_height_mm=50.0)
 
                 # have the robot observe a custom object in the real world with the Circles2 marker
 
@@ -1113,12 +1184,13 @@ class CustomObject(ObservableObject):
         .. testcode::
 
             import anki_vector
-            with anki_vector.Robot() as robot:
+            from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                                marker=CustomObjectMarkers.Circles2,
                                                size_mm=20.0,
-                                               marker_width_mm=10.0, marker_height_mm=10.0)
+                                               marker_width_mm=50.0, marker_height_mm=50.0)
 
                 # have the robot observe a custom object in the real world with the Circles2 marker
 
@@ -1174,11 +1246,13 @@ class CustomObjectTypes():  # pylint: disable=too-few-public-methods
     .. testcode::
 
         import anki_vector
-        with anki_vector.Robot() as robot:
+        from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
+        with anki_vector.Robot(enable_custom_object_detection=True) as robot:
             robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                            marker=CustomObjectMarkers.Circles2,
                                            size_mm=20.0,
-                                           marker_width_mm=10.0, marker_height_mm=10.0)
+                                           marker_width_mm=50.0, marker_height_mm=50.0)
     """
 
     #: CustomType00 - the first custom object type
@@ -1264,11 +1338,13 @@ class CustomObjectMarkers():  # pylint: disable=too-few-public-methods
     .. testcode::
 
         import anki_vector
-        with anki_vector.Robot() as robot:
+        from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
+
+        with anki_vector.Robot(enable_custom_object_detection=True) as robot:
             robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                            marker=CustomObjectMarkers.Circles2,
                                            size_mm=20.0,
-                                           marker_width_mm=10.0, marker_height_mm=10.0)
+                                           marker_width_mm=50.0, marker_height_mm=50.0)
     """
 
     #: .. image:: ../images/custom_markers/SDK_2Circles.png
@@ -1333,9 +1409,10 @@ class FixedCustomObject(util.Component):
     .. testcode::
 
         import anki_vector
-        from anki_vector.util import degrees
+        from anki_vector.util import degrees, Pose
+        import time
 
-        with anki_vector.Robot() as robot:
+        with anki_vector.Robot(enable_custom_object_detection=True) as robot:
             robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                    10, 100, 100, relative_to_robot=True)
     """
@@ -1374,9 +1451,10 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.object_id))
@@ -1397,9 +1475,10 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.pose))
@@ -1413,9 +1492,10 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1429,9 +1509,10 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1445,9 +1526,10 @@ class FixedCustomObject(util.Component):
         .. testcode::
 
             import anki_vector
-            from anki_vector.util import degrees
+            from anki_vector.util import degrees, Pose
+            import time
 
-            with anki_vector.Robot() as robot:
+            with anki_vector.Robot(enable_custom_object_detection=True) as robot:
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))

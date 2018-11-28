@@ -55,8 +55,6 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizSetPathColorMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ErasePath,
     std::bind(&PhysVizController::ProcessVizErasePathMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::DefineColor,
-    std::bind(&PhysVizController::ProcessVizDefineColorMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ShowObjects,
     std::bind(&PhysVizController::ProcessVizShowObjectsMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
@@ -67,22 +65,6 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizSegmentPrimitiveMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::EraseSegmentPrimitives,
     std::bind(&PhysVizController::ProcessVizEraseSegmentPrimitivesMessage, this, std::placeholders::_1));
-
-  
-  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageBegin,
-    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageBegin, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessage,
-    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessageEnd,
-    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageEnd, this, std::placeholders::_1));
-
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizBegin,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessageBegin, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageViz,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizEnd,
-    std::bind(&PhysVizController::ProcessVizMemoryMapMessageEnd, this, std::placeholders::_1));
-  
 
   _server.StopListening();
   _server.StartListening((uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
@@ -159,14 +141,6 @@ void PhysVizController::Draw(int pass, const char *view)
       if (_pathColorMap.find(pathID) != _pathColorMap.end()) {
         Anki::ColorRGBA pathColor(_pathColorMap[pathID]);
         glColor4ub(pathColor.r(), pathColor.g(), pathColor.b(), pathColor.alpha());
-        /*
-        VizColorDef_t::iterator cIt = colorMap_.find(pathColorMap_[pathID]);
-        if (cIt != colorMap_.end()) {
-          Anki::Vector::VizDefineColor *c = &(cIt->second);
-          glColor3f(c->r, c->g, c->b);
-
-        }
-         */
       }
 
       // Draw the path
@@ -205,13 +179,6 @@ void PhysVizController::Draw(int pass, const char *view)
       // Set color for the block
       Anki::ColorRGBA objColor(obj->color);
       glColor4ub(objColor.r(), objColor.g(), objColor.b(), objColor.alpha());
-      /*
-      VizColorDef_t::iterator cIt = colorMap_.find(obj->color);
-      if (cIt != colorMap_.end()) {
-        Anki::Vector::VizDefineColor *c = &(cIt->second);
-        glColor3f(c->r, c->g, c->b);
-      }
-       */
 
       // Set pose
       glPushMatrix();
@@ -234,12 +201,6 @@ void PhysVizController::Draw(int pass, const char *view)
           DrawTextAtOffset(idString, 0.6f*obj->x_size_m, 0.6f*obj->y_size_m, 0.6f*obj->z_size_m);
           DrawTextAtOffset(idString, -0.6f*obj->x_size_m, -0.6f*obj->y_size_m, -0.6f*obj->z_size_m);
           
-          break;
-        }
-          case VizObjectType::VIZ_OBJECT_RAMP:
-        {
-          float slopeLength = obj->objParameters[0]*obj->x_size_m;
-          DrawRamp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
           break;
         }
         case VizObjectType::VIZ_OBJECT_CHARGER:
@@ -291,13 +252,6 @@ void PhysVizController::Draw(int pass, const char *view)
         // Set color for the quad
         Anki::ColorRGBA quadColor(quad.color);
         glColor4ub(quadColor.r(), quadColor.g(), quadColor.b(), quadColor.alpha());
-        /*
-        VizColorDef_t::iterator cIt = colorMap_.find(quad.color);
-        if (cIt != colorMap_.end()) {
-          Anki::Vector::VizDefineColor *c = &(cIt->second);
-          glColor3f(c->r, c->g, c->b);
-        }
-         */
 
         DrawQuad(quad.xUpperLeft,  quad.yUpperLeft,  quad.zUpperLeft,
           quad.xLowerLeft,  quad.yLowerLeft,  quad.zLowerLeft,
@@ -312,35 +266,6 @@ void PhysVizController::Draw(int pass, const char *view)
           ::Anki::NamedColors::DEFAULT.alpha());
       } // for each quad
     } // for each quad type
-
-    // Draw simple quad vectors
-    for(const auto & quadVectorPerIdentifier : _simpleQuadVectorMapReady) {
-      for(const auto & quadInVector : quadVectorPerIdentifier.second) {
-
-        // Set color for the quad
-        Anki::ColorRGBA quadColor(quadInVector.color);
-        glColor4ub(quadColor.r(), quadColor.g(), quadColor.b(), quadColor.alpha());
-        
-        const float halfSize = quadInVector.sideSize*0.5f;
-        DrawQuadFill(
-            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
-            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
-            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
-            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
-         );
-
-        const bool kRenderQuadBorder = true;
-        if ( kRenderQuadBorder ) {
-          glColor4ub(255,255,255,10);
-          DrawQuad(
-              quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
-              quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L
-              quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2], // up R
-              quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
-          );
-        }
-      } // for each quadInVector
-    } // for each vector in map
     
     // Draw segment primitives
     glBegin(GL_LINES);
@@ -378,9 +303,6 @@ void PhysVizController::Cleanup()
   _pathColorMap.clear();
   _objectMap.clear();
   _quadMap.clear();
-  _colorMap.clear();
-  _simpleQuadVectorMapReady.clear();
-  _simpleQuadVectorMapIncoming.clear();
 }
 
 void PhysVizController::ProcessMessage(VizInterface::MessageViz&& message)
@@ -430,140 +352,6 @@ void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::Mess
     payload.xLowerRight, payload.yLowerRight, payload.zLowerRight);
 
   _quadMap[(int)payload.quadType][payload.quadID] = VizInterface::Quad(payload);
-}
-
-// OLD SCHEME for memory map quad display
-
-void PhysVizController::ProcessVizSimpleQuadVectorMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessageBegin();
-  PRINT("Processing SimpleQuadVectorMessageBegin '%s'\n", payload.identifier.c_str());
-
-  // clear the vector in Incoming
-  _simpleQuadVectorMapIncoming[payload.identifier].clear();
-}
-
-void PhysVizController::ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  // WARNING:  No check here that we've received the 'begin' message yet (does not handle out-of-order messages)
-  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessage();
-  PRINT("Processing SimpleQuadVectorMessage '%s' (quad count: %zu)\n",
-    payload.identifier.c_str(), payload.quads.size());
-
-  // ideally I would like to move vectors, but messages are const in case more listeners subscribe
-  SimpleQuadVector& dest = _simpleQuadVectorMapIncoming[payload.identifier];
-  //  dest.insert(
-  //      dest.end(),
-  //      std::make_move_iterator(payload.quads.begin()),
-  //      std::make_move_iterator(payload.quads.end())
-  //    );
-  const size_t quadLimitPerId = 8192;
-  const size_t newSize = dest.size() + payload.quads.size();
-  if( newSize <= quadLimitPerId ) {
-    dest.reserve( newSize );
-    dest.insert( dest.end(), payload.quads.begin(), payload.quads.end());
-  }
-  else
-  {
-    static int warningTimesLeft = 30;
-    if ( warningTimesLeft > 0 )
-    {
-      const size_t available = quadLimitPerId - dest.size();
-      const size_t asked     = payload.quads.size();
-      const size_t discarded = asked - available;
-      --warningTimesLeft;
-      dWebotsConsolePrintf("[PhysVizController] [WARNING] Too many quads for '%s'. Discarding %zu from %zu received in this message. (%d warnings left)\n",
-        payload.identifier.c_str(),
-        discarded,
-        asked,
-        warningTimesLeft );
-      if ( warningTimesLeft == 0 ) {
-        dWebotsConsolePrintf("[PhysVizController] [WARNING] Suppressing future warnings from quad excess\n");
-      }
-    }
-    dest.reserve( quadLimitPerId );
-    std::vector<VizInterface::SimpleQuad>::const_iterator payloadIt = payload.quads.begin();
-    while( (dest.size() < quadLimitPerId) && payloadIt != payload.quads.end() ) {
-      dest.emplace_back( *payloadIt );
-      ++payloadIt;
-    }
-  }
-}
-
-void PhysVizController::ProcessVizSimpleQuadVectorMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessageEnd();
-  PRINT("Processing SimpleQuadVectorMessageEnd '%s'\n", payload.identifier.c_str());
-
-  // swap the vectors from incoming - ready
-  std::swap(_simpleQuadVectorMapIncoming[payload.identifier], _simpleQuadVectorMapReady[payload.identifier]);
-}
-
-
-// NEW SCHEME for memory map quad display
-  
-void PhysVizController::ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_MemoryMapMessageVizBegin();
-  _memoryMapInfo[payload.originId] = payload.info;
-
-  // clear the vector in Incoming
-  _memoryMapQuadInfoVectorMapIncoming[payload.originId].clear();
-}
-
-void PhysVizController::ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_MemoryMapMessageViz();
-
-  MemoryMapQuadInfoVector& dest = _memoryMapQuadInfoVectorMapIncoming[payload.originId];
-  dest[payload.seqNum] = std::move(payload.quadInfos);
-}
-
-void PhysVizController::ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_MemoryMapMessageVizEnd();
-
-  // Now that we've received the entire list of quad infos, decode them into a list of drawable quads
-  
-  // input  is _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId], and _memoryMapInfo[payload.originId]
-  // output is _simpleQuadVectorMapReady["string"]
-  const auto& iter = _memoryMapInfo.find(payload.originId);
-  if(iter == _memoryMapInfo.end())
-  {
-    dWebotsConsolePrintf("[PhysVizController] [INFO] Didn't get begin memory map begin viz message");
-  }
-  else
-  {
-    const ExternalInterface::MemoryMapInfo& info = iter->second;
-    
-    SimpleQuadVector& destSimpleQuads = _simpleQuadVectorMapReady[info.identifier];
-    destSimpleQuads.clear();
-    
-    Point3f rootCenter(MM_TO_M(info.rootCenterX), MM_TO_M(info.rootCenterY), MM_TO_M(info.rootCenterZ));
-    MemoryMapNode rootNode(info.rootDepth, MM_TO_M(info.rootSize_mm), rootCenter);
-
-    u32 expectedSeqNum = 0;
-    const auto& srcQuadInfos = _memoryMapQuadInfoVectorMapIncoming[payload.originId];
-    for (const auto& quadInfo : srcQuadInfos)
-    {
-      if(quadInfo.first != expectedSeqNum)
-      {
-        dWebotsConsolePrintf("[PhysVizController] [INFO] Dropped memory map viz message, displayed map will be incorrect");
-        break;
-      }
-      else
-      {
-        for (const auto& quad : quadInfo.second)
-        {
-          rootNode.AddChild(destSimpleQuads, quad);
-        }
-        ++expectedSeqNum;
-      }
-    }
-  }
-  
-  _memoryMapQuadInfoVectorMapIncoming.erase(payload.originId);
-  _memoryMapInfo.erase(payload.originId);
 }
 
 void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -703,14 +491,6 @@ void PhysVizController::ProcessVizErasePathMessage(const AnkiEvent<VizInterface:
   } else {
     _pathMap.erase(payload.pathID);
   }
-}
-
-void PhysVizController::ProcessVizDefineColorMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
-{
-  const auto& payload = msg.GetData().Get_DefineColor();
-  PRINT("Processing DefineColor\n");
-
-  _colorMap[payload.colorID] = payload;
 }
 
 void PhysVizController::ProcessVizShowObjectsMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -971,56 +751,6 @@ void PhysVizController::DrawQuadFill(
   glEnd();
 }
 
-
-MemoryMapNode::MemoryMapNode(int depth, float size_m, const Point3f& center)
-{
-  _depth = depth;
-  _size_m = size_m;
-  _center = center;
-  _nextChild = 0;
-}
-
-bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::MemoryMapQuadInfo& quad)
-{
-  using namespace ExternalInterface;
-  
-  if (_depth == quad.depth)
-  {
-    VizInterface::SimpleQuad simpleQuad;
-    simpleQuad.center[0] = _center.x();
-    simpleQuad.center[1] = _center.y();
-    simpleQuad.center[2] = _center.z();
-    simpleQuad.sideSize = _size_m;
-    simpleQuad.color = ColorRGBA(quad.colorRGBA);
-    destSimpleQuads.emplace_back(simpleQuad);
-    return true;
-  }
-  
-  if (_children.empty())
-  {
-    int nextDepth = _depth - 1;
-    float nextSize = _size_m * 0.5f;
-    float offset = nextSize * 0.5f;
-    Point3f center1(_center.x() + offset, _center.y() + offset, _center.z());
-    Point3f center2(_center.x() + offset, _center.y() - offset, _center.z());
-    Point3f center3(_center.x() - offset, _center.y() + offset, _center.z());
-    Point3f center4(_center.x() - offset, _center.y() - offset, _center.z());
-    // this code should probably be optimized to avoid copies but I'm just getting it to work right now
-    
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center1));
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center2));
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center3));
-    _children.push_back(MemoryMapNode(nextDepth, nextSize, center4));
-  }
-  
-  if (_children[_nextChild].AddChild(destSimpleQuads, quad))
-  {
-    // All children below this child have been processed
-    _nextChild++;
-  }
-  
-  return (_nextChild > 3);
-}
 
 } // end namespace Vector
 } // end namespace Anki

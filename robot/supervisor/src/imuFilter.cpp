@@ -59,7 +59,7 @@ namespace Anki {
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
         Radians rot_ = 0;   // radians
         f32 rotSpeed_ = 0; // rad/s
-        
+
         // Roll angle:
         f32 roll_                        = 0.f;
         const f32 ROLL_FILT_COEFF        = 0.75f; // Filter to combine gyro and accel for smooth roll estimation
@@ -89,28 +89,28 @@ namespace Anki {
 
         const f32 GYRO_BIAS_FILT_COEFF_PRECALIB = 0.017f;   // Gyro bias filter coefficient. Relatively fast before calibration.
         f32 gyroBiasCoeff_              = GYRO_BIAS_FILT_COEFF_PRECALIB;
-        
+
         // Are we finished initial calibration for the gyro zero-rate bias?
         bool biasFilterComplete_        = false;
-        
+
         // During initial gyro bias calibration, store recent bias estimates in a queue. This allows us to compute a
         // min and max of recent bias estimates, to ensure that all readings are within a small band before declaring
         // the gyro bias 'calibrated'.
         std::array<Util::MinMaxQueue<f32>, 3> gyroBiasCalibValues_;
-        
+
         // Max difference between the max and min of recent gyro bias estimates. If any recent readings that fall
         // outside this band, then the gyro bias is not yet calibrated.
         const f32 BIAS_FILT_ALLOWED_BAND = DEG_TO_RAD_F32(0.35f);
-        
+
         // Number of consecutive gyro bias estimates required to fall within a small min/max window before declaring the gyro 'calibrated'
         const u16 BIAS_FILT_COMPLETE_COUNT = 200;
-        
+
         bool gyro_sign[3] = {false}; // true is negative, false is positive
 
         // Circular buffer of robot-frame gyro readings corresponding to every IMU reading that we have received. These
         // get sent to engine as part of RobotState and are used for image de-warping, etc.
         ImuDataBufferType imuDataBuffer_;
-        
+
         f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
         f32 accel_robot_frame[3]        = {0};    // Unfiltered accelerometer measurements in robot frame
         f32 accel_robot_frame_filt[3]   = {0};    // Filtered accelerometer measurements in robot frame
@@ -391,7 +391,7 @@ namespace Anki {
           biasVals.clear();
         }
       }
-      
+
       void UpdateGyroBiasFilter(const float rawGyro[3])
       {
         // Gyro bias filter update/calibration:
@@ -403,7 +403,7 @@ namespace Anki {
         //
         // Once the initial calibration is complete (i.e. IsBiasFilterComplete() == true), we switch to a much slower
         // filter which keeps track of slow drifting of gyro zero-rate bias over time and temperature changes.
-        
+
         if (!isMotionDetected_) {
           // Update gyro bias offset while not moving. If the gyro bias value queue is just starting, then set the
           // filtered gyro bias to the actual gyro value to initialize it. Otherwise, pass it through the low pass filter.
@@ -414,12 +414,12 @@ namespace Anki {
               gyro_bias_filt[i] = LowPassFilter_single(gyro_bias_filt[i], rawGyro[i], gyroBiasCoeff_);
             }
           }
-          
+
           AnkiInfoPeriodic(12000, "IMUFilter.Bias", "%f %f %f (deg/sec)",
                            RAD_TO_DEG_F32(gyro_bias_filt[0]),
                            RAD_TO_DEG_F32(gyro_bias_filt[1]),
                            RAD_TO_DEG_F32(gyro_bias_filt[2]));
-          
+
           // If initial bias estimate not complete, accumulate
           if (!IsBiasFilterComplete()) {
             for (int i=0 ; i<3 ; i++) {
@@ -464,7 +464,7 @@ namespace Anki {
           ClearGyroBiasCalibValues();
         }
       }
-      
+
       void DetectFalling()
       {
         // Fall detection accelerometer thresholds:
@@ -516,11 +516,11 @@ namespace Anki {
               BraceForImpact();
             } else {
               // only clear the flag if aMag rises above the higher threshold.
-              fallStarted_ = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) && 
+              fallStarted_ = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) &&
                              (ProxSensors::IsAnyCliffDetected() || !PowerModeManager::IsActiveModeEnabled());
             }
           } else { // not fallStarted
-            if ((accelMagnitudeSqrd_ < FALLING_THRESH_LOW_MMPS2_SQRD) && 
+            if ((accelMagnitudeSqrd_ < FALLING_THRESH_LOW_MMPS2_SQRD) &&
                 (ProxSensors::IsAnyCliffDetected() || !PowerModeManager::IsActiveModeEnabled())) {
               fallStarted_ = true;
               fallStartedTime_ = now;
@@ -759,20 +759,20 @@ namespace Anki {
 
         //AnkiDebugPeriodic(50, "RobotPitch", "%f deg (motion %d, gyro %f)", RAD_TO_DEG_F32(pitch_), MotionDetected(), gyro_robot_frame_filt[1]);
       }
-      
+
       void UpdateRoll()
       {
         const f32 headAngle = HeadController::GetAngleRad();
         const f32 accelBasedRoll = atan2f(imu_data_.accel[1], imu_data_.accel[2] * cosf(headAngle));
         const f32 gyroBasedRoll = roll_ - (gyro_robot_frame[0] * CONTROL_DT);
-        
+
         // Complementary filter to mostly trust gyro integration for current roll in the short term
         // but always approach accelerometer-based roll in the "long" term.
         const bool isMoving = WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving() || HeadController::IsMoving();
         const f32 coeff = isMoving ? ROLL_FILT_COEFF_MOVING : ROLL_FILT_COEFF;
         roll_ = (coeff * gyroBasedRoll) + ((1.f - coeff) * accelBasedRoll);
         AnkiDebugPeriodic(250, "IMUFilter.UpdateRoll",
-                         "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)\n",
+                         "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)",
                          RAD_TO_DEG_F32(roll_),
                          RAD_TO_DEG_F32(accelBasedRoll),
                          RAD_TO_DEG_F32(gyroBasedRoll),
@@ -831,7 +831,7 @@ namespace Anki {
         DetectMotion();
 
         UpdateGyroBiasFilter(imu_data_.gyro);
-          
+
         // Don't do any other IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
           pitch_ = 0.f;
@@ -877,7 +877,7 @@ namespace Anki {
 
 
         ///// Accelerometer update /////
-          
+
         LowPassFilter(accel_filt, imu_data_.accel, ACCEL_FILT_COEFF);
 
         // Compute accelerations in robot frame
@@ -937,7 +937,7 @@ namespace Anki {
         // Poke detection MUST occur after pick-up detection, to avoid confusing an
         // overly-aggressive pickup with a poke.
         DetectPoke();
-        
+
         DetectFalling();
 
         // Queue ImuData to be sent as part of RobotState
@@ -1005,7 +1005,7 @@ namespace Anki {
       {
         return gyro_;
       }
-      
+
       ImuDataBufferType& GetImuDataBuffer()
       {
         return imuDataBuffer_;
@@ -1026,7 +1026,7 @@ namespace Anki {
       {
         return pitch_;
       }
-      
+
       f32 GetRoll()
       {
         return roll_;
@@ -1041,7 +1041,7 @@ namespace Anki {
       {
         return IsPickedUp() && isMotionDetected_;
       }
-      
+
       bool IsMotionDetected()
       {
         return isMotionDetected_;

@@ -108,6 +108,10 @@ namespace Anki {
       // Calls callback upon completion of check
       void CheckForLoad(void (*callback)(bool) = SendLiftLoadMessage);
       
+      // Returns true if motor hasn't been calibrated since the last time
+      // sycon reported that the encoder is invalid
+      bool IsEncoderInvalid();
+
     } // namespace LiftController
   } // namespace Vector
 } // namespace Anki

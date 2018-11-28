@@ -45,6 +45,9 @@ struct VisionSystemInput
   // arguments for whether or not to clear metering regions which is the
   // current purpose of futureModesToProcess.
   VisionModeSet futureModesToProcess;
+
+  // Quality at which to jpg compress images for display
+  s32 imageCompressQuality = 50;
 };
 
 }

@@ -66,7 +66,7 @@ CameraCalibrator::~CameraCalibrator()
 }
 
 Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibration_out,
-                                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs_out)
+                                                            DebugImageList<Vision::CompressedImage>& debugImages_out)
 {
   std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
@@ -148,7 +148,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
         cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), calibImage.dotsFound);
       }
       
-      debugImageRGBs_out.push_back({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
+      debugImages_out.emplace_back(std::string("CalibImage") + std::to_string(imgCnt), dispImg);
     }
     
     ++imgCnt;
@@ -226,7 +226,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
 Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targetType,
                                                             const std::list<Vision::ObservedMarker>& observedMarkers,
                                                             std::list<Vision::CameraCalibration>& calibration_out,
-                                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs_out)
+                                                            DebugImageList<Vision::CompressedImage>& debugImages_out)
 {
   std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
@@ -374,7 +374,7 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
       const auto& p = imgPts[i];
       dispImg.DrawFilledCircle({p[0], p[1]}, NamedColors::RED, 2);
     }
-    debugImageRGBs_out.push_back({"CalibImage", dispImg});
+    debugImages_out.emplace_back("CalibImage", dispImg);
   }
   
   // Depending on what type of robot we are running, provide a different initial guess for calibration

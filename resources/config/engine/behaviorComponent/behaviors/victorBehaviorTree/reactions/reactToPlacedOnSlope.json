@@ -4,6 +4,15 @@
   "associatedActiveFeature": "NoFeature",
 
   "wantsToBeActivatedCondition": {
-    "conditionType": "RobotPlacedOnSlope"
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "RobotPlacedOnSlope"
+      },
+      {
+        "conditionType": "BeingHeld",
+        "shouldBeHeld": false
+      }
+    ]
   }
 }

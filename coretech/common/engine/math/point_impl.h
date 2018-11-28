@@ -30,6 +30,20 @@
 
 #include <cmath>
 
+// STL specializations for hashing common template specializations for Point types 
+namespace std {
+  
+  template <> 
+  struct std::hash<Anki::Point2i> 
+  {
+    s64 operator()(const Anki::Point2i& p) const 
+    { 
+      return ((s64) p.x()) << 32 | ((s64) p.y()); 
+    }
+  };
+
+}
+
 namespace Anki {
   
   template<PointDimType N, typename T>

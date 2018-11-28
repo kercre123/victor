@@ -65,8 +65,10 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   _isInitialized = true;
   _context = context;
 
-  RobotExternalRequestComponent* externalRequestComponent = new RobotExternalRequestComponent();
-  externalRequestComponent->Init(_context);
+  _externalRequestComponent = std::make_unique<RobotExternalRequestComponent>();
+  _externalRequestComponent->Init(_context);
+
+  auto * externalRequestComponent = _externalRequestComponent.get();
 
   auto versionStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetVersionState, externalRequestComponent, std::placeholders::_1);
   auto networkStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetNetworkState, externalRequestComponent, std::placeholders::_1);
@@ -80,7 +82,7 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kNetworkStateRequest, networkStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, sayTextCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSetEyeColorRequest, setEyeColorCallback));
-  
+
   return RESULT_OK;
 }
 

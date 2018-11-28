@@ -11,6 +11,7 @@
 #include "coretech/common/engine/math/quad_impl.h"
 
 #include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/compressedImage.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/observableObject.h"
 #include "coretech/vision/engine/perspectivePoseEstimation.h"
@@ -554,4 +555,66 @@ GTEST_TEST(ResizeImage, CorrectSizes)
   origImg.ResizeKeepAspectRatio(30, 25, Vision::ResizeMethod::NearestNeighbor, false);
   EXPECT_EQ(13, origImg.GetNumRows());
   EXPECT_EQ(25, origImg.GetNumCols());  
+}
+
+GTEST_TEST(CompressedImage, Compress)
+{
+  using namespace Vision;
+
+  // Empty compressed image
+  CompressedImage cImg;
+  const std::vector<u8>& buffer = cImg.GetCompressedBuffer();
+
+  EXPECT_TRUE(buffer.empty());
+  EXPECT_EQ(cImg.GetTimestamp(), 0);
+  EXPECT_EQ(cImg.GetImageId(), 0);
+  EXPECT_EQ(cImg.GetNumRows(), 0);
+  EXPECT_EQ(cImg.GetNumCols(), 0);
+  EXPECT_EQ(cImg.GetNumChannels(), 0);
+
+  Image gray(5, 5, (u8)0);
+  gray.SetTimestamp(1);
+  gray.SetImageId(2);
+
+  // Compress a gray image
+  cImg.Compress(gray);
+
+  EXPECT_EQ(buffer.size(), 332);
+  EXPECT_EQ(cImg.GetTimestamp(), 1);
+  EXPECT_EQ(cImg.GetImageId(), 2);
+  EXPECT_EQ(cImg.GetNumRows(), 5);
+  EXPECT_EQ(cImg.GetNumCols(), 5);
+  EXPECT_EQ(cImg.GetNumChannels(), 1);
+
+  ImageRGB rgb(10, 10, {0, 0, 0});
+  rgb.SetTimestamp(3);
+  rgb.SetImageId(4);
+
+  // Construct and immediately compress an image
+  CompressedImage cImg2(rgb);
+  const std::vector<u8>& buffer2 = cImg2.GetCompressedBuffer();
+  
+  EXPECT_EQ(buffer2.size(), 631);
+  EXPECT_EQ(cImg2.GetTimestamp(), 3);
+  EXPECT_EQ(cImg2.GetImageId(), 4);
+  EXPECT_EQ(cImg2.GetNumRows(), 10);
+  EXPECT_EQ(cImg2.GetNumCols(), 10);
+  EXPECT_EQ(cImg2.GetNumChannels(), 3);
+}
+
+GTEST_TEST(CompressedImage, Decompress)
+{
+  using namespace Vision;
+  
+  Image rgb(5, 5, (u8)255);
+  CompressedImage img(rgb, 100);
+
+  ImageRGB outRGB;
+  bool res = img.Decompress(outRGB);
+  EXPECT_FALSE(res);
+
+  Image outGray;
+  res = img.Decompress(outGray);
+  EXPECT_TRUE(res);
+  EXPECT_EQ(rgb, outGray);
 }

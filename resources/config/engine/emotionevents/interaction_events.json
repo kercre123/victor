@@ -2,7 +2,7 @@
   "emotionEvents" : [
     {
       "name" : "FistBumpSuccess",
-      "emotionAffectors" : [										  
+      "emotionAffectors" : [
         {
           "emotionType" : "Happy",
           "value" : 0.8
@@ -18,7 +18,7 @@
     },
     {
       "name" : "FistBumpLeftHanging",
-      "emotionAffectors" : [										  
+      "emotionAffectors" : [
         {
           "emotionType" : "Happy",
           "value" : -0.8
@@ -104,6 +104,19 @@
         {
           "emotionType" : "Social",
           "value" : 1.0
+        }
+      ]
+    },
+    {
+    "name": "RobotShaken",
+    "emotionAffectors" : [
+        {
+          "emotionType" : "Happy",
+          "value" : -0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.3
         }
       ]
     },

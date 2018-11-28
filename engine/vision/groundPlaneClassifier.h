@@ -155,7 +155,7 @@ public:
   GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context);
 
   Result Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
-                DebugImageList <Vision::ImageRGB>& debugImageRGBs,
+                DebugImageList<Vision::CompressedImage>& debugImages,
                 std::list<OverheadEdgeFrame>& outEdges);
 
   bool IsInitialized() const {

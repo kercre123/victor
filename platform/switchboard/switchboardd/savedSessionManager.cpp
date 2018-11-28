@@ -16,40 +16,61 @@
 #include "log.h"
 #include "cutils/properties.h"
 #include "switchboardd/pairingMessages.h"
-#include "anki-wifi/fileutils.h"
+#include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
 namespace Switchboard {
 
 const std::string SavedSessionManager::kRtsKeyPath = "/dev/block/bootdevice/by-name/switchboard";
-const std::string SavedSessionManager::kRtsKeyDataPath = "/data/data/com.anki.victor/persistent/switchboard";
 const std::string SavedSessionManager::kRtsKeyDataFile = "/data/data/com.anki.victor/persistent/switchboard/sessions";
 
-const std::ios_base::openmode SavedSessionManager::kWriteMode = std::ios_base::binary | std::ios_base::trunc;
-const std::ios_base::openmode SavedSessionManager::kReadMode = std::ios_base::binary | std::ios_base::in;
 const uint8_t SavedSessionManager::kMaxNumberClients = (uint8_t)255;
 const uint32_t SavedSessionManager::kNativeBufferSize = 262144; // 256 * 1024 bytes -- (256kb)
-const uint8_t SavedSessionManager::kMagicVersionNumber = 2; // MAGIC number that can't change
+const uint32_t SavedSessionManager::kMagicVersionNumber = 2; // MAGIC number that can't change
+const uint32_t SavedSessionManager::kInvalidVersionNumber = (uint32_t) -1;
 const char* SavedSessionManager::kPrefix = "ANKIBITS";
 
-void SavedSessionManager::MigrateKeys() {
-  // if switchboard /data file doesn't exist, then copy it over
-  if(!HasMigrated()) {
-    Log::Write("Trying to migrate keys from dev block to data.");
-    // load RtsKeys from factory
-    RtsKeys keys = LoadRtsKeysFactory();
-
-    // save RtsKeys 
-    SaveRtsKeys(keys);
-
-    // clear factory keys (but keep name)
-    ClearRtsKeysFactory();
+int SavedSessionManager::MigrateKeys() {
+  // If we can successfully load data from kRtsKeyDataFile, then migration is complete
+  RtsKeys rtsKeys = LoadRtsKeys();
+  if (rtsKeys.keys.version == kMagicVersionNumber) {
+    return 0;
   }
-}
 
-bool SavedSessionManager::HasMigrated() {
-  std::ifstream fin(kRtsKeyDataFile);
-  return fin.good();
+  Log::Write("Migrating keys from %s to %s", kRtsKeyPath.c_str(), kRtsKeyDataFile.c_str());
+
+  rtsKeys = LoadRtsKeysFactory();
+
+  if (rtsKeys.keys.version != kMagicVersionNumber) {
+    Log::Error("Failed to read valid data from %s.", kRtsKeyPath.c_str());
+    // If the data from the switchboard partition is invalid, reset the structure before
+    // writing to kRtsKeyDataFile
+    rtsKeys = {.keys = {}};
+  }
+
+  int rc = SaveRtsKeys(rtsKeys);
+  if (rc) {
+    return rc;
+  }
+
+  // After successfully moving the data to the kRtsKeyDataFile, reset the
+  // data in the switchboard partition to have only the minimally necessary information
+  std::string name;
+  if (rtsKeys.keys.id.hasName) {
+    // Copy existing name if we have it
+    char *c = &(rtsKeys.keys.id.name[0]);
+    char *end = &(rtsKeys.keys.id.name[sizeof(rtsKeys.keys.id.name)]);
+    while (c < end && *c) {
+      name.push_back(*c);
+      c++;
+    }
+  }
+
+  rc = ClearRtsKeysFactory(name);
+  if (rc) {
+    Log::Error("Failed to clear %s", kRtsKeyPath.c_str());
+  }
+  return 0;
 }
 
 std::string SavedSessionManager::GetRobotName() {
@@ -59,225 +80,157 @@ std::string SavedSessionManager::GetRobotName() {
   return std::string(vicName);
 }
 
-RtsKeys SavedSessionManager::LoadRtsKeysFactory() {
-  RtsKeys savedData;
-  savedData.keys.version = -1;
-  std::ifstream fin;
+bool SavedSessionManager::IsValidRtsKeysData(const std::vector<uint8_t>& data) {
+  const struct RtsKeysData* keysData = reinterpret_cast<const struct RtsKeysData*>(data.data());
 
-  size_t fileSize = sizeof(RtsKeysData) + (kMaxNumberClients * sizeof(RtsClientData));
-  char* buffer = (char*)malloc(kNativeBufferSize);
+  // Make sure we have the minimum amount of data required
+  if (data.size() < sizeof(*keysData)) {
+    return false;
+  }
 
-  if(NULL == buffer) {
-    Log::Error("Ran out of heap space when trying to read session keys.", kNativeBufferSize);
+  // Must start with ANKIBITS magic
+  if (strncmp((char*) keysData->magic, kPrefix, strlen(kPrefix)) != 0) {
+    return false;
+  }
+
+  // Must have magic version number 2
+  if (kMagicVersionNumber != keysData->version) {
+    return false;
+  }
+
+  // If a name is present, it cannot be empty
+  if (keysData->id.hasName && !keysData->id.name[0]) {
+    return false;
+  }
+
+  // Make sure we have enough data to cover all the clients
+  size_t expectedLength = sizeof(*keysData) + (keysData->numKnownClients * sizeof(RtsClientData));
+  if (data.size() < expectedLength) {
+    return false;
+  }
+  return true;
+}
+
+RtsKeys SavedSessionManager::LoadRtsKeysFromFile(const std::string& fileName, size_t length) {
+  RtsKeys savedData = { .keys = {.version = kInvalidVersionNumber} };
+
+  if (!length) {
+    length = sizeof(savedData.keys) + (kMaxNumberClients * sizeof(RtsClientData));
+  }
+  std::vector<uint8_t> data = Anki::Util::FileUtils::ReadFileAsBinary(fileName, 0, length);
+
+  if (!IsValidRtsKeysData(data)) {
+    Log::Error("%s does not have valid data", fileName.c_str());
     return savedData;
   }
 
-  fin.open(kRtsKeyPath, kReadMode);
+  memcpy((char*)&savedData.keys, data.data(), sizeof(savedData.keys));
 
-  if(!fin.is_open()) {
-    Log::Error("Failed to open %s.", kRtsKeyPath.c_str());
-    free(buffer);
-    return savedData;
-  }
-
-  // Read max file size into buffer
-  fin.read(buffer, fileSize);
-
-  if(fin.fail()) {
-    Log::Error("Failed to read %s.", kRtsKeyPath.c_str());
-    free(buffer);
-    fin.close();
-    savedData.keys.version = -1;
-    return savedData;
-  }
-
-  ////////////////////////////////////////////////////////////////////////
-  memcpy((char*)&savedData.keys, buffer, sizeof(savedData.keys));
-  
-  for(int i = 0; i < savedData.keys.numKnownClients; i++) {
+  for (auto i = 0; i < savedData.keys.numKnownClients; i++) {
     RtsClientData clientData;
-    char* clientSrc = buffer + sizeof(savedData.keys) + (i * sizeof(clientData));
+    uint8_t* clientSrc = data.data() + sizeof(savedData.keys) + (i * sizeof(clientData));
 
-    memcpy((char*)&(clientData), clientSrc, sizeof(clientData));
+    memcpy((uint8_t *)&(clientData), clientSrc, sizeof(clientData));
     savedData.clients.push_back(clientData);
   }
 
-  ////////////////////////////////////////////////////////////////////////
-
-  free(buffer);
-  fin.close();
-
-  if(strncmp((char*)&savedData.keys.magic, kPrefix, strlen(kPrefix)) != 0) {
-    Log::Error("RTS keys file prefix is incorrect.");
-    savedData.keys.version = -1;
-    return savedData;
-  }
-
   return savedData;
+}
+
+RtsKeys SavedSessionManager::LoadRtsKeysFactory() {
+  return LoadRtsKeysFromFile(kRtsKeyPath);
 }
 
 RtsKeys SavedSessionManager::LoadRtsKeys() {
-  RtsKeys savedData;
-  savedData.keys.version = -1;
-  std::ifstream fin;
-
-  size_t fileSize = sizeof(RtsKeysData) + (kMaxNumberClients * sizeof(RtsClientData));
-  char* buffer = (char*)malloc(fileSize);
-
-  if(NULL == buffer) {
-    Log::Error("Ran out of heap space [%d] when trying to read session keys.", fileSize);
-    return savedData;
-  }
-
-  fin.open(kRtsKeyDataFile, kReadMode);
-
-  if(!fin.is_open()) {
-    Log::Error("Failed to open %s.", kRtsKeyDataFile.c_str());
-    free(buffer);
-    return savedData;
-  }
-
-  fin.seekg(0, fin.end);
-  size_t realFileSize = static_cast<size_t>(fin.tellg());
-  fin.seekg(0, fin.beg);
-
-  if(realFileSize < sizeof(savedData.keys)) {
-    Log::Error("File size is smaller than minimum expected for %s.", kRtsKeyDataFile.c_str());
-    free(buffer);
-    fin.close();
-    savedData.keys.version = -1;
-    return savedData;
-  }
-
-  // Read max file size into buffer
-  fin.read(buffer, sizeof(savedData.keys));
-
-  if(fin.fail()) {
-    Log::Error("Failed to read keys: %d, %d.", (int)fin.bad(), (int)fin.fail());
-    free(buffer);
-    fin.close();
-    savedData.keys.version = -1;
-    return savedData;
-  }
-
-  ////////////////////////////////////////////////////////////////////////
-  memcpy((char*)&savedData.keys, buffer, sizeof(savedData.keys));
-
-  size_t expectedFileSize = sizeof(savedData.keys) + savedData.keys.numKnownClients * sizeof(RtsClientData);
-  if(realFileSize != expectedFileSize) {
-    Log::Error("Actual file size [%d] doesn't match expected size [%d].", realFileSize, expectedFileSize);
-    free(buffer);
-    fin.close();
-    savedData.keys.version = -1;
-    return savedData;
-  }
-
-  fin.read(buffer + sizeof(savedData.keys), savedData.keys.numKnownClients * sizeof(RtsClientData));
-
-  if(fin.fail()) {
-    Log::Error("Failed to read clients: %d, %d.", (int)fin.bad(), (int)fin.fail());
-    free(buffer);
-    fin.close();
-    savedData.keys.version = -1;
-    return savedData;
-  }
-  
-  for(int i = 0; i < savedData.keys.numKnownClients; i++) {
-    RtsClientData clientData;
-    char* clientSrc = buffer + sizeof(savedData.keys) + (i * sizeof(clientData));
-    memcpy((char*)&(clientData), clientSrc, sizeof(clientData));
-    savedData.clients.push_back(clientData);
-  }
-
-  ////////////////////////////////////////////////////////////////////////
-
-  free(buffer);
-  fin.close();
-  
-  char magic[128];
-  memcpy(magic, (char*)&savedData.keys.magic, sizeof(savedData.keys.magic));
-
-  if(strncmp((char*)&savedData.keys.magic, kPrefix, strlen(kPrefix)) != 0) {
-    Log::Error("RTS keys file prefix is incorrect: [%s].", magic);
-    savedData.keys.version = -1;
-    return savedData;
-  }
-
-  return savedData;
+  return LoadRtsKeysFromFile(kRtsKeyDataFile, SIZE_MAX);
 }
 
-void SavedSessionManager::ClearRtsKeysFactory() {
-  std::ofstream fout;
+int SavedSessionManager::SaveRtsKeysToFile(RtsKeys& saveData,
+                                           const std::string& fileName,
+                                           size_t fileLength) {
 
-  fout.open(kRtsKeyPath, kWriteMode);
-
-  if(!fout.is_open()) {
-    Log::Error("Failed to open %s.", kRtsKeyPath.c_str());
-    return;
-  }
-
-  RtsKeys factoryKeys = LoadRtsKeysFactory();
-  factoryKeys.clients.clear();
-  
-  memset(factoryKeys.keys.id.publicKey, 0, sizeof(factoryKeys.keys.id.publicKey));
-  memset(factoryKeys.keys.id.privateKey, 0, sizeof(factoryKeys.keys.id.privateKey));
-
-  // Update saveData values
-  memcpy((char*)&factoryKeys.keys.magic, kPrefix, strlen(kPrefix)); 
-  factoryKeys.keys.version = kMagicVersionNumber;
-  factoryKeys.keys.numKnownClients = factoryKeys.clients.size();
-
-  fout.write((char*)&(factoryKeys.keys), sizeof(factoryKeys.keys));
-
-  // Zero-out the rest of our buffer size
-  uint32_t numBytesToZero = kNativeBufferSize - (uint32_t)fout.tellp();
-  for(int i  = 0; i < numBytesToZero; i++) {
-    char zero = 0;
-    fout.write((char*)&zero, sizeof(zero));
-  }
-
-  fout.close();
-}
-
-void SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {  
-  // Write file with Rts data
-  std::ofstream fout;
-
-  int rc = CreateDirectory(kRtsKeyDataPath,
-                           kModeUserReadWriteExecute,
-                           kNetUid,
-                           kAnkiGid);
-  if (rc) {
-    Log::Write("Could not create %s. rc = %d", kRtsKeyDataPath.c_str(), rc);
-    return;
-  }
-
-  fout.open(kRtsKeyDataFile, kWriteMode);
-
-  if(!fout.is_open()) {
-    Log::Error("Failed to open %s.", kRtsKeyDataFile.c_str());
-    return;
-  }
-
-  // Update saveData values
-  memcpy((char*)&saveData.keys.magic, kPrefix, strlen(kPrefix)); 
+  // Make sure that we have the magic and version number set correctly
+  memcpy(&saveData.keys.magic, kPrefix, strlen(kPrefix));
   saveData.keys.version = kMagicVersionNumber;
-  saveData.keys.numKnownClients = saveData.clients.size();
 
-  fout.write((char*)&(saveData.keys), sizeof(saveData.keys));
+  // If we don't have a name, try to get it from properties
+  if (!saveData.keys.id.hasName || !saveData.keys.id.name[0]) {
+    (void) memset(saveData.keys.id.name, 0, sizeof(saveData.keys.id.name));
+    std::string name = GetRobotName();
+    if (!name.empty()) {
+      (void) strncpy(saveData.keys.id.name, name.c_str(), sizeof(saveData.keys.id.name));
+    }
+  }
+  // Make sure we don't claim to have a name if it is empty
+  saveData.keys.id.hasName = saveData.keys.id.name[0] != '\0';
 
   // If somehow we hit max clients, start removing from the beginning
   if(saveData.clients.size() > kMaxNumberClients) {
-    saveData.clients.erase(saveData.clients.begin(), 
-      saveData.clients.begin() + (saveData.clients.size() - kMaxNumberClients));
+    saveData.clients.erase(saveData.clients.begin(),
+       saveData.clients.begin() + (saveData.clients.size() - kMaxNumberClients));
   }
 
-  for(int i = 0; i < saveData.clients.size(); i++) {
-    // Write each client session
-    fout.write((char*)&(saveData.clients[i]), sizeof(saveData.clients[i]));
+  // Make sure we have a correct count of clients for serialization
+  saveData.keys.numKnownClients = saveData.clients.size();
+
+  // Serialize everything into a vector
+  size_t length = sizeof(saveData.keys) + (saveData.clients.size() * sizeof(RtsClientData));
+
+  // If the caller requested a file length larger than needed, we will honor it.
+  // This is used to zero pad the file out to a desired size.
+  if (fileLength > length) {
+    length = fileLength;
+  }
+  std::vector<uint8_t> data;
+  data.resize(length);
+  memcpy(data.data(), &(saveData.keys), sizeof(saveData.keys));
+
+  size_t offset = sizeof(saveData.keys);
+  for (auto i = 0 ; i < saveData.clients.size(); i++) {
+    RtsClientData* clientSrc = &(saveData.clients[i]);
+    memcpy(data.data() + offset, clientSrc, sizeof(*clientSrc));
+    offset += sizeof(*clientSrc);
   }
 
-  fout.close();
+  // Write the data in one shot to the file
+  bool success = Anki::Util::FileUtils::WriteFile(fileName, data);
+  if (!success) {
+    Log::Error("Failed to write key data to %s", fileName.c_str());
+    return -2;
+  }
+  return 0;
+}
+
+int SavedSessionManager::ClearRtsKeysFactory(const std::string& name) {
+  RtsKeys saveData = {.keys = {}};
+  if (!name.empty()) {
+    saveData.keys.id.hasName = true;
+    strncpy(saveData.keys.id.name, name.c_str(), sizeof(saveData.keys.id.name));
+  }
+
+  return SaveRtsKeysToFile(saveData, kRtsKeyPath, kNativeBufferSize);
+}
+
+int SavedSessionManager::SaveRtsKeys(RtsKeys& saveData) {
+  if (!Anki::Util::FileUtils::CreateDirectory(kRtsKeyDataFile, true)) {
+    Log::Write("Could not create directory for %s.", kRtsKeyDataFile.c_str());
+    return -1;
+  }
+
+  std::string tmpFileName = kRtsKeyDataFile + ".tmp";
+  Anki::Util::FileUtils::DeleteFile(tmpFileName);
+
+  int rc = SaveRtsKeysToFile(saveData, tmpFileName);
+  if (rc) {
+    return rc;
+  }
+
+  if (rename(tmpFileName.c_str(), kRtsKeyDataFile.c_str())) {
+    Log::Error("Failed to rename %s to %s", tmpFileName.c_str(), kRtsKeyDataFile.c_str());
+    Anki::Util::FileUtils::DeleteFile(tmpFileName);
+    return -3;
+  }
+  return 0;
 }
 
 } // Switchboard

@@ -115,10 +115,10 @@ void StackCycleMonitor::SwitchToSafeStack( BehaviorExternalInterface& bei, IBeha
   const auto& BC = bei.GetBehaviorContainer();
   BehaviorID behaviorID = BEHAVIOR_ID(ResetSafely); // normal reset behavior
   if( oldBaseOfStack != nullptr ) {
-    auto onboardingBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(Onboarding) );
-    auto onboardingBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetOnboardingSafely) );
+    auto onboardingBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(Onboarding1p2) );
+    auto onboardingBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetOnboarding1p2Safely) );
     if( (onboardingBehavior1.get() == oldBaseOfStack) || (onboardingBehavior2.get() == oldBaseOfStack) ) {
-      behaviorID = BEHAVIOR_ID(ResetOnboardingSafely); // onboarding reset behavior
+      behaviorID = BEHAVIOR_ID(ResetOnboarding1p2Safely); // onboarding reset behavior
     } else {
       auto normalBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(ModeSelector) );
       auto normalBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetSafely) );

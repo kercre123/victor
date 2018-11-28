@@ -24,11 +24,14 @@
       { "channel": "JdocsManager",                      "enabled": true  },
       { "channel": "Keyboard",                          "enabled": true  },
       { "channel": "MessageProfiler",                   "enabled": true  },
+      { "channel": "Microphones",                       "enabled": false },
       { "channel": "MicData",                           "enabled": true  },
+      { "channel": "NeuralNets",                        "enabled": true  },
       { "channel": "PerfMetric",                        "enabled": true  },
       { "channel": "PoseConfirmer",                     "enabled": true  },
       { "channel": "VisionComponent",                   "enabled": true  },
       { "channel": "VisionSystem",                      "enabled": true  },
+      { "channel": "Alexa",                             "enabled": true  },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
@@ -55,10 +58,13 @@
       { "channel": "FaceWorld",                         "enabled": false },
       { "channel": "JdocsManager",                      "enabled": true  },
       { "channel": "MessageProfiler",                   "enabled": true  },
+      { "channel": "Microphones",                       "enabled": false },
+      { "channel": "NeuralNets",                        "enabled": false },
       { "channel": "PerfMetric",                        "enabled": true  },
       { "channel": "PoseConfirmer",                     "enabled": false },
       { "channel": "VisionComponent",                   "enabled": false },
       { "channel": "VisionSystem",                      "enabled": false },
+      { "channel": "Alexa",                             "enabled": false },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":

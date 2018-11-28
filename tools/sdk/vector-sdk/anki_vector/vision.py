@@ -24,6 +24,8 @@ processing on the robot.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['VisionComponent']
 
+from concurrent import futures
+
 from . import util, connection, events
 from .messaging import protocol
 
@@ -47,6 +49,12 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
 
         robot.events.subscribe(self._handle_mirror_mode_disabled_event, events.Events.mirror_mode_disabled)
         robot.events.subscribe(self._handle_vision_modes_auto_disabled_event, events.Events.vision_modes_auto_disabled)
+
+    def close(self):
+        """Close all the running vision modes and wait for a response."""
+        vision_mode = self.disable_all_vision_modes()  # pylint: disable=assignment-from-no-return
+        if isinstance(vision_mode, futures.Future):
+            vision_mode.result()
 
     def _handle_mirror_mode_disabled_event(self, _, _msg):
         self._display_camera_feed_on_face = False
@@ -95,7 +103,7 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
 
             import anki_vector
             with anki_vector.Robot() as robot:
-                robot.enable_custom_object_detection(detect_custom_objects=True)
+                robot.vision.enable_custom_object_detection()
         """
         self._detect_custom_objects = detect_custom_objects
 
@@ -118,12 +126,6 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         :param estimate_expression: Specify whether we want the robot to estimate what expression detected faces are showing.
         :param detect_blink: Specify whether we want the robot to detect how much detected faces are blinking.
         :param detect_gaze: Specify whether we want the robot to detect where detected faces are looking.
-
-        .. testcode::
-
-            import anki_vector
-            with anki_vector.Robot() as robot:
-                robot.enable_face_detection(detect_faces=True, detect_smile=True, estimate_emotion=False, detect_blink=True)
         """
         self._detect_faces = detect_faces
 
@@ -146,7 +148,7 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
 
     #         import anki_vector
     #         with anki_vector.Robot() as robot:
-    #             robot.enable_motion_detection(detect_motion=True)
+    #             robot.vision.enable_motion_detection(detect_motion=True)
     #     """
     #     self._detect_motion = detect_motion
 
@@ -158,12 +160,6 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         """Display the robot's camera feed on its face along with any detections (if enabled)
 
         :param display_camera_feed_on_face: Specify whether we want to display the robot's camera feed on its face.
-
-        .. testcode::
-
-            import anki_vector
-            with anki_vector.Robot() as robot:
-                robot.display_camera_feed_on_face(display_camera_feed_on_face=True)
         """
         self._display_camera_feed_on_face = display_camera_feed_on_face
 

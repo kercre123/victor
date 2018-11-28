@@ -37,18 +37,18 @@ int gpio_get_base_offset()
     }
 
     if (fd < 0) {
-      error_exit(app_DEVICE_OPEN_ERROR, "can't access gpiochip base [%d]", errno);
+      error_return(app_DEVICE_OPEN_ERROR, "can't access gpiochip base [%d]", errno);
     }
 
     char base_buf[5] = {0};
     int r = read(fd, base_buf, sizeof(base_buf));
     if (r < 0) {
-      error_exit(app_IO_ERROR, "can't read gpiopchip base property");
+      error_return(app_IO_ERROR, "can't read gpiopchip base property");
     }
 
     if (isdigit(base_buf[0]) == 0)
     {
-      error_exit(app_VALIDATION_ERROR, "can't parse gpiochip base property");
+      error_return(app_VALIDATION_ERROR, "can't parse gpiochip base property");
     }
 
     GPIO_BASE_OFFSET = atoi(base_buf);
@@ -57,21 +57,20 @@ int gpio_get_base_offset()
   return GPIO_BASE_OFFSET;
 }
 
-GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initial_value) {
+int gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initial_value, GPIO* gp_out) {
    char ioname[32];
    GPIO gp  = malloc(sizeof(struct GPIO_t));
-   if (!gp) error_exit(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
+   if (!gp) error_return(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
 
    //create io
    int fd = open("/sys/class/gpio/export", O_WRONLY);
    snprintf(ioname, 32, "%d\n", gpio_number+gpio_get_base_offset());
    if (fd<0) {
      free(gp);
-     error_exit(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
+     error_return(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
    }
    (void)write(fd, ioname, strlen(ioname));
    close(fd);
-
 
    gp->pin = gpio_number;
    gp->isOpenDrain = false;
@@ -85,14 +84,16 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
 
    if (fd <0) {
      free(gp);
-     error_exit(app_IO_ERROR, "can't create gpio %d value control %d - %s", gpio_number, errno, strerror(errno));
+     error_return(app_IO_ERROR, "can't create gpio %d value control %d - %s", gpio_number, errno, strerror(errno));
    }
    gp->fd = fd;
    if  (fd>0) {
      gpio_set_value(gp, initial_value);
    }
    gp->isOpenDrain = false;
-   return gp;
+   *gp_out = gp;
+   
+   return 0;
 }
 
 static inline enum Gpio_Dir gpio_drain_direction(enum Gpio_Level value) {
@@ -100,12 +101,17 @@ static inline enum Gpio_Dir gpio_drain_direction(enum Gpio_Level value) {
 }
 
 
-GPIO gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value) {
+int gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value, GPIO* gp_out) {
   enum Gpio_Dir initial_dir = gpio_drain_direction(initial_value);
-  GPIO gp = gpio_create(gpio_number, initial_dir, gpio_LOW);
-  gp->isOpenDrain = true;
-  return gp;
+  int res = gpio_create(gpio_number, initial_dir, gpio_LOW, gp_out);
+  if(res < 0)
+  {
+    *gp_out = NULL;
+    return res;
+  }
 
+  (*gp_out)->isOpenDrain = true;
+  return 0;
 }
 
 

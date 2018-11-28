@@ -88,6 +88,16 @@ std::shared_ptr<SafeHandle> GatewayMessagingServer::SendClientGuidRefreshRequest
   return sharedHandle;
 }
 
+std::shared_ptr<SafeHandle> GatewayMessagingServer::SendSdkProxyRequest(std::string clientGuid, std::string id, std::string path, std::string json, SdkProxyRequestCallback callback) {
+  std::shared_ptr<SafeHandle> sharedHandle = std::make_shared<SafeHandle>();
+
+  _sdkProxyRequestCallbackQueue.insert({ id, callback });
+  _sdkProxyRequestHandlesQueue.insert({ id, std::weak_ptr<SafeHandle>(sharedHandle) });
+
+  SendMessage(SwitchboardResponse(SdkProxyRequest(clientGuid, id, path, json)));
+
+  return sharedHandle;
+}
 
 void GatewayMessagingServer::HandleAuthRequest(const SwitchboardRequest& message) {
   if(_tokenClient.expired()) {
@@ -182,6 +192,30 @@ void GatewayMessagingServer::HandleClientGuidRefreshResponse(const SwitchboardRe
   });
 }
 
+void GatewayMessagingServer::HandleSdkProxyResponse(const SwitchboardRequest& message) {
+  _taskExecutor->Wake([this, message]() {
+    // Handle SdkProxyResponse
+    SdkProxyResponse response = message.Get_SdkProxyResponse();
+
+    auto callbackIter = _sdkProxyRequestCallbackQueue.find(response.messageId);
+    auto handleIter = _sdkProxyRequestHandlesQueue.find(response.messageId);
+
+    if(callbackIter != _sdkProxyRequestCallbackQueue.end() &&
+      handleIter != _sdkProxyRequestHandlesQueue.end()) {
+      
+      if(!handleIter->second.expired()) {
+        callbackIter->second(response.messageId, response.statusCode, response.contentType, response.content);
+      }
+
+      _sdkProxyRequestCallbackQueue.erase(callbackIter);
+      _sdkProxyRequestHandlesQueue.erase(handleIter);
+    } else {
+      // handle case where somehow message id doesn't exist
+      Log::Write("GatewayMessageServer received Sdk Proxy Response from gateway with unknown id.");
+    }
+  });
+}
+
 void GatewayMessagingServer::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
   // Send SwitchboardResponse
   SwitchboardResponse res = SwitchboardResponse(Anki::Vector::AuthResponse(appToken, "", authError));
@@ -227,6 +261,11 @@ void GatewayMessagingServer::sEvGatewayMessageHandler(struct ev_loop* loop, stru
       case SwitchboardRequestTag::ClientGuidRefreshResponse:
       {
         self->HandleClientGuidRefreshResponse(message);
+        break;
+      }
+      case SwitchboardRequestTag::SdkProxyResponse:
+      {
+        self->HandleSdkProxyResponse(message);
         break;
       }
       default:

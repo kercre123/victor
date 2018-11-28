@@ -167,7 +167,7 @@ namespace Vector {
         // Sending the delocalize message one tic after actually moving the robot to be sure that no images
         // from the previous pose are processed after the delocalization.
         SendForceDeloc();        
-        _kidnapStartTime = GetSupervisor()->getTime();
+        _kidnapStartTime = GetSupervisor().getTime();
         SET_TEST_STATE(Kidnap);
         break;
       }

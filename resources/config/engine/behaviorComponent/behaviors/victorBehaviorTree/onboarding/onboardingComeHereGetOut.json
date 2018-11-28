@@ -1,5 +1,0 @@
-{
-  "behaviorID": "OnboardingComeHereGetOut",
-  "behaviorClass": "AnimSequence",
-  "animTriggers": ["OnboardingComeHereGetOut"]
-}

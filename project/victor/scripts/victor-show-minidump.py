@@ -22,8 +22,8 @@ TOPLEVEL = exec(['git', 'rev-parse', '--show-toplevel'])
 # Path to helper scripts
 SCRIPTS = os.path.join(TOPLEVEL, 'project', 'victor', 'scripts')
 
-# Path to robot_sh.sh
-ROBOT_SH = os.path.join(SCRIPTS, 'robot_sh.sh')
+# IP of robot
+ANKI_ROBOT_HOST = os.environ.get('ANKI_ROBOT_HOST')
 
 # Path to vicos_which.sh
 VICOS_WHICH = os.path.join(SCRIPTS, 'vicos_which.sh')
@@ -114,10 +114,17 @@ def show_line (line, options):
 
 def show_minidump(minidump, options):
   # Normalize minidump path
-  if not re.search('^/', minidump):
-    minidump = "/data/data/com.anki.victor/cache/crashDumps/{}".format(minidump)
-  # Fetch minidump from robot
-  cmd = [ROBOT_SH, "/anki/bin/minidump_stackwalk", minidump]
+  if not options.skip_copy:
+    if not re.search('^/', minidump):
+      remote_minidump = "/data/data/com.anki.victor/cache/crashDumps/{}".format(minidump)
+
+      # Fetch minidump from robot
+      cmd = ["scp", "-p", "root@"+ANKI_ROBOT_HOST+":"+remote_minidump,"."]
+      subprocess.call(cmd)
+
+  minidump_stackwalk = os.path.join(TOPLEVEL, 'tools/crash-tools/linux/minidump_stackwalk')
+  symbols = os.path.join(TOPLEVEL, '_build/vicos', options.configuration, 'symbols')
+  cmd = ['noah', minidump_stackwalk, minidump, symbols]
   output = exec(cmd)
   output = output.split('\n')
   # Process minidump
@@ -134,6 +141,16 @@ def main():
                       help='Configuration name (%choices)',
                       required=True
   )
+  parser.add_argument('-d',
+                      dest='dump_syms',
+                      action='store_true',
+                      help='Generate symbols'
+  )
+  parser.add_argument('-s',
+                      dest='skip_copy',
+                      action='store_true',
+                      help='Skip copying dump file from robot'
+  )
   parser.add_argument(dest='minidumps',
                       action='append',
                       help='Minidump name...'
@@ -145,6 +162,12 @@ def main():
     raise "You must specify -c configuration"
   if not options.minidumps:
     raise "You must specify minidump name(s)"
+
+  # Process symbols
+  if options.dump_syms:
+    DUMP_SYMS = os.path.join(TOPLEVEL, 'project/victor/scripts/dump-syms.sh')
+    cmd = [DUMP_SYMS, options.configuration]
+    subprocess.call(cmd)
 
   # Process each minidump
   for minidump in options.minidumps:

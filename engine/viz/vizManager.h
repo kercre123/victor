@@ -35,9 +35,6 @@
 #include <vector>
 #include <map>
 
-// Send viz to unity?
-#define VIZ_TO_UNITY 0
-
 namespace Anki {
   
   // Forward declaration
@@ -104,14 +101,6 @@ namespace Anki {
                                const Pose3d &pose,
                                const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
-      Handle_t DrawRamp(const u32 rampID,
-                        const f32 platformLength,
-                        const f32 slopeLength,
-                        const f32 width,
-                        const f32 height,
-                        const Pose3d& pose,
-                        const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
-      
       Handle_t DrawCharger(const u32 chargerID,
                            const f32 platformLength,
                            const f32 slopeLength,
@@ -132,9 +121,6 @@ namespace Anki {
       
       void DrawCameraFace(const Vision::TrackedFace& face,
                           const ColorRGBA& color);
-      
-      //void DrawRamp();
-      
       
       void EraseRobot(const u32 robotID);
       void EraseCuboid(const u32 blockID);
@@ -308,11 +294,6 @@ namespace Anki {
         const Point<3,T>& from, const Point<3,T>& to, const ColorRGBA& color, bool clearPrevious, float zOffset=0.0f);
       void EraseSegments(const std::string& identifier);
       
-      // vector of simple quads (note a simple quad is an axis aligned quad with a color)
-      using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
-      void DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads);
-      void EraseQuadVector(const std::string& identifier);
-      
       // circle as segments
       template <typename T>
       void DrawXYCircleAsSegments(const std::string& identifier, const Point<3, T>& center, const T radius, const ColorRGBA& color,
@@ -323,10 +304,7 @@ namespace Anki {
       void DrawQuadAsSegments(const std::string& identifier, const Quadrilateral<2, T>& quad, T z, const ColorRGBA& color, bool clearPrevious);
       template <typename T>
       void DrawQuadAsSegments(const std::string& identifier, const Quadrilateral<3, T>& quad, const ColorRGBA& color, bool clearPrevious);
-      
-      // helper to create SimpleQuads from Color and coordinates/size in millimeters. Note SimpleQuad uses floats
-      template <typename T>
-      static VizInterface::SimpleQuad MakeSimpleQuad(const ColorRGBA& color, const Point<3, T>& centerMM, T sideSizeMM);
+
       
       // ==== Circle functions =====
       template<typename T>
@@ -340,17 +318,6 @@ namespace Anki {
     
       // ==== Text functions =====
       void SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...);
-      
-      
-      // ==== Color functions =====
-      /*
-      // Sets the index colorID to correspond to the specified color vector
-      void DefineColor(const u32 colorID,
-                       const f32 red, const f32 green, const f32 blue,
-                       const f32 alpha);
-      */
-      //void ClearAllColors();
-
         
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle);
@@ -677,19 +644,6 @@ namespace Anki {
       DrawSegment(identifier, topRight, bottomRight, color, false);
       DrawSegment(identifier, bottomRight, bottomLeft, color, false);
       DrawSegment(identifier, bottomLeft, topLeft, color, false);
-    }
-
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    template <typename T>
-    VizInterface::SimpleQuad VizManager::MakeSimpleQuad(const ColorRGBA& color, const Point<3, T>& centerMM, T sideSizeMM)
-    {
-      VizInterface::SimpleQuad ret;
-      ret.color = color.AsRGBA();
-      ret.sideSize = Anki::Util::numeric_cast<float>(MM_TO_M(sideSizeMM));;
-      ret.center[0] = Anki::Util::numeric_cast<float>(MM_TO_M(centerMM[0]));
-      ret.center[1] = Anki::Util::numeric_cast<float>(MM_TO_M(centerMM[1]));
-      ret.center[2] = Anki::Util::numeric_cast<float>(MM_TO_M(centerMM[2]));
-      return ret;
     }
     
     template <typename T>

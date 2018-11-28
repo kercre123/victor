@@ -10,14 +10,11 @@ import pytest
 
 try:
     import anki_vector.messaging.protocol as p
+    from google.protobuf.json_format import Parse
 except ImportError:
     sys.exit("Error: This script requires you to install the Vector SDK")
 
-from util import vector_connection, json_from_file
-
-# NOTE: Crashes when too long. Being temporarily removed by Ross until it works.
-# def test_status_history(vector_connection):
-#     vector_connection.send("v1/status_history", p.RobotHistoryRequest(), p.RobotHistoryResponse())
+from util import vector_connection, image_data_from_file
 
 def test_protocol_version(vector_connection):
     vector_connection.send("v1/protocol_version", p.ProtocolVersionRequest(), p.ProtocolVersionResponse())
@@ -25,12 +22,12 @@ def test_protocol_version(vector_connection):
 def test_list_animations(vector_connection):
     vector_connection.send("v1/list_animations", p.ListAnimationsRequest(), p.ListAnimationsResponse())
 
-# TODO: providing default data crashes this rpc, and the oled_color.json file doesn't render (nor did it in the grpc_tools Makefile)
-# @pytest.mark.parametrize("data", [
-#     json_from_file(os.path.join('assets', 'oled_color.json'))
-# ])
-# def test_display_face_image_rgb(vector_connection, data):
-#     vector_connection.send_raw("v1/display_face_image_rgb", data, p.DisplayFaceImageRGBResponse())
+@pytest.mark.parametrize("data", [
+    pytest.param(image_data_from_file(os.path.join('assets', 'cozmo_image.jpg')), id='cozmo_image.jpg')
+])
+def test_display_face_image_rgb(vector_connection, data):
+    message = p.DisplayFaceImageRGBRequest(face_data=data, duration_ms=1000, interrupt_running=True)
+    vector_connection.send("v1/display_face_image_rgb", message, p.DisplayFaceImageRGBResponse())
 
 @pytest.mark.parametrize("data", [
     '{"intent":"intent_meet_victor","param":"Bobert"}'
@@ -85,34 +82,53 @@ def test_enable_image_streaming(vector_connection):
     vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=True), p.EnableImageStreamingResponse())
     vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=False), p.EnableImageStreamingResponse())
 
-# TODO: add behavior control or else this does nothing
-# @pytest.mark.parametrize("data", [
-#     '{"id_tag": 2000001, "x_mm":100.0, "y_mm":100.0, "rad":0.0, "motion_prof":{"speed_mmps":110.0, "accel_mmps2":200.0, "decel_mmps2": 500.0, "point_turn_speed_rad_per_sec": 2.0, "point_turn_accel_rad_per_sec2": 10.0, "point_turn_decel_rad_per_sec2": 10.0, "dock_speed_mmps": 60.0, "dock_accel_mmps2": 200.0, "dock_decel_mmps2": 500.0, "reverse_speed_mmps": 80.0, "is_custom": false}}'
-# ])
-# def test_go_to_pose(vector_connection, data):
-#     vector_connection.send_raw("v1/go_to_pose", data, p.GoToPoseResponse())
-
-# TODO: add behavior control or else this does nothing
-# @pytest.mark.parametrize("data", [
-#     '{"id_tag": 2000001}'
-# ])
-# def test_dock_with_cube(vector_connection, data):
-#     vector_connection.send_raw("v1/dock_with_cube", data, p.DockWithCubeResponse())
-
-# NOTE: hangs forever (needs behavior control maybe)
-# def test_drive_off_charger(vector_connection):
-#     vector_connection.send("v1/drive_off_charger", p.DriveOffChargerRequest(), p.DriveOffChargerResponse())
-
-# NOTE: hangs forever (needs behavior control maybe)
-# def test_drive_on_charger(vector_connection):
-#     vector_connection.send("v1/drive_on_charger", p.DriveOnChargerRequest(), p.DriveOnChargerResponse())
-
 def test_get_onboarding_state(vector_connection):
     vector_connection.send("v1/get_onboarding_state", p.OnboardingStateRequest(), p.OnboardingStateResponse())
 
-# NOTE: Missing parameters
-# def test_send_onboarding_input(vector_connection):
-#     vector_connection.send("v1/send_onboarding_input", p.OnboardingInputRequest(), p.OnboardingInputResponse())
+def test_onboarding_complete_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_complete_request = p.OnboardingCompleteRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_wake_up_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_wake_up_request = p.OnboardingWakeUpRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_wake_up_started_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_wake_up_started_request = p.OnboardingWakeUpStartedRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_skip_onboarding(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_skip_onboarding = p.OnboardingSkipOnboarding() ),\
+    p.OnboardingInputResponse())
+
+def test_restart_onboarding(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_restart = p.OnboardingRestart() ),\
+    p.OnboardingInputResponse())
+
+def test_set_onboarding_phase(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_set_phase_request = p.OnboardingSetPhaseRequest(phase=5) ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_phase_progress_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_phase_progress_request = p.OnboardingPhaseProgressRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_charge_info_request(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_charge_info_request = p.OnboardingChargeInfoRequest() ),\
+    p.OnboardingInputResponse())
+
+def test_onboarding_mark_complete_and_exit(vector_connection):
+    vector_connection.send("v1/send_onboarding_input",\
+    p.OnboardingInputRequest( onboarding_mark_complete_and_exit = p.OnboardingMarkCompleteAndExit() ),\
+    p.OnboardingInputResponse())
 
 def test_photos_info(vector_connection):
     vector_connection.send("v1/photos_info", p.PhotosInfoRequest(), p.PhotosInfoResponse())
@@ -201,7 +217,6 @@ def test_network_state(vector_connection):
 def test_say_text(vector_connection):
     vector_connection.send("v1/say_text", p.SayTextRequest(), p.SayTextResponse())
 
-# NOTE: Sometimes hangs
 def test_connect_cube(vector_connection):
     vector_connection.send("v1/connect_cube", p.ConnectCubeRequest(), p.ConnectCubeResponse())
 
@@ -229,9 +244,16 @@ def test_check_update_status(vector_connection):
 def test_update_and_restart(vector_connection):
     vector_connection.send("v1/update_and_restart", p.UpdateAndRestartRequest(), p.UpdateAndRestartResponse())
 
-# NOTE: Not implemented yet
-# def test_upload_debug_logs(vector_connection):
-#     vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse())
+def test_upload_debug_logs(vector_connection):
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+        if response.status_code == 403:
+            print("Rate limit for debug logs hit")
+            return
+        assert response.status_code == 200, "Received failure status_code: {} => {}".format(response.status_code, response.content)
+        Parse(response.content, response_type, ignore_unknown_fields=True)
+        print("Converted Protobuf: {}".format(response_type))
+    vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse(), callback=callback)
 
 def test_check_cloud_connection(vector_connection):
     vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())

@@ -3,6 +3,7 @@
 #include "common.h"
 #include "hardware.h"
 
+#include "motors.h"
 #include "encoders.h"
 #include "timer.h"
 
@@ -17,6 +18,12 @@ static int page;
 static uint32_t time[2][MOTOR_COUNT];
 static int32_t delta[2][MOTOR_COUNT];
 
+static bool active = false;
+int Encoders::stale_count = 0;
+bool Encoders::disabled = false;
+bool Encoders::head_invalid = false;
+bool Encoders::lift_invalid = false;
+
 void Encoders::init(void) {
   static const uint32_t EVENT_MASK =
     LENCA::mask | LENCB::mask |
@@ -24,7 +31,6 @@ void Encoders::init(void) {
     RTENC::mask | LTENC::mask;
 
   // Enable power to encoder LEDs
-  nVENC_EN::reset();
   nVENC_EN::mode(MODE_OUTPUT);
 
   // Setup gpio
@@ -53,9 +59,16 @@ void Encoders::init(void) {
   NVIC_SetPriority(EXTI0_1_IRQn, PRIORITY_ENCODERS);
   NVIC_SetPriority(EXTI2_3_IRQn, PRIORITY_ENCODERS);
   NVIC_SetPriority(EXTI4_15_IRQn, PRIORITY_ENCODERS);
+}
+
+void Encoders::start() {
+  nVENC_EN::reset();
+
   NVIC_EnableIRQ(EXTI0_1_IRQn);
   NVIC_EnableIRQ(EXTI2_3_IRQn);
   NVIC_EnableIRQ(EXTI4_15_IRQn);
+  
+  active = true;
 }
 
 void Encoders::stop() {
@@ -64,6 +77,71 @@ void Encoders::stop() {
   NVIC_DisableIRQ(EXTI4_15_IRQn);
 
   nVENC_EN::set();
+
+  active = false;
+}
+
+void Encoders::tick_start() {
+  if (!active) return ;
+  
+  nVENC_EN::reset();
+}
+
+void Encoders::tick_end() {
+  if (!active) return ;
+
+  if (Motors::lift_driven) {
+    lift_invalid = false;
+    stale_count = 0;
+  }
+  if (Motors::head_driven) {
+    head_invalid = false;
+    stale_count = 0;
+  }
+  if (Motors::treads_driven) {
+    stale_count = 0;
+  }
+
+  static const int STALE_TARGET = 40;
+  
+  static uint32_t gpio_last = ~0;
+  uint32_t gpio_now = (HENCA::bank->IDR & (HENCB::mask | HENCA::mask))
+                    | (LENCA::bank->IDR & (LENCB::mask | LENCA::mask))
+                    | (RTENC::bank->IDR & (RTENC::mask | LTENC::mask));
+
+  if (stale_count < STALE_TARGET) {
+    if (++stale_count == STALE_TARGET) {
+      NVIC_DisableIRQ(EXTI0_1_IRQn);
+      NVIC_DisableIRQ(EXTI2_3_IRQn);
+      NVIC_DisableIRQ(EXTI4_15_IRQn);
+      disabled = true;
+    } else {
+      NVIC_EnableIRQ(EXTI0_1_IRQn);
+      NVIC_EnableIRQ(EXTI2_3_IRQn);
+      NVIC_EnableIRQ(EXTI4_15_IRQn);
+      disabled = false;
+    }
+  } else if (gpio_last != gpio_now) {
+    uint32_t change = gpio_now ^ gpio_last;
+
+    if (change & (HENCB::mask | HENCA::mask)) {
+      head_invalid = true;
+    }
+
+    if (change & (LENCB::mask | LENCA::mask)) {
+      lift_invalid = true;
+    }
+
+    NVIC_EnableIRQ(EXTI0_1_IRQn);
+    NVIC_EnableIRQ(EXTI2_3_IRQn);
+    NVIC_EnableIRQ(EXTI4_15_IRQn);
+    stale_count = 0;
+    disabled = false;
+  } else {
+    nVENC_EN::set();
+  }
+  
+  gpio_last = gpio_now;
 }
 
 void Encoders::flip(uint32_t* &time_last, int32_t* &delta_last) {
@@ -87,6 +165,8 @@ extern "C" void EXTI0_1_IRQHandler(void) {
 
   // Clear our interrupt
   EXTI->PR = HENCA::mask | HENCB::mask;
+
+  Encoders::stale_count = 0;
 }
 
 // Lift encoder
@@ -100,6 +180,8 @@ extern "C" void EXTI2_3_IRQHandler(void) {
 
   // Clear our interrupt
   EXTI->PR = LENCA::mask | LENCB::mask;
+
+  Encoders::stale_count = 0;
 }
 
 // Tread encoders
@@ -119,4 +201,6 @@ extern "C" void EXTI4_15_IRQHandler(void) {
 
   // Clear our interrupt
   EXTI->PR = RTENC::mask | LTENC::mask;
+
+  Encoders::stale_count = 0;
 }

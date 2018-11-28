@@ -16,18 +16,23 @@
 #define ANIMPROCESS_COZMO_ALEXA_H
 #pragma once
 
+#include "audioEngine/audioTypes.h"
 #include "audioUtil/audioDataTypes.h"
 #include <memory>
 #include <string>
 #include <mutex>
 
 namespace Anki {
+namespace AudioEngine {
+class AudioCallbackContext;
+}
 namespace Vector {
   
 class AlexaImpl;
 class AnimContext;
 enum class AlexaAuthState : uint8_t;
 enum class AlexaNetworkErrorType : uint8_t;
+enum class AlexaSimpleState : uint8_t;
 enum class AlexaUXState : uint8_t;
 enum class ScreenName : uint8_t;
 
@@ -52,9 +57,10 @@ public:
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
   
-  void NotifyOfTapToTalk() const;
+  void NotifyOfTapToTalk();
   
-  void NotifyOfWakeWord( long from_ms, long to_ms ) const;
+  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
+  
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -63,6 +69,7 @@ protected:
   
 private:
   
+
   // decides whether to create/destroy the impl. If !active, then deleteUserData decides whether user data will be cleared
   void SetAlexaActive( bool active, bool deleteUserData = false );
   
@@ -91,6 +98,9 @@ private:
   // sets this class's _uxState and messages engine if it changes
   void SetUXState( AlexaUXState newState );
   
+  // Helper to tell MicDataSystem whether the wake word should be active
+  void SetSimpleState( AlexaSimpleState state ) const;
+  
   void PlayErrorAudio( AlexaNetworkErrorType errorType );
   bool IsErrorPlaying() const { return (_timeToEndError_s >= 0.0f); }
   
@@ -104,11 +114,16 @@ private:
   void SetAlexaFace( ScreenName screenName, std::string url="", const std::string& code="" ) const;
   
   // helpers for the file that indicates whether the last robot run ended during an authenticated session
-  const std::string& GetOptInFilePath() const;
-  void TouchOptInFile() const;
-  bool DidAuthenticatePreviously() const;
+  const std::string& GetPersistentFolder() const;
+  void TouchOptInFiles() const;
+  bool DidAuthenticateEver() const;
+  bool DidAuthenticateLastBoot() const;
   void DeleteOptInFile() const;
-  void DeleteUserFolder() const;
+  void DeleteUserFiles() const;
+  
+  // Play Audio Event Helper
+  // Use new create AudioCallbackContext instance, hand off ownership when passing in to method
+  void PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback = nullptr ) const;
   
   std::unique_ptr<AlexaImpl> _impl;
   
@@ -128,10 +143,21 @@ private:
   // If non-negative, this is the time that the AlexaUXState::Error ends, restoring _pendingUXState
   float _timeToEndError_s = -1.0f;
   
+  enum AlexaNotifyType : uint8_t {
+    None = 0,
+    Voice,
+    Button
+  };
+  
+  AlexaNotifyType _notifyType = None;
+
   // whether a message was received from engine saying to opt in. this gets reset after auth completes
   bool _authStartedByUser = false;
   // if during an authentication the state was ever WaitingForCode, this is the most recent code
   std::string _previousCode;
+  
+  // if the user was ever authenticated, even in a previous boot
+  bool _authenticatedEver = false;
   
   mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
 };

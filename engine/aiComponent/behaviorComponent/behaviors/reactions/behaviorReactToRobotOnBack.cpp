@@ -17,11 +17,10 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 
 #include "util/logging/DAS.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/motorTypes.h"
 
 namespace Anki {
@@ -39,38 +38,32 @@ namespace {
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  _offTreadsCondition = std::make_shared<ConditionOffTreadsState>( OffTreadsState::OnBack, GetDebugLabel() );
-  _exitIfHeld = config.get( kExitIfHeldKey, true ).asBool();
+  _iConfig.exitIfHeld = config.get( kExitIfHeldKey, true ).asBool();
+  
+  SubscribeToTags({
+    RobotInterface::RobotToEngineTag::animEvent
+  });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnBack::WantsToBeActivatedBehavior() const
 {
-  return _offTreadsCondition->AreConditionsMet(GetBEI());
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::InitBehavior()
 {
-  _offTreadsCondition->Init(GetBEI());
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnBack::OnBehaviorEnteredActivatableScope() {
-  _offTreadsCondition->SetActive(GetBEI(), true);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnBack::OnBehaviorLeftActivatableScope()
-{
-  _offTreadsCondition->SetActive(GetBEI(), false);
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::OnBehaviorActivated()
 {
+  _dVars = DynamicVariables();
+  
   FlipDownIfNeeded();
 }
 
@@ -81,9 +74,37 @@ void BehaviorReactToRobotOnBack::GetBehaviorJsonKeys(std::set<const char*>& expe
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnBack::BehaviorUpdate()
+{
+  if (!IsActivated()) {
+    return;
+  }
+  
+  const bool onBack = (GetBEI().GetOffTreadsState() == OffTreadsState::OnBack);
+  if (!onBack && _dVars.cancelIfNotOnBack) {
+    LOG_WARNING("BehaviorReactToRobotOnBack.BehaviorUpdate.Canceling",
+                "Canceling the reaction since the robot is unexpectedly no longer OnBack");
+    CancelSelf();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnBack::HandleWhileActivated(const RobotToEngineEvent& event)
+{
+  const auto& eventData = event.GetData();
+  if (eventData.GetTag() == RobotInterface::RobotToEngineTag::animEvent) {
+    if (eventData.Get_animEvent().event_id == AnimEvent::FLIP_DOWN_BEGIN) {
+      // We are about to begin actually flipping down from OnBack. At this point, we expect the OffTreadsState to
+      // transition away from OnBack, so we should not cancel the behavior if the OffTreadState changes.
+      _dVars.cancelIfNotOnBack = false;
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
 {
-  if ( _exitIfHeld && GetBEI().GetRobotInfo().IsBeingHeld()) {
+  if ( _iConfig.exitIfHeld && GetBEI().GetRobotInfo().IsBeingHeld()) {
     CancelSelf();
   }
 

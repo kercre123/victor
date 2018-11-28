@@ -1,11 +1,15 @@
 {
-  "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToObstacle",
+  "behaviorClass": "DispatcherQueue",
+  
+  "behaviors": [
+    "ReactToObstacleInternal",
+    "CheckForAndReactToHand"
+  ],
   
   "associatedActiveFeature": "NoFeature",
   "emotionEventOnActivated": "ReactToObstacle",
-
-  "animTriggers": ["ReactToObstacle"],
+  
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
     "and": [
@@ -22,12 +26,24 @@
       }
     ]
   },
-
+  
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",
     "not": {
       "conditionType": "OffTreadsState",
       "targetState": "OnTreads"
     }
-  }
+  },
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "ReactToObstacleInternal",
+      "behaviorClass": "AnimSequence",
+      
+      "animTriggers": ["ReactToObstacle"]
+    }
+  ]
 }
+
+
+

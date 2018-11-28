@@ -63,6 +63,10 @@ public:
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   bool Merge(const QuadTree& other, const Pose3d& transform);
 
+  // Tree Height is the number of edges to traverse to reach a desired node
+  // Note: nodes/cells at height=0 have sideLength=contentPrecision
+  uint8_t GetMaxTreeHeight() const { return _level; }
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

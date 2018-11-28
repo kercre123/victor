@@ -8,6 +8,7 @@ include(flatbuffers)
 include(opencv)
 include(text2speech)
 include(sensory)
+include(speexdsp)
 include(robot_core)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
@@ -55,6 +56,7 @@ target_link_libraries(victor_anim
   signal_essence
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
+  ${SPEEXDSP_LIBS}
   # platform
   ${PLATFORM_LIBS}
   # Aubio beat detection
@@ -101,6 +103,7 @@ if (VICOS)
     #       wait for a (much) larger cleanup to cmake / clad / coretech.
     cti_common
     jsoncpp
+    ${ANKITRACE}
     ${PLATFORM_LIBS}
   )
 

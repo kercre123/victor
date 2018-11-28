@@ -14,8 +14,10 @@ boots without wifi.
 Before any of the vic-* processes are running, the OS will set the time to something relatively recent (2018
 at least).
 
-The OS also has the notion of a timezone, which should be set via settings. In the meantime, you can set it
-manually by ssh'ing into the robot and running:
+The OS also has the notion of a timezone, which can be set via settings in the app, or via the engine
+webserver (8888), consolevars -> RobotSettings -> DebugSetTimeZone. Enter the timezone with no spaces, in
+the standard format, e.g. America/Los_Angeles.  You can also set it manually by ssh'ing into the robot and 
+running:
 ```
 timedatectl set-timezone America/Los_Angeles
 ```

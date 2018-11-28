@@ -511,7 +511,7 @@ TEST(SurfaceClassifier, DISABLED_GroundClassifier_NoiseRemoval)
 
   Anki::Vector::GroundPlaneClassifier groundPlaneClassifier(config, cozmoContext);
 
-  Anki::Vector::DebugImageList <Anki::Vision::ImageRGB> debugImageList;
+  Anki::Vector::DebugImageList<Anki::Vision::CompressedImage> debugImageList;
   std::list<Anki::Vector::OverheadEdgeFrame> outEdges;
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/realImagesDesk");
@@ -535,11 +535,7 @@ TEST(SurfaceClassifier, DISABLED_GroundClassifier_NoiseRemoval)
     if (DISPLAY_IMAGES) {
       for (auto& name_image : debugImageList) {
         std::string& name = name_image.first;
-        Anki::Vision::ImageRGB& image = name_image.second;
-        cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
-        cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
-
-        cv::imshow(name, image.get_CvMat_());
+        name_image.second.Display(name);
       }
       VisualizeClassifierOnImages(imagepath, groundPlaneClassifier.GetClassifier(), extractor);
     }

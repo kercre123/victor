@@ -484,6 +484,10 @@
     "SpriteName" : "empty_sprite"
   },
   {
+    "CladEvent" : "Face_Alexa_Icon",
+    "SpriteName" : "face_alexa_icon"
+  },
+  {
     "CladEvent" : "Gyro_Not_Calibrated",
     "SpriteName" : "gyro_not_calibrated"
   },
@@ -564,12 +568,20 @@
     "SpriteName" : "face_alexa_listen2weather"
   },
   {
-    "CladEvent" : "Face_Alexa_Ring_Test",
-    "SpriteName" : "face_alexa_ring_test"
-  },
-  {
     "CladEvent" : "Face_Alexaint_Back2listen",
     "SpriteName" : "face_alexaint_back2listen"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Error_Getin",
+    "SpriteName" : "face_alexaint_error_getin"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Error_Getout",
+    "SpriteName" : "face_alexaint_error_getout"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Error_Loop",
+    "SpriteName" : "face_alexaint_error_loop"
   },
   {
     "CladEvent" : "Face_Alexaint_Fail",
@@ -584,12 +596,20 @@
     "SpriteName" : "face_alexaint_l_loop"
   },
   {
+    "CladEvent" : "Face_Alexaint_Listen2error",
+    "SpriteName" : "face_alexaint_listen2error"
+  },
+  {
     "CladEvent" : "Face_Alexaint_Listen2neutral",
     "SpriteName" : "face_alexaint_listen2neutral"
   },
   {
     "CladEvent" : "Face_Alexaint_Listen2speak",
     "SpriteName" : "face_alexaint_listen2speak"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Listen2think",
+    "SpriteName" : "face_alexaint_listen2think"
   },
   {
     "CladEvent" : "Face_Alexaint_Listen2timer",
@@ -604,6 +624,10 @@
     "SpriteName" : "face_alexaint_listen_timeout"
   },
   {
+    "CladEvent" : "Face_Alexaint_Speak2error",
+    "SpriteName" : "face_alexaint_speak2error"
+  },
+  {
     "CladEvent" : "Face_Alexaint_Speak_Getout",
     "SpriteName" : "face_alexaint_speak_getout"
   },
@@ -616,6 +640,86 @@
     "SpriteName" : "face_alexaint_suddenspeak"
   },
   {
+    "CladEvent" : "Face_Alexaint_Think2error",
+    "SpriteName" : "face_alexaint_think2error"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Think2speak",
+    "SpriteName" : "face_alexaint_think2speak"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Think_Fail",
+    "SpriteName" : "face_alexaint_think_fail"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Think_Loop",
+    "SpriteName" : "face_alexaint_think_loop"
+  },
+  {
+    "CladEvent" : "Face_Alexaint_Think_Timeout",
+    "SpriteName" : "face_alexaint_think_timeout"
+  },
+  {
+    "CladEvent" : "Face_Avs_Listen2Notification",
+    "SpriteName" : "face_avs_Listen2Notification"
+  },
+  {
+    "CladEvent" : "Face_Avs_Error_Getin",
+    "SpriteName" : "face_avs_error_getin"
+  },
+  {
+    "CladEvent" : "Face_Avs_Listen2timer",
+    "SpriteName" : "face_avs_listen2timer"
+  },
+  {
+    "CladEvent" : "Face_Avs_Notification2Listen",
+    "SpriteName" : "face_avs_notification2Listen"
+  },
+  {
+    "CladEvent" : "Face_Avs_Notification2speak",
+    "SpriteName" : "face_avs_notification2speak"
+  },
+  {
+    "CladEvent" : "Face_Avs_Notification2think",
+    "SpriteName" : "face_avs_notification2think"
+  },
+  {
+    "CladEvent" : "Face_Avs_Notification_Getin",
+    "SpriteName" : "face_avs_notification_getin"
+  },
+  {
+    "CladEvent" : "Face_Avs_Notification_Getout",
+    "SpriteName" : "face_avs_notification_getout"
+  },
+  {
+    "CladEvent" : "Face_Avs_Notification_Loop",
+    "SpriteName" : "face_avs_notification_loop"
+  },
+  {
+    "CladEvent" : "Face_Avs_Notification_Quick",
+    "SpriteName" : "face_avs_notification_quick"
+  },
+  {
+    "CladEvent" : "Face_Avs_Speak2notification",
+    "SpriteName" : "face_avs_speak2notification"
+  },
+  {
+    "CladEvent" : "Face_Avs_Suddenerror",
+    "SpriteName" : "face_avs_suddenerror"
+  },
+  {
+    "CladEvent" : "Face_Avs_Suddennotification",
+    "SpriteName" : "face_avs_suddennotification"
+  },
+  {
+    "CladEvent" : "Face_Avs_Think2notification",
+    "SpriteName" : "face_avs_think2notification"
+  },
+  {
+    "CladEvent" : "Face_Avs_Think_Loop",
+    "SpriteName" : "face_avs_think_loop"
+  },
+  {
     "CladEvent" : "Face_Chargerdocking_Severerequest",
     "SpriteName" : "face_chargerdocking_severerequest"
   },
@@ -626,6 +730,30 @@
   {
     "CladEvent" : "Face_Flashing_Zeros",
     "SpriteName" : "face_flashing_zeros"
+  },
+  {
+    "CladEvent" : "Face_Holiday_Hny_Fireworks",
+    "SpriteName" : "face_holiday_hny_fireworks"
+  },
+  {
+    "CladEvent" : "Face_Holiday_Hyn_Confetti",
+    "SpriteName" : "face_holiday_hyn_confetti"
+  },
+  {
+    "CladEvent" : "Face_Holiday_Lights",
+    "SpriteName" : "face_holiday_lights"
+  },
+  {
+    "CladEvent" : "Face_Holiday_Lights_01",
+    "SpriteName" : "face_holiday_lights_01"
+  },
+  {
+    "CladEvent" : "Face_Holiday_Lights_02",
+    "SpriteName" : "face_holiday_lights_02"
+  },
+  {
+    "CladEvent" : "Face_Holiday_Lights_03",
+    "SpriteName" : "face_holiday_lights_03"
   },
   {
     "CladEvent" : "Face_Knowledgegraph_Answer",
@@ -714,6 +842,14 @@
   {
     "CladEvent" : "Face_Messaging_Tts_Getout",
     "SpriteName" : "face_messaging_tts_getout"
+  },
+  {
+    "CladEvent" : "Face_Mutemic_Micoff",
+    "SpriteName" : "face_mutemic_micoff"
+  },
+  {
+    "CladEvent" : "Face_Mutemic_Micon",
+    "SpriteName" : "face_mutemic_micon"
   },
   {
     "CladEvent" : "Face_Nocloud_Icon",

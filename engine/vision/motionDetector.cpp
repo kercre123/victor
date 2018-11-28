@@ -483,7 +483,7 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
                               const VisionPoseData&   crntPoseData,
                               const VisionPoseData&   prevPoseData,
                               std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
-                              DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+                              DebugImageList<Vision::CompressedImage>& debugImages)
 {
   const Vision::ImageCacheSize imageSize = Vision::ImageCache::GetSize(kMotionDetection_ScaleMultiplier);
 
@@ -495,7 +495,7 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
                         imageCache.GetNumRows(Vision::ImageCacheSize::Half),
                         imageCache.GetNumCols(Vision::ImageCacheSize::Half),
                         kMotionDetection_ScaleMultiplier,
-                        crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
+                        crntPoseData, prevPoseData, observedMotions, debugImages);
   }
   else
   {
@@ -504,7 +504,7 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
                         imageCache.GetNumRows(Vision::ImageCacheSize::Half),
                         imageCache.GetNumCols(Vision::ImageCacheSize::Half),
                         kMotionDetection_ScaleMultiplier,
-                        crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
+                        crntPoseData, prevPoseData, observedMotions, debugImages);
   }
 }
   
@@ -515,7 +515,7 @@ Result MotionDetector::DetectHelper(const ImageType &image,
                                     const VisionPoseData& crntPoseData,
                                     const VisionPoseData& prevPoseData,
                                     std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                                    DebugImageList<Vision::ImageRGB> &debugImageRGBs)
+                                    DebugImageList<Vision::CompressedImage>& debugImages)
 {
 
   // Create the ImageRegionSelector. It has to be done here since the image size is not known before
@@ -582,14 +582,14 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     s32 numAboveThresh = RatioTest(blurredImage, foregroundMotion);
 
     // Run the peripheral motion detection
-    const bool peripheralMotionDetected = DetectPeripheralMotionHelper(foregroundMotion, debugImageRGBs, msg,
+    const bool peripheralMotionDetected = DetectPeripheralMotionHelper(foregroundMotion, debugImages, msg,
                                                                        scaleMultiplier);
 
     const bool groundMotionDetected = DetectGroundAndImageHelper(foregroundMotion, numAboveThresh, origNumRows,
                                                                  origNumCols,
                                                                  scaleMultiplier, crntPoseData, prevPoseData,
                                                                  observedMotions,
-                                                                 debugImageRGBs, msg);
+                                                                 debugImages, msg);
 
     if (peripheralMotionDetected || groundMotionDetected) {
       if (kMotionDetectionDebug) {
@@ -620,7 +620,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
                                                 const VisionPoseData &crntPoseData,
                                                 const VisionPoseData &prevPoseData,
                                                 std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                                                DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
+                                                DebugImageList<Vision::CompressedImage> &debugImages,
                                                 ExternalInterface::RobotObservedMotion &msg)
 {
 
@@ -703,7 +703,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
       snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
       putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
               cv::Point(0, ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0, 255, 0));
-      debugImageRGBs.push_back({"RatioImg", ratioImgDisp});
+      debugImages.emplace_back("RatioImg", ratioImgDisp);
 
       //_currentResult.debugImages.push_back({"PrevRatioImg", _prevRatioImg});
       //_currentResult.debugImages.push_back({"ForegroundMotion", foregroundMotion});
@@ -722,7 +722,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
                 cv::Point(0, crntPoseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
                 CV_RGB(0,255,0));
       }
-      debugImageRGBs.push_back({"RatioImgGround", ratioImgDispGround});
+      debugImages.emplace_back("RatioImgGround", ratioImgDispGround);
 
     }
   }
@@ -882,7 +882,7 @@ void MotionDetector::FilterImageAndPrevImages(const ImageType& image, ImageType&
 }
 
 bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
-                                                  DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
+                                                  DebugImageList<Vision::CompressedImage> &debugImages,
                                                   ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier)
 {
 
@@ -1094,7 +1094,7 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
         imageToDisplay.DrawFilledCircle(centroid, Anki::NamedColors::GREEN, 10);
       }
     }
-    debugImageRGBs.emplace_back("PeripheralMotion", imageToDisplay);
+    debugImages.emplace_back("PeripheralMotion", imageToDisplay);
   }
 
   return motionDetected;
@@ -1106,13 +1106,13 @@ template Result MotionDetector::DetectHelper(const Vision::Image&, s32, s32, f32
                                              const VisionPoseData&,
                                              const VisionPoseData&,
                                              std::list<ExternalInterface::RobotObservedMotion>&,
-                                             DebugImageList<Vision::ImageRGB>&);
+                                             DebugImageList<Vision::CompressedImage>&);
 
 template Result MotionDetector::DetectHelper(const Vision::ImageRGB&, s32, s32, f32,
                                              const VisionPoseData&,
                                              const VisionPoseData&,
                                              std::list<ExternalInterface::RobotObservedMotion>&,
-                                             DebugImageList<Vision::ImageRGB>&);
+                                             DebugImageList<Vision::CompressedImage>&);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Computes "centroid" at specified percentiles in X and Y

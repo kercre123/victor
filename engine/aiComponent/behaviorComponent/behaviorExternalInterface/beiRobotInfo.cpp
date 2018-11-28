@@ -312,6 +312,18 @@ bool BEIRobotInfo::IsLiftMotorOutOfBounds() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::IsHeadEncoderInvalid() const
+{
+  return _robot.IsHeadEncoderInvalid();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIRobotInfo::IsLiftEncoderInvalid() const
+{
+  return _robot.IsLiftEncoderInvalid();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsOnChargerContacts() const
 {
   return _robot.GetBatteryComponent().IsOnChargerContacts();

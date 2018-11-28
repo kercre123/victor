@@ -10,6 +10,8 @@
 *
 */
 
+#include "vizControllerImpl.h"
+
 #include "simulator/controllers/shared/webotsHelpers.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/colorRGBA.h"
@@ -21,8 +23,8 @@
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/viz/vizTextLabelTypes.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/logging/logging.h"
-#include "vizControllerImpl.h"
 #include <functional>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -37,17 +39,9 @@ namespace Anki {
 namespace Vector {
 
 
-static const size_t kEmotionBuffersCapacity  = 300; // num ticks of emotion score values to store
-  
-  
 VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
   : _vizSupervisor(vs)
 {
-  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
-  {
-    _emotionBuffers[i].Reset(kEmotionBuffersCapacity);
-  }
-  _emotionEventBuffer.Reset(kEmotionBuffersCapacity);
 }
   
 
@@ -93,8 +87,24 @@ void VizControllerImpl::Init()
   Subscribe(VizInterface::MessageVizTag::EnabledVisionModes,
     std::bind(&VizControllerImpl::ProcessEnabledVisionModes, this, std::placeholders::_1));
 
+  Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
+            std::bind(&VizControllerImpl::ProcessVizSetOriginMessage, this, std::placeholders::_1));
+  
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizBegin,
+            std::bind(&VizControllerImpl::ProcessVizMemoryMapMessageBegin, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageViz,
+            std::bind(&VizControllerImpl::ProcessVizMemoryMapMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::MemoryMapMessageVizEnd,
+            std::bind(&VizControllerImpl::ProcessVizMemoryMapMessageEnd, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::Object,
+            std::bind(&VizControllerImpl::ProcessVizObjectMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EraseObject,
+            std::bind(&VizControllerImpl::ProcessVizEraseObjectMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::ShowObjects,
+            std::bind(&VizControllerImpl::ProcessVizShowObjectsMessage, this, std::placeholders::_1));
 
   // Get display devices
+  _navMapDisp = _vizSupervisor.getDisplay("nav_map");
   _disp = _vizSupervisor.getDisplay("cozmo_viz_display");
   _dockDisp = _vizSupervisor.getDisplay("cozmo_docking_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
@@ -145,10 +155,10 @@ void VizControllerImpl::Init()
 
   // Look for controller-less CozmoBot in children.
   // These will be used as visualization robots.
-  auto nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(&_vizSupervisor, "CozmoBot");
+  auto nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(_vizSupervisor, "CozmoBot");
   if (nodeInfo.nodePtr == nullptr) {
     // If there's no Vector, look for a Whiskey
-    nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(&_vizSupervisor, "WhiskeyBot");
+    nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(_vizSupervisor, "WhiskeyBot");
   }
 
   const auto* nd = nodeInfo.nodePtr;
@@ -165,28 +175,49 @@ void VizControllerImpl::Init()
     if (vizMode) {
       PRINT_NAMED_INFO("VizControllerImpl.Init.FoundVizRobot",
                        "Found Viz robot with name %s", nodeInfo.typeName.c_str());
-      CozmoBotVizParams p;
-      p.supNode = (webots::Supervisor*)nd;
 
       // Find pose fields
-      p.trans = nd->getField("translation");
-      p.rot = nd->getField("rotation");
+      _vizBot.trans = nd->getField("translation");
+      _vizBot.rot = nd->getField("rotation");
 
       // Find lift and head angle fields
-      p.headAngle = nd->getField("headAngle");
-      p.liftAngle = nd->getField("liftAngle");
+      _vizBot.headAngle = nd->getField("headAngle");
+      _vizBot.liftAngle = nd->getField("liftAngle");
 
-      if (p.supNode && p.trans && p.rot && p.headAngle && p.liftAngle) {
-        PRINT_NAMED_INFO("VizControllerImpl.Init.AddedVizRobot",
-                         "Added viz robot %s", nodeInfo.typeName.c_str());
-        vizBots_.push_back(p);
-      } else {
-        PRINT_NAMED_ERROR("VizControllerImpl.Init.MissingFields",
-                          "ERROR: Could not find all required fields in CozmoBot supervisor");
+      DEV_ASSERT_MSG(_vizBot.Valid(),
+                     "VizControllerImpl.Init.MissingFields",
+                     "Could not find all required fields in CozmoBot supervisor");
+    } else if (_drawingObjectsEnabled) {
+      // vizMode is false here, meaning that there is an actual simulated robot in the world. If drawing objects is
+      // enabled, then we must be able to hide any new objects from the robot's camera. Therefore, we need to be able
+      // to access the Camera node so that we can call Node::setVisibility() on each new object. There seems to be no
+      // good way to get the underlying node pointer of the camera, so we have to do this somewhat hacky iteration over
+      // all of the nodes in the world to find the camera node's ID.
+      const int maxNodesToSearch = 10000;
+      webots::Node* cameraNode = nullptr;
+      for (int i=0 ; i < maxNodesToSearch ; i++) {
+        auto* node = _vizSupervisor.getFromId(i);
+        if ((node != nullptr) && (node->getTypeName() == "CozmoCamera")) {
+          cameraNode = node;
+          break;
+        }
       }
+      DEV_ASSERT(cameraNode != nullptr, "No camera found");
+      _vizSupervisor.getSelf()->setVisibility(cameraNode, false);
+      _cozmoCameraNodeId = cameraNode->getId();
     }
   }
+}
 
+void VizControllerImpl::Update()
+{
+  const double currTime_sec = _vizSupervisor.getTime();
+  const double updateRate = _vizSupervisor.getSelf()->getField("drawObjectsRate_sec")->getSFFloat();
+  
+  if (currTime_sec - _lastDrawObjectsTime_sec > updateRate) {
+    DrawObjects();
+    _lastDrawObjectsTime_sec = currTime_sec;
+  }
 }
 
 void VizControllerImpl::ProcessMessage(VizInterface::MessageViz&& message)
@@ -239,10 +270,7 @@ void VizControllerImpl::ProcessSaveState(const AnkiEvent<VizInterface::MessageVi
   }
 }
 
-void VizControllerImpl::SetRobotPose(CozmoBotVizParams *p,
-  const f32 x, const f32 y, const f32 z,
-  const f32 rot_axis_x, const f32 rot_axis_y, const f32 rot_axis_z, const f32 rot_rad,
-  const f32 headAngle, const f32 liftAngle)
+void VizControllerImpl::SetRobotPose(CozmoBotVizParams& vizParams, const Pose3d& pose, const f32 headAngle, const f32 liftAngle)
 {
   // Make sure we haven't tried to set these Webots fields in the current time step
   // (which causes weird behavior due to a Webots R2018a bug with the setSF* functions)
@@ -254,56 +282,32 @@ void VizControllerImpl::SetRobotPose(CozmoBotVizParams *p,
   }
   lastUpdateTime = currTime;
   
-  if (p) {
-    double trans[3] = {x,y,z};
-    p->trans->setSFVec3f(trans);
+  double trans[3] = {0};
+  WebotsHelpers::GetWebotsTranslation(pose, trans);
+  vizParams.trans->setSFVec3f(trans);
+  
+  double rot[4] = {0};
+  WebotsHelpers::GetWebotsRotation(pose, rot);
+  vizParams.rot->setSFRotation(rot);
 
-    // TODO: Transform roll pitch yaw to axis-angle.
-    // Only using yaw for now.
-    double rot[4] = {rot_axis_x,rot_axis_y,rot_axis_z, rot_rad};
-    p->rot->setSFRotation(rot);
-
-    p->liftAngle->setSFFloat(liftAngle + 0.199763);  // Adding LIFT_LOW_ANGLE_LIMIT since the model's lift angle does not correspond to robot's lift angle.
-    // TODO: Make this less hard-coded.
-    p->headAngle->setSFFloat(headAngle);
-  }
+  vizParams.liftAngle->setSFFloat(liftAngle + 0.199763);  // Adding LIFT_LOW_ANGLE_LIMIT since the model's lift angle does not correspond to robot's lift angle.
+  // TODO: Make this less hard-coded.
+  vizParams.headAngle->setSFFloat(headAngle);
 }
 
 
 void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = msg.GetData().Get_SetRobot();
-  
-  const uint8_t robotID = 1; // only ID ever used is 1
-  
-  std::map<u8, u8>::iterator it = robotIDToVizBotIdxMap_.find(robotID);
-  if (it == robotIDToVizBotIdxMap_.end()) {
-    if (robotIDToVizBotIdxMap_.size() < vizBots_.size()) {
-      // Robot ID is not currently registered, but there are still some available vizBots.
-      // Auto assign one here.
-      robotIDToVizBotIdxMap_[robotID] = (uint8_t)robotIDToVizBotIdxMap_.size();
-      it = robotIDToVizBotIdxMap_.end();
-      it--;
-      PRINT_NAMED_INFO("VizControllerImpl.ProcessVizSetRobotMessage.RegisteringRobot","Registering vizBot for robot %d\n", robotID);
-    } else {
-      // Print 'no more vizBots' message. Just once.
-      static bool printedNoMoreVizBots = false;
-      if (!printedNoMoreVizBots) {
-        PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizSetRobotMessage.NoMoreVizBots",
-          "RobotID %d not registered. No more available Viz bots. Add more to world file!",
-          robotID);
-        printedNoMoreVizBots = true;
-      }
-      return;
-    }
+  if (_vizBot.Valid()) {
+    const auto& payload = msg.GetData().Get_SetRobot();
+    
+    SetRobotPose(_vizBot,
+                 Pose3d(payload.rot_rad,
+                        Vec3f(payload.rot_axis_x, payload.rot_axis_y, payload.rot_axis_z),
+                        Vec3f(payload.x_trans_m, payload.y_trans_m, payload.z_trans_m)),
+                 payload.head_angle,
+                 payload.lift_angle);
   }
-
-  CozmoBotVizParams *p = &(vizBots_[it->second]);
-
-  SetRobotPose(p,
-    payload.x_trans_m, payload.y_trans_m, payload.z_trans_m,
-    payload.rot_axis_x, payload.rot_axis_y, payload.rot_axis_z, payload.rot_rad,
-    payload.head_angle, payload.lift_angle);
 }
 
 static inline void SetColorHelper(webots::Display* disp, u32 ankiColor)
@@ -964,6 +968,243 @@ void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::
     ss.str(std::string(""));
   }
 }
+  
+void VizControllerImpl::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface::MessageViz> &msg)
+{
+  const auto& payload = msg.GetData().Get_SetVizOrigin();
+  
+  double translation[3] = { MM_TO_M(payload.trans_x_mm),
+                            MM_TO_M(payload.trans_y_mm),
+                            MM_TO_M(payload.trans_z_mm) };
+  
+  double rotation[4] = { payload.rot_axis_x,
+                         payload.rot_axis_y,
+                         payload.rot_axis_z,
+                         payload.rot_rad };
 
+  _vizControllerPose = WebotsHelpers::ConvertTranslationRotationToPose(translation, rotation);
+  
+  _vizSupervisor.getSelf()->getField("translation")->setSFVec3f(translation);
+  _vizSupervisor.getSelf()->getField("rotation")->setSFRotation(rotation);
+}
+  
+void VizControllerImpl::ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  _navMapNodes.clear();
+  _navMapNodes.reserve(1024); // reserve some memory to avoid re-allocations
+}
+
+void VizControllerImpl::ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_MemoryMapMessageViz();
+  _navMapNodes.insert(_navMapNodes.end(),
+                      payload.quadInfos.begin(),
+                      payload.quadInfos.end());
+}
+
+void VizControllerImpl::ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  // Render the quad tree
+  
+  const auto displayWidth = _navMapDisp->getWidth();
+  const auto displayHeight = _navMapDisp->getHeight();
+  _navMapDisp->setOpacity(1.0);
+  
+  // Clear display
+  _navMapDisp->setAlpha(0.0);
+  _navMapDisp->setColor(0);
+  _navMapDisp->fillRectangle(0, 0, displayWidth, displayHeight);
+  
+  // Store the pixel coordinates of the center of the image (for later conversion from x/y to image coordinates)
+  const auto displayCenterX = 0.5 * displayWidth;
+  const auto displayCenterY = 0.5 * displayHeight;
+  
+  // Draw each node
+  for (const auto& node : _navMapNodes) {
+    const auto rgba = node.colorRGBA;
+    const int webotsColor = (rgba>>8); // convert RGBA to RGB
+    const float webotsAlpha = (rgba & 0xFF) / 255.f; // convert alpha to 0.0 to 1.0
+    _navMapDisp->setAlpha(webotsAlpha);
+    _navMapDisp->setColor(webotsColor);
+    
+    // Webots requires the x,y position of the rectangle to be the top left corner, not the center.
+    const auto topLeftCornerX = node.centerX_mm - node.edgeLen_mm/2.f;
+    const auto topLeftCornerY = node.centerY_mm + node.edgeLen_mm/2.f;
+    
+    // Convert x,y (with origin in the center of the image) to image coordinates (top left of image is origin)
+    auto imageX =  topLeftCornerX + displayCenterX;
+    auto imageY = -topLeftCornerY + displayCenterY;
+    
+    // We subtract 1 from the width/height to leave a 'space' between nodes, which allows us to see the individual
+    // quads even if they are the same color.
+    int width = node.edgeLen_mm - 1;
+    int height = node.edgeLen_mm - 1;
+    
+    // If the quad would be off the display plane, we still want to draw as much of it as we can
+    if (imageX < 0) {
+      width -= std::abs(imageX);
+      imageX = 0;
+    }
+    if (imageY < 0) {
+      height -= std::abs(imageY);
+      imageY = 0;
+    }
+    
+    const bool shouldDraw = (height > 0) && (width > 0);
+    
+    if (shouldDraw) {
+      _navMapDisp->fillRectangle(imageX, imageY, width, height);
+    }
+  }
+
+}
+  
+void VizControllerImpl::ProcessVizObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_Object();
+  auto& mapEntry = _vizObjects[payload.objectID];
+  mapEntry.data = payload;
+}
+
+void VizControllerImpl::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_EraseObject();
+  
+  uint32_t lowerBoundId = payload.objectID;
+  uint32_t upperBoundId = payload.objectID;
+  
+  if (payload.objectID == (uint32_t)VizConstants::ALL_OBJECT_IDs) {
+    lowerBoundId = 0;
+    upperBoundId = std::numeric_limits<decltype(upperBoundId)>::max();
+  } else if (payload.objectID == (uint32_t)VizConstants::OBJECT_ID_RANGE) {
+    lowerBoundId = payload.lower_bound_id;
+    upperBoundId = payload.upper_bound_id;
+  }
+  
+  EraseVizObjects(lowerBoundId, upperBoundId);
+}
+  
+void VizControllerImpl::ProcessVizShowObjectsMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_ShowObjects();
+  _showObjects = (payload.show != 0);
+  
+  // Clear all objects if necessary
+  if (!_showObjects) {
+    EraseVizObjects();
+  }
+}
+  
+void VizControllerImpl::EraseVizObjects(const uint32_t lowerBoundId, const uint32_t upperBoundId)
+{
+  // Get lower bound iterator
+  auto lowerIt = _vizObjects.lower_bound(lowerBoundId);
+  if (lowerIt == _vizObjects.end()) {
+    return;
+  }
+  
+  // Get upper bound iterator
+  auto upperIt = _vizObjects.upper_bound(upperBoundId);
+  
+  // Erase objects in bounds (but first remove them from the scene tree if necessary)
+  std::for_each(lowerIt, upperIt,
+                [this](const std::pair<uint32_t, VizObjectInfo>& pair){
+                  auto nodeID = pair.second.webotsNodeId;
+                  if (nodeID >= 0) {
+                    _vizSupervisor.getFromId(nodeID)->remove();
+                  }
+                });
+  _vizObjects.erase(lowerIt, upperIt);
+}
+
+void VizControllerImpl::DrawObjects()
+{
+  const bool shouldDraw = (_drawingObjectsEnabled && _showObjects);
+  if (!shouldDraw) {
+    return;
+  }
+  
+  using namespace Util::FullEnumToValueArrayChecker;
+  constexpr static const FullEnumToValueArray<VizObjectType, const char*, VizObjectType::NUM_VIZ_OBJECT_TYPES> kVizObjectTypeToProtoString {
+    {VizObjectType::VIZ_OBJECT_ROBOT,       "PoseMarker {}"},
+    {VizObjectType::VIZ_OBJECT_CUBOID,      "WireframeCuboid {}"},
+    {VizObjectType::VIZ_OBJECT_CHARGER,     "WireframeCharger {}"},
+    {VizObjectType::VIZ_OBJECT_PREDOCKPOSE, "PoseMarker {}"},
+    {VizObjectType::VIZ_OBJECT_HUMAN_HEAD,  "HumanHead {}"},
+  };
+  
+  static_assert( IsSequentialArray(kVizObjectTypeToProtoString),
+                "kVizObjectTypeToProtoString array does not define each entry in order, once and only once!");
+  
+  for (auto& obj : _vizObjects) {
+    auto& vizObjectInfo = obj.second;
+    const auto& objectType = vizObjectInfo.data.objectTypeID;
+    
+    // Add a new object to the scene tree if it doesn't exist already
+    if (vizObjectInfo.webotsNodeId < 0) {
+      const auto& protoStr = kVizObjectTypeToProtoString[Util::EnumToUnderlying(objectType)].Value();
+      vizObjectInfo.webotsNodeId = WebotsHelpers::AddSceneTreeNode(_vizSupervisor, protoStr);
+    }
+    
+    // If we don't have a webots node ID at this point, then this is not a drawable object, so just skip it.
+    if (vizObjectInfo.webotsNodeId < 0) {
+      continue;
+    }
+    
+    auto* nodePtr = _vizSupervisor.getFromId(vizObjectInfo.webotsNodeId);
+    const auto& d = vizObjectInfo.data;
+    
+    // Set translation/rotation/color
+    Pose3d pose(DEG_TO_RAD(d.rot_deg),
+                Vec3f(d.rot_axis_x, d.rot_axis_y, d.rot_axis_z),
+                Vec3f(d.x_trans_m, d.y_trans_m, d.z_trans_m));
+    pose.PreComposeWith(_vizControllerPose);
+    
+    double trans[3] = {0};
+    WebotsHelpers::GetWebotsTranslation(pose, trans);
+    nodePtr->getField("translation")->setSFVec3f(trans);
+    
+    double rot[4] = {0};
+    WebotsHelpers::GetWebotsRotation(pose, rot);
+    nodePtr->getField("rotation")->setSFRotation(rot);
+    
+    double webotsColor[3];
+    WebotsHelpers::ConvertRgbaToWebotsColorArray(d.color, webotsColor);
+    nodePtr->getField("color")->setSFColor(webotsColor);
+    
+    // Hide this node from the robot's camera (if any)
+    if (_cozmoCameraNodeId >= 0) {
+      auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
+      nodePtr->setVisibility(cameraNode, false);
+    }
+    
+    // Apply object-specific parameters (if any)
+    switch (objectType) {
+      case VizObjectType::VIZ_OBJECT_ROBOT:
+        // Draw the robot pose marker a bit above the actual position
+        nodePtr->getField("zOffset")->setSFFloat(0.080);
+        break;
+      case VizObjectType::VIZ_OBJECT_CUBOID:
+        nodePtr->getField("xSize")->setSFFloat(d.x_size_m);
+        nodePtr->getField("ySize")->setSFFloat(d.y_size_m);
+        nodePtr->getField("zSize")->setSFFloat(d.z_size_m);
+        break;
+      case VizObjectType::VIZ_OBJECT_CHARGER:
+        nodePtr->getField("platformLength")->setSFFloat(d.x_size_m);
+        nodePtr->getField("slopeLength")->setSFFloat(d.objParameters[0] * d.x_size_m);
+        nodePtr->getField("width")->setSFFloat(d.y_size_m);
+        nodePtr->getField("height")->setSFFloat(d.z_size_m);
+        break;
+      case VizObjectType::VIZ_OBJECT_PREDOCKPOSE:
+        // Draw the pre-dock pose a bit above the actual position
+        nodePtr->getField("zOffset")->setSFFloat(0.080);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+  
 } // end namespace Vector
 } // end namespace Anki

@@ -24,6 +24,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "util/threading/threadPriority.h"
+#include "platform/anki-trace/tracing.h"
 #include <chrono>
 
 #if REMOTE_CONSOLE_ENABLED
@@ -271,17 +272,16 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     const auto tickAfterEngineExecution = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterEngineExecution);
     const auto tickDuration_us = duration_cast<microseconds>(tickAfterEngineExecution - tickStart);
-//    PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
-//                     TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
 
-#if ENABLE_RUN_TIME_DIAGNOSTICS
+    tracepoint(anki_ust, vic_engine_loop_duration, tickDuration_us.count());
+#if ENABLE_TICK_TIME_WARNINGS
     // Only complain if we're more than 10ms behind
     if (remaining_us < microseconds(-10000))
     {
       PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
                           BS_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-#endif // ENABLE_RUN_TIME_DIAGNOSTICS
+#endif
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
@@ -307,11 +307,11 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
-#if ENABLE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_TICK_TIME_WARNINGS
       PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.catchup",
                           "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                           (float)(forwardJumpDuration * 0.001f));
-#endif // ENABLE_RUN_TIME_DIAGNOSTICS
+#endif
     }
 
     tickStart = TimeClock::now();

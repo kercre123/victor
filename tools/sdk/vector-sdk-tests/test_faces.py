@@ -12,7 +12,6 @@ import anki_vector  # pylint: disable=wrong-import-position
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     print("------ begin testing face events ------")

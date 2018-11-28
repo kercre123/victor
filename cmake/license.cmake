@@ -331,6 +331,9 @@ function(check_licenses)
                 gtest                        # special case, imported library can't have our checks
                 babile                       # special case, imported library can't have our checks
                 libtensorflow-lite.a         # handled elsewhere
+                liblttng-ust.so
+                liblttng-ust-tracepoint.so
+                liblttng-ust-dl.so
                 )
       if(${target} MATCHES ${lib})
         set(system_lib TRUE)

@@ -28,7 +28,7 @@ set(PROTOBUF_CPP_PLUGIN_PATH "${CMAKE_SOURCE_DIR}/EXTERNALS/External_Dependencie
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_CPP_GEN_HEADERS} ${GATEWAY_PROTO_CPP_GEN_SRCS}
   COMMAND mkdir -p ${PROTOBUF_OUTPUT_DIR}
-  COMMAND ${PROTOBUF_HOME}/bin/protoc -I"${CMAKE_SOURCE_DIR}/cloud/gateway"
+  COMMAND ${PROTOBUF_HOME}/bin/protoc -I"${GATEWAY_PROTO_HOME_DIR}/public"
     -I"${PROTOBUF_HOME}/include"
     "--plugin=protoc-gen-${PROTOBUF_CPP_PLUGIN}=${PROTOBUF_CPP_PLUGIN_PATH}"
     "--cpp_out=${PROTOBUF_OUTPUT_DIR}"
@@ -105,6 +105,7 @@ target_link_libraries(cozmo_engine
   z
   # platform
   ${PLATFORM_LIBS}
+  ${ANKITRACE}
 )
 
 target_compile_options(cozmo_engine PRIVATE

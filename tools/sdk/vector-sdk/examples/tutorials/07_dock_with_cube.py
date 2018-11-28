@@ -34,7 +34,7 @@ def main():
     with anki_vector.Robot(args.serial) as robot:
         robot.behavior.drive_off_charger()
 
-        # If necessary, Move Vector's Head and Lift down
+        # If necessary, move Vector's Head and Lift down
         robot.behavior.set_head_angle(degrees(-5.0))
         robot.behavior.set_lift_height(0.0)
 
@@ -45,6 +45,8 @@ def main():
             # TODO Try with num_retries of 3
             dock_response = robot.behavior.dock_with_cube(robot.world.connected_light_cube)
             docking_result = dock_response.result
+
+            robot.world.disconnect_cube()
 
     if docking_result:
         if docking_result.code != anki_vector.messaging.protocol.ActionResult.ACTION_RESULT_SUCCESS:

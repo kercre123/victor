@@ -11,8 +11,7 @@
     
     "Listening": {
       "fromIdle": {
-        "animTrigger": "AlexaIdle2Listen",
-        "audioEvent": "Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound"
+        "animTrigger": "AlexaIdle2Listen"
       },
       "loop": "AlexaListenLoop",
       "transitions": {

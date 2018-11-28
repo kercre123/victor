@@ -24,6 +24,7 @@
 #include "util/logging/channelFilter.h"
 #include "util/logging/victorLogger.h"
 #include "util/string/stringUtils.h"
+#include "platform/anki-trace/tracing.h"
 
 #include "platform/common/diagnosticDefines.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
@@ -199,19 +200,16 @@ int main(void)
 
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
+    tracepoint(anki_ust, vic_anim_loop_duration, duration_cast<microseconds>(tickNow - tickStart).count());
 
-#if ENABLE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_TICK_TIME_WARNINGS
     // Complain if we're going overtime
     if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
     {
-      //const auto tickDuration_us = duration_cast<microseconds>(tickNow - tickStart);
-      //PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
-      //                 TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
-
       PRINT_NAMED_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
                           ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-#endif // ENABLE_RUN_TIME_DIAGNOSTICS
+#endif
 
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
@@ -233,11 +231,11 @@ int main(void)
       const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
-#if ENABLE_RUN_TIME_DIAGNOSTICS
+#if ENABLE_TICK_TIME_WARNINGS
       PRINT_NAMED_WARNING("CozmoAnimMain.catchup",
                           "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                           (float)(forwardJumpDuration * 0.001f));
-#endif // ENABLE_RUN_TIME_DIAGNOSTICS
+#endif
     }
   }
 

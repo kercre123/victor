@@ -57,6 +57,7 @@ namespace Data {
 }
   
 namespace Vision {
+  class CompressedImage;
   class TrackedFace;
 }
   
@@ -178,8 +179,7 @@ struct DockingErrorSignal;
     TimeStamp_t GetProcessingPeriod_ms() const;
     TimeStamp_t GetFramePeriod_ms() const;
     
-    template<class PixelType>
-    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier);
+    Result SendCompressedImage(const Vision::CompressedImage& img, const std::string& identifier);
     
     // Detected markers will only be queued for BlockWorld processing if the robot
     // was turning by less than these amounts when they were observed.

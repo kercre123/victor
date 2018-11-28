@@ -103,6 +103,17 @@ CONSOLE_VAR_ENUM(size_t, kAlexaRecognizerModel, CONSOLE_GROUP_ALEXA, _alexaRecog
 int _alexaTriggerModelSensitivityIndex = 0;
 CONSOLE_VAR_ENUM(int, kAlexaRecognizerModelSensitivity, CONSOLE_GROUP_ALEXA, _alexaTriggerModelSensitivityIndex,
                  kRecognizerModelSensitivityStr);
+  
+// HACK
+#define CONSOLE_GROUP_ALEXA_PLAYBACK "SpeechRecognizer.AlexaPlayback"
+size_t _alexaPlaybackRecognizerModelTypeIndex = (size_t) SupportedLocales::enUS_250kb;
+CONSOLE_VAR_ENUM(size_t, kAlexaPlaybackRecognizerModel, CONSOLE_GROUP_ALEXA_PLAYBACK,
+                 _alexaPlaybackRecognizerModelTypeIndex, kRecognizerModelStr);
+
+int _alexaPlaybackTriggerModelSensitivityIndex = 0;
+CONSOLE_VAR_ENUM(int, kAlexaPlaybackRecognizerModelSensitivity, CONSOLE_GROUP_ALEXA_PLAYBACK,
+                 _alexaPlaybackTriggerModelSensitivityIndex, kRecognizerModelSensitivityStr);
+  
 
 std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 
@@ -134,9 +145,22 @@ void SpeechRecognizerSystem::SetupConsoleFuncs()
                                                 *_alexaTrigger.get());
     context->channel->WriteLog("UpdateAlexaRecognizer %s", result.c_str());
   };
+  ////////////////////
+  auto updateAlexaPlaybackRecognizerModel = [this](ConsoleFunctionContextRef context) {
+    if (!_alexaPlaybackTrigger) {
+      context->channel->WriteLog("'Alexa' Playback Trigger is not active");
+      return;
+    }
+    std::string result = UpdateRecognizerHelper(_alexaPlaybackRecognizerModelTypeIndex, kAlexaPlaybackRecognizerModel,
+                                                _alexaPlaybackTriggerModelSensitivityIndex, kAlexaPlaybackRecognizerModelSensitivity,
+                                                *_alexaPlaybackTrigger.get());
+    context->channel->WriteLog("Update Alexa Playback Recognizer %s", result.c_str());
+  };
 
-  sConsoleFuncs.emplace_front("UpdateVectorRecognizer", std::move(updateVectorRecognizerModel), CONSOLE_GROUP_VECTOR, "");
-  sConsoleFuncs.emplace_front("UpdateAlexaRecognizer", std::move(updateAlexaRecognizerModel), CONSOLE_GROUP_ALEXA, "");
+  sConsoleFuncs.emplace_front("Update Recognizer", std::move(updateVectorRecognizerModel), CONSOLE_GROUP_VECTOR, "");
+  sConsoleFuncs.emplace_front("Update Recognizer", std::move(updateAlexaRecognizerModel), CONSOLE_GROUP_ALEXA, "");
+  sConsoleFuncs.emplace_front("Update Recognizer", std::move(updateAlexaPlaybackRecognizerModel), CONSOLE_GROUP_ALEXA_PLAYBACK, "");
+  
 #endif
   _micDataSystem->GetSpeakerLatency_ms(); // Fix compiler error when ANKI_DEV_CHEATS is not enabled
 }
@@ -265,12 +289,65 @@ void SpeechRecognizerSystem::InitAlexa(const RobotDataLoader& dataLoader,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::InitAlexaPlayback(const RobotDataLoader& dataLoader,
+                                               TriggerWordDetectedCallback callback)
+{
+  // This called when Alexa is authorized
+  if (_alexaPlaybackTrigger) {
+    LOG_WARNING("SpeechRecognizerSystem.InitAlexa", "Alexa Playback Recognizer is already running");
+    return;
+  }
+  
+  // HACK: Add Alexa Playback Trigger
+  _alexaPlaybackTrigger = std::make_unique<TriggerContext>();
+  _alexaPlaybackTrigger->recognizer->Init("");
+  _alexaPlaybackTrigger->recognizer->SetCallback(callback);
+  _alexaPlaybackTrigger->recognizer->Start();
+  _alexaPlaybackTrigger->micTriggerConfig->Init("alexa", dataLoader.GetMicTriggerConfig());
+  
+  // Set init detector using console vars
+  UpdateTriggerForLocale(*_alexaPlaybackTrigger,
+                         Util::Locale("en","US"),
+                         MicData::MicTriggerConfig::ModelType::size_250kb,
+                         -1);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::DisableAlexa()
 {
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
     _alexaTrigger.reset();
   }
+  if (_alexaPlaybackTrigger) {
+    // HACK
+    _alexaPlaybackTrigger->recognizer->Stop();
+    _alexaPlaybackTrigger.reset();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::DisableAlexaTemporarily()
+{
+  if (_alexaTrigger) {
+    _alexaTrigger->recognizer->Stop();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::ReEnableAlexa()
+{
+  if (_alexaTrigger) {
+    _alexaTrigger->recognizer->Start();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpeechRecognizerTHF* SpeechRecognizerSystem::GetAlexaPlaybackRecognizer() {
+  if (_alexaPlaybackTrigger) {
+    return _alexaPlaybackTrigger->recognizer.get();
+  }
+  return nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -283,13 +360,17 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   // Update recognizer
   if (vadActive) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
-    if (_alexaTrigger) {
-      _alexaTrigger->recognizer->Update(audioData, audioDataLen);
-    }
   }
-  // Send all audio to Alexa
-  if (_alexaComponent != nullptr) {
+
+  if (_alexaComponent != nullptr && _alexaTrigger != nullptr) {
+    // Update both the alexa SDK and the trigger word at the same time with the same data. This is critical so
+    // that their internal sample counters line up
     _alexaComponent->AddMicrophoneSamples(audioData, audioDataLen);
+    _alexaTrigger->recognizer->Update(audioData, audioDataLen);
+
+    // NOTE: for the listed reason above, I'm not running the VAD in front of the alexa trigger. If we want to
+    // turn that back on, it should be possible, we'd just need to count how many samples were skipped so we
+    // could reconcile the sample counters
   }
 }
 
@@ -334,7 +415,7 @@ void SpeechRecognizerSystem::ApplyLocaleUpdate()
 {
   std::lock_guard<std::mutex> lock(_triggerModelMutex);
   
-  TriggerContext* triggers[] = { _victorTrigger.get(), _alexaTrigger.get() };
+  TriggerContext* triggers[] = { _victorTrigger.get(), _alexaTrigger.get(), _alexaPlaybackTrigger.get() };
   const size_t kTriggerCount = sizeof(triggers) / sizeof(TriggerContext*);
   for (size_t idx = 0; idx < kTriggerCount; ++idx) {
     TriggerContext* aTrigger = triggers[idx];
@@ -390,6 +471,8 @@ void SpeechRecognizerSystem::ApplyLocaleUpdate()
   _isPendingLocaleUpdate = false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// SpeechRecognizerSystem::TriggerContext
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpeechRecognizerSystem::TriggerContext::TriggerContext()
 : recognizer(std::make_unique<SpeechRecognizerTHF>())

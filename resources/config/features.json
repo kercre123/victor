@@ -89,7 +89,7 @@
   },
   {
     "feature": "Volume",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "HandDetection",

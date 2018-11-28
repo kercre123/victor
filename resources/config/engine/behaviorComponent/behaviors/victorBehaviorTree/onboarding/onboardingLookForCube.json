@@ -1,5 +1,0 @@
-{
-  "behaviorID"    : "OnboardingLookForCube",
-  "behaviorClass": "LookForCubePatiently",
-  "animLoop": "LookAround"
-}

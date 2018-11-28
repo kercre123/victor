@@ -129,6 +129,7 @@ public:
   
   // If not set, any sample from which the charger is out of view is rejected. If set, it is accepted with probability p
   void SetAcceptanceProbability( float p, Util::RandomGenerator& rng );
+  void ClearAcceptanceProbability();
   
   // Will reject any position from which the charger would not be visible. Note that this does not check distance to
   // charger, just that the marker would be visible from the given position.

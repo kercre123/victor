@@ -6,10 +6,34 @@
   "wantsToBeActivatedCondition": {
     "conditionType": "StuckOnEdge"
   },
+  
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",
-    "not": {
-      "conditionType": "StuckOnEdge"
-    }
+    "or": [
+      {
+        "conditionType": "Compound",
+        "and": [
+          {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType": "InCalmMode"
+            }
+          },
+          {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType": "StuckOnEdge"
+            }
+          }
+        ]
+      },
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OffTreadsState",
+          "targetState": "OnTreads"
+        }
+      }
+    ]
   }
 }

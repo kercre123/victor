@@ -20,6 +20,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef COZMO_ROBOT
+#error "This logging file may only be included in vic-robot"
+#endif
+
 #if defined(VICOS)
 
 #include <android/log.h>

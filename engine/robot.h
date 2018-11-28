@@ -584,6 +584,19 @@ public:
 
   bool SetLocale(const std::string & locale);
 
+  // Whether or not the encoders have been "disabled". 
+  // (In reality they are operating at a lower frequency so that motion can be detected.)
+  // This happens normally if the motors are not actively being driven.
+  bool AreEncodersDisabled() const { return IsStatusFlagSet(RobotStatusFlag::ENCODERS_DISABLED); }
+
+  // Whether or not the head was detected to have moved while the encoders were "disabled"
+  // i.e. Calibration is necessary!
+  bool IsHeadEncoderInvalid() const { return IsStatusFlagSet(RobotStatusFlag::ENCODER_HEAD_INVALID); }
+
+  // Whether or not the lift was detected to have moved while the encoders were "disabled"
+  // i.e. Calibration is necessary!
+  bool IsLiftEncoderInvalid() const { return IsStatusFlagSet(RobotStatusFlag::ENCODER_LIFT_INVALID); }
+
 protected:
   bool _toldToShutdown = false;
   ShutdownReason _shutdownReason = ShutdownReason::SHUTDOWN_UNKNOWN;
@@ -714,6 +727,8 @@ protected:
   bool UpdateStartupChecks(Result& res);
   bool UpdateCameraStartupChecks(Result& res);
   bool UpdateGyroCalibChecks(Result& res);
+
+  bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
 }; // class Robot
 
 

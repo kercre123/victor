@@ -1721,6 +1721,8 @@ namespace Anki {
         _objectID.UnSet();
       }
       
+      // Note: when using a custom object, caller must guarantee that the object will persist past
+      // the lifetime of the action
       _objectPtr = objectPtr;
       
       SetName("TurnTowardsCustomObject" + std::to_string(_objectPtr->GetID().GetValue()));

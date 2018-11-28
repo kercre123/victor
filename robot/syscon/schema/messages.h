@@ -42,10 +42,6 @@ enum {
 };
 typedef uint32_t RobotMotor;
 
-enum {
-  RUNNING_FLAGS_SENSORS_VALID = 1
-};
-
 // ENUM DropSensor
 enum {
   DROP_SENSOR_FRONT_LEFT  = 0,
@@ -101,6 +97,14 @@ enum {
   POWER_CHARGER_SHORTED = 0x8000
 };
 typedef uint16_t BatteryFlags;
+
+enum {
+  RUNNING_FLAGS_SENSORS_VALID = 1,
+  ENCODERS_DISABLED = 2,
+  ENCODER_HEAD_INVALID = 4,
+  ENCODER_LIFT_INVALID = 8
+};
+typedef uint8_t B2HFlags;
 
 // ENUM PowerState
 enum {
@@ -187,7 +191,7 @@ struct RangeData
   uint16_t signalRate;
   uint16_t ambientRate;
   uint16_t spadCount;
-  uint16_t spare2;
+  uint16_t sampleCount;
   uint32_t calibrationResult;
 };
 

@@ -200,7 +200,7 @@ void Power::tick(void) {
       Encoders::stop();
       Mics::reduce(true);
     } else if (desired == POWER_ACTIVE) {
-      Encoders::init();
+      Encoders::start();
       Opto::start();
       Mics::reduce(false);
     } 

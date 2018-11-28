@@ -178,7 +178,7 @@ namespace Vector {
         // from the previous pose are processed after the delocalization.
         SendForceDeloc();
         
-        _kidnapStartTime = GetSupervisor()->getTime();
+        _kidnapStartTime = GetSupervisor().getTime();
         SET_TEST_STATE(Kidnap);
         break;
       }
@@ -193,7 +193,7 @@ namespace Vector {
           _turnInPlaceDone = false;
           SendTurnInPlace(DEG_TO_RAD(_turnAngle_deg));
           
-          _kidnapStartTime = GetSupervisor()->getTime();
+          _kidnapStartTime = GetSupervisor().getTime();
           SET_TEST_STATE(FinishTurn);
         }
         break;

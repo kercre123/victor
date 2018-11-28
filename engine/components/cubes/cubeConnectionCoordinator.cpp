@@ -257,7 +257,7 @@ bool CubeConnectionCoordinator::UnsubscribeFromCubeConnection(ICubeConnectionSub
       }
     }
     if(!subscriberWasDumped){
-      PRINT_NAMED_ERROR("CubeConnectionCoordinator.InvalidUnsubscribeRequest",
+      PRINT_NAMED_WARNING("CubeConnectionCoordinator.InvalidUnsubscribeRequest",
                           "Unsubscribe requested from subscriber with no subscription record");
     }
     return false;

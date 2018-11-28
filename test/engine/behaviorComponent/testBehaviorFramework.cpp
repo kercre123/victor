@@ -120,6 +120,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<VariableSnapshotComponent>(map, BEIComponentID::VariableSnapshotComponent),
            GetFromMap<VisionComponent>(map, BEIComponentID::Vision),
            GetFromMap<VisionScheduleMediator>(map, BEIComponentID::VisionScheduleMediator),
+           GetFromMap<SettingsCommManager>(map, BEIComponentID::SettingsCommManager),
            GetFromMap<SettingsManager>(map, BEIComponentID::SettingsManager),
            GetFromMap<SleepTracker>(map, BEIComponentID::SleepTracker));
 }

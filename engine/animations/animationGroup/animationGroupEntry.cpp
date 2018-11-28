@@ -19,6 +19,8 @@
 #include "util/math/math.h"
 #include "coretech/common/engine/jsonTools.h"
 
+#define LOG_CHANNEL "AnimationGroupEntry"
+
 namespace Anki {
   namespace Vector {
     
@@ -39,8 +41,8 @@ namespace Anki {
       const Json::Value& jsonName = jsonRoot[kNameKey];
       
       if(!jsonName.isString()) {
-        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoName",
-                          "Missing '%s' field for animation.", kNameKey);
+        LOG_ERROR("AnimationGroupEntry.DefineFromJson.NoName",
+                  "Missing '%s' field for animation.", kNameKey);
         return RESULT_FAIL;
       }
       
@@ -49,9 +51,9 @@ namespace Anki {
       // TODO: Verify each animation actually exists in the CannedAnimationContainer (which is now in the animation process) (VIC-370)
       /*
       if(nullptr != cannedAnimations && nullptr == cannedAnimations->GetAnimation(_name)) {
-        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.InvalidName",
-                          "No canned animation exists named '%s'",
-                          _name.c_str());
+        LOG_ERROR("AnimationGroupEntry.DefineFromJson.InvalidName",
+                  "No canned animation exists named '%s'",
+                  _name.c_str());
         return RESULT_FAIL;
       }
       */
@@ -59,8 +61,8 @@ namespace Anki {
       const Json::Value& jsonWeight = jsonRoot[kWeightKey];
       
       if(!jsonWeight.isDouble()) {
-        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoWeight",
-                          "Missing '%s' field for animation.", kWeightKey);
+        LOG_ERROR("AnimationGroupEntry.DefineFromJson.NoWeight",
+                  "Missing '%s' field for animation.", kWeightKey);
         
         return RESULT_FAIL;
       }
@@ -70,18 +72,18 @@ namespace Anki {
       const Json::Value& jsonMood = jsonRoot[kMoodKey];
       
       if(!jsonMood.isString()) {
-        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoMood",
-                          "Missing '%s' field for animation.", kMoodKey);
+        LOG_ERROR("AnimationGroupEntry.DefineFromJson.NoMood",
+                  "Missing '%s' field for animation.", kMoodKey);
         
         return RESULT_FAIL;
       }
       
       const char* moodTypeString = jsonMood.asCString();
-      _mood  = SimpleMoodTypeFromString( moodTypeString );
+      _mood = SimpleMoodTypeFromString( moodTypeString );
       
       if (_mood == SimpleMoodType::Count)
       {
-        PRINT_NAMED_WARNING("SimpleMoodScorer.ReadFromJson.BadType", "Bad '%s' = '%s'", kMoodKey, moodTypeString);
+        LOG_WARNING("SimpleMoodScorer.ReadFromJson.BadType", "Bad '%s' = '%s'", kMoodKey, moodTypeString);
         return RESULT_FAIL;
       }
       
@@ -101,8 +103,8 @@ namespace Anki {
         const Json::Value& minHeadAngle = jsonRoot[kHeadAngleMinKey];
         const Json::Value& maxHeadAngle = jsonRoot[kHeadAngleMaxKey];
         if(!minHeadAngle.isDouble() || !maxHeadAngle.isDouble()) {
-          PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoHeadAngleWhenUsingHeadAngles",
-                            "Missing '%s' or '%s' field for animation.", kHeadAngleMinKey,kHeadAngleMaxKey);
+          LOG_ERROR("AnimationGroupEntry.DefineFromJson.NoHeadAngleWhenUsingHeadAngles",
+                    "Missing '%s' or '%s' field for animation.", kHeadAngleMinKey,kHeadAngleMaxKey);
           
           return RESULT_FAIL;
         }

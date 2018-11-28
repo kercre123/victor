@@ -68,7 +68,7 @@ protected:
   bool LoadKeys();
 
   void SaveKeys() {
-    SavedSessionManager::SaveRtsKeys(_rtsKeys);
+    (void) SavedSessionManager::SaveRtsKeys(_rtsKeys);
   }
 
   std::unique_ptr<KeyExchange> _keyExchange;

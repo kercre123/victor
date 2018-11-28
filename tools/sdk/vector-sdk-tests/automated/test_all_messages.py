@@ -425,7 +425,6 @@ async def run_message_tests(robot, future):
 
 
 def main():
-    """main execution"""
     args = anki_vector.util.parse_command_args()
 
     logger = logging.getLogger('anki_vector')

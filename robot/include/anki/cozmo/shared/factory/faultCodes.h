@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
+#include "platform/anki-trace/tracing.h"
 
 namespace Anki {
 namespace Vector {
@@ -35,7 +36,7 @@ enum : uint16_t {
 
   //Use higher numbers for head self-tests
   //display precedence over (external) body tests
-  DISPLAY_FAILURE       = 990, //nobody will ever see this :(
+  DISPLAY_FAILURE       = 990,
 
   CAMERA_STOPPED        = 981,
   CAMERA_FAILURE        = 980,
@@ -113,6 +114,7 @@ enum : uint16_t {
 static int DisplayFaultCode(uint16_t code)
 {
   printf("DisplayFaultCode: %u\n", code);
+  tracepoint(anki_ust, anki_fault_code, code);
   int fifo = open(FaultCode::kFaultCodeFifoName, O_WRONLY);
   if (fifo == -1) {
     printf("DisplayFaultCode: Failed to open fifo %d\n", errno);

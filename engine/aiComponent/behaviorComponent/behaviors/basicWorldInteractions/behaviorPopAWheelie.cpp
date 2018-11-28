@@ -222,7 +222,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                                      EnumToString(msg.result));
                     
                     // mark the block as inaccessible
-                    const ObservableObject* failedObject = failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetBlock);
+                    const ObservableObject* failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetBlock);
                     if(failedObject){
                       GetAIComp<AIWhiteboard>().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
                     }

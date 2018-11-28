@@ -937,6 +937,33 @@ HAL::PowerState HAL::PowerGetMode()
   return (bodyData_->flags & RUNNING_FLAGS_SENSORS_VALID) ? POWER_MODE_ACTIVE : POWER_MODE_CALM;
 }
 
+bool HAL::AreEncodersDisabled()
+{
+  if(bodyData_ != nullptr)
+  {
+    return (bodyData_->flags & ENCODERS_DISABLED);
+  }
+  return true;
+}
+
+bool HAL::IsHeadEncoderInvalid()
+{
+  if(bodyData_ != nullptr)
+  {
+    return (bodyData_->flags & ENCODER_HEAD_INVALID);
+  }
+  return true;
+}
+
+bool HAL::IsLiftEncoderInvalid()
+{
+  if(bodyData_ != nullptr)
+  {
+    return (bodyData_->flags & ENCODER_LIFT_INVALID);
+  }
+  return true;
+}
+
 
 } // namespace Vector
 } // namespace Anki

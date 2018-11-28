@@ -109,7 +109,7 @@ OverheadMap::OverheadMap(const Json::Value& config, const CozmoContext *context)
 
 
 Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
-                           DebugImageList <Vision::ImageRGB>& debugImageRGBs)
+                           DebugImageList<Vision::CompressedImage>& debugImages)
 {
 
   // TODO skip if robot hasn't moved
@@ -189,11 +189,11 @@ Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& 
 
   _overheadMap.SetTimestamp((TimeStamp_t)poseData.timeStamp);
 
-  UpdateFootprintMask(poseData.histState.GetPose(), debugImageRGBs);
+  UpdateFootprintMask(poseData.histState.GetPose(), debugImages);
 
   if (DEBUG_VISUALIZE) {
-    const Vision::ImageRGB robotFootPrint = GetImageCenteredOnRobot(poseData.histState.GetPose(), debugImageRGBs);
-    debugImageRGBs.emplace_back("RobotFootprint", robotFootPrint);
+    const Vision::ImageRGB robotFootPrint = GetImageCenteredOnRobot(poseData.histState.GetPose(), debugImages);
+    debugImages.emplace_back("RobotFootprint", robotFootPrint);
   }
 
   if (DEBUG_SAVE_OVERHEAD > 0) {
@@ -211,7 +211,7 @@ Result OverheadMap::Update(const Vision::ImageRGB& image, const VisionPoseData& 
 }
 
 Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
-                                                      DebugImageList<Anki::Vision::ImageRGB>& debugImageRGBs) const
+                                                      DebugImageList<Vision::CompressedImage>& debugImages) const
 {
 
   // To extract the pixels underneath the robot, the (cropped) overhead map is rotated by the
@@ -282,7 +282,7 @@ Vision::ImageRGB OverheadMap::GetImageCenteredOnRobot(const Pose3d& robotPose,
       const Rectangle<f32> rect(boundingRect);
       toDisplay.DrawRect(rect, ColorRGBA(u8(0), u8(0), u8(255)));
     }
-    debugImageRGBs.emplace_back("OverheadMap", toDisplay);
+    debugImages.emplace_back("OverheadMap", toDisplay);
   }
 
   return toRet;
@@ -458,7 +458,7 @@ void OverheadMap::SaveMaskedOverheadPixels(const std::string& positiveExamplesFi
 
 }
 
-void OverheadMap::UpdateFootprintMask(const Pose3d& robotPose, DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs)
+void OverheadMap::UpdateFootprintMask(const Pose3d& robotPose, DebugImageList<Vision::CompressedImage>& debugImages)
 {
   cv::RotatedRect footprintRect = GetFootprintRotatedRect(robotPose);
   if ((footprintRect.size.width == 0) || (footprintRect.size.height == 0)) {
@@ -476,7 +476,7 @@ void OverheadMap::UpdateFootprintMask(const Pose3d& robotPose, DebugImageList <A
   _footprintMask.DrawFilledConvexPolygon(points, NamedColors::WHITE);
 
   if (DEBUG_VISUALIZE) {
-    debugImageRGBs.emplace_back("footprintMask", _footprintMask);
+    debugImages.emplace_back("footprintMask", _footprintMask);
   }
 
 }

@@ -402,9 +402,9 @@ TEST(VisionSystem, MarkerDetectionTests)
 
       if(DEBUG_DISPLAY != DISABLED && ((DEBUG_DISPLAY != ENABLE_ON_FAIL) || !success))
       {
-        for(auto const& debugImg : processingResult.debugImageRGBs)
+        for(auto const& debugImg : processingResult.debugImages)
         {
-          debugImg.second.Display(debugImg.first.c_str());
+          debugImg.second.Display(debugImg.first);
         }
 
         Vision::ImageRGB dispImg(img);
@@ -560,7 +560,7 @@ TEST(VisionSystem, ImageQuality)
 #     define DISPLAY_IMAGES 0
       if(DISPLAY_IMAGES)
       {
-        for(auto const& debugImg : processingResult.debugImageRGBs)
+        for(auto const& debugImg : processingResult.debugImages)
         {
           debugImg.second.Display(debugImg.first.c_str());
         }
@@ -601,7 +601,7 @@ GTEST_TEST(LaserPointDetector, LaserDetect)
     imageCache.Reset(testImg);
 
     // Create LaserPointDetector and test on image
-    Vector::DebugImageList<Anki::Vision::ImageRGB> debugImageList;
+    Vector::DebugImageList<Vision::CompressedImage> debugImageList;
     std::list<Vector::ExternalInterface::RobotObservedLaserPoint> points;
 
     Vector::LaserPointDetector detector(nullptr);
@@ -611,7 +611,7 @@ GTEST_TEST(LaserPointDetector, LaserDetect)
 
     if (DEBUG_LASER_DISPLAY) {
       for (auto image: debugImageList) {
-        image.second.Display(imageName.c_str(), 0);
+        image.second.Display(imageName.c_str());
       }
     }
 

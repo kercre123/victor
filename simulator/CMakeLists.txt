@@ -91,6 +91,7 @@ target_link_libraries(webotsCtrlCommon
 
 target_compile_definitions(webotsCtrlCommon
   PUBLIC
+  WEBOTS_VER=\"${WEBOTS_VER}\"
 )
 
 #

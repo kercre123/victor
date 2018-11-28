@@ -69,7 +69,7 @@ XYPlanner::~XYPlanner()
       LOG_DEBUG("XYPlanner.DestroyThread.Joined", "");
     }
     catch (std::runtime_error& err) {
-      PRINT_NAMED_ERROR("XYPlanner.Destroy.Exception", "locking the context mutex threw: %s", err.what());
+      LOG_ERROR("XYPlanner.Destroy.Exception", "locking the context mutex threw: %s", err.what());
       // this will probably crash when we call SafeDelete below
     }
     Util::SafeDelete(_plannerThread);
@@ -154,7 +154,7 @@ void XYPlanner::StartPlanner()
 {
   // grab the lock
   if( ! _contextMutex.try_lock() ) {
-    PRINT_NAMED_ERROR("XYPlanner.StartPlanner.InternalThreadingError", "Somehow failed to get mutex inside StartPlanning, but we should already have it at this point");
+    LOG_ERROR("XYPlanner.StartPlanner.InternalThreadingError", "Somehow failed to get mutex inside StartPlanning, but we should already have it at this point");
     return;
   }
 
@@ -183,11 +183,13 @@ void XYPlanner::StartPlanner()
   //        that the goal is safe, even if we use a known safe point for the goal. The work around, for now, is
   //        to find the nearest safe -grid- point, and then insert the true goal state after a plan has been made.
   const Point2f plannerStart = FindNearestSafePoint( GetNearestGridPoint(_start.GetTranslation()) );
-  
+
+#if !defined(NDEBUG)
   for (const auto& s : plannerGoals) {
-    LOG_INFO("XYPlanner.StartPlanner", "Plan from %s to %s (%.1f mm)",
+    LOG_DEBUG("XYPlanner.StartPlanner", "Plan from %s to %s (%.1f mm)",
       plannerStart.ToString().c_str(), s.ToString().c_str(), (plannerStart - s).Length() );
   }
+#endif
 
   // profile time it takes to find a plan
   using namespace std::chrono;
@@ -200,7 +202,7 @@ void XYPlanner::StartPlanner()
   high_resolution_clock::time_point planTime = high_resolution_clock::now();
 
   if(kArtificialPlanningDelay_ms>0) {
-    const int kMaxNumToBlock_ms = 10;
+    static const int kMaxNumToBlock_ms = 10;
     int msBlocked = 0;
     while((msBlocked < kArtificialPlanningDelay_ms) && !_stopPlanner) {
       const int thisBlock_ms = std::min( kMaxNumToBlock_ms, kArtificialPlanningDelay_ms - msBlocked );
@@ -217,7 +219,7 @@ void XYPlanner::StartPlanner()
     _collisionPenalty = GetPathCollisionPenalty( _path );
     _status = EPlannerStatus::CompleteWithPlan;
   } else {
-    PRINT_NAMED_WARNING("XYPlanner.StartPlanner", "No path found!" );
+    LOG_WARNING("XYPlanner.StartPlanner", "No path found!" );
     _status = EPlannerStatus::CompleteNoPlan;
   }
 
@@ -242,7 +244,7 @@ bool XYPlanner::GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path
 { 
   if ( !_contextMutex.try_lock() && ( _status == EPlannerStatus::Error || _status == EPlannerStatus::Running ) ) {
     if (_status == EPlannerStatus::Error || _status == EPlannerStatus::Running ) {
-      PRINT_NAMED_WARNING("XYPlanner.GetCompletePath_Internal", "Tried to get the path while planner was running");
+      LOG_WARNING("XYPlanner.GetCompletePath_Internal", "Tried to get the path while planner was running");
       return false;
     } else {
       _contextMutex.lock();
@@ -406,7 +408,7 @@ Point2f XYPlanner::FindNearestSafePoint(const Point2f& p) const
   std::vector<Point2f> plan = planner.Search({p});
 
   if (plan.empty()) {
-    PRINT_NAMED_WARNING("XYPlanner.FindNearestSafePoint", "Could not find any collision free point near %s", p.ToString().c_str());
+    LOG_WARNING("XYPlanner.FindNearestSafePoint", "Could not find any collision free point near %s", p.ToString().c_str());
   } else if (plan.size() > 1) {
     LOG_INFO("XYPlanner.FindNearestSafePoint", "had to move start state to %s", plan.back().ToString().c_str());
   }
@@ -451,7 +453,7 @@ Planning::Path XYPlanner::BuildPath(const std::vector<Point2f>& plan) const
   }
 
   if ( !path.CheckContinuity(.0001) ) {
-    PRINT_NAMED_WARNING("XYPlanner.BuildPath", "Path smoother gnereated a non-continuous plan");
+    LOG_WARNING("XYPlanner.BuildPath", "Path smoother gnereated a non-continuous plan");
   }
 
   return path;

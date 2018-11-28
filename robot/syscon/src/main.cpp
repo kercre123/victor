@@ -18,6 +18,7 @@ static int reset_count = 0;
 
 void Main_Execution(void) {
   // Do our main execution loop
+  Encoders::tick_end();
   Comms::tick();
   Motors::tick();
   Opto::tick();
@@ -31,7 +32,7 @@ void Main_Execution(void) {
   }
 }
 
-int main (void) { 
+int main (void) {
   // Our vector table is in SRAM and DMA mapping
   SYSCFG->CFGR1 = SYSCFG_CFGR1_USART1RX_DMA_RMP
                 | (SYSCFG_CFGR1_MEM_MODE_0 * 3)
@@ -42,6 +43,7 @@ int main (void) {
   __enable_irq();
 
   Power::init();
+  Encoders::init();
   Mics::init();
   Analog::init();
   Comms::init();

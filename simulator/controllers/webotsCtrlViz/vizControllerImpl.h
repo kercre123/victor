@@ -17,13 +17,11 @@
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEventMgr.h"
 
+#include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/image.h"
 
-#include "util/container/circularBuffer.h"
-
 #include "clad/types/cameraParams.h"
-#include "clad/types/emotionTypes.h"
 #include "clad/vizInterface/messageViz.h"
 
 #include <webots/Supervisor.hpp>
@@ -37,13 +35,23 @@ namespace Vector {
 
 struct CozmoBotVizParams
 {
-  webots::Supervisor* supNode = nullptr;
+  bool Valid() {return (trans != nullptr) &&
+                       (rot != nullptr) &&
+                       (liftAngle != nullptr) &&
+                       (headAngle != nullptr); }
+  
   webots::Field* trans = nullptr;
   webots::Field* rot = nullptr;
   webots::Field* liftAngle = nullptr;
   webots::Field* headAngle = nullptr;
 };
 
+// Information about viz objects to draw (e.g. wireframe of cube)
+struct VizObjectInfo {
+  VizInterface::Object data;
+  int webotsNodeId = -1; // Optional webots node identifier for 3D objects that are dynamically added to the scene tree.
+};
+  
 // Note: The values of these labels are used to determine the line number
 //       at which the corresponding text is displayed in the window.
 enum class VizTextLabelType : unsigned int
@@ -78,15 +86,16 @@ public:
   VizControllerImpl(webots::Supervisor& vs);
 
   void Init();
+  void Update();
+
+  // Set whether or not VizController should draw objects in the 3D display
+  void EnableDrawingObjects(const bool b) { _drawingObjectsEnabled = b; }
   
   void ProcessMessage(VizInterface::MessageViz&& message);
 
 private:
 
-  void SetRobotPose(CozmoBotVizParams *p,
-    const f32 x, const f32 y, const f32 z,
-    const f32 rot_axis_x, const f32 rot_axis_y, const f32 rot_axis_z, const f32 rot_rad,
-    const f32 headAngle, const f32 liftAngle);
+  void SetRobotPose(CozmoBotVizParams& vizParams, const Pose3d& pose, const f32 headAngle, const f32 liftAngle);
 
   void DrawText(webots::Display* disp, u32 lineNum, u32 color, const char* text);
   void DrawText(webots::Display* disp, u32 lineNum, const char* text);
@@ -111,13 +120,23 @@ private:
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
   
+  void ProcessVizSetOriginMessage(const AnkiEvent<VizInterface::MessageViz> &msg);
+  
+  void ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizMemoryMapMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
+  void ProcessVizObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizShowObjectsMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
   void DisplayBufferedCameraImage(const RobotTimeStamp_t timestamp);
   void DisplayCameraInfo(const RobotTimeStamp_t timestamp);
   
-  using EmotionBuffer = Util::CircularBuffer<float>;
-  using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
+  void EraseVizObjects(const uint32_t lowerBoundId = 0,
+                       const uint32_t upperBoundId = std::numeric_limits<uint32_t>::max());
   
-  using CubeAccelBuffer = Util::CircularBuffer<float>;
+  void DrawObjects();
   
   void Subscribe(const VizInterface::MessageVizTag& tagType, std::function<void(const AnkiEvent<VizInterface::MessageViz>&)> messageHandler) {
     _eventMgr.SubscribeForever(static_cast<uint32_t>(tagType), messageHandler);
@@ -125,6 +144,9 @@ private:
 
   webots::Supervisor& _vizSupervisor;
 
+  // For displaying nav map in the 3D view
+  webots::Display* _navMapDisp;
+  
   // For displaying misc debug data
   webots::Display* _disp;
 
@@ -143,13 +165,11 @@ private:
   // Image reference for display in camDisp
   webots::ImageRef* _camImg = nullptr;
 
-  // Cozmo bots for visualization
-
-  // Vector of available CozmoBots for vizualization
-  std::vector<CozmoBotVizParams> vizBots_;
-
-  // Map of robotID to vizBot index
-  std::map<uint8_t, uint8_t> robotIDToVizBotIdxMap_;
+  // The Pose3d of the viz controller with respect to the Webots world
+  Pose3d _vizControllerPose;
+  
+  // CozmoBot for vizualization (when connected to a physical robot)
+  CozmoBotVizParams _vizBot;
 
   // Image message processing
   static const size_t kNumBufferedImages = 10;
@@ -176,18 +196,32 @@ private:
   // Camera info
   Vision::CameraParams _cameraParams;
   
+  // Store the nodeID of the camera node inside the simulated robot (if any). This is to be able to make the viz
+  // displays and objects invisible to the robot's camera using webots::Node::setVisibility().
+  int _cozmoCameraNodeId = -1;
+  
   // For saving state
   bool          _saveState = false;
   std::string   _savedStateFolder = "";
   
   AnkiEventMgr<VizInterface::MessageViz> _eventMgr;
-  
-  // Circular buffers of data to show last N ticks of a value
-  EmotionBuffer           _emotionBuffers[(size_t)EmotionType::Count];
-  EmotionEventBuffer      _emotionEventBuffer;
 
   std::string _currAnimName = "";
   u8          _currAnimTag = 0;
+  
+  std::vector<ExternalInterface::MemoryMapQuadInfoFull> _navMapNodes;
+  
+  // "Global" switch to enable drawing of objects from this controller
+  bool _drawingObjectsEnabled = false;
+  
+  // Whether or not to draw objects (based on ShowObjects message)
+  bool _showObjects = true;
+  
+  double _lastDrawObjectsTime_sec = -1.0;
+  
+  // Objects to visualize (e.g. cubes, charger, poses, etc.). Map keyed on viz object ID
+  std::map<uint32_t, VizObjectInfo> _vizObjects;
+  
 };
 
 } // end namespace Vector

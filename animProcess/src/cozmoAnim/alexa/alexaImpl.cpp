@@ -40,6 +40,7 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "osState/osState.h"
+#include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -67,6 +68,7 @@
 #include <ESP/DummyESPDataProvider.h>
 
 #include <chrono>
+#include <fstream>
 
 namespace Anki {
 namespace Vector {
@@ -89,8 +91,6 @@ namespace {
   static const std::chrono::seconds kBufferDuration_s = std::chrono::seconds(15);
   // The size of the ring buffer.
   static const size_t kBufferSize = (kSampleRate_Hz)*kBufferDuration_s.count();
-  // Conversion factor from milliseconds to samples
-  static const unsigned int kMillisToSamples = kSampleRate_Hz / 1000;
   
   const std::string kDirectivesFile = "directives.txt";
   const std::string kAlexaFolder = "alexa";
@@ -101,8 +101,48 @@ namespace {
   // If the DialogUXState was set to Idle, but the last Play directive was older than this amount, then
   // switch to Idle
   CONSOLE_VAR_RANGED(float, kAlexaMaxIdleDelay_s, "Alexa", 3.0f, 0.0f, 10.0f);
-  
-  CONSOLE_VAR(bool, kLogAlexaDirectives, "Alexa", false);
+
+  // enable to log directives received into a directives.txt file in the cache
+  CONSOLE_VAR(bool, kLogAlexaDirectives, "Alexa", false );
+
+  // enable to save a copy of the mic data out to the cache folder when we detect an "alexa" wake word
+  // NOTE: only valid and read during Init, so make sure to save the console var to enable it (or edit the value here)
+  CONSOLE_VAR(bool, kDumpAlexaTriggerAudio, "Alexa.Init", false);
+
+  // every this many seconds (in basestation time), grab the wall time (system clock) and see if it looks like
+  // it may have jumped. IF so, refresh the alexa timers
+  CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
+
+  const char* DialogUXStateToString( const avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState& duxState ) {
+    switch( duxState ) {
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED: return "FINISHED";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE: return "IDLE";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING: return "THINKING";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING: return "LISTENING";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::EXPECTING: return "EXPECTING";
+      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING: return "SPEAKING";
+    }
+  }
+
+  const char* MessageStatusToString(const avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status& status ) {
+    switch( status ) {
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::PENDING: return "PENDING";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SUCCESS: return "SUCCESS";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SUCCESS_NO_CONTENT: return "SUCCESS_NO_CONTENT";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::NOT_CONNECTED: return "NOT_CONNECTED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::NOT_SYNCHRONIZED: return "NOT_SYNCHRONIZED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::TIMEDOUT: return "TIMEDOUT";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::PROTOCOL_ERROR: return "PROTOCOL_ERROR";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INTERNAL_ERROR: return "INTERNAL_ERROR";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_INTERNAL_ERROR_V2: return "SERVER_INTERNAL_ERROR_V2";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::REFUSED: return "REFUSED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::CANCELED: return "CANCELED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::THROTTLED: return "THROTTLED";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::BAD_REQUEST: return "BAD_REQUEST";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_OTHER_ERROR: return "SERVER_OTHER_ERROR";
+      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INVALID_AUTH: return "INVALID_AUTH";
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -149,6 +189,9 @@ AlexaImpl::~AlexaImpl()
 bool AlexaImpl::Init( const AnimContext* context )
 {
   _context = context;
+
+  _lastWallTime = WallTime::getInstance()->GetApproximateTime();
+  _lastWallTimeCheck_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   const auto* dataPlatform = _context->GetDataPlatform();
   
@@ -267,20 +310,16 @@ bool AlexaImpl::Init( const AnimContext* context )
                                                                      audioFactory->alerts() );
   // setup media player interfaces
   auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
-  _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
-                                                        "TTS",
+  _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::TTS,
                                                         httpContentFetcherFactory );
   _ttsMediaPlayer->Init(context);
-  _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_ALERTS_VOLUME,
-                                                           "Alerts",
+  _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Alerts,
                                                            httpContentFetcherFactory );
   _alertsMediaPlayer->Init( context );
-  _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
-                                                          "Audio",
+  _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Audio,
                                                           httpContentFetcherFactory );
   _audioMediaPlayer->Init( context );
-  _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
-                                                                  "Notifications",
+  _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Notifications,
                                                                   httpContentFetcherFactory );
   _notificationsMediaPlayer->Init( context );
   
@@ -400,6 +439,16 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   _microphone = AlexaAudioInput::Create( sharedDataStream );
   _microphone->startStreamingMicrophoneData();
+
+
+  if( ANKI_DEV_CHEATS && kDumpAlexaTriggerAudio ) {
+    auto debugBuffer = std::make_shared<avsCommon::avs::AudioInputStream::Buffer>( bufferSize );
+
+    std::shared_ptr<avsCommon::avs::AudioInputStream> debugDataStream
+      = avsCommon::avs::AudioInputStream::create( debugBuffer, kWordSize, kMaxReaders );
+    _debugMicrophone = AlexaAudioInput::Create( debugDataStream );
+    _debugMicrophone->startStreamingMicrophoneData();
+  }
   
   _capabilitiesDelegate->addCapabilitiesObserver( _client );
   
@@ -430,12 +479,37 @@ void AlexaImpl::Update()
   
   // check if the idle timer _timeToSetIdle_s has expired
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  if( kAlexaHackCheckForSystemClockSyncPeriod_s > 0.0f &&
+      currTime_s >= _lastWallTimeCheck_s + kAlexaHackCheckForSystemClockSyncPeriod_s ) {
+    // HACK: NTP can cause the time to jump into the future, and the alexa client's timers won't properly ring
+    // if this happens after initialization. OSState::IsWallTimeSynced() exists to try to detect this, but
+    // appears to be unreliable (see JIRA VIC-4527), so use this hack instead.
+
+    constexpr const int kTimeToConsiderJump_s = 5;
+
+    auto wallTime = WallTime::getInstance()->GetApproximateTime();
+    auto delta = wallTime - _lastWallTime;
+    auto deltaSeconds = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
+
+    if( std::abs( deltaSeconds - kAlexaHackCheckForSystemClockSyncPeriod_s ) > kTimeToConsiderJump_s ) {
+      PRINT_NAMED_WARNING("AlexaImpl.Update.TimeJumpDetected.ResetTimers",
+                          "Detected a time jump of %lld seconds (in %f BS seconds), refreshing timers",
+                          deltaSeconds,
+                          kAlexaHackCheckForSystemClockSyncPeriod_s);
+      _client->ReinitializeAllTimers();
+    }
+
+    _lastWallTime = wallTime;
+    _lastWallTimeCheck_s = currTime_s;
+  }
+
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
     _dialogState = DialogUXState::IDLE;
     CheckForUXStateChange();
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Logout()
 {
@@ -461,6 +535,11 @@ void AlexaImpl::AddMicrophoneSamples( const AudioUtil::AudioSample* const sample
   if( _microphone != nullptr ) {
     _microphone->AddSamples( samples, nSamples );
   }
+#if ANKI_DEV_CHEATS
+  if( _debugMicrophone != nullptr ) {
+    _debugMicrophone->AddSamples( samples, nSamples );
+  }
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -498,10 +577,13 @@ void AlexaImpl::OnDirective(const std::string& directive, const std::string& pay
   if( kLogAlexaDirectives ) {
     Json::Value json;
     Json::Reader reader;
+    const float bsTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     bool success = reader.parse( payload, json );
     if( success ) {
       const bool append = true;
-      Util::FileUtils::WriteFile( _alexaCacheFolder + kDirectivesFile, directive + ": " + json.toStyledString(), append );
+      Util::FileUtils::WriteFile( _alexaCacheFolder + kDirectivesFile,
+                                  std::to_string(bsTime) + " " + directive + ": " + json.toStyledString(),
+                                  append );
     }
   }
 }
@@ -558,6 +640,11 @@ void AlexaImpl::OnRequestAuthorization( const std::string& url, const std::strin
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 {
+  LOG_INFO("AlexaImpl.OnDialogUXStateChanged", "from '%s' to '%s'",
+           DialogUXStateToString(_dialogState),
+           DialogUXStateToString(state));
+
+
   _dialogState = state;
   if( _dialogState != DialogUXState::LISTENING ) {
     _isTapOccurring = false;
@@ -664,7 +751,7 @@ void AlexaImpl::OnAVSConnectionChanged( const avsCommon::sdkInterfaces::Connecti
 void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status )
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING("AlexaImpl.OnSendComplete", "status=%d", status);
+  LOG_WARNING("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
   switch( status ) {
     case Status::PENDING: // The message has not yet been processed for sending.
@@ -675,13 +762,29 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
       break;
       
     case Status::NOT_CONNECTED: // The send failed because AVS was not connected.
-    case Status::NOT_SYNCHRONIZED: // The send failed because AVS is not synchronized.
     case Status::TIMEDOUT: // The send failed because of timeout waiting for AVS response.
+    {
+      // consider these a lost connection if we were connected
+      if( _internetConnected ) {
+        OnInternetConnectionChanged(false);
+      }
+
+      SetNetworkConnectionError();
+      break;
+    }
+
+    case Status::CANCELED: // The send failed due to server canceling it before the transmission completed.
+    {
+      // may have lost connection, or may be a server-side issue (I think...)
+      SetNetworkConnectionError();
+      break;
+    }
+
+    case Status::NOT_SYNCHRONIZED: // The send failed because AVS is not synchronized.
     case Status::PROTOCOL_ERROR: // The send failed due to an underlying protocol error.
     case Status::INTERNAL_ERROR: // The send failed due to an internal error within ACL.
     case Status::SERVER_INTERNAL_ERROR_V2: // The send failed due to an internal error on the server which sends code 500.
     case Status::REFUSED: // The send failed due to server refusing the request.
-    case Status::CANCELED: // The send failed due to server canceling it before the transmission completed.
     case Status::THROTTLED: // The send failed due to excessive load on the server.
     case Status::BAD_REQUEST: // The send failed due to invalid request sent by the user.
     case Status::SERVER_OTHER_ERROR: // The send failed due to unknown server error.
@@ -742,15 +845,9 @@ void AlexaImpl::NotifyOfTapToTalk()
     if( !_isTapOccurring ) {
       // check info known about connection before trying. these often don't get updated until sending fails
       if( !_client->IsAVSConnected() ) {
-        // check if it's because of the internet (this flag only gets updated every 5 mins, so it gets checked second)
-        if( _internetConnected ) {
-          SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
-        } else if( _avsEverConnected ) {
-          SetNetworkError( AlexaNetworkErrorType::LostConnection );
-        } else {
-          SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
-        }
+        SetNetworkConnectionError();
       } else {
+        _client->StopForegroundActivity();
         ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
                      "AlexaImpl.NotifyOfTapToTalk.Failed",
                      "Failed to notify tap to talk" );
@@ -764,58 +861,56 @@ void AlexaImpl::NotifyOfTapToTalk()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::NotifyOfWakeWord( long from_ms, long to_ms )
+void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
-    // check if it's because of the internet (this flag only gets updated every 5 mins, so it gets checked second)
-    if( _internetConnected ) {
-      SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
-    } else if( _avsEverConnected ) {
-      SetNetworkError( AlexaNetworkErrorType::LostConnection );
-    } else {
-      SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
-    }
-    
+    SetNetworkConnectionError();
     return;
   }
-  
-    
-  avsCommon::avs::AudioInputStream::Index fromIndex;
-  avsCommon::avs::AudioInputStream::Index toIndex;
-  
-  const int kWindowHalfBuffer = 100;
-  
-  if ( from_ms < 0 ) {
-    fromIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
-  } else {
-    fromIndex = from_ms; // first move into larger type
-    fromIndex = kMillisToSamples*fromIndex; // milliseconds to samples @ 16k audio
-    if( fromIndex > kWindowHalfBuffer ) {
-      fromIndex -= kWindowHalfBuffer;
+
+#if ANKI_DEV_CHEATS
+  if( _debugMicrophone ) {
+    const size_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
+
+    static int sAudioDumpIdx = 0;
+    const std::string filename = _alexaCacheFolder + "audioInput_" + std::to_string(sAudioDumpIdx++) + ".pcm";
+    std::ofstream fileOut;
+    std::ios_base::openmode mode = std::ios::out | std::ofstream::binary;
+    fileOut.open(filename,mode);
+    if( fileOut.is_open() ) {
+      const size_t buffSizebytes = 1024 * 1024;
+      char buf[buffSizebytes] = {0};
+
+      // TODO:(bn) move this code to a thread or dispatch queue?
+      auto reader = _debugMicrophone->GetReader();
+      auto wordSize = reader->getWordSize();
+      auto numWords = buffSizebytes / wordSize;
+      size_t totalNumRead = 0;
+
+      ssize_t numRead = 1;
+      BOUNDED_WHILE ( 1000, numRead > 0 ) {
+        numRead = reader->read(buf, numWords);
+        if( numRead <= 0 ) {
+          break;
+        }
+        totalNumRead += numRead;
+        fileOut.write(buf, numRead * wordSize);
+      }
+      fileOut.flush();
+      fileOut.close();
+
+      // "absolute" index is total bytes ever, not the current size of the ring buffer
+      const size_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
+      const size_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
+      LOG_INFO("AlexaImpl.WroteAudioInput",
+               "Wrote mic data to file '%s'. Trigger range %zu to %zu",
+               filename.c_str(),
+               debugStartIdx,
+               debugEndIdx);
     }
   }
-  
-  const size_t totalNumSamples = _microphone->GetTotalNumSamples();
-  
-  if ( to_ms < 0 ) {
-    toIndex = avsCommon::sdkInterfaces::KeyWordObserverInterface::UNSPECIFIED_INDEX;
-  } else {
-    toIndex = to_ms;
-    toIndex = kMillisToSamples*toIndex + kWindowHalfBuffer;
-    if( toIndex > totalNumSamples ) {
-      toIndex = totalNumSamples;
-    }
-  }
-  
-  // NOTE: this only works if our extra VAD is off, since otherwise the mic samples wont match the sample indices provided by sensory.
-  // To get around this, we simply take the size (in # samples) of the window and
-  // back up from the most recent sample by that amount. It seems to work...
-  if ( from_ms >= 0 && to_ms >= 0 ) {
-    avsCommon::avs::AudioInputStream::Index dIndex = toIndex - fromIndex;
-    toIndex = totalNumSamples;
-    fromIndex = toIndex - dIndex;
-  }
+#endif
   
   // this can generate SdsReader:seekFailed:reason=seekOverwrittenData if the time indices contain overwritten data
   _keywordObserver->onKeyWordDetected( _wakeWordAudioProvider->stream, "ALEXA", fromIndex, toIndex, nullptr);
@@ -840,6 +935,41 @@ avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion AlexaImpl::GetFirmwareVe
   }
   avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion version = std::atoi(concatVersion.c_str());
   return version;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::SetNetworkConnectionError()
+{
+  if( _internetConnected ) {
+    // the AVS internet connection check is slow, so let's double check by getting our IP address
+    const bool updateIPCheck = true;
+    const std::string ip = OSState::getInstance()->GetIPAddress(updateIPCheck);
+    const bool hasIP = !ip.empty();
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.IPCheck", "ip addr: '%s'", ip.c_str());
+
+    if( !hasIP ) {
+      // the internet connection check is pretty slow, and we don't have an IP, so we definitely don't have
+      // internet. Update the status here
+      OnInternetConnectionChanged( hasIP );
+    }
+  }
+  // note that we might have a (local) IP address, but no internet, so don't set us as connected based on the
+  // IP check
+
+  // check if it's because of the internet (this flag only gets updated every 5 mins, so it gets checked second)
+  if( _internetConnected ) {
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.HavingTrouble",
+             "AVS not conntected, but internet reported as being connected");
+    SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+  } else if( _avsEverConnected ) {
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.LostConnection",
+             "AVS not conntected, internet was but is no longer");
+    SetNetworkError( AlexaNetworkErrorType::LostConnection );
+  } else {
+    LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.NoInitialConnection",
+             "AVS not conntected, internet never was");
+    SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

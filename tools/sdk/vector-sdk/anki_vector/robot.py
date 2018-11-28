@@ -84,6 +84,8 @@ class Robot:
     :param show_viewer: Render camera feed on/off.
     :param requires_behavior_control: Request control of Vector's behavior system."""
 
+    # TODO For both Robot and AsyncRobot, consider adding equivalent of use_3d_viewer param so OpenGLViewer starts automatically.
+
     def __init__(self,
                  serial: str = None,
                  ip: str = None,
@@ -240,9 +242,10 @@ class Robot:
 
         .. testcode::
 
-            with anki_vector.Robot() as robot:
-                time.sleep(1)
-                image = Image.fromarray(robot.camera.latest_image)
+            import anki_vector
+
+            with anki_vector.Robot(enable_camera_feed=True) as robot:
+                image = robot.camera.latest_image
                 image.show()
         """
         if self._camera is None:
@@ -288,7 +291,7 @@ class Robot:
     def proximity(self) -> proximity.ProximityComponent:
         """Component containing state related to object proximity detection.
 
-        .. testcode::
+        ..code-block ::
 
             import anki_vector
             with anki_vector.Robot() as robot:
@@ -342,7 +345,7 @@ class Robot:
 
             import anki_vector
             with anki_vector.Robot() as robot:
-                robot.vision.set_vision_mode(detect_faces=True)
+                robot.vision.enable_custom_object_detection()
         """
         return self._vision
 
@@ -354,6 +357,7 @@ class Robot:
         return self._world
 
     @property
+    @util.block_while_none()
     def pose(self) -> util.Pose:
         """:class:`anki_vector.util.Pose`: The current pose (position and orientation) of Vector.
 
@@ -366,6 +370,7 @@ class Robot:
         return self._pose
 
     @property
+    @util.block_while_none()
     def pose_angle_rad(self) -> float:
         """Vector's pose angle (heading in X-Y plane).
 
@@ -378,6 +383,7 @@ class Robot:
         return self._pose_angle_rad
 
     @property
+    @util.block_while_none()
     def pose_pitch_rad(self) -> float:
         """Vector's pose pitch (angle up/down).
 
@@ -390,6 +396,7 @@ class Robot:
         return self._pose_pitch_rad
 
     @property
+    @util.block_while_none()
     def left_wheel_speed_mmps(self) -> float:
         """Vector's left wheel speed in mm/sec
 
@@ -402,6 +409,7 @@ class Robot:
         return self._left_wheel_speed_mmps
 
     @property
+    @util.block_while_none()
     def right_wheel_speed_mmps(self) -> float:
         """Vector's right wheel speed in mm/sec
 
@@ -414,6 +422,7 @@ class Robot:
         return self._right_wheel_speed_mmps
 
     @property
+    @util.block_while_none()
     def head_angle_rad(self) -> float:
         """Vector's head angle (up/down).
 
@@ -426,6 +435,7 @@ class Robot:
         return self._head_angle_rad
 
     @property
+    @util.block_while_none()
     def lift_height_mm(self) -> float:
         """Height of Vector's lift from the ground.
 
@@ -438,6 +448,7 @@ class Robot:
         return self._lift_height_mm
 
     @property
+    @util.block_while_none()
     def accel(self) -> util.Vector3:
         """:class:`anki_vector.util.Vector3`: The current accelerometer reading (x, y, z)
 
@@ -450,6 +461,7 @@ class Robot:
         return self._accel
 
     @property
+    @util.block_while_none()
     def gyro(self) -> util.Vector3:
         """The current gyroscope reading (x, y, z)
 
@@ -462,6 +474,7 @@ class Robot:
         return self._gyro
 
     @property
+    @util.block_while_none()
     def carrying_object_id(self) -> int:
         """The ID of the object currently being carried (-1 if none)
 
@@ -474,6 +487,7 @@ class Robot:
         return self._carrying_object_id
 
     @property
+    @util.block_while_none()
     def head_tracking_object_id(self) -> int:
         """The ID of the object the head is tracking to (-1 if none)
 
@@ -486,6 +500,7 @@ class Robot:
         return self._head_tracking_object_id
 
     @property
+    @util.block_while_none()
     def localized_to_object_id(self) -> int:
         """The ID of the object that the robot is localized to (-1 if none)
 
@@ -499,6 +514,7 @@ class Robot:
 
     # TODO Move to photos or somewhere else
     @property
+    @util.block_while_none()
     def last_image_time_stamp(self) -> int:
         """The robot's timestamp for the last image seen.
 
@@ -511,6 +527,7 @@ class Robot:
         return self._last_image_time_stamp
 
     @property
+    @util.block_while_none()
     def status(self) -> float:
         """Describes Vector's status.
 
@@ -677,8 +694,13 @@ class Robot:
             self.nav_map.init_nav_map_feed()
 
         # Enable face detection, to allow Vector to add faces to its world view
-        self.vision.enable_face_detection(detect_faces=self.enable_face_detection, estimate_expression=False)
-        self.vision.enable_custom_object_detection(detect_custom_objects=self.enable_custom_object_detection)
+        if self.conn.requires_behavior_control:
+            face_detection = self.vision.enable_face_detection(detect_faces=self.enable_face_detection, estimate_expression=False)
+            if isinstance(face_detection, concurrent.futures.Future):
+                face_detection.result()
+            object_detection = self.vision.enable_custom_object_detection(detect_custom_objects=self.enable_custom_object_detection)
+            if isinstance(object_detection, concurrent.futures.Future):
+                object_detection.result()
 
         # Subscribe to a callback that updates the robot's local properties
         self.events.subscribe(self._unpack_robot_state, events.Events.robot_state)
@@ -694,14 +716,14 @@ class Robot:
             robot.anim.play_animation("anim_turn_left_01")
             robot.disconnect()
         """
-        vision_mode = self.vision.disable_all_vision_modes()  # pylint: disable=assignment-from-no-return
-        if isinstance(vision_mode, concurrent.futures.Future):
-            vision_mode.result()
+        if self.conn.requires_behavior_control:
+            self.vision.close()
 
         # Stop rendering video
         self.viewer.stop_video()
         # Shutdown camera feed
         self.camera.close_camera_feed()
+        self._enable_camera_feed = False
         # Shutdown audio feed
         if self._audio is not None:
             self._audio.close_audio_feed()
@@ -751,7 +773,7 @@ class Robot:
 
     @connection.on_connection_thread(requires_control=False)
     async def get_version_state(self) -> protocol.VersionStateResponse:
-        """Get the versioning information for Vector.
+        """Get the versioning information for Vector, including Vector's os_version and engine_build_id.
 
         .. testcode::
 

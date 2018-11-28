@@ -77,8 +77,8 @@ public:
     SigEsBeamformingOn      // Signal Essence beamforming processing
   };
   
-  // Set the processing state that is desired, system state can change the active processing state
-  void SetPreferredMicDataProcessingState(ProcessingState state) { _preferredProcState = state; }
+  // Stop processing data from mics
+  void MuteMics(bool mute);
   
   void ResetMicListenDirection();
   float GetIncomingMicDataPercentUsed();
@@ -127,6 +127,7 @@ private:
   std::thread _processThread;
   std::thread _processTriggerThread;
   std::mutex _rawMicDataMutex;
+  bool _muteMics = false;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
   bool _isSpeakerActive = false;
@@ -158,7 +159,6 @@ private:
   size_t _procAudioRawComplete = 0;
   size_t _procAudioXferCount = 0;
   std::atomic<ProcessingState> _activeProcState{ProcessingState::None};
-  std::atomic<ProcessingState> _preferredProcState{ProcessingState::None};
 
   // Mutex for different accessing signal essence software
   std::mutex _seInteractMutex;
@@ -198,8 +198,6 @@ private:
   
   void SetActiveMicDataProcessingState(ProcessingState state);
   const char* GetProcessingStateName(ProcessingState state) const;
-  
-  void NotifyAlexaOfButtonPress();
   
   void SetupConsoleFuncs();
 };

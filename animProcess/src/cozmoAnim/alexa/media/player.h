@@ -41,6 +41,8 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <unordered_set>
 #include <atomic>
 #include <map>
+#include <mutex>
+#include <queue>
 
 
 #include <AVSCommon/SDKInterfaces/SpeakerInterface.h>
@@ -52,14 +54,27 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <PlaylistParser/UrlContentToAttachmentConverter.h>
 #include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterfaceFactoryInterface.h>
 #include <AVSCommon/Utils/RequiresShutdown.h>
+#include "minimp3/minimp3.h"
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
 
-#include "util/container/fixedCircularBuffer.h"
+// TEMP
+struct SpeexResamplerState_;
+typedef struct SpeexResamplerState_ SpeexResamplerState;
+
 
 namespace Anki {
   
+namespace AudioMetaData {
+  namespace GameEvent {
+    enum class GenericEvent : uint32_t;
+  }
+  namespace GameParameter {
+    enum class ParameterType : uint32_t;
+  }
+}
+
 namespace AudioMetaData {
   namespace GameEvent {
     enum class GenericEvent : uint32_t;
@@ -80,10 +95,13 @@ namespace Vector {
 
 class AlexaReader;
 class AnimContext;
+struct AudioInfo;
 namespace Audio {
   class CozmoAudioController;
 }
-class AudioDataBuffer;
+class SpeechRecognizerSystem;
+class SpeechRecognizerTHF;
+
 
 class AlexaMediaPlayer : public alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface
                        , public alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface
@@ -94,8 +112,14 @@ class AlexaMediaPlayer : public alexaClientSDK::avsCommon::utils::mediaPlayer::M
   using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
 public:
 
-  AlexaMediaPlayer( alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type type,
-                    const std::string& name,
+  enum class Type : uint8_t {
+    TTS,
+    Alerts,
+    Audio,
+    Notifications
+  };
+
+  AlexaMediaPlayer( Type type,
                     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory );
   ~AlexaMediaPlayer();
 
@@ -119,7 +143,7 @@ public:
   virtual bool adjustVolume( int8_t delta ) override;
   virtual bool setMute( bool mute ) override;
   virtual bool getSpeakerSettings( SpeakerSettings* settings ) override;
-  virtual Type getSpeakerType() override { return _type; }
+  virtual alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type getSpeakerType() override;
   virtual void onError() override;
   virtual void doShutdown() override;
 
@@ -149,6 +173,8 @@ private:
   void SavePCM( short* buff, size_t size=0 ) const;
   void SaveMP3( const unsigned char* buff, size_t size=0 ) const;
 
+  mp3dec_t _mp3decoder;
+  
   enum class State {
     Idle=0,
     Preparing,
@@ -164,6 +190,7 @@ private:
   SourceId _playingSource = 0;
 
   std::map<SourceId, std::unique_ptr< AlexaReader >> _readers;
+  short _decodedPcm[1152*2]; // Got value from minimp3.h MINIMP3_MAX_SAMPLES_PER_FRAME
 
   // An internal executor that performs execution of callable objects passed to it sequentially but asynchronously.
   alexaClientSDK::avsCommon::utils::threading::Executor _executor;
@@ -178,8 +205,6 @@ private:
 
   StreamingWaveDataPtr _waveData;
 
-  const std::string _name;
-
   std::string _saveFolder;
 
   // worker thread
@@ -188,18 +213,29 @@ private:
   // audio controller provided by context
   AudioController* _audioController = nullptr;
   
-  // Audio play control events
-  AudioMetaData::GameEvent::GenericEvent      _playEvent;
-  AudioMetaData::GameEvent::GenericEvent      _pauseEvent;
-  AudioMetaData::GameEvent::GenericEvent      _resumeEvent;
-  AudioMetaData::GameParameter::ParameterType _volumeParameter;
-  uint8_t                                     _pluginId;
+  // The ideal amount of audio samples in buffer
+  size_t _idealBufferSampleSize;
+  // Size of buffer before starting playback
+  size_t _minPlaybackBufferSize;
 
   /// Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;
 
   /// Used to stream urls into attachments
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
+
+  const AudioInfo& _audioInfo;
+
+  // TEMP
+  SpeechRecognizerTHF*            _recognizer = nullptr;
+  SpeexResamplerState*            _speexState = nullptr;
+  SpeechRecognizerSystem*         _speechRegSys = nullptr;
+  static constexpr size_t         _kResampleMaxSize = 2000;
+  short                           _resampledPcm[_kResampleMaxSize];
+  std::queue<std::pair<int, int>> _detectedTriggers_ms;
+  
+  void UpdateDetectorState(float& inout_lastPlayedMs);
+  
 };
 
 } // namespace Vector

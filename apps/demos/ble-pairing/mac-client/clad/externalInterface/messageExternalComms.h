@@ -1096,6 +1096,75 @@ struct RtsStatusResponse_4
 extern const char* RtsStatusResponse_4VersionHashStr;
 extern const uint8_t RtsStatusResponse_4VersionHash[16];
 
+// MESSAGE RtsStatusResponse_5
+struct RtsStatusResponse_5
+{
+  std::string wifiSsidHex;
+  uint8_t wifiState;
+  bool accessPoint;
+  uint8_t bleState;
+  uint8_t batteryState;
+  std::string version;
+  std::string esn;
+  bool otaInProgress;
+  bool hasOwner;
+  bool isCloudAuthed;
+  
+  /**** Constructors ****/
+  RtsStatusResponse_5() = default;
+  RtsStatusResponse_5(const RtsStatusResponse_5& other) = default;
+  RtsStatusResponse_5(RtsStatusResponse_5& other) = default;
+  RtsStatusResponse_5(RtsStatusResponse_5&& other) noexcept = default;
+  RtsStatusResponse_5& operator=(const RtsStatusResponse_5& other) = default;
+  RtsStatusResponse_5& operator=(RtsStatusResponse_5&& other) = default;
+  
+  explicit RtsStatusResponse_5(const std::string& wifiSsidHex,
+    uint8_t wifiState,
+    bool accessPoint,
+    uint8_t bleState,
+    uint8_t batteryState,
+    const std::string& version,
+    const std::string& esn,
+    bool otaInProgress,
+    bool hasOwner,
+    bool isCloudAuthed)
+  : wifiSsidHex(wifiSsidHex)
+  , wifiState(wifiState)
+  , accessPoint(accessPoint)
+  , bleState(bleState)
+  , batteryState(batteryState)
+  , version(version)
+  , esn(esn)
+  , otaInProgress(otaInProgress)
+  , hasOwner(hasOwner)
+  , isCloudAuthed(isCloudAuthed)
+  {}
+  
+  explicit RtsStatusResponse_5(const uint8_t* buff, size_t len);
+  explicit RtsStatusResponse_5(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsStatusResponse_5& other) const;
+  bool operator!=(const RtsStatusResponse_5& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(wifiSsidHex, wifiState, accessPoint, bleState, batteryState, version, esn, otaInProgress, hasOwner, isCloudAuthed);
+  }
+};
+
+extern const char* RtsStatusResponse_5VersionHashStr;
+extern const uint8_t RtsStatusResponse_5VersionHash[16];
+
 // MESSAGE RtsWifiScanRequest
 struct RtsWifiScanRequest
 {
@@ -1824,6 +1893,54 @@ struct RtsCloudSessionRequest
 extern const char* RtsCloudSessionRequestVersionHashStr;
 extern const uint8_t RtsCloudSessionRequestVersionHash[16];
 
+// MESSAGE RtsCloudSessionRequest_2
+struct RtsCloudSessionRequest_2
+{
+  std::string sessionToken;
+  std::string clientName;
+  std::string appId;
+  
+  /**** Constructors ****/
+  RtsCloudSessionRequest_2() = default;
+  RtsCloudSessionRequest_2(const RtsCloudSessionRequest_2& other) = default;
+  RtsCloudSessionRequest_2(RtsCloudSessionRequest_2& other) = default;
+  RtsCloudSessionRequest_2(RtsCloudSessionRequest_2&& other) noexcept = default;
+  RtsCloudSessionRequest_2& operator=(const RtsCloudSessionRequest_2& other) = default;
+  RtsCloudSessionRequest_2& operator=(RtsCloudSessionRequest_2&& other) = default;
+  
+  explicit RtsCloudSessionRequest_2(const std::string& sessionToken,
+    const std::string& clientName,
+    const std::string& appId)
+  : sessionToken(sessionToken)
+  , clientName(clientName)
+  , appId(appId)
+  {}
+  
+  explicit RtsCloudSessionRequest_2(const uint8_t* buff, size_t len);
+  explicit RtsCloudSessionRequest_2(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsCloudSessionRequest_2& other) const;
+  bool operator!=(const RtsCloudSessionRequest_2& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(sessionToken, clientName, appId);
+  }
+};
+
+extern const char* RtsCloudSessionRequest_2VersionHashStr;
+extern const uint8_t RtsCloudSessionRequest_2VersionHash[16];
+
 // MESSAGE RtsCloudSessionResponse
 struct RtsCloudSessionResponse
 {
@@ -1995,6 +2112,108 @@ struct RtsResponse
 
 extern const char* RtsResponseVersionHashStr;
 extern const uint8_t RtsResponseVersionHash[16];
+
+// MESSAGE RtsSdkProxyRequest
+struct RtsSdkProxyRequest
+{
+  std::string clientGuid;
+  std::string messageId;
+  std::string urlPath;
+  std::string json;
+  
+  /**** Constructors ****/
+  RtsSdkProxyRequest() = default;
+  RtsSdkProxyRequest(const RtsSdkProxyRequest& other) = default;
+  RtsSdkProxyRequest(RtsSdkProxyRequest& other) = default;
+  RtsSdkProxyRequest(RtsSdkProxyRequest&& other) noexcept = default;
+  RtsSdkProxyRequest& operator=(const RtsSdkProxyRequest& other) = default;
+  RtsSdkProxyRequest& operator=(RtsSdkProxyRequest&& other) = default;
+  
+  explicit RtsSdkProxyRequest(const std::string& clientGuid,
+    const std::string& messageId,
+    const std::string& urlPath,
+    const std::string& json)
+  : clientGuid(clientGuid)
+  , messageId(messageId)
+  , urlPath(urlPath)
+  , json(json)
+  {}
+  
+  explicit RtsSdkProxyRequest(const uint8_t* buff, size_t len);
+  explicit RtsSdkProxyRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsSdkProxyRequest& other) const;
+  bool operator!=(const RtsSdkProxyRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(clientGuid, messageId, urlPath, json);
+  }
+};
+
+extern const char* RtsSdkProxyRequestVersionHashStr;
+extern const uint8_t RtsSdkProxyRequestVersionHash[16];
+
+// MESSAGE RtsSdkProxyResponse
+struct RtsSdkProxyResponse
+{
+  std::string messageId;
+  uint16_t statusCode;
+  std::string responseType;
+  std::string responseBody;
+  
+  /**** Constructors ****/
+  RtsSdkProxyResponse() = default;
+  RtsSdkProxyResponse(const RtsSdkProxyResponse& other) = default;
+  RtsSdkProxyResponse(RtsSdkProxyResponse& other) = default;
+  RtsSdkProxyResponse(RtsSdkProxyResponse&& other) noexcept = default;
+  RtsSdkProxyResponse& operator=(const RtsSdkProxyResponse& other) = default;
+  RtsSdkProxyResponse& operator=(RtsSdkProxyResponse&& other) = default;
+  
+  explicit RtsSdkProxyResponse(const std::string& messageId,
+    uint16_t statusCode,
+    const std::string& responseType,
+    const std::string& responseBody)
+  : messageId(messageId)
+  , statusCode(statusCode)
+  , responseType(responseType)
+  , responseBody(responseBody)
+  {}
+  
+  explicit RtsSdkProxyResponse(const uint8_t* buff, size_t len);
+  explicit RtsSdkProxyResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsSdkProxyResponse& other) const;
+  bool operator!=(const RtsSdkProxyResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(messageId, statusCode, responseType, responseBody);
+  }
+};
+
+extern const char* RtsSdkProxyResponseVersionHashStr;
+extern const uint8_t RtsSdkProxyResponseVersionHash[16];
 
 // MESSAGE Error
 struct Error
@@ -3291,6 +3510,489 @@ extern const char* RtsConnection_4VersionHashStr;
 extern const uint8_t RtsConnection_4VersionHash[16];
 
 // "Lookup Tables" for getting type by tag using template specializations
+template<RtsConnection_5Tag tag>
+struct RtsConnection_5_TagToType;
+
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::Error> {
+  using type = Anki::Vector::ExternalComms::Error;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsConnRequest> {
+  using type = Anki::Vector::ExternalComms::RtsConnRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsConnResponse> {
+  using type = Anki::Vector::ExternalComms::RtsConnResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsNonceMessage> {
+  using type = Anki::Vector::ExternalComms::RtsNonceMessage;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsChallengeMessage> {
+  using type = Anki::Vector::ExternalComms::RtsChallengeMessage;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsChallengeSuccessMessage> {
+  using type = Anki::Vector::ExternalComms::RtsChallengeSuccessMessage;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiConnectRequest> {
+  using type = Anki::Vector::ExternalComms::RtsWifiConnectRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiConnectResponse_3> {
+  using type = Anki::Vector::ExternalComms::RtsWifiConnectResponse_3;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiIpRequest> {
+  using type = Anki::Vector::ExternalComms::RtsWifiIpRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiIpResponse> {
+  using type = Anki::Vector::ExternalComms::RtsWifiIpResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsStatusRequest> {
+  using type = Anki::Vector::ExternalComms::RtsStatusRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsStatusResponse_5> {
+  using type = Anki::Vector::ExternalComms::RtsStatusResponse_5;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiScanRequest> {
+  using type = Anki::Vector::ExternalComms::RtsWifiScanRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiScanResponse_3> {
+  using type = Anki::Vector::ExternalComms::RtsWifiScanResponse_3;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsOtaUpdateRequest> {
+  using type = Anki::Vector::ExternalComms::RtsOtaUpdateRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsOtaUpdateResponse> {
+  using type = Anki::Vector::ExternalComms::RtsOtaUpdateResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsCancelPairing> {
+  using type = Anki::Vector::ExternalComms::RtsCancelPairing;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsForceDisconnect> {
+  using type = Anki::Vector::ExternalComms::RtsForceDisconnect;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsAck> {
+  using type = Anki::Vector::ExternalComms::RtsAck;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiAccessPointRequest> {
+  using type = Anki::Vector::ExternalComms::RtsWifiAccessPointRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiAccessPointResponse> {
+  using type = Anki::Vector::ExternalComms::RtsWifiAccessPointResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsSshRequest> {
+  using type = Anki::Vector::ExternalComms::RtsSshRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsSshResponse> {
+  using type = Anki::Vector::ExternalComms::RtsSshResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsOtaCancelRequest> {
+  using type = Anki::Vector::ExternalComms::RtsOtaCancelRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsLogRequest> {
+  using type = Anki::Vector::ExternalComms::RtsLogRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsLogResponse> {
+  using type = Anki::Vector::ExternalComms::RtsLogResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsFileDownload> {
+  using type = Anki::Vector::ExternalComms::RtsFileDownload;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiForgetRequest> {
+  using type = Anki::Vector::ExternalComms::RtsWifiForgetRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsWifiForgetResponse> {
+  using type = Anki::Vector::ExternalComms::RtsWifiForgetResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsCloudSessionRequest_2> {
+  using type = Anki::Vector::ExternalComms::RtsCloudSessionRequest_2;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsCloudSessionResponse> {
+  using type = Anki::Vector::ExternalComms::RtsCloudSessionResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsAppConnectionIdRequest> {
+  using type = Anki::Vector::ExternalComms::RtsAppConnectionIdRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsAppConnectionIdResponse> {
+  using type = Anki::Vector::ExternalComms::RtsAppConnectionIdResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsResponse> {
+  using type = Anki::Vector::ExternalComms::RtsResponse;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsSdkProxyRequest> {
+  using type = Anki::Vector::ExternalComms::RtsSdkProxyRequest;
+};
+template<>
+struct RtsConnection_5_TagToType<RtsConnection_5Tag::RtsSdkProxyResponse> {
+  using type = Anki::Vector::ExternalComms::RtsSdkProxyResponse;
+};
+
+// UNION RtsConnection_5
+class RtsConnection_5
+{
+public:
+  using Tag = RtsConnection_5Tag;
+  /**** Constructors ****/
+  RtsConnection_5() :_tag(Tag::INVALID) { }
+  explicit RtsConnection_5(const CLAD::SafeMessageBuffer& buff);
+  explicit RtsConnection_5(const uint8_t* buffer, size_t length);
+  RtsConnection_5(const RtsConnection_5& other);
+  RtsConnection_5(RtsConnection_5&& other) noexcept;
+  RtsConnection_5& operator=(const RtsConnection_5& other);
+  RtsConnection_5& operator=(RtsConnection_5&& other) noexcept;
+  
+  ~RtsConnection_5() { ClearCurrent(); }
+  Tag GetTag() const { return _tag; }
+  
+  // Templated getter for union members by type
+  // NOTE: Always returns a reference, even for trivial types, unlike untemplated version
+  template<Tag tag>
+  const typename RtsConnection_5_TagToType<tag>::type & Get_() const;
+  
+  // Templated creator for making a union object out of one if its members
+  template <Tag tag>
+  static RtsConnection_5 Create_(typename RtsConnection_5_TagToType<tag>::type member);
+  
+  /** Error **/
+  static RtsConnection_5 CreateError(Anki::Vector::ExternalComms::Error&& new_Error);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::Error&& new_Error);
+  const Anki::Vector::ExternalComms::Error& Get_Error() const;
+  void Set_Error(const Anki::Vector::ExternalComms::Error& new_Error);
+  void Set_Error(Anki::Vector::ExternalComms::Error&& new_Error);
+  
+  /** RtsConnRequest **/
+  static RtsConnection_5 CreateRtsConnRequest(Anki::Vector::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  const Anki::Vector::ExternalComms::RtsConnRequest& Get_RtsConnRequest() const;
+  void Set_RtsConnRequest(const Anki::Vector::ExternalComms::RtsConnRequest& new_RtsConnRequest);
+  void Set_RtsConnRequest(Anki::Vector::ExternalComms::RtsConnRequest&& new_RtsConnRequest);
+  
+  /** RtsConnResponse **/
+  static RtsConnection_5 CreateRtsConnResponse(Anki::Vector::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  const Anki::Vector::ExternalComms::RtsConnResponse& Get_RtsConnResponse() const;
+  void Set_RtsConnResponse(const Anki::Vector::ExternalComms::RtsConnResponse& new_RtsConnResponse);
+  void Set_RtsConnResponse(Anki::Vector::ExternalComms::RtsConnResponse&& new_RtsConnResponse);
+  
+  /** RtsNonceMessage **/
+  static RtsConnection_5 CreateRtsNonceMessage(Anki::Vector::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  const Anki::Vector::ExternalComms::RtsNonceMessage& Get_RtsNonceMessage() const;
+  void Set_RtsNonceMessage(const Anki::Vector::ExternalComms::RtsNonceMessage& new_RtsNonceMessage);
+  void Set_RtsNonceMessage(Anki::Vector::ExternalComms::RtsNonceMessage&& new_RtsNonceMessage);
+  
+  /** RtsChallengeMessage **/
+  static RtsConnection_5 CreateRtsChallengeMessage(Anki::Vector::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  const Anki::Vector::ExternalComms::RtsChallengeMessage& Get_RtsChallengeMessage() const;
+  void Set_RtsChallengeMessage(const Anki::Vector::ExternalComms::RtsChallengeMessage& new_RtsChallengeMessage);
+  void Set_RtsChallengeMessage(Anki::Vector::ExternalComms::RtsChallengeMessage&& new_RtsChallengeMessage);
+  
+  /** RtsChallengeSuccessMessage **/
+  static RtsConnection_5 CreateRtsChallengeSuccessMessage(Anki::Vector::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  const Anki::Vector::ExternalComms::RtsChallengeSuccessMessage& Get_RtsChallengeSuccessMessage() const;
+  void Set_RtsChallengeSuccessMessage(const Anki::Vector::ExternalComms::RtsChallengeSuccessMessage& new_RtsChallengeSuccessMessage);
+  void Set_RtsChallengeSuccessMessage(Anki::Vector::ExternalComms::RtsChallengeSuccessMessage&& new_RtsChallengeSuccessMessage);
+  
+  /** RtsWifiConnectRequest **/
+  static RtsConnection_5 CreateRtsWifiConnectRequest(Anki::Vector::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  const Anki::Vector::ExternalComms::RtsWifiConnectRequest& Get_RtsWifiConnectRequest() const;
+  void Set_RtsWifiConnectRequest(const Anki::Vector::ExternalComms::RtsWifiConnectRequest& new_RtsWifiConnectRequest);
+  void Set_RtsWifiConnectRequest(Anki::Vector::ExternalComms::RtsWifiConnectRequest&& new_RtsWifiConnectRequest);
+  
+  /** RtsWifiConnectResponse_3 **/
+  static RtsConnection_5 CreateRtsWifiConnectResponse_3(Anki::Vector::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  const Anki::Vector::ExternalComms::RtsWifiConnectResponse_3& Get_RtsWifiConnectResponse_3() const;
+  void Set_RtsWifiConnectResponse_3(const Anki::Vector::ExternalComms::RtsWifiConnectResponse_3& new_RtsWifiConnectResponse_3);
+  void Set_RtsWifiConnectResponse_3(Anki::Vector::ExternalComms::RtsWifiConnectResponse_3&& new_RtsWifiConnectResponse_3);
+  
+  /** RtsWifiIpRequest **/
+  static RtsConnection_5 CreateRtsWifiIpRequest(Anki::Vector::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  const Anki::Vector::ExternalComms::RtsWifiIpRequest& Get_RtsWifiIpRequest() const;
+  void Set_RtsWifiIpRequest(const Anki::Vector::ExternalComms::RtsWifiIpRequest& new_RtsWifiIpRequest);
+  void Set_RtsWifiIpRequest(Anki::Vector::ExternalComms::RtsWifiIpRequest&& new_RtsWifiIpRequest);
+  
+  /** RtsWifiIpResponse **/
+  static RtsConnection_5 CreateRtsWifiIpResponse(Anki::Vector::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  const Anki::Vector::ExternalComms::RtsWifiIpResponse& Get_RtsWifiIpResponse() const;
+  void Set_RtsWifiIpResponse(const Anki::Vector::ExternalComms::RtsWifiIpResponse& new_RtsWifiIpResponse);
+  void Set_RtsWifiIpResponse(Anki::Vector::ExternalComms::RtsWifiIpResponse&& new_RtsWifiIpResponse);
+  
+  /** RtsStatusRequest **/
+  static RtsConnection_5 CreateRtsStatusRequest(Anki::Vector::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  const Anki::Vector::ExternalComms::RtsStatusRequest& Get_RtsStatusRequest() const;
+  void Set_RtsStatusRequest(const Anki::Vector::ExternalComms::RtsStatusRequest& new_RtsStatusRequest);
+  void Set_RtsStatusRequest(Anki::Vector::ExternalComms::RtsStatusRequest&& new_RtsStatusRequest);
+  
+  /** RtsStatusResponse_5 **/
+  static RtsConnection_5 CreateRtsStatusResponse_5(Anki::Vector::ExternalComms::RtsStatusResponse_5&& new_RtsStatusResponse_5);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsStatusResponse_5&& new_RtsStatusResponse_5);
+  const Anki::Vector::ExternalComms::RtsStatusResponse_5& Get_RtsStatusResponse_5() const;
+  void Set_RtsStatusResponse_5(const Anki::Vector::ExternalComms::RtsStatusResponse_5& new_RtsStatusResponse_5);
+  void Set_RtsStatusResponse_5(Anki::Vector::ExternalComms::RtsStatusResponse_5&& new_RtsStatusResponse_5);
+  
+  /** RtsWifiScanRequest **/
+  static RtsConnection_5 CreateRtsWifiScanRequest(Anki::Vector::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  const Anki::Vector::ExternalComms::RtsWifiScanRequest& Get_RtsWifiScanRequest() const;
+  void Set_RtsWifiScanRequest(const Anki::Vector::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
+  void Set_RtsWifiScanRequest(Anki::Vector::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
+  
+  /** RtsWifiScanResponse_3 **/
+  static RtsConnection_5 CreateRtsWifiScanResponse_3(Anki::Vector::ExternalComms::RtsWifiScanResponse_3&& new_RtsWifiScanResponse_3);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiScanResponse_3&& new_RtsWifiScanResponse_3);
+  const Anki::Vector::ExternalComms::RtsWifiScanResponse_3& Get_RtsWifiScanResponse_3() const;
+  void Set_RtsWifiScanResponse_3(const Anki::Vector::ExternalComms::RtsWifiScanResponse_3& new_RtsWifiScanResponse_3);
+  void Set_RtsWifiScanResponse_3(Anki::Vector::ExternalComms::RtsWifiScanResponse_3&& new_RtsWifiScanResponse_3);
+  
+  /** RtsOtaUpdateRequest **/
+  static RtsConnection_5 CreateRtsOtaUpdateRequest(Anki::Vector::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  const Anki::Vector::ExternalComms::RtsOtaUpdateRequest& Get_RtsOtaUpdateRequest() const;
+  void Set_RtsOtaUpdateRequest(const Anki::Vector::ExternalComms::RtsOtaUpdateRequest& new_RtsOtaUpdateRequest);
+  void Set_RtsOtaUpdateRequest(Anki::Vector::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
+  
+  /** RtsOtaUpdateResponse **/
+  static RtsConnection_5 CreateRtsOtaUpdateResponse(Anki::Vector::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  const Anki::Vector::ExternalComms::RtsOtaUpdateResponse& Get_RtsOtaUpdateResponse() const;
+  void Set_RtsOtaUpdateResponse(const Anki::Vector::ExternalComms::RtsOtaUpdateResponse& new_RtsOtaUpdateResponse);
+  void Set_RtsOtaUpdateResponse(Anki::Vector::ExternalComms::RtsOtaUpdateResponse&& new_RtsOtaUpdateResponse);
+  
+  /** RtsCancelPairing **/
+  static RtsConnection_5 CreateRtsCancelPairing(Anki::Vector::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  const Anki::Vector::ExternalComms::RtsCancelPairing& Get_RtsCancelPairing() const;
+  void Set_RtsCancelPairing(const Anki::Vector::ExternalComms::RtsCancelPairing& new_RtsCancelPairing);
+  void Set_RtsCancelPairing(Anki::Vector::ExternalComms::RtsCancelPairing&& new_RtsCancelPairing);
+  
+  /** RtsForceDisconnect **/
+  static RtsConnection_5 CreateRtsForceDisconnect(Anki::Vector::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  const Anki::Vector::ExternalComms::RtsForceDisconnect& Get_RtsForceDisconnect() const;
+  void Set_RtsForceDisconnect(const Anki::Vector::ExternalComms::RtsForceDisconnect& new_RtsForceDisconnect);
+  void Set_RtsForceDisconnect(Anki::Vector::ExternalComms::RtsForceDisconnect&& new_RtsForceDisconnect);
+  
+  /** RtsAck **/
+  static RtsConnection_5 CreateRtsAck(Anki::Vector::ExternalComms::RtsAck&& new_RtsAck);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsAck&& new_RtsAck);
+  const Anki::Vector::ExternalComms::RtsAck& Get_RtsAck() const;
+  void Set_RtsAck(const Anki::Vector::ExternalComms::RtsAck& new_RtsAck);
+  void Set_RtsAck(Anki::Vector::ExternalComms::RtsAck&& new_RtsAck);
+  
+  /** RtsWifiAccessPointRequest **/
+  static RtsConnection_5 CreateRtsWifiAccessPointRequest(Anki::Vector::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  const Anki::Vector::ExternalComms::RtsWifiAccessPointRequest& Get_RtsWifiAccessPointRequest() const;
+  void Set_RtsWifiAccessPointRequest(const Anki::Vector::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest);
+  void Set_RtsWifiAccessPointRequest(Anki::Vector::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  
+  /** RtsWifiAccessPointResponse **/
+  static RtsConnection_5 CreateRtsWifiAccessPointResponse(Anki::Vector::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  const Anki::Vector::ExternalComms::RtsWifiAccessPointResponse& Get_RtsWifiAccessPointResponse() const;
+  void Set_RtsWifiAccessPointResponse(const Anki::Vector::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
+  void Set_RtsWifiAccessPointResponse(Anki::Vector::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  
+  /** RtsSshRequest **/
+  static RtsConnection_5 CreateRtsSshRequest(Anki::Vector::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  const Anki::Vector::ExternalComms::RtsSshRequest& Get_RtsSshRequest() const;
+  void Set_RtsSshRequest(const Anki::Vector::ExternalComms::RtsSshRequest& new_RtsSshRequest);
+  void Set_RtsSshRequest(Anki::Vector::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  
+  /** RtsSshResponse **/
+  static RtsConnection_5 CreateRtsSshResponse(Anki::Vector::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  const Anki::Vector::ExternalComms::RtsSshResponse& Get_RtsSshResponse() const;
+  void Set_RtsSshResponse(const Anki::Vector::ExternalComms::RtsSshResponse& new_RtsSshResponse);
+  void Set_RtsSshResponse(Anki::Vector::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  
+  /** RtsOtaCancelRequest **/
+  static RtsConnection_5 CreateRtsOtaCancelRequest(Anki::Vector::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  const Anki::Vector::ExternalComms::RtsOtaCancelRequest& Get_RtsOtaCancelRequest() const;
+  void Set_RtsOtaCancelRequest(const Anki::Vector::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest);
+  void Set_RtsOtaCancelRequest(Anki::Vector::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  
+  /** RtsLogRequest **/
+  static RtsConnection_5 CreateRtsLogRequest(Anki::Vector::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  const Anki::Vector::ExternalComms::RtsLogRequest& Get_RtsLogRequest() const;
+  void Set_RtsLogRequest(const Anki::Vector::ExternalComms::RtsLogRequest& new_RtsLogRequest);
+  void Set_RtsLogRequest(Anki::Vector::ExternalComms::RtsLogRequest&& new_RtsLogRequest);
+  
+  /** RtsLogResponse **/
+  static RtsConnection_5 CreateRtsLogResponse(Anki::Vector::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  const Anki::Vector::ExternalComms::RtsLogResponse& Get_RtsLogResponse() const;
+  void Set_RtsLogResponse(const Anki::Vector::ExternalComms::RtsLogResponse& new_RtsLogResponse);
+  void Set_RtsLogResponse(Anki::Vector::ExternalComms::RtsLogResponse&& new_RtsLogResponse);
+  
+  /** RtsFileDownload **/
+  static RtsConnection_5 CreateRtsFileDownload(Anki::Vector::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  const Anki::Vector::ExternalComms::RtsFileDownload& Get_RtsFileDownload() const;
+  void Set_RtsFileDownload(const Anki::Vector::ExternalComms::RtsFileDownload& new_RtsFileDownload);
+  void Set_RtsFileDownload(Anki::Vector::ExternalComms::RtsFileDownload&& new_RtsFileDownload);
+  
+  /** RtsWifiForgetRequest **/
+  static RtsConnection_5 CreateRtsWifiForgetRequest(Anki::Vector::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  const Anki::Vector::ExternalComms::RtsWifiForgetRequest& Get_RtsWifiForgetRequest() const;
+  void Set_RtsWifiForgetRequest(const Anki::Vector::ExternalComms::RtsWifiForgetRequest& new_RtsWifiForgetRequest);
+  void Set_RtsWifiForgetRequest(Anki::Vector::ExternalComms::RtsWifiForgetRequest&& new_RtsWifiForgetRequest);
+  
+  /** RtsWifiForgetResponse **/
+  static RtsConnection_5 CreateRtsWifiForgetResponse(Anki::Vector::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  const Anki::Vector::ExternalComms::RtsWifiForgetResponse& Get_RtsWifiForgetResponse() const;
+  void Set_RtsWifiForgetResponse(const Anki::Vector::ExternalComms::RtsWifiForgetResponse& new_RtsWifiForgetResponse);
+  void Set_RtsWifiForgetResponse(Anki::Vector::ExternalComms::RtsWifiForgetResponse&& new_RtsWifiForgetResponse);
+  
+  /** RtsCloudSessionRequest_2 **/
+  static RtsConnection_5 CreateRtsCloudSessionRequest_2(Anki::Vector::ExternalComms::RtsCloudSessionRequest_2&& new_RtsCloudSessionRequest_2);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsCloudSessionRequest_2&& new_RtsCloudSessionRequest_2);
+  const Anki::Vector::ExternalComms::RtsCloudSessionRequest_2& Get_RtsCloudSessionRequest_2() const;
+  void Set_RtsCloudSessionRequest_2(const Anki::Vector::ExternalComms::RtsCloudSessionRequest_2& new_RtsCloudSessionRequest_2);
+  void Set_RtsCloudSessionRequest_2(Anki::Vector::ExternalComms::RtsCloudSessionRequest_2&& new_RtsCloudSessionRequest_2);
+  
+  /** RtsCloudSessionResponse **/
+  static RtsConnection_5 CreateRtsCloudSessionResponse(Anki::Vector::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  const Anki::Vector::ExternalComms::RtsCloudSessionResponse& Get_RtsCloudSessionResponse() const;
+  void Set_RtsCloudSessionResponse(const Anki::Vector::ExternalComms::RtsCloudSessionResponse& new_RtsCloudSessionResponse);
+  void Set_RtsCloudSessionResponse(Anki::Vector::ExternalComms::RtsCloudSessionResponse&& new_RtsCloudSessionResponse);
+  
+  /** RtsAppConnectionIdRequest **/
+  static RtsConnection_5 CreateRtsAppConnectionIdRequest(Anki::Vector::ExternalComms::RtsAppConnectionIdRequest&& new_RtsAppConnectionIdRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsAppConnectionIdRequest&& new_RtsAppConnectionIdRequest);
+  const Anki::Vector::ExternalComms::RtsAppConnectionIdRequest& Get_RtsAppConnectionIdRequest() const;
+  void Set_RtsAppConnectionIdRequest(const Anki::Vector::ExternalComms::RtsAppConnectionIdRequest& new_RtsAppConnectionIdRequest);
+  void Set_RtsAppConnectionIdRequest(Anki::Vector::ExternalComms::RtsAppConnectionIdRequest&& new_RtsAppConnectionIdRequest);
+  
+  /** RtsAppConnectionIdResponse **/
+  static RtsConnection_5 CreateRtsAppConnectionIdResponse(Anki::Vector::ExternalComms::RtsAppConnectionIdResponse&& new_RtsAppConnectionIdResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsAppConnectionIdResponse&& new_RtsAppConnectionIdResponse);
+  const Anki::Vector::ExternalComms::RtsAppConnectionIdResponse& Get_RtsAppConnectionIdResponse() const;
+  void Set_RtsAppConnectionIdResponse(const Anki::Vector::ExternalComms::RtsAppConnectionIdResponse& new_RtsAppConnectionIdResponse);
+  void Set_RtsAppConnectionIdResponse(Anki::Vector::ExternalComms::RtsAppConnectionIdResponse&& new_RtsAppConnectionIdResponse);
+  
+  /** RtsResponse **/
+  static RtsConnection_5 CreateRtsResponse(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse);
+  const Anki::Vector::ExternalComms::RtsResponse& Get_RtsResponse() const;
+  void Set_RtsResponse(const Anki::Vector::ExternalComms::RtsResponse& new_RtsResponse);
+  void Set_RtsResponse(Anki::Vector::ExternalComms::RtsResponse&& new_RtsResponse);
+  
+  /** RtsSdkProxyRequest **/
+  static RtsConnection_5 CreateRtsSdkProxyRequest(Anki::Vector::ExternalComms::RtsSdkProxyRequest&& new_RtsSdkProxyRequest);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsSdkProxyRequest&& new_RtsSdkProxyRequest);
+  const Anki::Vector::ExternalComms::RtsSdkProxyRequest& Get_RtsSdkProxyRequest() const;
+  void Set_RtsSdkProxyRequest(const Anki::Vector::ExternalComms::RtsSdkProxyRequest& new_RtsSdkProxyRequest);
+  void Set_RtsSdkProxyRequest(Anki::Vector::ExternalComms::RtsSdkProxyRequest&& new_RtsSdkProxyRequest);
+  
+  /** RtsSdkProxyResponse **/
+  static RtsConnection_5 CreateRtsSdkProxyResponse(Anki::Vector::ExternalComms::RtsSdkProxyResponse&& new_RtsSdkProxyResponse);
+  explicit RtsConnection_5(Anki::Vector::ExternalComms::RtsSdkProxyResponse&& new_RtsSdkProxyResponse);
+  const Anki::Vector::ExternalComms::RtsSdkProxyResponse& Get_RtsSdkProxyResponse() const;
+  void Set_RtsSdkProxyResponse(const Anki::Vector::ExternalComms::RtsSdkProxyResponse& new_RtsSdkProxyResponse);
+  void Set_RtsSdkProxyResponse(Anki::Vector::ExternalComms::RtsSdkProxyResponse&& new_RtsSdkProxyResponse);
+  
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsConnection_5& other) const;
+  bool operator!=(const RtsConnection_5& other) const;
+private:
+  void ClearCurrent();
+  Tag _tag;
+  
+  union {
+    Anki::Vector::ExternalComms::Error _Error;
+    Anki::Vector::ExternalComms::RtsConnRequest _RtsConnRequest;
+    Anki::Vector::ExternalComms::RtsConnResponse _RtsConnResponse;
+    Anki::Vector::ExternalComms::RtsNonceMessage _RtsNonceMessage;
+    Anki::Vector::ExternalComms::RtsChallengeMessage _RtsChallengeMessage;
+    Anki::Vector::ExternalComms::RtsChallengeSuccessMessage _RtsChallengeSuccessMessage;
+    Anki::Vector::ExternalComms::RtsWifiConnectRequest _RtsWifiConnectRequest;
+    Anki::Vector::ExternalComms::RtsWifiConnectResponse_3 _RtsWifiConnectResponse_3;
+    Anki::Vector::ExternalComms::RtsWifiIpRequest _RtsWifiIpRequest;
+    Anki::Vector::ExternalComms::RtsWifiIpResponse _RtsWifiIpResponse;
+    Anki::Vector::ExternalComms::RtsStatusRequest _RtsStatusRequest;
+    Anki::Vector::ExternalComms::RtsStatusResponse_5 _RtsStatusResponse_5;
+    Anki::Vector::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
+    Anki::Vector::ExternalComms::RtsWifiScanResponse_3 _RtsWifiScanResponse_3;
+    Anki::Vector::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
+    Anki::Vector::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
+    Anki::Vector::ExternalComms::RtsCancelPairing _RtsCancelPairing;
+    Anki::Vector::ExternalComms::RtsForceDisconnect _RtsForceDisconnect;
+    Anki::Vector::ExternalComms::RtsAck _RtsAck;
+    Anki::Vector::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
+    Anki::Vector::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
+    Anki::Vector::ExternalComms::RtsSshRequest _RtsSshRequest;
+    Anki::Vector::ExternalComms::RtsSshResponse _RtsSshResponse;
+    Anki::Vector::ExternalComms::RtsOtaCancelRequest _RtsOtaCancelRequest;
+    Anki::Vector::ExternalComms::RtsLogRequest _RtsLogRequest;
+    Anki::Vector::ExternalComms::RtsLogResponse _RtsLogResponse;
+    Anki::Vector::ExternalComms::RtsFileDownload _RtsFileDownload;
+    Anki::Vector::ExternalComms::RtsWifiForgetRequest _RtsWifiForgetRequest;
+    Anki::Vector::ExternalComms::RtsWifiForgetResponse _RtsWifiForgetResponse;
+    Anki::Vector::ExternalComms::RtsCloudSessionRequest_2 _RtsCloudSessionRequest_2;
+    Anki::Vector::ExternalComms::RtsCloudSessionResponse _RtsCloudSessionResponse;
+    Anki::Vector::ExternalComms::RtsAppConnectionIdRequest _RtsAppConnectionIdRequest;
+    Anki::Vector::ExternalComms::RtsAppConnectionIdResponse _RtsAppConnectionIdResponse;
+    Anki::Vector::ExternalComms::RtsResponse _RtsResponse;
+    Anki::Vector::ExternalComms::RtsSdkProxyRequest _RtsSdkProxyRequest;
+    Anki::Vector::ExternalComms::RtsSdkProxyResponse _RtsSdkProxyResponse;
+  };
+};
+extern const char* RtsConnection_5VersionHashStr;
+extern const uint8_t RtsConnection_5VersionHash[16];
+
+// "Lookup Tables" for getting type by tag using template specializations
 template<RtsConnection_1Tag tag>
 struct RtsConnection_1_TagToType;
 
@@ -3637,6 +4339,10 @@ template<>
 struct RtsConnection_TagToType<RtsConnectionTag::RtsConnection_4> {
   using type = Anki::Vector::ExternalComms::RtsConnection_4;
 };
+template<>
+struct RtsConnection_TagToType<RtsConnectionTag::RtsConnection_5> {
+  using type = Anki::Vector::ExternalComms::RtsConnection_5;
+};
 
 // UNION RtsConnection
 class RtsConnection
@@ -3692,6 +4398,13 @@ public:
   void Set_RtsConnection_4(const Anki::Vector::ExternalComms::RtsConnection_4& new_RtsConnection_4);
   void Set_RtsConnection_4(Anki::Vector::ExternalComms::RtsConnection_4&& new_RtsConnection_4);
   
+  /** RtsConnection_5 **/
+  static RtsConnection CreateRtsConnection_5(Anki::Vector::ExternalComms::RtsConnection_5&& new_RtsConnection_5);
+  explicit RtsConnection(Anki::Vector::ExternalComms::RtsConnection_5&& new_RtsConnection_5);
+  const Anki::Vector::ExternalComms::RtsConnection_5& Get_RtsConnection_5() const;
+  void Set_RtsConnection_5(const Anki::Vector::ExternalComms::RtsConnection_5& new_RtsConnection_5);
+  void Set_RtsConnection_5(Anki::Vector::ExternalComms::RtsConnection_5&& new_RtsConnection_5);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -3711,6 +4424,7 @@ private:
     Anki::Vector::ExternalComms::RtsConnection_2 _RtsConnection_2;
     Anki::Vector::ExternalComms::RtsConnection_3 _RtsConnection_3;
     Anki::Vector::ExternalComms::RtsConnection_4 _RtsConnection_4;
+    Anki::Vector::ExternalComms::RtsConnection_5 _RtsConnection_5;
   };
 };
 extern const char* RtsConnectionVersionHashStr;

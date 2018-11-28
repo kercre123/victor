@@ -20,7 +20,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingLookAtPhone.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboardingLookAtPhone.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/battery/batteryComponent.h"
@@ -32,6 +32,8 @@
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
+
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -124,25 +126,6 @@ void BehaviorOnboarding1p0::InitBehavior()
   _iConfig.behaviorWaitForTriggerWordOnCharger = BC.FindBehaviorByID( kBehaviorIDWhileWaitingOnCharger );
   _iConfig.behaviorTriggerWord = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingTriggerWord) );
   _iConfig.behaviorPowerOff = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingPowerOff) );
-  
-  if( ANKI_DEV_CHEATS ) {
-    // this console func names match what the 1.1 onboarding tool will send, to avoid having to change that
-    auto continueFunc = [this](ConsoleFunctionContextRef context) {
-      // flag to wake up (don't start it now so that app messages and console vars are both applied at the same time)
-      _dVars.receivedWakeUp = true;
-    };
-    _iConfig.consoleFuncs.emplace_front( "Continue", std::move(continueFunc), "Onboarding", "" );
-    
-    auto setCompleteFunc = [this](ConsoleFunctionContextRef context) {
-      SetStage( OnboardingStages::Complete, false );
-    };
-    _iConfig.consoleFuncs.emplace_front( "SetComplete", std::move(setCompleteFunc), "Onboarding", "" );
-    
-    auto setDoNothingFunc = [this](ConsoleFunctionContextRef context) {
-      SetStage( OnboardingStages::DevDoNothing, false );
-    };
-    _iConfig.consoleFuncs.emplace_front( "SetDevDoNothing", std::move(setDoNothingFunc), "Onboarding", "" );
-  }
   
   {
     using namespace Util;
@@ -545,6 +528,18 @@ void BehaviorOnboarding1p0::EnableWakeWord()
     = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
                                   AudioMetaData::GameObjectType::Behavior, 0 );
   SmartPushResponseToTriggerWord( AnimationTrigger::VC_ListeningGetIn, postAudioEvent, StreamAndLightEffect::StreamingEnabled );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboarding1p0::FwdEventToHandleWhileActivated(const AppToEngineEvent& event)
+{
+  if( IsActivated() ){
+    HandleWhileActivated(event);
+  }
+  else{
+    LOG_ERROR("BehaviorOnboarding1p0.FwdEventToHandleWhileActivate.NotActivated",
+              "Received AppToEngineEvent for handling prior to activation");
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

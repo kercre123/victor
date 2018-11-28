@@ -13,6 +13,8 @@
 
 #include "cozmoAnim/faceDisplay/faceDisplayImpl.h"
 
+#include "anki/cozmo/shared/factory/faultCodes.h"
+
 #include "core/lcd.h"
 
 #include "util/logging/logging.h"
@@ -22,7 +24,11 @@ namespace Vector {
 
   FaceDisplayImpl::FaceDisplayImpl()
   {
-    lcd_init();
+    int res = lcd_init();
+    if(res < 0)
+    {
+      FaultCode::DisplayFaultCode(FaultCode::DISPLAY_FAILURE);
+    }
   }
 
   FaceDisplayImpl::~FaceDisplayImpl()

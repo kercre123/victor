@@ -51,9 +51,6 @@ private:
   
   void TransitionToNextAction();
   
-  void CreateReactToHandAction(std::unique_ptr<CompoundActionSequential>& action,
-                               std::function<void(void)>& extraCallback);
-  
   // true if a poly of the width of the robot to a point dist_mm away is free of obstacles
   bool RobotPathFreeOfObstacle( float dist_mm, bool useRobotWidth ) const;
   
@@ -84,6 +81,7 @@ private:
     InstanceConfig();
     ICozmoBehaviorPtr bumpBehavior;
     ICozmoBehaviorPtr referenceHumanBehavior;
+    ICozmoBehaviorPtr handReactionBehavior;
   };
 
   struct DynamicVariables {
@@ -97,6 +95,7 @@ private:
     std::weak_ptr<IActionRunner> scanCenterAction;
     bool playingScanSound;
     RobotTimeStamp_t lastImageTime;
+    bool handSeen;
     
     struct Persistent {
       bool canSeeSideObstacle;

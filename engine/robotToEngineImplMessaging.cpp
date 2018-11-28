@@ -57,7 +57,6 @@
 #include "util/signals/signalHolder.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
-#include "anki/cozmo/robot/logging.h"
 
 #include <functional>
 
@@ -602,7 +601,7 @@ void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotI
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleRobotPoked");
-  AnkiInfo("Robot.HandleRobotPoked","");
+  LOG_INFO("Robot.HandleRobotPoked","");
   robot->HandlePokeEvent();
 }
 

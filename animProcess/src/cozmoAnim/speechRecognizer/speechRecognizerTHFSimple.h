@@ -52,6 +52,8 @@ public:
   virtual void SetRecognizerFollowupIndex(IndexType index) override;
   virtual IndexType GetRecognizerIndex() const override;
   
+  void Reset();
+
 private:
   struct SpeechRecognizerTHFData;
   std::unique_ptr<SpeechRecognizerTHFData> _impl;
@@ -62,6 +64,9 @@ private:
   static bool RecogStatusIsEndCondition(uint16_t status);
   void Cleanup();
   
+  virtual void StartInternal() override;
+  virtual void StopInternal() override;
+
 }; // class SpeechRecognizer
 
 } // end namespace Vector

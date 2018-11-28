@@ -401,28 +401,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
   DEV_ASSERT(_context->IsEngineThread(), "CozmoEngine.UpdateOnWrongThread" );
 
-#if ENABLE_SLEEP_TIME_DIAGNOSTICS || ENABLE_RUN_TIME_DIAGNOSTICS
-  const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-#endif
-#if ENABLE_SLEEP_TIME_DIAGNOSTICS
-  {
-    static bool firstUpdate = true;
-    static double lastUpdateTimeMs = 0.0;
-    //const double currentTimeMs = (double)currTime_nanosec / 1e+6;
-    if (! firstUpdate)
-    {
-      const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = BS_TIME_STEP_MS + 15.;
-      if (timeSinceLastUpdate > maxLatency)
-      {
-        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP_MS)}}, "%.2f", timeSinceLastUpdate);
-      }
-    }
-    lastUpdateTimeMs = startUpdateTimeMs;
-    firstUpdate = false;
-  }
-#endif // ENABLE_SLEEP_TIME_DIAGNOSTICS
-
   _uiMsgHandler->ResetMessageCounts();
   _protoMsgHandler->ResetMessageCounts();
   _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
@@ -434,6 +412,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
     LOG_INFO("CozmoEngine.Update.UIConnected", "UI has connected");
 
+    // Webots simulator relies on this message
     if (_engineState == EngineState::Running) {
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(1.f);
     }
@@ -484,8 +463,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       {
         SetEngineState(EngineState::ConnectingToRobot);
       }
+#if defined(SIMULATOR)
       LOG_DEBUG("CozmoEngine.Update.LoadingRatio", "%f", currentLoadingDone);
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
+#endif
       break;
     }
     case EngineState::ConnectingToRobot:
@@ -499,7 +480,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       }
       lastConnectAttempt = now;
 
-      // Attempt to conect
+      // Attempt to connect
       Result result = ConnectToRobotProcess();
       if (RESULT_OK != result) {
         //LOG_WARNING("CozmoEngine.Update.ConnectingToRobot", "Unable to connect to robot (result %d)", result);
@@ -539,22 +520,8 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     }
     default:
       PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
+      break;
   }
-
-#if ENABLE_RUN_TIME_DIAGNOSTICS
-  {
-    const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-    const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = BS_TIME_STEP_MS;
-    if (updateLengthMs > maxUpdateDuration)
-    {
-      static const std::string targetMs = std::to_string(BS_TIME_STEP_MS);
-      Anki::Util::sInfoF("cozmo_engine.update.run.slow",
-                         {{DDATA, targetMs.c_str()}},
-                         "%.2f", updateLengthMs);
-    }
-  }
-#endif // ENABLE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
 }

@@ -47,7 +47,7 @@ public:
   virtual ~BaseStationTimer() override;
 
   // Updates the current system time used for tracking
-  void UpdateTime(BaseStationTime_t currTimeNanoSeconds);
+  void UpdateTime(const BaseStationTime_t currTimeNanoSeconds);
   
   // Gets time in seconds since the start of the program
   // WARNING: This value updates only once every tick! So measuring time differences within one update loop
@@ -59,9 +59,6 @@ public:
   // WARNING: This value updates only once every tick! So measuring time differences within one update loop
   // will result in ZERO time passed.
   BaseStationTime_t GetCurrentTimeInNanoSeconds() const;
-
-  // Gets elapsed time since last tick in seconds
-  float GetTimeSinceLastTickInSeconds() const;
 
   // Gets current time in TimeStamp units (ms)
   TimeStamp_t GetCurrentTimeStamp() const;
@@ -79,10 +76,8 @@ private:
   double currTimeSecondsDouble_;
   float currTimeSecondsFloat_;
   BaseStationTime_t currTimeNanoSeconds_;
+  TimeStamp_t currTimeStamp_;
 
-  // How long the last tick took
-  float elapsedTimeSecondsFloat_;
-  
   size_t tickCount_ = 0;
 };
 

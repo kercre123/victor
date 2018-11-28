@@ -104,15 +104,27 @@ void INeuralNetModel::ClassificationOutputHelper(const T* outputData, TimeStamp_
   
   if(labelIndex >= minLabel)
   {
+    const std::string& label = (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>");
+    
+    // Find a matching SalientPointType for the label if there is one. Otherwise, default to "Object".
+    Vision::SalientPointType salientType = Vision::SalientPointType::Unknown;
+    if(!Vision::SalientPointTypeFromString(label, salientType))
+    {
+      LOG_WARNING("INeuralNetModel.ClassificationOutputHelper.UnknownLabel",
+                  "Could not convert label '%s' to a SalientPointType. Using Unknown.",
+                  label.c_str());
+    }
+    
     Vision::SalientPoint salientPoint(timestamp, 0.5f, 0.5f, maxScore, 1.f,
-                                      Vision::SalientPointType::Object,
-                                      (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
+                                      salientType,
+                                      label,
                                       imgPoly.ToCladPoint2dVector(),0);
     
     if(_params.verbose)
     {
       LOG_INFO("INeuralNetModel.ClassificationOutputHelper.ObjectFound",
-               "Name: %s, Score: %f", salientPoint.description.c_str(), salientPoint.score);
+               "Name: %s, Score: %f, Timestamp:%ums",
+               salientPoint.description.c_str(), salientPoint.score, salientPoint.timestamp);
     }
     
     salientPoints.push_back(std::move(salientPoint));

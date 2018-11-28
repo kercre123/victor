@@ -27,6 +27,8 @@ namespace Vector {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MemoryMap : public INavMap
 {
+friend class CST_NavMap;    // allow access for webots test for NavMap
+
 public:
 
   using EContentType     = MemoryMapTypes::EContentType;
@@ -90,6 +92,10 @@ public:
   // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
   virtual bool AnyOf(const Poly2f& p, NodePredicate f)          const override;
   virtual bool AnyOf(const MemoryMapRegion& p, NodePredicate f) const override;
+
+  // multi-ray variant of the AnyOf method
+  // implementation may optimize for this case
+  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const override;
 
   // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)
   virtual float GetArea(const MemoryMapRegion& p, const NodePredicate& f) const override;

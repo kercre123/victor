@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -408,65 +409,6 @@ func SendOnboardingWakeUp(in *extint.GatewayWrapper_OnboardingWakeUpRequest) (*e
 	}, nil
 }
 
-func SendOnboardingContinue(in *extint.GatewayWrapper_OnboardingContinue) (*extint.OnboardingInputResponse, error) {
-	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingContinueResponse{}, 1)
-	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: in,
-	})
-	if err != nil {
-		return nil, err
-	}
-	continueResponse, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-	}
-	return &extint.OnboardingInputResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-		OneofMessageType: &extint.OnboardingInputResponse_OnboardingContinueResponse{
-			OnboardingContinueResponse: continueResponse.GetOnboardingContinueResponse(),
-		},
-	}, nil
-}
-
-func SendOnboardingGetStep(in *extint.GatewayWrapper_OnboardingGetStep) (*extint.OnboardingInputResponse, error) {
-	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingStepResponse{}, 1)
-	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: in,
-	})
-	if err != nil {
-		return nil, err
-	}
-	select {
-	case getStepResponse, ok := <-responseChan:
-		if !ok {
-			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-		}
-		return &extint.OnboardingInputResponse{
-			Status: &extint.ResponseStatus{
-				Code: extint.ResponseStatus_REQUEST_PROCESSING,
-			},
-			OneofMessageType: &extint.OnboardingInputResponse_OnboardingStepResponse{
-				OnboardingStepResponse: getStepResponse.GetOnboardingStepResponse(),
-			},
-		}, nil
-	case <-time.After(10 * time.Second):
-		return &extint.OnboardingInputResponse{
-			Status: &extint.ResponseStatus{
-				Code: extint.ResponseStatus_NOT_FOUND,
-			},
-			OneofMessageType: &extint.OnboardingInputResponse_OnboardingStepResponse{
-				OnboardingStepResponse: &extint.OnboardingStepResponse{
-					StepNumber: extint.OnboardingSteps_STEP_INVALID,
-				},
-			},
-		}, nil
-	}
-}
-
 func SendAppDisconnected() {
 	msg := &extint.GatewayWrapper_AppDisconnected{
 		AppDisconnected: &extint.AppDisconnected{},
@@ -475,20 +417,6 @@ func SendAppDisconnected() {
 		OneofMessageType: msg,
 	})
 	// no error handling
-}
-
-func SendOnboardingSkip(in *extint.GatewayWrapper_OnboardingSkip) (*extint.OnboardingInputResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: in,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &extint.OnboardingInputResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-	}, nil
 }
 
 func SendOnboardingSkipOnboarding(in *extint.GatewayWrapper_OnboardingSkipOnboarding) (*extint.OnboardingInputResponse, error) {
@@ -506,6 +434,89 @@ func SendOnboardingSkipOnboarding(in *extint.GatewayWrapper_OnboardingSkipOnboar
 }
 
 func SendOnboardingRestart(in *extint.GatewayWrapper_OnboardingRestart) (*extint.OnboardingInputResponse, error) {
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
+func SendOnboardingSetPhase(in *extint.GatewayWrapper_OnboardingSetPhaseRequest) (*extint.OnboardingInputResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingSetPhaseResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	completeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingSetPhaseResponse{
+			OnboardingSetPhaseResponse: completeResponse.GetOnboardingSetPhaseResponse(),
+		},
+	}, nil
+}
+
+func SendOnboardingPhaseProgress(in *extint.GatewayWrapper_OnboardingPhaseProgressRequest) (*extint.OnboardingInputResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingPhaseProgressResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	completeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingPhaseProgressResponse{
+			OnboardingPhaseProgressResponse: completeResponse.GetOnboardingPhaseProgressResponse(),
+		},
+	}, nil
+}
+
+func SendOnboardingChargeInfo(in *extint.GatewayWrapper_OnboardingChargeInfoRequest) (*extint.OnboardingInputResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingChargeInfoResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: in,
+	})
+	if err != nil {
+		return nil, err
+	}
+	completeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	return &extint.OnboardingInputResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+		OneofMessageType: &extint.OnboardingInputResponse_OnboardingChargeInfoResponse{
+			OnboardingChargeInfoResponse: completeResponse.GetOnboardingChargeInfoResponse(),
+		},
+	}, nil
+}
+
+func SendOnboardingMarkCompleteAndExit(in *extint.GatewayWrapper_OnboardingMarkCompleteAndExit) (*extint.OnboardingInputResponse, error) {
 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
@@ -606,6 +617,10 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 			if animName == "EndOfListAnimationsResponses" {
 				done = true
 			} else {
+				if strings.Contains(animName, "_avs_") {
+					// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
+					continue
+				}
 				var newAnim = extint.Animation{
 					Name: animName,
 				}
@@ -1209,14 +1224,6 @@ func (service *rpcService) SendOnboardingInput(ctx context.Context, in *extint.O
 		return SendOnboardingWakeUp(&extint.GatewayWrapper_OnboardingWakeUpRequest{
 			OnboardingWakeUpRequest: in.GetOnboardingWakeUpRequest(),
 		})
-	case *extint.OnboardingInputRequest_OnboardingContinue:
-		return SendOnboardingContinue(&extint.GatewayWrapper_OnboardingContinue{
-			OnboardingContinue: in.GetOnboardingContinue(),
-		})
-	case *extint.OnboardingInputRequest_OnboardingSkip:
-		return SendOnboardingSkip(&extint.GatewayWrapper_OnboardingSkip{
-			OnboardingSkip: in.GetOnboardingSkip(),
-		})
 	case *extint.OnboardingInputRequest_OnboardingSkipOnboarding:
 		return SendOnboardingSkipOnboarding(&extint.GatewayWrapper_OnboardingSkipOnboarding{
 			OnboardingSkipOnboarding: in.GetOnboardingSkipOnboarding(),
@@ -1225,9 +1232,21 @@ func (service *rpcService) SendOnboardingInput(ctx context.Context, in *extint.O
 		return SendOnboardingRestart(&extint.GatewayWrapper_OnboardingRestart{
 			OnboardingRestart: in.GetOnboardingRestart(),
 		})
-	case *extint.OnboardingInputRequest_OnboardingGetStep:
-		return SendOnboardingGetStep(&extint.GatewayWrapper_OnboardingGetStep{
-			OnboardingGetStep: in.GetOnboardingGetStep(),
+	case *extint.OnboardingInputRequest_OnboardingSetPhaseRequest:
+		return SendOnboardingSetPhase(&extint.GatewayWrapper_OnboardingSetPhaseRequest{
+			OnboardingSetPhaseRequest: in.GetOnboardingSetPhaseRequest(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingPhaseProgressRequest:
+		return SendOnboardingPhaseProgress(&extint.GatewayWrapper_OnboardingPhaseProgressRequest{
+			OnboardingPhaseProgressRequest: in.GetOnboardingPhaseProgressRequest(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingChargeInfoRequest:
+		return SendOnboardingChargeInfo(&extint.GatewayWrapper_OnboardingChargeInfoRequest{
+			OnboardingChargeInfoRequest: in.GetOnboardingChargeInfoRequest(),
+		})
+	case *extint.OnboardingInputRequest_OnboardingMarkCompleteAndExit:
+		return SendOnboardingMarkCompleteAndExit(&extint.GatewayWrapper_OnboardingMarkCompleteAndExit{
+			OnboardingMarkCompleteAndExit: in.GetOnboardingMarkCompleteAndExit(),
 		})
 	default:
 		return nil, grpc.Errorf(codes.InvalidArgument, "OnboardingInputRequest.OneofMessageType has unexpected type %T", x)

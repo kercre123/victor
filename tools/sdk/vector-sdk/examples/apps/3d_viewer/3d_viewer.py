@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''3d Viewer example, with remote control.
+"""3d Viewer example, with remote control.
 
 This is an example of how you can use the 3D viewer with a program, and the
 3D Viewer and controls will work automatically.
-'''
+"""
 
 import asyncio
 

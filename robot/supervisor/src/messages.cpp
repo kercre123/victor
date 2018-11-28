@@ -143,6 +143,9 @@ namespace Anki {
         SET_STATUS_BIT(HAL::BatteryIsOverheated(),                  IS_BATTERY_OVERHEATED);
         SET_STATUS_BIT(ProxSensors::IsAnyCliffDetected(),           CLIFF_DETECTED);
         SET_STATUS_BIT(IMUFilter::IsFalling(),                      IS_FALLING);
+        SET_STATUS_BIT(HAL::AreEncodersDisabled(),                  ENCODERS_DISABLED);
+        SET_STATUS_BIT(HeadController::IsEncoderInvalid(),          ENCODER_HEAD_INVALID);
+        SET_STATUS_BIT(LiftController::IsEncoderInvalid(),          ENCODER_LIFT_INVALID);
 #ifdef  SIMULATOR
         SET_STATUS_BIT(isForcedDelocalizing_,                       IS_PICKED_UP);
 #endif
@@ -182,11 +185,6 @@ namespace Anki {
       {
         AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d, calib: %d", msg.enable, msg.calibOnDisable);
         PowerModeManager::EnableActiveMode(!msg.enable, msg.calibOnDisable);
-      }
-
-      void Process_autoCalmOnCharger(const RobotInterface::AutoCalmOnCharger& msg)
-      {
-        PowerModeManager::SuppressAutoDisableOnCharger(msg.suppress);
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)

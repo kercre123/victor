@@ -211,7 +211,7 @@ int32_t WebotsDevLogController::Update()
 std::string WebotsDevLogController::GetDirectoryPath() const
 {
   std::string dirPath;
-  WebotsHelpers::GetFieldAsString(_selfNode, kLogsDirectoryFieldName, dirPath);
+  WebotsHelpers::GetFieldAsString(*_selfNode, kLogsDirectoryFieldName, dirPath);
   return dirPath;
 }
 

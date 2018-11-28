@@ -118,6 +118,9 @@ namespace HeadController {
       bool bracing_ = false;
       const f32 BRACING_POWER = -0.65;
 
+      // True if encoder was reported as invalid by HAL and has not been calibrated since
+      bool encoderInvalid_ = false;
+
     } // "private" members
 
 
@@ -296,6 +299,7 @@ namespace HeadController {
             isCalibrated_     = true;
             calState_         = HCS_IDLE;
             inPosition_       = true;
+            encoderInvalid_   = false;
             break;
           }
         } // end switch(calState_)
@@ -580,6 +584,11 @@ namespace HeadController {
 
       PoseAndSpeedFilterUpdate();
 
+      // Check encoder validity
+      if (HAL::IsHeadEncoderInvalid()) {
+        encoderInvalid_ = true;
+      }
+
       // If disabled, do not activate motors
       if(!enable_) {
         if (enableAtTime_ms_ == 0) {
@@ -674,6 +683,12 @@ namespace HeadController {
       MAX_ERROR_SUM = maxIntegralError;
       AnkiInfo( "HeadController.SetGains", "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f",
             Kp_, Ki_, Kd_, MAX_ERROR_SUM);
+    }
+
+
+    bool IsEncoderInvalid()
+    {
+      return encoderInvalid_;
     }
 
   } // namespace HeadController

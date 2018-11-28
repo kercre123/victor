@@ -24,8 +24,8 @@
 
       "allowNoCharger": true,
 
-      "minSearchRadius_m": 0.25,
-      "maxSearchRadius_m": 1.0,
+      "minSearchRadius_m": 0.0,
+      "maxSearchRadius_m": 0.5,
       "maxChargerDistance_m": 2.0,
       "pAcceptKnownAreas": 0.4,
 

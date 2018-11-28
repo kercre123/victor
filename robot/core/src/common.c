@@ -7,7 +7,7 @@ void error_exit(CoreAppErrorCode code, const char* msg, ...)
 {
   va_list args;
 
-  printf("ERROR %d: ", code);
+  printf("Error %d: ", code);
   va_start(args, msg);
   vprintf(msg, args);
   va_end(args);

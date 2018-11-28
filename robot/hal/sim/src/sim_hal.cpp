@@ -933,5 +933,20 @@ namespace Anki {
       return powerState_;
     }
 
+    bool HAL::AreEncodersDisabled()
+    {
+      return false;
+    }
+
+    bool HAL::IsHeadEncoderInvalid()
+    {
+      return false;
+    }
+
+    bool HAL::IsLiftEncoderInvalid()
+    {
+      return false;
+    }
+
   } // namespace Vector
 } // namespace Anki

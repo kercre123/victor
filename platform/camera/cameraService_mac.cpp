@@ -19,6 +19,8 @@
 
 #include "coretech/common/engine/array2d_impl.h"
 
+#include "simulator/controllers/shared/webotsHelpers.h"
+
 #include "util/logging/logging.h"
 
 #include "util/container/fixedCircularBuffer.h"
@@ -151,6 +153,27 @@ namespace Anki {
           // TODO: Not sure from Cyberbotics support message whether this should include "+ VISION_TIME_STEP" or not...
           cameraStartTime_ms_ = GetTimeStamp(); // + VISION_TIME_STEP;
           lastImageCapturedTime_ms_ = 0;
+          
+          // Make the CozmoVizDisplay (which includes the nav map, etc.) invisible to the camera. Note that the call to
+          // setVisibility() requires a pointer to the camera NODE, _not_ the camera device (which is of type
+          // webots::Camera*). There seems to be no good way to get the underlying node pointer of the camera, so we
+          // have to do this somewhat hacky iteration over all of the nodes in the world to find the camera node.
+          const auto& vizNodes = WebotsHelpers::GetMatchingSceneTreeNodes(*_engineSupervisor, "CozmoVizDisplay");
+          
+          webots::Node* cameraNode = nullptr;
+          const int maxNodesToSearch = 10000;
+          for (int i=0 ; i < maxNodesToSearch ; i++) {
+            auto* node = _engineSupervisor->getFromId(i);
+            if ((node != nullptr) && (node->getTypeName() == "CozmoCamera")) {
+              cameraNode = node;
+              break;
+            }
+          }
+          DEV_ASSERT(cameraNode != nullptr, "CameraService.NoWebotsCameraFound");
+          
+          for (const auto& vizNode : vizNodes) {
+            vizNode.nodePtr->setVisibility(cameraNode, false);
+          }
         }
       }
     }
