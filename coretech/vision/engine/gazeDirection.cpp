@@ -44,7 +44,6 @@ void GazeDirection::Update(const TrackedFace& face)
   _headPose = face.GetHeadPose();
   _lastUpdated = face.GetTimeStamp();
 
-  PRINT_NAMED_WARNING("GazeDirection.Update.CurrentIndex", "%d", _currentIndex);
   if (_currentIndex > (kGazeDirectionHistorySize - 1)) {
     // Make sure we place a "real" value
     // in every element of the history
@@ -147,8 +146,8 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDi
   // "behind" the head if the pose were looking at the ground plane if the y translation is
   // positive.
   Pose3d translatedPose(0.f, Z_AXIS_3D(), {0.f, kGazeDirectionSecondPointTranslationY_mm, 0.f}, headPose);
-  const auto point = translatedPose.GetWithRespectToRoot().GetTranslation();
-  const auto translation = headPose.GetTranslation();
+  const auto& point = translatedPose.GetWithRespectToRoot().GetTranslation();
+  const auto& translation = headPose.GetTranslation();
 
   if (Util::IsFltNear(translation.z(), point.z())) {
     gazeDirectionPoint = point;
