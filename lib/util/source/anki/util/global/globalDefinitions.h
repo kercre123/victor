@@ -50,6 +50,10 @@
 #define ANKI_PRIVACY_GUARD 0
 #endif
 
+#ifndef ANKI_NO_CRASHLOGGING
+#define ANKI_NO_CRASHLOGGING 0
+#endif
+
 #if ANKI_DEVELOPER_CODE
   #define ANKI_DEVELOPER_CODE_ONLY(expr)      expr
   #define ANKI_NON_DEVELOPER_CODE_ONLY(expr)

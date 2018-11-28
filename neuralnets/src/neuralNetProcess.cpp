@@ -14,12 +14,16 @@
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/logging/victorLogger.h"
+#include "util/logging/multiLoggerProvider.h"
+#include "util/logging/saveToFileLoggerProvider.h"
 
 #include <signal.h>
 #include <thread>
 
+#define LOG_PATH "/tmp/logs/"
 #define LOG_PROCNAME "vic-neuralnets"
 #define LOG_CHANNEL "NeuralNets"
 
@@ -53,7 +57,20 @@ protected:
     
     // Create and set logger, depending on platform
     _logger.reset(new Util::VictorLogger(LOG_PROCNAME));
+#if ANKI_NO_CRASHLOGGING
     return _logger.get();
+#else
+    Anki::Util::FileUtils::RemoveDirectory(LOG_PATH LOG_PROCNAME);
+
+    _fileLoggerQueue.create("FileLoggerQueue");
+
+    _fileLogger = std::make_unique<Anki::Util::SaveToFileLoggerProvider>(_fileLoggerQueue.get(), LOG_PATH LOG_PROCNAME);
+
+    std::vector<Anki::Util::ILoggerProvider*> loggers = {_logger.get(), _fileLogger.get()};
+
+    _combinedLoggers = std::make_unique<Anki::Util::MultiLoggerProvider>(loggers);
+    return _combinedLoggers.get();
+#endif
   }
   
   virtual void DerivedCleanup() override
@@ -82,7 +99,10 @@ private:
     sShouldShutdown = true;
   }
 
+  Anki::Util::Dispatch::QueueHandle _fileLoggerQueue;
   std::unique_ptr<Util::VictorLogger> _logger;
+  std::unique_ptr<Anki::Util::SaveToFileLoggerProvider> _fileLogger;
+  std::unique_ptr<Anki::Util::MultiLoggerProvider> _combinedLoggers;
 };
 
 bool VicNeuralNetProcess::sShouldShutdown = false;

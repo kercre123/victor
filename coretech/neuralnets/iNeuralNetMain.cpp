@@ -102,7 +102,7 @@ Result INeuralNetMain::Init(const std::string& configFilename,
            configFilename.c_str(), modelPath.c_str(), cachePath.c_str());
   
   _cachePath = cachePath;
-  
+
   // Read config file
   Json::Value config;
   {

@@ -2,6 +2,8 @@
 
 Note: The best source of information about our various logging macros is [logging.h](/lib/util/source/anki/util/logging/logging.h) in Util.
 
+Note 2: This logging API documentation applies to all processes except `vic-robot`, `vic-robot` has it's own similar API but is entirely separate and does not follow these guidelines. Do not update API calls to use `LOG_CHANNEL`, etc...
+
 ## Logging isn't free
 
 Writing a log statement costs system resources since it involves IPC messaging to a logging process. Excessive logging hogs resources and causes system-wide slowdown, resulting in subpar robot performance.

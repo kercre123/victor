@@ -22,7 +22,9 @@
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/logging/channelFilter.h"
+#include "util/logging/multiLoggerProvider.h"
 #include "util/logging/victorLogger.h"
+#include "util/logging/saveToFileLoggerProvider.h"
 #include "util/string/stringUtils.h"
 #include "platform/anki-trace/tracing.h"
 
@@ -39,6 +41,7 @@
 using namespace Anki;
 using namespace Anki::Vector;
 
+#define LOG_PATH "/tmp/logs/"
 #define LOG_PROCNAME "vic-anim"
 #define LOG_CHANNEL "CozmoAnimMain"
 
@@ -125,7 +128,24 @@ int main(void)
   // - create and set logger
   auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
 
+#if ANKI_NO_CRASHLOGGING
   Util::gLoggerProvider = logger.get();
+#else
+  Anki::Util::FileUtils::RemoveDirectory(LOG_PATH LOG_PROCNAME);
+
+  Anki::Util::Dispatch::QueueHandle fileLoggerQueue;
+  fileLoggerQueue.create("FileLoggerQueue");
+
+  std::unique_ptr<Anki::Util::SaveToFileLoggerProvider> fileLogger =
+    std::make_unique<Anki::Util::SaveToFileLoggerProvider>(fileLoggerQueue.get(), LOG_PATH LOG_PROCNAME);
+
+  std::vector<Anki::Util::ILoggerProvider*> loggers = {logger.get(), fileLogger.get()};
+
+  std::unique_ptr<Anki::Util::MultiLoggerProvider> combinedLoggers =
+    std::make_unique<Anki::Util::MultiLoggerProvider>(loggers);
+
+  Util::gLoggerProvider = combinedLoggers.get();
+#endif
   Util::gEventProvider = logger.get();
 
   auto dataPlatform = createPlatform();

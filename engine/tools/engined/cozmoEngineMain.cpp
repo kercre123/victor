@@ -29,6 +29,7 @@
 #include "util/logging/DAS.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/logging/victorLogger.h"
+#include "util/logging/saveToFileLoggerProvider.h"
 #include "util/string/stringUtils.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
@@ -59,7 +60,8 @@
 constexpr const char * ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 
 // What process name do we use for logging?
-constexpr const char * LOG_PROCNAME = "vic-engine";
+#define LOG_PATH "/tmp/logs/"
+#define LOG_PROCNAME "vic-engine"
 
 // What channel name do we use for logging?
 constexpr const char * LOG_CHANNEL = "CozmoEngineMain";
@@ -79,6 +81,12 @@ namespace {
 
   // Private singleton
   std::unique_ptr<Anki::Util::VictorLogger> gVictorLogger;
+
+#if !ANKI_NO_CRASHLOGGING
+  Anki::Util::Dispatch::QueueHandle gFileLoggerQueue;
+  std::unique_ptr<Anki::Util::SaveToFileLoggerProvider> gFileLogger;
+  std::unique_ptr<Anki::Util::MultiLoggerProvider> gCombinedLoggers;
+#endif
 
   #if DEV_LOGGER_ENABLED
   // Private singleton
@@ -124,16 +132,6 @@ static int cozmo_start(const Json::Value& configuration)
       return 1;
   }
 
-  //
-  // In normal usage, private singleton owns the logger until application exits.
-  // When collecting developer logs, ownership of singleton VictorLogger is transferred to
-  // singleton MultiLogger.
-  //
-  gVictorLogger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
-
-  Anki::Util::gLoggerProvider = gVictorLogger.get();
-  Anki::Util::gEventProvider = gVictorLogger.get();
-
 
   std::string persistentPath;
   std::string cachePath;
@@ -175,6 +173,29 @@ static int cozmo_start(const Json::Value& configuration)
   const std::string& appRunId = Anki::Util::GetUUIDString();
   #endif
 
+
+  //
+  // In normal usage, private singleton owns the logger until application exits.
+  // When collecting developer logs, ownership of singleton VictorLogger is transferred to
+  // singleton MultiLogger.
+  //
+  gVictorLogger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
+#if ANKI_NO_CRASHLOGGING
+  Anki::Util::gLoggerProvider = gVictorLogger.get();
+#else
+  Anki::Util::FileUtils::RemoveDirectory(LOG_PATH LOG_PROCNAME);
+
+  gFileLoggerQueue.create("FileLoggerQueue");
+  gFileLogger = std::make_unique<Anki::Util::SaveToFileLoggerProvider>(gFileLoggerQueue.get(), LOG_PATH LOG_PROCNAME);
+
+  std::vector<Anki::Util::ILoggerProvider*> loggers = {gVictorLogger.get(), gFileLogger.get()};
+
+  gCombinedLoggers = std::make_unique<Anki::Util::MultiLoggerProvider>(loggers);
+
+  Anki::Util::gLoggerProvider = gCombinedLoggers.get();
+#endif
+  Anki::Util::gEventProvider = gVictorLogger.get();
+
   // - console filter for logs
   {
     using namespace Anki::Util;
@@ -193,10 +214,10 @@ static int cozmo_start(const Json::Value& configuration)
     const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
     consoleFilter->Initialize(consoleFilterConfigOnPlatform);
     
-    // set filter in the loggers
+    // set filter in the logger
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
 
-    Anki::Util::gLoggerProvider->SetFilter(filterPtr);
+    gVictorLogger.get()->SetFilter(filterPtr);
   }
 
   #if DEV_LOGGER_ENABLED

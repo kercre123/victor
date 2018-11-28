@@ -5,6 +5,7 @@ ${GIT_PROJ_ROOT}/project/victor/build-victor.sh \
                 -c Release \
                 -DANKI_PRIVACY_GUARD=1 \
                 -DANKI_NO_WEBSERVER_ENABLED=1 \
+                -DANKI_NO_CRASHLOGGING=1 \
                 -DANKI_DEV_CHEATS=0 \
                 -DANKI_PROFILING_ENABLED=0 \
                 -DANKI_MESSAGE_PROFILER_ENABLED=0 \
