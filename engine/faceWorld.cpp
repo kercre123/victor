@@ -34,6 +34,10 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "webServerProcess/src/webService.h"
 
+#include "clad/types/featureGateTypes.h"
+#include "engine/utils/cozmoFeatureGate.h"
+
+
 
 namespace Anki {
 namespace Vector {
@@ -470,7 +474,10 @@ namespace Vector {
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
     faceEntry->numTimesObserved++;
 
-    AddOrUpdateGazeDirection(faceEntry->face);
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    if (featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
+      AddOrUpdateGazeDirection(faceEntry->face);
+    }
 
     // Keep up with how many times non-tracking-only faces have been seen facing
     // facing the camera (and thus potentially recognizable)
@@ -994,7 +1001,8 @@ namespace Vector {
                                                                               trackedFace.GetHeadPose(),
                                                                               drawFaceColor);
 
-    if (kRenderGazeDirectionPoints) {
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    if (kRenderGazeDirectionPoints && featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
       auto& entry = _gazeDirection[trackedFace.GetID()];
       const s32 startingObjectId = 2345;
 
