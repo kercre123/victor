@@ -188,6 +188,9 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // todo: we might want another option to delete the impl without deleting any data (this opt in file)
     // or logging out (in SetAlexaUsage()). That might be useful if we need to suddenly stop alexa during low
     // battery, etc
+
+    // turn off our notification lights
+    OnNotificationsChanged(false);
     
     DeleteOptInFile();
     if( deleteUserData ) {
