@@ -40,6 +40,13 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
   ExternalInterface::MessageGameToEngine clad_message;
   bool converted_to_clad = true;
 
+  auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
+  LOG_WARNING("ron_proto_to_clad_testing", "Redirect((%d, %s, %s, %s)=>clad)", 
+      proto_message.oneof_message_type_case(),
+      proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
+      proto_message.GetMetadata().descriptor->full_name().c_str(),
+      MessageGameToEngineTagToString(clad_message.GetTag()));
+
   switch(proto_message.oneof_message_type_case()) {
     case external_interface::GatewayWrapper::kDriveWheelsRequest:
       ProtoDriveWheelsRequestToClad(proto_message, clad_message);
@@ -58,14 +65,6 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
   if(converted_to_clad) {
     cozmo_context->GetExternalInterface()->Broadcast(clad_message);
   } 
-  if (converted_to_clad or true) { //DO NOT SUBMIT (make this part of the previous block)
-    auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
-    LOG_WARNING("ron_proto_to_clad_testing", "In p2c (request) Redirect(): message.descriptor: %d %s %s  -->  %s",
-      proto_message.oneof_message_type_case(),
-      proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
-      proto_message.GetMetadata().descriptor->full_name().c_str(),
-      MessageGameToEngineTagToString(clad_message.GetTag()));
-  }
 
   return converted_to_clad;
 }
@@ -75,33 +74,22 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
   bool converted_to_proto = true;
   ::google::protobuf::Message * wrapped_message = nullptr;
 
-  LOG_WARNING("ron_proto_to_clad_testing", "MARK %d", __LINE__);
-  LOG_WARNING("ron_proto_to_clad_testing", "In ME2G->proto (response) Redirect(). %d %s ", 
+  LOG_WARNING("ron_proto_to_clad_testing", "Redirect(ME2G(%d, %s)=>proto)", 
       (int)message.GetTag(),
       MessageEngineToGameTagToString(message.GetTag()));
   switch(message.GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::AnimationAvailable:
-      LOG_WARNING("ron_proto_to_clad_testing", "MARK %d", __LINE__);
       wrapped_message = CladAnimationAvailableToProto(message, proto_message);
-      LOG_WARNING("ron_proto_to_clad_testing", "MARK %d", __LINE__);
     break;
     case ExternalInterface::MessageEngineToGameTag::EndOfMessage:
-      LOG_WARNING("ron_proto_to_clad_testing", "MARK %d", __LINE__);
       wrapped_message = CladEndOfMessageToProto(message, proto_message);
-      LOG_WARNING("ron_proto_to_clad_testing", "MARK %d", __LINE__);
     break;
     default:
       converted_to_proto = false;
     break;
   }
 
-  LOG_WARNING("ron_proto_to_clad_testing", "MARK %d", __LINE__);
   if(converted_to_proto) {
-    LOG_WARNING("ron_proto_to_clad_testing", "MARK %d", __LINE__);
-    LOG_WARNING("ron_proto_to_clad_testing", "In ME2G->proto (response) Redirect(). converted_to_proto(%s): %d", 
-        MessageEngineToGameTagToString(message.GetTag()),
-        converted_to_proto);
-
     cozmo_context->GetGatewayInterface()->Broadcast(proto_message);   
 
     //delete wrapped_message;  //DO NOT SUBMIT until you're sure this is being deleted in the proto_message destructor.
@@ -115,7 +103,10 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   bool converted_to_proto = true;
   ::google::protobuf::Message * wrapped_message = nullptr;
 
-  LOG_WARNING("ron_proto_to_clad_testing", "In MG2E->proto (response) Redirect(). Tag: %d", (int)message.GetTag());
+  LOG_WARNING("ron_proto_to_clad_testing", "Redirect(MG2E(%d, %s))=>proto", 
+      (int)message.GetTag(),
+      MessageGameToEngineTagToString(message.GetTag()));
+
   switch(message.GetTag()) {
     case ExternalInterface::MessageGameToEngineTag::DriveWheels:
       wrapped_message = CladDriveWheelsToProto(message, proto_message);
@@ -128,13 +119,10 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
     break;
   }
 
-  LOG_WARNING("ron_proto_to_clad_testing", "In MG2E->proto (response) Redirect(). converted_to_proto: %d", converted_to_proto);
   if(converted_to_proto) {
-    LOG_WARNING("ron_proto_to_clad_testing", "In MG2E->proto (response) Redirect(): %s", MessageGameToEngineTagToString(message.GetTag()));
-
     cozmo_context->GetGatewayInterface()->Broadcast(proto_message);   
 
-    delete wrapped_message;
+    //delete wrapped_message;
   }
 
 
