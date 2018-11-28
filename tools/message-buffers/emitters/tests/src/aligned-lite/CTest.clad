@@ -72,6 +72,33 @@ union MyMessage {
   Bar bar = 0,
 }
 
+message StructWithInit {
+  int_32 intC1A2B3 = 0xC1A2B3,
+  float_32 floatPi = 3.1415,
+  uint_16 uint63 = 63,
+  // NOTE: because false/true are C++ keywords, must use 1 or 0
+  bool boolFalse = 0,
+  bool boolTrue = 1,
+  int_8 intA = 0xA,
+}
+
+message NestStructWithInit {
+  int_16 int347 = 347,
+  int_16 padding,
+  StructWithInit inner
+}
+
+message StructWithInitVerbatim {
+  AnkiEnum enum1 = verbatim AnkiEnum::myReallySilly_EnumVal,
+  string strHello = verbatim "Hello"
+}
+
+union UnionStructWithInit {
+  StructWithInit alpha,
+  NestStructWithInit beta,
+  StructWithInitVerbatim gamma
+}
+
 /*union MetaUnion {
   Foo foo,
   Void v2,
