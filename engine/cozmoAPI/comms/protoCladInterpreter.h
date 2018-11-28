@@ -15,6 +15,7 @@
 #include "engine/externalInterface/externalInterface.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/gateway/messageRobotToExternalTag.h"
 #include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
@@ -25,6 +26,7 @@ class ProtoCladInterpreter {
 public:
     static bool Redirect(const external_interface::GatewayWrapper & message, CozmoContext * cozmo_context);
     static bool Redirect(const ExternalInterface::MessageGameToEngine & message, CozmoContext * cozmo_context);
+    static bool Redirect(const ExternalInterface::MessageEngineToGame & message, CozmoContext * cozmo_context);
 
 private:
   ProtoCladInterpreter() {}
@@ -47,18 +49,21 @@ private:
   //
   // Clad-to-Proto interpreters
   //
-  static void CladDriveWheelsToProto(
+  static ::google::protobuf::Message * CladDriveWheelsToProto(
       const ExternalInterface::MessageGameToEngine & clad_message,
       external_interface::GatewayWrapper & proto_message);
 
-  static void CladPlayAnimationToProto(
+  static ::google::protobuf::Message * CladPlayAnimationToProto(
       const ExternalInterface::MessageGameToEngine & clad_message,
       external_interface::GatewayWrapper & proto_message);
 
-  static void CladListAnimationsToProto(
-      const ExternalInterface::MessageGameToEngine & clad_message,
+  static ::google::protobuf::Message * CladAnimationAvailableToProto(
+      const ExternalInterface::MessageEngineToGame & clad_message, 
       external_interface::GatewayWrapper & proto_message);
 
+  static ::google::protobuf::Message * CladEndOfMessageToProto(
+      const ExternalInterface::MessageEngineToGame & clad_message, 
+      external_interface::GatewayWrapper & proto_message);
 };
 
 } // namespace Vector

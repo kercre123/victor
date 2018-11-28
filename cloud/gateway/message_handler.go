@@ -28,34 +28,6 @@ var (
 	connectionId     string
 )
 
-// TODO: Remove
-/*
-func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
-		LeftWheelMmps:   msg.LeftWheelMmps,
-		RightWheelMmps:  msg.RightWheelMmps,
-		LeftWheelMmps2:  msg.LeftWheelMmps2,
-		RightWheelMmps2: msg.RightWheelMmps2,
-	})
-}
-*/
-
-// TODO: Remove
-/*
-func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.MessageExternalToRobot {
-	if msg.Animation == nil {
-		return nil
-	}
-	return gw_clad.NewMessageExternalToRobotWithPlayAnimation(&gw_clad.PlayAnimation{
-		NumLoops:        msg.Loops,
-		AnimationName:   msg.Animation.Name,
-		IgnoreBodyTrack: msg.IgnoreBodyTrack,
-		IgnoreHeadTrack: msg.IgnoreHeadTrack,
-		IgnoreLiftTrack: msg.IgnoreLiftTrack,
-	})
-}
-*/
-
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
@@ -623,14 +595,14 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 	var anims []*extint.Animation
 
 	done := false
-	remaining := -1
-	for done == false || remaining != 0 {
+	for done == false {
 		select {
 		case chanResponse, ok := <-animationAvailableResponse:
 			if !ok {
 				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
 			animName := chanResponse.GetListAnimationsResponse().AnimationNames[0].GetName()
+			// Don't change "EndOfListAnimationsResponses" - it's what we'll receive from the .cpp sender.
 			if animName == "EndOfListAnimationsResponses" {
 				done = true
 			} else {

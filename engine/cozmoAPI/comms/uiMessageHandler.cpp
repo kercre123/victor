@@ -250,6 +250,13 @@ namespace Anki {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
 
+        // TODO: What should be done if there's an issue?
+        LOG_WARNING("ron_proto_to_clad_testing", "MARK: %s %d", __FILE__, __LINE__);
+        if(ProtoCladInterpreter::Redirect(message, _context)) {
+          LOG_WARNING("ron_proto_to_clad_testing", "MARK: %s %d", __FILE__, __LINE__);
+        }
+        LOG_WARNING("ron_proto_to_clad_testing", "MARK: %s %d", __FILE__, __LINE__);
+
         #if ANKI_DEV_CHEATS
         if (nullptr != DevLoggingSystem::GetInstance())
         {
