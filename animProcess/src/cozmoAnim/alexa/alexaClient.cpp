@@ -36,6 +36,7 @@
 #include "cozmoAnim/alexa/alexaRevokeAuthHandler.h"
 #include "cozmoAnim/alexa/alexaTemplateRuntimeStub.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -78,6 +79,8 @@ using namespace alexaClientSDK;
 namespace {
   #define LOG_CHANNEL "Alexa"
   #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
+
+  CONSOLE_VAR(bool, kDEV_ONLY_EnableAlexaTemplateRendererStub, "Alexa", false);
 }
   
   
@@ -470,14 +473,11 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
   }
 
 
-  #ifndef DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
-    #warning "DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER is not defined, defaulting to off"
-    #define DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER 0
-  #endif
-
-  #if DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
-  _templateRuntime = std::make_shared<AlexaTemplateRuntimeStub>( _exceptionSender );
-  #endif
+#if ANKI_DEV_CHEATS
+  if( kDEV_ONLY_EnableAlexaTemplateRendererStub ) {
+    _templateRuntime = std::make_shared<AlexaTemplateRuntimeStub>( _exceptionSender );
+  }
+#endif
   
   // Register directives
   
@@ -557,14 +557,16 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
 
-  #if DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
-  if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("TemplateRuntime", _templateRuntime) ) ) {
-    ACSDK_ERROR(LX("initializeFailed")
-                .d("reason", "unableToRegisterDirectiveHandler")
-                .d("directiveHandler", "TemplateRuntime"));
-    return false;
+#if ANKI_DEV_CHEATS
+  if( kDEV_ONLY_EnableAlexaTemplateRendererStub ) {
+    if( !_directiveSequencer->addDirectiveHandler( MAKE_WRAPPER("TemplateRuntime", _templateRuntime) ) ) {
+      ACSDK_ERROR(LX("initializeFailed")
+                  .d("reason", "unableToRegisterDirectiveHandler")
+                  .d("directiveHandler", "TemplateRuntime"));
+      return false;
+    }
   }
-  #endif
+#endif
   
   // Register capabilities
   
@@ -636,14 +638,16 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
 
-  #if DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
-  if (!(capabilitiesDelegate->registerCapability(_templateRuntime))) {
-    ACSDK_ERROR(LX("initializeFailed")
-                .d("reason", "unableToRegisterCapability")
-                .d("capabilitiesDelegate", "TemplateRuntime"));
-    return false;
+#if ANKI_DEV_CHEATS
+  if( kDEV_ONLY_EnableAlexaTemplateRendererStub ) {
+    if (!(capabilitiesDelegate->registerCapability(_templateRuntime))) {
+      ACSDK_ERROR(LX("initializeFailed")
+                  .d("reason", "unableToRegisterCapability")
+                  .d("capabilitiesDelegate", "TemplateRuntime"));
+      return false;
+    }
   }
-  #endif
+#endif
   
   return true;
 }
