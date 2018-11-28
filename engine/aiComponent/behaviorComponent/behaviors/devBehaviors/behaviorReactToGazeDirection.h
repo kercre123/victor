@@ -40,38 +40,29 @@ protected:
 
 private:
 
+  struct InstanceConfig {
+    InstanceConfig(const Json::Value& config);
+
+    // I don't even think I need this
+    f32                   coolDown_sec;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    RobotTimeStamp_t      lastReactionTime_ms;
+    SmartFaceID           faceIDToTurnBackTo;
+  };
+
   // TODO add eye contact "state" or something
   void TransitionToCheckFaceDirection();
   void TransitionToCompleted();
   void FoundNewFace(ActionResult result);
   bool CheckIfShouldStop();
 
-  SmartFaceID _faceIDToTurnBackTo;
-
-  enum class State : uint8_t {
-
-    // TODO add state for eye contact
-    NotStarted,
-    FaceNormalDirectedAtRobot,
-    FaceNormalDirectedAtSurfaceLeft,
-    FaceNormalDirectedAtSurfaceRight,
-    
-  };
-
-  struct InstanceConfig
-  {
-    f32                   coolDown_sec;
-  };
-  struct DynamicVariables
-  {
-    RobotTimeStamp_t      lastReactionTime_ms;
-  };
-
-  std::unique_ptr<InstanceConfig>   _iConfig;
-  std::unique_ptr<DynamicVariables> _dVars;
-
-  // TODO shoudl this live some place else?
-  State state = State::NotStarted;
+  std::unique_ptr<InstanceConfig> _iConfig;
+  // TODO it's unclear if this is should should be a pointer
+  // and where it should be intialized
+  DynamicVariables _dVars;
 
 };
 

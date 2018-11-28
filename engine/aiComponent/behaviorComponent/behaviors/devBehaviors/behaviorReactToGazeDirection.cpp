@@ -64,11 +64,8 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToGazeDirection::BehaviorReactToGazeDirection(const Json::Value& config)
  : ICozmoBehavior(config)
-, _iConfig(new InstanceConfig)
-, _dVars(new DynamicVariables)
+, _iConfig(new InstanceConfig(config))
 {
-  _dVars->lastReactionTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
   _iConfig->coolDown_sec = 3;
 }
 
@@ -76,6 +73,19 @@ BehaviorReactToGazeDirection::BehaviorReactToGazeDirection(const Json::Value& co
 void BehaviorReactToGazeDirection::InitBehavior()
 {
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToGazeDirection::InstanceConfig::InstanceConfig(const Json::Value& config)
+{
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToGazeDirection::DynamicVariables::DynamicVariables()
+{
+  lastReactionTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
@@ -88,10 +98,11 @@ bool BehaviorReactToGazeDirection::WantsToBeActivatedBehavior() const
   return true;
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::OnBehaviorActivated()
 {
+  // reset dynamic variables
+  _dVars = DynamicVariables();
 }
 
 
@@ -119,7 +130,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
   Pose3d faceFocusPose;
   // SmartFaceID faceID;
   Pose3d eyeFocusPose;
-  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, faceFocusPose, eyeFocusPose, _faceIDToTurnBackTo)) {
+  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, faceFocusPose, eyeFocusPose, _dVars.faceIDToTurnBackTo)) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d faceFocusPoseWRTRobot;
     Pose3d eyeFocusPoseWRTRobot;
@@ -132,7 +143,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
                "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
       auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(500);
 
-      GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_faceIDToTurnBackTo);
+      GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
       
       if (((translation.LengthSq() > kDistanceForAboveHorizonSearch_mm2 ||
             eyeTranslation.LengthSq() > kDistanceForAboveHorizonSearch_mm2) && kFindFacesUsingFaceDirection)) {
@@ -173,7 +184,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
                  "angle: %.3f", RAD_TO_DEG(turnAngle.ToFloat()));
 
         SmartFaceID faceToTurnTowards;
-        if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _faceIDToTurnBackTo, robotPose, faceToTurnTowards)
+        if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _dVars.faceIDToTurnBackTo, robotPose, faceToTurnTowards)
             && kUseExistingFacesWhenSearchingForFaces) {
           LOG_INFO("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.FoundAnExistingFaceGoingToTurnTowardsThat", "");
           if (turnAngle > 0) {
@@ -283,7 +294,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
               if (kTurnBackToFace) {
                 turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
                 turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
-                turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+                turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
                 turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
               }
 
@@ -299,7 +310,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
               turnAction->AddAction(turnAndAnimate);
               turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
               turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-              turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+              turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
 
               turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
             }
@@ -316,7 +327,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
               if (kTurnBackToFace) {
                 turnAction->AddAction(new TurnTowardsPoseAction(faceFocusPoseWRTRobot));
                 turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
-                turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+                turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
                 turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
               }
 
@@ -333,7 +344,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
 
               turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
               turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-              turnAction->AddAction(new TurnTowardsFaceAction(_faceIDToTurnBackTo));
+              turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
 
               turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
             }
@@ -356,7 +367,7 @@ void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
 {
   if (ActionResult::NO_FACE == result) {
     LOG_INFO("BehaviorReactToGazeDirection.FoundNewFace.Result", "No Face %d", result);
-    DelegateIfInControl(new TurnTowardsFaceAction(_faceIDToTurnBackTo), &BehaviorReactToGazeDirection::TransitionToCompleted);
+    DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo), &BehaviorReactToGazeDirection::TransitionToCompleted);
   } else if (ActionResult::SUCCESS == result) {
     LOG_INFO("BehaviorReactToGazeDirection.FoundNewFace.Result", "Success %d", result);
     BehaviorReactToGazeDirection::TransitionToCompleted();
