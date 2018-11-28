@@ -33,6 +33,7 @@ public:
 
 AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
+  , _threadIdHolder(new ThreadIDInternal)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
@@ -42,7 +43,6 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
   , _alexa(new Alexa())
   , _backpackLightComponent(new BackpackLightComponent(this))
-  , _threadIdHolder(new ThreadIDInternal)
 {
   InitAudio(_dataPlatform);
 }
