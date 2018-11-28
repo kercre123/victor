@@ -18,39 +18,34 @@ namespace Anki {
 namespace Vision {
 
 namespace {
-  CONSOLE_VAR(u32, kHistorySize,                      "Vision.GazeDirection",  6);
-  CONSOLE_VAR(f32, kInlierDistanceSq,                 "Vision.GazeDirection",  100.f);
-  CONSOLE_VAR(u32, kMinNumberOfInliers,               "Vision.GazeDirection",  2);
-  CONSOLE_VAR(u32, kExpireThreshold,                  "Vision.GazeDirection",  50);
-  CONSOLE_VAR(f32, kInlierXThreshold,                 "Vision.GazeDirection",  300.f);
-  CONSOLE_VAR(f32, kInlierYThreshold,                 "Vision.GazeDirection",  100.f);
-  CONSOLE_VAR(f32, kInlierZThreshold,                 "Vision.GazeDirection",  20.f);
-  CONSOLE_VAR(f32, kShiftOutputPointX_mm,             "Vision.GazeDirection",  100.f);
-  CONSOLE_VAR(f32, kGazeAgreementX,                   "Vision.GazeDirection",  100.f);
-  CONSOLE_VAR(f32, kGazeAgreementY,                   "Vision.GazeDirection",  100.f);
-  CONSOLE_VAR(f32, kGazeAgreementZ,                   "Vision.GazeDirection",  100.f);
+  CONSOLE_VAR(u32, kGazeDirectionHistorySize,                 "Vision.GazeDirection",  6);
+  CONSOLE_VAR(u32, kGazeDirectionMinNumberOfInliers,          "Vision.GazeDirection",  2);
+  CONSOLE_VAR(u32, kGazeDirectionExpireThreshold_ms,          "Vision.GazeDirection",  1000);
+  CONSOLE_VAR(f32, kGazeDirectionInlierXThreshold_mm,         "Vision.GazeDirection",  300.f);
+  CONSOLE_VAR(f32, kGazeDirectionInlierYThreshold_mm,         "Vision.GazeDirection",  100.f);
+  CONSOLE_VAR(f32, kGazeDirectionInlierZThreshold_mm,         "Vision.GazeDirection",  20.f);
+  CONSOLE_VAR(f32, kGazeDirectionShiftOutputPointX_mm,        "Vision.GazeDirection",  100.f);
   // This value was chosen to be sufficiently large that the difference in the z coordinates
   // of the two points used to find the intersection with the ground plane weren't too close
   // as to cause numerical instabilities. 500 was too small.
-  CONSOLE_VAR(f32, kSecondPointTranslationY_mm,       "Vision.GazeDirection",  1500.f);
+  CONSOLE_VAR(f32, kGazeDirectionSecondPointTranslationY_mm,  "Vision.GazeDirection",  1500.f);
 }
 
 GazeDirection::GazeDirection()
-  : _gazeDirectionAverage(Point3f(GazeDirectionData::kDefaultDistance_cm,
-                                  GazeDirectionData::kDefaultDistance_cm,
-                                  GazeDirectionData::kDefaultDistance_cm))
+  : _gazeDirectionAverage(Point3f(GazeDirectionData::kDefaultDistance_mm,
+                                  GazeDirectionData::kDefaultDistance_mm,
+                                  GazeDirectionData::kDefaultDistance_mm))
 {
-  _gazeDirectionHistory.resize(kHistorySize);
+  _gazeDirectionHistory.resize(kGazeDirectionHistorySize);
 }
 
-void GazeDirection::Update(const TrackedFace& face,
-                           const TimeStamp_t timeStamp)
+void GazeDirection::Update(const TrackedFace& face)
 {
   _headPose = face.GetHeadPose();
-  _lastUpdated = timeStamp;
+  _lastUpdated = face.GetTimeStamp();
 
-  if (_currentIndex > (kHistorySize - 1))
-  {
+  PRINT_NAMED_WARNING("GazeDirection.Update.CurrentIndex", "%d", _currentIndex);
+  if (_currentIndex > (kGazeDirectionHistorySize - 1)) {
     // Make sure we place a "real" value
     // in every element of the history
     // before returning a result
@@ -62,11 +57,15 @@ void GazeDirection::Update(const TrackedFace& face,
   bool include = GetPointFromHeadPose(_headPose, gazeDirectionPoint);
   _gazeDirectionHistory[_currentIndex].Update(gazeDirectionPoint, include);
 
-  _gazeDirectionAverage = ComputeEntireGazeDirectionAverage();
-  _numberOfInliers = FindInliers(_gazeDirectionAverage);
-  _gazeDirectionAverage = RecomputeGazeDirectionAverage();
+  // This computations only need to happen once we are initialized because
+  // otherwise we're not going to output a point as stable
+  if (_initialized) {
+    _gazeDirectionAverage = ComputeEntireGazeDirectionAverage();
+    _numberOfInliers = FindInliers(_gazeDirectionAverage);
+    _gazeDirectionAverage = RecomputeGazeDirectionAverage();
+  }
 
-  _currentIndex += 1;
+  _currentIndex++;
 }
 
 Point3f GazeDirection::ComputeEntireGazeDirectionAverage()
@@ -86,11 +85,11 @@ Point3f GazeDirection::ComputeGazeDirectionAverage(const bool filterOutliers)
     if (gazeDirection.include) {
       if (filterOutliers) {
         if (gazeDirection.inlier) {
-          pointsInAverage += 1;
+          pointsInAverage++;
           averageGazeDirection += gazeDirection.point;
         }
       } else {
-        pointsInAverage += 1;
+        pointsInAverage++;
         averageGazeDirection += gazeDirection.point;
       }
     }
@@ -99,9 +98,9 @@ Point3f GazeDirection::ComputeGazeDirectionAverage(const bool filterOutliers)
   if (pointsInAverage != 0) {
     averageGazeDirection *= 1.f/pointsInAverage;
   } else {
-    averageGazeDirection = Point3f(GazeDirectionData::kDefaultDistance_cm,
-                                   GazeDirectionData::kDefaultDistance_cm,
-                                   GazeDirectionData::kDefaultDistance_cm);
+    averageGazeDirection = Point3f(GazeDirectionData::kDefaultDistance_mm,
+                                   GazeDirectionData::kDefaultDistance_mm,
+                                   GazeDirectionData::kDefaultDistance_mm);
   }
   return averageGazeDirection;
 }
@@ -119,11 +118,11 @@ int GazeDirection::FindInliers(const Point3f& gazeDirectionAverage)
     }
                       
     auto difference = gazeDirection.point - gazeDirectionAverage;
-    if (std::abs(difference.x()) < kInlierXThreshold &&
-        std::abs(difference.y()) < kInlierYThreshold &&
-        std::abs(difference.z()) < kInlierZThreshold) {
+    if (std::abs(difference.x()) < kGazeDirectionInlierXThreshold_mm &&
+        std::abs(difference.y()) < kGazeDirectionInlierYThreshold_mm &&
+        std::abs(difference.z()) < kGazeDirectionInlierZThreshold_mm) {
       gazeDirection.inlier = true;
-      numberOfInliers += 1;
+      numberOfInliers++;
     } else {
       gazeDirection.inlier = false;
     }
@@ -138,7 +137,7 @@ Point3f GazeDirection::RecomputeGazeDirectionAverage()
 
 bool GazeDirection::GetExpired(const TimeStamp_t currentTime) const
 {
-  return (currentTime - _lastUpdated) > kExpireThreshold;
+  return (currentTime - _lastUpdated) > kGazeDirectionExpireThreshold_ms;
 }
 
 bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDirectionPoint)
@@ -147,17 +146,14 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDi
   // intersection of that line with ground plane, note that this point is in world coordinates
   // "behind" the head if the pose were looking at the ground plane if the y translation is
   // positive.
-  Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()),
-                                             Point3f(0.f, kSecondPointTranslationY_mm, 0.f)));
-  translatedPose.SetParent(headPose);
+  Pose3d translatedPose(0.f, Z_AXIS_3D(), {0.f, kGazeDirectionSecondPointTranslationY_mm, 0.f}, headPose);
   const auto point = translatedPose.GetWithRespectToRoot().GetTranslation();
   const auto translation = headPose.GetTranslation();
 
-  if (!FLT_NEAR(translation.z(), point.z())) {
+  if (Util::IsFltNear(translation.z(), point.z())) {
     gazeDirectionPoint = point;
     return false;
   } else {
-
     // This is adopting the definition of a line l as the set
     // { P_1 * alpha + P_2 * (1-alpha) | alpha in R}
     // and the points (including the zero vector) are
@@ -165,7 +161,6 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDi
     // position of the point in the direction of the head pose's rotation
     // (point).
     const float alpha = ( -point.z() ) / ( translation.z() - point.z() );
-    const auto groundPlanePoint = translation * alpha + point * (1 - alpha);
 
     // Alpha less than zero means that the ground plane point we found is "behind"
     // the head pose. For some reason the head pose rotation is such
@@ -175,7 +170,7 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDi
     // This avoids finding a intersection with the ground plane when face normal is
     // directed above the horizon.
     if (FLT_GT(alpha, 1.f)) {
-      gazeDirectionPoint = groundPlanePoint;
+      gazeDirectionPoint = translation * alpha + point * (1 - alpha);
       return true;
     } else {
       gazeDirectionPoint = point;
@@ -186,26 +181,26 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDi
 
 bool GazeDirection::IsStable() const
 {
-  return ( (_numberOfInliers > kMinNumberOfInliers) && _initialized );
+  return ( (_numberOfInliers > kGazeDirectionMinNumberOfInliers) && _initialized );
 }
 
 Point3f GazeDirection::GetGazeDirectionAverage() const
 {
-  return _gazeDirectionAverage + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
+  return _gazeDirectionAverage + Point3f(kGazeDirectionShiftOutputPointX_mm, 0.f, 0.f);
 }
 
 Point3f GazeDirection::GetCurrentGazeDirection() const
 {
-  return _gazeDirectionHistory[_currentIndex].point + Point3f(kShiftOutputPointX_mm, 0.f, 0.f);
+  return _gazeDirectionHistory[_currentIndex].point + Point3f(kGazeDirectionShiftOutputPointX_mm, 0.f, 0.f);
 }
 
 void GazeDirection::ClearHistory()
 {
   _initialized = false;
   for (auto& gazeDirection: _gazeDirectionHistory) {
-      gazeDirection.point = Point3f(GazeDirectionData::kDefaultDistance_cm,
-                                    GazeDirectionData::kDefaultDistance_cm,
-                                    GazeDirectionData::kDefaultDistance_cm);
+      gazeDirection.point.x() = GazeDirectionData::kDefaultDistance_mm;
+      gazeDirection.point.y() = GazeDirectionData::kDefaultDistance_mm;
+      gazeDirection.point.z() = GazeDirectionData::kDefaultDistance_mm;
       gazeDirection.inlier = false;
       gazeDirection.include  = false;
   }
