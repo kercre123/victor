@@ -80,7 +80,9 @@ namespace {
   #define LOG_CHANNEL "Alexa"
   #define LX(event) avsCommon::utils::logger::LogEntry(__FILE__, event)
 
+#if ANKI_DEV_CHEATS
   CONSOLE_VAR(bool, kDEV_ONLY_EnableAlexaTemplateRendererStub, "Alexa", false);
+#endif
 }
   
   
