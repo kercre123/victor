@@ -26,6 +26,7 @@ enum uint_8 FeatureType {
   FindFacesWhileHeld,
   Volume,
   HandDetection,
+  GazeDirection,
   
   TestFeature,
   PRDemo,

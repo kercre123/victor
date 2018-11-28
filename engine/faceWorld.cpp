@@ -35,6 +35,10 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "webServerProcess/src/webService.h"
 
+#include "clad/types/featureGateTypes.h"
+#include "engine/utils/cozmoFeatureGate.h"
+
+
 
 namespace Anki {
 namespace Vector {
@@ -474,10 +478,9 @@ namespace Vector {
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
     faceEntry->numTimesObserved++;
 
-    // This is where I am going to update my faceEntry, but only
-    // if it has parts (aka has eyes)
-    if (faceEntry->face.HasEyes()) {
-      AddOrUpdateGazeDirection(faceEntry->face, faceEntry->face.GetTimeStamp());
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    if (featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
+      AddOrUpdateGazeDirection(faceEntry->face);
     }
 
     // Keep up with how many times non-tracking-only faces have been seen facing
@@ -619,19 +622,32 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result FaceWorld::AddOrUpdateGazeDirection(Vision::TrackedFace& face,
-                                             const TimeStamp_t& timeStamp)
+  Result FaceWorld::AddOrUpdateGazeDirection(Vision::TrackedFace& face)
   {
-    auto& entry = _gazeDirection[face.GetID()];
-    entry.Update(face, timeStamp);
-    const bool isGazeStable = entry.IsStable();
-    face.SetGazeDirectionStable(isGazeStable);
-    if (isGazeStable)
+    // Only update the gaze direction for the given face if
+    // we have succesfully found parts for this face which are
+    // needed to determine the rotation of the head pose. The
+    // HasEyes method is proxy for this.
+    if (face.HasEyes())
     {
-      auto faceDirectionAverage = entry.GetGazeDirectionAverage();
-      Pose3d gazeDirectionPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), faceDirectionAverage));
-      gazeDirectionPose.SetParent(_robot->GetWorldOrigin());
-      face.SetGazeDirectionPose(gazeDirectionPose);
+      auto& entry = _gazeDirection[face.GetID()];
+      entry.Update(face);
+
+      if (entry.GetExpired(face.GetTimeStamp()))
+      {
+        _gazeDirection.erase(face.GetID());
+      }
+      else
+      {
+        const bool isGazeStable = entry.IsStable();
+        face.SetGazeDirectionStable(isGazeStable);
+        if (isGazeStable)
+        {
+          auto faceDirectionAverage = entry.GetGazeDirectionAverage();
+          Pose3d gazeDirectionPose(0.f, Z_AXIS_3D(), faceDirectionAverage, _robot->GetWorldOrigin());
+          face.SetGazeDirectionPose(gazeDirectionPose);
+        }
+      }
     }
     return RESULT_OK;
   }
@@ -989,22 +1005,26 @@ namespace Vector {
                                                                               trackedFace.GetHeadPose(),
                                                                               drawFaceColor);
 
-    if (kRenderGazeDirectionPoints) {
-      auto& entry = _gazeDirection[trackedFace.GetID()];
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    if (kRenderGazeDirectionPoints && featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
+      const auto& entry = _gazeDirection[trackedFace.GetID()];
       const s32 startingObjectId = 2345;
-      const auto currentGazeDirection = entry.GetCurrentGazeDirection();
-      Pose3d currentGazePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentGazeDirection));
-      faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
-                                                                               kGazeGroundPointSize,
-                                                                               currentGazePose,
-                                                                               ::Anki::NamedColors::ORANGE);
 
-      const auto averageGazeDirection = entry.GetGazeDirectionAverage();
-      Pose3d averageGazePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageGazeDirection));
-      faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
-                                                                               kGazeGroundPointSize,
-                                                                               averageGazePose,
-                                                                               ::Anki::NamedColors::GREEN);
+      const auto currentGazeDirection = entry.GetCurrentGazeDirection();
+      Pose3d currentGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentGazeDirection));
+      faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
+                                                                              kGazeGroundPointSize,
+                                                                              currentGazePose,
+                                                                              ::Anki::NamedColors::ORANGE);
+
+      if (entry.IsStable()) {
+        const auto averageGazeDirection = entry.GetGazeDirectionAverage();
+        Pose3d averageGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageGazeDirection));
+        faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
+                                                                                kGazeGroundPointSize,
+                                                                                averageGazePose,
+                                                                                ::Anki::NamedColors::GREEN);
+      }
     }
 
     if(drawInImage)

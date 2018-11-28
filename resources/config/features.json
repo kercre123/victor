@@ -94,6 +94,10 @@
   {
     "feature": "HandDetection",
     "enabled": false
+  },
+  {
+    "feature": "GazeDirection",
+    "enabled": false
   }
 ]
 

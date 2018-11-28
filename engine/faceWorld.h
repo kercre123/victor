@@ -86,7 +86,7 @@ namespace Vector {
     
     Result Update(const std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(const Vision::TrackedFace& face);
-    Result AddOrUpdateGazeDirection(Vision::TrackedFace& face, const TimeStamp_t& timeStamp);
+    Result AddOrUpdateGazeDirection(Vision::TrackedFace& face);
   
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     

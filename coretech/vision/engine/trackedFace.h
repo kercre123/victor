@@ -110,7 +110,7 @@ namespace Vision {
     // This is the gaze direction computed using the head pose rotation matrix, and then
     // projected onto the ground plane
     const Pose3d& GetGazeDirectionPose() const;
-    void SetGazeDirectionPose(const Pose3d gazeDirectionPose);
+    void SetGazeDirectionPose(const Pose3d& gazeDirectionPose);
 
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
@@ -146,10 +146,6 @@ namespace Vision {
     // Is gaze direction stable
     bool IsGazeDirectionStable() const { return _isGazeDirectionStable; }
     void SetGazeDirectionStable(const bool gazeDirecitonStable);
-
-    // Eye Gaze Average
-    Point2f GetEyeGazeAverage() const {return _eyeGazeAverage;}
-    void SetEyeGazeAverage(const Point2f& eyeGazeAverage);
 
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
@@ -364,15 +360,11 @@ namespace Vision {
     _isGazeDirectionStable = isGazeDirectionStable;
   }
 
-  inline void TrackedFace::SetEyeGazeAverage(const Point2f& eyeGazeAverage) {
-    _eyeGazeAverage = eyeGazeAverage;
-  }
-
   inline const Pose3d& TrackedFace::GetGazeDirectionPose() const {
     return _gazeDirectionPose;
   }
 
-  inline void TrackedFace::SetGazeDirectionPose(const Pose3d gazeDirectionPose) {
+  inline void TrackedFace::SetGazeDirectionPose(const Pose3d& gazeDirectionPose) {
     _gazeDirectionPose = gazeDirectionPose;
   }
 

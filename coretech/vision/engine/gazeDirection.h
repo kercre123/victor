@@ -13,8 +13,8 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#ifndef __Anki_Vision_FaceNormalDirectedAtRobot3D_H__
-#define __Anki_Vision_FaceNormalDirectedAtRobot3D_H__
+#ifndef __Anki_CoreTech_Vision_GazeDirection_H__
+#define __Anki_CoreTech_Vision_GazeDirection_H__
 
 #include "coretech/vision/engine/trackedFace.h"
 
@@ -23,13 +23,13 @@ namespace Vision {
 
 struct GazeDirectionData
 {
-  constexpr static const float kDefaultDistance_cm = -100000.f;
+  constexpr static const float kDefaultDistance_mm = -100000.f;
   Point3f point;
   bool inlier;
   bool include;
 
   GazeDirectionData()
-    : point(Point3f(kDefaultDistance_cm, kDefaultDistance_cm, kDefaultDistance_cm))
+    : point(Point3f(kDefaultDistance_mm, kDefaultDistance_mm, kDefaultDistance_mm))
       ,inlier(false)
       ,include(false)
       {
@@ -55,7 +55,7 @@ struct GazeDirectionData
   The goal of this class is to find whether these gaze ground plane points
   are sufficiently "stable" or stationary such that it is clear that the head
   is "gazing" at a point on the ground plane. To achieve this a simple running
-  average with inliers, followed by a threshold check for proximity to
+  average with inliers is used, followed by a threshold check for proximity to
   the average.
 
   Specifically:
@@ -80,12 +80,14 @@ class GazeDirection
 public:
   GazeDirection();
 
-  void Update(const TrackedFace& headPose,
-              const TimeStamp_t timeStamp);
+  void Update(const TrackedFace& headPose);
 
+  // This will return the average found amoung the inliers
+  // this is only accurate if IsStable returns true.
   Point3f GetGazeDirectionAverage() const;
+  // This will return the last point in the history and
+  // is used for debugging and visualization purposes.
   Point3f GetCurrentGazeDirection() const;
-  std::vector<GazeDirectionData> const& GetFaceDirectionHistory() {return _gazeDirectionHistory;}
 
   bool GetExpired(const TimeStamp_t currentTime) const;
   bool IsStable() const;
@@ -101,8 +103,8 @@ private:
   Point3f RecomputeGazeDirectionAverage();
 
   Pose3d _headPose;
-  TimeStamp_t _lastUpdated;
 
+  TimeStamp_t _lastUpdated = 0;
   int _currentIndex = 0;
   int _numberOfInliers = 0;
   bool _initialized = false;
@@ -113,4 +115,4 @@ private:
 
 }
 }
-#endif // __Anki_Vision_FaceNormalDirectedAtRobot_H__
+#endif // __Anki_CoreTech_Vision_GazeDirection_H__
