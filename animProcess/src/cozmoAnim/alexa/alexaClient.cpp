@@ -422,6 +422,12 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateNotificationsCapabilityAgent"));
     return false;
   }
+
+  // VIC-11806: notifications cleared when victor was turned off never recieve the SetIndicator(OFF) callback so
+  //            the notification light remains on when you boot up.  Clearing all saved notification data at startup,
+  //            since amazon re-sends them upon connection
+  // note: this seems really wrong and is a hack to pass cert :(
+  _notificationsCapabilityAgent->clearData();
   
   // The Interaction Model Capability Agent provides a way for AVS cloud initiated actions to be executed by the client.
   _interactionCapabilityAgent
