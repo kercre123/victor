@@ -984,7 +984,7 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::DrawFace(FaceEntry& faceEntry, bool drawInImage)
+  void FaceWorld::DrawFace(FaceEntry& faceEntry, bool drawInImage) const
   {
     if(!ANKI_DEV_CHEATS) {
       // Don't draw anything in shipping builds
@@ -1003,23 +1003,26 @@ namespace Vector {
 
     const auto* featureGate = _robot->GetContext()->GetFeatureGate();
     if (kRenderGazeDirectionPoints && featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
-      const auto& entry = _gazeDirection[trackedFace.GetID()];
-      const s32 startingObjectId = 2345;
+      const auto& entry = _gazeDirection.find(trackedFace.GetID());
+      if (entry != _gazeDirection.end()) {
+        const auto& gazeDirection = entry->second;
+        const s32 startingObjectId = 2345;
 
-      const auto currentGazeDirection = entry.GetCurrentGazeDirection();
-      Pose3d currentGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentGazeDirection));
-      faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
-                                                                              kGazeGroundPointSize,
-                                                                              currentGazePose,
-                                                                              ::Anki::NamedColors::ORANGE);
-
-      if (entry.IsStable()) {
-        const auto averageGazeDirection = entry.GetGazeDirectionAverage();
-        Pose3d averageGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageGazeDirection));
-        faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
+        const auto currentGazeDirection = gazeDirection.GetCurrentGazeDirection();
+        Pose3d currentGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentGazeDirection));
+        faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
                                                                                 kGazeGroundPointSize,
-                                                                                averageGazePose,
-                                                                                ::Anki::NamedColors::GREEN);
+                                                                                currentGazePose,
+                                                                                ::Anki::NamedColors::ORANGE);
+
+        if (gazeDirection.IsStable()) {
+          const auto averageGazeDirection = gazeDirection.GetGazeDirectionAverage();
+          Pose3d averageGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageGazeDirection));
+          faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
+                                                                                  kGazeGroundPointSize,
+                                                                                  averageGazePose,
+                                                                                  ::Anki::NamedColors::GREEN);
+        }
       }
     }
 

@@ -29,7 +29,7 @@ struct GazeDirectionData
   bool include;
 
   GazeDirectionData()
-    : point(Point3f(kDefaultDistance_mm, kDefaultDistance_mm, kDefaultDistance_mm))
+    : point(kDefaultDistance_mm, kDefaultDistance_mm, kDefaultDistance_mm)
       ,inlier(false)
       ,include(false)
       {

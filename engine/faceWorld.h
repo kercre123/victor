@@ -229,7 +229,7 @@ namespace Vector {
 
     void SetupEventHandlers(IExternalInterface& externalInterface);
     
-    void DrawFace(FaceEntry& knownFace, bool drawInImage = true);
+    void DrawFace(FaceEntry& knownFace, bool drawInImage = true) const;
     void EraseFaceViz(FaceEntry& faceEntry);
     
     void SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedFace& msg ) const;
