@@ -17,12 +17,7 @@
 #include "util/global/globalDefinitions.h"
 
 #if ANKI_DEV_CHEATS
-// disable this entire file if dev cheats aren't on (don't want to ship it by accident)
-
-// Set this to 1 to enable this hack
-#define DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER 0
-
-#if DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
+// disable this entire class if dev cheats aren't on (don't want to ship it by accident)
 
 #include <unordered_map>
 #include <AVSCommon/AVS/CapabilityAgent.h>
@@ -85,12 +80,8 @@ public:
   }
 };
 
-
 } // namespace Vector
 } // namespace Anki
 
-#endif // DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER
-#else // ANKI_DEV_CHEATS
-  #define DEV_ONLY_ALEXA_USE_TEMPALTE_RENDERER 0
 #endif // ANKI_DEV_CHEATS
 #endif //__AnimProcess_Src_CozmoAnim_Alexa_AlexaTemplateRuntimeStub_H__
