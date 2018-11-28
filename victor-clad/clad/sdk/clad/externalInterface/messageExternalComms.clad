@@ -268,7 +268,7 @@ message RtsCloudSessionRequest {
     string[uint_16]      sessionToken,
 }
 
-message RtsCloudSessionRequest_2 {
+message RtsCloudSessionRequest_5 {
     string[uint_16]       sessionToken,
     string                clientName,
     string                appId,
@@ -451,7 +451,7 @@ union RtsConnection_5 {
     RtsFileDownload                 RtsFileDownload             = 0x1A,
     RtsWifiForgetRequest            RtsWifiForgetRequest        = 0x1B,  
     RtsWifiForgetResponse           RtsWifiForgetResponse       = 0x1C,  
-    RtsCloudSessionRequest_2        RtsCloudSessionRequest_2    = 0x1D,   // * modified in V5
+    RtsCloudSessionRequest_5        RtsCloudSessionRequest_5    = 0x1D,   // * modified in V5
     RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  
     RtsAppConnectionIdRequest       RtsAppConnectionIdRequest   = 0x1F,
     RtsAppConnectionIdResponse      RtsAppConnectionIdResponse  = 0x20,

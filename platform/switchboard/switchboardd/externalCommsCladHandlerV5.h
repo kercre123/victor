@@ -175,7 +175,7 @@ namespace Switchboard {
             _receiveRtsForceDisconnect.emit(rtsMsg);
             break;
           }
-          case Anki::Vector::ExternalComms::RtsConnection_5Tag::RtsCloudSessionRequest_2: {
+          case Anki::Vector::ExternalComms::RtsConnection_5Tag::RtsCloudSessionRequest_5: {
             _receiveRtsCloudSessionRequest.emit(rtsMsg);
             break;
           }

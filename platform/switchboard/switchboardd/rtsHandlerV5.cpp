@@ -519,8 +519,8 @@ void RtsHandlerV5::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
     return;
   }
   
-  Anki::Vector::ExternalComms::RtsCloudSessionRequest_2 cloudReq = 
-    msg.Get_RtsCloudSessionRequest_2();
+  Anki::Vector::ExternalComms::RtsCloudSessionRequest_5 cloudReq = 
+    msg.Get_RtsCloudSessionRequest_5();
   std::string sessionToken = cloudReq.sessionToken;
 
   Log::Write("Received cloud session authorization request.");
