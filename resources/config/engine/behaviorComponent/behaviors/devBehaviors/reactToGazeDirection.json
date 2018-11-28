@@ -1,4 +1,4 @@
 {
-  "behaviorID" :   "ReactToFaceNormal",
-  "behaviorClass": "ReactToFaceNormal"
+  "behaviorID" :   "ReactToGazeDirection",
+  "behaviorClass": "ReactToGazeDirection"
 }
