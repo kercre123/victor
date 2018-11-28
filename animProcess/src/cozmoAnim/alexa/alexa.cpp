@@ -467,17 +467,17 @@ void Alexa::SetUXState( AlexaUXState newState )
   if (_uxState == AlexaUXState::Listening) {
     if ( (oldState == AlexaUXState::Idle) && (_notifyType != None) ) {
       // Alexa triggered by voice or button press
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
       _notifyType = None;
     }
     else if (oldState == AlexaUXState::Speaking) {
       // Play EarCon for follow up question
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
     }
   }
   else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
     // Play when listening ends
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
   }
   
 }
