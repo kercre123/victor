@@ -73,7 +73,6 @@ namespace HeadController {
       // Calibration parameters
       typedef enum {
         HCS_IDLE,
-        HCS_RAISE_HEAD, // Only used if not packed out
         HCS_LOWER_HEAD,
         HCS_WAIT_FOR_STOP,
         HCS_SET_CURR_ANGLE,
@@ -176,7 +175,7 @@ namespace HeadController {
       }
       
       potentialBurnoutStartTime_ms_ = 0;
-      calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
+      calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
       inPosition_ = false;
     
@@ -224,31 +223,13 @@ namespace HeadController {
 
           case HCS_IDLE:
             break;
-
-          case HCS_RAISE_HEAD:
-            power_ = 0.4f;
+  
+          case HCS_LOWER_HEAD:
+            power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
             HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             lowHeadAngleDuringCalib_rad_ = currentAngle_.ToFloat();
-            calState_ = HCS_LOWER_HEAD;
-            break;
-            
-          case HCS_LOWER_HEAD:
-            if(!IsMoving())
-            {
-              if( HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME)
-              {
-                power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
-                HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
-                lastHeadMovedTime_ms = HAL::GetTimeStamp();
-                lowHeadAngleDuringCalib_rad_ = currentAngle_.ToFloat();
-                calState_ = HCS_WAIT_FOR_STOP;
-              }            
-            }
-            else
-            {
-              lastHeadMovedTime_ms = HAL::GetTimeStamp();
-            }
+            calState_ = HCS_WAIT_FOR_STOP;    
             break;
 
           case HCS_WAIT_FOR_STOP:
@@ -317,7 +298,7 @@ namespace HeadController {
               AnkiWarn("HeadController.CalibrationUpdate.RestartingCalib",
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
-              calState_ = (Factory::GetEMR()->fields.PACKED_OUT_FLAG ? HCS_LOWER_HEAD : HCS_RAISE_HEAD);
+              calState_ = HCS_LOWER_HEAD;
             } else {
               AnkiInfo("HeadController.CalibrationUpdate.Abort",
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
