@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToFaceNormal__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToFaceNormal__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToGazeDirection__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToGazeDirection__
 
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -71,4 +71,4 @@ private:
 } // namespace Vector
 } // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToFaceNormal__
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToGazeDirection__
