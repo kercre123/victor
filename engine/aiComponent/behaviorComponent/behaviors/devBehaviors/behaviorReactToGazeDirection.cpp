@@ -226,7 +226,6 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
   DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d& gazePose)
 {
@@ -291,7 +290,6 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
     } else {
       LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
     }
-    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.FaceNotFocused", "");
   }
 }
 
