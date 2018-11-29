@@ -16,6 +16,7 @@
 #include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
+#include "engine/aiComponent/alexaComponent.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -167,12 +168,6 @@ void BehaviorSleepCycle::CreateCustomWakeReasonConditions()
       return isDoneReacting;
     },
     GetDebugLabel() ) );
-
-  _iConfig.wakeConditions.emplace( WakeReason::AlexaInteractionComplete,
-                                   new ConditionLambda( [this](BehaviorExternalInterface& bei) {
-                                     return _dVars.alexaInteractionComplete;
-                                   },
-                                   GetDebugLabel() ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -260,7 +255,6 @@ void BehaviorSleepCycle::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.sleepingWakeWordBehavior.get());
   delegates.insert(_iConfig.wiggleBackOntoChargerBehavior.get());
   delegates.insert(_iConfig.emergencyModeAnimBehavior.get());
-  delegates.insert(_iConfig.alexaBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -301,7 +295,6 @@ void BehaviorSleepCycle::InitBehavior()
   _iConfig.sleepingWakeWordBehavior      = BC.FindBehaviorByID( BEHAVIOR_ID( SleepingTriggerWord ) );
   _iConfig.wiggleBackOntoChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID( WiggleBackOntoChargerFromPlatform ) );
   _iConfig.emergencyModeAnimBehavior     = BC.FindBehaviorByID( BEHAVIOR_ID( EmergencyModeAnimDispatcher ) );
-  _iConfig.alexaBehavior                 = BC.FindBehaviorByID( BEHAVIOR_ID( Alexa ) );
   _iConfig.personCheckBehavior           = BC.FindBehaviorByID( BEHAVIOR_ID( SleepingPersonCheck ) );
 
   for( const auto& conditionPair : _iConfig.wakeConditions ) {
@@ -383,6 +376,14 @@ void BehaviorSleepCycle::OnBehaviorDeactivated()
     case SleepStateID::DeepSleep:
     case SleepStateID::LightSleep: {
 
+      // if alexa is activating, don't play a get out
+      const auto& alexaComp = GetAIComp<AlexaComponent>();
+      const bool alexaIsIdle = alexaComp.IsIdle();
+
+      if( !alexaIsIdle ) {
+        break;
+      }
+
       switch( _dVars.reactionState ) {
         case SleepReactionType::NotReacting:
         case SleepReactionType::WiggleOntoCharger:
@@ -391,7 +392,6 @@ void BehaviorSleepCycle::OnBehaviorDeactivated()
 
         case SleepReactionType::Sound:
         case SleepReactionType::TriggerWord:
-        case SleepReactionType::Alexa:
           // no wake up anim here
           break;
       }
@@ -479,19 +479,6 @@ void BehaviorSleepCycle::BehaviorUpdate()
     }
   }
 
-  if( _dVars.reactionState == SleepReactionType::Alexa ) {
-    if( IsControlDelegated() ) {
-      // wait for alexa behavior to end (unlike normal trigger word, the entire Alexa response happens within sleeping)
-      return;
-    }
-    else {
-      // Alexa is complete, probably want to wake (unless we're in emergency sleep or reacting)
-      // TODO:(bn) in emergency sleep, maybe we should play the "home" icon here?
-      _dVars.alexaInteractionComplete = true;
-      SetReactionState(SleepReactionType::NotReacting);
-    }
-  }
-
   if( _dVars.currState != SleepStateID::EmergencySleep &&
       _iConfig.emergencyCondition->AreConditionsMet( GetBEI() ) ) {
     TransitionToEmergencySleep();
@@ -510,15 +497,6 @@ void BehaviorSleepCycle::BehaviorUpdate()
       CancelDelegates(false);
       SetReactionState(SleepReactionType::TriggerWord);
       DelegateIfInControl(_iConfig.sleepingWakeWordBehavior.get());
-      return;
-    }
-
-    // check Alexa
-    // TODO:(bn) only let this run if we're on the charger?
-    if( _iConfig.alexaBehavior->WantsToBeActivated() ) {
-      CancelDelegates(false);
-      SetReactionState(SleepReactionType::Alexa);
-      DelegateIfInControl(_iConfig.alexaBehavior.get());
       return;
     }
 
@@ -976,9 +954,6 @@ void BehaviorSleepCycle::TransitionToLightSleep()
 void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
 {
   if( !IsControlDelegated() ) {
-
-    // clear alexa flag here because we are going to sleep (need another alexa to wake up from it)
-    _dVars.alexaInteractionComplete = false;
 
     auto playAsleepBehavior = [this]() {
       // now that we're asleep, let's remove the "active intent state" in case we were in it
