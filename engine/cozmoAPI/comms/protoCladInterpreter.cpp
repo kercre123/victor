@@ -91,8 +91,6 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
 
   if(converted_to_proto) {
     cozmo_context->GetGatewayInterface()->Broadcast(proto_message);   
-
-    //delete wrapped_message;  //DO NOT SUBMIT until you're sure this is being deleted in the proto_message destructor.
   }
 
   return converted_to_proto;
@@ -184,7 +182,7 @@ void ProtoCladInterpreter::ProtoListAnimationsRequestToClad(
   external_interface::ListAnimationsResponse * list_animations_response = new external_interface::ListAnimationsResponse;
   std::string animName = clad_message.Get_AnimationAvailable().animName;
   LOG_WARNING("ron_proto_to_clad_testing", "animation name: %s", animName.c_str());
-  list_animations_response->add_animation_names()->set_name(*(new std::string(animName))); //DO NOT SUBMIT (GET RID OF THE LEAK)
+  list_animations_response->add_animation_names()->set_name(animName);
   proto_message = ExternalMessageRouter::WrapResponse(list_animations_response);
   return list_animations_response;
 }

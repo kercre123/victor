@@ -910,7 +910,7 @@ autounion MessageGameToEngine
   TurnInPlace                        TurnInPlace                        = 0x14,
   SetHeadAngle                       SetHeadAngle                       = 0x15,
   SetLiftHeight                      SetLiftHeight                      = 0x16,
-  SetBackpackLEDs                    SetBackpackLEDs                    = 0x17,
+  //SetBackpackLEDs                    SetBackpackLEDs                    = 0x17,
   AlignWithObject                    AlignWithObject                    = 0x18,
   SetLiftAngle                       SetLiftAngle                       = 0x19,
   DeleteCustomMarkerObjects          DeleteCustomMarkerObjects          = 0x1A,
