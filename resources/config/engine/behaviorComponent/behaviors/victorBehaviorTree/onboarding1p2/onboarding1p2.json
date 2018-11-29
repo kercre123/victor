@@ -33,23 +33,23 @@
     {
       "phaseName" : "TeachWakeWord",
       "phaseBehaviorID" : "OnboardingTeachWakeWord1p2",
-      "phaseTimeout_s" : 180.0
+      "phaseTimeout_s" : 300.0
     },
     {
       "phaseName" : "TeachComeHere",
       "phaseBehaviorID" : "OnboardingTeachComeHere1p2",
-      "phaseTimeout_s" : 180.0
+      "phaseTimeout_s" : 300.0
     },
     {
       "phaseName" : "TeachMeetVictor",
       "phaseBehaviorID" : "OnboardingTeachMeetVictor1p2",
-      "phaseTimeout_s" : 180.0
+      "phaseTimeout_s" : 300.0
     }
   ],
 
-  "startTimeout_s" : 600.0, // Exit timeout if the app never triggers onboarding.
-  "completionTimeout_s" : 600.0, // Exit timeout after starting, regardless of phase/progression 
+  "startTimeout_s" : 0.0, // Exit timeout if the app never triggers onboarding. 0.0 disables this timeout.
+  "completionTimeout_s" : 0.0, // Exit timeout after starting, regardless of phase/progression 
   "appDisconnectTimeout_s" : 180.0, // Exit timeout from default phase if the App disconnects after starting onboarding
-  "idleTimeout_s" : 120.0, // Exit timeout from idle state after phase completion
+  "idleTimeout_s" : 300.0, // Exit timeout from idle state after phase completion
   "allowPowerOffFromIdle" : true // Should the power button work if we're idling outside any onboarding phase?
 }

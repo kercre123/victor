@@ -8,7 +8,7 @@
   "behaviors" : [
     "OnboardingComeHereTriggerWordDetected",
     "ComeHereVoiceCommand",
-    "OnboardingLookAtUser"
+    "OnboardingLookAtUser1p2"
   ],
 
   "anonymousBehaviors" : [

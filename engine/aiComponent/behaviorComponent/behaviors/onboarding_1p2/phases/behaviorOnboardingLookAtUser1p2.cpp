@@ -24,6 +24,7 @@
 
 #define SET_STATE(s) do{ \
   _dVars.state = LookAtUserState::s; \
+  SetDebugStateName(#s);\
 } while(0);
 
 namespace Anki {
@@ -68,6 +69,8 @@ bool BehaviorOnboardingLookAtUser1p2::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtUser1p2::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
+  modifiers.wantsToBeActivatedWhenOnCharger = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -102,7 +105,7 @@ void BehaviorOnboardingLookAtUser1p2::BehaviorUpdate()
 
   if( !inOffTreadsState && !onTreads ) {
     TransitionToWaitingForPutDown();
-  } else if( inOnChargerState != onCharger ) {
+  } else if( onTreads && inOnChargerState != onCharger ) {
     TransitionToLookAtUser();
   }
 
