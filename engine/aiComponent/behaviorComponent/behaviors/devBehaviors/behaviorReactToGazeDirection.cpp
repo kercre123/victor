@@ -47,8 +47,6 @@ namespace {
   CONSOLE_VAR(f32,  kConeFor135TurnForFaceSearch_deg,        "Vision.GazeDirection",  60.f);
   CONSOLE_VAR(f32,  kSearchForFaceThirdAngle_deg,            "Vision.GazeDirection",  135.f);
   CONSOLE_VAR(s32,  kSearchForFaceNumberOfImagesToWait,      "Vision.GazeDirection",  5);
-  CONSOLE_VAR(bool, kFindSurfacePointsUsingFaceDirection,    "Vision.GazeDirection",  false);
-  CONSOLE_VAR(bool, kFindFacesUsingFaceDirection,            "Vision.GazeDirection",  true);
   CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.GazeDirection",  false);
   CONSOLE_VAR(s32,  kNumberOfTurnsForSurfacePoint,           "Vision.GazeDirection",  1);
 }
@@ -222,14 +220,6 @@ Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d&
       turnAngle = DEG_TO_RAD(-kSearchForFaceTurnAroundAngle_deg);
     } else {
       turnAngle = DEG_TO_RAD(kSearchForFaceTurnAroundAngle_deg);
-    }
-  } else if ( (angleDifference <= Radians(DEG_TO_RAD(kConeFor135TurnForFaceSearch_deg/2.f))) &&
-              (angleDifference >= -Radians(DEG_TO_RAD(kConeFor135TurnForFaceSearch_deg/2.f))) &&
-              kSearchForFaceUseThreeTurns) {
-    if (angleDifference < 0) {
-      turnAngle = DEG_TO_RAD(-kSearchForFaceThirdAngle_deg);
-    } else {
-      turnAngle = DEG_TO_RAD(kSearchForFaceThirdAngle_deg);
     }
   } else if (translation.y() < 0) {
     turnAngle = DEG_TO_RAD(kSearchForFaceTurnRightAngle_deg);
