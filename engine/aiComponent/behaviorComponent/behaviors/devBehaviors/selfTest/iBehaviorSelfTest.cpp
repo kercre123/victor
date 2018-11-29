@@ -426,7 +426,10 @@ void IBehaviorSelfTest::ClearTimers()
   }
 }
 
-void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot, const std::vector<std::string>& text, ColorRGBA textColor, ColorRGBA bg)
+void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
+                                         const std::vector<std::string>& text,
+                                         ColorRGBA textColor,
+                                         ColorRGBA bg)
 {
   auto& anim = robot.GetAnimationComponent();
   Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, {bg.r(), bg.g(), bg.b()});
@@ -479,8 +482,7 @@ void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot, const std::vector<std::st
     offset += minSize.height + 2;
   }
 
-  anim.DisplayFaceImage(img, 0, true);
- 
+  anim.DisplayFaceImage(img, 0, true); 
 }
 
 }

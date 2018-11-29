@@ -79,7 +79,11 @@ private:
 
   //bool _startTest = false;
     
-  std::vector<::Signal::SmartHandle> _signalHandles;  
+  std::vector<::Signal::SmartHandle> _signalHandles;
+
+  bool _waitForButtonToEndTest = false;
+  bool _restartOnButtonPress = false;
+  bool _buttonPressed = false;
 };
 
 } // namespace Cozmo

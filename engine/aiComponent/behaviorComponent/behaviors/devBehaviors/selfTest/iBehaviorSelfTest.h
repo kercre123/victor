@@ -178,15 +178,16 @@ protected:
   // time has passed
   void RecordTouchSensorData(Robot& robot, const std::string& nameOfData);
 
-  void DrawTextOnScreen(Robot& robot, const std::vector<std::string>& text,
-                        ColorRGBA textColor = NamedColors::WHITE,
-                        ColorRGBA bg = NamedColors::BLACK);
+  static void DrawTextOnScreen(Robot& robot, const std::vector<std::string>& text,
+                               ColorRGBA textColor = NamedColors::WHITE,
+                               ColorRGBA bg = NamedColors::BLACK);
 
 private:
 
   // Let WaitToStart be able to clear its timers on init so it can remove
   // the default timeout timer
   friend class BehaviorSelfTestWaitToStart;
+  friend class BehaviorSelfTest;
 
   // Clears all timers except those marked as "DontDelete"
   void ClearTimers();

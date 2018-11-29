@@ -240,6 +240,41 @@ void BehaviorSelfTest::Reset()
 
 void BehaviorSelfTest::BehaviorUpdate()
 {
+  if(_waitForButtonToEndTest)
+  {
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+    const bool buttonPressed = robot.IsPowerButtonPressed();
+
+    if(_buttonPressed && !buttonPressed)
+    {
+      if(_restartOnButtonPress)
+      {
+        // If we are restarting the test then skip the first behavior
+        // as it just waits for the face menu screen option to be selected
+        _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
+        _currentSelfTestBehaviorIter++;
+        
+        _currentBehavior = *_currentSelfTestBehaviorIter;
+      }
+      else
+      {
+        // This should clear the face and put us back
+        robot.SendRobotMessage<RobotInterface::SelfTestEnd>();
+      }
+       
+      _restartOnButtonPress = false;
+      _waitForButtonToEndTest = false;
+
+      // Fake being re-activated to startup selftest again
+      OnBehaviorActivated();
+     }
+    
+    _buttonPressed = buttonPressed;
+  }
+
   if(_currentBehavior != nullptr)
   {
     // Check if the current behavior has failed
@@ -442,8 +477,12 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // Reset playpen
   Reset();
 
+  _restartOnButtonPress = false;//(result != FactoryTestResultCode::SUCCESS);
+  _waitForButtonToEndTest = true;
+  
+  // Handled by button press logic in BehaviorUpdate
   // Fake being re-activated to startup playpen again
-  OnBehaviorActivated();
+  //OnBehaviorActivated();
 
   // If data directory is too large, delete it
   // if(Util::FileUtils::GetDirectorySize(PlaypenConfig::kDataDirPath) > PlaypenConfig::kMaxDataDirSize_bytes)
@@ -457,7 +496,7 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // }
 
   // Just-in-case sync
-  sync();
+  //sync();
   
   // TODO(Al): Turn off Victor at end of playpen?
 }
@@ -482,15 +521,17 @@ void BehaviorSelfTest::DisplayResult(FactoryTestResultCode result)
     
     robot.GetBodyLightComponent().SetBackpackLights(passLights);
 
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
-                                                                                     RobotInterface::ColorRGB(0,0,0),
-                                                                                     RobotInterface::ColorRGB(0,255,0),
-                                                                                     "OK")));
+    IBehaviorSelfTest::DrawTextOnScreen(robot, {"OK", "Press button", "to finish test"},
+                                        NamedColors::BLACK, NamedColors::GREEN);
+    // robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
+    //                                                                                  RobotInterface::ColorRGB(0,0,0),
+    //                                                                                  RobotInterface::ColorRGB(0,255,0),
+    //                                                                                  "OK")));
   }
   else
   {
-    PlayAnimationAction* action = new PlayAnimationAction("playpenFailAnim");
-    robot.GetActionList().AddConcurrentAction(action);
+    //PlayAnimationAction* action = new PlayAnimationAction("playpenFailAnim");
+    //robot.GetActionList().AddConcurrentAction(action);
 
     static const BackpackLights failLights = {
       .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
@@ -504,11 +545,14 @@ void BehaviorSelfTest::DisplayResult(FactoryTestResultCode result)
     
     robot.GetBodyLightComponent().SetBackpackLights(failLights);
 
-    // Draw result to screen
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
-                                                                                     RobotInterface::ColorRGB(0,0,0),
-                                                                                     RobotInterface::ColorRGB(255,0,0),
-                                                                                     std::to_string((u32)result))));
+    IBehaviorSelfTest::DrawTextOnScreen(robot, {std::to_string((u32)result), "Press button", "to end test"},
+                                        NamedColors::BLACK, NamedColors::RED);
+
+    // // Draw result to screen
+    // robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
+    //                                                                                  RobotInterface::ColorRGB(0,0,0),
+    //                                                                                  RobotInterface::ColorRGB(255,0,0),
+    //                                                                                  std::to_string((u32)result))));
   }
 }
 

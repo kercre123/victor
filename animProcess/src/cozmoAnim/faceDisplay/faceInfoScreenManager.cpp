@@ -1354,6 +1354,16 @@ void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
   }
 }
 
+void FaceInfoScreenManager::SelfTestEnd()
+{
+  const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
+  if(curScreen != ScreenName::SelfTestRunning)
+  {
+    return;
+  }
+
+  SetScreen(ScreenName::Main);
+}
 
 } // namespace Cozmo
 } // namespace Anki

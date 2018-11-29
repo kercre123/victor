@@ -231,6 +231,11 @@ message PlaypenStart
 
 }
 
+message SelfTestEnd
+{
+
+}
+
 message SetMotionModelParams
 {
   float_32 slipFactor,
@@ -604,6 +609,8 @@ union EngineToRobot
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechStart             textToSpeechStart           = 0x92,
   TextToSpeechStop              textToSpeechStop            = 0x93,
+
+  SelfTestEnd                   selfTestEnd                 = 0x94,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
