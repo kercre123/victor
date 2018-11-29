@@ -11,7 +11,7 @@ import sys
 
 import anki_vector
 
-conf = importlib.import_module('vector-sdk.configure')
+conf = importlib.import_module('vector-python-sdk-private.sdk.configure')
 
 class InternalApi(conf.Api):
     def __init__(self, env):
