@@ -466,7 +466,7 @@ class HStructEmitter(BaseEmitter):
 
     def emitMembers(self, node, globals):
         if node.members():
-            emitter = CPPLiteMemberDeclarationEmitter(self.output, self.options, group_compounds=False)
+            emitter = CPPLiteMemberDeclarationEmitter(self.output, self.options, group_compounds=False, do_initialize_values=True)
             for member in node.members():
                 emitter.visit(member)
         else:
@@ -761,12 +761,19 @@ class CPPUnionEmitter(HUnionEmitter):
 
 class CPPLiteMemberDeclarationEmitter(BaseEmitter):
     
-    def __init__(self, output, options, group_compounds):
+    def __init__(self, output, options, group_compounds, do_initialize_values = False):
         super(CPPLiteMemberDeclarationEmitter, self).__init__(output, options)
         self.group_compounds = group_compounds
+        self.do_initialize_values = do_initialize_values
     
     def visit_MessageMemberDecl(self, node):
         self.visit(node.type, member_name=node.name)
+        # check for initialization for member
+        if (self.do_initialize_values and node.init):
+            initial_value = node.init
+            member_val = initial_value.value
+            member_str = hex(member_val) if initial_value.type == "hex" else str(member_val)
+            self.output.write(" = %s" % member_str)
         self.output.write(';\n')
     
     def emitSimple(self, node, member_name):

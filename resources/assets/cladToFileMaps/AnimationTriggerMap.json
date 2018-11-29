@@ -384,6 +384,10 @@
     "AnimName": "ag_rtpkeepaway_reacttocube"
   },
   {
+    "CladEvent": "DanceBeatCantDoThat",
+    "AnimName": "ag_dancebeat_cantdothat"
+  },
+  {
     "CladEvent": "DanceBeatEyeHold",
     "AnimName": "ag_dancebeat_eyehold"
   },
@@ -1933,5 +1937,13 @@
   {
     "CladEvent": "MovementTurnAround",
     "AnimName": "ag_movement_turnaround_01"
+  },
+  {
+   "CladEvent": "SeasonalHappyHolidays",
+   "AnimName": "ag_holiday_hh_lights"
+  },
+  {
+   "CladEvent": "SeasonalHappyNewYear",
+   "AnimName": "ag_holiday_hny"
   }
 ]

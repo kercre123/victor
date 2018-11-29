@@ -77,6 +77,21 @@ Exported animation files are pulled into the repo by [`project/victor/build-vict
 
 During deployment only the .bin files are copied onto the robot.
 
+
+# How to include new animations in the behavior system
+
+As a behavior engineer, you're likely to be called upon to make use of new animations produced by Anki's awesome animators.
+You'll typically be provided with: 
+- A "DEPS number". This is simply the revision number of the Subversion repository containing animation assets, mentioned above.
+- Names of one or more animation groups (see above for what an animation group is), typically named something like `ag_featurename_animationname`.
+
+To incorporate the animations in your feature, do the following:
+- In `victor/DEPS`, set the "version" number (in the "victor-animation-assets" entry under "svn", line 65 at the time of this writing) to the DEPS number provided by the animator (if it is not already equal to or greater than that number). Note that this line is prone to merge conflicts: it's likely that someone else working on a feature in parallel has also changed this line and merged to master while you were working on your feature. Pay attention when merging.
+- Create new animation triggers in `victor/clad/src/clad/types/animationTrigger.clad`. (It's just a big ol' enum. Try to keep it in alphabetical order.)
+- Edit `victor/resources/assets/cladToFileMaps/AnimationTriggerMap.json` to map between the animation triggers you just created and the animation groups created by the animator.
+- Use the new animation triggers in your behavior.
+
+
 # Webots
 
 Key       |Effect

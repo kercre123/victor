@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cmath>
 
 namespace AnkiTypes {}
 using namespace AnkiTypes;
@@ -160,6 +161,61 @@ int test_MyMessage()
   }
 }
 
+int test_StructWithInit()
+{
+  printf("Test StructWithInit:\n");
+
+  StructWithInit s;
+  NestStructWithInit n;
+  StructWithInitVerbatim v;
+  UnionStructWithInit u;
+  
+  if( s.boolFalse == false &&
+      s.boolTrue == true &&
+      s.intA == 0xA &&
+      s.intC1A2B3 == 0xC1A2B3 &&
+      s.uint63 == 63 &&
+      std::abs(s.floatPi - 3.1415) < 1e-6 ) {
+    printf("PASS StructWithInit\n");
+  } else {
+    printf("FAIL StructWithInit initialized with incorrect values\n");
+    return 1;
+  }
+
+  if( n.int347 == 347 &&
+      n.inner.boolFalse == false &&
+      n.inner.boolTrue == true &&
+      n.inner.intA == 0xA &&
+      n.inner.intC1A2B3 == 0xC1A2B3 &&
+      n.inner.uint63 == 63 &&
+      std::abs(n.inner.floatPi - 3.1415) < 1e-6) {
+    printf("PASS NestStructWithInit\n");
+  } else {
+    printf("FAIL NestStructWithInit\n");
+    return 1;
+  }
+
+  std::string expected = "Hello";
+
+  if( v.enum1 == AnkiEnum::myReallySilly_EnumVal &&
+      expected.compare(v.strHello)==0 ) {
+    printf("PASS StructWithInitVerbatim\n");
+  } else {
+    printf("FAIL StructWithInitVerbatim\n");
+    return 1;
+  }
+  
+  uint32_t expectedSize = 1; // for an uninitialized union, the size is just 1
+  if(!u.IsValid() && u.Size() == expectedSize && sizeof(u._padding)==3) {
+    printf("PASS UnionStructWithInit\n");
+  } else {
+    printf("FAIL UnionStructWithInit\n");
+    return 1;
+  }
+
+  return 0;
+}
+
 int main(int argc, char** argv)
 {
   // fix warnings
@@ -171,6 +227,9 @@ int main(int argc, char** argv)
   }
   if(!test_MyMessage()) {
     return 3;
+  }
+  if(!test_StructWithInit()) {
+    return 4;
   }
   return 0;
 }

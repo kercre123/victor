@@ -77,9 +77,6 @@ public:
     SigEsBeamformingOn      // Signal Essence beamforming processing
   };
   
-  // Set the processing state that is desired, system state can change the active processing state
-  void SetPreferredMicDataProcessingState(ProcessingState state) { _preferredProcState = state; }
-  
   // Stop processing data from mics
   void MuteMics(bool mute);
   
@@ -162,7 +159,6 @@ private:
   size_t _procAudioRawComplete = 0;
   size_t _procAudioXferCount = 0;
   std::atomic<ProcessingState> _activeProcState{ProcessingState::None};
-  std::atomic<ProcessingState> _preferredProcState{ProcessingState::None};
 
   // Mutex for different accessing signal essence software
   std::mutex _seInteractMutex;

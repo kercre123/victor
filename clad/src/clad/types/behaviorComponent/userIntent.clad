@@ -147,6 +147,8 @@ union dupes_allowed UserIntent
   UserIntent_Void             play_anygame,
   UserIntent_Void             play_anytrick,
   UserIntent_PlaySpecific     play_specific,
+  UserIntent_Void             seasonal_happyholidays,
+  UserIntent_Void             seasonal_happynewyear,
   UserIntent_TimeInSeconds    set_timer,
   UserIntent_Void             show_clock,
   UserIntent_Void             silence,

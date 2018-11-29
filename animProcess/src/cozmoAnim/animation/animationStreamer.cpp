@@ -38,10 +38,8 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
-#include "util/time/universalTime.h"
 #include "webServerProcess/src/webService.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -58,6 +56,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <vector>
+
+#define LOG_CHANNEL "Animations"
 
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
@@ -174,8 +174,6 @@ namespace Vector {
 #endif // ANKI_DEV_CHEATS
 
   namespace{
-
-  static const char* kLogChannelName = "Animations";
 
   static const std::string kWebVizModuleName = "animations";
 
@@ -312,8 +310,8 @@ namespace Vector {
   void ToggleKeepFaceAlive(ConsoleFunctionContextRef context)
   {
     s_enableKeepFaceAlive = !s_enableKeepFaceAlive;
-    PRINT_CH_INFO(kLogChannelName, "ConsoleFunc.ToggleKeepFaceAlive", "KeepFaceAlive now %s",
-                  (s_enableKeepFaceAlive ? "ON" : "OFF"));
+    LOG_INFO("ConsoleFunc.ToggleKeepFaceAlive", "KeepFaceAlive now %s",
+             (s_enableKeepFaceAlive ? "ON" : "OFF"));
   }
 
   CONSOLE_FUNC(ToggleKeepFaceAlive, CONSOLE_GROUP);
@@ -443,9 +441,9 @@ namespace Vector {
     }
     else
     {
-      PRINT_NAMED_ERROR("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
-                        "Could not find expected neutral face animation file called %s",
-                        neutralFaceAnimName.c_str());
+      LOG_ERROR("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
+                "Could not find expected neutral face animation file called %s",
+                neutralFaceAnimName.c_str());
     }
 
     // Do this after the ProceduralFace class has set to use the right neutral face
@@ -493,9 +491,9 @@ namespace Vector {
     // Special case: stop streaming the current animation
     if(name.empty()) {
       if(DEBUG_ANIMATION_STREAMING) {
-        PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.SetStreamingAnimation.StoppingCurrent",
-                       "Stopping streaming of animation '%s'.",
-                       GetStreamingAnimationName().c_str());
+        LOG_DEBUG("AnimationStreamer.SetStreamingAnimation.StoppingCurrent",
+                  "Stopping streaming of animation '%s'.",
+                  GetStreamingAnimationName().c_str());
       }
 
       Abort();
@@ -520,9 +518,8 @@ namespace Vector {
   {
     if(DEBUG_ANIMATION_STREAMING)
     {
-      PRINT_CH_DEBUG(kLogChannelName,
-                     "AnimationStreamer.SetStreamingAnimation", "Name:%s Tag:%d NumLoops:%d",
-                     anim != nullptr ? anim->GetName().c_str() : "NULL", tag, numLoops);
+      LOG_DEBUG("AnimationStreamer.SetStreamingAnimation", "Name:%s Tag:%d NumLoops:%d",
+                anim != nullptr ? anim->GetName().c_str() : "NULL", tag, numLoops);
     }
 
     const bool wasStreamingSomething = (nullptr != _streamingAnimation);
@@ -530,19 +527,17 @@ namespace Vector {
     if(wasStreamingSomething)
     {
       if(nullptr != anim && !interruptRunning) {
-        PRINT_CH_INFO(kLogChannelName,
-                      "AnimationStreamer.SetStreamingAnimation.NotInterrupting",
-                      "Already streaming %s, will not interrupt with %s",
-                      _streamingAnimation->GetName().c_str(),
-                      anim->GetName().c_str());
+        LOG_INFO("AnimationStreamer.SetStreamingAnimation.NotInterrupting",
+                 "Already streaming %s, will not interrupt with %s",
+                 _streamingAnimation->GetName().c_str(),
+                 anim->GetName().c_str());
         return RESULT_FAIL;
       }
 
-      PRINT_CH_INFO(kLogChannelName,
-                    "AnimationStreamer.SetStreamingAnimation.Aborting",
-                    "Animation %s is interrupting animation %s",
-                    anim != nullptr ? anim->GetName().c_str() : "NULL",
-                    _streamingAnimation->GetName().c_str());
+      LOG_INFO("AnimationStreamer.SetStreamingAnimation.Aborting",
+               "Animation %s is interrupting animation %s",
+               anim != nullptr ? anim->GetName().c_str() : "NULL",
+               _streamingAnimation->GetName().c_str());
 
       Abort(kNotAnimatingTag, shouldClearProceduralAnim);
     }
@@ -567,10 +562,9 @@ namespace Vector {
     _playingInternalAnim = isInternalAnim;
 
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_CH_DEBUG(kLogChannelName,
-                     "AnimationStreamer.SetStreamingAnimation",
-                     "Will start streaming '%s' animation %d times with tag=%d.",
-                     _streamingAnimation->GetName().c_str(), numLoops, tag);
+      LOG_DEBUG("AnimationStreamer.SetStreamingAnimation",
+                "Will start streaming '%s' animation %d times with tag=%d.",
+                _streamingAnimation->GetName().c_str(), numLoops, tag);
     }
 
     return RESULT_OK;
@@ -609,10 +603,9 @@ namespace Vector {
 
 #     if DEBUG_ANIMATION_STREAMING
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__) \
-                PRINT_CH_INFO(kLogChannelName, \
-                              "AnimationStreamer.SendAnimationMessages", \
-                              "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
-                              _relativeStreamTime_ms)
+                LOG_INFO("AnimationStreamer.SendAnimationMessages", \
+                         "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
+                         _relativeStreamTime_ms)
 #     else
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
 #     endif
@@ -676,9 +669,9 @@ namespace Vector {
 
     if (msg.imageId != _faceImageId) {
       if (_faceImageChunksReceivedBitMask != 0) {
-        PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageChunk.UnfinishedFace",
-                            "Overwriting ID %d with ID %d",
-                            _faceImageId, msg.imageId);
+        LOG_WARNING("AnimationStreamer.Process_displayFaceImageChunk.UnfinishedFace",
+                    "Overwriting ID %d with ID %d",
+                    _faceImageId, msg.imageId);
       }
       _faceImageId = msg.imageId;
       _faceImageChunksReceivedBitMask = 1 << msg.chunkIndex;
@@ -707,7 +700,7 @@ namespace Vector {
       auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
       img->SetFromGray(_faceImageGrayscale);
       auto handle = std::make_shared<Vision::SpriteWrapper>(img);
-      //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageChunk.CompleteFaceReceived", "");
+      //LOG_DEBUG("AnimationStreamer.Process_displayFaceImageChunk.CompleteFaceReceived", "");
       const bool shouldRenderInEyeHue = true;
       SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
       _faceImageId = 0;
@@ -724,9 +717,9 @@ namespace Vector {
 
     if (msg.imageId != _faceImageGrayscaleId) {
       if (_faceImageGrayscaleChunksReceivedBitMask != 0) {
-        PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageGrayscaleChunk.UnfinishedFace",
-                            "Overwriting ID %d with ID %d",
-                            _faceImageGrayscaleId, msg.imageId);
+        LOG_WARNING("AnimationStreamer.Process_displayFaceImageGrayscaleChunk.UnfinishedFace",
+                    "Overwriting ID %d with ID %d",
+                    _faceImageGrayscaleId, msg.imageId);
       }
       _faceImageGrayscaleId = msg.imageId;
       _faceImageGrayscaleChunksReceivedBitMask = 1 << msg.chunkIndex;
@@ -743,7 +736,7 @@ namespace Vector {
       auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
       img->SetFromGray(_faceImageGrayscale);
       auto handle = std::make_shared<Vision::SpriteWrapper>(img);
-      //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageGrayscaleChunk.CompleteFaceReceived", "");
+      //LOG_DEBUG("AnimationStreamer.Process_displayFaceImageGrayscaleChunk.CompleteFaceReceived", "");
       const bool shouldRenderInEyeHue = true;
       SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
       _faceImageGrayscaleId = 0;
@@ -755,9 +748,9 @@ namespace Vector {
   {
     if (msg.imageId != _faceImageRGBId) {
       if (_faceImageRGBChunksReceivedBitMask != 0) {
-        PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.UnfinishedFace",
-                            "Overwriting ID %d with ID %d",
-                            _faceImageRGBId, msg.imageId);
+        LOG_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.UnfinishedFace",
+                    "Overwriting ID %d with ID %d",
+                    _faceImageRGBId, msg.imageId);
       }
       _faceImageRGBId = msg.imageId;
       _faceImageRGBChunksReceivedBitMask = 1 << msg.chunkIndex;
@@ -773,7 +766,7 @@ namespace Vector {
       auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
       img->SetFromRGB565(_faceImageRGB565);
       auto handle = std::make_shared<Vision::SpriteWrapper>(img);
-      //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
+      //LOG_DEBUG("AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
       const bool shouldRenderInEyeHue = false;
       SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
       _faceImageRGBId = 0;
@@ -787,9 +780,9 @@ namespace Vector {
     if(_compositeImageBuilder != nullptr){
       if(msg.compositeImageID != _compositeImageID){
         _compositeImageBuilder.reset();
-        PRINT_NAMED_WARNING("AnimationStreamer.Process_displayCompositeImageChunk.MissingChunk",
-                            "Composite image was being built with image ID %d, but new ID %d received so wiping image",
-                            _compositeImageID, msg.compositeImageID);
+        LOG_WARNING("AnimationStreamer.Process_displayCompositeImageChunk.MissingChunk",
+                    "Composite image was being built with image ID %d, but new ID %d received so wiping image",
+                    _compositeImageID, msg.compositeImageID);
       }
     }
     _compositeImageID = msg.compositeImageID;
@@ -971,8 +964,8 @@ namespace Vector {
 
       keyframe.QueueCompositeImageUpdate(std::move(spec), applyAt_ms);
     }else{
-      PRINT_NAMED_WARNING("AnimationStreamer.UpdateCompositeImage.NoCompositeImage",
-                          "Keyframe does not have a composite image to update");
+      LOG_WARNING("AnimationStreamer.UpdateCompositeImage.NoCompositeImage",
+                  "Keyframe does not have a composite image to update");
     }
 
 
@@ -986,14 +979,13 @@ namespace Vector {
     if (nullptr != _streamingAnimation &&
         (tag == _tag || tag == kNotAnimatingTag) )
     {
-      PRINT_CH_INFO(kLogChannelName,
-                    "AnimationStreamer.Abort",
-                    "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
-                    _tag,
-                    _streamingAnimation->GetName().c_str(),
-                    _streamingAnimation->HasFramesLeft(),
-                    _startOfAnimationSent,
-                    _endOfAnimationSent);
+      LOG_INFO("AnimationStreamer.Abort",
+               "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
+               _tag,
+               _streamingAnimation->GetName().c_str(),
+               _streamingAnimation->HasFramesLeft(),
+               _startOfAnimationSent,
+               _endOfAnimationSent);
 
       StopTracksInUse();
 
@@ -1095,7 +1087,7 @@ namespace Vector {
             break;
           default:
             // Audio, face, and event frames are handled separately since they don't actually result in a EngineToRobot message
-            PRINT_NAMED_WARNING("AnimationStreamer.SendIfTrackUnlocked.InvalidTrack", "%s", EnumToString(track));
+            LOG_WARNING("AnimationStreamer.SendIfTrackUnlocked.InvalidTrack", "%s", EnumToString(track));
             break;
         }
       }
@@ -1112,9 +1104,9 @@ namespace Vector {
         const auto maxSpacing_ms = _proceduralTrackComponent->GetMaxBlinkSpacingTimeForScreenProtection_ms();
         if( newValue > maxSpacing_ms)
         {
-          PRINT_NAMED_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
-                              "Clamping max blink spacing to %dms to avoid screen burn-in",
-                              maxSpacing_ms);
+          LOG_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
+                      "Clamping max blink spacing to %dms to avoid screen burn-in",
+                      maxSpacing_ms);
 
           newValue = maxSpacing_ms;
         }
@@ -1137,9 +1129,8 @@ namespace Vector {
     }
 
     _keepFaceAliveParams[whichParam] = newValue;
-    PRINT_CH_DEBUG(kLogChannelName,
-                   "AnimationStreamer.SetParam", "%s : %f",
-                   EnumToString(whichParam), newValue);
+    LOG_DEBUG("AnimationStreamer.SetParam", "%s : %f",
+              EnumToString(whichParam), newValue);
   }
 
 
@@ -1503,9 +1494,8 @@ namespace Vector {
     const std::string& streamingAnimName = _streamingAnimation->GetName();
 
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_CH_DEBUG(kLogChannelName,
-                     "AnimationStreamer.SendStartOfAnimation", "Tag=%d, Name=%s, loopCtr=%d",
-                     _tag, streamingAnimName.c_str(), _loopCtr);
+      LOG_DEBUG("AnimationStreamer.SendStartOfAnimation", "Tag=%d, Name=%s, loopCtr=%d",
+                _tag, streamingAnimName.c_str(), _loopCtr);
     }
 
     if (_loopCtr == 0) {
@@ -1541,9 +1531,8 @@ namespace Vector {
     const std::string& streamingAnimName = _streamingAnimation->GetName();
 
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_CH_INFO(kLogChannelName,
-                    "AnimationStreamer.SendEndOfAnimation", "Tag=%d, Name=%s, t=%dms, loopCtr=%d, numLoops=%d",
-                    _tag, streamingAnimName.c_str(), _relativeStreamTime_ms, _loopCtr, _numLoops);
+      LOG_INFO("AnimationStreamer.SendEndOfAnimation", "Tag=%d, Name=%s, t=%dms, loopCtr=%d, numLoops=%d",
+               _tag, streamingAnimName.c_str(), _relativeStreamTime_ms, _loopCtr, _numLoops);
     }
 
     if (abortingAnim || (_loopCtr == _numLoops - 1)) {
@@ -1606,8 +1595,8 @@ namespace Vector {
     Result lastResult = RESULT_OK;
 
     if(!_streamingAnimation->IsInitialized()) {
-      PRINT_NAMED_ERROR("Animation.Update", "%s: Animation must be initialized before it can be played/updated.",
-                        _streamingAnimation != nullptr ? _streamingAnimation->GetName().c_str() : "<NULL>");
+      LOG_ERROR("Animation.Update", "%s: Animation must be initialized before it can be played/updated.",
+                _streamingAnimation != nullptr ? _streamingAnimation->GetName().c_str() : "<NULL>");
       return RESULT_FAIL;
     }
 
@@ -1629,9 +1618,8 @@ namespace Vector {
 
     if(DEBUG_ANIMATION_STREAMING) {
       // Very verbose!
-      //PRINT_CH_INFO(kLogChannelName,
-      //              "Animation.Update", "%d bytes left to send this Update.",
-      //              numBytesToSend);
+      //LOG_INFO("Animation.Update", "%d bytes left to send this Update.",
+      //         umBytesToSend);
     }
 
     // Tracks which have no procedural alterations - grab any messages directly
@@ -1772,11 +1760,10 @@ namespace Vector {
 
         if(_numLoops == 0 || _loopCtr < _numLoops) {
          if(DEBUG_ANIMATION_STREAMING) {
-           PRINT_CH_INFO(kLogChannelName,
-                         "AnimationStreamer.Update.Looping",
-                         "Finished loop %d of %d of '%s' animation. Restarting.",
-                         _loopCtr, _numLoops,
-                         _streamingAnimation->GetName().c_str());
+           LOG_INFO("AnimationStreamer.Update.Looping",
+                    "Finished loop %d of %d of '%s' animation. Restarting.",
+                    _loopCtr, _numLoops,
+                    _streamingAnimation->GetName().c_str());
          }
 
           // Reset the animation so it can be played again:
@@ -1788,10 +1775,9 @@ namespace Vector {
         }
         else {
           if(DEBUG_ANIMATION_STREAMING) {
-            PRINT_CH_INFO(kLogChannelName,
-                          "AnimationStreamer.Update.FinishedStreaming",
-                          "Finished streaming '%s' animation.",
-                          _streamingAnimation->GetName().c_str());
+            LOG_INFO("AnimationStreamer.Update.FinishedStreaming",
+                     "Finished streaming '%s' animation.",
+                     _streamingAnimation->GetName().c_str());
           }
 
           _streamingAnimation = nullptr;
@@ -1812,8 +1798,8 @@ namespace Vector {
           StopTracksInUse(false);
           lastResult = SendEndOfAnimation();
           if (_animAudioClient->HasActiveEvents()) {
-            PRINT_NAMED_WARNING("AnimationStreamer.ExtractMessagesFromStreamingAnim.EndOfAnimation.ActiveAudioEvent",
-                                "AnimName: '%s'", _streamingAnimation->GetName().c_str());
+            LOG_WARNING("AnimationStreamer.ExtractMessagesFromStreamingAnim.EndOfAnimation.ActiveAudioEvent",
+                        "AnimName: '%s'", _streamingAnimation->GetName().c_str());
           }
         }
       }
@@ -2000,7 +1986,7 @@ namespace Vector {
 
   void AnimationStreamer::SetDefaultKeepFaceAliveParams()
   {
-    PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
+    LOG_DEBUG("AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
 
     for(auto param = Util::EnumToUnderlying(KeepFaceAliveParameter::BlinkSpacingMinTime_ms);
         param != Util::EnumToUnderlying(KeepFaceAliveParameter::NumParameters); ++param) {
@@ -2232,14 +2218,14 @@ namespace Vector {
         static const std::set<std::string> knownIssues = {
           "anim_lookatphone_loop_01",
           "anim_onboarding_wakeword_getin_01",
-          "anim_alexaint_l_getin_03",
-          "anim_alexaint_suddenspeak_03",
+          "anim_avs_l_getin_03",
+          "anim_avs_suddenspeak_03",
           "PROCEDURAL_ANIM",
         };
         if(knownIssues.find(animName) == knownIssues.end()) {
-          PRINT_NAMED_WARNING("AnimationStreamer.InvalidateBannedTracks.UnknownIssue",
-                              "Animation '%s' did not have its body track locked when on the charger",
-                              animName.c_str());
+          LOG_WARNING("AnimationStreamer.InvalidateBannedTracks.UnknownIssue",
+                      "Animation '%s' did not have its body track locked when on the charger",
+                      animName.c_str());
         }
       }
     }

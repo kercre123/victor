@@ -47,6 +47,7 @@ var (
 	switchboardManager SwitchboardIpcManager
 	engineProtoManager EngineProtoIpcManager
 	tokenManager       ClientTokenManager
+	bleProxy           BLEProxy
 
 	// TODO: remove clad socket and map when there are no more clad messages being used
 	engineCladManager EngineCladIpcManager
@@ -229,11 +230,21 @@ func main() {
 
 	log.Println("Hostname:", robotHostname)
 
-	dcreds := credentials.NewTLS(&tls.Config{
+	tlsConf := &tls.Config{
 		ServerName:   robotHostname,
 		Certificates: []tls.Certificate{*demoKeyPair},
 		RootCAs:      demoCertPool,
-	})
+	}
+	bleProxy = BLEProxy{
+		Client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: tlsConf,
+			},
+		},
+		Address: addr,
+	}
+	bleProxy.initialize(grpcServer.GetServiceInfo())
+	dcreds := credentials.NewTLS(tlsConf)
 	dopts := []grpc.DialOption{grpc.WithTransportCredentials(dcreds)}
 
 	gwmux := grpcRuntime.NewServeMux(grpcRuntime.WithMarshalerOption(grpcRuntime.MIMEWildcard, &grpcRuntime.JSONPb{EmitDefaults: true, OrigName: true, EnumsAsInts: true}))

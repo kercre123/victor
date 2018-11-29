@@ -50,9 +50,9 @@ if (!(x)) { \
 #define COMBINE1(X,Y) X##Y  // helper macro
 #define COMBINE(X,Y) COMBINE1(X,Y)
   
-#define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
+#define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double COMBINE(startTime,__LINE__) = GetSupervisor().getTime(); if (IsTrueBeforeTimeout(cond, #cond, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
   
-#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor()->getTime(); \
+#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double COMBINE(startTime,__LINE__) = GetSupervisor().getTime(); \
                                                             if(AllTrueBeforeTimeout({__VA_ARGS__}, {PP_STRINGIZE_X(__VA_ARGS__)}, COMBINE(startTime,__LINE__), timeout, __FILE__, __FUNCTION__, __LINE__))
 
   

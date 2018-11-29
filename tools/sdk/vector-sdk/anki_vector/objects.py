@@ -1413,7 +1413,6 @@ class FixedCustomObject(util.Component):
         import time
 
         with anki_vector.Robot(enable_custom_object_detection=True) as robot:
-            time.sleep(1.0)
             robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                    10, 100, 100, relative_to_robot=True)
     """
@@ -1456,7 +1455,6 @@ class FixedCustomObject(util.Component):
             import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
-                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.object_id))
@@ -1481,7 +1479,6 @@ class FixedCustomObject(util.Component):
             import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
-                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object id: {0}'.format(obj.pose))
@@ -1499,7 +1496,6 @@ class FixedCustomObject(util.Component):
             import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
-                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1517,7 +1513,6 @@ class FixedCustomObject(util.Component):
             import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
-                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))
@@ -1535,7 +1530,6 @@ class FixedCustomObject(util.Component):
             import time
 
             with anki_vector.Robot(enable_custom_object_detection=True) as robot:
-                time.sleep(1.0)
                 obj = robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                                   10, 100, 100, relative_to_robot=True)
                 print('fixed custom object size: {0}mm x {1}mm x {2}mm'.format(obj.x_size_mm, obj.y_size_mm, obj.z_size_mm))

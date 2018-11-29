@@ -418,12 +418,6 @@ namespace Anki {
       HandleRobotOffTreadsStateChanged(msg);
       UpdateVizOriginToRobot();
     }
-
-    void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
-    {
-      PRINT_NAMED_INFO("UiGameController.HandleEngineLoadingStatus.RatioComplete", "%f", msg.ratioComplete);
-      _engineLoadedRatio = msg.ratioComplete;
-    }
     
     void UiGameController::HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg)
     {
@@ -621,9 +615,6 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGameTag::EngineErrorCodeMessage:
             HandleEngineErrorCodeBase(message.Get_EngineErrorCodeMessage());
             break;
-          case ExternalInterface::MessageEngineToGameTag::EngineLoadingDataStatus:
-            HandleEngineLoadingStatusBase(message.Get_EngineLoadingDataStatus());
-            break;
           case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
             HandleFaceEnrollmentCompletedBase(message.Get_FaceEnrollmentCompleted());
             break;
@@ -673,19 +664,7 @@ namespace Anki {
           if (!_gameComms->HasClient()) {
             return 0;
           } else {
-            _uiState = UI_WAITING_FOR_ENGINE_LOAD;
-          }
-          break;
-        }
-          
-        case UI_WAITING_FOR_ENGINE_LOAD:
-        {
-          _msgHandler.ProcessMessages();
-          
-          if (_engineLoadedRatio >= 1.0f)
-          {
             _uiState = UI_RUNNING;
-            
             OnEngineLoaded();
           }
           break;
@@ -1738,9 +1717,9 @@ namespace Anki {
       return _stepTimeMS;
     }
     
-    webots::Supervisor* UiGameController::GetSupervisor()
+    webots::Supervisor& UiGameController::GetSupervisor()
     {
-      return &_supervisor;
+      return _supervisor;
     }
     
     const Pose3d& UiGameController::GetRobotPose() const
@@ -1981,7 +1960,7 @@ namespace Anki {
     const std::string UiGameController::GetAnimationTestName() const
     {
       std::string animTestName;
-      WebotsHelpers::GetFieldAsString(_robotNode, "animationTestName", animTestName);
+      WebotsHelpers::GetFieldAsString(*_robotNode, "animationTestName", animTestName);
       return animTestName;
     }
 
@@ -2080,7 +2059,7 @@ namespace Anki {
       << p.GetRotationAxis().x() << " " << p.GetRotationAxis().y() << " " << p.GetRotationAxis().z() << " "
       << p.GetRotationAngle().ToFloat() << " }";
       
-      webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
+      webots::Field* rootChildren = GetSupervisor().getRoot()->getField("children");
       int numRootChildren = rootChildren->getCount();
       rootChildren->importMFNodeFromString(numRootChildren, ss.str());
       

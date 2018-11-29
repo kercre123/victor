@@ -54,6 +54,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <PlaylistParser/UrlContentToAttachmentConverter.h>
 #include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterfaceFactoryInterface.h>
 #include <AVSCommon/Utils/RequiresShutdown.h>
+#include "minimp3/minimp3.h"
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
@@ -172,6 +173,8 @@ private:
   void SavePCM( short* buff, size_t size=0 ) const;
   void SaveMP3( const unsigned char* buff, size_t size=0 ) const;
 
+  mp3dec_t _mp3decoder;
+  
   enum class State {
     Idle=0,
     Preparing,
@@ -210,12 +213,10 @@ private:
   // audio controller provided by context
   AudioController* _audioController = nullptr;
   
-  // Audio play control events
-  AudioMetaData::GameEvent::GenericEvent      _playEvent;
-  AudioMetaData::GameEvent::GenericEvent      _pauseEvent;
-  AudioMetaData::GameEvent::GenericEvent      _resumeEvent;
-  AudioMetaData::GameParameter::ParameterType _volumeParameter;
-  uint8_t                                     _pluginId;
+  // The ideal amount of audio samples in buffer
+  size_t _idealBufferSampleSize;
+  // Size of buffer before starting playback
+  size_t _minPlaybackBufferSize;
 
   /// Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;

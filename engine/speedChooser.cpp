@@ -18,6 +18,8 @@
 
 #include <limits>
 
+#define LOG_CHANNEL "SpeedChooser"
+
 namespace Anki {
   namespace Vector{
       
@@ -58,28 +60,28 @@ namespace Anki {
       // Reverse speed 75% of forward speed
       motionProfile.reverseSpeed_mmps = motionProfile.speed_mmps * 0.75f;
       
-      PRINT_NAMED_INFO("SpeedChooser.GetPathMotionProfile", "distToGoal:%f using speed:%f revSpeed:%f accel:%f",
-                       distToObject,
-                       motionProfile.speed_mmps,
-                       motionProfile.reverseSpeed_mmps,
-                       motionProfile.accel_mmps2);
+      LOG_INFO("SpeedChooser.GetPathMotionProfile", "distToGoal:%f using speed:%f revSpeed:%f accel:%f",
+               distToObject,
+               motionProfile.speed_mmps,
+               motionProfile.reverseSpeed_mmps,
+               motionProfile.accel_mmps2);
       
       return motionProfile;
     }
     
     PathMotionProfile SpeedChooser::GetPathMotionProfile(const std::vector<Pose3d>& goals)
     {
-      if(goals.size() == 0)
+      if(goals.empty())
       {
-        PRINT_NAMED_WARNING("SpeedChooser.GetPathMotionProfile",
-                            "Number of goal poses is 0 returning default motion profile");
+        LOG_WARNING("SpeedChooser.GetPathMotionProfile",
+                    "Number of goal poses is 0; returning default motion profile");
         return DEFAULT_PATH_MOTION_PROFILE;
       }
       
       // Pick the goal pose that is closest to the robot
       Pose3d closestPoseToRobot = goals.front();
       f32 closestDist = std::numeric_limits<float>::max();
-      for(auto & pose : goals)
+      for(const auto & pose : goals)
       {
         Pose3d p;
         pose.GetWithRespectTo(_robot.GetPose(), p);

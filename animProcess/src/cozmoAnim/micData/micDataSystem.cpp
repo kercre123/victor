@@ -217,7 +217,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
-      const Alexa* alexa = _context->GetAlexa();
+      Alexa* alexa = _context->GetAlexa();
       ASSERT_NAMED(alexa != nullptr, "");
       alexa->NotifyOfTapToTalk();
     }
@@ -750,8 +750,8 @@ void MicDataSystem::ToggleMicMute()
     using namespace AudioEngine;
     using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
     const auto eventID = ToAudioEventId( _micMuted
-                                         ? GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_On
-                                         : GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_Off );
+                                         ? GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_State_Privacy_Mode_On
+                                         : GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_State_Privacy_Mode_Off );
     const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
     audioController->PostAudioEvent( eventID, gameObject );
   }

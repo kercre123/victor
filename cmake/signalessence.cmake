@@ -11,12 +11,7 @@ elseif (MACOSX)
 endif()
 
 # Signal Essence Lib Version
-option(SE_ECHO_LIB "Use Signal Essence Echo Canceling lib version" ON)
-set(SIGNALESSENCE_VERSION_PATH "v005") # Current v1.1 release version
-if (SE_ECHO_LIB)
-  set(SIGNALESSENCE_VERSION_PATH "v008") # Updated prototype version with Echo Cancelation
-  set (SE_ECHO_ENABLED 0)
-endif()
+set(SIGNALESSENCE_VERSION_PATH "v008") # Updated prototype version with Echo Cancelation
 
 message("Signal Essence lib ${SIGNALESSENCE_VERSION_PATH}")
 

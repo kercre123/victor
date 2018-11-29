@@ -12,7 +12,9 @@ enum uint_8 OnboardingPhase
   LookAtPhone,
   WakeUp,
   LookAtUser,
-  TeachWakeWord
+  TeachWakeWord,
+  TeachComeHere,
+  TeachMeetVictor
 }
 
 }

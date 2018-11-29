@@ -55,7 +55,7 @@ namespace Anki {
                                                      const char* func,
                                                      int line)
     {
-      if (GetSupervisor()->getTime() - start_time > timeout) {
+      if (GetSupervisor().getTime() - start_time > timeout) {
         if (!cond) {
           PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << " started at: " << start_time << ")");
           _result = 255;
@@ -85,7 +85,7 @@ namespace Anki {
       }
       
       // Some conditions were false. Check for timeout.
-      if (GetSupervisor()->getTime() - start_time > timeout) {
+      if (GetSupervisor().getTime() - start_time > timeout) {
         DEV_ASSERT(conditionStrings.size() == conditionBools.size(), "CozmoSimTestController.AllTrueBeforeTimeout.NumberOfConditionsMismatch");
 
         std::ostringstream msg;
@@ -115,7 +115,7 @@ namespace Anki {
       if(_screenshotInterval > 0){
         
         // Use simulated time intervals to decide _when_ to take the screen shots
-        const double simTime = GetSupervisor()->getTime();
+        const double simTime = GetSupervisor().getTime();
         
         if((simTime - _timeOfLastScreenshot) > _screenshotInterval)
         {
@@ -128,7 +128,7 @@ namespace Anki {
           
           std::stringstream ss;
           ss << kScreenShotsPath << _screenshotID << "_" << timeString << "_" << _screenshotNum << ".png";
-          GetSupervisor()->exportImage(ss.str(), 80);
+          GetSupervisor().exportImage(ss.str(), 80);
           
           PRINT_NAMED_INFO("CozmoSimTestController.UpdateInternal.TookScreenshot",
                            "ID:%s Num:%d Time:%s",
@@ -182,8 +182,8 @@ namespace Anki {
       time(&t);
       std::stringstream ss;
       ss << kBuildDirectory << name << ".mp4";
-      GetSupervisor()->movieStartRecording(ss.str(), 854, 480, 0, 90, speed, false);
-      _isRecording =  GetSupervisor()->getMovieStatus() == webots::Supervisor::MOVIE_RECORDING;
+      GetSupervisor().movieStartRecording(ss.str(), 854, 480, 0, 90, speed, false);
+      _isRecording =  GetSupervisor().getMovieStatus() == webots::Supervisor::MOVIE_RECORDING;
       PRINT_NAMED_INFO("Is Movie Recording?","_isRecording:%d", _isRecording);
     }
     
@@ -191,15 +191,15 @@ namespace Anki {
     
     void CozmoSimTestController::StopMovie()
     {
-      if(_isRecording && GetSupervisor()->getMovieStatus() == GetSupervisor()->MOVIE_RECORDING)
+      if(_isRecording && GetSupervisor().getMovieStatus() == GetSupervisor().MOVIE_RECORDING)
       {
-        GetSupervisor()->movieStopRecording();
+        GetSupervisor().movieStopRecording();
         PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie Stop Command issued");
         
-        while(GetSupervisor()->movieIsReady()){
+        while(GetSupervisor().movieIsReady()){
         }
 
-        if(GetSupervisor()->movieFailed()){
+        if(GetSupervisor().movieFailed()){
           PRINT_NAMED_ERROR("CozmoSimTestController.StopMovie", "Movie failed to save properly");
         }
         
@@ -257,7 +257,7 @@ namespace Anki {
 
     void CozmoSimTestController::PrintPeriodicBlockDebug()
     {
-      const double currTime_s = GetSupervisor()->getTime();
+      const double currTime_s = GetSupervisor().getTime();
       
       if( _nextPrintTime < 0 || currTime_s >= _nextPrintTime ) {
         _nextPrintTime = currTime_s + _printInterval_s;

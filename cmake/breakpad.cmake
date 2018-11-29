@@ -1,7 +1,7 @@
 #
 # breakpad.cmake
 #
-if (NOT TARGET minidump_stackwalk)
+if (NOT TARGET breakpad_client)
 set(BREAKPAD_PATH "${CMAKE_SOURCE_DIR}/lib/crash-reporting-vicos/Breakpad")
 set(BREAKPAD_INCLUDE_PATHS "${BREAKPAD_PATH}/include")
 set(BREAKPAD_LICENSE "BSD-4,${CMAKE_SOURCE_DIR}/licenses/breakpad.license")
@@ -17,7 +17,6 @@ if (VICOS)
     )
     set(BREAKPAD_EXE_PATH "${BREAKPAD_PATH}/bin/armeabi-v7a")
     set(BREAKPAD_EXES
-      minidump_stackwalk
     )
 endif()
 

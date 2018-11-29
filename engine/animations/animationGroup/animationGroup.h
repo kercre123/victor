@@ -69,7 +69,7 @@ namespace Util {
                                           float headAngleRad=0.f,
                                           bool strictCooldown=false) const;
       
-      Util::RandomGenerator&  _rng;
+      Util::RandomGenerator& _rng;
       
       // Name of this animation
       std::string _name;

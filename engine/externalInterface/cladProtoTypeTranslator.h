@@ -73,6 +73,8 @@ namespace CladProtoTypeTranslator {
   CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, WakeUp);
   CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, LookAtUser);
   CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, TeachWakeWord);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, TeachComeHere);
+  CLAD_PROTO_COMPARE_ASSERT(OnboardingPhase, TeachMeetVictor);
 
   CLAD_PROTO_COMPARE_ASSERT(OnboardingPhaseState, PhaseInvalid);
   CLAD_PROTO_COMPARE_ASSERT(OnboardingPhaseState, PhasePending);

@@ -96,11 +96,11 @@ void Alexa::Init(const AnimContext* context)
   // assume opted out. If there's a file indicating opted in, create the impl and try to authorize.
   // otherwise, wait for an engine msg saying to start authorization
   bool authenticatedLastBoot = DidAuthenticateLastBoot();
-  _needsReactivation = DidAuthenticateEver();
+  _authenticatedEver = DidAuthenticateEver();
   
   if( authenticatedLastBoot ) {
     SetAlexaActive( true );
-  } else if( _needsReactivation ) {
+  } else if( _authenticatedEver ) {
     // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
     // when they say the wake word, it plays "Your device isnt registered. For help, go it its companion app."
     // TODO: it might make sense to load the least sensitive model to avoid false positives
@@ -179,7 +179,7 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // create impl
     CreateImpl();
   } else if( !active && HasImpl() ) {
-    const auto simpleState = _needsReactivation ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
+    const auto simpleState = _authenticatedEver ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
     SetSimpleState( simpleState );
     DeleteImpl();
   }
@@ -188,6 +188,9 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // todo: we might want another option to delete the impl without deleting any data (this opt in file)
     // or logging out (in SetAlexaUsage()). That might be useful if we need to suddenly stop alexa during low
     // battery, etc
+
+    // turn off our notification lights
+    OnNotificationsChanged(false);
     
     DeleteOptInFile();
     if( deleteUserData ) {
@@ -322,6 +325,7 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
       _timeEnableWakeWord_s = -1.0f;
       SetAuthState( state );
       TouchOptInFiles();
+      _authenticatedEver = true;
       const auto simpleState = (_uxState == AlexaUXState::Idle) ? AlexaSimpleState::Idle : AlexaSimpleState::Active;
       SetSimpleState( simpleState );
     }
@@ -457,19 +461,23 @@ void Alexa::SetUXState( AlexaUXState newState )
     }
   }
   
-  // special cases to play audio events not handled by our getin process
-  // Speaking to Listening
-  // Listening to thinking
-  if( (oldState == AlexaUXState::Speaking) && (_uxState == AlexaUXState::Listening) ) {
-    // Play EarCon for follow up question
-    using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
-  } else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+  using namespace AudioEngine;
+  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+  // Play Audio Event for state change
+  if (_uxState == AlexaUXState::Listening) {
+    if ( (oldState == AlexaUXState::Idle) && (_notifyType != None) ) {
+      // Alexa triggered by voice or button press
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+      _notifyType = None;
+    }
+    else if (oldState == AlexaUXState::Speaking) {
+      // Play EarCon for follow up question
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+    }
+  }
+  else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
     // Play when listening ends
-    using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Endpointing ) );
+    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
   }
 }
   
@@ -621,38 +629,31 @@ void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, s
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfTapToTalk() const
+void Alexa::NotifyOfTapToTalk()
 {
   if( ANKI_VERIFY( _impl != nullptr,
                    "Alexa.NotifyOfTapToTalk.Disabled",
                    "Tap-to-talk was issued when alexa was disabled" ) )
   {
+    _notifyType = Button;
     _impl->NotifyOfTapToTalk();
-    // Play button EarCon Audio Event
-    using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound_Touch ) );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex )
 {
-  using namespace AudioEngine;
-  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-  
   bool hasImpl = false;
   {
     std::lock_guard<std::mutex> lg{ _implMutex };
     if( _impl != nullptr ) {
+      _notifyType = Voice;
       _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
-      // Play speach trigger EarCon Audio Event
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Ful_Ui_Wakesound ) );
       hasImpl = true;
     }
   }
   
-  if( !hasImpl && _needsReactivation ) {
+  if( !hasImpl && _authenticatedEver ) {
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }

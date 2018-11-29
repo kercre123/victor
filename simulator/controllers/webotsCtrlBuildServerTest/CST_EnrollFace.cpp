@@ -117,7 +117,7 @@ void CST_EnrollFace::WaitToSetNewFacePose(double waitTime_sec, webots::Node* fac
   _facePoseChange.waitTime_sec = waitTime_sec;
   _nextState                   = newState;
   
-  _waitStartTime = GetSupervisor()->getTime();
+  _waitStartTime = GetSupervisor().getTime();
   
   SET_TEST_STATE(WaitForFacePoseChange);
 }
@@ -127,7 +127,7 @@ void CST_EnrollFace::LookDownAndTransition(TestState nextState, const std::funct
   SendMoveHeadToAngle(MIN_HEAD_ANGLE, 75.f, 100.f);
   SET_TEST_STATE(WaitForLookDown);
   _callback = fcn;
-  _waitStartTime = GetSupervisor()->getTime();
+  _waitStartTime = GetSupervisor().getTime();
   _nextState = nextState;
 }
   

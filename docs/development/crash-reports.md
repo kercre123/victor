@@ -27,93 +27,31 @@ On the TeamCity build server for victor builds, a build step automatically gener
 
 Instructions below are for generating symbolicated call stacks for local builds.
 
-## Manually create symbols and a call stack
+## Developer builds and symbolication of call stacks on OSX
 
-The idea here is to copy your 'full' binaries to a Linux VM, then run a script/tool to generate a symbols package, then run another tool to generate a call stack.
+To generate call stacks from a developer build you will need to:
 
-The tools need to run on a Linux VM. In the victor repo they can be found (along with these rough scripts) at `tools/crash-tools/linux`.  At some point we will clean these up into a simpler solution so this is more automated.
+1. Install noah
+1. Symbol files in breakpad format
+1. A crash dump file
+1. Execute `minidump_stackwalk`
 
-
-First, you need the `*.full` files from your build (that had the crash).  The processing of those files to create the symbols must be run on a Linux VM (NOT OSX), so first copy them to a VM, using a script like this:  [`copyFullBinariesToVM.sh`](/tools/crash-tools/linux/copyFullBinariesToVM.sh)
-
-```
-#!/bin/bash
-
-set -e
-
-REMOTE_HOST='pterry@10.10.7.148'
-DEST_FOLDER='/home/pterry/test'
-SRC_FOLDER='../github/Victor/_build/vicos/Release'
-
-echo "Copying *.full files from here to my VM"
-ssh $REMOTE_HOST "rm -rf $DEST_FOLDER/lib"
-ssh $REMOTE_HOST "rm -rf $DEST_FOLDER/bin"
-ssh $REMOTE_HOST "mkdir $DEST_FOLDER/lib"
-ssh $REMOTE_HOST "mkdir $DEST_FOLDER/bin"
-scp $SRC_FOLDER/lib/*.full $REMOTE_HOST:$DEST_FOLDER/lib/
-scp $SRC_FOLDER/bin/*.full $REMOTE_HOST:$DEST_FOLDER/bin/
-echo "DONE"
-```
-
-Next, on the VM, run the `dump_syms` tool (that has been built for Linux) with a script like this:  [`makeSyms.sh`](/tools/crash-tools/linux/makeSyms.sh)
+To install noah on OSX type:
 
 ```
-#!/bin/bash
-
-set -e
-
-echo "Renaming *.full -> * in bin and lib folders"
-pushd bin
-rename 's/\.full$//' *.full
-popd # bin
-pushd lib
-rename 's/\.so\.full$/\.so/' *.so.full
-popd # bin
-
-rm -rf symbols
-
-echo "Making symbols for * in bin folder"
-pushd bin
-for i in `ls *`; do
-    echo Processing ${i}...
-    ./../dump_syms $i . > $i.sym || ./../dump_syms -v $i > $i.sym
-    VER=`head -1 $i.sym | awk '{print $4;}'`
-    mkdir -p ../symbols/$i/$VER
-    mv $i.sym ../symbols/$i/$VER/
-done
-popd # bin
-
-echo "Making symbols for *.so in lib folder"
-pushd lib
-for i in `ls *.so`; do
-    echo Processing ${i}...
-    ./../dump_syms $i . > $i.sym || ./../dump_syms -v $i > $i.sym
-    VER=`head -1 $i.sym | awk '{print $4;}'`
-    mkdir -p ../symbols/$i/$VER
-    mv $i.sym ../symbols/$i/$VER/
-done
-popd # lib
+brew install linux-noah/noah/noah
 ```
 
-Now copy the symbols off the VM and package them with something like this:  [`copySymsFromVM.sh`](/tools/crash-tools/linux/copySymsFromVM.sh)
+then to generate symbol files, copy the crash dump file and execute `minidump_stackwalk` type:
 
-```#!/bin/bash
-
-set -e
-
-REMOTE_HOST='pterry@10.10.7.148'
-REMOTE_FOLDER='/home/pterry/test'
-
-echo "Copying symbols from VM"
-rm -rf symbols
-scp -rp $REMOTE_HOST:$REMOTE_FOLDER/symbols/ .
-
-echo "Creating compressed tar file"
-rm -f symbols.tar.gz
-tar -czf symbols.tar.gz symbols/
-
-echo "DONE"
+```
+./project/victor/scripts/victor-show-minidump.py -d -c Debug vic-anim-V0-2018-11-14T14-27-50-459.dmp
 ```
 
-Finally, run the `minidump_stackwalk` tool, giving it the name of the symbols package, and the name of the crash dump file, and it outputs a call stack.  This must be run on Linux OS, not OSX or VICOS.
+`-d` instructs `victor-show-minidump.py` to generate the symbol files by executing `dump_syms`
 
+`-c Debug` indicates a `Debug` build, switch to `Release` as necessary
+
+`vic-anim-V0-2018-11-14T14-27-50-459.dmp` is the name of a dump file, if it has been handled on the robot it may have the extension `.local` or `.uploaded`, `/data/data/com.anki.victor/cache/crashDumps/` will be prepended automatically.
+
+If you have already copied the dump file from your robot use `-s` to skip the copy.

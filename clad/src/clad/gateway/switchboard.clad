@@ -22,6 +22,20 @@ message ClientGuidRefreshRequest{
 message ClientGuidRefreshResponse{
 }
 
+message SdkProxyRequest {
+  string            clientGuid,
+  string            messageId,
+  string            path,
+  string[uint_16]   json,
+}
+
+message SdkProxyResponse {
+  string            messageId,
+  uint_16           statusCode,
+  string            contentType,
+  string[uint_16]   content,
+}
+
 union SwitchboardRequest {
   SwitchboardError            SwitchboardError            = 0x01,
   Anki::Vector::AuthRequest   AuthRequest                 = 0x02,
@@ -29,6 +43,7 @@ union SwitchboardRequest {
   ExternalConnectionRequest   ExternalConnectionRequest   = 0x04,
   ExternalConnectionResponse  ExternalConnectionResponse  = 0x05,
   ClientGuidRefreshResponse   ClientGuidRefreshResponse   = 0x06,
+  SdkProxyResponse            SdkProxyResponse             = 0x07,
 }
 
 union SwitchboardResponse {
@@ -38,6 +53,7 @@ union SwitchboardResponse {
   ExternalConnectionRequest   ExternalConnectionRequest   = 0x04,
   ExternalConnectionResponse  ExternalConnectionResponse  = 0x05,
   ClientGuidRefreshRequest    ClientGuidRefreshRequest    = 0x06,
+  SdkProxyRequest             SdkProxyRequest            = 0x07,
 }
 
 } // namespace Switchboard

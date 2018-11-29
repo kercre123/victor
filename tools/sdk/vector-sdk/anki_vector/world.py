@@ -22,6 +22,7 @@ see with its camera.
 # __all__ should order by constants, event classes, other classes, functions.
 __all__ = ['World']
 
+from concurrent import futures
 from typing import Iterable
 
 from . import faces
@@ -653,14 +654,13 @@ class World(util.Component):
         self.logger.error("Failed to define Custom Object %s", custom_object_archetype)
         return None
 
-    @connection.on_connection_thread(requires_control=False)
-    async def create_custom_fixed_object(self,
-                                         pose: util.Pose,
-                                         x_size_mm: float,
-                                         y_size_mm: float,
-                                         z_size_mm: float,
-                                         relative_to_robot: bool = False,
-                                         use_robot_origin: bool = True) -> objects.FixedCustomObject:
+    def create_custom_fixed_object(self,
+                                   pose: util.Pose,
+                                   x_size_mm: float,
+                                   y_size_mm: float,
+                                   z_size_mm: float,
+                                   relative_to_robot: bool = False,
+                                   use_robot_origin: bool = True) -> objects.FixedCustomObject:
         """Defines a cuboid of custom size and places it in the world. It cannot be observed.
 
         :param pose: The pose of the object we are creating.
@@ -678,7 +678,6 @@ class World(util.Component):
             import time
 
             with anki_vector.Robot() as robot:
-                time.sleep(1.0)
                 robot.world.create_custom_fixed_object(Pose(100, 0, 0, angle_z=degrees(0)),
                                                        x_size_mm=10, y_size_mm=100, z_size_mm=100,
                                                        relative_to_robot=True)
@@ -698,13 +697,9 @@ class World(util.Component):
         if relative_to_robot:
             pose = self._robot.pose.define_pose_relative_this(pose)
 
-        req = protocol.CreateFixedCustomObjectRequest(
-            pose=pose.to_proto_pose_struct(),
-            x_size_mm=x_size_mm,
-            y_size_mm=y_size_mm,
-            z_size_mm=z_size_mm)
-
-        response = await self.grpc_interface.CreateFixedCustomObject(req)
+        response = self._create_custom_fixed_object(pose, x_size_mm, y_size_mm, z_size_mm)
+        if isinstance(response, futures.Future):
+            response = response.result()
 
         fixed_custom_object = self.fixed_custom_object_factory(
             self._robot,
@@ -717,6 +712,21 @@ class World(util.Component):
         if fixed_custom_object:
             self._objects[fixed_custom_object.object_id] = fixed_custom_object
         return fixed_custom_object
+
+    @connection.on_connection_thread(requires_control=False)
+    async def _create_custom_fixed_object(self,
+                                          pose: util.Pose,
+                                          x_size_mm: float,
+                                          y_size_mm: float,
+                                          z_size_mm: float):
+        """Send the CreateFixedCustomObject rpc call on the connection thread."""
+        req = protocol.CreateFixedCustomObjectRequest(
+            pose=pose.to_proto_pose_struct(),
+            x_size_mm=x_size_mm,
+            y_size_mm=y_size_mm,
+            z_size_mm=z_size_mm)
+
+        return await self.grpc_interface.CreateFixedCustomObject(req)
 
     #### Private Methods ####
 

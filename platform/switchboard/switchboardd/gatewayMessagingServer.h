@@ -18,6 +18,7 @@
 
 #include <string>
 #include <queue>
+#include <unordered_map>
 #include <signals/simpleSignal.hpp>
 #include "ev++.h"
 #include "coretech/messaging/shared/socketConstants.h"
@@ -34,6 +35,7 @@ namespace Switchboard {
 class GatewayMessagingServer {
   typedef std::function<void(bool, std::string)> ConnectionIdRequestCallback;
   typedef std::function<void(bool)> ClientGuidRefreshRequestCallback;
+  typedef std::function<void(std::string, uint16_t, std::string, std::string)> SdkProxyRequestCallback;
 
 public:
   using GatewayMessageSignal = Signal::Signal<void (SwitchboardRequest)>;
@@ -44,11 +46,14 @@ public:
 
   std::shared_ptr<SafeHandle> SendConnectionIdRequest(ConnectionIdRequestCallback callback);
   std::shared_ptr<SafeHandle> SendClientGuidRefreshRequest(ClientGuidRefreshRequestCallback callback);
+  std::shared_ptr<SafeHandle> SendSdkProxyRequest(std::string clientGuid, std::string id, std::string path, std::string json, SdkProxyRequestCallback callback);
+
 
   void HandleAuthRequest(const SwitchboardRequest& message);
   void HandleConnectionIdRequest(const SwitchboardRequest& message);
   void HandleConnectionIdResponse(const SwitchboardRequest& message);
   void HandleClientGuidRefreshResponse(const SwitchboardRequest& message);
+  void HandleSdkProxyResponse(const SwitchboardRequest& message);
   void ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken);
   static void sEvGatewayMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 
@@ -63,6 +68,11 @@ private:
 
   std::queue<ClientGuidRefreshRequestCallback> _refreshClientGuidRequestCallbackQueue;
   std::queue<std::weak_ptr<SafeHandle>> _refreshClientGuidRequestHandlesQueue;
+
+  // SdkProxyRequestCallback requires matching id, so we will 
+  // keep map instead of queue  
+  std::unordered_map<std::string, SdkProxyRequestCallback> _sdkProxyRequestCallbackQueue;
+  std::unordered_map<std::string, std::weak_ptr<SafeHandle>> _sdkProxyRequestHandlesQueue;
 
   bool SendMessage(const SwitchboardResponse& message);
 

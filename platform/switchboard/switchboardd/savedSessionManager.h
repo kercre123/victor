@@ -50,25 +50,27 @@ struct RtsKeys {
 
 class SavedSessionManager {
 public:
-  static void MigrateKeys();
+  static int MigrateKeys();
   static RtsKeys LoadRtsKeys();
-  static void SaveRtsKeys(RtsKeys& keys);
+  static int SaveRtsKeys(RtsKeys& keys);
   static std::string GetRobotName();
-  static const std::string kRtsKeyPath;
-  static const std::string kRtsKeyDataFile;
 
 private:
-  static bool HasMigrated();
+  static bool IsValidRtsKeysData(const std::vector<uint8_t>& data);
+  static RtsKeys LoadRtsKeysFromFile(const std::string& fileName, size_t length = 0);
+  static int SaveRtsKeysToFile(RtsKeys& keys,
+                               const std::string& fileName,
+                               size_t fileLength = 0);
   static RtsKeys LoadRtsKeysFactory();
-  static void ClearRtsKeysFactory();
+  static int ClearRtsKeysFactory(const std::string& name);
 
-  static const std::string kSaveFolder;
-  static const std::ios_base::openmode kWriteMode;
-  static const std::ios_base::openmode kReadMode;
+  static const std::string kRtsKeyPath;
+  static const std::string kRtsKeyDataFile;
   static const uint8_t kMaxNumberClients;
   static const char* kPrefix;
   static const uint32_t kNativeBufferSize;
-  static const uint8_t kMagicVersionNumber;
+  static const uint32_t kMagicVersionNumber;
+  static const uint32_t kInvalidVersionNumber;
 };
 
 } // Switchboard

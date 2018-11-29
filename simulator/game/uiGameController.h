@@ -329,7 +329,7 @@ protected:
 
   // ====== Accessors =====
   s32 GetStepTimeMS() const;
-  webots::Supervisor* GetSupervisor();
+  webots::Supervisor& GetSupervisor();
 
   PoseOriginList _poseOriginList;
   
@@ -499,7 +499,6 @@ private:
   void HandleCliffEventBase(const CliffEvent& msg);
   void HandleSetCliffDetectThresholdsBase(const SetCliffDetectThresholds& msg);
   void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);
-  void HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg);
   void HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg);
   void HandleRobotDeletedAllCustomObjectsBase(const ExternalInterface::RobotDeletedAllCustomObjects& msg);
   void HandleRobotDeletedCustomMarkerObjectsBase(const ExternalInterface::RobotDeletedCustomMarkerObjects& msg);
@@ -544,7 +543,6 @@ private:
   
   typedef enum {
     UI_WAITING_FOR_GAME = 0,
-    UI_WAITING_FOR_ENGINE_LOAD,
     UI_RUNNING
   } UI_State_t;
   
@@ -556,8 +554,6 @@ private:
   const Util::Data::DataPlatform* _dataPlatform = nullptr;
 
   UdpClient _physicsControllerClient;
-  
-  float _engineLoadedRatio = 0.0f;
   
   double _waitTimer = -1.0;
   

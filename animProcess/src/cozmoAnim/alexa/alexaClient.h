@@ -30,7 +30,9 @@
 #ifndef ANIMPROCESS_COZMO_ALEXA_ALEXACLIENT_H
 #define ANIMPROCESS_COZMO_ALEXA_ALEXACLIENT_H
 
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
+
 #include <memory>
 
 // todo: forward declare where possible. this is insane
@@ -236,8 +238,10 @@ private:
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsCapabilityAgent> _notificationsCapabilityAgent;
 
+#if ANKI_DEV_CHEATS
   // DEV-ONLY tool for testing
   std::shared_ptr<AlexaTemplateRuntimeStub> _templateRuntime;
+#endif
   
   std::shared_ptr<AlexaRevokeAuthHandler> _revokeAuthorizationHandler;
   

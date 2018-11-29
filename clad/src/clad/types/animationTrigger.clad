@@ -114,6 +114,7 @@ enum int_32 AnimationTrigger
   CubePounceReactToCube,
   CubePounceWinHand,
   CubePounceWinSession,
+  DanceBeatCantDoThat,
   DanceBeatEyeHold,
   DanceBeatGetIn,
   DanceBeatGetOut,
@@ -208,6 +209,9 @@ enum int_32 AnimationTrigger
   GazingLookAtVectorReaction,
   
   HighTemperatureWarningFace,
+
+  SeasonalHappyHolidays,
+  SeasonalHappyNewYear,
 
   ICantDoThat,
   InitialWakeUp,

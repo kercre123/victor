@@ -61,7 +61,7 @@ public:
   // compute immediately in the calling thread.
   // 
   // There are two versions of the function. They both take a single start pose, one takes multiple possible
-  // target poses, and one takes a single target pose. The one with multiple poses allows the planner to chose
+  // target poses, and one takes a single target pose. The one with multiple poses allows the planner to choose
   // which pose to drive to on its own. If the multiple goal poses version is not implemented, the single goal
   // will be selected which is the closest according to ComputeClosestGoalPose. The single pose function is
   // protected to simplify the external interface (simply pass a vector of one element if that is desired)

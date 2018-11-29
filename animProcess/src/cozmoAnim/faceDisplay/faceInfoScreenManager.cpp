@@ -232,10 +232,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     // Restore power mode as specified by engine
     SendAnimToRobot(_calmModeMsgOnNone);
 
-    RobotInterface::AutoCalmOnCharger autoCalmMsg;
-    autoCalmMsg.suppress = false;
-    SendAnimToRobot(std::move(autoCalmMsg));
-
     if (FACTORY_TEST) {
       InitConnectionFlow(animStreamer);
     }
@@ -246,10 +242,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     msg.enable = false;
     msg.calibOnDisable = false;
     SendAnimToRobot(std::move(msg));
-
-    RobotInterface::AutoCalmOnCharger autoCalmMsg;
-    autoCalmMsg.suppress = true;
-    SendAnimToRobot(std::move(autoCalmMsg));
   };
   SET_ENTER_ACTION(None, noneEnterFcn);
   SET_EXIT_ACTION(None, noneExitFcn);
@@ -1556,7 +1548,7 @@ void FaceInfoScreenManager::DrawMuteAnimation(AnimationStreamer* animStreamer)
   const bool muted = _context->GetMicDataSystem()->IsMicMuted();
   // The value of muted was set prior to this method call, so indicates a transition _to_ that state,
   // so play the on/off or off/on anim to reflect that
-  const std::string animName = muted ? "anim_mutemic_micoff_01" : "anim_mutemic_micon_01";
+  const std::string animName = muted ? "anim_micstate_micoff_01" : "anim_micstate_micon_01";
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;

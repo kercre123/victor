@@ -193,7 +193,7 @@ namespace Anki {
     
     RotationMatrix3d        GetRotationMatrix() const { return GetRotation().GetRotationMatrix(); }
     RotationVector3d        GetRotationVector() const { return GetRotation().GetRotationVector(); }
-    Vec3f                   GetRotationAxis()   const { return GetRotation().GetRotationVector().GetAxis(); }
+    Vec3f                   GetRotationAxis()   const { return GetRotation().GetAxis(); }
 
     // Get the rotation angle, optionally around a specific axis.
     // By default the rotation angle *around the pose's rotation axis* is
