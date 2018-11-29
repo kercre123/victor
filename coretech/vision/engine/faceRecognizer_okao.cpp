@@ -47,16 +47,16 @@ namespace Vision {
   //
 
   // Face must be recognized with score above this threshold to be considered a match
-  CONSOLE_VAR_RANGED(s32, kFaceRecognitionThreshold, "Vision.FaceRecognition", 750, 0, 1000);
+  CONSOLE_VAR_RANGED(s32, kFaceRecognitionThreshold, "Vision.FaceRecognition", 575, 0, 1000);
 
-  // Non-match must be this much less than the recognition threshold to trigger registering new user
+  // Non-match must be this much less than the recognition threshold to trigger registering a new session-only user
   CONSOLE_VAR_RANGED(s32, kFaceRecognitionThresholdMarginForAdding, "Vision.FaceRecognition", 200, 0, 1000);
 
   // Second-best named match when top match is session-only must be greater than FaceRecognition
   // threshold minus this margin to be used. This makes it a little easier to use 2nd best entry.
   // If there is 3rd best match that is also named but with different ID, it must also be this margin
   // _below_ the 2nd best match's score.
-  CONSOLE_VAR_RANGED(s32, kFaceRecognitionThresholdMarginForUsing2ndBest, "Vision.FaceRecognition", 75, 0, 1000);
+  CONSOLE_VAR_RANGED(s32, kFaceRecognitionThresholdMarginForUsing2ndBest, "Vision.FaceRecognition", 50, 0, 1000);
 
   // When enabled, this will merge the individual data elements of the session-only album entries
   // for two face records being merged. I don't believe this is a good idea anymore because
@@ -65,7 +65,7 @@ namespace Vision {
   CONSOLE_VAR(bool, kEnableMergingOfSessionOnlyAlbumEntries, "Vision.FaceRecognition", false);
 
   // Time between adding enrollment data for an existing user.
-  CONSOLE_VAR(f32, kTimeBetweenFaceEnrollmentUpdates_sec, "Vision.FaceRecognition", 1.f);
+  CONSOLE_VAR(f32, kTimeBetweenFaceEnrollmentUpdates_sec, "Vision.FaceRecognition", 0.5f);
 
   // If true, gets enrollment time from the image timestamp instead of system time.
   // This is especially useful for testing using image files, which may be processed
@@ -79,7 +79,7 @@ namespace Vision {
 
   CONSOLE_VAR_RANGED(u8, kFaceRec_MinSleepTime_ms, "Vision.FaceRecognition", 5, 1, 10);
 
-  CONSOLE_VAR_RANGED(u8, kFaceRecMaxDebugResults, "Vision.FaceRecognition", 2, 2, 10);
+  CONSOLE_VAR_RANGED(u8, kFaceRecMaxDebugResults, "Vision.FaceRecognition", 3, 2, 10);
 
   CONSOLE_VAR(bool, kFaceRecognitionExtraDebug, "Vision.FaceRecognition", false);
 
@@ -1805,7 +1805,7 @@ namespace Vision {
 
           ++nextIndex;
 
-        } while(nextMatchingID == matchingID && nextIndex < resultNum);
+        } while(nextIndex < resultNum);
 
       } // if(resultNum >= 2)
 
