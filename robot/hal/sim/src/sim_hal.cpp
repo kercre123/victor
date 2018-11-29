@@ -779,12 +779,14 @@ namespace Anki {
         proxData.signalIntensity  = 25.f;
         proxData.ambientIntensity = 0.25f;
         proxData.spadCount        = 90.f;
+        proxData.timestamp_ms     = HAL::GetTimeStamp();
       } else {
         // Calm mode values
         proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
         proxData.signalIntensity  = 0.f;
         proxData.ambientIntensity = 0.f;
         proxData.spadCount        = 200.f;
+        proxData.timestamp_ms     = HAL::GetTimeStamp();
       }
 
       return proxData;

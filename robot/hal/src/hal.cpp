@@ -810,12 +810,14 @@ ProxSensorDataRaw HAL::GetRawProxData()
     proxData.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
     // SPAD count is fixed point 8.8, so convert to float:
     proxData.spadCount        = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
+    proxData.timestamp_ms     = HAL::GetTimeStamp();
   } else {
     // Calm mode values
     proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
     proxData.signalIntensity  = 0.f;
     proxData.ambientIntensity = 0.f;
     proxData.spadCount        = 200.f;
+    proxData.timestamp_ms     = HAL::GetTimeStamp();
   }
   return proxData;
 }

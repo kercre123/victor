@@ -55,6 +55,7 @@ structure ProxSensorDataRaw {
   float_32    signalIntensity,  // the intensity of the light (expressed in millions of counts per second) return to the sensor
   float_32    ambientIntensity, // the intensity of light (expressed in millions of counts per second) in ambient conditions (i.e. emitter turned off)
   float_32    spadCount,        // effective number of SPADs (Single-photon Avalanche Diodes) used for the measurement
+  uint_32     timestamp_ms,     // time this reading was recorded (for low power modes)
   uint_16     distance_mm,      // reported distance in mm (includes corrective offset)
   RangeStatus rangeStatus,      // the ranging status reported by the device (see documentation for values)
   uint_8      padding,
@@ -62,3 +63,4 @@ structure ProxSensorDataRaw {
 
 } // namespace Vector
 } // namespace Anki
+
