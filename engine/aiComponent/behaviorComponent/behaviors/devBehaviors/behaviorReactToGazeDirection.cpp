@@ -168,8 +168,11 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
 {
   CompoundActionSequential* turnAction = new CompoundActionSequential();
   const auto& translation = gazePose.GetTranslation();
-  if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres) && FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres) ) &&
-     (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres) && FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres)) )
+  auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(kMaxTimeSinceTrackedFaceUpdated_ms);
+  if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres_mm) &&
+           FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres_mm) ) &&
+     (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres_mm) &&
+      FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres_mm)) )
       || ( makingEyeContact && kUseEyeContact) ) {
     // If we're making eye contact with the robot or looking at the robot
     CompoundActionSequential* turnAction = new CompoundActionSequential();
@@ -178,7 +181,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
     turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
     turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
     turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
-    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+    DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
 
   } else {
 
