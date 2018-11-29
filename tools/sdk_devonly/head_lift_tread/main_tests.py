@@ -7,7 +7,6 @@ import test_tread_motors as treadTest
 import head_test as headTest
 import time
 
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.getcwd())),'sdk/vector-sdk'))
 import anki_vector
 
 from anki_vector.util import degrees, distance_mm, speed_mmps

@@ -4,6 +4,7 @@ package cloudproc
 
 import (
 	"anki/cloudproc/dev"
+	"anki/token"
 	"net/http"
 )
 
@@ -12,8 +13,9 @@ var serveMux *http.ServeMux
 func init() {
 	serveMux = http.NewServeMux()
 	devServer = launchServer
-	addHandlerFunc = func(f func(*http.ServeMux)) {
+	addHandlerFunc = func(f func(*http.ServeMux), s *token.Server) {
 		f(serveMux)
+		token.TokenServer = s
 	}
 }
 

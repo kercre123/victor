@@ -418,12 +418,6 @@ namespace Anki {
       HandleRobotOffTreadsStateChanged(msg);
       UpdateVizOriginToRobot();
     }
-
-    void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
-    {
-      PRINT_NAMED_INFO("UiGameController.HandleEngineLoadingStatus.RatioComplete", "%f", msg.ratioComplete);
-      _engineLoadedRatio = msg.ratioComplete;
-    }
     
     void UiGameController::HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg)
     {
@@ -621,9 +615,6 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGameTag::EngineErrorCodeMessage:
             HandleEngineErrorCodeBase(message.Get_EngineErrorCodeMessage());
             break;
-          case ExternalInterface::MessageEngineToGameTag::EngineLoadingDataStatus:
-            HandleEngineLoadingStatusBase(message.Get_EngineLoadingDataStatus());
-            break;
           case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
             HandleFaceEnrollmentCompletedBase(message.Get_FaceEnrollmentCompleted());
             break;
@@ -673,19 +664,7 @@ namespace Anki {
           if (!_gameComms->HasClient()) {
             return 0;
           } else {
-            _uiState = UI_WAITING_FOR_ENGINE_LOAD;
-          }
-          break;
-        }
-          
-        case UI_WAITING_FOR_ENGINE_LOAD:
-        {
-          _msgHandler.ProcessMessages();
-          
-          if (_engineLoadedRatio >= 1.0f)
-          {
             _uiState = UI_RUNNING;
-            
             OnEngineLoaded();
           }
           break;

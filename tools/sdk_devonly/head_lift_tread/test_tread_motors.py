@@ -5,7 +5,6 @@ import os
 import sys
 import time
 
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.getcwd())),'sdk/vector-sdk'))
 import anki_vector
 from anki_vector.util import distance_mm, speed_mmps
 

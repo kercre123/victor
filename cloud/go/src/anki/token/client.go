@@ -18,11 +18,7 @@ type conn struct {
 }
 
 func newConn(identityProvider identity.Provider, serverURL string, creds credentials.PerRPCCredentials) (*conn, error) {
-	dialOpts, err := getDialOptions(identityProvider, creds)
-	if err != nil {
-		return nil, err
-	}
-	dialOpts = append(dialOpts, util.CommonGRPC()...)
+	dialOpts := append(getDialOptions(identityProvider, creds), util.CommonGRPC()...)
 	rpcConn, err := grpc.Dial(serverURL, dialOpts...)
 	if err != nil {
 		return nil, err
@@ -93,11 +89,11 @@ func (c *conn) Close() error {
 	return c.conn.Close()
 }
 
-func getDialOptions(identityProvider identity.Provider, creds credentials.PerRPCCredentials) ([]grpc.DialOption, error) {
+func getDialOptions(identityProvider identity.Provider, creds credentials.PerRPCCredentials) []grpc.DialOption {
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(identityProvider.TransportCredentials()))
 	if creds != nil {
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
 	}
-	return dialOpts, nil
+	return dialOpts
 }

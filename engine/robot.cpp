@@ -274,9 +274,9 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 
   LOG_INFO("Robot.Robot", "Created");
 
-  // Check for /run/data_cleared file
+  // Check for /tmp/data_cleared file
   // VIC-6069: OS needs to write this file following Clear User Data reboot
-  static const std::string dataClearedFile = "/run/data_cleared";
+  static const std::string dataClearedFile = "/tmp/data_cleared";
   if (Util::FileUtils::FileExists(dataClearedFile)) {
     DASMSG(robot_cleared_user_data, "robot.cleared_user_data", "User data was cleared");
     DASMSG_SEND();

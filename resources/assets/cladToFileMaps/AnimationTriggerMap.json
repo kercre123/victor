@@ -1893,5 +1893,13 @@
   {
     "CladEvent": "MovementTurnAround",
     "AnimName": "ag_movement_turnaround_01"
+  },
+  {
+   "CladEvent": "SeasonalHappyHolidays",
+   "AnimName": "ag_holiday_hh_lights"
+  },
+  {
+   "CladEvent": "SeasonalHappyNewYear",
+   "AnimName": "ag_holiday_hny"
   }
 ]

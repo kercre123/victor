@@ -121,6 +121,9 @@ private:
   IGatewayInterface*                                      _gatewayInterface = nullptr;
   Util::Data::DataPlatform*                               _dataPlatform = nullptr;
 
+  // for holding the thread id (and avoiding need to include cpuThreadId.h here)
+  std::unique_ptr<ThreadIDInternal> _threadIdHolder;
+
   // Context holds onto these things for everybody:
   std::unique_ptr<CozmoFeatureGate>                     _featureGate;
   std::unique_ptr<Util::RandomGenerator>                _random;
@@ -135,8 +138,6 @@ private:
   std::unique_ptr<WebService::WebService>               _webService;
   std::unique_ptr<AppToEngineHandler>                   _appToEngineHandler;
 
-  // for holding the thread id (and avoiding needed to include the .h here)
-  std::unique_ptr<ThreadIDInternal> _threadIdHolder;
 };
 
 

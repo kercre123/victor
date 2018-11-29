@@ -15,19 +15,11 @@ This lets a user communicate with webots via the SDK, and is required for vic-ga
 This script is called automatically as part of the mac build process.
 If this needs to be called manually that is probably an error, and should be mentioned in the `#vic-coz-sdk` slack channel.
 
-## sdk_lint.sh
-
-Auto-format (`autopep8`) and lint (`pylint`) the python sdk code.
-
-## update_proto.sh
-
-Copies `.proto` files into the python sdk, makes minor modifications to their import paths, and builds the generated pb2 files.
-
 ## victor_curl.py
 
 The `victor_curl` script is intended to bridge the ease of use of invoking curl with the credentials created
 through the configure.py script. It will use the serial number of a robot that has been configured via the `configure.py`
-script in `vector-sdk`, and then construct a relevant curl command to communicate with the robot.
+script in `vector-python-sdk-private/sdk`, and then construct a relevant curl command to communicate with the robot.
 
 ### Configuration
 
@@ -38,8 +30,18 @@ To get set up with access to the robot, you will need to do the following steps:
 1. Configure your laptop to have access to Vector by running
 
     ```bash
-    ../vector-sdk/configure.py
+    ../vector-python-sdk-private/sdk/configure.py
     ```
+
+    to use a production account.
+
+    or
+
+    ```bash
+    ../configure_dev.py
+    ```
+
+    to use a dev account.
 
     You should see "SUCCESS!" if everything worked properly. If not, please contact your friendly, neighborhood sdk team members via the `#vic-coz-sdk` slack channel.
 

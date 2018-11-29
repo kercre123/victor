@@ -114,7 +114,6 @@ namespace {
   const char* kCmdLineFile        = "/proc/cmdline";
   constexpr const char* kUniversalTimeFile = "/usr/share/zoneinfo/Universal";
   constexpr const char* kRobotVersionFile = "/anki/etc/version";
-  constexpr const char* kOnChargeContactsPath = "/run/on-charge-contacts";
   constexpr const char* kMaintenanceRebootFile = "/run/after_maintenance_reboot";
 
   const char* kAutomaticGovernor = "interactive";
@@ -910,15 +909,6 @@ bool OSState::IsUserSpaceSecure()
   }
 
   return _isUserSpaceSecure;
-}
-
-void OSState::SetOnChargeContacts(const bool onChargeContacts) const
-{
-  if (onChargeContacts) {
-    (void) Util::FileUtils::TouchFile(kOnChargeContactsPath);
-  } else {
-    Util::FileUtils::DeleteFile(kOnChargeContactsPath);
-  }
 }
 
 } // namespace Vector

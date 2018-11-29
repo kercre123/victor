@@ -946,8 +946,8 @@ namespace Vision {
     // Yaw angle maps without change onto our coordinate system, while the roll and pitch
     // need to be switched and negated to map correctly from the okao coordinate system
     // to the anki coordindate system.
-    const RotationMatrix3d rotation(-face.GetHeadPitch(), -face.GetHeadRoll(), face.GetHeadYaw());
-    headPose.SetRotation(headPose.GetRotation() * rotation);
+    const RotationMatrix3d faceRotation(-face.GetHeadPitch(), face.GetHeadRoll(), face.GetHeadYaw());
+    headPose.SetRotation(headPose.GetRotation() * faceRotation);
 
     headPose.SetParent(_camera.GetPose());
     face.SetHeadPose(headPose);

@@ -22,6 +22,7 @@ type conn struct {
 }
 
 var (
+	// This is a global variabe used for performance issues (not referenced outside this file)
 	defaultTLSCert = credentials.NewClientTLSFromCert(rootcerts.ServerCertPool(), "")
 )
 

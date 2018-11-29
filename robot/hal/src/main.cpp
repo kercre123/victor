@@ -52,8 +52,6 @@ int main(int argc, const char* argv[])
 {
   using Result = Anki::Result;
 
-  mlockall(MCL_FUTURE);
-
   struct sched_param params;
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
@@ -83,6 +81,13 @@ int main(int argc, const char* argv[])
     } else {
       return result;
     }
+  }
+
+  // After Init, all memory we need has been initialized and the IMU thread (if used) has been
+  // instantiated, lock our pages
+  int lock_r = mlockall(MCL_FUTURE);
+  if (lock_r == -1) {
+    AnkiError("robot.main", "Failed to lock pages");
   }
 
   auto start = std::chrono::steady_clock::now();

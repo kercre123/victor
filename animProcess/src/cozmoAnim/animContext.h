@@ -106,6 +106,9 @@ private:
   // It really should be, and that refactoring will have to happen soon).
   Util::Data::DataPlatform*                      _dataPlatform = nullptr;
 
+  // for holding the thread id (and avoiding need to include cpuThreadId.h here)
+  std::unique_ptr<ThreadIDInternal> _threadIdHolder;
+
   // Context holds onto these things for everybody:
   std::unique_ptr<Util::Locale>                  _locale;
   std::unique_ptr<AudioMultiplexer>              _audioMux;
@@ -117,10 +120,6 @@ private:
   std::unique_ptr<Audio::AudioPlaybackSystem>    _audioPlayer;
   std::unique_ptr<Alexa>                         _alexa;
   std::unique_ptr<BackpackLightComponent>        _backpackLightComponent;
-  
-
-  // for holding the thread id (and avoiding needed to include the .h here)
-  std::unique_ptr<ThreadIDInternal> _threadIdHolder;
 
   void InitAudio(Util::Data::DataPlatform* dataPlatform);
 };

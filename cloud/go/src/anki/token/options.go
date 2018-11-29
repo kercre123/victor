@@ -1,10 +1,7 @@
 package token
 
-import "anki/token/identity"
-
 type options struct {
 	server           bool
-	identityProvider identity.Provider
 	socketNameSuffix string
 }
 
@@ -16,13 +13,6 @@ type Option func(o *options)
 func WithServer() Option {
 	return func(o *options) {
 		o.server = true
-	}
-}
-
-// WithIdentityProvider specifies a non-default identity provider
-func WithIdentityProvider(identityProvider identity.Provider) Option {
-	return func(o *options) {
-		o.identityProvider = identityProvider
 	}
 }
 

@@ -80,11 +80,6 @@ message GoingToSleep {
   bool triggeredFromVoiceCommand = 0
 }
 
-message EngineLoadingDataStatus {
-  float_32 ratioComplete = 0.0
-}
-
-
 message CurrentCameraParams {
   float_32 cameraGain,
   uint_16  exposure_ms,
