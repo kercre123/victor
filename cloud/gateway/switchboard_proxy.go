@@ -87,7 +87,11 @@ func (proxy *BLEProxy) handle(request *gw_clad.SdkProxyRequest) *gw_clad.SdkProx
 		proxyResponse.Content = "Unable to run streams through BLE interface"
 		return proxyResponse
 	}
-	url := fmt.Sprintf("https://%s/%s", proxy.Address, request.Path)
+	path := request.Path
+	if strings.HasPrefix(path, "/") {
+		path = path[1:]
+	}
+	url := fmt.Sprintf("https://%s/%s", proxy.Address, path)
 
 	jsonStr := []byte(request.Json)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
