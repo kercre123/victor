@@ -33,8 +33,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include <vector>
-#include <set>
 
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
