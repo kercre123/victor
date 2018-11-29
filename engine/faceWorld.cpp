@@ -1145,7 +1145,7 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::GetGazeDirectionPose(const u32 withinLast_ms, Pose3d& faceFocusPose,
+  bool FaceWorld::GetGazeDirectionPose(const u32 withinLast_ms, Pose3d& gazeDirectionPose,
                                        SmartFaceID& faceID) const
   {
     const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
@@ -1159,7 +1159,7 @@ namespace Vector {
       {
         if (entry.second.face.IsGazeDirectionStable())
         {
-          faceFocusPose = entry.second.face.GetGazeDirectionPose();
+          gazeDirectionPose = entry.second.face.GetGazeDirectionPose();
           faceID.Reset(*_robot, entry.second.face.GetID());
           return true;
         }
@@ -1197,9 +1197,11 @@ namespace Vector {
     {
       if (faceID.MatchesFaceID(entry.second.face.GetID()))
       {
-        auto& faceDirectionEntry = _gazeDirection[entry.second.face.GetID()];
-        faceDirectionEntry.ClearHistory();
-        return true;
+        const auto& gazeDirectionEntry = _gazeDirection.find(entry.second.face.GetID());
+        if (gazeDirectionEntry != _gazeDirection.end()) {
+          gazeDirectionEntry->second.ClearHistory();
+          return true;
+        }
       }
     }
     return false;
