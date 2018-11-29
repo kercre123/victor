@@ -1,0 +1,5 @@
+{
+  "behaviorID" :   "ReactToGazeDirectionSurface",
+  "behaviorClass": "ReactToGazeDirection",
+  "searchForFaces": false
+}

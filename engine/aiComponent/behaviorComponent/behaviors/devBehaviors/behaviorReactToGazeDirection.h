@@ -66,6 +66,7 @@ private:
   Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
   void TransitionToCheckForFace(const Radians& turnAngle);
   void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle);
+  void TransitionToCheckForPointOnSurface(const Pose3d& gazePose);
 };
 
 } // namespace Vector

@@ -560,6 +560,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToGazeDirection(config));
       break;
     }
+
+    case BehaviorClass::ReactToGazeDirectionSurface:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToGazeDirection(config));
+      break;
+    }
     
     case BehaviorClass::PlaypenCameraCalibration:
     {

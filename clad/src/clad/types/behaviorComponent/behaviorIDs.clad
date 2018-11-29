@@ -59,6 +59,7 @@ enum uint_16 BehaviorID {
   PuzzleMaze,
   ReactToBody,
   ReactToGazeDirection,
+  ReactToGazeDirectionSurface,
   TestStackMonitors,
 
   // victorBehaviorTree/alexa

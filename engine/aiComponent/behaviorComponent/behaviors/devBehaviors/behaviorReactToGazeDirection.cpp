@@ -185,12 +185,55 @@ void BehaviorReactToGazeDirection::TransitionToLookAtFace(const SmartFaceID& fac
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose3d& gazePose)
+{
+  CompoundActionSequential* turnAction = new CompoundActionSequential();
+  const auto& translation = gazePose.GetTranslation();
+  for (int i = 0; i < kNumberOfTurnsForSurfacePoint; ++i) {
+    if ( FLT_LT(translation.y(), 0.f) ) {
+      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInRight));
+    } else {
+      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
+    }
+
+    // Do an initial turn if we want to
+    if (kTurnBackToFace) {
+      turnAction->AddAction(new TurnTowardsPoseAction(gazePose));
+      turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
+      turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+      turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+    }
+
+    // TODO do we want this to be the same point as before
+    TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(gazePose);
+    turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
+    turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
+    CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
+    turnAndAnimate->AddAction(turnTowardsPose);
+    if ( FLT_LT(translation.y(), 0.f) ) {
+      turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+    } else {
+      turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+    }
+    turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+    turnAction->AddAction(turnAndAnimate);
+    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+    turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+    turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+
+    turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
+  }
+  DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d& gazePose)
 {
   // Compute angle
   // If angle is within the turn around cone then turn around and look for face
   Radians turnAngle;
-  auto translation = gazePose.GetTranslation();
+  const auto& translation = gazePose.GetTranslation();
   Radians gazeAngle = atan2f(translation.y(), translation.x());
   auto angleDifference = Radians(DEG_TO_RAD(180)) - gazeAngle;
   if ( (angleDifference <= Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) &&
@@ -243,6 +286,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
         }
       } else {
         // Search on the sruface for stuff and things
+        TransitionToCheckForPointOnSurface(gazeDirectionPoseWRTRobot);
       }
     } else {
       LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
