@@ -88,7 +88,7 @@ protected:
   // NOTE: Leave modifying calls as protected methods, and access them via the friend classes (at the moment only
   //       MapComponent). The classes manage publication of map data, and need to monitor if the map state has changed
 
-  // add a object with the specified content. 
+  // add an object with the specified content. 
   virtual bool Insert(const MemoryMapRegion& r, const MemoryMapData& data) = 0;
   virtual bool Insert(const MemoryMapRegion& r, NodeTransformFunction transform) = 0;
   

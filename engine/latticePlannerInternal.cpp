@@ -357,7 +357,7 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
   }
 
-  // NOTE: timestamp is now depreciated for direct navMap queries - if reusing, a new method of checking
+  // NOTE: timestamp is now deprecated for direct navMap queries - if reusing, a new method of checking
   //       last timestamp change should be implemented at a MapComponent level
   // const RobotTimeStamp_t timeOfLastChange = _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp();
   const RobotTimeStamp_t timeOfLastChange = _robot->GetLastMsgTimestamp();
