@@ -11,6 +11,7 @@ include(sensory)
 include(speexdsp)
 include(robot_core)
 include(avs-device-sdk)
+include(fftw)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "Creative Commons Zero v1.0 Universal,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE")
@@ -63,6 +64,7 @@ target_link_libraries(victor_anim
   # Aubio beat detection
   ${AUBIO_LIBS}
   ${AVS_LIBS}
+  ${FFTW_LIBS}
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h

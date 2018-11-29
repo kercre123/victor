@@ -80,6 +80,7 @@ namespace Util {
     class Queue;
   }
   template <typename T> class RingBuffContiguousRead;
+  template <typename T, size_t N> class FixedCircularBuffer;
 }
 
 namespace Vector {
@@ -213,6 +214,11 @@ private:
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
 
   const AudioInfo& _audioInfo;
+  
+  static constexpr int kBandStopFilterSize = 151;
+  std::unique_ptr<Util::FixedCircularBuffer<short, kBandStopFilterSize>> _bandStopBuffer;
+  // todo: make this constexpr (see comment in ComputeFilterCoeffs)
+  static std::array<float, kBandStopFilterSize> _filterCoeffs24;
 
   // TEMP
   SpeechRecognizerTHF*            _recognizer = nullptr;

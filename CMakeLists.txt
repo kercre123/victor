@@ -224,6 +224,7 @@ include(aubio)
 include(sensory)
 include(signalessence)
 include(avs-device-sdk)
+include(fftw)
 
 write_license_html()
 check_licenses()
