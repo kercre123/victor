@@ -2,7 +2,7 @@
  * File: behaviorReactToGazeDirection.cpp
  *
  * Author: Robert Cosgriff
- * Created: 2018-09-04
+ * Created: 11/29/2018
  *
  * Description: see header
  *
@@ -13,17 +13,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorReactToGazeDirection.h"
 
-#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/actions/trackFaceAction.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorSearchWithinBoundingBox.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionSalientPointDetected.h"
-#include "engine/aiComponent/salientPointsComponent.h"
-#include "engine/components/sensors/cliffSensorComponent.h"
-#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/faceWorld.h"
 
 #include "util/console/consoleInterface.h"
@@ -80,6 +72,11 @@ void BehaviorReactToGazeDirection::InitBehavior()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToGazeDirection::BehaviorUpdate()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToGazeDirection::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
   const std::string& debugName = "BehaviorReactToBody.InstanceConfig.LoadConfig";
@@ -95,6 +92,10 @@ BehaviorReactToGazeDirection::DynamicVariables::DynamicVariables()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
+  const char* list[] = {
+      kSearchForFaces,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -108,13 +109,6 @@ void BehaviorReactToGazeDirection::OnBehaviorActivated()
 {
   TransitionToCheckGazeDirection();
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToGazeDirection::BehaviorUpdate()
-{
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCheckForFace(const Radians& turnAngle)
@@ -280,6 +274,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCompleted()
 {
+  CancelDelegates(false);
 }
 
 void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
@@ -287,7 +282,7 @@ void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
   if (ActionResult::NO_FACE == result) {
     DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo), &BehaviorReactToGazeDirection::TransitionToCompleted);
   } else if (ActionResult::SUCCESS == result) {
-    BehaviorReactToGazeDirection::TransitionToCompleted();
+    TransitionToCompleted();
   }
 }
 
