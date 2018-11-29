@@ -25,9 +25,7 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  // This used to be -200 just a note
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres_mm,        "Vision.GazeDirection", -25.f);
-  // This used to 50 just a note
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres_mm,        "Vision.GazeDirection",  20.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.GazeDirection", -100.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.GazeDirection",  100.f);
@@ -170,41 +168,60 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
 {
   CompoundActionSequential* turnAction = new CompoundActionSequential();
   const auto& translation = gazePose.GetTranslation();
-  for (int i = 0; i < kNumberOfTurnsForSurfacePoint; ++i) {
-    if ( FLT_LT(translation.y(), 0.f) ) {
-      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInRight));
-    } else {
-      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
-    }
-
-    // Do an initial turn if we want to
-    if (kTurnBackToFace) {
-      turnAction->AddAction(new TurnTowardsPoseAction(gazePose));
-      turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
-      turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
-      turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
-    }
-
-    // TODO do we want this to be the same point as before
-    TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(gazePose);
-    turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
-    turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
-    CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
-    turnAndAnimate->AddAction(turnTowardsPose);
-    if ( FLT_LT(translation.y(), 0.f) ) {
-      turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
-    } else {
-      turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
-    }
-    turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
-    turnAction->AddAction(turnAndAnimate);
-    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+  if ( ( ( FLT_GT(translation.x(), kFaceDirectedAtRobotMinXThres) && FLT_LT(translation.x(), kFaceDirectedAtRobotMaxXThres) ) &&
+     (FLT_GT(translation.y(), kFaceDirectedAtRobotMinYThres) && FLT_LT(translation.y(), kFaceDirectedAtRobotMaxYThres)) )
+      || ( makingEyeContact && kUseEyeContact) ) {
+    // If we're making eye contact with the robot or looking at the robot
+    CompoundActionSequential* turnAction = new CompoundActionSequential();
+    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorGetIn));
+    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorReaction));
     turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-    turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
-
+    turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
     turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
+    DelegateIfInControl(turnAction, &BehaviorReactToFaceNormal::TransitionToCompleted);
+
+  } else {
+
+    // This is the case where we aren't looking at the robot,
+    // so we need to turn right or left towards the pose,
+    // and play the correct animation.
+    for (int i = 0; i < kNumberOfTurnsForSurfacePoint; ++i) {
+
+      if ( FLT_LT(translation.y(), 0.f) ) {
+        turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInRight));
+      } else {
+        turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
+      }
+
+      // Do an initial turn if we want to
+      if (kTurnBackToFace) {
+        turnAction->AddAction(new TurnTowardsPoseAction(gazePose));
+        turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialTurn_s));
+        turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+        turnAction->AddAction(new WaitAction(kTurnWaitAfterInitialLookBackAtFace_s));
+      }
+
+      // TODO do we want this to be the same point as before
+      TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(gazePose);
+      turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
+      turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
+      CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
+      turnAndAnimate->AddAction(turnTowardsPose);
+      if ( FLT_LT(translation.y(), 0.f) ) {
+        turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+      } else {
+        turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+      }
+      turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+      turnAction->AddAction(turnAndAnimate);
+      turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+      turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+      turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+
+      turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
+    }
+    DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
   }
-  DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -323,6 +340,11 @@ void BehaviorReactToGazeDirection::SendDASEventForPoseToFollow(const Pose3d& gaz
   DASMSG_SET(i2, static_cast<int>(translation.y()), "Y coordinate of point to turn towards");
   DASMSG_SET(i3, static_cast<int>(translation.z()), "Z coordinate of point to turn towards");
   DASMSG_SEND();
+}
+
+u32 BehaviorReactToGazeDirection::GetMaxTimeSinceTrackedFaceUpdated_ms() const
+{
+  return kMaxTimeSinceTrackedFaceUpdated_ms;
 }
 
 } // namespace Vector
