@@ -4,6 +4,8 @@
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
   "associatedActiveFeature": "SeasonalHappyNewYear",
+
+  "renderInEyeHue": false,
   
   "respondToUserIntents": [
     { "type": "seasonal_happynewyear" }
