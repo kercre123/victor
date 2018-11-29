@@ -1169,6 +1169,27 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::AnyStableGazeDirection(const u32 withinLast_ms) const
+  {
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
+
+    for (const auto& entry: _faceEntries)
+    {
+      if (ShouldReturnFace(entry.second, recentTime, false))
+      {
+        if (entry.second.face.IsGazeDirectionStable())
+        {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool FaceWorld::ClearGazeDirectionHistory(const SmartFaceID& faceID)
   {
     // Loop over all the faces and see if any of them are making eye contact

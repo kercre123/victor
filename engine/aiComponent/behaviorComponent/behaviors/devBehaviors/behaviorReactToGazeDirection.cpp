@@ -100,34 +100,21 @@ void BehaviorReactToGazeDirection::GetBehaviorJsonKeys(std::set<const char*>& ex
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToGazeDirection::WantsToBeActivatedBehavior() const
 {
-  return true;
+  return GetBEI().GetFaceWorld().AnyStableGazeDirection(500);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::OnBehaviorActivated()
 {
-  // reset dynamic variables
-  _dVars = DynamicVariables();
+  TransitionToCheckGazeDirection();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::BehaviorUpdate()
 {
-  if ( ! IsActivated() ) {
-    return;
-  }
-  TransitionToCheckFaceDirection();
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToGazeDirection::CheckIfShouldStop()
-{
-  // It might take a couple of frames to get a stability reading so set a timer here if we
-  // need to or something so we don't just wait forever
-  return false;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCheckForFace(const Radians& turnAngle)
@@ -260,15 +247,12 @@ Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
+void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
 {
-  Pose3d faceFocusPose;
-  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, faceFocusPose, _dVars.faceIDToTurnBackTo)) {
+  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d gazeDirectionPoseWRTRobot;
-
-    if (faceFocusPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
-
+    if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
       if (_iConfig->searchForFaces) {
         const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
 

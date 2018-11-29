@@ -49,24 +49,21 @@ private:
   struct DynamicVariables {
     DynamicVariables();
 
+    Pose3d                gazeDirectionPose;
     SmartFaceID           faceIDToTurnBackTo;
   };
 
-  // TODO add eye contact "state" or something
-  void TransitionToCheckFaceDirection();
-  void TransitionToCompleted();
-  void FoundNewFace(ActionResult result);
-  bool CheckIfShouldStop();
-
   std::unique_ptr<InstanceConfig> _iConfig;
-  // TODO it's unclear if this is should should be a pointer
-  // and where it should be intialized
   DynamicVariables _dVars;
 
-  Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
+  void TransitionToCheckGazeDirection();
+  void TransitionToCompleted();
   void TransitionToCheckForFace(const Radians& turnAngle);
   void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle);
   void TransitionToCheckForPointOnSurface(const Pose3d& gazePose);
+
+  Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
+  void FoundNewFace(ActionResult result);
 };
 
 } // namespace Vector
