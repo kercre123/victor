@@ -64,6 +64,9 @@ private:
   // and where it should be intialized
   DynamicVariables _dVars;
 
+  Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
+  void TransitionToCheckForFace(const Radians& turnAngle);
+  void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle);
 };
 
 } // namespace Vector
