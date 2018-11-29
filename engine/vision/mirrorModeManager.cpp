@@ -28,11 +28,11 @@ namespace {
   
   // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
   // and in mirror mode (at specified scale)
-  CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,    "Vision.MirrorMode", 0.f, 0.f, 1.f);
-  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
-  CONSOLE_VAR(bool, kDisplayExposureInMirrorMode,       "Vision.MirrorMode", true);
-  CONSOLE_VAR(f32,  kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
-  CONSOLE_VAR(s32,  kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
+  CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,           "Vision.MirrorMode", 0.f, 0.f, 1.f);
+  CONSOLE_VAR(bool,        kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
+  CONSOLE_VAR(bool,        kDisplayExposureInMirrorMode,       "Vision.MirrorMode", true);
+  CONSOLE_VAR(f32,         kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
+  CONSOLE_VAR(s32,         kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
   CONSOLE_VAR_RANGED(f32,  kMirrorModeFaceDebugFontScale,      "Vision.MirrorMode", 0.5f, 0.1f, 1.f);
   
   // TODO: Figure out the original image resolution? This just assumes "Default" for marker/face detection
