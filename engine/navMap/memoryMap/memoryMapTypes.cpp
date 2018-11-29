@@ -84,6 +84,26 @@ bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType
   return isIn;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullContentArray& array)
+{
+  using namespace MemoryMapTypes;
+  using namespace QuadTreeTypes;
+  
+  DEV_ASSERT(IsSequentialArray(array), "MemoryMapTreeTypes.ConvertContentArrayToFlags.InvalidArray");
+
+  EContentTypePackedType contentTypeFlags = 0;
+  for( const auto& entry : array )
+  {
+    if ( entry.Value() ) {
+      const EContentTypePackedType contentTypeFlag = EContentTypeToFlag(entry.EnumValue());
+      contentTypeFlags = contentTypeFlags | contentTypeFlag;
+    }
+  }
+
+  return contentTypeFlags;
+}
+
 
 } // namespace
 } // namespace

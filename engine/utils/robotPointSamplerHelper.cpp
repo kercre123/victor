@@ -263,7 +263,7 @@ void RejectIfChargerOutOfView::ClearAcceptanceProbability()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RejectIfCollidesWithMemoryMap::RejectIfCollidesWithMemoryMap( const MemoryMapTypes::FullContentArray& collisionTypes )
-  : _collisionTypes( collisionTypes )
+  : _collisionTypes( ConvertContentArrayToFlags(collisionTypes) )
 {}
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -280,7 +280,7 @@ bool RejectIfCollidesWithMemoryMap::operator()( const Poly2f& sampledPoly )
   if( _memoryMap == nullptr ) {
     return true;
   }
-  const bool collides = _memoryMap->HasCollisionWithTypes( sampledPoly, _collisionTypes );
+  const bool collides = _memoryMap->AnyOf( FastPolygon(sampledPoly), [&](const auto& data) { return IsInEContentTypePackedType(data->type, _collisionTypes); } );
   if( collides && (_rng != nullptr) ) {
     const float rv = _rng->RandDbl();
     if( rv <= _pAccept ) {

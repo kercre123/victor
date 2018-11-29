@@ -15,6 +15,7 @@
  #define __Anki_Cozmo_MapComponent_H__
 
 #include "coretech/common/engine/robotTimeStamp.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"

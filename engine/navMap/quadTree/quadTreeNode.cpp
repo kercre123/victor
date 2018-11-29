@@ -15,13 +15,7 @@
 #include "quadTreeProcessor.h"
 
 #include "coretech/common/engine/math/point_impl.h"
-
 #include "util/math/math.h"
-#include "util/cpuProfiler/cpuProfiler.h"
-
-#include <unordered_map>
-#include <limits>
-#include <algorithm>
 
 namespace Anki {
 namespace Vector {

@@ -850,7 +850,7 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( std::shared_ptr<cons
     Poly2f chargerPoly;
     chargerPoly.ImportQuad2d(chargerFootprint);
     
-    memoryMap->FindContentIf(chargerPoly, findFunc, unexploredProxObstacles);
+    memoryMap->FindContentIf(FastPolygon(chargerPoly), findFunc, unexploredProxObstacles);
   } else {
     memoryMap->FindContentIf(findFunc, unexploredProxObstacles);
   }

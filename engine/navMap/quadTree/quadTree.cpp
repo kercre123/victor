@@ -12,13 +12,7 @@
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/point_impl.h"
-#include "coretech/common/engine/math/polygon_impl.h"
 
-#include "coretech/messaging/engine/IComms.h"
-
-#include "util/console/consoleInterface.h"
-#include "util/cpuProfiler/cpuProfiler.h"
-#include "util/logging/callstack.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
@@ -250,9 +244,7 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTree::ExpandToFit(const AxisAlignedQuad& region)
-{
-  ANKI_CPU_PROFILE("QuadTree::ExpandToFit");
-  
+{  
   // allow expanding several times until the poly fits in the tree, as long as we can expand, we keep trying,
   // relying on the root to tell us if we reached a limit
   bool expanded = false;
