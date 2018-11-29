@@ -70,24 +70,7 @@ CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardSpeed_mmps, CONSOLE_GROUP
 // Minimum angles to turn during tracking to keep the robot moving and looking alive
 CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTrackingPanAngle_deg,  CONSOLE_GROUP, 4.0f, 0.0f, 30.0f);
 CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTrackingTiltAngle_deg, CONSOLE_GROUP, 4.0f, 0.0f, 30.0f);
-
-// If we are doing the memory map check, these are the types which will prevent us from driving the ideal
-// distance
-constexpr MemoryMapTypes::FullContentArray typesToBlockDriving =
-{
-  {MemoryMapTypes::EContentType::Unknown               , false},
-  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
-  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-  {MemoryMapTypes::EContentType::ObstacleProx          , true },
-  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-  {MemoryMapTypes::EContentType::Cliff                 , true },
-  {MemoryMapTypes::EContentType::InterestingEdge       , true },
-  {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
-};
-static_assert(MemoryMapTypes::IsSequentialArray(typesToBlockDriving),
-  "This array does not define all types once and only once.");
-  
+ 
 const char* const kMinTimeToTrackFaceKeyLowerBoundKey = "minTimeToTrackFaceLowerBound_s";
 const char* const kMinTimeToTrackFaceKeyUpperBoundKey = "minTimeToTrackFaceUpperBound_s";
 const char* const kMaxTimeToTrackFaceKeyLowerBoundKey = "maxTimeToTrackFaceLowerBound_s";
@@ -289,16 +272,12 @@ bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward()
       GetBEI().HasMapComponent()) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
 
-    const auto memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
-    
-    DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
-
     const Vec3f& fromRobot = robotInfo.GetPose().GetTranslation();
 
     const Vec3f ray{kInteractWithFaces_DriveForwardIdealDist_mm, 0.0f, 0.0f};
     const Vec3f toGoal = robotInfo.GetPose() * ray;
-    
-    const bool hasCollision = memoryMap->HasCollisionWithTypes({{Point2f{fromRobot}, Point2f{toGoal}}}, typesToBlockDriving);
+
+    const bool hasCollision =  GetBEI().GetMapComponent().CheckForCollisions(FastPolygon{{Point2f{fromRobot}, Point2f{toGoal}}});
 
     if( kInteractWithFaces_VizMemoryMapCheck ) {
       const char* vizID = "BehaviorInteractWithFaces.MemMapCheck";

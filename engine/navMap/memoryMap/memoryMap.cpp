@@ -17,7 +17,6 @@
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/quad.h"
-#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/console/consoleInterface.h"
@@ -93,26 +92,6 @@ static auto PerformanceMonitor(T f, const std::string& method,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullContentArray& array)
-{
-  using namespace MemoryMapTypes;
-  using namespace QuadTreeTypes;
-  
-  DEV_ASSERT(IsSequentialArray(array), "QuadTreeTypes.ConvertContentArrayToFlags.InvalidArray");
-
-  EContentTypePackedType contentTypeFlags = 0;
-  for( const auto& entry : array )
-  {
-    if ( entry.Value() ) {
-      const EContentTypePackedType contentTypeFlag = EContentTypeToFlag(entry.EnumValue());
-      contentTypeFlags = contentTypeFlags | contentTypeFlag;
-    }
-  }
-
-  return contentTypeFlags;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ColorRGBA GetNodeVizColor(MemoryMapDataPtr node)
 {
   // scale used to help visualize confidence levels for obstacles
@@ -184,20 +163,6 @@ bool MemoryMap::Merge(const INavMap& other, const Pose3d& transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::FillBorder(EContentType typeToReplace,
-                           const FullContentArray& neighborsToFillFrom,
-                           const MemoryMapDataPtr& newData)
-{
-  // convert into node types and emtpy (no extra info) node content
-  using namespace QuadTreeTypes;
-  const EContentTypePackedType nodeNeighborsToFillFrom = ConvertContentArrayToFlags(neighborsToFillFrom);
-  
-  // ask the processor to do it
-  std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, newData) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMap::FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& newData)
 {
   // ask the processor to do it
@@ -229,43 +194,12 @@ double MemoryMap::GetExploredRegionAreaM2() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double MemoryMap::GetInterestingEdgeAreaM2() const
-{
-  // delegate on processor
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  const double area = _quadTree.GetProcessor().GetInterestingEdgeAreaM2();
-  return area;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float MemoryMap::GetContentPrecisionMM() const
 {
   // ask the navmesh
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
   const float precision = _quadTree.GetContentPrecisionMM();
   return precision;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const
-{
-  // convert type to quadtree node content and to flag (since processor takes in flags)
-  const EContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
-  const MemoryMapRegion& region = poly;
-
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return AnyOf( region, [&nodeTypeFlags] (MemoryMapDataConstPtr data) {
-    return IsInEContentTypePackedType(data->type, nodeTypeFlags);
-  });
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::AnyOf(const Poly2f& p, NodePredicate f) const
-{
-  bool retv = false;  
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold( [&](const auto& node) { retv |= f(node.GetData()); }, FastPolygon(p));
-  return retv;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -383,20 +317,6 @@ void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output
   MONITOR_PERFORMANCE( _quadTree.Fold(accumulator) );
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const
-{
-  QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
-    MemoryMapDataPtr data = node.GetData();
-    if( pred(data) ) { 
-      output.insert( MemoryMapDataConstPtr(node.GetData()) );
-    }
-  };
-
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, FastPolygon(poly)) );
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MemoryMap::FindContentIf(const MemoryMapRegion& poly, NodePredicate pred, MemoryMapDataConstList& output) const
 {

@@ -1411,7 +1411,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       BroadcastObjectObservation(observedObject);
 
       _didObjectsChange = true;
-      _robotMsgTimeStampAtChange = Anki::Util::Max(atTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+      _robotMsgTimeStampAtChange = atTimestamp;
 
     } // for each object seen
 
@@ -1747,7 +1747,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     AddLocatedObject(markerlessObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = Anki::Util::Max(lastTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = lastTimestamp;
 
     return RESULT_OK;
   }
@@ -1775,7 +1775,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     AddLocatedObject(customObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = Anki::Util::Max(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
 
     return customObject->GetID();
   }
@@ -2700,7 +2700,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     // Flag that we removed an object
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = Anki::Util::Max(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
   }
 
   ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,

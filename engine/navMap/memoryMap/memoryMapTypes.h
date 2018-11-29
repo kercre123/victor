@@ -131,22 +131,11 @@ using EContentTypePackedType = uint32_t;
 // packed variable
 EContentTypePackedType EContentTypeToFlag(EContentType nodeContentType);
 
+// Converts and array of EContentType values into flag bits
+EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullContentArray& array);
+
 // returns true if contentType is in PackedTypes
 bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes);
-  
-  
-static const MemoryMapTypes::FullContentArray kTypesThatAreObstacles =
-{
-  {MemoryMapTypes::EContentType::Unknown               , false},
-  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
-  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {MemoryMapTypes::EContentType::ObstacleObservable    , true },
-  {MemoryMapTypes::EContentType::ObstacleProx          , true },
-  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-  {MemoryMapTypes::EContentType::Cliff                 , true },
-  {MemoryMapTypes::EContentType::InterestingEdge       , false},
-  {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
-};
 
 } // namespace MemoryMapTypes
 } // namespace Vector
