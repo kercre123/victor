@@ -66,6 +66,8 @@ private:
   void FoundNewFace(ActionResult result);
 
   void SendDASEventForPoseToFollow(const Pose3d& gazePose) const;
+
+  u32 GetMaxTimeSinceTrackedFaceUpdated_ms() const;
 };
 
 } // namespace Vector

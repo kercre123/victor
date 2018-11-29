@@ -50,6 +50,7 @@ namespace {
   CONSOLE_VAR(s32,  kSearchForFaceNumberOfImagesToWait,      "Vision.GazeDirection",  5);
   CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.GazeDirection",  false);
   CONSOLE_VAR(s32,  kNumberOfTurnsForSurfacePoint,           "Vision.GazeDirection",  1);
+  CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.GazeDirection",  500);
 }
 
 namespace {
@@ -100,7 +101,7 @@ void BehaviorReactToGazeDirection::GetBehaviorJsonKeys(std::set<const char*>& ex
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToGazeDirection::WantsToBeActivatedBehavior() const
 {
-  return GetBEI().GetFaceWorld().AnyStableGazeDirection(500);
+  return GetBEI().GetFaceWorld().AnyStableGazeDirection(kMaxTimeSinceTrackedFaceUpdated_ms);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -234,7 +235,8 @@ Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
 {
-  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
+  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
+                                                  _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d gazeDirectionPoseWRTRobot;
     if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
