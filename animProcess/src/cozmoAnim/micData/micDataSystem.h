@@ -15,13 +15,14 @@
 #define __AnimProcess_CozmoAnim_MicDataSystem_H_
 
 #include "micDataTypes.h"
-#include "clad/types/beatDetectorTypes.h"
 #include "coretech/common/shared/types.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 #include "util/global/globalDefinitions.h"
 #include "util/environment/locale.h"
 
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/beatDetectorTypes.h"
 
 #include <cstdint>
 #include <deque>
@@ -192,6 +193,9 @@ private:
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
+  void SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info,
+                            const char* stateStr) const;
+
   const AnimContext* _context;
 };
 

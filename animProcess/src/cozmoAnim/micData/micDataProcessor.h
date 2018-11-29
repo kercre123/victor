@@ -94,6 +94,8 @@ public:
 
   void FakeTriggerWordDetection();
 
+  void GetLatestMicDirectionData(MicDirectionData& out_lastSample, DirectionIndex& out_dominantDirection) const;
+
 
 private:
   const AnimContext* _context = nullptr;
