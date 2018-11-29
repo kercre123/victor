@@ -512,6 +512,7 @@ bool SettingsManager::ApplySettingTimeZone()
   const std::string value = _currentSettings[key].asString();
 
   std::vector<std::string> command;
+  command.push_back("/usr/bin/sudo");
   command.push_back("/usr/bin/timedatectl");
   command.push_back("set-timezone");
   command.push_back(value);

@@ -526,10 +526,5 @@ bool OSState::IsUserSpaceSecure()
   return true;
 }
 
-void OSState::SetOnChargeContacts(const bool onChargeContacts) const
-{
-  // Do nothing
-}
-
 } // namespace Vector
 } // namespace Anki
