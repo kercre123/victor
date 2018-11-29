@@ -26,7 +26,7 @@ const (
 
 // Note: If there is a function that can be shared, use the engine manager.
 //       The only reason I duplicated the functions so far was interfaces
-//       were strangely causing the deleteenerUnsafe to fail. - shawn 7/17/18
+//       were strangely causing the deleteListenerUnsafe to fail. - shawn 7/17/18
 type IpcManager struct {
 	connMutex sync.Mutex
 	conn      ipc.Conn

@@ -542,15 +542,12 @@ func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.Proto
 }
 
 func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
-	//DO NOT SUBMIT(remove this line) REPLACES: _, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
-	log.Printf("ron_proto_to_clad_testing: func (service *rpcService) DriveWheels() - about to Write()") //DO NOT SUBMIT
 	message := &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveWheelsRequest{
 			DriveWheelsRequest: in,
 		},
 	}
 	_, err := engineProtoManager.Write(message)
-	log.Printf("ron_proto_to_clad_testing: func (service *rpcService) DriveWheels() - Write() complete. %s", message.GetOneofMessageType()) //DO NOT SUBMIT
 	if err != nil {
 		return nil, err
 	}
@@ -565,7 +562,6 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 	f, animResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlayAnimationResponse{}, 1)
 	defer f()
 
-	//DO NOT SUBMIT(remove this line) REPLACES: _, err := engineCladManager.Write(ProtoPlayAnimationToClad(in))
 	message := &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PlayAnimationRequest{
 			PlayAnimationRequest: in,
@@ -626,7 +622,7 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 				}
 				anims = append(anims, &newAnim)
 			}
-		case <-time.After(5 * time.Second):
+		case <-time.After(10 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
 		}
 	}
