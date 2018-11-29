@@ -61,6 +61,10 @@ namespace {
   CONSOLE_VAR(s32,  kNumberOfTurnsForSurfacePoint,           "Vision.GazeDirection",  1);
 }
 
+namespace {
+  const char* const kSearchForFaces = "searchForFaces";
+}
+
 #define LOG_CHANNEL "Behaviors"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,7 +72,6 @@ BehaviorReactToGazeDirection::BehaviorReactToGazeDirection(const Json::Value& co
  : ICozmoBehavior(config)
 , _iConfig(new InstanceConfig(config))
 {
-  _iConfig->coolDown_sec = 3;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,13 +82,13 @@ void BehaviorReactToGazeDirection::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToGazeDirection::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
-
+  const std::string& debugName = "BehaviorReactToBody.InstanceConfig.LoadConfig";
+  searchForFaces = JsonTools::ParseBool(config, kSearchForFaces, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToGazeDirection::DynamicVariables::DynamicVariables()
 {
-  lastReactionTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 
@@ -181,6 +184,7 @@ void BehaviorReactToGazeDirection::TransitionToLookAtFace(const SmartFaceID& fac
   DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::FoundNewFace);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d& gazePose)
 {
   // Compute angle
@@ -217,24 +221,28 @@ Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d&
 void BehaviorReactToGazeDirection::TransitionToCheckFaceDirection()
 {
   Pose3d faceFocusPose;
-  // SmartFaceID faceID;
   if(GetBEI().GetFaceWorld().GetGazeDirectionPose(500, faceFocusPose, _dVars.faceIDToTurnBackTo)) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d gazeDirectionPoseWRTRobot;
 
     if (faceFocusPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
-      const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
 
-      // Now that we know we are going to turn clear the history
-      GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
-      
-      // If angle is within the turn around cone then turn around and look for face
-      SmartFaceID faceToTurnTowards;
-      if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _dVars.faceIDToTurnBackTo, robotPose, faceToTurnTowards)
-          && kUseExistingFacesWhenSearchingForFaces) {
-        TransitionToLookAtFace(faceToTurnTowards, turnAngle);
+      if (_iConfig->searchForFaces) {
+        const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
+
+        // Now that we know we are going to turn clear the history
+        GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
+
+        // If angle is within the turn around cone then turn around and look for face
+        SmartFaceID faceToTurnTowards;
+        if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _dVars.faceIDToTurnBackTo, robotPose, faceToTurnTowards)
+            && kUseExistingFacesWhenSearchingForFaces) {
+          TransitionToLookAtFace(faceToTurnTowards, turnAngle);
+        } else {
+          TransitionToCheckForFace(turnAngle);
+        }
       } else {
-        TransitionToCheckForFace(turnAngle);
+        // Search on the sruface for stuff and things
       }
     } else {
       LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
@@ -265,8 +273,11 @@ void BehaviorReactToGazeDirection::GetBehaviorOperationModifiers(BehaviorOperati
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.behaviorAlwaysDelegates = false;
 
+  // This will result in running facial part detection whenever is behavior is an activatable scope
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });
 }
 
 }

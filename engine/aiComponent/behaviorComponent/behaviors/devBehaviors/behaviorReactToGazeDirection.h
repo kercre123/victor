@@ -43,13 +43,12 @@ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
 
-    // I don't even think I need this
-    f32                   coolDown_sec;
+    bool searchForFaces;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    RobotTimeStamp_t      lastReactionTime_ms;
+
     SmartFaceID           faceIDToTurnBackTo;
   };
 
