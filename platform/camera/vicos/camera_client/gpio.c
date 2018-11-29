@@ -49,6 +49,23 @@ struct GPIO_t
   bool isOpenDrain;
 };
 
+static int open_patiently(const char *pathname, int flags)
+{
+  int fd = -1;
+  int retries = 10;
+  while (retries > 0) {
+    retries--;
+    fd = open(pathname, flags);
+    if (fd < 0 && errno == EACCES) {
+      // Sleep 100 milliseconds and try again
+      (void) usleep((useconds_t) 100000);
+    } else {
+      break;
+    }
+  }
+  return fd;
+}
+
 int gpio_get_base_offset()
 {
   if (GPIO_BASE_OFFSET < 0) {
@@ -57,10 +74,10 @@ int gpio_get_base_offset()
     // android/3.10:  /sys/devices/soc.0/1000000.pinctrl/gpio/gpiochip911/base -> 911
 
     // Assume we are on an OE-linux system
-    int fd = open("/sys/devices/soc/1000000.pinctrl/gpio/gpiochip0/base", O_RDONLY);
+    int fd = open_patiently("/sys/devices/soc/1000000.pinctrl/gpio/gpiochip0/base", O_RDONLY);
     if (fd < 0) {
       // Fallback to Android
-      fd = open("/sys/devices/soc.0/1000000.pinctrl/gpio/gpiochip911/base", O_RDONLY);
+      fd = open_patiently("/sys/devices/soc.0/1000000.pinctrl/gpio/gpiochip911/base", O_RDONLY);
     }
 
     if (fd < 0) {
@@ -90,7 +107,7 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
    if (!gp) error_exit(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
 
    //create io
-   int fd = open("/sys/class/gpio/export", O_WRONLY);
+   int fd = open_patiently("/sys/class/gpio/export", O_WRONLY);
    snprintf(ioname, 32, "%d\n", gpio_number+gpio_get_base_offset());
    if (fd<0) {
      free(gp);
@@ -108,7 +125,7 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
 
    //open value fd
    snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+gpio_get_base_offset());
-   fd = open(ioname, O_WRONLY | O_CREAT );
+   fd = open_patiently(ioname, O_WRONLY | O_CREAT );
 
    if (fd <0) {
      free(gp);
@@ -142,7 +159,7 @@ void gpio_set_direction(GPIO gp, enum Gpio_Dir direction)
    char ioname[40];
 //   printf("settting direction of %d  to %s\n", gp->pin, direction  ? "out": "in");
    snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp->pin+gpio_get_base_offset());
-   int fd =  open(ioname, O_WRONLY );
+   int fd =  open_patiently(ioname, O_WRONLY );
    if (direction == gpio_DIR_OUTPUT) {
       (void)write(fd, "out", 3);
    }
