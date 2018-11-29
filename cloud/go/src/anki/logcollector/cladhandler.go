@@ -2,6 +2,7 @@ package logcollector
 
 import (
 	"anki/log"
+	"anki/token"
 	"clad/cloud"
 	"context"
 	"fmt"
@@ -11,8 +12,8 @@ type cladHandler struct {
 	collector *logCollector
 }
 
-func newCladHandler(opts *options) (*cladHandler, error) {
-	collector, err := newLogCollector(opts)
+func newCladHandler(tokener token.Accessor, opts *options) (*cladHandler, error) {
+	collector, err := newLogCollector(tokener, opts)
 	if err != nil {
 		return nil, err
 	}

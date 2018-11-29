@@ -70,10 +70,9 @@ func Run(ctx context.Context, procOptions ...Option) {
 	}
 	if opts.logcollectorOpts != nil {
 		launchProcess(&wg, func() {
-			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener),
-				logcollector.WithErrorListener(tokenServer.ErrorListener())},
+			logcollectorOpts := append([]logcollector.Option{logcollector.WithErrorListener(tokenServer.ErrorListener())},
 				opts.logcollectorOpts...)
-			logcollector.Run(ctx, logcollectorOpts...)
+			logcollector.Run(ctx, tokener, logcollectorOpts...)
 		})
 	}
 	wg.Wait()

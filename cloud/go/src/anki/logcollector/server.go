@@ -3,13 +3,14 @@ package logcollector
 import (
 	"anki/ipc"
 	"anki/log"
+	"anki/token"
 	"bytes"
 	"clad/cloud"
 	"context"
 	"fmt"
 )
 
-func runServer(ctx context.Context, opts *options) {
+func runServer(ctx context.Context, tokener token.Accessor, opts *options) {
 	socketName := "logcollector_server"
 	if opts.socketNameSuffix != "" {
 		socketName = fmt.Sprintf("%s_%s", socketName, opts.socketNameSuffix)
@@ -23,14 +24,15 @@ func runServer(ctx context.Context, opts *options) {
 
 	// close on context?
 	for c := range serv.NewConns() {
-		cl := client{c, opts}
+		cl := client{c, tokener, opts}
 		go cl.handleConn(ctx)
 	}
 }
 
 type client struct {
 	ipc.Conn
-	opts *options
+	tokener token.Accessor
+	opts    *options
 }
 
 func (c *client) handleConn(ctx context.Context) {
@@ -62,7 +64,7 @@ func (c *client) handleConn(ctx context.Context) {
 }
 
 func (c *client) handleRequest(ctx context.Context, msg *cloud.LogCollectorRequest) (*cloud.LogCollectorResponse, error) {
-	cladHandler, err := newCladHandler(c.opts)
+	cladHandler, err := newCladHandler(c.tokener, c.opts)
 	if err != nil {
 		if c.opts.errListener != nil {
 			c.opts.errListener.OnError(err)
@@ -73,13 +75,13 @@ func (c *client) handleRequest(ctx context.Context, msg *cloud.LogCollectorReque
 }
 
 // Run starts the log collector service
-func Run(ctx context.Context, optionValues ...Option) {
+func Run(ctx context.Context, tokener token.Accessor, optionValues ...Option) {
 	var opts options
 	for _, o := range optionValues {
 		o(&opts)
 	}
 
 	if opts.server {
-		runServer(ctx, &opts)
+		runServer(ctx, tokener, &opts)
 	}
 }

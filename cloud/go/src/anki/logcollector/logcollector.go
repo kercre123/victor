@@ -35,9 +35,9 @@ type logCollector struct {
 	uploader *s3manager.Uploader
 }
 
-func newLogCollector(opts *options) (*logCollector, error) {
+func newLogCollector(tokener token.Accessor, opts *options) (*logCollector, error) {
 	c := &logCollector{
-		tokener: opts.tokener,
+		tokener: tokener,
 
 		bucketName:       opts.bucketName,
 		s3BasePrefix:     opts.s3BasePrefix,
@@ -53,7 +53,7 @@ func newLogCollector(opts *options) (*logCollector, error) {
 		c.httpClient = http.DefaultClient
 	}
 
-	c.certCommonName = opts.tokener.IdentityProvider().CertCommonName()
+	c.certCommonName = c.tokener.IdentityProvider().CertCommonName()
 
 	awsCredentials, err := c.tokener.GetStsCredentials()
 	if err != nil {

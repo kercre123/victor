@@ -1,7 +1,9 @@
 package logcollector
 
 import (
+	"anki/token/identity"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/anki/sai-go-util/dockerutil"
 	ac "github.com/aws/aws-sdk-go/aws/credentials"
+	"google.golang.org/grpc/credentials"
 	gc "google.golang.org/grpc/credentials"
 
 	"github.com/stretchr/testify/require"
@@ -20,14 +23,37 @@ import (
 )
 
 const (
-	accessKey      = "xxx"
-	secretKey      = "yyy"
+	accessKey      = "AKIAIOSFODNN7EXAMPLE"
+	secretKey      = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 	region         = "us-east-1"
 	testBucketName = "logbucket"
 	testPathPrefix = "pathprefix"
 	testUserID     = "test-user-id"
 	testDeviceID   = "00000000"
 )
+
+// IdentityProvider implementation that allows for testing without real backend
+type TestIdentityProvider struct{}
+
+func (i TestIdentityProvider) Init() error {
+	return nil
+}
+
+func (i TestIdentityProvider) ParseAndStoreToken(token string) (identity.Token, error) {
+	return nil, nil
+}
+
+func (i TestIdentityProvider) TransportCredentials() credentials.TransportCredentials {
+	return nil
+}
+
+func (i TestIdentityProvider) CertCommonName() string {
+	return testDeviceID
+}
+
+func (i TestIdentityProvider) GetToken() identity.Token {
+	return nil
+}
 
 // Accessor implementation that allows for testing without real token service
 type TestTokener struct{}
@@ -47,22 +73,26 @@ func (t TestTokener) GetStsCredentials() (*ac.Credentials, error) {
 	}), nil
 }
 
-func newTestLogCollector(endpoint, bucketName string) (*logCollector, error) {
-	logcollectorOpts := []Option{WithServer()}
+func (t TestTokener) IdentityProvider() identity.Provider {
+	return TestIdentityProvider{}
+}
 
-	logcollectorOpts = append(logcollectorOpts, WithTokener(TestTokener{}))
-	logcollectorOpts = append(logcollectorOpts, WithEndpoint(endpoint))
-	logcollectorOpts = append(logcollectorOpts, WithS3ForcePathStyle(true))
-	logcollectorOpts = append(logcollectorOpts, WithS3UrlPrefix(fmt.Sprintf("s3://%s/%s", bucketName, testPathPrefix)))
-	logcollectorOpts = append(logcollectorOpts, WithDisableSSL(true))
-	logcollectorOpts = append(logcollectorOpts, WithAwsRegion(region))
+func newTestLogCollector(endpoint, bucketName string) (*logCollector, error) {
+	logcollectorOpts := []Option{
+		WithServer(),
+		WithEndpoint(endpoint),
+		WithS3ForcePathStyle(true),
+		WithS3UrlPrefix(fmt.Sprintf("s3://%s/%s", bucketName, testPathPrefix)),
+		WithDisableSSL(true),
+		WithAwsRegion(region),
+	}
 
 	var opts options
 	for _, o := range logcollectorOpts {
 		o(&opts)
 	}
 
-	return newLogCollector(&opts)
+	return newLogCollector(TestTokener{}, &opts)
 }
 
 type LogCollectorSuite struct {
@@ -159,7 +189,8 @@ func (s *LogCollectorSuite) TestUpload() {
 	s.Equal(s.Container.Addr(), parsedURL.Host)
 
 	segments := strings.Split(parsedURL.Path[1:], "/")
-	s.Equal([]string{testBucketName, testPathPrefix, testUserID, testDeviceID}, segments[0:4])
+	encodedTestDeviceId := base64.StdEncoding.EncodeToString([]byte(testDeviceID))
+	s.Equal([]string{testBucketName, testPathPrefix, testUserID, encodedTestDeviceId}, segments[0:4])
 
 	key := strings.Join(segments[1:], "/")
 	content := s.GetObject(testBucketName, key)

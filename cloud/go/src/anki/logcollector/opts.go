@@ -1,7 +1,6 @@
 package logcollector
 
 import (
-	"anki/token"
 	"anki/util"
 	"net/http"
 	"net/url"
@@ -10,7 +9,6 @@ import (
 type options struct {
 	server           bool
 	socketNameSuffix string
-	tokener          token.Accessor
 	httpClient       *http.Client
 	errListener      util.ErrorListener
 
@@ -44,14 +42,6 @@ func WithSocketNameSuffix(socketNameSuffix string) Option {
 func WithHTTPClient(httpClient *http.Client) Option {
 	return func(o *options) {
 		o.httpClient = httpClient
-	}
-}
-
-// WithTokener specifies that the given token.Accessor should be used to obtain
-// authorization credentials (used to retrieve USerID)
-func WithTokener(value token.Accessor) Option {
-	return func(o *options) {
-		o.tokener = value
 	}
 }
 
