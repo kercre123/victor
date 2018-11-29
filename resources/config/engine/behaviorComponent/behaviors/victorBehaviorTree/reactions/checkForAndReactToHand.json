@@ -2,6 +2,8 @@
   "behaviorID" :   "CheckForAndReactToHand",
   "behaviorClass": "CheckForAndReactToSalientPoint",
 
+  "associatedActiveFeature": "ReactToHand",
+
   "visionMode" : "DetectingHands",
   "numFrames" : 2,
   
