@@ -1312,6 +1312,8 @@ namespace Vision {
       // Get whatever is the latest recognition information for the current tracker ID
       s32 enrollmentCompleted = 0;
       auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID, enrollmentCompleted);
+    
+      face.SetBestGuessName(_recognizer.GetBestGuessNameForTrackingID(detectionInfo.nID));
 
       if(recognitionData.WasFaceIDJustUpdated())
       {

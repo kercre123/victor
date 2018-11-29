@@ -51,6 +51,13 @@ namespace Vision {
     void SetName(const std::string& newName);
     bool HasName() const;
     
+    // If this face has a name, it will be returned. Otherwise, the best guess
+    // will be returned (which could still be none/empty). The best guess need
+    // not be as confident a match as the "regular" name above, but may be useful
+    // in some situations when we're willing to be less sure about someone's identity.
+    const std::string& GetBestGuessName() const;
+    void SetBestGuessName(const std::string& name);
+    
     // Returns true if tracking is happening vs. false if face was just detected
     bool IsBeingTracked() const;
     void SetIsBeingTracked(bool tf);
@@ -169,6 +176,7 @@ namespace Vision {
     Pose3d _gazeDirectionPose;
 
     std::string    _name;
+    std::string    _bestGuessName;
     
     Rectangle<f32> _rect;
     
@@ -324,6 +332,14 @@ namespace Vision {
   
   inline void TrackedFace::SetName(const std::string& newName) {
     _name = newName;
+  }
+  
+  inline void TrackedFace::SetBestGuessName(const std::string& name) {
+    _bestGuessName = name;
+  }
+  
+  inline const std::string& TrackedFace::GetBestGuessName() const {
+    return (HasName() ? GetName() : _bestGuessName);
   }
   
   inline void TrackedFace::SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info) {
