@@ -7,5 +7,7 @@
     "conditionType": "FeatureGate",
     "feature": "GazeDirection",
     "expected": true
-  }
+  },
+
+  "associatedActiveFeature": "ReactToGazeDirection"
 }
