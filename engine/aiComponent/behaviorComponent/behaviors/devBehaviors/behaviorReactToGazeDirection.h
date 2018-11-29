@@ -2,7 +2,7 @@
  * File: behaviorReactToGazeDirection.h
  *
  * Author: Robert Cosgriff
- * Created: 2018-09-04
+ * Created: 11/29/2018
  *
  * Description: React depending on the gaze direction of a face
  *
@@ -64,6 +64,8 @@ private:
 
   Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
   void FoundNewFace(ActionResult result);
+
+  void SendDASEventForPoseToFollow(const Pose3d& gazePose) const;
 };
 
 } // namespace Vector

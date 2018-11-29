@@ -19,6 +19,7 @@
 #include "engine/faceWorld.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 namespace Anki {
 namespace Vector {
@@ -237,6 +238,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d gazeDirectionPoseWRTRobot;
     if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
+      SendDASEventForPoseToFollow(gazeDirectionPoseWRTRobot);
       if (_iConfig->searchForFaces) {
         const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
 
@@ -270,8 +272,18 @@ void BehaviorReactToGazeDirection::TransitionToCompleted()
 void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
 {
   if (ActionResult::NO_FACE == result) {
-    DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo), &BehaviorReactToGazeDirection::TransitionToCompleted);
+    // TODO not sure if we should be sending anymore data
+    DASMSG(behavior_react_to_gaze_direction_found_new_face,
+           "behavior.react_to_gaze_direction.found_new_face",
+           "Found a new face by following the gaze direction of another face.");
+    DASMSG_SEND();
+    DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo),
+                        &BehaviorReactToGazeDirection::TransitionToCompleted);
   } else if (ActionResult::SUCCESS == result) {
+    DASMSG(behavior_react_to_gaze_direction_no_found_new_face,
+           "behavior.react_to_gaze_direction.no_new_face",
+           "No new face found by following the gaze direction of another face.");
+    DASMSG_SEND();
     TransitionToCompleted();
   }
 }
@@ -291,5 +303,25 @@ void BehaviorReactToGazeDirection::GetBehaviorOperationModifiers(BehaviorOperati
   modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToGazeDirection::SendDASEventForPoseToFollow(const Pose3d& gazePose) const
+{
+  const auto& translation = gazePose.GetTranslation();
+  std::string type;
+  if (_iConfig->searchForFaces) {
+    type = "Surface";
+  } else {
+    type = "Face";
+  }
+  DASMSG(behavior_react_to_gaze_direction_pose_to_follow,
+         "behavior.react_to_gaze_direction.pose_to_follow",
+         "Gaze point to turn towards.");
+  DASMSG_SET(s1, type.c_str(), "The type of point we turning towards");
+  DASMSG_SET(i1, static_cast<int>(translation.x()), "X coordinate of point to turn towards");
+  DASMSG_SET(i2, static_cast<int>(translation.y()), "Y coordinate of point to turn towards");
+  DASMSG_SET(i3, static_cast<int>(translation.z()), "Z coordinate of point to turn towards");
+  DASMSG_SEND();
 }
-}
+
+} // namespace Vector
+} // namespace Anki
