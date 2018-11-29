@@ -239,7 +239,6 @@ CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dat
 // Destructor must exist in cpp (even though it's empty) in order for CozmoGame unique_ptr to be defined and deletable
 CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 {
-
 }
 
 void CozmoAPI::CozmoInstanceRunner::Run()
@@ -257,16 +256,18 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 
   while(_isRunning)
   {
-    ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
-
-    const duration<double> curTimeSeconds = tickStart - runStart;
-    const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());
-
-    const bool tickSuccess = Update(Util::numeric_cast<BaseStationTime_t>(curTimeNanoseconds));
-    if (!tickSuccess)
     {
-      // If we fail to update properly, stop running
-      Stop();
+      ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
+
+      const duration<double> curTimeSeconds = tickStart - runStart;
+      const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());
+
+      const bool tickSuccess = Update(Util::numeric_cast<BaseStationTime_t>(curTimeNanoseconds));
+      if (!tickSuccess)
+      {
+        // If we fail to update properly, stop running
+        Stop();
+      }
     }
 
     const auto tickAfterEngineExecution = TimeClock::now();
@@ -300,7 +301,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     // This is so that we don't spend the next SEVERAL frames catching up.
     const auto timeBehind_us = -remaining_us;
     static const auto kusPerFrame = ((microseconds)(BS_TIME_STEP_MICROSECONDS)).count();
-    static const int kTooFarBehindFramesThreshold = 4;
+    static const int kTooFarBehindFramesThreshold = 2;
     static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
     if (timeBehind_us >= kTooFarBehindThreshold)
     {
