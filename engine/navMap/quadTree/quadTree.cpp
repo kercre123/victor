@@ -195,10 +195,8 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
 
   // obtain all leaf nodes from the map we are merging from
   NodeCPtrVector leafNodes;
-  other.Fold(
-    [&leafNodes](const QuadTreeNode& node) {
-      if (!node.IsSubdivided()) { leafNodes.push_back(&node); }
-    });
+  const FoldFunctorConst getLeaves = [&leafNodes](const auto& node) { if (!node.IsSubdivided()) { leafNodes.push_back(&node); } };
+  other.Fold( getLeaves );
   
   // note regarding quad size limit: when we merge one map into another, this map can expand or shift the root
   // to accomodate the information that we are receiving from 'other'. 'other' is considered to have more up to
@@ -370,7 +368,9 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
   }
     
   // update address of all children
-  Fold([] (QuadTreeNode& node) { node.ResetAddress(); });
+  FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
+  Fold(reset);
+
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _level, MM_TO_M(_sideLen));
@@ -433,7 +433,8 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, 
   ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
 
   // update address of all children
-  Fold([] (QuadTreeNode& node) { node.ResetAddress(); });
+  FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
+  Fold(reset);
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _level, MM_TO_M(_sideLen));
