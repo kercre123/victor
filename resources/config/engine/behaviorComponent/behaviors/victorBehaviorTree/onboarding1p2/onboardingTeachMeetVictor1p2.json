@@ -6,6 +6,7 @@
   "linkScope" : false,
 
   "behaviors" : [
+    "MandatoryPhysicalReactions",
     "OnboardingMeetVictorTriggerWordDetected",
     "ComeHereVoiceCommand",
     "MeetVictor",

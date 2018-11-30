@@ -36,6 +36,9 @@ class BehaviorReactToVoiceCommand : public ICozmoBehavior
 
 public:
 
+  // Public destructor must be explicitly defined to allow std::unique_ptr<FwdDeclaredType> (ConditionUserIntentPending)
+  ~BehaviorReactToVoiceCommand();
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   virtual bool WantsToBeActivatedBehavior() const override;
@@ -175,7 +178,7 @@ private:
     RecentOccurrenceTracker::Handle wifiErrorHandle;
     RecentOccurrenceTracker::Handle cloudErrorHandle;
 
-    std::shared_ptr<ConditionUserIntentPending> intentWhitelistCondition;
+    std::unique_ptr<ConditionUserIntentPending> intentWhitelistCondition;
 
   } _iVars;
 
