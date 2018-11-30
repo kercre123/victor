@@ -236,6 +236,13 @@ void GatewayMessagingServer::sEvGatewayMessageHandler(struct ev_loop* loop, stru
 
     SwitchboardRequest message;
     uint16_t msgSize = *(uint16_t*)sMessageData;
+
+    if(msgSize > (sizeof(sMessageData) - sizeof(msgSize))) {
+      // if the size is greater than the buffer we support, than don't try to read
+      Log::Write("GatewayMessagingServer received message from vic-gateway that didn't fit into our buffer.");
+      continue;
+    }
+
     size_t unpackedSize = message.Unpack(msgPayload, msgSize);
 
     if(unpackedSize != (size_t)msgSize) {

@@ -626,9 +626,6 @@ void RtsHandlerV5::HandleRtsSdkProxyRequest(const Vector::ExternalComms::RtsConn
 
         if(idIter != _sdkRequestIds.end()) {
           // send response with app's given ID
-          Log::Write("=====>>>>>>>>>[[");
-          Log::Write(content.c_str());
-          Log::Write("<<<<<<<<<=====]]");
           SendRtsMessage<RtsSdkProxyResponse>(idIter->second, statusCode, contentType, content);
           _sdkRequestIds.erase(idIter);
         } else {
