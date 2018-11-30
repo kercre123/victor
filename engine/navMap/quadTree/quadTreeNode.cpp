@@ -358,8 +358,16 @@ namespace {
 
 void QuadTreeNode::Fold(FoldFunctor& accumulator, const FoldableRegion& region, FoldDirection dir)
 {
-  if ( !region.IntersectsQuad(_boundingBox) ) { return; }                         // node and region are disjoint
-  if ( region.ContainsQuad(_boundingBox) )    { Fold(accumulator, dir); return; } // node is a subset of region
+  if ( !region.IntersectsQuad(_boundingBox) ) { 
+    // node and region are disjoint
+    return; 
+  }
+  
+  if ( region.ContainsQuad(_boundingBox) ) { 
+    // node is a subset of region
+    Fold(accumulator, dir); 
+    return; 
+  } 
 
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
 
@@ -374,8 +382,16 @@ void QuadTreeNode::Fold(FoldFunctor& accumulator, const FoldableRegion& region, 
 
 void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const FoldableRegion& region, FoldDirection dir) const
 {
-  if ( !region.IntersectsQuad(_boundingBox) ) { return; }                         // node and region are disjoint
-  if ( region.ContainsQuad(_boundingBox) )    { Fold(accumulator, dir); return; } // node is a subset of region
+  if ( !region.IntersectsQuad(_boundingBox) ) { 
+    // node and region are disjoint
+    return; 
+  }
+  
+  if ( region.ContainsQuad(_boundingBox) ) { 
+    // node is a subset of region
+    Fold(accumulator, dir); 
+    return; 
+  } 
 
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
 

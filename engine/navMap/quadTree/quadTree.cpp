@@ -195,7 +195,9 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
 
   // obtain all leaf nodes from the map we are merging from
   NodeCPtrVector leafNodes;
-  const FoldFunctorConst getLeaves = [&leafNodes](const auto& node) { if (!node.IsSubdivided()) { leafNodes.push_back(&node); } };
+  const FoldFunctorConst getLeaves = [&leafNodes](const auto& node) { 
+    if (!node.IsSubdivided()) { leafNodes.push_back(&node); } 
+  };
   other.Fold( getLeaves );
   
   // note regarding quad size limit: when we merge one map into another, this map can expand or shift the root
