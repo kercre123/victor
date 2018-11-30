@@ -456,7 +456,11 @@ namespace Anki {
   const Vec3f Rotation3d::GetAxis() const
   {
     Vec3f axis(_q[1], _q[2], _q[3]);
-    axis.MakeUnitLength();
+    const float length = axis.MakeUnitLength();
+    if (NEAR_ZERO(length)) {
+      // Not a valid axis (since rotation angle is zero) so just return any valid one
+      return Z_AXIS_3D();
+    }
     return axis;
   }
   
