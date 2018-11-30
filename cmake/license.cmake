@@ -216,7 +216,7 @@ function(write_license_html)
       file(APPEND ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.html "<a href=\"${dir}/${filename}\"\>${dir}</a><br/>\n")
     endif()
   endforeach()
-  
+
   # footer
 
   file(APPEND ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.html "</p></body></html>")
@@ -323,7 +323,7 @@ function(check_licenses)
 
     foreach(lib libcutils libglib libgio libgobject libffi libdl libz libresolv libgmodule libpcre
                 Accelerate AppKit AudioToolbox AudioUnit CoreAudio CoreBluetooth CoreFoundation
-                OpenCL OpenGL Foundation GLUT Security 
+                OpenCL OpenGL Foundation GLUT Security
                 "-Wl" "-ldl"
                 ankiutil                     # hack: because of other hacks
                 Controller CppController ode # webots
@@ -378,7 +378,7 @@ function(check_licenses)
       # linker option is not a known target, i.e. a system library or missing cmake configuration
 
       if(NOT system_lib)
-        message("${target} is not a recognised system lib and does not have cmake configuration including licensing information.")
+        message(${MESSAGE_STATUS} "WARNING: ${target} is not a recognised system lib and does not have cmake configuration including licensing information.")
       endif()
 
     endif()
@@ -398,7 +398,7 @@ function(guess_license_for_file filename licenses_result)
     file(READ ${filename} contents LIMIT 2048)
     string(REPLACE "'" "" "${contents}" contents)
     string(TOLOWER "${contents}" contents)
-  
+
     if(contents MATCHES "anki")
       list(APPEND licenses "Anki")
     endif()
