@@ -102,10 +102,6 @@ int _alexaTriggerModelSensitivityIndex = 0;
 CONSOLE_VAR_ENUM(int, kAlexaRecognizerModelSensitivity, CONSOLE_GROUP_ALEXA, _alexaTriggerModelSensitivityIndex,
                  kRecognizerModelSensitivityStr);
   
-CONSOLE_VAR(bool, kSaveRawMicInput, CONSOLE_GROUP_ALEXA, false);
-// 0: don't run; 1: compute power as if _notchDetectorActive; 2: analyze power every tick
-CONSOLE_VAR_RANGED(unsigned int, kForceRunNotchDetector, CONSOLE_GROUP_ALEXA, 0, 0, 2);
-  
 // HACK
 #define CONSOLE_GROUP_ALEXA_PLAYBACK "SpeechRecognizer.AlexaPlayback"
 size_t _alexaPlaybackRecognizerModelTypeIndex = (size_t) SupportedLocales::enUS_250kb;
@@ -120,6 +116,9 @@ CONSOLE_VAR_ENUM(int, kAlexaPlaybackRecognizerModelSensitivity, CONSOLE_GROUP_AL
 std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 
 #endif // ANKI_DEV_CHEATS
+CONSOLE_VAR(bool, kSaveRawMicInput, CONSOLE_GROUP_ALEXA, false);
+// 0: don't run; 1: compute power as if _notchDetectorActive; 2: analyze power every tick
+CONSOLE_VAR_RANGED(unsigned int, kForceRunNotchDetector, CONSOLE_GROUP_ALEXA, 0, 0, 2);
 } // namespace
 
 void SpeechRecognizerSystem::SetupConsoleFuncs()
