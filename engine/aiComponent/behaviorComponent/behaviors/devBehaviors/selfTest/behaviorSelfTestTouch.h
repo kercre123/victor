@@ -29,6 +29,7 @@ protected:
 protected:
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
   
   virtual Result        OnBehaviorActivatedInternal() override;

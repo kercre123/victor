@@ -53,7 +53,7 @@ static std::map<std::string, std::vector<FactoryTestResultCode>> results;
 // Only behaviorSelfTestSoundCheck should be setting this bool
 static bool receivedFFTResult = false;
 }
- 
+
 IBehaviorSelfTest::IBehaviorSelfTest(const Json::Value& config)
 : ICozmoBehavior(config)
 {
@@ -71,12 +71,12 @@ bool IBehaviorSelfTest::WantsToBeActivatedBehavior() const
 void IBehaviorSelfTest::OnBehaviorActivated()
 {
   // Add a timer to force the behavior to end if it runs too long
-  AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
+  AddTimer(SelfTestConfig::kDefaultTimeout_ms, [this](){
     PRINT_NAMED_WARNING("IBehaviorSelfTest.Timeout",
                         "Behavior %s has timed out and we are %signoring failures",
                         GetDebugLabel().c_str(),
                         (ShouldIgnoreFailures() ? "" : "NOT "));
-    
+
     if(!ShouldIgnoreFailures())
     {
       SetResult(FactoryTestResultCode::TEST_TIMED_OUT);
@@ -86,10 +86,10 @@ void IBehaviorSelfTest::OnBehaviorActivated()
       SetResult(FactoryTestResultCode::SUCCESS);
     }
   });
-  
+
   OnBehaviorActivatedInternal();
 }
-  
+
 void IBehaviorSelfTest::BehaviorUpdate()
 {
   if(!IsActivated())
@@ -116,7 +116,7 @@ void IBehaviorSelfTest::BehaviorUpdate()
   {
     _lastStatus = SelfTestUpdateInternal();
   }
-  
+
   // Finish recording touch data before letting the behavior complete
   if(_recordingTouch)
   {
@@ -128,11 +128,11 @@ void IBehaviorSelfTest::BehaviorUpdate()
     CancelSelf();
   }
 }
-  
+
 void IBehaviorSelfTest::HandleWhileActivated(const EngineToGameEvent& event)
 {
   EngineToGameTag tag = event.GetData().GetTag();
-  
+
   // If a subclass subscribed to the tag then let them handle it otherwise it is one we (the baseclass) subscribed
   // to, one of the kFailureTags
   if(_tagsSubclassSubscribeTo.count(tag) > 0)
@@ -227,7 +227,7 @@ void IBehaviorSelfTest::HandleWhileActivated(const RobotToEngineEvent& event)
 void IBehaviorSelfTest::SubscribeToTags(std::set<EngineToGameTag>&& tags)
 {
   _tagsSubclassSubscribeTo.insert(tags.begin(), tags.end());
-  
+
   // If the caller wants to subscribe to one of the failure type tags then don't let them subscribe
   // since we already are subscribed to it and it will already call HandleWhileActivatedInternal()
   for(auto iter = tags.begin(); iter != tags.end();)
@@ -241,7 +241,7 @@ void IBehaviorSelfTest::SubscribeToTags(std::set<EngineToGameTag>&& tags)
       ++iter;
     }
   }
-  
+
   ICozmoBehavior::SubscribeToTags(std::move(tags));
 }
 
@@ -275,7 +275,7 @@ bool IBehaviorSelfTest::DelegateIfInControl(IActionRunner* action, ActionResultC
                           GetDebugLabel().c_str(),
                           EnumToString(result));
     }
-    
+
     callback(result);
   };
   return ICozmoBehavior::DelegateIfInControl(action, callbackWrapper);
@@ -292,34 +292,26 @@ bool IBehaviorSelfTest::DelegateIfInControl(IActionRunner* action, RobotComplete
                           GetDebugLabel().c_str(),
                           EnumToString(rca.result));
     }
-    
+
     callback(rca);
   };
   return ICozmoBehavior::DelegateIfInControl(action, callbackWrapper);
 }
 
-void IBehaviorSelfTest::WriteToStorage(Robot& robot, 
+void IBehaviorSelfTest::WriteToStorage(Robot& robot,
                                       NVStorage::NVEntryTag tag,
-                                      const u8* data, 
+                                      const u8* data,
                                       size_t size,
                                       FactoryTestResultCode failureCode)
 {
-  if(PlaypenConfig::kWriteToStorage)
-  {
-    SELFTEST_TRY(robot.GetNVStorageComponent().Write(tag, data, size),
-                failureCode);
-  }
-  else
-  {
-    PRINT_NAMED_INFO("IBehaviorSelfTest.WriteToStorage.WritingNotEnabled", 
-                     "Not writing to %s",
-                     EnumToString(tag));
-  }
+  PRINT_NAMED_INFO("IBehaviorSelfTest.WriteToStorage.WritingNotEnabled",
+                   "Not writing to %s",
+                   EnumToString(tag));
 }
-  
+
 bool IBehaviorSelfTest::ShouldIgnoreFailures() const
 {
-  return PlaypenConfig::kIgnoreFailures;
+  return SelfTestConfig::kIgnoreFailures;
 }
 
 void IBehaviorSelfTest::SetResult(FactoryTestResultCode result)
@@ -400,7 +392,7 @@ void IBehaviorSelfTest::RecordTouchSensorData(Robot& robot, const std::string& n
   //   // Add a timer that will stop recording touch data and write it to log
   //   // This timer will not be removed from the timer vector so it must complete before the behavior is allowed to
   //   // complete
-  //   AddTimer(PlaypenConfig::kDurationOfTouchToRecord_ms, [this, &robot, nameOfData](){ 
+  //   AddTimer(PlaypenConfig::kDurationOfTouchToRecord_ms, [this, &robot, nameOfData](){
   //     robot.GetTouchSensorComponent().StopRecordingData();
   //     SELFTEST_TRY(GetLogger().Append("TouchSensor_" + nameOfData, _touchSensorValues), FactoryTestResultCode::WRITE_TO_LOG_FAILED);
   //     _touchSensorValues.data.clear();
@@ -482,7 +474,7 @@ void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
     offset += minSize.height + 2;
   }
 
-  anim.DisplayFaceImage(img, 0, true); 
+  anim.DisplayFaceImage(img, 0, true);
 }
 
 }

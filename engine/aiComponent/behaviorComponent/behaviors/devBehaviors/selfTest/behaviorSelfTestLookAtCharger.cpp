@@ -140,7 +140,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
       data.visualAngleAwayFromTarget_rad = angle.ToFloat();
     }
 
-    f32 bias = PlaypenConfig::kDistanceSensorBiasAdjustment_mm;
+    f32 bias = SelfTestConfig::kDistanceSensorBiasAdjustment_mm;
     if(!robot.IsPhysical())
     {
       bias = 0;
@@ -149,14 +149,14 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
     if(/*robot.IsPhysical() &&*/
        !Util::IsNear(data.proxSensorData.distance_mm - bias, 
                      data.visualDistanceToTarget_mm,
-                     PlaypenConfig::kDistanceSensorReadingThresh_mm))
+                     SelfTestConfig::kDistanceSensorReadingThresh_mm))
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.SelfTestUpdateInternal.ReadingOutsideThresh",
                           "Sensor reading %u - %f not near visual reading %f with threshold %f",
                           data.proxSensorData.distance_mm,
-                          PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
+                          SelfTestConfig::kDistanceSensorBiasAdjustment_mm,
                           data.visualDistanceToTarget_mm,
-                          PlaypenConfig::kDistanceSensorReadingThresh_mm);
+                          SelfTestConfig::kDistanceSensorReadingThresh_mm);
 
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, SelfTestStatus::Running);
     }
@@ -199,13 +199,13 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
     const f32 distToMarker_mm = markerPose.GetTranslation().x();
     if(!Util::IsNear(distToMarker_mm,
                      _expectedDistanceToObject_mm,
-                     PlaypenConfig::kVisualDistanceToDistanceSensorObjectThresh_mm))
+                     SelfTestConfig::kVisualDistanceToDistanceSensorObjectThresh_mm))
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.TransitionToRefineTurn.MarkerOOR",
                           "Observing distance sensor marker at %fmm, expected distance is %fmm +/- %fmm",
                           distToMarker_mm,
                           _expectedDistanceToObject_mm,
-                          PlaypenConfig::kVisualDistanceToDistanceSensorObjectThresh_mm);
+                          SelfTestConfig::kVisualDistanceToDistanceSensorObjectThresh_mm);
       
       SELFTEST_SET_RESULT(FactoryTestResultCode::DISTANCE_MARKER_OOR);
     }
@@ -235,7 +235,7 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
 
 void BehaviorSelfTestLookAtCharger::TransitionToRecordSensor()
 {
-  _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;
+  _numRecordedReadingsLeft = SelfTestConfig::kNumDistanceSensorReadingsToRecord;
 }
 
 void BehaviorSelfTestLookAtCharger::TransitionToTurnBack()
@@ -299,10 +299,14 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
         markerName = marker.GetCodeName();
       }
     }
-
-    if(lastObservedTime < robot.GetLastImageTimeStamp())
+    
+    if((u32)robot.GetLastImageTimeStamp() - lastObservedTime > SelfTestConfig::kChargerMarkerLastObservedTimeThresh_ms)
     {
-      PRINT_NAMED_INFO("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld","");
+      PRINT_NAMED_INFO("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld",
+                       "%u - %u > %u",
+                       (u32)robot.GetLastImageTimeStamp(),
+                       lastObservedTime,
+                       SelfTestConfig::kChargerMarkerLastObservedTimeThresh_ms);
       return false;
     }
     

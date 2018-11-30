@@ -359,7 +359,7 @@ void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
 
 void Process_selfTestEnd(const RobotInterface::SelfTestEnd& msg)
 {
-  FaceInfoScreenManager::getInstance()->SelfTestEnd();
+  FaceInfoScreenManager::getInstance()->SelfTestEnd(_animStreamer);
 }
 
 

@@ -375,7 +375,6 @@ namespace Cozmo {
   
   void AnimationStreamer::Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg)
   {
-    PRINT_NAMED_WARNING("","HERE");
     if (msg.imageId != _faceImageRGBId) {
       if (_faceImageRGBChunksReceivedBitMask != 0) {
         PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.UnfinishedFace", 

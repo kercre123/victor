@@ -29,7 +29,7 @@ Result BehaviorSelfTestDriftCheck::OnBehaviorActivatedInternal()
 {
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
-  MoveHeadToAngleAction* moveHeadToAngle = new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleForDriftCheck);
+  MoveHeadToAngleAction* moveHeadToAngle = new MoveHeadToAngleAction(SelfTestConfig::kHeadAngleForDriftCheck);
   MoveLiftToHeightAction* moveLiftUp = new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY);
   
   CompoundActionSequential* headUpDown = new CompoundActionSequential({moveHeadUp, moveHeadToAngle});
@@ -38,7 +38,7 @@ Result BehaviorSelfTestDriftCheck::OnBehaviorActivatedInternal()
   // After moving head and lift, wait to ensure that audio recording has stopped before transitioning to playing 
   // the sound and starting more recording
   CompoundActionSequential* action = new CompoundActionSequential({liftAndHead, 
-     new WaitAction(Util::MilliSecToSec((float)PlaypenConfig::kDurationOfAudioToRecord_ms))});
+     new WaitAction(Util::MilliSecToSec((float)SelfTestConfig::kDurationOfAudioToRecord_ms))});
   
   DelegateIfInControl(action, [this](){ TransitionToStartDriftCheck(); });
   
@@ -54,7 +54,7 @@ void BehaviorSelfTestDriftCheck::TransitionToStartDriftCheck()
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
   
-  AddTimer(PlaypenConfig::kIMUDriftDetectPeriod_ms, [this](){ CheckDrift(); });
+  AddTimer(SelfTestConfig::kIMUDriftDetectPeriod_ms, [this](){ CheckDrift(); });
 }
 
 void BehaviorSelfTestDriftCheck::CheckDrift()
@@ -65,11 +65,11 @@ void BehaviorSelfTestDriftCheck::CheckDrift()
 
   f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
   
-  if(angleChange > PlaypenConfig::kIMUDriftAngleThreshDeg)
+  if(angleChange > SelfTestConfig::kIMUDriftAngleThreshDeg)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.CheckDrift.DriftDetected",
                         "Angle change of %f deg detected in %f seconds",
-                        angleChange, Util::MilliSecToSec((float)PlaypenConfig::kIMUDriftDetectPeriod_ms));
+                        angleChange, Util::MilliSecToSec((float)SelfTestConfig::kIMUDriftDetectPeriod_ms));
     SELFTEST_SET_RESULT(FactoryTestResultCode::IMU_DRIFTING);
   }
   

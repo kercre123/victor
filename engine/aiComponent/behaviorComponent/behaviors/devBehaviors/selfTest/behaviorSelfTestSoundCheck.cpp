@@ -36,13 +36,13 @@ void BehaviorSelfTestSoundCheck::InitBehaviorInternal()
 Result BehaviorSelfTestSoundCheck::OnBehaviorActivatedInternal()
 {
   // Move head and lift to extremes then move to sound playing angle
-  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToPlaySound);
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(SelfTestConfig::kHeadAngleToPlaySound);
   MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
-  
+
   CompoundActionParallel* liftAndHead = new CompoundActionParallel({head, lift});
 
   DelegateIfInControl(liftAndHead, [this](){ TransitionToPlayingSound(); });
-  
+
   return RESULT_OK;
 }
 
@@ -53,17 +53,21 @@ void BehaviorSelfTestSoundCheck::TransitionToPlayingSound()
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Set speaker volume to config value
-  robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(PlaypenConfig::kSoundVolume);
+  robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(SelfTestConfig::kSoundVolume);
 
   // Start recording mic audio of the sound and run an FFT on the audio to check that we actually heard the
   // sound we played
   const bool runFFT = true;
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(SelfTestConfig::kDurationOfAudioToRecord_ms,
                                                                                      runFFT,
                                                                                      "/data/beep")));
 
-  PlayAnimationAction* soundAction = new PlayAnimationAction("soundTestAnim");
-  DelegateIfInControl(soundAction, [this](){ SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS) });
+  CompoundActionSequential* action = new CompoundActionSequential({
+    new PlayAnimationAction("soundTestAnim"),
+    new WaitAction(Util::MilliSecToSec((float)SelfTestConfig::kDurationOfAudioToRecord_ms))
+  });
+
+  DelegateIfInControl(action, [this](){ SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS) });
 }
 
 void BehaviorSelfTestSoundCheck::OnBehaviorDeactivated()
@@ -94,15 +98,15 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
     for(u8 i = 0; i < payload.result.size(); ++i)
     {
       const auto& fftResult = payload.result[i];
-      PRINT_NAMED_INFO("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.Result", 
+      PRINT_NAMED_INFO("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.Result",
                        "FFT result for channel %u : %u",
                        i, fftResult);
 
-      // Check that the most prominent frequency heard by this mic is 
+      // Check that the most prominent frequency heard by this mic is
       // near the expected frequency
-      if(!Util::IsNear((float)fftResult, 
-                       PlaypenConfig::kFFTExpectedFreq_hz, 
-                       PlaypenConfig::kFFTFreqTolerance_hz))
+      if(!Util::IsNear((float)fftResult,
+                       SelfTestConfig::kFFTExpectedFreq_hz,
+                       SelfTestConfig::kFFTFreqTolerance_hz))
       {
         ++count;
         res = channelToMic[i];
@@ -110,8 +114,8 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
                             "%s picked up freq %u which is outside %u +/- %u",
                             EnumToString(res),
                             fftResult,
-                            PlaypenConfig::kFFTExpectedFreq_hz, 
-                            PlaypenConfig::kFFTFreqTolerance_hz);
+                            SelfTestConfig::kFFTExpectedFreq_hz,
+                            SelfTestConfig::kFFTFreqTolerance_hz);
       }
     }
 
@@ -121,9 +125,9 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
     if(count == payload.result.size())
     {
       res = FactoryTestResultCode::SPEAKER_NOT_WORKING;
-      PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.Speaker", 
+      PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.Speaker",
                           "No mics picked up expected frequency %u, assuming speaker is not working",
-                          PlaypenConfig::kFFTExpectedFreq_hz);
+                          SelfTestConfig::kFFTExpectedFreq_hz);
     }
 
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -148,5 +152,3 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
 
 }
 }
-
-

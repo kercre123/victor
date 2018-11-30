@@ -67,7 +67,7 @@ Result BehaviorSelfTestDockWithCharger::OnBehaviorActivatedInternal()
 
     DelegateIfInControl(action, [this](){ TransitionToOnChargerChecks(); });
   }
-    
+
   return RESULT_OK;
 }
 
@@ -82,19 +82,39 @@ void BehaviorSelfTestDockWithCharger::TransitionToOnChargerChecks()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
+  const float batteryVolts = robot.GetBatteryVoltage();
+  const float chargerVolts = robot.GetChargerVoltage();
+  const bool disconnected = robot.IsBatteryDisconnected();
+  const bool batteryVoltageGood = batteryVolts >= SelfTestConfig::kMinBatteryVoltage;
+  const bool chargerVoltageGood = chargerVolts >= 4;
+
+  if(disconnected)
   {
-    PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
-    SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);
+    if(!chargerVoltageGood)
+    {
+      PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.ChargerTooLow", "%fv", chargerVolts);
+      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+    }
+  }
+  else
+  {
+    if(!batteryVoltageGood)
+    {
+      PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.BatteryTooLow", "%fv", batteryVolts);
+      SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);
+    }
+    else if(!chargerVoltageGood)
+    {
+      PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.ChargerTooLow", "%fv", chargerVolts);
+      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+    }
   }
 
   // TODO Maybe check cliff sensors for no cliff here
   // Difficult because don't know what kind of surface we are on, may be a dark table
-  
+
   SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
 }
 
 }
 }
-
-

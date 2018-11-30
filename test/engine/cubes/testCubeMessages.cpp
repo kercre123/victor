@@ -54,7 +54,7 @@ TEST(CubeMessages, CompareSizes)
   
   {
     // Base message union
-    //MessageCubeToEngine message;
+    MessageCubeToEngine message;
   
     // CubeAccelData (which is TapCommand in cube firmware)
     //message.Set_accelData(CubeAccelData());

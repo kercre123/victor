@@ -26,10 +26,11 @@ BehaviorSelfTestDriveForwards::BehaviorSelfTestDriveForwards(const Json::Value& 
 
 Result BehaviorSelfTestDriveForwards::OnBehaviorActivatedInternal()
 {
-  DriveStraightAction* action = new DriveStraightAction(120, 60, false);
+  DriveStraightAction* action = new DriveStraightAction(SelfTestConfig::kDistanceToDriveForwards_mm,
+                                                        SelfTestConfig::kDriveSpeed_mmps, false);
 
   DelegateIfInControl(action, [this](){ TransitionToOffChargerChecks(); });
-    
+
   return RESULT_OK;
 }
 
@@ -44,7 +45,7 @@ void BehaviorSelfTestDriveForwards::TransitionToOffChargerChecks()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
+  if(robot.GetBatteryVoltage() < SelfTestConfig::kMinBatteryVoltage)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
     SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);
@@ -52,11 +53,9 @@ void BehaviorSelfTestDriveForwards::TransitionToOffChargerChecks()
 
   // TODO Maybe check cliff sensors for no cliff here
   // Difficult because don't know what kind of surface we are on, may be a dark table
-  
+
   SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
 }
 
 }
 }
-
-

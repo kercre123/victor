@@ -46,14 +46,14 @@ Result BehaviorSelfTestInitChecks::OnBehaviorActivatedInternal()
   // Check that raw touch values are in expected range (the range assumes no touch)
   const u16 rawTouchValue = robot.GetTouchSensorComponent().GetLatestRawTouchValue();
   if(!Util::InRange(rawTouchValue,
-      PlaypenConfig::kMinExpectedTouchValue,
-      PlaypenConfig::kMaxExpectedTouchValue))
+      SelfTestConfig::kMinExpectedTouchValue,
+      SelfTestConfig::kMaxExpectedTouchValue))
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.TouchOOR", 
                         "Min %u < Val %u < Max %u",
-                        PlaypenConfig::kMinExpectedTouchValue,
+                        SelfTestConfig::kMinExpectedTouchValue,
                         rawTouchValue,
-                        PlaypenConfig::kMaxExpectedTouchValue);
+                        SelfTestConfig::kMaxExpectedTouchValue);
     SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
   }
 

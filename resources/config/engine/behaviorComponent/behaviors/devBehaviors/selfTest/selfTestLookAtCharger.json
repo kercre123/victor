@@ -1,6 +1,6 @@
 {
   "behaviorClass": "SelfTestLookAtCharger",
-    "behaviorID": "SelfTestLookAtCharger",
+  "behaviorID": "SelfTestLookAtCharger",
   "AngleToTurnToSeeTarget_deg": 180,
   "DistanceToDriveToSeeTarget_mm": 0,
   "ExpectedObjectType": "Charger_Basic",

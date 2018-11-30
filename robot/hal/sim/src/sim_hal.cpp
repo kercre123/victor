@@ -769,21 +769,6 @@ namespace Anki {
       return proxData;
     }
 
-  f32 HAL::GetTouchSensorFilt()
-  {
-    return GetButtonState(BUTTON_CAPACITIVE);
-  }
-
-  bool HAL::IsTouchSensorValid()
-  {
-    return true;
-  }
-
-  void HAL::UpdateTouchSensorValidRange()
-  {
-    return;
-  }
-
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
       switch(button_id) {

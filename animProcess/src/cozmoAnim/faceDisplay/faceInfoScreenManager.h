@@ -92,7 +92,7 @@ public:
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
-  void SelfTestEnd();
+  void SelfTestEnd(AnimationStreamer* animStreamer);
 
 private:
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;

@@ -39,6 +39,7 @@ public:
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.behaviorAlwaysDelegates = false;
     modifiers.visionModesForActiveScope->insert({VisionMode::DetectingMarkers, EVisionUpdateFrequency::High});
   }
@@ -46,7 +47,7 @@ protected:
   virtual void InitBehavior() override;
 
   // Override of IBehavior functions
-  virtual bool WantsToBeActivatedBehavior() const override{ return true;}
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;

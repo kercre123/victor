@@ -42,33 +42,33 @@ namespace Cozmo {
 BehaviorSelfTest::BehaviorSelfTest(const Json::Value& config)
 : ICozmoBehavior( config)
 {
-  
+
 }
 
-void BehaviorSelfTest::InitBehavior() 
+void BehaviorSelfTest::InitBehavior()
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   const BehaviorContainer& BC = GetBEI().GetBehaviorContainer();
-  
-  ICozmoBehaviorPtr waitToStartBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestWaitToStart);
-  DEV_ASSERT(waitToStartBehavior != nullptr &&
-             waitToStartBehavior->GetClass() == BehaviorClass::SelfTestWaitToStart,
-             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestWaitToStart");
-  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(waitToStartBehavior));
+
+  // ICozmoBehaviorPtr waitToStartBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestWaitToStart);
+  // DEV_ASSERT(waitToStartBehavior != nullptr &&
+  //            waitToStartBehavior->GetClass() == BehaviorClass::SelfTestWaitToStart,
+  //            "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestWaitToStart");
+  // _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(waitToStartBehavior));
 
   ICozmoBehaviorPtr putOnChargerBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestPutOnCharger);
   DEV_ASSERT(putOnChargerBehavior != nullptr &&
              putOnChargerBehavior->GetClass() == BehaviorClass::SelfTestPutOnCharger,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPutOnCharger");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(putOnChargerBehavior));
-  
+
   ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
   DEV_ASSERT(touchBehavior != nullptr &&
              touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
-  
+
   ICozmoBehaviorPtr buttonBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestButton);
   DEV_ASSERT(buttonBehavior != nullptr &&
              buttonBehavior->GetClass() == BehaviorClass::SelfTestButton,
@@ -104,7 +104,7 @@ void BehaviorSelfTest::InitBehavior()
              soundCheckBehavior->GetClass() == BehaviorClass::SelfTestSoundCheck,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestSoundCheck");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(soundCheckBehavior));
-  
+
   ICozmoBehaviorPtr driveFowardsBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestDriveForwards);
   DEV_ASSERT(driveFowardsBehavior != nullptr &&
              driveFowardsBehavior->GetClass() == BehaviorClass::SelfTestDriveForwards,
@@ -142,19 +142,21 @@ void BehaviorSelfTest::GetAllDelegates(std::set<IBehavior*>& delegates) const
   }
 }
 
-  
+
 void BehaviorSelfTest::OnBehaviorActivated()
 {
   //  _startTest = false;
   PRINT_NAMED_WARNING("","STARTING SELF TEST");
-  
-  // // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // // be removed
-  // Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+  robot.GetBodyLightComponent().ClearAllBackpackLightConfigs();
 
   // if(robot.HasExternalInterface())
   // {
-  //   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(PlaypenConfig::kSoundVolume);
+  //   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(SelfTestConfig::kSoundVolume);
   // }
 
   // // // Start the factory log
@@ -164,10 +166,10 @@ void BehaviorSelfTest::OnBehaviorActivated()
   // // PRINT_NAMED_INFO("BehaviorSelfTest.WillLogToDevice",
   // //                  "Log name: %s",
   // //                  _factoryTestLogger.GetLogName().c_str());
-  
+
   // // Set blind docking mode
   // NativeAnkiUtilConsoleSetValueWithString("PickupDockingMethod", "0");
-  
+
   // // Disable driving animations
   // NativeAnkiUtilConsoleSetValueWithString("EnableDrivingAnimations", "false");
 
@@ -176,17 +178,17 @@ void BehaviorSelfTest::OnBehaviorActivated()
   // {
   //   NativeAnkiUtilConsoleSetValueWithString("ImageCompressQuality", "0");
   // }
-  
+
   // // Make sure only Marker Detection mode is enabled; we don't need anything else running
   // robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
   // robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-  
+
   // // Set and disable auto exposure
-  // robot.GetVisionComponent().SetAndDisableAutoExposure(PlaypenConfig::kExposure_ms, PlaypenConfig::kGain);
+  // robot.GetVisionComponent().SetAndDisableAutoExposure(SelfTestConfig::kExposure_ms, SelfTestConfig::kGain);
 
   // // Set and disable WhiteBalance
-  // robot.GetVisionComponent().SetAndDisableWhiteBalance(PlaypenConfig::kGain, PlaypenConfig::kGain, PlaypenConfig::kGain);
-  
+  // robot.GetVisionComponent().SetAndDisableWhiteBalance(SelfTestConfig::kGain, SelfTestConfig::kGain, SelfTestConfig::kGain);
+
   // // Disable block pool from auto connecting
   // if(robot.HasExternalInterface())
   // {
@@ -194,21 +196,21 @@ void BehaviorSelfTest::OnBehaviorActivated()
   // }
 
   // // Toggle cube discovery off and on
-  // robot.GetCubeCommsComponent().EnableDiscovery(false, PlaypenConfig::kActiveObjectDiscoveryTime_s);
-  // robot.GetCubeCommsComponent().EnableDiscovery(true, PlaypenConfig::kActiveObjectDiscoveryTime_s);
+  // robot.GetCubeCommsComponent().EnableDiscovery(false, SelfTestConfig::kActiveObjectDiscoveryTime_s);
+  // robot.GetCubeCommsComponent().EnableDiscovery(true, SelfTestConfig::kActiveObjectDiscoveryTime_s);
 
   // // Request a WiFi scan
   // if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::WifiScanError)) {
   //   PRINT_NAMED_INFO("BehaviorSelfTest.OnBehaviorActivated.SendingWifiScanRequest", "");
   //   robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::WifiScanRequest()));
   // }
-  
+
   // // Disable filtered touch sensor value tracking
   // robot.EnableTrackTouchSensorFilt(false);
-  
+
   // _imuTemp.tempStart_c = robot.GetImuTemperature();
   // _imuTemp.duration_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  
+
   // Delegate to the first behavior
   _currentBehavior->WantsToBeActivated();
   DelegateNow(_currentBehavior.get());
@@ -229,13 +231,18 @@ void BehaviorSelfTest::Reset()
   }
 
   // _behaviorStartTimes.clear();
-  
+
   // Set current behavior to first playpen behavior
   _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
   _currentBehavior = *_currentSelfTestBehaviorIter;
-  
+
   // Clear imu temp struct
   // _imuTemp = IMUTempDuration();
+
+  _restartOnButtonPress = false;
+  _waitForButtonToEndTest = false;
+
+  _buttonPressed = false;
 }
 
 void BehaviorSelfTest::BehaviorUpdate()
@@ -254,24 +261,27 @@ void BehaviorSelfTest::BehaviorUpdate()
       {
         // If we are restarting the test then skip the first behavior
         // as it just waits for the face menu screen option to be selected
-        _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
-        _currentSelfTestBehaviorIter++;
-        
-        _currentBehavior = *_currentSelfTestBehaviorIter;
+        //_currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
+        //_currentSelfTestBehaviorIter++;
+
+        //_currentBehavior = *_currentSelfTestBehaviorIter;
+
+        // Fake being re-activated to startup selftest again
+        OnBehaviorActivated();
       }
       else
       {
+        CancelSelf();
+
         // This should clear the face and put us back
         robot.SendRobotMessage<RobotInterface::SelfTestEnd>();
+        robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::SelfTestEnd()));
       }
-       
+
       _restartOnButtonPress = false;
       _waitForButtonToEndTest = false;
-
-      // Fake being re-activated to startup selftest again
-      OnBehaviorActivated();
      }
-    
+
     _buttonPressed = buttonPressed;
   }
 
@@ -282,40 +292,43 @@ void BehaviorSelfTest::BehaviorUpdate()
     if(result != FactoryTestResultCode::UNKNOWN &&
        result != FactoryTestResultCode::SUCCESS)
     {
-      // _currentBehavior->OnDeactivated();
-      
+      //_currentBehavior->OnDeactivated();
+
       PRINT_NAMED_WARNING("BehaviorSelfTest.Update.BehaviorFailed",
                           "Behavior %s failed with %s",
                           _currentBehavior->GetDebugLabel().c_str(),
                           EnumToString(_currentBehavior->GetResult()));
-      
+
+      _currentBehavior = nullptr;
+
       HandleResult(result);
       //return RESULT_FAIL;
     }
   }
 
   // If the current behavior has completed
-  if(_currentBehavior->GetResult() == FactoryTestResultCode::SUCCESS)
-  {    
+  if(_currentBehavior != nullptr &&
+     _currentBehavior->GetResult() == FactoryTestResultCode::SUCCESS)
+  {
     // Move to the next behavior
     _currentSelfTestBehaviorIter++;
-    
+
     // If we still have behaviors to run
     if(_currentSelfTestBehaviorIter != _selfTestBehaviors.end())
     {
       // Update current behavior
       _currentBehavior = *_currentSelfTestBehaviorIter;
       DEV_ASSERT(_currentBehavior != nullptr, "BehaviorSelfTest.BehaviorUpdate.NullCurrentBehavior");
-      
+
       if(!_currentBehavior->WantsToBeActivated())
       {
         PRINT_NAMED_ERROR("BehaviorSelfTest.ChooseNextBehaviorInternal.BehaviorNotRunnable",
                           "Current behavior %s is not runnable",
                           _currentBehavior->GetDebugLabel().c_str());
-        
+
         HandleResult(FactoryTestResultCode::BEHAVIOR_NOT_RUNNABLE);
       }
-      
+
       //_behaviorStartTimes.push_back(BaseStationTimer::getInstance()->GetCurrentTimeStamp());
 
       DelegateNow(_currentBehavior.get());
@@ -332,7 +345,7 @@ void BehaviorSelfTest::BehaviorUpdate()
 
 void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
 {
-  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResult.OrigResult", 
+  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResult.OrigResult",
                    "%s", EnumToString(result));
 
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -347,10 +360,10 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed.ImuTemp", "");
   //   result = FactoryTestResultCode::WRITE_TO_LOG_FAILED;
   // }
-  
+
   const auto& allResults = IBehaviorSelfTest::GetAllSelfTestResults();
   // // Write all playpen behavior results to log if we are ignoring failures
-  // if(PlaypenConfig::kIgnoreFailures &&
+  // if(SelfTestConfig::kIgnoreFailures &&
   //    !_factoryTestLogger.Append(allResults))
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed.AllResults", "");
@@ -359,7 +372,7 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
 
   // If this is a success but we are ignoring failures a behavior may have actually
   // failed so check all results
-  if(result == FactoryTestResultCode::SUCCESS && PlaypenConfig::kIgnoreFailures)
+  if(result == FactoryTestResultCode::SUCCESS && SelfTestConfig::kIgnoreFailures)
   {
     for(const auto& resultPair : allResults)
     {
@@ -379,19 +392,19 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
 
   IBehaviorSelfTest::ResetAllSelfTestResults();
 
-  // Only check EMR PLAYPEN_READY_FLAG on success so that we can run robots through 
+  // Only check EMR PLAYPEN_READY_FLAG on success so that we can run robots through
   // playpen to check sensors and stuff before even if they have not passed previous fixtures
   // if(result == FactoryTestResultCode::SUCCESS &&
-  //    (Factory::GetEMR() == nullptr || 
+  //    (Factory::GetEMR() == nullptr ||
   //     !Factory::GetEMR()->fields.PLAYPEN_READY_FLAG))
   // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.NotReadyForPlaypen", 
+  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.NotReadyForPlaypen",
   //                       "Either couldn't read EMR or robot not ready for playpen");
   //   result = FactoryTestResultCode::ROBOT_FAILED_PREPLAYPEN_TESTS;
   // }
 
   //FactoryTestResultEntry resultEntry;
-  
+
   // _behaviorStartTimes.resize(resultEntry.timestamps.size());
   // _behaviorStartTimes[_behaviorStartTimes.size() - 1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
@@ -402,10 +415,10 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // std::copy(_behaviorStartTimes.begin(),
   //           _behaviorStartTimes.begin() + resultEntry.timestamps.size(),
   //           resultEntry.timestamps.begin());
-  
+
   // u8 buf[resultEntry.Size()];
   // size_t numBytes = resultEntry.Pack(buf, sizeof(buf));
-  // if(PlaypenConfig::kWriteToStorage &&
+  // if(SelfTestConfig::kWriteToStorage &&
   //    !robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
   //                                         buf,
   //                                         numBytes))
@@ -423,11 +436,11 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   //   result = FactoryTestResultCode::WRITE_TO_LOG_FAILED;
   // }
 
-  // if((result == FactoryTestResultCode::SUCCESS) && PlaypenConfig::kWriteToStorage)
+  // if((result == FactoryTestResultCode::SUCCESS) && SelfTestConfig::kWriteToStorage)
   // {
   //   time_t nowTime = time(0);
   //   struct tm* tmStruct = gmtime(&nowTime);
-    
+
   //   // TODO: System time will be incorrect need to have a fixture set it
   //   BirthCertificate bc;
   //   bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
@@ -436,7 +449,7 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   //   bc.hour   = static_cast<u8>(tmStruct->tm_hour);
   //   bc.minute = static_cast<u8>(tmStruct->tm_min);
   //   bc.second = static_cast<u8>(tmStruct->tm_sec);
-    
+
   //   u8 buf[bc.Size()];
   //   size_t numBytes = bc.Pack(buf, sizeof(buf));
 
@@ -457,15 +470,15 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
 
   // const u32 kPlaypenPassedFlag = ((result == FactoryTestResultCode::SUCCESS) ? 1 : 0);
   // Factory::WriteEMR(offsetof(Factory::EMR::Fields, PLAYPEN_PASSED_FLAG)/sizeof(uint32_t), kPlaypenPassedFlag);
-  
+
   // robot.Broadcast(ExternalInterface::MessageEngineToGame(FactoryTestResultEntry(resultEntry)));
 
-  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResultInternal.Result", 
+  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResultInternal.Result",
                    "Playpen completed with %s",
                    EnumToString(result));
 
   // Copy engine logs if the test failed or we are ignoring failures
-  // if((result != FactoryTestResultCode::SUCCESS || PlaypenConfig::kIgnoreFailures) &&
+  // if((result != FactoryTestResultCode::SUCCESS || SelfTestConfig::kIgnoreFailures) &&
   //    !_factoryTestLogger.CopyEngineLog(robot.GetContextDataPlatform()))
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.CopyEngineLogFailed", "");
@@ -473,31 +486,31 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // _factoryTestLogger.CloseLog();
 
   DisplayResult(result);
-  
+
   // Reset playpen
   Reset();
 
   _restartOnButtonPress = false;//(result != FactoryTestResultCode::SUCCESS);
   _waitForButtonToEndTest = true;
-  
+
   // Handled by button press logic in BehaviorUpdate
   // Fake being re-activated to startup playpen again
   //OnBehaviorActivated();
 
   // If data directory is too large, delete it
-  // if(Util::FileUtils::GetDirectorySize(PlaypenConfig::kDataDirPath) > PlaypenConfig::kMaxDataDirSize_bytes)
+  // if(Util::FileUtils::GetDirectorySize(SelfTestConfig::kDataDirPath) > SelfTestConfig::kMaxDataDirSize_bytes)
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.DeletingDataDir",
   //                       "%s is larger than %zd, deleting",
-  //                       PlaypenConfig::kDataDirPath.c_str(),
-  //                       PlaypenConfig::kMaxDataDirSize_bytes);
+  //                       SelfTestConfig::kDataDirPath.c_str(),
+  //                       SelfTestConfig::kMaxDataDirSize_bytes);
 
-  //   Util::FileUtils::RemoveDirectory(PlaypenConfig::kDataDirPath);
+  //   Util::FileUtils::RemoveDirectory(SelfTestConfig::kDataDirPath);
   // }
 
   // Just-in-case sync
   //sync();
-  
+
   // TODO(Al): Turn off Victor at end of playpen?
 }
 
@@ -518,7 +531,7 @@ void BehaviorSelfTest::DisplayResult(FactoryTestResultCode result)
       .transitionOffPeriod_ms = {{450,450,450}},
       .offset                 = {{0,0,0}}
     };
-    
+
     robot.GetBodyLightComponent().SetBackpackLights(passLights);
 
     IBehaviorSelfTest::DrawTextOnScreen(robot, {"OK", "Press button", "to finish test"},
@@ -542,7 +555,7 @@ void BehaviorSelfTest::DisplayResult(FactoryTestResultCode result)
       .transitionOffPeriod_ms = {{0,0,0}},
       .offset                 = {{0,0,0}}
     };
-    
+
     robot.GetBodyLightComponent().SetBackpackLights(failLights);
 
     IBehaviorSelfTest::DrawTextOnScreen(robot, {std::to_string((u32)result), "Press button", "to end test"},
@@ -562,9 +575,9 @@ void BehaviorSelfTest::HandleMessage(const ExternalInterface::SelfTestBehaviorFa
   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleMessage.SelfTestBehaviorFailed",
                       "Some behavior failed with %s%s",
                       EnumToString(msg.result),
-                      (PlaypenConfig::kIgnoreFailures ? ", ignoring" : ""));
+                      (SelfTestConfig::kIgnoreFailures ? ", ignoring" : ""));
 
-  if(!PlaypenConfig::kIgnoreFailures)
+  if(!SelfTestConfig::kIgnoreFailures)
   {
     if(_currentBehavior != nullptr)
     {
@@ -607,11 +620,10 @@ void BehaviorSelfTest::HandleMessage(const ExternalInterface::SelfTestBehaviorFa
 //   }
 //   PRINT_NAMED_WARNING("","START TEST MESSAGE");
 //   // Robot& robot = GetBEI().GetRobotInfo()._robot;
-    
+
 //   //const auto& payload = event.GetData().Get_startSelfTest();
 //   _startTest = true;
 // }
-  
-}
-}
 
+}
+}
