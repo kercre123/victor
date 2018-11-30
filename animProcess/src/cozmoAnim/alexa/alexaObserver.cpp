@@ -50,6 +50,7 @@ AlexaObserver::AlexaObserver()
 , _authState{ AuthObserverInterface::State::UNINITIALIZED }
 , _authCheckCounter{ 0 }
 , _connectionStatus{ avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::DISCONNECTED }
+, _running{ true }
 {
 }
   
@@ -80,7 +81,7 @@ void AlexaObserver::Update()
 {
   // puts callables on the main thread. the sdk uses its Executor to run things sequentially, but it spins up a bunch
   // of threads
-  while( !_workQueue.empty() ) {
+  while( _running && !_workQueue.empty() ) {
     std::function<void(void)> func;
     {
       std::lock_guard<std::mutex> lg(_mutex);
@@ -90,6 +91,11 @@ void AlexaObserver::Update()
     if( func != nullptr ) {
       func();
     }
+  }
+  if( !_running ) {
+    std::lock_guard<std::mutex> lg(_mutex);
+    std::queue<QueueType> mtq; // variable name: exercise left to the reader
+    std::swap( _workQueue, mtq );
   }
 }
 
