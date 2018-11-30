@@ -279,6 +279,7 @@ void BehaviorReactToGazeDirection::TransitionToCompleted()
   CancelDelegates(false);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
 {
   if (ActionResult::NO_FACE == result) {

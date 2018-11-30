@@ -61,9 +61,6 @@ namespace Vector {
   // Ignore faces detected below the robot (except when picked up), to help reduce false positives
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceWorld", true);
 
-  // Only use faces that have parts to update face direction averages
-  CONSOLE_VAR(bool, kFaceDirectionOnlyUseFacesWithParts, "Vision.FaceNormalDirectedAtRobot3d", true);
-
   // Ignore new faces detected while rotating too fast
   CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Head_deg/s",    10.f);
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
