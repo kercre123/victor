@@ -106,6 +106,8 @@ void BehaviorReactToGazeDirection::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCheckForFace(const Radians& turnAngle)
 {
+
+  // Turn to the turn angle, pick the correct (left or right) animation, and then search for a face.
   CompoundActionSequential* turnAction = new CompoundActionSequential();
   if (turnAngle > 0) {
     turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInLeft));
@@ -136,6 +138,9 @@ void BehaviorReactToGazeDirection::TransitionToCheckForFace(const Radians& turnA
 void BehaviorReactToGazeDirection::TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle)
 {
 
+  // Using a turn towards face action and the face to turn towards, look for the
+  // face we think is in the FOV if we were to turn to turn angle. The turn
+  // angle is used to chose to play the left or right animation.
   CompoundActionSequential* turnAction = new CompoundActionSequential();
   if (turnAngle > 0) {
     turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesGetInLeft));
@@ -145,6 +150,7 @@ void BehaviorReactToGazeDirection::TransitionToLookAtFace(const SmartFaceID& fac
 
   TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(faceToTurnTowards, M_PI);
   turnTowardsFace->SetRequireFaceConfirmation(true);
+
   CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
   turnAndAnimate->AddAction(turnTowardsFace);
   if (turnAngle > 0) {
@@ -161,7 +167,6 @@ void BehaviorReactToGazeDirection::TransitionToLookAtFace(const SmartFaceID& fac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose3d& gazePose)
 {
-  CompoundActionSequential* turnAction = new CompoundActionSequential();
   const auto& translation = gazePose.GetTranslation();
   auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(kMaxTimeSinceTrackedFaceUpdated_ms);
 
@@ -173,7 +178,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
                                       Util::IsFltLT(translation.y(), kFaceDirectedAtRobotMaxYThres_mm) );
   if ( ( isWithinXConstraints && isWithinYConstarints ) || ( makingEyeContact && kUseEyeContact) ) {
 
-    // If we're making eye contact with the robot or looking at the robot
+    // If we're making eye contact with the robot or looking at the robot, react to that.
     CompoundActionSequential* turnAction = new CompoundActionSequential();
     turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorGetIn));
     turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorReaction));
@@ -184,9 +189,10 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
 
   } else {
 
-    // This is the case where we aren't looking at the robot,
-    // so we need to turn right or left towards the pose,
-    // and play the correct animation.
+    // This is the case where we aren't looking at the robot, so we need to turn
+    // right or left towards the pose, play the correct animation, and then turn
+    // back to the face. This sequence could happen several times.
+    CompoundActionSequential* turnAction = new CompoundActionSequential();
     for (int i = 0; i < kNumberOfTurnsForSurfacePoint; ++i) {
 
       if ( Util::IsFltLT(translation.y(), 0.f) ) {
@@ -220,22 +226,28 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d& gazePose)
 {
-  // Compute angle
-  // If angle is within the turn around cone then turn around and look for face
+  // Compute angle to turn and look for faces. There are three buckets each with a
+  // corresponding turn: left, right, turn-around. Put the pose into one on these buckets
+  // and return the turn angle associated with each bucket.
   Radians turnAngle;
   const auto& translation = gazePose.GetTranslation();
   Radians gazeAngle = atan2f(translation.y(), translation.x());
   auto angleDifference = Radians(DEG_TO_RAD(180)) - gazeAngle;
   if ( (angleDifference <= Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) &&
        (angleDifference >= -Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) ) {
+    // Turn around
     if (angleDifference < 0) {
+      // Turn around by turning right
       turnAngle = DEG_TO_RAD(-kSearchForFaceTurnAroundAngle_deg);
     } else {
+      // turn around by turning left
       turnAngle = DEG_TO_RAD(kSearchForFaceTurnAroundAngle_deg);
     }
   } else if (translation.y() < 0) {
+    // Turn right
     turnAngle = DEG_TO_RAD(kSearchForFaceTurnRightAngle_deg);
   } else {
+    // Turn left
     turnAngle = DEG_TO_RAD(kSearchForFaceTurnLeftAngle_deg);
   }
 
@@ -252,19 +264,31 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
     if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
       SendDASEventForPoseToFollow(gazeDirectionPoseWRTRobot);
       if (_iConfig->searchForFaces) {
+
+        // Bucket the angle to turn to look for faces
         const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
 
         // Now that we know we are going to turn clear the history
         GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
 
+        // If we're configured to look for existing faces in face world to turn towards
+        // check if there are any existing faces visible from the angle we want to turn to.
+        // faces visible from that angle, or we're not configured to do use faces existing in
+        // face world then turn to the specificied angle and search for a face.
         SmartFaceID faceToTurnTowards;
         if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _dVars.faceIDToTurnBackTo, robotPose, faceToTurnTowards)
             && kUseExistingFacesWhenSearchingForFaces) {
+          // If a face is visible turn towards it instead of the angle.
           TransitionToLookAtFace(faceToTurnTowards, turnAngle);
         } else {
+          // If there aren't any faces visible from that angle, or we're not configured to
+          // use faces existing in face world then turn to the specificied angle and search
+          // for a face.
           TransitionToCheckForFace(turnAngle);
         }
       } else {
+        // We're looking for points on the surface, similar to looking for faces
+        // but the head angle will be pointed towards the ground plane.
         TransitionToCheckForPointOnSurface(gazeDirectionPoseWRTRobot);
       }
     } else {
@@ -287,6 +311,7 @@ void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
            "behavior.react_to_gaze_direction.no_new_face",
            "No new face found by following the gaze direction of another face.");
     DASMSG_SEND();
+    // No face was found so turn back to the face we started with
     DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo),
                         &BehaviorReactToGazeDirection::TransitionToCompleted);
   } else if (ActionResult::SUCCESS == result) {
