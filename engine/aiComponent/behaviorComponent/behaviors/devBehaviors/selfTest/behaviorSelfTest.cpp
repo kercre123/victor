@@ -219,6 +219,13 @@ void BehaviorSelfTest::OnBehaviorActivated()
 void BehaviorSelfTest::OnBehaviorDeactivated()
 {
   PRINT_NAMED_WARNING("","SELFTEST DEACTIVATED");
+
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+  robot.GetBackpackLightComponent().ClearAllBackpackLightConfigs();
+
   Reset();
 }
 
@@ -231,6 +238,8 @@ void BehaviorSelfTest::Reset()
   }
 
   // _behaviorStartTimes.clear();
+
+  CancelDelegates(false);
 
   // Set current behavior to first playpen behavior
   _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();

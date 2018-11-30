@@ -22,7 +22,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 namespace{
 static const int kBSTickInterval = 1;
 }
@@ -38,7 +38,7 @@ IBehavior::IBehavior(const std::string& debugLabel)
 , _currentActivationState(ActivationState::NotInitialized)
 #endif
 {
-  
+
 }
 
 
@@ -47,7 +47,7 @@ void IBehavior::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
   AssertActivationState_DevOnly(ActivationState::NotInitialized);
   SetActivationState_DevOnly(ActivationState::OutOfScope);
-  
+
   _beiWrapper = std::make_unique<BEIWrapper>(behaviorExternalInterface);
   InitInternal();
 }
@@ -57,7 +57,11 @@ void IBehavior::Init(BehaviorExternalInterface& behaviorExternalInterface)
 void IBehavior::OnEnteredActivatableScope()
 {
   AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
-  
+
+  // Update should be called immediately after entering activatable scope
+  // so set the last tick count as being one tickInterval before the current tickCount
+  _lastTickOfUpdate = (BaseStationTimer::getInstance()->GetTickCount() - kBSTickInterval);
+
   _currentInScopeCount++;
   // If this isn't the first EnteredActivatableScope don't call internal functions
   if(_currentInScopeCount != 1){
@@ -70,9 +74,6 @@ void IBehavior::OnEnteredActivatableScope()
 
   SetActivationState_DevOnly(ActivationState::InScope);
 
-  // Update should be called immediately after entering activatable scope
-  // so set the last tick count as being one tickInterval before the current tickCount
-  _lastTickOfUpdate = (BaseStationTimer::getInstance()->GetTickCount() - kBSTickInterval);
   OnEnteredActivatableScopeInternal();
 }
 
@@ -92,7 +93,7 @@ void IBehavior::Update()
                 tickCount,
                 _lastTickOfUpdate);
   _lastTickOfUpdate = tickCount;
-  
+
   UpdateInternal();
 }
 
@@ -119,7 +120,7 @@ void IBehavior::OnActivated()
                   _debugLabel.c_str(),
                   tickCount,
                   _lastTickWantsToBeActivatedCheckedOn);
-  
+
   SetActivationState_DevOnly(ActivationState::Activated);
   OnActivatedInternal();
 }
@@ -129,7 +130,7 @@ void IBehavior::OnActivated()
 void IBehavior::OnDeactivated()
 {
   AssertActivationState_DevOnly(ActivationState::Activated);
-  
+
   SetActivationState_DevOnly(ActivationState::InScope);
   OnDeactivatedInternal();
 }
@@ -139,7 +140,7 @@ void IBehavior::OnDeactivated()
 void IBehavior::OnLeftActivatableScope()
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
-  
+
   if(!ANKI_VERIFY(_currentInScopeCount != 0,
                   "", "")){
     return;
@@ -154,8 +155,8 @@ void IBehavior::OnLeftActivatableScope()
                   _debugLabel.c_str());
     return;
   }
-  
-  
+
+
   SetActivationState_DevOnly(ActivationState::OutOfScope);
   OnLeftActivatableScopeInternal();
 }
@@ -169,7 +170,7 @@ void IBehavior::SetActivationState_DevOnly(ActivationState state)
                  "%s: Activation state set to %s",
                  _debugLabel.c_str(),
                  ActivationStateToString(state).c_str());
-  
+
   #if ANKI_DEV_CHEATS
     _currentActivationState = state;
   #endif
@@ -194,6 +195,14 @@ void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
 void IBehavior::AssertNotActivationState_DevOnly(ActivationState state) const
 {
   #if ANKI_DEV_CHEATS
+  if(state == _currentActivationState)
+  {
+    PRINT_NAMED_ERROR("","NOT SAME %s %s %s %s",
+                      debugStr.c_str(),
+                      _debugLabel.c_str(),
+                      ActivationStateToString(_currentActivationState),
+                      ActivationStateToString(state));
+  }
   DEV_ASSERT_MSG(_currentActivationState != state,
                  "IBehavior.AssertNotActivationState_DevOnly.WrongActivationState",
                  "Behavior '%s' is state %s, but should not be",
@@ -213,6 +222,6 @@ std::string IBehavior::ActivationStateToString(ActivationState state) const
     case ActivationState::InScope        : return "InScope";
   }
 }
-  
+
 } // namespace Cozmo
 } // namespace Anki
