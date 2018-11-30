@@ -568,10 +568,6 @@
     "SpriteName" : "face_alexa_listen2weather"
   },
   {
-    "CladEvent" : "Face_Alexa_Ring_Test",
-    "SpriteName" : "face_alexa_ring_test"
-  },
-  {
     "CladEvent" : "Face_Alexaint_Back2listen",
     "SpriteName" : "face_alexaint_back2listen"
   },
