@@ -43,7 +43,6 @@
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/cameraParams.h"
-#include "clad/types/faceEnrollmentPoses.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/salientPointTypes.h"

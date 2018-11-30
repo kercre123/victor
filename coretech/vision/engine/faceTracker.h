@@ -16,7 +16,6 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/faceIdTypes.h"
-#include "clad/types/faceEnrollmentPoses.h"
 #include "clad/types/loadedKnownFace.h"
 
 #include <list>
