@@ -78,10 +78,30 @@ public:
   virtual bool Intersects(const AxisAlignedHyperCube<N,T>& C) const = 0;
 };
 
+// convenience type for defining the entire set of numbers 
+template <DimType N, typename T>
+class FiniteNumberSet : public BoundedConvexSet<N,T> {
+public:
+  virtual ~FiniteNumberSet() {}
+
+  // check if:    x ∈ S
+  virtual bool Contains(const Point<N,T>& x) const override { return true; };
+
+  // check if:    S ⊂ H
+  virtual bool InHalfPlane(const Halfplane<N,T>& H) const override { return false; };
+
+
+  virtual AxisAlignedHyperCube<N,T> GetAxisAlignedBoundingBox() const override { 
+    return AxisAlignedHyperCube<N,T>(Point<N,T>(std::numeric_limits<T>::min()), Point<N,T>(std::numeric_limits<T>::max())); 
+  };
+  
+  virtual bool Intersects(const AxisAlignedHyperCube<N,T>& C) const override { return true; };
+};
 
 using PointSet2f         = PointSet<2, f32>;
 using ConvexPointSet2f   = ConvexPointSet<2, f32>;
 using BoundedConvexSet2f = BoundedConvexSet<2, f32>;
+using RealNumbers2f      = FiniteNumberSet<2, f32>;
 
 }
 

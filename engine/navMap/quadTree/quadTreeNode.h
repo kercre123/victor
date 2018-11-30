@@ -65,8 +65,8 @@ public:
 
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
-  void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
-  void Fold(FoldFunctorConst accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
+  void Fold(const FoldFunctorConst& accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
+  void Fold(const FoldFunctorConst& accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
   
   // finds all the leaf nodes that are neighbors with this node
   NodeCPtrVector GetNeighbors() const;
@@ -115,7 +115,7 @@ private:
   };
     
   // container for each node's children
-  using ChildrenVector = std::vector< std::shared_ptr<QuadTreeNode> >;
+  using ChildrenVector = std::vector< std::unique_ptr<QuadTreeNode> >;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -146,8 +146,8 @@ private:
 
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
-  void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
-  void Fold(FoldFunctor accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst);
+  void Fold(FoldFunctor& accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
+  void Fold(FoldFunctor& accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration

@@ -133,7 +133,6 @@ public:
 
   // returns the accumulated area of cells in mm^2 in the current map that satisfy the predicate (and region, if supplied)
   float GetCollisionArea(const BoundedConvexSet2f& region) const;
-  float GetCollisionArea() const;
 
   // Remove all prox obstacles from the map.
   // CAUTION: This will entirely remove _all_ information about prox
@@ -167,9 +166,6 @@ private:
   // remove current renders for all maps if any
   void ClearRender();
   
-  // returns the accumulated area of cells in mm^2 in the entire specified map
-  float GetCollisionArea(const std::shared_ptr<const INavMap>& memoryMap) const;
-
   // update broadcast dirty flags with new changes
   void UpdateBroadcastFlags(bool wasChanged);
 
