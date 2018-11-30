@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -e
 set -u
 
 GIT=`which git`

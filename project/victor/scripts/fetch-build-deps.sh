@@ -1,7 +1,6 @@
 #!/bin/bash
-set -x
-set -u
 set -e
+set -u
 
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
 
