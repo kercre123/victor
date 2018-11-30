@@ -127,7 +127,7 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
   bool contentChanged = false;
   FoldFunctor trfm = [&] (QuadTreeNode& node)
     {
-      MemoryMapDataPtr newData = transform(node.GetData());
+      auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
         node.ForceSetDetectedContentType(newData, _processor);
@@ -151,7 +151,7 @@ bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction trans
   QuadTreeNode* node = GetNodeAtAddress(address);
 
   if (node) {
-    MemoryMapDataPtr newData = transform(node->GetData());
+    auto newData = transform(node->GetData());
     if ((node->GetData() != newData) && !node->IsSubdivided()) 
     {
       node->ForceSetDetectedContentType(newData, _processor);
@@ -169,7 +169,7 @@ bool QuadTree::Transform(NodeTransformFunction transform)
   bool contentChanged = false;
   FoldFunctor trfm = [&] (QuadTreeNode& node)
     {
-      MemoryMapDataPtr newData = transform(node.GetData());
+      auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
         node.ForceSetDetectedContentType(newData, _processor);

@@ -115,7 +115,7 @@ private:
   };
     
   // container for each node's children
-  using ChildrenVector = std::vector< std::shared_ptr<QuadTreeNode> >;
+  using ChildrenVector = std::vector< std::unique_ptr<QuadTreeNode> >;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query

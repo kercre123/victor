@@ -308,7 +308,7 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
   for ( auto& cPtr : _childrenPtr ) {
-    if ( auto observe = PreservePointer<QuadTreeNode>(cPtr) ) { observe->Fold(accumulator, dir); }
+    cPtr->Fold(accumulator, dir); 
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -320,7 +320,7 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
   
   for ( const auto& cPtr : _childrenPtr )  {
-    if ( auto observe = PreservePointer<const QuadTreeNode>(cPtr) ) { observe->Fold(accumulator, dir); }
+    ((const QuadTreeNode*) cPtr.get())->Fold(accumulator, dir); 
   }
   
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -375,9 +375,7 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, const FoldableRegion& region, F
         u8 idx = 0;
         do {
           if (childFilter & 1) { 
-            if ( auto observe = PreservePointer<QuadTreeNode>(_childrenPtr[idx]) ) { 
-              observe->Fold(accumulator, region, dir);
-            }
+            _childrenPtr[idx]->Fold(accumulator, region, dir);
           }
           ++idx;
         } while ( childFilter >>= 1 ); 
@@ -411,9 +409,7 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FoldableRegion& regi
         u8 idx = 0;
         do {
           if (childFilter & 1) { 
-            if ( auto observe = PreservePointer<const QuadTreeNode>(_childrenPtr[idx]) ) { 
-              observe->Fold(accumulator, region, dir); 
-            }
+            ((const QuadTreeNode*) _childrenPtr[idx].get())->Fold(accumulator, region, dir); 
           }
           ++idx;
         } while ( childFilter >>= 1 );
