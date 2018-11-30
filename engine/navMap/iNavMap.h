@@ -52,32 +52,20 @@ public:
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const = 0;
   
-  // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
-  // the region that the point generated to store the point could have an error of up to this length.
-  virtual float GetContentPrecisionMM() const = 0;
-  
   // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)
-  virtual float GetArea(const MemoryMapRegion& region, const NodePredicate& func) const = 0;
-  virtual float GetArea(const NodePredicate& func) const = 0;
+  virtual float GetArea(const NodePredicate& func, const MemoryMapRegion& region = RealNumbers2f()) const = 0;
   
   // returns true if any node that intersects with the provided regions evaluates `func` as true.
   virtual bool AnyOf(const MemoryMapRegion& region, NodePredicate func) const = 0;
   
-  // multi-ray variant of the AnyOf method
-  // implementation may optimize for this case
+  // multi-ray variant of the `AnyOf` method implementation may optimize for this case
   virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const = 0;
-  
-  // returns true if there are any nodes of the given type, false otherwise
-  virtual bool HasContentType(EContentType type) const = 0;
   
   // Pack map data to broadcast
   virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const = 0;
 
-  // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
-  
   // populate a list of all data that matches the predicate inside region
-  virtual void FindContentIf(const MemoryMapRegion& region, NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
+  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output, const MemoryMapRegion& region = RealNumbers2f()) const = 0;
   
 protected:
   
@@ -98,11 +86,9 @@ protected:
   // subclass
   virtual bool Merge(const INavMap& other, const Pose3d& transform) = 0;
  
-  // attempt to apply a transformation function to all nodes in the tree
-  virtual bool TransformContent(NodeTransformFunction transform) = 0;
   
   // attempt to apply a transformation function to all nodes in the tree constrained by region
-  virtual bool TransformContent(const MemoryMapRegion& region, NodeTransformFunction transform) = 0;
+  virtual bool TransformContent(NodeTransformFunction transform, const MemoryMapRegion& region = RealNumbers2f()) = 0;
 
   // TODO: FillBorder should be local (need to specify a max quad that can perform the operation, otherwise the
   // bounds keeps growing as Cozmo explores). Profiling+Performance required.

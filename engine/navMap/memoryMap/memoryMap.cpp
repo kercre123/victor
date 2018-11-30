@@ -171,17 +171,10 @@ bool MemoryMap::FillBorder(const NodePredicate& innerPred, const NodePredicate& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::TransformContent(NodeTransformFunction transform)
+bool MemoryMap::TransformContent(NodeTransformFunction transform, const MemoryMapRegion& region)
 {
   std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.Transform(transform) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::TransformContent(const MemoryMapRegion& poly, NodeTransformFunction transform)
-{
-  std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.Transform(poly, transform) );
+  return MONITOR_PERFORMANCE( _quadTree.Transform(region, transform) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -191,15 +184,6 @@ double MemoryMap::GetExploredRegionAreaM2() const
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
   const double area = _quadTree.GetProcessor().GetExploredRegionAreaM2();
   return area;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MemoryMap::GetContentPrecisionMM() const
-{
-  // ask the navmesh
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  const float precision = _quadTree.GetContentPrecisionMM();
-  return precision;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -219,30 +203,12 @@ std::vector<bool> MemoryMap::AnyOf( const Point2f& start, const std::vector<Poin
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MemoryMap::GetArea(const MemoryMapRegion& region, const NodePredicate& pred) const
+float MemoryMap::GetArea(const NodePredicate& pred, const MemoryMapRegion& region) const
 {
   float retv = 0.f;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
   _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += Util::Square(node.GetSideLen());} }, region);
   return retv;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MemoryMap::GetArea(const NodePredicate& pred) const
-{
-  float retv = 0.f;
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += Util::Square(node.GetSideLen());} });
-  return retv;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::HasContentType(EContentType type) const
-{
-  // ask the processor
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  const bool hasAny = _quadTree.GetProcessor().HasContentType(type);
-  return hasAny;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -302,23 +268,9 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
   _quadTree.Fold(accumulator);
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const
-{
-  QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
-    MemoryMapDataPtr data = node.GetData();
-    if (pred(data)) {
-      output.insert( MemoryMapDataConstPtr(node.GetData()) );
-    }
-  };
-
-  std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator) );
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(const MemoryMapRegion& poly, NodePredicate pred, MemoryMapDataConstList& output) const
+void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const
 {
   QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
     MemoryMapDataPtr data = node.GetData();
@@ -328,7 +280,7 @@ void MemoryMap::FindContentIf(const MemoryMapRegion& poly, NodePredicate pred, M
   };
 
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, poly) );
+  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, region) );
 }
 
 } // namespace Vector

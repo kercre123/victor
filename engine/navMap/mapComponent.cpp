@@ -586,7 +586,7 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
     };
 
   FastPolygon poly(Poly2f((Quad2f)groundPlaneWrtRobot));
-  UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(poly, transform));
+  UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(transform, poly));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -649,7 +649,7 @@ void MapComponent::FlagProxObstaclesUsingPose()
     }
     return data;
   };
-  const bool addedExplored = currentNavMemoryMap->TransformContent(triangleExplored, exploredFunc);
+  const bool addedExplored = currentNavMemoryMap->TransformContent(exploredFunc, triangleExplored);
 
   UpdateBroadcastFlags( addedExplored );
 
@@ -875,7 +875,7 @@ void MapComponent::SendDASInfoAboutMap(const PoseOriginID_t& mapOriginID) const
                       mapOriginID ) )
     {
       const float explored_mm2 = 1e6f * it->second.map->GetExploredRegionAreaM2();
-      const float collision_mm2 = GetCollisionArea( it->second.map );
+      const float collision_mm2 = it->second.map->GetArea( [] (const auto& data) { return data->IsCollisionType(); });
       TimeStamp_t activeDuration_ms = 0;
       if ( mapOriginID == _currentMapOriginID )
       {
@@ -1442,23 +1442,7 @@ float MapComponent::GetCollisionArea(const BoundedConvexSet2f& region) const
 {
   const auto currentMap = GetCurrentMemoryMap();
   if (currentMap) {
-    return currentMap->GetArea( region, [] (const auto& data) { return data->IsCollisionType(); });
-  }
-  return 0.f;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MapComponent::GetCollisionArea() const
-{
-  const auto currentMap = GetCurrentMemoryMap();
-  return GetCollisionArea( currentMap );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float MapComponent::GetCollisionArea(const std::shared_ptr<const INavMap>& memoryMap) const
-{
-  if (memoryMap) {
-    return memoryMap->GetArea( [] (const auto& data) { return data->IsCollisionType(); });
+    return currentMap->GetArea( [] (const auto& data) { return data->IsCollisionType(); }, region);
   }
   return 0.f;
 }
