@@ -1689,10 +1689,15 @@ void ICozmoBehavior::SmartEnableEngineResponseToTriggerWord()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger, 
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
-                                                    StreamAndLightEffect streamAndLightEffect)
+                                                    StreamAndLightEffect streamAndLightEffect,
+                                                    int32_t minStreamingDuration_ms)
 {
   _pushedCustomTriggerResponse = true;
-  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), getInAnimTrigger, postAudioEvent, streamAndLightEffect);
+  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(),
+                                                                   getInAnimTrigger,
+                                                                   postAudioEvent,
+                                                                   streamAndLightEffect,
+                                                                   minStreamingDuration_ms);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

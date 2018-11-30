@@ -24,6 +24,7 @@ namespace Anki {
 namespace Vector {
 
 class BehaviorReactToMicDirection;
+class ConditionUserIntentPending;
 enum class AnimationTrigger : int32_t;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -174,6 +175,7 @@ private:
     RecentOccurrenceTracker::Handle wifiErrorHandle;
     RecentOccurrenceTracker::Handle cloudErrorHandle;
 
+    std::shared_ptr<ConditionUserIntentPending> intentWhitelistCondition;
 
   } _iVars;
 

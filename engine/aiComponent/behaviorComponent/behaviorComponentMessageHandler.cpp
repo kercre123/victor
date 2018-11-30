@@ -272,10 +272,11 @@ void BehaviorComponentMessageHandler::SetupUserIntentEvents()
 
   // fake trigger word
   auto fakeTriggerWordCallback = [this]( const GameToEngineEvent& event ) {
-    LOG_DEBUG("BehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected", "");
-    auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-    const bool willStreamAudio = false;
-    uic.SetTriggerWordPending(willStreamAudio);
+    // Since wakeword handling has moved to the anim process, this now forwards the event there so that
+    // the full streaming stack is exercised. The event will propogate back down to the engine when
+    // appropriate
+    RobotInterface::FakeWakeWordFromExternalInterface msg;
+    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
   };
   _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeTriggerWordDetected, fakeTriggerWordCallback ) );
 

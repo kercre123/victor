@@ -62,6 +62,8 @@ public:
   bool ShouldStreamAfterTriggerWordResponse();
   
   bool ShouldSimulateStreamAfterTriggerWord();
+
+  uint32_t GetMinStreamingDuration();
   
   // with the exception of HasAnyAlexaResponse, alexa methods should be called on the main thread.
   // This is only because the current Alexa implementation fits this constraint, so I'm assuming it here.
@@ -79,6 +81,7 @@ private:
   AnimationStreamer* _streamer = nullptr;
 
   Anki::AudioEngine::Multiplexer::PostAudioEvent _postAudioEvent;
+  int32_t _minStreamingDuration_ms;
   bool _shouldTriggerWordStartStream;
   bool _shouldTriggerWordSimulateStream;
   uint8_t _getInAnimationTag;

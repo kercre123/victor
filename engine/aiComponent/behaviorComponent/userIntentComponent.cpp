@@ -920,13 +920,15 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
   auto postAudioEvent = AECH::CreatePostAudioEvent( newState.postAudioEvent,
                                                     AudioMetaData::GameObjectType::Behavior,
                                                     0 );
-  PushResponseToTriggerWord(id, newState.getInTrigger, postAudioEvent, newState.streamAndLightEffect);
+  PushResponseToTriggerWord(id, newState.getInTrigger, postAudioEvent, newState.streamAndLightEffect,
+                            newState.minStreamingDuration_ms);
 
 }
 
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger,
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
-                                                    StreamAndLightEffect streamAndLightEffect)
+                                                    StreamAndLightEffect streamAndLightEffect,
+                                                    int32_t minStreamingDuration_ms)
 {
   std::string animName;
   auto* data_ldr = _robot->GetContext()->GetDataLoader();
@@ -947,18 +949,20 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
     }
   }
 
-  PushResponseToTriggerWord(id, animName, postAudioEvent, streamAndLightEffect);
+  PushResponseToTriggerWord(id, animName, postAudioEvent, streamAndLightEffect, minStreamingDuration_ms);
 }
 
 
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName,
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
-                                                    StreamAndLightEffect streamAndLightEffect)
+                                                    StreamAndLightEffect streamAndLightEffect,
+                                                    int32_t minStreamingDuration_ms)
 {
   RobotInterface::SetTriggerWordResponse msg;
   msg.getInAnimationTag = _tagForTriggerWordGetInCallbacks;
   msg.postAudioEvent = postAudioEvent;
   msg.getInAnimationName = getInAnimationName;
+  msg.minStreamingDuration_ms = minStreamingDuration_ms;
 
   ApplyStreamAndLightEffect(streamAndLightEffect, msg);
 

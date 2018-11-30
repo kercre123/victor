@@ -27,7 +27,7 @@
   "animListeningGetIn"      : "VC_SleepingToListeningGetIn",
   "animListeningLoop"       : "VC_SleepingToListeningLoop",
   "animListeningGetOut"     : "VC_SleepingToListeningGetOut",
-  "backpackLights"          : true,
+  "backpackLights"          : false,
 
   "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
   

@@ -513,7 +513,8 @@ protected:
   // Change the response to the trigger word until the behavior is deactivated
   void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger,
                                       const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
-                                      StreamAndLightEffect streamAndLightEffect);
+                                      StreamAndLightEffect streamAndLightEffect,
+                                      int32_t minStreamingDuration_ms = -1);
   void SmartPushEmptyResponseToTriggerWord();
 
   void SmartPushResponseToTriggerWord(const TriggerWordResponseData& newState);

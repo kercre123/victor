@@ -100,10 +100,12 @@ public:
   void PushResponseToTriggerWord(const std::string& id, const TriggerWordResponseData& newState);
   void PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
                                  const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
-                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
+                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled,
+                                 int32_t minStreamingDuration_ms = -1);
   void PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName = "", 
                                  const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
-                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
+                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled,
+                                 int32_t minStreamingDuration_ms = -1);
   void PopResponseToTriggerWord(const std::string& id);
 
   // Copies the current response to the trigger word but overrides the shouldStream and ShouldSimulateStream

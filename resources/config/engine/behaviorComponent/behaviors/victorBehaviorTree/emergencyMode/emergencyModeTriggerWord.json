@@ -36,7 +36,7 @@
       },
 
       "behaviorOnIntent": "ReactToTriggerDirectionAwake",
-      "backpackLights": true,
+      "backpackLights": false,
       "exitAfterListeningIfNotStreaming" : true,
       "pushResponse": false
     }

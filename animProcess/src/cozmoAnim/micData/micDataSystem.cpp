@@ -479,7 +479,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       if (_streamingComplete)
       {
         // our stream is complete, so clear out the current stream as long as our minimum streaming time has elapsed
-        constexpr BaseStationTime_t minStreamDuration_ns = kStreamingMinDuration_ms * 1000 * 1000;
+        uint32_t minStreamingDuration_ms = _context->GetShowAudioStreamStateManager()->GetMinStreamingDuration();
+        const BaseStationTime_t minStreamDuration_ns = minStreamingDuration_ms * 1000 * 1000;
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
         if (currTime_nanosec >= minStreamEnd_ns)
         {
@@ -508,8 +509,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
 
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-      const bool willStream = HasStreamingJob() && showStreamState->ShouldStreamAfterTriggerWordResponse();
-      SetWillStream(willStream);
+      SetWillStream(showStreamState->ShouldStreamAfterTriggerWordResponse());
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {

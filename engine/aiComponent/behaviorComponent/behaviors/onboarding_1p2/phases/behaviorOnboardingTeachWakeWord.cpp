@@ -25,18 +25,23 @@
   _dVars.state = TeachWakeWordState::s; \
 } while(0);
 
+namespace{
+const char* kSimulatedStreamingDurationKey = "simulatedStreamingDuration_ms";
+}
+
 namespace Anki {
 namespace Vector {
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorOnboardingTeachWakeWord::InstanceConfig::InstanceConfig()
+BehaviorOnboardingTeachWakeWord::InstanceConfig::InstanceConfig(const Json::Value& config)
 : lookAtUserBehavior(nullptr)
 , listenGetInAnimTrigger(AnimationTrigger::OnboardingListenGetIn)
 , listenGetOutAnimTrigger(AnimationTrigger::OnboardingListenGetOut)
 , celebrationAnimTrigger(AnimationTrigger::OnboardingWakeWordSuccess)
+, simulatedStreamingDuration_ms(-1) // -1 will use the default setting from the anim process
 , numWakeWordsToCelebrate(3)
 {
+  JsonTools::GetValueOptional(config, kSimulatedStreamingDurationKey, simulatedStreamingDuration_ms);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,6 +62,7 @@ int BehaviorOnboardingTeachWakeWord::GetPhaseProgressInPercent() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingTeachWakeWord::BehaviorOnboardingTeachWakeWord(const Json::Value& config)
  : ICozmoBehavior(config)
+ , _iConfig(config)
 {
 }
 
@@ -91,6 +97,15 @@ void BehaviorOnboardingTeachWakeWord::GetBehaviorOperationModifiers(BehaviorOper
 void BehaviorOnboardingTeachWakeWord::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert( _iConfig.lookAtUserBehavior.get() );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboardingTeachWakeWord::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kSimulatedStreamingDurationKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -188,7 +203,8 @@ void BehaviorOnboardingTeachWakeWord::EnableWakeWordDetection()
   auto postAudioEvent = AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
   SmartPushResponseToTriggerWord( _iConfig.listenGetInAnimTrigger,
                                   postAudioEvent,
-                                  StreamAndLightEffect::StreamingDisabledButWithLight );
+                                  StreamAndLightEffect::StreamingDisabledButWithLight,
+                                  _iConfig.simulatedStreamingDuration_ms );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
