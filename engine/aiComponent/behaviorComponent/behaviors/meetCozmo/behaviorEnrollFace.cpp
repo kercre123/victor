@@ -103,12 +103,19 @@ CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 2.f);
 CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesRecentTime_sec,   CONSOLE_GROUP, 0.5f);
 
-CONSOLE_VAR(u32,               kEnrollFace_TicksForKnownNameBeforeFail,         CONSOLE_GROUP, 35);
+// Number of times to see a named "wrong face" before either failing or going ahead and enrolling it
+CONSOLE_VAR(u32,               kEnrollFace_TicksForKnownNameBeforeFail,         CONSOLE_GROUP, 15);
+
+// If the max score for any observation of a "wrong face" is above this threshold, we will fail enrollment.
+// If, however, it is below this threshold, we will go ahead and enroll this named face as a new person with
+// the new name. Set to 0 to always fail when wrong face is seen.
+CONSOLE_VAR(s32,               kEnrollFace_ScoreThresholdToFailOnWrongFace,     CONSOLE_GROUP, 800);
+  
 CONSOLE_VAR(TimeStamp_t,       kEnrollFace_MaxInterruptionBeforeReset_ms,       CONSOLE_GROUP, 10000);
 
 // Whether seeing a named, wrong face causes the behavior to end. If not, will instead just go back
 // to looking for a face
-CONSOLE_VAR(bool,              kEnrollFace_FailOnWrongFace,                     CONSOLE_GROUP, false);
+CONSOLE_VAR(bool,              kEnrollFace_FailOnWrongFace,                     CONSOLE_GROUP, true);
   
 enum class SayWrongNameMode : u8
 {
@@ -164,12 +171,14 @@ struct BehaviorEnrollFace::DynamicVariables
   struct WrongFaceInfo {
     FaceID_t    faceID;
     u32         count;
+    float       maxScore;
     bool        idChanged;
     bool        nameSaid;
     
-    explicit WrongFaceInfo(FaceID_t id, bool idJustChanged = false)
+    explicit WrongFaceInfo(FaceID_t id, float score, bool idJustChanged)
     : faceID(id)
     , count(1)
+    , maxScore(score)
     , idChanged(idJustChanged)
     , nameSaid(false)
     { }
@@ -197,6 +206,7 @@ struct BehaviorEnrollFace::DynamicVariables
   bool             saveToRobot;
   bool             saveSucceeded;
   bool             enrollingSpecificID;
+  bool             forceNewID;
   FaceID_t         faceID;
   FaceID_t         saveID;
   FaceID_t         observedUnusableID;
@@ -253,6 +263,10 @@ BehaviorEnrollFace::DynamicVariables::DynamicVariables()
 
   lastRelBodyAngle    = 0.f;
   totalBackup_mm      = 0.f;
+  
+  faceID = Vision::UnknownFaceID;
+  saveID = Vision::UnknownFaceID;
+  forceNewID = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -655,9 +669,37 @@ void BehaviorEnrollFace::BehaviorUpdate()
       // See if wrongFace info was updated via a changedID message or call to UpdateFaceToEnroll()
       std::string wrongName;
       FaceID_t wrongID = Vision::UnknownFaceID;
-      if(IsSeeingWrongFace(wrongID, wrongName))
+      float maxScore = 0.f;
+      if(IsSeeingWrongFace(wrongID, wrongName, maxScore))
       {
-        TransitionToWrongFace(wrongID, wrongName);
+        const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(wrongID);
+        const bool wrongFaceExists = ANKI_VERIFY(face != nullptr,
+                                                 "BehaviorEnrollFace.BehaviorUpdate.BadWrongFaceID",
+                                                 "WrongID:%d", wrongID);
+        if(!wrongFaceExists || Util::IsFltGT(maxScore, kEnrollFace_ScoreThresholdToFailOnWrongFace))
+        {
+          TransitionToWrongFace(wrongID, wrongName);
+        }
+        else
+        {
+          // NOTE: the VERIFY above guarantees we only do this if face is valid, so GetTimeStamp() below is safe.
+          PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.TransitionToEnrollWrongFace",
+                        "Haven't found unnamed face to enroll, going with named 'wrong' face %d: '%s' [Score:%.1f]",
+                        wrongID, Util::HidePersonallyIdentifiableInfo(wrongName.c_str()), maxScore);
+          
+          DASMSG(behavior_meet_victor_force_enrolling_named_face, "behavior.meet_victor.force_enrolling_named_face",
+                 "Saw a named face that did not match requested name, but with low enough score that "
+                 "we will enroll it anyway as a new face");
+          DASMSG_SET(i1, wrongID, "The ID of the named face we've chosen to enroll anyway");
+          DASMSG_SET(i2, (int)maxScore, "The max match score of the named face we've chosen to enroll");
+          DASMSG_SEND();
+          
+          _dVars->faceID = wrongID;
+          _dVars->lastFaceSeenTime_ms = face->GetTimeStamp(); // prevent immediate "lost enrollee"
+          _dVars->forceNewID = true;
+          CancelDelegates(false);
+          TransitionToStartEnrollment();
+        }
       }
       
       break;
@@ -673,6 +715,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
     case State::ScanningInterrupted:
     case State::DriveOffCharger:
     case State::PutDownBlock:
+    case State::StartEnrolling:
     {
       // Nothing specific to do: just waiting for animation/save to complete
       break;
@@ -732,7 +775,8 @@ void BehaviorEnrollFace::BehaviorUpdate()
                  "It has been too long since we saw the face we were trying to enroll, resetting enrollment");
           DASMSG_SEND();
           PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.BehaviorUpdate.LostEnrollee",
-                        "LastSeen:%ums LastImage:%ums",
+                        "LookingForID:%d LastSeen:%ums LastImage:%ums",
+                        _dVars->faceID,
                         (TimeStamp_t)_dVars->lastFaceSeenTime_ms, (TimeStamp_t)lastImgTime_ms);
           finishedScanning = true;
           ResetEnrollment();
@@ -747,15 +791,13 @@ void BehaviorEnrollFace::BehaviorUpdate()
           // See if wrongFace info was updated via a changedID message or call to UpdateFaceToEnroll()
           std::string wrongName;
           FaceID_t wrongID = Vision::UnknownFaceID;
-          if(IsSeeingWrongFace(wrongID, wrongName))
+          float maxScore = 0.f;
+          if(IsSeeingWrongFace(wrongID, wrongName, maxScore))
           {
-            ResetEnrollment();
-            TransitionToWrongFace(wrongID, wrongName);
-
-            if(AreScanningLightsEnabled())
+            if(Util::IsFltGT(maxScore, kEnrollFace_ScoreThresholdToFailOnWrongFace))
             {
-              auto& blc = GetBEI().GetBackpackLightComponent();
-              blc.ClearAllBackpackLightConfigs();
+              ResetEnrollment();
+              TransitionToWrongFace(wrongID, wrongName);
             }
           }
         }
@@ -903,6 +945,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
         info.result = FaceEnrollmentResult::Cancelled;
         break;
 
+      case State::StartEnrolling:
       case State::Enrolling:
         // If deactivating while enrolling, make sure we play the interruption animation so
         // we don't leave the face with "scanning" eyes
@@ -1069,6 +1112,12 @@ void BehaviorEnrollFace::ResetEnrollment()
   if(!_dVars->enrollingSpecificID)
   {
     _dVars->faceID = Vision::UnknownFaceID;
+  }
+  
+  if(AreScanningLightsEnabled())
+  {
+    auto& blc = GetBEI().GetBackpackLightComponent();
+    blc.ClearAllBackpackLightConfigs();
   }
 }
   
@@ -1340,7 +1389,7 @@ void BehaviorEnrollFace::TransitionToAlreadyKnowYouHandler()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::TransitionToStartEnrollment()
 {
-  SET_STATE(Enrolling);
+  SET_STATE(StartEnrolling);
   
   // Give ourselves a little more time to finish now that we've seen a face, but
   // don't go over the max timeout
@@ -1399,7 +1448,8 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   _dVars->timeScanningStarted_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   // Actually enable directed enrollment of the selected face in the vision system
-  GetBEI().GetFaceWorldMutable().Enroll(_dVars->faceID);
+  GetBEI().GetFaceWorldMutable().Enroll(_dVars->faceID, _dVars->forceNewID);
+  _dVars->forceNewID = false;
 
   TrackFaceAction* trackAction = new TrackFaceAction(_dVars->faceID);
 
@@ -1573,6 +1623,11 @@ void BehaviorEnrollFace::TransitionToWrongFace( FaceID_t faceID, const std::stri
   
   SET_STATE(SayingWrongName);
 
+  DASMSG(behavior_meet_victor_wrong_face, "behavior.meet_victor.wrong_face",
+         "Refusing to enroll high-scoring wrong face with name other than requested enrollment name");
+  DASMSG_SET(i1, faceID, "ID of wrong face we are refusing to enroll");
+  DASMSG_SEND();
+  
   if(kEnrollFace_FailOnWrongFace)
   {
     _dVars->failedState = State::Failed_WrongFace;
@@ -1868,6 +1923,8 @@ void BehaviorEnrollFace::UpdateFaceTime(const Face* newFace)
   const auto newFaceTimeStamp = newFace->GetTimeStamp();
   if(newFaceTimeStamp > _dVars->lastFaceSeenTime_ms)
   {
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceTime", "Saw ID:%d at %ums",
+                   _dVars->faceID, newFaceTimeStamp);
     _dVars->lastFaceSeenTime_ms = newFaceTimeStamp;
   }
 }
@@ -1944,7 +2001,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const RobotT
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEnrollFace::IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& wrongName) const
+bool BehaviorEnrollFace::IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& wrongName, float& maxScore) const
 {
   // Find any entry whose name we haven't already said and either whose ID changed or it's been
   // seen while looking for faces too many times
@@ -1959,6 +2016,7 @@ bool BehaviorEnrollFace::IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& w
   {
     // Return the ID and name
     wrongFaceID = it->second.faceID;
+    maxScore    = it->second.maxScore;
     wrongName   = it->first;
     return true;
   }
@@ -1993,7 +2051,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
   if(sawCurrentEnrollFace)
   {
     // If we saw the face we're currently enrolling, there's nothing to do other than
-    // update it's last seen time
+    // update its last seen time
     const Face* enrollFace = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
     UpdateFaceIDandTime(enrollFace);
   }
@@ -2090,13 +2148,15 @@ void BehaviorEnrollFace::UpdateFaceToEnroll()
         if(newFace->HasName())
         {
           // Update the number of times we've seen this named face
+          const float score = newFace->GetScore();
           auto it = _dVars->persistent.wrongFaceStats.find(newFace->GetName());
           if( it == _dVars->persistent.wrongFaceStats.end() ) {
             // New entry
-            _dVars->persistent.wrongFaceStats.emplace(newFace->GetName(), DynamicVariables::WrongFaceInfo(faceID));
+            _dVars->persistent.wrongFaceStats.emplace(newFace->GetName(), DynamicVariables::WrongFaceInfo(faceID, score, false));
           } else {
             // Increment existing
             ++it->second.count;
+            it->second.maxScore = std::max(it->second.maxScore, score);
           }
         }
         
@@ -2149,7 +2209,7 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
           else
           {
             _dVars->persistent.wrongFaceStats.emplace(newFace->GetName(),
-                                                      DynamicVariables::WrongFaceInfo(msg.newID, true));
+                                                      DynamicVariables::WrongFaceInfo(msg.newID, newFace->GetScore(), true));
           }
         }
         else

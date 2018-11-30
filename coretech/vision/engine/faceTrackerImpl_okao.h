@@ -75,9 +75,9 @@ namespace Vision {
     static bool IsRecognitionSupported() { return true; }
     static float GetMinEyeDistanceForEnrollment();
     
-    void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-                               Vision::FaceID_t forFaceID,
-                               s32 numEnrollments);
+    void SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,
+                               s32 numEnrollments,
+                               bool forceNewID);
 																						      
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
     void EnableSmileDetection(bool enable)   { _detectSmiling = enable; }
@@ -172,8 +172,6 @@ namespace Vision {
     POINT _facialParts[PT_POINT_KIND_MAX];
     INT32 _facialPartConfs[PT_POINT_KIND_MAX];
     INT32 _expressionValues[EX_EXPRESSION_KIND_MAX];
-    
-    FaceEnrollmentPose _enrollPose = FaceEnrollmentPose::LookingStraight;
     
     // Runs on a separate thread
     FaceRecognizer _recognizer;

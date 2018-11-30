@@ -69,9 +69,9 @@ namespace Vision {
     
     void SetRecognitionIsSynchronous(bool isSynchronous);
     
-    void SetFaceEnrollmentMode(FaceEnrollmentPose pose,
-                               FaceID_t forFaceID = UnknownFaceID,
-                               s32 numEnrollments = -1);
+    void SetFaceEnrollmentMode(FaceID_t forFaceID = UnknownFaceID,
+                               s32 numEnrollments = -1,
+                               bool forceNewID = false);
     
     void EnableEmotionDetection(bool enable);
     void EnableSmileDetection(bool enable);

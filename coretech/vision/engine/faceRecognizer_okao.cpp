@@ -958,6 +958,11 @@ namespace Vision {
     if(_enrollmentCount > 0) {
       --_enrollmentCount;
     }
+    
+    if(_forceNewEnrollment)
+    {
+      enrollData.SetPreviousFaceID(_enrollmentID);
+    }
 
     _enrollmentData.emplace(faceID, std::move(enrollData));
 
@@ -1015,7 +1020,7 @@ namespace Vision {
     }
   } // CancelExistingEnrollment()
   
-  void FaceRecognizer::SetAllowedEnrollments(s32 N, FaceID_t forFaceID)
+  void FaceRecognizer::SetAllowedEnrollments(s32 N, FaceID_t forFaceID, bool forceNewID)
   {
     if(forFaceID == UnknownFaceID)
     {
@@ -1025,9 +1030,10 @@ namespace Vision {
     _enrollmentCount = N;
     _origEnrollmentCount = N;
     _enrollmentID = forFaceID;
-
+    
     if(_enrollmentID == UnknownFaceID)
     {
+      DEV_ASSERT(!forceNewID, "FaceRecognizer.SetAllowedEnrollments.CannotForceNewIDwithUnknownID");
       _enrollmentTrackID = UnknownFaceID;
     }
     else
@@ -1041,6 +1047,21 @@ namespace Vision {
         _enrollmentTrackID = enrollDataIter->second.GetTrackingID();
       }
     }
+    
+    _forceNewEnrollment = false;
+    if(forceNewID)
+    {
+      DEV_ASSERT(N > 0, "FaceRecognizer.SetAllowedEnrollments.BadNforForceNewID");
+      
+      if(ANKI_VERIFY(_enrollmentTrackID != UnknownFaceID,
+                     "FaceRecognizer.SetAllowedEnrollments.ForceWithNoTrackingID",
+                     "No tracking ID found for FaceID:%d, cannot enable forced new ID",
+                     _enrollmentID))
+      {
+        _forceNewEnrollment = true;
+      }
+    }
+      
   }
 
   bool FaceRecognizer::SetNextFaceToRecognize(const Image& img,
@@ -1565,6 +1586,57 @@ namespace Vision {
       return RESULT_OK;
     }
 
+    if(!canEnrollAnyFace && _forceNewEnrollment &&
+       haveEnrollmentCountsLeft &&
+       _detectionInfo.nID == _enrollmentTrackID)
+    {
+      recognitionScore = kMaxScore;
+      
+      if(_enrollmentCount == _origEnrollmentCount)
+      {
+        // Special case: Force enrollment of this person as a new person
+        PRINT_CH_INFO(LOG_CHANNEL, "RecognizeFace.ForceAddingNewFaceID",
+                      "Adding new user to empty album, while enrolling track ID:%d",
+                      _enrollmentTrackID);
+        
+        Result result = RegisterNewUser(_okaoRecognitionFeatureHandle, faceID);
+        if(RESULT_OK != result) {
+          PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.FailedToRegisterNewUser",
+                              "TrackingID:%d FaceID:%d", _detectionInfo.nID, faceID);
+          return result;
+        }
+        
+        _enrollmentID = faceID;
+        _trackingToFaceID[_detectionInfo.nID] = faceID;
+      }
+      else
+      {
+        PRINT_CH_INFO(LOG_CHANNEL, "RecognizeFace.ForceUpdatingNewFaceID",
+                      "Updating forced enrollment ID:%d", _enrollmentID);
+        
+        auto enrollDataIter = _enrollmentData.find(_enrollmentID);
+        if(ANKI_VERIFY(enrollDataIter != _enrollmentData.end(),
+                       "FaceRecognizer.RecognizeFace.MissingEnrollDataForForcedUpdate",
+                       "EnrollmentID:%d", _enrollmentID))
+        {
+          const auto& albumEntries = enrollDataIter->second.GetAlbumEntries();
+          DEV_ASSERT(albumEntries.size() == 1, "FaceRecognizer.RecognizeFace.ExpectingOneAlbumEntry");
+          
+          const AlbumEntryID_t albumEntry = albumEntries.begin()->first;
+          Result result = UpdateExistingAlbumEntry(albumEntry,
+                                                   _okaoRecognitionFeatureHandle,
+                                                   recognitionScore);
+          if(RESULT_OK != result)
+          {
+            PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.ForceUpdatingExistingAlbumEntryFailed",
+                                "EnrollmentID:%d AlbumEntry:%d", _enrollmentID, albumEntry);
+          }
+        }
+      }
+      
+      return RESULT_OK;
+    }
+    
     // See if we recognize the person using the features we extracted on the
     // feature-extraction thread
     INT32 resultNum = 0;

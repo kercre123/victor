@@ -157,9 +157,9 @@ namespace Vector {
     // enrollment is allowed (use UnknownFaceID to indicate "any" ID).
     // Enrollment will automatically disable after numEnrollments. (Use 
     // a value < 0 to enable ongoing enrollments.)
-    void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-                               Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
-                               s32 numEnrollments = -1);
+    void SetFaceEnrollmentMode(Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
+                               s32 numEnrollments = -1,
+                               bool forceNewID = false);
     
     void SetFaceRecognitionIsSynchronous(bool isSynchronous);
     

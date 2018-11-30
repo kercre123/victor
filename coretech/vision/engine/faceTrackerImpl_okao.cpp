@@ -1121,7 +1121,7 @@ namespace Vision {
 
     // Shuffle the set of unrecognized faces so we don't always try the same one.
     // If we know everyone, no need to random shuffle (skip all)
-    if(skipRecognition.size() != numDetections)
+    if(numDetections > 1 && skipRecognition.size() != numDetections)
     {
       std::random_shuffle(detectionIndices.begin(), detectionIndices.end(),
                           [this](int i) { return _rng->RandInt(i); });
@@ -1326,6 +1326,15 @@ namespace Vision {
           .newName = recognitionData.GetName()
         };
 
+        // Update allowed tracked face IDs if one in there just changed
+        if(_allowedTrackedFaceID.count(update.oldID)>0)
+        {
+          PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.UpdatingAllowedTrackedFaceIDs",
+                            "Remove %d, Add %d", update.oldID, update.newID);
+          _allowedTrackedFaceID.erase(update.oldID);
+          _allowedTrackedFaceID.insert(update.newID);
+        }
+        
         updatedIDs.push_back(std::move(update));
       }
 
@@ -1425,12 +1434,11 @@ namespace Vision {
     return FaceEnrollParams::kFarDistanceBetweenEyesMin;
   }
 
-  void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-                                                Vision::FaceID_t forFaceID,
-                                                s32 numEnrollments)
+  void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,
+                                                s32 numEnrollments,
+                                                bool forceNewID)
   {
-    _enrollPose = pose;
-    _recognizer.SetAllowedEnrollments(numEnrollments, forFaceID);
+    _recognizer.SetAllowedEnrollments(numEnrollments, forFaceID, forceNewID);
   }
 
 
@@ -1444,10 +1452,10 @@ namespace Vision {
 
     if(detectionInfo.nConfidence > kMinDetectionConfidence)
     {
-      switch(_enrollPose)
-      {
-        case FaceEnrollmentPose::LookingStraight:
-        {
+//      switch(_enrollPose)
+//      {
+//        case FaceEnrollmentPose::LookingStraight:
+//        {
           if(detectionInfo.nPose == POSE_YAW_FRONT &&
              face.IsFacingCamera() &&
              intraEyeDist >= kFarDistanceBetweenEyesMin)
@@ -1459,144 +1467,144 @@ namespace Vision {
                               "EyeDist=%.1f (vs. %.1f)",
                               intraEyeDist, kFarDistanceBetweenEyesMin);
           }
-          break;
-        }
-
-        case FaceEnrollmentPose::LookingStraightClose:
-        {
-          // Close enough and not too much head angle
-          if(intraEyeDist >= kCloseDistanceBetweenEyesMin &&
-             intraEyeDist <= kCloseDistanceBetweenEyesMax &&
-             detectionInfo.nPose == POSE_YAW_FRONT &&
-             face.IsFacingCamera())
-          {
-            enableEnrollment = true;
-          }
-          else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightClose",
-                              "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              intraEyeDist, kCloseDistanceBetweenEyesMin, kCloseDistanceBetweenEyesMax,
-                              face.GetHeadRoll().getDegrees(),
-                              face.GetHeadPitch().getDegrees(),
-                              face.GetHeadYaw().getDegrees());
-          }
-          break;
-        }
-
-        case FaceEnrollmentPose::LookingStraightFar:
-        {
-          // Far enough and not too much head angle
-          if(intraEyeDist >= kFarDistanceBetweenEyesMin &&
-             intraEyeDist <= kFarDistanceBetweenEyesMax &&
-             detectionInfo.nPose == POSE_YAW_FRONT &&
-             face.IsFacingCamera())
-          {
-            enableEnrollment = true;
-          }
-          else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightFar",
-                              "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              intraEyeDist, kFarDistanceBetweenEyesMin, kFarDistanceBetweenEyesMax,
-                              face.GetHeadRoll().getDegrees(),
-                              face.GetHeadPitch().getDegrees(),
-                              face.GetHeadYaw().getDegrees());
-          }
-          break;
-        }
-
-        case FaceEnrollmentPose::LookingLeft:
-        {
-          // Looking left enough, but not too much. "No" pitch/roll.
-          if(detectionInfo.nPose == POSE_YAW_LH_PROFILE /*
-             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
-             face.GetHeadYaw().getDegrees() >= kLookingLeftRightMinAngle_deg &&
-             face.GetHeadYaw().getDegrees() <= kLookingLeftRightMaxAngle_deg*/)
-          {
-            enableEnrollment = true;
-          }
-          else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingLeft",
-                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              face.GetHeadRoll().getDegrees(),
-                              face.GetHeadPitch().getDegrees(),
-                              face.GetHeadYaw().getDegrees());
-          }
-          break;
-        }
-
-        case FaceEnrollmentPose::LookingRight:
-        {
-          // Looking right enough, but not too much. "No" pitch/roll.
-          if(detectionInfo.nPose == POSE_YAW_RH_PROFILE /*
-             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
-             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
-             face.GetHeadYaw().getDegrees() <= -kLookingLeftRightMinAngle_deg &&
-             face.GetHeadYaw().getDegrees() >= -kLookingLeftRightMaxAngle_deg*/)
-          {
-            enableEnrollment = true;
-          }
-          else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingRight",
-                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              face.GetHeadRoll().getDegrees(),
-                              face.GetHeadPitch().getDegrees(),
-                              face.GetHeadYaw().getDegrees());
-          }
-          break;
-        }
-
-        case FaceEnrollmentPose::LookingUp:
-        {
-          // Looking up enough, but not too much. "No" pitch/roll.
-          if(detectionInfo.nPose == POSE_YAW_FRONT && intraEyeDist >= kFarDistanceBetweenEyesMax &&
-             //std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
-             //std::abs(face.GetHeadYaw().getDegrees()) <= kLookingStraightMaxAngle_deg &&
-             face.GetHeadPitch().getDegrees() >= kLookingUpMinAngle_deg &&
-             face.GetHeadPitch().getDegrees() <= kLookingUpMaxAngle_deg)
-          {
-            enableEnrollment = true;
-          }
-          else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingUp",
-                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              face.GetHeadRoll().getDegrees(),
-                              face.GetHeadPitch().getDegrees(),
-                              face.GetHeadYaw().getDegrees());
-          }
-          break;
-        }
-
-        case FaceEnrollmentPose::LookingDown:
-        {
-          // Looking up enough, but not too much. "No" pitch/roll.
-          if(detectionInfo.nPose == POSE_YAW_FRONT && intraEyeDist >= kFarDistanceBetweenEyesMax &&
-             //std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
-             //std::abs(face.GetHeadYaw().getDegrees()) <= kLookingStraightMaxAngle_deg &&
-             face.GetHeadPitch().getDegrees() <= -kLookingDownMinAngle_deg &&
-             face.GetHeadPitch().getDegrees() >= -kLookingDownMaxAngle_deg)
-          {
-            enableEnrollment = true;
-          }
-          else if(DEBUG_ENROLLABILITY) {
-            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingDown",
-                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
-                              face.GetHeadRoll().getDegrees(),
-                              face.GetHeadPitch().getDegrees(),
-                              face.GetHeadYaw().getDegrees());
-          }
-          break;
-        }
-
-        case FaceEnrollmentPose::Disabled:
-          break;
-
-      } // switch(_enrollPose)
+//          break;
+//        }
+//
+//        case FaceEnrollmentPose::LookingStraightClose:
+//        {
+//          // Close enough and not too much head angle
+//          if(intraEyeDist >= kCloseDistanceBetweenEyesMin &&
+//             intraEyeDist <= kCloseDistanceBetweenEyesMax &&
+//             detectionInfo.nPose == POSE_YAW_FRONT &&
+//             face.IsFacingCamera())
+//          {
+//            enableEnrollment = true;
+//          }
+//          else if(DEBUG_ENROLLABILITY) {
+//            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightClose",
+//                              "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
+//                              intraEyeDist, kCloseDistanceBetweenEyesMin, kCloseDistanceBetweenEyesMax,
+//                              face.GetHeadRoll().getDegrees(),
+//                              face.GetHeadPitch().getDegrees(),
+//                              face.GetHeadYaw().getDegrees());
+//          }
+//          break;
+//        }
+//
+//        case FaceEnrollmentPose::LookingStraightFar:
+//        {
+//          // Far enough and not too much head angle
+//          if(intraEyeDist >= kFarDistanceBetweenEyesMin &&
+//             intraEyeDist <= kFarDistanceBetweenEyesMax &&
+//             detectionInfo.nPose == POSE_YAW_FRONT &&
+//             face.IsFacingCamera())
+//          {
+//            enableEnrollment = true;
+//          }
+//          else if(DEBUG_ENROLLABILITY) {
+//            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraightFar",
+//                              "EyeDist=%.1f [%.1f,%.1f], Roll=%.1f, Pitch%.1f, Yaw=%.1f",
+//                              intraEyeDist, kFarDistanceBetweenEyesMin, kFarDistanceBetweenEyesMax,
+//                              face.GetHeadRoll().getDegrees(),
+//                              face.GetHeadPitch().getDegrees(),
+//                              face.GetHeadYaw().getDegrees());
+//          }
+//          break;
+//        }
+//
+//        case FaceEnrollmentPose::LookingLeft:
+//        {
+//          // Looking left enough, but not too much. "No" pitch/roll.
+//          if(detectionInfo.nPose == POSE_YAW_LH_PROFILE /*
+//             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
+//             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
+//             face.GetHeadYaw().getDegrees() >= kLookingLeftRightMinAngle_deg &&
+//             face.GetHeadYaw().getDegrees() <= kLookingLeftRightMaxAngle_deg*/)
+//          {
+//            enableEnrollment = true;
+//          }
+//          else if(DEBUG_ENROLLABILITY) {
+//            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingLeft",
+//                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
+//                              face.GetHeadRoll().getDegrees(),
+//                              face.GetHeadPitch().getDegrees(),
+//                              face.GetHeadYaw().getDegrees());
+//          }
+//          break;
+//        }
+//
+//        case FaceEnrollmentPose::LookingRight:
+//        {
+//          // Looking right enough, but not too much. "No" pitch/roll.
+//          if(detectionInfo.nPose == POSE_YAW_RH_PROFILE /*
+//             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
+//             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
+//             face.GetHeadYaw().getDegrees() <= -kLookingLeftRightMinAngle_deg &&
+//             face.GetHeadYaw().getDegrees() >= -kLookingLeftRightMaxAngle_deg*/)
+//          {
+//            enableEnrollment = true;
+//          }
+//          else if(DEBUG_ENROLLABILITY) {
+//            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingRight",
+//                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
+//                              face.GetHeadRoll().getDegrees(),
+//                              face.GetHeadPitch().getDegrees(),
+//                              face.GetHeadYaw().getDegrees());
+//          }
+//          break;
+//        }
+//
+//        case FaceEnrollmentPose::LookingUp:
+//        {
+//          // Looking up enough, but not too much. "No" pitch/roll.
+//          if(detectionInfo.nPose == POSE_YAW_FRONT && intraEyeDist >= kFarDistanceBetweenEyesMax &&
+//             //std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
+//             //std::abs(face.GetHeadYaw().getDegrees()) <= kLookingStraightMaxAngle_deg &&
+//             face.GetHeadPitch().getDegrees() >= kLookingUpMinAngle_deg &&
+//             face.GetHeadPitch().getDegrees() <= kLookingUpMaxAngle_deg)
+//          {
+//            enableEnrollment = true;
+//          }
+//          else if(DEBUG_ENROLLABILITY) {
+//            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingUp",
+//                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
+//                              face.GetHeadRoll().getDegrees(),
+//                              face.GetHeadPitch().getDegrees(),
+//                              face.GetHeadYaw().getDegrees());
+//          }
+//          break;
+//        }
+//
+//        case FaceEnrollmentPose::LookingDown:
+//        {
+//          // Looking up enough, but not too much. "No" pitch/roll.
+//          if(detectionInfo.nPose == POSE_YAW_FRONT && intraEyeDist >= kFarDistanceBetweenEyesMax &&
+//             //std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
+//             //std::abs(face.GetHeadYaw().getDegrees()) <= kLookingStraightMaxAngle_deg &&
+//             face.GetHeadPitch().getDegrees() <= -kLookingDownMinAngle_deg &&
+//             face.GetHeadPitch().getDegrees() >= -kLookingDownMaxAngle_deg)
+//          {
+//            enableEnrollment = true;
+//          }
+//          else if(DEBUG_ENROLLABILITY) {
+//            PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingDown",
+//                              "Roll=%.1f, Pitch%.1f, Yaw=%.1f",
+//                              face.GetHeadRoll().getDegrees(),
+//                              face.GetHeadPitch().getDegrees(),
+//                              face.GetHeadYaw().getDegrees());
+//          }
+//          break;
+//        }
+//
+//        case FaceEnrollmentPose::Disabled:
+//          break;
+//
+//      } // switch(_enrollPose)
     } // if detectionConfidence high enough
 
-    if(DEBUG_ENROLLABILITY && enableEnrollment) {
-      PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable", "Mode=%d", (u8)_enrollPose);
-    }
+//    if(DEBUG_ENROLLABILITY && enableEnrollment) {
+//      PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable", "Mode=%d", (u8)_enrollPose);
+//    }
 
     return enableEnrollment;
 

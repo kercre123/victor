@@ -81,7 +81,7 @@ namespace Vision {
     
     // Use faceID = UnknownFaceID to allow enrollments for any face.
     // Use N = -1 to allow ongoing enrollment.
-    void SetAllowedEnrollments(s32 N, FaceID_t forFaceID);
+    void SetAllowedEnrollments(s32 N, FaceID_t forFaceID, bool forceNewID = false);
     
     TrackingID_t GetEnrollmentTrackID() const { return _enrollmentTrackID; }
     FaceID_t     GetEnrollmentID()      const { return _enrollmentID; }
@@ -242,6 +242,7 @@ namespace Vision {
     // Which face we are allowed to add enrollment data for (UnknownFaceID == "any" face),
     // and how many enrollments we are allowed to add ( <0 means as many as we want)
     bool      _isEnrollmentEnabled = true;
+    bool      _forceNewEnrollment = false;
     FaceID_t  _enrollmentID = UnknownFaceID;
     FaceID_t  _enrollmentTrackID = UnknownFaceID;
     s32       _enrollmentCount = -1; // Has no effect if enrollmentID not set
