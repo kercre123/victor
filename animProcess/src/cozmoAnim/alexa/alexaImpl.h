@@ -88,7 +88,7 @@ public:
   
   void NotifyOfTapToTalk();
   
-  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
+  void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
   
   // Callback setters
   

@@ -37,8 +37,8 @@ public:
     int startTime_ms;
     int endTime_ms;
 
-    size_t startSampleIndex;
-    size_t endSampleIndex;
+    uint64_t startSampleIndex;
+    uint64_t endSampleIndex;
 
     float score;
     
