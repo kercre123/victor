@@ -622,7 +622,7 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 				}
 				anims = append(anims, &newAnim)
 			}
-		case <-time.After(10 * time.Second):
+		case <-time.After(5 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
 		}
 	}
