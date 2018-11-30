@@ -3,6 +3,7 @@
   "behaviorClass": "AnimSequence",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  "associatedActiveFeature": "ReactToHello",
 
   "respondToUserIntents": [
     { "type": "greeting_hello" }

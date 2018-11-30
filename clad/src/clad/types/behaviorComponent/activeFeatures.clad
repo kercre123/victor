@@ -86,6 +86,7 @@ enum uint_32 ActiveFeature {
   ReactToHello,
   ReactToLove,
   ReactToNegative,
+  ReactToHello,
   ReactToRobotOnSide,
   RecordingMessage,
   RequestCharger,
@@ -96,6 +97,7 @@ enum uint_32 ActiveFeature {
   SeasonalHappyNewYear,
   Sleeping,
   ShutUp,
+  StuckOnEdge,
   TakeAPhoto,
   TimerCanceled,
   TimerChecked,
@@ -107,9 +109,6 @@ enum uint_32 ActiveFeature {
   BasicVoiceCommand,
   Weather,
   WhatsMyName,
-
-  // Legacy name -- kept around to keep analytics in sync for the "big greeting" behavior
-  VC_Greeting,
 }
 
 enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
@@ -160,6 +159,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   ReactToHello            = verbatim ActiveFeatureType::Social,
   ReactToLove             = verbatim ActiveFeatureType::Social,
   ReactToNegative         = verbatim ActiveFeatureType::Social,
+  ReactToHello            = verbatim ActiveFeatureType::Social,
   ReactToRobotOnSide      = verbatim ActiveFeatureType::Autonomous,
   RecordingMessage        = verbatim ActiveFeatureType::Utility,
   RequestCharger          = verbatim ActiveFeatureType::Failure,
@@ -170,6 +170,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   SeasonalHappyNewYear    = verbatim ActiveFeatureType::Social,
   Sleeping                = verbatim ActiveFeatureType::Sleep,
   ShutUp                  = verbatim ActiveFeatureType::Autonomous,
+  StuckOnEdge             = verbatim ActiveFeatureType::Autonomous,
   TakeAPhoto              = verbatim ActiveFeatureType::Utility,
   TimerCanceled           = verbatim ActiveFeatureType::Utility,
   TimerChecked            = verbatim ActiveFeatureType::Utility,
@@ -180,9 +181,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   VolumeAdjustment        = verbatim ActiveFeatureType::Utility,
   BasicVoiceCommand       = verbatim ActiveFeatureType::Social,
   Weather                 = verbatim ActiveFeatureType::Utility,
-  WhatsMyName             = verbatim ActiveFeatureType::Social,
-
-  VC_Greeting             = verbatim ActiveFeatureType::Social
+  WhatsMyName             = verbatim ActiveFeatureType::Social
 }
 
 } // namespace Vector
