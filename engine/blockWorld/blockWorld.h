@@ -516,9 +516,6 @@ namespace Anki
       
       Robot*             _robot = nullptr;
       
-      f32 _lastPlayAreaSizeEventSec;
-      const f32 _playAreaSizeEventIntervalSec;
-      
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)

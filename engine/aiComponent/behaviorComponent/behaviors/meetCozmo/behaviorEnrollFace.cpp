@@ -986,9 +986,6 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
       GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::EnrolledFace);
     }
 
-    // Log enrollment to DAS, with result type
-    Util::sInfoF("robot.face_enrollment", {{DDATA, EnumToString(info.result)}}, "%d", info.faceID);
-
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.BroadcastCompletion",
                   "In state:%hhu, FaceEnrollmentResult=%s",
                   _dVars->persistent.state, EnumToString(info.result));

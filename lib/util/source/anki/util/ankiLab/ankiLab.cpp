@@ -296,18 +296,12 @@ void AnkiLab::ReportExperimentAssignmentResult(const AssignmentDef& assignment,
       (status == AssignmentStatus::ExperimentNotFound) ||
       (status == AssignmentStatus::VariantNotFound)){
     std::string statusInfo = versionString + ":" + statusString;
-    Anki::Util::sWarning("experiment.invalid", {
-      { "$user", assignment.GetUser_id().c_str() },
-      { DGROUP , assignment.GetVariation_key().c_str() },
-      { DDATA  , statusInfo.c_str() }
-    }, experimentKey.c_str());
-
-    LOG_DEBUG("AnkiLab.experiment.invalid",
-              "%s:%s:%s - %s",
-              experimentKey.c_str(),
-              assignment.GetVariation_key().c_str(),
-              assignment.GetUser_id().c_str(),
-              statusInfo.c_str());
+    LOG_WARNING("AnkiLab.experiment.invalid",
+                "%s:%s:%s - %s",
+                experimentKey.c_str(),
+                assignment.GetVariation_key().c_str(),
+                assignment.GetUser_id().c_str(),
+                statusInfo.c_str());
     return;
   }
 

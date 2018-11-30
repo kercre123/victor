@@ -54,6 +54,7 @@
 #include "util/debug/messageDebugging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
+#include "util/logging/DAS.h"
 #include "util/signals/signalHolder.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
@@ -189,18 +190,8 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   ANKI_CPU_PROFILE("Robot::HandleMotorCalibration");
 
   const MotorCalibration& payload = message.GetData().Get_motorCalibration();
-  LOG_INFO("HandleMotorCalibration.Recvd", "Motor %d, started %d, autoStarted %d",
-           (int)payload.motorID, payload.calibStarted, payload.autoStarted);
-
-  if (payload.calibStarted) {
-    Util::sInfoF("HandleMotorCalibration.Start",
-                 {{DDATA, std::to_string(payload.autoStarted).c_str()}},
-                  "%s", EnumToString(payload.motorID));
-  } else {
-    Util::sInfoF("HandleMotorCalibration.Complete",
-                 {{DDATA, std::to_string(payload.autoStarted).c_str()}},
-                  "%s", EnumToString(payload.motorID));
-  }
+  LOG_INFO("HandleMotorCalibration.Recvd", "Motor %s, started %d, autoStarted %d",
+           EnumToString(payload.motorID), payload.calibStarted, payload.autoStarted);
 
   if (payload.motorID == MotorID::MOTOR_LIFT &&
       payload.calibStarted && robot->GetCarryingComponent().IsCarryingObject())
@@ -337,11 +328,14 @@ void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::
 void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleRobotStopped");
-
+  
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
-  Util::sInfoF("RobotImplMessaging.HandleRobotStopped",
-               {{DDATA, ""}},
-               "%hhu", payload.reason);
+  
+  DASMSG(robot_impl_messaging.handle_robot_stopped,
+         "robot_impl_messaging.handle_robot_stopped",
+         "Received RobotStopped message");
+  DASMSG_SET(s1, EnumToString(payload.reason), "Stop reason");
+  DASMSG_SEND();
 
   // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
   // trigger this RobotStopped message so it's not too crazy.

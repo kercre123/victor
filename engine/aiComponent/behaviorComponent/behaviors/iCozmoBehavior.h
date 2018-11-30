@@ -469,7 +469,7 @@ protected:
   
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify activity strategies if they listen for the message
-  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true) const;
+  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved) const;
 
   /////////////
   /// "Smart" helpers - Behaviors can call these functions to set properties that

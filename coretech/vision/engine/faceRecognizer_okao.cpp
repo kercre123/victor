@@ -1733,19 +1733,24 @@ namespace Vision {
                 // Merge the two. Note that if this is not the second best match and there are other session-only
                 // entries in between, this will likely happen again and they will get merged in one by one.
                 // At least that's the theory... This is an unlikely scenario regardless.
-                PRINT_CH_INFO(LOG_CHANNEL, "RecognizeFace.UsingLowerRankedMatch",
-                              "Top match (AlbumEntry:%d ID:%d Score:%d) is session-only. "
-                              "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named ('%s'). Using it and merging.",
-                              matchingAlbumEntries[matchIndex], matchingID, matchingScore,
-                              nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex],
-                              nextMatchIter->second.GetName().piiGuardedString());
-
-                // Log IDs in s_val and scores in DDATA:
-                Util::sInfoF("robot.vision.face_recognition.using_lower_ranked_match",
-                             {{DDATA, (std::to_string(matchingScore) + ", " +
-                                       std::to_string(scores[nextIndex]) + ", " +
-                                       std::to_string(nextNextID == Vision::UnknownFaceID ? -1 : scores[nextNextIndex])).c_str()}},
-                             "%d, %d, %d", matchingID, nextMatchingID, nextNextID);
+                LOG_INFO("RecognizeFace.UsingLowerRankedMatch",
+                         "Top match (AlbumEntry:%d ID:%d Score:%d) is session-only. "
+                         "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named ('%s'). Using it and merging.",
+                         matchingAlbumEntries[matchIndex], matchingID, matchingScore,
+                         nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex],
+                         nextMatchIter->second.GetName().piiGuardedString());
+                
+                DASMSG(vision.face_recognition.using_lower_ranked_match,
+                       "vision.face_recognition.using_lower_ranked_match",
+                       "A session-only face was the top match, but we are using a lower-ranked named match instead");
+                DASMSG_SET(i1, matchingID, "Top matching ID");
+                DASMSG_SET(i2, matchingScore, "Top matching score");
+                DASMSG_SET(i3, nextMatchingID, "Next matching ID");
+                DASMSG_SET(i4, scores[nextIndex], "Score of nextIndex (=scores[nextIndex])");
+                DASMSG_SET(s1, std::to_string(nextNextID), "Next next ID");
+                DASMSG_SET(s2, std::to_string(nextNextID == Vision::UnknownFaceID ? -1 : scores[nextNextIndex]),
+                           "Score of nextNextIndex (or -1 if nextNextID is unknown)");
+                DASMSG_SEND();
 
                 if(ANKI_DEV_CHEATS)
                 {
@@ -2435,11 +2440,19 @@ namespace Vision {
           {
             const auto & faceID = entry.second.GetFaceID();
 
-            // Log the ID and num of album entries (as DDATA) of each entry we load
+            // Log the ID and num of album entries of each entry we load
             const size_t numAlbumEntries = entry.second.GetAlbumEntries().size();
-            Util::sInfoF("robot.vision.loaded_face_enrollment_entry",
-                         {{DDATA, std::to_string(numAlbumEntries).c_str()}},
-                         "%d", faceID);
+            LOG_INFO("robot.vision.loaded_face_enrollment_entry",
+                     "numAlbumEntries %zu, faceID %d",
+                     numAlbumEntries,
+                     faceID);
+            
+            DASMSG(vision.face_recognition.loaded_face_enrollment_entry,
+                   "vision.face_recognition.loaded_face_enrollment_entry",
+                   "We have loaded a face enrollment entry");
+            DASMSG_SET(i1, faceID, "Face ID");
+            DASMSG_SET(i2, numAlbumEntries, "Number of album entries");
+            DASMSG_SEND();
 
             EmplaceLoadedKnownFace(entry.second, loadedFaces, "SetSerializedData.AddedEnrollmentDataEntry");
           }

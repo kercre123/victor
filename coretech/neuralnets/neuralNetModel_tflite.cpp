@@ -42,7 +42,7 @@ namespace {
 struct TFLiteLogReporter : public tflite::ErrorReporter {
   int Report(const char* format, va_list args) override
   {
-    ::Anki::Util::sErrorV("NeuralNetModel.TFLiteErrorReporter", {}, format, args);
+    LOG_ERROR("NeuralNetModel.TFLiteErrorReporter", format, args);
     return 0;
   }
 };

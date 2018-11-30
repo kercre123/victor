@@ -32,6 +32,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/logging/DAS.h"
 #include "webServerProcess/src/webService.h"
 
 #include "clad/types/featureGateTypes.h"
@@ -68,8 +69,6 @@ namespace Vector {
   CONSOLE_VAR(bool,  kRenderGazeDirectionPoints,      "Vision.GazeDirection", false);
 
   static const char * const kLoggingChannelName = "FaceRecognizer";
-  static const char * const kIsNamedStringDAS = "1";
-  static const char * const kIsSessionOnlyStringDAS = "0";
 
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
   static const Point3f kGazeGroundPointSize{100.f, 100.f, 100.f};
@@ -220,9 +219,12 @@ namespace Vector {
       const FaceEntry& newFaceEntry = result.first->second;
       if(oldID > 0 && newID > 0 && newFaceEntry.HasStableID())
       {
-        Util::sInfoF("robot.vision.update_face_id",
-                     {{DDATA, std::to_string(oldID).c_str()}},
-                     "%d", newID);
+        DASMSG(robot.vision.update_face_id,
+               "robot.vision.update_face_id",
+               "Face ID updated");
+        DASMSG_SET(i1, oldID, "Old ID");
+        DASMSG_SET(i2, newID, "New ID");
+        DASMSG_SEND();
       }
 
     } else if(oldID > 0){
@@ -490,26 +492,33 @@ namespace Vector {
     const bool isNamed = faceEntry->IsNamed();
     if(faceEntry->numTimesObserved == 1 && isNamed)
     {
-      // Log to DAS that we immediately recognized a new face with a name
-      Util::sInfoF("robot.vision.face_recognition.immediate_recognition", {{DDATA, kIsNamedStringDAS}},
-                   "%d", faceEntry->face.GetID());
+      DASMSG(robot.vision.face_recognition.immediate_recognition,
+             "robot.vision.face_recognition.immediate_recognition",
+             "We immediately recognized a new face with a name");
+      DASMSG_SET(i1, faceEntry->face.GetID(), "Face ID");
+      DASMSG_SEND();
     }
     else if(!isNamed && faceEntry->face.GetID() > 0 && faceEntry->numTimesObservedFacingCamera == kNumTimesToSeeFrontalToBeStable)
     {
-      // Log to DAS that we've seen this session-only face for awhile and not
-      // recognized it as someone else (so this is a stable session-only face)
-      // NOTE: we do this just once, when we cross the num times observed threshold
-      Util::sInfoF("robot.vision.face_recognition.persistent_session_only", {{DDATA, kIsSessionOnlyStringDAS}},
-                   "%d", faceEntry->face.GetID());
+      DASMSG(robot.vision.face_recognition.persistent_session_only,
+             "robot.vision.face_recognition.persistent_session_only",
+             "We have seen a session-only face for awhile and not recognized it as someone else (so this is a stable "
+             "session-only face) NOTE: we do this just once, when we cross the num times observed threshold");
+      DASMSG_SET(i1, faceEntry->face.GetID(), "Face ID");
+      DASMSG_SEND();
 
       // HACK: increment the counter again so we don't send this multiple times if not seeing frontal anymore
       faceEntry->numTimesObservedFacingCamera++;
     }
     else if(timeSinceLastSeen_ms > kTimeUnobservedBeforeReLoggingToDAS_ms && faceEntry->HasStableID())
     {
-      // Log to DAS that we are re-seeing this face after not having seen it for a bit
-      // (and recognizing it as an existing named person or stable session-only ID)
-      Util::sInfoF("robot.vision.face_recognition.re_recognized", {{DDATA, isNamed ? kIsNamedStringDAS : kIsSessionOnlyStringDAS}}, "%d", faceEntry->face.GetID());
+      DASMSG(robot.vision.face_recognition.persistent_session_only,
+             "robot.vision.face_recognition.persistent_session_only",
+             "We are re-seeing a face after not having seen it for a bit (and recognizing it as an existing named "
+             "person or stable session-only ID)");
+      DASMSG_SET(i1, faceEntry->face.GetID(), "Face ID");
+      DASMSG_SET(i2, isNamed, "1 if this is a named face, 0 or null otherwise");
+      DASMSG_SEND();
     }
 
     // Wait to report this face until we've seen it enough times to be convinced it's
@@ -678,11 +687,12 @@ namespace Vector {
 
         if(faceIter->second.HasStableID())
         {
-          // Log to DAS the removal of any "stable" face that gets removed because
-          // we haven't seen it in awhile
-          Util::sInfoF("robot.vision.remove_unobserved_session_only_face",
-                       {{DDATA, std::to_string(face.GetTimeStamp()).c_str()}},
-                       "%d", faceIter->first);
+          DASMSG(robot.vision.remove_unobserved_session_only_face,
+                 "robot.vision.remove_unobserved_session_only_face",
+                 "Removing a 'stable' face because we have not seen it in awhile");
+          DASMSG_SET(i1, faceIter->first, "Face ID");
+          DASMSG_SET(i2, face.GetTimeStamp(), "Face time stamp");
+          DASMSG_SEND();
         }
 
         RemoveFace(faceIter); // Increments faceIter!
