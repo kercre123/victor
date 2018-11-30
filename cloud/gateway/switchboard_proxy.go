@@ -3,6 +3,7 @@ package main
 import (
 	"anki/log"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -74,6 +75,13 @@ func (proxy *BLEProxy) isStream(url string) bool {
 	return false
 }
 
+// TruncationResponse to construct a json error response when the message is
+// too large for the gateway <-> switchboard interface.
+type TruncationResponse struct {
+	OriginalStatus uint16 `json:"original_status"`
+	Reason         string `json:"reason"`
+}
+
 // handle takes a given proxy request and sends it through the proxy pipelines and returns a response
 func (proxy *BLEProxy) handle(request *gw_clad.SdkProxyRequest) *gw_clad.SdkProxyResponse {
 	log.Printf("Handling a switchboard proxy request id:\"%s\" path:\"%s\" json:\"%s\"\n", request.MessageId, request.Path, request.Json)
@@ -112,5 +120,21 @@ func (proxy *BLEProxy) handle(request *gw_clad.SdkProxyRequest) *gw_clad.SdkProx
 	proxyResponse.StatusCode = uint16(resp.StatusCode)
 	proxyResponse.ContentType = resp.Header.Get("Content-Type")
 	proxyResponse.Content = string(body)
+	responseSize := proxyResponse.Size()
+	if responseSize >= 2048 {
+		content := TruncationResponse{
+			OriginalStatus: uint16(resp.StatusCode),
+			Reason:         fmt.Sprintf("Response body too large: %d", responseSize),
+		}
+		proxyResponse.StatusCode = uint16(500)
+		jsonResponse, err := json.Marshal(content)
+		if err != nil {
+			proxyResponse.ContentType = "application/text"
+			proxyResponse.Content = "Response body too large"
+		} else {
+			proxyResponse.ContentType = "application/json"
+			proxyResponse.Content = string(jsonResponse[:])
+		}
+	}
 	return proxyResponse
 }
