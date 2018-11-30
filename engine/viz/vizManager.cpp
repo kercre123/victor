@@ -649,7 +649,7 @@ namespace Anki {
     void VizManager::EraseSegments(const std::string& identifier)
     {
       ANKI_CPU_PROFILE("VizManager::EraseSegments");
-      SendMessage(VizInterface::MessageViz(VizInterface::EraseSegmentPrimitives{identifier}));
+      SendMessage(VizInterface::MessageViz(VizInterface::EraseLineSegments{identifier}));
     }
     
     // =============== Circle methods ==================

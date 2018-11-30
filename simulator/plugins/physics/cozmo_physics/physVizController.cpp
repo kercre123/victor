@@ -60,11 +60,11 @@ void PhysVizController::Init() {
   Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
     std::bind(&PhysVizController::ProcessVizSetOriginMessage, this, std::placeholders::_1));
   
-  // primitives
-  Subscribe(VizInterface::MessageVizTag::SegmentPrimitive,
-    std::bind(&PhysVizController::ProcessVizSegmentPrimitiveMessage, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::EraseSegmentPrimitives,
-    std::bind(&PhysVizController::ProcessVizEraseSegmentPrimitivesMessage, this, std::placeholders::_1));
+  // line segments
+  Subscribe(VizInterface::MessageVizTag::LineSegment,
+    std::bind(&PhysVizController::ProcessVizLineSegmentMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EraseLineSegments,
+    std::bind(&PhysVizController::ProcessVizEraseLineSegmentsMessage, this, std::placeholders::_1));
 
   _server.StopListening();
   _server.StartListening((uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
@@ -267,9 +267,9 @@ void PhysVizController::Draw(int pass, const char *view)
       } // for each quad
     } // for each quad type
     
-    // Draw segment primitives
+    // Draw line segments
     glBegin(GL_LINES);
-    for ( const auto& segmentVectorPerIdentifier : _segmentPrimitives )
+    for ( const auto& segmentVectorPerIdentifier : _lineSegments )
     {
       for ( const auto& segmentInVector : segmentVectorPerIdentifier.second )
       {
@@ -326,20 +326,20 @@ void PhysVizController::ProcessVizObjectMessage(const AnkiEvent<VizInterface::Me
   _objectMap[payload.objectID] = VizInterface::Object(payload);
 }
 
-void PhysVizController::ProcessVizSegmentPrimitiveMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+void PhysVizController::ProcessVizLineSegmentMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = msg.GetData().Get_SegmentPrimitive();
-  PRINT("Processing SegmentPrimitive (%s)\n", payload.identifier.c_str());
+  const auto& payload = msg.GetData().Get_LineSegment();
+  PRINT("Processing LineSegment (%s)\n", payload.identifier.c_str());
   
   if ( payload.clearPrevious ) {
-    _segmentPrimitives[payload.identifier].clear();
+    _lineSegments[payload.identifier].clear();
   }
   
-  _segmentPrimitives[payload.identifier].emplace_back( payload.color, payload.origin, payload.dest );
+  _lineSegments[payload.identifier].emplace_back( payload.color, payload.origin, payload.dest );
   
   // some limits to catch when things get out of control in a loop
-  CORETECH_ASSERT(_segmentPrimitives.size() < 128);
-  CORETECH_ASSERT(_segmentPrimitives[payload.identifier].size() < 1024);
+  CORETECH_ASSERT(_lineSegments.size() < 128);
+  CORETECH_ASSERT(_lineSegments[payload.identifier].size() < 1024);
 }
 
 void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -378,12 +378,12 @@ void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterfac
   }
 }
 
-void PhysVizController::ProcessVizEraseSegmentPrimitivesMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+void PhysVizController::ProcessVizEraseLineSegmentsMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = msg.GetData().Get_EraseSegmentPrimitives();
-  PRINT("Processing EraseSegmentPrimitives (%s)\n", payload.identifier.c_str());
+  const auto& payload = msg.GetData().Get_EraseLineSegments();
+  PRINT("Processing EraseLineSegments (%s)\n", payload.identifier.c_str());
   
-  _segmentPrimitives.erase(payload.identifier);
+  _lineSegments.erase(payload.identifier);
 }
 
 void PhysVizController::ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)

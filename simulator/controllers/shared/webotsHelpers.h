@@ -82,6 +82,13 @@ Pose3d ConvertTranslationRotationToPose(const double* transIn,
 void ConvertRgbaToWebotsColorArray(const uint32_t rgbaColor,
                                    double* webotsColorOut);
 
+// Set the "translation" and "rotation" fields of a node based on the input newPose. If convertToMeters = true, then
+// the input Pose3d is assumed to have a translation in millimeters.
+void SetNodePose(webots::Node& node, const Pose3d& newPose, const bool convertToMeters = false);
+
+// Set the SFVec3F "color" field of a node based on the input rgbaColor.
+void SetNodeColor(webots::Node& node, uint32_t rgbaColor);
+  
 }; // namespace
 }; // namespace
 

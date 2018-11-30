@@ -102,6 +102,22 @@ void VizControllerImpl::Init()
             std::bind(&VizControllerImpl::ProcessVizEraseObjectMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ShowObjects,
             std::bind(&VizControllerImpl::ProcessVizShowObjectsMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::LineSegment,
+            std::bind(&VizControllerImpl::ProcessVizLineSegmentMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EraseLineSegments,
+            std::bind(&VizControllerImpl::ProcessVizEraseLineSegmentsMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::Quad,
+            std::bind(&VizControllerImpl::ProcessVizQuadMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EraseQuad,
+            std::bind(&VizControllerImpl::ProcessVizEraseQuadMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::AppendPathSegmentLine,
+            std::bind(&VizControllerImpl::ProcessVizAppendPathSegmentLineMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::AppendPathSegmentArc,
+            std::bind(&VizControllerImpl::ProcessVizAppendPathSegmentArcMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SetPathColor,
+            std::bind(&VizControllerImpl::ProcessVizSetPathColorMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::ErasePath,
+            std::bind(&VizControllerImpl::ProcessVizErasePathMessage, this, std::placeholders::_1));
 
   // Get display devices
   _navMapDisp = _vizSupervisor.getDisplay("nav_map");
@@ -214,9 +230,9 @@ void VizControllerImpl::Update()
   const double currTime_sec = _vizSupervisor.getTime();
   const double updateRate = _vizSupervisor.getSelf()->getField("drawObjectsRate_sec")->getSFFloat();
   
-  if (currTime_sec - _lastDrawObjectsTime_sec > updateRate) {
-    DrawObjects();
-    _lastDrawObjectsTime_sec = currTime_sec;
+  if (currTime_sec - _lastDrawTime_sec > updateRate) {
+    Draw();
+    _lastDrawTime_sec = currTime_sec;
   }
 }
 
@@ -971,21 +987,13 @@ void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::
   
 void VizControllerImpl::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface::MessageViz> &msg)
 {
-  const auto& payload = msg.GetData().Get_SetVizOrigin();
+  const auto& m = msg.GetData().Get_SetVizOrigin();
   
-  double translation[3] = { MM_TO_M(payload.trans_x_mm),
-                            MM_TO_M(payload.trans_y_mm),
-                            MM_TO_M(payload.trans_z_mm) };
-  
-  double rotation[4] = { payload.rot_axis_x,
-                         payload.rot_axis_y,
-                         payload.rot_axis_z,
-                         payload.rot_rad };
+  _vizControllerPose = Pose3d(m.rot_rad,
+                              Vec3f(m.rot_axis_x, m.rot_axis_y, m.rot_axis_z),
+                              Vec3f(MM_TO_M(m.trans_x_mm), MM_TO_M(m.trans_y_mm), MM_TO_M(m.trans_z_mm)));
 
-  _vizControllerPose = WebotsHelpers::ConvertTranslationRotationToPose(translation, rotation);
-  
-  _vizSupervisor.getSelf()->getField("translation")->setSFVec3f(translation);
-  _vizSupervisor.getSelf()->getField("rotation")->setSFRotation(rotation);
+  WebotsHelpers::SetNodePose(*_vizSupervisor.getSelf(), _vizControllerPose);
 }
   
 void VizControllerImpl::ProcessVizMemoryMapMessageBegin(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -1094,6 +1102,73 @@ void VizControllerImpl::ProcessVizShowObjectsMessage(const AnkiEvent<VizInterfac
     EraseVizObjects();
   }
 }
+
+void VizControllerImpl::ProcessVizLineSegmentMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_LineSegment();
+  
+  if (payload.clearPrevious) {
+    EraseVizSegments(payload.identifier);
+  }
+  
+  auto& vizSegment = _vizSegments[payload.identifier];
+  vizSegment.emplace_back();
+  vizSegment.back().data = payload;
+}
+
+void VizControllerImpl::ProcessVizEraseLineSegmentsMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_EraseLineSegments();
+  EraseVizSegments(payload.identifier);
+}
+  
+void VizControllerImpl::ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_Quad();
+  
+  auto& vizQuad = _vizQuads[payload.quadType][payload.quadID];
+  vizQuad.data = payload;
+}
+
+void VizControllerImpl::ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_EraseQuad();
+  EraseVizQuads((VizQuadType) payload.quadType, payload.quadID);
+}
+  
+void VizControllerImpl::ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_AppendPathSegmentLine();
+  
+  auto& pathInfo = _vizPaths[payload.pathID];
+  pathInfo.lines.emplace_back();
+  pathInfo.lines.back().data = payload;
+}
+
+void VizControllerImpl::ProcessVizAppendPathSegmentArcMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_AppendPathSegmentArc();
+
+  auto& pathInfo = _vizPaths[payload.pathID];
+  pathInfo.arcs.emplace_back();
+  pathInfo.arcs.back().data = payload;
+}
+  
+void VizControllerImpl::ProcessVizSetPathColorMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SetPathColor();
+  
+  auto it = _vizPaths.find(payload.pathID);
+  if (it != _vizPaths.end()) {
+    it->second.color = payload.colorID;
+  }
+}
+  
+void VizControllerImpl::ProcessVizErasePathMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_ErasePath();
+  EraseVizPath(payload.pathID);
+}
   
 void VizControllerImpl::EraseVizObjects(const uint32_t lowerBoundId, const uint32_t upperBoundId)
 {
@@ -1117,13 +1192,75 @@ void VizControllerImpl::EraseVizObjects(const uint32_t lowerBoundId, const uint3
   _vizObjects.erase(lowerIt, upperIt);
 }
 
-void VizControllerImpl::DrawObjects()
+void VizControllerImpl::EraseVizSegments(const std::string& identifier)
+{
+  auto segmentIt = _vizSegments.find(identifier);
+  if (segmentIt != _vizSegments.end()) {
+    for (auto& segment : segmentIt->second) {
+      auto nodeId = segment.webotsNodeId;
+      if (nodeId >= 0) {
+        _vizSupervisor.getFromId(nodeId)->remove();
+      }
+    }
+    
+    _vizSegments.erase(segmentIt);
+  }
+}
+  
+void VizControllerImpl::EraseVizQuads(const VizQuadType quadType, const uint32_t quadId)
+{
+  auto typeIt = _vizQuads.find(quadType);
+  if (typeIt != _vizQuads.end()) {
+    auto& quadsWithPayloadType = typeIt->second;
+    auto quadIt = quadsWithPayloadType.find(quadId);
+    if (quadIt != quadsWithPayloadType.end()) {
+      auto nodeId = quadIt->second.webotsNodeId;
+      if (nodeId >= 0) {
+        _vizSupervisor.getFromId(nodeId)->remove();
+      }
+      quadsWithPayloadType.erase(quadIt);
+    }
+    
+    if (quadsWithPayloadType.empty()) {
+      _vizQuads.erase(typeIt);
+    }
+  }
+}
+
+void VizControllerImpl::EraseVizPath(const uint32_t pathId)
+{
+  auto it = _vizPaths.find(pathId);
+  if (it != _vizPaths.end()) {
+    for (auto& line : it->second.lines) {
+      if (line.webotsNodeId >= 0) {
+        _vizSupervisor.getFromId(line.webotsNodeId)->remove();
+      }
+    }
+    for (auto& arc : it->second.arcs) {
+      if (arc.webotsNodeId >= 0) {
+        _vizSupervisor.getFromId(arc.webotsNodeId)->remove();
+      }
+    }
+    
+    _vizPaths.erase(it);
+  }
+}
+
+void VizControllerImpl::Draw()
 {
   const bool shouldDraw = (_drawingObjectsEnabled && _showObjects);
   if (!shouldDraw) {
     return;
   }
   
+  DrawObjects();
+  DrawLineSegments();
+  DrawQuads();
+  DrawPaths();
+}
+
+void VizControllerImpl::DrawObjects()
+{
   using namespace Util::FullEnumToValueArrayChecker;
   constexpr static const FullEnumToValueArray<VizObjectType, const char*, VizObjectType::NUM_VIZ_OBJECT_TYPES> kVizObjectTypeToProtoString {
     {VizObjectType::VIZ_OBJECT_ROBOT,       "PoseMarker {}"},
@@ -1160,17 +1297,8 @@ void VizControllerImpl::DrawObjects()
                 Vec3f(d.x_trans_m, d.y_trans_m, d.z_trans_m));
     pose.PreComposeWith(_vizControllerPose);
     
-    double trans[3] = {0};
-    WebotsHelpers::GetWebotsTranslation(pose, trans);
-    nodePtr->getField("translation")->setSFVec3f(trans);
-    
-    double rot[4] = {0};
-    WebotsHelpers::GetWebotsRotation(pose, rot);
-    nodePtr->getField("rotation")->setSFRotation(rot);
-    
-    double webotsColor[3];
-    WebotsHelpers::ConvertRgbaToWebotsColorArray(d.color, webotsColor);
-    nodePtr->getField("color")->setSFColor(webotsColor);
+    WebotsHelpers::SetNodePose(*nodePtr, pose);
+    WebotsHelpers::SetNodeColor(*nodePtr, d.color);
     
     // Hide this node from the robot's camera (if any)
     if (_cozmoCameraNodeId >= 0) {
@@ -1204,7 +1332,131 @@ void VizControllerImpl::DrawObjects()
     }
   }
 }
-
   
+void VizControllerImpl::DrawLineSegments()
+{
+  for (auto& segmentInfo : _vizSegments) {
+    for (auto& segment : segmentInfo.second) {
+      // Add a new object to the scene tree if it doesn't exist already
+      if (segment.webotsNodeId < 0) {
+        segment.webotsNodeId = WebotsHelpers::AddSceneTreeNode(_vizSupervisor, "LineSegment {}");
+      }
+      auto* nodePtr = _vizSupervisor.getFromId(segment.webotsNodeId);
+      
+      // Hide this node from the robot's camera (if any)
+      if (_cozmoCameraNodeId >= 0) {
+        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
+        nodePtr->setVisibility(cameraNode, false);
+      }
+      
+      WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
+      WebotsHelpers::SetNodeColor(*nodePtr, segment.data.color);
+      
+      double origin[3] = {segment.data.origin[0], segment.data.origin[1], segment.data.origin[2]};
+      nodePtr->getField("origin")->setSFVec3f(origin);
+      
+      double dest[3] = {segment.data.dest[0], segment.data.dest[1], segment.data.dest[2]};
+      nodePtr->getField("dest")->setSFVec3f(dest);
+    }
+  }
+}
+
+void VizControllerImpl::DrawQuads()
+{
+  for (auto& quadTypeMap : _vizQuads) {
+    for (auto& quad : quadTypeMap.second) {
+      auto& quadInfo = quad.second;
+      const auto& data = quadInfo.data;
+      
+      // Add a new object to the scene tree if it doesn't exist already
+      if (quadInfo.webotsNodeId < 0) {
+        quadInfo.webotsNodeId = WebotsHelpers::AddSceneTreeNode(_vizSupervisor, "WireframeQuad {}");
+      }
+      
+      auto* nodePtr = _vizSupervisor.getFromId(quadInfo.webotsNodeId);
+      
+      // Hide this node from the robot's camera (if any)
+      if (_cozmoCameraNodeId >= 0) {
+        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
+        nodePtr->setVisibility(cameraNode, false);
+      }
+      
+      WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
+      WebotsHelpers::SetNodeColor(*nodePtr, data.color);
+      
+      double upperLeft[3] = {data.xUpperLeft, data.yUpperLeft, data.zUpperLeft};
+      nodePtr->getField("upperLeft")->setSFVec3f(upperLeft);
+      
+      double lowerLeft[3] = {data.xLowerLeft, data.yLowerLeft, data.zLowerLeft};
+      nodePtr->getField("lowerLeft")->setSFVec3f(lowerLeft);
+      
+      double lowerRight[3] = {data.xLowerRight, data.yLowerRight, data.zLowerRight};
+      nodePtr->getField("lowerRight")->setSFVec3f(lowerRight);
+      
+      double upperRight[3] = {data.xUpperRight, data.yUpperRight, data.zUpperRight};
+      nodePtr->getField("upperRight")->setSFVec3f(upperRight);      
+    }
+  }
+}
+  
+void VizControllerImpl::DrawPaths()
+{
+  for (auto& pathInfo : _vizPaths) {
+    
+    // Draw lines
+    for (auto& line: pathInfo.second.lines) {
+      auto& data = line.data;
+      
+      // Add a new object to the scene tree if it doesn't exist already
+      if (line.webotsNodeId < 0) {
+        line.webotsNodeId = WebotsHelpers::AddSceneTreeNode(_vizSupervisor, "LineSegment {}");
+      }
+      auto* nodePtr = _vizSupervisor.getFromId(line.webotsNodeId);
+      
+      // Hide this node from the robot's camera (if any)
+      if (_cozmoCameraNodeId >= 0) {
+        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
+        nodePtr->setVisibility(cameraNode, false);
+      }
+      
+      WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
+      WebotsHelpers::SetNodeColor(*nodePtr, pathInfo.second.color);
+      
+      double origin[3] = {data.x_start_m, data.y_start_m, data.z_start_m};
+      nodePtr->getField("origin")->setSFVec3f(origin);
+      
+      double dest[3] = {data.x_end_m, data.y_end_m, data.z_end_m};
+      nodePtr->getField("dest")->setSFVec3f(dest);
+    }
+    
+    // Draw arcs
+    for (auto& arc: pathInfo.second.arcs) {
+      auto& data = arc.data;
+      
+      // Add a new object to the scene tree if it doesn't exist already
+      if (arc.webotsNodeId < 0) {
+        arc.webotsNodeId = WebotsHelpers::AddSceneTreeNode(_vizSupervisor, "CircularArc {}");
+      }
+      auto* nodePtr = _vizSupervisor.getFromId(arc.webotsNodeId);
+      
+      // Hide this node from the robot's camera (if any)
+      if (_cozmoCameraNodeId >= 0) {
+        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
+        nodePtr->setVisibility(cameraNode, false);
+      }
+      
+      WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
+      WebotsHelpers::SetNodeColor(*nodePtr, pathInfo.second.color);
+      
+      nodePtr->getField("xOffset")->setSFFloat(data.x_center_m);
+      nodePtr->getField("yOffset")->setSFFloat(data.y_center_m);
+      
+      nodePtr->getField("radius")->setSFFloat(data.radius_m);
+      nodePtr->getField("startAngle")->setSFFloat(data.start_rad);
+      nodePtr->getField("sweepAngle")->setSFFloat(data.sweep_rad);
+    }
+  }
+}
+
 } // end namespace Vector
 } // end namespace Anki
