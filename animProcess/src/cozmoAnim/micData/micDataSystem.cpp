@@ -98,6 +98,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 , _fftResultData(new FFTResultData())
 , _alexaState(AlexaSimpleState::Disabled)
 , _micMuted(false)
+, _abortAlexaScreen(false)
 , _context(context)
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
@@ -132,6 +133,11 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
       // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
       return;
     }
+    
+    // saying "hey vector" should exit certain alexa debug screens and cancel auth. FaceInfoScreen isn't
+    // currently set up to handle threads, so set a flag that is handled in Update()
+    _abortAlexaScreen = true;
+    
     _micDataProcessor->VoiceTriggerWordDetection( info );
     SendRecognizerDasLog( info, nullptr );
   };
@@ -546,6 +552,15 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         endTriggerDispTime_ns != 0 || _currentlyStreaming);
     }
   #endif
+  
+  if (_abortAlexaScreen) {
+    _abortAlexaScreen = false;
+    FaceInfoScreenManager::getInstance()->EnableAlexaScreen(ScreenName::None,"","");
+    Alexa* alexa = _context->GetAlexa();
+    if( alexa != nullptr ) {
+      alexa->CancelPendingAlexaAuth();
+    }
+  }
 
   // Try to retrieve the speaker latency from the AkAlsaSink plugin. We
   // only need to actually call into the plugin once (or until we get a

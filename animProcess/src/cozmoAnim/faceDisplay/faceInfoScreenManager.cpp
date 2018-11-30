@@ -15,6 +15,7 @@
 */
 
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/connectionFlow.h"
@@ -519,6 +520,14 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   LOG_INFO("FaceInfoScreenManager.SetScreen.EnteringScreen", "%hhu", GetCurrScreenName());
   _currScreen->EnterScreen();
 
+  if(!IsAlexaScreen(GetCurrScreenName())) {
+    // when exiting alexa screens (say, into pairing), cancel any pending alexa authorization
+    auto* alexa = _context->GetAlexa();
+    if (alexa != nullptr) {
+      alexa->CancelPendingAlexaAuth();
+    }
+  }
+
   ResetObservedHeadAndLiftAngles();
 
   // Clear menu navigation triggers
@@ -951,10 +960,19 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 
   const ScreenName currScreenName = GetCurrScreenName();
 
-  // Fake trigger word on single press
-  if (singlePressDetected && currScreenName == ScreenName::None) {
-    LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotSinglePress", "Triggering wake word");
-    _context->GetMicDataSystem()->FakeTriggerWordDetection();
+  if (singlePressDetected) {
+    if (IsAlexaScreen(currScreenName)) {
+      // Single press should exit any uncompleted alexa authorization
+      Alexa* alexa = _context->GetAlexa();
+      if( alexa != nullptr ) {
+        alexa->CancelPendingAlexaAuth();
+      }
+      EnableAlexaScreen(ScreenName::None,"","");
+    } else if (currScreenName == ScreenName::None) {
+      // Fake trigger word on single press
+      LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotSinglePress", "Triggering wake word");
+      _context->GetMicDataSystem()->FakeTriggerWordDetection();
+    }
   }
 
   // Check for conditions to enter BLE pairing mode

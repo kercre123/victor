@@ -205,6 +205,13 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::CancelPendingAlexaAuth()
 {
+  if( !_authStartedByUser ) {
+    // various components in animprocess will call this method based on user actions like exiting pairing screen or
+    // saying hey vector. We don't want this to cancel a pending authorization that started when the robot booted,
+    // and instead only want it to cancel a user-initiated auth
+    return;
+  }
+  
   switch( _authState ) {
     case AlexaAuthState::RequestingAuth:
     case AlexaAuthState::WaitingForCode:

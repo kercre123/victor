@@ -49,7 +49,7 @@ public:
   
   // handles message from engine to opt in or out
   void SetAlexaUsage(bool optedIn);
-  // handles message from engine to cancel any pending authorization
+  // cancels any pending authorization started by the user (not an auto-auth during reboot)
   void CancelPendingAlexaAuth();
   
   void OnEngineLoaded();

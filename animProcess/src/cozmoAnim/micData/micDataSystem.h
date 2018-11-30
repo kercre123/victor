@@ -189,6 +189,8 @@ private:
   AlexaSimpleState _alexaState;
   
   std::atomic<bool> _micMuted;
+  
+  std::atomic<bool> _abortAlexaScreen;
 
   void SetWillStream(bool willStream) const;
 
