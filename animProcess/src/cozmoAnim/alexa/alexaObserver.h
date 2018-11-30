@@ -73,6 +73,9 @@ public:
   
   void Update();
   
+  // prepares for deletion
+  void Shutdown() { _running = false; }
+  
   using OnDialogUXStateChangedFunc = std::function<void(DialogUXState)>;
   using OnRequestAuthorizationFunc = std::function<void(const std::string&,const std::string&)>;
   using OnAuthStateChangeFunc = std::function<void(alexaClientSDK::avsCommon::sdkInterfaces::AuthObserverInterface::State,
@@ -94,6 +97,7 @@ public:
              const OnLogout& onLogout,
              const OnNotificationIndicator& onNotificationIndicator );
   
+protected:
   virtual void onDialogUXStateChanged( DialogUXState state ) override;
   
   virtual void onConnectionStatusChanged( const alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status status,
@@ -173,8 +177,11 @@ private:
   OnLogout _onLogout;
   OnNotificationIndicator _onNotificationIndicator;
   
+  std::atomic<bool> _running;
+  
   std::mutex _mutex;
-  std::queue<std::function<void(void)>> _workQueue;
+  using QueueType = std::function<void(void)>;
+  std::queue<QueueType> _workQueue;
 };
 
 } // namespace Vector

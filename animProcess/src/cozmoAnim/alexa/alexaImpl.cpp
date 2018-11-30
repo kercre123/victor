@@ -159,6 +159,11 @@ AlexaImpl::AlexaImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::~AlexaImpl()
 {
+  if( _observer ) {
+    // note: once VIC-11427 is implemented, this might not be necessary, but it wouldn't hurt
+    _observer->Shutdown();
+  }
+  
   if( _capabilitiesDelegate ) {
     // TODO (VIC-11427): this is likely leaking something when commented out, but running shutdown() causes a lock
     //_capabilitiesDelegate->shutdown();
@@ -601,7 +606,7 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   // if not SUCCESS or AUTHORIZATION_PENDING, fail. AUTHORIZATION_PENDING seems like a valid error
   // to me: "Waiting for user to authorize the specified code pair."
   if( (error != Error::SUCCESS) && (error != Error::AUTHORIZATION_PENDING) ) {
-    LOG_ERROR( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
+    LOG_WARNING( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
     const bool errFlag = true;
     SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
     return;
