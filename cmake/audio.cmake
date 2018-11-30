@@ -6,7 +6,7 @@ option(AUDIO_RELEASE "Only link plugs we have licensed for" OFF)
 
 if(AUDIO_RELEASE)
   # Only link plugins we have lisences for
-  message("AUDIO_RELEASE is ON - Only link licensed plugins")
+  message(STATUS "AUDIO_RELEASE is ON - Only link licensed plugins")
   set(ANKI_LIB_AUDIO_PLUGINS
     # Effect Plugins
     AE_AK_COMPRESSOR_FX
@@ -28,7 +28,7 @@ if(AUDIO_RELEASE)
     AE_AK_RECORDER_FX
     AE_MCDSP_LIMITER_FX
     AE_Krotos_Vocoder_FX
-    # Source Plugins	
+    # Source Plugins
     AE_AK_SILENCE_SOURCE
     AE_AK_SINE_GENERATOR_SOURCE
     AE_AK_TONE_GENERATOR_SOURCE
@@ -45,7 +45,7 @@ if(AUDIO_RELEASE)
 else()
 
   # Link all availble plugins
-  message("AUDIO_RELEASE is OFF - Link all Wwise plugins")
+  message(STATUS "AUDIO_RELEASE is OFF - Link all Wwise plugins")
   set(ANKI_LIB_AUDIO_PLUGINS
     # Effect Plugins
     AE_AK_COMPRESSOR_FX
@@ -70,7 +70,7 @@ else()
     AE_MCDSP_LIMITER_FX
     AE_MCDSP_FUTZ_BOX_FX
     AE_Krotos_Vocoder_FX
-    # Source Plugins	
+    # Source Plugins
     AE_AK_SILENCE_SOURCE
     AE_AK_SINE_GENERATOR_SOURCE
     AE_AK_TONE_GENERATOR_SOURCE
