@@ -28,6 +28,7 @@ namespace Anki {
     namespace MicData {
       class MicDataSystem;
     }
+    class NotchDetector;
     class RobotDataLoader;
     class SpeechRecognizerTHF;
   }
@@ -78,6 +79,13 @@ public:
   void DisableAlexaTemporarily();
   // Re-enable Alexa trigger following call to DisableAlexaTemporarily
   void ReEnableAlexa();
+  
+  // set whether the notch detector should be active (for alexa keyword only). When active,
+  // alexa triggers get dropped if we detect a notch.
+  void ToggleNotchDetector(bool active);
+  
+  // add raw audio samples
+  void UpdateRaw(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen);
 
   // Update recognizer audio
   // NOTE: Always call from tne same thread
@@ -116,6 +124,10 @@ private:
   
   std::mutex                                  _triggerModelMutex;
   std::atomic<bool>                           _isPendingLocaleUpdate{ false };
+  
+  std::shared_ptr<NotchDetector>              _notchDetector;
+  std::mutex                                  _notchMutex;
+  bool                                        _notchDetectorActive = false;
   
   // Set custom model and search files for locale
   // Return true when locale file was found and is different then current locale
