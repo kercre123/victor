@@ -1700,6 +1700,29 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
+    void UiGameController::SendPushDrivingAnimations(const std::string& lockName,
+                                                     const AnimationTrigger& startAnim,
+                                                     const AnimationTrigger& loopAnim,
+                                                     const AnimationTrigger& endAnim)
+    {
+      ExternalInterface::PushDrivingAnimations m;
+      m.lockName = lockName;
+      m.drivingStartAnim = startAnim;
+      m.drivingLoopAnim = loopAnim;
+      m.drivingEndAnim = endAnim;
+      
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+    
+    void UiGameController::SendRemoveDrivingAnimations(const std::string& lockName)
+    {
+      ExternalInterface::RemoveDrivingAnimations m;
+      m.lockName = lockName;
+      
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+    
+    
     void UiGameController::QuitWebots(s32 status)
     {
       PRINT_NAMED_INFO("UiGameController.QuitWebots.Result", "%d", status);
