@@ -286,7 +286,9 @@ void AlexaObserver::onPlaybackError( SourceId id,
                                      const avsCommon::utils::mediaPlayer::ErrorType& type,
                                      std::string error )
 {
-  PRINT_NAMED_ERROR( "AlexaObserver.onPlaybackError", "Error '%s': %s", errorTypeToString(type).c_str(), error.c_str() );
+  LOG_WARNING( "AlexaObserver.onPlaybackError", "Error '%s': %s", errorTypeToString(type).c_str(), error.c_str() );
+  // now would be an ideal time to play "Sorry, music and radio playback are not supported on this device," but we
+  // don't have that clip. TODO: obtain this clip
   auto func = [this,id]() {
     if( _onSourcePlaybackChange != nullptr ) {
       _onSourcePlaybackChange( id, false );

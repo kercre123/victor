@@ -719,11 +719,12 @@ void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
     }
   } else {
     auto it = _playingSources.find( id );
-    if( ANKI_VERIFY( it != _playingSources.end(),
-                     "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id ) )
-    {
+    if( it != _playingSources.end() ) {
       _playingSources.erase( it );
       CheckForUXStateChange();
+    } else {
+      // this may be ok, depending on whether or not there was an error
+      LOG_WARNING( "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id );
     }
   }
 }
