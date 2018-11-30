@@ -86,7 +86,6 @@ protected:
   void EraseLastObservedFace();
   void ToggleFaceDetection();
   
-  void ToggleImageStreaming();
   void ToggleEyeRendering();
   
   void SetDefaultKeepFaceAliveParams();

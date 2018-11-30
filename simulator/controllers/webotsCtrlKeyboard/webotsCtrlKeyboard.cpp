@@ -1182,19 +1182,6 @@ namespace Vector {
     SendEnableVisionMode(VisionMode::DetectingFaces, isFaceDetectionEnabled);
   }
 
-  void WebotsKeyboardController::ToggleImageStreaming()
-  {
-    using namespace ExternalInterface;
-    
-    static bool toggle = false;
-    SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("ImageCompressQuality",
-                                                              (toggle ? "50" : "0"))));
-    
-    LOG_INFO("ToggleImageStreaming", "%s image streaming", (toggle ? "Enabling" : "Disabling"));
-    
-    toggle = !toggle;
-  }
-
   void WebotsKeyboardController::FlipSelectedBlock()
   {
     ExternalInterface::FlipBlock m;
@@ -1942,7 +1929,7 @@ namespace Vector {
 //      REGISTER_KEY_FCN('H', MOD_ALT,       , "");
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
     
-    REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreaming, "Toggle image streaming");
+    REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreamingToGame, "Toggle image streaming");
 //      REGISTER_KEY_FCN('I', MOD_SHIFT,     , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT_SHIFT, , "");
