@@ -162,8 +162,8 @@ namespace {
   #define LOG(x, ...) LOG_INFO("AlexaMediaPlayer.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
   const bool kSaveDebugAudio = false; // FIXME we probably don't want to be shiping this!!
-  const bool kSaveResampledPCM = false; // if true, kSaveDebugAudio will save resampled pcm instead of decoded pcm
 #endif
+  const bool kSaveResampledPCM = false; // if true, kSaveDebugAudio will save resampled pcm instead of decoded pcm
   
   CONSOLE_VAR(bool, kApplyBandStopFilter, "Alexa", true);
   constexpr int kTTSSampleRate = 24000;
