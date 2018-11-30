@@ -12,6 +12,7 @@
 
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
+#include "micDataTypes.h"
 #include "clad/types/alexaTypes.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
@@ -21,13 +22,19 @@
 
 #include "audioEngine/audioTypeTranslator.h"
 
+namespace{
+const int32_t kUseDefaultStreamingDuration = -1;
+}
+
 namespace Anki {
 namespace Vector {
 
 ShowAudioStreamStateManager::ShowAudioStreamStateManager(const AnimContext* context)
 : _context(context)
+, _minStreamingDuration_ms(kUseDefaultStreamingDuration)
 {
-
+  // Initialize this value to prevent errors before the TriggerResponse is first set
+  _postAudioEvent.audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid;
 }
 
 
@@ -61,6 +68,7 @@ void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::S
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   _postAudioEvent = msg.postAudioEvent;
+  _minStreamingDuration_ms = msg.minStreamingDuration_ms;
   _shouldTriggerWordStartStream = msg.shouldTriggerWordStartStream;
   _shouldTriggerWordSimulateStream = msg.shouldTriggerWordSimulateStream;
   _getInAnimationTag = msg.getInAnimationTag;
@@ -204,6 +212,16 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
                  info.getInAnimTag);
 
     _alexaResponses.push_back( std::move(info) );
+  }
+}
+
+uint32_t ShowAudioStreamStateManager::GetMinStreamingDuration()
+{
+  if( _minStreamingDuration_ms > kUseDefaultStreamingDuration ){
+    return _minStreamingDuration_ms;
+  }
+  else{
+    return MicData::kStreamingDefaultMinDuration_ms;
   }
 }
   

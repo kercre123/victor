@@ -34,6 +34,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   : _externalInterface(externalInterface)
   , _gatewayInterface(gatewayInterface)
   , _dataPlatform(dataPlatform)
+  , _threadIdHolder(new ThreadIDInternal)
   , _featureGate(new CozmoFeatureGate(dataPlatform))
   , _random(new Anki::Util::RandomGenerator())
   , _locale(new Util::Locale(Util::Locale::GetNativeLocale()))
@@ -46,7 +47,6 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _perfMetric(new PerfMetric(this))
   , _webService(new WebService::WebService())
   , _appToEngineHandler( new AppToEngineHandler() )
-  , _threadIdHolder(new ThreadIDInternal)
 {
   //_gameLogTransferTask->Init(_transferQueueMgr.get());
   _appToEngineHandler->Init( _webService.get(), _externalInterface );

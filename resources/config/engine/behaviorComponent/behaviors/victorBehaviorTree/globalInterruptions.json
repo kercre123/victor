@@ -8,7 +8,6 @@
     "MandatoryPhysicalReactions",
     "SDK0",
     "TriggerWordDetected",
-    "Alexa",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "DemoTimerUtilityCoordinator",

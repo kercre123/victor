@@ -395,6 +395,10 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/sdkBehaviors
   SDK0,
 
+  // victorBehaviorTree/seasonal
+  SeasonalHappyHolidays,
+  SeasonalHappyNewYear,
+
   // victorBehaviorTree
   SingletonICantDoThat,
   SingletonPoweringRobotOff,

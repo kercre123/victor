@@ -27,7 +27,7 @@
 
 namespace Anki {
 namespace Vision {
-  
+
   class TrackedFace
   {
   public:
@@ -50,6 +50,13 @@ namespace Vision {
     const std::string& GetName() const;
     void SetName(const std::string& newName);
     bool HasName() const;
+    
+    // If this face has a name, it will be returned. Otherwise, the best guess
+    // will be returned (which could still be none/empty). The best guess need
+    // not be as confident a match as the "regular" name above, but may be useful
+    // in some situations when we're willing to be less sure about someone's identity.
+    const std::string& GetBestGuessName() const;
+    void SetBestGuessName(const std::string& name);
     
     // Returns true if tracking is happening vs. false if face was just detected
     bool IsBeingTracked() const;
@@ -106,7 +113,12 @@ namespace Vision {
     
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
-    
+
+    // This is the gaze direction computed using the head pose rotation matrix, and then
+    // projected onto the ground plane
+    const Pose3d& GetGazeDirectionPose() const;
+    void SetGazeDirectionPose(const Pose3d& gazeDirectionPose);
+
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
     void SetIsFacingCamera(bool tf);
@@ -138,6 +150,10 @@ namespace Vision {
     bool IsMakingEyeContact() const { return _isMakingEyeContact; }
     void SetEyeContact(const bool eyeContact);
 
+    // Is gaze direction stable
+    bool IsGazeDirectionStable() const { return _isGazeDirectionStable; }
+    void SetGazeDirectionStable(const bool gazeDirecitonStable);
+
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
 
@@ -146,16 +162,21 @@ namespace Vision {
     
   private:
     
-    FaceID_t       _id                 = UnknownFaceID;
-    float          _score              = 0.f;
-    TimeStamp_t    _timestamp          = 0;
-    s32            _numEnrollments     = 0;
-    bool           _isBeingTracked     = false;
-    bool           _isFacingCamera     = false;
-    bool           _isMakingEyeContact = false;
+    FaceID_t       _id                    = UnknownFaceID;
+    float          _score                 = 0.f;
+    TimeStamp_t    _timestamp             = 0;
+    s32            _numEnrollments        = 0;
+    bool           _isBeingTracked        = false;
+    bool           _isFacingCamera        = false;
+    bool           _isMakingEyeContact    = false;
+    bool           _isGazeDirectionStable = false;
     bool           _isTranslationSet   = false;
+    Point2f        _eyeGazeAverage;
+
+    Pose3d _gazeDirectionPose;
 
     std::string    _name;
+    std::string    _bestGuessName;
     
     Rectangle<f32> _rect;
     
@@ -292,8 +313,7 @@ namespace Vision {
     _headPose = pose;
     _isTranslationSet = true;
   }
-  
-  
+
   inline const std::string& TrackedFace::GetName() const {
     return _name;
   }
@@ -312,6 +332,14 @@ namespace Vision {
   
   inline void TrackedFace::SetName(const std::string& newName) {
     _name = newName;
+  }
+  
+  inline void TrackedFace::SetBestGuessName(const std::string& name) {
+    _bestGuessName = name;
+  }
+  
+  inline const std::string& TrackedFace::GetBestGuessName() const {
+    return (HasName() ? GetName() : _bestGuessName);
   }
   
   inline void TrackedFace::SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info) {
@@ -343,7 +371,19 @@ namespace Vision {
   inline void TrackedFace::SetEyeContact(const bool eyeContact) {
     _isMakingEyeContact = eyeContact;
   }
-  
+
+  inline void TrackedFace::SetGazeDirectionStable(const bool isGazeDirectionStable) {
+    _isGazeDirectionStable = isGazeDirectionStable;
+  }
+
+  inline const Pose3d& TrackedFace::GetGazeDirectionPose() const {
+    return _gazeDirectionPose;
+  }
+
+  inline void TrackedFace::SetGazeDirectionPose(const Pose3d& gazeDirectionPose) {
+    _gazeDirectionPose = gazeDirectionPose;
+  }
+
 } // namespace Vision
 } // namespace Anki
 

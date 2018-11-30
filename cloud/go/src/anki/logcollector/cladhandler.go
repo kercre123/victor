@@ -30,6 +30,7 @@ func (c *cladHandler) handleRequest(ctx context.Context, req *cloud.LogCollector
 	return nil, err
 }
 
+// This is a global variabe used for performance issues (not referenced outside this file)
 var connectErrorResponse = cloud.NewLogCollectorResponseWithErr(&cloud.LogCollectorErrorResponse{cloud.LogCollectorError_ErrorConnecting})
 
 func (c *cladHandler) uploadRequest(ctx context.Context, cladReq *cloud.UploadRequest) (*cloud.LogCollectorResponse, error) {

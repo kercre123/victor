@@ -19,6 +19,7 @@ namespace Vector {
 
 structure TriggerWordResponseData {
   AudioMetaData::GameEvent::GenericEvent postAudioEvent,
+  int_32 minStreamingDuration_ms = -1,
   StreamAndLightEffect streamAndLightEffect,
   AnimationTrigger getInTrigger
 }

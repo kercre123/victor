@@ -263,6 +263,14 @@
     {
       "user_intent": "movement_turnaround",
       "cloud_intent": "intent_imperative_turnaround"
+    },
+    {
+      "user_intent": "seasonal_happynewyear",
+      "cloud_intent": "intent_seasonal_happynewyear"
+    },
+    {
+      "user_intent": "seasonal_happyholidays",
+      "cloud_intent": "intent_seasonal_happyholidays"
     }
   ],
 

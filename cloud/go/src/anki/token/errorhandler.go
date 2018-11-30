@@ -2,7 +2,6 @@ package token
 
 import (
 	"anki/log"
-	"anki/util"
 	"clad/cloud"
 	"context"
 	"time"
@@ -13,6 +12,7 @@ import (
 )
 
 type backoffHandler struct {
+	handler RequestHandler
 	cancel  context.CancelFunc
 	backoff backoff.BackOff
 	denied  bool
@@ -75,7 +75,7 @@ func (b *backoffHandler) OnError(err error) {
 
 func (b *backoffHandler) retry() error {
 	// make request
-	_, err := handleRequest(cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{ForceRefresh: true}))
+	_, err := b.handler.handleRequest(cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{ForceRefresh: true}))
 	if status.Code(err) == codes.PermissionDenied {
 		b.denied = true
 		log.Println("Token retry got PermissionDenied, stopping")
@@ -88,10 +88,8 @@ func (b *backoffHandler) retry() error {
 	return err
 }
 
-var errorHandler = new(backoffHandler)
-
-// ErrorListener returns an error listener that will respond to PermissionDenied errors
+// NewBackoffHandler creates a backoff handler that will respond to PermissionDenied errors
 // in other services by attempting to refresh the current JWT token
-func ErrorListener() util.ErrorListener {
-	return errorHandler
+func NewBackoffHandler(handler RequestHandler) *backoffHandler {
+	return &backoffHandler{handler: handler}
 }

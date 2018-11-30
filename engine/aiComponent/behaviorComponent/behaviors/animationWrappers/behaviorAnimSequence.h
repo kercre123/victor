@@ -69,6 +69,7 @@ private:
     InstanceConfig();
     int  numLoops;
     u8 tracksToLock;
+    bool renderInEyeHue;
     // Class supports playing a series of animation triggers OR a series of animations by name
     // BUT NOT BOTH AT THE SAME TIME!!!!
     std::vector<AnimationTrigger> animTriggers;

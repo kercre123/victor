@@ -4,51 +4,66 @@ import (
 	"anki/ipc"
 	"anki/log"
 	"anki/token/identity"
+	"anki/util"
 	"bytes"
 	"clad/cloud"
 	"context"
 	"fmt"
 )
 
-// Init initializes the token service in advance of other services that depend on it
-var initialized = false
+// Server encapsulates the receiving and queueing of token requests by other robot processes
+type Server struct {
+	initialized      bool
+	queue            tokenQueue
+	identityProvider identity.Provider
+	backoffHandler   *backoffHandler
+}
 
-func Init(identityProvider identity.Provider) error {
+type RequestHandler interface {
+	handleRequest(req *cloud.TokenRequest) (*cloud.TokenResponse, error)
+}
+
+func (s *Server) ErrorListener() util.ErrorListener {
+	return s.backoffHandler
+}
+
+// Init initializes the token service in advance of other services that depend on it
+func (s *Server) Init(identityProvider identity.Provider) error {
+	s.backoffHandler = NewBackoffHandler(s)
+
+	if identityProvider == nil {
+		return fmt.Errorf("Error initializing identity provider")
+	}
+	s.identityProvider = identityProvider
+
 	if err := identityProvider.Init(); err != nil {
 		log.Println("Error initializing jwt store:", err)
 		return err
 	}
-	initialized = true
+	s.initialized = true
 	return nil
 }
 
 // Run starts the token service for other code/processes to connect to and
 // request tokens
-func Run(ctx context.Context, optionValues ...Option) {
+func (s *Server) Run(ctx context.Context, optionValues ...Option) {
 	var opts options
 	for _, o := range optionValues {
 		o(&opts)
 	}
 
-	identityProvider := opts.identityProvider
-	if identityProvider == nil {
-		log.Println("Error initializing identity provider")
-		return
-	}
-
-	if !initialized {
-		if err := identityProvider.Init(); err != nil {
+	if !s.initialized {
+		if err := s.identityProvider.Init(); err != nil {
 			return
 		}
 	}
 
-	var queue tokenQueue
-	if err := queue.init(ctx, identityProvider); err != nil {
+	if err := s.queue.init(ctx, s.backoffHandler, s.identityProvider); err != nil {
 		log.Println("Error initializing request queue:", err)
 		return
 	}
 
-	initRefresher(ctx, identityProvider)
+	initRefresher(ctx, &s.queue, s.identityProvider)
 
 	if opts.server {
 		socketName := "token_server"
@@ -56,27 +71,21 @@ func Run(ctx context.Context, optionValues ...Option) {
 			socketName = fmt.Sprintf("%s_%s", socketName, opts.socketNameSuffix)
 		}
 
-		serv, err := initServer(ctx, socketName)
+		serv, err := s.initServer(ctx, socketName)
 		if err != nil {
 			log.Println("Error creating token server:", err)
 			return
 		}
 
 		for c := range serv.NewConns() {
-			go handleConn(c)
+			go s.handleConn(c)
 		}
 	}
 	// if server isn't requested, our background routines will handle requests
 	// and there's no need for this function to block
 }
 
-// HandleRequest will process the given request and return a response. It may block,
-// either due to waiting for other requests to process or due to waiting for gRPC.
-func HandleRequest(req *cloud.TokenRequest) (*cloud.TokenResponse, error) {
-	return handleRequest(req)
-}
-
-func handleConn(c ipc.Conn) {
+func (s *Server) handleConn(c ipc.Conn) {
 	for {
 		buf := c.ReadBlock()
 		// TODO: will this ever close?
@@ -89,7 +98,7 @@ func handleConn(c ipc.Conn) {
 			continue
 		}
 
-		resp, err := handleRequest(&msg)
+		resp, err := s.handleRequest(&msg)
 		if err != nil {
 			log.Println("Error handling token request:", err)
 		}
@@ -104,15 +113,17 @@ func handleConn(c ipc.Conn) {
 	}
 }
 
-func handleRequest(m *cloud.TokenRequest) (*cloud.TokenResponse, error) {
+// HandleRequest will process the given request and return a response. It may block,
+// either due to waiting for other requests to process or due to waiting for gRPC.
+func (s *Server) handleRequest(m *cloud.TokenRequest) (*cloud.TokenResponse, error) {
 	req := request{m: m, ch: make(chan *response)}
 	defer close(req.ch)
-	queue <- req
+	s.queue.queue <- req
 	resp := <-req.ch
 	return resp.resp, resp.err
 }
 
-func initServer(ctx context.Context, socketName string) (ipc.Server, error) {
+func (s *Server) initServer(ctx context.Context, socketName string) (ipc.Server, error) {
 	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath(socketName))
 	if err != nil {
 		return nil, err

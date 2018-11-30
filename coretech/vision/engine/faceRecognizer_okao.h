@@ -109,8 +109,10 @@ namespace Vision {
                              const std::vector<u8>& enrollData,
                              std::list<LoadedKnownFace>& loadedFaces);
 
-    bool GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID);
-
+    bool GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID) const;
+   
+    std::string GetBestGuessNameForTrackingID(const TrackingID_t trackingID) const;
+    
   private:
     
     // Aliases for better readability
@@ -141,6 +143,10 @@ namespace Vision {
     // for merge opportunities.
     Result UpdateRecognitionData(const FaceID_t recognizedID,
                                  const RecognitionScore score);
+    
+    void   UpdateBestGuessName(const std::vector<AlbumEntryID_t>& matchingAlbumEntries,
+                               const std::vector<RecognitionScore>& scores,
+                               const int resultNum);
     
 		bool   IsMergingAllowed(FaceID_t toFaceID) const;
     
@@ -227,6 +233,7 @@ namespace Vision {
     
     // Internal bookkeeping and parameters
     std::map<TrackingID_t, FaceID_t> _trackingToFaceID;
+    std::map<TrackingID_t, std::string> _trackingIDtoBestGuessName;
     AlbumEntryToFaceID   _albumEntryToFaceID;
     
     FaceID_t       _nextFaceID     = 1; // Skip UnknownFaceID

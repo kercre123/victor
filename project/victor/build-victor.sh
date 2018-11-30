@@ -38,6 +38,7 @@ CONFIGURE=0
 GEN_SRC_ONLY=0
 RM_BUILD_ASSETS=0
 RUN_BUILD=1
+RUN_INSTALL=1
 CMAKE_TARGET=""
 EXPORT_COMPILE_COMMANDS=0
 IGNORE_EXTERNAL_DEPENDENCIES=0
@@ -102,6 +103,7 @@ while getopts ":x:c:p:a:t:g:F:D:hvfdCTeISX" opt; do
             ;;
         t)
             CMAKE_TARGET="${OPTARG}"
+            RUN_INSTALL=0
             ;;
         e)
             EXPORT_COMPILE_COMMANDS=1
@@ -442,7 +444,7 @@ else
     TARGET_ARG="--target $CMAKE_TARGET"
   fi
   $CMAKE_EXE --build . $TARGET_ARG $*
-  if [ "$PLATFORM" != "mac" ]; then
+  if [[ "$PLATFORM" == "vicos" && $RUN_INSTALL -eq 1 ]]; then
     # run install target on robot-platforms
     $CMAKE_EXE --build . --target install
   fi

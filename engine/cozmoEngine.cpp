@@ -412,11 +412,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
     LOG_INFO("CozmoEngine.Update.UIConnected", "UI has connected");
 
-    // Webots simulator relies on this message
-    if (_engineState == EngineState::Running) {
-      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(1.f);
-    }
-
     _updateMoveComponent = true;
     _uiWasConnected = true;
   } else if (_uiWasConnected && !_uiMsgHandler->HasDesiredNumUiDevices()) {
@@ -463,10 +458,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       {
         SetEngineState(EngineState::ConnectingToRobot);
       }
-#if defined(SIMULATOR)
-      LOG_DEBUG("CozmoEngine.Update.LoadingRatio", "%f", currentLoadingDone);
-      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
-#endif
       break;
     }
     case EngineState::ConnectingToRobot:

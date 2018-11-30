@@ -27,7 +27,6 @@
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
-#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 
 #include "audioEngine/plugins/ankiPluginInterface.h"
 
@@ -36,6 +35,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
@@ -133,6 +133,7 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
       return;
     }
     _micDataProcessor->VoiceTriggerWordDetection( info );
+    SendRecognizerDasLog( info, nullptr );
   };
   _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
   _micDataProcessor->Init();
@@ -217,7 +218,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
-      const Alexa* alexa = _context->GetAlexa();
+      Alexa* alexa = _context->GetAlexa();
       ASSERT_NAMED(alexa != nullptr, "");
       alexa->NotifyOfTapToTalk();
     }
@@ -478,7 +479,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       if (_streamingComplete)
       {
         // our stream is complete, so clear out the current stream as long as our minimum streaming time has elapsed
-        constexpr BaseStationTime_t minStreamDuration_ns = kStreamingMinDuration_ms * 1000 * 1000;
+        uint32_t minStreamingDuration_ms = _context->GetShowAudioStreamStateManager()->GetMinStreamingDuration();
+        const BaseStationTime_t minStreamDuration_ns = minStreamingDuration_ms * 1000 * 1000;
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
         if (currTime_nanosec >= minStreamEnd_ns)
         {
@@ -507,8 +509,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
 
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-      const bool willStream = HasStreamingJob() && showStreamState->ShouldStreamAfterTriggerWordResponse();
-      SetWillStream(willStream);
+      SetWillStream(showStreamState->ShouldStreamAfterTriggerWordResponse());
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
@@ -726,6 +727,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       if( (alexa != nullptr) && showStreamState->HasAnyAlexaResponse() ) {
         alexa->NotifyOfWakeWord( info.startSampleIndex, info.endSampleIndex );
       }
+      SendRecognizerDasLog( info, EnumToString(_alexaState) );
     };
     _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
 
@@ -750,8 +752,8 @@ void MicDataSystem::ToggleMicMute()
     using namespace AudioEngine;
     using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
     const auto eventID = ToAudioEventId( _micMuted
-                                         ? GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_On
-                                         : GenericEvent::Play__Robot_Vic_Alexa__Sfx_Med_State_Privacy_Mode_Off );
+                                         ? GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_State_Privacy_Mode_On
+                                         : GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_State_Privacy_Mode_Off );
     const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
     audioController->PostAudioEvent( eventID, gameObject );
   }
@@ -830,6 +832,25 @@ void MicDataSystem::RequestConnectionStatus()
     PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");
     SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
+}
+
+void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info,
+                                         const char* stateStr) const
+{
+  MicData::MicDirectionData directionData;
+  MicData::DirectionIndex dominantDirection;
+  _micDataProcessor->GetLatestMicDirectionData(directionData, dominantDirection);
+  DASMSG( speech_recognized, "mic_data_system.speech_trigger_recognized", "Voice trigger recognized" );
+  DASMSG_SET( s1, (info.result != nullptr) ? info.result : "", "Recognized result" );
+  DASMSG_SET( s2, (stateStr != nullptr) ? stateStr : "", "Current Alexa UX State");
+  DASMSG_SET( s3, std::to_string(info.score).c_str(), "Recognizer Score");
+  DASMSG_SET( i1, dominantDirection, "Dominant Direction Index [0, 11], 12 is Unknown Direction" );
+  DASMSG_SET( i2, directionData.selectedDirection, "Selected Direction Index [0, 11], 12 is Unknown Direction" );
+  DASMSG_SET( i3, static_cast<int>(directionData.latestPowerValue),
+             "Latest power value, calculate dB by log(val) * 10" );
+  DASMSG_SET( i4, static_cast<int>(directionData.latestNoiseFloor),
+             "Latest floor noise value, calculate dB by log(val) * 10" );
+  DASMSG_SEND();
 }
 
 } // namespace MicData

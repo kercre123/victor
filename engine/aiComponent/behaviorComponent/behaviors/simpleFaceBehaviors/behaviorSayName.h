@@ -75,7 +75,7 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
-  void SayName(const std::string& name);
+  void SayName(const std::string& name, const bool isGuess);
   void SayDontKnow();
   void Finish();
 };

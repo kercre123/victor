@@ -19,11 +19,13 @@ type Accessor interface {
 
 type accessor struct {
 	identityProvider identity.Provider
+	stsCache         stsCredentialsCache
+	handler          RequestHandler
 }
 
-func (accessor) Credentials() (gc.PerRPCCredentials, error) {
+func (a accessor) Credentials() (gc.PerRPCCredentials, error) {
 	req := cloud.NewTokenRequestWithJwt(&cloud.JwtRequest{})
-	resp, err := HandleRequest(req)
+	resp, err := a.handler.handleRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +37,7 @@ func (accessor) Credentials() (gc.PerRPCCredentials, error) {
 }
 
 func (a accessor) GetStsCredentials() (*ac.Credentials, error) {
-	return getStsCredentials(a)
+	return a.stsCache.getStsCredentials(a)
 }
 
 func (a accessor) UserID() string {
@@ -50,8 +52,8 @@ func (a accessor) IdentityProvider() identity.Provider {
 	return a.identityProvider
 }
 
-func GetAccessor(identityProvider identity.Provider) Accessor {
-	return accessor{identityProvider}
+func GetAccessor(identityProvider identity.Provider, handler RequestHandler) Accessor {
+	return &accessor{identityProvider: identityProvider, handler: handler}
 }
 
 func tokenMetadata(jwtToken string) util.MapCredentials {

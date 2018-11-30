@@ -20,13 +20,16 @@ CLAD="${PYTHON:=python} ${PYTHONFLAGS:=} ${EMITTER:=../../CPPLite_emitter.py}"
 CLADSRC=../src
 OUTPUT_DIR=${OUTPUT_DIR:-./build/simple}
 
+echo "Generating clad source for each file..."
 for file in $CLADSRC/aligned-lite/*.clad; do
     OUTPUT_DIR_PARAM=$(dirname $OUTPUT_DIR/${file#$CLADSRC/};)
     mkdir -p ${OUTPUT_DIR_PARAM}
     $CLAD --max-message-size 1420 -o ${OUTPUT_DIR_PARAM} -C $(dirname $file) $(basename $file);
 done
 
+echo "Copying source to output directory..."
 cp -f cpplitetest.cpp $OUTPUT_DIR
 
+echo "Compiling with clang++..."
 clang++ -DCLAD_DEBUG -Wall -Wextra --std=c++11 -g -Os -o $OUTPUT_DIR/cpplitetest.out $OUTPUT_DIR/cpplitetest.cpp $OUTPUT_DIR/aligned-lite/CTest.cpp
 $OUTPUT_DIR/cpplitetest.out

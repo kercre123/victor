@@ -14,6 +14,7 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 
 #include "engine/robot.h"
+#include "engine/robotStateHistory.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 
@@ -248,8 +249,25 @@ void ProxSensorComponent::UpdateNavMap()
 
   if ((objectDetected || noObject) && !tiltedForward)
   {  
+    // check if the measurement was delayed, otherwise use the current robot pose.
+    Pose3d robotPose;
+    if (_latestDataRaw.timestamp_ms < _lastMsgTimestamp) {
+      HistRobotState histState;
+      RobotTimeStamp_t histTimestamp;
+      const bool kUseInterp = true;
+      const auto& res = _robot->GetStateHistory()->ComputeStateAt(_latestDataRaw.timestamp_ms, histTimestamp, histState, kUseInterp);
+      if (res != RESULT_OK) {
+        LOG_ERROR("ProxSensorComponent.UpdateNavMap.NoHistoricalPose",
+                  "Could not retrieve historical pose for timestamp %u (msg time %u)",
+                  _latestDataRaw.timestamp_ms, _lastMsgTimestamp);
+        return;
+      }
+      robotPose = histState.GetPose();
+    } else {
+      robotPose = _robot->GetPose();
+    }
+
     // check if the robot has moved or the sensor reading has changed significantly
-    const Pose3d  robotPose = _robot->GetPose();
     const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;
     if ( !robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
         (!noObject && FLT_GT(changePct, kMeasurementTolerance)) ) { 

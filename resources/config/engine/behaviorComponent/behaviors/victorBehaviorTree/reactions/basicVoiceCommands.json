@@ -22,7 +22,10 @@
     "MovementBackward",
     "MovementTurnLeft",
     "MovementTurnRight",
-    "MovementTurnAround"
+    "MovementTurnAround",
+
+    "SeasonalHappyHolidays",
+    "SeasonalHappyNewYear"
 
     // NOTE: "goodnight" greeting is handled by the sleep cycle behavior, not here
   ],

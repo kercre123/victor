@@ -26,10 +26,6 @@
       "audioAllowed": true
     },
     {
-      "behavior": "Alexa",
-      "audioAllowed": true
-    },
-    {
       "behavior": "TimerUtilityCoordinator",
       "audioAllowed": true
     },

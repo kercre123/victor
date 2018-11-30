@@ -171,6 +171,13 @@ void MicDataProcessor::FakeTriggerWordDetection()
   };
   TriggerWordDetectCallback(TriggerWordDetectSource::Button, info);
 }
+
+void MicDataProcessor::GetLatestMicDirectionData(MicDirectionData& out_lastSample,
+                                                 DirectionIndex& out_dominantDirection) const
+{
+  out_lastSample = _micImmediateDirection->GetLatestSample();
+  out_dominantDirection = _micImmediateDirection->GetDominantDirection();
+}
   
 void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
                                                  const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)

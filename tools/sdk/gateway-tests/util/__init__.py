@@ -21,7 +21,7 @@ try:
     import anki_vector
 except ImportError:
     sys.exit("\n\nThis script requires you to install the anki_vector sdk'.\n"
-             "To do so, please run '{pip_install}' from the tools/sdk/vector-sdk directory\n"
+             "To do so, please run '{pip_install}' from the tools/sdk/vector-python-sdk-private/sdk directory\n"
              "Then try again".format(
                  pip_install="pip3 install -e .",
              ))
@@ -45,7 +45,7 @@ except ImportError:
                 "Then try again".format(
                     tools_path=str(base_dir / "scripts"),
                     make="./update_proto.sh",
-                    sdk_path=str(base_dir / "vector-sdk"),
+                    sdk_path=str(base_dir / "vector-python-sdk-private" / "sdk"),
                     pip_install="pip install -e .",
                     configure="python3 configure.py",
                 ))

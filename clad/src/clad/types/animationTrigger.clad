@@ -198,6 +198,9 @@ enum int_32 AnimationTrigger
   
   HighTemperatureWarningFace,
 
+  SeasonalHappyHolidays,
+  SeasonalHappyNewYear,
+
   ICantDoThat,
   InitialWakeUp,
   InteractWithFaceTrackingIdle,

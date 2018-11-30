@@ -3,7 +3,6 @@
 import base64
 import sys, os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'vector-sdk'))
 import anki_vector
 
 color = anki_vector.color.Color(rgb=[255, 128, 0])
