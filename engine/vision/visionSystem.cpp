@@ -677,11 +677,9 @@ Result VisionSystem::EraseFace(Vision::FaceID_t faceID)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-                                            Vision::FaceID_t forFaceID,
-                                            s32 numEnrollments)
+void VisionSystem::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,  s32 numEnrollments, bool forceNewID)
 {
-  _faceTracker->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
+  _faceTracker->SetFaceEnrollmentMode(forFaceID, numEnrollments, forceNewID);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

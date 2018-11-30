@@ -170,7 +170,7 @@ Result Enroll(Robot& robot, RobotTimeStamp_t& fakeTime, RobotState& stateMsg, Vi
 {
   const std::string& enrollSubDir = "enroll";
   
-  robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight);
+  robot.GetVisionComponent().SetFaceEnrollmentMode();
   
   // Get the images to use for enrollment
   auto enrollFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({dataPath, userDir, enrollSubDir}),
@@ -225,8 +225,7 @@ Result Enroll(Robot& robot, RobotTimeStamp_t& fakeTime, RobotState& stateMsg, Vi
         
         // Recognized, not just tracked: start enrolling the ID
         enrollmentID = observedID;
-        robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight,
-                                                         enrollmentID,
+        robot.GetVisionComponent().SetFaceEnrollmentMode(enrollmentID,
                                                          (int)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry);
         
       }
@@ -422,7 +421,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     }
     
     // Allow session-only enrollment
-    robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight);
+    robot.GetVisionComponent().SetFaceEnrollmentMode();
     
     for(auto & test : testDirData)
     {

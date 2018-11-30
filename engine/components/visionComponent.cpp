@@ -2075,12 +2075,9 @@ namespace Vector {
     }
   }
 
-  void VisionComponent::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
- 																						  Vision::FaceID_t forFaceID,
-																						  s32 numEnrollments)
-
+  void VisionComponent::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID, s32 numEnrollments, bool forceNewID)
   {
-    _visionSystem->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
+    _visionSystem->SetFaceEnrollmentMode(forFaceID, numEnrollments, forceNewID);
   }
 
   Result VisionComponent::EraseFace(Vision::FaceID_t faceID)

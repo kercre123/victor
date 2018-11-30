@@ -94,6 +94,7 @@ private:
     LookingForFace,
     AlreadyKnowYouPrompt,
     AlreadyKnowYouHandle,
+    StartEnrolling,
     Enrolling,
     SayingName,
     Success,
@@ -144,7 +145,7 @@ private:
 
   bool HasTimedOut() const;
   bool IsSeeingTooManyFaces(FaceWorld& faceWorld, const RobotTimeStamp_t lastImgTime);
-  bool IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& wrongName) const;
+  bool IsSeeingWrongFace(FaceID_t& wrongFaceID, std::string& wrongName, float& maxScore) const;
   
   // Helper which returns false if the robot is not on its treads or a cliff is being detected
   bool CanMoveTreads() const;

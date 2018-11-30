@@ -1044,7 +1044,7 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::Enroll(Vision::FaceID_t faceID)
+  void FaceWorld::Enroll(Vision::FaceID_t faceID, bool forceNewID)
   {
     SetFaceEnrollmentComplete(false);
     
@@ -1054,15 +1054,13 @@ namespace Vector {
     const s32 numEnrollmentsRequired = (sessionOnly ? -1 :
                                         (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry);
 
-    _robot->GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight,
-                                                      faceID,
-                                                      numEnrollmentsRequired);
+    _robot->GetVisionComponent().SetFaceEnrollmentMode(faceID, numEnrollmentsRequired, forceNewID);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::Enroll(const SmartFaceID& faceID)
+  void FaceWorld::Enroll(const SmartFaceID& faceID, bool forceNewID)
   {
-    Enroll(faceID.GetID());
+    Enroll(faceID.GetID(), forceNewID);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

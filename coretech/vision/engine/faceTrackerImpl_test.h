@@ -61,9 +61,9 @@ public:
   Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
                     Vision::RobotRenamedEnrolledFace& renamedFace);
   Result SaveAlbum(const std::string& albumName);
-  void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-                             Vision::FaceID_t forFaceID,
-                             s32 numEnrollments);
+  void SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,
+                             s32 numEnrollments,
+                             bool forceNewID);
   Result GetSerializedData(std::vector<u8>& albumData,
                            std::vector<u8>& enrollData);
   Result SetSerializedData(const std::vector<u8>& albumData,

@@ -158,9 +158,9 @@ Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
 }
 
 // This is called when we should start simulating enrollment
-void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
-                                              Vision::FaceID_t forFaceID,
-                                              s32 numEnrollments)
+void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,
+                                              s32 numEnrollments,
+                                              bool forceNewID)
 {
   PRINT_NAMED_INFO("FaceTrackerImpl.SetFaceEnrollmentMode.NumFakeEnrollments",
                    "numer of enrollments %d for face %d", forFaceID, numEnrollments);

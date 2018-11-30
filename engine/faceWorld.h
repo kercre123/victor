@@ -150,8 +150,8 @@ namespace Vector {
     // Specify a faceID to start an enrollment of a specific ID, i.e. with the intention
     // of naming that person.
     // Use UnknownFaceID to enable (or return to) ongoing "enrollment" of session-only / unnamed faces.
-    void Enroll(Vision::FaceID_t faceID);
-    void Enroll(const SmartFaceID& faceID);
+    void Enroll(Vision::FaceID_t faceID, bool forceNewID = false);
+    void Enroll(const SmartFaceID& faceID, bool forceNewID = false);
     
     bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
     void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }
