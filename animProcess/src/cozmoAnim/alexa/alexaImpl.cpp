@@ -861,7 +861,7 @@ void AlexaImpl::NotifyOfTapToTalk()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
+void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
@@ -871,7 +871,7 @@ void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
 
 #if ANKI_DEV_CHEATS
   if( _debugMicrophone ) {
-    const size_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
+    const uint64_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
 
     static int sAudioDumpIdx = 0;
     const std::string filename = _alexaCacheFolder + "audioInput_" + std::to_string(sAudioDumpIdx++) + ".pcm";
@@ -901,10 +901,10 @@ void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
       fileOut.close();
 
       // "absolute" index is total bytes ever, not the current size of the ring buffer
-      const size_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
-      const size_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
+      const uint64_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
+      const uint64_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
       LOG_INFO("AlexaImpl.WroteAudioInput",
-               "Wrote mic data to file '%s'. Trigger range %zu to %zu",
+               "Wrote mic data to file '%s'. Trigger range %llu to %llu",
                filename.c_str(),
                debugStartIdx,
                debugEndIdx);

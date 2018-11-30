@@ -641,7 +641,7 @@ void Alexa::NotifyOfTapToTalk()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex )
+void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
 {
   bool hasImpl = false;
   {
