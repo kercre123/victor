@@ -1529,15 +1529,6 @@ bool ICozmoBehavior::CancelSelf()
   return false;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved) const
-{
-  LOG_INFO("ICozmoBehavior.BehaviorObjectiveAchieved",
-           "Behavior:%s, Objective:%s",
-           GetDebugLabel().c_str(),
-           EnumToString(objectiveAchieved));
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartSetMotionProfile(const PathMotionProfile& motionProfile)

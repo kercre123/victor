@@ -199,7 +199,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                   {
                     _dVars.lastBlockReactedTo.UnSet();
                     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SuccessfulWheelie));
-                    BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     _dVars.successful = true;
                     break;
                   }

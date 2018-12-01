@@ -165,8 +165,6 @@ void BehaviorReactToRobotShaken::TransitionToDoneShaking()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
 {
-  BehaviorObjectiveAchieved( BehaviorObjective::ReactedToRobotShaken );
-
   // Log some DAS stuff:
   const float shakeDuration_s = ( _dVars.shakeEndTime - _dVars.shakeStartTime );
   const int shakenDuration_ms = std::round( shakeDuration_s * 1000.f );

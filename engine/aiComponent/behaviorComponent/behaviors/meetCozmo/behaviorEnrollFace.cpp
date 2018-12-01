@@ -1025,7 +1025,6 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
     if(info.result == FaceEnrollmentResult::Success)
     {
-      BehaviorObjectiveAchieved(BehaviorObjective::EnrolledFaceWithName);
       GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::EnrolledFace);
     }
 

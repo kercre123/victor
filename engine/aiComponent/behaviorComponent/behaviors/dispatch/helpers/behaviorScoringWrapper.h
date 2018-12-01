@@ -23,12 +23,6 @@
 namespace Anki {
 namespace Vector {
   
-enum class BehaviorObjective : int32_t;
-  
-namespace ExternalInterface {
-struct BehaviorObjectiveAchieved;
-}
-
 class BehaviorScoringWrapper
 {
   
@@ -57,7 +51,6 @@ public:
   const Util::GraphEvaluator2d& GetActivatedPenalty() const { return _activatedPenalty; }
 
 private:
-  void HandleBehaviorObjective(const ExternalInterface::BehaviorObjectiveAchieved& msg);
   
   // ==================== Member Vars ====================
   std::vector<Signal::SmartHandle> _eventHandlers;
@@ -69,11 +62,6 @@ private:
   float                   _flatScore = 0.f;
   float                   _lastTimeDeactivated = 0.f;
   float                   _timeActivated   = 0.f;  
-  
-  // if this behavior objective gets sent (by any behavior), then consider this behavior to have been activated
-  // (for purposes of repetition penalty, aka cooldown)
-  BehaviorObjective _cooldownOnObjective;
-  
   
   bool _enableRepetitionPenalty = true;
   bool _enableActivatedPenalty = true;
