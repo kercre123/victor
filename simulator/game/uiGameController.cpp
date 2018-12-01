@@ -665,6 +665,10 @@ namespace Anki {
             return 0;
           } else {
             _uiState = UI_RUNNING;
+            
+            // Call step() here with a large-ish time to give engine time to initialize before calling OnEngineLoaded()
+            const int timeToWait_ms = 2000;
+            _supervisor.step(timeToWait_ms);
             OnEngineLoaded();
           }
           break;
@@ -676,11 +680,7 @@ namespace Anki {
           
           _msgHandler.ProcessMessages();
           
-          // Allow a little time for the Robot to get set up in the engine, since we just told it to be added
-          static const double startTime = _supervisor.getTime();
-          if ((_supervisor.getTime() - startTime) > TIME_UNTIL_READY_SEC) {
-            res = UpdateInternal();
-          }
+          res = UpdateInternal();
           
           break;
         }
