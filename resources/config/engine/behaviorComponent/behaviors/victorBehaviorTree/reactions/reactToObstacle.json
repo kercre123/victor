@@ -6,8 +6,7 @@
     "ReactToObstacleInternal",
     "CheckForAndReactToHand"
   ],
-  
-  "associatedActiveFeature": "NoFeature",
+
   "emotionEventOnActivated": "ReactToObstacle",
   
   "wantsToBeActivatedCondition": {
@@ -39,6 +38,8 @@
     {
       "behaviorName": "ReactToObstacleInternal",
       "behaviorClass": "AnimSequence",
+
+      "associatedActiveFeature": "NoFeature",
       
       "animTriggers": ["ReactToObstacle"]
     }
