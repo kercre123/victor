@@ -749,6 +749,11 @@ namespace Vision {
     headPose.SetParent(_camera.GetPose());
     face.SetHeadPose(headPose);
 
+    Pose3d eyePose = face.GetEyePose();
+    eyePose.SetTranslation(T);
+    eyePose.SetParent(_camera.GetPose());
+    face.SetEyePose(eyePose);
+
     // We don't know anything about orientation without parts, so don't update it and assume
     // _not_ facing the camera (without actual evidence that we are)
     face.SetIsFacingCamera(false);
@@ -951,6 +956,16 @@ namespace Vision {
 
     headPose.SetParent(_camera.GetPose());
     face.SetHeadPose(headPose);
+
+    Pose3d eyePose = face.GetEyePose();
+    eyePose.SetTranslation(T);
+    const Gaze& gaze = face.GetGaze();
+    Radians upDown_rad = Radians(DEG_TO_RAD(gaze.upDown_deg));
+    Radians leftRight_rad = Radians(DEG_TO_RAD(gaze.leftRight_deg));
+
+    const RotationMatrix3d eyeRotation(-upDown_rad, 0.f, leftRight_rad);
+    eyePose.SetRotation(eyePose.GetRotation() * eyeRotation);
+    face.SetEyePose(eyePose);
 
     if(kKeepUndistortedFaceFeatures)
     {

@@ -268,6 +268,8 @@ namespace Vector {
     Pose3d headPoseWrtWorldOrigin(face.GetHeadPose());
     headPoseWrtWorldOrigin.SetParent(_robot->GetPoseOriginList().GetOriginByID(histOriginID));
 
+    Pose3d eyePoseWrtWorldOrigin(face.GetEyePose());
+    eyePoseWrtWorldOrigin.SetParent(_robot->GetPoseOriginList().GetOriginByID(histOriginID));
     const bool robotOnTreads = _robot->GetOffTreadsState() == OffTreadsState::OnTreads;
     const bool headBelowRobot = headPoseWrtWorldOrigin.GetTranslation().z() < 0.f;
     if(kIgnoreFacesBelowRobot && robotOnTreads && headBelowRobot)
@@ -473,6 +475,7 @@ namespace Vector {
     assert(faceEntry != nullptr);
 
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
+    faceEntry->face.SetEyePose(eyePoseWrtWorldOrigin);
     faceEntry->numTimesObserved++;
 
     const auto* featureGate = _robot->GetContext()->GetFeatureGate();
