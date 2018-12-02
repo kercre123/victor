@@ -246,7 +246,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                    std::bind(&AlexaImpl::OnAVSConnectionChanged, this, std::placeholders::_1, std::placeholders::_2),
                    std::bind(&AlexaImpl::OnSendComplete, this, std::placeholders::_1),
                    std::bind(&AlexaImpl::OnSDKLogout, this),
-                   std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1) );
+                   std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1),
+                   std::bind(&AlexaImpl::OnAlertState, this, std::placeholders::_1, std::placeholders::_2) );
   
   const auto& rootConfig = avsCommon::utils::configuration::ConfigurationNode::getRoot();
   
@@ -378,6 +379,7 @@ bool AlexaImpl::Init( const AnimContext* context )
   _client->AddSpeakerManagerObserver( _observer );
   _client->AddInternetConnectionObserver( _observer );
   _client->AddNotificationsObserver( _observer );
+  _client->AddAlertObserver( _observer );
   
    // Creating the revoke authorization observer.
   auto revokeObserver = std::make_shared<AlexaRevokeAuthObserver>( _client->GetRegistrationManager() );
@@ -833,6 +835,36 @@ void AlexaImpl::OnNotificationsIndicator( avsCommon::avs::IndicatorState state )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::alerts::AlertObserverInterface::State state )
+{
+  using State = capabilityAgents::alerts::AlertObserverInterface::State;
+  _alertStates[alertID] = state;
+  _alertActive = false;
+  for( auto& alertPair : _alertStates ) {
+    bool canBeCancelled;
+    switch( alertPair.second ) {
+      case State::STARTED: // The alert has started.
+        canBeCancelled = true;
+        break;
+      case State::READY: // The alert is ready to start, and is waiting for channel focus.
+      case State::STOPPED: // The alert has stopped due to user or system intervention.
+      case State::SNOOZED: // The alert has snoozed.
+      case State::COMPLETED: // The alert has completed on its own.
+      case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
+      case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
+      case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
+      case State::ERROR: // The alert has encountered an error.
+        canBeCancelled = false;
+        break;
+    }
+    _alertActive |= canBeCancelled;
+  }
+  // TODO (VIC-11517): downgrade. for now this is useful in webots
+  LOG_WARNING( "AlexaImpl.OnAlertState",
+               "alert '%s' changed to %d, _alertActive=%d", alertID.c_str(), (int)state, _alertActive );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
   // always send WaitingForCode in case url or code changed
@@ -848,15 +880,19 @@ void AlexaImpl::NotifyOfTapToTalk()
 {
   if( _client != nullptr ) {
     if( !_isTapOccurring ) {
+      _client->StopForegroundActivity();
+      _client->StopAlerts();
+      
       // check info known about connection before trying. these often don't get updated until sending fails
       if( !_client->IsAVSConnected() ) {
         SetNetworkConnectionError();
       } else {
-        _client->StopForegroundActivity();
-        ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
-                     "AlexaImpl.NotifyOfTapToTalk.Failed",
-                     "Failed to notify tap to talk" );
-        _isTapOccurring = true;
+        if( !_alertActive ) {
+          ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
+                       "AlexaImpl.NotifyOfTapToTalk.Failed",
+                       "Failed to notify tap to talk" );
+          _isTapOccurring = true;
+        }
       }
     } else {
       _client->NotifyOfTapToTalkEnd();

@@ -63,7 +63,8 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
                           const OnAVSConnectionChanged& onAVSConnectionChanged,
                           const OnSendCompleted& onSendCompleted,
                           const OnLogout& onLogout,
-                          const OnNotificationIndicator& onNotificationIndicator )
+                          const OnNotificationIndicator& onNotificationIndicator,
+                          const OnAlertState& onAlertState )
 {
   _onDialogUXStateChanged = onDialogUXStateChanged;
   _onRequestAuthorization = onRequestAuthorization;
@@ -74,6 +75,7 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
   _onSendCompleted = onSendCompleted;
   _onLogout = onLogout;
   _onNotificationIndicator = onNotificationIndicator;
+  _onAlertState = onAlertState;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -170,6 +172,19 @@ void AlexaObserver::onSetIndicator( avsCommon::avs::IndicatorState state )
   auto func = [this,state]() {
     if( _onNotificationIndicator ) {
       _onNotificationIndicator( state );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onAlertStateChange( const std::string& alertToken,
+                                        capabilityAgents::alerts::AlertObserverInterface::State state,
+                                        const std::string& reason )
+{
+  auto func = [this,alertToken,state]() {
+    if( _onAlertState ) {
+      _onAlertState( alertToken, state );
     }
   };
   AddToQueue( std::move(func) );

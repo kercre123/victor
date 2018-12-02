@@ -146,6 +146,8 @@ public:
   
   void StopForegroundActivity();
   
+  void StopAlerts();
+  
   std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager> GetRegistrationManager();
   
   void AddSpeakerManagerObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerManagerObserverInterface> observer );
@@ -157,6 +159,8 @@ public:
   void AddRevokeAuthorizationObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::RevokeAuthorizationObserverInterface> observer );
   
   void AddNotificationsObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::NotificationsObserverInterface> observer );
+  
+  void AddAlertObserver( std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface> observer );
   
   using OnDirectiveFunc = std::function<void(const std::string&,const std::string&)>;
   void SetDirectiveCallback(const OnDirectiveFunc& onDirective) { _onDirectiveFunc = onDirective; }

@@ -762,6 +762,17 @@ void AlexaClient::StopForegroundActivity()
     _audioFocusManager->stopForegroundActivity();
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::StopAlerts()
+{
+  if( ANKI_VERIFY(_alertsCapabilityAgent != nullptr,
+                  "AlexaClient.StopAlerts.Null",
+                  "Alerts capability is null") )
+  {
+    _alertsCapabilityAgent->onLocalStop();
+  }
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaClient::AddSpeakerManagerObserver( std::shared_ptr<avsCommon::sdkInterfaces::SpeakerManagerObserverInterface> observer )
@@ -814,6 +825,17 @@ void AlexaClient::AddNotificationsObserver( std::shared_ptr<avsCommon::sdkInterf
                   "Notifications agent is null") )
   {
     _notificationsCapabilityAgent->addObserver( observer );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::AddAlertObserver( std::shared_ptr<capabilityAgents::alerts::AlertObserverInterface> observer )
+{
+  if( ANKI_VERIFY(_alertsCapabilityAgent != nullptr,
+                  "AlexaClient.AddAlertObserver.Null",
+                  "Alerts agent is null") )
+  {
+    _alertsCapabilityAgent->addObserver( observer );
   }
 }
 

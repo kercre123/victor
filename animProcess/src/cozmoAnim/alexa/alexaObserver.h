@@ -45,6 +45,7 @@
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerObserverInterface.h>
 #include <AVSCommon/Utils/Threading/Executor.h>
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
+#include <Alerts/AlertObserverInterface.h>
 #include <RegistrationManager/RegistrationObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
 
@@ -66,6 +67,7 @@ class AlexaObserver
   , public alexaClientSDK::avsCommon::sdkInterfaces::InternetConnectionObserverInterface
   , public alexaClientSDK::registrationManager::RegistrationObserverInterface
   , public alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface
+  , public alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface
   
 {
 public:
@@ -87,6 +89,7 @@ public:
   using OnSendCompleted = std::function<void(alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status)>;
   using OnLogout = std::function<void(void)>;
   using OnNotificationIndicator = std::function<void(alexaClientSDK::avsCommon::avs::IndicatorState)>;
+  using OnAlertState = std::function<void(const std::string&,alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State)>;
   void Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
              const OnRequestAuthorizationFunc& onRequestAuthorization,
              const OnAuthStateChangeFunc& onAuthStateChange,
@@ -95,7 +98,8 @@ public:
              const OnAVSConnectionChanged& onAVSConnectionChanged,
              const OnSendCompleted& onSendCompleted,
              const OnLogout& onLogout,
-             const OnNotificationIndicator& onNotificationIndicator );
+             const OnNotificationIndicator& onNotificationIndicator,
+             const OnAlertState& onAlertState );
   
 protected:
   virtual void onDialogUXStateChanged( DialogUXState state ) override;
@@ -140,6 +144,11 @@ protected:
   // notifications
   virtual void onSetIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state ) override;
   
+  // alerts
+  virtual void onAlertStateChange( const std::string& alertToken,
+                                   alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state,
+                                   const std::string& reason ) override;
+  
 private:
   using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
   
@@ -176,6 +185,7 @@ private:
   OnSendCompleted _onSendCompleted;
   OnLogout _onLogout;
   OnNotificationIndicator _onNotificationIndicator;
+  OnAlertState _onAlertState;
   
   std::atomic<bool> _running;
   
