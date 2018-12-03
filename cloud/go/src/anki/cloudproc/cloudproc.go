@@ -40,23 +40,21 @@ func Run(ctx context.Context, procOptions ...Option) {
 		}
 	}
 
-	if err := token.Init(identityProvider); err != nil {
+	var tokenServer = new(token.Server)
+	if err := tokenServer.Init(identityProvider); err != nil {
 		log.Println("Fatal error initializing token service:", err)
 		return
 	}
-	addHandlers(token.GetDevHandlers)
+	addHandlers(token.GetDevHandlers, tokenServer)
 	launchProcess(&wg, func() {
-		tokenOpts := append([]token.Option{token.WithIdentityProvider(identityProvider)},
-			opts.tokenOpts...)
-		token.Run(ctx, tokenOpts...)
+		tokenServer.Run(ctx, opts.tokenOpts...)
 	})
-	tokener := token.GetAccessor(identityProvider)
-	errorListener := token.ErrorListener()
+	tokener := token.GetAccessor(identityProvider, tokenServer)
 	if opts.voice != nil {
 		launchProcess(&wg, func() {
 			// provide default token accessor
 			voiceOpts := append([]voice.Option{voice.WithTokener(tokener),
-				voice.WithErrorListener(errorListener)},
+				voice.WithErrorListener(tokenServer.ErrorListener())},
 				opts.voiceOpts...)
 			opts.voice.Run(ctx, voiceOpts...)
 		})
@@ -65,7 +63,7 @@ func Run(ctx context.Context, procOptions ...Option) {
 		launchProcess(&wg, func() {
 			// provide default token accessor
 			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener),
-				jdocs.WithErrorListener(errorListener)},
+				jdocs.WithErrorListener(tokenServer.ErrorListener())},
 				opts.jdocOpts...)
 			jdocs.Run(ctx, jdocOpts...)
 		})
@@ -73,7 +71,7 @@ func Run(ctx context.Context, procOptions ...Option) {
 	if opts.logcollectorOpts != nil {
 		launchProcess(&wg, func() {
 			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener),
-				logcollector.WithErrorListener(errorListener)},
+				logcollector.WithErrorListener(tokenServer.ErrorListener())},
 				opts.logcollectorOpts...)
 			logcollector.Run(ctx, logcollectorOpts...)
 		})

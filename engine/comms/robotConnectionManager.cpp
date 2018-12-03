@@ -21,6 +21,7 @@
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/histogram/histogram.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 #define LOG_CHANNEL "RobotConnectionManager"
@@ -74,14 +75,14 @@ Result RobotConnectionManager::Update()
 
 void RobotConnectionManager::SendAndResetQueueStats()
 {
-  // s_val: min:mean:max as ints
-  // data: num
-  Util::sInfoF("cozmo_engine.robot_msg_queue.recent_incoming_size",
-               {{DDATA, std::to_string( _queueSizeAccumulator.GetNum() ).c_str()}},
-               "%d:%d:%d",
-               (int)std::round(_queueSizeAccumulator.GetMin()),
-               (int)std::round(_queueSizeAccumulator.GetMean()),
-               (int)std::round(_queueSizeAccumulator.GetMax()));
+  DASMSG(robot.msg_queue.recent_incoming_size,
+         "robot.msg_queue.recent_incoming_size",
+         "Stats about RobotConnectionManager incoming queue");
+  DASMSG_SET(i1, _queueSizeAccumulator.GetNum(), "Number of queue size stats entries");
+  DASMSG_SET(i2, _queueSizeAccumulator.GetMin(), "Min queue size");
+  DASMSG_SET(i3, _queueSizeAccumulator.GetMean(), "Mean queue size");
+  DASMSG_SET(i4, _queueSizeAccumulator.GetMax(), "Max queue size");
+  DASMSG_SEND();
 
   // clear accumulator so we only send recent stats
   _queueSizeAccumulator.Clear();

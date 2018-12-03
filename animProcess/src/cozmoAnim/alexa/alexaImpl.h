@@ -38,12 +38,14 @@
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/SoftwareInfoSenderObserverInterface.h>
+#include <Alerts/AlertObserverInterface.h>
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
 #include <AVSCommon/AVS/IndicatorState.h>
 
 #include <functional>
 #include <string>
 #include <set>
+#include <unordered_map>
 
 namespace alexaClientSDK {
   namespace capabilitiesDelegate { class CapabilitiesDelegate; }
@@ -88,7 +90,7 @@ public:
   
   void NotifyOfTapToTalk();
   
-  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
+  void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
   
   // Callback setters
   
@@ -137,6 +139,7 @@ private:
   void OnSendComplete( alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status );
   void OnSDKLogout();
   void OnNotificationsIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state );
+  void OnAlertState( const std::string& alertID, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state );
   
   
   // readable version int
@@ -164,6 +167,10 @@ private:
   float _timeToSetIdle_s = -1.0f;
   // tap to talk is active
   bool _isTapOccurring = false;
+  
+  // alert info
+  bool _alertActive = false;
+  std::unordered_map<std::string, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State> _alertStates;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
   // on vicos.... so just track if the system clock jumps and if so, refresh the timers

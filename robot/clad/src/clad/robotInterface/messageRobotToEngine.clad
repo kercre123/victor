@@ -53,6 +53,7 @@ message TriggerWordDetected
   uint_32 triggerScore,
   uint_16 direction,
   bool isButtonPress,
+  bool fromMute,
   bool willOpenStream,
 }
 

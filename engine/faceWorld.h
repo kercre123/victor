@@ -16,6 +16,7 @@
 #define __Anki_Cozmo_FaceWorld_H__
 
 #include "coretech/common/engine/robotTimeStamp.h"
+#include "coretech/vision/engine/gazeDirection.h"
 #include "coretech/vision/engine/trackedFace.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
@@ -85,6 +86,7 @@ namespace Vector {
     
     Result Update(const std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(const Vision::TrackedFace& face);
+    Result AddOrUpdateGazeDirection(Vision::TrackedFace& face);
   
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
@@ -148,8 +150,8 @@ namespace Vector {
     // Specify a faceID to start an enrollment of a specific ID, i.e. with the intention
     // of naming that person.
     // Use UnknownFaceID to enable (or return to) ongoing "enrollment" of session-only / unnamed faces.
-    void Enroll(Vision::FaceID_t faceID);
-    void Enroll(const SmartFaceID& faceID);
+    void Enroll(Vision::FaceID_t faceID, bool forceNewID = false);
+    void Enroll(const SmartFaceID& faceID, bool forceNewID = false);
     
     bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
     void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }
@@ -227,7 +229,7 @@ namespace Vector {
 
     void SetupEventHandlers(IExternalInterface& externalInterface);
     
-    void DrawFace(FaceEntry& knownFace, bool drawInImage = true);
+    void DrawFace(FaceEntry& knownFace, bool drawInImage = true) const;
     void EraseFaceViz(FaceEntry& faceEntry);
     
     void SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedFace& msg ) const;
@@ -240,6 +242,8 @@ namespace Vector {
     // faces saved album data for the initial entry so it can work across boots
     using ObservationHistoryMap = std::map<Vision::FaceID_t, ObservationTimeHistory>;
     ObservationHistoryMap _wallTimesObserved;
+
+    std::map<Vision::FaceID_t, Vision::GazeDirection> _gazeDirection;
     
   }; // class FaceWorld
   

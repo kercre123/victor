@@ -59,6 +59,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/DAS.h"
 #include "util/math/math.h"
 #include "webServerProcess/src/webVizSender.h"
 
@@ -96,8 +97,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   BlockWorld::BlockWorld()
   : UnreliableComponent<BCComponentID>(this, BCComponentID::BlockWorld)
   , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::BlockWorld)
-  , _lastPlayAreaSizeEventSec(0)
-  , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _robotMsgTimeStampAtChange(0)
   , _trackPoseChanges(false)
@@ -1411,7 +1410,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       BroadcastObjectObservation(observedObject);
 
       _didObjectsChange = true;
-      _robotMsgTimeStampAtChange = Anki::Util::Max(atTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+      _robotMsgTimeStampAtChange = atTimestamp;
 
     } // for each object seen
 
@@ -1747,7 +1746,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     AddLocatedObject(markerlessObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = Anki::Util::Max(lastTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = lastTimestamp;
 
     return RESULT_OK;
   }
@@ -1775,7 +1774,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     AddLocatedObject(customObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = Anki::Util::Max(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
 
     return customObject->GetID();
   }
@@ -2168,8 +2167,12 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
                   object->GetPose().GetTranslation().z(),
                   object->GetPose().FindRoot().GetName().c_str());
 
-    // fire event to represent "first time an object has been seen in this origin"
-    Util::sInfoF("robot.object_located", {}, "%s", EnumToString(object->GetType()));
+    // fire DAS event
+    DASMSG(robot.object_located, "robot.object_located", "First time object has been seen in this origin");
+    DASMSG_SET(s1, EnumToString(object->GetType()), "ObjectType");
+    DASMSG_SET(s2, object->GetPose().FindRoot().GetName(), "Name of frame");
+    DASMSG_SET(i1, object->GetID().GetValue(), "ObjectID");
+    DASMSG_SEND();
 
     // make sure that everyone gets notified that there's a new object in town, I mean in this origin
     {
@@ -2352,14 +2355,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   Result BlockWorld::UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& currentObsMarkers)
   {
     ANKI_CPU_PROFILE("BlockWorld::UpdateObservedMarkers");
-
-    const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if (_lastPlayAreaSizeEventSec + _playAreaSizeEventIntervalSec < currentTimeSec) {
-      _lastPlayAreaSizeEventSec = currentTimeSec;
-      const auto currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-      const double areaM2 = currentNavMemoryMap->GetExploredRegionAreaM2();
-      Anki::Util::sInfoF("robot.play_area_size", {}, "%.2f", areaM2);
-    }
 
     // clear the change list and start tracking them
     _objectPoseChangeList.clear();
@@ -2700,7 +2695,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
     // Flag that we removed an object
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = Anki::Util::Max(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
+    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
   }
 
   ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,

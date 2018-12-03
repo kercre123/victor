@@ -157,7 +157,7 @@ public:
   
 private:
   std::shared_ptr<const INavMap> _memoryMap = nullptr; // BAD! Nothing guarantees that this is current
-  const MemoryMapTypes::FullContentArray& _collisionTypes;
+  const MemoryMapTypes::EContentTypePackedType _collisionTypes;
   Util::RandomGenerator* _rng = nullptr;
   float _pAccept = 0.0f;
 };

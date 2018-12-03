@@ -167,6 +167,7 @@ private:
   int Decode( const StreamingWaveDataPtr& data, bool flush = false );
 
   void CallOnPlaybackFinished( SourceId id );
+  void CallOnPlaybackError( SourceId id );
 
   const char* const StateToString() const;
 
@@ -202,6 +203,15 @@ private:
 
   uint64_t _offset_ms = 0;
   bool _firstPass = true;
+  size_t _attemptedDecodeBytes = 0;
+  
+  // whether we're downloading a format that we can process
+  enum class DataValidity : uint8_t {
+    Unknown=0,
+    Valid,
+    Invalid,
+  };
+  std::atomic<DataValidity> _dataValidity;
 
   StreamingWaveDataPtr _waveData;
 
@@ -214,9 +224,9 @@ private:
   AudioController* _audioController = nullptr;
   
   // The ideal amount of audio samples in buffer
-  size_t _idealBufferSampleSize;
+  size_t _idealBufferSampleSize = 0;
   // Size of buffer before starting playback
-  size_t _minPlaybackBufferSize;
+  size_t _minPlaybackBufferSize = 0;
 
   /// Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;

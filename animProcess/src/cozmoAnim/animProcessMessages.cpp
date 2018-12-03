@@ -612,6 +612,11 @@ void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
   }
 }
 
+void Process_fakeWakeWordFromExternalInterface(const RobotInterface::FakeWakeWordFromExternalInterface& msg)
+{
+  _context->GetMicDataSystem()->FakeTriggerWordDetection();
+}
+
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);

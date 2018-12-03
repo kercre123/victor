@@ -49,28 +49,28 @@ TEST( TestNavMap, FillBorder)
   
   MemoryMapData baseArea( EContentType::ClearOfObstacle, 0 );
   Point2f robotPos = robot.GetPose().GetTranslation();
-  Poly2f bigQuad( {{robotPos.x(), robotPos.y()},
+  FastPolygon bigQuad( {{robotPos.x(), robotPos.y()},
                   {robotPos.x() + 500, robotPos.y()},
                   {robotPos.x() + 500, robotPos.y() + 500},
                   {robotPos.x(), robotPos.y()+500}} );
   memoryMap->Insert( bigQuad, baseArea );
   
   MemoryMapData_ProxObstacle proxObstacle( MemoryMapData_ProxObstacle::EXPLORED, {0.0f, 0.0f, 0.0f}, 0 );
-  Poly2f littleProx1( {{robotPos.x() + 100, robotPos.y() + 100},
+  FastPolygon littleProx1( {{robotPos.x() + 100, robotPos.y() + 100},
                       {robotPos.x() + 110, robotPos.y()},
                       {robotPos.x() + 110, robotPos.y() + 110},
                       {robotPos.x() + 100, robotPos.y() + 110}} );
   memoryMap->Insert( littleProx1, proxObstacle );
   
   MemoryMapData edgeType( EContentType::InterestingEdge, 0 );
-  Poly2f medEdge( {{robotPos.x() + 200, robotPos.y() + 200},
+  FastPolygon medEdge( {{robotPos.x() + 200, robotPos.y() + 200},
                   {robotPos.x() + 400, robotPos.y() + 200},
                   {robotPos.x() + 400, robotPos.y() + 400},
                   {robotPos.x() + 200, robotPos.y() + 400}} );
   memoryMap->Insert( medEdge, edgeType );
   
   MemoryMapData_ProxObstacle proxObstacle2( MemoryMapData_ProxObstacle::EXPLORED, {0.0f, 0.0f, 0.0f}, 0 );
-  Poly2f littleProx2( {{robotPos.x() + 210, robotPos.y() + 210},
+  FastPolygon littleProx2( {{robotPos.x() + 210, robotPos.y() + 210},
                       {robotPos.x() + 220, robotPos.y() + 210},
                       {robotPos.x() + 220, robotPos.y() + 220},
                       {robotPos.x() + 210, robotPos.y() + 220}} );
@@ -123,9 +123,13 @@ TEST( TestNavMap, FillBorder)
     {EContentType::NotInterestingEdge    , false }
   };
   ASSERT_TRUE( IsSequentialArray(clearOfObstacleTypes) );
+
+  const EContentTypePackedType nodeNeighborsToFillFrom = ConvertContentArrayToFlags(clearOfObstacleTypes);
   
   MemoryMapData_Cliff toReplace( Pose3d{""}, 0 );
-  memoryMap->FillBorder(EContentType::ObstacleProx, clearOfObstacleTypes, toReplace.Clone());
+  NodePredicate innerType = [] (const auto& inside)  { return inside->type == EContentType::ObstacleProx; };
+  NodePredicate outerType = [&](const auto& outside) { return IsInEContentTypePackedType(outside->type, nodeNeighborsToFillFrom); };
+  memoryMap->FillBorder(innerType, outerType, toReplace.Clone());
   
   // check the big quad
   hasClear = false;

@@ -209,7 +209,7 @@ namespace Anki {
       }
 
       // Stop motion on any movement tracks that are locked by this action
-      const auto& mc = GetRobot().GetMoveComponent();
+      auto& mc = GetRobot().GetMoveComponent();
       const auto& lockStr = std::to_string(GetTag());
       std::string debugStr;
       if (mc.AreAllTracksLockedBy((u8) AnimTrackFlag::HEAD_TRACK, lockStr)) {
@@ -242,9 +242,18 @@ namespace Anki {
                         _name.c_str(),
                         _idTag);
         }
-        GetRobot().GetMoveComponent().UnlockTracks(_tracks, GetTag());
+        mc.UnlockTracks(_tracks, lockStr);
       }
 
+      // We should not be locking _any_ tracks at this point. If we are, then just unlock them and report this.
+      const auto lockedTracks = mc.GetTracksLockedBy(lockStr);
+      if (lockedTracks != 0) {
+        LOG_ERROR("IActionRunner.Destroy.TracksStillLocked",
+                  "%s [%d]: Somehow we are still locking tracks 0x%02X. Unlocking them. Current state %s, _suppressTrackLocking %d",
+                  _name.c_str(), GetTag(), lockedTracks, ActionResultToString(_state), _suppressTrackLocking);
+        mc.UnlockTracks(lockedTracks, lockStr);
+      }
+      
       GetRobot().GetActionList().GetActionWatcher().ActionEnding(this);
     }
 
@@ -323,6 +332,19 @@ namespace Anki {
       return false;
     }
 
+    void IActionRunner::ShouldSuppressTrackLocking(bool tf)
+    {
+      if (_state != ActionResult::NOT_STARTED) {
+        PRINT_NAMED_WARNING("IActionRunner.ShouldSuppressTrackLocking.AlreadyStarted",
+                            "Action %s [%d] not suppressing track locking since we have already started (current state %s)",
+                            GetName().c_str(),
+                            GetTag(),
+                            ActionResultToString(_state));
+        return;
+      }
+      _suppressTrackLocking = tf;
+    }
+    
     void IActionRunner::ForceComplete()
     {
       PRINT_CH_INFO("Actions", "IActionRunner.ForceComplete",

@@ -112,7 +112,6 @@ private:
     ICozmoBehaviorPtr sleepingWakeWordBehavior;
     ICozmoBehaviorPtr wiggleBackOntoChargerBehavior;
     ICozmoBehaviorPtr emergencyModeAnimBehavior;
-    ICozmoBehaviorPtr alexaBehavior;
 
     std::map< WakeReason, IBEIConditionPtr > wakeConditions;
 
@@ -135,7 +134,6 @@ private:
     SleepReactionType reactionState = SleepReactionType::NotReacting;
     bool wasOnChargerContacts = false;
     bool isMuted = false;
-    bool alexaInteractionComplete = false;
 
 #if ANKI_DEV_CHEATS
     WakeReason lastWakeReason = WakeReason::Invalid;

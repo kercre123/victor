@@ -433,6 +433,7 @@ message StartWakeWordlessStreaming
 message SetTriggerWordResponse
 {
   AudioEngine::Multiplexer::PostAudioEvent postAudioEvent,
+  int_32 minStreamingDuration_ms = -1,
   bool shouldTriggerWordStartStream = 0,
   bool shouldTriggerWordSimulateStream = 0,
   uint_8 getInAnimationTag = 0,
@@ -569,6 +570,11 @@ message DisplayFaceImageRGBChunk {
     uint_16  numPixels,       // Number of pixels in faceData
     uint_8   imageId,         // ID for this image, used only to track chunks of the same image
     uint_8   chunkIndex
+}
+
+// FakeWakeWordFromExternalInterface - used to trigger wakeword reactions in the anim process from Webots
+message FakeWakeWordFromExternalInterface
+{
 }
 
 // SetDebugConsoleVarMessage - for getting console vars to AnimProcess (until we have nicer web interface)
@@ -800,6 +806,8 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
+
+  FakeWakeWordFromExternalInterface fakeWakeWordFromExternalInterface = 0x80,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,

@@ -4,6 +4,8 @@
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
   "associatedActiveFeature": "SeasonalHappyHolidays",
+
+  "renderInEyeHue": false,
   
   "respondToUserIntents": [
     { "type": "seasonal_happyholidays" }

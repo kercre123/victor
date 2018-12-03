@@ -15,16 +15,7 @@
 
 #include "memoryMap/memoryMapTypes.h"
 #include "memoryMap/data/memoryMapData.h"
-
-#include "engine/navMap/quadTree/quadTreeTypes.h"
-
-#include "coretech/common/engine/math/fastPolygon2d.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/ball.h"
-#include "coretech/common/engine/robotTimeStamp.h"
-#include "util/logging/logging.h"
-
-#include <unordered_set>
 
 namespace Anki {
 namespace Vector {
@@ -60,46 +51,21 @@ public:
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const = 0;
-  // return the size of the area currently flagged as interesting edges
-  virtual double GetInterestingEdgeAreaM2() const = 0;
-  
-  // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
-  // the region that the point generated to store the point could have an error of up to this length.
-  virtual float GetContentPrecisionMM() const = 0;
-  
-  // TODO: remove entirely once behaviors no-longer grab INavMap pointers directly - map component can do wrapping to `AnyOf`
-  // checks if the given region intersects with a node of the given types
-  virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const = 0;
   
   // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)
-  virtual float GetArea(const MemoryMapRegion& region, const NodePredicate& func) const = 0;
-  virtual float GetArea(const NodePredicate& func) const = 0;
+  virtual float GetArea(const NodePredicate& func, const MemoryMapRegion& region = RealNumbers2f()) const = 0;
   
-  // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
   // returns true if any node that intersects with the provided regions evaluates `func` as true.
-  virtual bool AnyOf(const Poly2f& poly, NodePredicate func) const = 0;
   virtual bool AnyOf(const MemoryMapRegion& region, NodePredicate func) const = 0;
   
-  // multi-ray variant of the AnyOf method
-  // implementation may optimize for this case
+  // multi-ray variant of the `AnyOf` method implementation may optimize for this case
   virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const = 0;
-  
-  // returns true if there are any nodes of the given type, false otherwise
-  virtual bool HasContentType(EContentType type) const = 0;
-  
-  // returns the time navMap was last changed
-  virtual RobotTimeStamp_t GetLastChangedTimeStamp() const = 0;
   
   // Pack map data to broadcast
   virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const = 0;
 
-  // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
-  
-  // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
   // populate a list of all data that matches the predicate inside region
-  virtual void FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
-  virtual void FindContentIf(const MemoryMapRegion& region, NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
+  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output, const MemoryMapRegion& region = RealNumbers2f()) const = 0;
   
 protected:
   
@@ -110,9 +76,7 @@ protected:
   // NOTE: Leave modifying calls as protected methods, and access them via the friend classes (at the moment only
   //       MapComponent). The classes manage publication of map data, and need to monitor if the map state has changed
 
-  // TODO: remove Poly2f version once behaviors no-longer grab INavMap pointers directly
-  // add a poly with the specified content. 
-  virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) = 0;
+  // add an object with the specified content. 
   virtual bool Insert(const MemoryMapRegion& r, const MemoryMapData& data) = 0;
   virtual bool Insert(const MemoryMapRegion& r, NodeTransformFunction transform) = 0;
   
@@ -122,16 +86,12 @@ protected:
   // subclass
   virtual bool Merge(const INavMap& other, const Pose3d& transform) = 0;
  
-  // attempt to apply a transformation function to all nodes in the tree
-  virtual bool TransformContent(NodeTransformFunction transform) = 0;
   
   // attempt to apply a transformation function to all nodes in the tree constrained by region
-  virtual bool TransformContent(const MemoryMapRegion& region, NodeTransformFunction transform) = 0;
+  virtual bool TransformContent(NodeTransformFunction transform, const MemoryMapRegion& region = RealNumbers2f()) = 0;
 
   // TODO: FillBorder should be local (need to specify a max quad that can perform the operation, otherwise the
   // bounds keeps growing as Cozmo explores). Profiling+Performance required.
-  // change the content type from typeToReplace into newData if there's a border from any of the neighborsToFillFrom towards typeToReplace
-  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, const MemoryMapDataPtr& newData) = 0;
   
   // fills inner regions satisfying innerPred( inner node ) && outerPred(neighboring node), converting
   // the inner region to the given data

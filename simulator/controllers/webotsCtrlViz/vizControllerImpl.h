@@ -51,6 +51,35 @@ struct VizObjectInfo {
   VizInterface::Object data;
   int webotsNodeId = -1; // Optional webots node identifier for 3D objects that are dynamically added to the scene tree.
 };
+
+// Information about viz line segments to draw
+struct VizSegmentInfo {
+  VizInterface::LineSegment data;
+  int webotsNodeId = -1;
+};
+
+// Information about viz quads to draw
+struct VizQuadInfo {
+  VizInterface::Quad data;
+  int webotsNodeId = -1;
+};
+  
+// Information about viz paths to draw
+struct VizPathSegmentLineInfo {
+  VizInterface::AppendPathSegmentLine data;
+  int webotsNodeId = -1;
+};
+
+struct VizPathSegmentArcInfo {
+  VizInterface::AppendPathSegmentArc data;
+  int webotsNodeId = -1;
+};
+  
+struct VizPathInfo {
+  uint32_t color = 0;
+  std::vector<VizPathSegmentLineInfo> lines;
+  std::vector<VizPathSegmentArcInfo> arcs;
+};
   
 // Note: The values of these labels are used to determine the line number
 //       at which the corresponding text is displayed in the window.
@@ -130,13 +159,36 @@ private:
   void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizShowObjectsMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   
+  void ProcessVizLineSegmentMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizEraseLineSegmentsMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
+  void ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
+  void ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizAppendPathSegmentArcMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSetPathColorMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizErasePathMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
   void DisplayBufferedCameraImage(const RobotTimeStamp_t timestamp);
   void DisplayCameraInfo(const RobotTimeStamp_t timestamp);
   
   void EraseVizObjects(const uint32_t lowerBoundId = 0,
                        const uint32_t upperBoundId = std::numeric_limits<uint32_t>::max());
   
+  void EraseVizSegments(const std::string& identifier);
+  
+  void EraseVizQuads(const VizQuadType quadType,
+                     const uint32_t quadId);
+  
+  void EraseVizPath(const uint32_t pathId);
+  
+  void Draw();
+  
   void DrawObjects();
+  void DrawLineSegments();
+  void DrawQuads();
+  void DrawPaths();
   
   void Subscribe(const VizInterface::MessageVizTag& tagType, std::function<void(const AnkiEvent<VizInterface::MessageViz>&)> messageHandler) {
     _eventMgr.SubscribeForever(static_cast<uint32_t>(tagType), messageHandler);
@@ -217,11 +269,19 @@ private:
   // Whether or not to draw objects (based on ShowObjects message)
   bool _showObjects = true;
   
-  double _lastDrawObjectsTime_sec = -1.0;
+  double _lastDrawTime_sec = -1.0;
   
   // Objects to visualize (e.g. cubes, charger, poses, etc.). Map keyed on viz object ID
   std::map<uint32_t, VizObjectInfo> _vizObjects;
   
+  // Line segments to visualize. Map keyed on string identifier.
+  std::map<std::string, std::vector<VizSegmentInfo>> _vizSegments;
+  
+  // Quads to visualize. Inner map keyed on QuadID
+  std::map<VizQuadType, std::map<uint32_t, VizQuadInfo>> _vizQuads;
+  
+  // Paths to visualize. Map keyed on path ID
+  std::map<uint32_t, VizPathInfo> _vizPaths;
 };
 
 } // end namespace Vector

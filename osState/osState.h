@@ -213,9 +213,6 @@ public:
   // True if user space is secure
   bool IsUserSpaceSecure();
 
-  // For the engine to let the OS State know if we are on/off the charge contacts
-  void SetOnChargeContacts(const bool onChargeContacts) const;
-
 protected:
    // Return true if robot has a valid EMR.
    // This function is "off limits" to normal robot services

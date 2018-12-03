@@ -36,7 +36,7 @@ enum uint_32 BehaviorStat {
   ReactedToTriggerWord,
   RolledCube,
   
-} // enum class BehaviorObjectives
+} // enum class BehaviorStat
   
 } // namespace Vector
 } // namespace Anki

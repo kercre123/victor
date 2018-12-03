@@ -47,10 +47,10 @@ private:
   }
 
   void ProcessVizObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizSegmentPrimitiveMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizLineSegmentMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessVizEraseSegmentPrimitivesMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizEraseLineSegmentsMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizAppendPathSegmentArcMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -126,9 +126,9 @@ private:
     std::array<float, 3> dest;
   };
   
-  // segment primitives
+  // line segments
   using SegmentVector = std::vector<Segment>;
-  std::map<std::string, SegmentVector> _segmentPrimitives;
+  std::map<std::string, SegmentVector> _lineSegments;
 
   // Server that listens for visualization messages from basestation's VizManger
   UdpServer _server;

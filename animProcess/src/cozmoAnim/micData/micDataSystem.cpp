@@ -27,7 +27,6 @@
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
-#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 
 #include "audioEngine/plugins/ankiPluginInterface.h"
 
@@ -36,6 +35,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
@@ -69,6 +69,7 @@ namespace {
 
 # undef CONSOLE_GROUP
 
+  const std::string kMicSettingsFile = "micMuted";
 }
 
 namespace Anki {
@@ -98,6 +99,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 , _fftResultData(new FFTResultData())
 , _alexaState(AlexaSimpleState::Disabled)
 , _micMuted(false)
+, _abortAlexaScreen(false)
 , _context(context)
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
@@ -105,6 +107,8 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   _writeLocationDir = dataWriteLocation;
   _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation));
   _speechRecognizerSystem.reset(new SpeechRecognizerSystem(_context, this, triggerDataDir));
+  
+  _persistentFolder = Util::FileUtils::AddTrailingFileSeparator( dataPlatform->pathToResource(Util::Data::Scope::Persistent, "") );
 
   if (!_writeLocationDir.empty())
   {
@@ -132,10 +136,20 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
       // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
       return;
     }
+    
+    // saying "hey vector" should exit certain alexa debug screens and cancel auth. FaceInfoScreen isn't
+    // currently set up to handle threads, so set a flag that is handled in Update()
+    _abortAlexaScreen = true;
+    
     _micDataProcessor->VoiceTriggerWordDetection( info );
+    SendRecognizerDasLog( info, nullptr );
   };
   _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
   _micDataProcessor->Init();
+  
+  if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
+    ToggleMicMute();
+  }
 }
 
 MicDataSystem::~MicDataSystem()
@@ -210,16 +224,22 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
+  const bool wasMuted = _micMuted;
   if( _micMuted ) {
-    return;
+    // A single press when muted should unmute and then trigger a wakeword.
+    // This is an annoying code path since FaceInfoScreenManager::ToggleMute calls back into
+    // MicDataSystem. But FaceInfoScreenManager is already set up to check for various button clicks...
+    FaceInfoScreenManager::getInstance()->ToggleMute();
+    DEV_ASSERT( !_micMuted, "MicDataSystem.FakeTriggerWordDetect.StillMuted" );
   }
+  
   if( _buttonPressIsAlexa ) {
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
       Alexa* alexa = _context->GetAlexa();
       ASSERT_NAMED(alexa != nullptr, "");
-      alexa->NotifyOfTapToTalk();
+      alexa->NotifyOfTapToTalk( wasMuted );
     }
   }
   else {
@@ -227,7 +247,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     // This next check is probably not necessary, but for symmetry, the hey vector button press shouldn't trigger
     // if alexa is in the middle of an interaction
     if( _alexaState != AlexaSimpleState::Active ) {
-      _micDataProcessor->FakeTriggerWordDetection();
+      _micDataProcessor->FakeTriggerWordDetection( wasMuted );
     }
   }
 }
@@ -478,7 +498,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       if (_streamingComplete)
       {
         // our stream is complete, so clear out the current stream as long as our minimum streaming time has elapsed
-        constexpr BaseStationTime_t minStreamDuration_ns = kStreamingMinDuration_ms * 1000 * 1000;
+        uint32_t minStreamingDuration_ms = _context->GetShowAudioStreamStateManager()->GetMinStreamingDuration();
+        const BaseStationTime_t minStreamDuration_ns = minStreamingDuration_ms * 1000 * 1000;
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
         if (currTime_nanosec >= minStreamEnd_ns)
         {
@@ -507,8 +528,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
 
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-      const bool willStream = HasStreamingJob() && showStreamState->ShouldStreamAfterTriggerWordResponse();
-      SetWillStream(willStream);
+      SetWillStream(showStreamState->ShouldStreamAfterTriggerWordResponse());
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
@@ -545,6 +565,15 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         endTriggerDispTime_ns != 0 || _currentlyStreaming);
     }
   #endif
+  
+  if (_abortAlexaScreen) {
+    _abortAlexaScreen = false;
+    FaceInfoScreenManager::getInstance()->EnableAlexaScreen(ScreenName::None,"","");
+    Alexa* alexa = _context->GetAlexa();
+    if( alexa != nullptr ) {
+      alexa->CancelPendingAlexaAuth();
+    }
+  }
 
   // Try to retrieve the speaker latency from the AkAlsaSink plugin. We
   // only need to actually call into the plugin once (or until we get a
@@ -726,6 +755,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       if( (alexa != nullptr) && showStreamState->HasAnyAlexaResponse() ) {
         alexa->NotifyOfWakeWord( info.startSampleIndex, info.endSampleIndex );
       }
+      SendRecognizerDasLog( info, EnumToString(_alexaState) );
     };
     _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
 
@@ -766,6 +796,14 @@ void MicDataSystem::ToggleMicMute()
     if( bplComp != nullptr ) {
       bplComp->SetMicMute( _micMuted );
     }
+  }
+  
+  // add/remove persistent file
+  const auto muteFile = _persistentFolder + kMicSettingsFile;
+  if( _micMuted ) {
+    Util::FileUtils::TouchFile( muteFile );
+  } else if( Util::FileUtils::FileExists( muteFile ) ) {
+    Util::FileUtils::DeleteFile( muteFile );
   }
 }
   
@@ -830,6 +868,25 @@ void MicDataSystem::RequestConnectionStatus()
     PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");
     SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
+}
+
+void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info,
+                                         const char* stateStr) const
+{
+  MicData::MicDirectionData directionData;
+  MicData::DirectionIndex dominantDirection;
+  _micDataProcessor->GetLatestMicDirectionData(directionData, dominantDirection);
+  DASMSG( speech_recognized, "mic_data_system.speech_trigger_recognized", "Voice trigger recognized" );
+  DASMSG_SET( s1, (info.result != nullptr) ? info.result : "", "Recognized result" );
+  DASMSG_SET( s2, (stateStr != nullptr) ? stateStr : "", "Current Alexa UX State");
+  DASMSG_SET( s3, std::to_string(info.score).c_str(), "Recognizer Score");
+  DASMSG_SET( i1, dominantDirection, "Dominant Direction Index [0, 11], 12 is Unknown Direction" );
+  DASMSG_SET( i2, directionData.selectedDirection, "Selected Direction Index [0, 11], 12 is Unknown Direction" );
+  DASMSG_SET( i3, static_cast<int>(directionData.latestPowerValue),
+             "Latest power value, calculate dB by log(val) * 10" );
+  DASMSG_SET( i4, static_cast<int>(directionData.latestNoiseFloor),
+             "Latest floor noise value, calculate dB by log(val) * 10" );
+  DASMSG_SEND();
 }
 
 } // namespace MicData

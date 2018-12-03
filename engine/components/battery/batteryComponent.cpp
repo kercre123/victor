@@ -442,7 +442,6 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     _lastOnChargerContactsChange_sec = now_sec;
   }
 
-  OSState::getInstance()->SetOnChargeContacts(onChargeContacts);
 }
 
 

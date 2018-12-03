@@ -206,7 +206,6 @@ void BehaviorRollBlock::TransitionToRollSuccess()
   if(!ShouldStreamline()){
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RollBlockSuccess));
   }
-  BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
 }
 
   

@@ -15,13 +15,14 @@
 #define __AnimProcess_CozmoAnim_MicDataSystem_H_
 
 #include "micDataTypes.h"
-#include "clad/types/beatDetectorTypes.h"
 #include "coretech/common/shared/types.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 #include "util/global/globalDefinitions.h"
 #include "util/environment/locale.h"
 
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/beatDetectorTypes.h"
 
 #include <cstdint>
 #include <deque>
@@ -142,6 +143,7 @@ private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
   std::string _writeLocationDir = "";
+  std::string _persistentFolder;
   // Members for the the mic jobs
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
   std::shared_ptr<MicDataInfo> _currentStreamingJob;
@@ -188,6 +190,8 @@ private:
   AlexaSimpleState _alexaState;
   
   std::atomic<bool> _micMuted;
+  
+  std::atomic<bool> _abortAlexaScreen;
 
   void SetWillStream(bool willStream) const;
 
@@ -195,6 +199,9 @@ private:
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
+  void SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info,
+                            const char* stateStr) const;
+
   const AnimContext* _context;
 };
 

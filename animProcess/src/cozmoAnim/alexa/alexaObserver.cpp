@@ -50,6 +50,7 @@ AlexaObserver::AlexaObserver()
 , _authState{ AuthObserverInterface::State::UNINITIALIZED }
 , _authCheckCounter{ 0 }
 , _connectionStatus{ avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::DISCONNECTED }
+, _running{ true }
 {
 }
   
@@ -62,7 +63,8 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
                           const OnAVSConnectionChanged& onAVSConnectionChanged,
                           const OnSendCompleted& onSendCompleted,
                           const OnLogout& onLogout,
-                          const OnNotificationIndicator& onNotificationIndicator )
+                          const OnNotificationIndicator& onNotificationIndicator,
+                          const OnAlertState& onAlertState )
 {
   _onDialogUXStateChanged = onDialogUXStateChanged;
   _onRequestAuthorization = onRequestAuthorization;
@@ -73,6 +75,7 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
   _onSendCompleted = onSendCompleted;
   _onLogout = onLogout;
   _onNotificationIndicator = onNotificationIndicator;
+  _onAlertState = onAlertState;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,7 +83,7 @@ void AlexaObserver::Update()
 {
   // puts callables on the main thread. the sdk uses its Executor to run things sequentially, but it spins up a bunch
   // of threads
-  while( !_workQueue.empty() ) {
+  while( _running && !_workQueue.empty() ) {
     std::function<void(void)> func;
     {
       std::lock_guard<std::mutex> lg(_mutex);
@@ -90,6 +93,11 @@ void AlexaObserver::Update()
     if( func != nullptr ) {
       func();
     }
+  }
+  if( !_running ) {
+    std::lock_guard<std::mutex> lg(_mutex);
+    std::queue<QueueType> mtq; // variable name: exercise left to the reader
+    std::swap( _workQueue, mtq );
   }
 }
 
@@ -164,6 +172,19 @@ void AlexaObserver::onSetIndicator( avsCommon::avs::IndicatorState state )
   auto func = [this,state]() {
     if( _onNotificationIndicator ) {
       _onNotificationIndicator( state );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onAlertStateChange( const std::string& alertToken,
+                                        capabilityAgents::alerts::AlertObserverInterface::State state,
+                                        const std::string& reason )
+{
+  auto func = [this,alertToken,state]() {
+    if( _onAlertState ) {
+      _onAlertState( alertToken, state );
     }
   };
   AddToQueue( std::move(func) );
@@ -286,7 +307,9 @@ void AlexaObserver::onPlaybackError( SourceId id,
                                      const avsCommon::utils::mediaPlayer::ErrorType& type,
                                      std::string error )
 {
-  PRINT_NAMED_ERROR( "AlexaObserver.onPlaybackError", "Error '%s': %s", errorTypeToString(type).c_str(), error.c_str() );
+  LOG_WARNING( "AlexaObserver.onPlaybackError", "Error '%s': %s", errorTypeToString(type).c_str(), error.c_str() );
+  // now would be an ideal time to play "Sorry, music and radio playback are not supported on this device," but we
+  // don't have that clip. TODO: obtain this clip
   auto func = [this,id]() {
     if( _onSourcePlaybackChange != nullptr ) {
       _onSourcePlaybackChange( id, false );

@@ -32,7 +32,7 @@ namespace Vector {
 namespace {
   CONSOLE_VAR_RANGED( float, kHandReaction_DriveForwardSpeed_mmps, "Behavior.ReactToHand", 100.0f, 0.f, MAX_SAFE_WHEEL_SPEED_MMPS);
   CONSOLE_VAR_RANGED( float, kReactToHand_DriveDistanceFraction,   "Behavior.ReactToHand", 1.f, 0.f, 1.f);
-  const float kReactToHand_PitchAngleThresh_rad = DEG_TO_RAD(5);
+  CONSOLE_VAR_RANGED( float, kReactToHand_PitchAngleThresh_deg,    "Behavior.ReactToHand", 2.f, 0.f, 10.f);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -53,7 +53,7 @@ bool BehaviorReactToHand::IsRobotLifted() const
 {
   const Radians& pitchAngle_rad = this->GetBEI().GetRobotInfo().GetPitchAngle();
   const float pitchDelta_rad = (pitchAngle_rad - _pitchAngleStart_rad).ToFloat();
-  const bool isLifted = Util::IsFltGT(pitchDelta_rad, kReactToHand_PitchAngleThresh_rad);
+  const bool isLifted = Util::IsFltGT(pitchDelta_rad, DEG_TO_RAD(kReactToHand_PitchAngleThresh_deg));
   LOG_DEBUG("BehaviorReactToHand.IsRobotLifted", "Angle:%.1fdeg = %s",
             RAD_TO_DEG(pitchDelta_rad), (isLifted ? "YES" : "NO"));
   return isLifted;

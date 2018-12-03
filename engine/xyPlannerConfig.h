@@ -18,6 +18,7 @@
 
 #include "coretech/planning/engine/aStar.h"
 #include "coretech/planning/engine/bidirectionalAStar.h"
+#include "coretech/common/engine/math/ball.h"
 
 #include <numeric>
 

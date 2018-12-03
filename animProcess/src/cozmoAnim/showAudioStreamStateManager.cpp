@@ -12,6 +12,7 @@
 
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
+#include "micDataTypes.h"
 #include "clad/types/alexaTypes.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
@@ -21,13 +22,19 @@
 
 #include "audioEngine/audioTypeTranslator.h"
 
+namespace{
+const int32_t kUseDefaultStreamingDuration = -1;
+}
+
 namespace Anki {
 namespace Vector {
 
 ShowAudioStreamStateManager::ShowAudioStreamStateManager(const AnimContext* context)
 : _context(context)
+, _minStreamingDuration_ms(kUseDefaultStreamingDuration)
 {
-
+  // Initialize this value to prevent errors before the TriggerResponse is first set
+  _postAudioEvent.audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid;
 }
 
 
@@ -61,6 +68,7 @@ void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::S
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   _postAudioEvent = msg.postAudioEvent;
+  _minStreamingDuration_ms = msg.minStreamingDuration_ms;
   _shouldTriggerWordStartStream = msg.shouldTriggerWordStartStream;
   _shouldTriggerWordSimulateStream = msg.shouldTriggerWordSimulateStream;
   _getInAnimationTag = msg.getInAnimationTag;
@@ -206,6 +214,16 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
     _alexaResponses.push_back( std::move(info) );
   }
 }
+
+uint32_t ShowAudioStreamStateManager::GetMinStreamingDuration()
+{
+  if( _minStreamingDuration_ms > kUseDefaultStreamingDuration ){
+    return _minStreamingDuration_ms;
+  }
+  else{
+    return MicData::kStreamingDefaultMinDuration_ms;
+  }
+}
   
 bool ShowAudioStreamStateManager::HasAnyAlexaResponse() const
 {
@@ -231,7 +249,7 @@ bool ShowAudioStreamStateManager::HasValidAlexaUXResponse(AlexaUXState state) co
   return false;
 }
   
-bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state)
+bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ignoreGetIn)
 {
   const AlexaInfo* response = nullptr;
   for( const auto& info : _alexaResponses ) {
@@ -246,7 +264,7 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state)
     return false;
   }
   
-  if( !response->getInAnimName.empty() ) {
+  if( !response->getInAnimName.empty() && !ignoreGetIn ) {
     // TODO: (VIC-11516) it's possible that the UX state went back to idle for just a short while, in
     // which case the engine could be playing the get-out from the previous UX state, or worse, is
     // still in the looping animation for that ux state. it would be nice if the get-in below only

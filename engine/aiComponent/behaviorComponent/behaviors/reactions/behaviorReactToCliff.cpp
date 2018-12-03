@@ -501,7 +501,6 @@ Pose3d BehaviorReactToCliff::GetCliffPoseToLookAt() const
 void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
 {
   if(!kEnableVisualCliffExtension) {
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
     return;
   }
   
@@ -532,12 +531,9 @@ void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
   }
   compoundAction->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::DetectingOverheadEdges));
   
-  BehaviorSimpleCallback callback = [this] (void) -> void {
+  DelegateIfInControl(compoundAction, []() {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservationFinished", "");
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
-  };
-
-  DelegateIfInControl(compoundAction, callback);
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -32,7 +32,12 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/logging/DAS.h"
 #include "webServerProcess/src/webService.h"
+
+#include "clad/types/featureGateTypes.h"
+#include "engine/utils/cozmoFeatureGate.h"
+
 
 
 namespace Anki {
@@ -61,11 +66,12 @@ namespace Vector {
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBackFace,      "WasRotatingTooFast.Face.NumToLookBack", 5);
 
+  CONSOLE_VAR(bool,  kRenderGazeDirectionPoints,      "Vision.GazeDirection", false);
+
   static const char * const kLoggingChannelName = "FaceRecognizer";
-  static const char * const kIsNamedStringDAS = "1";
-  static const char * const kIsSessionOnlyStringDAS = "0";
 
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
+  static const Point3f kGazeGroundPointSize{100.f, 100.f, 100.f};
   
   static const std::string kWebVizObservedObjectsName = "observedobjects";
   static const std::string kWebVizNavMapName = "navmap";
@@ -213,9 +219,12 @@ namespace Vector {
       const FaceEntry& newFaceEntry = result.first->second;
       if(oldID > 0 && newID > 0 && newFaceEntry.HasStableID())
       {
-        Util::sInfoF("robot.vision.update_face_id",
-                     {{DDATA, std::to_string(oldID).c_str()}},
-                     "%d", newID);
+        DASMSG(robot.vision.update_face_id,
+               "robot.vision.update_face_id",
+               "Face ID updated");
+        DASMSG_SET(i1, oldID, "Old ID");
+        DASMSG_SET(i2, newID, "New ID");
+        DASMSG_SEND();
       }
 
     } else if(oldID > 0){
@@ -467,6 +476,11 @@ namespace Vector {
     faceEntry->face.SetHeadPose(headPoseWrtWorldOrigin);
     faceEntry->numTimesObserved++;
 
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    if (featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
+      AddOrUpdateGazeDirection(faceEntry->face);
+    }
+
     // Keep up with how many times non-tracking-only faces have been seen facing
     // facing the camera (and thus potentially recognizable)
     if(faceEntry->face.IsFacingCamera())
@@ -478,26 +492,33 @@ namespace Vector {
     const bool isNamed = faceEntry->IsNamed();
     if(faceEntry->numTimesObserved == 1 && isNamed)
     {
-      // Log to DAS that we immediately recognized a new face with a name
-      Util::sInfoF("robot.vision.face_recognition.immediate_recognition", {{DDATA, kIsNamedStringDAS}},
-                   "%d", faceEntry->face.GetID());
+      DASMSG(robot.vision.face_recognition.immediate_recognition,
+             "robot.vision.face_recognition.immediate_recognition",
+             "We immediately recognized a new face with a name");
+      DASMSG_SET(i1, faceEntry->face.GetID(), "Face ID");
+      DASMSG_SEND();
     }
     else if(!isNamed && faceEntry->face.GetID() > 0 && faceEntry->numTimesObservedFacingCamera == kNumTimesToSeeFrontalToBeStable)
     {
-      // Log to DAS that we've seen this session-only face for awhile and not
-      // recognized it as someone else (so this is a stable session-only face)
-      // NOTE: we do this just once, when we cross the num times observed threshold
-      Util::sInfoF("robot.vision.face_recognition.persistent_session_only", {{DDATA, kIsSessionOnlyStringDAS}},
-                   "%d", faceEntry->face.GetID());
+      DASMSG(robot.vision.face_recognition.persistent_session_only,
+             "robot.vision.face_recognition.persistent_session_only",
+             "We have seen a session-only face for awhile and not recognized it as someone else (so this is a stable "
+             "session-only face) NOTE: we do this just once, when we cross the num times observed threshold");
+      DASMSG_SET(i1, faceEntry->face.GetID(), "Face ID");
+      DASMSG_SEND();
 
       // HACK: increment the counter again so we don't send this multiple times if not seeing frontal anymore
       faceEntry->numTimesObservedFacingCamera++;
     }
     else if(timeSinceLastSeen_ms > kTimeUnobservedBeforeReLoggingToDAS_ms && faceEntry->HasStableID())
     {
-      // Log to DAS that we are re-seeing this face after not having seen it for a bit
-      // (and recognizing it as an existing named person or stable session-only ID)
-      Util::sInfoF("robot.vision.face_recognition.re_recognized", {{DDATA, isNamed ? kIsNamedStringDAS : kIsSessionOnlyStringDAS}}, "%d", faceEntry->face.GetID());
+      DASMSG(robot.vision.face_recognition.persistent_session_only,
+             "robot.vision.face_recognition.persistent_session_only",
+             "We are re-seeing a face after not having seen it for a bit (and recognizing it as an existing named "
+             "person or stable session-only ID)");
+      DASMSG_SET(i1, faceEntry->face.GetID(), "Face ID");
+      DASMSG_SET(i2, isNamed, "1 if this is a named face, 0 or null otherwise");
+      DASMSG_SEND();
     }
 
     // Wait to report this face until we've seen it enough times to be convinced it's
@@ -606,6 +627,37 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result FaceWorld::AddOrUpdateGazeDirection(Vision::TrackedFace& face)
+  {
+    // Only update the gaze direction for the given face if
+    // we have succesfully found parts for this face which are
+    // needed to determine the rotation of the head pose. The
+    // HasEyes method is proxy for this.
+    if (face.HasEyes())
+    {
+      auto& entry = _gazeDirection[face.GetID()];
+      entry.Update(face);
+
+      if (entry.GetExpired(face.GetTimeStamp()))
+      {
+        _gazeDirection.erase(face.GetID());
+      }
+      else
+      {
+        const bool isGazeStable = entry.IsStable();
+        face.SetGazeDirectionStable(isGazeStable);
+        if (isGazeStable)
+        {
+          auto faceDirectionAverage = entry.GetGazeDirectionAverage();
+          Pose3d gazeDirectionPose(0.f, Z_AXIS_3D(), faceDirectionAverage, _robot->GetWorldOrigin());
+          face.SetGazeDirectionPose(gazeDirectionPose);
+        }
+      }
+    }
+    return RESULT_OK;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result FaceWorld::Update(const std::list<Vision::TrackedFace>& observedFaces)
   {
     ANKI_CPU_PROFILE("FaceWorld::Update");
@@ -635,11 +687,12 @@ namespace Vector {
 
         if(faceIter->second.HasStableID())
         {
-          // Log to DAS the removal of any "stable" face that gets removed because
-          // we haven't seen it in awhile
-          Util::sInfoF("robot.vision.remove_unobserved_session_only_face",
-                       {{DDATA, std::to_string(face.GetTimeStamp()).c_str()}},
-                       "%d", faceIter->first);
+          DASMSG(robot.vision.remove_unobserved_session_only_face,
+                 "robot.vision.remove_unobserved_session_only_face",
+                 "Removing a 'stable' face because we have not seen it in awhile");
+          DASMSG_SET(i1, faceIter->first, "Face ID");
+          DASMSG_SET(i2, face.GetTimeStamp(), "Face time stamp");
+          DASMSG_SEND();
         }
 
         RemoveFace(faceIter); // Increments faceIter!
@@ -941,7 +994,7 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::DrawFace(FaceEntry& faceEntry, bool drawInImage)
+  void FaceWorld::DrawFace(FaceEntry& faceEntry, bool drawInImage) const
   {
     if(!ANKI_DEV_CHEATS) {
       // Don't draw anything in shipping builds
@@ -958,6 +1011,31 @@ namespace Vector {
                                                                               trackedFace.GetHeadPose(),
                                                                               drawFaceColor);
 
+    const auto* featureGate = _robot->GetContext()->GetFeatureGate();
+    if (kRenderGazeDirectionPoints && featureGate->IsFeatureEnabled(FeatureType::GazeDirection)) {
+      const auto& entry = _gazeDirection.find(trackedFace.GetID());
+      if (entry != _gazeDirection.end()) {
+        const auto& gazeDirection = entry->second;
+        const s32 startingObjectId = 2345;
+
+        const auto currentGazeDirection = gazeDirection.GetCurrentGazeDirection();
+        Pose3d currentGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentGazeDirection));
+        faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
+                                                                                kGazeGroundPointSize,
+                                                                                currentGazePose,
+                                                                                ::Anki::NamedColors::ORANGE);
+
+        if (gazeDirection.IsStable()) {
+          const auto averageGazeDirection = gazeDirection.GetGazeDirectionAverage();
+          Pose3d averageGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageGazeDirection));
+          faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
+                                                                                  kGazeGroundPointSize,
+                                                                                  averageGazePose,
+                                                                                  ::Anki::NamedColors::GREEN);
+        }
+      }
+    }
+
     if(drawInImage)
     {
       // Draw box around recognized face (with ID) now that we have the real ID set
@@ -966,7 +1044,7 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::Enroll(Vision::FaceID_t faceID)
+  void FaceWorld::Enroll(Vision::FaceID_t faceID, bool forceNewID)
   {
     SetFaceEnrollmentComplete(false);
     
@@ -976,15 +1054,13 @@ namespace Vector {
     const s32 numEnrollmentsRequired = (sessionOnly ? -1 :
                                         (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry);
 
-    _robot->GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight,
-                                                      faceID,
-                                                      numEnrollmentsRequired);
+    _robot->GetVisionComponent().SetFaceEnrollmentMode(faceID, numEnrollmentsRequired, forceNewID);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::Enroll(const SmartFaceID& faceID)
+  void FaceWorld::Enroll(const SmartFaceID& faceID, bool forceNewID)
   {
-    Enroll(faceID.GetID());
+    Enroll(faceID.GetID(), forceNewID);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

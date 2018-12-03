@@ -63,6 +63,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/math/numericCast.h"
 
 #include "webServerProcess/src/webVizSender.h"
@@ -1528,18 +1529,6 @@ bool ICozmoBehavior::CancelSelf()
   return false;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame) const
-{
-  /**auto robotExternalInterface = GetBEI().GetRobotExternalInterface().lock();
-  if(broadcastToGame && (robotExternalInterface != nullptr)){
-    robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
-  }**/
-  PRINT_CH_INFO("Behaviors", "ICozmoBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetDebugLabel().c_str(), EnumToString(objectiveAchieved));
-  // send das event
-  Util::sInfoF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetDebugLabel().c_str());
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartSetMotionProfile(const PathMotionProfile& motionProfile)
@@ -1689,10 +1678,15 @@ void ICozmoBehavior::SmartEnableEngineResponseToTriggerWord()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger, 
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
-                                                    StreamAndLightEffect streamAndLightEffect)
+                                                    StreamAndLightEffect streamAndLightEffect,
+                                                    int32_t minStreamingDuration_ms)
 {
   _pushedCustomTriggerResponse = true;
-  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), getInAnimTrigger, postAudioEvent, streamAndLightEffect);
+  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(),
+                                                                   getInAnimTrigger,
+                                                                   postAudioEvent,
+                                                                   streamAndLightEffect,
+                                                                   minStreamingDuration_ms);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

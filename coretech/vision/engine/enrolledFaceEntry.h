@@ -107,6 +107,7 @@ public:
   
   FaceID_t GetFaceID() const { return _faceID; }
   FaceID_t GetPreviousFaceID() const { return _prevID; }
+  void     SetPreviousFaceID(FaceID_t prevID) { _prevID = prevID; }
   
   TrackingID_t   GetTrackingID() const { return _trackID; }
   TrackingID_t   GetPreviousTrackingID() const { return _prevTrackID; }

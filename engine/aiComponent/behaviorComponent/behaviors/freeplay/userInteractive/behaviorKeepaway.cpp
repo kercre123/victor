@@ -623,11 +623,7 @@ void BehaviorKeepaway::TransitionToGetOutBored()
   StopIdleAnimation();
   CancelDelegates(false);
 
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetOutBored),
-                      [this](){
-                        BehaviorObjectiveAchieved(BehaviorObjective::KeepawayQuitBored);
-                        // Don't delegate, cancel behavior.
-                      });
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetOutBored));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -637,11 +633,7 @@ void BehaviorKeepaway::TransitionToSoloGetOut()
   StopIdleAnimation();
   CancelDelegates(false);
 
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceWinSession),
-                      [this](){
-                        BehaviorObjectiveAchieved(BehaviorObjective::KeepawayQuitBored);
-                        // Don't delegate, cancel behavior.
-                      });
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceWinSession));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

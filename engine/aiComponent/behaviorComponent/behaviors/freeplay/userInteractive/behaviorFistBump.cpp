@@ -302,12 +302,6 @@ void BehaviorFistBump::BehaviorUpdate()
     }
     case State::CompleteFail:
     {
-      // Should only be sending FistBumpSuccess or FistBumpLeftHanging if this not the sparks Fist bump
-      // since we don't want the sparks fist bumps to reset the cooldown timer in the trigger strategy.
-      BehaviorObjectiveAchieved(_dVars.state == State::CompleteSuccess ?
-                                BehaviorObjective::FistBumpSuccess :
-                                BehaviorObjective::FistBumpLeftHanging);
-
       if(GetBEI().HasMoodManager()){
         auto& moodManager = GetBEI().GetMoodManager();
         moodManager.TriggerEmotionEvent(_dVars.state == State::CompleteSuccess ?
@@ -316,13 +310,11 @@ void BehaviorFistBump::BehaviorUpdate()
                                         MoodManager::GetCurrentTimeInSeconds());
       }
 
-      
       // Fall through
     }
     case State::Complete:
     {
       ResetTrigger(_iConfig.updateLastCompletionTime);
-      BehaviorObjectiveAchieved(BehaviorObjective::FistBumpComplete);
       CancelSelf();
       return;
     }

@@ -13,19 +13,10 @@
 #include "quadTree.h"
 
 #include "coretech/common/engine/math/bresenhamLine2d.h"
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/vision/engine/profiler.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 #include "util/console/consoleInterface.h"
-#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
-
-#include <limits>
-#include <memory>
-#include <typeinfo>
-#include <type_traits>
-#include <unordered_map>
 
 #define LOG_CHANNEL "quadTreeProcessor"
 
@@ -143,7 +134,7 @@ QuadTreeProcessor::AnyOfRays( const Point2f& start,
         _quadTree->GetMaxTreeHeight()));
     while(!bresIter.Done()) {
       const Point2i& rasterPoint = bresIter.Get();
-      decltype(localCache)::const_iterator got = localCache.find(rasterPoint);
+      auto got = localCache.find(rasterPoint);
       if(got == localCache.end()) {
         // compute new result and insert into the cache
         const auto qnode = ((const QuadTree*)_quadTree)->GetNodeAtAddress(GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
@@ -239,22 +230,6 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
   return output;
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapDataPtr& data)
-{
-  DEV_ASSERT_MSG(IsCached(filledType),
-                 "QuadTreeProcessor.FillBorder.FilledTypeNotCached",
-                 "%s is not cached, which is needed for fast processing operations",
-                 EContentTypeToString(filledType));
-  NodePredicate innerCheckFunc = [&filledType](MemoryMapDataConstPtr inside) {
-    return (filledType == inside->type);
-  };
-  NodePredicate outerCheckFunc = [&fillingTypeFlags](MemoryMapDataConstPtr outside) {
-    return IsInEContentTypePackedType(outside->type, fillingTypeFlags);
-  };
-  return FillBorder( innerCheckFunc, outerCheckFunc, data );
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data)
 {

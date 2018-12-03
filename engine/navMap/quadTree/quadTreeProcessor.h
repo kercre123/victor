@@ -66,12 +66,6 @@ public:
 
   // return the size of the area currently explored
   inline double GetExploredRegionAreaM2() const { return _totalExploredArea_m2; }
-  // return the size of the area currently flagged as interesting edges
-  inline double GetInterestingEdgeAreaM2() const { return _totalInterestingEdgeArea_m2; }
-  
-  // fills content regions of filledType that have borders with any content in fillingTypeFlags, converting the filledType
-  // region to the given data
-  bool FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapDataPtr& data);
   
   // fills inner regions satisfying innerPred( inner node ) && outerPred(neighboring node), converting
   // the inner region to the given data

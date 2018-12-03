@@ -201,7 +201,7 @@ namespace Vector {
       size_t countMismatch = 0;
       for(int rayIdx=0; rayIdx<=300; ++rayIdx) {
         const auto start = std::chrono::system_clock::now();
-        bool inCollision1Ray = _map->AnyOf({{0.f, 0.f}, testRayPoints[rayIdx]}, collisionCheckFun);
+        bool inCollision1Ray = _map->AnyOf(FastPolygon({{0.f, 0.f}, testRayPoints[rayIdx]}), collisionCheckFun);
         const auto basic_time_us = (std::chrono::system_clock::now() - start).count();
         singleRayCheckTimes.push_back(basic_time_us);
 

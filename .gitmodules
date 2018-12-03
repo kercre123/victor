@@ -7,3 +7,6 @@
 [submodule "lib/util/source/3rd/minimp3"]
 	path = lib/util/source/3rd/minimp3
 	url = git@github.com:anki/minimp3.git
+[submodule "tools/sdk/vector-python-sdk-private"]
+	path = tools/sdk/vector-python-sdk-private
+	url = git@github.com:anki/vector-python-sdk-private.git

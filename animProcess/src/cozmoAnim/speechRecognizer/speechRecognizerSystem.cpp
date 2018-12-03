@@ -157,9 +157,12 @@ void SpeechRecognizerSystem::SetupConsoleFuncs()
     context->channel->WriteLog("Update Alexa Playback Recognizer %s", result.c_str());
   };
 
-  sConsoleFuncs.emplace_front("Update Recognizer", std::move(updateVectorRecognizerModel), CONSOLE_GROUP_VECTOR, "");
-  sConsoleFuncs.emplace_front("Update Recognizer", std::move(updateAlexaRecognizerModel), CONSOLE_GROUP_ALEXA, "");
-  sConsoleFuncs.emplace_front("Update Recognizer", std::move(updateAlexaPlaybackRecognizerModel), CONSOLE_GROUP_ALEXA_PLAYBACK, "");
+  sConsoleFuncs.emplace_front("Update Vector Recognizer", std::move(updateVectorRecognizerModel),
+                              CONSOLE_GROUP_VECTOR, "");
+  sConsoleFuncs.emplace_front("Update Alexa Recognizer", std::move(updateAlexaRecognizerModel),
+                              CONSOLE_GROUP_ALEXA, "");
+  sConsoleFuncs.emplace_front("Update Alexa Playback Recognizer", std::move(updateAlexaPlaybackRecognizerModel),
+                              CONSOLE_GROUP_ALEXA_PLAYBACK, "");
   
 #endif
   _micDataSystem->GetSpeakerLatency_ms(); // Fix compiler error when ANKI_DEV_CHEATS is not enabled

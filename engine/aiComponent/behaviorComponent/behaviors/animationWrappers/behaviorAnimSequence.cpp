@@ -23,22 +23,29 @@ namespace Vector {
 using namespace ExternalInterface;
   
 namespace{
-static const char* kAnimTriggerKey = "animTriggers";
-static const char* kAnimNamesKey   = "animNames";
-static const char* kLoopsKey       = "num_loops";
-static const char* kTracksToLock   = "tracksToLock";
+const char* kAnimTriggerKey = "animTriggers";
+const char* kAnimNamesKey   = "animNames";
+const char* kLoopsKey       = "num_loops";
+const char* kTracksToLock   = "tracksToLock";
+const char* kRenderInEyeHue = "renderInEyeHue";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAnimSequence::InstanceConfig::InstanceConfig() {
-  numLoops = 0;
+BehaviorAnimSequence::InstanceConfig::InstanceConfig() :
+  numLoops(0),
+  tracksToLock(static_cast<u8>(AnimTrackFlag::NO_TRACKS)),
+  renderInEyeHue(true)
+{
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAnimSequence::DynamicVariables::DynamicVariables() {
-  sequenceLoopsDone = 0;
+BehaviorAnimSequence::DynamicVariables::DynamicVariables() :
+  sequenceLoopsDone(0)
+{
+
 }
 
 
@@ -80,6 +87,8 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config)
       }
     }
   }
+
+  _iConfig.renderInEyeHue = config.get(kRenderInEyeHue, true).asBool();
 }
   
   
@@ -91,6 +100,7 @@ void BehaviorAnimSequence::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kAnimNamesKey,
     kLoopsKey,
     kTracksToLock,
+    kRenderInEyeHue,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -165,18 +175,20 @@ IActionRunner* BehaviorAnimSequence::GetAnimationAction()
   // create sequence with all triggers
   CompoundActionSequential* sequenceAction = new CompoundActionSequential();
   for (AnimationTrigger trigger : _iConfig.animTriggers) {
-    IAction* playAnim = new ReselectingLoopAnimationAction(trigger,
+    ReselectingLoopAnimationAction* playAnim = new ReselectingLoopAnimationAction(trigger,
                                                            numLoops,
                                                            interruptRunning,
                                                            tracksToLock);
+    playAnim->SetRenderInEyeHue(_iConfig.renderInEyeHue);
     sequenceAction->AddAction(playAnim);
   }
 
   for (const auto& name : _iConfig.animationNames) {
-    IAction* playAnim = new PlayAnimationAction(name,
+    PlayAnimationAction* playAnim = new PlayAnimationAction(name,
                                                 numLoops,
                                                 interruptRunning,
                                                 tracksToLock);
+    playAnim->SetRenderInEyeHue(_iConfig.renderInEyeHue);
     sequenceAction->AddAction(playAnim);
   }
   return sequenceAction;

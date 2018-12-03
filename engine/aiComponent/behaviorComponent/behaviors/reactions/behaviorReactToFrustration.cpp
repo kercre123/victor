@@ -153,7 +153,6 @@ void BehaviorReactToFrustration::AnimationComplete()
     DriveToPoseAction* action = new DriveToPoseAction(randomPoseRotAndTrans.GetWithRespectToRoot(), kForceHeadDown);
     DelegateIfInControl(action); // finish behavior when we are done
   }
-  BehaviorObjectiveAchieved(BehaviorObjective::ReactedToFrustration);
 }
 
 

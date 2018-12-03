@@ -37,7 +37,7 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   virtual void InitBehavior() override;
   virtual bool WantsToBeActivatedBehavior() const override;
@@ -56,11 +56,12 @@ private:
   void DisableWakeWordDetection();
 
   struct InstanceConfig {
-    InstanceConfig();
+    InstanceConfig(const Json::Value& config);
     ICozmoBehaviorPtr lookAtUserBehavior;
     AnimationTrigger  listenGetInAnimTrigger;
     AnimationTrigger  listenGetOutAnimTrigger;
     AnimationTrigger  celebrationAnimTrigger;
+    int32_t           simulatedStreamingDuration_ms;
     uint8_t           numWakeWordsToCelebrate;
   };
 

@@ -29,6 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
@@ -83,6 +84,9 @@ namespace {
   const char* kPushResponseKey                     = "pushResponse";
   const char* kNotifyOnWifiErrorsKey               = "notifyOnWifiErrors";
   const char* kNotifyOnCloudErrorsKey              = "notifyOnCloudErrors";
+
+  // If supplied, any received intent not whitelisted will be consumed and the "unknown intent" outcome execized
+  const char* kIntentWhitelistKey                  = "whiteListedIntents";
 
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
@@ -242,9 +246,20 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
                         GetDebugLabel().c_str());
   }
 
+  if( !config[kIntentWhitelistKey].isNull() )
+  {
+    const Json::Value& whiteListedIntents = ConditionUserIntentPending::GenerateConfig(config[kIntentWhitelistKey]);
+    _iVars.intentWhitelistCondition = std::make_unique<ConditionUserIntentPending>(whiteListedIntents);
+  }
+
   SetRespondToTriggerWord( true );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Public destructor must be explicitly defined to allow std::unique_ptr<FwdDeclaredType> (ConditionUserIntentPending)
+BehaviorReactToVoiceCommand::~BehaviorReactToVoiceCommand()
+{
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
@@ -262,7 +277,8 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kExitAfterListeningIfNotStreamingKey,
     kPushResponseKey,
     kNotifyOnWifiErrorsKey,
-    kNotifyOnCloudErrorsKey
+    kNotifyOnCloudErrorsKey,
+    kIntentWhitelistKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -301,6 +317,12 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   {
     RobotInterface::RobotToEngineTag::triggerWordDetected
   });
+
+  if( nullptr != _iVars.intentWhitelistCondition )
+  {
+    _iVars.intentWhitelistCondition->SetOwnerDebugLabel(GetDebugLabel());
+    _iVars.intentWhitelistCondition->Init(GetBEI());
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -394,6 +416,12 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
                   (int)GetReactionDirection(),
                   _dVars.expectingStream ? "expecting" : "not expecting");
 
+  if( nullptr != _iVars.intentWhitelistCondition )
+  {
+    const bool setActive = true;
+    _iVars.intentWhitelistCondition->SetActive(GetBEI(), setActive);
+  }
+
   StartListening();
 }
 
@@ -431,6 +459,12 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
       }
     }
     gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordEnd) );
+  }
+
+  if( nullptr != _iVars.intentWhitelistCondition )
+  {
+    const bool setActive = false;
+    _iVars.intentWhitelistCondition->SetActive(GetBEI(), setActive);
   }
 
   // we've done all we can, now it's up to the next behavior to consume the user intent
@@ -787,6 +821,14 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
                    "Heard an intent");
 
     bool shouldTransitionToIntentFeedback = true;
+
+    if( nullptr != _iVars.intentWhitelistCondition && !_iVars.intentWhitelistCondition->AreConditionsMet(GetBEI()) )
+    {
+      PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.NotOnWhitelist",
+                     "Heard an intent, but it was not on the intent whitelist");
+      uic.DropAnyUserIntent();
+      _dVars.intentStatus = EIntentStatus::IntentUnknown;
+    }
 
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if ( uic.IsUserIntentPending( unmatched ) )

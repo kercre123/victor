@@ -9,7 +9,7 @@ FORCE ?= 0
 current_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GIT_ROOT := $(abspath $(current_dir)/../../..)
 PYTHON_STRUCTURE := vector/messaging
-PYTHON_SDK_ROOT := $(abspath $(current_dir)/../vector-sdk)
+PYTHON_SDK_ROOT := $(abspath $(current_dir)/../vector-python-sdk-private)
 PYTHON_OUT := $(abspath $(PYTHON_SDK_ROOT)/$(PYTHON_STRUCTURE))
 GATEWAY_GO_FILES := $(filter-out $(GIT_ROOT)/cloud/gateway/config_mac.go,$(wildcard $(GIT_ROOT)/cloud/gateway/*.go))
 
@@ -58,19 +58,19 @@ pylint: pylint_tests pylint_examples pylint_main
 
 autopep: .PHONY
 	python3 -m pip install autopep8
-	python3 -m autopep8 --ignore E501,E402 --in-place $(shell find ../vector-sdk/examples -type f -name "*.py") ../vector-sdk/tests/*.py ../vector-sdk/tests/automated/*.py ../vector-sdk/vector/*.py
+	python3 -m autopep8 --ignore E501,E402 --in-place $(shell find ../vector-python-sdk-private/examples -type f -name "*.py") ../vector-python-sdk-private/tests/*.py ../vector-python-sdk-private/tests/automated/*.py ../vector-python-sdk-private/vector/*.py
 
 pylint_main: autopep
 	@echo "> Running pylint on vector module"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/vector -type f -d 1 -name "*.py") || exit 0
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-python-sdk-private/vector -type f -d 1 -name "*.py") || exit 0
 
 pylint_tests: autopep
 	@echo "> Running pylint on test files"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 -name "*.py") || exit 0
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-python-sdk-private/tests ../vector-python-sdk-private/tests/automated -type f -d 1 -name "*.py") || exit 0
 
 pylint_examples: autopep
 	@echo "> Running pylint on vector examples"
-	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-sdk/examples -type f -name "*.py") || exit 0
+	@python3 -m pylint --rcfile=.pylint $(shell find ../vector-python-sdk-private/examples -type f -name "*.py") || exit 0
 
 
 # Unused flatbuffers target. Keeping this for posterity
@@ -325,7 +325,7 @@ help: .PHONY
 	@env -i make -rnpq --no-print-directory .DEFAULT 2>/dev/null | grep "^[^%[:space:]]*:" | grep -v Makefile | awk '{ print substr($$1, 1, length($$1)-1) }' | sort | uniq | column
 
 IGNORE_FILES := test_backpack_light_profiles.py test_backpack_lights.py test_cube_lights.py test_say_text.py
-TEST_FILES := $(shell find ../vector-sdk/tests ../vector-sdk/tests/automated -type f -d 1 $(foreach file,$(IGNORE_FILES),| grep -v $(file)))
+TEST_FILES := $(shell find ../vector-python-sdk-private/tests ../vector-python-sdk-private/tests/automated -type f -d 1 $(foreach file,$(IGNORE_FILES),| grep -v $(file)))
 
 $(addprefix run_,$(TEST_FILES)): run_%: % .require_ip
 	@mkdir -p logs

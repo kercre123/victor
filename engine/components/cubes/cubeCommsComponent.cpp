@@ -512,6 +512,14 @@ void CubeCommsComponent::HandleAppEvents(const AnkiEvent<external_interface::Gat
     if( _robot->HasGatewayInterface() ) {
       auto* msg = new external_interface::CubesAvailableResponse;
       msg->mutable_factory_ids()->Reserve( (int)_cubeScanResults.size() );
+
+      // TODO(str): Hack to make the FinalCheck App screen detect cube de-tabbing properly, see VIC-12123
+      // If we haven't seen any cubes yet, run a scan
+      if(_cubeScanResults.empty() && GetCubeConnectionState() == CubeConnectionState::UnconnectedIdle){
+        const bool autoConnectAfterScan = false;
+        StartScanningForCubes(autoConnectAfterScan);
+      }
+
       int i=0;
       for( const auto& p : _cubeScanResults ) {
         msg->mutable_factory_ids()->Add();

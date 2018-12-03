@@ -327,6 +327,13 @@ protected:
                                   const f32 relativeToY,
                                   const MakeRelativeMode makeRelative);
 
+  void SendPushDrivingAnimations(const std::string& lockName,
+                                 const AnimationTrigger& startAnim,
+                                 const AnimationTrigger& loopAnim,
+                                 const AnimationTrigger& endAnim);
+  
+  void SendRemoveDrivingAnimations(const std::string& lockName);
+  
   // ====== Accessors =====
   s32 GetStepTimeMS() const;
   webots::Supervisor& GetSupervisor();

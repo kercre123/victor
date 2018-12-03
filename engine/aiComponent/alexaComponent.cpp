@@ -111,10 +111,14 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
   
   // setup anim tags for getins to various ux states
   auto& animComponent = robot->GetAnimationComponent();
-  _animTags = animComponent.SetAlexaUXResponseCallback([this](unsigned int idx){
+  _animTags = animComponent.SetAlexaUXResponseCallback([this](unsigned int idx, bool playing){
     const auto uxState = static_cast<AlexaUXState>(idx);
-    _uxResponseInfo[uxState].waitingForGetInCompletion = false;
-    _uxResponseInfo[uxState].timeout_s = false;
+    if( playing ) {
+      // only set to wait if this animation was passed as a get-in. the same anim may be used elsewhere
+      _uxResponseInfo[uxState].SetWaiting( _uxResponseInfo[uxState].hasAnim );
+    } else {
+      _uxResponseInfo[uxState].SetWaiting( false );
+    }
   });
 }
 
@@ -150,7 +154,7 @@ void AlexaComponent::UpdateDependent(const AICompMap& dependentComps)
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   for( auto& response : _uxResponseInfo ) {
     if( (response.second.timeout_s > 0.0f) && (currTime_s > response.second.timeout_s) ) {
-      response.second.waitingForGetInCompletion = false;
+      response.second.SetWaiting( false );
     }
   }
   
@@ -369,10 +373,8 @@ void AlexaComponent::HandleNewUXState( AlexaUXState state )
     // alexa exited from idle. the anim process is likely playing some getin right now if we pushed one.
     auto it = _uxResponseInfo.find( state );
     if( it != _uxResponseInfo.end() ) {
-      it->second.waitingForGetInCompletion = it->second.hasAnim;
-      // if the ux state change happens before anim has received our new anim response, anim and engine
-      // will be out of sync. Just in case, make sure this times out in a few seconds.
-      it->second.timeout_s = kAnimTimeout_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      const bool shouldWait = it->second.hasAnim;
+      it->second.SetWaiting( shouldWait );
     }
   }
   _uxState = state;
@@ -428,6 +430,19 @@ std::string AlexaComponent::GetAnimName( AnimationTrigger trigger ) const
     }
   }
   return animName;
+}
+  
+void AlexaComponent::AlexaUXResponseInfo::SetWaiting( bool waiting )
+{
+  if( waiting ) {
+    waitingForGetInCompletion = true;
+    // if the ux state change happens before anim has received our new anim response, anim and engine
+    // will be out of sync. Just in case, make sure this times out in a few seconds.
+    timeout_s = kAnimTimeout_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  } else {
+    waitingForGetInCompletion = false;
+    timeout_s = -1.0f;
+  }
 }
 
   

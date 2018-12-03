@@ -15,13 +15,7 @@
 #include "quadTreeProcessor.h"
 
 #include "coretech/common/engine/math/point_impl.h"
-
 #include "util/math/math.h"
-#include "util/cpuProfiler/cpuProfiler.h"
-
-#include <unordered_map>
-#include <limits>
-#include <algorithm>
 
 namespace Anki {
 namespace Vector {
@@ -299,36 +293,27 @@ QuadTreeNode::NodeCPtrVector QuadTreeNode::GetNeighbors() const
 // Fold Implementations
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-namespace {
-  // helper to make sure that we have a valid pointer if we are performing multithreaded operations
-  template<class T>
-  std::shared_ptr<T> PreservePointer(const std::shared_ptr<T>& ptr) {
-    const std::weak_ptr<T> weak = ptr;
-    return weak.lock();
-  }
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
+void QuadTreeNode::Fold(FoldFunctor& accumulator, FoldDirection dir)
 {
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
-  for ( auto& cPtr : _childrenPtr ) {
-    if ( auto observe = PreservePointer<QuadTreeNode>(cPtr) ) { observe->Fold(accumulator, dir); }
+  for ( const auto& cPtr : _childrenPtr ) {
+    cPtr->Fold(accumulator, dir); 
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
-{ 
-  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-  
-  for ( const auto& cPtr : _childrenPtr )  {
-    if ( auto observe = PreservePointer<const QuadTreeNode>(cPtr) ) { observe->Fold(accumulator, dir); }
+void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, FoldDirection dir) const
+{
+  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
+
+  for ( const auto& cPtr : _childrenPtr ) {
+    cPtr->Fold(accumulator, dir); 
   }
-  
+
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
 
@@ -358,76 +343,65 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
 
 */
 
-void QuadTreeNode::Fold(FoldFunctor accumulator, const FoldableRegion& region, FoldDirection dir)
-{
-  if ( region.IntersectsQuad(_boundingBox) )  {    
-    // check if we can stop doing overlap checks
-    if ( region.ContainsQuad(_boundingBox) ) {
-      Fold(accumulator, dir);
-    } else {
-      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+namespace {
+  inline u8 GetChildFilterMask(const Point2f& center, const AxisAlignedQuad& aabb) {
+    u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
 
-      // filter out child nodes if we know the region won't intersect based off of AABB checks
-      if ( IsSubdivided() ) {      
-        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
+    if ( aabb.GetMinVertex().x() > center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
+    if ( aabb.GetMaxVertex().x() < center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
+    if ( aabb.GetMinVertex().y() > center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
+    if ( aabb.GetMaxVertex().y() < center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
 
-        const AxisAlignedQuad& aabb = region.GetBoundingBox();
-        if ( aabb.GetMinVertex().x() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
-        if ( aabb.GetMaxVertex().x() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
-        if ( aabb.GetMinVertex().y() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
-        if ( aabb.GetMaxVertex().y() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
-
-        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
-        u8 idx = 0;
-        do {
-          if (childFilter & 1) { 
-            if ( auto observe = PreservePointer<QuadTreeNode>(_childrenPtr[idx]) ) { 
-              observe->Fold(accumulator, region, dir);
-            }
-          }
-          ++idx;
-        } while ( childFilter >>= 1 ); 
-      }
-
-      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-    }
-  }
+    return childFilter;
+  }  
 }
 
-void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FoldableRegion& region, FoldDirection dir) const
+void QuadTreeNode::Fold(FoldFunctor& accumulator, const FoldableRegion& region, FoldDirection dir)
 {
-  if ( region.IntersectsQuad(_boundingBox) ) {    
-    // check if we can stop doing overlap checks
-    if ( region.ContainsQuad(_boundingBox) ) {
-      Fold(accumulator, dir);
-    } else {
-      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-
-      // filter out child nodes if we know the region won't intersect based off of AABB checks
-      if ( IsSubdivided() ) {      
-        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
-        
-        const AxisAlignedQuad& aabb = region.GetBoundingBox();
-        if ( aabb.GetMinVertex().x() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
-        if ( aabb.GetMaxVertex().x() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
-        if ( aabb.GetMinVertex().y() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
-        if ( aabb.GetMaxVertex().y() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
-
-        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
-        u8 idx = 0;
-        do {
-          if (childFilter & 1) { 
-            if ( auto observe = PreservePointer<const QuadTreeNode>(_childrenPtr[idx]) ) { 
-              observe->Fold(accumulator, region, dir); 
-            }
-          }
-          ++idx;
-        } while ( childFilter >>= 1 );
-      }
-
-      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-    }
+  if ( !region.IntersectsQuad(_boundingBox) ) { 
+    // node and region are disjoint
+    return; 
   }
+  
+  if ( region.ContainsQuad(_boundingBox) ) { 
+    // node is a subset of region
+    Fold(accumulator, dir); 
+    return; 
+  } 
+
+  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+
+  u8 childFilter = IsSubdivided() ? GetChildFilterMask(_center, region.GetBoundingBox()) : 0;        
+  for ( const auto& cPtr : _childrenPtr ) { 
+    if (childFilter & 1) { cPtr->Fold(accumulator, region, dir); }
+    if ((childFilter >>= 1) == 0) { break; };
+  }
+
+  if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+}
+
+void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const FoldableRegion& region, FoldDirection dir) const
+{
+  if ( !region.IntersectsQuad(_boundingBox) ) { 
+    // node and region are disjoint
+    return; 
+  }
+  
+  if ( region.ContainsQuad(_boundingBox) ) { 
+    // node is a subset of region
+    Fold(accumulator, dir); 
+    return; 
+  } 
+
+  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+
+  u8 childFilter = IsSubdivided() ? GetChildFilterMask(_center, region.GetBoundingBox()) : 0;        
+  for ( const auto& cPtr : _childrenPtr ) { 
+    if (childFilter & 1) { cPtr->Fold(accumulator, region, dir); }
+    if ((childFilter >>= 1) == 0) { break; };
+  }
+
+  if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
 
 } // namespace Vector

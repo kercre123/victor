@@ -9,7 +9,7 @@ All new test files and test functions should start with `test_` to be auto-disco
 ## Requirements
 
 To run these tests, you'll need the the Python SDK which currently lives under
-`tools/sdk/vector-sdk/`. Instructions to use the SDK can be found [on confluence](https://ankiinc.atlassian.net/wiki/spaces/VD/pages/441319496/Python+Vector+SDK+-+Getting+Started).
+`tools/sdk/vector-python-sdk-private/`. Instructions to use the SDK can be found [on confluence](https://ankiinc.atlassian.net/wiki/spaces/VD/pages/441319496/Python+Vector+SDK+-+Getting+Started).
 
 In addition to properly installing the Python SDK, the Gateway Tests require
 pytest, requests and requests_toolbelt. These may be installed via:

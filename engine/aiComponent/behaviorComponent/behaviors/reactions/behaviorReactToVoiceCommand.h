@@ -24,6 +24,7 @@ namespace Anki {
 namespace Vector {
 
 class BehaviorReactToMicDirection;
+class ConditionUserIntentPending;
 enum class AnimationTrigger : int32_t;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -34,6 +35,9 @@ class BehaviorReactToVoiceCommand : public ICozmoBehavior
 
 
 public:
+
+  // Public destructor must be explicitly defined to allow std::unique_ptr<FwdDeclaredType> (ConditionUserIntentPending)
+  ~BehaviorReactToVoiceCommand();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -174,6 +178,7 @@ private:
     RecentOccurrenceTracker::Handle wifiErrorHandle;
     RecentOccurrenceTracker::Handle cloudErrorHandle;
 
+    std::unique_ptr<ConditionUserIntentPending> intentWhitelistCondition;
 
   } _iVars;
 
