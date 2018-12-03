@@ -78,6 +78,7 @@ enum uint_32 ActiveFeature {
   PopAWheelie,
   ReactToCliff,
   ReactToHand,
+  ReactToHello,
   ReactToRobotOnSide,
   RecordingMessage,
   RequestCharger,
@@ -88,6 +89,7 @@ enum uint_32 ActiveFeature {
   SeasonalHappyNewYear,
   Sleeping,
   ShutUp,
+  StuckOnEdge,
   TakeAPhoto,
   TimerCanceled,
   TimerChecked,
@@ -144,6 +146,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   PopAWheelie             = verbatim ActiveFeatureType::Autonomous,
   ReactToCliff            = verbatim ActiveFeatureType::Autonomous,
   ReactToHand             = verbatim ActiveFeatureType::Autonomous,
+  ReactToHello            = verbatim ActiveFeatureType::Social,
   ReactToRobotOnSide      = verbatim ActiveFeatureType::Autonomous,
   RecordingMessage        = verbatim ActiveFeatureType::Utility,
   RequestCharger          = verbatim ActiveFeatureType::Failure,
@@ -154,6 +157,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   SeasonalHappyNewYear    = verbatim ActiveFeatureType::Social,
   Sleeping                = verbatim ActiveFeatureType::Sleep,
   ShutUp                  = verbatim ActiveFeatureType::Autonomous,
+  StuckOnEdge             = verbatim ActiveFeatureType::Autonomous,
   TakeAPhoto              = verbatim ActiveFeatureType::Utility,
   TimerCanceled           = verbatim ActiveFeatureType::Utility,
   TimerChecked            = verbatim ActiveFeatureType::Utility,
@@ -165,7 +169,6 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   BasicVoiceCommand       = verbatim ActiveFeatureType::Social,
   Weather                 = verbatim ActiveFeatureType::Utility,
   WhatsMyName             = verbatim ActiveFeatureType::Social,
-
   VC_Greeting             = verbatim ActiveFeatureType::Social
 }
 
