@@ -84,6 +84,7 @@ message DebugScreenMode
 {
   bool isDebug,
   bool needsWait,
+  bool fromMute,
 }
 
 message RobotAvailable

@@ -69,6 +69,7 @@ namespace {
 
 # undef CONSOLE_GROUP
 
+  const std::string kMicSettingsFile = "micMuted";
 }
 
 namespace Anki {
@@ -106,6 +107,8 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   _writeLocationDir = dataWriteLocation;
   _micDataProcessor.reset(new MicDataProcessor(_context, this, dataWriteLocation));
   _speechRecognizerSystem.reset(new SpeechRecognizerSystem(_context, this, triggerDataDir));
+  
+  _persistentFolder = Util::FileUtils::AddTrailingFileSeparator( dataPlatform->pathToResource(Util::Data::Scope::Persistent, "") );
 
   if (!_writeLocationDir.empty())
   {
@@ -143,6 +146,10 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
   };
   _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
   _micDataProcessor->Init();
+  
+  if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
+    ToggleMicMute();
+  }
 }
 
 MicDataSystem::~MicDataSystem()
@@ -217,16 +224,22 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
+  const bool wasMuted = _micMuted;
   if( _micMuted ) {
-    return;
+    // A single press when muted should unmute and then trigger a wakeword.
+    // This is an annoying code path since FaceInfoScreenManager::ToggleMute calls back into
+    // MicDataSystem. But FaceInfoScreenManager is already set up to check for various button clicks...
+    FaceInfoScreenManager::getInstance()->ToggleMute();
+    DEV_ASSERT( !_micMuted, "MicDataSystem.FakeTriggerWordDetect.StillMuted" );
   }
+  
   if( _buttonPressIsAlexa ) {
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
       Alexa* alexa = _context->GetAlexa();
       ASSERT_NAMED(alexa != nullptr, "");
-      alexa->NotifyOfTapToTalk();
+      alexa->NotifyOfTapToTalk( wasMuted );
     }
   }
   else {
@@ -234,7 +247,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     // This next check is probably not necessary, but for symmetry, the hey vector button press shouldn't trigger
     // if alexa is in the middle of an interaction
     if( _alexaState != AlexaSimpleState::Active ) {
-      _micDataProcessor->FakeTriggerWordDetection();
+      _micDataProcessor->FakeTriggerWordDetection( wasMuted );
     }
   }
 }
@@ -786,6 +799,14 @@ void MicDataSystem::ToggleMicMute()
     if( bplComp != nullptr ) {
       bplComp->SetMicMute( _micMuted );
     }
+  }
+  
+  // add/remove persistent file
+  const auto muteFile = _persistentFolder + kMicSettingsFile;
+  if( _micMuted ) {
+    Util::FileUtils::TouchFile( muteFile );
+  } else if( Util::FileUtils::FileExists( muteFile ) ) {
+    Util::FileUtils::DeleteFile( muteFile );
   }
 }
   

@@ -463,7 +463,10 @@ void Alexa::SetUXState( AlexaUXState newState )
     auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
     if( showStreamStateManager != nullptr ) {
       if( showStreamStateManager->HasValidAlexaUXResponse( _uxState ) ) {
-        showStreamStateManager->StartAlexaResponse( _uxState );
+        // play alexa get-in/audio requested by engine. switching out of mute plays an animation
+        // that shan't be interrupted by the alexa get-in
+        const bool skipGetIn = (_notifyType == NotifyType::ButtonFromMute);
+        showStreamStateManager->StartAlexaResponse( _uxState, skipGetIn );
       }
     }
   }
@@ -472,15 +475,15 @@ void Alexa::SetUXState( AlexaUXState newState )
   using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
   // Play Audio Event for state change
   if (_uxState == AlexaUXState::Listening) {
-    if ( (oldState == AlexaUXState::Idle) && (_notifyType != None) ) {
+    if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
       // Alexa triggered by voice or button press
       PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
-      _notifyType = None;
     }
     else if (oldState == AlexaUXState::Speaking) {
       // Play EarCon for follow up question
       PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
     }
+    _notifyType = NotifyType::None;
   }
   else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
     // Play when listening ends
@@ -636,13 +639,13 @@ void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, s
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfTapToTalk()
+void Alexa::NotifyOfTapToTalk( bool fromMute )
 {
   if( ANKI_VERIFY( _impl != nullptr,
                    "Alexa.NotifyOfTapToTalk.Disabled",
                    "Tap-to-talk was issued when alexa was disabled" ) )
   {
-    _notifyType = Button;
+    _notifyType = fromMute ? NotifyType::ButtonFromMute : NotifyType::Button;
     _impl->NotifyOfTapToTalk();
   }
 }
@@ -654,7 +657,7 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
   {
     std::lock_guard<std::mutex> lg{ _implMutex };
     if( _impl != nullptr ) {
-      _notifyType = Voice;
+      _notifyType = NotifyType::Voice;
       _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
       hasImpl = true;
     }

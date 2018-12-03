@@ -249,7 +249,7 @@ bool ShowAudioStreamStateManager::HasValidAlexaUXResponse(AlexaUXState state) co
   return false;
 }
   
-bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state)
+bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ignoreGetIn)
 {
   const AlexaInfo* response = nullptr;
   for( const auto& info : _alexaResponses ) {
@@ -264,7 +264,7 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state)
     return false;
   }
   
-  if( !response->getInAnimName.empty() ) {
+  if( !response->getInAnimName.empty() && !ignoreGetIn ) {
     // TODO: (VIC-11516) it's possible that the UX state went back to idle for just a short while, in
     // which case the engine could be playing the get-out from the previous UX state, or worse, is
     // still in the looping animation for that ux state. it would be nice if the get-in below only

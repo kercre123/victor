@@ -87,6 +87,8 @@ public:
   // depending on how the auth process originated (app or voice command)
   void EnableAlexaScreen(ScreenName screenName, const std::string& code, const std::string& url);
   
+  void ToggleMute();
+  
   void StartAlexaNotification();
 
   // When enabled, switches to a special camera screen used to show
@@ -170,8 +172,8 @@ private:
   void DrawMotorInfo(const RobotState& state);
   void DrawCustomText();
   void DrawAlexaFace();
-  void DrawMuteAnimation(AnimationStreamer* animStreamer);
-  void DrawAlexaNotification(AnimationStreamer* animStreamer);
+  void DrawMuteAnimation();
+  void DrawAlexaNotification();
   
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();
@@ -212,6 +214,8 @@ private:
 
   RobotInterface::DrawTextOnScreen _customText;
   WebService::WebService* _webService;
+  
+  AnimationStreamer* _animationStreamer = nullptr;
   
   std::string _alexaCode;
   std::string _alexaUrl;
