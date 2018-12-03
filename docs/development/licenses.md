@@ -99,6 +99,7 @@ Licenses may be:
 |CPAL-1.0     |          |Common Public Attribution License Version 1.0 (CPAL-1.0)    |https://opensource.org/licenses/CPAL-1.0                                 |
 |CPL-1.0      |Caution   |Common Public License, Version 1.0                          |https://opensource.org/licenses/CPL-1.0                                  |
 |CUA-OPL-1.0  |          |CUA Office Public License                                   |https://opensource.org/licenses/CUA-OPL-1.0                              |
+|curl         |          |The curl license (MIT/X Derivate)                           |https://curl.haxx.se/docs/copyright.html                                 |
 |CVW          |          |The MITRE Collaborative Virtual Workspace License           |https://opensource.org/licenses/CVW                                      |
 |ECL-1.0      |          |Educational Community License, Version 1.0                  |https://opensource.org/licenses/ECL-1.0                                  |
 |ECL-2.0      |          |Educational Community License, Version 2.0                  |https://opensource.org/licenses/ECL-2.0                                  |
@@ -152,6 +153,7 @@ Licenses may be:
 |OCLC-2.0     |          |The OCLC Research Public License, Version 2.0               |https://opensource.org/licenses/OCLC-2.0                                 |
 |OFL-1.1      |          |SIL Open Font License, Version 1.1                          |https://opensource.org/licenses/OFL-1.1                                  |
 |OGTSL        |          |The Open Group Test Suite License (OGTSL)                   |https://opensource.org/licenses/OGTSL                                    |
+|OpenSSL/SSLeay|         |Dual: OpenSSL (Apache-style) and SSLeay (BSD-style)         |https://www.openssl.org/source/license.txt                               |
 |OPL-2.1      |          |OSET Foundation Public License                              |https://www.osetfoundation.org/public-license                            |
 |OSL-1.0      |          |Open Software License, Version 1.0                          |https://opensource.org/licenses/OSL-1.0                                  |
 |OSL-2.1      |          |Open Software License, Version 2.1                          |https://opensource.org/licenses/OSL-2.1                                  |
