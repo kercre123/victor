@@ -69,7 +69,7 @@ public:
   // This is only because the current Alexa implementation fits this constraint, so I'm assuming it here.
   bool HasAnyAlexaResponse() const; // ok to call off thread
   bool HasValidAlexaUXResponse(AlexaUXState state) const;
-  bool StartAlexaResponse(AlexaUXState state);
+  bool StartAlexaResponse(AlexaUXState state, bool ignoreGetIn = false);
 
 private:
 

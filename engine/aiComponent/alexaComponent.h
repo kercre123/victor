@@ -107,8 +107,11 @@ private:
   
   struct AlexaUXResponseInfo
   {
-    bool waitingForGetInCompletion = false;
+    void SetWaiting( bool waiting ); // sets waitingForGetInCompletion and timeout_s, or clears both
+    
     bool hasAnim = false;
+    
+    bool waitingForGetInCompletion = false;
     float timeout_s = -1.0f;
   };
   std::unordered_map<AlexaUXState, AlexaUXResponseInfo> _uxResponseInfo;

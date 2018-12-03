@@ -150,6 +150,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
   _context = context;
+  _animationStreamer = animStreamer;
   
   // allow us to send debug info out to the web server
   _webService = context->GetWebService();
@@ -229,12 +230,12 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // Enter/Exit fcns, menu items, timeouts
 
   // === None screen ===
-  auto noneEnterFcn = [this, animStreamer]() {
+  auto noneEnterFcn = [this]() {
     // Restore power mode as specified by engine
     SendAnimToRobot(_calmModeMsgOnNone);
 
     if (FACTORY_TEST) {
-      InitConnectionFlow(animStreamer);
+      InitConnectionFlow(_animationStreamer);
     }
   };
   auto noneExitFcn = []() {
@@ -323,17 +324,17 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
     
   // === Camera screen ===
-  FaceInfoScreen::ScreenAction cameraEnterAction = [animStreamer]() {
+  FaceInfoScreen::ScreenAction cameraEnterAction = [this]() {
     StreamCameraImages m;
     m.enable = true;
     RobotInterface::SendAnimToEngine(std::move(m));
-    animStreamer->RedirectFaceImagesToDebugScreen(true);
+    _animationStreamer->RedirectFaceImagesToDebugScreen(true);
   };
-  auto cameraExitAction = [animStreamer]() {
+  auto cameraExitAction = [this]() {
     StreamCameraImages m;
     m.enable = false;
     RobotInterface::SendAnimToEngine(std::move(m));
-    animStreamer->RedirectFaceImagesToDebugScreen(false);
+    _animationStreamer->RedirectFaceImagesToDebugScreen(false);
   };
   SET_ENTER_ACTION(Camera, cameraEnterAction);
   SET_EXIT_ACTION(Camera, cameraExitAction);
@@ -341,11 +342,11 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // === Mirror Mode ===
   // Engine requests this screen so it is assumed that Engine is already
   // set to send us images
-  FaceInfoScreen::ScreenAction mirrorEnterAction = [animStreamer]() {
-    animStreamer->RedirectFaceImagesToDebugScreen(true);
+  FaceInfoScreen::ScreenAction mirrorEnterAction = [this]() {
+    _animationStreamer->RedirectFaceImagesToDebugScreen(true);
   };
-  auto mirrorExitAction = [animStreamer]() {
-    animStreamer->RedirectFaceImagesToDebugScreen(false);
+  auto mirrorExitAction = [this]() {
+    _animationStreamer->RedirectFaceImagesToDebugScreen(false);
   };
   SET_ENTER_ACTION(MirrorMode, mirrorEnterAction);
   SET_EXIT_ACTION(MirrorMode, mirrorExitAction);
@@ -365,16 +366,16 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_TIMEOUT(AlexaPairingExpired, kAlexaTimeout_s, None);
   
   // === Toggling mute ===
-  auto toggleMuteEnterAction = [this, animStreamer]() {
-    DrawMuteAnimation( animStreamer );
+  auto toggleMuteEnterAction = [this]() {
+    DrawMuteAnimation();
   };
   SET_ENTER_ACTION(ToggleMute, toggleMuteEnterAction);
   // TODO (VIC-11606): don't use timeout and instead wait for mute anim to end
   SET_TIMEOUT(ToggleMute, kToggleMuteTimeout_s, None);
   
   // === AlexaNotification ===
-  auto alexaNotification = [this, animStreamer]() {
-    DrawAlexaNotification( animStreamer );
+  auto alexaNotification = [this]() {
+    DrawAlexaNotification();
   };
   SET_ENTER_ACTION(AlexaNotification, alexaNotification);
   SET_TIMEOUT(AlexaNotification, kAlexaNotificationTimeout_s, None);
@@ -473,6 +474,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
 {
   bool prevScreenIsDebug = false;
   bool prevScreenNeedsWait = false;
+  bool prevScreenWasMute = false;
 
   // Call ExitScreen
   // _currScreen may be null on the first call of this function
@@ -483,6 +485,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     _currScreen->ExitScreen();
     prevScreenIsDebug = IsDebugScreen(GetCurrScreenName());
     prevScreenNeedsWait = ScreenNeedsWait(GetCurrScreenName());
+    prevScreenWasMute = GetCurrScreenName() == ScreenName::ToggleMute;
   }
 
   _currScreen = GetScreen(screen);
@@ -503,6 +506,8 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     DebugScreenMode msg;
     msg.isDebug = currScreenIsDebug;
     msg.needsWait = currScreenNeedsWait;
+    // leaving the mute screen via single press may coincide with the start of a wake word trigger, so don't clear it
+    msg.fromMute = prevScreenWasMute;
     RobotInterface::SendAnimToEngine(std::move(msg));
   }
 
@@ -994,10 +999,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
           !isOnCharger && // while user-facing instructions may say "pick up the robot and double press," it's really just off charger
           CanEnterPairingFromScreen(currScreenName))
   {
-    _context->GetMicDataSystem()->ToggleMicMute();
-    // Drawing a mute/unmute animation is handled here, rather than as an engine behavior, since it is
-    // something that should always be done no matter what the state of the engine or behavior system is
-    SetScreen(ScreenName::ToggleMute);
+    ToggleMute();
   }
 
   // Check for button press to go to next debug screen
@@ -1558,7 +1560,7 @@ void FaceInfoScreenManager::DrawAlexaFace()
   SendAnimToRobot(std::move(headAction));
 }
   
-void FaceInfoScreenManager::DrawMuteAnimation(AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::DrawMuteAnimation()
 {
   if( _currScreen == nullptr ) {
     return;
@@ -1570,12 +1572,12 @@ void FaceInfoScreenManager::DrawMuteAnimation(AnimationStreamer* animStreamer)
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt,
-                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
+  _animationStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt,
+                                            shouldOverrideEyeHue, shouldRenderInEyeHue);
   
 }
   
-void FaceInfoScreenManager::DrawAlexaNotification(AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::DrawAlexaNotification()
 {
   if( _currScreen == nullptr ) {
     return;
@@ -1585,8 +1587,8 @@ void FaceInfoScreenManager::DrawAlexaNotification(AnimationStreamer* animStreame
   const bool shouldInterrupt = true;
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
-  animStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt,
-                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
+  _animationStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt,
+                                            shouldOverrideEyeHue, shouldRenderInEyeHue);
 }
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
@@ -1695,6 +1697,18 @@ void FaceInfoScreenManager::EnableAlexaScreen(ScreenName screenName, const std::
   } else if ((screenName == ScreenName::None) && isAlexaScreen) {
     LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Done", "");
     SetScreen(ScreenName::None);
+  }
+}
+  
+void FaceInfoScreenManager::ToggleMute()
+{
+  _context->GetMicDataSystem()->ToggleMicMute();
+  if ((_currScreen != nullptr) && (_currScreen->GetName() == ScreenName::ToggleMute)) {
+    // abort current animation and restart new one
+    DrawMuteAnimation();
+    _currScreen->RestartTimeout();
+  } else {
+    SetScreen(ScreenName::ToggleMute);
   }
 }
   

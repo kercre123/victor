@@ -764,13 +764,13 @@ Result AnimationComponent::SetFaceSaturation(float level)
   return res;
 }
 
-AnimationTag AnimationComponent::SetTriggerWordGetInCallback(std::function<void()> callbackFunction)
+AnimationTag AnimationComponent::SetTriggerWordGetInCallback(std::function<void(bool)> callbackFunction)
 {
   _triggerWordGetInCallbackFunction = callbackFunction;
   return _tagForTriggerWordGetInCallbacks;
 }
   
-std::array<AnimationTag,4> AnimationComponent::SetAlexaUXResponseCallback(std::function<void(unsigned int)> callback)
+std::array<AnimationTag,4> AnimationComponent::SetAlexaUXResponseCallback(std::function<void(unsigned int, bool)> callback)
 {
   _alexaResponseCallback = callback;
   const std::array<AnimationTag,4> tags = {{_tagForAlexaListening, _tagForAlexaThinking, _tagForAlexaSpeaking, _tagForAlexaError}};
@@ -923,6 +923,14 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
   _isAnimating = true;
   _currAnimName = payload.animName;
   _currAnimTag = payload.tag;
+  
+  if( payload.tag == _tagForTriggerWordGetInCallbacks ){
+    const bool playing = true;
+    _triggerWordGetInCallbackFunction(playing);
+  } else if( TagIsAlexa(payload.tag) ) {
+    const bool playing = true;
+    SendAlexaCallback(payload.tag, playing);
+  }
 
   _robot->GetContext()->GetVizManager()->SendCurrentAnimation(_currAnimName, _currAnimTag);
 }
@@ -950,21 +958,12 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
     // this wont be in our _callbackMap, so for debug's sake let's print this out
     LOG_INFO("AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     atLeastOneCallback = true;
-    _triggerWordGetInCallbackFunction();
+    const bool playing = false;
+    _triggerWordGetInCallbackFunction(playing);
   } else if( TagIsAlexa(payload.tag) ) {
     atLeastOneCallback = true;
-    if( _alexaResponseCallback ) {
-      // must match order in clad file
-      if( payload.tag == _tagForAlexaListening ) {
-        _alexaResponseCallback( 0 );
-      } else if( payload.tag == _tagForAlexaThinking ) {
-        _alexaResponseCallback( 1 );
-      } else if( payload.tag == _tagForAlexaSpeaking ) {
-        _alexaResponseCallback( 2 );
-      } else if( payload.tag == _tagForAlexaError ) {
-        _alexaResponseCallback( 3 );
-      }
-    }
+    const bool playing = false;
+    SendAlexaCallback(payload.tag, playing);
   }
     
   if (!atLeastOneCallback &&
@@ -1062,6 +1061,22 @@ bool AnimationComponent::TagIsAlexa( AnimationTag tag ) const
                        || (tag == _tagForAlexaSpeaking)
                        || (tag == _tagForAlexaError);
   return isAlexa;
+}
+  
+void AnimationComponent::SendAlexaCallback( uint8_t tag, bool playing ) const
+{
+  if( _alexaResponseCallback ) {
+    // must match order in clad file
+    if( tag == _tagForAlexaListening ) {
+      _alexaResponseCallback( 0, playing );
+    } else if( tag == _tagForAlexaThinking ) {
+      _alexaResponseCallback( 1, playing );
+    } else if( tag == _tagForAlexaSpeaking ) {
+      _alexaResponseCallback( 2, playing );
+    } else if( tag == _tagForAlexaError ) {
+      _alexaResponseCallback( 3, playing );
+    }
+  }
 }
 
 
