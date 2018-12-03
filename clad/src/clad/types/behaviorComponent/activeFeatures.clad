@@ -11,7 +11,7 @@ enum uint_8 ActiveFeatureType {
 
   Invalid = 0,
 
-  // system features that don't fit elsewhere
+  // System features or features that dont fit elsewhere
   System,
 
   Onboarding,
@@ -30,7 +30,7 @@ enum uint_8 ActiveFeatureType {
   // features that attempt to interact with humans
   Social,
 
-  // utility functions
+  // utility functions that are useful to the _user_
   Utility,
 
   // playful / game features
@@ -179,7 +179,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   TimerRinging            = verbatim ActiveFeatureType::Utility,
   TimerSet                = verbatim ActiveFeatureType::Utility,
   UnmatchedVoiceIntent    = verbatim ActiveFeatureType::Failure,
-  VolumeAdjustment        = verbatim ActiveFeatureType::Utility,
+  VolumeAdjustment        = verbatim ActiveFeatureType::System,
   BasicVoiceCommand       = verbatim ActiveFeatureType::Social,
   Weather                 = verbatim ActiveFeatureType::Utility,
   WhatsMyName             = verbatim ActiveFeatureType::Social,
