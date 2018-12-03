@@ -337,7 +337,9 @@ namespace Anki {
                          (*_currentAction)->GetTag());
         
         // If the compound action is suppressing track locking then the constituent actions should too
-        (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        if ((*_currentAction)->IsSuppressingTrackLocking() != IsSuppressingTrackLocking()) {
+          (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        }
         
         // Otherwise, we are still running. Go ahead and immediately do an
         // update on the next action now to get its initialization and
@@ -398,7 +400,9 @@ namespace Anki {
         }
 
         // If the compound action is suppressing track locking then the constituent actions should too
-        (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        if ((*_currentAction)->IsSuppressingTrackLocking() != IsSuppressingTrackLocking()) {
+          (*_currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        }
         
         const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         if(_waitUntilTime < 0.0f || currentTime >= _waitUntilTime)
@@ -512,7 +516,9 @@ namespace Anki {
         }
           
         // If the compound action is suppressing track locking then the constituent actions should too
-        (*currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        if ((*currentAction)->IsSuppressingTrackLocking() != IsSuppressingTrackLocking()) {
+          (*currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
+        }
 
         const ActionResult subResult = (*currentAction)->Update();
         SetStatus((*currentAction)->GetStatus());
