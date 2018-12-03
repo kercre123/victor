@@ -668,6 +668,10 @@
     "SpriteName" : "face_avs_error_getin"
   },
   {
+    "CladEvent" : "Face_Avs_Getin",
+    "SpriteName" : "face_avs_getin"
+  },
+  {
     "CladEvent" : "Face_Avs_Listen2timer",
     "SpriteName" : "face_avs_listen2timer"
   },
@@ -702,6 +706,10 @@
   {
     "CladEvent" : "Face_Avs_Speak2notification",
     "SpriteName" : "face_avs_speak2notification"
+  },
+  {
+    "CladEvent" : "Face_Avs_Speak_Getout",
+    "SpriteName" : "face_avs_speak_getout"
   },
   {
     "CladEvent" : "Face_Avs_Suddenerror",
