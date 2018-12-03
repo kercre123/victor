@@ -328,11 +328,8 @@ void BehaviorFindHome::TransitionToSearchTurn()
     } else {
       // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
       // images action, and play a "search turn end" animation after the "wait for images" anim.
-      auto* loopAndWaitForImagesAction = new CompoundActionParallel();
-      loopAndWaitForImagesAction->SetShouldEndWhenFirstActionCompletes(true);
-      loopAndWaitForImagesAction->AddAction(new ReselectingLoopAnimationAction(_iConfig.waitForImagesAnimTrigger));
-      loopAndWaitForImagesAction->AddAction(waitForImagesAction);
-      action->AddAction(loopAndWaitForImagesAction);
+      action->AddAction(new LoopAnimWhileAction(waitForImagesAction,
+                                                _iConfig.waitForImagesAnimTrigger));
       action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
     }
     

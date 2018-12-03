@@ -496,6 +496,12 @@ namespace Anki {
       
       SetStatus(GetName());
       
+      Result derivedUpdateResult = UpdateDerived();
+      if(RESULT_OK != derivedUpdateResult) {
+        PRINT_CH_INFO("Actions", "CompoundActionParallel.UpdateInternal.UpdateDerivedFailed", "");
+        return ActionResult::UPDATE_DERIVED_FAILED;
+      }
+      
       bool subActionCompleted = false;
       
       for(auto currentAction = _actions.begin(); currentAction != _actions.end();)

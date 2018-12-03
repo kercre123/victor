@@ -200,6 +200,32 @@ namespace Anki {
       bool       _renderInEyeHue = true;
       
     };
+    
+    #pragma mark ---- LoopAnimWhileAction ----
+    // Loops the given animation while doing the 'primary' action in parallel. Once the primary action completes, we
+    // wait for either the current animation loop to finish or maxWaitTime_sec (whichever comes first).
+    class LoopAnimWhileAction : public CompoundActionParallel
+    {
+    public:
+      LoopAnimWhileAction(IActionRunner* primaryAction,
+                          const AnimationTrigger loopAnim,
+                          const float maxWaitTime_sec = -1.f);
+      
+      virtual ~LoopAnimWhileAction() {};
+      
+      virtual Result UpdateDerived() override;
+      
+      // Once the primary action completes, this is the maximum amount of time we will wait for the current animation
+      // loop to finish before bailing. A negative value disables this check.
+      void SetMaxWaitTime_sec(const float maxWaitTime_sec);
+      
+    private:
+      std::weak_ptr<IActionRunner> _primaryAction;
+      std::weak_ptr<IActionRunner> _animAction;
+      
+      float _timePrimaryActionCompleted = -1.f;
+      float _maxWaitTime_sec = -1.f;
+    };
 
   }
 }
