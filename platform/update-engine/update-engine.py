@@ -542,52 +542,14 @@ def update_from_url(url):
     if reboot_after_install:
         os.system("/sbin/reboot")
 
-def logv(msg):
-    if DEBUG:
-        print(msg)
-        sys.stdout.flush()
-
-def loge(msg):
-    print(msg, file=sys.stderr)
-    sys.stderr.flush()
-
-def generate_shard_id():
-    override_shard = os.getenv("UPDATE_ENGINE_SHARD", None)
-    if override_shard:
-        return override_shard
-    esn = get_prop("ro.serialno")
-    b = int(sha256(esn).hexdigest(), 16) % 100
-    return "{:02d}".format(b)
-
-def construct_update_url(os_version, cmdline):
-    base_url = os.getenv("UPDATE_ENGINE_BASE_URL", None)
-    if "anki.dev" in cmdline:
-        base_url = os.getenv("UPDATE_ENGINE_ANKIDEV_BASE_URL", base_url)
-    if not base_url:
-        return None
-    ota_type = os.getenv("UPDATE_ENGINE_OTA_TYPE", "diff")
-    shard_part = ""
-    use_sharding = os.getenv("UPDATE_ENGINE_USE_SHARDING", "False") in TRUE_SYNONYMS
-    if use_sharding:
-        shard_part = generate_shard_id() + "/"
-    url = "{0}{1}{2}/{3}.ota".format(base_url, shard_part, ota_type, os_version.rstrip("ud"))
-    return url
 
 if __name__ == '__main__':
     clear_status()
-    DEBUG = os.getenv("UPDATE_ENGINE_DEBUG", "False") in TRUE_SYNONYMS
-    url = os.getenv("UPDATE_ENGINE_URL", "auto")
+    url = ""
     if len(sys.argv) > 1:
         url = sys.argv[1]
     if len(sys.argv) > 2 and sys.argv[2] == '-v':
         DEBUG = True
-    if url == "auto":
-        logv("Automatic update running.....")
-        url = construct_update_url(get_prop("ro.anki.version"), get_cmdline())
-        if not url:
-            loge("Unable to construct automatic update url")
-            die(203, "Unable to construct automatic update url")
-        logv("Automatic URL = {}".format(url))
 
     if DEBUG:
         update_from_url(url)
