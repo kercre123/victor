@@ -3,6 +3,7 @@
   "behaviorClass": "AnimSequence",
 
   "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  "associatedActiveFeature": "BasicVoiceCommand",
 
   "respondToUserIntents":
   [
