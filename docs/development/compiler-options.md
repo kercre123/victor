@@ -433,13 +433,6 @@ Anki::Util::sEvent
 
 comment only
 
-### reliableMessageTypes
-```
-const char* ReliableMessageTypeToString(EReliableMessageType messageType)
-{
-#ifdef SHIPPING
-  return "";
-```
 
 ### webService.cpp
 ```
