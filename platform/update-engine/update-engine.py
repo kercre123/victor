@@ -35,7 +35,6 @@ MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
 MANIFEST_SIG = os.path.join(STATUS_DIR, "manifest.sha256")
 BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
 DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
-ABOOT_STAGING = os.path.join(STATUS_DIR, "aboot.img")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
@@ -43,7 +42,6 @@ HTTP_TIMEOUT = 90 # Give up after 90 seconds on blocking operations
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
 SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "1.0.0"]
 TRUE_SYNONYMS = ["True", "true", "on", "1"]
-WIPE_DATA_COOKIE = "/run/wipe-data"
 DEBUG = False
 
 def make_blocking(pipe, blocking):
@@ -66,7 +64,6 @@ def safe_delete_staging_files():
     "Delete staging files"
     safe_delete(BOOT_STAGING)
     safe_delete(DELTA_STAGING)
-    safe_delete(ABOOT_STAGING)
 
 def clear_status():
     "Clear everything out of the status directory"
@@ -108,6 +105,8 @@ def get_slot_name(partition, slot):
 
 def open_slot(partition, slot, mode):
     "Opens a partition slot"
+    if slot == "f":
+        assert mode == "r"  # No writing to F slot
     return open(os.path.join(BOOT_DEVICE, get_slot_name(partition, slot)), mode + "b")
 
 
@@ -177,15 +176,9 @@ def get_slot(kernel_command_line):
         return 'f', 'a'
 
 
-def get_qsn():
-    "Retrieve the QSN of the robot"
-    return open("/sys/devices/soc0/serial_number", "r").read().strip()
-
-
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
     config = ConfigParser.ConfigParser({'encryption': '0',
-                                        'qsn': None,
                                         'ankidev': '0',
                                         'reboot_after_install': '0'})
     config.readfp(fileobj)
@@ -452,66 +445,6 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
         zero_slot(target_slot)
         die(207, "Delta payload error: {!s}".format(pay_err))
 
-def handle_factory(manifest, tar_stream):
-    "Update factory partitions"
-    total_size = manifest.getint("ABOOT", "bytes") + \
-                 manifest.getint("RECOVERY", "bytes") + \
-                 manifest.getint("RECOVERYFS", "bytes")
-    write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
-    written_size = 0
-    write_status(PROGRESS_FILE, written_size)
-    target_slot = 'f'
-
-    def progress_update(progress):
-        "Update progress while writing to slots"
-        write_status(PROGRESS_FILE, written_size + progress)
-        if DEBUG:
-            sys.stdout.write("{0:0.3f}\r".format(float(written_size+progress)/float(total_size)))
-            sys.stdout.flush()
-
-    # Install new aboot, recovery, recoverfs
-    if DEBUG:
-        print("ABoot")
-    extract_result = extract_ti(manifest, tar_stream, "emmc_appsboot.img.gz", "ABOOT",
-                                open(ABOOT_STAGING, "wb"),
-                                progress_update)
-    if extract_result is False:
-        die(209, "aboot hash doesn't match signed manifest")
-    else:
-        written_size += extract_result
-    if DEBUG:
-        print("recovery")
-    extract_result = extract_ti(manifest, tar_stream, "boot.img.gz", "RECOVERY",
-                                open(BOOT_STAGING, "wb"),
-                                progress_update)
-    if extract_result is False:
-        die(209, "Boot image hash doesn't match signed manifest")
-    written_size += extract_result
-    # Extract system images
-    if DEBUG:
-        print("recoveryfs")
-    extract_result = extract_ti(manifest, tar_stream, "sysfs.img.gz", "RECOVERYFS",
-                                open_slot("system", target_slot, "w"),
-                                progress_update)
-    if extract_result is False:
-        zero_slot(target_slot)
-        die(209, "System image hash doesn't match signed manifest")
-    written_size += extract_result
-    # Actually write the boot image now
-    with open(BOOT_STAGING, "rb") as src:
-        with open_slot("boot", target_slot, "w") as dst:
-            dst.write(src.read())
-
-    # Delete the staged boot.img file
-    safe_delete(BOOT_STAGING)
-
-    # And actually write the aboot image
-    with open(ABOOT_STAGING, "rb") as src:
-        with open(os.path.join(BOOT_DEVICE, "aboot"), "wb") as dst:
-            dst.write(src.read())
-
-    # Delete the staged aboot.img file
-    safe_delete(ABOOT_STAGING)
 
 def validate_new_os_version(current_os_version, new_os_version, cmdline):
     allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
@@ -546,7 +479,6 @@ def update_from_url(url):
     write_status(EXPECTED_DOWNLOAD_SIZE_FILE, content_length)
     current_os_version = get_prop("ro.anki.version")
     next_boot_os_version = current_os_version
-    is_factory_update = False
     reboot_after_install = 0
     with make_tar_stream(stream) as tar_stream:
         # Get the manifest
@@ -596,15 +528,6 @@ def update_from_url(url):
                 handle_delta(current_slot, target_slot, manifest, tar_stream)
             else:
                 die(201, "One image specified but not DELTA")
-        elif num_images == 3:
-            if manifest.has_section("ABOOT") and manifest.has_section("RECOVERY") and manifest.has_section("RECOVERYFS"):
-                if manifest.get("META", "qsn") == get_qsn():
-                    handle_factory(manifest, tar_stream)
-                    is_factory_update = True
-                else:
-                    die(213, "QSN doesn't match manifest")
-            else:
-                die(201, "3 images specified but not factory update")
         else:
             die(201, "Unexpected manifest configuration")
     stream.close()
@@ -612,15 +535,8 @@ def update_from_url(url):
     if not call(["/bin/sync"]):
         die(208, "Couldn't sync OS images to disk")
     # Mark the slot bootable now
-    if not is_factory_update:
-        if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
-            die(202, "Could not set target slot as active")
-    else: # Is a factory update, mark both update slots unbootable and erase user data
-        write_status(WIPE_DATA_COOKIE, 1)
-        if not call(["/bin/bootctl", current_slot, "set_unbootable", 'a']):
-            die(202, "Could not set a slot as unbootable")
-        if not call(["/bin/bootctl", current_slot, "set_unbootable", 'b']):
-            die(202, "Could not set b slot as unbootable")
+    if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
+        die(202, "Could not set target slot as active")
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
     if reboot_after_install:
