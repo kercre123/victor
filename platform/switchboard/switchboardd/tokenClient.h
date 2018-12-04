@@ -47,7 +47,7 @@ public:
   //~TokenClient();
   bool Init();
   bool Connect();
-  std::shared_ptr<TokenResponseHandle> SendAuthRequest(std::string sessionToken, AuthRequestCallback callback);
+  std::shared_ptr<TokenResponseHandle> SendAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
   std::shared_ptr<TokenResponseHandle> SendSecondaryAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
   std::shared_ptr<TokenResponseHandle> SendReassociateAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
   std::shared_ptr<TokenResponseHandle> SendJwtRequest(JwtRequestCallback callback);

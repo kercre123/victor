@@ -542,7 +542,7 @@ void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
         case Anki::Vector::TokenError::NullToken: {
           // Primary association
           isPrimary = true;
-          std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendAuthRequest(sessionToken, 
+          std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendAuthRequest(sessionToken, "", "",
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
           });

@@ -116,7 +116,7 @@ void GatewayMessagingServer::HandleAuthRequest(const SwitchboardRequest& message
         case Anki::Vector::TokenError::NullToken: {
           // Primary association
           isPrimary = true;
-          tokenClient->SendAuthRequest(sessionToken, 
+          tokenClient->SendAuthRequest(sessionToken, "", "",
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
           });
