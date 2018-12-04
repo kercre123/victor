@@ -17,26 +17,22 @@
 
 #include "quadTreeTypes.h"
 
-#include "engine/navMap/memoryMap/data/memoryMapData.h"
-#include "coretech/common/engine/math/axisAlignedHyperCube.h"
-
 #include "util/helpers/noncopyable.h"
-
-#include <memory>
-#include <vector>
 
 namespace Anki {
 namespace Vector {
 
 class QuadTreeProcessor;
+
 using namespace QuadTreeTypes;
-using namespace MemoryMapTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class QuadTreeNode : private Util::noncopyable
 {
   friend class QuadTree;
 public:
+  ~QuadTreeNode();
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -52,7 +48,6 @@ public:
 
   bool                   IsRootNode()     const { return _parent == nullptr; }
   bool                   IsSubdivided()   const { return !_childrenPtr.empty(); }
-  bool                   IsEmptyType()    const { return IsSubdivided() || (GetData()->type == EContentType::Unknown); }
   uint8_t                GetLevel()       const { return _level; }
   float                  GetSideLen()     const { return _sideLen; }
   const Point2f&         GetCenter()      const { return _center; }
@@ -97,10 +92,9 @@ protected:
   
   // subdivide/join children
   bool Subdivide();
-  bool Join(QuadTreeProcessor& processor);
 
   // copys the data of this node to its children, and resets its own data
-  void MoveDataToChildren(QuadTreeProcessor& processor);
+  void MoveDataToChildren();
 
 private:
 
@@ -130,20 +124,17 @@ private:
 
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
-  void TryAutoMerge(QuadTreeProcessor& processor);
+  void TryAutoMerge();
   
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(const MemoryMapDataPtr detectedContent, QuadTreeProcessor& processor);
+  void ForceSetContent(NodeContent&& newContent);
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const QuadTreeNode* newParent) { _parent = newParent; }
   
   // swaps children and content with 'otherNode', updating the children's parent pointer
-  void SwapChildrenAndContent(QuadTreeNode* otherNode, QuadTreeProcessor& processor);
+  void SwapChildrenAndContent(QuadTreeNode* otherNode);
   
-  // read the note in destructor on why we manually destroy nodes when they are removed
-  static void DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor);
-
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
   void Fold(FoldFunctor& accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
@@ -192,6 +183,10 @@ private:
   
   // information about what's in this quad
   NodeContent _content;
+
+  // callbacks to notify external system if an element has changed or been destroyed
+  std::function<void (const QuadTreeNode*)> _destructorCallback;
+  std::function<void (const QuadTreeNode*, const NodeContent&)> _modifiedCallback;
     
 }; // class
   

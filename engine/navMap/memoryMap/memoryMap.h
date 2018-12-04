@@ -14,6 +14,7 @@
 
 #include "engine/navMap/iNavMap.h"
 #include "engine/navMap/quadTree/quadTree.h"
+#include "engine/navMap/quadTree/quadTreeProcessor.h"
 
 #include <shared_mutex>
 
@@ -27,15 +28,16 @@ friend class CST_NavMap;    // allow access for webots test for NavMap
 
 public:
 
-  using EContentType     = MemoryMapTypes::EContentType;
-  using FullContentArray = MemoryMapTypes::FullContentArray;
-  using MemoryMapRegion  = MemoryMapTypes::MemoryMapRegion;
+  using EContentType           = MemoryMapTypes::EContentType;
+  using FullContentArray       = MemoryMapTypes::FullContentArray;
+  using MemoryMapRegion        = MemoryMapTypes::MemoryMapRegion;
+  using MemoryMapDataConstList = MemoryMapTypes::MemoryMapDataConstList;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   MemoryMap();
-  virtual ~MemoryMap() {}
+  virtual ~MemoryMap();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // From INavMemoryMap
@@ -82,8 +84,13 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // processor for this quadtree
+  QuadTreeProcessor _processor;
+
   // underlaying data container
   QuadTree          _quadTree;
+
+  // safe thread access for planner
   mutable std::shared_timed_mutex _writeAccess;
   
 }; // class

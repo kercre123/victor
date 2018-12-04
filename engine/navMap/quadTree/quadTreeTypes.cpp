@@ -75,7 +75,7 @@ NodeAddress GetAddressForNodeCenter(const Point2i& nodeCenter, const uint8_t& de
   }
   // (0,0) is the furthest possible leaf node in the MinusXMinusY direction
   // thus the binary mask of the cell is directly used to compute the address
-  NodeAddress addr(depth+1, EQuadrant::Invalid);
+  NodeAddress addr(depth+1);
   addr[0] = EQuadrant::Root;
   uint32_t dirX = ~nodeCenter.x();
   uint32_t dirY = ~nodeCenter.y();
@@ -102,7 +102,6 @@ std::string ToString(const NodeAddress& addr)
       case EQuadrant::MinusXPlusY:  return "-+";
       case EQuadrant::MinusXMinusY: return "--";
       case EQuadrant::Root:         return "root";
-      case EQuadrant::Invalid:      return "n/a";
     }
     return "";
   };

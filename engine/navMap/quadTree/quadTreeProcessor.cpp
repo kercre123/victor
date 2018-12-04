@@ -46,18 +46,23 @@ QuadTreeProcessor::QuadTreeProcessor()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldType, const bool wasEmpty)
+void QuadTreeProcessor::OnNodeContentChanged(const QuadTreeNode* node, const NodeContent& oldContent)
 {
   
   using namespace MemoryMapTypes;
-  EContentType newType = node->GetContent().data->type;
+  const EContentType oldType = oldContent.data->type;
+  const EContentType newType = node->GetData()->type;
 
-  DEV_ASSERT(oldType != newType, "QuadTreeProcessor.OnNodeContentTypeChanged.ContentNotChanged");
+  // type hasn't changed, so we don't need to update any of our caching
+  if (oldType == newType) { return; }
 
   // update exploration area based on the content type
   {
-    const bool needsToRemove = !wasEmpty &&  node->IsEmptyType();
-    const bool needsToAdd    =  wasEmpty && !node->IsEmptyType();
+    const bool wasEmpty = (oldType == EContentType::Unknown);
+    const MemoryMapDataPtr data = node->GetData();
+
+    const bool needsToRemove = !wasEmpty &&  (node->IsSubdivided() || (data->type == EContentType::Unknown));
+    const bool needsToAdd    =  wasEmpty && !(node->IsSubdivided() || (data->type == EContentType::Unknown));
     if ( needsToRemove )
     {
       const float side_m = MM_TO_M(node->GetSideLen());
@@ -166,7 +171,7 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 
   // remove the area for this node if it was counted before
   {
-    const bool wasOutOld = node->IsEmptyType();
+    const bool wasOutOld = (node->GetData()->type == EContentType::Unknown);
     const bool needsToRemove = !wasOutOld;
     if ( needsToRemove )
     {

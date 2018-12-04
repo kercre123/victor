@@ -111,9 +111,6 @@ bool ExpectsAdditionalData(EContentType type);
 // String representing ENodeContentType for debugging purposes
 const char* EContentTypeToString(EContentType contentType);
 
-// convert between our internal node content type and an external content type
-ExternalInterface::ENodeContentTypeEnum ConvertContentType(EContentType contentType);
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Array of content that provides an API with compilation checks for algorithms that require combinations
 // of content types. It's for example used to make sure that you define a value for all content types, rather
