@@ -14,7 +14,6 @@ import zlib
 import shutil
 import ConfigParser
 import socket
-import re
 from select import select
 from hashlib import sha256
 from collections import OrderedDict
@@ -41,7 +40,7 @@ HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 HTTP_TIMEOUT = 90 # Give up after 90 seconds on blocking operations
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
 SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "1.0.0"]
-TRUE_SYNONYMS = ["True", "true", "on", "1"]
+MINIMUM_OS_VERSION = "1.0.0.1741"
 DEBUG = False
 
 def make_blocking(pipe, blocking):
@@ -446,20 +445,10 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
 
 
 def validate_new_os_version(current_os_version, new_os_version, cmdline):
-    allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
-    if allow_downgrade and "anki.dev" in cmdline:
-        return
-    os_version_regex = re.compile('^(?:\d+\.){2,3}\d+(d|ud)?$')
-    m = os_version_regex.match(new_os_version)
-    if not m:
-        die(216, "OS version " + new_os_version + " does not match regular expression")
-    new_os_version_suffix = m.groups()[0]
-    m = os_version_regex.match(current_os_version)
-    current_os_version_suffix = m.groups()[0]
-    if new_os_version_suffix != current_os_version_suffix:
-        die(216, "Update from " + current_os_version + " to " + new_os_version + " not allowed")
     if LooseVersion(new_os_version) < LooseVersion(current_os_version):
         die(216, "Downgrade from " + current_os_version + " to " + new_os_version + " not allowed")
+    if LooseVersion(new_os_version) < LooseVersion(MINIMUM_OS_VERSION):
+        die(216, new_os_version + " is less than the minimum allowed version: " + MINIMUM_OS_VERSION);
     return
 
 def update_from_url(url):
