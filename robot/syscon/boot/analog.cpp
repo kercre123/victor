@@ -190,6 +190,7 @@ void Analog::init(void) {
   CAPI::mode(MODE_ALTERNATE);
   
   // LEDs
+  LED_DAT::type(TYPE_OPENDRAIN);
   LED_CLK::type(TYPE_OPENDRAIN);
   LED_DAT::reset();
   LED_CLK::reset();

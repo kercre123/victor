@@ -24,6 +24,8 @@ static const uint32_t COMMS_BAUDRATE = 3000000;
 static const uint32_t WATCHDOG_CLOCK  = 10000;
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
+static const uint32_t* HW_REVISION    = (uint32_t*)0x08000010;
+
 enum IRQ_Priority {
   PRIORITY_ADC = 0,
   PRIORITY_ENCODERS = 1,
