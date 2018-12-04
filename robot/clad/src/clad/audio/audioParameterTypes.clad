@@ -19,6 +19,7 @@ enum uint_32 ParameterType
   Robot_Vic_Head_Accelerate = 2691629051,
   Robot_Vic_Head_Position = 1549905781,
   Robot_Vic_Head_Speed = 4244799613,
+  Robot_Vic_How_Old_Speed = 4000308525,
   Robot_Vic_Lift_Accelerate = 1685856300,
   Robot_Vic_Lift_Position = 4014791842,
   Robot_Vic_Lift_Speed = 2317283412,
