@@ -3,6 +3,7 @@
   "behaviorID" : "Alexa",
 
   "associatedActiveFeature": "Alexa",
+  "behaviorStatToIncrement": "AVS",
   
   "responseData": {
     

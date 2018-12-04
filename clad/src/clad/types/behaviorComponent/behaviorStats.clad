@@ -16,6 +16,7 @@ namespace Vector {
 
 enum uint_32 BehaviorStat {
 
+  AVS, // alexa
   AnimationPlayed,
   AttemptedFistBump,
   AttemptedPounceOnCube,
