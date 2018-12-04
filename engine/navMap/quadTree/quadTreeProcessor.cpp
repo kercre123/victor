@@ -61,8 +61,8 @@ void QuadTreeProcessor::OnNodeContentChanged(const QuadTreeNode* node, const Nod
     const bool wasEmpty = (oldType == EContentType::Unknown);
     const MemoryMapDataPtr data = node->GetData();
 
-    const bool needsToRemove = !wasEmpty &&  (node->IsSubdivided() || (data->type == EContentType::Unknown));
-    const bool needsToAdd    =  wasEmpty && !(node->IsSubdivided() || (data->type == EContentType::Unknown));
+    const bool needsToRemove = !wasEmpty &&  (node->IsSubdivided() || (newType == EContentType::Unknown));
+    const bool needsToAdd    =  wasEmpty && !(node->IsSubdivided() || (newType == EContentType::Unknown));
     if ( needsToRemove )
     {
       const float side_m = MM_TO_M(node->GetSideLen());
@@ -114,6 +114,43 @@ void QuadTreeProcessor::OnNodeContentChanged(const QuadTreeNode* node, const Nod
     _nodeSets[newType].insert(node);
   }
 }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
+{
+  // if old content type is cached
+  const EContentType oldContent = node->GetData()->type;
+  if ( IsCached(oldContent) )
+  {
+    // remove the node from that cache
+    DEV_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(),
+               "QuadTreeProcessor.OnNodeDestroyed.InvalidNode");
+    _nodeSets[oldContent].erase(node);
+  }
+
+  // remove the area for this node if it was counted before
+  {
+    const bool wasOutOld = (node->GetData()->type == EContentType::Unknown);
+    const bool needsToRemove = !wasOutOld;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalExploredArea_m2 -= area_m2;
+    }
+  }
+  
+  // remove interesting edge area if it was counted before
+  {
+    const bool shouldBeCountedOld = (node->GetData()->type == EContentType::InterestingEdge);
+    const bool needsToRemove =  shouldBeCountedOld;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalInterestingEdgeArea_m2 -= area_m2;
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::vector<bool>
@@ -156,43 +193,6 @@ QuadTreeProcessor::AnyOfRays( const Point2f& start,
   return results;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
-{
-  // if old content type is cached
-  const EContentType oldContent = node->GetData()->type;
-  if ( IsCached(oldContent) )
-  {
-    // remove the node from that cache
-    DEV_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(),
-               "QuadTreeProcessor.OnNodeDestroyed.InvalidNode");
-    _nodeSets[oldContent].erase(node);
-  }
-
-  // remove the area for this node if it was counted before
-  {
-    const bool wasOutOld = (node->GetData()->type == EContentType::Unknown);
-    const bool needsToRemove = !wasOutOld;
-    if ( needsToRemove )
-    {
-      const float side_m = MM_TO_M(node->GetSideLen());
-      const float area_m2 = side_m*side_m;
-      _totalExploredArea_m2 -= area_m2;
-    }
-  }
-  
-  // remove interesting edge area if it was counted before
-  {
-    const bool shouldBeCountedOld = (node->GetData()->type == EContentType::InterestingEdge);
-    const bool needsToRemove =  shouldBeCountedOld;
-    if ( needsToRemove )
-    {
-      const float side_m = MM_TO_M(node->GetSideLen());
-      const float area_m2 = side_m*side_m;
-      _totalInterestingEdgeArea_m2 -= area_m2;
-    }
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred)
