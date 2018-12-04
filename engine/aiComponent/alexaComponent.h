@@ -17,6 +17,7 @@
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/alexaComponentTypes.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -42,6 +43,7 @@ namespace external_interface {
 }
 namespace RobotInterface {
   class RobotToEngine;
+  enum class CancelAlexaFromEngineReason : uint8_t;
 }
 
   
@@ -82,7 +84,7 @@ public:
 
 private:
   
-  void SetAlexaOption( bool optedIn );
+  void SetAlexaOption( bool optedIn, UserIntentSource source );
   
   void HandleAppEvents( const AnkiEvent<external_interface::GatewayWrapper>& event );
   void HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEngine>& event );
@@ -92,7 +94,7 @@ private:
   void SendAuthStateToApp( bool isResponse );
   
   // tell anim to cancel any pending auth, but not any completed auth
-  void SendCancelPendingAuth() const;
+  void SendCancelPendingAuth(const RobotInterface::CancelAlexaFromEngineReason& reason) const;
   
   void ToggleButtonWakewordSetting( bool isAlexa ) const;
   
@@ -106,6 +108,7 @@ private:
   std::string _authStateExtra;
   
   AlexaUXState _uxState;
+  float _lastUxStateTransition_s = 0.0f;
   
   struct AlexaUXResponseInfo
   {

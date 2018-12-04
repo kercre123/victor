@@ -14,31 +14,35 @@
 *
 */
 
-#include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
+
+#include "micDataTypes.h"
+
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/image_impl.h"
-#include "micDataTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/internetUtils/internetUtils.h"
+#include "util/logging/DAS.h"
+
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
-#include "webServerProcess/src/webService.h"
 
 #include "json/json.h"
 #include "osState/osState.h"
@@ -47,6 +51,8 @@
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
+
+#include "webServerProcess/src/webService.h"
 
 #include <chrono>
 #include <fstream>
@@ -519,6 +525,14 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   LOG_INFO("FaceInfoScreenManager.SetScreen.EnteringScreen", "%hhu", GetCurrScreenName());
   _currScreen->EnterScreen();
 
+  if(!IsAlexaScreen(GetCurrScreenName())) {
+    // when exiting alexa screens (say, into pairing), cancel any pending alexa authorization
+    auto* alexa = _context->GetAlexa();
+    if (alexa != nullptr) {
+      alexa->CancelPendingAlexaAuth("LEFT_CODE_SCREEN");
+    }
+  }
+
   ResetObservedHeadAndLiftAngles();
 
   // Clear menu navigation triggers
@@ -951,10 +965,19 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 
   const ScreenName currScreenName = GetCurrScreenName();
 
-  // Fake trigger word on single press
-  if (singlePressDetected && currScreenName == ScreenName::None) {
-    LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotSinglePress", "Triggering wake word");
-    _context->GetMicDataSystem()->FakeTriggerWordDetection();
+ if (singlePressDetected) {
+    if (IsAlexaScreen(currScreenName)) {
+      // Single press should exit any uncompleted alexa authorization
+      Alexa* alexa = _context->GetAlexa();
+      if( alexa != nullptr ) {
+        alexa->CancelPendingAlexaAuth("BUTTON_PRESS");
+      }
+      EnableAlexaScreen(ScreenName::None,"","");
+    } else if (currScreenName == ScreenName::None) {
+      // Fake trigger word on single press
+      LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotSinglePress", "Triggering wake word");
+      _context->GetMicDataSystem()->FakeTriggerWordDetection();
+    }
   }
 
   // Check for conditions to enter BLE pairing mode
@@ -1663,7 +1686,12 @@ void FaceInfoScreenManager::EnableAlexaScreen(ScreenName screenName, const std::
   if ((screenName == ScreenName::AlexaPairing) && (GetCurrScreenName() != ScreenName::AlexaPairing)) {
     _alexaCode = code;
     _alexaUrl = url;
+
     LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Code", "");
+
+    DASMSG(pairing_code_displayed, "alexa.pairing_code_displayed", "A code to pair with AVS has been displayed");
+    DASMSG_SEND();
+
     SetScreen(ScreenName::AlexaPairing);
   } else if ((screenName == ScreenName::AlexaPairingSuccess) && (currScreen != ScreenName::AlexaPairingSuccess)) {
     LOG_INFO("FaceInfoScreenManager.EnableAlexaPairingScreen.Success", "");

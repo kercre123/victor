@@ -28,6 +28,8 @@
  */
 
 #include "cozmoAnim/alexa/alexaObserver.h"
+#include "json/json.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
@@ -352,7 +354,52 @@ void AlexaObserver::onSendCompleted( avsCommon::sdkInterfaces::MessageRequestObs
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaObserver::onExceptionReceived( const std::string& exceptionMessage )
 {
+  // example response when signed out
+  //  {
+  //     "header": {
+  //         "messageId": "8438931a-40ce-4612-bd2c-035fae4dd385",
+  //         "name": "Exception",
+  //         "namespace": "System"
+  //     },
+  //     "payload": {
+  //         "code": "UNAUTHORIZED_REQUEST_EXCEPTION",
+  //         "description": "Unable to authenticate the request. Please provide a valid authorization token."
+  //     }
+  //   }
+
   LOG_WARNING( "AlexaObserver.onExceptionReceived", "SDK exception: %s", exceptionMessage.c_str() );
+
+  Json::Value exceptionData;
+
+  // use the most permissive reader possible
+  Json::Reader reader(Json::Features::all());
+  const bool parsedOK = reader.parse(exceptionMessage, exceptionData, false);
+
+  std::string code = "INVALID_JSON_CANT_PARSE";
+  if( parsedOK ) {
+    if( exceptionData.isMember("payload") ) {
+      Json::Value& payload = exceptionData["payload"];
+      if( payload.isMember("code") ) {
+        Json::Value& code = payload["code"];
+        if( code.isString() ) {
+          code = code.asString();
+        }
+        else {
+          code = "INVALID_JSON_CODE_NOT_STRING";
+        }
+      }
+      else {
+        code = "INVALID_JSON_NO_CODE";
+      }
+    }
+    else {
+      code = "INVALID_JSON_NO_PAYLOAD";
+    }
+  }
+
+  DASMSG(alexa_exception_msg, "alexa.exception", "AVS SDK received an exception");
+  DASMSG_SET(s1, code, "Exception code");
+  DASMSG_SEND();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

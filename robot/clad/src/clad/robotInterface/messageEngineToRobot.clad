@@ -463,8 +463,16 @@ message SetAlexaUsage
 {
   bool optedIn
 }
+
+enum uint_8 CancelAlexaFromEngineReason
+{
+  AppDisconnect
+}
+
 message CancelPendingAlexaAuth
 {
+  // reason of cancellation (for DAS message)
+  CancelAlexaFromEngineReason reason
 }
 
 structure ColorRGB

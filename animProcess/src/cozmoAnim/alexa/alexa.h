@@ -49,8 +49,10 @@ public:
   
   // handles message from engine to opt in or out
   void SetAlexaUsage(bool optedIn);
-  // handles message from engine to cancel any pending authorization
-  void CancelPendingAlexaAuth();
+
+  // cancels any pending authorization started by the user (not an auto-auth during reboot). Reason is
+  // included in a DAS message
+  void CancelPendingAlexaAuth(const std::string& reason);
   
   void OnEngineLoaded();
   
