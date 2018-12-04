@@ -93,7 +93,7 @@ public:
 
 private:
   
-  void SetAlexaOption( bool optedIn );
+  void SetAlexaOption( bool optedIn, UserIntentSource source );
   
   void HandleAppEvents( const AnkiEvent<external_interface::GatewayWrapper>& event );
   void HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEngine>& event );

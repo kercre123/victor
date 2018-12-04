@@ -303,6 +303,11 @@ void AlexaImpl::InitThread()
     DASMSG_SET(s1, deviceInfo->getProductId(), "product id (from json)");
     DASMSG_SEND();
   }
+  else {
+    DASMSG(avs_device_info, "alexa.device_info", "we created an alexa object with the given device info");
+    DASMSG_SET(s1, deviceInfo->getProductId(), "product id (from json)");
+    DASMSG_SEND();
+  }
   
   // Creating the AuthDelegate - this component takes care of LWA and authorization of the client.
   auto authDelegateStorage = authorization::cblAuthDelegate::SQLiteCBLAuthDelegateStorage::create( rootConfig );
