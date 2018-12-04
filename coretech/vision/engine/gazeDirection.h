@@ -89,6 +89,9 @@ public:
   // is used for debugging and visualization purposes.
   Point3f GetCurrentGazeDirection() const;
 
+  Point3f GetEyeDirectionAverage() const;
+  Point3f GetCurrentEyeDirection() const;
+
   bool GetExpired(const TimeStamp_t currentTime) const;
   bool IsStable() const;
 
@@ -96,21 +99,32 @@ public:
 
 private:
   int FindInliers(const Point3f& faceDirectionAverage);
+  int FindEyeDirectionInliers(const Point3f& eyeDirectionAverage);
 
   bool GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint);
   Point3f ComputeEntireGazeDirectionAverage();
   Point3f ComputeGazeDirectionAverage(const bool filterOutliers);
   Point3f RecomputeGazeDirectionAverage();
 
+  bool GetPointFromEyePose(const Pose3d& eyePose, Point3f& eyeDirectionPoint);
+  Point3f ComputeEntireEyeDirectionAverage();
+  Point3f ComputeEyeDirectionAverage(const bool filterOutliers);
+  Point3f RecomputeEyeDirectionAverage();
+
   Pose3d _headPose;
+  Pose3d _eyePose;
 
   TimeStamp_t _lastUpdated = 0;
   int _currentIndex = 0;
   int _numberOfInliers = 0;
+  int _numberOfEyeDirectionsInliers = 0;
   bool _initialized = false;
 
   std::vector<GazeDirectionData> _gazeDirectionHistory;
   Point3f _gazeDirectionAverage;
+
+  std::vector<GazeDirectionData> _eyeDirectionHistory;
+  Point3f _eyeDirectionAverage;
 };
 
 }

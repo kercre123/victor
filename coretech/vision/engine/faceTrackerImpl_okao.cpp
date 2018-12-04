@@ -1203,7 +1203,12 @@ namespace Vision {
 
       if(facePartsFound)
       {
-        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
+
+        // TODO this is the old location of this call and make sure we
+        // want it in the new one before deleting this comment. It was
+        // moved because we need the gaze to be set before we call this
+        // so we can set eye pose correctly ... clear as mud and tots obvs
+        // SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
 
         //PRINT_NAMED_INFO("FaceTrackerImpl.Update.HeadOrientation",
         //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
@@ -1247,6 +1252,9 @@ namespace Vision {
                                 detectionIndex, numDetections);
           }
         }
+
+        // This is the new location of the set face pose from parts
+        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
 
         if(_detectGaze)
         {
