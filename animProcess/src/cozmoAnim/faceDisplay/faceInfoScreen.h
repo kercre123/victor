@@ -73,6 +73,9 @@ public:
   
   // Specify the timeout duration and the screen to goto when it expires
   void SetTimeout(f32 seconds, ScreenName gotoScreen);
+  
+  // Restarts the timeout, if there is one
+  void RestartTimeout();
 
   // Returns true if this screen has a menu item that was added via AppendMenuItem
   bool HasMenu() const;

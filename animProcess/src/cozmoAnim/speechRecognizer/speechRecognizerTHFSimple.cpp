@@ -65,8 +65,8 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   mutable std::recursive_mutex      _recogMutex;
   const recog_t*                    _lastUsedRecognizer = nullptr;
   size_t                            _sampleRate_kHz = 0;
-  size_t                            _sampleIndex = 0;
-  size_t                            _lastResetSampleIndex = 0;
+  uint64_t                          _sampleIndex = 0;
+  uint64_t                          _lastResetSampleIndex = 0;
   bool                              _disabled = false;
   bool                              _reset = false;
   

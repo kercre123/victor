@@ -2037,7 +2037,7 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
     msgProfiler.Update((int)msg.GetTag(), msg.Size());
   } else {
     const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
-    Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);
+    LOG_WARNING("Robot.SendMessage", "Robot %d failed to send a message type %s", _ID, msgTypeName);
     msgProfiler.ReportOnFailure();
   }
   return sendResult;

@@ -6,10 +6,11 @@
   "linkScope" : false,
 
   "behaviors" : [
+    "MandatoryPhysicalReactions",
     "OnboardingMeetVictorTriggerWordDetected",
     "ComeHereVoiceCommand",
     "MeetVictor",
-    "OnboardingLookAtUser"
+    "OnboardingLookAtUser1p2"
   ],
 
   "anonymousBehaviors" : [

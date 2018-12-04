@@ -16,7 +16,6 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/faceIdTypes.h"
-#include "clad/types/faceEnrollmentPoses.h"
 #include "clad/types/loadedKnownFace.h"
 
 #include <list>
@@ -69,9 +68,9 @@ namespace Vision {
     
     void SetRecognitionIsSynchronous(bool isSynchronous);
     
-    void SetFaceEnrollmentMode(FaceEnrollmentPose pose,
-                               FaceID_t forFaceID = UnknownFaceID,
-                               s32 numEnrollments = -1);
+    void SetFaceEnrollmentMode(FaceID_t forFaceID = UnknownFaceID,
+                               s32 numEnrollments = -1,
+                               bool forceNewID = false);
     
     void EnableEmotionDetection(bool enable);
     void EnableSmileDetection(bool enable);

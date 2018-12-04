@@ -330,19 +330,24 @@ namespace Anki {
       currentAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
       bool inPosition = false;
       
-      const float absAngularDistToTarget_rad = std::abs(_angularDistExpected_rad - _angularDistTraversed_rad);
+      if (_isAbsoluteAngle) {
+        // For absolute turns, we only care if we are near the target angle (we don't care about the angle traversed)
+        inPosition = currentAngle.IsNear(_currentTargetAngle, _angleTolerance.ToFloat());
+      } else {
+        const float absAngularDistToTarget_rad = std::abs(_angularDistExpected_rad - _angularDistTraversed_rad);
 
-      // Only check if body is in position if we're within Pi radians of completing
-      //  the turn (to allow for multiple-rotation turns, e.g. 360 degrees).
-      if (absAngularDistToTarget_rad < M_PI_F) {
-        inPosition = currentAngle.IsNear(_currentTargetAngle, _angleTolerance.ToFloat() + Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
-        
-        // If we've relocalized during the turn, also consider the turn complete
-        //  if we've turned through the entire expected angular distance (since the
-        //  pose jump may cause the target vs. actual angle comparison to fail)
-        if (_relocalizedCnt != 0 &&
-            absAngularDistToTarget_rad < std::abs(_angleTolerance.ToFloat())) {
-          inPosition = true;
+        // Only check if body is in position if we're within Pi radians of completing
+        //  the turn (to allow for multiple-rotation turns, e.g. 360 degrees).
+        if (absAngularDistToTarget_rad < M_PI_F) {
+          inPosition = currentAngle.IsNear(_currentTargetAngle, _angleTolerance.ToFloat() + Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+          
+          // If we've relocalized during the turn, also consider the turn complete
+          //  if we've turned through the entire expected angular distance (since the
+          //  pose jump may cause the target vs. actual angle comparison to fail)
+          if (_relocalizedCnt != 0 &&
+              absAngularDistToTarget_rad < std::abs(_angleTolerance.ToFloat())) {
+            inPosition = true;
+          }
         }
       }
       return inPosition && !GetRobot().GetMoveComponent().AreWheelsMoving();

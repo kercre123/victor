@@ -48,11 +48,9 @@ void FaceInfoScreen::EnterScreen()
 {
   _menuCursor = 0;
   
-  // Only set timeout if the timeoutDuration is non-zero and the timeout screen
-  // is different from the current screen.
-  if (_timeoutDuration_s > 0.f && _timeoutScreen != _name) {
-    const auto currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    _timeout_s = currTime_s + _timeoutDuration_s;
+  // Only set timeout if the timeout screen is different from the current screen.
+  if (_timeoutScreen != _name) {
+    RestartTimeout();
   }
 
   if (_enterAction) {
@@ -80,6 +78,14 @@ void FaceInfoScreen::SetTimeout(f32 seconds, ScreenName gotoScreen)
 {
   _timeoutDuration_s = seconds;
   _timeoutScreen = gotoScreen;
+}
+  
+void FaceInfoScreen::RestartTimeout()
+{
+  if (_timeoutDuration_s > 0.f) {
+    const auto currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _timeout_s = currTime_s + _timeoutDuration_s;
+  }
 }
   
 void FaceInfoScreen::AppendMenuItem(const std::string& text, ScreenName gotoScreen)

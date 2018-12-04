@@ -65,14 +65,12 @@ namespace Anki {
         // never actually stop moving
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
 
-#if (ANKI_WHISKEY==0)
         // For disengaging gripper once the lift has reached its final position
         bool disengageGripperAtDest_ = false;
         f32  disengageAtAngle_ = 0.f;
 
         // The height of the "fingers"
         const f32 LIFT_FINGER_HEIGHT = 3.8f;
-#endif
 
         f32 Kp_ = 3.f; // proportional control constant
         f32 Kd_ = 0.f;  // derivative gain
@@ -84,19 +82,11 @@ namespace Anki {
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
 #else // ifdef SIMULATOR
 
-#if (ANKI_WHISKEY==0)
         f32 Kp_ = 3.f;     // proportional control constant
         f32 Kd_ = 3000.f;  // derivative gain
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 5.f;
-#else
-        f32 Kp_ = 3.f;     // proportional control constant
-        f32 Kd_ = 3000.f;  // derivative gain
-        f32 Ki_ = 0.1f;    // integral control constant
-        f32 angleErrorSum_ = 0.f;
-        f32 MAX_ERROR_SUM = 5.f;
-#endif        
 
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
@@ -230,10 +220,8 @@ namespace Anki {
 
           ResetAnglePosition(currentAngle_rad_);
 #ifdef SIMULATOR
-#if (ANKI_WHISKEY==0)
           // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
           HAL::DisengageGripper();
-#endif          
 #endif
         }
       }
@@ -519,7 +507,6 @@ namespace Anki {
         const f32 newDesiredAngle = CLIP(angle_rad, MIN_LIFT_ANGLE, MAX_LIFT_ANGLE);
 
 #ifdef SIMULATOR
-#if (ANKI_WHISKEY==0)
         if(!HAL::IsGripperEngaged()) {
           // If the new desired height will make the lift move upward, turn on
           // the gripper's locking mechanism so that we might pick up a block as
@@ -542,7 +529,6 @@ namespace Anki {
             disengageGripperAtDest_ = false;
           }
         }
-#endif        
 #endif
         // Check if already at desired angle
         if (inPosition_ &&
@@ -768,12 +754,10 @@ namespace Anki {
         }
 
 #ifdef SIMULATOR
-#if (ANKI_WHISKEY==0)
         if (disengageGripperAtDest_ && currentAngle_rad_ < disengageAtAngle_) {
           HAL::DisengageGripper();
           disengageGripperAtDest_ = false;
         }
-#endif
 #endif
 
         if (checkingForLoadStartTime_ > 0) {

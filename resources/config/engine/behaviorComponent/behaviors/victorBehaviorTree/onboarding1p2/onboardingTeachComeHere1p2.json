@@ -1,14 +1,32 @@
 {
   "behaviorID" : "OnboardingTeachComeHere1p2",
-  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
 
   "interruptActiveBehavior": true,
   "linkScope" : false,
 
   "behaviors" : [
-    "OnboardingComeHereTriggerWordDetected",
-    "ComeHereVoiceCommand",
-    "OnboardingLookAtUser"
+    {
+      "behavior" : "MandatoryPhysicalReactions",
+      "cooldown_s" : 0.0
+    },
+    {
+      "behavior" : "OnboardingComeHereTriggerWordDetected",
+      "cooldown_s" : 0.0
+    },
+    {
+      "behavior" : "OnboardingComeHere",
+      // -1.0 cooldown is FLT_MAX, meaning only run once.
+      "cooldown_s" : -1.0
+    },
+    {
+      "behavior" : "ComeHereVoiceCommand",
+      "cooldown_s" : 0.0
+    },
+    {
+      "behavior" : "OnboardingLookAtUser1p2",
+      "cooldown_s" : 0.0
+    }
   ],
 
   "anonymousBehaviors" : [

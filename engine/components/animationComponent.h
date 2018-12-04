@@ -235,12 +235,13 @@ public:
   // Allows external components to set up a special callback function that persists across multiple calls
   // This functionality is currently associated exclusively with the needs of UserIntentComponent's TriggerWordGetIn animation
   // The animation tag returned is what should be associated with any animations that want to call this callback when they
-  // complete
-  AnimationTag SetTriggerWordGetInCallback(std::function<void()> callbackFunction);
+  // complete. Callback parameter is true when the animation is playing and false when it stops
+  AnimationTag SetTriggerWordGetInCallback(std::function<void(bool)> callbackFunction);
   
-  // Similar to above, but returns a animation tags corresponding to Alexa's Listening, Thinking, and Speaking
-  // UX states. The callback passes 0, 1, and 2 corresponding to the same
-  std::array<AnimationTag,4> SetAlexaUXResponseCallback(std::function<void(unsigned int)> callback);
+  // Similar to above, but returns a animation tags corresponding to Alexa's Listening, Thinking, Speaking, and Error
+  // UX states. The callback passes 0, 1, 2, and 3 corresponding to the same. Second param is true when the animation
+  // starts and false when it stops
+  std::array<AnimationTag,4> SetAlexaUXResponseCallback(std::function<void(unsigned int,bool)> callback);
 
 
   // Accessors for latest animState values
@@ -293,6 +294,7 @@ private:
   Result SendEnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0);
   
   bool TagIsAlexa( AnimationTag tag ) const;
+  void SendAlexaCallback( uint8_t tag, bool playing ) const;
   
   static constexpr float _kDefaultTimeout_sec = 60.f;
 
@@ -376,13 +378,13 @@ private:
   std::unordered_multimap<Tag, AnimCallbackInfo> _callbackMap;
   // Special tag associated with the userIntentComponent's triggerWordGetInAnimation
   AnimationTag _tagForTriggerWordGetInCallbacks;
-  std::function<void()> _triggerWordGetInCallbackFunction;
+  std::function<void(bool)> _triggerWordGetInCallbackFunction;
   
   AnimationTag _tagForAlexaListening;
   AnimationTag _tagForAlexaThinking;
   AnimationTag _tagForAlexaSpeaking;
   AnimationTag _tagForAlexaError;
-  std::function<void(unsigned int)> _alexaResponseCallback;
+  std::function<void(unsigned int,bool)> _alexaResponseCallback;
   
   int _compositeImageID;
 

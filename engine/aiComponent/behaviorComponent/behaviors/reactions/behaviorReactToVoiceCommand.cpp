@@ -255,6 +255,11 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   SetRespondToTriggerWord( true );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Public destructor must be explicitly defined to allow std::unique_ptr<FwdDeclaredType> (ConditionUserIntentPending)
+BehaviorReactToVoiceCommand::~BehaviorReactToVoiceCommand()
+{
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const

@@ -93,7 +93,7 @@
   },
   {
     "feature": "HandDetection",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "GazeDirection",

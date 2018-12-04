@@ -169,6 +169,25 @@ void ConvertRgbaToWebotsColorArray(const uint32_t rgbaColor, double* webotsColor
 }
 
 
+void SetNodePose(webots::Node& node, const Pose3d& newPose, const bool convertToMeters)
+{
+  double trans[3] = {0};
+  GetWebotsTranslation(newPose, trans, convertToMeters);
+  node.getField("translation")->setSFVec3f(trans);
+  
+  double rot[4] = {0};
+  GetWebotsRotation(newPose, rot);
+  node.getField("rotation")->setSFRotation(rot);
+}
+
+
+void SetNodeColor(webots::Node& node, uint32_t rgbaColor)
+{
+  double webotsColor[3] = {0};
+  ConvertRgbaToWebotsColorArray(rgbaColor, webotsColor);
+  node.getField("color")->setSFColor(webotsColor);
+}
+
 }; // namespace
 }; // namespace
 

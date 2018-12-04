@@ -733,7 +733,7 @@ def main(args):
   parser.add_argument('--sdkScriptLocation',
                       dest='sdk_root',
                       action='store',
-                      default=os.path.join(VECTOR_ENGINE_ROOT, 'tools', 'sdk', 'vector-python-sdk-private', 'sdk', 'tests', 'automated'),
+                      default=os.path.join(VECTOR_ENGINE_ROOT, 'tools', 'sdk', 'vector-sdk-tests', 'automated'),
                       type=str,
                       help='Location of where to look for the sdk scripts which will be ran.')
 

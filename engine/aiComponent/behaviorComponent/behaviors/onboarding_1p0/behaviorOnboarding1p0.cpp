@@ -101,10 +101,6 @@ void BehaviorOnboarding1p0::GetBehaviorOperationModifiers(BehaviorOperationModif
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Med });
-  
-  // cubes aren't needed, but by connecting to one we also gather cube advertisements, which are checked by the app
-  modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
-  modifiers.connectToCubeInBackground = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

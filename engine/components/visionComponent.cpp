@@ -91,10 +91,8 @@ namespace Vector {
   CONSOLE_VAR_ENUM(u8, kVisionComponent_Logging,   ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
 
-  // Quality of images sent to game/viz
-  // Set to -1 to display "locally" with img.Display()
-  // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
-  CONSOLE_VAR(s32,  kImageCompressQuality,  "Vision.General", 50);
+  // Whether or not to send 'debug' images
+  CONSOLE_VAR(bool, kSendDebugImages,  "Vision.General", true);
 
   CONSOLE_VAR(bool, kSendUndistortedImages, "Vision.General", false);
   
@@ -2077,12 +2075,9 @@ namespace Vector {
     }
   }
 
-  void VisionComponent::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
- 																						  Vision::FaceID_t forFaceID,
-																						  s32 numEnrollments)
-
+  void VisionComponent::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID, s32 numEnrollments, bool forceNewID)
   {
-    _visionSystem->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
+    _visionSystem->SetFaceEnrollmentMode(forFaceID, numEnrollments, forceNewID);
   }
 
   Result VisionComponent::EraseFace(Vision::FaceID_t faceID)
@@ -2764,7 +2759,7 @@ namespace Vector {
     if(ANKI_DEV_CHEATS)
     {
       // Display any debug images left by the vision system
-      if(kImageCompressQuality > 0)
+      if(kSendDebugImages)
       {
         for(auto & debugGray : result.debugImages)
         {

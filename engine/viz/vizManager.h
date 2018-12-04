@@ -285,7 +285,7 @@ namespace Anki {
       void EraseAllMatMarkers();
 
       // ==== Draw functions without identifier =====
-      // This supports sending requests to draw primitives without requiring to assign a single ID to every
+      // This supports sending requests to draw segments without requiring to assign a single ID to every
       // one of them, but a group. Used for debugging purposes where the underlaying geometry is not directly
       // related to a given object
       
@@ -565,7 +565,7 @@ namespace Anki {
     void VizManager::DrawSegment(const std::string& identifier,
       const Point<3,T>& from, const Point<3,T>& to, const ColorRGBA& color, bool clearPrevious, float zOffset)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::SegmentPrimitive
+      SendMessage(VizInterface::MessageViz(VizInterface::LineSegment
         {identifier,
          color.AsRGBA(),
          { {Anki::Util::numeric_cast<float>(MM_TO_M(from.x())),

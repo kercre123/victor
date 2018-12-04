@@ -159,6 +159,11 @@ AlexaImpl::AlexaImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::~AlexaImpl()
 {
+  if( _observer ) {
+    // note: once VIC-11427 is implemented, this might not be necessary, but it wouldn't hurt
+    _observer->Shutdown();
+  }
+  
   if( _capabilitiesDelegate ) {
     // TODO (VIC-11427): this is likely leaking something when commented out, but running shutdown() causes a lock
     //_capabilitiesDelegate->shutdown();
@@ -241,7 +246,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                    std::bind(&AlexaImpl::OnAVSConnectionChanged, this, std::placeholders::_1, std::placeholders::_2),
                    std::bind(&AlexaImpl::OnSendComplete, this, std::placeholders::_1),
                    std::bind(&AlexaImpl::OnSDKLogout, this),
-                   std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1) );
+                   std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1),
+                   std::bind(&AlexaImpl::OnAlertState, this, std::placeholders::_1, std::placeholders::_2) );
   
   const auto& rootConfig = avsCommon::utils::configuration::ConfigurationNode::getRoot();
   
@@ -373,6 +379,7 @@ bool AlexaImpl::Init( const AnimContext* context )
   _client->AddSpeakerManagerObserver( _observer );
   _client->AddInternetConnectionObserver( _observer );
   _client->AddNotificationsObserver( _observer );
+  _client->AddAlertObserver( _observer );
   
    // Creating the revoke authorization observer.
   auto revokeObserver = std::make_shared<AlexaRevokeAuthObserver>( _client->GetRegistrationManager() );
@@ -601,7 +608,7 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   // if not SUCCESS or AUTHORIZATION_PENDING, fail. AUTHORIZATION_PENDING seems like a valid error
   // to me: "Waiting for user to authorize the specified code pair."
   if( (error != Error::SUCCESS) && (error != Error::AUTHORIZATION_PENDING) ) {
-    LOG_ERROR( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
+    LOG_WARNING( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
     const bool errFlag = true;
     SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
     return;
@@ -719,11 +726,12 @@ void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
     }
   } else {
     auto it = _playingSources.find( id );
-    if( ANKI_VERIFY( it != _playingSources.end(),
-                     "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id ) )
-    {
+    if( it != _playingSources.end() ) {
       _playingSources.erase( it );
       CheckForUXStateChange();
+    } else {
+      // this may be ok, depending on whether or not there was an error
+      LOG_WARNING( "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id );
     }
   }
 }
@@ -828,6 +836,36 @@ void AlexaImpl::OnNotificationsIndicator( avsCommon::avs::IndicatorState state )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::alerts::AlertObserverInterface::State state )
+{
+  using State = capabilityAgents::alerts::AlertObserverInterface::State;
+  _alertStates[alertID] = state;
+  _alertActive = false;
+  for( auto& alertPair : _alertStates ) {
+    bool canBeCancelled;
+    switch( alertPair.second ) {
+      case State::STARTED: // The alert has started.
+        canBeCancelled = true;
+        break;
+      case State::READY: // The alert is ready to start, and is waiting for channel focus.
+      case State::STOPPED: // The alert has stopped due to user or system intervention.
+      case State::SNOOZED: // The alert has snoozed.
+      case State::COMPLETED: // The alert has completed on its own.
+      case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
+      case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
+      case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
+      case State::ERROR: // The alert has encountered an error.
+        canBeCancelled = false;
+        break;
+    }
+    _alertActive |= canBeCancelled;
+  }
+  // TODO (VIC-11517): downgrade. for now this is useful in webots
+  LOG_WARNING( "AlexaImpl.OnAlertState",
+               "alert '%s' changed to %d, _alertActive=%d", alertID.c_str(), (int)state, _alertActive );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
   // always send WaitingForCode in case url or code changed
@@ -843,15 +881,19 @@ void AlexaImpl::NotifyOfTapToTalk()
 {
   if( _client != nullptr ) {
     if( !_isTapOccurring ) {
+      _client->StopForegroundActivity();
+      _client->StopAlerts();
+      
       // check info known about connection before trying. these often don't get updated until sending fails
       if( !_client->IsAVSConnected() ) {
         SetNetworkConnectionError();
       } else {
-        _client->StopForegroundActivity();
-        ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
-                     "AlexaImpl.NotifyOfTapToTalk.Failed",
-                     "Failed to notify tap to talk" );
-        _isTapOccurring = true;
+        if( !_alertActive ) {
+          ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
+                       "AlexaImpl.NotifyOfTapToTalk.Failed",
+                       "Failed to notify tap to talk" );
+          _isTapOccurring = true;
+        }
       }
     } else {
       _client->NotifyOfTapToTalkEnd();
@@ -861,7 +903,7 @@ void AlexaImpl::NotifyOfTapToTalk()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
+void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
@@ -871,7 +913,7 @@ void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
 
 #if ANKI_DEV_CHEATS
   if( _debugMicrophone ) {
-    const size_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
+    const uint64_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
 
     static int sAudioDumpIdx = 0;
     const std::string filename = _alexaCacheFolder + "audioInput_" + std::to_string(sAudioDumpIdx++) + ".pcm";
@@ -901,10 +943,10 @@ void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
       fileOut.close();
 
       // "absolute" index is total bytes ever, not the current size of the ring buffer
-      const size_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
-      const size_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
+      const uint64_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
+      const uint64_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
       LOG_INFO("AlexaImpl.WroteAudioInput",
-               "Wrote mic data to file '%s'. Trigger range %zu to %zu",
+               "Wrote mic data to file '%s'. Trigger range %llu to %llu",
                filename.c_str(),
                debugStartIdx,
                debugEndIdx);

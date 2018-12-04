@@ -19,7 +19,7 @@ PROTO CozmoVizDisplay
   field SFInt32 navMapSize 1500        # Size of the nav map display in pixels. 1 pixel = 1 mm.
   field SFFloat navMapTransparency 0.0 # The overall transparency of the nav map display
   
-  field SFFloat drawObjectsRate_sec 0.0 # How often to update rendering of objects in the 3D view. 0.0 means as fast as possible.
+  field SFFloat drawObjectsRate_sec 0.25 # How often to update rendering of objects in the 3D view. 0.0 means as fast as possible.
 ]
 {
 Supervisor {

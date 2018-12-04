@@ -12,8 +12,11 @@ enum class TestState {
   RequestCubeConnection,          // Request to be connected to a cube
   WaitingForObjectAvailable,      // We should receive ObjectAvailable messages from all three cubes
   WaitingForConnectToCubeA,       // We should connect to the closest cube, which is cube A
+  WaitingForDisconnectFromCubeA,
   WaitingForConnectToCubeA_again, // We should connect to cube A again, since we have not reset the preferred cube
+  WaitingForDisconnectFromCubeA_again,
   WaitingForConnectToCubeB,       // We should connect to the closest cube, which is now cube B
+  WaitingForDisconnectFromCubeB,
   WaitingForConnectToCubeC,       // We should connect to the preferred cube, which we have set as cube C
   WaitingForUnexpectedDisconnect, // After zapping cube C from the world, we should get a disconnection message
   Exit
@@ -108,13 +111,21 @@ s32 CST_CubeConnection::UpdateSimInternal()
         // Disconnect from cube. Next connection attempt should
         // connect to cube A again (since it is the preferred cube).
         SendDisconnectFromCube(0.f);
-        SendConnectToCube();
         
-        SET_TEST_STATE(WaitingForConnectToCubeA_again);
+        SET_TEST_STATE(WaitingForDisconnectFromCubeA);
       }
       break;
     }
       
+    case TestState::WaitingForDisconnectFromCubeA:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsAnyCubeConnected(), 5) {
+        SendConnectToCube();
+        SET_TEST_STATE(WaitingForConnectToCubeA_again);
+      }
+      break;
+    }
+    
     case TestState::WaitingForConnectToCubeA_again:
     {
       // We should connect to cube A again (even though it's not the closest cube)
@@ -124,8 +135,16 @@ s32 CST_CubeConnection::UpdateSimInternal()
         // should connect to cube B (since it is now the closest cube).
         SendForgetPreferredCube();
         SendDisconnectFromCube(0.f);
-        SendConnectToCube();
         
+        SET_TEST_STATE(WaitingForDisconnectFromCubeA_again);
+      }
+      break;
+    }
+      
+    case TestState::WaitingForDisconnectFromCubeA_again:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsAnyCubeConnected(), 5) {
+        SendConnectToCube();
         SET_TEST_STATE(WaitingForConnectToCubeB);
       }
       break;
@@ -139,6 +158,14 @@ s32 CST_CubeConnection::UpdateSimInternal()
         // Set cube C as the preferred cube. We should now
         // connect to cube C even though it is not the closest.
         SendSetPreferredCube(kCubeC);
+        SET_TEST_STATE(WaitingForDisconnectFromCubeB);
+      }
+      break;
+    }
+      
+    case TestState::WaitingForDisconnectFromCubeB:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsAnyCubeConnected(), 5) {
         SendConnectToCube();
         SET_TEST_STATE(WaitingForConnectToCubeC);
       }

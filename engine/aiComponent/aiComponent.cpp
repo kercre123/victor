@@ -200,6 +200,7 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   // 5) Object is moving faster than some min speed
   // 6) Last sensor reading is less than a certain distance that defines
   //    how close an obstacle needs to be in order for it to be sudden.
+  static bool wasObstacleDetected = false;
   _suddenObstacleDetected = readingIsValid &&
                             (avgRobotSpeed_mmps  >= 0.f) &&
                             (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
@@ -207,7 +208,7 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
                             (latestDistance_mm   <= kObsMaxObjectDistance_mm);
 
-  if (_suddenObstacleDetected) {
+  if (!wasObstacleDetected && _suddenObstacleDetected) {
     DASMSG(robot_obstacle_detected,
            "robot.obstacle_detected",
            "The robot has detected (with his prox sensor) that an obstacle has suddenly appeared in front of him");
@@ -215,8 +216,8 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
     DASMSG_SET(i2, static_cast<int64_t>(avgObjectSpeed_mmps), "Average object speed in the recent past (mm/sec)");
     DASMSG_SET(i3, static_cast<int64_t>(avgRobotSpeed_mmps), "Average robot speed in the recent past (mm/sec)");
     DASMSG_SEND();
-    PRINT_NAMED_INFO("AIComponent.Update.CheckForSuddenObstacle","SuddenObstacleDetected");
   }
+  wasObstacleDetected = _suddenObstacleDetected;
 }
 
 #if ANKI_DEV_CHEATS

@@ -55,7 +55,7 @@ private:
   
   void OnEnterInfoFace( BehaviorContainer& bContainer, BehaviorSystemManager& bsm );
   
-  void OnExitInfoFace( BehaviorSystemManager& bsm, BehaviorsBootLoader& bbl, UserIntentComponent& uic );
+  void OnExitInfoFace( BehaviorSystemManager& bsm, BehaviorsBootLoader& bbl, UserIntentComponent& uic, bool clearTrigger );
 
   void SetupUserIntentEvents();
   

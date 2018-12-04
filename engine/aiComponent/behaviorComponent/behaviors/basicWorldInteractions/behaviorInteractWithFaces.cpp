@@ -243,7 +243,6 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
   if( _dVars.trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _dVars.trackFaceUntilTime_s ) {
-      BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       CancelDelegates();
     }
   }

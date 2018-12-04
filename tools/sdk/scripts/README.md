@@ -18,8 +18,8 @@ If this needs to be called manually that is probably an error, and should be men
 ## victor_curl.py
 
 The `victor_curl` script is intended to bridge the ease of use of invoking curl with the credentials created
-through the configure.py script. It will use the serial number of a robot that has been configured via the `configure.py`
-script in `vector-python-sdk-private/sdk`, and then construct a relevant curl command to communicate with the robot.
+through the `anki_vector.configure` executable submodule. It will use the serial number of said robot, and
+construct a relevant curl command to communicate with the robot.
 
 ### Configuration
 
@@ -30,7 +30,7 @@ To get set up with access to the robot, you will need to do the following steps:
 1. Configure your laptop to have access to Vector by running
 
     ```bash
-    ../vector-python-sdk-private/sdk/configure.py
+    python3 -m anki_vector.configure
     ```
 
     to use a production account.
@@ -38,7 +38,7 @@ To get set up with access to the robot, you will need to do the following steps:
     or
 
     ```bash
-    ../configure_dev.py
+    ../vector-python-sdk-private/configure_dev.py
     ```
 
     to use a dev account.

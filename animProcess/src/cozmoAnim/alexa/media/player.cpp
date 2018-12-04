@@ -49,6 +49,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "util/console/consoleInterface.h"
+#include "util/container/fixedCircularBuffer.h"
 #include "util/container/ringBuffContiguousRead.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
@@ -111,6 +112,12 @@ namespace {
   constexpr size_t kDownloadSize = 8192;
   constexpr float  kIdealBufferSize_sec = 2.0f;
   constexpr float  kMinBufferSize_sec = 2.5f;
+  
+  // assume the input stream is an unsupported format and abort streaming after this many bytes are
+  // processed. this is arbitrary based on how much header info you'd actually expect in an mp3. Sometimes
+  // sources may provide large headers with their copyright blurbs, but probably not even this much.
+  // Note that if the stream ends prior to downloading this many bytes, we already exit cleanly.
+  constexpr size_t kMaxInvalidDataBeforeAbort = 512*1024; // 512 kB
 
   // define wwise objects depending on player type
   constexpr PluginId_t kPluginIdTTS = 10;
@@ -159,10 +166,53 @@ namespace {
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("AlexaMediaPlayer.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
-  const bool kSaveDebugAudio = true; // FIXME we probably don't want to be shiping this!!
+  const bool kSaveDebugAudio = false; // FIXME we probably don't want to be shiping this!!
 #endif
+  const bool kSaveResampledPCM = false; // if true, kSaveDebugAudio will save resampled pcm instead of decoded pcm
+  
+  CONSOLE_VAR(bool, kApplyBandStopFilter, "Alexa", true);
+  constexpr int kTTSSampleRate = 24000;
+  
+  CONSOLE_VAR(bool, kUsePlaybackRecognizer, "Alexa", true); // must be saved and then robot rebooted
 }
-
+  
+// a bandstop FIR filter in the form of an N-element array
+// todo: make this constexpr (will need to construct the array in its initialization using templates)
+// I'm keeping this here for now, rather than just pasting the values, so that (a) you know they were
+// computed and (b) since hopefully this will be made constexpr
+template < int N, int sampleRate >
+std::array<float, N> ComputeFilterCoeffs()
+{
+  // half an octave centered at 5200 Hz, because this guy thinks the superbowl ad was centered there
+  // https://imgur.com/z6bZu3b
+  // If you change this, also change notchDetector, which has indices in [0,127] corresponding to [0,8kHz)
+  const float centerFreq_Hz = 5200.0f;
+  const float sqrt2 = 1.41421356237f; // since sqrt is not constexpr
+  // since an octave is log2(fMax/fMin), and we want the average fMin+fMax=centerFreq:
+  const float fMin = 2 * centerFreq_Hz / (1 + sqrt2);
+  const float fMax = 2 * centerFreq_Hz * sqrt2 / (1 + sqrt2);
+  
+  static_assert( N % 2, "N must be odd" );
+  
+  std::array<float, N> filterCoeffs;
+  
+  // http://digitalsoundandmusic.com/7-3-2-low-pass-high-pass-bandpass-and-bandstop-filters/
+  const float f1 = fMin/sampleRate;
+  const float f2 = fMax/sampleRate;
+  const float omega1 = 2*M_PI_F*f1;
+  const float omega2 = 2*M_PI_F*f2;
+  const int middle = N/2;
+  for( int i=-N/2; i<=N/2; ++i ) {
+    if (i == 0) {
+      filterCoeffs[middle] = 1 - 2*(f2 - f1);
+    } else {
+      filterCoeffs[i + middle] = sinf(omega1*i)/(M_PI_F*i) - sinf(omega2*i)/(M_PI_F*i);
+    }
+  }
+  return filterCoeffs;
+}
+std::array<float, AlexaMediaPlayer::kBandStopFilterSize> AlexaMediaPlayer::_filterCoeffs24
+  = ComputeFilterCoeffs<AlexaMediaPlayer::kBandStopFilterSize,kTTSSampleRate>();
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaMediaPlayer::AlexaMediaPlayer( Type type,
@@ -171,9 +221,11 @@ AlexaMediaPlayer::AlexaMediaPlayer( Type type,
   , _type( type )
   , _state(State::Idle)
   , _mp3Buffer( new Util::RingBuffContiguousRead<uint8_t>{ kAudioBufferSize, kMaxReadSize } )
+  , _dataValidity{ DataValidity::Unknown }
   , _dispatchQueue(Util::Dispatch::Create("AlexaMediaPlayer"))
   , _contentFetcherFactory( contentFetcherFactory )
   , _audioInfo( sAudioInfo.at(_type) )
+  , _bandStopBuffer{ std::make_unique<Util::FixedCircularBuffer<short, kBandStopFilterSize>>() }
 {
  // FIXME: How do we get the inital state from persistant storage
   _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
@@ -221,7 +273,7 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
 #endif
   }
 
-  if (_type == AlexaMediaPlayer::Type::TTS) {
+  if (kUsePlaybackRecognizer && (_type == AlexaMediaPlayer::Type::TTS)) {
     auto* dataPlatform = context->GetDataLoader();
     _speechRegSys = context->GetMicDataSystem()->GetSpeechRecognizerSystem();
     // Setup Callback when stream starts, want it to happen on the same thread
@@ -238,16 +290,10 @@ void AlexaMediaPlayer::Update()
     return; // not init yet
   }
 
-  bool needsToPlay = false;
-  {
-    if( _state == State::Playable ) {
-      LOG("Update: needsToPlay");
-      needsToPlay = true;
-      SetState( State::Playing );
-    }
-  }
-
-  if( needsToPlay ) {
+  if( _state == State::Playable ) {
+    LOG("Update: needsToPlay");
+    SetState( State::Playing );
+  
     // post event
     using namespace AudioEngine;
     const auto eventID = ToAudioEventId( _audioInfo.playEvent );
@@ -265,6 +311,12 @@ void AlexaMediaPlayer::Update()
       PRINT_NAMED_ERROR( "AlexaMediaPlayer.Update.CouldNotPlay", "Speaker '%s' could not play", _audioInfo.name.c_str() );
     }
   }
+  
+  if( _dataValidity == DataValidity::Invalid ) {
+    CallOnPlaybackError( _playingSource );
+    // don't CallOnPlaybackError again
+    _dataValidity = DataValidity::Unknown;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -275,6 +327,21 @@ void AlexaMediaPlayer::CallOnPlaybackFinished( SourceId id )
     SetState(State::Idle);
     for( auto& observer : _observers ) {
       observer->onPlaybackFinished( id );
+    }
+  });
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::CallOnPlaybackError( SourceId id )
+{
+  _executor.submit([this, id]() {
+    LOG( "CallOnPlaybackError %d, Setting state=Idle", (int)id );
+    SetState(State::Idle);
+    static const std::string kPlaybackError = "The device had trouble with playback";
+    for( auto& observer : _observers ) {
+      observer->onPlaybackError( id,
+                                 avsCommon::utils::mediaPlayer::ErrorType::MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
+                                 kPlaybackError );
     }
   });
 }
@@ -369,6 +436,8 @@ bool AlexaMediaPlayer::play( SourceId id )
     // reset vars
     _offset_ms = 0;
     _firstPass = true;
+    _dataValidity = DataValidity::Unknown;
+    _attemptedDecodeBytes = 0;
     _mp3Buffer->Reset();
     _detectedTriggers_ms = decltype(_detectedTriggers_ms){};
     if (_recognizer != nullptr) {
@@ -392,6 +461,8 @@ bool AlexaMediaPlayer::play( SourceId id )
 
     int numBlocks = 0;
     const int kMaxBlocks = 10000; // number of times we can try to check a blocking reader before giving up
+    
+    bool invalidData = false;
 
     float lastPlayedMs = 0;
     auto stateOk = [this] {
@@ -417,8 +488,8 @@ bool AlexaMediaPlayer::play( SourceId id )
       }
 
       if( !sentPlaybackStarted ) {
+        LOG( "source %d onPlaybackStarted", (int)id);
         for( auto& observer : _observers ) {
-          LOG( "source %d onPlaybackStarted", (int)id);
           observer->onPlaybackStarted( id );
         }
         sentPlaybackStarted = true;
@@ -486,8 +557,12 @@ bool AlexaMediaPlayer::play( SourceId id )
         // LOG("Sleep for %zu ms", sleepFor_ms);
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
       }
+      
+      if( (_dataValidity == DataValidity::Unknown) && (_attemptedDecodeBytes > kMaxInvalidDataBeforeAbort) ) {
+        invalidData = true; // this will cause a break further down
+      }
 
-      if( flush ) {
+      if( flush || invalidData ) {
         _waveData->DoneProducingData();
         break;
       }
@@ -497,8 +572,15 @@ bool AlexaMediaPlayer::play( SourceId id )
     SavePCM( nullptr );
     SaveMP3( nullptr );
 
-    if( _state == State::Preparing ) {
+    if( (_state == State::Preparing) && (_dataValidity == DataValidity::Valid) ) {
+      // if the above loop exits and the decoder has prepared valid data (it decoded at least 1 sample),
+      // then switch the state to Playable. normally this happens when enough samples have been decoded,
+      // but sometimes downloading finishes before that
       SetState(State::Playable);
+    } else if( invalidData ) {
+      // if the decoder loop was aborted because of invalid data, set a flag that data is invalid, which
+      // the Update() loop will then handle
+      _dataValidity = DataValidity::Invalid;
     }
 
     _readers[id]->Close();
@@ -603,6 +685,9 @@ std::chrono::milliseconds AlexaMediaPlayer::getOffset( SourceId id )
 uint64_t AlexaMediaPlayer::getNumBytesBuffered()
 {
   LOG( "getNumBytesBuffered NOT IMPLEMENTED" );
+  // This should return "the number of bytes queued up in the media player buffers."
+  // _attemptedDecodeBytes is the number of bytes downloaded, but we still need the number of bytes played (likely bytes
+  // actually played, not just sent to wwise). I have no idea how the return value of this method is used.
   return 0;
 }
 
@@ -648,7 +733,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 
     int consumed = info.frame_bytes;
     if( info.frame_bytes > 0 ) {
-
+      _attemptedDecodeBytes += info.frame_bytes;
 
       SaveMP3( inputBuff, consumed );
 
@@ -660,6 +745,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 
       if( samples > 0 ) {
         // valid wav data!
+        _dataValidity = DataValidity::Valid;
         if( _firstPass ) {
           _firstPass = false;
           _idealBufferSampleSize = static_cast<size_t>( info.hz * kIdealBufferSize_sec);
@@ -673,7 +759,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
             speex_resampler_destroy(_speexState);
             _speexState = nullptr;
           }
-          if (_type == AlexaMediaPlayer::Type::TTS) {
+          if (_recognizer != nullptr) {
             int error = 0;
             _speexState = speex_resampler_init(
                                                1, // num channels
@@ -711,10 +797,28 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
           samples = samples/2;
           info.channels = 1;
         }
+        
+        // if it's 24kHz (the tts sample rate), add a band stop filter before sending to speakers so
+        // that we can check for it in mic input.
+        // TODO: Once we cement the characteristics of the filter we want, this should be done in wwise
+        // instead, since that already has 3 filters, and apparently they can be customized by
+        // dragging control points around.
+        // TODO 2: more filters for different sample rates
+        if( kApplyBandStopFilter && (Anki::Util::Abs(info.hz - kTTSSampleRate) < 1000) ) {
+          for( int i=0; i<samples; ++i ) {
+            _bandStopBuffer->push_front( (float)_decodedPcm[i] );
+            float value = 0.0f;
+            for( int j=0; j<_bandStopBuffer->size(); ++j ) {
+              value += _filterCoeffs24[j] * (*_bandStopBuffer)[j];
+            }
+            _decodedPcm[i] = (short)value;
+          }
+        }
+        
 
-//        if( samples > 0 ) {
-//          SavePCM( pcm, samples );
-//        }
+        if( (samples > 0) && !kSaveResampledPCM ) {
+          SavePCM( _decodedPcm, samples );
+        }
 
         // todo: minimp3 should be able to output in float to avoid this allocation and copy, but it
         // seems to clip for me when in float
@@ -739,7 +843,9 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 
           if( numSamplesWritten > 0 ) {
             _recognizer->Update(_resampledPcm, numSamplesWritten);
-            SavePCM( _resampledPcm, numSamplesWritten );
+            if( kSaveResampledPCM ) {
+              SavePCM( _resampledPcm, numSamplesWritten );
+            }
           }
         }
 

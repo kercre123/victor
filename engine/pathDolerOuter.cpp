@@ -18,7 +18,7 @@
 #include "util/math/numericCast.h"
 #include "pathDolerOuter.h"
 
-#define LOG_CHANNEL "Planning"
+#define LOG_CHANNEL "Planner"
 
 namespace Anki {
 namespace Vector {

@@ -1,7 +1,7 @@
 {
   "behaviorClass": "AskForHelp",
   "behaviorID": "StuckOnEdge",
-  "associatedActiveFeature": "AskForHelp",
+  "associatedActiveFeature": "StuckOnEdge",
   
   "wantsToBeActivatedCondition": {
     "conditionType": "StuckOnEdge"

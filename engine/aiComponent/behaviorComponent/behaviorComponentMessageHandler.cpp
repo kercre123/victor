@@ -161,14 +161,18 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
     // when leaving debug screens.
     auto debugScreenModeHandler = [this, &bContainer, &bsm, &behaviorsBootLoader, &uic](const RobotToEngineEvent& event) {
       const auto& msg = event.GetData().Get_debugScreenMode();
-      LOG_DEBUG("BehaviorComponentMessageHandler.DebugScreenModeChange", "isDebug=%d needsWait=%d", msg.isDebug, msg.needsWait);
+      LOG_DEBUG("BehaviorComponentMessageHandler.DebugScreenModeChange",
+                "isDebug=%d needsWait=%d, fromMute=%d",
+                msg.isDebug, msg.needsWait, msg.fromMute);
       if (!msg.isDebug) {
         // We only care if the debug screen is disabled.
         // We don't use this same message (with enabled == true) for going into the wait behavior
         // because of a race condition which could result in an animation being played from
         // engine _after_ the anim process has already played a face animation for the
         // pairing screen.
-        OnExitInfoFace(bsm, behaviorsBootLoader, uic);
+        // Don't clear the trigger if leaving mute since exiting mute allows a trigger word (TODO: VIC-11795 not this)
+        const bool clearTrigger = !msg.fromMute;
+        OnExitInfoFace(bsm, behaviorsBootLoader, uic, clearTrigger);
       } else if (msg.needsWait) {
         // If the face is an Alexa face, enter the Wait behavior
         OnEnterInfoFace( bContainer, bsm );
@@ -228,6 +232,8 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
 
 
   auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+  // note that disabling the engine response for the mic mute screen will be ignored if the user
+  // presses the backpack button because of a field fromMute in the triggerWordDetected message
   uic.DisableEngineResponseToTriggerWord(kDisableTriggerWordName, true);
 
   uic.AlterStreamStateForCurrentResponse(kLockName, StreamAndLightEffect::StreamingDisabled);
@@ -236,7 +242,8 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm,
                                                       BehaviorsBootLoader& bbl,
-                                                      UserIntentComponent& uic )
+                                                      UserIntentComponent& uic,
+                                                      bool clearTrigger )
 {
 
   LOG_DEBUG("BehaviorComponentMessageHandler.OnInfoFaceStarted.ExitPairing", "");
@@ -245,8 +252,8 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
   contComp.UpdateInfoFace(false);
 
   // ignore any unclaimed trigger word or intent warnings, if a user said the wake word or a command
-  // just prior to accessing a dev screen
-  if (uic.IsTriggerWordPending()) {
+  // just prior to accessing a dev screen, unless clearTrigger
+  if (uic.IsTriggerWordPending() && clearTrigger) {
     uic.ClearPendingTriggerWord();
   }
   if (uic.IsAnyUserIntentPending()) {

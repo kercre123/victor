@@ -86,7 +86,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherScoring.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriority.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
@@ -641,12 +640,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DispatcherRerun:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherRerun(config));
-      break;
-    }
-    
-    case BehaviorClass::DispatcherScoring:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherScoring(config));
       break;
     }
     

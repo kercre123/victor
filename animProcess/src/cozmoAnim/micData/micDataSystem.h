@@ -143,6 +143,7 @@ private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
   std::string _writeLocationDir = "";
+  std::string _persistentFolder;
   // Members for the the mic jobs
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
   std::shared_ptr<MicDataInfo> _currentStreamingJob;
@@ -189,6 +190,8 @@ private:
   AlexaSimpleState _alexaState;
   
   std::atomic<bool> _micMuted;
+  
+  std::atomic<bool> _abortAlexaScreen;
 
   void SetWillStream(bool willStream) const;
 
