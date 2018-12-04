@@ -51,15 +51,26 @@ static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 // NOTE: This value can be overridden by value stored in EMR
 static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 
+// ---------PickupChecks--------
+static u16 kTimeToBeUpsideDown_ms = 2000;
+
 // ----------InitChecks----------
 // Minimum battery voltage the robot should have at the start and end of playpen
-static f32       kMinBatteryVoltage    = 3.6;
+static f32 kMinBatteryVoltage     = 3.6;
 
 // Minimum expected raw touch sensor value
-static u16       kMinExpectedTouchValue= 3000;
+static u16 kMinExpectedTouchValue = 3000;
 
 // Maximum expected raw touch sensor value
-static u16       kMaxExpectedTouchValue= 7000;
+static u16 kMaxExpectedTouchValue = 7000;
+
+static u16 kDriveBackwardsDist_mm = 100;
+
+static u16 kDriveBackwardsSpeed_mmps = 60;
+
+static u16 kMinCliffSensorOnChargerVal = 50;
+
+static u16 kMaxCliffSensorOnChargerVal = 1000;
 
 // ----------Motor Calibration----------
 // Timeout to wait for motor calibration to complete

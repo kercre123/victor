@@ -37,15 +37,16 @@ namespace{
 BehaviorStack::~BehaviorStack()
 {
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack)
 {
   ANKI_VERIFY(_behaviorStack.empty(),
               "BehaviorSystemManager.BehaviorStack.InitBehaviorStack.StackNotEmptyOnInit",
               "");
-  
+
   baseOfStack->OnEnteredActivatableScope();
+
   ANKI_VERIFY(baseOfStack->WantsToBeActivated(),
               "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesn'tWantToRun",
               "");
@@ -56,8 +57,9 @@ void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::ClearStack()
 {
+  PRINT_NAMED_WARNING("","CLEARING BEHAVIOR STACK");
   const bool behaviorStackAlreadyEmpty = _behaviorStack.empty();
-  
+
   const size_t stackSize = _behaviorStack.size();
   for(int i = 0; i + 1 < stackSize; i++){
     PopStack();
@@ -69,10 +71,12 @@ void BehaviorStack::ClearStack()
                  "BehaviorStack.ClearStack.StackImproperlyEmpty",
                  "") ) {
     IBehavior* oldBaseBehavior = _behaviorStack.back();
+
     PopStack();
+
     oldBaseBehavior->OnLeftActivatableScope();
   }
-  
+
   DEV_ASSERT(_behaviorStack.empty(), "BehaviorStack.Destructor.NotAllBehaviorsPoppedFromStack");
 
 }
@@ -89,8 +93,8 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
     return;
   }
 
-  
-  
+
+
   // The stack can be altered during update ticks through the cancel delegation
   // functions - so track the index in the stack rather than the iterator directly
   // One side effect of this is that if a Behavior ends this tick without queueing
@@ -98,13 +102,13 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
   // an action - to save on complexity we're accepting this tradeoff for the time being
   // but may decide to address it directly here or within the BSbehavior/one of its subclasses
   // in the future
-  behaviorExternalInterface.GetBehaviorEventComponent()._actionsCompletedThisTick.clear();  
+  behaviorExternalInterface.GetBehaviorEventComponent()._actionsCompletedThisTick.clear();
   for(int idx = 0; idx < _behaviorStack.size(); idx++){
     tickedInStack.insert(_behaviorStack.at(idx));
     behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
-    
+
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
        behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents);
@@ -114,18 +118,18 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
        behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
-    
+
     // Set the actions completed this tick for the top of the stack
     if(idx == (_behaviorStack.size() - 1)){
       behaviorExternalInterface.GetBehaviorEventComponent()._actionsCompletedThisTick = actionsCompletedThisTick;
     }
-    
+
     _behaviorStack.at(idx)->Update();
   }
 
   if( ANKI_DEV_CHEATS ) {
     SendDebugVizMessages(behaviorExternalInterface);
-    
+
     if( behaviorWebVizDirty ) {
       SendDebugBehaviorTreeToWebViz( behaviorExternalInterface );
       behaviorWebVizDirty = false;
@@ -154,10 +158,10 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
 {
   _behaviorToIndexMap.insert(std::make_pair(behavior, _behaviorStack.size()));
   _behaviorStack.push_back(behavior);
-  
+
   PrepareDelegatesToEnterScope(behavior);
   behavior->OnActivated();
-  
+
   behaviorWebVizDirty = true;
 }
 
@@ -168,10 +172,10 @@ void BehaviorStack::PopStack()
   PrepareDelegatesForRemovalFromStack(_behaviorStack.back());
 
   _behaviorStack.back()->OnDeactivated();
-  
+
   _behaviorToIndexMap.erase(_behaviorStack.back());
   _behaviorStack.pop_back();
-  
+
   behaviorWebVizDirty = true;
 }
 
@@ -185,7 +189,7 @@ void BehaviorStack::PrepareDelegatesToEnterScope(IBehavior* delegated)
   for(auto& entry: newAvailableDelegates){
     entry->OnEnteredActivatableScope();
   }
-  
+
   _delegatesMap.insert(std::make_pair(delegated, std::move(newAvailableDelegates)));
 }
 
@@ -199,11 +203,11 @@ void BehaviorStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
   for(auto& entry: availableDelegates->second){
     entry->OnLeftActivatableScope();
   }
-  
+
   _delegatesMap.erase(delegated);
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
 {
@@ -223,7 +227,7 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
   for( const auto& behavior : _behaviorStack ) {
     data.debugStrings.push_back( behavior->GetDebugLabel() );
   }
-  
+
   auto context = behaviorExternalInterface.GetRobotInfo().GetContext();
   if(context != nullptr){
     auto vizManager = context->GetVizManager();
@@ -232,12 +236,12 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   Json::Value data = BuildDebugBehaviorTree(behaviorExternalInterface);
-  
+
   const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
   if( context != nullptr ) {
     // const auto* webService = context->GetWebService();
@@ -250,12 +254,12 @@ void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& beh
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-   
+
   Json::Value data;
   data["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   auto& tree = data["tree"];
   auto& stack = data["stack"];
-  
+
   // construct flat table of tree relationships
   for( const auto& elem : _delegatesMap ) {
     for( const auto& child : elem.second ) {
@@ -274,7 +278,7 @@ Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& beh
   for( const auto& stackElem : _behaviorStack ) {
     stack.append( stackElem->GetDebugLabel() );
   }
-  
+
   return data;
 }
 

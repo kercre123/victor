@@ -35,8 +35,18 @@ Result BehaviorSelfTestTouch::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  DrawTextOnScreen(robot, {"Hold Touch"});
-  
+  _calibrated = (robot.GetTouchSensorComponent().IsCalibrated());/* &&
+                 !robot.GetTouchSensorComponent().IsChargerModeCheckRunning());*/
+
+  if(_calibrated)
+  {
+    DrawTextOnScreen(robot, {"Hold Touch"});
+  }
+  else
+  {
+    DrawTextOnScreen(robot, {"Please Wait"});
+  }
+
   return RESULT_OK;
 }
 
@@ -46,6 +56,24 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  const bool isCalibrated = (robot.GetTouchSensorComponent().IsCalibrated());/* &&
+                             !robot.GetTouchSensorComponent().IsChargerModeCheckRunning());*/
+  if(!isCalibrated && _calibrated)
+  {
+    DrawTextOnScreen(robot, {"Please Wait"});
+  }
+  else if(isCalibrated && !_calibrated)
+  {
+    IncreaseTimeoutTimer(5000);
+    DrawTextOnScreen(robot, {"Hold Touch"});
+  }
+  _calibrated = isCalibrated;
+
+  if(!_calibrated)
+  {
+    return SelfTestStatus::Running;
+  }
+
   const bool buttonPressed = robot.GetTouchSensorComponent().GetIsPressed();
 
   const bool buttonReleasedEvent = _buttonPressed && !buttonPressed;
@@ -54,9 +82,9 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
   if(_addTimer)
   {
     _addTimer = false;
-    
+
     DrawTextOnScreen(robot, {std::to_string(_heldCountDown)});
-    
+
     AddTimer(1000,
              [this, &robot](){
                _heldCountDown--;
@@ -72,7 +100,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
              },
       "countdown");
   }
-  
+
   if(_heldCountDown <= 0)
   {
     RemoveTimers("countdown");
@@ -80,15 +108,15 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
     if(buttonReleasedEvent)
     {
       DrawTextOnScreen(robot, {""});
-      
+
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
     }
   }
-  
+
   if(buttonPressedEvent)
   {
     DrawTextOnScreen(robot, {std::to_string(_heldCountDown)});
-    
+
     AddTimer(1000,
              [this](){
                _heldCountDown--;
@@ -105,7 +133,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
   }
 
   _buttonPressed = buttonPressed;
-  
+
   return SelfTestStatus::Running;
 }
 
@@ -118,5 +146,3 @@ void BehaviorSelfTestTouch::OnBehaviorDeactivated()
 
 }
 }
-
-

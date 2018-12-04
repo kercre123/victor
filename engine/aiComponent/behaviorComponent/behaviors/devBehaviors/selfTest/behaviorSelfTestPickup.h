@@ -1,5 +1,5 @@
 /**
- * File: behaviorSelfTestInitChecks.h
+ * File: behaviorSelfTestPickup.h
  *
  * Author: Al Chaussee
  * Created: 11/16/2018
@@ -10,36 +10,39 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorSelfTestInitChecks_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorSelfTestInitChecks_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorSelfTestPickup_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorSelfTestPickup_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/iBehaviorSelfTest.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorSelfTestInitChecks : public IBehaviorSelfTest
+class BehaviorSelfTestPickup : public IBehaviorSelfTest
 {
 protected:
-  
+
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorSelfTestInitChecks(const Json::Value& config);
-  
+  BehaviorSelfTestPickup(const Json::Value& config);
+
 protected:
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = false;
   }
-  
+
   virtual Result        OnBehaviorActivatedInternal() override;
+  virtual SelfTestStatus SelfTestUpdateInternal() override;
+  virtual void           OnBehaviorDeactivated()   override;
 
 private:
 
-  void TransitionToChecks();
-  
+  bool _upsideDownTimerAdded = false;
+  TimeStamp_t _upsideDownStartTime_ms = 0;
+
 };
 
 }
 }
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorSelfTestInitChecks_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorSelfTestPickup_H__

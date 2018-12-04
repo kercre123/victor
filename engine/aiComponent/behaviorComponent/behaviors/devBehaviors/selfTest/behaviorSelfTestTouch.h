@@ -42,7 +42,7 @@ private:
 
   int _heldCountDown = 5;
   bool _addTimer = false;
-
+  bool _calibrated = false;
 };
 
 }

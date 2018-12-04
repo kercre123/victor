@@ -418,6 +418,21 @@ void IBehaviorSelfTest::ClearTimers()
   }
 }
 
+void IBehaviorSelfTest::IncreaseTimeoutTimer(TimeStamp_t time_ms)
+{
+  auto iter = _timers.begin();
+  while(iter != _timers.end())
+  {
+    if(iter->GetName() == "")
+    {
+      iter->AddTime(time_ms);
+    }
+
+    ++iter;
+  }
+  
+}
+
 void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
                                          const std::vector<std::string>& text,
                                          ColorRGBA textColor,

@@ -78,6 +78,7 @@ enum uint_8 BehaviorClass {
   SelfTestLookAtCharger,
   SelfTestMotorCalibration,
   SelfTestDriftCheck,
+  SelfTestPickup,
   SelfTestPutOnCharger,
   SelfTestScreenAndBackpack,
   SelfTestSoundCheck,

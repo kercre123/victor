@@ -112,7 +112,7 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
   _behaviorExternalInterface = &behaviorExternalInterface;
   _asyncMessageComponent = asyncMessageComponent;
   ResetBehaviorStack(baseBehavior);
-  
+
   if(robot.HasExternalInterface()){
     _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(EngineToGameTag::RobotCompletedAction,
                                             [this](const EngineToGameEvent& event) {
@@ -121,11 +121,11 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
                                               _actionsCompletedThisTick.push_back(event.GetData().Get_RobotCompletedAction());
                                             }));
   }
-  
+
   return RESULT_OK;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
 {
@@ -142,30 +142,30 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
 void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
   ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
-  
+
   if(_initializationStage == InitializationStage::SystemNotInitialized) {
     PRINT_NAMED_ERROR("BehaviorSystemManager.Update.NotInitialized", "");
     return;
   }
-  
+
   // There's a delay between init and first robot update tick - this messes with
   // time checks in IBehavior, so Activate the base here instead of in init
   if(_initializationStage == InitializationStage::StackNotInitialized){
     _initializationStage = InitializationStage::Initialized;
 
-
     IBehavior* baseBehavior = _baseBehaviorTmp;
-    
+
     _behaviorStack->InitBehaviorStack(baseBehavior);
+
     _baseBehaviorTmp = nullptr;
   }
 
   for( const auto& completionMsg : _actionsCompletedThisTick ) {
     behaviorExternalInterface.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
   }
-  
+
   _asyncMessageComponent->PrepareCache();
-  
+
   std::set<IBehavior*> behaviorsUpdatesTickedInStack;
   // First update the behavior stack and allow it to make any delegation/canceling
   // decisions that it needs to make
@@ -177,7 +177,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   // Then once all of that's done, update anything that's in activatable scope
   // but isn't currently on the behavior stack
   UpdateInActivatableScope(behaviorExternalInterface, behaviorsUpdatesTickedInStack);
-  
+
   _asyncMessageComponent->ClearCache();
 } // Update()
 
@@ -255,13 +255,13 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
                   "")){
     return false;
   }
-  
+
   if(!ANKI_VERIFY(delegated != nullptr,
                   "BehaviorSystemManager.Delegate.DelegatingToNullptr", "")){
     return false;
   }
-  
-  
+
+
   {
     // Ensure that the delegated behavior is in the delegates map
     const BehaviorStack::DelegatesMap& delegatesMap =  _behaviorStack->GetDelegatesMap();
@@ -275,7 +275,7 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
       return false;
     }
   }
-  
+
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBehavior",
                 "'%s' will delegate to '%s'",
                 delegator != nullptr ? delegator->GetDebugLabel().c_str() : "Empty Stack",
@@ -283,9 +283,9 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
 
   // Activate the new behavior and add it to the top of the stack
   _behaviorStack->PushOntoStack(delegated);
-  
+
   _behaviorStack->DebugPrintStack("AfterDelegation");
-  
+
   return true;
 }
 
@@ -318,9 +318,9 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
                   delegator->GetDebugLabel().c_str())){
     return;
   }
-  
+
   CancelDelegates(delegator);
-  
+
   if(ANKI_VERIFY(!IsControlDelegated(delegator),
                  "BehaviorSystemManager.CancelSelf.ControlStillDelegated",
                  "CancelDelegates was called, but the delegator is not on the top of the stack")){

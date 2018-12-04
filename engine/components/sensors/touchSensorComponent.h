@@ -26,7 +26,7 @@ namespace Anki {
 namespace Cozmo {
 
 class IBehaviorPlaypen;
-  
+
 
 class BoxFilter
 {
@@ -37,7 +37,7 @@ public:
   , _sum(0)
   {
   }
-  
+
   int ApplyFilter(int input)
   {
     _buffer.push_back(input);
@@ -48,7 +48,7 @@ public:
     }
     return int( float(_sum)/_buffer.size() );
   }
-  
+
 private:
   std::deque<int> _buffer;
   int _winSize;
@@ -78,24 +78,24 @@ public:
   //////
   // end IDependencyManagedComponent functions
   //////
-  
+
   bool GetIsPressed() const;
-  
+
   float GetTouchPressTime() const;
-  
+
 protected:
   virtual void UpdateInternal(const RobotState& msg) override;
-  
+
   virtual std::string GetLogHeader() override;
   virtual std::string GetLogRow() override;
-  
+
   // returns true if there is a state change between pressed/released
   // additionally updates the state of press/release internally which
   // can be queried with GetIsPressed()
   bool ProcessWithDynamicThreshold(const int baseline, const int input);
-  
+
   int GetDetectLevelOffset() const;
-  
+
   int GetUndetectLevelOffset() const;
 
 public:
@@ -104,9 +104,19 @@ public:
   {
     return _lastRawTouchValue;
   }
-  
+
   bool IsCalibrated() const;
-  
+
+  // bool IsCalibrated() const
+  // {
+  //   return _baselineCalibrator.IsCalibrated();
+  // }
+
+  // bool IsChargerModeCheckRunning() const
+  // {
+  //   return _baselineCalibrator.IsChargerModeCheckRunning();
+  // }
+
 private:
 
   // Let Playpen behaviors have access to Start/Stop recording touch sensor data
@@ -114,7 +124,7 @@ private:
   // state messages
   friend class IBehaviorPlaypen;
   void StartRecordingData(TouchSensorValues* data);
-  void StopRecordingData() { _dataToRecord = nullptr; } 
+  void StopRecordingData() { _dataToRecord = nullptr; }
 
   // Pointer to a struct that should be populated with touch sensor data when recording
   TouchSensorValues* _dataToRecord = nullptr;
@@ -123,28 +133,28 @@ private:
 
   // number of consecutive cycles seeing "no contact" reading
   size_t _noContactCounter;
-  
+
   // calibration value from IIR filtering "no contact" signals
   float _baselineTouch;
-  
+
   BoxFilter _boxFilterTouch;
-  
+
   // current offset of the detect-level relative to baseline
   int _detectOffsetFromBase;
-  
+
   // current offset of the undetect-level relative to baseline
   int _undetectOffsetFromBase;
-  
+
   bool _isPressed;
-  
+
   size_t _numConsecCalibReadings;
-  
+
   // counters to debounce the monotonic increase/decrease
   // of the detect and undetect thresholds
   // otherwise noise would constantly be shifting the thresholds
   int _countAboveDetectLevel;
   int _countBelowUndetectLevel;
-  
+
   // time in seconds of the last touch press
   float _touchPressTime;
 };

@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestInitChecks.h"
 
-#include "engine/components/bodyLightComponent.h"
+#include "engine/actions/basicActions.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/robot.h"
@@ -37,10 +37,40 @@ Result BehaviorSelfTestInitChecks::OnBehaviorActivatedInternal()
   DrawTextOnScreen(robot,
                    {"Beginning automated test"});
 
+  DriveStraightAction* drive = new DriveStraightAction(-SelfTestConfig::kDriveBackwardsDist_mm,
+                                                       SelfTestConfig::kDriveBackwardsSpeed_mmps,
+                                                       false);
+
+  CompoundActionParallel* action = new CompoundActionParallel();
+  const bool ignoreFailure = true;
+  std::weak_ptr<IActionRunner> drivePtr = action->AddAction(drive, ignoreFailure);
+
+  WaitAction* wait = new WaitAction(1.f);
+  WaitForLambdaAction* cancel = new WaitForLambdaAction([drivePtr](Robot& robot){
+                                                          if(auto drive = drivePtr.lock())
+                                                          {
+                                                            drive->Cancel();
+                                                          }
+                                                          return true;
+                                                        });
+  CompoundActionSequential* seq = new CompoundActionSequential({wait, cancel});
+  action->AddAction(seq);
+
+  DelegateIfInControl(action, [this](){ TransitionToChecks(); });
+
+  return RESULT_OK;
+}
+
+void BehaviorSelfTestInitChecks::TransitionToChecks()
+{
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+
   // Should not be seeing any cliffs
   if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())
   {
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CLIFF_UNEXPECTED, RESULT_FAIL);
+    SELFTEST_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
   }
 
   // Check that raw touch values are in expected range (the range assumes no touch)
@@ -49,12 +79,12 @@ Result BehaviorSelfTestInitChecks::OnBehaviorActivatedInternal()
       SelfTestConfig::kMinExpectedTouchValue,
       SelfTestConfig::kMaxExpectedTouchValue))
   {
-    PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.TouchOOR", 
+    PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.TouchOOR",
                         "Min %u < Val %u < Max %u",
                         SelfTestConfig::kMinExpectedTouchValue,
                         rawTouchValue,
                         SelfTestConfig::kMaxExpectedTouchValue);
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
+    SELFTEST_SET_RESULT(FactoryTestResultCode::TOUCH_VALUES_OOR);
   }
 
   PRINT_NAMED_WARNING("","%d %d %d", robot.IsOnCharger(), robot.IsCharging(), robot.IsBatteryDisconnected());
@@ -64,35 +94,33 @@ Result BehaviorSelfTestInitChecks::OnBehaviorActivatedInternal()
   {
     if(robot.IsCharging() && robot.IsBatteryDisconnected())
     {
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, RESULT_FAIL);
+      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNDETECTED);
     }
     else if(!robot.IsCharging() && !robot.IsBatteryDisconnected())
     {
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, RESULT_FAIL);
+      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNDETECTED);
     }
   }
   else
   {
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, RESULT_FAIL);
+    SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNDETECTED);
   }
-  
+
   // Charger voltage should be nice and high
   // Battery voltage will be checked later once we are off the charger in case the battery is currently disconnected
   if(robot.GetChargerVoltage() < 4.0)
   {
-    PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
+    PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.ChargerTooLow",
+                        "%fv",
+                        robot.GetChargerVoltage());
+    SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);
   }
-  
+
   // Force delocalize the robot to ensure consistent starting pose
   robot.Delocalize(false);
 
-  SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
-  
-  return RESULT_OK;
+  SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
 }
 
 }
 }
-
-

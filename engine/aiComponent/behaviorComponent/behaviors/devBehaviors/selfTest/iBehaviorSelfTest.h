@@ -164,6 +164,8 @@ protected:
   void RemoveTimer(const std::string& name);
 
   void RemoveTimers(const std::string& name);
+
+  void IncreaseTimeoutTimer(TimeStamp_t time_ms);
   
   // Returns whether or not we should ignore behavior failures
   bool ShouldIgnoreFailures() const;
@@ -218,6 +220,8 @@ private:
     }
 
     const std::string& GetName() const { return _name; }
+
+    void AddTime(TimeStamp_t time_ms) { _time_ms += time_ms; }
     
   private:
     TimeStamp_t _time_ms = 0;

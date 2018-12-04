@@ -57,6 +57,12 @@ void BehaviorSelfTest::InitBehavior()
   //            "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestWaitToStart");
   // _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(waitToStartBehavior));
 
+  ICozmoBehaviorPtr pickupBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestPickup);
+  DEV_ASSERT(pickupBehavior != nullptr &&
+             pickupBehavior->GetClass() == BehaviorClass::SelfTestPickup,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPickup");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(pickupBehavior));
+
   ICozmoBehaviorPtr putOnChargerBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestPutOnCharger);
   DEV_ASSERT(putOnChargerBehavior != nullptr &&
              putOnChargerBehavior->GetClass() == BehaviorClass::SelfTestPutOnCharger,
@@ -224,7 +230,7 @@ void BehaviorSelfTest::OnBehaviorDeactivated()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  robot.GetBackpackLightComponent().ClearAllBackpackLightConfigs();
+  robot.GetBodyLightComponent().ClearAllBackpackLightConfigs();
 
   Reset();
 }

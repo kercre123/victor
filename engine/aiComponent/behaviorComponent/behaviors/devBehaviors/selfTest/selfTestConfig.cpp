@@ -21,9 +21,13 @@ WRAP_EXTERN_CONSOLE_VAR(bool,  kIgnoreFailures,               "SelfTest");
 WRAP_EXTERN_CONSOLE_VAR(float, kDefaultTimeout_ms,            "SelfTest");
 WRAP_EXTERN_CONSOLE_VAR(float, kTimeToDisplayResultOnFace_ms, "SelfTest");
 
+WRAP_EXTERN_CONSOLE_VAR(u16, kTimeToBeUpsideDown_ms, "SelfTest");
+
 WRAP_EXTERN_CONSOLE_VAR(f32,  kMinBatteryVoltage,     "SelfTest");
 WRAP_EXTERN_CONSOLE_VAR(u16,  kMinExpectedTouchValue, "SelfTest");
 WRAP_EXTERN_CONSOLE_VAR(u16,  kMaxExpectedTouchValue, "SelfTest");
+WRAP_EXTERN_CONSOLE_VAR(u16,  kDriveBackwardsDist_mm, "SelfTest");
+WRAP_EXTERN_CONSOLE_VAR(u16,  kDriveBackwardsSpeed_mmps, "SelfTest");
 
 WRAP_EXTERN_CONSOLE_VAR(u32, kMotorCalibrationTimeout_ms, "SelfTest");
 

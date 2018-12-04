@@ -156,6 +156,7 @@ private:
   friend class BehaviorSelfTestDriveForwards;
   friend class BehaviorSelfTestLookAtCharger;
   friend class BehaviorSelfTestDockWithCharger;
+  friend class BehaviorSelfTestPickup;
   
   Robot& _robot;
 };
