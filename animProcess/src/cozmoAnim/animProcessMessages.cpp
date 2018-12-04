@@ -472,7 +472,7 @@ void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPe
 {
   auto* alexa = _context->GetAlexa();
   if (alexa != nullptr) {
-    alexa->CancelPendingAlexaAuth();
+    alexa->CancelPendingAlexaAuth(EnumToString(msg.reason));
   }
 }
 
