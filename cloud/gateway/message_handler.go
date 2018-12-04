@@ -1690,8 +1690,9 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 
 	switchboardManager.Write(gw_clad.NewSwitchboardRequestWithAuthRequest(&cloud_clad.AuthRequest{
 		SessionToken: string(in.UserSessionId),
-		ClientName: string(in.ClientName),
-		AppId: string(in.AppId),
+		// cap ClientName to 64-characters
+		ClientName: string(in.ClientName)[0:63],
+		AppId: "SDK",
 	}))
 	response, ok := <-authChan
 	if !ok {
