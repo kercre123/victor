@@ -39,16 +39,6 @@ public:
   
 private:
   
-  // todo: might be faster if take avwrage of everything rather than 3 averages of certain ranges
-  void GetMinAndAvg(const size_t minIdx, const size_t maxIdx, float& minVal, float& avg);
-  
-  void GetOutliersAndAvg(const size_t minIdx,
-                         const size_t maxIdx,
-                         const float minVal1,
-                         const float minVal2,
-                         unsigned int& numOutliers,
-                         float& avg);
-  
   static constexpr unsigned int kNumPowers = 128; // should be a power of 2
   static constexpr unsigned int kNumToAvg = 10;
   static constexpr float kNumToAvgRecip = 1.0f/kNumToAvg;
