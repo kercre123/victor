@@ -215,10 +215,10 @@ private:
 
   const AudioInfo& _audioInfo;
   
-  static constexpr int kBandStopFilterSize = 151;
-  std::unique_ptr<Util::FixedCircularBuffer<short, kBandStopFilterSize>> _bandStopBuffer;
+  static constexpr int kFilterSize = 151;
+  std::unique_ptr<Util::FixedCircularBuffer<short, kFilterSize>> _filterBuffer;
   // todo: make this constexpr (see comment in ComputeFilterCoeffs)
-  static std::array<float, kBandStopFilterSize> _filterCoeffs24;
+  static std::array<float, kFilterSize> _filterCoeffs24;
 
   // TEMP
   SpeechRecognizerTHF*            _recognizer = nullptr;
