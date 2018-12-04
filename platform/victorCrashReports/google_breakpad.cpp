@@ -39,9 +39,10 @@ namespace {
 
 #define LOG_CHANNEL "GoogleBreakpad"
 
-static char dumpTag[BUFSIZ];
-static char dumpName[BUFSIZ];
-static char dumpPath[1024];
+std::string dumpTag;
+std::string dumpName;
+std::string dumpPath;
+std::string tmpDumpPath;
 static int fd = -1;
 static google_breakpad::ExceptionHandler* exceptionHandler;
 
@@ -102,15 +103,18 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
 {
   LOG_INFO("GoogleBreakpad.DumpCallback",
            "Dump path: '%s', fd = %d, context = %p, succeeded = %s",
-           dumpPath, descriptor.fd(), context, succeeded ? "true" : "false");
+           tmpDumpPath.c_str(), descriptor.fd(), context, succeeded ? "true" : "false");
   if (descriptor.fd() == fd && fd >= 0) {
     (void) close(fd); fd = -1;
   }
 
+  // Move dump file to upload path
+  rename(tmpDumpPath.c_str(), dumpPath.c_str());
+
   // Report the crash to DAS
   DASMSG(robot_crash, "robot.crash", "Robot service crash");
-  DASMSG_SET(s1, dumpTag, "Service name");
-  DASMSG_SET(s2, dumpName, "Crash name");
+  DASMSG_SET(s1, dumpTag.c_str(), "Service name");
+  DASMSG_SET(s2, dumpName.c_str(), "Crash name");
   DASMSG_SEND_ERROR();
 
   //
@@ -144,14 +148,14 @@ void InstallGoogleBreakpad(const char* filenamePrefix)
   const std::string & crashTag = filenamePrefix;
   const std::string & crashName = crashTag + "-V" + buildVersion +
                                   "-" + GetDateTimeString() + ".dmp";
-  const std::string & crashFile = path + crashName;
 
   // Save these strings for later
-  (void) strncpy(dumpTag, crashTag.c_str(), sizeof(dumpTag));
-  (void) strncpy(dumpName, crashName.c_str(), sizeof(dumpName));
-  (void) strncpy(dumpPath, crashFile.c_str(), sizeof(dumpPath));
+  dumpTag     = crashTag;
+  dumpName    = crashName;
+  dumpPath    = path + crashName;
+  tmpDumpPath = path + crashName + "~";
 
-  fd = open(crashFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
+  fd = open(tmpDumpPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
   google_breakpad::MinidumpDescriptor descriptor(fd);
   descriptor.set_sanitize_stacks(true);
   exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
@@ -165,12 +169,12 @@ void UnInstallGoogleBreakpad()
     (void) close(fd);
     fd = -1;
   }
-  if (dumpPath[0] != '\0') {
-    struct stat dumpStat;
-    memset(&dumpStat, 0, sizeof(dumpStat));
-    int rc = stat(dumpPath, &dumpStat);
-    if (!rc && !dumpStat.st_size) {
-      (void) unlink(dumpPath);
+  if (!tmpDumpPath.empty()) {
+    struct stat tmpDumpStat;
+    memset(&tmpDumpStat, 0, sizeof(tmpDumpStat));
+    int rc = stat(tmpDumpPath.c_str(), &tmpDumpStat);
+    if (!rc && !tmpDumpStat.st_size) {
+      (void) unlink(tmpDumpPath.c_str());
     }
   }
 }

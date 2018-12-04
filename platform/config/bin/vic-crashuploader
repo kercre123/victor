@@ -69,6 +69,18 @@ case "$os_version" in
     ;;
 esac
 
+# Remove empty crash files else rename
+for i in $VIC_CRASH_FOLDER/*.dmp~
+do
+    if [[ -s ${i} ]]; then
+        echo "Found crash $i renaming"
+        /bin/mv ${i} ${i%?}
+    else
+        /bin/echo "Removing empty crash file $i"
+        /bin/rm -f ${i}
+    fi
+done
+
 while :
 do
     cd $VIC_CRASH_FOLDER > /dev/null
@@ -76,69 +88,63 @@ do
     # Go through all the crash files we haven't uploaded
     for i in ./*.dmp
     do
-        # Ignore file if it is being held by any process; it's either one
-        # of the empty crash dump files that exist while victor is running,
-        # or is in the process of being written
-        PROCESSES_HOLDING=$(fuser ${i})
-        if [[ -z $PROCESSES_HOLDING ]]; then
-            if [[ -s ${i} ]]; then
-                if [[ ${i} =~ [V] ]]; then
-                    # New filename format ("V" in filename)
-                    TEMP=${i#*V}
-                    VERSION=${TEMP%%"-"*}
-                    if [ "$VERSION" = "0" ]; then
-                      UPLOAD_THIS_CRASH=0
-                    else
-                      UPLOAD_THIS_CRASH=1
-                    fi
-                  else
-                    # Older filename format (no "V" in filename)
-                    # For any few remaining crash dumps using the old filename format,
-                    # use the same logic we had before (upload if running versioned build)
-                    UPLOAD_THIS_CRASH=$VIC_RUNNING_VERSIONED_BUILD
-                fi
-                if [ $UPLOAD_THIS_CRASH -gt 0 ]; then
-                    # If file size is greater than zero, attempt to upload it
-                    echo "Uploading crash dump file ${i}"
-                    #
-                    # Upload crash dump plus metadata as multipart form
-                    #
-                    form="-F upload_file=@${i}"
-                    form="${form} -F hostname=${hostname}"
-                    form="${form} -F robot.esn=${esn}"
-                    form="${form} -F robot.os_version=${os_version}"
-                    form="${form} -F robot.anki_version=${anki_version}"
-
-                    if [ ${DEVELOPER} -gt 0 ]; then
-                      if [ -f ${i}.log ]; then
-                        form="${form} -F attachment_messages.log=@${i}.log"
-                      fi
-                    fi
-
-                    if /usr/bin/curl ${form} ${VIC_CRASH_UPLOAD_URL} ; then
-                        echo "Successfully uploaded ${i}"
-
-                        # Rename the file so that we can keep it around for a while before deletion
-                        mv ${i} ${i}.${UPLOADED_EXT}
-                        if [ -f ${i}.log ]; then
-                          mv ${i}.log ${i}.${UPLOADED_EXT}.log
-                        fi
-                    else
-                        echo "Failed to upload ${i}"
-                    fi
+        if [[ -s ${i} ]]; then
+            if [[ ${i} =~ [V] ]]; then
+                # New filename format ("V" in filename)
+                TEMP=${i#*V}
+                VERSION=${TEMP%%"-"*}
+                if [ "$VERSION" = "0" ]; then
+                    UPLOAD_THIS_CRASH=0
                 else
-                    # Don't upload, but rename
-                    echo "Renaming local build crash dump file ${i}"
-                    mv ${i} ${i}.${LOCAL_EXT}
-                    if [ -f ${i}.log ]; then
-                      mv ${i}.log ${i}.${LOCAL_EXT}.log
-                    fi
+                    UPLOAD_THIS_CRASH=1
                 fi
             else
-                # If file size is zero, at this point it has been abandoned
-                echo "Deleting abandoned crash dump file ${i}"
-                rm -f ${i} ${i}.log
+                # Older filename format (no "V" in filename)
+                # For any few remaining crash dumps using the old filename format,
+                # use the same logic we had before (upload if running versioned build)
+                UPLOAD_THIS_CRASH=$VIC_RUNNING_VERSIONED_BUILD
             fi
+            if [ $UPLOAD_THIS_CRASH -gt 0 ]; then
+                # If file size is greater than zero, attempt to upload it
+                echo "Uploading crash dump file ${i}"
+                #
+                # Upload crash dump plus metadata as multipart form
+                #
+                form="-F upload_file=@${i}"
+                form="${form} -F hostname=${hostname}"
+                form="${form} -F robot.esn=${esn}"
+                form="${form} -F robot.os_version=${os_version}"
+                form="${form} -F robot.anki_version=${anki_version}"
+
+                if [ ${DEVELOPER} -gt 0 ]; then
+                    if [ -f ${i}.log ]; then
+                        form="${form} -F attachment_messages.log=@${i}.log"
+                    fi
+                fi
+
+                if /usr/bin/curl ${form} ${VIC_CRASH_UPLOAD_URL} ; then
+                    echo "Successfully uploaded ${i}"
+
+                    # Rename the file so that we can keep it around for a while before deletion
+                    mv ${i} ${i}.${UPLOADED_EXT}
+                    if [ -f ${i}.log ]; then
+                        mv ${i}.log ${i}.${UPLOADED_EXT}.log
+                    fi
+                else
+                    echo "Failed to upload ${i}"
+                fi
+            else
+                # Don't upload, but rename
+                echo "Renaming local build crash dump file ${i}"
+                mv ${i} ${i}.${LOCAL_EXT}
+                if [ -f ${i}.log ]; then
+                    mv ${i}.log ${i}.${LOCAL_EXT}.log
+                fi
+            fi
+        else
+            # If file size is zero, at this point it has been abandoned
+            echo "Deleting abandoned crash dump file ${i}"
+            rm -f ${i} ${i}.log
         fi
     done
 
