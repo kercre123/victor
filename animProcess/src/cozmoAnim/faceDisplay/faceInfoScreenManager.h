@@ -86,8 +86,9 @@ public:
   // When enabled, switches to a screen showing the alexa pairing code, and optionally the URL,
   // depending on how the auth process originated (app or voice command)
   void EnableAlexaScreen(ScreenName screenName, const std::string& code, const std::string& url);
-  
-  void ToggleMute();
+
+  // turn mute on or off (reason sent to DAS)
+  void ToggleMute(const std::string& reason);
   
   void StartAlexaNotification();
 

@@ -229,7 +229,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     // A single press when muted should unmute and then trigger a wakeword.
     // This is an annoying code path since FaceInfoScreenManager::ToggleMute calls back into
     // MicDataSystem. But FaceInfoScreenManager is already set up to check for various button clicks...
-    FaceInfoScreenManager::getInstance()->ToggleMute();
+    FaceInfoScreenManager::getInstance()->ToggleMute("SINGLE_PRESS");
     DEV_ASSERT( !_micMuted, "MicDataSystem.FakeTriggerWordDetect.StillMuted" );
   }
   
