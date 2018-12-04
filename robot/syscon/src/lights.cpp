@@ -47,6 +47,7 @@ static LightChannel *current_light;
 static bool enabled = false;
 
 static void set_lights(LightChannel*& target, const uint16_t* gamma, uint8_t shift_mask);
+static void leds_off(void);
 
 void Lights::init(void) {
   TIM17->CR1 = 0;
@@ -87,9 +88,9 @@ void Lights::disable(void) {
   enabled = false;
 }
 
-static void shifter() {
+static void output_shift(uint8_t data) {
   for (int bit = 0x80; bit > 0; bit >>= 1) {
-    if (current_light->shift_out & bit) {
+    if (data & bit) {
       LED_DAT::set();    
     } else {
       LED_DAT::reset();
@@ -98,7 +99,14 @@ static void shifter() {
     __asm { nop };
     LED_CLK::reset();
   }
+}
 
+static void leds_off(void) {
+  output_shift(*HW_REVISION >= 2 ? 0x1F : 0xE0);
+}
+
+static void shifter() {
+  output_shift(current_light->shift_out);
   TIM17->ARR = current_light->time;
   light_handler = (++current_light)->funct;
   TIM17->CR1 = TIM_CR1_CEN | TIM_CR1_OPM;

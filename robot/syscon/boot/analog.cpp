@@ -63,6 +63,20 @@ static int total_release = 0;
 static uint16_t volatile adc_values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
 
+static inline void leds_off(void) {
+  // Shifing by 5 is enough to disable LEDs
+  LED_DAT::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  LED_DAT::set();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+}
+
 void Analog::init(void) {
   // Calibrate ADC1
   if ((ADC1->CR & ADC_CR_ADEN) != 0) {
