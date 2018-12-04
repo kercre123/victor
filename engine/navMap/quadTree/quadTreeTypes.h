@@ -30,18 +30,19 @@ namespace QuadTreeTypes {
 // Types
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
+// content for each nodeß
+template <typename T, typename... Ts>
+struct NodeContentT {
+  NodeContentT(T m = T()) : data(m) {}
 
-// content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
-struct NodeContent {
-  NodeContent(const MemoryMapData& m);
-  NodeContent(MemoryMapDataPtr m = MemoryMapDataPtr());
+  template <typename U>
+  operator U() const { return std::get<U>(data); }
   
   // comparison operators
-  bool operator==(const NodeContent& other) const;
-  bool operator!=(const NodeContent& other) const;
+  bool operator==(const NodeContentT<T, Ts...>& other) const { return data == other.data; }
+  bool operator!=(const NodeContentT<T, Ts...>& other) const { return data != other.data; }
   
-  MemoryMapDataPtr data;
+  std::tuple<T, Ts...> data;
 };
 
 // wrapper class for specifying the interface between QT actions and geometry methods
@@ -105,6 +106,7 @@ enum class EQuadrant : uint8_t {
 enum class EDirection { PlusX, PlusY, MinusX, MinusY };
 
 using MemoryMapDataPtr = MemoryMapDataWrapper<MemoryMapData>;
+using NodeContent      = NodeContentT<MemoryMapDataPtr>;
 using NodeAddress      = std::vector<EQuadrant>;
 using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
 using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;

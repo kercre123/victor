@@ -51,8 +51,7 @@ public:
   uint8_t                GetLevel()       const { return _level; }
   float                  GetSideLen()     const { return _sideLen; }
   const Point2f&         GetCenter()      const { return _center; }
-  MemoryMapDataPtr       GetData()        const { return _content.data; }
-  const NodeContent&     GetContent()     const { return _content; }
+  const NodeContent&     GetData()        const { return _content; }
   const NodeAddress&     GetAddress()     const { return _address; }
   const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }
 

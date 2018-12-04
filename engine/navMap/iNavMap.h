@@ -56,16 +56,16 @@ public:
   virtual float GetArea(const NodePredicate& func, const MemoryMapRegion& region = RealNumbers2f()) const = 0;
   
   // returns true if any node that intersects with the provided regions evaluates `func` as true.
-  virtual bool AnyOf(const MemoryMapRegion& region, NodePredicate func) const = 0;
+  virtual bool AnyOf(const MemoryMapRegion& region, const NodePredicate& func) const = 0;
   
   // multi-ray variant of the `AnyOf` method implementation may optimize for this case
-  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const = 0;
+  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, const NodePredicate& pred) const = 0;
   
   // Pack map data to broadcast
   virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const = 0;
 
   // populate a list of all data that matches the predicate inside region
-  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output, const MemoryMapRegion& region = RealNumbers2f()) const = 0;
+  virtual void FindContentIf(const NodePredicate& pred, MemoryMapTypes::MemoryMapDataConstList& output, const MemoryMapRegion& region = RealNumbers2f()) const = 0;
   
 protected:
   

@@ -89,9 +89,10 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
   FoldFunctor accumulator = [&] (QuadTreeNode& node)
   {
     auto newData = transform(node.GetData());
-    if ( node.GetData() == newData ) { return; }
+    auto currentData = static_cast<const decltype(newData)&>(node.GetData());
+    if ( currentData == newData ) { return; }
 
-    node.GetData()->SetLastObservedTime(newData->GetLastObservedTime());
+    currentData->SetLastObservedTime(newData->GetLastObservedTime());
 
     // split node if we are unsure if the incoming region will fill the entire area
     if ( !region.ContainsQuad(node.GetBoundingBox()) && node.CanSubdivide())
@@ -102,7 +103,7 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
     
     if ( !node.IsSubdivided() )
     {
-      if ( node.GetData()->CanOverrideSelfWithContent(newData) ) {
+      if ( currentData->CanOverrideSelfWithContent(newData) ) {
         node.ForceSetContent( newData );
         contentChanged = true;
       }
@@ -210,11 +211,6 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
   // iterate all those leaf nodes, adding them to this tree
   bool changed = false;
   for( const auto& nodeInOther : leafNodes ) {
-  
-    // if the leaf node is unkown then we don't need to add it
-    const bool isUnknown = ( nodeInOther->GetData()->type == EContentType::Unknown );
-    if ( !isUnknown ) {
-      
       // NOTE: there's a precision problem when we add back the quads; when we add a non-axis aligned quad to the map,
       // we modify (if applicable) all quads that intersect with that non-aa quad. When we merge this information into
       // a different map, we have lost precision on how big the original non-aa quad was, since we have stored it
@@ -234,7 +230,6 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       // grab CH to sort verticies into CW order
       const ConvexPolygon poly = ConvexPolygon::ConvexHull( std::move(corners) );
       changed |= Insert(FastPolygon(poly), [&nodeInOther] (auto) { return nodeInOther->GetData(); });
-    }
   }
   return changed;
 }
@@ -423,7 +418,7 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
   std::swap(childTakingMyPlace->_childrenPtr, oldChildren);
 
   // set the content type I had in the child that takes my place, then reset my content
-  childTakingMyPlace->ForceSetContent( _content.data );
+  childTakingMyPlace->ForceSetContent( NodeContent(_content) );
   ForceSetContent(MemoryMapDataPtr());
 
   // update address of all children

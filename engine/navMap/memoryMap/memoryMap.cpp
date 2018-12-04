@@ -34,7 +34,7 @@ namespace Vector {
 // Helpers
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-CONSOLE_VAR(bool, kMapPerformanceTestsEnabled, "ProxSensorComponent", false);
+CONSOLE_VAR(bool, kMapPerformanceTestsEnabled, "ProxSensorComponent", true);
 CONSOLE_VAR(int,  kMapPerformanceTestsSampleWindow, "ProxSensorComponent", 128);
 CONSOLE_VAR(bool, kRenderProxBeliefs, "ProxSensorComponent", false);
 
@@ -62,7 +62,7 @@ static void UpdatePerformanceRecord(const double& time_us, const std::string& re
   if ((++record.samples & kMapPerformanceTestsSampleWindow - 1) == 0) {
     DEV_ASSERT((kMapPerformanceTestsSampleWindow & (kMapPerformanceTestsSampleWindow - 1)) == 0,
       "Performance sample window not a power of 2");
-    PRINT_NAMED_INFO("PerformanceMonitor", "Average time for '%s' is %f us", recordName.c_str(), record.avgTime_us);
+    PRINT_NAMED_WARNING("PerformanceMonitor", "Average time for '%s' is %f us", recordName.c_str(), record.avgTime_us);
   }
 }
 
@@ -195,16 +195,16 @@ double MemoryMap::GetExploredRegionAreaM2() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::AnyOf(const MemoryMapRegion& r, NodePredicate f) const
+bool MemoryMap::AnyOf(const MemoryMapRegion& r, const NodePredicate& f) const
 {
   bool retv = false;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold( [&](const auto& node) { retv |= f(node.GetData()); }, r);
+  _quadTree.Fold( [&](const auto& node) { retv |= f( static_cast<const MemoryMapDataPtr&>(node.GetData())); }, r);
   return retv;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<bool> MemoryMap::AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const
+std::vector<bool> MemoryMap::AnyOf( const Point2f& start, const std::vector<Point2f>& ends, const NodePredicate& pred) const
 {
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
   return _processor.AnyOfRays(start, ends, pred);
@@ -215,7 +215,10 @@ float MemoryMap::GetArea(const NodePredicate& pred, const MemoryMapRegion& regio
 {
   float retv = 0.f;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += Util::Square(node.GetSideLen());} }, region);
+  _quadTree.Fold( [&](const auto& node) { 
+    if ( pred( static_cast<const MemoryMapDataPtr&>(node.GetData())) ) { 
+      retv += Util::Square(node.GetSideLen());} 
+    }, region);
   return retv;
 }
 
@@ -259,10 +262,11 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
       // leaf node
       if ( !node.IsSubdivided() )
       {
-        const auto& vizColor = GetNodeVizColor(node.GetData()).AsRGBA();
+        const MemoryMapDataPtr& nodeData = node.GetData();
+        const auto& vizColor = GetNodeVizColor(nodeData).AsRGBA();
         
         info.quadInfo.emplace_back(
-          node.GetData()->GetExternalContentType(), 
+          nodeData->GetExternalContentType(), 
           node.GetLevel(), 
           vizColor);
         
@@ -278,12 +282,12 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const
+void MemoryMap::FindContentIf(const NodePredicate& pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const
 {
   QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
-    MemoryMapDataPtr data = node.GetData();
+    const MemoryMapDataPtr& data = node.GetData();
     if( pred(data) ) { 
-      output.insert( MemoryMapDataConstPtr(node.GetData()) );
+      output.insert( data );
     }
   };
 

@@ -105,14 +105,14 @@ void QuadTreeNode::TryAutoMerge()
   // check if all children classified the same content (assumes node content equality is transitive)
   for(size_t i=0; i<_childrenPtr.size()-1; ++i)
   {
-    allChildrenEqual &= (_childrenPtr[i]->GetContent() == _childrenPtr[i+1]->GetContent());
+    allChildrenEqual &= (_childrenPtr[i]->GetData() == _childrenPtr[i+1]->GetData());
   }
   
   // we can merge and set that type on this parent
   if ( allChildrenEqual )
   {
     // do a copy since merging will destroy children
-    auto content = _childrenPtr[0]->GetContent();
+    auto content = _childrenPtr[0]->GetData();
     ForceSetContent(std::move(content));
 
     _childrenPtr.clear();    
