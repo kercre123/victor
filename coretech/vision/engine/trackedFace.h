@@ -150,6 +150,9 @@ namespace Vision {
     bool IsGazeDirectionStable() const { return _isGazeDirectionStable; }
     void SetGazeDirectionStable(const bool gazeDirecitonStable);
 
+    bool IsEyeGazeDirectedAtSurface() const {return _isEyeGazeDirectedAtSurface;}
+    void SetEyeGazeDirectedAtSurface(const bool isEyeGazeDirectedAtSurface);
+
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
 
@@ -166,6 +169,7 @@ namespace Vision {
     bool           _isFacingCamera        = false;
     bool           _isMakingEyeContact    = false;
     bool           _isGazeDirectionStable = false;
+    bool           _isEyeGazeDirectedAtSurface = false;
     bool           _isTranslationSet   = false;
     Point2f        _eyeGazeAverage;
 
@@ -362,6 +366,10 @@ namespace Vision {
 
   inline void TrackedFace::SetGazeDirectionStable(const bool isGazeDirectionStable) {
     _isGazeDirectionStable = isGazeDirectionStable;
+  }
+
+  inline void TrackedFace::SetEyeGazeDirectedAtSurface(const bool isEyeGazeDirectedAtSurface) {
+    _isEyeGazeDirectedAtSurface = isEyeGazeDirectedAtSurface;
   }
 
   inline const Pose3d& TrackedFace::GetGazeDirectionPose() const {

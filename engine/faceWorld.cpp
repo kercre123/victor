@@ -270,6 +270,7 @@ namespace Vector {
 
     Pose3d eyePoseWrtWorldOrigin(face.GetEyePose());
     eyePoseWrtWorldOrigin.SetParent(_robot->GetPoseOriginList().GetOriginByID(histOriginID));
+
     const bool robotOnTreads = _robot->GetOffTreadsState() == OffTreadsState::OnTreads;
     const bool headBelowRobot = headPoseWrtWorldOrigin.GetTranslation().z() < 0.f;
     if(kIgnoreFacesBelowRobot && robotOnTreads && headBelowRobot)
@@ -646,6 +647,7 @@ namespace Vector {
           auto faceDirectionAverage = entry.GetGazeDirectionAverage();
           Pose3d gazeDirectionPose(0.f, Z_AXIS_3D(), faceDirectionAverage, _robot->GetWorldOrigin());
           face.SetGazeDirectionPose(gazeDirectionPose);
+          face.SetEyeGazeDirectedAtSurface(entry.IsEyeGazeDirectedAtSurface());
         }
       }
     }
@@ -1241,6 +1243,17 @@ namespace Vector {
           return true;
         }
       }
+    }
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::GetFaceEyesDirectedAtSurface(const SmartFaceID& faceID) const
+  {
+    const auto entry = _faceEntries.find(faceID.GetID());
+    // TODO this face should be stable ... but maybe it's worth checking again?
+    if (entry != _faceEntries.end()) {
+      return entry->second.face.IsEyeGazeDirectedAtSurface();
     }
     return false;
   }

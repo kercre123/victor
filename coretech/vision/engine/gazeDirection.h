@@ -92,6 +92,8 @@ public:
   Point3f GetEyeDirectionAverage() const;
   Point3f GetCurrentEyeDirection() const;
 
+  bool IsEyeGazeDirectedAtSurface() const;
+
   bool GetExpired(const TimeStamp_t currentTime) const;
   bool IsStable() const;
 

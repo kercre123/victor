@@ -44,6 +44,7 @@ namespace {
   CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.GazeDirection",  false);
   CONSOLE_VAR(s32,  kNumberOfTurnsForSurfacePoint,           "Vision.GazeDirection",  1);
   CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.GazeDirection",  500);
+  CONSOLE_VAR(bool, kUseEyeGazeToLookAtSurfaceorFaces,      "Vision.GazeDirection",   false);
 }
 
 namespace {
@@ -270,7 +271,14 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
       // Now that we know we are going to turn clear the history
       GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
 
-      if (_iConfig->searchForFaces) {
+      // Check how we want to determine whether to search for faces
+      bool searchForFaces = _iConfig->searchForFaces;
+      if (kUseEyeGazeToLookAtSurfaceorFaces) {
+        // TODO need to have better naming
+        searchForFaces = !GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo);
+      }
+
+      if (searchForFaces) {
 
         // Bucket the angle to turn to look for faces
         const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);

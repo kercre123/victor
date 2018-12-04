@@ -332,5 +332,11 @@ Point3f GazeDirection::GetCurrentEyeDirection() const
   return point;
 }
 
+bool GazeDirection::IsEyeGazeDirectedAtSurface() const
+{
+  // TODO add logic once everything is all hooked up
+  return false;
+}
+
 } // namespace Vision
 } // namespace Anki
