@@ -5,8 +5,6 @@
 #include "timer.h"
 #include "lights.h"
 
-static inline void kick_off();
-
 typedef void (*void_funct)(void);
 static void_funct light_handler;
 
@@ -26,11 +24,14 @@ static const int LIGHT_COLORS     = 3;
 static const int LIGHT_MINIMUM    = 128;
 static const int LIGHT_SHIFT      = 17;
 
-static const uint16_t WIS_GAMMA_TABLE[] = { 0xBD10, 0xBD10, 0xBD10 };
-static const uint16_t VIC_GAMMA_TABLE[] = { 0xBD10, 0xBD10, 0xBD10, 0xBD10 };
+static const uint16_t WIS_GAMMA_TABLE[] = { 0xEA60, 0xEA60, 0xEA60 };
+static const uint16_t VIC_GAMMA_TABLE[] = { 0xEA60, 0xEA60, 0xEA60 };
 
-static const uint8_t VIC_ORDER[] = { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11};
-static const uint8_t WIS_ORDER[] = { 0,  3,  6,  9,  1,  4,  7, 10,  2,  5,   8,  11};
+static const uint8_t REORDER[] = { 
+   0,  3,  6,  9, 
+   1,  4,  7, 10,
+   2,  5,  8, 11
+};
 
 static const uint8_t default_value[LIGHT_CHANNELS][LIGHT_COLORS] = {
   { 0xFF, 0xFF, 0xFF },
@@ -45,7 +46,7 @@ static LightChannel light[LIGHT_CHANNELS * LIGHT_COLORS + 1];
 static LightChannel *current_light;
 static bool enabled = false;
 
-static void set_lights(LightChannel*& target, const uint16_t* gamma, uint8_t shift_mask, int rows, int columns);
+static void set_lights(LightChannel*& target, const uint16_t* gamma, uint8_t shift_mask);
 
 void Lights::init(void) {
   TIM17->CR1 = 0;
@@ -69,10 +70,10 @@ extern "C" void TIM17_IRQHandler(void) {
 }
 
 void Lights::receive(const uint8_t* data) {
-  const uint8_t* order_table = (*HW_REVISION >= 2) ? WIS_ORDER : VIC_ORDER;
+  const uint8_t* order_table = REORDER;
   
   for (int i = 0; i < LIGHT_CHANNELS * LIGHT_COLORS; i++) {
-    value[*(order_table++)] = *(data++);
+    value[i] = data[*(order_table++)];
   }
 }
 
@@ -98,10 +99,6 @@ static void shifter() {
     LED_CLK::reset();
   }
 
-  kick_off();
-}
-
-static void kick_off(void) {
   TIM17->ARR = current_light->time;
   light_handler = (++current_light)->funct;
   TIM17->CR1 = TIM_CR1_CEN | TIM_CR1_OPM;
@@ -112,9 +109,9 @@ void Lights::tick(void) {
   
   if (enabled) {
     if (*HW_REVISION >= 2) {     
-      set_lights(target, WIS_GAMMA_TABLE, 0xEF, LIGHT_COLORS, LIGHT_CHANNELS);
+      set_lights(target, WIS_GAMMA_TABLE, 0xFF);
     } else {
-      set_lights(target, VIC_GAMMA_TABLE, 0xE0, LIGHT_CHANNELS, LIGHT_COLORS);
+      set_lights(target, VIC_GAMMA_TABLE, 0x00);
     }
   }
 
@@ -125,7 +122,7 @@ void Lights::tick(void) {
   light[0].funct();
 }
 
-static void set_lights(LightChannel*& target, const uint16_t* gamma, uint8_t shift_mask, const int rows, const int columns) {
+static void set_lights(LightChannel*& target, const uint16_t* gamma, uint8_t shift_mask) {
   using namespace Lights;
 
   LightWorkspace light[4];
@@ -133,24 +130,36 @@ static void set_lights(LightChannel*& target, const uint16_t* gamma, uint8_t shi
 
   const uint8_t* colors = value;
 
-  for (int ch = 0; ch < rows; ch++) {
+  for (int ch = 0; ch < LIGHT_COLORS; ch++) {
     uint32_t dark_offset = *(gamma++);
-    
-    // Create light channels
-    int slots = columns;
 
-    // Stub cells
-    for (int x = 0; x < columns; x++) {
+    int clr3;
+    switch(ch) {
+      case 0:   clr3 = 0x08; break ;
+      case 2:   clr3 = 0x10; break ;
+      default:  clr3 = 0x00; break ;
+    }
+    
+    int mask = shift_mask ^ (0x4 >> ch) ^ clr3;
+    
+      // Stub cells
+    for (int x = 0; x < LIGHT_CHANNELS; x++) {
       uint32_t intensity = (uint32_t)*(colors++);
 
       light[x].time = (dark_offset * intensity * intensity) >> LIGHT_SHIFT;
-      light[x].mask = 1 << x;
+
+      if (x < 3) {
+        light[x].mask = 0x80 >> x;
+      } else {
+        light[x].mask = clr3;
+      }
+
       sorted[x] = &light[x];
     }
 
     // Sort light channels
-    for (int x = 0; x < columns - 1; x++) {
-      for (int y = x + 1; y < columns; y++) {
+    for (int x = 0; x < LIGHT_CHANNELS; x++) {
+      for (int y = x + 1; y < LIGHT_CHANNELS; y++) {
         if (sorted[x]->time <= sorted[y]->time) continue ;
   
         LightWorkspace* t = sorted[y]; 
@@ -161,17 +170,11 @@ static void set_lights(LightChannel*& target, const uint16_t* gamma, uint8_t shi
 
     // Merge channels
     int prev_time = 0;
-    int mask = 0x7;
     
-    for (int x = 0; x < slots; x++) {
+    for (int x = 0; x < LIGHT_CHANNELS; x++) {
       int delta = sorted[x]->time - prev_time;
 
-      if (ch < 3) {
-        target->shift_out = shift_mask ^ (0x80 >> ch) ^ mask;
-      } else {
-        target->shift_out = shift_mask ^ ((mask & 4) ? 0x10 : 0) ^ ((mask & 1) ? 0x01 : 0);
-      }
-      
+      target->shift_out = mask;
       target->time = delta;
       target->funct = shifter;
 
