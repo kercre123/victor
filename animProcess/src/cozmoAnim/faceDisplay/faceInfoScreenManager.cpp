@@ -36,6 +36,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/internetUtils/internetUtils.h"
+#include "util/logging/DAS.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
@@ -999,7 +1000,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
           !isOnCharger && // while user-facing instructions may say "pick up the robot and double press," it's really just off charger
           CanEnterPairingFromScreen(currScreenName))
   {
-    ToggleMute();
+    ToggleMute("DOUBLE_PRESS");
   }
 
   // Check for button press to go to next debug screen
@@ -1700,9 +1701,21 @@ void FaceInfoScreenManager::EnableAlexaScreen(ScreenName screenName, const std::
   }
 }
   
-void FaceInfoScreenManager::ToggleMute()
+void FaceInfoScreenManager::ToggleMute(const std::string& reason)
 {
   _context->GetMicDataSystem()->ToggleMicMute();
+
+  if( _context->GetMicDataSystem()->IsMicMuted() ) {
+    DASMSG(microphone_off_message, "robot.microphone_off", "Microphone disabled (muted)");
+    DASMSG_SET(s1, reason, "reason (how it was toggled)");
+    DASMSG_SEND();
+  }
+  else {
+    DASMSG(microphone_on_message, "robot.microphone_on", "Microphone enabled (unmuted)");
+    DASMSG_SET(s1, reason, "reason (how it was toggled)");
+    DASMSG_SEND();
+  }
+  
   if ((_currScreen != nullptr) && (_currScreen->GetName() == ScreenName::ToggleMute)) {
     // abort current animation and restart new one
     DrawMuteAnimation();

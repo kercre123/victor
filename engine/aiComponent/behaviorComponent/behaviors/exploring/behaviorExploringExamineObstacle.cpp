@@ -286,7 +286,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     if(_dVars.handSeen)
     {
       SET_STATE(ReactToHand);
-      DelegateNow(_iConfig.handReactionBehavior.get(), &BehaviorExploringExamineObstacle::TransitionToNextAction);
+      if (_iConfig.handReactionBehavior->WantsToBeActivated()) {
+        DelegateNow(_iConfig.handReactionBehavior.get(), &BehaviorExploringExamineObstacle::TransitionToNextAction);
+      }
       return;
       
     } else {
