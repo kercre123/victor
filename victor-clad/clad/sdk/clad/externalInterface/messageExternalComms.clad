@@ -266,8 +266,8 @@ message RtsFileDownload {
 
 message RtsCloudSessionRequest {
     string[uint_16]      sessionToken,
-	string				 clientName,
-	string				 appId,
+    string               clientName,
+    string               appId,
 }
 
 message RtsCloudSessionRequest_5 {

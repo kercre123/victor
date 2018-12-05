@@ -767,8 +767,8 @@ func (service *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
 			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
-			FaceId: element.FaceID,
-			Name:   element.Name,
+			FaceId:                    element.FaceID,
+			Name:                      element.Name,
 		}
 		faces = append(faces, &newFace)
 	}
@@ -1696,8 +1696,8 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 
 	switchboardManager.Write(gw_clad.NewSwitchboardRequestWithAuthRequest(&cloud_clad.AuthRequest{
 		SessionToken: string(in.UserSessionId),
-		ClientName: clientName,
-		AppId: "SDK",
+		ClientName:   clientName,
+		AppId:        "SDK",
 	}))
 	response, ok := <-authChan
 	if !ok {
@@ -2442,7 +2442,7 @@ func (service *rpcService) UpdateAndRestart(ctx context.Context, in *extint.Upda
 		go func() {
 			<-time.After(5 * time.Second)
 			err := exec.Command("/usr/bin/sudo", "/sbin/reboot").Run()
-			if (err != nil) {
+			if err != nil {
 				log.Errorf("Reboot attempt failed: %s\n", err)
 			}
 		}()
