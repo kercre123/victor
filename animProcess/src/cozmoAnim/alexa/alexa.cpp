@@ -48,6 +48,9 @@ namespace {
   
   const float kTimeUntilWakeWord_s = 3.0f;
   
+  // If true, the wake word is enabled when signed out if the user has _ever_ been signed in. Saying "alexa"
+  // triggers an error. If false, no wake work is running.
+  const bool kPlayErrorIfSignedOut = false;
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
 }
@@ -100,7 +103,7 @@ void Alexa::Init(const AnimContext* context)
   
   if( authenticatedLastBoot ) {
     SetAlexaActive( true );
-  } else if( _authenticatedEver ) {
+  } else if( _authenticatedEver && kPlayErrorIfSignedOut ) {
     // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
     // when they say the wake word, it plays "Your device isnt registered. For help, go it its companion app."
     // TODO: it might make sense to load the least sensitive model to avoid false positives
@@ -180,7 +183,7 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // create impl
     CreateImpl();
   } else if( !active && HasImpl() ) {
-    const auto simpleState = _authenticatedEver ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
+    const auto simpleState = (_authenticatedEver && kPlayErrorIfSignedOut) ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
     SetSimpleState( simpleState );
     DeleteImpl();
   }
@@ -703,7 +706,7 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
     }
   }
   
-  if( !hasImpl && _authenticatedEver ) {
+  if( !hasImpl && _authenticatedEver && kPlayErrorIfSignedOut ) {
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }
