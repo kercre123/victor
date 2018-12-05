@@ -83,6 +83,8 @@ namespace Anki {
       const f32 POINT_TURN_SLIP_COMP_FACTOR = 1.5f;
 #endif
       
+      const f32 MAX_PITCH_POINT_TURN_RAD = DEG_TO_RAD(45.f);
+      
       f32 pointTurnAngTol_;
       
       f32 pointTurnSpeedKp_ = 20;
@@ -706,7 +708,19 @@ namespace Anki {
     // Position-controlled point turn update
     void ManagePointTurn()
     {
-
+      
+      // Check to make sure the robot is not pitched too steeply,
+      // and if it is, stop and cancel the point turn
+      const Radians& currPitch = IMUFilter::GetPitch();
+      if (currPitch.getAbsoluteVal() > MAX_PITCH_POINT_TURN_RAD) {
+        ExitPointTurn();
+        AnkiInfo( "SteeringController.ManagePointTurn.StoppingDueToPitch",
+                  "Pitch magnitude of %f [rad] is higher than max allowed pitch of %f [rad]",
+                  currPitch.getAbsoluteVal().ToFloat(),
+                  MAX_PITCH_POINT_TURN_RAD);
+        return;
+      }
+      
       // Update current angular velocity
       f32 currDesiredAngularVel, currDesiredAngle;
       vpg_.Step(currDesiredAngularVel, currDesiredAngle);
