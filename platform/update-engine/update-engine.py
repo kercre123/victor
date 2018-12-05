@@ -465,8 +465,6 @@ def update_from_url(url):
     stream = open_url_stream(url)
     content_length = stream.info().getheaders("Content-Length")[0]
     write_status(EXPECTED_DOWNLOAD_SIZE_FILE, content_length)
-    current_os_version = get_prop("ro.anki.version")
-    next_boot_os_version = current_os_version
     with make_tar_stream(stream) as tar_stream:
         # Get the manifest
         if DEBUG:
@@ -491,7 +489,7 @@ def update_from_url(url):
         if manifest.get("META", "manifest_version") not in SUPPORTED_MANIFEST_VERSIONS:
             die(201, "Unexpected manifest version")
         next_boot_os_version = manifest.get("META", "update_version")
-        validate_new_os_version(current_os_version, next_boot_os_version, cmdline)
+        validate_new_os_version(get_prop("ro.anki.version"), next_boot_os_version, cmdline)
         if DEBUG:
             print("Updating to version {}".format(next_boot_os_version))
         if "anki.dev" in cmdline:
