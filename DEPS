@@ -61,6 +61,7 @@
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
                 ],
                 "allow_extra_files": "True",
+                "branch": "branches/release_1.2.1",
                 "export_dirname": "animation-assets",
                 "extract_types_from_tar": [
                     ".json",
@@ -71,7 +72,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4697"
+                "version": "4723"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
