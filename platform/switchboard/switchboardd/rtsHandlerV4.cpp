@@ -536,7 +536,7 @@ void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
   }
 
   std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(
-    [this, sessionToken](Anki::Vector::TokenError error, std::string jwtToken) {
+    [this, sessionToken, clientName, appId](Anki::Vector::TokenError error, std::string jwtToken) {
       bool isPrimary = false;
       Log::Write("CloudRequest JWT Response Handler");
 

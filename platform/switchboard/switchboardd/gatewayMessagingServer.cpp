@@ -106,11 +106,11 @@ void GatewayMessagingServer::HandleAuthRequest(const SwitchboardRequest& message
 
   std::shared_ptr<TokenClient> tokenClient = _tokenClient.lock();
   std::string sessionToken = message.Get_AuthRequest().sessionToken;
-  std::string sessionToken = message.Get_AuthRequest().clientName;
-  std::string sessionToken = message.Get_AuthRequest().appId;
+  std::string clientName = message.Get_AuthRequest().clientName;
+  std::string appId = message.Get_AuthRequest().appId;
 
   tokenClient->SendJwtRequest(
-    [this, sessionToken, tokenClient](Anki::Vector::TokenError error, std::string jwtToken) {
+    [this, sessionToken, clientName, appId, tokenClient](Anki::Vector::TokenError error, std::string jwtToken) {
       bool isPrimary = false;
       Log::Write("CloudRequest JWT Response Handler");
 

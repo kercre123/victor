@@ -1688,10 +1688,15 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 	f, authChan := switchboardManager.CreateChannel(gw_clad.SwitchboardResponseTag_AuthResponse, 1)
 	defer f()
 
+	// cap ClientName to 64-characters
+	clientName := string(in.ClientName)
+	if len(clientName) > 64 {
+		clientName = clientName[:64]
+	}
+
 	switchboardManager.Write(gw_clad.NewSwitchboardRequestWithAuthRequest(&cloud_clad.AuthRequest{
 		SessionToken: string(in.UserSessionId),
-		// cap ClientName to 64-characters
-		ClientName: string(in.ClientName)[0:63],
+		ClientName: clientName,
 		AppId: "SDK",
 	}))
 	response, ok := <-authChan
