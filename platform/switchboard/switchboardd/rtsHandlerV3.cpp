@@ -22,7 +22,7 @@ namespace Switchboard {
 using namespace Anki::Vector::ExternalComms;
 long long RtsHandlerV3::sTimeStarted;
 
-RtsHandlerV3::RtsHandlerV3(INetworkStream* stream, 
+RtsHandlerV3::RtsHandlerV3(INetworkStream* stream,
     struct ev_loop* evloop,
     std::shared_ptr<EngineMessagingClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
@@ -73,7 +73,7 @@ _wifiConnectTimeout_s(15)
   // Initialize ev timer
   _handleInternet.signal = &_internetTimerSignal;
   ev_timer_init(&_handleInternet.timer, &RtsHandlerV3::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
-  
+
   Log::Write("RtsComms V3 starting up.");
 }
 
@@ -96,7 +96,7 @@ RtsHandlerV3::~RtsHandlerV3() {
 bool RtsHandlerV3::StartRts() {
   SendPublicKey();
   _state = RtsPairingPhase::AwaitingPublicKey;
-  
+
   return true;
 }
 
@@ -141,7 +141,7 @@ void RtsHandlerV3::SubscribeToCladMessages() {
   _rtsCancelPairingHandle = _cladHandler->OnReceiveCancelPairingRequest().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsCancelPairing, this, std::placeholders::_1));
   _rtsLogRequestHandle = _cladHandler->OnReceiveRtsLogRequest().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsLogRequest, this, std::placeholders::_1));
   _rtsCloudSessionHandle = _cladHandler->OnReceiveRtsCloudSessionRequest().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsCloudSessionRequest, this, std::placeholders::_1));
-  _rtsForceDisconnectHandle = _cladHandler->OnReceiveRtsForceDisconnect().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsForceDisconnect, this, std::placeholders::_1)); 
+  _rtsForceDisconnectHandle = _cladHandler->OnReceiveRtsForceDisconnect().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsForceDisconnect, this, std::placeholders::_1));
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&RtsHandlerV3::HandleRtsAck, this, std::placeholders::_1));
 }
 
@@ -171,7 +171,7 @@ void RtsHandlerV3::SaveSessionKeys() {
     Log::Write("Tried to save session keys without valid keys.");
     return;
   }
-  
+
   // if there is no owner yet, only allow one session to be saved
   if(!_hasOwner) {
     _rtsKeys.clients.clear();
@@ -180,7 +180,7 @@ void RtsHandlerV3::SaveSessionKeys() {
   // we already have session keys for client with same public key,
   // so delete old keys
   _rtsKeys.clients.erase(
-    std::remove_if(_rtsKeys.clients.begin(), _rtsKeys.clients.end(), 
+    std::remove_if(_rtsKeys.clients.begin(), _rtsKeys.clients.end(),
       [this](RtsClientData c) {
       Log::Write("Deleting previously saved keys for same client.");
       return memcmp(&c.publicKey, &_clientSession.publicKey, sizeof(_clientSession.publicKey)) == 0;
@@ -485,7 +485,7 @@ void RtsHandlerV3::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenE
 
   // Send HandleRtsResponse
   SendRtsMessage<RtsCloudSessionResponse>(
-    authError==Anki::Vector::TokenError::NoError, 
+    authError==Anki::Vector::TokenError::NoError,
     status,
     appToken);
   Log::Error("Finished processing???");
@@ -496,15 +496,17 @@ void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
   if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
-  
-  Anki::Vector::ExternalComms::RtsCloudSessionRequest cloudReq = 
+
+  Anki::Vector::ExternalComms::RtsCloudSessionRequest cloudReq =
     msg.Get_RtsCloudSessionRequest();
   std::string sessionToken = cloudReq.sessionToken;
+  std::string clientName = cloudReq.clientName;
+  std::string appId = cloudReq.appId;
 
   Log::Write("Received cloud session authorization request.");
 
   std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(
-    [this, sessionToken](Anki::Vector::TokenError error, std::string jwtToken) {
+    [this, sessionToken, clientName, appId](Anki::Vector::TokenError error, std::string jwtToken) {
       bool isPrimary = false;
       Log::Write("CloudRequest JWT Response Handler");
 
@@ -512,7 +514,8 @@ void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
         case Anki::Vector::TokenError::NullToken: {
           // Primary association
           isPrimary = true;
-          std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendAuthRequest(sessionToken, 
+          std::weak_ptr<TokenResponseHandle> authHandle =
+		  	_tokenClient->SendAuthRequest(sessionToken, clientName, appId,
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
           });
@@ -522,7 +525,8 @@ void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
         case Anki::Vector::TokenError::NoError: {
           // Secondary association
           isPrimary = false;
-          std::weak_ptr<TokenResponseHandle> authHandle = _tokenClient->SendSecondaryAuthRequest(sessionToken, "", "",
+          std::weak_ptr<TokenResponseHandle> authHandle =
+			  _tokenClient->SendSecondaryAuthRequest(sessionToken, clientName, appId,
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
             Log::Write("CloudReequest Auth Response Handler");
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
@@ -614,7 +618,7 @@ void RtsHandlerV3::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLengt
   // Input client's public key and calculate shared keys
   _keyExchange->SetRemotePublicKey(publicKey);
   _keyExchange->CalculateSharedKeysServer((unsigned char*)_pin.c_str());
-  
+
   // Give our shared keys to the network stream
   _stream->SetCryptoKeys(
     _keyExchange->GetEncryptKey(),

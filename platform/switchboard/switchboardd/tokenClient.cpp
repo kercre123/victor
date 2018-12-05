@@ -49,16 +49,16 @@ bool TokenClient::Connect() {
   return connected;
 }
 
-std::shared_ptr<TokenResponseHandle> TokenClient::SendAuthRequest(std::string sessionToken, AuthRequestCallback callback) {
+std::shared_ptr<TokenResponseHandle> TokenClient::SendAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
   std::shared_ptr<TokenResponseHandle> handle = std::make_shared<TokenResponseHandle>();
 
-  _taskExecutor->Wake([this, handle, callback, sessionToken]() {
+  _taskExecutor->Wake([this, handle, callback, sessionToken, clientName, appId]() {
     // add callback to queue
     _authCallbacks.push(callback);
     _authHandles.push(handle);
 
-    Anki::Vector::TokenRequest tokenRequest = 
-      Anki::Vector::TokenRequest(Anki::Vector::AuthRequest(sessionToken));
+    Anki::Vector::TokenRequest tokenRequest =
+      Anki::Vector::TokenRequest(Anki::Vector::AuthRequest(sessionToken, clientName, appId));
 
     SendMessage(tokenRequest);
   });
