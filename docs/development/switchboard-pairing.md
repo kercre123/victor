@@ -1,10 +1,10 @@
-# RTS Version 2 Protocol #
+# RTS Version 5 Protocol #
 
 **Author:** Paul Aluri
 
 ## The Layers ##
 
-Right now this protocol is being used for secure BLE pairing. 
+Right now this protocol is being used for secure BLE pairing. This general protocol hasn't changed since RTSv2.
 
 During this pairing process, devices initially send each other a packed-byte handshake message. Then they move to sending CLAD messages. Once keys are exchanged, the pairing devices then send encrypted CLAD messages. An example top-to-bottom protocol stack for this final state is as follows:
 * Clad Messages
