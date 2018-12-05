@@ -149,9 +149,17 @@ ColorRGBA GetNodeVizColor(MemoryMapDataPtr node)
 // MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMap::MemoryMap()
-: _quadTree()
+: _processor()
+, _quadTree(_processor)
 {
+  _processor.SetRoot( &_quadTree );
 }
+
+MemoryMap::~MemoryMap()
+{
+  _processor.SetRoot( nullptr );
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMap::Merge(const INavMap& other, const Pose3d& transform)
@@ -167,7 +175,7 @@ bool MemoryMap::FillBorder(const NodePredicate& innerPred, const NodePredicate& 
 {
   // ask the processor to do it
   std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.GetProcessor().FillBorder(innerPred, outerPred, newData) );
+  return MONITOR_PERFORMANCE( _processor.FillBorder(innerPred, outerPred, newData) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -182,7 +190,7 @@ double MemoryMap::GetExploredRegionAreaM2() const
 {
   // delegate on processor
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  const double area = _quadTree.GetProcessor().GetExploredRegionAreaM2();
+  const double area = _processor.GetExploredRegionAreaM2();
   return area;
 }
 
@@ -199,7 +207,7 @@ bool MemoryMap::AnyOf(const MemoryMapRegion& r, NodePredicate f) const
 std::vector<bool> MemoryMap::AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const
 {
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return _quadTree.GetProcessor().AnyOfRays(start, ends, pred);
+  return _processor.AnyOfRays(start, ends, pred);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

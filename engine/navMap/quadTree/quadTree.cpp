@@ -8,7 +8,9 @@
  *
  * Copyright: Anki, Inc. 2015
  **/
+
 #include "quadTree.h"
+#include "quadTreeProcessor.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/point_impl.h"
@@ -35,7 +37,7 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTree::QuadTree()
+QuadTree::QuadTree(QuadTreeProcessor& callbacks)
 {
   _sideLen  = kQuadTreeInitialRootSideLength;
   _level    = kQuadTreeInitialMaxDepth;
@@ -43,7 +45,9 @@ QuadTree::QuadTree()
   _address  = {EQuadrant::Root};
   _boundingBox = AxisAlignedQuad(_center - Point2f(_sideLen*.5f), _center + Point2f(_sideLen*.5));
 
-  _processor.SetRoot( this );
+  using namespace std::placeholders;
+  _destructorCallback = std::bind( &QuadTreeProcessor::OnNodeDestroyed, &callbacks, _1 );
+  _modifiedCallback   = std::bind( &QuadTreeProcessor::OnNodeContentChanged, &callbacks, _1, _2 );
 
   // make sure math invariants hold before we allow anyone to use the QT
   DEV_ASSERT(Vec2Quadrant( Vec2f( 1.f,  1.f) ) == EQuadrant::PlusXPlusY,   "Incorrect Quadrant 1");
@@ -60,13 +64,6 @@ QuadTree::QuadTree()
   DEV_ASSERT(Vec2Quadrant( Vec2f(-0.f,  1.f) ) == EQuadrant::MinusXPlusY,  "Incorrect -0x +y Axis quadrant");
   DEV_ASSERT(Vec2Quadrant( Vec2f( 0.f, -1.f) ) == EQuadrant::PlusXMinusY,  "Incorrect +0x -y Axis quadrant");
   DEV_ASSERT(Vec2Quadrant( Vec2f(-0.f, -1.f) ) == EQuadrant::MinusXMinusY, "Incorrect -0x -y Axis quadrant");
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTree::~QuadTree()
-{
-  // we are destroyed, stop our rendering
-  _processor.SetRoot(nullptr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -97,16 +94,16 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
     node.GetData()->SetLastObservedTime(newData->GetLastObservedTime());
 
     // split node if we are unsure if the incoming region will fill the entire area
-    if ( !region.ContainsQuad(node.GetBoundingBox()) )
+    if ( !region.ContainsQuad(node.GetBoundingBox()) && node.CanSubdivide())
     {
       node.Subdivide();
-      node.MoveDataToChildren( _processor );
+      node.MoveDataToChildren();
     }
     
     if ( !node.IsSubdivided() )
     {
       if ( node.GetData()->CanOverrideSelfWithContent(newData) ) {
-        node.ForceSetDetectedContentType( newData, _processor );
+        node.ForceSetContent( newData );
         contentChanged = true;
       }
     } 
@@ -114,7 +111,7 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
   Fold(accumulator, region);
 
   // try to cleanup tree
-  FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
+  FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
   Fold(merge, region, FoldDirection::DepthFirst);
 
   return contentChanged;
@@ -130,7 +127,7 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
       auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
-        node.ForceSetDetectedContentType(newData, _processor);
+        node.ForceSetContent(newData);
         contentChanged = true;
       }
     };
@@ -138,7 +135,7 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
   Fold(trfm, region);
 
   // try to cleanup tree
-  FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
+  FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
   Fold(merge, region, FoldDirection::DepthFirst);
   
   return contentChanged;
@@ -154,7 +151,7 @@ bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction trans
     auto newData = transform(node->GetData());
     if ((node->GetData() != newData) && !node->IsSubdivided()) 
     {
-      node->ForceSetDetectedContentType(newData, _processor);
+      node->ForceSetContent(newData);
       return true;
     }
   }
@@ -172,7 +169,7 @@ bool QuadTree::Transform(NodeTransformFunction transform)
       auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
-        node.ForceSetDetectedContentType(newData, _processor);
+        node.ForceSetContent(newData);
         contentChanged = true;
       }
     };
@@ -180,7 +177,7 @@ bool QuadTree::Transform(NodeTransformFunction transform)
   Fold(trfm);
 
   // try to cleanup tree
-  FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
+  FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
   Fold(merge, FoldDirection::DepthFirst);
   
   return contentChanged;
@@ -254,7 +251,7 @@ bool QuadTree::ExpandToFit(const AxisAlignedQuad& region)
   {
     // find in which direction we are expanding, upgrade root level in that direction (center moves)
     const Vec2f& direction = region.GetCentroid() - Point2f{GetCenter().x(), GetCenter().y()};
-    expanded = UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
+    expanded = UpgradeRootLevel(direction, kQuadTreeMaxRootDepth);
 
     // check if the region now fits in the expanded root
     fitsInMap = _boundingBox.ContainsAll( {region.GetMinVertex(), region.GetMaxVertex()} );
@@ -265,7 +262,7 @@ bool QuadTree::ExpandToFit(const AxisAlignedQuad& region)
   if ( !fitsInMap )
   {
     // shift the root to try to cover the poly, by removing opposite nodes in the map
-    ShiftRoot(region, _processor);
+    ShiftRoot(region);
 
     // check if the poly now fits in the expanded root
     fitsInMap = _boundingBox.ContainsAll( {region.GetMinVertex(), region.GetMaxVertex()} );
@@ -286,7 +283,7 @@ bool QuadTree::ExpandToFit(const AxisAlignedQuad& region)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& processor)
+bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
 {
   const float rootHalfLen = _sideLen * 0.5f;
 
@@ -342,11 +339,8 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
       const size_t b1 = (Q2N) ( xPlusAxisReq ? EQuadrant::MinusXMinusY : EQuadrant::PlusXMinusY);
       const size_t b2 = (Q2N) (!xPlusAxisReq ? EQuadrant::MinusXMinusY : EQuadrant::PlusXMinusY);
 
-      _childrenPtr[a1]->SwapChildrenAndContent(oldChildren[a2].get(), processor );
-      _childrenPtr[b1]->SwapChildrenAndContent(oldChildren[b2].get(), processor );
-
-      // delete everything in oldChildren since we put the nodes we are keeping back into their new position
-      DestroyNodes(oldChildren, processor);
+      _childrenPtr[a1]->SwapChildrenAndContent(oldChildren[a2].get() );
+      _childrenPtr[b1]->SwapChildrenAndContent(oldChildren[b2].get() );
     }
 
     if ( yShift )
@@ -362,10 +356,8 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
       const size_t b2 = (Q2N) (!yPlusAxisReq ? EQuadrant::MinusXMinusY : EQuadrant::MinusXPlusY);
 
       // delete everything in oldChildren since we put the nodes we are keeping back into their new position
-      _childrenPtr[a1]->SwapChildrenAndContent(oldChildren[a2].get(), processor );
-      _childrenPtr[b1]->SwapChildrenAndContent(oldChildren[b2].get(), processor );
-
-      DestroyNodes(oldChildren, processor);
+      _childrenPtr[a1]->SwapChildrenAndContent(oldChildren[a2].get() );
+      _childrenPtr[b1]->SwapChildrenAndContent(oldChildren[b2].get() );
     }
   }
     
@@ -382,7 +374,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& proce
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor)
+bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
 { 
   // reached expansion limit
   if ( _level == std::numeric_limits<uint8_t>::max() || _level >= maxRootLevel) {
@@ -431,8 +423,8 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, 
   std::swap(childTakingMyPlace->_childrenPtr, oldChildren);
 
   // set the content type I had in the child that takes my place, then reset my content
-  childTakingMyPlace->ForceSetDetectedContentType( _content.data, processor );
-  ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
+  childTakingMyPlace->ForceSetContent( _content.data );
+  ForceSetContent(MemoryMapDataPtr());
 
   // update address of all children
   FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };

@@ -30,7 +30,7 @@ QuadTreeNode::QuadTreeNode(const QuadTreeNode* parent, EQuadrant quadrant)
 : _boundingBox({0,0}, {0,0})
 , _parent(parent)
 , _quadrant(quadrant)
-, _content(MemoryMapDataPtr())
+, _content()
 {
   if (_parent) { 
     float halfLen = _parent->GetSideLen() * .25f;
@@ -38,12 +38,20 @@ QuadTreeNode::QuadTreeNode(const QuadTreeNode* parent, EQuadrant quadrant)
     _center       = _parent->GetCenter() + Quadrant2Vec(_quadrant) * halfLen;
     _level        = _parent->GetLevel() - 1;
     _boundingBox  = AxisAlignedQuad(_center - Point2f(halfLen), _center + Point2f(halfLen));
+
+    _destructorCallback = _parent->_destructorCallback;
+    _modifiedCallback   = _parent->_modifiedCallback;
   }
   
   ResetAddress();
-  DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
- 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+QuadTreeNode::~QuadTreeNode()
+{
+  _destructorCallback(this);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::ResetAddress()
 {
@@ -66,39 +74,20 @@ bool QuadTreeNode::Subdivide()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::MoveDataToChildren(QuadTreeProcessor& processor)
-{
-  if ( !IsSubdivided() || _content.data->type == EContentType::Unknown ) { return; }
+void QuadTreeNode::MoveDataToChildren()
+{  
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
   {
     // use ForceContentType to make sure the processor is notified since the QTN constructor does not notify the processor
-    childPtr->ForceSetDetectedContentType(_content.data, processor);
+    childPtr->ForceSetContent( NodeContent(_content) );
   }
   // clear the subdivided node content
-  ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
-
-  // reset timestamps since they were cleared
-  _content.data->SetFirstObservedTime(_childrenPtr[0]->GetData()->GetFirstObservedTime());
-  _content.data->SetLastObservedTime( _childrenPtr[0]->GetData()->GetLastObservedTime());
+  ForceSetContent(NodeContent());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Join(QuadTreeProcessor& processor)
-{
-  if (!IsSubdivided()) { return false; }
-
-  // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
-  DestroyNodes(_childrenPtr, processor);
-
-  // make sure vector of children is empty to since IsSubdivided() checks this vectors length
-  _childrenPtr.clear();
-
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
+void QuadTreeNode::TryAutoMerge()
 {
   if (!IsSubdivided()) {
     return;
@@ -122,37 +111,23 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
   // we can merge and set that type on this parent
   if ( allChildrenEqual )
   {
-    MemoryMapDataPtr nodeData = _childrenPtr[0]->GetData(); // do a copy since merging will destroy children
-    nodeData->SetFirstObservedTime(GetData()->GetFirstObservedTime());
-    nodeData->SetLastObservedTime(GetData()->GetLastObservedTime());
-    
-    Join( processor );
-    
-    // set our content to the one we will have after the merge
-    ForceSetDetectedContentType(nodeData, processor);
+    // do a copy since merging will destroy children
+    auto content = _childrenPtr[0]->GetContent();
+    ForceSetContent(std::move(content));
+
+    _childrenPtr.clear();    
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::ForceSetDetectedContentType(const MemoryMapDataPtr newData, QuadTreeProcessor& processor)
+void QuadTreeNode::ForceSetContent(NodeContent&& newContent)
 {
-  const EContentType oldContentType = _content.data->type;
-  const bool wasEmptyType = IsEmptyType();
-  
-  // this is where we can detect changes in content, for example new obstacles or things disappearing
-  _content.data = newData;
-  
-  // notify processor only when content type changes, not if the underlaying info changes
-  const bool typeChanged = oldContentType != _content.data->type;
-  if ( typeChanged ) {
-    // we no longer check if if the type changes from Invalid or Subdivided in the processor, 
-    // so we should move the check here.
-    processor.OnNodeContentTypeChanged(this, oldContentType, wasEmptyType);
-  }
+  std::swap(_content, newContent);
+  _modifiedCallback(this, newContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode, QuadTreeProcessor& processor )
+void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode)
 {
   // swap children
   std::swap(_childrenPtr, otherNode->_childrenPtr);
@@ -168,24 +143,9 @@ void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode, QuadTreeProce
   }
 
   // swap contents by use of copy, since changes have to be notified to the processor
-  MemoryMapDataPtr myPrevContent = _content.data;
-  ForceSetDetectedContentType(otherNode->GetData(), processor);
-  otherNode->ForceSetDetectedContentType(myPrevContent, processor);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor)
-{
-  // iterate all nodes in vector
-  for( auto& node : nodes )
-  {
-    // destroying its children
-    DestroyNodes( node->_childrenPtr, processor );
-    // and then itself
-    processor.OnNodeDestroyed( node.get() );
-    node.reset();
-  }
+  auto myPrevContent = _content;
+  ForceSetContent( std::move( otherNode->_content ));
+  otherNode->ForceSetContent(std::move(myPrevContent));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

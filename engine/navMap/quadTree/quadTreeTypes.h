@@ -34,8 +34,8 @@ using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
 
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
 struct NodeContent {
-  explicit NodeContent(const MemoryMapData& m);
-  explicit NodeContent(MemoryMapDataPtr m);
+  NodeContent(const MemoryMapData& m);
+  NodeContent(MemoryMapDataPtr m = MemoryMapDataPtr());
   
   // comparison operators
   bool operator==(const NodeContent& other) const;
@@ -43,10 +43,6 @@ struct NodeContent {
   
   MemoryMapDataPtr data;
 };
-
-
-using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
-using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
 
 // wrapper class for specifying the interface between QT actions and geometry methods
 class FoldableRegion {
@@ -102,15 +98,16 @@ enum class EQuadrant : uint8_t {
   PlusXMinusY  = 1,
   MinusXPlusY  = 2,
   MinusXMinusY = 3,
-  Root     = 4, // needed for the root node, who has no parent
-  Invalid  = 255
+  Root         = 4 // needed for the root node, who has no parent
 };
 
 // movement direction
 enum class EDirection { PlusX, PlusY, MinusX, MinusY };
 
-// a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
-using NodeAddress = std::vector<EQuadrant>;
+using MemoryMapDataPtr = MemoryMapDataWrapper<MemoryMapData>;
+using NodeAddress      = std::vector<EQuadrant>;
+using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
+using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions
