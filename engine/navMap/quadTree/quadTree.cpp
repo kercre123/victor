@@ -90,20 +90,17 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
   
   // run the insert on the expanded QT
   bool contentChanged = false;
-  FoldFunctor accumulator = [&] (QuadTreeNode& node)
-  {
+  FoldFunctor accumulator = [&] (QuadTreeNode& node) {
     auto newData = transform(node.GetData());
     auto currentData = static_cast<const decltype(newData)&>(node.GetData());
     if ( currentData == newData ) { return; }
 
     // split node if we are unsure if the incoming region will fill the entire area
-    if ( !region.ContainsQuad(node.GetBoundingBox()) && node.CanSubdivide())
-    {
+    if ( !region.ContainsQuad(node.GetBoundingBox()) ) {
       node.Subdivide();
     }
     
-    if ( !node.IsSubdivided() )
-    {
+    if ( !node.IsSubdivided() ) {
       if ( currentData->CanOverrideSelfWithContent(newData) ) {
         node.ForceSetContent( newData );
         contentChanged = true;
@@ -167,7 +164,7 @@ bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction trans
   // try to cleanup tree
   if (contentChanged) {
     FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
-    Fold(merge, address);
+    Fold(merge, address, FoldDirection::DepthFirst);
   }
   
   return contentChanged;
@@ -185,7 +182,7 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
   const FoldFunctorConst getLeaves = [&leafNodes](const auto& node) { 
     if (!node.IsSubdivided()) { leafNodes.push_back(&node); } 
   };
-  other.Fold( getLeaves );
+  other.Fold( getLeaves, RealNumbers2f() );
   
   // note regarding quad size limit: when we merge one map into another, this map can expand or shift the root
   // to accomodate the information that we are receiving from 'other'. 'other' is considered to have more up to
@@ -347,7 +344,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
     
   // update address of all children
   FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
-  Fold(reset);
+  Fold(reset, RealNumbers2f());
 
 
   // log
@@ -412,7 +409,7 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
 
   // update address of all children
   FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
-  Fold(reset);
+  Fold(reset, RealNumbers2f());
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _maxHeight, MM_TO_M(_sideLen));

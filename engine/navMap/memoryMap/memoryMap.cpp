@@ -283,7 +283,7 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
     };
 
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold(accumulator);
+  _quadTree.Fold(accumulator, RealNumbers2f());
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
