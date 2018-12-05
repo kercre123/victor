@@ -12,6 +12,7 @@
  */
 
 #include "cozmoAnim/alexa/alexaCapabilityWrapper.h"
+#include "util/logging/DAS.h"
 #include <memory>
 
 namespace Anki {
@@ -78,6 +79,10 @@ void AlexaCapabilityWrapper::RunDirectiveCallback( const std::shared_ptr<avsComm
     const auto& name = directive->getName();
     const auto& payload = directive->getPayload();
     _onDirective( name, payload );
+    if( name == "SetEndpoint" ) {
+      DASMSG( alexa_endpoint, "alexa.endpoint", "AVS endpoint changed" );
+      DASMSG_SEND();
+    }
   }
 }
   
