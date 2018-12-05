@@ -23,22 +23,13 @@ set(HEAPTRACK_FILE_FORMAT_VERSION 2)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(FeatureSummary)
-find_package(Libunwind REQUIRED)
-
-message("LIBUNWIND_FOUND ${LIBUNWIND_FOUND}")
-message("LIBUNWIND_INCLUDE_DIRS ${LIBUNWIND_INCLUDE_DIRS}")
-message("LIBUNWIND_LIBRARIES ${LIBUNWIND_LIBRARIES}")
-message("LIBUNWIND_HAS_UNW_GETCONTEXT ${LIBUNWIND_HAS_UNW_GETCONTEXT}")
-message("LIBUNWIND_HAS_UNW_INIT_LOCAL ${LIBUNWIND_HAS_UNW_INIT_LOCAL}")
-message("LIBUNWIND_HAS_UNW_BACKTRACE ${LIBUNWIND_HAS_UNW_BACKTRACE}")
-message("LIBUNWIND_HAS_UNW_BACKTRACE_SKIP ${LIBUNWIND_HAS_UNW_BACKTRACE_SKIP}")
-message("LIBUNWIND_VERSION_STRING ${LIBUNWIND_VERSION_STRING}")
+find_package(Libunwind) # REQUIRED)
 
 # find_package(Boost 1.41.0 COMPONENTS system filesystem) # option first
 # find_package(Boost 1.41.0 REQUIRED COMPONENTS iostreams program_options) # then required
 set(Boost_INCLUDE_DIRS /Users/richard/projects/victor/lib/util/source/3rd/boost_1_68_0)
-find_package(Threads REQUIRED)
-find_package(ZLIB REQUIRED)
+find_package(Threads) # REQUIRED)
+find_package(ZLIB) # REQUIRED)
 find_package(Zstd)
 set_package_properties(Zstd PROPERTIES TYPE RECOMMENDED PURPOSE "Zstandard offers better (de)compression performance compared with gzip/zlib, making heaptrack faster and datafiles smaller.")
 
@@ -75,17 +66,17 @@ if (NOT HAVE_CXX11_SUPPORT)
     message(FATAL_ERROR "Your compiler is too old and does not support the required C++11 features.")
 endif()
 
-check_cxx_source_compiles(
-    "#include <stdio_ext.h>
-    #include <fcntl.h>
-    #include <dlfcn.h>
-    #include <link.h>
-    int main() { return 0; }"
-    HAVE_LINUX_HEADERS)
-
-if (NOT HAVE_LINUX_HEADERS)
-    message(FATAL_ERROR "You are missing some Linux headers required to compile heaptrack.")
-endif()
+# check_cxx_source_compiles(
+#     "#include <stdio_ext.h>
+#     #include <fcntl.h>
+#     #include <dlfcn.h>
+#     #include <link.h>
+#     int main() { return 0; }"
+#     HAVE_LINUX_HEADERS)
+# 
+# if (NOT HAVE_LINUX_HEADERS)
+#     message(FATAL_ERROR "You are missing some Linux headers required to compile heaptrack.")
+# endif()
 
 # cfree() does not exist in glibc 2.26+.
 # See: https://bugs.kde.org/show_bug.cgi?id=383889
@@ -109,6 +100,7 @@ set(ECM_ENABLE_SANITIZERS "" CACHE STRING "semicolon-separated list of sanitizer
 
 add_subdirectory(3rdparty)
 add_subdirectory(src)
+if(VICOS)
 add_subdirectory(tests)
-
+endif()
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)

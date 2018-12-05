@@ -64,7 +64,7 @@ struct Trace
 
     bool fill(int skip)
     {
-        fprintf(stderr, "before unw_backtrace %d %p %d\n", skip, &m_data[0], MAX_SIZE);
+        fprintf(stderr, "before unw_backtrace %d %p %d\n", skip, (void*)&m_data[0], MAX_SIZE);
 #if USE_BACKTRACE
         int size = backtrace(m_data, MAX_SIZE);
 #else
