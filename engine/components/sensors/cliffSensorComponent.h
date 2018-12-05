@@ -15,11 +15,15 @@
 #define __Anki_Cozmo_Basestation_Components_CliffSensorComponent_H__
 
 #include "engine/components/sensors/iSensorComponent.h"
+#include "engine/externalInterface/externalInterface.h"
 
 #include "clad/types/proxMessages.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/bitFlags/bitFlags.h"
+
+#include <list>
 
 namespace Anki {
 class Pose3d;
@@ -41,12 +45,14 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override {
-    InitBase(robot);
-  };
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
+  
+  void HandleMessage(const ExternalInterface::RobotStopped& msg);
+  
+  void HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg);
 
 protected:
   virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
@@ -105,7 +111,17 @@ public:
   // Returns whether or not stop-on-white is enabled
   bool IsStopOnWhiteEnabled() const { return _stopOnWhiteEnabled; }
   
+  // Returns latest timestamp in seconds of when the robot was put down on a cliff.
+  TimeStamp_t GetLatestPutDownOnCliffTime_ms() const { return _lastPutDownOnCliffTime_ms; }
+  
+  // Returns latest timestamp in seconds of a stop due to a cliff detection
+  TimeStamp_t GetLatestStopDueToCliffTime_ms() const { return _lastStopDueToCliffTime_ms; }
+  
+  const CliffSensorDataArray& GetCliffDataRawAtLastStop() const { return _cliffDataRawAtLastStop; };
+  
 private:
+  
+  void InitEventHandlers(IExternalInterface& interface);
   
   void QueueCliffThresholdUpdate();
   
@@ -118,6 +134,8 @@ private:
   Util::BitFlags8<CliffSensor> _whiteDetectedFlags;
   
   uint32_t _lastMsgTimestamp = 0;
+  
+  std::list<Signal::SmartHandle> _eventHandles;
   
   // Cliff detection thresholds for each sensor
   CliffSensorDataArray _cliffDetectThresholds;
@@ -141,6 +159,14 @@ private:
   uint32_t _nextCliffThresholdUpdateToRobot_ms = 0;
   
   bool _stopOnWhiteEnabled = false;
+  
+  // Timestamp of latest event where robot stopped due to a cliff detection
+  TimeStamp_t _lastStopDueToCliffTime_ms = 0;
+  // Raw cliff sensor data when the last RobotStopped event occurred due to a cliff detection.
+  CliffSensorDataArray _cliffDataRawAtLastStop;
+  
+  // Timestamp of latest event where robot was put down on a cliff
+  TimeStamp_t _lastPutDownOnCliffTime_ms = 0;
 };
 
 
