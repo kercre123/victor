@@ -21,10 +21,10 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  // This scale factor gets applied to the output tempo estimate of
-  // the aubio tempo detector. It has been seen that the tempo detector
-  // usually reports a tempo ~1.7% higher than the actual tempo.
-  const float kTempoCorrectionScaleFactor = 1.f / 1.017f;
+  // This scale factor gets applied to the output tempo estimate of the aubio tempo detector. It has been seen that the
+  // tempo detector usually reports a tempo ~1.2% higher than the actual tempo when using the _processed_ audio stream,
+  // and about 1.7% higher than actual when using the _raw_ audio stream (see kBeatDetectorUseProcessedAudio).
+  CONSOLE_VAR(float, kTempoCorrectionScaleFactor, "MicData", 0.988f);
   
   // Every once in a while, we reset the aubio tempo detection object,
   // just in case it is carrying some weird state or taking up memory.
