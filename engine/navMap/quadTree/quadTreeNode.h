@@ -22,8 +22,6 @@
 namespace Anki {
 namespace Vector {
 
-class QuadTreeProcessor;
-
 using namespace QuadTreeTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -32,41 +30,28 @@ class QuadTreeNode : private Util::noncopyable
   friend class QuadTree;
 public:
   ~QuadTreeNode();
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  using NodeCPtrVector = std::vector<const QuadTreeNode*>;  
-  using NodeContent    = QuadTreeTypes::NodeContent;
-  using FoldFunctor    = QuadTreeTypes::FoldFunctor;
-  using FoldDirection  = QuadTreeTypes::FoldDirection;
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   bool                   IsRootNode()     const { return _parent == nullptr; }
   bool                   IsSubdivided()   const { return !_childrenPtr.empty(); }
-  uint8_t                GetLevel()       const { return _level; }
+  uint8_t                GetMaxHeight()   const { return _maxHeight; }
   float                  GetSideLen()     const { return _sideLen; }
   const Point2f&         GetCenter()      const { return _center; }
   const NodeContent&     GetData()        const { return _content; }
   const NodeAddress&     GetAddress()     const { return _address; }
   const AxisAlignedQuad& GetBoundingBox() const { return _boundingBox; }
 
-
-
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
   void Fold(const FoldFunctorConst& accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
   void Fold(const FoldFunctorConst& accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
+  void Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr) const; // no direction since NodeAddr is always one node
   
   // finds all the leaf nodes that are neighbors with this node
-  NodeCPtrVector GetNeighbors() const;
-
-  // find a node at a particular address
-  const QuadTreeNode* GetNodeAtAddress(const NodeAddress& addr) const;
+  std::vector<const QuadTreeNode*> GetNeighbors() const;
 
 protected:
 
@@ -85,42 +70,22 @@ protected:
   
   // updates the address incase tree structure changes (expands and shifts)
   void ResetAddress();
-
-  // find a node at a particular address
-  QuadTreeNode* GetNodeAtAddress(const NodeAddress& addr);
   
-  // subdivide/join children
+  // split the current node
   bool Subdivide();
-
-  // copys the data of this node to its children, and resets its own data
-  void MoveDataToChildren();
 
 private:
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // info about moving towards a neighbor
-  struct MoveInfo {
-    EQuadrant neighborQuadrant;  // destination quadrant
-    bool sharesParent;           // whether destination quadrant is in the same parent
-  };
-    
-  // container for each node's children
-  using ChildrenVector = std::vector< std::unique_ptr<QuadTreeNode> >;
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                 
   
   // return true if this quad can subdivide
-  bool CanSubdivide() const { return (_level > 0) && !IsSubdivided(); }
+  bool CanSubdivide() const { return (_maxHeight > 0) && !IsSubdivided(); }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge();
@@ -138,6 +103,7 @@ private:
   // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
   void Fold(FoldFunctor& accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
   void Fold(FoldFunctor& accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst);
+  void Fold(FoldFunctor& accumulator, const NodeAddress& addr); // no direction since NodeAddr is always one node
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
@@ -149,7 +115,7 @@ private:
 
   // iterate until we reach the nodes that have a border in the given direction, and add them to the vector
   // NOTE: this method is expected to NOT clear the vector before adding descendants
-  void AddSmallestDescendants(EDirection direction, NodeCPtrVector& descendants) const;
+  void AddSmallestDescendants(EDirection direction, std::vector<const QuadTreeNode*>& descendants) const;
    
   // find the neighbor of the same or higher level in the given direction
   const QuadTreeNode* FindSingleNeighbor(EDirection direction) const;
@@ -162,7 +128,7 @@ private:
   // NOTE: try to minimize padding in these attributes
 
   // children when subdivided. Can be empty or have 4 nodes
-  ChildrenVector _childrenPtr;
+  std::vector< std::unique_ptr<QuadTreeNode> > _childrenPtr;
 
   // coordinates of this quad
   Point2f _center;
@@ -174,7 +140,7 @@ private:
   const QuadTreeNode* _parent;
 
   // our level
-  uint8_t _level;
+  uint8_t _maxHeight;
 
   // quadrant within the parent
   EQuadrant _quadrant;

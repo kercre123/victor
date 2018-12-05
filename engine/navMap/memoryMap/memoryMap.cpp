@@ -41,9 +41,6 @@ CONSOLE_VAR(bool, kRenderProxBeliefs, "ProxSensorComponent", false);
 namespace
 {
 
-// helper method to colorize nodes based on their type and attributes in visualization
-Anki::ColorRGBA GetNodeVizColor(MemoryMapDataPtr node);
-
 #define MONITOR_PERFORMANCE(eval) (kMapPerformanceTestsEnabled) ? PerformanceMonitor([&]() {return eval;}, __FILE__ ":" + std::string(__func__)) : eval
 
 struct PerformanceRecord { double avgTime_us = 0; u32 samples = 0; };
@@ -150,7 +147,10 @@ ColorRGBA GetNodeVizColor(MemoryMapDataPtr node)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMap::MemoryMap()
 : _processor()
-, _quadTree(_processor)
+, _quadTree(
+    std::bind( &QuadTreeProcessor::OnNodeDestroyed, &_processor, std::placeholders::_1 ),
+    std::bind( &QuadTreeProcessor::OnNodeContentChanged, &_processor, std::placeholders::_1, std::placeholders::_2 )
+)
 {
   _processor.SetRoot( &_quadTree );
 }
@@ -228,7 +228,12 @@ bool MemoryMap::Insert(const MemoryMapRegion& r, const MemoryMapData& data)
   // clone data to make into a shared pointer.
   const auto& dataPtr = data.Clone();
   std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.Insert(r, [&dataPtr] (auto _) { return dataPtr; }) );
+
+  NodeTransformFunction trfm = [&dataPtr] (const MemoryMapDataPtr& currentData) { 
+    currentData->SetLastObservedTime(dataPtr->GetLastObservedTime());
+    return dataPtr; 
+  };
+  return MONITOR_PERFORMANCE( _quadTree.Insert(r, trfm) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -251,7 +256,7 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
         instanceId << "QuadTree_" << this;
 
         info.mapInfo = ExternalInterface::MemoryMapInfo(
-          node.GetLevel(),
+          node.GetMaxHeight(),
           node.GetSideLen(),
           node.GetCenter().x(),
           node.GetCenter().y(),
@@ -267,7 +272,7 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
         
         info.quadInfo.emplace_back(
           nodeData->GetExternalContentType(), 
-          node.GetLevel(), 
+          node.GetMaxHeight(), 
           vizColor);
         
         info.quadInfoFull.emplace_back(vizColor,

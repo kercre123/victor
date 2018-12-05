@@ -94,7 +94,7 @@ using MemoryMapDataConstPtr  = MemoryMapDataWrapper<const MemoryMapData>;
 using MemoryMapDataList      = std::unordered_set<MemoryMapDataPtr, MemoryMapDataHasher<MemoryMapData>>;
 using MemoryMapDataConstList = std::unordered_set<MemoryMapDataConstPtr, MemoryMapDataHasher<const MemoryMapData>>;
 
-using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
+using NodeTransformFunction  = QuadTreeTypes::NodeTransformFunction;
 using NodePredicate          = std::function<bool (MemoryMapDataConstPtr)>;
 
 using QuadInfoVector         = std::vector<ExternalInterface::MemoryMapQuadInfo>;

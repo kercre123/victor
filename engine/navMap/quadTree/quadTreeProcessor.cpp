@@ -165,21 +165,23 @@ QuadTreeProcessor::AnyOfRays( const Point2f& start,
   const auto startBres = QuadTreeTypes::GetIntegralCoordinateOfNode(start, 
     _quadTree->GetCenter(), 
     _quadTree->GetContentPrecisionMM(), 
-    _quadTree->GetMaxTreeHeight());
-  const auto maxTreeHeight = _quadTree->GetMaxTreeHeight();
+    _quadTree->GetMaxHeight());
+  const auto maxTreeHeight = _quadTree->GetMaxHeight();
 
   for(int rayIdx = 0; rayIdx<ends.size(); ++rayIdx) {
     BresenhamLinePixelIterator bresIter(startBres, 
       QuadTreeTypes::GetIntegralCoordinateOfNode(ends[rayIdx], 
         _quadTree->GetCenter(), 
         _quadTree->GetContentPrecisionMM(), 
-        _quadTree->GetMaxTreeHeight()));
+        _quadTree->GetMaxHeight()));
     while(!bresIter.Done()) {
       const Point2i& rasterPoint = bresIter.Get();
       auto got = localCache.find(rasterPoint);
       if(got == localCache.end()) {
         // compute new result and insert into the cache
-        const auto qnode = ((const QuadTree*)_quadTree)->GetNodeAtAddress(GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
+        const QuadTreeNode* qnode = nullptr;
+        auto getNode = [&qnode] (const QuadTreeNode& n) { qnode = &n; };
+        ((const QuadTree*)_quadTree)->Fold(getNode, GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
         const bool result = qnode && pred( static_cast<const MemoryMapDataPtr&>(qnode->GetData()) );
         got = localCache.insert({rasterPoint, result}).first;
       }

@@ -12,7 +12,7 @@
  * Copyright: Anki, Inc. 2015
 **/
 #include "quadTreeNode.h"
-#include "quadTreeProcessor.h"
+#include "engine/navMap/memoryMap/data/memoryMapData.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "util/math/math.h"
@@ -30,13 +30,12 @@ QuadTreeNode::QuadTreeNode(const QuadTreeNode* parent, EQuadrant quadrant)
 : _boundingBox({0,0}, {0,0})
 , _parent(parent)
 , _quadrant(quadrant)
-, _content()
 {
   if (_parent) { 
     float halfLen = _parent->GetSideLen() * .25f;
     _sideLen      = _parent->GetSideLen() * .5f;
     _center       = _parent->GetCenter() + Quadrant2Vec(_quadrant) * halfLen;
-    _level        = _parent->GetLevel() - 1;
+    _maxHeight    = _parent->GetMaxHeight() - 1;
     _boundingBox  = AxisAlignedQuad(_center - Point2f(halfLen), _center + Point2f(halfLen));
 
     _destructorCallback = _parent->_destructorCallback;
@@ -65,25 +64,19 @@ bool QuadTreeNode::Subdivide()
 {
   if ( !CanSubdivide() ) { return false; }
   
+  // create new children, push our data to them, then clear our own data
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::PlusXPlusY) );   // up L
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::PlusXMinusY) );  // up R
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::MinusXPlusY) );  // lo L
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::MinusXMinusY) ); // lo R
 
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::MoveDataToChildren()
-{  
-  // our children may change later on, but until they do, assume they have our old content
-  for ( auto& childPtr : _childrenPtr )
-  {
-    // use ForceContentType to make sure the processor is notified since the QTN constructor does not notify the processor
+  for ( auto& childPtr : _childrenPtr ) {
     childPtr->ForceSetContent( NodeContent(_content) );
   }
-  // clear the subdivided node content
+
   ForceSetContent(NodeContent());
+
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -169,33 +162,7 @@ QuadTreeNode* QuadTreeNode::GetChild(EQuadrant quadrant)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const QuadTreeNode* QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr) const
-{
-  if (addr.size() > _address.size()) {
-    if(!IsSubdivided()) { return this; } // returns the closest parent
-    auto nextNode = GetChild(addr[_address.size()]);
-    return (nextNode) ? nextNode->GetNodeAtAddress(addr) : nullptr;
-  } else if (addr == _address) {
-    return this;
-  } 
-  return nullptr;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode* QuadTreeNode::GetNodeAtAddress(const NodeAddress& addr)
-{
-  if (addr.size() > _address.size()) {
-    if(!IsSubdivided()) { return this; } // returns the closest parent
-    auto nextNode = GetChild(addr[_address.size()]);
-    return (nextNode) ? nextNode->GetNodeAtAddress(addr) : nullptr;
-  } else if (addr == _address) {
-    return this;
-  } 
-  return nullptr;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::AddSmallestDescendants(EDirection direction, NodeCPtrVector& descendants) const
+void QuadTreeNode::AddSmallestDescendants(EDirection direction, std::vector<const QuadTreeNode*>& descendants) const
 {
   if ( !IsSubdivided() ) {
     descendants.emplace_back( this );
@@ -232,19 +199,19 @@ const QuadTreeNode* QuadTreeNode::FindSingleNeighbor(EDirection direction) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::NodeCPtrVector QuadTreeNode::GetNeighbors() const
+std::vector<const QuadTreeNode*> QuadTreeNode::GetNeighbors() const
 {
-  NodeCPtrVector neighbors;
+  std::vector<const QuadTreeNode*> neighbors;
   
   const QuadTreeNode* plusX  = FindSingleNeighbor(EDirection::PlusX);
   const QuadTreeNode* minusX = FindSingleNeighbor(EDirection::MinusX);
-  const QuadTreeNode* minuxY = FindSingleNeighbor(EDirection::MinusY);
+  const QuadTreeNode* minusY = FindSingleNeighbor(EDirection::MinusY);
   const QuadTreeNode* plusY  = FindSingleNeighbor(EDirection::PlusY);
  
   if (plusX ) { plusX->AddSmallestDescendants(EDirection::MinusX, neighbors);  }
   if (minusX) { minusX->AddSmallestDescendants(EDirection::PlusX, neighbors);  }
-  if (minuxY) { minuxY->AddSmallestDescendants(EDirection::PlusY,  neighbors); }
-  if (plusY ) { plusY->AddSmallestDescendants(EDirection::MinusY,  neighbors); }
+  if (minusY) { minusY->AddSmallestDescendants(EDirection::PlusY, neighbors); }
+  if (plusY ) { plusY->AddSmallestDescendants(EDirection::MinusY, neighbors); }
 
   return neighbors;
 }
@@ -276,6 +243,31 @@ void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, FoldDirection dir) 
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr) const
+{
+  if (addr.size() > _address.size()) {
+    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
+    auto nextNode = GetChild(addr[_address.size()]);
+    if (nextNode) { nextNode->Fold(accumulator, addr); }
+  } else if (addr == _address) {
+    accumulator(*this);
+  } 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::Fold(FoldFunctor& accumulator, const NodeAddress& addr)
+{
+  if (addr.size() > _address.size()) {
+    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
+    auto nextNode = GetChild(addr[_address.size()]);
+    if (nextNode) { nextNode->Fold(accumulator, addr); }
+  } else if (addr == _address) {
+    accumulator(*this);
+  } 
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /*

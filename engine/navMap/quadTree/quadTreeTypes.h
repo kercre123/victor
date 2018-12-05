@@ -21,7 +21,6 @@
 namespace Anki {
 namespace Vector {
 
-class MemoryMapData;
 class QuadTreeNode;
 
 namespace QuadTreeTypes {
@@ -30,19 +29,39 @@ namespace QuadTreeTypes {
 // Types
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// content for each nodeß
-template <typename T, typename... Ts>
-struct NodeContentT {
-  NodeContentT(T m = T()) : data(m) {}
 
-  template <typename U>
-  operator U() const { return std::get<U>(data); }
+
+// content for each node
+template <typename... Ts>
+class NodeContentT {
+private:
+  // general case - assume false since Tail can be empty
+  template <typename Test, typename... Tail>
+  struct has_type : std::false_type {};
+
+  // Test type is different from Head, so recurse
+  template <typename Test, typename Head, typename... Tail>
+  struct has_type<Test, Head, Tail...> : has_type<Test, Tail...> {};
+
+  // Head and Test are the same type, so we have Test type
+  template <typename Test, typename... Tail>
+  struct has_type<Test, Test, Tail...> : std::true_type {};
+
+  std::tuple<Ts...> _data;
+
+public:
+  NodeContentT() {}
+  NodeContentT(const NodeContentT<Ts...>& n) : _data(n) {}
+
+  template <typename U, typename = std::enable_if_t<has_type<U, Ts...>::value>>
+  NodeContentT(const U& u) { std::get<U>(_data) = u; }
+
+  template <typename U, typename = std::enable_if_t<has_type<U, Ts...>::value>>
+  operator U() const { return std::get<U>(_data); }
   
   // comparison operators
-  bool operator==(const NodeContentT<T, Ts...>& other) const { return data == other.data; }
-  bool operator!=(const NodeContentT<T, Ts...>& other) const { return data != other.data; }
-  
-  std::tuple<T, Ts...> data;
+  bool operator==(const NodeContentT<Ts...>& other) const { return _data == other._data; }
+  bool operator!=(const NodeContentT<Ts...>& other) const { return _data != other._data; }
 };
 
 // wrapper class for specifying the interface between QT actions and geometry methods
@@ -110,6 +129,9 @@ using NodeContent      = NodeContentT<MemoryMapDataPtr>;
 using NodeAddress      = std::vector<EQuadrant>;
 using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
 using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
+
+// TODO: template on any implicitly convertable type of `NodeContent`
+using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions

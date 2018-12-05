@@ -13,7 +13,6 @@
 #define ANKI_COZMO_QUAD_TREE_H
 
 #include "quadTreeNode.h"
-#include "quadTreeProcessor.h"
 
 namespace Anki {
 
@@ -31,7 +30,10 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree(QuadTreeProcessor& callbacks);
+  QuadTree(
+    std::function<void (const QuadTreeNode*)> destructorCallback,
+    std::function<void (const QuadTreeNode*, const NodeContent&)> modifiedCallback
+  );
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -53,14 +55,10 @@ public:
   // it will not expand the root node
   bool Transform(const FoldableRegion& region, NodeTransformFunction transform);
   bool Transform(const NodeAddress& address, NodeTransformFunction transform);
-  bool Transform(NodeTransformFunction transform);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   bool Merge(const QuadTree& other, const Pose3d& transform);
 
-  // Tree Height is the number of edges to traverse to reach a desired node
-  // Note: nodes/cells at height=0 have sideLength=contentPrecision
-  uint8_t GetMaxTreeHeight() const { return _level; }
 
 private:
 
