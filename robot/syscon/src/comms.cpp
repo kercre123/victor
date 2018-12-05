@@ -31,7 +31,6 @@ struct InboundPacket {
   union {
     LightState lightState;
     HeadToBody headToBody;
-    ContactData contactData;
     AckMessage ack;
     VersionInfo version;
     uint8_t raw_payload[];
@@ -42,7 +41,6 @@ struct InboundPacket {
 struct TransmitFifoPayload {
   SpineMessageHeader header;
   union {
-    ContactData contactData;
     AckMessage ack;
     VersionInfo version;
     uint8_t raw[];
@@ -247,8 +245,6 @@ static int sizeOfInboundPayload(PayloadId id) {
       return sizeof(LightState);
     case PAYLOAD_DATA_FRAME:
       return sizeof(HeadToBody);
-    case PAYLOAD_CONT_DATA:
-      return sizeof(ContactData);
     default:
       return -1;
   }
