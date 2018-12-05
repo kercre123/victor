@@ -203,7 +203,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
       LOG_INFO("MicDataProcessor.TWCallback", "Timestamp %d", (TimeStamp_t)mostRecentTimestamp);
     }
     else {
-      PRINT_NAMED_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
+      LOG_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
     }
   };
   
