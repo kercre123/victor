@@ -56,6 +56,10 @@
     "AnimName": "ag_avs_listen2error"
   },
   {
+    "CladEvent": "AlexaSignOut",
+    "AnimName" : "ag_blackjack_victorlose"
+  },
+  {
     "CladEvent": "AlexaSpeak2Listen",
     "AnimName": "ag_avs_back2listen_01"
   },

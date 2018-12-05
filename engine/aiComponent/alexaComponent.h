@@ -53,6 +53,8 @@ enum class AnimationTrigger : int32_t;
   
 template<typename T>
 class AnkiEvent;
+  
+class UserIntentComponent;
 
 class AlexaComponent : public IDependencyManagedComponent<AIComponentID>,
                        private Util::noncopyable
@@ -79,10 +81,19 @@ public:
   bool IsIdle() const;
   bool IsUXStateGetInPlaying( AlexaUXState state ) const;
   bool IsAnyUXStateGetInPlaying() const;
+  
+  // check if sign in/out is pending. If it is pending, AlexaComponent will SignIn/SignOut for you
+  // after some number of ticks. To avoid this, Claim it, but then you must call SignIn/SignOut. Note
+  // that only one request is allowed until SignIn() or SignOut() is called (or a pending request times out).
+  bool IsSignInPending() const;
+  bool IsSignOutPending() const;
+  void ClaimRequest();
+  void SignIn();
+  void SignOut();
 
 private:
   
-  void SetAlexaOption( bool optedIn, UserIntentSource source );
+  void SetAlexaOption( bool optedIn );
   
   void HandleAppEvents( const AnkiEvent<external_interface::GatewayWrapper>& event );
   void HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEngine>& event );
@@ -97,8 +108,22 @@ private:
   void ToggleButtonWakewordSetting( bool isAlexa ) const;
   
   std::string GetAnimName( AnimationTrigger trigger ) const;
+
+  void SendSignInDAS( UserIntentSource source ) const;
+  void SendSignOutDAS( UserIntentSource source ) const;
+  
+  enum class Request : uint8_t {
+    None=0,
+    SignInApp, // app or console var
+    SignOutApp, // app or console var
+    SignInVC,
+    SignOutVC,
+  };
+  
+  void SetRequest( Request request );
   
   Robot& _robot;
+  UserIntentComponent* _uic = nullptr;
   std::list<Signal::SmartHandle> _signalHandles;
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
   
@@ -123,6 +148,9 @@ private:
   bool _pendingAuthIsFromOptIn = false;
   
   bool _featureFlagEnabled = false;
+  
+  Request _request = Request::None;
+  size_t _requestTimeout = 0;
   
 };
 

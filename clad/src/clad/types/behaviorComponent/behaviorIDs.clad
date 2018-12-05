@@ -62,6 +62,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/alexa
   Alexa,
+  AlexaSignInOut,
 
   // victorBehaviorTree/appBehaviors
   ChangeEyeColor,

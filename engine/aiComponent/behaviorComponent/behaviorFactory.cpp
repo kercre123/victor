@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/alexa/behaviorAlexa.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/alexa/behaviorAlexaSignInOut.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithFace.h"
@@ -86,6 +87,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherScoring.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriority.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
@@ -208,6 +210,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::Alexa:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAlexa(config));
+      break;
+    }
+    
+    case BehaviorClass::AlexaSignInOut:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAlexaSignInOut(config));
       break;
     }
     
@@ -640,6 +648,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DispatcherRerun:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherRerun(config));
+      break;
+    }
+    
+    case BehaviorClass::DispatcherScoring:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherScoring(config));
       break;
     }
     
