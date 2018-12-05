@@ -60,9 +60,16 @@ static struct {
     BodyToHead payload;
     SpineMessageFooter footer;
   } sync;
+  
+  struct {
+    // Body 2 Head data
+    SpineMessageHeader header;
+    MicLSB payload;
+    SpineMessageFooter footer;
+  } mic;
 
   // Additional data (after sync)
-  uint8_t tail[sizeof(TransmitFifoPayload) * 3];
+  uint8_t tail[sizeof(TransmitFifoPayload)];
 } outboundPacket;
 
 static const uint16_t BYTE_TIMER_PRESCALE = SYSTEM_CLOCK / COMMS_BAUDRATE;
@@ -115,6 +122,10 @@ void Comms::init(void) {
   outboundPacket.sync.header.sync_bytes = SYNC_BODY_TO_HEAD;
   outboundPacket.sync.header.payload_type = PAYLOAD_DATA_FRAME;
   outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
+
+  outboundPacket.mic.header.sync_bytes = SYNC_BODY_TO_HEAD;
+  outboundPacket.mic.header.payload_type = PAYLOAD_MIC_LSB;
+  outboundPacket.mic.header.bytes_to_follow = sizeof(outboundPacket.mic.payload);
 
   // Configure our interrupts
   NVIC_SetPriority(DMA1_Channel4_5_IRQn, PRIORITY_SPINE_COMMS);
@@ -215,12 +226,15 @@ void Comms::tick(void) {
   Opto::transmit(&outboundPacket.sync.payload);
 #if MICDATA_ENABLED
   Mics::transmit(outboundPacket.sync.payload.audio);
+  Mics::transmit_lsb(outboundPacket.mic.payload.audio);
   Mics::errorCode(outboundPacket.sync.payload.micError);
 #endif
   Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
   outboundPacket.sync.payload.framecounter++;
   outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
+
+  outboundPacket.mic.footer.checksum = crc(&outboundPacket.mic.payload, sizeof(outboundPacket.mic.payload) / sizeof(uint32_t));
 
   DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
 
