@@ -10,15 +10,15 @@
 
 extern "C" {
   void start_mic_spi(int16_t a, int16_t b, void* tim);
-  void dec_odd(int32_t* acc, const uint16_t* samples, int16_t* output);
-  void dec_even(int32_t* acc, const uint16_t* samples, int16_t* output);
+  void dec_odd(int32_t* acc, const uint16_t* samples, int32_t* output);
+  void dec_even(int32_t* acc, const uint16_t* samples, int32_t* output);
 }
 
 const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
 static const int PDM_BYTES_PER_IRQ = SAMPLES_PER_IRQ * AUDIO_DECIMATION * 2 / 8;
   
-static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
+static int32_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
 static uint16_t pdm_data[2][2][PDM_BYTES_PER_IRQ / 2];
 static int sample_index;
 static bool reduced;
@@ -121,16 +121,29 @@ void Mics::errorCode(uint16_t* data) {
 }
 
 void Mics::transmit(int16_t* payload) {
-  memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
+  const int32_t* data = audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0];
+  for (int i = 0; i < AUDIO_SAMPLES_PER_FRAME * 4; i++) {
+    *(payload++) = *(data++) >> 16;
+  }
 }
 
-static void decimate(const uint16_t* input, int32_t* acc, int16_t* output) {
+void Mics::transmit_lsb(uint8_t* payload) {
+  const uint8_t* data = (const uint8_t*)audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0];
+  
+  data++; // We want the 2nd of 4 bytes;
+  for (int i = 0; i < AUDIO_SAMPLES_PER_FRAME * 4; i++) {
+    *(payload++) = *data;
+    data += 4;
+  }
+}
+
+static void decimate(const uint16_t* input, int32_t* acc, int32_t* output) {
   dec_odd(&acc[0], input, &output[0]);
   if (!reduced) dec_even(&acc[2], input, &output[1]);
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
-  static int16_t *output = audio_data[0];
+  static int32_t *output = audio_data[0];
   uint32_t isr = DMA1->ISR;
   DMA1->IFCR = DMA_IFCR_CGIF2;
 

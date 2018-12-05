@@ -65,6 +65,7 @@ enum {
   PAYLOAD_DFU_PACKET  = 0x6675,
   PAYLOAD_SHUT_DOWN   = 0x6473,
   PAYLOAD_BOOT_FRAME  = 0x6662,
+  PAYLOAD_MIC_LSB     = 0x6D64,
   PAYLOAD_TYPE_COUNT  = 10,
 };
 typedef uint16_t PayloadId;
@@ -242,6 +243,11 @@ struct BodyToHead
 #if MICDATA_ENABLED
   int16_t audio[MICDATA_SAMPLES_COUNT];
 #endif
+};
+
+struct MicLSB
+{
+  uint8_t audio[MICDATA_SAMPLES_COUNT];
 };
 
 struct ContactData

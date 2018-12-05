@@ -49,9 +49,8 @@ SAMPLES_PER_IRQ equ     20
                 stage3f
                 LDM     r3, {r3-r5}
                 ADD     r3, r3, r9
-                ASRS    r3, r3, #16
-                STRH    r3, [r2]            ; *output = (acc2 + *ptr) >> 16
-                ADDS    r2, r2, #8          ; output += 4
+                STR     r3, [r2]            ; *output = (acc2 + *ptr) >> 16
+                ADDS    r2, r2, #16          ; output += 4
                 ADD     r4, r4, r8
                 MOV     r9, r4              ; acc2 = acc1 + *ptr
                 ADD     r5, r5, r7
