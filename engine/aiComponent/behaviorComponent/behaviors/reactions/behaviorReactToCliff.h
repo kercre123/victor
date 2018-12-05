@@ -43,6 +43,7 @@ protected:
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
   
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
@@ -79,7 +80,7 @@ private:
     float cliffBackupDist_mm;
     float cliffBackupSpeed_mmps;
     
-    float eventFlagTimeout_sec;
+    u32 eventFlagTimeout_ms;
   };
 
   InstanceConfig _iConfig;
@@ -100,9 +101,8 @@ private:
     struct Persistent {
       int numStops;
       int numCliffReactAttempts;
-      float lastStopTime_sec;
       bool  putDownOnCliff;
-      float lastPutDownOnCliffTime_sec;
+      TimeStamp_t lastInScopeTime_ms;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
     Persistent persistent;
