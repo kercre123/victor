@@ -61,6 +61,7 @@ private:
   void TransitionToCheckForFace(const Radians& turnAngle);
   void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle);
   void TransitionToCheckForPointOnSurface(const Pose3d& gazePose);
+  void TransitionToDriveToPointOnSurface(const Pose3d& gazePose);
 
   Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
   void FoundNewFace(ActionResult result);

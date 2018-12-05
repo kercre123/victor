@@ -15,6 +15,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
 
@@ -44,7 +45,15 @@ namespace {
   CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.GazeDirection",  false);
   CONSOLE_VAR(s32,  kNumberOfTurnsForSurfacePoint,           "Vision.GazeDirection",  1);
   CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.GazeDirection",  500);
-  CONSOLE_VAR(bool, kUseEyeGazeToLookAtSurfaceorFaces,      "Vision.GazeDirection",   false);
+  CONSOLE_VAR(bool, kUseEyeGazeToLookAtSurfaceorFaces,       "Vision.GazeDirection",  false);
+  // TODO disable this use -1
+  CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection",  1000000.f);
+  CONSOLE_VAR(bool, kUseRelativePoseForDriveTo,              "Vision.GazeDirection", false);
+  CONSOLE_VAR(f32,  kAngleToleranceForDrive_rad,             "Vision.GazeDirection", M_PI_F);
+  CONSOLE_VAR(f32,  kDistanceToleranceForDrive_mm,           "Vision.GazeDirection", DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM);
+  CONSOLE_VAR(bool, kUseDriveStraightActionForDriveTo,       "Vision.GazeDirection", false);
+  CONSOLE_VAR(f32,  kDriveStraightDistance_mm,               "Vision.GazeDirection", 200);
+  CONSOLE_VAR(bool, kDriveStraightTurnBackToFace,            "Vision.GazeDirection", true);
 }
 
 namespace {
@@ -168,6 +177,60 @@ void BehaviorReactToGazeDirection::TransitionToLookAtFace(const SmartFaceID& fac
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3d& gazePose)
+{
+  const auto& translation = gazePose.GetTranslation();
+  CompoundActionSequential* turnAction = new CompoundActionSequential();
+
+  if ( Util::IsFltLT(translation.y(), 0.f) ) {
+    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInRight));
+  } else {
+    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
+  }
+
+  TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(gazePose);
+  turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
+  turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
+  CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
+  turnAndAnimate->AddAction(turnTowardsPose);
+  if ( Util::IsFltLT(translation.y(), 0.f) ) {
+    turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+  } else {
+    turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+  }
+  turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+  turnAction->AddAction(turnAndAnimate);
+  turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+
+  // Now that we're looking at the point actually drive to it
+  const bool forceHeadDown = false;
+  // TODO need something better than this. The duplciate code is awful.
+  if (kUseDriveStraightActionForDriveTo) {
+    DriveStraightAction* driveStraightAction = new DriveStraightAction(kDriveStraightDistance_mm);
+    turnAction->AddAction(driveStraightAction);
+    if (kDriveStraightTurnBackToFace) {
+      turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+      turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+    }
+  } else {
+    if (kUseRelativePoseForDriveTo) {
+      DriveToPoseAction* driveToAction = new DriveToPoseAction(gazePose,
+                                                               forceHeadDown,
+                                                               kDistanceToleranceForDrive_mm,
+                                                               kAngleToleranceForDrive_rad);
+      turnAction->AddAction(driveToAction);
+    } else {
+      DriveToPoseAction* driveToAction = new DriveToPoseAction(_dVars.gazeDirectionPose,
+                                                               forceHeadDown,
+                                                               kDistanceToleranceForDrive_mm,
+                                                               kAngleToleranceForDrive_rad);
+      turnAction->AddAction(driveToAction);
+    }
+  }
+  DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose3d& gazePose)
 {
   const auto& translation = gazePose.GetTranslation();
@@ -191,6 +254,16 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
     DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
 
   } else {
+    if (translation.LengthSq() < kMaxDriveToSurfacePointDistance_mm2) {
+      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckForPointOnSurface.Drive",
+                  "Translation distance squared %.3f, kMaxDriveToSurfacePointDistance_mm2 %.3f",
+                  translation.LengthSq(), kMaxDriveToSurfacePointDistance_mm2);
+      TransitionToDriveToPointOnSurface(gazePose);
+    } else {
+      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckForPointOnSurface.NoDrive",
+                  "Translation distance squared %.3f, kMaxDriveToSurfacePointDistance_mm2 %.3f",
+                  translation.LengthSq(), kMaxDriveToSurfacePointDistance_mm2);
+    }
 
     // This is the case where we aren't looking at the robot, so we need to turn
     // right or left towards the pose, play the correct animation, and then turn
