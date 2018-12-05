@@ -12,7 +12,7 @@ include(speexdsp)
 include(robot_core)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "Creative Commons Zero v1.0 Universal,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE" "BSD-3-Clause,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/kissfft/LICENSES/BSD-3-Clause" "Unlicense,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/kissfft/LICENSES/Unlicense")
+anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "Creative Commons Zero v1.0 Universal,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")

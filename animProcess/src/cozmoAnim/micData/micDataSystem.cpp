@@ -764,9 +764,6 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
     // Disable "Alexa" wake word in SpeechRecognizerSystem
     _speechRecognizerSystem->DisableAlexa();
   }
-  
-  const bool active = (_alexaState == AlexaSimpleState::Active);
-  _speechRecognizerSystem->ToggleNotchDetector( active );
 }
   
 void MicDataSystem::ToggleMicMute()
