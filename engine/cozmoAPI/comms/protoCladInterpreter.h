@@ -49,19 +49,19 @@ private:
   //
   // Clad-to-Proto interpreters
   //
-  static ::google::protobuf::Message * CladDriveWheelsToProto(
+  static void CladDriveWheelsToProto(
       const ExternalInterface::MessageGameToEngine & clad_message,
       external_interface::GatewayWrapper & proto_message);
 
-  static ::google::protobuf::Message * CladPlayAnimationToProto(
+  static void CladPlayAnimationToProto(
       const ExternalInterface::MessageGameToEngine & clad_message,
       external_interface::GatewayWrapper & proto_message);
 
-  static ::google::protobuf::Message * CladAnimationAvailableToProto(
+  static void CladAnimationAvailableToProto(
       const ExternalInterface::MessageEngineToGame & clad_message, 
       external_interface::GatewayWrapper & proto_message);
 
-  static ::google::protobuf::Message * CladEndOfMessageToProto(
+  static void CladEndOfMessageToProto(
       const ExternalInterface::MessageEngineToGame & clad_message, 
       external_interface::GatewayWrapper & proto_message);
 };

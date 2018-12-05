@@ -40,8 +40,6 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
   ExternalInterface::MessageGameToEngine clad_message;
   bool converted_to_clad = true;
 
-  auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
-
   switch(proto_message.oneof_message_type_case()) {
     case external_interface::GatewayWrapper::kDriveWheelsRequest:
       ProtoDriveWheelsRequestToClad(proto_message, clad_message);
@@ -58,7 +56,7 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
   }
 
   if(converted_to_clad) {
-    cozmo_context->GetExternalInterface()->Broadcast(clad_message);
+    cozmo_context->GetExternalInterface()->Broadcast(std::move(clad_message));
   } 
 
   return converted_to_clad;
@@ -67,14 +65,13 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
 bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame & message, CozmoContext * cozmo_context) {
   external_interface::GatewayWrapper proto_message;
   bool converted_to_proto = true;
-  ::google::protobuf::Message * wrapped_message = nullptr;
 
   switch(message.GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::AnimationAvailable:
-      wrapped_message = CladAnimationAvailableToProto(message, proto_message);
+      CladAnimationAvailableToProto(message, proto_message);
     break;
     case ExternalInterface::MessageEngineToGameTag::EndOfMessage:
-      wrapped_message = CladEndOfMessageToProto(message, proto_message);
+      CladEndOfMessageToProto(message, proto_message);
     break;
     default:
       converted_to_proto = false;
@@ -82,7 +79,7 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
   }
 
   if(converted_to_proto) {
-    cozmo_context->GetGatewayInterface()->Broadcast(proto_message);   
+    cozmo_context->GetGatewayInterface()->Broadcast(std::move(proto_message));
   }
 
   return converted_to_proto;
@@ -91,14 +88,13 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
 bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine & message, CozmoContext * cozmo_context) {
   external_interface::GatewayWrapper proto_message;
   bool converted_to_proto = true;
-  ::google::protobuf::Message * wrapped_message = nullptr;
 
   switch(message.GetTag()) {
     case ExternalInterface::MessageGameToEngineTag::DriveWheels:
-      wrapped_message = CladDriveWheelsToProto(message, proto_message);
+      CladDriveWheelsToProto(message, proto_message);
     break;
     case ExternalInterface::MessageGameToEngineTag::PlayAnimation:
-      wrapped_message = CladPlayAnimationToProto(message, proto_message);
+      CladPlayAnimationToProto(message, proto_message);
     break;
     default:
       converted_to_proto = false;
@@ -106,9 +102,7 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   }
 
   if(converted_to_proto) {
-    cozmo_context->GetGatewayInterface()->Broadcast(proto_message);   
-
-    //delete wrapped_message;
+    cozmo_context->GetGatewayInterface()->Broadcast(std::move(proto_message));
   }
 
 
@@ -146,40 +140,36 @@ void ProtoCladInterpreter::ProtoListAnimationsRequestToClad(
 }
 
 
-::google::protobuf::Message * ProtoCladInterpreter::CladDriveWheelsToProto(
+void ProtoCladInterpreter::CladDriveWheelsToProto(
     const ExternalInterface::MessageGameToEngine & clad_message,
     external_interface::GatewayWrapper & proto_message) { 
   external_interface::DriveWheelsResponse * drive_wheels_response = new external_interface::DriveWheelsResponse;
   proto_message = ExternalMessageRouter::WrapResponse(drive_wheels_response);
-  return drive_wheels_response;
 }
 
-::google::protobuf::Message * ProtoCladInterpreter::CladPlayAnimationToProto(
+void ProtoCladInterpreter::CladPlayAnimationToProto(
     const ExternalInterface::MessageGameToEngine & clad_message,
     external_interface::GatewayWrapper & proto_message) { 
   external_interface::PlayAnimationResponse * play_animation_response = new external_interface::PlayAnimationResponse;
   proto_message = ExternalMessageRouter::WrapResponse(play_animation_response);
-  return play_animation_response;
 }
 
-::google::protobuf::Message * ProtoCladInterpreter::CladAnimationAvailableToProto(
+void ProtoCladInterpreter::CladAnimationAvailableToProto(
     const ExternalInterface::MessageEngineToGame & clad_message, 
     external_interface::GatewayWrapper & proto_message) {
   external_interface::ListAnimationsResponse * list_animations_response = new external_interface::ListAnimationsResponse;
   std::string animName = clad_message.Get_AnimationAvailable().animName;
   list_animations_response->add_animation_names()->set_name(animName);
   proto_message = ExternalMessageRouter::WrapResponse(list_animations_response);
-  return list_animations_response;
 }
 
-::google::protobuf::Message * ProtoCladInterpreter::CladEndOfMessageToProto(
+void ProtoCladInterpreter::CladEndOfMessageToProto(
     const ExternalInterface::MessageEngineToGame & clad_message, 
     external_interface::GatewayWrapper & proto_message) {
   external_interface::ListAnimationsResponse * end_of_list_animations_response = new external_interface::ListAnimationsResponse;
   // Don't change "EndOfListAnimationsResponses" - The .go recipient depends upon it.
   end_of_list_animations_response->add_animation_names()->set_name("EndOfListAnimationsResponses");
   proto_message = ExternalMessageRouter::WrapResponse(end_of_list_animations_response);
-  return end_of_list_animations_response;
 }
 
 
