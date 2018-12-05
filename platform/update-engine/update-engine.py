@@ -39,8 +39,8 @@ OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 HTTP_TIMEOUT = 90 # Give up after 90 seconds on blocking operations
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "1.0.0"]
-MINIMUM_OS_VERSION = "1.0.0.1741"
+SUPPORTED_MANIFEST_VERSIONS = ["1.0.0"]
+MINIMUM_OS_VERSION = "1.0.0.1741" # FIXME VIC-12256
 DEBUG = False
 
 def make_blocking(pipe, blocking):
@@ -177,8 +177,7 @@ def get_slot(kernel_command_line):
 
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0',
-                                        'ankidev': '0'})
+    config = ConfigParser.ConfigParser()
     config.readfp(fileobj)
     return config
 
