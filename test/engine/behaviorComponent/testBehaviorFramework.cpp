@@ -332,7 +332,8 @@ void TestBehaviorFramework::ApplyAdditionalRequirementsBeforeDelegation(IBehavio
       #define ADD_CASE_FOR_BEHAVIOR( x ) case BehaviorClass::x: { ApplyTestDelegationRequirements<BehaviorClass::x>(delCozPtr, *this); } break
       // changes required by class
       switch( delCozPtr->GetClass() ) {
-          
+        
+        ADD_CASE_FOR_BEHAVIOR(AlexaSignInOut);
         ADD_CASE_FOR_BEHAVIOR(AnimSequenceWithFace);
         ADD_CASE_FOR_BEHAVIOR(ClearChargerArea);
         ADD_CASE_FOR_BEHAVIOR(GoHome);

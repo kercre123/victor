@@ -21,6 +21,7 @@ enum uint_8 BehaviorClass {
 
   // alexa
   Alexa,
+  AlexaSignInOut,
 
   // animationWrappers
   AnimGetInLoop,
@@ -117,6 +118,7 @@ enum uint_8 BehaviorClass {
   DispatcherQueue,
   DispatcherRandom,
   DispatcherRerun,
+  DispatcherScoring,
   DispatcherStrictPriority,
   DispatcherStrictPriorityWithCooldown,
 

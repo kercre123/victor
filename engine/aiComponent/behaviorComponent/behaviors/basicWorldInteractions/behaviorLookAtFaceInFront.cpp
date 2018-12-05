@@ -26,6 +26,7 @@ namespace Vector {
 namespace{
 const TimeStamp_t kSeenFaceWindow_ms = 5000;
 const int kNumFramesToWait = 25;
+const char* const kConfirmFaceKey = "confirmFace";
 }  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -44,6 +45,7 @@ BehaviorLookAtFaceInFront::DynamicVariables::DynamicVariables()
 BehaviorLookAtFaceInFront::BehaviorLookAtFaceInFront(const Json::Value& config)
  : ICozmoBehavior(config)
 {
+  _iConfig.confirmFace = config.get( kConfirmFaceKey, true ).asBool();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,6 +73,7 @@ void BehaviorLookAtFaceInFront::GetAllDelegates(std::set<IBehavior*>& delegates)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAtFaceInFront::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
+  expectedKeys.insert( kConfirmFaceKey );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -142,7 +145,7 @@ void BehaviorLookAtFaceInFront::TransitionToLookUp()
 void BehaviorLookAtFaceInFront::TransitionToLookAtFace(const SmartFaceID& smartID)
 {
   auto* action = new TurnTowardsFaceAction(smartID);
-  action->SetRequireFaceConfirmation(true);
+  action->SetRequireFaceConfirmation( _iConfig.confirmFace );
   DelegateIfInControl(action);
 }
 

@@ -16,6 +16,7 @@
 #include "clad/types/behaviorComponent/behaviorClasses.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/alexaComponent.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki;
@@ -37,6 +38,16 @@ void RemoveTestDelegationRequirements( ICozmoBehavior* behavior,
 // Put your TEST delegation requirements here. Feel free to make a separate file that is included by this one.
 // You'll also have to add to the switch in testBehaviorFramework.h. If these requirements are needed for
 // dev reasons beyond of unit tests, use devDelegationRequirements.h
+
+template <>
+void ApplyTestDelegationRequirements<BehaviorClass::AlexaSignInOut>( ICozmoBehavior* behavior,
+                                                                           TestBehaviorFramework& tbf )
+{
+  // this is here instead of DevDelegationRequirements since simply setting a user intent would also require
+  // us to tick AlexaComponent
+  auto& aiComp = tbf.GetAIComponent();
+  aiComp.GetComponent<AlexaComponent>().SetRequest( AlexaComponent::Request::SignInApp );
+}
 
 template <>
 void ApplyTestDelegationRequirements<BehaviorClass::AnimSequenceWithFace>( ICozmoBehavior* behavior,
