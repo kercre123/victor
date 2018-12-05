@@ -907,7 +907,8 @@ namespace Vector {
 
       while(true == _visionSystem->CheckMailbox(result))
       {
-        if(_vizManager != nullptr)
+        if((_vizManager != nullptr) &&
+           _vizManager->IsConnected())
         {
           // Send processed modes to viz
           VizInterface::EnabledVisionModes evm;
