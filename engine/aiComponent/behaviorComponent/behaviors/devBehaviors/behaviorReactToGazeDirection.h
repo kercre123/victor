@@ -43,7 +43,7 @@ private:
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
 
-    bool searchForFaces;
+    bool searchForPointsOnSurface;
   };
 
   struct DynamicVariables {

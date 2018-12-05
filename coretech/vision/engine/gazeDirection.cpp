@@ -29,6 +29,12 @@ namespace {
   // of the two points used to find the intersection with the ground plane weren't too close
   // as to cause numerical instabilities. 500 was too small.
   CONSOLE_VAR(f32, kGazeDirectionSecondPointTranslationY_mm,  "Vision.GazeDirection",  1500.f);
+  CONSOLE_VAR(f32, kEyeGazeDirectionInlierXThreshold_mm,      "Vision.GazeDirection",  1000.f);
+  CONSOLE_VAR(f32, kEyeGazeDirectionInlierYThreshold_mm,      "Vision.GazeDirection",  1000.f);
+  CONSOLE_VAR(f32, kEyeGazeDirectionInlierZThreshold_mm,      "Vision.GazeDirection",  20.f);
+  CONSOLE_VAR(f32, kEyeGazeDirectionXSurfaceThreshold_mm,     "Vision.GazeDirection",  2000.f);
+  CONSOLE_VAR(f32, kEyeGazeDirectionYSurfaceThreshold_mm,     "Vision.GazeDirection",  2000.f);
+  CONSOLE_VAR(f32, kEyeGazeDirectionZSurfaceThreshold_mm,     "Vision.GazeDirection",  20.f);
 }
 
 GazeDirection::GazeDirection()
@@ -248,9 +254,9 @@ int GazeDirection::FindEyeDirectionInliers(const Point3f& eyeDirectionAverage)
                      "direction x=%.3f, y=%.3f, z=%.3f", difference.x(),
                      difference.y(), difference.z());
     */
-    if (std::abs(difference.x()) < kGazeDirectionInlierXThreshold_mm &&
-        std::abs(difference.y()) < kGazeDirectionInlierYThreshold_mm &&
-        std::abs(difference.z()) < kGazeDirectionInlierZThreshold_mm) {
+    if (std::abs(difference.x()) < kEyeGazeDirectionInlierXThreshold_mm &&
+        std::abs(difference.y()) < kEyeGazeDirectionInlierYThreshold_mm &&
+        std::abs(difference.z()) < kEyeGazeDirectionInlierZThreshold_mm) {
       eyeDirection.inlier = true;
       numberOfInliers += 1;
     } else {
@@ -334,8 +340,13 @@ Point3f GazeDirection::GetCurrentEyeDirection() const
 
 bool GazeDirection::IsEyeGazeDirectedAtSurface() const
 {
-  // TODO add logic once everything is all hooked up
-  return false;
+  if (std::abs(_eyeDirectionAverage.x()) > kEyeGazeDirectionXSurfaceThreshold_mm ||
+      std::abs(_eyeDirectionAverage.y()) > kEyeGazeDirectionYSurfaceThreshold_mm ||
+      std::abs(_eyeDirectionAverage.z()) > kEyeGazeDirectionZSurfaceThreshold_mm) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 } // namespace Vision

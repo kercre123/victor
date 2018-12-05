@@ -1031,11 +1031,15 @@ namespace Vector {
         }
 
         const auto averageEyeDirection = gazeDirection.GetEyeDirectionAverage();
+        auto eyeGazeAverageColor = ::Anki::NamedColors::BLACK;
+        if (gazeDirection.IsEyeGazeDirectedAtSurface()) {
+          eyeGazeAverageColor = ::Anki::NamedColors::CYAN;
+        }
         Pose3d averageEyePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageEyeDirection));
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 2,
                                                                                 kGazeGroundPointSize,
                                                                                 averageEyePose,
-                                                                                ::Anki::NamedColors::BLACK);
+                                                                                eyeGazeAverageColor);
         const auto currentEyeDirection = gazeDirection.GetCurrentEyeDirection();
         Pose3d currentEyePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentEyeDirection));
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 3,

@@ -48,7 +48,7 @@ namespace {
 }
 
 namespace {
-  const char* const kSearchForFaces = "searchForFaces";
+  const char* const kSearchForFaces = "searchForPointsOnSurface";
 }
 
 #define LOG_CHANNEL "Behaviors"
@@ -75,7 +75,7 @@ void BehaviorReactToGazeDirection::BehaviorUpdate()
 BehaviorReactToGazeDirection::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
   const std::string& debugName = "BehaviorReactToBody.InstanceConfig.LoadConfig";
-  searchForFaces = JsonTools::ParseBool(config, kSearchForFaces, debugName);
+  searchForPointsOnSurface = JsonTools::ParseBool(config, kSearchForFaces, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -272,13 +272,13 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
       GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
 
       // Check how we want to determine whether to search for faces
-      bool searchForFaces = _iConfig->searchForFaces;
+      bool searchForPointsOnSurface = _iConfig->searchForPointsOnSurface;
       if (kUseEyeGazeToLookAtSurfaceorFaces) {
         // TODO need to have better naming
-        searchForFaces = !GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo);
+        searchForPointsOnSurface = GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo);
       }
 
-      if (searchForFaces) {
+      if (searchForPointsOnSurface) {
 
         // Bucket the angle to turn to look for faces
         const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
@@ -356,7 +356,7 @@ void BehaviorReactToGazeDirection::SendDASEventForPoseToFollow(const Pose3d& gaz
 {
   const auto& translation = gazePose.GetTranslation();
   std::string type;
-  if (_iConfig->searchForFaces) {
+  if (_iConfig->searchForPointsOnSurface) {
     type = "Surface";
   } else {
     type = "Face";

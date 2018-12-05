@@ -1,7 +1,7 @@
 {
   "behaviorID" :   "ReactToGazeDirection",
   "behaviorClass": "ReactToGazeDirection",
-  "searchForFaces": true,
+  "searchForPointsOnSurface": false,
 
   "wantsToBeActivatedCondition":  {
     "conditionType": "FeatureGate",
