@@ -540,6 +540,7 @@ void AlexaImpl::Update()
   }
 
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
+    LOG_INFO( "AlexaImpl.Update.SetDialogStateIDle", "the timer to set idle elapsed, updating dialog state to idle" );
     _dialogState = DialogUXState::IDLE;
     CheckForUXStateChange();
   }

@@ -128,6 +128,7 @@ void Alexa::Update()
   if( (_timeToEndError_s >= 0.0f) && (currTime_s >= _timeToEndError_s) ) {
     // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
     _timeToEndError_s = -1.0f;
+    LOG_INFO( "Alexa.Update.RestoreStateAfterError", "returning to UX state after error state is complete" );
     OnAlexaUXStateChanged( _pendingUXState );
   }
 }
@@ -456,11 +457,21 @@ void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
   if( !IsErrorPlaying() ) {
     SetUXState( newState );
   }
+  else {
+    LOG_INFO( "Alexa.OnAlexaUXStateChanged.SetPendingAfterError",
+              "An error is playing, so isntead of changing UX state now, set the pending state to '%s'",
+              EnumToString(newState));
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::SetUXState( AlexaUXState newState )
 {
+
+  LOG_INFO( "Alexa.SetUXState", "new State '%s', old state was '%s'",
+            EnumToString(newState),
+            EnumToString(_uxState) );
+
   const auto oldState = _uxState;
   _uxState = newState;
   
@@ -714,6 +725,7 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
       if( IsErrorPlaying() ) {
         // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
         _timeToEndError_s = -1.0f;
+        LOG_INFO( "Alexa.Callback.RestoreStateAfterError", "returning to UX state after error callback" );
         OnAlexaUXStateChanged( _pendingUXState );
       }
     });
