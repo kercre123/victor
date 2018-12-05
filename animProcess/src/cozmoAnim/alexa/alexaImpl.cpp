@@ -719,7 +719,7 @@ void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 void AlexaImpl::CheckForUXStateChange()
 {
   const auto oldState = _uxState;
-  const bool anyPlaying = !_playingSources.empty();
+  const bool anyPlaying = !_playingSources.empty() || _alertActive;
   
   // reset idle timer
   _timeToSetIdle_s = -1.0f;
