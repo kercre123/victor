@@ -94,6 +94,8 @@ namespace { // "Private members"
     .battery.charger      = (int16_t)(5.0/kBatteryScale),
   };
 
+  bool maxNumSelectTimeoutsReached_ = false;
+
 } // "private" namespace
 
 // Forward Declarations
@@ -129,6 +131,7 @@ bool check_select_timeout(spine_ctx_t spine)
   {
     AnkiError("spine.check_select_timeout.timeoutCountReached","");
     FaultCode::DisplayFaultCode(FaultCode::SPINE_SELECT_TIMEOUT);
+    maxNumSelectTimeoutsReached_ = true;
     return true;
   }
 
@@ -281,6 +284,9 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
     }
 
     robot_io(&spine_);
+    if (maxNumSelectTimeoutsReached_) {
+      return RESULT_FAIL_IO_TIMEOUT;
+    }
     read_count++;
   }
 
@@ -291,7 +297,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
     FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
   }
 
-  return (initialized ? RESULT_OK : RESULT_FAIL_IO_TIMEOUT);
+  return (initialized ? RESULT_OK : RESULT_FAIL_IO);
 }
 
 Result HAL::Init(const int * shutdownSignal)
@@ -377,7 +383,7 @@ void handle_payload_data(const uint8_t frame_buffer[]) {
 
 
 Result spine_get_frame() {
-  Result result = RESULT_FAIL_IO_TIMEOUT;
+  Result result = RESULT_FAIL_IO;
   uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
 
   ssize_t r = 0;
@@ -424,6 +430,11 @@ Result spine_get_frame() {
       EventStart(EventType::ROBOT_IO);
       robot_io(&spine_);
       EventStop(EventType::ROBOT_IO);
+
+      // select timed out too many times
+      if (maxNumSelectTimeoutsReached_) {
+        return RESULT_FAIL_IO_TIMEOUT;
+      }
     }
 
     if(result == RESULT_OK)
@@ -548,9 +559,13 @@ Result HAL::Step(void)
 
   do {
     result = spine_get_frame();
-  } while(result != RESULT_OK);
+  } while(result != RESULT_OK && result != RESULT_FAIL_IO_TIMEOUT);
 
   EventStop(EventType::READ_SPINE);
+
+  if (result == RESULT_FAIL_IO_TIMEOUT) {
+    return result;
+  }
 
 #else // else have dummy body
 
@@ -687,7 +702,7 @@ void ProcessMicError()
   }
 
   static bool sentDAS = false;
-  if(whichChannelsStuck > 0)
+  if(!sentDAS && whichChannelsStuck > 0)
   {
     sentDAS = true;
 
