@@ -24,6 +24,7 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/drivingAnimationHandler.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
@@ -51,41 +52,17 @@ void BehaviorSelfTest::InitBehavior()
 
   const BehaviorContainer& BC = GetBEI().GetBehaviorContainer();
 
-  // ICozmoBehaviorPtr waitToStartBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestWaitToStart);
-  // DEV_ASSERT(waitToStartBehavior != nullptr &&
-  //            waitToStartBehavior->GetClass() == BehaviorClass::SelfTestWaitToStart,
-  //            "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestWaitToStart");
-  // _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(waitToStartBehavior));
-
-  ICozmoBehaviorPtr pickupBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestPickup);
-  DEV_ASSERT(pickupBehavior != nullptr &&
-             pickupBehavior->GetClass() == BehaviorClass::SelfTestPickup,
-             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPickup");
-  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(pickupBehavior));
-
   ICozmoBehaviorPtr putOnChargerBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestPutOnCharger);
   DEV_ASSERT(putOnChargerBehavior != nullptr &&
              putOnChargerBehavior->GetClass() == BehaviorClass::SelfTestPutOnCharger,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPutOnCharger");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(putOnChargerBehavior));
 
-  ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
-  DEV_ASSERT(touchBehavior != nullptr &&
-             touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
-             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
-  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
-
   ICozmoBehaviorPtr buttonBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestButton);
   DEV_ASSERT(buttonBehavior != nullptr &&
              buttonBehavior->GetClass() == BehaviorClass::SelfTestButton,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestButton");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(buttonBehavior));
-
-  ICozmoBehaviorPtr screenAndBackpackBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestScreenAndBackpack);
-  DEV_ASSERT(screenAndBackpackBehavior != nullptr &&
-             screenAndBackpackBehavior->GetClass() == BehaviorClass::SelfTestScreenAndBackpack,
-             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestScreenAndBackpack");
-  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(screenAndBackpackBehavior));
 
   ICozmoBehaviorPtr initChecksBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestInitChecks);
   DEV_ASSERT(initChecksBehavior != nullptr &&
@@ -129,6 +106,29 @@ void BehaviorSelfTest::InitBehavior()
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestDockWithCharger");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(dockWithCharger));
 
+  ICozmoBehaviorPtr pickupBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestPickup);
+  DEV_ASSERT(pickupBehavior != nullptr &&
+             pickupBehavior->GetClass() == BehaviorClass::SelfTestPickup,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPickup");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(pickupBehavior));
+
+  ICozmoBehaviorPtr putOnChargerBehavior2 = BC.FindBehaviorByID(BehaviorID::SelfTestPutOnCharger2);
+  DEV_ASSERT(putOnChargerBehavior2 != nullptr &&
+             putOnChargerBehavior2->GetClass() == BehaviorClass::SelfTestPutOnCharger,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPutOnCharger2");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(putOnChargerBehavior2));
+
+  ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
+  DEV_ASSERT(touchBehavior != nullptr &&
+             touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
+
+  ICozmoBehaviorPtr screenAndBackpackBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestScreenAndBackpack);
+  DEV_ASSERT(screenAndBackpackBehavior != nullptr &&
+             screenAndBackpackBehavior->GetClass() == BehaviorClass::SelfTestScreenAndBackpack,
+             "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestScreenAndBackpack");
+  _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(screenAndBackpackBehavior));
 
   _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
   _currentBehavior = *_currentSelfTestBehaviorIter;
@@ -164,7 +164,10 @@ void BehaviorSelfTest::OnBehaviorActivated()
   // {
   //   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(SelfTestConfig::kSoundVolume);
   // }
-
+  const DrivingAnimationHandler::DrivingAnimations anims{.drivingStartAnim = AnimationTrigger::Count,
+                                                         .drivingLoopAnim = AnimationTrigger::Count,
+                                                         .drivingEndAnim = AnimationTrigger::Count};
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations(anims, GetDebugLabel());
   // // // Start the factory log
   // // std::stringstream serialNumString;
   // // serialNumString << std::hex << robot.GetHeadSerialNumber();
@@ -231,6 +234,8 @@ void BehaviorSelfTest::OnBehaviorDeactivated()
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   robot.GetBodyLightComponent().ClearAllBackpackLightConfigs();
+
+  robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
 
   Reset();
 }
@@ -317,7 +322,7 @@ void BehaviorSelfTest::BehaviorUpdate()
       _currentBehavior = nullptr;
 
       HandleResult(result);
-      //return RESULT_FAIL;
+      return;
     }
   }
 
@@ -342,6 +347,7 @@ void BehaviorSelfTest::BehaviorUpdate()
                           _currentBehavior->GetDebugLabel().c_str());
 
         HandleResult(FactoryTestResultCode::BEHAVIOR_NOT_RUNNABLE);
+        return;
       }
 
       //_behaviorStartTimes.push_back(BaseStationTimer::getInstance()->GetCurrentTimeStamp());
@@ -573,7 +579,7 @@ void BehaviorSelfTest::DisplayResult(FactoryTestResultCode result)
 
     robot.GetBodyLightComponent().SetBackpackLights(failLights);
 
-    IBehaviorSelfTest::DrawTextOnScreen(robot, {std::to_string((u32)result), "Press button", "to end test"},
+    IBehaviorSelfTest::DrawTextOnScreen(robot, {std::to_string((u32)result), "", "Press button", "to end test"},
                                         NamedColors::BLACK, NamedColors::RED);
 
     // // Draw result to screen

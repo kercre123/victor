@@ -63,7 +63,7 @@ Result BehaviorSelfTestDockWithCharger::OnBehaviorActivatedInternal()
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNAVAILABLE, RESULT_FAIL);
     }
 
-    DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(object->GetID());
+    DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(object->GetID(), true, false);
 
     DelegateIfInControl(action, [this](){ TransitionToOnChargerChecks(); });
   }

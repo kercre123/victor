@@ -34,12 +34,29 @@ Result BehaviorSelfTestPutOnCharger::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  DrawTextOnScreen(robot, {"Put on charger"});
-  
+  const bool isPickedUp = robot.IsPickedUp();
+  //const bool isBeingHeld = robot.IsBeingHeld();
+
+  float textAngle = 0;
+  if(isPickedUp/* && isBeingHeld*/)
+  {
+    const AccelData& accel = robot.GetHeadAccelData();
+    if(accel.z <= -7000)
+    {
+      textAngle = 180;
+    }
+  }
+
+  DrawTextOnScreen(robot,
+                   {"Put on charger"},
+                   NamedColors::WHITE,
+                   NamedColors::BLACK,
+                   textAngle);
+
   AddTimer(30000, [this](){
     SELFTEST_SET_RESULT(FactoryTestResultCode::TEST_TIMED_OUT);
   });
-  
+
   return RESULT_OK;
 }
 
@@ -49,14 +66,44 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPutOnCharger::SelfTestUpdateIn
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const bool onCharger = robot.IsOnCharger();
+  const bool isPickedUp = robot.IsPickedUp();
+  //const bool isBeingHeld = robot.IsBeingHeld();
+
+  bool upsideDown = false;
+  if(isPickedUp/* && isBeingHeld*/)
+  {
+    const AccelData& accel = robot.GetHeadAccelData();
+    if(accel.z <= -7000)
+    {
+      upsideDown = true;
+    }
+  }
+
+  float textAngle = 0;
+  if(!_isUpsideDown && upsideDown)
+  {
+    textAngle = 180;
+  }
+
+  if(_isUpsideDown != upsideDown)
+  {
+    DrawTextOnScreen(robot,
+                     {"Put on charger"},
+                     NamedColors::WHITE,
+                     NamedColors::BLACK,
+                     textAngle);
+  }
+
+  _isUpsideDown = upsideDown;
+
+  const bool onCharger = robot.IsOnChargerPlatform();
   const bool charging = robot.IsCharging();
 
   if(onCharger || charging)
   {
     SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
   }
-  
+
   return SelfTestStatus::Running;
 }
 
@@ -67,5 +114,3 @@ void BehaviorSelfTestPutOnCharger::OnBehaviorDeactivated()
 
 }
 }
-
-

@@ -182,7 +182,8 @@ protected:
 
   static void DrawTextOnScreen(Robot& robot, const std::vector<std::string>& text,
                                ColorRGBA textColor = NamedColors::WHITE,
-                               ColorRGBA bg = NamedColors::BLACK);
+                               ColorRGBA bg = NamedColors::BLACK,
+                               f32 rotate_deg = 0.f);
 
 private:
 

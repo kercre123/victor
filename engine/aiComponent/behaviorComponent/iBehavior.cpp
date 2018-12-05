@@ -181,6 +181,15 @@ void IBehavior::SetActivationState_DevOnly(ActivationState state)
 void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
 {
   #if ANKI_DEV_CHEATS
+  if(state != _currentActivationState)
+  {
+    PRINT_NAMED_ERROR("","SAME %s %s %s %s",
+                      debugStr.c_str(),
+                      _debugLabel.c_str(),
+                      ActivationStateToString(_currentActivationState),
+                      ActivationStateToString(state));
+  }
+
   DEV_ASSERT_MSG(_currentActivationState == state,
                  "IBehavior.AssertActivationState_DevOnly.WrongActivationState",
                  "Behavior '%s' is state %s, but should be in %s",

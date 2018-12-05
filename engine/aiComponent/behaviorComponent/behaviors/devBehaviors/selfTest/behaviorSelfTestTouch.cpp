@@ -40,7 +40,7 @@ Result BehaviorSelfTestTouch::OnBehaviorActivatedInternal()
 
   if(_calibrated)
   {
-    DrawTextOnScreen(robot, {"Hold Touch"});
+    DrawTextOnScreen(robot, {"Hold Touch Sensor"});
   }
   else
   {
@@ -65,7 +65,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
   else if(isCalibrated && !_calibrated)
   {
     IncreaseTimeoutTimer(5000);
-    DrawTextOnScreen(robot, {"Hold Touch"});
+    DrawTextOnScreen(robot, {"Hold Touch Sensor"});
   }
   _calibrated = isCalibrated;
 
@@ -91,7 +91,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
 
                if(_heldCountDown <= 0)
                {
-                 DrawTextOnScreen(robot, {"Release Touch"});
+                 DrawTextOnScreen(robot, {"Release Touch Sensor"});
                }
                else
                {
@@ -127,7 +127,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
   else if(buttonReleasedEvent)
   {
     RemoveTimers("countdown");
-    DrawTextOnScreen(robot, {"Hold Touch"});
+    DrawTextOnScreen(robot, {"Hold Touch Sensor"});
     _addTimer = false;
     _heldCountDown = 5;
   }

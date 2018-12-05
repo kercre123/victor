@@ -67,7 +67,11 @@ void BehaviorSelfTestSoundCheck::TransitionToPlayingSound()
     new WaitAction(Util::MilliSecToSec((float)SelfTestConfig::kDurationOfAudioToRecord_ms))
   });
 
-  DelegateIfInControl(action, [this](){ SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS) });
+  DelegateIfInControl(action, [this, &robot](){
+                                DrawTextOnScreen(robot,
+                                                 {"Test Running"});
+                                SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+                              });
 }
 
 void BehaviorSelfTestSoundCheck::OnBehaviorDeactivated()

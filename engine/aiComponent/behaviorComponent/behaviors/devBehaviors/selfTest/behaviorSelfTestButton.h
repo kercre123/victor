@@ -29,6 +29,7 @@ protected:
 protected:
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
   
   virtual Result        OnBehaviorActivatedInternal() override;
@@ -37,6 +38,8 @@ protected:
 
 private:
 
+  void WaitToBeOnTreads();
+  
   bool _buttonStartedPressed = false;
   bool _buttonPressed = false;
 

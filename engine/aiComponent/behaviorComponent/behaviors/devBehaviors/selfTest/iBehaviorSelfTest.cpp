@@ -430,13 +430,14 @@ void IBehaviorSelfTest::IncreaseTimeoutTimer(TimeStamp_t time_ms)
 
     ++iter;
   }
-  
+
 }
 
 void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
                                          const std::vector<std::string>& text,
                                          ColorRGBA textColor,
-                                         ColorRGBA bg)
+                                         ColorRGBA bg,
+                                         float rotate_deg)
 {
   auto& anim = robot.GetAnimationComponent();
   Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, {bg.r(), bg.g(), bg.b()});
@@ -477,16 +478,42 @@ void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
     offset = img.GetNumRows()/2 - (std::ceil(text.size()/2.f) * minSize.height/2);
   }
 
-  for(const auto& t : text)
+  for(auto iter = text.begin(); iter != text.end(); ++iter)
   {
-    img.DrawTextCenteredHorizontally(t,
+    float scale = minScale;
+    int textThickness = thickness;
+
+    auto next = iter + 1;
+    if(next != text.end() &&
+       *next == "")
+    {
+      textThickness = 2;
+      scale *= 2.f;
+      offset += minSize.height;
+    }
+
+    img.DrawTextCenteredHorizontally(*iter,
                                      font,
-                                     minScale,
-                                     thickness,
+                                     scale,
+                                     textThickness,
                                      textColor,
                                      offset,
                                      false);
+
+    if(scale != minScale)
+    {
+      iter++;
+    }
+
     offset += minSize.height + 2;
+  }
+
+  if(!Util::IsNearZero(rotate_deg))
+  {
+    const auto M = cv::getRotationMatrix2D({(float)img.GetNumCols()/2, (float)img.GetNumRows()/2},
+                                            rotate_deg,
+                                            1);
+    cv::warpAffine(img.get_CvMat_(), img.get_CvMat_(), M, {img.GetNumCols(), img.GetNumRows()});
   }
 
   anim.DisplayFaceImage(img, 0, true);

@@ -57,6 +57,7 @@ enum uint_8 BehaviorID {
   SelfTestDriftCheck,
   SelfTestPickup,
   SelfTestPutOnCharger,
+  SelfTestPutOnCharger2,
   SelfTestScreenAndBackpack,
   SelfTestSoundCheck,
   SelfTestTouch,

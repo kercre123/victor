@@ -45,7 +45,15 @@ void BehaviorSelfTestDriveForwards::TransitionToOffChargerChecks()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  if(robot.GetBatteryVoltage() < SelfTestConfig::kMinBatteryVoltage)
+  const bool onCharger = robot.IsOnChargerPlatform();
+  if(onCharger)
+  {
+    PRINT_NAMED_WARNING("BehaviorSelfTestDriveForwards.TransitionToOffChargerChecks.StillOnCharger","");
+    SELFTEST_SET_RESULT(FactoryTestResultCode::STILL_ON_CHARGER);
+  }
+
+  const float batteryVolts = robot.GetBatteryVoltage();
+  if(batteryVolts < SelfTestConfig::kMinBatteryVoltage)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
     SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);

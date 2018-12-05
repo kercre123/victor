@@ -87,7 +87,7 @@ Result BehaviorSelfTestLookAtCharger::OnBehaviorActivatedInternal()
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
   MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-  DriveStraightAction* drive = new DriveStraightAction(_distToDrive_mm);
+  DriveStraightAction* drive = new DriveStraightAction(_distToDrive_mm, 60, false);
   CompoundActionParallel* liftHeadDrive = new CompoundActionParallel({lift, head, drive});
 
   TurnInPlaceAction* turn = new TurnInPlaceAction(_angleToTurn.ToFloat(), false);

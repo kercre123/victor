@@ -1365,6 +1365,7 @@ void FaceInfoScreenManager::SelfTestEnd(AnimationStreamer* animStreamer)
   }
 
   animStreamer->EnableKeepFaceAlive(true, 0);
+
   SetScreen(ScreenName::Main);
 }
 

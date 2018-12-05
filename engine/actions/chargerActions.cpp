@@ -23,9 +23,9 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 #pragma mark ---- MountChargerAction ----
-  
+
 MountChargerAction::MountChargerAction(ObjectID chargerID,
                                        const bool useCliffSensorCorrection,
                                        const bool shouldPlayDrivingAnimation)
@@ -36,7 +36,7 @@ MountChargerAction::MountChargerAction(ObjectID chargerID,
   , _useCliffSensorCorrection(useCliffSensorCorrection)
   , _playDrivingAnimation(shouldPlayDrivingAnimation)
 {
-  
+
 }
 
 
@@ -47,18 +47,18 @@ MountChargerAction::~MountChargerAction()
   }
 }
 
-  
+
 ActionResult MountChargerAction::Init()
 {
   if (_playDrivingAnimation) {
     // Init the driving animation handler
     GetRobot().GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking(), true);
   }
-  
+
   // Reset the compound actions to ensure they get re-configured:
   _mountAction.reset();
   _driveForRetryAction.reset();
-  
+
   // Verify that we have a charger in the world that matches _chargerID
   const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
   if ((charger == nullptr) ||
@@ -68,21 +68,21 @@ ActionResult MountChargerAction::Init()
                         _chargerID.GetValue());
     return ActionResult::BAD_OBJECT;
   }
-  
+
   // Tell robot which charger it will be using
   GetRobot().SetCharger(_chargerID);
 
   // Set up the turnAndMount compound action
   ActionResult result = ConfigureMountAction();
-  
+
   return result;
 }
 
 
 ActionResult MountChargerAction::CheckIfDone()
-{ 
+{
   auto result = ActionResult::RUNNING;
-  
+
   // Tick the turnAndMount action (if needed):
   if (_mountAction != nullptr) {
     result = _mountAction->Update();
@@ -112,18 +112,18 @@ ActionResult MountChargerAction::CheckIfDone()
       }
     }
   }
-  
+
   // Tick the _driveForRetryAction action (if needed):
   if (_driveForRetryAction != nullptr) {
     result = _driveForRetryAction->Update();
-    
+
     // If the action finished successfully, this parent action
     // should return a NOT_ON_CHARGER to cause a retry.
     if (result == ActionResult::SUCCESS) {
       return ActionResult::NOT_ON_CHARGER;
     }
   }
-  
+
   return result;
 }
 
@@ -134,13 +134,13 @@ ActionResult MountChargerAction::ConfigureMountAction()
   _mountAction.reset(new CompoundActionSequential());
   _mountAction->ShouldSuppressTrackLocking(true);
   _mountAction->SetRobot(&GetRobot());
-  
+
   // Raise lift slightly so it doesn't drag against the ground (if necessary)
   const float backingUpLiftHeight_mm = 45.f;
   if (GetRobot().GetLiftHeight() < backingUpLiftHeight_mm) {
     _mountAction->AddAction(new MoveLiftToHeightAction(backingUpLiftHeight_mm));
   }
-  
+
   // Play the driving Start anim if necessary
   if (_playDrivingAnimation) {
     _mountAction->AddAction(new WaitForLambdaAction([](Robot& robot) {
@@ -148,11 +148,11 @@ ActionResult MountChargerAction::ConfigureMountAction()
       return true;
     }));
   }
-  
+
   // Back up into the charger
   _mountAction->AddAction(new BackupOntoChargerAction(_chargerID,
                                                       _useCliffSensorCorrection));
-  
+
   // Play the driving End anim if necessary
   if (_playDrivingAnimation) {
     _mountAction->AddAction(new WaitForLambdaAction([](Robot& robot) {
@@ -165,10 +165,10 @@ ActionResult MountChargerAction::ConfigureMountAction()
       return false;
     }));
   }
-  
+
   return ActionResult::SUCCESS;
 }
-  
+
 ActionResult MountChargerAction::ConfigureDriveForRetryAction()
 {
   DEV_ASSERT(_driveForRetryAction == nullptr, "MountChargerAction.ConfigureDriveForRetryAction.AlreadyConfigured");
@@ -184,7 +184,7 @@ ActionResult MountChargerAction::ConfigureDriveForRetryAction()
 }
 
 #pragma mark ---- TurnToAlignWithChargerAction ----
-  
+
 TurnToAlignWithChargerAction::TurnToAlignWithChargerAction(ObjectID chargerID,
                                                            AnimationTrigger leftTurnAnimTrigger,
                                                            AnimationTrigger rightTurnAnimTrigger)
@@ -207,7 +207,7 @@ ActionResult TurnToAlignWithChargerAction::Init()
   _compoundAction.reset(new CompoundActionParallel());
   _compoundAction->ShouldSuppressTrackLocking(true);
   _compoundAction->SetRobot(&GetRobot());
-  
+
   const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
   if ((charger == nullptr) ||
       (charger->GetType() != ObjectType::Charger_Basic)) {
@@ -227,26 +227,26 @@ ActionResult TurnToAlignWithChargerAction::Init()
                            {distanceIntoChargerToAimFor_mm, 0.f, 0.f});
   poseToAngleToward.PreComposeWith(charger->GetPose());
   poseToAngleToward.SetParent(GetRobot().GetWorldOrigin());
-  
+
   const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(), poseToAngleToward);
   const float angleToTurnTo = atan2f(targetToRobotVec.y(), targetToRobotVec.x());
-  
+
   auto* turnAction = new TurnInPlaceAction(angleToTurnTo, true);
   turnAction->SetMaxSpeed(DEG_TO_RAD(100.f));
   turnAction->SetAccel(DEG_TO_RAD(300.f));
-  
+
   _compoundAction->AddAction(turnAction);
-  
+
   // Play the left/right turn animation depending on the anticipated direction of the turn
   const auto& robotAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
   const bool clockwise = (angleToTurnTo - robotAngle).ToFloat() < 0.f;
-  
+
   const auto animationTrigger = clockwise ? _rightTurnAnimTrigger : _leftTurnAnimTrigger;
-  
+
   if (animationTrigger != AnimationTrigger::Count) {
     _compoundAction->AddAction(new TriggerAnimationAction(animationTrigger));
   }
-  
+
   // Go ahead and do the first Update for the compound action so we don't
   // "waste" the first CheckIfDone call doing so. Proceed so long as this
   // first update doesn't _fail_
@@ -258,8 +258,8 @@ ActionResult TurnToAlignWithChargerAction::Init()
     return compoundResult;
   }
 }
-  
-  
+
+
 ActionResult TurnToAlignWithChargerAction::CheckIfDone()
 {
   DEV_ASSERT(_compoundAction != nullptr, "TurnToAlignWithChargerAction.CheckIfDone.NullCompoundAction");
@@ -280,13 +280,13 @@ BackupOntoChargerAction::BackupOntoChargerAction(ObjectID chargerID,
   // begin backing up onto it, so don't check for it. We aren't even seeing
   // the marker at this point anyway.
   SetDoNearPredockPoseCheck(false);
-  
+
   // Don't turn toward the object since we're expected to be facing away from it
   SetShouldFirstTurnTowardsObject(false);
   SetShouldCheckForObjectOnTopOf(false);
 }
 
-  
+
 ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 {
   auto objType = object->GetType();
@@ -295,19 +295,19 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
                       "Object is not a charger! It's a %s.", EnumToString(objType));
     return ActionResult::BAD_OBJECT;
   }
-  
+
   _dockAction = _useCliffSensorCorrection ?
                   DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF :
                   DockAction::DA_BACKUP_ONTO_CHARGER;
-  
-  
+
+
   // Tell robot which charger it will be using
   GetRobot().SetCharger(_dockObjectID);
 
   return ActionResult::SUCCESS;
 }
-  
-  
+
+
 ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
@@ -316,15 +316,16 @@ ActionResult BackupOntoChargerAction::Verify()
                 "Robot has mounted charger.");
     return ActionResult::SUCCESS;
   }
-  
+
   return ActionResult::ABORT;
 }
-  
-  
+
+
 #pragma mark ---- DriveToAndMountChargerAction ----
-  
+
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
-                                                           const bool useCliffSensorCorrection)
+                                                           const bool useCliffSensorCorrection,
+                                                           const bool enableDockingAnims)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -336,11 +337,10 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));
-  AddAction(new MountChargerAction(objectID, useCliffSensorCorrection));
+
+  auto mountAction = new MountChargerAction(objectID, useCliffSensorCorrection);
+  AddAction(mountAction);
 }
-  
-  
 
 } // namespace Cozmo
 } // namespace Anki
-

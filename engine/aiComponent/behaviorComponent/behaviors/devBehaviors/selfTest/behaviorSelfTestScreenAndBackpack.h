@@ -37,6 +37,8 @@ protected:
 
 private:
 
+  void TransitionToButtonCheck();
+  
   bool _buttonStartedPressed = false;
   bool _buttonPressed = false;
   

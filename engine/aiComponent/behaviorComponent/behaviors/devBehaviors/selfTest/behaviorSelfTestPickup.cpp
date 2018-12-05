@@ -53,9 +53,19 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
   if(isPickedUp/* && isBeingHeld*/)
   {
     const AccelData& accel = robot.GetHeadAccelData();
-    if(accel.z <= -8000)
+    if(accel.z <= -7000)
     {
       PRINT_NAMED_WARNING("","Robot is upside down");
+
+      if(_upsideDownStartTime_ms == 0)
+      {
+        DrawTextOnScreen(robot,
+                         {"Please Wait"},
+                         NamedColors::WHITE,
+                         NamedColors::BLACK,
+                         180);
+      }
+      
       if(!_upsideDownTimerAdded)
       {
         _upsideDownTimerAdded = true;
@@ -94,6 +104,16 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
     }
     else
     {
+      if(_upsideDownStartTime_ms != 0)
+      {
+        DrawTextOnScreen(robot,
+                         {"Pickup Robot", "Turn Upside Down"},
+                         NamedColors::WHITE,
+                         NamedColors::BLACK,
+                         0);
+
+      }
+      
       _upsideDownStartTime_ms = 0;
     }
   }

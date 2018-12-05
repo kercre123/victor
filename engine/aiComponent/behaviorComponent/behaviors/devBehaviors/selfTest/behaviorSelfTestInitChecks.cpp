@@ -35,7 +35,7 @@ Result BehaviorSelfTestInitChecks::OnBehaviorActivatedInternal()
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   DrawTextOnScreen(robot,
-                   {"Beginning automated test"});
+                   {"Test Running"});
 
   DriveStraightAction* drive = new DriveStraightAction(-SelfTestConfig::kDriveBackwardsDist_mm,
                                                        SelfTestConfig::kDriveBackwardsSpeed_mmps,

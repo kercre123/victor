@@ -37,6 +37,8 @@ protected:
   virtual void          OnBehaviorDeactivated() override;
 
 private:
+
+  bool _isUpsideDown = false;
   
 };
 

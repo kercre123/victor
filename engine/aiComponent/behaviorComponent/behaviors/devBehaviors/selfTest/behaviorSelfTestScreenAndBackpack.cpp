@@ -13,6 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestScreenAndBackpack.h"
 
 #include "engine/components/bodyLightComponent.h"
+#include "engine/actions/basicActions.h"
 #include "engine/robot.h"
 
 #include "coretech/vision/engine/image.h"
@@ -23,36 +24,51 @@ namespace Cozmo {
 BehaviorSelfTestScreenAndBackpack::BehaviorSelfTestScreenAndBackpack(const Json::Value& config)
 : IBehaviorSelfTest(config)
 {
-
+  SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
+                  {ExternalInterface::MessageEngineToGameTag::ChargerEvent});
 }
 
 Result BehaviorSelfTestScreenAndBackpack::OnBehaviorActivatedInternal()
+{
+  DriveStraightAction* action = new DriveStraightAction(10, 60, false);
+
+  DelegateIfInControl(action, [this](){ TransitionToButtonCheck(); });
+
+  return RESULT_OK;
+}
+
+void BehaviorSelfTestScreenAndBackpack::TransitionToButtonCheck()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  const bool onCharger = robot.IsOnChargerPlatform();
+  if(onCharger)
+  {
+    PRINT_NAMED_WARNING("BehaviorSelfTestScreenAndBackpack.TransitionToButtonCheck.StillOnCharger","");
+    SELFTEST_SET_RESULT(FactoryTestResultCode::STILL_ON_CHARGER);
+  }
+
   DrawTextOnScreen(robot,
                    {"Press button if screen","and lights match"},
                    NamedColors::BLACK,
-                   NamedColors::CYAN);
+                   NamedColors::WHITE);
 
   static const BackpackLights lights = {
-      .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
-      .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+      .onColors               = {{NamedColors::WHITE,NamedColors::WHITE,NamedColors::WHITE}},
+      .offColors              = {{NamedColors::WHITE,NamedColors::WHITE,NamedColors::WHITE}},
       .onPeriod_ms            = {{500,500,500}},
       .offPeriod_ms           = {{500,500,500}},
       .transitionOnPeriod_ms  = {{0,0,0}},
       .transitionOffPeriod_ms = {{0,0,0}},
       .offset                 = {{0,0,0}}
   };
-    
+
   robot.GetBodyLightComponent().SetBackpackLights(lights);
 
   _buttonPressed = robot.IsPowerButtonPressed();
   _buttonStartedPressed = _buttonPressed;
-
-  return RESULT_OK;
 }
 
 IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpdateInternal()
@@ -61,6 +77,12 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  const bool onCharger = robot.IsOnChargerPlatform();
+  if(onCharger || IsControlDelegated())
+  {
+    return SelfTestStatus::Running;
+  }
+
   const bool buttonPressed = robot.IsPowerButtonPressed();
   const bool buttonReleased = _buttonPressed && !buttonPressed;
 
@@ -68,10 +90,32 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
   {
     _buttonStartedPressed = false;
   }
-  
+
   if(buttonReleased && !_buttonStartedPressed)
   {
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+    DriveStraightAction* drive = new DriveStraightAction(-40,
+                                                         SelfTestConfig::kDriveBackwardsSpeed_mmps);
+
+    CompoundActionParallel* action = new CompoundActionParallel();
+    const bool ignoreFailure = true;
+    std::weak_ptr<IActionRunner> drivePtr = action->AddAction(drive, ignoreFailure);
+
+    WaitForLambdaAction* cancel = new WaitForLambdaAction([drivePtr](Robot& robot){
+                                                            if(robot.IsOnChargerPlatform())
+                                                            {
+                                                              if(auto drive = drivePtr.lock())
+                                                              {
+                                                                drive->Cancel();
+                                                              }
+                                                              return true;
+                                                            }
+                                                            return false;
+                                                          });
+    action->AddAction(cancel);
+
+    DelegateIfInControl(action, [this](){
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+    });
   }
 
   _buttonPressed = buttonPressed;
@@ -93,5 +137,3 @@ void BehaviorSelfTestScreenAndBackpack::OnBehaviorDeactivated()
 
 }
 }
-
-

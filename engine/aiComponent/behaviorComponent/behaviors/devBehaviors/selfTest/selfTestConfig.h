@@ -66,7 +66,7 @@ static u16 kMaxExpectedTouchValue = 7000;
 
 static u16 kDriveBackwardsDist_mm = 100;
 
-static u16 kDriveBackwardsSpeed_mmps = 60;
+static u16 kDriveBackwardsSpeed_mmps = 40;
 
 static u16 kMinCliffSensorOnChargerVal = 50;
 

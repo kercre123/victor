@@ -59,7 +59,11 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
   {
     if(onCharger)
     {
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+      DrawTextOnScreen(robot, {"Please Wait"});
+
+      AddTimer(500, [this](){
+                       WaitToBeOnTreads();
+                     });
     }
     else
     {
@@ -76,6 +80,24 @@ void BehaviorSelfTestButton::OnBehaviorDeactivated()
 {
   _buttonPressed = false;
   _buttonStartedPressed = false;
+}
+
+void BehaviorSelfTestButton::WaitToBeOnTreads()
+{
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+  if(robot.GetOffTreadsState() == OffTreadsState::OnTreads)
+  {
+    SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+  }
+  else
+  {
+    AddTimer(500, [this](){
+                     WaitToBeOnTreads();
+                   });
+  }
 }
 
 }
