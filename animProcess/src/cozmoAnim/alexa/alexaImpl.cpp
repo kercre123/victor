@@ -568,10 +568,10 @@ void AlexaImpl::Logout()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::StopForegroundActivity()
+void AlexaImpl::StopAlert()
 {
   if( _client ) {
-    _client->StopForegroundActivity();
+    _client->StopAlerts();
   }
 }
   
@@ -915,6 +915,7 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
     bool canBeCancelled;
     switch( alertPair.second ) {
       case State::STARTED: // The alert has started.
+      case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
         canBeCancelled = true;
         break;
       case State::READY: // The alert is ready to start, and is waiting for channel focus.
@@ -922,7 +923,6 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
       case State::SNOOZED: // The alert has snoozed.
       case State::COMPLETED: // The alert has completed on its own.
       case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
-      case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
       case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
       case State::ERROR: // The alert has encountered an error.
         canBeCancelled = false;
@@ -959,8 +959,6 @@ void AlexaImpl::NotifyOfTapToTalk()
   if( _client != nullptr ) {
     if( !_isTapOccurring ) {
       _client->StopForegroundActivity();
-      _client->StopAlerts();
-      
       // check info known about connection before trying. these often don't get updated until sending fails
       if( !_client->IsAVSConnected() ) {
         SetNetworkConnectionError();

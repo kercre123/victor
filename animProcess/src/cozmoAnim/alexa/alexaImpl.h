@@ -83,7 +83,9 @@ public:
   
   void Logout();
   
-  void StopForegroundActivity();
+  bool IsAlertActive() const { return _alertActive; }
+  
+  void StopAlert();
   
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples );
