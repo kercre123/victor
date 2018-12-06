@@ -285,9 +285,11 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ig
                   "The CozmoAudioController is null so the audio event cannot be played" ) )
   {
     using namespace AudioEngine;
-    controller->PostAudioEvent( ToAudioEventId( response->audioEvent.audioEvent ),
-                                ToAudioGameObject( response->audioEvent.gameObject ) );
-    
+    const auto audioEvent = response->audioEvent.audioEvent;
+    if ( audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid ) {
+      controller->PostAudioEvent( ToAudioEventId( audioEvent ),
+                                  ToAudioGameObject( response->audioEvent.gameObject ) );
+    }
   }
   
   return true;
