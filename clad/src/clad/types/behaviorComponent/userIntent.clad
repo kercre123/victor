@@ -107,6 +107,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             blackjack_hit,
   UserIntent_Void             blackjack_stand,
   UserIntent_Void             blackjack_playagain,
+  UserIntent_Void             character_age,
   UserIntent_Void             check_timer,
   UserIntent_Void             explore_start,
   UserIntent_GlobalStop       global_stop,

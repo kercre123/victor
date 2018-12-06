@@ -24,7 +24,7 @@ enum uint_8 ActiveFeatureType {
   // sleep
   Sleep,
 
-  // self-direted activities the robots do
+  // self-directed activities the robots do
   Autonomous,
 
   // features that attempt to interact with humans
@@ -35,6 +35,7 @@ enum uint_8 ActiveFeatureType {
 
   // playful / game features
   Play,
+
 }
 
 enum uint_32 ActiveFeature {
@@ -56,6 +57,7 @@ enum uint_32 ActiveFeature {
   FistBump,
   Frustrated,
   GoHome,
+  HowOldAreYou,
   InTheAir,
   InteractWithFaces,
   Keepaway,
@@ -131,6 +133,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   FistBump                = verbatim ActiveFeatureType::Social,
   Frustrated              = verbatim ActiveFeatureType::Failure,
   GoHome                  = verbatim ActiveFeatureType::Autonomous,
+  HowOldAreYou            = verbatim ActiveFeatureType::Social,
   InTheAir                = verbatim ActiveFeatureType::Social,
   InteractWithFaces       = verbatim ActiveFeatureType::Social,
   Keepaway                = verbatim ActiveFeatureType::Play,

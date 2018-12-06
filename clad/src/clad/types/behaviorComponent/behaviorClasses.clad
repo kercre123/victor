@@ -28,6 +28,7 @@ enum uint_8 BehaviorClass {
   AnimSequence,
   AnimSequenceWithFace,
   AnimSequenceWithObject,
+  CountingAnimation,
   TextToSpeechLoop,
 
   // appBehaviors
@@ -64,6 +65,9 @@ enum uint_8 BehaviorClass {
 
   // blackjack
   BlackJack,
+
+  // character/howOldAreYou
+  HowOldAreYou,
 
   // coordinators
   CoordinateGlobalInterrupts,

@@ -77,6 +77,10 @@ enum uint_16 BehaviorID {
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
 
+  // victorBehaviorTree/character
+  HowOldAreYou,
+  HowOldAreYouCounting,
+
   // victorBehaviorTree/clock
   ShowWallTime,
   SingletonFindFaceInFrontWallTime,

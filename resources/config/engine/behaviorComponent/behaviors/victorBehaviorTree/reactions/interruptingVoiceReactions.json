@@ -21,7 +21,7 @@
     "ComeHereVoiceCommand",
     "LookAtMeVoiceCommand",
     "WhatsMyNameVoiceCommand",
-    //"Volume",
+    "HowOldAreYou",
     "LeaveAMessage",
     "PlaybackMessage",
     "KnowledgeGraphQuestion",

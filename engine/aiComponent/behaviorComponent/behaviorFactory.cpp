@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorCountingAnimation.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/appBehaviors/behaviorEyeColor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/attentionTransfer/behaviorAttentionTransferIfNeeded.h"
@@ -45,6 +46,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/behaviorBlackJack.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/character/howOldAreYou/behaviorHowOldAreYou.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateInHabitat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateWhileInAir.h"
@@ -243,6 +245,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::CountingAnimation:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCountingAnimation(config));
+      break;
+    }
+    
     case BehaviorClass::TextToSpeechLoop:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTextToSpeechLoop(config));
@@ -396,6 +404,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::BlackJack:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorBlackJack(config));
+      break;
+    }
+    
+    case BehaviorClass::HowOldAreYou:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorHowOldAreYou(config));
       break;
     }
     

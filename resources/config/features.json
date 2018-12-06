@@ -98,6 +98,10 @@
   {
     "feature": "GazeDirection",
     "enabled": false
+  },
+  {
+    "feature": "HowOldAreYou",
+    "enabled": false
   }
 ]
 
