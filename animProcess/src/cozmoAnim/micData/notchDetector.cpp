@@ -33,7 +33,7 @@ namespace {
   // Computes things to output
   CONSOLE_VAR(bool, kDebugNotch, "MicData", false);
   
-  const float kNotchPower = -5.1f;
+  const float kNotchPower = -5.0f;
   
   #define LOG_CHANNEL "NotchDetector"
 }
