@@ -37,9 +37,9 @@ target_compile_definitions(${target_name}
 target_compile_options(${target_name}
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
-  PRIVATE
-  -fsanitize=address
-  -fno-omit-frame-pointer
+#  PRIVATE
+#  -fsanitize=address
+#  -fno-omit-frame-pointer
 )
 
 #target_link_options(${target_name}
@@ -81,8 +81,8 @@ target_compile_definitions(${target_name}
 target_compile_options(${target_name}
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
-  PRIVATE
-  -fsanitize=address
+#  PRIVATE
+#  -fsanitize=address
 )
 
 #target_link_options(${target_name}

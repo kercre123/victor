@@ -82,6 +82,7 @@ set(VICOS_TOOLCHAIN_PREFIX "${VICOS_TOOLCHAIN_ROOT}/bin/${VICOS_TOOLCHAIN_NAME}-
 set(VICOS_LLVM_TOOLCHAIN_PREFIX "${VICOS_SDK}/prebuilt/bin/${VICOS_TOOLCHAIN_NAME}-")
 set(VICOS_C_COMPILER   "${VICOS_LLVM_TOOLCHAIN_PREFIX}clang${VICOS_TOOLCHAIN_SUFFIX}")
 set(VICOS_CXX_COMPILER "${VICOS_LLVM_TOOLCHAIN_PREFIX}clang++${VICOS_TOOLCHAIN_SUFFIX}")
+set(VICOS_AR "${VICOS_LLVM_TOOLCHAIN_PREFIX}ar${VICOS_TOOLCHAIN_SUFFIX}")
 set(CMAKE_C_COMPILER_TARGET   ${VICOS_LLVM_TRIPLE})
 set(CMAKE_CXX_COMPILER_TARGET ${VICOS_LLVM_TRIPLE})
 set(CMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN   "${VICOS_TOOLCHAIN_ROOT}")
@@ -97,8 +98,6 @@ set(VICOS_LINKER_FLAGS_EXE)
 
 # Generic flags.
 list(APPEND VICOS_COMPILER_FLAGS
-#  -fsanitize=leak
-#  -fno-omit-frame-pointer
 	-gsplit-dwarf
     -DVICOS
 	-ffunction-sections
@@ -146,13 +145,15 @@ list(APPEND VICOS_LINKER_FLAGS
 # STL specific flags for libc++
 set(VICOS_STL_PREFIX llvm-libc++)
 list(APPEND VICOS_LINKER_FLAGS
-#  -fsanitize=leak
+#  -fsanitize=address
 #  -fno-omit-frame-pointer
 	-Wl,--exclude-libs,libunwind.a
 	-lc
 	-latomic
 	-lpthread)
 list(APPEND VICOS_COMPILER_FLAGS_CXX
+  -fsanitize=address
+  -fno-omit-frame-pointer
 	-stdlib=libc++
 	-std=c++14)
 
@@ -226,7 +227,8 @@ if(VICOS_CCACHE)
 endif()
 set(CMAKE_C_COMPILER        "${VICOS_C_COMPILER}")
 set(CMAKE_CXX_COMPILER      "${VICOS_CXX_COMPILER}")
-set(CMAKE_LINKER             "${VICOS_C_COMPILER}")
+set(CMAKE_LINKER            "${VICOS_CXX_COMPILER}")
+set(CMAKE_AR                "${VICOS_AR}")
 set(_CMAKE_TOOLCHAIN_PREFIX "${VICOS_TOOLCHAIN_PREFIX}")
 
 # Run the compiler ID checks before we set flags.
