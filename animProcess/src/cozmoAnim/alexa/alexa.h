@@ -59,6 +59,8 @@ public:
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
   
+  bool StopAlertIfActive();
+  
   void NotifyOfTapToTalk( bool fromMute );
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );

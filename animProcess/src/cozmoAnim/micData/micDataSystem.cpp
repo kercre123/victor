@@ -224,6 +224,13 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
+  // completely ignore _micMuted and _buttonPressIsAlexa and stop alerts no matter what
+  Alexa* alexa = _context->GetAlexa();
+  ASSERT_NAMED(alexa != nullptr, "");
+  if( alexa->StopAlertIfActive() ) {
+    return;
+  }
+  
   const bool wasMuted = _micMuted;
   if( _micMuted ) {
     // A single press when muted should unmute and then trigger a wakeword.
@@ -237,8 +244,6 @@ void MicDataSystem::FakeTriggerWordDetection()
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
-      Alexa* alexa = _context->GetAlexa();
-      ASSERT_NAMED(alexa != nullptr, "");
       alexa->NotifyOfTapToTalk( wasMuted );
     }
   }

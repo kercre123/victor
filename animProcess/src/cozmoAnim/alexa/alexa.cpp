@@ -671,6 +671,17 @@ void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, s
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool Alexa::StopAlertIfActive()
+{
+  if( _impl != nullptr && _impl->IsAlertActive() ) {
+    _impl->StopAlert();
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::NotifyOfTapToTalk( bool fromMute )
 {
   if( ANKI_VERIFY( _impl != nullptr,
