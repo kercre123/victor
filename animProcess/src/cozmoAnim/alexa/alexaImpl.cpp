@@ -909,6 +909,7 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
 {
   using State = capabilityAgents::alerts::AlertObserverInterface::State;
   _alertStates[alertID] = state;
+  const bool oldAlertActive = _alertActive;
   _alertActive = false;
   for( auto& alertPair : _alertStates ) {
     bool canBeCancelled;
@@ -932,6 +933,13 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnAlertState",
                "alert '%s' changed to %d, _alertActive=%d", alertID.c_str(), (int)state, _alertActive );
+  if( oldAlertActive != _alertActive ) {
+    // note: this is ok to only have two options, not three (e.g., "unknown") since _alertActive
+    // is initialized as false, in which case if the initial assignment to _alertActive is false, we don't
+    // need to call CheckForUXStateChange anyway
+    CheckForUXStateChange();
+  }
+    
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
