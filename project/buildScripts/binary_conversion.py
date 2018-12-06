@@ -275,11 +275,12 @@ def prep_audio_key_frame_json(keyframe, anim_name):
         # We like the 'audioName' field in JSON data for humans, but the engine
         # only uses an event's numerical ID, so we strip out the name string
         # before converting to binary format.
-        for eventGroup in keyframe[AUDIO_EVENT_GROUPS_ATTR]:
-            try:
-                del eventGroup[AUDIO_NAME_ATTR]
-            except KeyError:
-                pass
+        if AUDIO_EVENT_GROUPS_ATTR in keyframe:
+            for eventGroup in keyframe[AUDIO_EVENT_GROUPS_ATTR]:
+                try:
+                    del eventGroup[AUDIO_NAME_ATTR]
+                except KeyError:
+                    pass
 
         return keyframe
 

@@ -15,26 +15,26 @@
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/alexa/alexaImpl.h" // impl declaration
 
+#include "cozmoAnim/animProcessMessages.h" // must come before clad includes........
+
 #include "audioEngine/audioCallback.h"
 #include "audioEngine/audioTypeTranslator.h"
-#include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/audio/cozmoAudioController.h"
-#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
-#include "clad/types/alexaTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
+#include "clad/types/alexaTypes.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/animContext.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
-
-
 
 namespace Anki {
 namespace Vector {
@@ -48,6 +48,9 @@ namespace {
   
   const float kTimeUntilWakeWord_s = 3.0f;
   
+  // If true, the wake word is enabled when signed out if the user has _ever_ been signed in. Saying "alexa"
+  // triggers an error. If false, no wake work is running.
+  const bool kPlayErrorIfSignedOut = false;
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
 }
@@ -100,7 +103,7 @@ void Alexa::Init(const AnimContext* context)
   
   if( authenticatedLastBoot ) {
     SetAlexaActive( true );
-  } else if( _authenticatedEver ) {
+  } else if( _authenticatedEver && kPlayErrorIfSignedOut ) {
     // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
     // when they say the wake word, it plays "Your device isnt registered. For help, go it its companion app."
     // TODO: it might make sense to load the least sensitive model to avoid false positives
@@ -128,6 +131,7 @@ void Alexa::Update()
   if( (_timeToEndError_s >= 0.0f) && (currTime_s >= _timeToEndError_s) ) {
     // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
     _timeToEndError_s = -1.0f;
+    LOG_INFO( "Alexa.Update.RestoreStateAfterError", "returning to UX state after error state is complete" );
     OnAlexaUXStateChanged( _pendingUXState );
   }
 }
@@ -146,7 +150,7 @@ void Alexa::SetAlexaUsage(bool optedIn)
   } else {
     // if we were in the process of authenticating alexa, cancel that now (does nothing if not loggin in).
     // need to do this before we reset _authStartedByUser
-    CancelPendingAlexaAuth();
+    CancelPendingAlexaAuth("OPT_OUT");
   }
 
   _authStartedByUser = optedIn;
@@ -179,7 +183,7 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // create impl
     CreateImpl();
   } else if( !active && HasImpl() ) {
-    const auto simpleState = _authenticatedEver ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
+    const auto simpleState = (_authenticatedEver && kPlayErrorIfSignedOut) ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
     SetSimpleState( simpleState );
     DeleteImpl();
   }
@@ -203,7 +207,7 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::CancelPendingAlexaAuth()
+void Alexa::CancelPendingAlexaAuth(const std::string& reason)
 {
   if( !_authStartedByUser ) {
     // various components in animprocess will call this method based on user actions like exiting pairing screen or
@@ -211,10 +215,25 @@ void Alexa::CancelPendingAlexaAuth()
     // and instead only want it to cancel a user-initiated auth
     return;
   }
+
+  LOG_INFO( "Alexa.CancelPendingAlexaAuth",
+            "From auth state '%s', canceling for reason '%s'",
+            EnumToString(_authState),
+            reason.c_str() );
   
   switch( _authState ) {
-    case AlexaAuthState::RequestingAuth:
     case AlexaAuthState::WaitingForCode:
+    {
+
+      DASMSG(sign_in_canceled,
+             "alexa.user_sign_in_result",
+             "Result of sign in attempt (this instance is for cancellations");
+      DASMSG_SET(s1, "CANCEL", "result (CANCEL)");
+      DASMSG_SET(s2, reason, "the reason this attempt was canceled");
+      DASMSG_SEND();
+    }
+      // fall through
+    case AlexaAuthState::RequestingAuth:
     {
       // if the robot is authorizing, cancel it. go through this method instead of SetAlexaActive so that any code face
       // is removed
@@ -290,9 +309,14 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
 {
   const auto oldState = _authState;
   bool codeExpired = false;
-  
+
   // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "Alexa.OnAlexaAuthChanged", "%d url='%s' code='%s'", (int)(state), url.c_str(), code.c_str() );
+  LOG_WARNING( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
+               EnumToString(oldState),
+               EnumToString(state),
+               url.c_str(),
+               code.c_str() );
+
   switch( state ) {
     case AlexaAuthState::Uninitialized:
     {
@@ -436,11 +460,21 @@ void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
   if( !IsErrorPlaying() ) {
     SetUXState( newState );
   }
+  else {
+    LOG_INFO( "Alexa.OnAlexaUXStateChanged.SetPendingAfterError",
+              "An error is playing, so isntead of changing UX state now, set the pending state to '%s'",
+              EnumToString(newState));
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::SetUXState( AlexaUXState newState )
 {
+
+  LOG_INFO( "Alexa.SetUXState", "new State '%s', old state was '%s'",
+            EnumToString(newState),
+            EnumToString(_uxState) );
+
   const auto oldState = _uxState;
   _uxState = newState;
   
@@ -498,6 +532,15 @@ void Alexa::OnAlexaNetworkError( AlexaNetworkErrorType errorType )
   _pendingUXState = _uxState;
   SetUXState( AlexaUXState::Error );
   PlayErrorAudio( errorType );
+
+  DASMSG(local_error_msg, "alexa.local_error", "A local (network) error response is being played");
+  DASMSG_SET(s1,
+             EnumToString(errorType),
+             "type of the error (see AlexaNetworkErrorType in alexaTypes.clad)");
+  DASMSG_SET(s2,
+             EnumToString(_pendingUXState),
+             "former UX state before the error happened (see alexaTypes.clad)");
+  DASMSG_SEND();
 }
   
 
@@ -663,7 +706,7 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
     }
   }
   
-  if( !hasImpl && _authenticatedEver ) {
+  if( !hasImpl && _authenticatedEver && kPlayErrorIfSignedOut ) {
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }
@@ -685,6 +728,7 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
       if( IsErrorPlaying() ) {
         // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
         _timeToEndError_s = -1.0f;
+        LOG_INFO( "Alexa.Callback.RestoreStateAfterError", "returning to UX state after error callback" );
         OnAlexaUXStateChanged( _pendingUXState );
       }
     });

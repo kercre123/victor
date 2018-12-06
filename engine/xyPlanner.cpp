@@ -36,7 +36,7 @@ namespace {
   const float kPathPrecisionTolerance = .1f;
 }
 
-CONSOLE_VAR_EXTERN( int, kArtificialPlanningDelay_ms);
+CONSOLE_VAR_RANGED( int, kArtificialPlanningDelay_ms, "XYPlanner", 0, 0, 3900 );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  XYPlanner

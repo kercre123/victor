@@ -30,6 +30,8 @@
 namespace Anki {
 namespace Vector {
   
+#define LOG_CHANNEL "SpeechRecognizer"
+  
 // Anonymous namespace to use with debug console vars for manipulating input
 namespace {
   std::string sPhraseForceHeard = "";
@@ -175,7 +177,7 @@ bool SpeechRecognizerTHF::Init(const std::string& pronunPath)
 
 void SpeechRecognizerTHF::HandleInitFail(const std::string& failMessage)
 {
-  PRINT_NAMED_ERROR("SpeechRecognizerTHF.Init.Fail", "%s", failMessage.c_str());
+  LOG_ERROR("SpeechRecognizerTHF.Init.Fail", "%s", failMessage.c_str());
   Cleanup();
 }
 
@@ -189,7 +191,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   
   auto cleanupAfterFailure = [&] (const std::string& failMessage)
   {
-    PRINT_NAMED_ERROR("SpeechRecognizerTHF.AddRecognitionDataFromFile.Fail", "%s %s", failMessage.c_str(), thfGetLastError(_impl->_thfSession));
+    LOG_ERROR("SpeechRecognizerTHF.AddRecognitionDataFromFile.Fail", "%s %s", failMessage.c_str(), thfGetLastError(_impl->_thfSession));
     RecogData::DestroyData(createdRecognizer, createdSearch);
   };
   
@@ -344,7 +346,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       }
       else
       {
-        PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
+        LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
       }
     }
     _impl->_lastUsedRecognizer = currentRecognizer;
@@ -355,7 +357,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   unsigned short status = RECOG_SILENCE;
   if(!thfRecogPipe(_impl->_thfSession, currentRecognizer, audioDataLen, (short*)audioData, recogPipeMode, &status))
   {
-    PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogPipe.Fail", "%s", thfGetLastError(_impl->_thfSession));
+    LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogPipe.Fail", "%s", thfGetLastError(_impl->_thfSession));
     return;
   }
   
@@ -368,7 +370,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     {
       if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundStringRaw, &wordAlign, NULL, NULL, NULL, NULL, NULL))
       {
-        PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
+        LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
       }
     }
     else
@@ -405,7 +407,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       }
       
       DoCallback(info);
-      PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer -  %s", info.Description().c_str());
+      LOG_INFO("SpeechRecognizerTHF.Update", "Recognizer -  %s", info.Description().c_str());
     }
     
     // If the current recognizer allows a followup recognizer to immediately take over
@@ -420,16 +422,15 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
             thfRecogPrepSeq(_impl->_thfSession, nextRecogSP->GetRecognizer(), currentRecognizer))
         {
           std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
-          PRINT_CH_INFO("VoiceCommands",
-                        "SpeechRecognizerTHF.Update",
-                        "Switching current recog from %d to %d",
-                        _impl->_thfCurrentRecog, _impl->_thfFollowupRecog);
+          LOG_INFO("SpeechRecognizerTHF.Update",
+                   "Switching current recog from %d to %d",
+                   _impl->_thfCurrentRecog, _impl->_thfFollowupRecog);
           _impl->_thfCurrentRecog = _impl->_thfFollowupRecog;
           _impl->_thfFollowupRecog = InvalidIndex;
         }
         else
         {
-          PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogPrepSeq.Fail", "%s", thfGetLastError(_impl->_thfSession));
+          LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogPrepSeq.Fail", "%s", thfGetLastError(_impl->_thfSession));
         }
       }
     }
@@ -440,7 +441,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     }
     else
     {
-      PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
+      LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
     }
     
     sPhraseForceHeard = "";

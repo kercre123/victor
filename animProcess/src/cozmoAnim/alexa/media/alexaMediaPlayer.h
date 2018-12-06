@@ -161,8 +161,8 @@ private:
   void SetMediaPlayerAudioEvents();
   
   // Set the volume in Audio Controller for Media Player
-  // NOTE: Acceptable volume value [0.0, 1.0]
-  void SetPlayerVolume( float volume );
+  void SetPlayerVolume() const;
+  void OnSettingsChanged() const;
 
   // decodes from _mp3Buffer into data, returns millisec decoded
   int Decode( const StreamingWaveDataPtr& data, bool flush = false );
@@ -174,6 +174,10 @@ private:
 
   void SavePCM( short* buff, size_t size=0 ) const;
   void SaveMP3( const unsigned char* buff, size_t size=0 ) const;
+
+  std::string GetSettingsFilename() const;
+  void SaveSettings() const;
+  void LoadSettings();
 
   mp3dec_t _mp3decoder;
   
@@ -216,7 +220,8 @@ private:
 
   StreamingWaveDataPtr _waveData;
 
-  std::string _saveFolder;
+  std::string _cacheSaveFolder;
+  std::string _persistentSaveFolder;
 
   // worker thread
   DispatchQueue* _dispatchQueue = nullptr;
@@ -237,10 +242,10 @@ private:
 
   const AudioInfo& _audioInfo;
   
-  static constexpr int kBandStopFilterSize = 151;
-  std::unique_ptr<Util::FixedCircularBuffer<short, kBandStopFilterSize>> _bandStopBuffer;
+  static constexpr int kFilterSize = 151;
+  std::unique_ptr<Util::FixedCircularBuffer<short, kFilterSize>> _filterBuffer;
   // todo: make this constexpr (see comment in ComputeFilterCoeffs)
-  static std::array<float, kBandStopFilterSize> _filterCoeffs24;
+  static std::array<float, kFilterSize> _filterCoeffs24;
 
   // TEMP
   SpeechRecognizerTHF*            _recognizer = nullptr;

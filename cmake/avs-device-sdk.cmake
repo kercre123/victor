@@ -51,7 +51,7 @@ foreach(LIB ${AVS_LIBS})
     "${LIBAVS_LIB_PATH}/lib${LIB}${AVS_LIB_EXT}"
     INTERFACE_INCLUDE_DIRECTORIES
     "${LIBAVS_INCLUDE_PATH}")
-  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/avs-device-sdk.license" "MIT/X derivate,${CMAKE_SOURCE_DIR}/licenses/curl.license" "OpenSSL License/SSLeay License,${CMAKE_SOURCE_DIR}/licenses/openssl.license" "MIT License,${CMAKE_SOURCE_DIR}/licenses/nghttp2.license")
+  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/avs-device-sdk.license" "curl,${CMAKE_SOURCE_DIR}/licenses/curl.license" "OpenSSL/SSLeay,${CMAKE_SOURCE_DIR}/licenses/openssl.license" "MIT,${CMAKE_SOURCE_DIR}/licenses/nghttp2.license")
 endforeach()
 
 if (VICOS)
@@ -63,7 +63,7 @@ if (VICOS)
     "${LIBAVS_LIB_PATH}/libsqlite3.so.0"
     INTERFACE_INCLUDE_DIRECTORIES
     "${LIBAVS_INCLUDE_PATH}")
-  anki_build_target_license(sqlite3 "Public domain,${CMAKE_SOURCE_DIR}/licenses/sqlite3.license")
+  anki_build_target_license(sqlite3 "Public Domain,${CMAKE_SOURCE_DIR}/licenses/sqlite3.license")
 endif()
 
 

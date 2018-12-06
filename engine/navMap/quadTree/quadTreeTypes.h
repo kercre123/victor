@@ -30,16 +30,15 @@ namespace QuadTreeTypes {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-
-// content for each node
+// wrapper for a tuple that allows implicit casting to any of its contained types
 template <typename... Ts>
-class NodeContentT {
+class SmartTuple : public std::tuple<Ts...> {
 private:
-  // general case - assume false since Tail can be empty
-  template <typename Test, typename... Tail>
+  // general case - assume false since Types can be empty
+  template <typename... Types>
   struct has_type : std::false_type {};
 
-  // Test type is different from Head, so recurse
+  // Test type is different from Head, so recurse on Tail
   template <typename Test, typename Head, typename... Tail>
   struct has_type<Test, Head, Tail...> : has_type<Test, Tail...> {};
 
@@ -47,21 +46,28 @@ private:
   template <typename Test, typename... Tail>
   struct has_type<Test, Test, Tail...> : std::true_type {};
 
-  std::tuple<Ts...> _data;
+  // the empty list of types is Unique
+  template <typename... Types>
+  struct is_unique_set : std::true_type {};
+
+  // to be unique, Tail must not contain Head, and Tail must be unique
+  template <typename Head, typename... Tail>
+  struct is_unique_set<Head, Tail...> : std::integral_constant<bool, !has_type<Head, Tail...>::value && is_unique_set<Tail...>::value> {};
 
 public:
-  NodeContentT() {}
-  NodeContentT(const NodeContentT<Ts...>& n) : _data(n) {}
+  // make sure SmartTuple only contains unique types
+  static_assert(is_unique_set<Ts...>::value, "SmartTuple cannot have duplicate types");
+
+  SmartTuple() : std::tuple<Ts...>() {}
+  SmartTuple(const SmartTuple<Ts...>& n) : std::tuple<Ts...>(n) {}
+
+  // NOTE: use `enable_if_t` here, otherwise we will try to cast to find `SmartTuple<Ts...>` inside `std::tuple<Ts...>`
+  //       and get `tuple:1017:5: error: static_assert failed "type not found in type list"` 
+  template <typename U, typename = std::enable_if_t<has_type<U, Ts...>::value>>
+  SmartTuple(const U& u) : std::tuple<Ts...>() { std::get<U>(*this) = u; }
 
   template <typename U, typename = std::enable_if_t<has_type<U, Ts...>::value>>
-  NodeContentT(const U& u) { std::get<U>(_data) = u; }
-
-  template <typename U, typename = std::enable_if_t<has_type<U, Ts...>::value>>
-  operator U() const { return std::get<U>(_data); }
-  
-  // comparison operators
-  bool operator==(const NodeContentT<Ts...>& other) const { return _data == other._data; }
-  bool operator!=(const NodeContentT<Ts...>& other) const { return _data != other._data; }
+  operator U() const { return std::get<U>(*this); }
 };
 
 // wrapper class for specifying the interface between QT actions and geometry methods
@@ -124,14 +130,12 @@ enum class EQuadrant : uint8_t {
 // movement direction
 enum class EDirection { PlusX, PlusY, MinusX, MinusY };
 
-using MemoryMapDataPtr = MemoryMapDataWrapper<MemoryMapData>;
-using NodeContent      = NodeContentT<MemoryMapDataPtr>;
-using NodeAddress      = std::vector<EQuadrant>;
-using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
-using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
-
-// TODO: template on any implicitly convertable type of `NodeContent`
-using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
+using MemoryMapDataPtr      = MemoryMapDataWrapper<MemoryMapData>;
+using NodeContent           = SmartTuple<MemoryMapDataPtr>;
+using NodeTransformFunction = std::function<NodeContent (const NodeContent&)>;
+using NodeAddress           = std::vector<EQuadrant>;
+using FoldFunctor           = std::function<void (QuadTreeNode& node)>;
+using FoldFunctorConst      = std::function<void (const QuadTreeNode& node)>;;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions

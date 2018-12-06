@@ -36,13 +36,14 @@
 #include "cozmoAnim/alexa/alexaKeywordObserver.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/alexa/alexaRevokeAuthObserver.h"
-#include "cozmoAnim/alexa/media/player.h"
+#include "cozmoAnim/alexa/media/alexaMediaPlayer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "osState/osState.h"
 #include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 
@@ -121,6 +122,7 @@ namespace {
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING: return "LISTENING";
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::EXPECTING: return "EXPECTING";
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING: return "SPEAKING";
+      default: return "UNKNOWN";
     }
   }
 
@@ -141,6 +143,27 @@ namespace {
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::BAD_REQUEST: return "BAD_REQUEST";
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_OTHER_ERROR: return "SERVER_OTHER_ERROR";
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INVALID_AUTH: return "INVALID_AUTH";
+      default: return "UNKNOWN";
+    }
+  }
+
+  const char* AuthErrorToString(const avsCommon::sdkInterfaces::AuthObserverInterface::Error& error) {
+    switch(error) {
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SUCCESS: return "SUCCESS";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNKNOWN_ERROR: return "UNKNOWN_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_FAILED: return "AUTHORIZATION_FAILED";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNAUTHORIZED_CLIENT: return "UNAUTHORIZED_CLIENT";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SERVER_ERROR: return "SERVER_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_REQUEST: return "INVALID_REQUEST";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_VALUE: return "INVALID_VALUE";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_EXPIRED: return "AUTHORIZATION_EXPIRED";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNSUPPORTED_GRANT_TYPE: return "UNSUPPORTED_GRANT_TYPE";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CODE_PAIR: return "INVALID_CODE_PAIR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_PENDING: return "AUTHORIZATION_PENDING";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SLOW_DOWN: return "SLOW_DOWN";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INTERNAL_ERROR: return "INTERNAL_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CBL_CLIENT_ID: return "INVALID_CBL_CLIENT_ID";
+      default: return "UNKNOWN";
     }
   }
 }
@@ -261,6 +284,11 @@ bool AlexaImpl::Init( const AnimContext* context )
   if( !deviceInfo ) {
     CRITICAL_SDK("Creation of DeviceInfo failed!");
     return false;
+  }
+  else {
+    DASMSG(avs_device_info, "alexa.device_info", "we created an alexa object with the given device info");
+    DASMSG_SET(s1, deviceInfo->getProductId(), "product id (from json)");
+    DASMSG_SEND();
   }
   
   // Creating the AuthDelegate - this component takes care of LWA and authorization of the client.
@@ -512,6 +540,7 @@ void AlexaImpl::Update()
   }
 
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
+    LOG_INFO( "AlexaImpl.Update.SetDialogStateIDle", "the timer to set idle elapsed, updating dialog state to idle" );
     _dialogState = DialogUXState::IDLE;
     CheckForUXStateChange();
   }
@@ -520,11 +549,21 @@ void AlexaImpl::Update()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Logout()
 {
+  bool logoutCalled = false;
+
   if( _client ) {
     auto regManager = _client->GetRegistrationManager();
     if( regManager ) {
       regManager->logout();
+      logoutCalled = true;
     }
+  }
+
+  if( !logoutCalled ) {
+    DASMSG(user_sign_out_result, "alexa.user_sign_out_result", "User signed out of AVS SDK");
+    DASMSG_SET(s1, "FAILURE", "SUCCESS or FAILURE (note that this instance always sends failure)");
+    DASMSG_SET(s2, "INTERNAL_ERROR", "error type (only INTERNAL_ERROR currently exists, meaning could not call logout)");
+    DASMSG_SEND();
   }
 }
   
@@ -604,14 +643,31 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING("AlexaImpl.OnAuthStateChange", "authStateChanged newState=%d, error=%d", (int)newState, (int)error);
+
+
+  auto sendResultDas = [](bool success, avsCommon::sdkInterfaces::AuthObserverInterface::Error error) {
+    DASMSG(user_sign_in_result, "alexa.user_sign_in_result", "Result of initial user sign in attempt");
+    DASMSG_SET(s1, success ? "SUCCESS" : "FAILURE", "SUCCESS or FAILURE");
+    DASMSG_SET(s2, AuthErrorToString(error), "Error reason (from AVS SDK)");
+    DASMSG_SEND();
+  };
   
   // if not SUCCESS or AUTHORIZATION_PENDING, fail. AUTHORIZATION_PENDING seems like a valid error
   // to me: "Waiting for user to authorize the specified code pair."
   if( (error != Error::SUCCESS) && (error != Error::AUTHORIZATION_PENDING) ) {
     LOG_WARNING( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
+
+    sendResultDas(false, error);
+
     const bool errFlag = true;
     SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
     return;
+  }
+
+  if( _authState == AlexaAuthState::WaitingForCode ) {
+    const bool success = (newState == State::REFRESHED);
+
+    sendResultDas(success, error);
   }
 
   switch( newState ) {
@@ -663,7 +719,7 @@ void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 void AlexaImpl::CheckForUXStateChange()
 {
   const auto oldState = _uxState;
-  const bool anyPlaying = !_playingSources.empty();
+  const bool anyPlaying = !_playingSources.empty() || _alertActive;
   
   // reset idle timer
   _timeToSetIdle_s = -1.0f;
@@ -760,6 +816,11 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
+
+  DASMSG(send_complete, "alexa.response_to_request", "SDK responded to a sent message");
+  DASMSG_SET(s1, MessageStatusToString(status), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
+  DASMSG_SEND();
+
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
   switch( status ) {
     case Status::PENDING: // The message has not yet been processed for sending.
@@ -816,6 +877,14 @@ void AlexaImpl::OnSDKLogout()
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnLogout", "User logged out" );
+
+  // NOTE:(bn) This doesn't get called if we log out, nor if you de-register from Amazon, not sure when it would
+  // get called
+  DASMSG(user_sign_out_result,
+         "alexa.user_remote_sign_out",
+         "User remotely signed out of AVS SDK (unclear when this happens)");
+  DASMSG_SEND();
+
   if( _onLogout != nullptr ) {
     _onLogout();
   }

@@ -6,7 +6,7 @@
   
   "cliffBackupDistance_mm": 60.0,
   "cliffBackupSpeed_mmps": 100.0,
-  "eventFlagTimeout_sec": 0.5,
+  "eventFlagTimeout_ms": 500,
 
   "wantsToBeActivatedCondition": {
     "conditionType": "OffTreadsState",

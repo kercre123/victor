@@ -17,6 +17,7 @@
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/alexaComponentTypes.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -42,6 +43,7 @@ namespace external_interface {
 }
 namespace RobotInterface {
   class RobotToEngine;
+  enum class CancelAlexaFromEngineReason : uint8_t;
 }
 
   
@@ -51,6 +53,8 @@ enum class AnimationTrigger : int32_t;
   
 template<typename T>
 class AnkiEvent;
+  
+class UserIntentComponent;
 
 class AlexaComponent : public IDependencyManagedComponent<AIComponentID>,
                        private Util::noncopyable
@@ -77,6 +81,15 @@ public:
   bool IsIdle() const;
   bool IsUXStateGetInPlaying( AlexaUXState state ) const;
   bool IsAnyUXStateGetInPlaying() const;
+  
+  // check if sign in/out is pending. If it is pending, AlexaComponent will SignIn/SignOut for you
+  // after some number of ticks. To avoid this, Claim it, but then you must call SignIn/SignOut. Note
+  // that only one request is allowed until SignIn() or SignOut() is called (or a pending request times out).
+  bool IsSignInPending() const;
+  bool IsSignOutPending() const;
+  void ClaimRequest();
+  void SignIn();
+  void SignOut();
 
 private:
   
@@ -90,13 +103,27 @@ private:
   void SendAuthStateToApp( bool isResponse );
   
   // tell anim to cancel any pending auth, but not any completed auth
-  void SendCancelPendingAuth() const;
+  void SendCancelPendingAuth(const RobotInterface::CancelAlexaFromEngineReason& reason) const;
   
   void ToggleButtonWakewordSetting( bool isAlexa ) const;
   
   std::string GetAnimName( AnimationTrigger trigger ) const;
+
+  void SendSignInDAS( UserIntentSource source ) const;
+  void SendSignOutDAS( UserIntentSource source ) const;
+  
+  enum class Request : uint8_t {
+    None=0,
+    SignInApp, // app or console var
+    SignOutApp, // app or console var
+    SignInVC,
+    SignOutVC,
+  };
+  
+  void SetRequest( Request request );
   
   Robot& _robot;
+  UserIntentComponent* _uic = nullptr;
   std::list<Signal::SmartHandle> _signalHandles;
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
   
@@ -104,6 +131,7 @@ private:
   std::string _authStateExtra;
   
   AlexaUXState _uxState;
+  float _lastUxStateTransition_s = 0.0f;
   
   struct AlexaUXResponseInfo
   {
@@ -120,6 +148,9 @@ private:
   bool _pendingAuthIsFromOptIn = false;
   
   bool _featureFlagEnabled = false;
+  
+  Request _request = Request::None;
+  size_t _requestTimeout = 0;
   
 };
 

@@ -30,7 +30,7 @@ class QuadTreeNode : private Util::noncopyable
   friend class QuadTree;
 public:
   ~QuadTreeNode();
-
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

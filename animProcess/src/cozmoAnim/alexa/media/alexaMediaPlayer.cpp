@@ -33,7 +33,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
  */
 
 
-#include "player.h"
+#include "alexaMediaPlayer.h"
 
 #include "attachmentReader.h"
 #include "streamReader.h"
@@ -163,6 +163,10 @@ namespace {
       AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Resume,
       AudioMetaData::GameParameter::ParameterType::Robot_Alexa_Volume_Master}}
   };
+
+  const char* kSaveSettings_VolumeKey     = "volume";
+  const char* kSaveSettings_MuteKey       = "mute";
+
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("AlexaMediaPlayer.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
@@ -170,49 +174,39 @@ namespace {
 #endif
   const bool kSaveResampledPCM = false; // if true, kSaveDebugAudio will save resampled pcm instead of decoded pcm
   
-  CONSOLE_VAR(bool, kApplyBandStopFilter, "Alexa", true);
+  CONSOLE_VAR(bool, kApplyHighPassFilter, "Alexa", true);
   constexpr int kTTSSampleRate = 24000;
   
   CONSOLE_VAR(bool, kUsePlaybackRecognizer, "Alexa", true); // must be saved and then robot rebooted
 }
   
-// a bandstop FIR filter in the form of an N-element array
+// a high pass FIR filter in the form of an N-element array
 // todo: make this constexpr (will need to construct the array in its initialization using templates)
 // I'm keeping this here for now, rather than just pasting the values, so that (a) you know they were
 // computed and (b) since hopefully this will be made constexpr
 template < int N, int sampleRate >
 std::array<float, N> ComputeFilterCoeffs()
 {
-  // half an octave centered at 5200 Hz, because this guy thinks the superbowl ad was centered there
-  // https://imgur.com/z6bZu3b
-  // If you change this, also change notchDetector, which has indices in [0,127] corresponding to [0,8kHz)
-  const float centerFreq_Hz = 5200.0f;
-  const float sqrt2 = 1.41421356237f; // since sqrt is not constexpr
-  // since an octave is log2(fMax/fMin), and we want the average fMin+fMax=centerFreq:
-  const float fMin = 2 * centerFreq_Hz / (1 + sqrt2);
-  const float fMax = 2 * centerFreq_Hz * sqrt2 / (1 + sqrt2);
-  
+  const float cutoff_Hz = 500.0f;
   static_assert( N % 2, "N must be odd" );
   
   std::array<float, N> filterCoeffs;
   
   // http://digitalsoundandmusic.com/7-3-2-low-pass-high-pass-bandpass-and-bandstop-filters/
-  const float f1 = fMin/sampleRate;
-  const float f2 = fMax/sampleRate;
+  const float f1 = cutoff_Hz/sampleRate;
   const float omega1 = 2*M_PI_F*f1;
-  const float omega2 = 2*M_PI_F*f2;
   const int middle = N/2;
   for( int i=-N/2; i<=N/2; ++i ) {
     if (i == 0) {
-      filterCoeffs[middle] = 1 - 2*(f2 - f1);
+      filterCoeffs[middle] = 1-2*f1;
     } else {
-      filterCoeffs[i + middle] = sinf(omega1*i)/(M_PI_F*i) - sinf(omega2*i)/(M_PI_F*i);
+      filterCoeffs[i + middle] = -sinf(omega1*i)/(M_PI_F*i);
     }
   }
   return filterCoeffs;
 }
-std::array<float, AlexaMediaPlayer::kBandStopFilterSize> AlexaMediaPlayer::_filterCoeffs24
-  = ComputeFilterCoeffs<AlexaMediaPlayer::kBandStopFilterSize,kTTSSampleRate>();
+std::array<float, AlexaMediaPlayer::kFilterSize> AlexaMediaPlayer::_filterCoeffs24
+  = ComputeFilterCoeffs<AlexaMediaPlayer::kFilterSize,kTTSSampleRate>();
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaMediaPlayer::AlexaMediaPlayer( Type type,
@@ -225,7 +219,7 @@ AlexaMediaPlayer::AlexaMediaPlayer( Type type,
   , _dispatchQueue(Util::Dispatch::Create("AlexaMediaPlayer"))
   , _contentFetcherFactory( contentFetcherFactory )
   , _audioInfo( sAudioInfo.at(_type) )
-  , _bandStopBuffer{ std::make_unique<Util::FixedCircularBuffer<short, kBandStopFilterSize>>() }
+  , _filterBuffer{ std::make_unique<Util::FixedCircularBuffer<short, kFilterSize>>() }
 {
  // FIXME: How do we get the inital state from persistant storage
   _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
@@ -246,8 +240,8 @@ AlexaMediaPlayer::~AlexaMediaPlayer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaMediaPlayer::Init( const AnimContext* context )
 {
-  DEV_ASSERT(nullptr != context, "RadioAudioComponent.InvalidContext");
-  DEV_ASSERT(nullptr != context->GetAudioController(), "RadioAudioComponent.InvalidAudioController");
+  DEV_ASSERT(nullptr != context, "AudioMediaPlayer.InvalidContext");
+  DEV_ASSERT(nullptr != context->GetAudioController(), "AudioMediaPlayer.InvalidAudioController");
 
   _audioController  = context->GetAudioController();
   DEV_ASSERT_MSG( _audioController != nullptr, "AudioMediaPlayer.Init.InvalidAudioController", "" );
@@ -257,21 +251,31 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
   // in dev, remove any debug audio files from last time
   const Util::Data::DataPlatform* platform = context->GetDataPlatform();
   if( platform != nullptr ) {
-    _saveFolder = platform->pathToResource( Util::Data::Scope::Cache, "alexa" );
-    _saveFolder = Util::FileUtils::AddTrailingFileSeparator( _saveFolder );
-    if( !_saveFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _saveFolder ) ) {
-      Util::FileUtils::CreateDirectory( _saveFolder );
+    _cacheSaveFolder = platform->pathToResource( Util::Data::Scope::Cache, "alexa" );
+    _persistentSaveFolder = platform->pathToResource( Util::Data::Scope::Persistent, "alexa" );
+
+    _cacheSaveFolder = Util::FileUtils::AddTrailingFileSeparator( _cacheSaveFolder );
+    _persistentSaveFolder = Util::FileUtils::AddTrailingFileSeparator( _cacheSaveFolder );
+
+    if( !_cacheSaveFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _cacheSaveFolder ) ) {
+      Util::FileUtils::CreateDirectory( _cacheSaveFolder );
     }
+    DEV_ASSERT(Util::FileUtils::DirectoryExists( _persistentSaveFolder ), "AudioMediaPlayer.Init.NoPersistentSaveFolder");
+
 #if ANKI_DEV_CHEATS
     for( int i=1; i<100; ++i ) {
-      std::string ss = _saveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".mp3";
+      std::string ss = _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".mp3";
       if( Util::FileUtils::FileExists(ss) ) {
         Util::FileUtils::DeleteFile( ss );
-        Util::FileUtils::DeleteFile( _saveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".pcm" );
+        Util::FileUtils::DeleteFile( _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".pcm" );
       }
     }
 #endif
   }
+
+  // load our volume settings and update vector's volume accordingly
+  LoadSettings();
+  SetPlayerVolume();
 
   if (kUsePlaybackRecognizer && (_type == AlexaMediaPlayer::Type::TTS)) {
     auto* dataPlatform = context->GetDataLoader();
@@ -698,10 +702,19 @@ void AlexaMediaPlayer::setObserver( std::shared_ptr<avsCommon::utils::mediaPlaye
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaMediaPlayer::SetPlayerVolume(float volume)
+void AlexaMediaPlayer::OnSettingsChanged() const
 {
+  SetPlayerVolume();
+  SaveSettings();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::SetPlayerVolume() const
+{
+  const float playerVolume = _settings.mute ? 0.0f : (_settings.volume / 100.0f);
+
   const auto parameterId = AudioEngine::ToAudioParameterId( _audioInfo.volumeParameter );
-  const auto parameterValue = AudioEngine::ToAudioRTPCValue( volume );
+  const auto parameterValue = AudioEngine::ToAudioRTPCValue( playerVolume );
   _audioController->SetParameter( parameterId, parameterValue, AudioEngine::kInvalidAudioGameObject );
 }
 
@@ -804,12 +817,12 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
         // instead, since that already has 3 filters, and apparently they can be customized by
         // dragging control points around.
         // TODO 2: more filters for different sample rates
-        if( kApplyBandStopFilter && (Anki::Util::Abs(info.hz - kTTSSampleRate) < 1000) ) {
+        if( kApplyHighPassFilter && (Anki::Util::Abs(info.hz - kTTSSampleRate) < 1000) ) {
           for( int i=0; i<samples; ++i ) {
-            _bandStopBuffer->push_front( (float)_decodedPcm[i] );
+            _filterBuffer->push_front( (float)_decodedPcm[i] );
             float value = 0.0f;
-            for( int j=0; j<_bandStopBuffer->size(); ++j ) {
-              value += _filterCoeffs24[j] * (*_bandStopBuffer)[j];
+            for( int j=0; j<_filterBuffer->size(); ++j ) {
+              value += _filterCoeffs24[j] * (*_filterBuffer)[j];
             }
             _decodedPcm[i] = (short)value;
           }
@@ -885,7 +898,7 @@ void AlexaMediaPlayer::SavePCM( short* buff, size_t size ) const
   }
   static int pcmfd = -1;
   if( pcmfd < 0 ) {
-    const auto path = _saveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".pcm";
+    const auto path = _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".pcm";
     pcmfd = open( path.c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644 );
   }
 
@@ -907,7 +920,7 @@ void AlexaMediaPlayer::SaveMP3( const unsigned char* buff, size_t size ) const
   }
   static int mp3fd = -1;
   if( mp3fd < 0 ) {
-    const auto path = _saveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".mp3";
+    const auto path = _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".mp3";
     mp3fd = open( path.c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644 );
   }
 
@@ -918,6 +931,48 @@ void AlexaMediaPlayer::SaveMP3( const unsigned char* buff, size_t size ) const
     mp3fd = -1;
   }
 #endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string AlexaMediaPlayer::GetSettingsFilename() const
+{
+  return _persistentSaveFolder + "speaker_" + _audioInfo.name + "_settings.json";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::SaveSettings() const
+{
+  if( !_persistentSaveFolder.empty() ) {
+    const std::string filename = GetSettingsFilename();
+
+    Json::Value metadata;
+    metadata[kSaveSettings_VolumeKey]   = _settings.volume;
+    metadata[kSaveSettings_MuteKey]     = _settings.mute;
+
+    Util::FileUtils::WriteFile(filename, metadata.toStyledString());
+
+    LOG( "saved settings: volume [%d], mute [%d]", _settings.volume, _settings.mute );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::LoadSettings()
+{
+  if( !_persistentSaveFolder.empty() ) {
+    const std::string filename = GetSettingsFilename();
+    const std::string fileContents = Util::FileUtils::ReadFile( filename );
+
+    Json::Reader reader;
+    Json::Value metadata;
+
+    // if the file exists, we should have some content
+    if( !fileContents.empty() && reader.parse( fileContents, metadata ) ) {
+      _settings.volume      = metadata[kSaveSettings_VolumeKey].asInt();
+      _settings.mute        = metadata[kSaveSettings_MuteKey].asBool();
+
+      LOG( "loaded settings: volume [%d], mute [%d]", _settings.volume, _settings.mute );
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -935,15 +990,20 @@ bool AlexaMediaPlayer::getSpeakerSettings( SpeakerSettings *settings )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::setVolume( int8_t volume )
 {
-  _settings.volume = volume;
-  LOG( "setting volume to %d", _settings.volume );
-  SetPlayerVolume( _settings.volume / 100.0f );
+  if( volume != _settings.volume ) {
+    _settings.volume = volume;
+    LOG( "setting volume to %d", _settings.volume );
+    OnSettingsChanged();
+  }
+
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::adjustVolume( int8_t delta )
 {
+  const auto previousVolume = _settings.volume;
+
   _settings.volume += delta;
   if( _settings.volume < avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MIN ) {
     _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MIN;
@@ -951,18 +1011,24 @@ bool AlexaMediaPlayer::adjustVolume( int8_t delta )
   if( _settings.volume > avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX ) {
     _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
   }
-  LOG( "adjusting volume by %d to %d", delta, _settings.volume );
-  SetPlayerVolume( _settings.volume / 100.0f );
+
+  if( previousVolume != _settings.volume ) {
+    LOG( "adjusting volume by %d to %d", delta, _settings.volume );
+    OnSettingsChanged();
+  }
+
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::setMute( bool mute )
 {
-  _settings.mute = mute;
-  LOG( "setting mute=%d ", mute );
-  const int8_t volume = _settings.mute ? 0 : _settings.volume;
-  SetPlayerVolume( volume / 100.0f );
+  if( mute != _settings.mute ) {
+    _settings.mute = mute;
+    LOG( "setting mute=%d ", mute );
+    OnSettingsChanged();
+  }
+
   return true;
 }
 

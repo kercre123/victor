@@ -19,7 +19,6 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceAndApproachPlanner.h"
-#include "engine/latticePlanner.h"
 #include "engine/xyPlanner.h"
 #include "engine/minimalAnglePlanner.h"
 #include "engine/pathDolerOuter.h"

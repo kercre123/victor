@@ -10,6 +10,9 @@
  **/
 
 #include "quadTree.h"
+#include "quadTreeProcessor.h"
+
+#include "engine/navMap/memoryMap/data/memoryMapData.h"
 
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
 
@@ -101,10 +104,8 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
     }
     
     if ( !node.IsSubdivided() ) {
-      if ( currentData->CanOverrideSelfWithContent(newData) ) {
-        node.ForceSetContent( newData );
-        contentChanged = true;
-      }
+      node.ForceSetContent( std::move(newData) );
+      contentChanged = true;
     } 
   };
   Fold(accumulator, region);
@@ -128,7 +129,7 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
       auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
-        node.ForceSetContent(newData);
+        node.ForceSetContent( std::move(newData) );
         contentChanged = true;
       }
     };
@@ -154,7 +155,7 @@ bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction trans
       auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
-        node.ForceSetContent(newData);
+        node.ForceSetContent( std::move(newData) );
         contentChanged = true;
       }
     };

@@ -47,6 +47,7 @@
 
 namespace {
 
+#define LOG_CHANNEL "Microphones"
 # define CONSOLE_GROUP "MicData"
 
 #if ANKI_DEV_CHEATS
@@ -99,7 +100,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 , _fftResultData(new FFTResultData())
 , _alexaState(AlexaSimpleState::Disabled)
 , _micMuted(false)
-, _abortAlexaScreen(false)
+, _abortAlexaScreenDueToHeyVector(false)
 , _context(context)
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
@@ -139,7 +140,7 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
     
     // saying "hey vector" should exit certain alexa debug screens and cancel auth. FaceInfoScreen isn't
     // currently set up to handle threads, so set a flag that is handled in Update()
-    _abortAlexaScreen = true;
+    _abortAlexaScreenDueToHeyVector = true;
     
     _micDataProcessor->VoiceTriggerWordDetection( info );
     SendRecognizerDasLog( info, nullptr );
@@ -179,8 +180,8 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 {
   if(HasStreamingJob())
   {
-    PRINT_NAMED_WARNING("micDataProcessor.OverlappingStreamRequests",
-                        "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming");
+    LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
+                "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming");
     return;
   }
 
@@ -193,18 +194,18 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
       // but doesn't hurt to check
       if (!HasStreamingJob()) {
         _micDataProcessor->CreateStreamJob(type, kTriggerLessOverlapSize_ms);
-        PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
-                         "Starting Wake Wordless streaming");
+        LOG_INFO("MicDataSystem.StartWakeWordlessStreaming.StartStreaming",
+                 "Starting Wake Wordless streaming");
       }
       else {
-        PRINT_NAMED_WARNING("micDataProcessor.OverlappingStreamRequests",
-                            "Started streaming job while waiting for StartTriggerResponseWithoutGetIn callback");
+        LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
+                    "Started streaming job while waiting for StartTriggerResponseWithoutGetIn callback");
         SetWillStream(false);
       }
     }
     else {
-      PRINT_NAMED_WARNING("MicDataSystem.CantStreamToCloud",
-                          "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
+      LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.CantStreamToCloud",
+                  "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
       SetWillStream(false);
     }
   };
@@ -229,7 +230,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     // A single press when muted should unmute and then trigger a wakeword.
     // This is an annoying code path since FaceInfoScreenManager::ToggleMute calls back into
     // MicDataSystem. But FaceInfoScreenManager is already set up to check for various button clicks...
-    FaceInfoScreenManager::getInstance()->ToggleMute();
+    FaceInfoScreenManager::getInstance()->ToggleMute("SINGLE_PRESS");
     DEV_ASSERT( !_micMuted, "MicDataSystem.FakeTriggerWordDetect.StillMuted" );
   }
   
@@ -324,14 +325,14 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     switch (msg.GetTag()) {
 
       case CloudMic::MessageTag::stopSignal:
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
+        LOG_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
         receivedStopMessage = true;
         break;
 
       #if ANKI_DEV_CHEATS
       case CloudMic::MessageTag::testStarted:
       {
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.FakeTrigger", "");
+        LOG_INFO("MicDataSystem.Update.RecvCloudProcess.FakeTrigger", "");
         _fakeStreamingState = true;
 
         // Set up a message to send out about the triggerword
@@ -349,7 +350,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       #endif
       case CloudMic::MessageTag::connectionResult:
       {
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
+        LOG_INFO("MicDataSystem.Update.RecvCloudProcess.connectionResult", "%s", msg.Get_connectionResult().status.c_str());
         FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
 
         // Send the results back to engine
@@ -362,7 +363,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
 
       default:
-        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
+        LOG_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
         receivedStopMessage = true;
         break;
     }
@@ -442,12 +443,12 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
           hw.mode = _currentStreamingJob->_type;
         }
         SendUdpMessage(CloudMic::Message::Createhotword(std::move(hw)));
-        PRINT_NAMED_INFO("MicDataSystem.Update.StreamingStart", "");
+        LOG_INFO("MicDataSystem.Update.StreamingStart", "");
       }
       else
       {
         ClearCurrentStreamingJob();
-        PRINT_NAMED_INFO("MicDataSystem.Update.StreamingStartIgnored", "Ignoring stream start as no clients connected.");
+        LOG_INFO("MicDataSystem.Update.StreamingStartIgnored", "Ignoring stream start as no clients connected.");
       }
     }
 
@@ -465,7 +466,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
           {
             SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
           }
-          PRINT_NAMED_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
+          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
           #if ANKI_DEV_CHEATS
             _fakeStreamingState = false;
           #endif
@@ -566,13 +567,14 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
   #endif
   
-  if (_abortAlexaScreen) {
-    _abortAlexaScreen = false;
-    FaceInfoScreenManager::getInstance()->EnableAlexaScreen(ScreenName::None,"","");
+  if (_abortAlexaScreenDueToHeyVector) {
+    _abortAlexaScreenDueToHeyVector = false;
     Alexa* alexa = _context->GetAlexa();
     if( alexa != nullptr ) {
-      alexa->CancelPendingAlexaAuth();
+      // sign out before we change the info screen so the reason is more descriptive
+      alexa->CancelPendingAlexaAuth("VECTOR_WAKEWORD");
     }
+    FaceInfoScreenManager::getInstance()->EnableAlexaScreen(ScreenName::None,"","");
   }
 
   // Try to retrieve the speaker latency from the AkAlsaSink plugin. We
@@ -587,9 +589,9 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         if (pluginInterface != nullptr) {
           _speakerLatency_ms = pluginInterface->AkAlsaSinkGetSpeakerLatency_ms();
           if (_speakerLatency_ms != 0) {
-            PRINT_NAMED_INFO("MicDataSystem.Update.SpeakerLatency",
-                             "AkAlsaSink plugin reporting a max speaker latency of %u",
-                             (uint32_t) _speakerLatency_ms);
+            LOG_INFO("MicDataSystem.Update.SpeakerLatency",
+                     "AkAlsaSink plugin reporting a max speaker latency of %u",
+                     (uint32_t) _speakerLatency_ms);
           }
         }
       }
@@ -743,9 +745,8 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
     RobotDataLoader *dataLoader = _context->GetDataLoader();
     const auto callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-      PRINT_CH_INFO("Alexa", "MicDataSystem.SetAlexaState.TriggerWordDetectCallback",
-                    "info - %s", info.Description().c_str());
-      
+      LOG_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback",
+               "info - %s", info.Description().c_str());
       if( HasStreamingJob() ) {
         // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
         return;
@@ -868,7 +869,7 @@ void MicDataSystem::RequestConnectionStatus()
 {
   if (_udpServer->HasClient())
   {
-    PRINT_NAMED_INFO("MicDataSystem.RequestConnectionStatus", "");
+    LOG_INFO("MicDataSystem.RequestConnectionStatus", "");
     SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
 }

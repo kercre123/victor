@@ -246,6 +246,31 @@ void QuadTreeNode::Fold(FoldFunctor& accumulator, const NodeAddress& addr, FoldD
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr) const
+{
+  if (addr.size() > _address.size()) {
+    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
+    auto nextNode = GetChild(addr[_address.size()]);
+    if (nextNode) { nextNode->Fold(accumulator, addr); }
+  } else if (addr == _address) {
+    accumulator(*this);
+  } 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::Fold(FoldFunctor& accumulator, const NodeAddress& addr)
+{
+  if (addr.size() > _address.size()) {
+    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
+    auto nextNode = GetChild(addr[_address.size()]);
+    if (nextNode) { nextNode->Fold(accumulator, addr); }
+  } else if (addr == _address) {
+    accumulator(*this);
+  } 
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /*
   For calls that are constrained by some convex region, first we can potentially avoid excess collision checks
   if the current node is fully contained by the Fold Region. In the example below, nodes 1 through 6 need intersection 

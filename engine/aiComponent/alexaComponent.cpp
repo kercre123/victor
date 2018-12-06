@@ -17,8 +17,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/settingsManager.h"
 #include "engine/cozmoContext.h"
@@ -32,6 +32,7 @@
 #include "engine/utils/cozmoFeatureGate.h"
 #include "proto/external_interface/shared.pb.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
 
 namespace Anki {
@@ -39,8 +40,16 @@ namespace Vector {
   
 namespace {
   #define LOG_CHANNEL "Alexa"
+  
+  // This component also handles the VC for sign in and sign out to hide from any behaviors whether it was
+  // app or voice command that requested sign in/out, since app intents got cut.
   const UserIntentTag kSignInIntent = USER_INTENT(amazon_signin);
   const UserIntentTag kSignOutIntent = USER_INTENT(amazon_signout);
+  
+  // If a request to sign in/out is not claimed in this many ticks, this component will perform the sign in/out.
+  // Note that voice command-initiated requests wait until the intent is cleared in the uic before signing in/out,
+  // so that BehaviorReactToVoiceCommand has time to finish
+  const float kRequestDelayTicks = 4;
   
   const float kAnimTimeout_s = 3.0f;
   const AnimationTag kInvalidAnimationTag = AnimationComponent::GetInvalidTag();
@@ -84,15 +93,15 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
     _signalHandles.push_back( ri->Subscribe( RobotInterface::RobotToEngineTag::alexaUXChanged, callback ) );
   }
   auto forceOptIn = [this](ConsoleFunctionContextRef context) {
-    SetAlexaOption( true );
+    SetRequest( Request::SignInApp );
   };
   _consoleFuncs.emplace_front( "ForceAlexaOptIn", std::move(forceOptIn), "Alexa", "" );
   auto forceOptOut = [this](ConsoleFunctionContextRef context) {
-    SetAlexaOption( false );
+    SetRequest( Request::SignOutApp );
   };
   _consoleFuncs.emplace_front( "ForceAlexaOptOut", std::move(forceOptOut), "Alexa", "" );
   auto fakeAppDisconnect = [this](ConsoleFunctionContextRef context) {
-    SendCancelPendingAuth();
+    SendCancelPendingAuth(RobotInterface::CancelAlexaFromEngineReason::AppDisconnect);
   };
   _consoleFuncs.emplace_front( "FakeAppDisconnect", std::move(fakeAppDisconnect), "Alexa", "" );
   
@@ -120,6 +129,9 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
       _uxResponseInfo[uxState].SetWaiting( false );
     }
   });
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastUxStateTransition_s = currTime_s;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -135,19 +147,19 @@ void AlexaComponent::UpdateDependent(const AICompMap& dependentComps)
   // no behavior handles the intents kSignInIntent or kSignOutIntent. We just message the anim process
   // of the request to sign in/out, and depending on its state, it will either not do anything, or
   // send a message back to the engine switch stacks into a face screen-style Wait behavior for alexa pairing
-  auto& BC = dependentComps.GetComponent<BehaviorComponent>();
-  auto& uic = BC.GetComponent<UserIntentComponent>();
+  if( _uic == nullptr ) {
+    auto& BC = dependentComps.GetComponent<BehaviorComponent>();
+    _uic = &BC.GetComponent<UserIntentComponent>();
+  }
   
-  if( uic.IsUserIntentPending(kSignInIntent) ) {
+  if( _uic->IsUserIntentPending(kSignInIntent) ) {
     if( _featureFlagEnabled ) {
-      SetAlexaOption( true );
+      SetRequest( Request::SignInVC );
     }
-    uic.DropUserIntent( kSignInIntent );
-  } else if( uic.IsUserIntentPending(kSignOutIntent) ) {
+  } else if( _uic->IsUserIntentPending(kSignOutIntent) ) {
     if( _featureFlagEnabled ) {
-      SetAlexaOption( false );
+      SetRequest( Request::SignOutVC );
     }
-    uic.DropUserIntent( kSignOutIntent );
   }
   
   // check timeout for waitingForGetInCompletion
@@ -158,6 +170,65 @@ void AlexaComponent::UpdateDependent(const AICompMap& dependentComps)
     }
   }
   
+  if( (_requestTimeout != 0) && (_requestTimeout < BaseStationTimer::getInstance()->GetTickCount()) ) {
+    // Clear app requests when the timer expires.
+    // Clear VC requests when the intent is gone from the uic ==> this implies it expired in the uic, or
+    // someone else handled the intent. We have to wait at least as long as the uic timeout, because
+    // that timeout is dynamically adjusted by BehaviorReactToVoiceCommand
+    if( _request == Request::SignInApp ) {
+      SignIn();
+    } else if( _request == Request::SignOutApp ) {
+      SignOut();
+    } else if( (_request == Request::SignInVC) && !_uic->IsUserIntentPending(kSignInIntent) ) {
+      SignIn();
+    } else if( (_request == Request::SignOutVC) && !_uic->IsUserIntentPending(kSignOutIntent) ) {
+      SignOut();
+    }
+  }
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaComponent::IsSignInPending() const
+{
+  const bool pending = (_request == Request::SignInApp) || (_request == Request::SignInVC);
+  return pending && (_requestTimeout != 0);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaComponent::IsSignOutPending() const
+{
+  const bool pending = (_request == Request::SignOutApp) || (_request == Request::SignOutVC);
+  return pending && (_requestTimeout != 0);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::ClaimRequest()
+{
+  _requestTimeout = 0;
+  if( _uic != nullptr ) {
+    if( (_request == Request::SignInVC) && _uic->IsUserIntentPending(kSignInIntent) ) {
+      _uic->DropUserIntent( kSignInIntent );
+    } else if( (_request == Request::SignOutVC) && _uic->IsUserIntentPending(kSignOutIntent) ) {
+      _uic->DropUserIntent( kSignOutIntent );
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::SignIn()
+{
+  _request = Request::None;
+  _requestTimeout = 0;
+  SetAlexaOption( true );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::SignOut()
+{
+  _request = Request::None;
+  _requestTimeout = 0;
+  SetAlexaOption( false );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -166,8 +237,10 @@ void AlexaComponent::SetAlexaOption( bool optedIn )
   _pendingAuthIsFromOptIn = optedIn;
   // send anim message to opt IN/OUT
   _robot.SendMessage( RobotInterface::EngineToRobot( RobotInterface::SetAlexaUsage(optedIn) ) );
+
   if( !optedIn ) {
     // make sure backpack button setting is back to hey vector
+    // TEMP: DAS for this
     static const bool kButtonIsAlexa = false;
     ToggleButtonWakewordSetting( kButtonIsAlexa );
   }
@@ -189,16 +262,16 @@ void AlexaComponent::HandleAppEvents( const AnkiEvent<external_interface::Gatewa
     case external_interface::GatewayWrapperTag::kAlexaOptInRequest:
     {
       if( _featureFlagEnabled ) {
-        // tell anim process the new auth state
         const bool optIn = msg.alexa_opt_in_request().opt_in();
-        SetAlexaOption( optIn );
+        const auto request = optIn ? Request::SignInApp : Request::SignOutApp;
+        SetRequest( request );
       }
     }
       break;
     case external_interface::GatewayWrapperTag::kAppDisconnected:
     {
       // tell anim process to cancel any pending auth, but remain authenticated if already authenticated
-      SendCancelPendingAuth();
+      SendCancelPendingAuth(RobotInterface::CancelAlexaFromEngineReason::AppDisconnect);
     }
       break;
     default:
@@ -262,7 +335,8 @@ void AlexaComponent::SendAuthStateToApp( bool isResponse )
                       "Feature flag was disabled but the alexa state is '%s'",
                       AlexaAuthStateToString(_authState) ) ) {
       // try disabling alexa
-      SetAlexaOption( false );
+      SignOut();
+      SendSignOutDAS( UserIntentSource::Unknown );
       return;
     }
   }
@@ -302,10 +376,10 @@ void AlexaComponent::SendAuthStateToApp( bool isResponse )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaComponent::SendCancelPendingAuth() const
+void AlexaComponent::SendCancelPendingAuth(const RobotInterface::CancelAlexaFromEngineReason& reason) const
 {
   // send anim message to cancel pending authorization
-  _robot.SendMessage( RobotInterface::EngineToRobot( RobotInterface::CancelPendingAlexaAuth() ) );
+  _robot.SendMessage( RobotInterface::EngineToRobot( RobotInterface::CancelPendingAlexaAuth{ reason } ) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -368,6 +442,20 @@ void AlexaComponent::HandleNewUXState( AlexaUXState state )
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   PRINT_NAMED_WARNING("AlexaComponent.HandleNewUXState", "State=%s", AlexaUXStateToString(state) );
+
+
+  if( _uxState != state ) {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float lastStateTime_s = currTime_s - _lastUxStateTransition_s;
+
+    DASMSG(ux_state_msg, "alexa.ux_state_transition", "The alexa agent changed UX states");
+    DASMSG_SET(s1, AlexaUXStateToString(state), "new UX state (AlexaUXState in alexaTypes.clad)");
+    DASMSG_SET(s2, AlexaUXStateToString(_uxState), "old UX state (AlexaUXState in alexaTypes.clad)");
+    DASMSG_SET(i1, ((int)(lastStateTime_s * 1000.0f)), "Time (in milliseconds) the last ux state was active");
+    DASMSG_SEND();
+
+    _lastUxStateTransition_s = currTime_s;
+  }
   
   if( (_uxState == AlexaUXState::Idle) && (_uxState != state) ) {
     // alexa exited from idle. the anim process is likely playing some getin right now if we pushed one.
@@ -445,6 +533,51 @@ void AlexaComponent::AlexaUXResponseInfo::SetWaiting( bool waiting )
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::SetRequest( Request request )
+{
+  if( (_request == Request::None) && (request != Request::None) ) {
+    _request = request;
+    _requestTimeout = kRequestDelayTicks + BaseStationTimer::getInstance()->GetTickCount();
+
+    switch( _request ) {
+      case Request::SignInApp:
+        SendSignInDAS( UserIntentSource::App );
+        break;
+      case Request::SignOutApp:
+        SendSignOutDAS( UserIntentSource::App );
+        break;
+      case Request::SignInVC:
+        SendSignInDAS( UserIntentSource::Voice );
+        break;
+      case Request::SignOutVC:
+        SendSignOutDAS( UserIntentSource::Voice );
+        break;
+      case Request::None:
+        break;
+    }
+  } else {
+    LOG_WARNING( "AlexaComponent.AddRequest.NotHandled",
+                 "Request of type %d dropped because %d is already pending or request is none",
+                 (int)request, (int)_request );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::SendSignInDAS( UserIntentSource source ) const
+{
+  DASMSG(alexa_opt_in, "alexa.user_sign_in_attempt", "User attempted to sign in to alexa");
+  DASMSG_SET(s1, UserIntentSourceToString( source ), "source of the request (Voice or App)");
+  DASMSG_SEND();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaComponent::SendSignOutDAS( UserIntentSource source ) const
+{
+  DASMSG(alexa_opt_in, "alexa.user_sign_out_attempt", "User attempted to sign out of alexa");
+  DASMSG_SET(s1, UserIntentSourceToString( source ), "source of the request (Voice or App)");
+  DASMSG_SEND();
+}
   
 } // namespace Vector
 } // namespace Anki

@@ -231,7 +231,7 @@ bool MemoryMap::Insert(const MemoryMapRegion& r, const MemoryMapData& data)
 
   NodeTransformFunction trfm = [&dataPtr] (const MemoryMapDataPtr& currentData) { 
     currentData->SetLastObservedTime(dataPtr->GetLastObservedTime());
-    return dataPtr; 
+    return currentData->CanOverrideSelfWithContent(dataPtr) ? dataPtr : currentData; 
   };
   return MONITOR_PERFORMANCE( _quadTree.Insert(r, trfm) );
 }
