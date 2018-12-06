@@ -33,7 +33,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
  */
 
 
-#include "player.h"
+#include "alexaMediaPlayer.h"
 
 #include "attachmentReader.h"
 #include "streamReader.h"
@@ -163,6 +163,10 @@ namespace {
       AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Resume,
       AudioMetaData::GameParameter::ParameterType::Robot_Alexa_Volume_Master}}
   };
+
+  const char* kSaveSettings_VolumeKey     = "volume";
+  const char* kSaveSettings_MuteKey       = "mute";
+
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("AlexaMediaPlayer.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
@@ -236,8 +240,8 @@ AlexaMediaPlayer::~AlexaMediaPlayer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaMediaPlayer::Init( const AnimContext* context )
 {
-  DEV_ASSERT(nullptr != context, "RadioAudioComponent.InvalidContext");
-  DEV_ASSERT(nullptr != context->GetAudioController(), "RadioAudioComponent.InvalidAudioController");
+  DEV_ASSERT(nullptr != context, "AudioMediaPlayer.InvalidContext");
+  DEV_ASSERT(nullptr != context->GetAudioController(), "AudioMediaPlayer.InvalidAudioController");
 
   _audioController  = context->GetAudioController();
   DEV_ASSERT_MSG( _audioController != nullptr, "AudioMediaPlayer.Init.InvalidAudioController", "" );
@@ -247,21 +251,31 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
   // in dev, remove any debug audio files from last time
   const Util::Data::DataPlatform* platform = context->GetDataPlatform();
   if( platform != nullptr ) {
-    _saveFolder = platform->pathToResource( Util::Data::Scope::Cache, "alexa" );
-    _saveFolder = Util::FileUtils::AddTrailingFileSeparator( _saveFolder );
-    if( !_saveFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _saveFolder ) ) {
-      Util::FileUtils::CreateDirectory( _saveFolder );
+    _cacheSaveFolder = platform->pathToResource( Util::Data::Scope::Cache, "alexa" );
+    _persistentSaveFolder = platform->pathToResource( Util::Data::Scope::Persistent, "alexa" );
+
+    _cacheSaveFolder = Util::FileUtils::AddTrailingFileSeparator( _cacheSaveFolder );
+    _persistentSaveFolder = Util::FileUtils::AddTrailingFileSeparator( _cacheSaveFolder );
+
+    if( !_cacheSaveFolder.empty() && Util::FileUtils::DirectoryDoesNotExist( _cacheSaveFolder ) ) {
+      Util::FileUtils::CreateDirectory( _cacheSaveFolder );
     }
+    DEV_ASSERT(Util::FileUtils::DirectoryExists( _persistentSaveFolder ), "AudioMediaPlayer.Init.NoPersistentSaveFolder");
+
 #if ANKI_DEV_CHEATS
     for( int i=1; i<100; ++i ) {
-      std::string ss = _saveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".mp3";
+      std::string ss = _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".mp3";
       if( Util::FileUtils::FileExists(ss) ) {
         Util::FileUtils::DeleteFile( ss );
-        Util::FileUtils::DeleteFile( _saveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".pcm" );
+        Util::FileUtils::DeleteFile( _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(i) + ".pcm" );
       }
     }
 #endif
   }
+
+  // load our volume settings and update vector's volume accordingly
+  LoadSettings();
+  SetPlayerVolume();
 
   if (kUsePlaybackRecognizer && (_type == AlexaMediaPlayer::Type::TTS)) {
     auto* dataPlatform = context->GetDataLoader();
@@ -688,10 +702,19 @@ void AlexaMediaPlayer::setObserver( std::shared_ptr<avsCommon::utils::mediaPlaye
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaMediaPlayer::SetPlayerVolume(float volume)
+void AlexaMediaPlayer::OnSettingsChanged() const
 {
+  SetPlayerVolume();
+  SaveSettings();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::SetPlayerVolume() const
+{
+  const float playerVolume = _settings.mute ? 0.0f : (_settings.volume / 100.0f);
+
   const auto parameterId = AudioEngine::ToAudioParameterId( _audioInfo.volumeParameter );
-  const auto parameterValue = AudioEngine::ToAudioRTPCValue( volume );
+  const auto parameterValue = AudioEngine::ToAudioRTPCValue( playerVolume );
   _audioController->SetParameter( parameterId, parameterValue, AudioEngine::kInvalidAudioGameObject );
 }
 
@@ -875,7 +898,7 @@ void AlexaMediaPlayer::SavePCM( short* buff, size_t size ) const
   }
   static int pcmfd = -1;
   if( pcmfd < 0 ) {
-    const auto path = _saveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".pcm";
+    const auto path = _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".pcm";
     pcmfd = open( path.c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644 );
   }
 
@@ -897,7 +920,7 @@ void AlexaMediaPlayer::SaveMP3( const unsigned char* buff, size_t size ) const
   }
   static int mp3fd = -1;
   if( mp3fd < 0 ) {
-    const auto path = _saveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".mp3";
+    const auto path = _cacheSaveFolder + "speaker_" + _audioInfo.name + std::to_string(_playingSource) + ".mp3";
     mp3fd = open( path.c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644 );
   }
 
@@ -908,6 +931,48 @@ void AlexaMediaPlayer::SaveMP3( const unsigned char* buff, size_t size ) const
     mp3fd = -1;
   }
 #endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string AlexaMediaPlayer::GetSettingsFilename() const
+{
+  return _persistentSaveFolder + "speaker_" + _audioInfo.name + "_settings.json";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::SaveSettings() const
+{
+  if( !_persistentSaveFolder.empty() ) {
+    const std::string filename = GetSettingsFilename();
+
+    Json::Value metadata;
+    metadata[kSaveSettings_VolumeKey]   = _settings.volume;
+    metadata[kSaveSettings_MuteKey]     = _settings.mute;
+
+    Util::FileUtils::WriteFile(filename, metadata.toStyledString());
+
+    LOG( "saved settings: volume [%d], mute [%d]", _settings.volume, _settings.mute );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::LoadSettings()
+{
+  if( !_persistentSaveFolder.empty() ) {
+    const std::string filename = GetSettingsFilename();
+    const std::string fileContents = Util::FileUtils::ReadFile( filename );
+
+    Json::Reader reader;
+    Json::Value metadata;
+
+    // if the file exists, we should have some content
+    if( !fileContents.empty() && reader.parse( fileContents, metadata ) ) {
+      _settings.volume      = metadata[kSaveSettings_VolumeKey].asInt();
+      _settings.mute        = metadata[kSaveSettings_MuteKey].asBool();
+
+      LOG( "loaded settings: volume [%d], mute [%d]", _settings.volume, _settings.mute );
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -925,15 +990,20 @@ bool AlexaMediaPlayer::getSpeakerSettings( SpeakerSettings *settings )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::setVolume( int8_t volume )
 {
-  _settings.volume = volume;
-  LOG( "setting volume to %d", _settings.volume );
-  SetPlayerVolume( _settings.volume / 100.0f );
+  if( volume != _settings.volume ) {
+    _settings.volume = volume;
+    LOG( "setting volume to %d", _settings.volume );
+    OnSettingsChanged();
+  }
+
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::adjustVolume( int8_t delta )
 {
+  const auto previousVolume = _settings.volume;
+
   _settings.volume += delta;
   if( _settings.volume < avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MIN ) {
     _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MIN;
@@ -941,18 +1011,24 @@ bool AlexaMediaPlayer::adjustVolume( int8_t delta )
   if( _settings.volume > avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX ) {
     _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
   }
-  LOG( "adjusting volume by %d to %d", delta, _settings.volume );
-  SetPlayerVolume( _settings.volume / 100.0f );
+
+  if( previousVolume != _settings.volume ) {
+    LOG( "adjusting volume by %d to %d", delta, _settings.volume );
+    OnSettingsChanged();
+  }
+
   return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::setMute( bool mute )
 {
-  _settings.mute = mute;
-  LOG( "setting mute=%d ", mute );
-  const int8_t volume = _settings.mute ? 0 : _settings.volume;
-  SetPlayerVolume( volume / 100.0f );
+  if( mute != _settings.mute ) {
+    _settings.mute = mute;
+    LOG( "setting mute=%d ", mute );
+    OnSettingsChanged();
+  }
+
   return true;
 }
 
