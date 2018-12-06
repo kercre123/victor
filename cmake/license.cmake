@@ -92,7 +92,7 @@ function(anki_build_target_license target)
 
     list(FIND ALL_LICENSES ${license} found)
     if(found EQUAL -1)
-      message(${MESSAGE_STATUS} "ERROR: unrecognised license ${license} for ${target} target")
+      # message(${MESSAGE_STATUS} "ERROR: unrecognised license ${license} for ${target} target")
 
       # override previous licensing information
       set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)

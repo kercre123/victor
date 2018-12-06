@@ -139,7 +139,8 @@ cd ${TOPLEVEL}
 if [ -z "${CMAKE_EXE+x}" ]; then
     echo "Attempting to install cmake"
     ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.9.6
-    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --find-cmake 3.9.6`
+#    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --find-cmake 3.9.6`
+    CMAKE_EXE=/usr/local/bin/cmake
 fi
 
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then

@@ -97,6 +97,8 @@ set(VICOS_LINKER_FLAGS_EXE)
 
 # Generic flags.
 list(APPEND VICOS_COMPILER_FLAGS
+#  -fsanitize=leak
+#  -fno-omit-frame-pointer
 	-gsplit-dwarf
     -DVICOS
 	-ffunction-sections
@@ -144,6 +146,8 @@ list(APPEND VICOS_LINKER_FLAGS
 # STL specific flags for libc++
 set(VICOS_STL_PREFIX llvm-libc++)
 list(APPEND VICOS_LINKER_FLAGS
+#  -fsanitize=leak
+#  -fno-omit-frame-pointer
 	-Wl,--exclude-libs,libunwind.a
 	-lc
 	-latomic
@@ -222,6 +226,7 @@ if(VICOS_CCACHE)
 endif()
 set(CMAKE_C_COMPILER        "${VICOS_C_COMPILER}")
 set(CMAKE_CXX_COMPILER      "${VICOS_CXX_COMPILER}")
+set(CMAKE_LINKER             "${VICOS_C_COMPILER}")
 set(_CMAKE_TOOLCHAIN_PREFIX "${VICOS_TOOLCHAIN_PREFIX}")
 
 # Run the compiler ID checks before we set flags.
