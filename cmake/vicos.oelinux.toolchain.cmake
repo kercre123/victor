@@ -189,7 +189,8 @@ if(VICOS_CPP_FEATURES)
 endif()
 if(NOT VICOS_ALLOW_UNDEFINED_SYMBOLS)
     list(APPEND VICOS_LINKER_FLAGS
-		-Wl,--no-undefined)
+#		-Wl,--no-undefined
+)
 endif()
 
 # set thumb mode (use -marm for arm mode)
