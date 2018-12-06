@@ -29,6 +29,7 @@
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki::Cozmo;
+#if ANKI_DEV_CHEATS
 
 
 static const char* kTestBehaviorJson =
@@ -112,7 +113,6 @@ void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer&
   EXPECT_EQ(behaviorContainer.GetBehaviorMap().size(), expectedBehaviorCount);
 }
 
-
 TEST(BehaviorFactory, CreateAndDestroyBehaviors)
 {
   TestBehaviorFramework testBehaviorFramework;
@@ -147,3 +147,4 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   
   VerifyBehavior(newBehavior, behaviorContainer, kBaseBehaviorCount + 1);
 }
+#endif // ANKI_DEV_CHEATS

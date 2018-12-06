@@ -70,6 +70,7 @@ int main(int argc, char **argv)
   OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
 
+#if ANKI_DEV_CHEATS
   // Get robotID to detmermine if devlogger should be created
   // Only create devLogs for robot with DEFAULT_ROBOT_ID.
   // The only time it shouldn't create a log is for sim robots
@@ -77,8 +78,7 @@ int main(int argc, char **argv)
   // recording to the same folder.
   RobotID_t robotID = OSState::getInstance()->GetRobotID();
   const bool createDevLoggers = robotID == DEFAULT_ROBOT_ID;
-  
-#if ANKI_DEV_CHEATS
+
   if (createDevLoggers) {  
     DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), "mac");
   } else {
