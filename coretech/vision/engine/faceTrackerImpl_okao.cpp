@@ -763,6 +763,11 @@ namespace Vision {
     headPose.SetParent(_camera.GetPose());
     face.SetHeadPose(headPose);
 
+    Pose3d eyePose = face.GetEyePose();
+    eyePose.SetTranslation(T);
+    eyePose.SetParent(_camera.GetPose());
+    face.SetEyePose(eyePose);
+
     // We don't know anything about orientation without parts, so don't update it and assume
     // _not_ facing the camera (without actual evidence that we are)
     face.SetIsFacingCamera(false);
@@ -957,14 +962,30 @@ namespace Vision {
     // and is different than the anki coordindate system. Specifically the x-axis points
     // out of the detected faces nose, the z-axis points of the top of the detected faces
     // head, and the y-axis points out of the left ear of the detected face. Thus the
-    // Yaw angle maps without change onto our coordinate system, while the roll and pitch
-    // need to be switched and negated to map correctly from the okao coordinate system
+    // Yaw and Roll angles map without change onto our coordinate system, while the pitch
+    // needs to be negated to map correctly from the okao coordinate system
     // to the anki coordindate system.
     const RotationMatrix3d faceRotation(-face.GetHeadPitch(), face.GetHeadRoll(), face.GetHeadYaw());
     headPose.SetRotation(headPose.GetRotation() * faceRotation);
 
     headPose.SetParent(_camera.GetPose());
     face.SetHeadPose(headPose);
+
+    // This works very similar to the way that the face angles from okao work. The gaze
+    // angles are relative to the image plane and are independent of the head rotation
+    // angles. Thus to set this in our pose tree and world space we only need update the
+    // default eye pose rotation matrix (which is looking orthogonal towards the image
+    // plane) and the translation. For right now roll angles are ignored, since
+    // that isn't a natural movement of the eye. However, this could occur by the head
+    // rotation but since okao doesn't handle this case, neither do we.
+    Pose3d eyePose = face.GetEyePose();
+    eyePose.SetTranslation(T);
+    const Gaze& gaze = face.GetGaze();
+    Radians upDown_rad(DEG_TO_RAD(gaze.upDown_deg));
+    Radians leftRight_rad(DEG_TO_RAD(gaze.leftRight_deg));
+    const RotationMatrix3d eyeRotation(-upDown_rad, 0.f, leftRight_rad);
+    eyePose.SetRotation(eyePose.GetRotation() * eyeRotation);
+    face.SetEyePose(eyePose);
 
     if(kKeepUndistortedFaceFeatures)
     {
@@ -1202,7 +1223,6 @@ namespace Vision {
 
       if(facePartsFound)
       {
-        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
 
         //LOG_INFO("FaceTrackerImpl.Update.HeadOrientation",
         //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
@@ -1246,6 +1266,10 @@ namespace Vision {
                                 detectionIndex, numDetections);
           }
         }
+
+        // This needs to happen after we set the gaze, otherwise
+        // the eye pose will have the default gaze values
+        SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
 
         if(_detectGaze)
         {
