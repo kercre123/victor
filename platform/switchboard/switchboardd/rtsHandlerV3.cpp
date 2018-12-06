@@ -500,13 +500,11 @@ void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
   Anki::Vector::ExternalComms::RtsCloudSessionRequest cloudReq =
     msg.Get_RtsCloudSessionRequest();
   std::string sessionToken = cloudReq.sessionToken;
-  std::string clientName = cloudReq.clientName;
-  std::string appId = cloudReq.appId;
 
   Log::Write("Received cloud session authorization request.");
 
   std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(
-    [this, sessionToken, clientName, appId](Anki::Vector::TokenError error, std::string jwtToken) {
+    [this, sessionToken](Anki::Vector::TokenError error, std::string jwtToken) {
       bool isPrimary = false;
       Log::Write("CloudRequest JWT Response Handler");
 
@@ -515,7 +513,7 @@ void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
           // Primary association
           isPrimary = true;
           std::weak_ptr<TokenResponseHandle> authHandle =
-		  	_tokenClient->SendAuthRequest(sessionToken, clientName, appId,
+		  	_tokenClient->SendAuthRequest(sessionToken, "", "bleV3",
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
           });
@@ -526,7 +524,7 @@ void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
           // Secondary association
           isPrimary = false;
           std::weak_ptr<TokenResponseHandle> authHandle =
-			  _tokenClient->SendSecondaryAuthRequest(sessionToken, clientName, appId,
+			  _tokenClient->SendSecondaryAuthRequest(sessionToken, "", "bleV3",
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
             Log::Write("CloudReequest Auth Response Handler");
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
