@@ -30,7 +30,7 @@ class QuadTreeNode : private Util::noncopyable
   friend class QuadTree;
 public:
   ~QuadTreeNode();
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -62,22 +62,12 @@ protected:
   // it will allow subdivision as long as level is greater than 0
   QuadTreeNode(const QuadTreeNode* parent = nullptr, EQuadrant quadrant = EQuadrant::Root);
    
-  // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
-  // which is annoying
-  QuadTreeNode(const QuadTreeNode&&) = delete;
-  QuadTreeNode& operator=(const QuadTreeNode&&) = delete;
-  
-  // updates the address incase tree structure changes (expands and shifts)
-  void ResetAddress();
-  
-  // split the current node
-  bool Subdivide();
-
-private:
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // split the current node
+  bool Subdivide();
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge();
@@ -86,7 +76,7 @@ private:
   void ForceSetContent(NodeContent&& newContent);
   
   // sets a new parent to this node. Used on expansions
-  void ChangeParent(const QuadTreeNode* newParent) { _parent = newParent; }
+  void SetParent(const QuadTreeNode* newParent);
   
   // swaps children and content with 'otherNode', updating the children's parent pointer
   void SwapChildrenAndContent(QuadTreeNode* otherNode);

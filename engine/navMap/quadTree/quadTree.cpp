@@ -50,7 +50,7 @@ QuadTree::QuadTree(
   _sideLen            = kQuadTreeInitialRootSideLength;
   _maxHeight          = kQuadTreeInitialMaxDepth;
   _quadrant           = EQuadrant::Root;
-  _address            = {EQuadrant::Root};
+  _address            = {};
   _boundingBox        = AxisAlignedQuad(_center - Point2f(_sideLen*.5f), _center + Point2f(_sideLen*.5));
 
   _destructorCallback = destructorCallback;
@@ -342,11 +342,6 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
       _childrenPtr[b1]->SwapChildrenAndContent(oldChildren[b2].get() );
     }
   }
-    
-  // update address of all children
-  FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
-  Fold(reset, RealNumbers2f());
-
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _maxHeight, MM_TO_M(_sideLen));
@@ -398,7 +393,7 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
   
   // set the new parent in my old children
   for ( auto& childPtr : oldChildren ) {
-    childPtr->ChangeParent( childTakingMyPlace );
+    childPtr->SetParent( childTakingMyPlace );
   }
   
   // swap children with the temp
@@ -407,10 +402,6 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
   // set the content type I had in the child that takes my place, then reset my content
   childTakingMyPlace->ForceSetContent( NodeContent(_content) );
   ForceSetContent(MemoryMapDataPtr());
-
-  // update address of all children
-  FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
-  Fold(reset, RealNumbers2f());
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _maxHeight, MM_TO_M(_sideLen));

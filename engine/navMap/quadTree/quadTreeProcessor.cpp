@@ -241,7 +241,7 @@ bool QuadTreeProcessor::FillBorder(const NodePredicate& innerPred, const NodePre
 {
   // calculate nodes being flooded directly. Note that we are not going to cause filled nodes to flood forward
   // into others. A second call to FillBorder would be required for that (consider for local fills when we have them,
-  // since they'll be significally faster).
+  // since they'll be significantly faster).
 
   bool changed = false;
   for( const auto& node : GetNodesToFill(innerPred, outerPred) ) {

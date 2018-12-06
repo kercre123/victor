@@ -25,8 +25,11 @@ template <DimType N, typename T>
 class AxisAlignedHyperCube : public ConvexPointSet<N, T> {
 public:
 
+  AxisAlignedHyperCube() : _vertices( std::pow(2,N) ) {}
+
   // Constructor must enumerate all 2^N vertices for proper hyperplane Contains checks
-  AxisAlignedHyperCube(const Point<N,T>& p, const Point<N,T>& q) : _vertices( std::pow(2,N) )
+  AxisAlignedHyperCube(const Point<N,T>& p, const Point<N,T>& q) 
+  : _vertices( std::pow(2,N) )
   {
     // we can generate a vertex by looking at the binary representation of its index.
     // for each bit position corresponding to a dimension in N, a `0` bit represents 

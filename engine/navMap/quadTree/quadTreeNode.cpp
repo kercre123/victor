@@ -27,11 +27,11 @@ static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode w
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeNode::QuadTreeNode(const QuadTreeNode* parent, EQuadrant quadrant)
-: _boundingBox({0,0}, {0,0})
-, _parent(parent)
-, _quadrant(quadrant)
 {
-  if (_parent) { 
+  if (parent) { 
+    SetParent(parent);
+    _quadrant     = quadrant;
+
     float halfLen = _parent->GetSideLen() * .25f;
     _sideLen      = _parent->GetSideLen() * .5f;
     _center       = _parent->GetCenter() + Quadrant2Vec(_quadrant) * halfLen;
@@ -40,9 +40,10 @@ QuadTreeNode::QuadTreeNode(const QuadTreeNode* parent, EQuadrant quadrant)
 
     _destructorCallback = _parent->_destructorCallback;
     _modifiedCallback   = _parent->_modifiedCallback;
+
+    _content = _parent->GetData();
+    _modifiedCallback(this, NodeContent());
   }
-  
-  ResetAddress();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -52,27 +53,15 @@ QuadTreeNode::~QuadTreeNode()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::ResetAddress()
-{
-  _address.clear();
-  if(_parent) { _address = NodeAddress(_parent->GetAddress()); }
-  _address.push_back(_quadrant);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::Subdivide()
 {
   if ( (_maxHeight == 0) || IsSubdivided() ) { return false; }
   
-  // create new children, push our data to them, then clear our own data
+  // create new children, then clear our own data
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::PlusXPlusY) );   // up L
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::PlusXMinusY) );  // up R
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::MinusXPlusY) );  // lo L
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::MinusXMinusY) ); // lo R
-
-  for ( auto& childPtr : _childrenPtr ) {
-    childPtr->ForceSetContent( NodeContent(_content) );
-  }
 
   ForceSetContent(NodeContent());
 
@@ -120,6 +109,25 @@ void QuadTreeNode::ForceSetContent(NodeContent&& newContent)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::SetParent(const QuadTreeNode* newParent)
+{ 
+  _parent = newParent;
+
+  // parent change invalidates address of all nodes below this node 
+  FoldFunctor reset = [] (QuadTreeNode& node) { 
+    node._address.clear();
+
+    // root node address is empty, so don't insert it's quadrant
+    if(node._parent) { 
+      node._address = node._parent->GetAddress(); 
+      node._address.push_back(node._quadrant);
+    }
+  };
+
+  Fold(reset, RealNumbers2f()); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode)
 {
   // swap children
@@ -127,12 +135,12 @@ void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode)
 
   // notify the children of the parent change
   for ( auto& childPtr : _childrenPtr ) {
-    childPtr->ChangeParent( this );
+    childPtr->SetParent( this );
   }
 
   // notify the children of the parent change
   for ( auto& childPtr : otherNode->_childrenPtr ) {
-    childPtr->ChangeParent( otherNode );
+    childPtr->SetParent( otherNode );
   }
 
   // swap contents by use of copy, since changes have to be notified to the processor
@@ -223,52 +231,26 @@ std::vector<const QuadTreeNode*> QuadTreeNode::GetNeighbors() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr, FoldDirection dir) const
 {
-  if (addr.size() >= _address.size()) {
-    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
+  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
-    if (IsSubdivided()) { GetChild(addr[_address.size()])->Fold(accumulator, addr); }
+  if (IsSubdivided() && (addr.size() > _address.size())) { 
+    GetChild(addr[_address.size()])->Fold(accumulator, addr); 
+  }
 
-    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-  } 
+  if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(FoldFunctor& accumulator, const NodeAddress& addr, FoldDirection dir)
 {
-  if (addr.size() >= _address.size()) {
-    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
+  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
-    if (IsSubdivided()) { GetChild(addr[_address.size()])->Fold(accumulator, addr); }
+  if (IsSubdivided() && (addr.size() > _address.size())) { 
+    GetChild(addr[_address.size()])->Fold(accumulator, addr); 
+  }
 
-    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-  } 
+  if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr) const
-{
-  if (addr.size() > _address.size()) {
-    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
-    auto nextNode = GetChild(addr[_address.size()]);
-    if (nextNode) { nextNode->Fold(accumulator, addr); }
-  } else if (addr == _address) {
-    accumulator(*this);
-  } 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctor& accumulator, const NodeAddress& addr)
-{
-  if (addr.size() > _address.size()) {
-    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
-    auto nextNode = GetChild(addr[_address.size()]);
-    if (nextNode) { nextNode->Fold(accumulator, addr); }
-  } else if (addr == _address) {
-    accumulator(*this);
-  } 
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /*
