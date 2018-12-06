@@ -278,7 +278,7 @@ macro(anki_go_set_ldflags target_name flags)
 endmacro()
 
 macro(anki_go_set_cgo_cppflags target_name flags)
-  set_target_properties(${target_name} PROPERTIES CGO_CPPFLAGS "${flags}")
+  set_target_properties(${target_name} PROPERTIES CGO_CPPFLAGS "${flags}") #  -fsanitize=address -fno-omit-frame-pointer
 endmacro()
 
 macro(anki_go_set_cgo_ldflags target_name flags)

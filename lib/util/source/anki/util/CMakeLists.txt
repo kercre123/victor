@@ -39,7 +39,6 @@ target_link_libraries(util
   kazmath
   hdr_histogram_static
   ${PLATFORM_LIBS}
-  -Wl,-fsanitize=address
 )
 
 anki_build_strip(TARGET util)

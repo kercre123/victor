@@ -78,12 +78,28 @@ target_compile_definitions(${target_name}
   ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
 )
 
-target_compile_options(${target_name}
-  PRIVATE
-  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
-#  PRIVATE
-#  -fsanitize=address
-)
+if (${target_name} STREQUAL "vic-anim")
+  message("#### VIC-ANIM SPECIAL CASE ####")
+
+  target_compile_options(${target_name}
+    PRIVATE
+    ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+    PUBLIC
+    -fsanitize=address
+    -fno-omit-frame-pointer
+  )
+
+  target_link_options(${target_name}
+    PRIVATE
+    -fsanitize=address
+    # -fno-omit-frame-pointer
+  )
+else()
+  target_compile_options(${target_name}
+    PRIVATE
+    ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+  )
+endif()
 
 #target_link_options(${target_name}
 #  PRIVATE
