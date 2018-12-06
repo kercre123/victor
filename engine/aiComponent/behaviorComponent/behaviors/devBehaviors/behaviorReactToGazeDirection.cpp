@@ -17,7 +17,10 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/faceWorld.h"
+#include "engine/robot.h"
+
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
@@ -54,6 +57,9 @@ namespace {
   CONSOLE_VAR(bool, kUseDriveStraightActionForDriveTo,       "Vision.GazeDirection", false);
   CONSOLE_VAR(f32,  kDriveStraightDistance_mm,               "Vision.GazeDirection", 200);
   CONSOLE_VAR(bool, kDriveStraightTurnBackToFace,            "Vision.GazeDirection", true);
+  CONSOLE_VAR(bool, kUseHandDetectionHack,                   "Vision.GazeDirection", true);
+  CONSOLE_VAR(f32,  kProxSensorStopingDistance_mm,           "Vision.GazeDirection", 30);
+  CONSOLE_VAR(bool, kUseTranslationDistanceForDriveStraight, "Vision.GazeDirection", true);
 }
 
 namespace {
@@ -206,13 +212,50 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
   const bool forceHeadDown = false;
   // TODO need something better than this. The duplciate code is awful.
   if (kUseDriveStraightActionForDriveTo) {
+    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingOnlyDriveStraight", "");
     DriveStraightAction* driveStraightAction = new DriveStraightAction(kDriveStraightDistance_mm);
     turnAction->AddAction(driveStraightAction);
     if (kDriveStraightTurnBackToFace) {
       turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
       turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
     }
-  } else {
+  } else if (kUseHandDetectionHack) {
+    float distanceToDrive_mm = kDriveStraightDistance_mm;
+    if (kUseTranslationDistanceForDriveStraight) {
+      distanceToDrive_mm = translation.Length();
+    }
+    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingHandDetectionHack", "");
+    CompoundActionParallel* driveAction = new CompoundActionParallel({
+      new DriveStraightAction(distanceToDrive_mm),
+      new ReselectingLoopAnimationAction{AnimationTrigger::ExploringReactToHandDrive},
+      new WaitForLambdaAction([this](Robot& robot) {
+        const bool detectedUnexpectedMovement = (robot.GetMoveComponent().IsUnexpectedMovementDetected());
+        if(detectedUnexpectedMovement) {
+          LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.GotUnexpectedMovement", "");
+        }
+        bool proxSensorFire = false;
+        auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+        uint16_t proxDist_mm = 0;
+        if ( proxSensor.GetLatestDistance_mm( proxDist_mm) ) {
+          if ( proxDist_mm < kProxSensorStopingDistance_mm) {
+            LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.GotProxSensorReadingThatWereClose", "");
+            proxSensorFire = true;
+          }
+        }
+        return (detectedUnexpectedMovement || proxSensorFire);
+      }),
+    });
+    // The compound drive action will complete either when the DriveStraight finishes or unexpected movement
+    // is detected (the looping anim will never finish).
+    driveAction->SetShouldEndWhenFirstActionCompletes(true);
+    turnAction->AddAction(driveAction);
+    if (kDriveStraightTurnBackToFace) {
+      turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+      turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+    }
+
+  }else {
+    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingDriveToPoseAction", "");
     if (kUseRelativePoseForDriveTo) {
       DriveToPoseAction* driveToAction = new DriveToPoseAction(gazePose,
                                                                forceHeadDown,
