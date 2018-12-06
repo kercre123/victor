@@ -92,7 +92,7 @@ namespace Vector {
 
       // printout some transformation between integral and cartesian for checking
       const f32 precision = quadTree.GetContentPrecisionMM();
-      const uint8_t height = quadTree.GetMaxTreeHeight();
+      const uint8_t height = quadTree.GetMaxHeight();
       const Point2f center = quadTree.GetCenter();
       auto integralP1 = GetIntegralCoordinateOfNode(p1, center, precision, height);
       auto integralP2 = GetIntegralCoordinateOfNode(p2, center, precision, height);

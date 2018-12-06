@@ -76,7 +76,7 @@ public:
   bool HasContentType(EContentType type) const;
 
   // multi-ray based collision checking optimization with memoization of result point info
-  std::vector<bool> AnyOfRays(const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const;
+  std::vector<bool> AnyOfRays(const Point2f& start, const std::vector<Point2f>& ends, const NodePredicate& pred) const;
  
 private:
 

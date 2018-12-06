@@ -41,9 +41,6 @@ CONSOLE_VAR(bool, kRenderProxBeliefs, "ProxSensorComponent", false);
 namespace
 {
 
-// helper method to colorize nodes based on their type and attributes in visualization
-Anki::ColorRGBA GetNodeVizColor(MemoryMapDataPtr node);
-
 #define MONITOR_PERFORMANCE(eval) (kMapPerformanceTestsEnabled) ? PerformanceMonitor([&]() {return eval;}, __FILE__ ":" + std::string(__func__)) : eval
 
 struct PerformanceRecord { double avgTime_us = 0; u32 samples = 0; };
@@ -150,7 +147,10 @@ ColorRGBA GetNodeVizColor(MemoryMapDataPtr node)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMap::MemoryMap()
 : _processor()
-, _quadTree(_processor)
+, _quadTree(
+    std::bind( &QuadTreeProcessor::OnNodeDestroyed, &_processor, std::placeholders::_1 ),
+    std::bind( &QuadTreeProcessor::OnNodeContentChanged, &_processor, std::placeholders::_1, std::placeholders::_2 )
+)
 {
   _processor.SetRoot( &_quadTree );
 }
@@ -195,16 +195,16 @@ double MemoryMap::GetExploredRegionAreaM2() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::AnyOf(const MemoryMapRegion& r, NodePredicate f) const
+bool MemoryMap::AnyOf(const MemoryMapRegion& r, const NodePredicate& f) const
 {
   bool retv = false;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold( [&](const auto& node) { retv |= f(node.GetData()); }, r);
+  _quadTree.Fold( [&](const auto& node) { retv |= f( static_cast<const MemoryMapDataPtr&>(node.GetData())); }, r);
   return retv;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<bool> MemoryMap::AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const
+std::vector<bool> MemoryMap::AnyOf( const Point2f& start, const std::vector<Point2f>& ends, const NodePredicate& pred) const
 {
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
   return _processor.AnyOfRays(start, ends, pred);
@@ -215,7 +215,10 @@ float MemoryMap::GetArea(const NodePredicate& pred, const MemoryMapRegion& regio
 {
   float retv = 0.f;  
   std::shared_lock<std::shared_timed_mutex> lock(_writeAccess);
-  _quadTree.Fold( [&](const auto& node) { if ( pred(node.GetData()) ) { retv += Util::Square(node.GetSideLen());} }, region);
+  _quadTree.Fold( [&](const auto& node) { 
+    if ( pred( static_cast<const MemoryMapDataPtr&>(node.GetData())) ) { 
+      retv += Util::Square(node.GetSideLen());} 
+    }, region);
   return retv;
 }
 
@@ -225,7 +228,12 @@ bool MemoryMap::Insert(const MemoryMapRegion& r, const MemoryMapData& data)
   // clone data to make into a shared pointer.
   const auto& dataPtr = data.Clone();
   std::unique_lock<std::shared_timed_mutex> lock(_writeAccess);
-  return MONITOR_PERFORMANCE( _quadTree.Insert(r, [&dataPtr] (auto _) { return dataPtr; }) );
+
+  NodeTransformFunction trfm = [&dataPtr] (const MemoryMapDataPtr& currentData) { 
+    currentData->SetLastObservedTime(dataPtr->GetLastObservedTime());
+    return currentData->CanOverrideSelfWithContent(dataPtr) ? dataPtr : currentData; 
+  };
+  return MONITOR_PERFORMANCE( _quadTree.Insert(r, trfm) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -248,7 +256,7 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
         instanceId << "QuadTree_" << this;
 
         info.mapInfo = ExternalInterface::MemoryMapInfo(
-          node.GetLevel(),
+          node.GetMaxHeight(),
           node.GetSideLen(),
           node.GetCenter().x(),
           node.GetCenter().y(),
@@ -259,11 +267,12 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
       // leaf node
       if ( !node.IsSubdivided() )
       {
-        const auto& vizColor = GetNodeVizColor(node.GetData()).AsRGBA();
+        const MemoryMapDataPtr& nodeData = node.GetData();
+        const auto& vizColor = GetNodeVizColor(nodeData).AsRGBA();
         
         info.quadInfo.emplace_back(
-          node.GetData()->GetExternalContentType(), 
-          node.GetLevel(), 
+          nodeData->GetExternalContentType(), 
+          node.GetMaxHeight(), 
           vizColor);
         
         info.quadInfoFull.emplace_back(vizColor,
@@ -278,12 +287,12 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const
+void MemoryMap::FindContentIf(const NodePredicate& pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const
 {
   QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
-    MemoryMapDataPtr data = node.GetData();
+    const MemoryMapDataPtr& data = node.GetData();
     if( pred(data) ) { 
-      output.insert( MemoryMapDataConstPtr(node.GetData()) );
+      output.insert( data );
     }
   };
 

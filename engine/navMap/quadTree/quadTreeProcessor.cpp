@@ -50,8 +50,8 @@ void QuadTreeProcessor::OnNodeContentChanged(const QuadTreeNode* node, const Nod
 {
   
   using namespace MemoryMapTypes;
-  const EContentType oldType = oldContent.data->type;
-  const EContentType newType = node->GetData()->type;
+  const EContentType oldType = static_cast<const MemoryMapDataPtr&>(oldContent)->type;
+  const EContentType newType = static_cast<const MemoryMapDataPtr&>(node->GetData())->type;
 
   // type hasn't changed, so we don't need to update any of our caching
   if (oldType == newType) { return; }
@@ -118,7 +118,7 @@ void QuadTreeProcessor::OnNodeContentChanged(const QuadTreeNode* node, const Nod
 void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 {
   // if old content type is cached
-  const EContentType oldContent = node->GetData()->type;
+  const EContentType oldContent = static_cast<const MemoryMapDataPtr&>(node->GetData())->type;
   if ( IsCached(oldContent) )
   {
     // remove the node from that cache
@@ -129,7 +129,7 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 
   // remove the area for this node if it was counted before
   {
-    const bool wasOutOld = (node->GetData()->type == EContentType::Unknown);
+    const bool wasOutOld = (oldContent == EContentType::Unknown);
     const bool needsToRemove = !wasOutOld;
     if ( needsToRemove )
     {
@@ -141,7 +141,7 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
   
   // remove interesting edge area if it was counted before
   {
-    const bool shouldBeCountedOld = (node->GetData()->type == EContentType::InterestingEdge);
+    const bool shouldBeCountedOld = (oldContent == EContentType::InterestingEdge);
     const bool needsToRemove =  shouldBeCountedOld;
     if ( needsToRemove )
     {
@@ -156,7 +156,7 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 std::vector<bool>
 QuadTreeProcessor::AnyOfRays( const Point2f& start, 
                               const std::vector<Point2f>& ends, 
-                              NodePredicate pred) const
+                              const NodePredicate& pred) const
 {
   std::vector<bool> results(ends.size(), false);
   std::unordered_map<Point2i ,bool> localCache;
@@ -165,22 +165,24 @@ QuadTreeProcessor::AnyOfRays( const Point2f& start,
   const auto startBres = QuadTreeTypes::GetIntegralCoordinateOfNode(start, 
     _quadTree->GetCenter(), 
     _quadTree->GetContentPrecisionMM(), 
-    _quadTree->GetMaxTreeHeight());
-  const auto maxTreeHeight = _quadTree->GetMaxTreeHeight();
+    _quadTree->GetMaxHeight());
+  const auto maxTreeHeight = _quadTree->GetMaxHeight();
 
   for(int rayIdx = 0; rayIdx<ends.size(); ++rayIdx) {
     BresenhamLinePixelIterator bresIter(startBres, 
       QuadTreeTypes::GetIntegralCoordinateOfNode(ends[rayIdx], 
         _quadTree->GetCenter(), 
         _quadTree->GetContentPrecisionMM(), 
-        _quadTree->GetMaxTreeHeight()));
+        _quadTree->GetMaxHeight()));
     while(!bresIter.Done()) {
       const Point2i& rasterPoint = bresIter.Get();
       auto got = localCache.find(rasterPoint);
       if(got == localCache.end()) {
         // compute new result and insert into the cache
-        const auto qnode = ((const QuadTree*)_quadTree)->GetNodeAtAddress(GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
-        const bool result = qnode && pred(qnode->GetData());
+        const QuadTreeNode* qnode = nullptr;
+        auto getNode = [&qnode] (const QuadTreeNode& n) { qnode = &n; };
+        ((const QuadTree*)_quadTree)->Fold(getNode, GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
+        const bool result = qnode && pred( static_cast<const MemoryMapDataPtr&>(qnode->GetData()) );
         got = localCache.insert({rasterPoint, result}).first;
       }
       if(got->second) {
@@ -204,10 +206,10 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
   for (const auto& keyValuePair : _nodeSets ) {
     for (const auto& node : keyValuePair.second ) {
       // first check if node is typeToFill
-      if ( innerPred( node->GetData() ) ) {
+      if ( innerPred( static_cast<const MemoryMapDataPtr&>(node->GetData()) ) ) {
         // check if this nodes has a neighbor of any typesToFillFrom
         for(const auto& neighbor : node->GetNeighbors()) {
-          if( outerPred( neighbor->GetData() ) ) {
+          if( outerPred( static_cast<const MemoryMapDataPtr&>(neighbor->GetData()) ) ) {
             unexpandedNodes.emplace_back( node );
             break;
           }
@@ -225,8 +227,7 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
 
     // get all of this nodes neighbors of the same type
     for(const auto& neighbor : node->GetNeighbors()) {
-      MemoryMapDataConstPtr neighborData = neighbor->GetData();
-      if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
+      if ( innerPred( static_cast<const MemoryMapDataPtr&>(neighbor->GetData()) ) && (output.find(neighbor) == output.end()) ) {
         unexpandedNodes.push_back( neighbor );
       }
     }

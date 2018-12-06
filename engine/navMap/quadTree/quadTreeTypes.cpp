@@ -10,35 +10,12 @@
  **/
 #include "quadTreeTypes.h"
 
-#include "engine/navMap/memoryMap/data/memoryMapData.h"
-
 #include "coretech/common/engine/exceptions.h"
 #include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
 namespace Vector {
 namespace QuadTreeTypes {
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NodeContent::NodeContent(const MemoryMapData& m)
-: data(m.Clone()) {}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NodeContent::NodeContent(MemoryMapTypes::MemoryMapDataPtr m)
-: data(m) {}
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NodeContent::operator==(const NodeContent& other) const
-{
-  return (data == other.data);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NodeContent::operator!=(const NodeContent& other) const
-{
-  const bool ret = !(this->operator==(other));
-  return ret;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vec2f Quadrant2Vec(EQuadrant dir) 

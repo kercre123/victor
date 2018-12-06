@@ -12,8 +12,11 @@
 #include "quadTree.h"
 #include "quadTreeProcessor.h"
 
+#include "engine/navMap/memoryMap/data/memoryMapData.h"
+
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -37,17 +40,19 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTree::QuadTree(QuadTreeProcessor& callbacks)
+QuadTree::QuadTree(
+  std::function<void (const QuadTreeNode*)> destructorCallback,
+  std::function<void (const QuadTreeNode*, const NodeContent&)> modifiedCallback
+)
 {
-  _sideLen  = kQuadTreeInitialRootSideLength;
-  _level    = kQuadTreeInitialMaxDepth;
-  _quadrant = EQuadrant::Root;
-  _address  = {EQuadrant::Root};
-  _boundingBox = AxisAlignedQuad(_center - Point2f(_sideLen*.5f), _center + Point2f(_sideLen*.5));
+  _sideLen            = kQuadTreeInitialRootSideLength;
+  _maxHeight          = kQuadTreeInitialMaxDepth;
+  _quadrant           = EQuadrant::Root;
+  _address            = {EQuadrant::Root};
+  _boundingBox        = AxisAlignedQuad(_center - Point2f(_sideLen*.5f), _center + Point2f(_sideLen*.5));
 
-  using namespace std::placeholders;
-  _destructorCallback = std::bind( &QuadTreeProcessor::OnNodeDestroyed, &callbacks, _1 );
-  _modifiedCallback   = std::bind( &QuadTreeProcessor::OnNodeContentChanged, &callbacks, _1, _2 );
+  _destructorCallback = destructorCallback;
+  _modifiedCallback   = modifiedCallback;
 
   // make sure math invariants hold before we allow anyone to use the QT
   DEV_ASSERT(Vec2Quadrant( Vec2f( 1.f,  1.f) ) == EQuadrant::PlusXPlusY,   "Incorrect Quadrant 1");
@@ -89,30 +94,28 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
   FoldFunctor accumulator = [&] (QuadTreeNode& node)
   {
     auto newData = transform(node.GetData());
-    if ( node.GetData() == newData ) { return; }
-
-    node.GetData()->SetLastObservedTime(newData->GetLastObservedTime());
+    auto currentData = static_cast<const decltype(newData)&>(node.GetData());
+    if ( currentData == newData ) { return; }
 
     // split node if we are unsure if the incoming region will fill the entire area
     if ( !region.ContainsQuad(node.GetBoundingBox()) && node.CanSubdivide())
     {
       node.Subdivide();
-      node.MoveDataToChildren();
     }
     
     if ( !node.IsSubdivided() )
     {
-      if ( node.GetData()->CanOverrideSelfWithContent(newData) ) {
-        node.ForceSetContent( newData );
-        contentChanged = true;
-      }
+      node.ForceSetContent( std::move(newData) );
+      contentChanged = true;
     } 
   };
   Fold(accumulator, region);
 
   // try to cleanup tree
-  FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
-  Fold(merge, region, FoldDirection::DepthFirst);
+  if (contentChanged) {
+    FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
+    Fold(merge, region, FoldDirection::DepthFirst);
+  }
 
   return contentChanged;
 }
@@ -127,7 +130,7 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
       auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
-        node.ForceSetContent(newData);
+        node.ForceSetContent( std::move(newData) );
         contentChanged = true;
       }
     };
@@ -135,32 +138,16 @@ bool QuadTree::Transform(const FoldableRegion& region, NodeTransformFunction tra
   Fold(trfm, region);
 
   // try to cleanup tree
-  FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
-  Fold(merge, region, FoldDirection::DepthFirst);
-  
+  if (contentChanged) {
+    FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
+    Fold(merge, region, FoldDirection::DepthFirst);
+  }
+
   return contentChanged;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTree::Transform(const NodeAddress& address, NodeTransformFunction transform)
-{
-  // run the transform
-  QuadTreeNode* node = GetNodeAtAddress(address);
-
-  if (node) {
-    auto newData = transform(node->GetData());
-    if ((node->GetData() != newData) && !node->IsSubdivided()) 
-    {
-      node->ForceSetContent(newData);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Transform(NodeTransformFunction transform)
 {
   // run the transform
   bool contentChanged = false;
@@ -169,16 +156,18 @@ bool QuadTree::Transform(NodeTransformFunction transform)
       auto newData = transform(node.GetData());
       if ((node.GetData() != newData) && !node.IsSubdivided()) 
       {
-        node.ForceSetContent(newData);
+        node.ForceSetContent( std::move(newData) );
         contentChanged = true;
       }
     };
 
-  Fold(trfm);
+  Fold(trfm, address);
 
   // try to cleanup tree
-  FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
-  Fold(merge, FoldDirection::DepthFirst);
+  if (contentChanged) {
+    FoldFunctor merge = [] (QuadTreeNode& node) { node.TryAutoMerge(); };
+    Fold(merge, address);
+  }
   
   return contentChanged;
 }
@@ -191,7 +180,7 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
   Pose2d transform2d(transform);
 
   // obtain all leaf nodes from the map we are merging from
-  NodeCPtrVector leafNodes;
+  std::vector<const QuadTreeNode*> leafNodes;
   const FoldFunctorConst getLeaves = [&leafNodes](const auto& node) { 
     if (!node.IsSubdivided()) { leafNodes.push_back(&node); } 
   };
@@ -210,11 +199,6 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
   // iterate all those leaf nodes, adding them to this tree
   bool changed = false;
   for( const auto& nodeInOther : leafNodes ) {
-  
-    // if the leaf node is unkown then we don't need to add it
-    const bool isUnknown = ( nodeInOther->GetData()->type == EContentType::Unknown );
-    if ( !isUnknown ) {
-      
       // NOTE: there's a precision problem when we add back the quads; when we add a non-axis aligned quad to the map,
       // we modify (if applicable) all quads that intersect with that non-aa quad. When we merge this information into
       // a different map, we have lost precision on how big the original non-aa quad was, since we have stored it
@@ -234,7 +218,6 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       // grab CH to sort verticies into CW order
       const ConvexPolygon poly = ConvexPolygon::ConvexHull( std::move(corners) );
       changed |= Insert(FastPolygon(poly), [&nodeInOther] (auto) { return nodeInOther->GetData(); });
-    }
   }
   return changed;
 }
@@ -329,7 +312,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
   
     if ( xShift )
     {
-      ChildrenVector oldChildren;
+      std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
       std::swap(oldChildren, _childrenPtr);
       Subdivide();
 
@@ -345,7 +328,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
 
     if ( yShift )
     {
-      ChildrenVector oldChildren;
+      std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
       std::swap(oldChildren, _childrenPtr);
       Subdivide();
       
@@ -367,7 +350,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
 
 
   // log
-  PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _level, MM_TO_M(_sideLen));
+  PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _maxHeight, MM_TO_M(_sideLen));
   
   // successful shift
   return true;
@@ -377,7 +360,7 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
 bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
 { 
   // reached expansion limit
-  if ( _level == std::numeric_limits<uint8_t>::max() || _level >= maxRootLevel) {
+  if ( _maxHeight == std::numeric_limits<uint8_t>::max() || _maxHeight >= maxRootLevel) {
     return false;
   }
 
@@ -404,10 +387,10 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
   _center += Quadrant2Vec( Vec2Quadrant(direction) ) * _sideLen * 0.5f;
   _boundingBox = AxisAlignedQuad(_center - Point2f(_sideLen), _center + Point2f(_sideLen) );
   _sideLen *= 2.0f;
-  ++_level;
+  ++_maxHeight;
   
   // temporary take its children, then subdivide this node again
-  ChildrenVector oldChildren;
+  std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
   std::swap(oldChildren, _childrenPtr);
   Subdivide();
 
@@ -423,7 +406,7 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
   std::swap(childTakingMyPlace->_childrenPtr, oldChildren);
 
   // set the content type I had in the child that takes my place, then reset my content
-  childTakingMyPlace->ForceSetContent( _content.data );
+  childTakingMyPlace->ForceSetContent( NodeContent(_content) );
   ForceSetContent(MemoryMapDataPtr());
 
   // update address of all children
@@ -431,7 +414,7 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
   Fold(reset);
 
   // log
-  PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _level, MM_TO_M(_sideLen));
+  PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _maxHeight, MM_TO_M(_sideLen));
   
   return true;
 }
