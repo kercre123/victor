@@ -184,10 +184,11 @@ def get_audio_event_usage_in_anim(json_file, all_available_events):
                 except KeyError:
                     # this is the NEW style of audio keyframe
                     audio_ids = []
-                    for events in keyframe[EVENT_GROUPS_ATTR]:
-                        audio_ids.extend(events[EVENT_IDS_ATTR])
-                        _check_using_event_id(audio_ids, all_available_event_ids,
-                                              available_events, unavailable_events)
+                    if EVENT_GROUPS_ATTR in keyframe:
+                        for events in keyframe[EVENT_GROUPS_ATTR]:
+                            audio_ids.extend(events[EVENT_IDS_ATTR])
+                            _check_using_event_id(audio_ids, all_available_event_ids,
+                                                  available_events, unavailable_events)
                 else:
                     # this is the OLD style of audio keyframe
                     audio_ids = keyframe[AUDIO_EVENT_ID_ATTR]

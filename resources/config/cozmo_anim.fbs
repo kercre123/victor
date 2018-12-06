@@ -44,10 +44,10 @@ table AudioSwitch {
 }
 
 table AudioParameter {
-  parameterId:uint = 0;
+  parameterID:uint = 0;
   value:float = 0.0;
   time_ms:uint = 0;
-  curve:ubyte = 0;
+  curveType:ubyte = 0;
 }
 
 table RobotAudio {

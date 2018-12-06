@@ -711,25 +711,25 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       // Add Parameters
       const auto& parameters = jsonRoot[kKey_parameters];
       if (parameters.isArray()) {
-        JSON_KEY(parameterId);
+        JSON_KEY(parameterID);
         JSON_KEY(value);
         JSON_KEY(time_ms);
-        JSON_KEY(curve);
+        JSON_KEY(curveType);
         for (auto parameterIt = parameters.begin(); parameterIt != parameters.end(); ++parameterIt) {
           auto parameterId = static_cast<u32>(GameParameter::ParameterType::Invalid);
           float value = 0.0f;
           u32   time_ms = 0;
           u8    curve = static_cast<u8>(AudioEngine::Multiplexer::CurveType::Linear);
-          JsonTools::GetValueOptional(*parameterIt, kKey_parameterId, parameterId);
+          JsonTools::GetValueOptional(*parameterIt, kKey_parameterID, parameterId);
           if ((u32)GameParameter::ParameterType::Invalid == parameterId) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidParameter",
-                              "'%s' @ %i ms : Has an invalid parameterId", animNameDebug.c_str(), _triggerTime_ms);
+                              "'%s' @ %i ms : Has an invalid parameterID", animNameDebug.c_str(), _triggerTime_ms);
             // Move to next parameter
             continue;
           }
           JsonTools::GetValueOptional(*parameterIt, kKey_value, value);
           JsonTools::GetValueOptional(*parameterIt, kKey_time_ms, time_ms);
-          JsonTools::GetValueOptional(*parameterIt, kKey_curve, curve);
+          JsonTools::GetValueOptional(*parameterIt, kKey_curveType, curve);
           
           Result addResult = AddAudioRef(AudioParameterRef(static_cast<GameParameter::ParameterType>(parameterId),
                                                            value,
@@ -941,17 +941,17 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       const auto* parameters = audioKeyframe->parameters();
       if (nullptr != parameters) {
         for (const auto& aParameter : *parameters) {
-          const auto parameterId = static_cast<GameParameter::ParameterType>(aParameter->parameterId());
+          const auto parameterId = static_cast<GameParameter::ParameterType>(aParameter->parameterID());
           if (GameParameter::ParameterType::Invalid == parameterId) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidParameter",
-                              "'%s' @ %i ms : Has an invalid parameterId", animNameDebug.c_str(), _triggerTime_ms);
+                              "'%s' @ %i ms : Has an invalid parameterID", animNameDebug.c_str(), _triggerTime_ms);
             // Move to next Parameter
             continue;
           }
           auto parameterRef = AudioParameterRef(parameterId,
                                                 aParameter->value(),
                                                 aParameter->time_ms(),
-                                                static_cast<Multiplexer::CurveType>(aParameter->curve()),
+                                                static_cast<Multiplexer::CurveType>(aParameter->curveType()),
                                                 kAnimationGameObject);
           Result addResult = AddAudioRef(std::move(parameterRef));
           if(addResult != RESULT_OK) {
