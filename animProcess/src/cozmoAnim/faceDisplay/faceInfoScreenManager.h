@@ -109,6 +109,9 @@ public:
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
+  // Note when the engine has finished loading for internal use
+  void OnEngineLoaded() {_engineLoaded = true;}
+
 private:
   const AnimContext* _context = nullptr;
   
@@ -222,6 +225,7 @@ private:
   std::string _alexaUrl;
   
   bool _drawFAC = false;
+  bool _engineLoaded = false;
   
   // Reboot Linux
   void Reboot();

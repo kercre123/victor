@@ -586,6 +586,8 @@ void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
 
+  FaceInfoScreenManager::getInstance()->OnEngineLoaded();
+
   auto* alexa = _context->GetAlexa();
   if( alexa != nullptr ) {
     alexa->OnEngineLoaded();
