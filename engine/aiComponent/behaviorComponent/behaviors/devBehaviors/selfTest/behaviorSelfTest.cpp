@@ -35,6 +35,10 @@
 
 //#include "anki/cozmo/shared/factory/emrHelper.h"
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <cstddef>
 
 namespace Anki {
@@ -43,7 +47,7 @@ namespace Cozmo {
 BehaviorSelfTest::BehaviorSelfTest(const Json::Value& config)
 : ICozmoBehavior( config)
 {
-
+  SubscribeToTags({GameToEngineTag::WifiConnectResponse});
 }
 
 void BehaviorSelfTest::InitBehavior()
@@ -176,6 +180,9 @@ void BehaviorSelfTest::OnBehaviorActivated()
   // //                  "Log name: %s",
   // //                  _factoryTestLogger.GetLogName().c_str());
 
+  robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::WifiConnectRequest(SelfTestConfig::kWifiSSID)));
+  _radioScanState = RadioScanState::WaitingForWifiResult;
+
   // // Set blind docking mode
   // NativeAnkiUtilConsoleSetValueWithString("PickupDockingMethod", "0");
 
@@ -237,6 +244,8 @@ void BehaviorSelfTest::OnBehaviorDeactivated()
 
   robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
 
+  robot.GetCubeCommsComponent().RequestDisconnectFromCube(0);
+
   Reset();
 }
 
@@ -263,16 +272,24 @@ void BehaviorSelfTest::Reset()
   _waitForButtonToEndTest = false;
 
   _buttonPressed = false;
+
+  _radioScanState = RadioScanState::None;
 }
 
 void BehaviorSelfTest::BehaviorUpdate()
 {
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+  if(_radioScanState == RadioScanState::Passed &&
+     robot.GetCubeCommsComponent().IsConnectedToCube())
+  {
+    robot.GetCubeCommsComponent().RequestDisconnectFromCube(0);
+  }
+
   if(_waitForButtonToEndTest)
   {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    Robot& robot = GetBEI().GetRobotInfo()._robot;
-
     const bool buttonPressed = robot.IsPowerButtonPressed();
 
     if(_buttonPressed && !buttonPressed)
@@ -358,7 +375,8 @@ void BehaviorSelfTest::BehaviorUpdate()
     else
     {
       PRINT_NAMED_INFO("BehaviorSelfTest.Complete", "All behaviors have been run");
-      HandleResult(FactoryTestResultCode::SUCCESS);
+      FactoryTestResultCode res = DoFinalChecks();
+      HandleResult(res);
     }
   }
 }
@@ -631,20 +649,53 @@ void BehaviorSelfTest::HandleMessage(const ExternalInterface::SelfTestBehaviorFa
 //   }
 // }
 
-// void BehaviorSelfTest::AlwaysHandleInScope(const RobotToEngineEvent& event)
-// {
-//   const auto& tag = event.GetData().GetTag();
-//   PRINT_NAMED_WARNING("","%hhu", tag);
-//   if(tag != RobotInterface::RobotToEngineTag::startSelfTest)
-//   {
-//     return;
-//   }
-//   PRINT_NAMED_WARNING("","START TEST MESSAGE");
-//   // Robot& robot = GetBEI().GetRobotInfo()._robot;
+void BehaviorSelfTest::StartCubeConnectionCheck()
+{
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-//   //const auto& payload = event.GetData().Get_startSelfTest();
-//   _startTest = true;
-// }
+  auto cubeConnectionCallback = [this](bool success)
+                                {
+                                  _radioScanState = (success ? RadioScanState::Passed : RadioScanState::Failed);
+                                };
+  robot.GetCubeCommsComponent().RequestConnectToCube(cubeConnectionCallback);
+
+  _radioScanState = RadioScanState::WaitingForCubeResult;
+}
+
+void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
+{
+  const auto& tag = event.GetData().GetTag();
+
+  if(tag != GameToEngineTag::WifiConnectResponse)
+  {
+    return;
+  }
+
+  const auto& payload = event.GetData().Get_WifiConnectResponse();
+  if(payload.status_code != 0)
+  {
+    PRINT_NAMED_INFO("BehaviorSelfTest.HandleWifiConnectResponse",
+                     "Connection request failed with %u, falling back to cube check",
+                     payload.status_code);
+
+    StartCubeConnectionCheck();
+  }
+  else
+  {
+    PRINT_NAMED_INFO("BehaviorSelfTest.HandleWifiConnectResponse.Passed", "");
+
+    _radioScanState = RadioScanState::Passed;
+  }
+}
+
+FactoryTestResultCode BehaviorSelfTest::DoFinalChecks()
+{
+  return (_radioScanState == RadioScanState::Passed ?
+          FactoryTestResultCode::SUCCESS :
+          FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
+}
 
 }
 }

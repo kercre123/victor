@@ -17,6 +17,11 @@ message WifiScanRequest
 {
 }
 
+message WifiConnectRequest
+{
+  string ssid
+}
+
 } // SwitchboardInterface
 } // Cozmo
 } // Anki

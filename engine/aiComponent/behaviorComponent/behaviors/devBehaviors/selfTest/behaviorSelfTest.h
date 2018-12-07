@@ -27,15 +27,15 @@ class Robot;
 class BehaviorSelfTest : public ICozmoBehavior
 {
 public:
-  
+
   BehaviorSelfTest(const Json::Value& config);
   virtual ~BehaviorSelfTest() {};
-  
+
   virtual void BehaviorUpdate() override;
-  
+
   template<typename T>
   void HandleMessage(const T& msg);
-  
+
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
@@ -51,13 +51,13 @@ protected:
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
-  
+
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  //virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
-  
+  virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
+
 private:
-  
+
   // Handle the playpen result and finish up the test
   void HandleResult(FactoryTestResultCode result);
 
@@ -66,25 +66,41 @@ private:
 
   // Reset all playpen behaviors and state
   void Reset();
-  
+
+  void StartCubeConnectionCheck();
+
+  FactoryTestResultCode DoFinalChecks();
+
   using SelfTestBehavior = std::shared_ptr<IBehaviorSelfTest>;
-  
+
   SelfTestBehavior _currentBehavior = nullptr;
-  
+
   std::vector<SelfTestBehavior>::iterator _currentSelfTestBehaviorIter;
   std::vector<SelfTestBehavior> _selfTestBehaviors;
-  
+
   //std::vector<u32> _behaviorStartTimes;
-  
+
   //IMUTempDuration _imuTemp;
 
   //bool _startTest = false;
-    
+
   std::vector<::Signal::SmartHandle> _signalHandles;
 
   bool _waitForButtonToEndTest = false;
   bool _restartOnButtonPress = false;
   bool _buttonPressed = false;
+
+  enum class RadioScanState
+  {
+   None,
+   WaitingForWifiResult,
+   WaitingForCubeResult,
+   Failed,
+   Passed
+  };
+
+  RadioScanState _radioScanState = RadioScanState::None;
+
 };
 
 } // namespace Cozmo

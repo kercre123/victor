@@ -4,7 +4,7 @@
  * Author: shawnb
  * Created: 3/08/2018
  *
- * Description: Communication point for message coming from / 
+ * Description: Communication point for message coming from /
  *              going to the engine process. Currently this is
  *              using a tcp connection where engine acts as the
  *              server, and this is the client.
@@ -40,12 +40,15 @@ public:
   PairingStatusSignal& OnReceivePairingStatus() {
     return _pairingStatusSignal;
   }
+
+
   static void sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 private:
   void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
 
   // Private handler for WifiScanRequest from Engine (for playpen test)
   void HandleWifiScanRequest();
+  void HandleWifiConnectRequest(const std::string& ssid);
 
   LocalUdpClient _client;
   PairingStatusSignal _pairingStatusSignal;

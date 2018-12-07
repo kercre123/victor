@@ -51,6 +51,8 @@ static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 // NOTE: This value can be overridden by value stored in EMR
 static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 
+static std::string kWifiSSID = "AnkiGuest";
+
 // ---------PickupChecks--------
 static u16 kTimeToBeUpsideDown_ms = 2000;
 
