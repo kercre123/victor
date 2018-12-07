@@ -137,7 +137,7 @@
       },
       {
         "networkName"         : "hand_detector",
-        "graphFile"           : "hand_detector_ac20e263a81c430697dff9c035e8d996.tflite",
+        "graphFile"           : "hand_detector_fcde4ff411c44baa9e7184c733d3b943.tflite",
         "memoryMapGraph"      : 0,
         "labelsFile"          : "hand-labels.txt",
         "architecture"        : "custom",
