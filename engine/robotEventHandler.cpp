@@ -174,11 +174,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot.GetWorldOrigin());
   targetPose.SetName("GotoPoseTarget");
 
-  // TODO: expose whether or not to drive with head down in message?
-  const bool driveWithHeadDown = false;
-
-  DriveToPoseAction* action = new DriveToPoseAction(targetPose,
-                                                    driveWithHeadDown);
+  auto* action = new DriveToPoseAction(targetPose);
 
   if(msg.motionProf.isCustom)
   {
@@ -196,11 +192,7 @@ IActionRunner* GetActionHelper(Robot& robot, const external_interface::GoToPoseR
   Pose3d targetPose(msg.rad(), Z_AXIS_3D(), Vec3f(msg.x_mm(), msg.y_mm(), 0), robot.GetWorldOrigin());
   targetPose.SetName("GotoPoseTarget");
 
-  // TODO: expose whether or not to drive with head down in message?
-  const bool driveWithHeadDown = false;
-
-  DriveToPoseAction* action = new DriveToPoseAction(targetPose,
-                                                    driveWithHeadDown);
+  DriveToPoseAction* action = new DriveToPoseAction(targetPose);
 
   PathMotionProfile pathMotionProfile = ConvertProtoPathMotionProfile(msg.motion_prof());
   if(pathMotionProfile.isCustom)

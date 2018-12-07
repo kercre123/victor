@@ -774,7 +774,7 @@ void BehaviorConfirmHabitat::TransitionToRandomWalk()
   }
   desiredOffsetPose.SetParent(robotPose);
   GetBEI().GetMapComponent().SetUseProxObstaclesInPlanning(false);
-  IActionRunner* action = new DriveToPoseAction(desiredOffsetPose, false);
+  IActionRunner* action = new DriveToPoseAction(desiredOffsetPose);
   RobotCompletedActionCallback callback = [this](const ExternalInterface::RobotCompletedAction& msg)->void{
     GetBEI().GetMapComponent().SetUseProxObstaclesInPlanning(true);
   };
@@ -826,7 +826,7 @@ void BehaviorConfirmHabitat::TransitionToSeekLineFromCharger()
     desiredOffsetPose.SetParent(chargerPose);
     poses.push_back(desiredOffsetPose);
   }
-  IActionRunner* action = new DriveToPoseAction(poses, false);
+  IActionRunner* action = new DriveToPoseAction(poses);
   DelegateActionHelper(action, nullptr);
 
 }

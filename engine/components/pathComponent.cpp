@@ -631,7 +631,6 @@ void PathComponent::TryCompletingPath()
   if( (!collisionsAcceptable) && (nullptr != _longPathPlanner) ) {
 
     const float startPoseAngle_rad = driveCenterPose.GetRotationAngle<'Z'>().ToFloat();
-    DEV_ASSERT(_longPathPlanner->PreloadObstacles(), "Lattice planner didn't preload obstacles.");
     if( !_longPathPlanner->CheckIsPathSafe(newPath, startPoseAngle_rad) ) {
       // bad path. try with the fallback planner if possible
 

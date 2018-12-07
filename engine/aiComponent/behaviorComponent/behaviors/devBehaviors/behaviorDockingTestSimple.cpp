@@ -730,8 +730,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
         action->AddAction(placeAction);
       }
       
-      const bool kDriveWithDown = true;
-      DriveToPoseAction* driveAction = new DriveToPoseAction(p, kDriveWithDown);
+      DriveToPoseAction* driveAction = new DriveToPoseAction(p);
       action->AddAction(driveAction);
       
       DelegateIfInControl(robot, action,

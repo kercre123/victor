@@ -587,8 +587,7 @@ void BehaviorExploring::TransitionToDriving()
     action->AddAction( new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX ) );
   }
   
-  const bool forceHeadDown = false;
-  action->AddAction( new DriveToPoseAction( _dVars.sampledPoses, forceHeadDown ) );
+  action->AddAction( new DriveToPoseAction( _dVars.sampledPoses ) );
   
   DelegateIfInControl( action, [this](ActionResult res) {
     if( res == ActionResult::CANCELLED_WHILE_RUNNING ){

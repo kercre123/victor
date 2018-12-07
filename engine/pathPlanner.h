@@ -30,7 +30,7 @@ namespace Vector {
 enum class EComputePathStatus {
   Error, // Could not create path as requested
   Running, // Signifies that planning has successfully begun (may also be finished already)
-  NoPlanNeeded, // Signifies that planning is not nessecary, useful in the replanning case
+  NoPlanNeeded, // Signifies that planning is not necessary, useful in the replanning case
 };
 
 enum class EPlannerStatus {
@@ -113,13 +113,6 @@ public:
                        Planning::Path &path,
                        Planning::GoalID& selectedTargetIndex,
                        const PathMotionProfile* motionProfile = nullptr);
-  
-  // If this planner considers obstacles, it will likely preload those obstacles (if needed)
-  // when computing a path. But if you need to use those obstacles without computing a path,
-  // call this to do whatever importing is needed. If this planner does not consider obstacles,
-  // this should do nothing. Returns true if the planner does something with obstacles (e.g., loads
-  // them or starts them loading in a thread).
-  virtual bool PreloadObstacles() { return false; }
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile = nullptr) {}
@@ -187,18 +180,6 @@ constexpr const char* EPlannerStatusToString(EPlannerStatus status)
   }
 #undef HANDLE_ETDTPS_CASE
 }
-
-// A stub class that never plans
-class PathPlannerStub : public IPathPlanner
-{
-public:
-  PathPlannerStub() : IPathPlanner("Stub") { }
-
-  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose) override {
-    return EComputePathStatus::Error;
-  }
-};
     
     
 } // namespace Vector

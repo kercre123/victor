@@ -382,12 +382,9 @@ void BehaviorFindHome::TransitionToRandomDrive()
   std::vector<Pose3d> potentialSearchPoses;
   GenerateSearchPoses(potentialSearchPoses);
   
-  const bool forceHeadDown = false;
   const Radians angleTol = M_PI_F;    // basically don't care about the angle of arrival
-  auto driveToAction = new DriveToPoseAction(potentialSearchPoses,
-                                             forceHeadDown,
-                                             DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                                             angleTol);
+  auto driveToAction = new DriveToPoseAction(potentialSearchPoses);
+  driveToAction->SetGoalThresholds(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM, angleTol);
   DelegateIfInControl(driveToAction, &BehaviorFindHome::TransitionToSearchTurn);
 }
 

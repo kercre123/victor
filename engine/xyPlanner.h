@@ -65,10 +65,6 @@ public:
   virtual bool CheckIsPathSafe(const Planning::Path& path, float startAngle) const override;
   virtual bool CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const override;
 
-  // This class maintains a const reference to the NavMap, so there is no need to ever call this method since
-  // the map will update itself with obstacles
-  virtual bool PreloadObstacles() override { return true; }
-
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile = nullptr) override {}
 

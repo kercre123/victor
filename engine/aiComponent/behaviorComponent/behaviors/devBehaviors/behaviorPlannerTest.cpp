@@ -166,7 +166,7 @@ void BehaviorPlannerTest::CalcFarAwayPose()
 void BehaviorPlannerTest::GoToCubePose()
 {
   _dVars.state = State::DrivingToCube;
-  auto* action = new DriveToPoseAction( _dVars.cubePoses, false );
+  auto* action = new DriveToPoseAction( _dVars.cubePoses );
   action->SetMustContinueToOriginalGoal( kOnlyUseOriginalGoal );
   DelegateIfInControl( action, [this](const ActionResult& res){
     // if we havent done so already, remove all but the selected goal pose by the cube
@@ -195,7 +195,7 @@ void BehaviorPlannerTest::GoToFarAwayPose()
 {
   _dVars.state = State::DrivingFar;
   CalcFarAwayPose();
-  DelegateIfInControl( new DriveToPoseAction( _dVars.drivePose, false ), [this](const ActionResult& res){
+  DelegateIfInControl( new DriveToPoseAction( _dVars.drivePose ), [this](const ActionResult& res){
     if( IActionRunner::GetActionResultCategory(res) == ActionResultCategory::RETRY ) {
       DelegateIfInControl( new SayTextAction( "DRIVE RETRY",   SayTextAction::AudioTtsProcessingStyle::Unprocessed ),
                            &BehaviorPlannerTest::GoToFarAwayPose );
