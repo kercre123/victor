@@ -85,7 +85,9 @@ private:
     bool onCharger;
   };
 
-  void TransitionToPhase(const OnboardingPhase& phase, bool sendSetPhaseResponseToApp = false);
+  void TransitionToPhase(const OnboardingPhase& phase,
+                         bool sendSetPhaseResponseToApp = false,
+                         bool resumingPhaseAfterInterruption = false);
   void TransitionToPoweringOff();
 
   void OnPhaseComplete(const OnboardingPhase& phase);
@@ -141,7 +143,7 @@ private:
     ICozmoBehaviorPtr lastSetPhaseBehavior;
     OnboardingPhaseState lastSetPhaseState;
 
-    OnboardingPhase lastPhase;
+    OnboardingPhase currentPhase;
 
     float nextTimeSendBattInfo_s;
 
@@ -151,6 +153,7 @@ private:
     bool onboardingStarted;
     bool waitingForAppReconnect;
     bool waitingForTermination;
+    bool terminatedNaturally;
 
     bool shouldCheckPowerOff;
     bool isStimMaxed;

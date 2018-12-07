@@ -100,13 +100,14 @@ BehaviorOnboardingCoordinator::DynamicVariables::DynamicVariables()
 , lastSetPhase(OnboardingPhase::InvalidPhase)
 , lastSetPhaseBehavior(nullptr)
 , lastSetPhaseState(OnboardingPhaseState::PhaseInvalid)
-, lastPhase(OnboardingPhase::InvalidPhase)
+, currentPhase(OnboardingPhase::InvalidPhase)
 , nextTimeSendBattInfo_s(0.0f)
 , globalExitTime_s(0.0f)
 , phaseExitTime_s(0.0f)
 , appDisconnectExitTime_s(0.0f)
 , onboardingStarted(false)
 , waitingForAppReconnect(false)
+, terminatedNaturally(true)
 , shouldCheckPowerOff(false)
 , isStimMaxed(false)
 , poweringOff(false)
@@ -308,19 +309,31 @@ void BehaviorOnboardingCoordinator::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingCoordinator::OnBehaviorActivated()
 {
-  // reset dynamic variables
-  _dVars = DynamicVariables();
+  // If the behavior exited naturally, reset dynamic variables. Otherwise, assume we were interrupted
+  // by something and pick up where we left off to maintain App Authoritative design if at all possible
+  if(_dVars.terminatedNaturally){
+    _dVars = DynamicVariables();
+    // If this isn't set to true before exiting, onboarding was interrupted, probably by an infoFace feature like 
+    // mute or customer care
+    _dVars.terminatedNaturally = false;
 
-  float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _dVars.globalExitTime_s = (_iConfig.startTimeout_s > 0.0f) ? (currTime_s + _iConfig.startTimeout_s) : 0.0f;
+    float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _dVars.globalExitTime_s = (_iConfig.startTimeout_s > 0.0f) ? (currTime_s + _iConfig.startTimeout_s) : 0.0f;
+
+    TransitionToPhase(OnboardingPhase::Default);
+  } else {
+    if(OnboardingPhase::InvalidPhase != _dVars.currentPhase){
+      const bool appCommandedTransition = false;
+      const bool resumingPhaseAfterInterruption = true;
+      TransitionToPhase(_dVars.currentPhase, appCommandedTransition, resumingPhaseAfterInterruption);
+    }
+  }
 
   // init battery info, but don't msg the app
   const bool sendEvent = false;
   UpdateBatteryInfo(sendEvent);
 
   FixStimAtMax();
-
-  TransitionToPhase(OnboardingPhase::Default);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -460,7 +473,9 @@ void BehaviorOnboardingCoordinator::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& phase, bool appCommandedTransition)
+void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& phase,
+                                                      bool appCommandedTransition,
+                                                      bool resumingPhaseAfterInterruption)
 {
   // App Authoritative. Abandon anything we're currently doing without callbacks
   CancelDelegates(false);
@@ -477,19 +492,29 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
     ICozmoBehaviorPtr behavior = iter->second.behavior;
     if( behavior->WantsToBeActivated() ){
 
-      DelegateIfInControl(behavior.get(),
-        [this, phase](){
-          OnPhaseComplete(phase);
-        });
-
-      const bool phaseHasTimeout = iter->second.timeout_s > 0.0f;
-      _dVars.phaseExitTime_s = phaseHasTimeout ? (currTime_s + iter->second.timeout_s) : 0.0f;
-      _dVars.lastPhase = iter->first;
-      _dVars.shouldCheckPowerOff = iter->second.allowPowerOff;
+      if(resumingPhaseAfterInterruption){
+        IOnboardingPhaseWithProgress* phaseWithProgress = dynamic_cast<IOnboardingPhaseWithProgress*>(behavior.get());
+        if(phaseWithProgress){
+          phaseWithProgress->ResumeUponNextActivation();
+        }
+      } 
+      else {
+        // Only reset the phase timeout if this transition is NOT resuming after an interruption
+        const bool phaseHasTimeout = iter->second.timeout_s > 0.0f;
+        _dVars.phaseExitTime_s = phaseHasTimeout ? (currTime_s + iter->second.timeout_s) : 0.0f;
+      }
 
       if( appCommandedTransition ){
         _dVars.lastSetPhaseState = OnboardingPhaseState::PhaseInProgress;
       }
+      
+      _dVars.currentPhase = iter->first;
+      _dVars.shouldCheckPowerOff = iter->second.allowPowerOff;
+
+      DelegateIfInControl(behavior.get(),
+        [this, phase](){
+          OnPhaseComplete(phase);
+        });
     }
     else {
       LOG_ERROR("BehaviorOnboardingCooordinator.TransitionToPhase.PhaseBehaviorFailure",
@@ -547,7 +572,7 @@ void BehaviorOnboardingCoordinator::OnPhaseComplete(const OnboardingPhase& phase
   const bool hasIdleTimeout = _iConfig.idleTimeout_s > 0.0f;
   _dVars.phaseExitTime_s = hasIdleTimeout ? (currTime_s + _iConfig.idleTimeout_s) : 0.0f;
   _dVars.shouldCheckPowerOff = _iConfig.allowPowerOffFromIdle;
-  _dVars.lastPhase = OnboardingPhase::InvalidPhase;
+  _dVars.currentPhase = OnboardingPhase::InvalidPhase;
   _dVars.lastSetPhaseState = OnboardingPhaseState::PhaseComplete;
 }
 
@@ -561,8 +586,8 @@ void BehaviorOnboardingCoordinator::TransitionToPoweringOff()
     // power button was released
     _dVars.poweringOff = false;
     // Restore whatever phase we were in when the power button was pressed
-    if( OnboardingPhase::InvalidPhase != _dVars.lastPhase ){
-      TransitionToPhase(_dVars.lastPhase);
+    if( OnboardingPhase::InvalidPhase != _dVars.currentPhase ){
+      TransitionToPhase(_dVars.currentPhase);
     }
   });
 }
@@ -658,6 +683,7 @@ void BehaviorOnboardingCoordinator::TerminateOnboarding()
 {
   CancelDelegates(false);
   _dVars.waitingForTermination = true;
+  _dVars.terminatedNaturally = true;
 
   // we shouldn't CancelSelf() because this is the base behavior in the stack. But we can
   // tell the BehaviorsBootLoader to reboot with a different stack
@@ -722,7 +748,7 @@ bool BehaviorOnboardingCoordinator::ShouldExitDueToTimeout()
   if( ( _dVars.phaseExitTime_s > 0.0f ) && ( _dVars.phaseExitTime_s < currTime_s ) ){
     LOG_INFO( "BehaviorOnboardingCoordinator.TimeoutExpired",
               "Onboarding aborted due to expired %s phase timeout. Onboarding will repeat on reboot",
-              EnumToString(_dVars.lastPhase));
+              EnumToString(_dVars.currentPhase));
     // TODO:(STR) reimplement onboarding DAS messaging
     return true;
   }
