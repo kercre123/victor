@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUncalibratedHeadAndLift.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/powerStateManager.h"
 #include "engine/actions/basicActions.h"
 
@@ -60,11 +61,13 @@ bool BehaviorReactToUncalibratedHeadAndLift::WantsToBeActivatedBehavior() const
                          GetBEI().GetRobotInfo().IsLiftEncoderInvalid());
 
   if (shouldActivate) {
+    const AnimationComponent& animComponent = GetBEI().GetAnimationComponent();
+
     // If a calibration seems necessary, first verify that we're not in the FistBump behavior which we know
     // can cause the lift encoder to become invalid since manipulation by user is expected.
-    const auto checkInterruptCallback = [&shouldActivate](const ICozmoBehavior& behavior)->bool {
+    const auto checkInterruptCallback = [&shouldActivate, &animComponent](const ICozmoBehavior& behavior)->bool {
       auto got = kDoNotInterruptBehaviors.find(behavior.GetID());
-      if(got != kDoNotInterruptBehaviors.end()) {
+      if(got != kDoNotInterruptBehaviors.end() || animComponent.IsPlayingAnimation()) {
         shouldActivate = false;
         return false; // stop iterating
       }
