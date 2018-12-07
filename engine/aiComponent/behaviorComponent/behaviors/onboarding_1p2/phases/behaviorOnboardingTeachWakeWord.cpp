@@ -47,7 +47,13 @@ BehaviorOnboardingTeachWakeWord::InstanceConfig::InstanceConfig(const Json::Valu
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingTeachWakeWord::DynamicVariables::DynamicVariables()
 : state(TeachWakeWordState::ListenForWakeWord)
-, numWakeWordDetections(0)
+, resumeUponActivation(false)
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorOnboardingTeachWakeWord::DynamicVariables::PersistentVars::PersistentVars()
+: numWakeWordDetections(0)
 {
 }
 
@@ -56,7 +62,7 @@ BehaviorOnboardingTeachWakeWord::DynamicVariables::DynamicVariables()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int BehaviorOnboardingTeachWakeWord::GetPhaseProgressInPercent() const
 {
-  return (int)(100.0f * ((float)_dVars.numWakeWordDetections / (float)_iConfig.numWakeWordsToCelebrate));
+  return (int)(100.0f * ((float)_dVars.persistent.numWakeWordDetections / (float)_iConfig.numWakeWordsToCelebrate));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -111,8 +117,14 @@ void BehaviorOnboardingTeachWakeWord::GetBehaviorJsonKeys(std::set<const char*>&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingTeachWakeWord::OnBehaviorActivated()
 {
-  // reset dynamic variables
-  _dVars = DynamicVariables();
+  // reset dynamic variables, accounting for persistence when necessary
+  if(_dVars.resumeUponActivation){
+    auto resumeVars = _dVars.persistent;
+    _dVars = DynamicVariables();
+    _dVars.persistent = resumeVars;
+  } else {
+    _dVars = DynamicVariables();
+  }
 
   EnableWakeWordDetection();
   TransitionToListenForWakeWord();
@@ -174,7 +186,7 @@ void BehaviorOnboardingTeachWakeWord::TransitionToReactToWakeWord()
   CancelDelegates( false );
   SET_STATE( ReactToWakeWord );
 
-  if( ++_dVars.numWakeWordDetections >= _iConfig.numWakeWordsToCelebrate ){
+  if( ++_dVars.persistent.numWakeWordDetections >= _iConfig.numWakeWordsToCelebrate ){
     TransitionToCelebrateSuccess();
   }
   else{
