@@ -1002,6 +1002,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
   }
   else if(doublePressDetected &&
           !isOnCharger && // while user-facing instructions may say "pick up the robot and double press," it's really just off charger
+          _engineLoaded &&
           CanEnterPairingFromScreen(currScreenName))
   {
     ToggleMute("DOUBLE_PRESS");
