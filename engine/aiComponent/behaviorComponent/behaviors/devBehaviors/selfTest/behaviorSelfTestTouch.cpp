@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestTouch::BehaviorSelfTestTouch(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::TOUCH_PRESS_TIMEOUT)
 {
   SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
                   {ExternalInterface::MessageEngineToGameTag::ChargerEvent,
@@ -30,7 +30,6 @@ BehaviorSelfTestTouch::BehaviorSelfTestTouch(const Json::Value& config)
 
 Result BehaviorSelfTestTouch::OnBehaviorActivatedInternal()
 {
-  PRINT_NAMED_WARNING("","TOUCH TEST");
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
@@ -109,7 +108,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
     {
       DrawTextOnScreen(robot, {""});
 
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);
     }
   }
 

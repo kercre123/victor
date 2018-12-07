@@ -13,14 +13,14 @@
 #ifndef __Cozmo_Basestation_PlaypenConfig__
 #define __Cozmo_Basestation_PlaypenConfig__
 
-#include "coretech/common/shared/types.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "clad/types/customObjectMarkers.h"
-#include "clad/types/robotStatusAndActions.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/shared/types.h"
 
 #include "util/console/consoleVariable.h"
+
+#include "clad/types/robotStatusAndActions.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -54,11 +54,25 @@ static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 static std::string kWifiSSID = "AnkiGuest";
 
 // ---------PickupChecks--------
+// How long the robot needs to be held upside down
+// before the cliff sensors are checked
 static u16 kTimeToBeUpsideDown_ms = 2000;
+
+// Z acceleration threshold for determining if the robot is upside down
+static s16 kUpsideDownZAccel      = -7000;
+
+// Cliff sensors must be reporting less than this value when the robot is upside down
+static u16 kUpsideDownCliffValThresh  = 50;
+
+// Once the robot has been turned upside down, if more than this amount of time passes
+// the test will fail
+static u16 kUpsideDownTimeout_ms = 5000;
 
 // ----------InitChecks----------
 // Minimum battery voltage the robot should have at the start and end of playpen
 static f32 kMinBatteryVoltage     = 3.6;
+
+static f32 kMinChargerVoltage     = 4.f;
 
 // Minimum expected raw touch sensor value
 static u16 kMinExpectedTouchValue = 3000;
@@ -131,6 +145,21 @@ static u32 kFFTFreqTolerance_hz        = 20;
 // The charger marker's last observed time is allowed to be this old compared to the latest processed image
 static u32 kChargerMarkerLastObservedTimeThresh_ms = 500;
 
+// ----------Screen and Backpack----------
+// Distance to drive off the charger
+static u16 kDistToDriveOffCharger_mm = 10;
+
+// Speed to drive off the charger
+static u16 kDriveOffChargerSpeed_mmps = 60;
+
+// Color to display on screen and backpack lights
+static ColorRGBA kColorCheck = NamedColors::WHITE;
+
+// Color of text displayed on screen
+static ColorRGBA kTextColor = NamedColors::BLACK;
+
+// Distance to drive to get back on the charger
+static s16 kDistToDriveOnCharger_mm = -40;
 }
 }
 }

@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestPutOnCharger::BehaviorSelfTestPutOnCharger(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::PUT_ON_CHARGER_TIMEOUT)
 {
   SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
                   {ExternalInterface::MessageEngineToGameTag::ChargerEvent,
@@ -41,7 +41,7 @@ Result BehaviorSelfTestPutOnCharger::OnBehaviorActivatedInternal()
   if(isPickedUp/* && isBeingHeld*/)
   {
     const AccelData& accel = robot.GetHeadAccelData();
-    if(accel.z <= -7000)
+    if(accel.z <= SelfTestConfig::kUpsideDownZAccel)
     {
       textAngle = 180;
     }
@@ -54,7 +54,7 @@ Result BehaviorSelfTestPutOnCharger::OnBehaviorActivatedInternal()
                    textAngle);
 
   AddTimer(30000, [this](){
-    SELFTEST_SET_RESULT(FactoryTestResultCode::TEST_TIMED_OUT);
+    SELFTEST_SET_RESULT(SelfTestResultCode::TEST_TIMED_OUT);
   });
 
   return RESULT_OK;
@@ -73,7 +73,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPutOnCharger::SelfTestUpdateIn
   if(isPickedUp/* && isBeingHeld*/)
   {
     const AccelData& accel = robot.GetHeadAccelData();
-    if(accel.z <= -7000)
+    if(accel.z <= SelfTestConfig::kUpsideDownZAccel)
     {
       upsideDown = true;
     }
@@ -101,7 +101,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPutOnCharger::SelfTestUpdateIn
 
   if(onCharger || charging)
   {
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+    SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);
   }
 
   return SelfTestStatus::Running;
@@ -109,7 +109,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPutOnCharger::SelfTestUpdateIn
 
 void BehaviorSelfTestPutOnCharger::OnBehaviorDeactivated()
 {
-
+  _isUpsideDown = false;
 }
 
 }

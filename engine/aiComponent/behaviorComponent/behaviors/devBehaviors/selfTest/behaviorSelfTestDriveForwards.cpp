@@ -19,7 +19,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestDriveForwards::BehaviorSelfTestDriveForwards(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::DRIVE_FORWARDS_TIMEOUT)
 {
 
 }
@@ -49,20 +49,20 @@ void BehaviorSelfTestDriveForwards::TransitionToOffChargerChecks()
   if(onCharger)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestDriveForwards.TransitionToOffChargerChecks.StillOnCharger","");
-    SELFTEST_SET_RESULT(FactoryTestResultCode::STILL_ON_CHARGER);
+    SELFTEST_SET_RESULT(SelfTestResultCode::STILL_ON_CHARGER);
   }
 
   const float batteryVolts = robot.GetBatteryVoltage();
   if(batteryVolts < SelfTestConfig::kMinBatteryVoltage)
   {
-    PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
-    SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);
+    PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.BatteryTooLow", "%fv", batteryVolts);
+    SELFTEST_SET_RESULT(SelfTestResultCode::BATTERY_TOO_LOW);
   }
 
   // TODO Maybe check cliff sensors for no cliff here
   // Difficult because don't know what kind of surface we are on, may be a dark table
 
-  SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+  SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
 }
 
 }

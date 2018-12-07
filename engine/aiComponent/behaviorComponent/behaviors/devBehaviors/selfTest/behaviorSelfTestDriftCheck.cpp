@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestDriftCheck::BehaviorSelfTestDriftCheck(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::DRIFT_CHECK_TIMEOUT)
 {
 }
 
@@ -70,7 +70,7 @@ void BehaviorSelfTestDriftCheck::CheckDrift()
     PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.CheckDrift.DriftDetected",
                         "Angle change of %f deg detected in %f seconds",
                         angleChange, Util::MilliSecToSec((float)SelfTestConfig::kIMUDriftDetectPeriod_ms));
-    SELFTEST_SET_RESULT(FactoryTestResultCode::IMU_DRIFTING);
+    SELFTEST_SET_RESULT(SelfTestResultCode::IMU_DRIFTING);
   }
   
   _driftCheckComplete = true;
@@ -81,7 +81,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestDriftCheck::SelfTestUpdateInte
   // Wait until both sound and drift check complete
   if(_driftCheckComplete)
   {
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+    SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);
   }
   
   return SelfTestStatus::Running;

@@ -20,7 +20,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestWaitToStart::BehaviorSelfTestWaitToStart(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::TEST_TIMED_OUT)
 {
   // Subscribe to all of the base class's failure tags to prevent us from automatically failing
   // if we get put on the charger, motor calibration on startup, etc...
@@ -56,7 +56,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestWaitToStart::SelfTestUpdateInt
   //                                                                                  RobotInterface::ColorRGB(0,0,0),	
   //                                                                                  "")));
     
-  SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+  SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);
 }
 
 void BehaviorSelfTestWaitToStart::OnBehaviorDeactivated()

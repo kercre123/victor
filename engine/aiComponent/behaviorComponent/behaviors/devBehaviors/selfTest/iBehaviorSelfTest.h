@@ -24,12 +24,14 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "clad/types/selfTestTypes.h"
+
 namespace Anki {
 namespace Cozmo {
 
 // Macros for setting self test result codes
 #define SELFTEST_SET_RESULT(result)  { \
-  if(!ShouldIgnoreFailures() || result == FactoryTestResultCode::SUCCESS) { \
+  if(!ShouldIgnoreFailures() || result == SelfTestResultCode::SUCCESS) { \
     SetResult(result); \
     return; \
   } else { \
@@ -40,9 +42,9 @@ namespace Cozmo {
     AddToResultList(result); \
   } \
 }
-  
+
 #define SELFTEST_SET_RESULT_WITH_RETURN_VAL(result, retval)  { \
-  if(!ShouldIgnoreFailures() || result == FactoryTestResultCode::SUCCESS) { \
+  if(!ShouldIgnoreFailures() || result == SelfTestResultCode::SUCCESS) { \
     SetResult(result); \
     return retval; \
   } else { \
@@ -53,34 +55,32 @@ namespace Cozmo {
     AddToResultList(result); \
   } \
 }
-  
+
 #define SELFTEST_TRY(expr, result) { if(!(expr)) {SELFTEST_SET_RESULT(result);} }
-  
+
 class FactoryTestLogger;
 
 class IBehaviorSelfTest : public ICozmoBehavior
 {
 protected:
-  
+
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  IBehaviorSelfTest(const Json::Value& config);
-  
+  IBehaviorSelfTest(const Json::Value& config, SelfTestResultCode timeoutCode);
+
 public:
 
   // Returns the current result of a self test behavior
   // Will be UNKNOWN while running and either SUCCESS or something else when complete
-  FactoryTestResultCode GetResult() { if(_recordingTouch) { return FactoryTestResultCode::UNKNOWN; } return _result; }
-  
-  void Reset() { 
-    _timers.clear(); 
-    _result = FactoryTestResultCode::UNKNOWN; 
-    _recordingTouch = false;
-    _touchSensorValues.data.clear();
+  SelfTestResultCode GetResult() { return _result; }
+
+  void Reset() {
+    _timers.clear();
+    _result = SelfTestResultCode::UNKNOWN;
     _lastStatus = SelfTestStatus::Running;
   }
-  
-  static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllSelfTestResults();
+
+  static const std::map<std::string, std::vector<SelfTestResultCode>>& GetAllSelfTestResults();
   static void ResetAllSelfTestResults();
 
   static const std::set<ExternalInterface::MessageEngineToGameTag>& GetFailureTags();
@@ -100,19 +100,19 @@ protected:
     Complete
   };
 
-  virtual void InitBehavior() override {InitBehaviorInternal();};  
+  virtual void InitBehavior() override {InitBehaviorInternal();};
 
   // Override of IBehavior functions
   virtual bool WantsToBeActivatedBehavior() const override;
-  
+
   // Final override of OnBehaviorActivated so we can do things before the subclass inits
   // OnBehaviorActivatedInternal() is provided for the subclass to override
   virtual void OnBehaviorActivated() override final;
-  
+
   // Final override of UpdateInternal so we can do things before the subclass updates
   // SelfTestUpdateInternal() is provided for the subclass to override if they wish
   virtual void BehaviorUpdate() override final;
-  
+
   // Final override of HandleWhileActivated so we can do things before the subclass handles the event
   // HandleWhileActivatedInternal() is provided for the subclass to override
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override final;
@@ -122,40 +122,40 @@ protected:
   // is subscribing to
   void SubscribeToTags(std::set<EngineToGameTag>&& tags); // Hide base class function
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
-  
+
   // Hides some of ICozmoBehavior's various DelegateIfInControl functions so we can inject callbacks that
   // automatically print warnings/failures if actions fail
   bool DelegateIfInControl(IActionRunner* action, SimpleCallback callback); // Hide base class function
   bool DelegateIfInControl(IActionRunner* action, ActionResultCallback callback); // Hide base class function
   bool DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback); // Hide base class function
-  
+
 
   // Virtual functions for subclasses to override
-  virtual void InitBehaviorInternal() {}; 
-  
+  virtual void InitBehaviorInternal() {};
+
   virtual Result OnBehaviorActivatedInternal() = 0;
-  
+
   virtual SelfTestStatus SelfTestUpdateInternal() { return SelfTestStatus::Running; }
-  
+
   virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) { }
-  
+
   virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event) { }
 
   //FactoryTestLogger& GetLogger() { return *_factoryTestLogger; }
-  
+
   // Attempts to write to robot storage, if enabled, and will fail with failureCode if writing fails
-  void WriteToStorage(Robot& robot, 
+  void WriteToStorage(Robot& robot,
                       NVStorage::NVEntryTag tag,
-                      const u8* data, 
+                      const u8* data,
                       size_t size,
                       FactoryTestResultCode failureCode);
-  
+
   // Use the macro SELFTEST_SET_RESULT if you can instead of directly calling this function
-  void SetResult(FactoryTestResultCode result);
+  void SetResult(SelfTestResultCode result);
 
   // Add the result to the static list of self test behavior results
-  void AddToResultList(FactoryTestResultCode result);
-  
+  void AddToResultList(SelfTestResultCode result);
+
   // Adds a timer that will call the callback when time_ms has passed
   void AddTimer(TimeStamp_t time_ms, std::function<void(void)> callback, const std::string& name = "")
     { _timers.push_back(Timer(time_ms, callback, name)); }
@@ -166,7 +166,7 @@ protected:
   void RemoveTimers(const std::string& name);
 
   void IncreaseTimeoutTimer(TimeStamp_t time_ms);
-  
+
   // Returns whether or not we should ignore behavior failures
   bool ShouldIgnoreFailures() const;
 
@@ -204,16 +204,16 @@ private:
       _callback(callback),
       _name(name)
     {
-    
+
     }
-    
+
     void Tick()
     {
       if(BaseStationTimer::getInstance()->GetCurrentTimeStamp() > _time_ms &&
          _callback != nullptr)
       {
         _callback();
-        
+
         // Nullify callback so it will only be called once since timers are still alive/exist even
         // after _time_ms has been reached
         _callback = nullptr;
@@ -223,7 +223,7 @@ private:
     const std::string& GetName() const { return _name; }
 
     void AddTime(TimeStamp_t time_ms) { _time_ms += time_ms; }
-    
+
   private:
     TimeStamp_t _time_ms = 0;
     std::function<void(void)> _callback = nullptr;
@@ -233,9 +233,9 @@ private:
   std::vector<Timer> _timers;
 
   //mutable FactoryTestLogger* _factoryTestLogger;
-  
-  FactoryTestResultCode _result = FactoryTestResultCode::UNKNOWN;
-  
+
+  SelfTestResultCode _result = SelfTestResultCode::UNKNOWN;
+
   // Set of EngineToGameTags that a subclass has subscribed to
   std::set<EngineToGameTag> _tagsSubclassSubscribeTo;
 
@@ -245,8 +245,10 @@ private:
 
   // The last value UpdateInternal returned
   SelfTestStatus _lastStatus = SelfTestStatus::Running;
+
+  SelfTestResultCode _timeoutCode = SelfTestResultCode::TEST_TIMED_OUT;
 };
-  
+
 }
 }
 

@@ -22,7 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestPickup::BehaviorSelfTestPickup(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::PICKUP_ROBOT_TIMEOUT)
 {
   SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ChargerEvent,
                    ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged,
@@ -53,10 +53,8 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
   if(isPickedUp/* && isBeingHeld*/)
   {
     const AccelData& accel = robot.GetHeadAccelData();
-    if(accel.z <= -7000)
+    if(accel.z <= SelfTestConfig::kUpsideDownZAccel)
     {
-      PRINT_NAMED_WARNING("","Robot is upside down");
-
       if(_upsideDownStartTime_ms == 0)
       {
         DrawTextOnScreen(robot,
@@ -65,12 +63,12 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
                          NamedColors::BLACK,
                          180);
       }
-      
+
       if(!_upsideDownTimerAdded)
       {
         _upsideDownTimerAdded = true;
-        AddTimer(5000, [this]() {
-                         SELFTEST_SET_RESULT(FactoryTestResultCode::TEST_TIMED_OUT);
+        AddTimer(SelfTestConfig::kUpsideDownTimeout_ms, [this]() {
+                         SELFTEST_SET_RESULT(SelfTestResultCode::UPSIDE_DOWN_TIMEOUT);
                        });
       }
 
@@ -91,12 +89,12 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
           bool allCliffs = true;
           for(int c = 0; c < CliffSensorComponent::kNumCliffSensors; c++)
           {
-            allCliffs |= (cliffData[c] < 50);
+            allCliffs |= (cliffData[c] < SelfTestConfig::kUpsideDownCliffValThresh);
           }
 
           if(allCliffs)
           {
-            SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS,
+            SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS,
                                                 SelfTestStatus::Complete);
           }
         }
@@ -113,7 +111,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
                          0);
 
       }
-      
+
       _upsideDownStartTime_ms = 0;
     }
   }

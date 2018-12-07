@@ -18,9 +18,8 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestMotorCalibration::BehaviorSelfTestMotorCalibration(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::MOTOR_CALIBRATION_TIMEOUT)
 {
-  PRINT_NAMED_WARNING("","SUBSCRIBING");
   SubscribeToTags({EngineToGameTag::MotorCalibration});
 }
 
@@ -32,7 +31,7 @@ Result BehaviorSelfTestMotorCalibration::OnBehaviorActivatedInternal()
 
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
   AddTimer(5000,
-           [this](){ SELFTEST_SET_RESULT(FactoryTestResultCode::MOTORS_UNCALIBRATED) });
+           [this](){ SELFTEST_SET_RESULT(SelfTestResultCode::MOTORS_UNCALIBRATED) });
   
   return RESULT_OK;
 }
@@ -41,7 +40,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestMotorCalibration::SelfTestUpda
 {
   if(_liftCalibrated && _headCalibrated)
   {
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+    SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);
   }
   
   return SelfTestStatus::Running;
@@ -71,7 +70,7 @@ void BehaviorSelfTestMotorCalibration::HandleWhileActivatedInternal(const Engine
       }
       else
       {
-        SELFTEST_SET_RESULT(FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+        SELFTEST_SET_RESULT(SelfTestResultCode::MOTOR_CALIB_UNEXPECTED);
       }
     }
   }

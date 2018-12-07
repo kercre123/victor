@@ -18,6 +18,8 @@
 
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "clad/types/selfTestTypes.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -59,17 +61,17 @@ protected:
 private:
 
   // Handle the playpen result and finish up the test
-  void HandleResult(FactoryTestResultCode result);
+  void HandleResult(SelfTestResultCode result);
 
   // Display appropriate stuff on the face and backpack lights depending on the result
-  void DisplayResult(FactoryTestResultCode result);
+  void DisplayResult(SelfTestResultCode result);
 
   // Reset all playpen behaviors and state
   void Reset();
 
   void StartCubeConnectionCheck();
 
-  FactoryTestResultCode DoFinalChecks();
+  SelfTestResultCode DoFinalChecks();
 
   using SelfTestBehavior = std::shared_ptr<IBehaviorSelfTest>;
 

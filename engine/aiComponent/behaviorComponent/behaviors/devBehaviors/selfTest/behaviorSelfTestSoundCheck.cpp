@@ -23,13 +23,12 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestSoundCheck::BehaviorSelfTestSoundCheck(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::SOUND_CHECK_TIMEOUT)
 {
 }
 
 void BehaviorSelfTestSoundCheck::InitBehaviorInternal()
 {
-  PRINT_NAMED_WARNING("","STARTING SOUND");
   ICozmoBehavior::SubscribeToTags({RobotInterface::RobotToEngineTag::audioFFTResult});
 }
 
@@ -70,7 +69,7 @@ void BehaviorSelfTestSoundCheck::TransitionToPlayingSound()
   DelegateIfInControl(action, [this, &robot](){
                                 DrawTextOnScreen(robot,
                                                  {"Test Running"});
-                                SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+                                SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
                               });
 }
 
@@ -87,16 +86,16 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
     ReceivedFFTResult();
 
     // Vector that maps channel (index) to mic/mic result code
-    static const std::vector<FactoryTestResultCode> channelToMic = {
-      FactoryTestResultCode::MIC_BL_NOT_WORKING,
-      FactoryTestResultCode::MIC_FL_NOT_WORKING,
-      FactoryTestResultCode::MIC_BR_NOT_WORKING,
-      FactoryTestResultCode::MIC_FR_NOT_WORKING,
+    static const std::vector<SelfTestResultCode> channelToMic = {
+      SelfTestResultCode::MIC_BL_NOT_WORKING,
+      SelfTestResultCode::MIC_FL_NOT_WORKING,
+      SelfTestResultCode::MIC_BR_NOT_WORKING,
+      SelfTestResultCode::MIC_FR_NOT_WORKING,
     };
 
     const auto& payload = event.GetData().Get_audioFFTResult();
     u8 count = 0;
-    FactoryTestResultCode res = FactoryTestResultCode::UNKNOWN;
+    SelfTestResultCode res = SelfTestResultCode::UNKNOWN;
 
     // For each fft result
     for(u8 i = 0; i < payload.result.size(); ++i)
@@ -128,7 +127,7 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
     // Currently assuming it is the latter in this case
     if(count == payload.result.size())
     {
-      res = FactoryTestResultCode::SPEAKER_NOT_WORKING;
+      res = SelfTestResultCode::SPEAKER_NOT_WORKING;
       PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.Speaker",
                           "No mics picked up expected frequency %u, assuming speaker is not working",
                           SelfTestConfig::kFFTExpectedFreq_hz);
@@ -146,7 +145,7 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
     }
 
     // Broadcast a failure message containing the result code
-    if(res != FactoryTestResultCode::UNKNOWN)
+    if(res != SelfTestResultCode::UNKNOWN)
     {
       using namespace ExternalInterface;
       const_cast<Robot&>(robot).Broadcast(MessageEngineToGame(SelfTestBehaviorFailed(res)));

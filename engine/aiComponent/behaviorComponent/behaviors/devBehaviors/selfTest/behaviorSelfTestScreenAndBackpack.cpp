@@ -22,7 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestScreenAndBackpack::BehaviorSelfTestScreenAndBackpack(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::SCREEN_BACKPACK_TIMEOUT)
 {
   SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
                   {ExternalInterface::MessageEngineToGameTag::ChargerEvent});
@@ -30,7 +30,8 @@ BehaviorSelfTestScreenAndBackpack::BehaviorSelfTestScreenAndBackpack(const Json:
 
 Result BehaviorSelfTestScreenAndBackpack::OnBehaviorActivatedInternal()
 {
-  DriveStraightAction* action = new DriveStraightAction(10, 60, false);
+  DriveStraightAction* action = new DriveStraightAction(SelfTestConfig::kDistToDriveOffCharger_mm,
+                                                        SelfTestConfig::kDriveOffChargerSpeed_mmps, false);
 
   DelegateIfInControl(action, [this](){ TransitionToButtonCheck(); });
 
@@ -47,17 +48,17 @@ void BehaviorSelfTestScreenAndBackpack::TransitionToButtonCheck()
   if(onCharger)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestScreenAndBackpack.TransitionToButtonCheck.StillOnCharger","");
-    SELFTEST_SET_RESULT(FactoryTestResultCode::STILL_ON_CHARGER);
+    SELFTEST_SET_RESULT(SelfTestResultCode::STILL_ON_CHARGER);
   }
 
   DrawTextOnScreen(robot,
                    {"Press button if screen","and lights match"},
-                   NamedColors::BLACK,
-                   NamedColors::WHITE);
+                   SelfTestConfig::kTextColor,
+                   SelfTestConfig::kColorCheck);
 
   static const BackpackLights lights = {
-      .onColors               = {{NamedColors::WHITE,NamedColors::WHITE,NamedColors::WHITE}},
-      .offColors              = {{NamedColors::WHITE,NamedColors::WHITE,NamedColors::WHITE}},
+      .onColors               = {{SelfTestConfig::kColorCheck, SelfTestConfig::kColorCheck, SelfTestConfig::kColorCheck}},
+      .offColors              = {{SelfTestConfig::kColorCheck, SelfTestConfig::kColorCheck, SelfTestConfig::kColorCheck}},
       .onPeriod_ms            = {{500,500,500}},
       .offPeriod_ms           = {{500,500,500}},
       .transitionOnPeriod_ms  = {{0,0,0}},
@@ -93,7 +94,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
 
   if(buttonReleased && !_buttonStartedPressed)
   {
-    DriveStraightAction* drive = new DriveStraightAction(-40,
+    DriveStraightAction* drive = new DriveStraightAction(SelfTestConfig::kDistToDriveOnCharger_mm,
                                                          SelfTestConfig::kDriveBackwardsSpeed_mmps);
 
     CompoundActionParallel* action = new CompoundActionParallel();
@@ -114,7 +115,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
     action->AddAction(cancel);
 
     DelegateIfInControl(action, [this](){
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, SelfTestStatus::Complete);
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);
     });
   }
 

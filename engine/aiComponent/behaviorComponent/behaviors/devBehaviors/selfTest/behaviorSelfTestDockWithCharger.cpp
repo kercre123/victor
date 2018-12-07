@@ -20,7 +20,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestDockWithCharger::BehaviorSelfTestDockWithCharger(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::DOCK_WITH_CHARGER_TIMEOUT)
 {
   SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ChargerEvent});
 }
@@ -41,7 +41,7 @@ Result BehaviorSelfTestDockWithCharger::OnBehaviorActivatedInternal()
     PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.GetExpectedObjectMarkerPoseWrtRobot.NullObject",
                         "Expected object of type %s does not exist or am not seeing it",
                         ObjectTypeToString(ObjectType::Charger_Basic));
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNAVAILABLE, RESULT_FAIL);
+    SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::CHARGER_NOT_FOUND, RESULT_FAIL);
   }
   else
   {
@@ -60,7 +60,7 @@ Result BehaviorSelfTestDockWithCharger::OnBehaviorActivatedInternal()
     if(object == nullptr)
     {
       PRINT_NAMED_INFO("BehaviorSelfTestDockWithCharger.GetExpectedObjectMarkerPoseWrtRobot.NullObject","");
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNAVAILABLE, RESULT_FAIL);
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::CHARGER_NOT_FOUND, RESULT_FAIL);
     }
 
     DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(object->GetID(), true, false);
@@ -93,7 +93,7 @@ void BehaviorSelfTestDockWithCharger::TransitionToOnChargerChecks()
     if(!chargerVoltageGood)
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.ChargerTooLow", "%fv", chargerVolts);
-      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+      SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_VOLTAGE_TOO_LOW);
     }
   }
   else
@@ -101,19 +101,19 @@ void BehaviorSelfTestDockWithCharger::TransitionToOnChargerChecks()
     if(!batteryVoltageGood)
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.BatteryTooLow", "%fv", batteryVolts);
-      SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);
+      SELFTEST_SET_RESULT(SelfTestResultCode::BATTERY_TOO_LOW);
     }
     else if(!chargerVoltageGood)
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.ChargerTooLow", "%fv", chargerVolts);
-      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+      SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_VOLTAGE_TOO_LOW);
     }
   }
 
   // TODO Maybe check cliff sensors for no cliff here
   // Difficult because don't know what kind of surface we are on, may be a dark table
 
-  SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+  SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
 }
 
 }

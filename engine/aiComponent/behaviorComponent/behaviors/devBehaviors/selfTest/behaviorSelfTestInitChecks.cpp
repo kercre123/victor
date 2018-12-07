@@ -23,7 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestInitChecks::BehaviorSelfTestInitChecks(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::INIT_CHECKS_TIMEOUT)
 {
 
 }
@@ -70,7 +70,7 @@ void BehaviorSelfTestInitChecks::TransitionToChecks()
   // Should not be seeing any cliffs
   if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())
   {
-    SELFTEST_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
+    SELFTEST_SET_RESULT(SelfTestResultCode::CLIFF_UNEXPECTED);
   }
 
   // Check that raw touch values are in expected range (the range assumes no touch)
@@ -84,7 +84,7 @@ void BehaviorSelfTestInitChecks::TransitionToChecks()
                         SelfTestConfig::kMinExpectedTouchValue,
                         rawTouchValue,
                         SelfTestConfig::kMaxExpectedTouchValue);
-    SELFTEST_SET_RESULT(FactoryTestResultCode::TOUCH_VALUES_OOR);
+    SELFTEST_SET_RESULT(SelfTestResultCode::TOUCH_VALUES_OOR);
   }
 
   PRINT_NAMED_WARNING("","%d %d %d", robot.IsOnCharger(), robot.IsCharging(), robot.IsBatteryDisconnected());
@@ -94,32 +94,32 @@ void BehaviorSelfTestInitChecks::TransitionToChecks()
   {
     if(robot.IsCharging() && robot.IsBatteryDisconnected())
     {
-      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNDETECTED);
+      SELFTEST_SET_RESULT(SelfTestResultCode::ON_CHARGER_NOT_CHARGING_OR_DISCONNECTED);
     }
     else if(!robot.IsCharging() && !robot.IsBatteryDisconnected())
     {
-      SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNDETECTED);
+      SELFTEST_SET_RESULT(SelfTestResultCode::BATTERY_TOO_LOW);
     }
   }
   else
   {
-    SELFTEST_SET_RESULT(FactoryTestResultCode::CHARGER_UNDETECTED);
+    SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_UNDETECTED);
   }
 
   // Charger voltage should be nice and high
   // Battery voltage will be checked later once we are off the charger in case the battery is currently disconnected
-  if(robot.GetChargerVoltage() < 4.0)
+  if(robot.GetChargerVoltage() < SelfTestConfig::kMinChargerVoltage)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestInitChecks.OnActivated.ChargerTooLow",
                         "%fv",
                         robot.GetChargerVoltage());
-    SELFTEST_SET_RESULT(FactoryTestResultCode::BATTERY_TOO_LOW);
+    SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_VOLTAGE_TOO_LOW);
   }
 
   // Force delocalize the robot to ensure consistent starting pose
   robot.Delocalize(false);
 
-  SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+  SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
 }
 
 }

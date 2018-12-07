@@ -325,9 +325,9 @@ void BehaviorSelfTest::BehaviorUpdate()
   if(_currentBehavior != nullptr)
   {
     // Check if the current behavior has failed
-    const FactoryTestResultCode result = _currentBehavior->GetResult();
-    if(result != FactoryTestResultCode::UNKNOWN &&
-       result != FactoryTestResultCode::SUCCESS)
+    const SelfTestResultCode result = _currentBehavior->GetResult();
+    if(result != SelfTestResultCode::UNKNOWN &&
+       result != SelfTestResultCode::SUCCESS)
     {
       //_currentBehavior->OnDeactivated();
 
@@ -345,7 +345,7 @@ void BehaviorSelfTest::BehaviorUpdate()
 
   // If the current behavior has completed
   if(_currentBehavior != nullptr &&
-     _currentBehavior->GetResult() == FactoryTestResultCode::SUCCESS)
+     _currentBehavior->GetResult() == SelfTestResultCode::SUCCESS)
   {
     // Move to the next behavior
     _currentSelfTestBehaviorIter++;
@@ -363,7 +363,7 @@ void BehaviorSelfTest::BehaviorUpdate()
                           "Current behavior %s is not runnable",
                           _currentBehavior->GetDebugLabel().c_str());
 
-        HandleResult(FactoryTestResultCode::BEHAVIOR_NOT_RUNNABLE);
+        HandleResult(SelfTestResultCode::BEHAVIOR_NOT_RUNNABLE);
         return;
       }
 
@@ -375,14 +375,14 @@ void BehaviorSelfTest::BehaviorUpdate()
     else
     {
       PRINT_NAMED_INFO("BehaviorSelfTest.Complete", "All behaviors have been run");
-      FactoryTestResultCode res = DoFinalChecks();
+      SelfTestResultCode res = DoFinalChecks();
       HandleResult(res);
     }
   }
 }
 
 
-void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
+void BehaviorSelfTest::HandleResult(SelfTestResultCode result)
 {
   PRINT_NAMED_INFO("BehaviorSelfTest.HandleResult.OrigResult",
                    "%s", EnumToString(result));
@@ -397,7 +397,7 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // if(!_factoryTestLogger.Append(_imuTemp))
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed.ImuTemp", "");
-  //   result = FactoryTestResultCode::WRITE_TO_LOG_FAILED;
+  //   result = SelfTestResultCode::WRITE_TO_LOG_FAILED;
   // }
 
   const auto& allResults = IBehaviorSelfTest::GetAllSelfTestResults();
@@ -406,18 +406,18 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   //    !_factoryTestLogger.Append(allResults))
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed.AllResults", "");
-  //   result = FactoryTestResultCode::WRITE_TO_LOG_FAILED;
+  //   result = SelfTestResultCode::WRITE_TO_LOG_FAILED;
   // }
 
   // If this is a success but we are ignoring failures a behavior may have actually
   // failed so check all results
-  if(result == FactoryTestResultCode::SUCCESS && SelfTestConfig::kIgnoreFailures)
+  if(result == SelfTestResultCode::SUCCESS && SelfTestConfig::kIgnoreFailures)
   {
     for(const auto& resultPair : allResults)
     {
       for(const auto& res : resultPair.second)
       {
-        if(res != FactoryTestResultCode::SUCCESS)
+        if(res != SelfTestResultCode::SUCCESS)
         {
           result = res;
           PRINT_NAMED_INFO("BehaviorSelfTest.HandleResultInternal.ChangingResult",
@@ -433,13 +433,13 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
 
   // Only check EMR PLAYPEN_READY_FLAG on success so that we can run robots through
   // playpen to check sensors and stuff before even if they have not passed previous fixtures
-  // if(result == FactoryTestResultCode::SUCCESS &&
+  // if(result == SelfTestResultCode::SUCCESS &&
   //    (Factory::GetEMR() == nullptr ||
   //     !Factory::GetEMR()->fields.PLAYPEN_READY_FLAG))
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.NotReadyForPlaypen",
   //                       "Either couldn't read EMR or robot not ready for playpen");
-  //   result = FactoryTestResultCode::ROBOT_FAILED_PREPLAYPEN_TESTS;
+  //   result = SelfTestResultCode::ROBOT_FAILED_PREPLAYPEN_TESTS;
   // }
 
   //FactoryTestResultEntry resultEntry;
@@ -464,18 +464,18 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteTestResultToRobotFailed",
   //                       "Writing test results to robot failed");
-  //   resultEntry.result = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
-  //   result = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
+  //   resultEntry.result = SelfTestResultCode::TEST_RESULT_WRITE_FAILED;
+  //   result = SelfTestResultCode::TEST_RESULT_WRITE_FAILED;
   // }
 
   // if(!_factoryTestLogger.Append(resultEntry))
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed",
   //                       "Failed to write result entry to log");
-  //   result = FactoryTestResultCode::WRITE_TO_LOG_FAILED;
+  //   result = SelfTestResultCode::WRITE_TO_LOG_FAILED;
   // }
 
-  // if((result == FactoryTestResultCode::SUCCESS) && SelfTestConfig::kWriteToStorage)
+  // if((result == SelfTestResultCode::SUCCESS) && SelfTestConfig::kWriteToStorage)
   // {
   //   time_t nowTime = time(0);
   //   struct tm* tmStruct = gmtime(&nowTime);
@@ -497,8 +497,8 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   //                                           numBytes))
   //   {
   //     PRINT_NAMED_ERROR("BehaviorSelfTest.HandleResultInternal.BCWriteFailed", "");
-  //     resultEntry.result = FactoryTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
-  //     result = FactoryTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
+  //     resultEntry.result = SelfTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
+  //     result = SelfTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
   //   }
 
 
@@ -507,7 +507,7 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   //   Factory::WriteEMR(offsetof(Factory::EMR::Fields, playpen)/sizeof(uint32_t), buf, sizeof(buf));
   // }
 
-  // const u32 kPlaypenPassedFlag = ((result == FactoryTestResultCode::SUCCESS) ? 1 : 0);
+  // const u32 kPlaypenPassedFlag = ((result == SelfTestResultCode::SUCCESS) ? 1 : 0);
   // Factory::WriteEMR(offsetof(Factory::EMR::Fields, PLAYPEN_PASSED_FLAG)/sizeof(uint32_t), kPlaypenPassedFlag);
 
   // robot.Broadcast(ExternalInterface::MessageEngineToGame(FactoryTestResultEntry(resultEntry)));
@@ -517,7 +517,7 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
                    EnumToString(result));
 
   // Copy engine logs if the test failed or we are ignoring failures
-  // if((result != FactoryTestResultCode::SUCCESS || SelfTestConfig::kIgnoreFailures) &&
+  // if((result != SelfTestResultCode::SUCCESS || SelfTestConfig::kIgnoreFailures) &&
   //    !_factoryTestLogger.CopyEngineLog(robot.GetContextDataPlatform()))
   // {
   //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.CopyEngineLogFailed", "");
@@ -529,7 +529,7 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // Reset playpen
   Reset();
 
-  _restartOnButtonPress = false;//(result != FactoryTestResultCode::SUCCESS);
+  _restartOnButtonPress = false;//(result != SelfTestResultCode::SUCCESS);
   _waitForButtonToEndTest = true;
 
   // Handled by button press logic in BehaviorUpdate
@@ -553,13 +553,13 @@ void BehaviorSelfTest::HandleResult(FactoryTestResultCode result)
   // TODO(Al): Turn off Victor at end of playpen?
 }
 
-void BehaviorSelfTest::DisplayResult(FactoryTestResultCode result)
+void BehaviorSelfTest::DisplayResult(SelfTestResultCode result)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  if(result == FactoryTestResultCode::SUCCESS)
+  if(result == SelfTestResultCode::SUCCESS)
   {
     static const BackpackLights passLights = {
       .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
@@ -693,11 +693,11 @@ void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
   }
 }
 
-FactoryTestResultCode BehaviorSelfTest::DoFinalChecks()
+SelfTestResultCode BehaviorSelfTest::DoFinalChecks()
 {
   return (_radioScanState == RadioScanState::Passed ?
-          FactoryTestResultCode::SUCCESS :
-          FactoryTestResultCode::NO_ACTIVE_OBJECTS_DISCOVERED);
+          SelfTestResultCode::SUCCESS :
+          SelfTestResultCode::RADIO_CHECK_FAILED);
 }
 
 }

@@ -37,6 +37,7 @@
 #include "clad/types/cladRect.clad"
 #include "clad/types/gameStatusFlag.clad"
 #include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/selfTestTypes.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
 #include "clad/types/uiConnectionTypes.clad"
@@ -504,7 +505,7 @@ message PlaypenBehaviorFailed {
 
 // Engine->Engine message for asynchronous playpen checks
 message SelfTestBehaviorFailed {
-  FactoryTestResultCode result
+  SelfTestResultCode result
 }
 
 message SelfTestEnd {
@@ -572,7 +573,7 @@ message ObjectAvailable
 
 // Indicates that a cube has connected or disconnected
 message ObjectConnectionState
-{  
+{
   uint_32 objectID,
   string factoryID,
   ObjectType  object_type,

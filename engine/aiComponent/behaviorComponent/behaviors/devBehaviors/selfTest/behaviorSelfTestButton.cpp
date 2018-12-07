@@ -19,7 +19,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestButton::BehaviorSelfTestButton(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::BUTTON_PRESS_TIMEOUT)
 {
 
 }
@@ -67,7 +67,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
     }
     else
     {
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, SelfTestStatus::Failure);
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::CHARGER_UNDETECTED, SelfTestStatus::Failure);
     }
   }
 
@@ -90,7 +90,7 @@ void BehaviorSelfTestButton::WaitToBeOnTreads()
 
   if(robot.GetOffTreadsState() == OffTreadsState::OnTreads)
   {
-    SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+    SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
   }
   else
   {

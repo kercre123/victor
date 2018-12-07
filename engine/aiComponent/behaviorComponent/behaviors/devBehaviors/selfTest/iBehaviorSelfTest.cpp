@@ -25,6 +25,8 @@
 
 #include "coretech/vision/engine/image_impl.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+
 #include "opencv2/highgui.hpp"
 
 namespace Anki {
@@ -46,7 +48,7 @@ static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = 
 
 // Static (shared) across all selftest behaviors
 // Maps a behavior name/idStr to a vector of results it has failed/completed with
-static std::map<std::string, std::vector<FactoryTestResultCode>> results;
+static std::map<std::string, std::vector<SelfTestResultCode>> results;
 
 // Hacky way of giving any selftest behavior easy access to check something that an individual behavior
 // sets. This way the behavior that is checking doesn't have to dynamic cast to the individual behavior.
@@ -54,8 +56,9 @@ static std::map<std::string, std::vector<FactoryTestResultCode>> results;
 static bool receivedFFTResult = false;
 }
 
-IBehaviorSelfTest::IBehaviorSelfTest(const Json::Value& config)
+IBehaviorSelfTest::IBehaviorSelfTest(const Json::Value& config, SelfTestResultCode timeoutCode)
 : ICozmoBehavior(config)
+, _timeoutCode(timeoutCode)
 {
   // Don't want to invailidate kFailureTags by std::move-ing it so make a copy and move that
   auto failureTagCopy = kFailureTags;
@@ -64,7 +67,6 @@ IBehaviorSelfTest::IBehaviorSelfTest(const Json::Value& config)
 
 bool IBehaviorSelfTest::WantsToBeActivatedBehavior() const
 {
-  //_factoryTestLogger = &BehaviorSelfTestTest::GetFactoryTestLogger();
   return true;
 }
 
@@ -79,11 +81,11 @@ void IBehaviorSelfTest::OnBehaviorActivated()
 
     if(!ShouldIgnoreFailures())
     {
-      SetResult(FactoryTestResultCode::TEST_TIMED_OUT);
+      SetResult(_timeoutCode);
     }
     else
     {
-      SetResult(FactoryTestResultCode::SUCCESS);
+      SetResult(SelfTestResultCode::SUCCESS);
     }
   });
 
@@ -98,8 +100,8 @@ void IBehaviorSelfTest::BehaviorUpdate()
   }
 
   // Immediately stop the behavior if the result is not success
-  if(_result != FactoryTestResultCode::UNKNOWN &&
-     _result != FactoryTestResultCode::SUCCESS)
+  if(_result != SelfTestResultCode::UNKNOWN &&
+     _result != SelfTestResultCode::SUCCESS)
   {
     CancelSelf();
     return;
@@ -145,19 +147,19 @@ void IBehaviorSelfTest::HandleWhileActivated(const EngineToGameEvent& event)
     {
       case EngineToGameTag::CliffEvent:
       {
-        SELFTEST_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
+        SELFTEST_SET_RESULT(SelfTestResultCode::CLIFF_UNEXPECTED);
         break;
       }
       case EngineToGameTag::RobotStopped:
       {
-        SELFTEST_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
+        SELFTEST_SET_RESULT(SelfTestResultCode::CLIFF_UNEXPECTED);
         break;
       }
       case EngineToGameTag::ChargerEvent:
       {
         if(event.GetData().Get_ChargerEvent().onCharger)
         {
-          SELFTEST_SET_RESULT(FactoryTestResultCode::UNEXPECTED_ON_CHARGER);
+          SELFTEST_SET_RESULT(SelfTestResultCode::UNEXPECTED_ON_CHARGER);
         }
         break;
       }
@@ -166,15 +168,15 @@ void IBehaviorSelfTest::HandleWhileActivated(const EngineToGameEvent& event)
         const auto& payload = event.GetData().Get_MotorCalibration();
         if(payload.motorID == MotorID::MOTOR_HEAD)
         {
-          SELFTEST_SET_RESULT(FactoryTestResultCode::HEAD_MOTOR_CALIB_UNEXPECTED);
+          SELFTEST_SET_RESULT(SelfTestResultCode::HEAD_MOTOR_CALIB_UNEXPECTED);
         }
         else if(payload.motorID == MotorID::MOTOR_LIFT)
         {
-          SELFTEST_SET_RESULT(FactoryTestResultCode::LIFT_MOTOR_CALIB_UNEXPECTED);
+          SELFTEST_SET_RESULT(SelfTestResultCode::LIFT_MOTOR_CALIB_UNEXPECTED);
         }
         else
         {
-          SELFTEST_SET_RESULT(FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+          SELFTEST_SET_RESULT(SelfTestResultCode::MOTOR_CALIB_UNEXPECTED);
         }
         break;
       }
@@ -185,15 +187,15 @@ void IBehaviorSelfTest::HandleWhileActivated(const EngineToGameEvent& event)
         {
           if(payload.motorID == MotorID::MOTOR_HEAD)
           {
-            SELFTEST_SET_RESULT(FactoryTestResultCode::HEAD_MOTOR_DISABLED);
+            SELFTEST_SET_RESULT(SelfTestResultCode::HEAD_MOTOR_DISABLED);
           }
           else if(payload.motorID == MotorID::MOTOR_LIFT)
           {
-            SELFTEST_SET_RESULT(FactoryTestResultCode::LIFT_MOTOR_DISABLED);
+            SELFTEST_SET_RESULT(SelfTestResultCode::LIFT_MOTOR_DISABLED);
           }
           else
           {
-            SELFTEST_SET_RESULT(FactoryTestResultCode::MOTOR_DISABLED);
+            SELFTEST_SET_RESULT(SelfTestResultCode::MOTOR_DISABLED);
           }
         }
         break;
@@ -202,13 +204,13 @@ void IBehaviorSelfTest::HandleWhileActivated(const EngineToGameEvent& event)
       {
         if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState != OffTreadsState::OnTreads)
         {
-          SELFTEST_SET_RESULT(FactoryTestResultCode::ROBOT_PICKUP);
+          SELFTEST_SET_RESULT(SelfTestResultCode::ROBOT_PICKUP);
         }
         break;
       }
       case EngineToGameTag::UnexpectedMovement:
       {
-        SELFTEST_SET_RESULT(FactoryTestResultCode::UNEXPECTED_MOVEMENT_DETECTED);
+        SELFTEST_SET_RESULT(SelfTestResultCode::UNEXPECTED_MOVEMENT_DETECTED);
         break;
       }
       default:
@@ -256,7 +258,7 @@ bool IBehaviorSelfTest::DelegateIfInControl(IActionRunner* action, SimpleCallbac
   auto callbackWrapper = [this, callback](ActionResult result){
     if(result != ActionResult::SUCCESS)
     {
-      SELFTEST_SET_RESULT(FactoryTestResultCode::ACTION_FAILED);
+      SELFTEST_SET_RESULT(SelfTestResultCode::ACTION_FAILED);
     }
 
     callback();
@@ -314,19 +316,19 @@ bool IBehaviorSelfTest::ShouldIgnoreFailures() const
   return SelfTestConfig::kIgnoreFailures;
 }
 
-void IBehaviorSelfTest::SetResult(FactoryTestResultCode result)
+void IBehaviorSelfTest::SetResult(SelfTestResultCode result)
 {
   _result = result;
   ClearTimers();
   AddToResultList(result);
 }
 
-void IBehaviorSelfTest::AddToResultList(FactoryTestResultCode result)
+void IBehaviorSelfTest::AddToResultList(SelfTestResultCode result)
 {
   results[GetDebugLabel()].push_back(result);
 }
 
-const std::map<std::string, std::vector<FactoryTestResultCode>>& IBehaviorSelfTest::GetAllSelfTestResults()
+const std::map<std::string, std::vector<SelfTestResultCode>>& IBehaviorSelfTest::GetAllSelfTestResults()
 {
   return results;
 }

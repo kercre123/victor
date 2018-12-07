@@ -32,7 +32,7 @@ static const std::string kExpectedDistKey   = "ExpectedDistance_mm";
 }
 
 BehaviorSelfTestLookAtCharger::BehaviorSelfTestLookAtCharger(const Json::Value& config)
-: IBehaviorSelfTest(config)
+  : IBehaviorSelfTest(config, SelfTestResultCode::LOOK_AT_CHARGER_TIMEOUT)
 {
   bool res = false;
   float angle = 0;
@@ -75,7 +75,7 @@ Result BehaviorSelfTestLookAtCharger::OnBehaviorActivatedInternal()
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.InternalInitInternal.NoObject",
                         "No object type specified to look for, failing");
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_NOT_FOUND, RESULT_FAIL);
+    SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::CHARGER_NOT_FOUND, RESULT_FAIL);
   }
 
   // Make sure marker detection is enabled
@@ -158,7 +158,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
                           data.visualDistanceToTarget_mm,
                           SelfTestConfig::kDistanceSensorReadingThresh_mm);
 
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, SelfTestStatus::Running);
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_SENSOR_OOR, SelfTestStatus::Running);
     }
     
     return SelfTestStatus::Running;
@@ -207,7 +207,7 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
                           _expectedDistanceToObject_mm,
                           SelfTestConfig::kVisualDistanceToDistanceSensorObjectThresh_mm);
       
-      SELFTEST_SET_RESULT(FactoryTestResultCode::DISTANCE_MARKER_OOR);
+      SELFTEST_SET_RESULT(SelfTestResultCode::DISTANCE_MARKER_VISUAL_OOR);
     }
     // We are within expected distance to update refined turn angle to put us perpendicular with the marker
     else
@@ -240,9 +240,9 @@ void BehaviorSelfTestLookAtCharger::TransitionToRecordSensor()
 
 void BehaviorSelfTestLookAtCharger::TransitionToTurnBack()
 {
-  SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS);
+  SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
   //TurnInPlaceAction* action = new TurnInPlaceAction(_startingAngle.ToFloat(), true);
-  //DelegateIfInControl(action, [this]() { SELFTEST_SET_RESULT(FactoryTestResultCode::SUCCESS); });
+  //DelegateIfInControl(action, [this]() { SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS); });
 }
 
 bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& markerPoseWrtRobot)
@@ -261,7 +261,7 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
     PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.NullObject",
                         "Expected object of type %s does not exist or am not seeing it",
                         ObjectTypeToString(_expectedObjectType));
-    SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
+    SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
     return false;
   }
   else
@@ -316,7 +316,7 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
       PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.NoClosestMarker",
                           "Failed to get closest marker pose for object %s",
                           ObjectTypeToString(_expectedObjectType));
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
       return false;
     }
     
