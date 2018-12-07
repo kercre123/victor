@@ -96,6 +96,7 @@ private:
   void CreateImpl();
   void DeleteImpl();
   bool HasImpl() const { return _impl != nullptr; }
+  bool HasInitializedImpl() const; // done loading sdk but maybe not done connecting yet
   
   // sets this class's _authState and messages engine if it changes
   void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );

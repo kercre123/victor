@@ -46,6 +46,7 @@
 #include <string>
 #include <set>
 #include <unordered_map>
+#include <thread>
 
 namespace alexaClientSDK {
   namespace capabilitiesDelegate { class CapabilitiesDelegate; }
@@ -77,7 +78,12 @@ public:
   
   ~AlexaImpl();
   
-  bool Init( const AnimContext* context );
+  // Starts an async init thread that when complete runs a callback on the same thread as callers to Update()
+  using InitCompleteCallback = std::function<void(bool initSuccessful)>;
+  void Init( const AnimContext* context, InitCompleteCallback&& completionCallback );
+  
+  // If true, the sdk is ready to go (but may not be connected yet)
+  bool IsInitialized() const { return _initState == InitState::Completed; }
   
   void Update();
   
@@ -116,6 +122,9 @@ public:
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
   using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
+  
+  void UpdateAsyncInit();
+  void InitThread();
   
   std::vector<std::shared_ptr<std::istream>> GetConfigs() const;
   
@@ -205,6 +214,21 @@ private:
   OnLogout _onLogout;
   OnNetworkError _onNetworkError;
   OnNotificationsChanged _onNotificationsChanged;
+  
+  InitCompleteCallback _initCompleteCallback;
+  
+  // handles state of the loading thread. some of this could be done with futures but meh
+  enum class InitState : uint8_t {
+    Uninitialized=0,
+    PreInit,        // AlexaImpl::Init was called
+    Initing,        // init thread running
+    ThreadComplete, // init thread completed successfully
+    ThreadFailed,   // init thread failed
+    Completed,      // initialization complete
+    Failed,         // initialization failed
+  };
+  std::atomic<InitState> _initState;
+  std::thread _initThread;
 };
 
 
