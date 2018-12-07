@@ -110,6 +110,7 @@ Licenses may be:
 |EUDatagrid   |          |EU DataGrid Software License                                |https://opensource.org/licenses/EUDatagrid                               |
 |EUPL-1.1     |          |European Union Public License, Version 1.1                  |https://opensource.org/licenses/EUPL-1.1                                 |
 |Fair         |          |Fair License (Fair)                                         |https://opensource.org/licenses/Fair                                     |
+|FFTPACK5     |Go        |BSD-style                                                   |https://www2.cisl.ucar.edu/resources/legacy/fft5/license                 |
 |Frameworx-1.0|          |Frameworx License, Version 1.0                              |https://opensource.org/licenses/Frameworx-1.0                            |
 |GFDL-1.2     |          |                                                            |                                                                         |
 |GFDL-1.3     |          |                                                            |                                                                         |

@@ -12,7 +12,7 @@ TEST(AudioFFT, SineWave)
 {
   auto checkPower = [](AudioFFT& fft) {
     const auto& power = fft.GetPower();
-    ASSERT_EQ( power.size(), 257 );
+    ASSERT_EQ( power.size(), 256 );
     for( int i=0; i<power.size(); ++i ) {
       if( i == 10 ) {
         const float tol = 2e-5f;
@@ -26,7 +26,7 @@ TEST(AudioFFT, SineWave)
   
   auto checkPowerWindowed = [](AudioFFT& fft) {
     const auto& power = fft.GetPower();
-    ASSERT_EQ( power.size(), 257 );
+    ASSERT_EQ( power.size(), 256 );
     for( int i=0; i<power.size(); ++i ) {
       if( i == 10 ) {
         const float tol = .001f;
@@ -67,3 +67,4 @@ TEST(AudioFFT, SineWave)
   checkPower(fft);
   
 }
+

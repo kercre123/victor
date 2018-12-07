@@ -58,7 +58,7 @@ private:
   bool _dirty = false;
   
   DataType* _inData = nullptr;
-  void* _outData = nullptr; // pointer to library struct (array)
+  DataType* _outData = nullptr;
   void* _plan = nullptr; // pointer to library context
   
   std::vector<DataType> _windowCoeffs;
