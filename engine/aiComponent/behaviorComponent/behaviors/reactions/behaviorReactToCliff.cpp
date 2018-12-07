@@ -342,7 +342,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     // activation of the behavior? Must be in a very "cliffy" area.
     // Just go to StuckOnEdge to be safe.
     if (_dVars.persistent.numStops > kMaxNumRobotStopsBeforeGivingUp) {
-      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.TooManyRobotStops", "");
+      PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToPlayingCliffReaction.TooManyRobotStops", "%d", _dVars.persistent.numStops);
       TransitionToStuckOnEdge();
       return;
     }
@@ -577,7 +577,6 @@ void BehaviorReactToCliff::BehaviorUpdate()
            // see if we are still stopped over a cliff (i.e. the robot hasn't moved since)
            cliffComp.IsCliffDetected() ) ) {
         _dVars.gotStop = true;
-        ++_dVars.persistent.numStops;
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.PossibleStopEventWhileOutOfScope", "");
         // Record triggered cliff sensor value(s) and compare to what they are when wheels
         // stop moving. If the values are higher, the cliff is suspicious and we should quit.
@@ -677,7 +676,6 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       
       _dVars.quitReaction = false;
       _dVars.gotStop = true;
-      ++_dVars.persistent.numStops;
 
       // Record triggered cliff sensor value(s) and compare to what they are when wheels
       // stop moving. If the values are higher, the cliff is suspicious and we should quit.
@@ -696,6 +694,7 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
                     alreadyActivated);
 
       if (alreadyActivated) {
+        ++_dVars.persistent.numStops;
         CancelDelegates(false);
         OnBehaviorActivated();
       }
