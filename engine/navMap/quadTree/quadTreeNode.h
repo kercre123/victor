@@ -45,9 +45,8 @@ public:
 
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
-  void Fold(const FoldFunctorConst& accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
-  void Fold(const FoldFunctorConst& accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
-  void Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr) const; // no direction since NodeAddr is always one node
+  void Fold(const FoldFunctorConst& accumulator, const FoldableRegion& region = RealNumbers2f(), FoldDirection dir = FoldDirection::BreadthFirst) const;
+  void Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr, FoldDirection dir = FoldDirection::BreadthFirst) const;
   
   // finds all the leaf nodes that are neighbors with this node
   std::vector<const QuadTreeNode*> GetNeighbors() const;
@@ -61,30 +60,16 @@ protected:
   // Leave the constructor as a protected member so only the root node or other Quad tree nodes can create new nodes
   // it will allow subdivision as long as level is greater than 0
   QuadTreeNode(const QuadTreeNode* parent = nullptr, EQuadrant quadrant = EQuadrant::Root);
-   
-  // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
-  // which is annoying
-  QuadTreeNode(const QuadTreeNode&&) = delete;
-  QuadTreeNode& operator=(const QuadTreeNode&&) = delete;
+    
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Modification
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // updates the address incase tree structure changes (expands and shifts)
   void ResetAddress();
   
   // split the current node
   bool Subdivide();
-
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Query
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                 
-  
-  // return true if this quad can subdivide
-  bool CanSubdivide() const { return (_maxHeight > 0) && !IsSubdivided(); }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Modification
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge();
@@ -93,16 +78,15 @@ private:
   void ForceSetContent(NodeContent&& newContent);
   
   // sets a new parent to this node. Used on expansions
-  void ChangeParent(const QuadTreeNode* newParent) { _parent = newParent; }
+  void ChangeParent(const QuadTreeNode* newParent);
   
   // swaps children and content with 'otherNode', updating the children's parent pointer
   void SwapChildrenAndContent(QuadTreeNode* otherNode);
   
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
   // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
-  void Fold(FoldFunctor& accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
-  void Fold(FoldFunctor& accumulator, const FoldableRegion& region, FoldDirection dir = FoldDirection::BreadthFirst);
-  void Fold(FoldFunctor& accumulator, const NodeAddress& addr); // no direction since NodeAddr is always one node
+  void Fold(FoldFunctor& accumulator, const FoldableRegion& region = RealNumbers2f(), FoldDirection dir = FoldDirection::BreadthFirst);
+  void Fold(FoldFunctor& accumulator, const NodeAddress& addr, FoldDirection dir = FoldDirection::BreadthFirst);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration

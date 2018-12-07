@@ -25,6 +25,11 @@ static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "QuadTreeNode w
 static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
+namespace {
+  // helper type for recursing on all children of this node
+  static const RealNumbers2f kNodeRegion = RealNumbers2f();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeNode::QuadTreeNode(const QuadTreeNode* parent, EQuadrant quadrant)
 : _boundingBox({0,0}, {0,0})
@@ -55,14 +60,16 @@ QuadTreeNode::~QuadTreeNode()
 void QuadTreeNode::ResetAddress()
 {
   _address.clear();
-  if(_parent) { _address = NodeAddress(_parent->GetAddress()); }
-  _address.push_back(_quadrant);
+  if(_parent) { 
+    _address = NodeAddress(_parent->GetAddress()); 
+    _address.push_back(_quadrant);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::Subdivide()
 {
-  if ( !CanSubdivide() ) { return false; }
+  if ( (_maxHeight == 0) || IsSubdivided() ) { return false; }
   
   // create new children, push our data to them, then clear our own data
   _childrenPtr.emplace_back( new QuadTreeNode(this, EQuadrant::PlusXPlusY) );   // up L
@@ -117,6 +124,14 @@ void QuadTreeNode::ForceSetContent(NodeContent&& newContent)
 {
   std::swap(_content, newContent);
   _modifiedCallback(this, newContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::ChangeParent(const QuadTreeNode* newParent) 
+{ 
+  _parent = newParent; 
+  FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
+  Fold(reset);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -221,53 +236,28 @@ std::vector<const QuadTreeNode*> QuadTreeNode::GetNeighbors() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctor& accumulator, FoldDirection dir)
+void QuadTreeNode::Fold(FoldFunctor& accumulator, const NodeAddress& addr, FoldDirection dir)
 {
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
-  for ( const auto& cPtr : _childrenPtr ) {
-    cPtr->Fold(accumulator, dir); 
+  if (IsSubdivided() && (addr.size() > _address.size())) { 
+    GetChild(addr[_address.size()])->Fold(accumulator, addr, dir); 
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, FoldDirection dir) const
+void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr, FoldDirection dir) const
 {
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
-  for ( const auto& cPtr : _childrenPtr ) {
-    cPtr->Fold(accumulator, dir); 
+  if (IsSubdivided() && (addr.size() > _address.size())) { 
+    GetChild(addr[_address.size()])->Fold(accumulator, addr, dir); 
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const NodeAddress& addr) const
-{
-  if (addr.size() > _address.size()) {
-    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
-    auto nextNode = GetChild(addr[_address.size()]);
-    if (nextNode) { nextNode->Fold(accumulator, addr); }
-  } else if (addr == _address) {
-    accumulator(*this);
-  } 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctor& accumulator, const NodeAddress& addr)
-{
-  if (addr.size() > _address.size()) {
-    if(!IsSubdivided()) { accumulator(*this); } // returns the closest parent
-    auto nextNode = GetChild(addr[_address.size()]);
-    if (nextNode) { nextNode->Fold(accumulator, addr); }
-  } else if (addr == _address) {
-    accumulator(*this);
-  } 
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /*
@@ -310,23 +300,21 @@ namespace {
 
 void QuadTreeNode::Fold(FoldFunctor& accumulator, const FoldableRegion& region, FoldDirection dir)
 {
-  if ( !region.IntersectsQuad(_boundingBox) ) { 
-    // node and region are disjoint
-    return; 
-  }
+  // node and region are disjoint
+  if ( !region.IntersectsQuad(_boundingBox) ) { return; }
   
-  if ( region.ContainsQuad(_boundingBox) ) { 
-    // node is a subset of region
-    Fold(accumulator, dir); 
-    return; 
-  } 
-
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
 
-  u8 childFilter = IsSubdivided() ? GetChildFilterMask(_center, region.GetBoundingBox()) : 0;        
-  for ( const auto& cPtr : _childrenPtr ) { 
-    if (childFilter & 1) { cPtr->Fold(accumulator, region, dir); }
-    if ((childFilter >>= 1) == 0) { break; };
+  if ( region.ContainsQuad(_boundingBox) ) { 
+    for ( const auto& cPtr : _childrenPtr ) {
+      cPtr->Fold(accumulator, kNodeRegion, dir); 
+    }
+  } else {
+    u8 childFilter = IsSubdivided() ? GetChildFilterMask(_center, region.GetBoundingBox()) : 0;        
+    for ( const auto& cPtr : _childrenPtr ) { 
+      if (childFilter & 0x1) { cPtr->Fold(accumulator, region, dir); }
+      if ((childFilter >>= 1) == 0) { break; };
+    }
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -334,23 +322,21 @@ void QuadTreeNode::Fold(FoldFunctor& accumulator, const FoldableRegion& region, 
 
 void QuadTreeNode::Fold(const FoldFunctorConst& accumulator, const FoldableRegion& region, FoldDirection dir) const
 {
-  if ( !region.IntersectsQuad(_boundingBox) ) { 
-    // node and region are disjoint
-    return; 
-  }
+  // node and region are disjoint
+  if ( !region.IntersectsQuad(_boundingBox) ) { return; }
   
-  if ( region.ContainsQuad(_boundingBox) ) { 
-    // node is a subset of region
-    Fold(accumulator, dir); 
-    return; 
-  } 
-
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
 
-  u8 childFilter = IsSubdivided() ? GetChildFilterMask(_center, region.GetBoundingBox()) : 0;        
-  for ( const auto& cPtr : _childrenPtr ) { 
-    if (childFilter & 1) { cPtr->Fold(accumulator, region, dir); }
-    if ((childFilter >>= 1) == 0) { break; };
+  if ( region.ContainsQuad(_boundingBox) ) { 
+    for ( const auto& cPtr : _childrenPtr ) {
+      cPtr->Fold(accumulator, kNodeRegion, dir); 
+    }
+  } else {
+    u8 childFilter = IsSubdivided() ? GetChildFilterMask(_center, region.GetBoundingBox()) : 0;        
+    for ( const auto& cPtr : _childrenPtr ) { 
+      if (childFilter & 0x1) { cPtr->Fold(accumulator, region, dir); }
+      if ((childFilter >>= 1) == 0) { break; };
+    }
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }

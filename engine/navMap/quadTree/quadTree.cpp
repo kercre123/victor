@@ -48,7 +48,7 @@ QuadTree::QuadTree(
   _sideLen            = kQuadTreeInitialRootSideLength;
   _maxHeight          = kQuadTreeInitialMaxDepth;
   _quadrant           = EQuadrant::Root;
-  _address            = {EQuadrant::Root};
+  _address            = {};
   _boundingBox        = AxisAlignedQuad(_center - Point2f(_sideLen*.5f), _center + Point2f(_sideLen*.5));
 
   _destructorCallback = destructorCallback;
@@ -95,19 +95,16 @@ bool QuadTree::Insert(const FoldableRegion& region, NodeTransformFunction transf
   {
     auto newData = transform(node.GetData());
     auto currentData = static_cast<const decltype(newData)&>(node.GetData());
-    if ( currentData == newData ) { return; }
-
-    // split node if we are unsure if the incoming region will fill the entire area
-    if ( !region.ContainsQuad(node.GetBoundingBox()) && node.CanSubdivide())
-    {
+    if ( currentData != newData ) {
+      // split node since we are unsure if the incoming region will fill the entire area
       node.Subdivide();
+      
+      // if we are at the max depth
+      if ( !node.IsSubdivided() ) {
+        node.ForceSetContent( std::move(newData) );
+        contentChanged = true;
+      } 
     }
-    
-    if ( !node.IsSubdivided() )
-    {
-      node.ForceSetContent( std::move(newData) );
-      contentChanged = true;
-    } 
   };
   Fold(accumulator, region);
 
@@ -343,11 +340,6 @@ bool QuadTree::ShiftRoot(const AxisAlignedQuad& region)
       _childrenPtr[b1]->SwapChildrenAndContent(oldChildren[b2].get() );
     }
   }
-    
-  // update address of all children
-  FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
-  Fold(reset);
-
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _maxHeight, MM_TO_M(_sideLen));
@@ -408,10 +400,6 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel)
   // set the content type I had in the child that takes my place, then reset my content
   childTakingMyPlace->ForceSetContent( NodeContent(_content) );
   ForceSetContent(MemoryMapDataPtr());
-
-  // update address of all children
-  FoldFunctor reset = [] (QuadTreeNode& node) { node.ResetAddress(); };
-  Fold(reset);
 
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _maxHeight, MM_TO_M(_sideLen));
