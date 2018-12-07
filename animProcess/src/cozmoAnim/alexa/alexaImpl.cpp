@@ -174,6 +174,7 @@ AlexaImpl::AlexaImpl()
   , _uxState{ AlexaUXState::Idle }
   , _dialogState{ DialogUXState::IDLE }
   , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
+  , _initState{ InitState::Uninitialized }
 {
   static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
                  "Our shorthand SourceId type differs" );
@@ -214,9 +215,10 @@ AlexaImpl::~AlexaImpl()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AlexaImpl::Init( const AnimContext* context )
+void AlexaImpl::Init( const AnimContext* context, InitCompleteCallback&& completionCallback )
 {
   _context = context;
+  _initCompleteCallback = std::move(completionCallback);
 
   _lastWallTime = WallTime::getInstance()->GetApproximateTime();
   _lastWallTimeCheck_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -241,16 +243,26 @@ bool AlexaImpl::Init( const AnimContext* context )
   }
 #endif
   
+  // start the sdk async init process via Update()
+  _initState = InitState::PreInit;
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::InitThread()
+{
   auto configs = GetConfigs();
   if( configs.empty() ) {
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // TODO: docs say this should be called before any other threads start. I'm guessing theyre talking
   // about alexa threads.
   if( !avsCommon::avs::initialization::AlexaClientSDKInit::initialize( configs ) ) {
     CRITICAL_SDK("Failed to initialize SDK!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // The observer logs important changes in a variety of sdk components, and calls back to AlexaImpl
@@ -283,7 +295,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo = avsCommon::utils::DeviceInfo::create( rootConfig );
   if( !deviceInfo ) {
     CRITICAL_SDK("Creation of DeviceInfo failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   else {
     DASMSG(avs_device_info, "alexa.device_info", "we created an alexa object with the given device info");
@@ -305,7 +318,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   std::shared_ptr<storage::sqliteStorage::SQLiteMiscStorage> miscStorage = storage::sqliteStorage::SQLiteMiscStorage::create(rootConfig);
   if( !miscStorage ) {
     CRITICAL_SDK("Creation of miscStorage failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // Create HTTP Put handler
@@ -313,7 +327,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   if( !authDelegate ) {
     CRITICAL_SDK("Creation of AuthDelegate failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   authDelegate->addAuthObserver( _observer );
   
@@ -328,7 +343,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                                                           deviceInfo );
   if( !_capabilitiesDelegate ) {
     CRITICAL_SDK("Creation of CapabilitiesDelegate failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   _capabilitiesDelegate->addCapabilitiesObserver( _observer );
   
@@ -346,16 +362,16 @@ bool AlexaImpl::Init( const AnimContext* context )
   auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
   _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::TTS,
                                                         httpContentFetcherFactory );
-  _ttsMediaPlayer->Init(context);
+  _ttsMediaPlayer->Init( _context );
   _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Alerts,
                                                            httpContentFetcherFactory );
-  _alertsMediaPlayer->Init( context );
+  _alertsMediaPlayer->Init( _context );
   _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Audio,
                                                           httpContentFetcherFactory );
-  _audioMediaPlayer->Init( context );
+  _audioMediaPlayer->Init( _context );
   _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Notifications,
                                                                   httpContentFetcherFactory );
-  _notificationsMediaPlayer->Init( context );
+  _notificationsMediaPlayer->Init( _context );
   
   // the alerts/audio/notifications speakers dont change UX so we observe them
   _alertsMediaPlayer->setObserver( _observer );
@@ -369,7 +385,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   auto internetConnectionMonitor = avsCommon::utils::network::InternetConnectionMonitor::create(httpContentFetcherFactory);
   if( !internetConnectionMonitor ) {
     CRITICAL_SDK("Failed to create InternetConnectionMonitor");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   const avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion = GetFirmwareVersion();
@@ -399,7 +416,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   if( !_client ) {
     CRITICAL_SDK("Failed to create SDK client!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
@@ -423,7 +441,8 @@ bool AlexaImpl::Init( const AnimContext* context )
 
   if( !sharedDataStream ) {
     CRITICAL_SDK("Failed to create shared data stream!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
 
   avsCommon::utils::AudioFormat compatibleAudioFormat;
@@ -487,15 +506,26 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   _capabilitiesDelegate->addCapabilitiesObserver( _client );
   
-  // try connecting
+  // try connecting... this is already async but let's trigger it from this thread to keep everything in one place
   _client->Connect( _capabilitiesDelegate );
   
-  return true;
+  _initState = InitState::ThreadComplete;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Update()
 {
+  if( (_initState == InitState::PreInit) ||
+      (_initState == InitState::Initing) ||
+      (_initState == InitState::ThreadComplete) ||
+      (_initState == InitState::ThreadFailed) )
+  {
+    UpdateAsyncInit();
+  } else if( _initState != InitState::Completed ) {
+    return;
+  }
+    
+  
   if( _observer != nullptr ) {
     _observer->Update();
   }
@@ -542,6 +572,34 @@ void AlexaImpl::Update()
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
     _dialogState = DialogUXState::IDLE;
     CheckForUXStateChange();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::UpdateAsyncInit()
+{
+  if( (_initState == InitState::Uninitialized) ||
+      (_initState == InitState::Completed)     ||
+      (_initState == InitState::Failed) )
+  {
+    return;
+  }
+  
+  if( !_initThread.joinable() ) {
+    _initState = InitState::Initing;
+    _initThread = std::thread(&AlexaImpl::InitThread, this);
+    return;
+  }
+  
+  if( (_initState == InitState::ThreadComplete) || (_initState == InitState::ThreadFailed) ) {
+    // loading is now done
+    _initThread.join();
+    _initThread = std::thread();
+    const bool success = (_initState == InitState::ThreadComplete);
+    _initState = success ? InitState::Completed : InitState::Failed;
+    if( _initCompleteCallback ) {
+      _initCompleteCallback( success );
+    }
   }
 }
 

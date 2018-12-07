@@ -115,6 +115,7 @@ void Alexa::Init(const AnimContext* context)
 void Alexa::Update()
 {
   if( _impl != nullptr) {
+    // should be called even if not initialized, because this drives the init process
     _impl->Update();
   }
   
@@ -156,8 +157,13 @@ void Alexa::SetAlexaUsage(bool optedIn)
 
   const bool loggingOut = !optedIn && HasImpl();
   if( loggingOut ) {
-    // log out of amazon. this should delete persistent data, but we also nuke the folder just in case
-    _impl->Logout();
+    // if the impl hasnt finished initializing, don't try calling any impl methods for safety. the user
+    // would have to sign in and out quickly to do this, which isnt normally possible, and we nuke the
+    // impl anyway
+    if( _impl->IsInitialized() ) {
+      // log out of amazon. this should delete persistent data, but we also nuke the folder just in case
+      _impl->Logout();
+    }
     // the sdk callback from this should call OnLogout, but just in case something went wrong, do it first here
     OnLogout();
   }
@@ -278,20 +284,22 @@ void Alexa::CreateImpl()
   _impl->SetOnLogout( std::bind( &Alexa::OnLogout, this) );
   _impl->SetOnNetworkError( std::bind( &Alexa::OnAlexaNetworkError, this, std::placeholders::_1 ) );
   _impl->SetOnNotificationsChanged( std::bind( &Alexa::OnNotificationsChanged, this, std::placeholders::_1 ) );
-  const bool success = _impl->Init( _context );
-  if( success ) {
-    // initialization was successful.
-    // The sdk is likely trying to connect at this point. If this is NOT a user-initiated
-    // authentication attempt, turn on the wakeword by default after some amount of time has
-    // elapsed. If they say the wake word before we can connect to avs, we play an error sound. If
-    // there's a failure in auth, disable the wakeword. If auth changes in any way, clear the _timeEnableWakeWord_s.
-    if( !_authStartedByUser && (_authState == AlexaAuthState::RequestingAuth) ) {
-      _timeEnableWakeWord_s = kTimeUntilWakeWord_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // start an async initialization process
+  auto initCallback = [this](bool success) {
+    if( success ) {
+      // initialization was successful, and the sdk is trying to connect at this point. If this is NOT a user-initiated
+      // authentication attempt, turn on the wakeword by default after some amount of time has
+      // elapsed. If they say the wake word before we can connect to avs, we play an error sound. If
+      // there's a failure in auth, disable the wakeword. If auth changes in any way, clear the _timeEnableWakeWord_s.
+      if( !_authStartedByUser && (_authState == AlexaAuthState::RequestingAuth) ) {
+        _timeEnableWakeWord_s = kTimeUntilWakeWord_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      }
+    } else {
+      // initialization was unsuccessful
+      SetAlexaActive( false );
     }
-  } else {
-    // initialization was unsuccessful
-    SetAlexaActive( false );
-  }
+  };
+  _impl->Init( _context, std::move(initCallback) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -301,6 +309,16 @@ void Alexa::DeleteImpl()
   ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" );
   _impl.reset();
   SetAuthState( AlexaAuthState::Uninitialized );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool Alexa::HasInitializedImpl() const
+{
+  if( _impl != nullptr ) {
+    return _impl->IsInitialized(); // done loading SDK, but maybe not connected yet
+  } else {
+    return false;
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -665,7 +683,7 @@ void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, s
   // note: this can be called on another thread. guard access to _impl in case it is being deleted.
   // it might make more sense to move calls to this to the main thread as a precaution, sacrificing a copy
   std::lock_guard<std::mutex> lg{ _implMutex };
-  if( _impl != nullptr ) {
+  if( HasInitializedImpl() ) {
     _impl->AddMicrophoneSamples( samples, nSamples );
   }
 }
@@ -684,29 +702,32 @@ bool Alexa::StopAlertIfActive()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::NotifyOfTapToTalk( bool fromMute )
 {
-  if( ANKI_VERIFY( _impl != nullptr,
-                   "Alexa.NotifyOfTapToTalk.Disabled",
-                   "Tap-to-talk was issued when alexa was disabled" ) )
-  {
+  if( HasInitializedImpl() ) {
     _notifyType = fromMute ? NotifyType::ButtonFromMute : NotifyType::Button;
     _impl->NotifyOfTapToTalk();
+  } else {
+    // sanity check
+    ANKI_VERIFY( _impl != nullptr,
+                 "Alexa.NotifyOfTapToTalk.Disabled",
+                 "Tap-to-talk was issued when alexa was disabled" );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
 {
+  // wake word should not be enabled if impl is not initialized, but it doesn't hurt to check
   bool hasImpl = false;
   {
     std::lock_guard<std::mutex> lg{ _implMutex };
-    if( _impl != nullptr ) {
+    hasImpl = HasImpl();
+    if( hasImpl && _impl->IsInitialized() ) {
       _notifyType = NotifyType::Voice;
       _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
-      hasImpl = true;
     }
   }
   
-  if( !hasImpl && _authenticatedEver && kPlayErrorIfSignedOut ) {
+  if( kPlayErrorIfSignedOut && !hasImpl && _authenticatedEver ) {
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }
