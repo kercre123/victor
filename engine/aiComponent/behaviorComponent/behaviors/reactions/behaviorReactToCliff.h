@@ -43,7 +43,6 @@ protected:
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
-  virtual void OnBehaviorLeftActivatableScope() override;
   
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
@@ -88,8 +87,6 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     bool quitReaction;
-    bool gotStop;
-    bool wantsToBeActivated;
 
     // whether the robot has received a cliff event with a valid cliff pose
     // that serves as the look-at target for any visual observation actions
@@ -99,10 +96,11 @@ private:
     Pose3d cliffPose;
 
     struct Persistent {
+      bool gotStop;
       int numStops;
       int numCliffReactAttempts;
       bool  putDownOnCliff;
-      TimeStamp_t lastInScopeTime_ms;
+      TimeStamp_t lastActiveTime_ms;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
     Persistent persistent;
