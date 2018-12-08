@@ -32,6 +32,7 @@
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
@@ -95,6 +96,12 @@ Alexa::~Alexa() = default;
 void Alexa::Init(const AnimContext* context)
 {
   _context = context;
+  
+  // useful for testing shutting down alexa without losing your auth credentials
+  auto deleteImpl = [this](ConsoleFunctionContextRef context ) {
+    DeleteImpl();
+  };
+  _consoleFuncs.emplace_front( "DeleteImpl", std::move(deleteImpl), "Alexa", "" );
   
   // assume opted out. If there's a file indicating opted in, create the impl and try to authorize.
   // otherwise, wait for an engine msg saying to start authorization
@@ -309,6 +316,9 @@ void Alexa::DeleteImpl()
   std::lock_guard<std::mutex> lg{ _implMutex };
   ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" );
   _impl.reset();
+#if ANKI_DEV_CHEATS
+  AlexaImpl::ConfirmShutdown();
+#endif
   SetAuthState( AlexaAuthState::Uninitialized );
 }
   

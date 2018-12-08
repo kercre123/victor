@@ -31,7 +31,12 @@
 #pragma once
 
 #include "audioUtil/audioDataTypes.h"
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
+
+#if ANKI_DEV_CHEATS
+  #include "cozmoAnim/alexa/devShutdownChecker.h"
+#endif
 
 #include <AVSCommon/SDKInterfaces/AuthObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
@@ -118,6 +123,11 @@ public:
   
   using OnNotificationsChanged = std::function<void(bool hasNotification)>;
   void SetOnNotificationsChanged( const OnNotificationsChanged& callback ) { _onNotificationsChanged = callback; }
+  
+#if ANKI_DEV_CHEATS
+  static void ConfirmShutdown();
+#endif
+
   
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
@@ -229,6 +239,10 @@ private:
   };
   std::atomic<InitState> _initState;
   std::thread _initThread;
+
+#if ANKI_DEV_CHEATS
+  static DevShutdownChecker _shutdownChecker;
+#endif
 };
 
 

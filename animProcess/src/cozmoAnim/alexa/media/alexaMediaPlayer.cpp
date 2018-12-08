@@ -216,10 +216,12 @@ AlexaMediaPlayer::AlexaMediaPlayer( Type type,
   , _state(State::Idle)
   , _mp3Buffer( new Util::RingBuffContiguousRead<uint8_t>{ kAudioBufferSize, kMaxReadSize } )
   , _dataValidity{ DataValidity::Unknown }
-  , _dispatchQueue(Util::Dispatch::Create("AlexaMediaPlayer"))
+  , _dispatchQueue(Util::Dispatch::Create(("APlayer_" + sAudioInfo.at(type).name).c_str()))
   , _contentFetcherFactory( contentFetcherFactory )
   , _audioInfo( sAudioInfo.at(_type) )
   , _filterBuffer{ std::make_unique<Util::FixedCircularBuffer<short, kFilterSize>>() }
+  , _shuttingDown( false )
+  , _playLoopRunning( false )
 {
  // FIXME: How do we get the inital state from persistant storage
   _settings.volume = avsCommon::avs::speakerConstants::AVS_SET_VOLUME_MAX;
@@ -284,6 +286,10 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
     _speechRegSys->InitAlexaPlayback(*dataPlatform, nullptr);
     _recognizer = _speechRegSys->GetAlexaPlaybackRecognizer();
   }
+  
+  _audioCallbackPointer = std::make_shared<AudioCallbackType>([this](SourceId id){
+    CallOnPlaybackFinished( id );
+  });
 
 }
 
@@ -304,10 +310,14 @@ void AlexaMediaPlayer::Update()
     auto* callbackContext = new AudioCallbackContext();
     callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
     callbackContext->SetExecuteAsync( false ); // run on main thread
-    callbackContext->SetEventCallbackFunc( [this, id = _playingSource]( const AudioCallbackContext* thisContext,
-                                                                        const AudioCallbackInfo& callbackInfo ) {
-      // FIXME: this might be a bug. Need to check callback purpose, may be setting bad state
-      CallOnPlaybackFinished( id );
+    std::weak_ptr<AudioCallbackType> weakCallback = _audioCallbackPointer;
+    callbackContext->SetEventCallbackFunc( [weakCallback,id=_playingSource]( const AudioCallbackContext* thisContext,
+                                                                             const AudioCallbackInfo& callbackInfo ) {
+      // if the user logs out, this callback could fire after AlexaMediaPlayer is destoryed. check that here.
+      auto callback = weakCallback.lock();
+      if( callback && (*callback) ) {
+        (*callback)( id );
+      }
     });
 
     const auto playingID = _audioController->PostAudioEvent(eventID, _audioInfo.gameObject, callbackContext );
@@ -324,15 +334,21 @@ void AlexaMediaPlayer::Update()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaMediaPlayer::CallOnPlaybackFinished( SourceId id )
+void AlexaMediaPlayer::CallOnPlaybackFinished( SourceId id, bool runOnCaller )
 {
-  _executor.submit([this, id]() {
+  auto func = [this, id]() {
     LOG( "CallOnPlaybackFinished %d, Setting state=Idle", (int)id );
     SetState(State::Idle);
+    std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       observer->onPlaybackFinished( id );
     }
-  });
+  };
+  if( runOnCaller ) {
+    func();
+  } else {
+    _executor.submit(func);
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -342,6 +358,7 @@ void AlexaMediaPlayer::CallOnPlaybackError( SourceId id )
     LOG( "CallOnPlaybackError %d, Setting state=Idle", (int)id );
     SetState(State::Idle);
     static const std::string kPlaybackError = "The device had trouble with playback";
+    std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       observer->onPlaybackError( id,
                                  avsCommon::utils::mediaPlayer::ErrorType::MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
@@ -378,7 +395,7 @@ SourceId AlexaMediaPlayer::setSource( std::shared_ptr< avsCommon::avs::attachmen
 SourceId AlexaMediaPlayer::setSource( const std::string &url, std::chrono::milliseconds offset )
 {
   LOG( "set source with URL=%s", url.c_str() );
-  if( url.empty() ) {
+  if( url.empty() || _shuttingDown ) {
     return 0;
   }
 
@@ -390,11 +407,11 @@ SourceId AlexaMediaPlayer::setSource( const std::string &url, std::chrono::milli
     return 0;
   }
   auto attachment = _urlConverter->getAttachment();
-  if (!attachment) {
+  if( !attachment ) {
     return 0;
   }
   std::shared_ptr<avsCommon::avs::attachment::AttachmentReader> reader = attachment->createReader(avsCommon::utils::sds::ReaderPolicy::NONBLOCKING);
-  if (!reader) {
+  if( !reader ) {
     return 0;
   }
 
@@ -415,11 +432,10 @@ bool AlexaMediaPlayer::play( SourceId id )
 {
   LOG( "play" );
   _playingSource = id;
+  _playLoopRunning = true;
 
   Util::Dispatch::Async( _dispatchQueue, [id, this](){
 
-    const auto threadName = "APlayer_" + _audioInfo.name;
-    Anki::Util::SetThreadName(pthread_self(), threadName.c_str());
 #if defined(ANKI_PLATFORM_VICOS)
     // Setup the thread's affinity mask
     // We don't want to run this on the same core as the Audio Engine to reduce stuttering
@@ -480,7 +496,7 @@ bool AlexaMediaPlayer::play( SourceId id )
           return false;
       }
     };
-    while( stateOk() ) {
+    while( stateOk() && !_shuttingDown ) {
 
       UpdateDetectorState(lastPlayedMs);
 
@@ -493,6 +509,7 @@ bool AlexaMediaPlayer::play( SourceId id )
 
       if( !sentPlaybackStarted ) {
         LOG( "source %d onPlaybackStarted", (int)id);
+        std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
         for( auto& observer : _observers ) {
           observer->onPlaybackStarted( id );
         }
@@ -505,7 +522,7 @@ bool AlexaMediaPlayer::play( SourceId id )
       const auto& reader = _readers[id];
 
       AlexaReader::Status readStatus = AlexaReader::Status::Ok;
-      while( true ) {
+      while( !_shuttingDown ) {
         const size_t spaceForWrite = _mp3Buffer->Capacity() - _mp3Buffer->Size();
         const auto numUnreadInStream = reader->GetNumUnreadBytes();
         // it's possible that size==0 if the download hasn't started. ignore size for now, and try reading below,
@@ -537,13 +554,13 @@ bool AlexaMediaPlayer::play( SourceId id )
       }
 
       // if flush, then any data left in the ring buff will get decoded
-      const bool flush = !statusOK;
+      const bool flush = !statusOK && !_shuttingDown;
       // decode everything in the buffer thus far, leaving only something that perhaps wasnt a full mp3 frame
       const int timeDecoded_ms = Decode( _waveData, flush );
       _offset_ms += timeDecoded_ms;
 
       // sleep to avoid downloading data faster than it is played. todo: not this...
-      if( !flush && timeDecoded_ms > 0 ) {
+      if( !flush && timeDecoded_ms > 0 && !_shuttingDown ) {
         const auto samplesInBuffer = _waveData->GetNumberOfFramesReceived() - _waveData->GetNumberOfFramesPlayed();
         size_t sleepFor_ms;
         if (samplesInBuffer > _idealBufferSampleSize) {
@@ -566,7 +583,7 @@ bool AlexaMediaPlayer::play( SourceId id )
         invalidData = true; // this will cause a break further down
       }
 
-      if( flush || invalidData ) {
+      if( flush || invalidData || _shuttingDown ) {
         _waveData->DoneProducingData();
         break;
       }
@@ -590,7 +607,7 @@ bool AlexaMediaPlayer::play( SourceId id )
     _readers[id]->Close();
     _readers[id].reset();
 
-    while (!_detectedTriggers_ms.empty()) {
+    while (!_detectedTriggers_ms.empty() && !_shuttingDown) {
       if (_state == State::Idle) {
         break;
       }
@@ -601,6 +618,13 @@ bool AlexaMediaPlayer::play( SourceId id )
     if (_speechRegSys != nullptr) {
       _speechRegSys->ReEnableAlexa();
     }
+    
+    if( _shuttingDown ) {
+      _audioController->StopAllAudioEvents( _audioInfo.gameObject );
+    }
+    
+    _playLoopRunning = false;
+    _playLoopCondition.notify_all();
   });
 
   return true;
@@ -610,18 +634,29 @@ bool AlexaMediaPlayer::play( SourceId id )
 bool AlexaMediaPlayer::stop( SourceId id )
 {
   LOG( "stop" );
-
-  // FIXME: This should only stop the event that this media player is playing not all every Alexa events
+  return StopInternal( id );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
+{
   _audioController->StopAllAudioEvents( _audioInfo.gameObject );
 
-  _executor.submit([id, this]() {
+  auto onStop = [id, this]() {
     SetState(State::Idle);
     _offset_ms = 0;
+    std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackStopped for source %d", (int)id );
       observer->onPlaybackStopped( id );
     }
-  });
+  };
+  if( runOnCaller ) {
+    onStop();
+  } else {
+    _executor.submit(onStop);
+  }
+  
   return true;
 }
 
@@ -640,6 +675,7 @@ bool AlexaMediaPlayer::pause( SourceId id )
 
   _executor.submit([id, this]() {
     SetState(State::Paused);
+    std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackPaused for source %d", (int)id );
       observer->onPlaybackPaused( id );
@@ -667,6 +703,7 @@ bool AlexaMediaPlayer::resume( SourceId id )
 
   _executor.submit([id, this]() {
     SetState( State::Playing );
+    std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackResumed for source %d", (int)id );
       observer->onPlaybackResumed( id );
@@ -698,7 +735,14 @@ uint64_t AlexaMediaPlayer::getNumBytesBuffered()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaMediaPlayer::setObserver( std::shared_ptr<avsCommon::utils::mediaPlayer::MediaPlayerObserverInterface> playerObserver )
 {
-  _observers.insert( playerObserver );
+  std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
+  if( playerObserver == nullptr ) {
+    // this seems to happen _after_ we doShutDown of some media players. Ideally we would only remove the observer that
+    // the caller originally added, but that's not the API.
+    _observers.clear();
+  } else {
+    _observers.insert( playerObserver );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -726,7 +770,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
   mp3dec_frame_info_t info;
   float decoded_ms = 0.0f;
 
-  while( true ) {
+  while( !_shuttingDown ) {
 
     // unless we're flushing, don't bother decoding without a minimum amount of data in buffer
     if( !flush && (_mp3Buffer->Size() < kMinAudioToDecode) ) {
@@ -1041,7 +1085,28 @@ void AlexaMediaPlayer::onError()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaMediaPlayer::doShutdown()
 {
-  // TODO: stop any audio and threads
+  _shuttingDown = true;
+  // wait for the DispatchQueue play loop to complete. The thread is still running, but is cleaned up during destruction
+  std::unique_lock<std::mutex> lk{_playLoopMutex};
+  _playLoopCondition.wait( lk, [this]{ return !_playLoopRunning; } );
+  
+  if( _audioController ) {
+    _audioController->StopAllAudioEvents( _audioInfo.gameObject );
+  }
+  if( _state != State::Idle ) {
+    // if something is playing, notify observers of a stop, otherwise there ends up being a circular
+    // ref fiasco among shared_ptrs in AlexaClient
+    const bool runOnThisThread = true;
+    StopInternal( _playingSource, runOnThisThread );
+    // not sure if this is also needed
+    CallOnPlaybackFinished(_playingSource, runOnThisThread);
+  }
+  // _observers must be cleared here, otherwise there ends up being a circular ref fiasco among
+  // shared_ptrs in AlexaClient and AlexaImpl, even if nothing is playing. But since _observers is
+  // referenced in the _executor, first stop _executor, then clear _observers.
+  _executor.shutdown();
+  std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
+  _observers.clear();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
