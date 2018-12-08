@@ -167,6 +167,10 @@ namespace {
     }
   }
 }
+  
+#if ANKI_DEV_CHEATS
+  DevShutdownChecker AlexaImpl::_shutdownChecker;
+#endif
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::AlexaImpl()
@@ -189,13 +193,10 @@ AlexaImpl::~AlexaImpl()
   }
   
   if( _capabilitiesDelegate ) {
-    // TODO (VIC-11427): this is likely leaking something when commented out, but running shutdown() causes a lock
-    //_capabilitiesDelegate->shutdown();
+    _capabilitiesDelegate->shutdown();
   }
   
-  // First clean up anything that depends on the the MediaPlayers.
-  // This would be a userInputManager or interactionManager, for instance.
-  // We don't have those yet.
+  // First clean up anything that depend on the the MediaPlayers.
   
   // Now it's safe to shut down the MediaPlayers.
   if( _ttsMediaPlayer ) {
@@ -515,6 +516,22 @@ void AlexaImpl::InitThread()
   _client->Connect( _capabilitiesDelegate );
   
   _initState = InitState::ThreadComplete;
+
+#if ANKI_DEV_CHEATS
+  #define ADD_TO_SHUTDOWN_CHECKER(x) _shutdownChecker.AddObject(#x, x)
+  ADD_TO_SHUTDOWN_CHECKER( _observer );
+  ADD_TO_SHUTDOWN_CHECKER( _capabilitiesDelegate );
+  ADD_TO_SHUTDOWN_CHECKER( _ttsMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _alertsMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _audioMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _notificationsMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _tapToTalkAudioProvider );
+  ADD_TO_SHUTDOWN_CHECKER( _wakeWordAudioProvider );
+  ADD_TO_SHUTDOWN_CHECKER( _microphone );
+  ADD_TO_SHUTDOWN_CHECKER( _debugMicrophone );
+  ADD_TO_SHUTDOWN_CHECKER( _client );
+  ADD_TO_SHUTDOWN_CHECKER( _keywordObserver );
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1162,6 +1179,15 @@ void AlexaImpl::SetNetworkError( AlexaNetworkErrorType errorType )
     _onNetworkError( errorType );
   }
 }
+  
+#if ANKI_DEV_CHEATS
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::ConfirmShutdown()
+{
+  _shutdownChecker.PrintRemaining();
+  AlexaClient::ConfirmShutdown();
+}
+#endif
 
 } // namespace Vector
 } // namespace Anki

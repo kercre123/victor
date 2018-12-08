@@ -21,10 +21,14 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <list>
 
 namespace Anki {
 namespace AudioEngine {
 class AudioCallbackContext;
+}
+namespace Util {
+  class IConsoleFunction;
 }
 namespace Vector {
   
@@ -64,7 +68,6 @@ public:
   void NotifyOfTapToTalk( bool fromMute );
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
-  
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -164,6 +167,8 @@ private:
   
   // if the user was ever authenticated, even in a previous boot
   bool _authenticatedEver = false;
+  
+  std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
   
   mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
 };

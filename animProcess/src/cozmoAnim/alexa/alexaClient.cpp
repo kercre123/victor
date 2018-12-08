@@ -85,6 +85,10 @@ namespace {
 #endif
 }
   
+#if ANKI_DEV_CHEATS
+  DevShutdownChecker AlexaClient::_shutdownChecker;
+#endif
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::unique_ptr<AlexaClient>
@@ -236,12 +240,8 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
-  // Create a factory for creating objects that handle tasks that need to be performed right after establishing
-  // a connection to AVS.
-  _postConnectSynchronizerFactory = acl::PostConnectSynchronizerFactory::create( contextManager );
-  
   // Create a factory to create objects that establish a connection with AVS.
-  auto postConnectSynchronizerFactory = acl::PostConnectSynchronizerFactory::create(contextManager);
+  auto postConnectSynchronizerFactory = acl::PostConnectSynchronizerFactory::create( contextManager );
   
   // Create a factory to create objects that establish a connection with AVS.
   auto transportFactory
@@ -655,6 +655,32 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
       return false;
     }
   }
+#endif
+  
+#if ANKI_DEV_CHEATS
+  #define ADD_TO_SHUTDOWN_CHECKER(x) _shutdownChecker.AddObject(#x, x)
+  ADD_TO_SHUTDOWN_CHECKER( _directiveSequencer );
+  ADD_TO_SHUTDOWN_CHECKER( _audioFocusManager );
+  ADD_TO_SHUTDOWN_CHECKER( _audioActivityTracker );
+  ADD_TO_SHUTDOWN_CHECKER( _messageRouter );
+  ADD_TO_SHUTDOWN_CHECKER( _connectionManager );
+  ADD_TO_SHUTDOWN_CHECKER( _internetConnectionMonitor );
+  ADD_TO_SHUTDOWN_CHECKER( _exceptionSender );
+  ADD_TO_SHUTDOWN_CHECKER( _certifiedSender );
+  ADD_TO_SHUTDOWN_CHECKER( _audioInputProcessor );
+  ADD_TO_SHUTDOWN_CHECKER( _speechSynthesizer );
+  ADD_TO_SHUTDOWN_CHECKER( _audioPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _alertsCapabilityAgent );
+  ADD_TO_SHUTDOWN_CHECKER( _interactionCapabilityAgent );
+  ADD_TO_SHUTDOWN_CHECKER( _notificationsCapabilityAgent );
+  ADD_TO_SHUTDOWN_CHECKER( _userInactivityMonitor );
+  ADD_TO_SHUTDOWN_CHECKER( _dialogUXStateAggregator );
+  ADD_TO_SHUTDOWN_CHECKER( _playbackRouter );
+  ADD_TO_SHUTDOWN_CHECKER( _playbackController );
+  ADD_TO_SHUTDOWN_CHECKER( _speakerManager );
+  ADD_TO_SHUTDOWN_CHECKER( _softwareInfoSender );
+  ADD_TO_SHUTDOWN_CHECKER( _revokeAuthorizationHandler );
+  ADD_TO_SHUTDOWN_CHECKER( _registrationManager );
 #endif
   
   return true;

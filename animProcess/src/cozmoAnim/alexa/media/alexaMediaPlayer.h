@@ -129,7 +129,7 @@ public:
   void Update();
 
   virtual SourceId setSource( std::shared_ptr< alexaClientSDK::avsCommon::avs::attachment::AttachmentReader > attachmentReader,
-                              const alexaClientSDK::avsCommon::utils::AudioFormat *format=nullptr ) override;
+                              const alexaClientSDK::avsCommon::utils::AudioFormat* format=nullptr ) override;
   virtual SourceId setSource( const std::string &url, std::chrono::milliseconds offset = std::chrono::milliseconds::zero() ) override;
   virtual SourceId setSource( std::shared_ptr<std::istream> stream, bool repeat) override;
 
@@ -167,8 +167,10 @@ private:
   // decodes from _mp3Buffer into data, returns millisec decoded
   int Decode( const StreamingWaveDataPtr& data, bool flush = false );
 
-  void CallOnPlaybackFinished( SourceId id );
+  void CallOnPlaybackFinished( SourceId id, bool runOnCaller = false );
   void CallOnPlaybackError( SourceId id );
+  
+  bool StopInternal( SourceId id, bool runOnCaller = false );
 
   const char* const StateToString() const;
 
@@ -234,10 +236,10 @@ private:
   // Size of buffer before starting playback
   size_t _minPlaybackBufferSize = 0;
 
-  /// Used to create objects that can fetch remote HTTP content.
+  // Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;
 
-  /// Used to stream urls into attachments
+  // Used to stream urls into attachments
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
 
   const AudioInfo& _audioInfo;
@@ -246,6 +248,18 @@ private:
   std::unique_ptr<Util::FixedCircularBuffer<short, kFilterSize>> _filterBuffer;
   // todo: make this constexpr (see comment in ComputeFilterCoeffs)
   static std::array<float, kFilterSize> _filterCoeffs24;
+  // for ensuring callbacks don't fire after this class was deleted
+  using AudioCallbackType = std::function<void(SourceId)>;
+  std::shared_ptr<AudioCallbackType> _audioCallbackPointer;
+  
+  std::atomic<bool> _shuttingDown;
+  // guards access to _observers. not sure of order of sdk calls, so recursive just in case
+  std::recursive_mutex _observerMutex;
+  // todo: these three wouldn't be necessary if we had a thread instead of a dispatch queue. We basically need to
+  // join() the play/decoding thread during doShutdown(). In the meantime, we wait for a condition variable
+  std::atomic<bool> _playLoopRunning;
+  std::condition_variable _playLoopCondition;
+  std::mutex _playLoopMutex;
 
   // TEMP
   SpeechRecognizerTHF*            _recognizer = nullptr;
