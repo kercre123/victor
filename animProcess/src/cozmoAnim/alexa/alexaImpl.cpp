@@ -166,6 +166,22 @@ namespace {
       default: return "UNKNOWN";
     }
   }
+
+  const char* AlertStateToString(const capabilityAgents::alerts::AlertObserverInterface::State& state ) {
+    switch(state) {
+      case capabilityAgents::alerts::AlertObserverInterface::State::READY: return "READY";
+      case capabilityAgents::alerts::AlertObserverInterface::State::STARTED: return "STARTED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::STOPPED: return "STOPPED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::SNOOZED: return "SNOOZED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::COMPLETED: return "COMPLETED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::PAST_DUE: return "PAST_DUE";
+      case capabilityAgents::alerts::AlertObserverInterface::State::FOCUS_ENTERED_FOREGROUND: return "FOCUS_ENTERED_FOREGROUND";
+      case capabilityAgents::alerts::AlertObserverInterface::State::FOCUS_ENTERED_BACKGROUND: return "FOCUS_ENTERED_BACKGROUND";
+      case capabilityAgents::alerts::AlertObserverInterface::State::ERROR: return "ERROR";
+      default: return "UNKNOWN";
+    }
+  }
+
 }
   
 #if ANKI_DEV_CHEATS
@@ -1007,7 +1023,10 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
   }
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnAlertState",
-               "alert '%s' changed to %d, _alertActive=%d", alertID.c_str(), (int)state, _alertActive );
+               "alert '%s' changed to state '%s', _alertActive=%d",
+               alertID.c_str(),
+               AlertStateToString(state),
+               _alertActive );
   if( oldAlertActive != _alertActive ) {
     // note: this is ok to only have two options, not three (e.g., "unknown") since _alertActive
     // is initialized as false, in which case if the initial assignment to _alertActive is false, we don't
