@@ -194,7 +194,11 @@ private:
 
   void SetState( State state );
 
-  static SourceId _sourceID;
+  // static to keep all instances of this object returning unique source IDs
+  static std::atomic<SourceId> _nextAvailableSourceID;
+
+  SourceId GetNewSourceID();
+
   SourceId _playingSource = 0;
 
   std::map<SourceId, std::unique_ptr< AlexaReader >> _readers;

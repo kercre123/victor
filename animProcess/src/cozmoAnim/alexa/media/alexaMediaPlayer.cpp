@@ -87,7 +87,7 @@ namespace Vector {
 using namespace alexaClientSDK;
 
 using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
-SourceId AlexaMediaPlayer::_sourceID = 1; // 0 is invalid
+std::atomic<SourceId> AlexaMediaPlayer::_nextAvailableSourceID{1}; // 0 is invalid
 
 using PluginId_t = Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t;
 
@@ -327,6 +327,10 @@ void AlexaMediaPlayer::Update()
   }
   
   if( _dataValidity == DataValidity::Invalid ) {
+
+    PRINT_NAMED_WARNING( "AlexaMediaPlayer.Update.InvalidData.PlaybackError", "Speaker '%s' playing source %llu has invalid data",
+                         _audioInfo.name.c_str(), _playingSource );
+
     CallOnPlaybackError( _playingSource );
     // don't CallOnPlaybackError again
     _dataValidity = DataValidity::Unknown;
@@ -368,6 +372,12 @@ void AlexaMediaPlayer::CallOnPlaybackError( SourceId id )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SourceId AlexaMediaPlayer::GetNewSourceID()
+{
+  return _nextAvailableSourceID++;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SourceId AlexaMediaPlayer::setSource( std::shared_ptr< avsCommon::avs::attachment::AttachmentReader > attachmentReader,
                                       const avsCommon::utils::AudioFormat *format )
 {
@@ -376,8 +386,10 @@ SourceId AlexaMediaPlayer::setSource( std::shared_ptr< avsCommon::avs::attachmen
   // set if the previous source was in a non-stopped state. Any calls to a MediaPlayerInterface after an
   // onPlaybackStopped() call will fail, as the MediaPlayer has "reset" its state.
 
-  LOG( "set source with attachment reader" );
-  _readers[_sourceID].reset( new AttachmentReader( std::move(attachmentReader) ) );
+  const SourceId sourceID = GetNewSourceID();
+
+  LOG( "set source %llu with attachment reader (%zu previous readers)", sourceID, _readers.size() );
+  _readers[sourceID].reset( new AttachmentReader( std::move(attachmentReader) ) );
 
   using AudioFormat = avsCommon::utils::AudioFormat;
   if( format !=  nullptr) {
@@ -388,7 +400,7 @@ SourceId AlexaMediaPlayer::setSource( std::shared_ptr< avsCommon::avs::attachmen
          format->dataSigned, format->layout == AudioFormat::Layout::INTERLEAVED );
   }
 
-  return _sourceID++;
+  return sourceID;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -421,10 +433,14 @@ SourceId AlexaMediaPlayer::setSource( const std::string &url, std::chrono::milli
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SourceId AlexaMediaPlayer::setSource( std::shared_ptr<std::istream> stream, bool repeat )
 {
-  LOG( "set source with stream, repeat %s", repeat ? "true" : "false" );
+  const SourceId sourceID = GetNewSourceID();
+  LOG( "set source %llu with stream, repeat %s (%zu previous readers)",
+       sourceID,
+       repeat ? "true" : "false",
+       _readers.size() );
 
-  _readers[_sourceID].reset( new StreamReader( std::move(stream), repeat ) );
-  return _sourceID++;
+  _readers[sourceID].reset( new StreamReader( std::move(stream), repeat ) );
+  return sourceID;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -580,6 +596,12 @@ bool AlexaMediaPlayer::play( SourceId id )
       }
       
       if( (_dataValidity == DataValidity::Unknown) && (_attemptedDecodeBytes > kMaxInvalidDataBeforeAbort) ) {
+        PRINT_NAMED_WARNING("AlexaMediaPlayer.Play.InvalidData.DecodeError",
+                            "%s: source %llu Attempted to decode %zu bytes (> limit of %zu), setting data invalid",
+                            _audioInfo.name.c_str(),
+                            id,
+                            _attemptedDecodeBytes,
+                            kMaxInvalidDataBeforeAbort);
         invalidData = true; // this will cause a break further down
       }
 
@@ -606,6 +628,7 @@ bool AlexaMediaPlayer::play( SourceId id )
 
     _readers[id]->Close();
     _readers[id].reset();
+    _readers.erase(id);
 
     while (!_detectedTriggers_ms.empty() && !_shuttingDown) {
       if (_state == State::Idle) {
@@ -825,7 +848,9 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
                                                5, // quality 0-10
                                                &error);
 
-            PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
+            if( error != 0 ) {
+              PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
+            }
 
             // Set callback for this thread
             SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
