@@ -706,7 +706,7 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnDirective(const std::string& directive, const std::string& payload)
 {
-  if( directive == "Play" || directive == "Speak" ) {
+  if( directive == "Play" || directive == "Speak" || directive == "SetAlert" || directive == "DeleteAlert" ) {
     _lastPlayDirective_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   // TODO: is there a Stop directive we can listed to? that should force the Idle ux state or at least reset idle timers
@@ -821,11 +821,13 @@ void AlexaImpl::CheckForUXStateChange()
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE:
     {
       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      // if nothing is playing, it could be because something is about to play. We only know because
-      // a directive for "Play" or "Speak" has arrived. If one has arrived recently, don't switch to idle yet,
+      // if nothing is playing, it could be because something is about to play. We only know because a
+      // directive for "Play" or "Speak" has arrived. If one has arrived recently, don't switch to idle yet,
       // and instead set a timer so that it will switch to idle only if no other state change occurs.
       // Sometimes, if the delay is long enough, the robot will momentarily break to normal behavior before
-      // returning to alexa. Maybe we need a base delay
+      // returning to alexa. Maybe we need a base delay. Note that we also consider this delay if an alerts
+      // directive is received, because we somtimes receive the alerts directive before the corresponding TTS
+      // (e.g. "Alarm set for 5pm").
       if( anyPlaying ) {
         _uxState = AlexaUXState::Speaking;
       } else if( _lastPlayDirective_s < 0.0f || (currTime_s > _lastPlayDirective_s + kAlexaMaxIdleDelay_s) ) {
