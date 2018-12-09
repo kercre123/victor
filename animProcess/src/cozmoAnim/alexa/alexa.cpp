@@ -91,43 +91,46 @@ Alexa::Alexa()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // is defined here since AlexaImpl is not defined in the header
 Alexa::~Alexa() = default;
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Init(const AnimContext* context)
 {
   _context = context;
-  
+
   // useful for testing shutting down alexa without losing your auth credentials
   auto deleteImpl = [this](ConsoleFunctionContextRef context ) {
     DeleteImpl();
   };
   _consoleFuncs.emplace_front( "DeleteImpl", std::move(deleteImpl), "Alexa", "" );
-  
+
   // assume opted out. If there's a file indicating opted in, create the impl and try to authorize.
   // otherwise, wait for an engine msg saying to start authorization
   bool authenticatedLastBoot = DidAuthenticateLastBoot();
   _authenticatedEver = DidAuthenticateEver();
-  
+
   if( authenticatedLastBoot ) {
     SetAlexaActive( true );
   } else if( _authenticatedEver && kPlayErrorIfSignedOut ) {
     // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
-    // when they say the wake word, it plays "Your device isnt registered. For help, go it its companion app."
+    // when they say the wake word, it plays "Your device isn't registered. For help, go to its companion app."
     // TODO: it might make sense to load the least sensitive model to avoid false positives
     SetSimpleState( AlexaSimpleState::Idle );
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Update()
 {
-  if( _impl != nullptr) {
-    // should be called even if not initialized, because this drives the init process
-    _impl->Update();
+  {
+    std::lock_guard<std::mutex> lg{ _implMutex };
+    if( _impl != nullptr) {
+      // should be called even if not initialized, because this drives the init process
+      _impl->Update();
+    }
   }
-  
+
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   if( (_timeEnableWakeWord_s >= 0.0f) && (currTime_s >= _timeEnableWakeWord_s) ) {
     _timeEnableWakeWord_s = -1.0f;
     // TODO (VIC-11517): downgrade. for now this is useful in webots
