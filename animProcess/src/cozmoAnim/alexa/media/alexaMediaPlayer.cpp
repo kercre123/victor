@@ -790,7 +790,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 {
   using namespace AudioEngine;
 
-  mp3dec_frame_info_t info;
+  mp3dec_frame_info_t info {0};
   float decoded_ms = 0.0f;
 
   while( !_shuttingDown ) {
