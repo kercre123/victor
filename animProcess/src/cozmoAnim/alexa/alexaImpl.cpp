@@ -36,6 +36,7 @@
 #include "cozmoAnim/alexa/alexaKeywordObserver.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/alexa/alexaRevokeAuthObserver.h"
+#include "cozmoAnim/alexa/media/alexaAudioFactory.h"
 #include "cozmoAnim/alexa/media/alexaMediaPlayer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -111,7 +112,7 @@ namespace {
   CONSOLE_VAR(bool, kDumpAlexaTriggerAudio, "Alexa.Init", false);
 
   // every this many seconds (in basestation time), grab the wall time (system clock) and see if it looks like
-  // it may have jumped. IF so, refresh the alexa timers
+  // it may have jumped. If so, refresh the alexa timers
   CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
 
   const char* DialogUXStateToString( const avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState& duxState ) {
@@ -371,7 +372,7 @@ void AlexaImpl::InitThread()
     = capabilityAgents::notifications::SQLiteNotificationsStorage::create( rootConfig );
   
   // Creating the alert storage object to be used for rendering and storing alerts.
-  auto audioFactory = std::make_shared<applicationUtilities::resources::audio::AudioFactory>();
+  auto audioFactory = std::make_shared<AlexaAudioFactory>();
   auto alertStorage
     = capabilityAgents::alerts::storage::SQLiteAlertStorage::create( rootConfig,
                                                                      audioFactory->alerts() );
