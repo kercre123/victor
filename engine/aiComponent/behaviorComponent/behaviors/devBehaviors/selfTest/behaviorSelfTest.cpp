@@ -33,10 +33,6 @@
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include <cstddef>
 
 namespace Anki {

@@ -2,11 +2,11 @@
  * File: behaviorSelfTestSoundCheck.cpp
  *
  * Author: Al Chaussee
- * Created: 07/27/17
+ * Created: 11/16/2018
  *
  * Description: Checks speaker and mics work
  *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2018
  *
  **/
 
