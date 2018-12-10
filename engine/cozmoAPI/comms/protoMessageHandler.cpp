@@ -124,14 +124,9 @@ Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes
       return RESULT_FAIL;
     }
 
-    // NOTE FOR CODE REVIEW: I'm failing to broadcast this message because I don't want to risk
-    // one of the subscribers getting some new message that they've never seen before and causing
-    // a new bug. Similarly, I'm returning _before_ ++_messageCountIncoming to avoid making any
-    // change to the existing behaviors. Should I change the order? (I'm guessing, yes.) Is there
-    // something else I need to mangle, after doing so? (Also, guessing yes.)
-    if(ProtoCladInterpreter::Redirect(message, _context)) {
-      return RESULT_OK;
-    }
+    // Is there a potential, in adding the redirect and not returning (on success), for these messages
+    // to arrive at their destination twice?
+    ProtoCladInterpreter::Redirect(message, _context);
 
     ++_messageCountIncoming;
 
