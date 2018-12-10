@@ -549,7 +549,11 @@ void Alexa::SetUXState( AlexaUXState newState )
 void Alexa::OnAlexaNetworkError( AlexaNetworkErrorType errorType )
 {
   LOG_INFO( "Alexa.OnAlexaNetworkError.Type", "Error: %d", (int)errorType );
-  _pendingUXState = _uxState;
+  // _uxState may be error if the user said the wake word while the error is playing. In that case, preserve the
+  // old _pendingUXState, since _pendingUXState should never be Error
+  if( _uxState != AlexaUXState::Error ) {
+    _pendingUXState = _uxState;
+  }
   SetUXState( AlexaUXState::Error );
   PlayErrorAudio( errorType );
 
