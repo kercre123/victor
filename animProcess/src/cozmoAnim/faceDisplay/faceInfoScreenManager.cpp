@@ -61,6 +61,8 @@
 #define FORCE_TRANSITION_TO_PAIRING 0
 #endif
 
+#define ENABLE_SELF_TEST 1
+
 #if !FACTORY_TEST
 
 // Return true if we can connect to Anki OTA service
@@ -228,7 +230,9 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   // Main screen menu
   ADD_MENU_ITEM(Main, "EXIT", None);
+#if ENABLE_SELF_TEST
   ADD_MENU_ITEM(Main, "RUN SELF TEST", SelfTest);
+#endif
   ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
 
   // Self test screen
