@@ -17,6 +17,7 @@
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerTHFSimple.h"
+#include "cozmoAnim/micData/notchDetector.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -24,6 +25,9 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include <list>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 
 namespace Anki {
@@ -118,6 +122,9 @@ CONSOLE_VAR_ENUM(int, kAlexaPlaybackRecognizerModelSensitivity, CONSOLE_GROUP_AL
 std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 
 #endif // ANKI_DEV_CHEATS
+CONSOLE_VAR(bool, kSaveRawMicInput, CONSOLE_GROUP_ALEXA, false);
+// 0: don't run; 1: compute power as if _notchDetectorActive; 2: analyze power every tick
+CONSOLE_VAR_RANGED(unsigned int, kForceRunNotchDetector, CONSOLE_GROUP_ALEXA, 0, 0, 2);
 } // namespace
 
 void SpeechRecognizerSystem::SetupConsoleFuncs()
@@ -211,6 +218,7 @@ SpeechRecognizerSystem::SpeechRecognizerSystem(const AnimContext* context,
 : _context(context)
 , _micDataSystem(micDataSystem)
 , _triggerWordDataDir(triggerWordDataDir)
+, _notchDetector(std::make_shared<NotchDetector>())
 {
   SetupConsoleFuncs();
   
@@ -269,11 +277,25 @@ void SpeechRecognizerSystem::InitAlexa(const RobotDataLoader& dataLoader,
     return;
   }
   
+  // wrap callback with another check for whether the input signal contains a notch
+  auto wrappedCallback = [callback=std::move(callback), this](const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info){
+    bool validSignal = true;
+    if (_notchDetectorActive || kForceRunNotchDetector) {
+      std::lock_guard<std::mutex> lg{_notchMutex};
+      validSignal = !_notchDetector->HasNotch();
+    }
+    if (validSignal) {
+      callback(info);
+    } else {
+      LOG_INFO("SpeechRecognizerSystem.InitAlexaCallback.Notched", "Alexa wake word contained a notch so was ignored");
+    }
+  };
+  
   _alexaComponent = _context->GetAlexa();
   ASSERT_NAMED(_alexaComponent != nullptr, "SpeechRecognizerSystem.InitAlexa._context.GetAlexa.IsNull");
   _alexaTrigger = std::make_unique<TriggerContext>();
   _alexaTrigger->recognizer->Init("");
-  _alexaTrigger->recognizer->SetCallback(callback);
+  _alexaTrigger->recognizer->SetCallback(wrappedCallback);
   _alexaTrigger->recognizer->Start();
   _alexaTrigger->micTriggerConfig->Init("alexa", dataLoader.GetMicTriggerConfig());
   
@@ -351,6 +373,61 @@ SpeechRecognizerTHF* SpeechRecognizerSystem::GetAlexaPlaybackRecognizer() {
     return _alexaPlaybackTrigger->recognizer.get();
   }
   return nullptr;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::ToggleNotchDetector(bool active)
+{
+  _notchDetectorActive = active;
+  // todo: if !active, reset _notchDetector, otherwise it will contain old PSDs in its circular buffer. they get
+  // refreshed pretty quickly, so not crucial
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::UpdateRaw(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen)
+{
+  // take 0th channel (back left) and give it to the notch detector
+  std::vector<short> singleChannel;
+  singleChannel.resize(audioDataLen/MicData::kNumInputChannels);
+  for( int i=0, idx=0; i<audioDataLen; i+=MicData::kNumInputChannels, ++idx ) {
+    singleChannel[idx] = audioChunk[i];
+  }
+  
+  {
+    std::lock_guard<std::mutex> lg{_notchMutex};
+    // don't run any ffts if not needed. when _notchDetectorActive is enabled, the notch detector will start computing DFTs
+    // and their power and saving that in a circular buffer. when the wake word is used, it averages the recent PSDs and
+    // computes some statistics on the average PSD. This means there won't be any data for when the user speaks the first
+    // wake word, but that's fine since that won't have a notch anyway
+    const bool analyzeSamples = _notchDetectorActive || (kForceRunNotchDetector != 0);
+    _notchDetector->AddSamples(singleChannel.data(), singleChannel.size(), analyzeSamples);
+    if( kForceRunNotchDetector == 2 ) {
+      // run without result. useful for debugging with built-in sine waves
+      _notchDetector->HasNotch();
+    }
+  }
+  
+  if( ANKI_DEV_CHEATS ) {
+    static int pcmfd = -1;
+    if( (pcmfd < 0) && kSaveRawMicInput ) {
+      const auto path = "/data/data/com.anki.victor/cache/speechRecognizerRaw.pcm";
+      pcmfd = open( path, O_CREAT|O_RDWR|O_TRUNC, 0644 );
+    }
+    
+    if( pcmfd >= 0 ) {
+      std::vector<short> toSave;
+      toSave.resize(audioDataLen/MicData::kNumInputChannels);
+      for( int i=0, idx=0; i<audioDataLen; i+=MicData::kNumInputChannels, ++idx ) {
+        toSave[idx] = audioChunk[i];
+      }
+      (void) write( pcmfd, toSave.data(), toSave.size() * sizeof(short) );
+      if( !kSaveRawMicInput ) {
+        close( pcmfd );
+        pcmfd = -1;
+      }
+    }
+  }
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
