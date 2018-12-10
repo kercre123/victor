@@ -242,6 +242,16 @@ message PlaypenStart
 
 }
 
+message PrintBodyData
+{
+  // Print syscon body data to log every specified number of tics.
+  // 0 means disable print.
+  uint_32 period_tics,
+  bool motors,
+  bool prox,
+  bool battery,
+}
+
 message SetMotionModelParams
 {
   float_32 slipFactor,
@@ -722,6 +732,7 @@ union EngineToRobot
   SetMotionModelParams          setMotionModelParams        = 0x0C,
   RollActionParams              rollActionParams            = 0x0D,
   PlaypenStart                  playpenStart                = 0x0E,
+  PrintBodyData                 printBodyData               = 0x0F,
 
   // Motor control
   DriveWheels                   drive                       = 0x10,

@@ -151,6 +151,21 @@ static void AddAnimation(ConsoleFunctionContextRef context)
 CONSOLE_FUNC(PlayAnimationByName, "Animation", const char* animName, optional int numLoops, optional bool renderInEyeHue);
 CONSOLE_FUNC(AddAnimation, "Animation", const char* animFile);
 
+static void PrintBodyData(ConsoleFunctionContextRef context)
+{
+  if (_thisRobot != nullptr) {
+    // 0 means disable printing
+    const uint32_t period_tics = ConsoleArg_Get_UInt(context, "printPeriod_tics");
+    const bool motors = ConsoleArg_GetOptional_Bool(context, "motors", true);
+    const bool prox = ConsoleArg_GetOptional_Bool(context, "prox", false);
+    const bool battery = ConsoleArg_GetOptional_Bool(context, "battery", false);
+    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::PrintBodyData(period_tics, motors, prox, battery)));
+    LOG_INFO("Robot.PrintBodyData", "Period: %d tic, (m: %d, p: %d, b: %d)", period_tics, motors, prox, battery);
+  }
+}
+
+CONSOLE_FUNC(PrintBodyData, "Syscon", uint32_t printPeriod_tics, optional bool motors, optional bool prox, optional bool battery);
+
 // Perform Text to Speech Coordinator from debug console
 namespace {
 

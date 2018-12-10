@@ -911,6 +911,11 @@ namespace Anki {
       return 0; // Simulator never watchdogs
     }
 
+    void HAL::PrintBodyData(u32 period_tics, bool motors, bool prox, bool battery)
+    {
+      AnkiWarn("HAL.PrintBodyData.NotSupportedInSim", "");
+    }
+
     void HAL::Shutdown()
     {
 

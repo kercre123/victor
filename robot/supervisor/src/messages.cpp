@@ -472,6 +472,10 @@ namespace Anki {
       void Process_playpenStart(const RobotInterface::PlaypenStart& msg) {
       }
 
+      void Process_printBodyData(const RobotInterface::PrintBodyData& msg) {
+        HAL::PrintBodyData(msg.period_tics, msg.motors, msg.prox, msg.battery);
+      }
+
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
