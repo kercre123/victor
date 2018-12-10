@@ -17,6 +17,10 @@ message WifiScanRequest
 {
 }
 
+// Scans for and attempts to connect to ssid
+// Will immediately disconnect if connection was successful
+// Sends WifiConnectResponse back indicating if connection to
+// ssid was successfull
 message WifiConnectRequest
 {
   string ssid

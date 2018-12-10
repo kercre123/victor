@@ -58,10 +58,6 @@ void IBehavior::OnEnteredActivatableScope()
 {
   AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
 
-  // Update should be called immediately after entering activatable scope
-  // so set the last tick count as being one tickInterval before the current tickCount
-  _lastTickOfUpdate = (BaseStationTimer::getInstance()->GetTickCount() - kBSTickInterval);
-
   _currentInScopeCount++;
   // If this isn't the first EnteredActivatableScope don't call internal functions
   if(_currentInScopeCount != 1){
@@ -74,6 +70,9 @@ void IBehavior::OnEnteredActivatableScope()
 
   SetActivationState_DevOnly(ActivationState::InScope);
 
+  // Update should be called immediately after entering activatable scope
+  // so set the last tick count as being one tickInterval before the current tickCount
+  _lastTickOfUpdate = (BaseStationTimer::getInstance()->GetTickCount() - kBSTickInterval);
   OnEnteredActivatableScopeInternal();
 }
 
@@ -181,15 +180,6 @@ void IBehavior::SetActivationState_DevOnly(ActivationState state)
 void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
 {
   #if ANKI_DEV_CHEATS
-  if(state != _currentActivationState)
-  {
-    PRINT_NAMED_ERROR("","SAME %s %s %s %s",
-                      debugStr.c_str(),
-                      _debugLabel.c_str(),
-                      ActivationStateToString(_currentActivationState),
-                      ActivationStateToString(state));
-  }
-
   DEV_ASSERT_MSG(_currentActivationState == state,
                  "IBehavior.AssertActivationState_DevOnly.WrongActivationState",
                  "Behavior '%s' is state %s, but should be in %s",
@@ -204,14 +194,6 @@ void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
 void IBehavior::AssertNotActivationState_DevOnly(ActivationState state) const
 {
   #if ANKI_DEV_CHEATS
-  if(state == _currentActivationState)
-  {
-    PRINT_NAMED_ERROR("","NOT SAME %s %s %s %s",
-                      debugStr.c_str(),
-                      _debugLabel.c_str(),
-                      ActivationStateToString(_currentActivationState),
-                      ActivationStateToString(state));
-  }
   DEV_ASSERT_MSG(_currentActivationState != state,
                  "IBehavior.AssertNotActivationState_DevOnly.WrongActivationState",
                  "Behavior '%s' is state %s, but should not be",

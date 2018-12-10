@@ -275,7 +275,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     GetVisionComponent().Init(GetContext()->GetDataLoader()->GetRobotVisionConfig());
   }
 
-  //BEGIN_DONT_RUN_AFTER_PACKOUT
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
   _thisRobot = this;

@@ -816,8 +816,8 @@ namespace Cozmo {
     PRINT_NAMED_INFO("VisionComponent.Processor",
                      "Starting Robot VisionComponent::Processor thread...");
 
-    //    DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
-    //         "VisionComponent.Processor.VisionSystemNotReady");
+    DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
+               "VisionComponent.Processor.VisionSystemNotReady");
 
     Anki::Util::SetThreadName(pthread_self(), "VisionSystem");
 

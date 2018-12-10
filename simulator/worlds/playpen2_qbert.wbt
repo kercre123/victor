@@ -34,7 +34,6 @@ FactoryTestFixtureFloor {
   xSize 0.8
   ySize 0.4
   wallHeight 0
-  slotCenterX -1
 }
 DEF Cozmo_1 CozmoBot2 {
   name "CozmoBot_1"

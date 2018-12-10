@@ -64,7 +64,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestMotorCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestScreenAndBackpack.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestTouch.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestWaitToStart.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
@@ -695,12 +694,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::SelfTestTouch:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestTouch(config));
-      break;
-    }
-
-    case BehaviorClass::SelfTestWaitToStart:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorSelfTestWaitToStart(config));
       break;
     }
 

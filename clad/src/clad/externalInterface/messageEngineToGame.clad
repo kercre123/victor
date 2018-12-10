@@ -503,7 +503,7 @@ message PlaypenBehaviorFailed {
   FactoryTestResultCode result
 }
 
-// Engine->Engine message for asynchronous playpen checks
+// Engine->Engine message for asynchronous selftest checks
 message SelfTestBehaviorFailed {
   SelfTestResultCode result
 }

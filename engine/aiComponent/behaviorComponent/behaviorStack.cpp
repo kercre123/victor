@@ -57,7 +57,6 @@ void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::ClearStack()
 {
-  PRINT_NAMED_WARNING("","CLEARING BEHAVIOR STACK");
   const bool behaviorStackAlreadyEmpty = _behaviorStack.empty();
 
   const size_t stackSize = _behaviorStack.size();

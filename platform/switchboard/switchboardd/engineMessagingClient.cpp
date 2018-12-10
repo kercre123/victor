@@ -132,13 +132,13 @@ void EngineMessagingClient::HandleWifiScanRequest() {
 }
 
 void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
+  // Convert ssid to hex string
   std::stringstream ss;
   for(char c : ssid)
   {
     ss << std::hex << std::setfill('0') << std::setw(2) << (int)c;
   }
   const std::string ssidHex = ss.str();
-  Log::Write("%s %s", ssid.c_str(), ssidHex.c_str());
 
   Anki::Cozmo::SwitchboardInterface::WifiConnectResponse rcp;
   rcp.status_code = 255;
@@ -148,23 +148,23 @@ void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
 
   if(code == Anki::WifiScanErrorCode::SUCCESS)
   {
+    // Scan was a success, look though results for an AP with matching ssid
     bool ssidInRange = false;
     for(const auto& result : wifiResults)
     {
-      Log::Write("SSID %s", result.ssid.c_str());
       if(strcmp(ssidHex.c_str(), result.ssid.c_str()) == 0)
       {
         ssidInRange = true;
 
         Log::Write("HandleWifiConnectRequest: Found requested ssid from scan, attempting to connect");
         bool res = Anki::ConnectWiFiBySsid(result.ssid,
-                                           "goforanki",
+                                           "",
                                            (uint8_t)result.auth,
                                            result.hidden,
                                            nullptr,
                                            nullptr);
 
-        if(!res)
+        if(res != 0)
         {
           Log::Write("HandleWifiConnectRequest: Failed to connect to ssid");
         }
@@ -185,6 +185,8 @@ void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
     rcp.status_code = (uint8_t)code;
   }
 
+  // Immediately disconnect from ssid
+  // Will do nothing if not connected to ssid
   (void)Anki::RemoveWifiService(ssidHex);
 
   SendMessage(GMessage::CreateWifiConnectResponse(std::move(rcp)));

@@ -1,5 +1,5 @@
 /**
- * File: playpenConfig.h
+ * File: selfTestConfig.h
  *
  * Author: Al Chaussee
  * Created: 11/16/2018
@@ -28,30 +28,31 @@ namespace SelfTestConfig {
 
 // ----------General----------
 // Whether or not to ignore any test failures
-// The playpen behaviors should be written in such a way so that they can continue running
+// The plaype behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
 static bool kIgnoreFailures       = false;
 
-// Default timeout to force a playpen behavior to end
+// Default timeout to force a self test behavior to end
 static f32  kDefaultTimeout_ms    = 20000;
 
-// How long to display the playpen result on Cozmo's face
+// How long to display the self test result on Cozmo's face
 static f32  kTimeToDisplayResultOnFace_ms = 10000;
 
 // Whether or not to skip checking we have heard from an active object
 static bool kSkipActiveObjectCheck        = false;
 
 // Threshold on the difference between max and min filtered touch sensor
-// values during playpen
+// values during self test
 // NOTE: This value can be overridden by value stored in EMR
 static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 
 // Max allowed standard deviation of filtered touch sensor values
-// during playpen
+// during self test
 // NOTE: This value can be overridden by value stored in EMR
 static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 
-static std::string kWifiSSID = "AnkiGuest";
+// SSID we should try to scan and connect to for the radio check
+static std::string kWifiSSID = "AnkiSelfTest";
 
 // ---------PickupChecks--------
 // How long the robot needs to be held upside down
@@ -69,9 +70,10 @@ static u16 kUpsideDownCliffValThresh  = 50;
 static u16 kUpsideDownTimeout_ms = 5000;
 
 // ----------InitChecks----------
-// Minimum battery voltage the robot should have at the start and end of playpen
+// Minimum battery voltage the robot should have at the start and end of self test
 static f32 kMinBatteryVoltage     = 3.6;
 
+// Minimum charger voltage the robot should see when on the charger at the beginning of the self test
 static f32 kMinChargerVoltage     = 4.f;
 
 // Minimum expected raw touch sensor value
@@ -80,16 +82,23 @@ static u16 kMinExpectedTouchValue = 3000;
 // Maximum expected raw touch sensor value
 static u16 kMaxExpectedTouchValue = 7000;
 
+// How long the touch sensor needs to be held
 static u16 kTouchSensorDuration_sec = 5;
 
+// Distance to drive backwards at the beginning of the self test to align properly on the charger
 static u16 kDriveBackwardsDist_mm = 100;
 
+// Speed at which to drive backwards while on the charger
 static u16 kDriveBackwardsSpeed_mmps = 40;
 
+// Time to spend driving backwards while on the charger
+// Pose doesn't translate while on charger so drive is time based
 static f32 kDriveBackwardsTime_sec = 1.f;
 
+// Minimum cliff sensor value while on the charger
 static u16 kMinCliffSensorOnChargerVal = 50;
 
+// Max cliff sensor value while on the charger
 static u16 kMaxCliffSensorOnChargerVal = 1000;
 
 // ----------Motor Calibration----------
@@ -168,4 +177,4 @@ static s16 kDistToDriveOnCharger_mm = -40;
 }
 }
 
-#endif // __Cozmo_Basestation_PlaypenConfig__
+#endif // __Cozmo_Basestation_SelfTestConfig__

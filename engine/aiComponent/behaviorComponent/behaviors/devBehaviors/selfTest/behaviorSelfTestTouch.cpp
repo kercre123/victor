@@ -20,6 +20,10 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace {
+const std::string kCountdownTimerName = "countdown";
+}
+
 BehaviorSelfTestTouch::BehaviorSelfTestTouch(const Json::Value& config)
 : IBehaviorSelfTest(config, SelfTestResultCode::TOUCH_PRESS_TIMEOUT)
 {
@@ -101,18 +105,19 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
                  _addTimer = true;
                }
              },
-      "countdown");
+      kCountdownTimerName);
   }
 
   // Touch sensor has been held long enough
   if(_heldCountDown <= 0)
   {
     // Remove the countdown timer
-    RemoveTimers("countdown");
+    RemoveTimers(kCountdownTimerName);
 
     // Touch sensor has been released, test passed
     if(buttonReleasedEvent)
     {
+      // Clear screen
       DrawTextOnScreen(robot, {""});
 
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);
@@ -129,13 +134,13 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
                _heldCountDown--;
                _addTimer = true;
              },
-      "countdown");
+             kCountdownTimerName);
   }
   // Touch sensor was released, hasn't been held long enough
   else if(buttonReleasedEvent)
   {
     // Remove countdown timers
-    RemoveTimers("countdown");
+    RemoveTimers(kCountdownTimerName);
 
     DrawTextOnScreen(robot, {"Hold Touch Sensor"});
 

@@ -61,8 +61,7 @@ enum uint_8 BehaviorID {
   SelfTestScreenAndBackpack,
   SelfTestSoundCheck,
   SelfTestTouch,
-  SelfTestWaitToStart,
-  
+
   // examples
   ExampleAnimGetInLoop,
   ExampleAnonymousBehaviors,

@@ -296,6 +296,13 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
         markerName = marker.GetCodeName();
       }
     }
+
+    if(lastObservedTime == 0)
+    {
+      PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.MarkerNotObserved","");
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
+      return false;
+    }
     
     if((u32)robot.GetLastImageTimeStamp() - lastObservedTime > SelfTestConfig::kChargerMarkerLastObservedTimeThresh_ms)
     {

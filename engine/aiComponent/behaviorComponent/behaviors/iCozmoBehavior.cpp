@@ -1,4 +1,4 @@
- /**
+/**
  * File: ICozmoBehavior.cpp
  *
  * Author: Andrew Stein : Kevin M. Karol
@@ -838,7 +838,6 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   //check if the behavior runs while in the air
   if(GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads
       && !_operationModifiers.wantsToBeActivatedWhenOffTreads){
-    PRINT_NAMED_WARNING("","OFF TREADS");
     return false;
   }
 
