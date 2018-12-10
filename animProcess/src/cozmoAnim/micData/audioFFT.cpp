@@ -25,15 +25,15 @@ namespace Vector {
 AudioFFT::AudioFFT( unsigned int N )
 : _N{ N }
 , _buff{ N, N }
+, _windowCoeffs(N, 0.0)
 {
   Reset();
   
   // hann window coefficients
-  _windowCoeffs.resize( _N, 0.0 );
   for( int i=0; i<_N/2; i++ ) {
     DataType value = (1.0 - cos(2.0 * M_PI * i/(_N-1))) * 0.5;
     _windowCoeffs[i] = value;
-    _windowCoeffs[_N-i] = value; // window is symmetric
+    _windowCoeffs[_N-1-i] = value; // window is symmetric
   }
   
   static_assert( std::is_same<kiss_fft_scalar,float>::value, "" ); // not using fixed point
