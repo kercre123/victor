@@ -11,6 +11,7 @@ enum uint_32 ParameterType
   External_Shape = 1292394150,
   External_Speed = 732885492,
   Invalid = 0,
+  Rnd_Mimic_Duration_Dev = 3939567760,
   Robot_Alexa_Volume_Alerts = 522470314,
   Robot_Alexa_Volume_Master = 3289463297,
   Robot_Vic_Confident = 2193267925,
