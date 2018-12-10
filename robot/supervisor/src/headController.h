@@ -22,6 +22,7 @@
 #ifndef COZMO_HEAD_CONTROLLER_H_
 #define COZMO_HEAD_CONTROLLER_H_
 
+#include "clad/types/motorTypes.h"
 #include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -34,7 +35,7 @@ namespace Anki {
 
       // begins the calibration routine, and if a non-empty calibration
       // reason is provided, it will send up a DAS event for it
-      void StartCalibrationRoutine(bool autoStarted = false, const char* calibrationReason = "");
+      void StartCalibrationRoutine(const bool autoStarted, const MotorCalibrationReason& reason);
       
       bool IsCalibrated();
       bool IsCalibrating();

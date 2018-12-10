@@ -29,6 +29,8 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#define LOG_CHANNEL "Behaviors"
+
 namespace Anki {
 namespace Vector {
 
@@ -108,9 +110,16 @@ void BehaviorReactToUncalibratedHeadAndLift::OnBehaviorActivated()
   bool calibrateHead = robot.IsHeadMotorOutOfBounds() || robot.IsHeadEncoderInvalid();
   bool calibrateLift = robot.IsLiftMotorOutOfBounds() || robot.IsLiftEncoderInvalid();
   if(calibrateHead || calibrateLift) {
+    LOG_INFO("BehaviorReactToUncalibratedHeadAndLift.Activated",
+             "IsHeadMotorOutOfBounds %d, IsLiftMotorOutOfBounds %d, IsHeadEncoderInvalid %d, IsLiftEncoderInvalid %d",
+             GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds(),
+             GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds(),
+             GetBEI().GetRobotInfo().IsHeadEncoderInvalid(),
+             GetBEI().GetRobotInfo().IsLiftEncoderInvalid());
+    
     DelegateNow(new CalibrateMotorAction(calibrateHead,
                                          calibrateLift,
-                                         EnumToString(MotorCalibrationReason::BehaviorReactToUncalibratedHeadAndLift)));
+                                         MotorCalibrationReason::BehaviorReactToUncalibratedHeadAndLift));
   }
 }
   

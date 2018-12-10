@@ -340,12 +340,13 @@ namespace Anki {
       }
 
       void Process_startMotorCalibration(const RobotInterface::StartMotorCalibration& msg) {
+        const bool autoStarted = false;
         if (msg.calibrateHead) {
-          HeadController::StartCalibrationRoutine();
+          HeadController::StartCalibrationRoutine(autoStarted, msg.reason);
         }
 
         if (msg.calibrateLift) {
-          LiftController::StartCalibrationRoutine();
+          LiftController::StartCalibrationRoutine(autoStarted, msg.reason);
         }
       }
 

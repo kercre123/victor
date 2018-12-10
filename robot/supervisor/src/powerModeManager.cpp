@@ -63,8 +63,9 @@ void Update()
 
     if (calibOnEnable_ && enable_) {
       AnkiInfo("PowerModeManager.CalibrateOnActiveMode", "");
-      LiftController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::PowerSaveEnteringActiveMode));
-      HeadController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::PowerSaveEnteringActiveMode));
+      const bool autoStarted = true;
+      LiftController::StartCalibrationRoutine(autoStarted, MotorCalibrationReason::PowerSaveEnteringActiveMode);
+      HeadController::StartCalibrationRoutine(autoStarted, MotorCalibrationReason::PowerSaveEnteringActiveMode);
     }
   } else if (!shouldEnable && isHALActiveModeEnabled) {
 

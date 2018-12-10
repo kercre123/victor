@@ -621,9 +621,9 @@ void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag
   
 // =========== Motor commands ============
 
-Result MovementComponent::CalibrateMotors(bool head, bool lift)
+Result MovementComponent::CalibrateMotors(bool head, bool lift, const MotorCalibrationReason& reason)
 {
-  return _robot->SendRobotMessage<RobotInterface::StartMotorCalibration>(head, lift);
+  return _robot->SendRobotMessage<RobotInterface::StartMotorCalibration>(head, lift, reason);
 }
   
 
