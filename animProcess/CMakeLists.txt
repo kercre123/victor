@@ -32,6 +32,7 @@ endif()
 
 target_link_libraries(victor_anim
   PUBLIC
+  -fsanitize=address
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
   PRIVATE
@@ -73,6 +74,13 @@ target_compile_definitions(victor_anim
   ${PLATFORM_COMPILE_DEFS}
 )
 
+target_compile_options(victor_anim
+  PUBLIC
+  -fno-omit-frame-pointer
+  -fsanitize=address
+)
+
+
 target_include_directories(victor_anim
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
@@ -104,6 +112,12 @@ if (VICOS)
     jsoncpp
     ${ANKITRACE}
     ${PLATFORM_LIBS}
+  )
+
+  target_compile_options(vic-anim
+    PUBLIC
+    -fno-omit-frame-pointer
+    -fsanitize=leak
   )
 
   anki_build_strip(TARGET vic-anim)
