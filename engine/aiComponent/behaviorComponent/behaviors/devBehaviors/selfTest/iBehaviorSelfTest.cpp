@@ -2,15 +2,14 @@
  * File: iBehaviorSelfTest.h
  *
  * Author: Al Chaussee
- * Created: 07/24/17
+ * Created: 11/16/2018
  *
- * Description: Base class for all playpen related behaviors
+ * Description: Base class for all self test related behaviors
  *              All SelfTest behaviors should be written to be able to continue even after
  *              receiving unexpected things (basically conditional branches should only contain code
- *              that calls SET_RESULT) E.g. Even if camera calibration is outside our threshold we should
- *              still be able to continue running through the rest of selftest.
+ *              that calls SET_RESULT)
  *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2018
  *
  **/
 
@@ -383,27 +382,6 @@ void IBehaviorSelfTest::RemoveTimers(const std::string& name)
   }
 }
 
-void IBehaviorSelfTest::RecordTouchSensorData(Robot& robot, const std::string& nameOfData)
-{
-  // if(PlaypenConfig::kDurationOfTouchToRecord_ms > 0)
-  // {
-  //   // Start recording data to the _touchSensorValues struct
-  //   _recordingTouch = true;
-  //   robot.GetTouchSensorComponent().StartRecordingData(&_touchSensorValues);
-
-  //   // Add a timer that will stop recording touch data and write it to log
-  //   // This timer will not be removed from the timer vector so it must complete before the behavior is allowed to
-  //   // complete
-  //   AddTimer(PlaypenConfig::kDurationOfTouchToRecord_ms, [this, &robot, nameOfData](){
-  //     robot.GetTouchSensorComponent().StopRecordingData();
-  //     SELFTEST_TRY(GetLogger().Append("TouchSensor_" + nameOfData, _touchSensorValues), FactoryTestResultCode::WRITE_TO_LOG_FAILED);
-  //     _touchSensorValues.data.clear();
-  //     _recordingTouch = false;
-  //   },
-  //   "DontDelete");
-  // }
-}
-
 void IBehaviorSelfTest::ClearTimers()
 {
   // Remove all timers except for the ones marked as "DontDelete"
@@ -432,7 +410,6 @@ void IBehaviorSelfTest::IncreaseTimeoutTimer(TimeStamp_t time_ms)
 
     ++iter;
   }
-
 }
 
 void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
@@ -451,6 +428,8 @@ void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
                    std::numeric_limits<int>::max());
   float minScale = 0;
 
+  // Figure out the minimum text size we need such that all lines of text will fit
+  // on the display
   for(const auto& t : text)
   {
     cv::Size size;
@@ -470,6 +449,8 @@ void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
     }
   }
 
+  // Figure out the y offset starting point in order to draw
+  // all lines of text centered vertically
   int offset = 0;
   if(text.size() == 1)
   {
@@ -480,11 +461,15 @@ void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
     offset = img.GetNumRows()/2 - (std::ceil(text.size()/2.f) * minSize.height/2);
   }
 
+  // Start drawing text to image
   for(auto iter = text.begin(); iter != text.end(); ++iter)
   {
     float scale = minScale;
     int textThickness = thickness;
 
+    // If the text after this line is an empty string
+    // treat it special. This current text will be scaled
+    // and drawn such that it takes up both lines
     auto next = iter + 1;
     if(next != text.end() &&
        *next == "")
@@ -502,14 +487,18 @@ void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
                                      offset,
                                      false);
 
+    // If we scaled this text due to the next text being ""
+    // then we need to skip ""
     if(scale != minScale)
     {
       iter++;
     }
 
+    // Increment line spacing
     offset += minSize.height + 2;
   }
 
+  // Rotate the image by rotate_deg
   if(!Util::IsNearZero(rotate_deg))
   {
     const auto M = cv::getRotationMatrix2D({(float)img.GetNumCols()/2, (float)img.GetNumRows()/2},

@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Performs basic checks for the self test
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -23,7 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestInitChecks::BehaviorSelfTestInitChecks(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::INIT_CHECKS_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::INIT_CHECKS_TIMEOUT)
 {
 
 }
@@ -37,22 +37,27 @@ Result BehaviorSelfTestInitChecks::OnBehaviorActivatedInternal()
   DrawTextOnScreen(robot,
                    {"Test Running"});
 
+  // Drive backwards on the charger to help align cliff sensors so they are not
+  // on the white stripe
   DriveStraightAction* drive = new DriveStraightAction(-SelfTestConfig::kDriveBackwardsDist_mm,
                                                        SelfTestConfig::kDriveBackwardsSpeed_mmps,
                                                        false);
 
+  // Driving backwards on the charger does not update the robot's position so the drive action
+  // will run forever. Add in some wait actions to cancel the drive after some amount of time
   CompoundActionParallel* action = new CompoundActionParallel();
   const bool ignoreFailure = true;
   std::weak_ptr<IActionRunner> drivePtr = action->AddAction(drive, ignoreFailure);
 
-  WaitAction* wait = new WaitAction(1.f);
-  WaitForLambdaAction* cancel = new WaitForLambdaAction([drivePtr](Robot& robot){
-                                                          if(auto drive = drivePtr.lock())
-                                                          {
-                                                            drive->Cancel();
-                                                          }
-                                                          return true;
-                                                        });
+  WaitAction* wait = new WaitAction(SelfTestConfig::kDriveBackwardsTime_sec);
+  WaitForLambdaAction* cancel = new WaitForLambdaAction([drivePtr](Robot& robot)
+    {
+      if(auto drive = drivePtr.lock())
+      {
+        drive->Cancel();
+      }
+      return true;
+    });
   CompoundActionSequential* seq = new CompoundActionSequential({wait, cancel});
   action->AddAction(seq);
 

@@ -146,8 +146,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
       bias = 0;
     }
     
-    if(/*robot.IsPhysical() &&*/
-       !Util::IsNear(data.proxSensorData.distance_mm - bias, 
+    if(!Util::IsNear(data.proxSensorData.distance_mm - bias, 
                      data.visualDistanceToTarget_mm,
                      SelfTestConfig::kDistanceSensorReadingThresh_mm))
     {
@@ -241,8 +240,6 @@ void BehaviorSelfTestLookAtCharger::TransitionToRecordSensor()
 void BehaviorSelfTestLookAtCharger::TransitionToTurnBack()
 {
   SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
-  //TurnInPlaceAction* action = new TurnInPlaceAction(_startingAngle.ToFloat(), true);
-  //DelegateIfInControl(action, [this]() { SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS); });
 }
 
 bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& markerPoseWrtRobot)

@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Drives the robot forwards off the charger
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -32,7 +32,6 @@ protected:
   }
   
   virtual Result        OnBehaviorActivatedInternal() override;
-  virtual void          OnBehaviorDeactivated() override;
 
 private:
 

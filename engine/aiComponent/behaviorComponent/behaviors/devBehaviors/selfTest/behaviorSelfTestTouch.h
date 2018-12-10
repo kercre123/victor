@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Waits for the touch sensor to be held for some amount of time
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -39,10 +39,9 @@ protected:
 private:
   
   bool _buttonPressed = false;
-
-  int _heldCountDown = 5;
-  bool _addTimer = false;
-  bool _calibrated = false;
+  int  _heldCountDown = SelfTestConfig::kTouchSensorDuration_sec;
+  bool _addTimer      = false;
+  bool _calibrated    = false;
 };
 
 }

@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Prompts the user to put the robot on the charger
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestPutOnCharger::BehaviorSelfTestPutOnCharger(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::PUT_ON_CHARGER_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::PUT_ON_CHARGER_TIMEOUT)
 {
   SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
                   {ExternalInterface::MessageEngineToGameTag::ChargerEvent,
@@ -37,6 +37,8 @@ Result BehaviorSelfTestPutOnCharger::OnBehaviorActivatedInternal()
   const bool isPickedUp = robot.IsPickedUp();
   //const bool isBeingHeld = robot.IsBeingHeld();
 
+  // If we are upside down then draw the text so it will appear right side up
+  // as this behavior runs after BehaviorSelfTestPickup so the robot is likely upside down
   float textAngle = 0;
   if(isPickedUp/* && isBeingHeld*/)
   {

@@ -2,16 +2,16 @@
  * File: playpenConfig.h
  *
  * Author: Al Chaussee
- * Created: 08/10/17
+ * Created: 11/16/2018
  *
- * Description: Configuration file for playpen
+ * Description: Configuration file for self test
  *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2018
  *
  **/
 
-#ifndef __Cozmo_Basestation_PlaypenConfig__
-#define __Cozmo_Basestation_PlaypenConfig__
+#ifndef __Cozmo_Basestation_SelfTestConfig__
+#define __Cozmo_Basestation_SelfTestConfig__
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -80,9 +80,13 @@ static u16 kMinExpectedTouchValue = 3000;
 // Maximum expected raw touch sensor value
 static u16 kMaxExpectedTouchValue = 7000;
 
+static u16 kTouchSensorDuration_sec = 5;
+
 static u16 kDriveBackwardsDist_mm = 100;
 
 static u16 kDriveBackwardsSpeed_mmps = 40;
+
+static f32 kDriveBackwardsTime_sec = 1.f;
 
 static u16 kMinCliffSensorOnChargerVal = 50;
 

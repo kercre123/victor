@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Robot docks with the charger
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -20,17 +20,18 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestDockWithCharger::BehaviorSelfTestDockWithCharger(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::DOCK_WITH_CHARGER_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::DOCK_WITH_CHARGER_TIMEOUT)
 {
   SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ChargerEvent});
 }
 
 Result BehaviorSelfTestDockWithCharger::OnBehaviorActivatedInternal()
 {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  // Check for the object in the world
   BlockWorldFilter filter;
   filter.AddAllowedType(ObjectType::Charger_Basic);
   std::vector<ObservableObject*> objects;
@@ -63,7 +64,11 @@ Result BehaviorSelfTestDockWithCharger::OnBehaviorActivatedInternal()
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::CHARGER_NOT_FOUND, RESULT_FAIL);
     }
 
-    DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(object->GetID(), true, false);
+    const bool useCliffSensorCorrection = true;
+    const bool enableDockingAnims = false;
+    DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(object->GetID(),
+                                                                            useCliffSensorCorrection,
+                                                                            enableDockingAnims);
 
     DelegateIfInControl(action, [this](){ TransitionToOnChargerChecks(); });
   }
@@ -88,6 +93,7 @@ void BehaviorSelfTestDockWithCharger::TransitionToOnChargerChecks()
   const bool batteryVoltageGood = batteryVolts >= SelfTestConfig::kMinBatteryVoltage;
   const bool chargerVoltageGood = chargerVolts >= 4;
 
+  // If the battery is disconnected then we can only check charger voltage
   if(disconnected)
   {
     if(!chargerVoltageGood)
@@ -98,6 +104,7 @@ void BehaviorSelfTestDockWithCharger::TransitionToOnChargerChecks()
   }
   else
   {
+    // Battery is connected so first check battery voltage and then charger voltage
     if(!batteryVoltageGood)
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.BatteryTooLow", "%fv", batteryVolts);
@@ -109,9 +116,6 @@ void BehaviorSelfTestDockWithCharger::TransitionToOnChargerChecks()
       SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_VOLTAGE_TOO_LOW);
     }
   }
-
-  // TODO Maybe check cliff sensors for no cliff here
-  // Difficult because don't know what kind of surface we are on, may be a dark table
 
   SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
 }

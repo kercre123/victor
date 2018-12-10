@@ -7,8 +7,7 @@
  * Description: Base class for all self test related behaviors
  *              All self test behaviors should be written to be able to continue even after
  *              receiving unexpected things (basically conditional branches should only contain code
- *              that calls SET_RESULT) E.g. Even if camera calibration is outside our threshold we should
- *              still be able to continue running through the rest of the self test.
+ *              that calls SET_RESULT)
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -57,8 +56,6 @@ namespace Cozmo {
 }
 
 #define SELFTEST_TRY(expr, result) { if(!(expr)) {SELFTEST_SET_RESULT(result);} }
-
-class FactoryTestLogger;
 
 class IBehaviorSelfTest : public ICozmoBehavior
 {
@@ -163,8 +160,10 @@ protected:
   // Removes the first timer with the given name
   void RemoveTimer(const std::string& name);
 
+  // Removes all times with the given name
   void RemoveTimers(const std::string& name);
 
+  // Adds time_ms more time to the default behavior timeout timer
   void IncreaseTimeoutTimer(TimeStamp_t time_ms);
 
   // Returns whether or not we should ignore behavior failures
@@ -176,10 +175,13 @@ protected:
   // Returns and resets if we have gotten the fft result
   bool DidReceiveFFTResult();
 
-  // Starts recording touch sensor data and will automatically stop once 'kDurationOfTouchToRecord_ms'
-  // time has passed
-  void RecordTouchSensorData(Robot& robot, const std::string& nameOfData);
-
+  // Draws each element in the text vector on a separate line to the screen
+  // Will make all lines the same size such that the longest can fit on the screen
+  // Rotates the image by rotate_deg before displaying
+  // Note: An empty string in the text vector has special behavior
+  //       It will cause the element immediately before it to be drawn across multiple lines
+  //       Ex: {"36", "", "Test Failed"}, Text will be drawn on "3" lines. "36" will be drawn
+  //       across the first two and "Test Failed" will be drawn on the third
   static void DrawTextOnScreen(Robot& robot, const std::vector<std::string>& text,
                                ColorRGBA textColor = NamedColors::WHITE,
                                ColorRGBA bg = NamedColors::BLACK,
@@ -232,8 +234,6 @@ private:
 
   std::vector<Timer> _timers;
 
-  //mutable FactoryTestLogger* _factoryTestLogger;
-
   SelfTestResultCode _result = SelfTestResultCode::UNKNOWN;
 
   // Set of EngineToGameTags that a subclass has subscribed to
@@ -246,6 +246,7 @@ private:
   // The last value UpdateInternal returned
   SelfTestStatus _lastStatus = SelfTestStatus::Running;
 
+  // If the behavior has been running for too long fail with this result
   SelfTestResultCode _timeoutCode = SelfTestResultCode::TEST_TIMED_OUT;
 };
 

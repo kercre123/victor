@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Displays the same color on the backpack and screen to test lights
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -22,7 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestScreenAndBackpack::BehaviorSelfTestScreenAndBackpack(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::SCREEN_BACKPACK_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::SCREEN_BACKPACK_TIMEOUT)
 {
   SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
                   {ExternalInterface::MessageEngineToGameTag::ChargerEvent});
@@ -30,6 +30,8 @@ BehaviorSelfTestScreenAndBackpack::BehaviorSelfTestScreenAndBackpack(const Json:
 
 Result BehaviorSelfTestScreenAndBackpack::OnBehaviorActivatedInternal()
 {
+  // Have to drive forwards off the charger (runs after PutOnCharger) so
+  // we can set the backpack lights
   DriveStraightAction* action = new DriveStraightAction(SelfTestConfig::kDistToDriveOffCharger_mm,
                                                         SelfTestConfig::kDriveOffChargerSpeed_mmps, false);
 
@@ -94,24 +96,28 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
 
   if(buttonReleased && !_buttonStartedPressed)
   {
+    // Button was pressed indicating the screen and backpack lights look good, so drive back onto charger
     DriveStraightAction* drive = new DriveStraightAction(SelfTestConfig::kDistToDriveOnCharger_mm,
                                                          SelfTestConfig::kDriveBackwardsSpeed_mmps);
 
+    // Driving backwards on the charger does not update the robot's position so the drive action
+    // will run forever. Add in some wait actions to cancel the drive after some amount of time
     CompoundActionParallel* action = new CompoundActionParallel();
     const bool ignoreFailure = true;
     std::weak_ptr<IActionRunner> drivePtr = action->AddAction(drive, ignoreFailure);
 
-    WaitForLambdaAction* cancel = new WaitForLambdaAction([drivePtr](Robot& robot){
-                                                            if(robot.IsOnChargerPlatform())
-                                                            {
-                                                              if(auto drive = drivePtr.lock())
-                                                              {
-                                                                drive->Cancel();
-                                                              }
-                                                              return true;
-                                                            }
-                                                            return false;
-                                                          });
+    WaitForLambdaAction* cancel = new WaitForLambdaAction([drivePtr](Robot& robot)
+      {
+        if(robot.IsOnChargerPlatform())
+        {
+          if(auto drive = drivePtr.lock())
+          {
+            drive->Cancel();
+          }
+          return true;
+        }
+        return false;
+      });
     action->AddAction(cancel);
 
     DelegateIfInControl(action, [this](){

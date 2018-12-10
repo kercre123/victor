@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Displays the same color on the backpack and screen to test lights
  *
  * Copyright: Anki, Inc. 2018
  *

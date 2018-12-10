@@ -26,17 +26,14 @@ BehaviorSelfTestDriveForwards::BehaviorSelfTestDriveForwards(const Json::Value& 
 
 Result BehaviorSelfTestDriveForwards::OnBehaviorActivatedInternal()
 {
+  const bool shouldPlayAnimation = false;
   DriveStraightAction* action = new DriveStraightAction(SelfTestConfig::kDistanceToDriveForwards_mm,
-                                                        SelfTestConfig::kDriveSpeed_mmps, false);
+                                                        SelfTestConfig::kDriveSpeed_mmps,
+                                                        shouldPlayAnimation);
 
   DelegateIfInControl(action, [this](){ TransitionToOffChargerChecks(); });
 
   return RESULT_OK;
-}
-
-void BehaviorSelfTestDriveForwards::OnBehaviorDeactivated()
-{
-
 }
 
 void BehaviorSelfTestDriveForwards::TransitionToOffChargerChecks()

@@ -2,11 +2,11 @@
  * File: behaviorSelfTestLookAtCharger.h
  *
  * Author: Al Chaussee
- * Created: 09/22/17
+ * Created: 11/16/2018
  *
  * Description: Turns towards a target marker and records a number of distance sensor readings
  *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2018
  *
  **/
 

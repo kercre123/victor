@@ -33,8 +33,6 @@
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 
-//#include "anki/cozmo/shared/factory/emrHelper.h"
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -155,77 +153,29 @@ void BehaviorSelfTest::GetAllDelegates(std::set<IBehavior*>& delegates) const
 
 void BehaviorSelfTest::OnBehaviorActivated()
 {
-  //  _startTest = false;
-  PRINT_NAMED_WARNING("","STARTING SELF TEST");
-
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  // Clear backpack lights
   robot.GetBodyLightComponent().ClearAllBackpackLightConfigs();
 
-  // if(robot.HasExternalInterface())
-  // {
-  //   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(SelfTestConfig::kSoundVolume);
-  // }
+  // Set master volume for speaker check
+  // Not going through SettingsManager in order to
+  // be able to easily restore the previous volume setting
+  if(robot.HasExternalInterface())
+  {
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(SelfTestConfig::kSoundVolume);
+  }
+
   const DrivingAnimationHandler::DrivingAnimations anims{.drivingStartAnim = AnimationTrigger::Count,
                                                          .drivingLoopAnim = AnimationTrigger::Count,
                                                          .drivingEndAnim = AnimationTrigger::Count};
   robot.GetDrivingAnimationHandler().PushDrivingAnimations(anims, GetDebugLabel());
-  // // // Start the factory log
-  // // std::stringstream serialNumString;
-  // // serialNumString << std::hex << robot.GetHeadSerialNumber();
-  // // _factoryTestLogger.StartLog( serialNumString.str(), true, robot.GetContextDataPlatform());
-  // // PRINT_NAMED_INFO("BehaviorSelfTest.WillLogToDevice",
-  // //                  "Log name: %s",
-  // //                  _factoryTestLogger.GetLogName().c_str());
 
+  // Request scan/connection to specific SSID
   robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::WifiConnectRequest(SelfTestConfig::kWifiSSID)));
   _radioScanState = RadioScanState::WaitingForWifiResult;
-
-  // // Set blind docking mode
-  // NativeAnkiUtilConsoleSetValueWithString("PickupDockingMethod", "0");
-
-  // // Disable driving animations
-  // NativeAnkiUtilConsoleSetValueWithString("EnableDrivingAnimations", "false");
-
-  // // Disable image streaming
-  // if(robot.IsPhysical())
-  // {
-  //   NativeAnkiUtilConsoleSetValueWithString("ImageCompressQuality", "0");
-  // }
-
-  // // Make sure only Marker Detection mode is enabled; we don't need anything else running
-  // robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
-  // robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-
-  // // Set and disable auto exposure
-  // robot.GetVisionComponent().SetAndDisableAutoExposure(SelfTestConfig::kExposure_ms, SelfTestConfig::kGain);
-
-  // // Set and disable WhiteBalance
-  // robot.GetVisionComponent().SetAndDisableWhiteBalance(SelfTestConfig::kGain, SelfTestConfig::kGain, SelfTestConfig::kGain);
-
-  // // Disable block pool from auto connecting
-  // if(robot.HasExternalInterface())
-  // {
-  //   robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::BlockPoolEnabledMessage>(0, false);
-  // }
-
-  // // Toggle cube discovery off and on
-  // robot.GetCubeCommsComponent().EnableDiscovery(false, SelfTestConfig::kActiveObjectDiscoveryTime_s);
-  // robot.GetCubeCommsComponent().EnableDiscovery(true, SelfTestConfig::kActiveObjectDiscoveryTime_s);
-
-  // // Request a WiFi scan
-  // if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::WifiScanError)) {
-  //   PRINT_NAMED_INFO("BehaviorSelfTest.OnBehaviorActivated.SendingWifiScanRequest", "");
-  //   robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::WifiScanRequest()));
-  // }
-
-  // // Disable filtered touch sensor value tracking
-  // robot.EnableTrackTouchSensorFilt(false);
-
-  // _imuTemp.tempStart_c = robot.GetImuTemperature();
-  // _imuTemp.duration_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
   // Delegate to the first behavior
   _currentBehavior->WantsToBeActivated();
@@ -234,14 +184,13 @@ void BehaviorSelfTest::OnBehaviorActivated()
 
 void BehaviorSelfTest::OnBehaviorDeactivated()
 {
-  PRINT_NAMED_WARNING("","SELFTEST DEACTIVATED");
-
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   robot.GetBodyLightComponent().ClearAllBackpackLightConfigs();
 
+  // Remove the driving animations we pushed
   robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
 
   robot.GetCubeCommsComponent().Disconnect();
@@ -257,18 +206,12 @@ void BehaviorSelfTest::Reset()
     behavior->Reset();
   }
 
-  // _behaviorStartTimes.clear();
-
   CancelDelegates(false);
 
   // Set current behavior to first playpen behavior
   _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
   _currentBehavior = *_currentSelfTestBehaviorIter;
 
-  // Clear imu temp struct
-  // _imuTemp = IMUTempDuration();
-
-  _restartOnButtonPress = false;
   _waitForButtonToEndTest = false;
 
   _buttonPressed = false;
@@ -282,42 +225,29 @@ void BehaviorSelfTest::BehaviorUpdate()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
+  // If we had to fall back to cube connection and it passed
+  // then immediately disconnect from the cube
   if(_radioScanState == RadioScanState::Passed &&
      robot.GetCubeCommsComponent().IsConnectedToCube())
   {
     robot.GetCubeCommsComponent().Disconnect();
   }
 
+  // Check for button press if we are waiting for one in order to end the test
   if(_waitForButtonToEndTest)
   {
     const bool buttonPressed = robot.IsPowerButtonPressed();
 
     if(_buttonPressed && !buttonPressed)
     {
-      if(_restartOnButtonPress)
-      {
-        // If we are restarting the test then skip the first behavior
-        // as it just waits for the face menu screen option to be selected
-        //_currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
-        //_currentSelfTestBehaviorIter++;
+      CancelSelf();
 
-        //_currentBehavior = *_currentSelfTestBehaviorIter;
+      // This should clear the face and put us back to whatever behavior was previously running
+      robot.SendRobotMessage<RobotInterface::SelfTestEnd>();
+      robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::SelfTestEnd()));
 
-        // Fake being re-activated to startup selftest again
-        OnBehaviorActivated();
-      }
-      else
-      {
-        CancelSelf();
-
-        // This should clear the face and put us back
-        robot.SendRobotMessage<RobotInterface::SelfTestEnd>();
-        robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::SelfTestEnd()));
-      }
-
-      _restartOnButtonPress = false;
       _waitForButtonToEndTest = false;
-     }
+    }
 
     _buttonPressed = buttonPressed;
   }
@@ -329,8 +259,6 @@ void BehaviorSelfTest::BehaviorUpdate()
     if(result != SelfTestResultCode::UNKNOWN &&
        result != SelfTestResultCode::SUCCESS)
     {
-      //_currentBehavior->OnDeactivated();
-
       PRINT_NAMED_WARNING("BehaviorSelfTest.Update.BehaviorFailed",
                           "Behavior %s failed with %s",
                           _currentBehavior->GetDebugLabel().c_str(),
@@ -367,11 +295,9 @@ void BehaviorSelfTest::BehaviorUpdate()
         return;
       }
 
-      //_behaviorStartTimes.push_back(BaseStationTimer::getInstance()->GetCurrentTimeStamp());
-
       DelegateNow(_currentBehavior.get());
     }
-    // All playpen behaviors have run so success!
+    // All self test behaviors have run so success!
     else
     {
       PRINT_NAMED_INFO("BehaviorSelfTest.Complete", "All behaviors have been run");
@@ -387,27 +313,7 @@ void BehaviorSelfTest::HandleResult(SelfTestResultCode result)
   PRINT_NAMED_INFO("BehaviorSelfTest.HandleResult.OrigResult",
                    "%s", EnumToString(result));
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  //Robot& robot = GetBEI().GetRobotInfo()._robot;
-
-  // Update imu temp struct with the final temperature and append it to log
-  //  _imuTemp.tempEnd_c = robot.GetImuTemperature();
-  //_imuTemp.duration_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _imuTemp.duration_ms;
-  // if(!_factoryTestLogger.Append(_imuTemp))
-  // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed.ImuTemp", "");
-  //   result = SelfTestResultCode::WRITE_TO_LOG_FAILED;
-  // }
-
   const auto& allResults = IBehaviorSelfTest::GetAllSelfTestResults();
-  // // Write all playpen behavior results to log if we are ignoring failures
-  // if(SelfTestConfig::kIgnoreFailures &&
-  //    !_factoryTestLogger.Append(allResults))
-  // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed.AllResults", "");
-  //   result = SelfTestResultCode::WRITE_TO_LOG_FAILED;
-  // }
 
   // If this is a success but we are ignoring failures a behavior may have actually
   // failed so check all results
@@ -431,126 +337,18 @@ void BehaviorSelfTest::HandleResult(SelfTestResultCode result)
 
   IBehaviorSelfTest::ResetAllSelfTestResults();
 
-  // Only check EMR PLAYPEN_READY_FLAG on success so that we can run robots through
-  // playpen to check sensors and stuff before even if they have not passed previous fixtures
-  // if(result == SelfTestResultCode::SUCCESS &&
-  //    (Factory::GetEMR() == nullptr ||
-  //     !Factory::GetEMR()->fields.PLAYPEN_READY_FLAG))
-  // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.NotReadyForPlaypen",
-  //                       "Either couldn't read EMR or robot not ready for playpen");
-  //   result = SelfTestResultCode::ROBOT_FAILED_PREPLAYPEN_TESTS;
-  // }
-
-  //FactoryTestResultEntry resultEntry;
-
-  // _behaviorStartTimes.resize(resultEntry.timestamps.size());
-  // _behaviorStartTimes[_behaviorStartTimes.size() - 1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-
-  // resultEntry.result = result;
-  // resultEntry.engineSHA1 = 0; // TODO: Populate
-  // resultEntry.utcTime = time(0);
-  // resultEntry.stationID = 0; // TODO: Populate from fixture
-  // std::copy(_behaviorStartTimes.begin(),
-  //           _behaviorStartTimes.begin() + resultEntry.timestamps.size(),
-  //           resultEntry.timestamps.begin());
-
-  // u8 buf[resultEntry.Size()];
-  // size_t numBytes = resultEntry.Pack(buf, sizeof(buf));
-  // if(SelfTestConfig::kWriteToStorage &&
-  //    !robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
-  //                                         buf,
-  //                                         numBytes))
-  // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteTestResultToRobotFailed",
-  //                       "Writing test results to robot failed");
-  //   resultEntry.result = SelfTestResultCode::TEST_RESULT_WRITE_FAILED;
-  //   result = SelfTestResultCode::TEST_RESULT_WRITE_FAILED;
-  // }
-
-  // if(!_factoryTestLogger.Append(resultEntry))
-  // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.WriteToLogFailed",
-  //                       "Failed to write result entry to log");
-  //   result = SelfTestResultCode::WRITE_TO_LOG_FAILED;
-  // }
-
-  // if((result == SelfTestResultCode::SUCCESS) && SelfTestConfig::kWriteToStorage)
-  // {
-  //   time_t nowTime = time(0);
-  //   struct tm* tmStruct = gmtime(&nowTime);
-
-  //   // TODO: System time will be incorrect need to have a fixture set it
-  //   BirthCertificate bc;
-  //   bc.year   = static_cast<u8>(tmStruct->tm_year % 100);
-  //   bc.month  = static_cast<u8>(tmStruct->tm_mon + 1); // Months start at zero
-  //   bc.day    = static_cast<u8>(tmStruct->tm_mday);
-  //   bc.hour   = static_cast<u8>(tmStruct->tm_hour);
-  //   bc.minute = static_cast<u8>(tmStruct->tm_min);
-  //   bc.second = static_cast<u8>(tmStruct->tm_sec);
-
-  //   u8 buf[bc.Size()];
-  //   size_t numBytes = bc.Pack(buf, sizeof(buf));
-
-  //   if(!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_BirthCertificate,
-  //                                           buf,
-  //                                           numBytes))
-  //   {
-  //     PRINT_NAMED_ERROR("BehaviorSelfTest.HandleResultInternal.BCWriteFailed", "");
-  //     resultEntry.result = SelfTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
-  //     result = SelfTestResultCode::BIRTH_CERTIFICATE_WRITE_FAILED;
-  //   }
-
-
-  //   static_assert(sizeof(Factory::EMR::Fields::playpen) >= sizeof(BirthCertificate),
-  //                 "Not enough space for BirthCertificate in EMR::Playpen");
-  //   Factory::WriteEMR(offsetof(Factory::EMR::Fields, playpen)/sizeof(uint32_t), buf, sizeof(buf));
-  // }
-
-  // const u32 kPlaypenPassedFlag = ((result == SelfTestResultCode::SUCCESS) ? 1 : 0);
-  // Factory::WriteEMR(offsetof(Factory::EMR::Fields, PLAYPEN_PASSED_FLAG)/sizeof(uint32_t), kPlaypenPassedFlag);
-
-  // robot.Broadcast(ExternalInterface::MessageEngineToGame(FactoryTestResultEntry(resultEntry)));
-
   PRINT_NAMED_INFO("BehaviorSelfTest.HandleResultInternal.Result",
                    "Playpen completed with %s",
                    EnumToString(result));
 
-  // Copy engine logs if the test failed or we are ignoring failures
-  // if((result != SelfTestResultCode::SUCCESS || SelfTestConfig::kIgnoreFailures) &&
-  //    !_factoryTestLogger.CopyEngineLog(robot.GetContextDataPlatform()))
-  // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.CopyEngineLogFailed", "");
-  // }
-  // _factoryTestLogger.CloseLog();
-
+  // Display result on screen
   DisplayResult(result);
 
   // Reset playpen
   Reset();
 
-  _restartOnButtonPress = false;//(result != SelfTestResultCode::SUCCESS);
+  // Not done yet, need to wait for a button press in order to the test to end
   _waitForButtonToEndTest = true;
-
-  // Handled by button press logic in BehaviorUpdate
-  // Fake being re-activated to startup playpen again
-  //OnBehaviorActivated();
-
-  // If data directory is too large, delete it
-  // if(Util::FileUtils::GetDirectorySize(SelfTestConfig::kDataDirPath) > SelfTestConfig::kMaxDataDirSize_bytes)
-  // {
-  //   PRINT_NAMED_WARNING("BehaviorSelfTest.HandleResultInternal.DeletingDataDir",
-  //                       "%s is larger than %zd, deleting",
-  //                       SelfTestConfig::kDataDirPath.c_str(),
-  //                       SelfTestConfig::kMaxDataDirSize_bytes);
-
-  //   Util::FileUtils::RemoveDirectory(SelfTestConfig::kDataDirPath);
-  // }
-
-  // Just-in-case sync
-  //sync();
-
-  // TODO(Al): Turn off Victor at end of playpen?
 }
 
 void BehaviorSelfTest::DisplayResult(SelfTestResultCode result)
@@ -573,15 +371,17 @@ void BehaviorSelfTest::DisplayResult(SelfTestResultCode result)
 
     robot.GetBodyLightComponent().SetBackpackLights(passLights);
 
-    IBehaviorSelfTest::DrawTextOnScreen(robot, {"OK", "Press button", "to finish test"},
-                                        NamedColors::BLACK, NamedColors::GREEN);
-    // robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
-    //                                                                                  RobotInterface::ColorRGB(0,0,0),
-    //                                                                                  RobotInterface::ColorRGB(0,255,0),
-    //                                                                                  "OK")));
+    IBehaviorSelfTest::DrawTextOnScreen(robot,
+                                        {"OK",
+                                         "Press button",
+                                         "to finish test"},
+                                        NamedColors::BLACK,
+                                        NamedColors::GREEN);
   }
   else
   {
+    // I would like to play this animation here but it will cause the face to go blank
+    // so the user would not be able to see the result text
     //PlayAnimationAction* action = new PlayAnimationAction("playpenFailAnim");
     //robot.GetActionList().AddConcurrentAction(action);
 
@@ -597,14 +397,12 @@ void BehaviorSelfTest::DisplayResult(SelfTestResultCode result)
 
     robot.GetBodyLightComponent().SetBackpackLights(failLights);
 
-    IBehaviorSelfTest::DrawTextOnScreen(robot, {std::to_string((u32)result), "", "Press button", "to end test"},
-                                        NamedColors::BLACK, NamedColors::RED);
-
-    // // Draw result to screen
-    // robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
-    //                                                                                  RobotInterface::ColorRGB(0,0,0),
-    //                                                                                  RobotInterface::ColorRGB(255,0,0),
-    //                                                                                  std::to_string((u32)result))));
+    IBehaviorSelfTest::DrawTextOnScreen(robot,
+                                        {std::to_string((u32)result), "",
+                                         "Press button",
+                                         "to end test"},
+                                        NamedColors::BLACK,
+                                        NamedColors::RED);
   }
 }
 
@@ -626,28 +424,6 @@ void BehaviorSelfTest::HandleMessage(const ExternalInterface::SelfTestBehaviorFa
     HandleResult(msg.result);
   }
 }
-
-// template<>
-// void BehaviorSelfTest::HandleMessage(const SwitchboardInterface::EnterPairing& msg)
-// {
-//   // Only have playpen handle this message if this is the factory test and
-//   // we have not been packed out
-//   if(FACTORY_TEST)
-//   {
-//     BEGIN_DONT_RUN_AFTER_PACKOUT
-
-//     PRINT_NAMED_WARNING("BehaviorSelfTest.HandleMessage.EnterPairing",
-//                         "Pairing mode triggered. Exiting playpen test.");
-
-//     // Reset playpen
-//     Reset();
-
-//     // Fake being re-activated to startup playpen again
-//     OnBehaviorActivated();
-
-//     END_DONT_RUN_AFTER_PACKOUT
-//   }
-// }
 
 void BehaviorSelfTest::StartCubeConnectionCheck()
 {
@@ -671,12 +447,16 @@ void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
 {
   const auto& tag = event.GetData().GetTag();
 
+  // The only GameToEngine message we expect is WifiConnectResponse
   if(tag != GameToEngineTag::WifiConnectResponse)
   {
     return;
   }
 
   const auto& payload = event.GetData().Get_WifiConnectResponse();
+
+  // Fall back to a cube connection check should wifi fail
+  // for normal users this is expected as the wifi checks for a hardcoded network
   if(payload.status_code != 0)
   {
     PRINT_NAMED_INFO("BehaviorSelfTest.HandleWifiConnectResponse",

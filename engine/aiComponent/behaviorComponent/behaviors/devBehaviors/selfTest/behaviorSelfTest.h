@@ -69,36 +69,35 @@ private:
   // Reset all playpen behaviors and state
   void Reset();
 
+  // Begin the cube connection check
   void StartCubeConnectionCheck();
 
+  // Perform any final checks
   SelfTestResultCode DoFinalChecks();
 
   using SelfTestBehavior = std::shared_ptr<IBehaviorSelfTest>;
 
+  // The current running self test behavior
   SelfTestBehavior _currentBehavior = nullptr;
 
+  // List of all self test behaviors
   std::vector<SelfTestBehavior>::iterator _currentSelfTestBehaviorIter;
   std::vector<SelfTestBehavior> _selfTestBehaviors;
 
-  //std::vector<u32> _behaviorStartTimes;
-
-  //IMUTempDuration _imuTemp;
-
-  //bool _startTest = false;
-
   std::vector<::Signal::SmartHandle> _signalHandles;
 
+  // Whether or not we are waiting on button press to finish the self test
+  // after the result has been displayed
   bool _waitForButtonToEndTest = false;
-  bool _restartOnButtonPress = false;
   bool _buttonPressed = false;
 
   enum class RadioScanState
   {
-   None,
-   WaitingForWifiResult,
-   WaitingForCubeResult,
-   Failed,
-   Passed
+    None,
+    WaitingForWifiResult,
+    WaitingForCubeResult,
+    Failed,
+    Passed
   };
 
   RadioScanState _radioScanState = RadioScanState::None;

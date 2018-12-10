@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Waits for the backpack button to be pressed
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -19,14 +19,13 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestButton::BehaviorSelfTestButton(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::BUTTON_PRESS_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::BUTTON_PRESS_TIMEOUT)
 {
 
 }
 
 Result BehaviorSelfTestButton::OnBehaviorActivatedInternal()
 {
-  PRINT_NAMED_WARNING("","BUTTON TEST");
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
@@ -59,11 +58,11 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
   {
     if(onCharger)
     {
+      // Once the button has been pressed, wait until we have stabilized
+      // and think we are back on treads as the charger contacts can be quite bouncy
       DrawTextOnScreen(robot, {"Please Wait"});
 
-      AddTimer(500, [this](){
-                       WaitToBeOnTreads();
-                     });
+      WaitToBeOnTreads();
     }
     else
     {
@@ -94,6 +93,7 @@ void BehaviorSelfTestButton::WaitToBeOnTreads()
   }
   else
   {
+    // Repeatadly check for OnTreads every so often until we timeout
     AddTimer(500, [this](){
                      WaitToBeOnTreads();
                    });

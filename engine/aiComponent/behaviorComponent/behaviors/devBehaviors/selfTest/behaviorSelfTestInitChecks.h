@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Performs basic checks for the self test
  *
  * Copyright: Anki, Inc. 2018
  *

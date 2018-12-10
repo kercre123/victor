@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Waits for the touch sensor to be held for some amount of time
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -21,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestTouch::BehaviorSelfTestTouch(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::TOUCH_PRESS_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::TOUCH_PRESS_TIMEOUT)
 {
   SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
                   {ExternalInterface::MessageEngineToGameTag::ChargerEvent,
@@ -63,6 +63,8 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
   }
   else if(isCalibrated && !_calibrated)
   {
+    // If the touch sensor just became calibrated then increase the base behavior timeout
+    // by some amount of time in order to account for the time spent calibrating
     IncreaseTimeoutTimer(5000);
     DrawTextOnScreen(robot, {"Hold Touch Sensor"});
   }
@@ -74,20 +76,22 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
   }
 
   const bool buttonPressed = robot.GetTouchSensorComponent().GetIsPressed();
-
   const bool buttonReleasedEvent = _buttonPressed && !buttonPressed;
   const bool buttonPressedEvent = !_buttonPressed && buttonPressed;
 
+  // If it is time to add a countdown timer
   if(_addTimer)
   {
     _addTimer = false;
 
+    // Draw updated countdown to screen
     DrawTextOnScreen(robot, {std::to_string(_heldCountDown)});
 
     AddTimer(1000,
              [this, &robot](){
                _heldCountDown--;
 
+               // Touch sensor has been held long enough
                if(_heldCountDown <= 0)
                {
                  DrawTextOnScreen(robot, {"Release Touch Sensor"});
@@ -100,10 +104,13 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
       "countdown");
   }
 
+  // Touch sensor has been held long enough
   if(_heldCountDown <= 0)
   {
+    // Remove the countdown timer
     RemoveTimers("countdown");
 
+    // Touch sensor has been released, test passed
     if(buttonReleasedEvent)
     {
       DrawTextOnScreen(robot, {""});
@@ -112,6 +119,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
     }
   }
 
+  // Touch sensor has been held, start the countdown
   if(buttonPressedEvent)
   {
     DrawTextOnScreen(robot, {std::to_string(_heldCountDown)});
@@ -123,12 +131,18 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestTouch::SelfTestUpdateInternal(
              },
       "countdown");
   }
+  // Touch sensor was released, hasn't been held long enough
   else if(buttonReleasedEvent)
   {
+    // Remove countdown timers
     RemoveTimers("countdown");
+
     DrawTextOnScreen(robot, {"Hold Touch Sensor"});
+
     _addTimer = false;
-    _heldCountDown = 5;
+
+    // Reset countdown count
+    _heldCountDown = SelfTestConfig::kTouchSensorDuration_sec;
   }
 
   _buttonPressed = buttonPressed;
@@ -140,7 +154,7 @@ void BehaviorSelfTestTouch::OnBehaviorDeactivated()
 {
   _buttonPressed = false;
   _addTimer = false;
-  _heldCountDown = 5;
+  _heldCountDown = SelfTestConfig::kTouchSensorDuration_sec;
 }
 
 }

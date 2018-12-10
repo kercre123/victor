@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 11/16/2018
  *
- * Description: Runs forever until the robot is on the charger and has been touched for some amount of time
+ * Description: Prompts user to pickup robot to check cliff sensor while upside down
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -22,7 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestPickup::BehaviorSelfTestPickup(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::PICKUP_ROBOT_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::PICKUP_ROBOT_TIMEOUT)
 {
   SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ChargerEvent,
                    ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged,
@@ -55,28 +55,28 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
     const AccelData& accel = robot.GetHeadAccelData();
     if(accel.z <= SelfTestConfig::kUpsideDownZAccel)
     {
-      if(_upsideDownStartTime_ms == 0)
-      {
-        DrawTextOnScreen(robot,
-                         {"Please Wait"},
-                         NamedColors::WHITE,
-                         NamedColors::BLACK,
-                         180);
-      }
-
       if(!_upsideDownTimerAdded)
       {
         _upsideDownTimerAdded = true;
+
+        // Once turned upside down must complete rest of checks within this time
         AddTimer(SelfTestConfig::kUpsideDownTimeout_ms, [this]() {
-                         SELFTEST_SET_RESULT(SelfTestResultCode::UPSIDE_DOWN_TIMEOUT);
-                       });
+          SELFTEST_SET_RESULT(SelfTestResultCode::UPSIDE_DOWN_TIMEOUT);
+        });
       }
 
       const auto now = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       if(_upsideDownStartTime_ms == 0)
       {
         _upsideDownStartTime_ms = now;
+
+        DrawTextOnScreen(robot,
+                         {"Please Wait"},
+                         NamedColors::WHITE,
+                         NamedColors::BLACK,
+                         180);
       }
+      // Have been upside down for long enough, check cliff sensors
       else if(now - _upsideDownStartTime_ms > SelfTestConfig::kTimeToBeUpsideDown_ms)
       {
         const auto& cliffSenseComp = robot.GetCliffSensorComponent();
@@ -85,6 +85,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
            cliffSenseComp.IsCliffDetected(CliffSensor::CLIFF_BL) &&
            cliffSenseComp.IsCliffDetected(CliffSensor::CLIFF_BR))
         {
+          // All cliff sensors should be seeing cliffs and have values below a threshold
           const auto& cliffData = cliffSenseComp.GetCliffDataRaw();
           bool allCliffs = true;
           for(int c = 0; c < CliffSensorComponent::kNumCliffSensors; c++)
@@ -102,6 +103,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
     }
     else
     {
+      // No longer upside down
       if(_upsideDownStartTime_ms != 0)
       {
         DrawTextOnScreen(robot,

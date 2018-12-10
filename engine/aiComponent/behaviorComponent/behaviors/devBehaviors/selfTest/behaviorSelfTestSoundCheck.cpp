@@ -23,7 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 BehaviorSelfTestSoundCheck::BehaviorSelfTestSoundCheck(const Json::Value& config)
-  : IBehaviorSelfTest(config, SelfTestResultCode::SOUND_CHECK_TIMEOUT)
+: IBehaviorSelfTest(config, SelfTestResultCode::SOUND_CHECK_TIMEOUT)
 {
 }
 
