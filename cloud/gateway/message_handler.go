@@ -230,28 +230,6 @@ func CladExpressionValuesToProto(msg []uint8) []uint32 {
 	return expression_values
 }
 
-func CladRobotObservedFaceToProto(msg *gw_clad.RobotObservedFace) *extint.RobotObservedFace {
-	// BlinkAmount, Gaze and SmileAmount are not exposed to the SDK
-	return &extint.RobotObservedFace{
-		FaceId:    msg.FaceID,
-		Timestamp: msg.Timestamp,
-		Pose:      CladPoseToProto(&msg.Pose),
-		ImgRect:   CladCladRectToProto(&msg.ImgRect),
-		Name:      msg.Name,
-
-		Expression: extint.FacialExpression(msg.Expression + 1), // protobuf enums have a 0 start value
-
-		// Individual expression values histogram, sums to 100 (Exception: all zero if expressio: msg.
-		ExpressionValues: CladExpressionValuesToProto(msg.ExpressionValues[:]),
-
-		// Face landmarks
-		LeftEye:  CladCladPointsToProto(msg.LeftEye),
-		RightEye: CladCladPointsToProto(msg.RightEye),
-		Nose:     CladCladPointsToProto(msg.Nose),
-		Mouth:    CladCladPointsToProto(msg.Mouth),
-	}
-}
-
 func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFaceID) *extint.RobotChangedObservedFaceID {
 	return &extint.RobotChangedObservedFaceID{
 		OldId: msg.OldID,

@@ -247,7 +247,9 @@ message GatewayWrapper {
     SetEyeColorRequest            set_eye_color_request              = 1700;
     SetEyeColorResponse           set_eye_color_response             = 1701;
 
+    // ------------ Events -------------------------
+    RobotObservedFace             robot_observed_face                = 1800;
+
     // (when adding new categories, please create gaps between field numbers)
-    // ------------  -------------------------
   }
 }

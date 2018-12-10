@@ -74,6 +74,7 @@ private:
   // Send a message to a specified ID
   virtual void DeliverToExternal(const external_interface::GatewayWrapper& message) override;
 
+  //TODO: Remove. (Unused) You'll have to kill _hostProtoDeviceID and _lastPingTime_ms at the same time.
   bool ConnectToProtoDevice(ISocketComms::DeviceId deviceId);
 
   // ============================== Private Member Vars ==============================

@@ -18,6 +18,7 @@
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/externalInterface/gatewayInterface.h"
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
@@ -36,6 +37,8 @@
 #include "util/enums/enumOperators.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
+
+#include "stdio.h"  //DO NOT SUBMIT
 
 #ifdef SIMULATOR
 #include "osState/osState.h"
@@ -191,13 +194,15 @@ namespace Anki {
       _context = context;
 
       // We'll use this callback for simple events we care about
-      auto commonCallback = std::bind(&UiMessageHandler::HandleEvents, this, std::placeholders::_1);
+      auto g2e_callback = std::bind(&UiMessageHandler::HandleGameToEngineEvents, this, std::placeholders::_1);
+      auto e2g_callback = std::bind(&UiMessageHandler::HandleEngineToGameEvents, this, std::placeholders::_1);
 
       // Subscribe to desired simple events
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::TransferFile, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, g2e_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, g2e_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, g2e_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::TransferFile, g2e_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace, e2g_callback));
 
       return RESULT_OK;
     }
@@ -679,7 +684,22 @@ namespace Anki {
       return success;
     }
 
-    void UiMessageHandler::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    void UiMessageHandler::HandleEngineToGameEvents(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+    {
+      LOG_WARNING("ron_proto_handle_events", "Received clad event");
+      external_interface::GatewayWrapper proto_message;
+      switch (event.GetData().GetTag()) {
+        case ExternalInterface::MessageEngineToGameTag::RobotObservedFace:
+          ProtoCladInterpreter::CladRobotObservedFaceToProto(event.GetData().Get_RobotObservedFace(), proto_message);
+          break;
+        default:
+          return;
+      }
+      LOG_WARNING("ron_proto_handle_events", "Broadcasting proto_message");
+      _context->GetGatewayInterface()->Broadcast(proto_message);
+    }
+
+    void UiMessageHandler::HandleGameToEngineEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
       switch (event.GetData().GetTag())
       {

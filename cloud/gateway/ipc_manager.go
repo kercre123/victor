@@ -185,7 +185,6 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
-				log.Errorf("EngineProtoIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)
@@ -564,14 +563,6 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 		switch msg.Tag() {
 		case gw_clad.MessageRobotToExternalTag_Event:
 			event := CladEventToProto(msg.GetEvent())
-			manager.SendEventToChannel(event)
-			// @TODO: Convert all face events to proto VIC-4643
-		case gw_clad.MessageRobotToExternalTag_RobotObservedFace:
-			event := &extint.Event{
-				EventType: &extint.Event_RobotObservedFace{
-					RobotObservedFace: CladRobotObservedFaceToProto(msg.GetRobotObservedFace()),
-				},
-			}
 			manager.SendEventToChannel(event)
 		case gw_clad.MessageRobotToExternalTag_RobotChangedObservedFaceID:
 			event := &extint.Event{

@@ -228,29 +228,6 @@ message RobotObservedPossibleObject {
     RobotObservedObject possibleObject
 }
 
-// RobotObservedFace
-message RobotObservedFace {
-    int_32        faceID,         // negative: tracked but not recognized; positive: recognized face
-    uint_32       timestamp,
-    PoseStruct3d  pose,
-    CladRect      img_rect,       // position in image coords
-    string        name,           // Empty if none assigned yet
-
-    FacialExpression  expression,
-    SmileAmount       smileAmount,
-    Gaze              gaze,
-    BlinkAmount       blinkAmount,
-
-    // Individual expression values histogram, sums to 100 (Exception: all zero if expression=Unknown)
-    uint_8        expressionValues[uint_8],
-
-    // Face landmarks
-    CladPoint2d   leftEye[uint_8],
-    CladPoint2d   rightEye[uint_8],
-    CladPoint2d   nose[uint_8],
-    CladPoint2d   mouth[uint_8]
-}
-
 // RobotChangedObservedFaceID
 //  This generally happens when a tracked face (negative ID) is recognized and
 //  receives a positive ID or when face records get merged
@@ -339,7 +316,6 @@ union MessageRobotToExternal {
   Event                             Event                              = 0x02,
   // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
-  RobotObservedFace                 RobotObservedFace                  = 0x06, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   AnimationAvailable                AnimationAvailable                 = 0x08,
   EndOfMessage                      EndOfMessage                       = 0x09,
