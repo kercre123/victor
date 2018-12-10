@@ -93,8 +93,7 @@ void BehaviorReactToPutDown::TransitionToHeadCalibration()
   // Force all motors to recalibrate since it's possible that Vector may have been put down too aggressively,
   // resulting in gear slippage for a motor, or the user might have forced one of the motors into a different
   // position while in the air or while sensors were disabled.
-  DelegateIfInControl(new CalibrateMotorAction(true, true,
-                                               EnumToString(MotorCalibrationReason::BehaviorReactToPutDown)),
+  DelegateIfInControl(new CalibrateMotorAction(true, true, MotorCalibrationReason::BehaviorReactToPutDown),
                       &BehaviorReactToPutDown::TransitionToPlayingWaitAnimation);
 }
   

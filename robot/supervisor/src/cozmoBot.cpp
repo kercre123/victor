@@ -109,8 +109,10 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.LiftController", "");
 
         // Calibrate motors
-        LiftController::StartCalibrationRoutine(1);
-        HeadController::StartCalibrationRoutine(1);
+        const bool autoStarted = true;
+        const auto reason = MotorCalibrationReason::Startup;
+        LiftController::StartCalibrationRoutine(autoStarted, reason);
+        HeadController::StartCalibrationRoutine(autoStarted, reason);
 
         robotStateMessageCounter_ = 0;
 

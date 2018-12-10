@@ -458,7 +458,8 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CalibrateMotors& msg)
 {
     CalibrateMotorAction* action = new CalibrateMotorAction(msg.calibrateHead,
-                                                            msg.calibrateLift);
+                                                            msg.calibrateLift,
+                                                            MotorCalibrationReason::Game);
     return action;
 }
 

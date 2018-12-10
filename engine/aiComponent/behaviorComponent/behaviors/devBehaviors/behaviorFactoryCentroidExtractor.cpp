@@ -120,7 +120,7 @@ void BehaviorFactoryCentroidExtractor::OnBehaviorActivated()
   robot.GetActionList().Cancel();
       
   // Start motor calibration
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true, MotorCalibrationReason::Playpen)));
   
   
 }

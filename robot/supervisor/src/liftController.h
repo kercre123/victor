@@ -14,6 +14,7 @@
 #ifndef COZMO_LIFT_CONTROLLER_H_
 #define COZMO_LIFT_CONTROLLER_H_
 
+#include "clad/types/motorTypes.h"
 #include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -33,7 +34,7 @@ namespace Anki {
       // Automatically enables motor if it was disabled
       // Note: if a non-empty calibration reason is provided,
       // this will also send up a DAS event for the calibration
-      void StartCalibrationRoutine(bool autoStarted = false, const char* calibrationReason = "");
+      void StartCalibrationRoutine(const bool autoStarted, const MotorCalibrationReason& reason);
       
       // Returns true if calibration has completed
       bool IsCalibrated();      

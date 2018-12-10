@@ -63,7 +63,7 @@ void BehaviorReactToPlacedOnSlope::OnBehaviorActivated()
     const auto& robotInfo = GetBEI().GetRobotInfo();
     // Don't run the animation. Instead, run a motor cal since his head may be out of calibration.
     PRINT_CH_INFO("Behaviors", "BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
-    DelegateIfInControl(new CalibrateMotorAction(true, false));
+    DelegateIfInControl(new CalibrateMotorAction(true, false, MotorCalibrationReason::BehaviorReactToPlacedOnSlope));
     _endedOnInclineLastTime = false;
   } else {
     // Play the animation then check if we're still on a slope or if we were perched on something:

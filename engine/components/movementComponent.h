@@ -142,7 +142,7 @@ public:
   void UnlockAllTracks();
   
   // Sends calibrate command to robot
-  Result CalibrateMotors(bool head, bool lift);
+  Result CalibrateMotors(bool head, bool lift, const MotorCalibrationReason& reason);
   
   // Enables lift power on the robot.
   // If disabled, lift goes limp.

@@ -303,7 +303,7 @@ namespace Vector {
     public:
       CalibrateMotorAction(bool calibrateHead,
                            bool calibrateLift,
-                           std::string calibrationReason = "");
+                           const MotorCalibrationReason& reason);
 
       // Template for all events we subscribe to
       template<typename T>
@@ -318,7 +318,7 @@ namespace Vector {
       bool _calibHead;
       bool _calibLift;
       
-      std::string _calibReason;
+      MotorCalibrationReason _calibReason;
       
       bool _headCalibStarted;
       bool _liftCalibStarted;

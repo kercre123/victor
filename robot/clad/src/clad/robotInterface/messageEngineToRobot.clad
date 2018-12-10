@@ -41,7 +41,8 @@ message CheckCloudConnectivity
 message StartMotorCalibration
 {
   bool calibrateHead,
-  bool calibrateLift
+  bool calibrateLift,
+  MotorCalibrationReason reason,
 }
 
 message DriveWheels
