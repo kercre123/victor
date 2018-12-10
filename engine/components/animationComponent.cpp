@@ -914,7 +914,7 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
 
   auto it = _callbackMap.find(payload.tag);
   if (it != _callbackMap.end() || isTriggerWordGetIn || isAlexa) {
-    LOG_INFO("AnimStarted.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+    // LOG_INFO("AnimStarted.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
   } else if (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM)) {
     LOG_WARNING("AnimationComponent.AnimStarted.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     return;
@@ -946,7 +946,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   auto it = _callbackMap.find(payload.tag);
   while(it != _callbackMap.end()){
     atLeastOneCallback = true;
-    LOG_INFO("AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+    // LOG_INFO("AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     it->second.ExecuteCallback(payload.wasAborted ? AnimResult::Aborted : AnimResult::Completed,
                                payload.streamTimeAnimEnded);
     _callbackMap.erase(it);
@@ -956,7 +956,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   // Special callback for the trigger word response that persists
   if(payload.tag == _tagForTriggerWordGetInCallbacks){
     // this wont be in our _callbackMap, so for debug's sake let's print this out
-    LOG_INFO("AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
+    // LOG_INFO("AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     atLeastOneCallback = true;
     const bool playing = false;
     _triggerWordGetInCallbackFunction(playing);
