@@ -346,6 +346,9 @@ void BehaviorSleepCycle::OnBehaviorActivated()
   else {
     SetState( SleepStateID::Awake );
 
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _dVars.lastWakeUpTime_s = currTime_s;
+
     // starts in "awake", so delegate right away to awake behavior
     if( _iConfig.awakeDelegate->WantsToBeActivated() ) {
       DelegateIfInControl(_iConfig.awakeDelegate.get());
