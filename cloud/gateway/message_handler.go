@@ -230,13 +230,6 @@ func CladExpressionValuesToProto(msg []uint8) []uint32 {
 	return expression_values
 }
 
-func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFaceID) *extint.RobotChangedObservedFaceID {
-	return &extint.RobotChangedObservedFaceID{
-		OldId: msg.OldID,
-		NewId: msg.NewID,
-	}
-}
-
 func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
 	return &extint.PoseStruct{
 		X:        msg.X,

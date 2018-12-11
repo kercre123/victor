@@ -292,5 +292,16 @@ void ProtoCladInterpreter::CladRobotObservedFaceToProto(
   proto_message = ExternalMessageRouter::Wrap(robot_observed_face);
 }
 
+ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
+    const Anki::Vector::ExternalInterface::ChangedObservedFaceID & clad_message,
+    external_interface::GatewayWrapper & proto_message) {
+  external_interface::ChangedObservedFaceID * changed_observed_face_id = new external_interface::ChangedObservedFaceID;
+  
+  changed_observed_face_id->set_new_id(clad_message.newID);
+  changed_observed_face_id->set_old_id(clad_message.oldID);
+
+  proto_message = ExternalMessageRouter::Wrap(changed_observed_face_id);
+}
+
 } // namespace Vector
 } // namespace Anki

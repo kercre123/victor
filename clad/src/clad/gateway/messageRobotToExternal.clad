@@ -228,14 +228,6 @@ message RobotObservedPossibleObject {
     RobotObservedObject possibleObject
 }
 
-// RobotChangedObservedFaceID
-//  This generally happens when a tracked face (negative ID) is recognized and
-//  receives a positive ID or when face records get merged
-message RobotChangedObservedFaceID {
-    int_32   oldID,
-    int_32   newID
-}
-
 // Anything that the robot wishes to push to the app that 
 // is not a response to a request from the app.
 // DEPRECATED. Please try to use protobuf's Event instead
@@ -316,7 +308,6 @@ union MessageRobotToExternal {
   Event                             Event                              = 0x02,
   // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
-  RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   AnimationAvailable                AnimationAvailable                 = 0x08,
   EndOfMessage                      EndOfMessage                       = 0x09,
   ObjectConnectionState             ObjectConnectionState              = 0x0A, // TODO: Add this to Events once webots dependancy on heirarchy is lifted

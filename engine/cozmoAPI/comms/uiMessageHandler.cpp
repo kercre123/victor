@@ -692,6 +692,9 @@ namespace Anki {
         case ExternalInterface::MessageEngineToGameTag::RobotObservedFace:
           ProtoCladInterpreter::CladRobotObservedFaceToProto(event.GetData().Get_RobotObservedFace(), proto_message);
           break;
+        case ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID:
+          ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(event.GetData().Get_RobotChangedObservedFaceID(), proto_message);
+          break;
         default:
           return;
       }
