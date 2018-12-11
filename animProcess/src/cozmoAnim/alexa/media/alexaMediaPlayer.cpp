@@ -119,6 +119,8 @@ namespace {
   // Note that if the stream ends prior to downloading this many bytes, we already exit cleanly.
   constexpr size_t kMaxInvalidDataBeforeAbort = 512*1024; // 512 kB
 
+  constexpr int kMaxPlayTries = 20;
+
   // define wwise objects depending on player type
   constexpr PluginId_t kPluginIdTTS = 10;
   constexpr PluginId_t kPluginIdAudio = 11;
@@ -392,8 +394,16 @@ void AlexaMediaPlayer::Update()
 void AlexaMediaPlayer::CallOnPlaybackFinished( SourceId id, bool runOnCaller )
 {
   auto func = [this, id]() {
-    LOG( "CallOnPlaybackFinished %d, Setting state=Idle", (int)id );
-    SetState(State::Idle);
+    if( _playingSource == id ) {
+      LOG( "CallOnPlaybackFinished %d, Setting state=Idle", (int)id );
+      SetState(State::Idle);
+    }
+    else {
+      LOG( "CallOnPlaybackFinished %llu, but %llu is playing, so keep state as %s",
+           id,
+           _playingSource,
+           StateToString() );
+    }
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       observer->onPlaybackFinished( id );
@@ -410,8 +420,16 @@ void AlexaMediaPlayer::CallOnPlaybackFinished( SourceId id, bool runOnCaller )
 void AlexaMediaPlayer::CallOnPlaybackError( SourceId id )
 {
   _executor.submit([this, id]() {
-    LOG( "CallOnPlaybackError %d, Setting state=Idle", (int)id );
-    SetState(State::Idle);
+    if( _playingSource == id ) {
+      LOG( "CallOnPlaybackError %d, Setting state=Idle", (int)id );
+      SetState(State::Idle);
+    }
+    else {
+      LOG( "CallOnPlaybackError %llu, but source %llu is playing, so keep state as %s",
+           id,
+           _playingSource,
+           StateToString() );
+    }
     static const std::string kPlaybackError = "The device had trouble with playback";
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
@@ -497,11 +515,40 @@ SourceId AlexaMediaPlayer::setSource( std::shared_ptr<std::istream> stream, bool
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::play( SourceId id )
 {
-  LOG( "play" );
-  _playingSource = id;
-  _playLoopRunning = true;
+  LOG( "play source %llu", id );
+  _nextSourceToPlay = id;
 
   Util::Dispatch::Async( _dispatchQueue, [id, this](){
+
+    std::unique_lock<std::mutex> lk{_playLoopMutex};
+
+    for(int tries = 0; tries < kMaxPlayTries && !_shuttingDown && id == _nextSourceToPlay; ++tries) {
+      if( ExchangeState(State::Idle, State::Preparing) ) {
+        // success!
+        break;
+      }
+      else {
+        lk.unlock();
+        LOG("play: state is not idle, sleeping to let it go idle (try %d)", tries);
+        // TODO:(bn) condition variable or something, this doesn't seem to happen often though
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        lk.lock();
+        // loop around again
+      }
+    }
+
+    if( _state != State::Preparing || _shuttingDown || id != _nextSourceToPlay ) {
+      LOG("Failed to set state to preparing, state is %s, giving up on playing source %llu",
+          StateToString(),
+          id);
+      return;
+    }
+
+    // at this point, we hold the play loop mutex, and we are the _only_ playing async job for _this_ media
+    // player
+
+    _playLoopRunning = true;
+    _playingSource = id;
 
 #if defined(ANKI_PLATFORM_VICOS)
     // Setup the thread's affinity mask
@@ -515,8 +562,6 @@ bool AlexaMediaPlayer::play( SourceId id )
       LOG_ERROR("AlexaMediaPlayer.play", "SetAffinityMaskError %d", error);
     }
 #endif
-
-    SetState(State::Preparing);
 
     bool sentPlaybackStarted = false;
 
@@ -533,6 +578,7 @@ bool AlexaMediaPlayer::play( SourceId id )
 
     // new waveData instance to hold data passed to wwise
     _waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
+
     // reset plugin
     {
       auto* pluginInterface = _audioController->GetPluginInterface();
@@ -548,7 +594,7 @@ bool AlexaMediaPlayer::play( SourceId id )
 
     int numBlocks = 0;
     const int kMaxBlocks = 10000; // number of times we can try to check a blocking reader before giving up
-    
+
     bool invalidData = false;
 
     float lastPlayedMs = 0;
@@ -606,6 +652,7 @@ bool AlexaMediaPlayer::play( SourceId id )
           _mp3Buffer->AddData( input.data(), (int)bytesRead );
         }
         if( readStatus != AlexaReader::Status::Ok ) {
+          // LOG( "source %llu readStatus %s", id, AlexaReader::StatusToString(readStatus) );
           break;
         }
       }
@@ -647,7 +694,7 @@ bool AlexaMediaPlayer::play( SourceId id )
         // LOG("Sleep for %zu ms", sleepFor_ms);
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
       }
-      
+
       if( (_dataValidity == DataValidity::Unknown) && (_attemptedDecodeBytes > kMaxInvalidDataBeforeAbort) ) {
         PRINT_NAMED_WARNING("AlexaMediaPlayer.Play.InvalidData.DecodeError",
                             "%s: source %llu Attempted to decode %zu bytes (> limit of %zu), setting data invalid",
@@ -659,10 +706,15 @@ bool AlexaMediaPlayer::play( SourceId id )
       }
 
       if( flush || invalidData || _shuttingDown ) {
+        LOG( "done producing data on waveData %p for source %llu (flush:%d invalid:%d)",
+             _waveData.get(),
+             id,
+             flush,
+             invalidData );
         _waveData->DoneProducingData();
         break;
       }
-    }
+    } // end while
 
     // flush debug dumps
     SavePCM( nullptr );
@@ -672,7 +724,7 @@ bool AlexaMediaPlayer::play( SourceId id )
       // if the above loop exits and the decoder has prepared valid data (it decoded at least 1 sample),
       // then switch the state to Playable. normally this happens when enough samples have been decoded,
       // but sometimes downloading finishes before that
-      SetState(State::Playable);
+      ExchangeState(State::Preparing, State::Playable);
     } else if( invalidData ) {
       // if the decoder loop was aborted because of invalid data, switch to playing a clip instead. this
       // play-thread method will end, and Update() will check the new state (ClipPlayable) and switch to that.
@@ -703,14 +755,17 @@ bool AlexaMediaPlayer::play( SourceId id )
     if (_speechRegSys != nullptr) {
       _speechRegSys->ReEnableAlexa();
     }
-    
+
     if( _shuttingDown ) {
       _audioController->StopAllAudioEvents( _audioInfo.gameObject );
     }
-    
+
+    LOG( "playing complete for source %llu", id );
+
     _playLoopRunning = false;
-    _playLoopCondition.notify_all();
-  });
+    _playLoopRunningCondition.notify_all();
+
+  }); // end Dispatch Async
 
   return true;
 }
@@ -718,7 +773,7 @@ bool AlexaMediaPlayer::play( SourceId id )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::stop( SourceId id )
 {
-  LOG( "stop" );
+  LOG( "stop source %llu", id );
   return StopInternal( id );
 }
   
@@ -728,8 +783,17 @@ bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
   _audioController->StopAllAudioEvents( _audioInfo.gameObject );
 
   auto onStop = [id, this]() {
-    SetState(State::Idle);
-    _offset_ms = 0;
+    if( _playingSource == id ) {
+      SetState(State::Idle);
+      _offset_ms = 0;
+    }
+    else {
+      LOG("AlexaMediaPlayer.StopInternal.OnStop.OtherSourcePlaying Stopping source %llu, but %llu is playing, so leaving state as '%s'",
+          id,
+          _playingSource,
+          StateToString());
+    }
+
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackStopped for source %d", (int)id );
@@ -811,7 +875,16 @@ bool AlexaMediaPlayer::resume( SourceId id )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::chrono::milliseconds AlexaMediaPlayer::getOffset( SourceId id )
 {
-  return std::chrono::milliseconds{_offset_ms};
+  if( id == _playingSource ) {
+    return std::chrono::milliseconds{_offset_ms};
+  }
+  else {
+    LOG_ERROR("AlexaMediaPlayer.GetOffset.SourceMismatch",
+              "requesting source for id %llu, but last playing is %llu",
+              id,
+              _playingSource);
+    return std::chrono::milliseconds{0};
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1003,7 +1076,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
         const auto numFrames = data->GetNumberOfFramesReceived();
         if( (_state == State::Preparing) && ((numFrames >= _minPlaybackBufferSize) || flush) ) {
          // LOG("Now Playable, numFrames %d minFrames %zu flush %d", numFrames, _minPlaybackBufferSize, flush );
-          SetState(State::Playable);
+          ExchangeState(State::Preparing, State::Playable);
         }
       }
     } else {
@@ -1016,9 +1089,9 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const char* const AlexaMediaPlayer::StateToString() const
+const char* const AlexaMediaPlayer::StateToString(const AlexaMediaPlayer::State& state)
 {
-  switch( _state ) {
+  switch( state ) {
     case State::Idle: return "Idle";
     case State::Preparing: return "Preparing";
     case State::Playable: return "Playable";
@@ -1027,6 +1100,12 @@ const char* const AlexaMediaPlayer::StateToString() const
     case State::ClipPlayable: return "ClipPlayable";
     case State::ClipPlaying: return "ClipPlaying";
   };
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* const AlexaMediaPlayer::StateToString() const
+{
+  return StateToString( _state );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1184,7 +1263,7 @@ void AlexaMediaPlayer::doShutdown()
   _shuttingDown = true;
   // wait for the DispatchQueue play loop to complete. The thread is still running, but is cleaned up during destruction
   std::unique_lock<std::mutex> lk{_playLoopMutex};
-  _playLoopCondition.wait( lk, [this]{ return !_playLoopRunning; } );
+  _playLoopRunningCondition.wait( lk, [this]{ return !_playLoopRunning; } );
   
   if( _audioController ) {
     _audioController->StopAllAudioEvents( _audioInfo.gameObject );
@@ -1217,6 +1296,20 @@ void AlexaMediaPlayer::SetState( State state )
   _state = state;
   LOG("State: %s", StateToString());
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaMediaPlayer::ExchangeState( State expectedCurrentState, State desiredState )
+{
+  const bool exchanged = _state.compare_exchange_strong(expectedCurrentState, desiredState);
+  if( exchanged ) {
+    LOG("State: %s (exchange success from %s)", StateToString(), StateToString(expectedCurrentState));
+  }
+  else {
+    LOG("State remains %s because exchange failed (desired was %s)!", StateToString(), StateToString(desiredState));
+  }
+  return exchanged;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaMediaPlayer::UpdateDetectorState(float& inout_lastPlayedMs)

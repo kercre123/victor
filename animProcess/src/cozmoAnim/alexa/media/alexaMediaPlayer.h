@@ -164,14 +164,12 @@ private:
   void OnSettingsChanged() const;
 
   // decodes from _mp3Buffer into data, returns millisec decoded
-  int Decode( const StreamingWaveDataPtr& data, bool flush = false );
+  int Decode( const StreamingWaveDataPtr& data, bool flush );
 
   void CallOnPlaybackFinished( SourceId id, bool runOnCaller = false );
   void CallOnPlaybackError( SourceId id );
   
   bool StopInternal( SourceId id, bool runOnCaller = false );
-
-  const char* const StateToString() const;
 
   void SavePCM( short* buff, size_t size=0 ) const;
   void SaveMP3( const unsigned char* buff, size_t size=0 ) const;
@@ -196,12 +194,20 @@ private:
 
   void SetState( State state );
 
+  const char* const StateToString() const;
+  static const char* const StateToString(const State& state);
+
+  // return true if set, only set state if it is currently desired (atomically), otherwise returns false and
+  // doesn't impact _state
+  bool ExchangeState( State expectedCurrentState, State desiredState );
+
   // static to keep all instances of this object returning unique source IDs
   static std::atomic<SourceId> _nextAvailableSourceID;
 
   SourceId GetNewSourceID();
 
-  SourceId _playingSource = 0;
+  volatile SourceId _playingSource = 0;
+  volatile SourceId _nextSourceToPlay = 0;
 
   std::map<SourceId, std::unique_ptr< AlexaReader >> _readers;
   short _decodedPcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
@@ -267,10 +273,14 @@ private:
   std::atomic<bool> _shuttingDown;
   // guards access to _observers. not sure of order of sdk calls, so recursive just in case
   std::recursive_mutex _observerMutex;
+
   // todo: these three wouldn't be necessary if we had a thread instead of a dispatch queue. We basically need to
   // join() the play/decoding thread during doShutdown(). In the meantime, we wait for a condition variable
-  std::atomic<bool> _playLoopRunning;
-  std::condition_variable _playLoopCondition;
+
+  volatile bool _playLoopRunning;
+  std::condition_variable _playLoopRunningCondition;
+
+  // held the entire time the play loop is active
   std::mutex _playLoopMutex;
 
   // TEMP

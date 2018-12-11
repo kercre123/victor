@@ -606,8 +606,10 @@ void AlexaImpl::Update()
   }
 
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
-    LOG_INFO( "AlexaImpl.Update.SetDialogStateIDle", "the timer to set idle elapsed, updating dialog state to idle" );
-    _dialogState = DialogUXState::IDLE;
+    if( _dialogState != DialogUXState::IDLE) {
+      _dialogState = DialogUXState::IDLE;
+      LOG_INFO( "AlexaImpl.Update.SetDialogStateIdle", "the timer to set idle elapsed, updating dialog state to idle" );
+    }
     CheckForUXStateChange();
   }
 }
@@ -813,7 +815,7 @@ void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 void AlexaImpl::CheckForUXStateChange()
 {
   const auto oldState = _uxState;
-  const bool anyPlaying = !_playingSources.empty() || _alertActive;
+  const bool anyPlaying = !_playingSources.empty() || _alertActive || _backgroundAlertActive;
   
   // reset idle timer
   _timeToSetIdle_s = -1.0f;
@@ -886,6 +888,22 @@ void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
       LOG_WARNING( "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id );
     }
   }
+
+#if ANKI_DEV_CHEATS
+
+  std::stringstream ss;
+  for( const auto& sid : _playingSources ) {
+    ss << ((int)sid) << ", ";
+  }
+
+  LOG_INFO("AlexaImpl.OnSourcePlaybackChange",
+           "Source %llu set to %s, %zu are now playing: %s",
+           id,
+           playing ? "playing" : "not playing",
+           _playingSources.size(),
+           ss.str().c_str());
+#endif
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1009,29 +1027,36 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
   _alertActive = false;
   for( auto& alertPair : _alertStates ) {
     bool canBeCancelled;
+    bool anyInBackground = false;
     switch( alertPair.second ) {
       case State::STARTED: // The alert has started.
       case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
         canBeCancelled = true;
         break;
+
+      case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
+        anyInBackground = true;
+
+        // fall through
       case State::READY: // The alert is ready to start, and is waiting for channel focus.
       case State::STOPPED: // The alert has stopped due to user or system intervention.
       case State::SNOOZED: // The alert has snoozed.
       case State::COMPLETED: // The alert has completed on its own.
       case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
-      case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
       case State::ERROR: // The alert has encountered an error.
         canBeCancelled = false;
         break;
     }
     _alertActive |= canBeCancelled;
+    _backgroundAlertActive = anyInBackground;
   }
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnAlertState",
-               "alert '%s' changed to state '%s', _alertActive=%d",
+               "alert '%s' changed to state '%s', _alertActive=%d, _backgroundAlertActive=%d",
                alertID.c_str(),
                AlertStateToString(state),
-               _alertActive );
+               _alertActive,
+               _backgroundAlertActive);
   if( oldAlertActive != _alertActive ) {
     // note: this is ok to only have two options, not three (e.g., "unknown") since _alertActive
     // is initialized as false, in which case if the initial assignment to _alertActive is false, we don't
