@@ -23,7 +23,9 @@ message WifiScanRequest
 // ssid was successfull
 message WifiConnectRequest
 {
-  string ssid
+  uint_8 ssid[33], // 32 plus null
+  uint_8 pwd[33],
+  bool disconnectAfterConnection
 }
 
 } // SwitchboardInterface

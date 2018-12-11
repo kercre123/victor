@@ -41,14 +41,15 @@ public:
     return _pairingStatusSignal;
   }
 
-
   static void sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
 private:
   void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
 
   // Private handler for WifiScanRequest from Engine (for playpen test)
   void HandleWifiScanRequest();
-  void HandleWifiConnectRequest(const std::string& ssid);
+  void HandleWifiConnectRequest(const std::string& ssid,
+                                const std::string& pwd,
+                                bool disconnectAfterConnection);
 
   LocalUdpClient _client;
   PairingStatusSignal _pairingStatusSignal;

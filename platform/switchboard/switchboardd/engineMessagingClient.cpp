@@ -96,7 +96,9 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
 
         if(messageTag == EMessageTag::WifiConnectRequest)
         {
-          wData->client->HandleWifiConnectRequest(message.Get_WifiConnectRequest().ssid);
+          wData->client->HandleWifiConnectRequest(std::string((char*)&message.Get_WifiConnectRequest().ssid),
+                                                  std::string((char*)&message.Get_WifiConnectRequest().pwd),
+                                                  message.Get_WifiConnectRequest().disconnectAfterConnection);
         }
         else
         {
@@ -131,7 +133,9 @@ void EngineMessagingClient::HandleWifiScanRequest() {
   SendMessage(GMessage::CreateWifiScanResponse(std::move(rsp)));
 }
 
-void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
+void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid,
+                                                     const std::string& pwd,
+                                                     bool disconnectAfterConnection) {
   // Convert ssid to hex string
   std::stringstream ss;
   for(char c : ssid)
@@ -158,7 +162,7 @@ void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
 
         Log::Write("HandleWifiConnectRequest: Found requested ssid from scan, attempting to connect");
         bool res = Anki::ConnectWiFiBySsid(result.ssid,
-                                           "",
+                                           pwd,
                                            (uint8_t)result.auth,
                                            result.hidden,
                                            nullptr,
@@ -185,9 +189,12 @@ void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
     rcp.status_code = (uint8_t)code;
   }
 
-  // Immediately disconnect from ssid
-  // Will do nothing if not connected to ssid
-  (void)Anki::RemoveWifiService(ssidHex);
+  if(disconnectAfterConnection)
+  {
+    // Immediately disconnect from ssid
+    // Will do nothing if not connected to ssid
+    (void)Anki::RemoveWifiService(ssidHex);
+  }
 
   SendMessage(GMessage::CreateWifiConnectResponse(std::move(rcp)));
 }

@@ -54,6 +54,9 @@ static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 // SSID we should try to scan and connect to for the radio check
 static std::string kWifiSSID = "AnkiSelfTest";
 
+// Password for above SSID
+static std::string kWifiPwd = "";
+
 // ---------PickupChecks--------
 // How long the robot needs to be held upside down
 // before the cliff sensors are checked

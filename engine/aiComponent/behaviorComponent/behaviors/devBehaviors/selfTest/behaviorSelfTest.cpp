@@ -1,4 +1,4 @@
-/**
+ /**
  * File: behaviorSelfTest.cpp
  *
  * Author: Al Chaussee
@@ -170,7 +170,18 @@ void BehaviorSelfTest::OnBehaviorActivated()
   robot.GetDrivingAnimationHandler().PushDrivingAnimations(anims, GetDebugLabel());
 
   // Request scan/connection to specific SSID
-  robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::WifiConnectRequest(SelfTestConfig::kWifiSSID)));
+  SwitchboardInterface::WifiConnectRequest msg;
+  memset(&msg.ssid, 0, msg.ssid.size());
+  memset(&msg.pwd, 0, msg.pwd.size());
+
+  // Copy from string into fixed sized array, taking care to only copy what we need or what we have space for
+  // msg.ssid.size()-1 to account for null terminator in fixed sized array
+  memcpy(&msg.ssid, SelfTestConfig::kWifiSSID.data(), std::min(msg.ssid.size()-1, SelfTestConfig::kWifiSSID.size()));
+  memcpy(&msg.pwd, SelfTestConfig::kWifiPwd.data(), std::min(msg.pwd.size()-1, SelfTestConfig::kWifiPwd.size()));
+
+  msg.disconnectAfterConnection = true;
+  robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+                  
   _radioScanState = RadioScanState::WaitingForWifiResult;
 
   // Delegate to the first behavior
