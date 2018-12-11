@@ -140,7 +140,7 @@ namespace Anki {
         // If we end up shutting down due to the user holding the button
         // we still want to record the current time to disk to keep our
         // clock as close to accurate as possible on the next boot.
-        (void) ForkAndExecAndForget({"/bin/systemctl", "start", "fake-hwclock-tick"});
+        (void) ForkAndExecAndForget({"sudo", "/bin/systemctl", "start", "fake-hwclock-tick"});
         #endif
       }
 
