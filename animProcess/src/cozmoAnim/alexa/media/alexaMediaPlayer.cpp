@@ -812,22 +812,45 @@ bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::pause( SourceId id )
 {
-  if( _readers.find( id ) == _readers.end() ) {
-    // LOG( "pause FAIL _readers.find( id ) == _readers.end()" );
+  if( _playingSource != id && _nextSourceToPlay != id ) {
+    LOG( "pause source %llu FAIL, _playingSource %llu, _nextSourceToPlay %llu",
+         id,
+         _playingSource,
+         _nextSourceToPlay);
     return false;
   }
 
   if( _state == State::Idle ) {
-    // LOG( "pause FAIL _state == State::Idle" );
+    LOG( "pause source %llu FAIL _state == State::Idle", id );
     return false;
   }
 
   _executor.submit([id, this]() {
-    // copy into _stateBeforePause (atomic-ness doesnt matter) explicitly since copy ctor is deleted
-    const State state = _state;
-    _stateBeforePause = state;
-    
-    SetState(State::Paused);
+
+    // it's possible this could run a few iterations if the play thread is changing the state, but should be exceedingly rare
+    for(int tries = 0; tries < kMaxPlayTries; ++tries) {
+      const State state = _state;
+      _stateBeforePause = state;
+      if( ExchangeState( _stateBeforePause, State::Paused ) ) {
+        // exchange success!
+        LOG( "pause source %llu from state '%s'", id, StateToString(_stateBeforePause) );
+        break;
+      }
+      else {
+#if ANKI_DEV_CHEATS
+        LOG( "pause source %llu try %d failed, _stateBeforePause %s, _state %s",
+             id,
+             tries,
+             StateToString(_stateBeforePause),
+             StateToString(_state));
+#endif
+      }
+    }
+
+    if( _state != State::Paused ) {
+      return;
+    }
+
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackPaused for source %d", (int)id );
@@ -844,21 +867,25 @@ bool AlexaMediaPlayer::pause( SourceId id )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AlexaMediaPlayer::resume( SourceId id )
 {
-  if( _readers.find( id ) == _readers.end() ) {
-    // LOG( "resume _readers.find( id ) == _readers.end()" );
+  if( _playingSource != id ) {
+    LOG( "resume source %llu FAIL because playing source is %llu", id, _playingSource);
     return false;
   }
 
   if( _state != State::Paused ) {
-    // LOG( "resume _state != State::Paused" );
+    LOG( "resume source %llu FAIL because _state '%s' != State::Paused", id, StateToString() );
     return false;
   }
 
   _executor.submit([id, this]() {
-    ASSERT_NAMED( _stateBeforePause != State::Idle, "AlexaMediaPlayer.resume.InvalidResumeState" );
-    // set state with what it was before pause (atomic read not applicable since _stateBeforePause isnt being changed)
-    const State stateBeforePause = _stateBeforePause;
-    SetState( stateBeforePause );
+
+    // set state back to what it was previously
+    const bool exchangeOK = ExchangeState(State::Paused, _stateBeforePause);
+    if( !exchangeOK ) {
+      LOG( "resume source %llu ERROR, state should have been paused, now is %s", id, StateToString() );
+      return;
+    }
+
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackResumed for source %d", (int)id );
