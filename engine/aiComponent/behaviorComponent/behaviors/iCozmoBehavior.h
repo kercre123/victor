@@ -31,7 +31,6 @@
 #include <set>
 
 #include "clad/types/actionResults.h"
-#include "clad/types/behaviorComponent/behaviorObjectives.h"
 #include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
 #include "clad/types/behaviorComponent/streamAndLightEffect.h"
 #include "clad/types/robotCompletedAction.h"
@@ -69,11 +68,6 @@ enum class CubeAnimationTrigger : int32_t;
 
 struct PathMotionProfile;
 struct TriggerWordResponseData;
-
-namespace ExternalInterface {
-struct BehaviorObjectiveAchieved;
-}
-
 
 // This struct defines some of the operation modes iCozmoBehavior
 // provides to derived classes. They have the opportunity to override
@@ -467,10 +461,6 @@ protected:
   // was successfully canceled, false otherwise (e.g. the behavior wasn't active to begin with)
   bool CancelSelf();
   
-  // Behaviors should call this function when they reach their completion state
-  // in order to log das events and notify activity strategies if they listen for the message
-  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true) const;
-
   /////////////
   /// "Smart" helpers - Behaviors can call these functions to set properties that
   /// need to be cleared when the behavior stops.  ICozmoBehavior will hold the reference
@@ -513,7 +503,8 @@ protected:
   // Change the response to the trigger word until the behavior is deactivated
   void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger,
                                       const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
-                                      StreamAndLightEffect streamAndLightEffect);
+                                      StreamAndLightEffect streamAndLightEffect,
+                                      int32_t minStreamingDuration_ms = -1);
   void SmartPushEmptyResponseToTriggerWord();
 
   void SmartPushResponseToTriggerWord(const TriggerWordResponseData& newState);

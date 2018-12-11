@@ -27,7 +27,8 @@ enum uint_8 FeatureType {
   Volume,
   HandDetection,
   GazeDirection,
-  
+  HowOldAreYou,
+
   TestFeature,
   PRDemo,
 }

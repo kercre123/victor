@@ -10,9 +10,10 @@ include(text2speech)
 include(sensory)
 include(speexdsp)
 include(robot_core)
+include(pffft)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "Creative Commons Zero v1.0 Universal,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE")
+anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "CC0,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE" "FFTPACK5,${CMAKE_SOURCE_DIR}/licenses/pffft.license")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
@@ -43,7 +44,6 @@ target_link_libraries(victor_anim
   cti_vision
   cti_messaging_robot
   robot_clad_cpplite
-  robot_transport
   cloud_clad_cpp
   audio_engine
   audio_multiplexer_robot
@@ -62,6 +62,7 @@ target_link_libraries(victor_anim
   # Aubio beat detection
   ${AUBIO_LIBS}
   ${AVS_LIBS}
+  ${PFFFT_LIBS}
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h

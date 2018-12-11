@@ -129,7 +129,7 @@ void BehaviorReactToRobotOnFace::DelayThenCheckState()
 {
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnFace ) {
     DelegateIfInControl(new WaitAction(kWaitTimeBeforeRepeatAnim_s),
-                &BehaviorReactToRobotOnFace::CheckFlipSuccess);
+                        &BehaviorReactToRobotOnFace::CheckFlipSuccess);
   }
 
 }
@@ -140,9 +140,7 @@ void BehaviorReactToRobotOnFace::CheckFlipSuccess()
 {
   if(GetBEI().GetOffTreadsState() == OffTreadsState::OnFace) {
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FailedToRightFromFace),
-                &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
-  }else{
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnFace);
+                        &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
   }
 }
 

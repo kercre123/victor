@@ -1182,19 +1182,6 @@ namespace Vector {
     SendEnableVisionMode(VisionMode::DetectingFaces, isFaceDetectionEnabled);
   }
 
-  void WebotsKeyboardController::ToggleImageStreaming()
-  {
-    using namespace ExternalInterface;
-    
-    static bool toggle = false;
-    SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("ImageCompressQuality",
-                                                              (toggle ? "50" : "0"))));
-    
-    LOG_INFO("ToggleImageStreaming", "%s image streaming", (toggle ? "Enabling" : "Disabling"));
-    
-    toggle = !toggle;
-  }
-
   void WebotsKeyboardController::FlipSelectedBlock()
   {
     ExternalInterface::FlipBlock m;
@@ -1942,7 +1929,7 @@ namespace Vector {
 //      REGISTER_KEY_FCN('H', MOD_ALT,       , "");
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
     
-    REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreaming, "Toggle image streaming");
+    REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreamingToGame, "Toggle image streaming");
 //      REGISTER_KEY_FCN('I', MOD_SHIFT,     , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT_SHIFT, , "");
@@ -2248,19 +2235,11 @@ namespace Vector {
         
         static const char* kWebotsDrivingLock = "webots_driving_lock";
         // Pop whatever driving animations were being used and push the new ones
-        ExternalInterface::MessageGameToEngine msg1;
-        msg1.Set_RemoveDrivingAnimations(
-          ExternalInterface::RemoveDrivingAnimations(kWebotsDrivingLock));
-        SendMessage(msg1);
-      
-        ExternalInterface::PushDrivingAnimations m;
-        m.drivingStartAnim = AnimationTriggerFromString(_drivingStartAnim.c_str());
-        m.drivingLoopAnim = AnimationTriggerFromString(_drivingLoopAnim.c_str());
-        m.drivingEndAnim = AnimationTriggerFromString(_drivingEndAnim.c_str());
-        
-        ExternalInterface::MessageGameToEngine msg2;
-        msg2.Set_PushDrivingAnimations(m);
-        SendMessage(msg2);
+        SendRemoveDrivingAnimations(kWebotsDrivingLock);
+        SendPushDrivingAnimations(kWebotsDrivingLock,
+                                  AnimationTriggerFromString(_drivingStartAnim),
+                                  AnimationTriggerFromString(_drivingLoopAnim),
+                                  AnimationTriggerFromString(_drivingEndAnim));
       }
       
       

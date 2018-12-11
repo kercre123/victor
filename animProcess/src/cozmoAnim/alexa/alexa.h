@@ -49,17 +49,21 @@ public:
   
   // handles message from engine to opt in or out
   void SetAlexaUsage(bool optedIn);
-  // handles message from engine to cancel any pending authorization
-  void CancelPendingAlexaAuth();
+
+  // cancels any pending authorization started by the user (not an auto-auth during reboot). Reason is
+  // included in a DAS message
+  void CancelPendingAlexaAuth(const std::string& reason);
   
   void OnEngineLoaded();
   
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
   
-  void NotifyOfTapToTalk();
+  bool StopAlertIfActive();
   
-  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
+  void NotifyOfTapToTalk( bool fromMute );
+  
+  void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
   
 
 protected:
@@ -92,6 +96,7 @@ private:
   void CreateImpl();
   void DeleteImpl();
   bool HasImpl() const { return _impl != nullptr; }
+  bool HasInitializedImpl() const; // done loading sdk but maybe not done connecting yet
   
   // sets this class's _authState and messages engine if it changes
   void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );
@@ -143,13 +148,14 @@ private:
   // If non-negative, this is the time that the AlexaUXState::Error ends, restoring _pendingUXState
   float _timeToEndError_s = -1.0f;
   
-  enum AlexaNotifyType : uint8_t {
+  enum class NotifyType : uint8_t {
     None = 0,
     Voice,
-    Button
+    Button,
+    ButtonFromMute,
   };
   
-  AlexaNotifyType _notifyType = None;
+  NotifyType _notifyType = NotifyType::None;
 
   // whether a message was received from engine saying to opt in. this gets reset after auth completes
   bool _authStartedByUser = false;

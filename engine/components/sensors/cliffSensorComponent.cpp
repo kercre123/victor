@@ -13,6 +13,7 @@
 
 #include "engine/components/sensors/cliffSensorComponent.h"
 
+#include "engine/ankiEventUtil.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/markerlessObject.h"
@@ -29,6 +30,7 @@
 #include "util/logging/logging.h"
 
 #include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #define LOG_CHANNEL "CliffSensor"
 
@@ -60,7 +62,6 @@ namespace {
   // Also reduce the AllowedDelta if the robot could be driving over something (i.e. its pitch angle
   // is sufficiently far from zero)
   const Radians kRobotPitchThresholdPossibleCliff_rad = DEG_TO_RAD(7.f);
-  
 }
 
 
@@ -70,11 +71,53 @@ CliffSensorComponent::CliffSensorComponent()
 , _cliffDetectAllowedDelta(kCliffDetectAllowedDeltaDefault)
 {
   _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
+  _cliffDataRawAtLastStop.fill(std::numeric_limits<uint16_t>::max());
   _cliffMinObserved.fill(std::numeric_limits<uint16_t>::max());
   _cliffDataFilt.fill(0.f);
   _cliffDetectThresholds.fill(CLIFF_SENSOR_THRESHOLD_DEFAULT);
 }
 
+void CliffSensorComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
+{
+  InitBase(robot);
+  if (_robot->HasExternalInterface())
+  {
+    InitEventHandlers(*(_robot->GetExternalInterface()));
+  }
+}
+
+void CliffSensorComponent::InitEventHandlers(IExternalInterface& interface)
+{
+  auto helper = MakeAnkiEventUtil(interface, *this, _eventHandles);
+  
+  // Subscribe to relevant events, listed in alphabetical order.
+  helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged>();
+  helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::RobotStopped>();
+}
+  
+void CliffSensorComponent::HandleMessage(const ExternalInterface::RobotStopped& msg)
+{
+  if (msg.reason == StopReason::CLIFF) {
+    _lastStopDueToCliffTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    _cliffDataRawAtLastStop = GetCliffDataRaw();
+    LOG_INFO("CliffSensorComponent.RobotStoppedOnCliff", "");
+    
+    // Reset the recorded data for the last event where the robot was put down on a cliff.
+    _lastPutDownOnCliffTime_ms = 0;
+  }
+}
+
+void CliffSensorComponent::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged &msg)
+{
+  if (msg.treadsState == OffTreadsState::OnTreads && IsCliffDetected()) {
+    _lastPutDownOnCliffTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    LOG_INFO("CliffSensorComponent.RobotPutDownOnCliff", "");
+    
+    // Reset the recorded data for the last event where the robot stopped for a cliff.
+    _lastStopDueToCliffTime_ms = 0;
+    _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
+  }
+}
 
 void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {

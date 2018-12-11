@@ -668,8 +668,24 @@
     "SpriteName" : "face_avs_error_getin"
   },
   {
+    "CladEvent" : "Face_Avs_Fail",
+    "SpriteName" : "face_avs_fail"
+  },
+  {
+    "CladEvent" : "Face_Avs_Getin",
+    "SpriteName" : "face_avs_getin"
+  },
+  {
+    "CladEvent" : "Face_Avs_Listen2neutral",
+    "SpriteName" : "face_avs_listen2neutral"
+  },
+  {
     "CladEvent" : "Face_Avs_Listen2timer",
     "SpriteName" : "face_avs_listen2timer"
+  },
+  {
+    "CladEvent" : "Face_Avs_Listen_Timeout",
+    "SpriteName" : "face_avs_listen_timeout"
   },
   {
     "CladEvent" : "Face_Avs_Notification2Listen",
@@ -702,6 +718,14 @@
   {
     "CladEvent" : "Face_Avs_Speak2notification",
     "SpriteName" : "face_avs_speak2notification"
+  },
+  {
+    "CladEvent" : "Face_Avs_Speak_Getout",
+    "SpriteName" : "face_avs_speak_getout"
+  },
+  {
+    "CladEvent" : "Face_Avs_Sudden_Speak",
+    "SpriteName" : "face_avs_sudden_speak"
   },
   {
     "CladEvent" : "Face_Avs_Suddenerror",

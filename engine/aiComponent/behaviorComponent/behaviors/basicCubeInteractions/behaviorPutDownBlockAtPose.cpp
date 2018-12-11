@@ -136,7 +136,7 @@ void BehaviorPutDownBlockAtPose::TransitionToDriveToDestinationPose()
   SET_STATE(DriveToDestinationPose);
 
   if(_dVars.persistent.customDestPending) {
-    DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_dVars.persistent.destinationPose, false);
+    DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_dVars.persistent.destinationPose);
     DelegateIfInControl(driveToPoseAction, &BehaviorPutDownBlockAtPose::TransitionToPutDownBlock);
   }
   else {

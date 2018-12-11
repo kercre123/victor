@@ -59,8 +59,8 @@ message Object
   float_32   objParameters[4] // for object-specific parameters
 }
 
-// SegmentPrimitive
-message SegmentPrimitive
+// LineSegment
+message LineSegment
 {
   string identifier,
   uint_32 color,
@@ -175,8 +175,8 @@ message EraseObject
   uint_32 upper_bound_id,
 }
 
-// EraseSegmentPrimitives
-message EraseSegmentPrimitives
+// EraseLineSegments
+message EraseLineSegments
 {
   string identifier,
 }

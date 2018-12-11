@@ -10,7 +10,9 @@ enum uint_8 TokenError {
 }
 
 structure AuthRequest {
-	string[uint_16] sessionToken
+	string sessionToken,
+	string clientName,
+	string appId
 }
 
 structure AuthResponse {

@@ -13,19 +13,10 @@
 #include "quadTree.h"
 
 #include "coretech/common/engine/math/bresenhamLine2d.h"
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/vision/engine/profiler.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 #include "util/console/consoleInterface.h"
-#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
-
-#include <limits>
-#include <memory>
-#include <typeinfo>
-#include <type_traits>
-#include <unordered_map>
 
 #define LOG_CHANNEL "quadTreeProcessor"
 
@@ -55,18 +46,23 @@ QuadTreeProcessor::QuadTreeProcessor()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldType, const bool wasEmpty)
+void QuadTreeProcessor::OnNodeContentChanged(const QuadTreeNode* node, const NodeContent& oldContent)
 {
   
   using namespace MemoryMapTypes;
-  EContentType newType = node->GetContent().data->type;
+  const EContentType oldType = static_cast<const MemoryMapDataPtr&>(oldContent)->type;
+  const EContentType newType = static_cast<const MemoryMapDataPtr&>(node->GetData())->type;
 
-  DEV_ASSERT(oldType != newType, "QuadTreeProcessor.OnNodeContentTypeChanged.ContentNotChanged");
+  // type hasn't changed, so we don't need to update any of our caching
+  if (oldType == newType) { return; }
 
   // update exploration area based on the content type
   {
-    const bool needsToRemove = !wasEmpty &&  node->IsEmptyType();
-    const bool needsToAdd    =  wasEmpty && !node->IsEmptyType();
+    const bool wasEmpty = (oldType == EContentType::Unknown);
+    const MemoryMapDataPtr data = node->GetData();
+
+    const bool needsToRemove = !wasEmpty &&  (node->IsSubdivided() || (newType == EContentType::Unknown));
+    const bool needsToAdd    =  wasEmpty && !(node->IsSubdivided() || (newType == EContentType::Unknown));
     if ( needsToRemove )
     {
       const float side_m = MM_TO_M(node->GetSideLen());
@@ -118,12 +114,49 @@ void QuadTreeProcessor::OnNodeContentTypeChanged(const QuadTreeNode* node, const
     _nodeSets[newType].insert(node);
   }
 }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
+{
+  // if old content type is cached
+  const EContentType oldContent = static_cast<const MemoryMapDataPtr&>(node->GetData())->type;
+  if ( IsCached(oldContent) )
+  {
+    // remove the node from that cache
+    DEV_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(),
+               "QuadTreeProcessor.OnNodeDestroyed.InvalidNode");
+    _nodeSets[oldContent].erase(node);
+  }
+
+  // remove the area for this node if it was counted before
+  {
+    const bool wasOutOld = (oldContent == EContentType::Unknown);
+    const bool needsToRemove = !wasOutOld;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalExploredArea_m2 -= area_m2;
+    }
+  }
+  
+  // remove interesting edge area if it was counted before
+  {
+    const bool shouldBeCountedOld = (oldContent == EContentType::InterestingEdge);
+    const bool needsToRemove =  shouldBeCountedOld;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalInterestingEdgeArea_m2 -= area_m2;
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::vector<bool>
 QuadTreeProcessor::AnyOfRays( const Point2f& start, 
                               const std::vector<Point2f>& ends, 
-                              NodePredicate pred) const
+                              const NodePredicate& pred) const
 {
   std::vector<bool> results(ends.size(), false);
   std::unordered_map<Point2i ,bool> localCache;
@@ -132,22 +165,24 @@ QuadTreeProcessor::AnyOfRays( const Point2f& start,
   const auto startBres = QuadTreeTypes::GetIntegralCoordinateOfNode(start, 
     _quadTree->GetCenter(), 
     _quadTree->GetContentPrecisionMM(), 
-    _quadTree->GetMaxTreeHeight());
-  const auto maxTreeHeight = _quadTree->GetMaxTreeHeight();
+    _quadTree->GetMaxHeight());
+  const auto maxTreeHeight = _quadTree->GetMaxHeight();
 
   for(int rayIdx = 0; rayIdx<ends.size(); ++rayIdx) {
     BresenhamLinePixelIterator bresIter(startBres, 
       QuadTreeTypes::GetIntegralCoordinateOfNode(ends[rayIdx], 
         _quadTree->GetCenter(), 
         _quadTree->GetContentPrecisionMM(), 
-        _quadTree->GetMaxTreeHeight()));
+        _quadTree->GetMaxHeight()));
     while(!bresIter.Done()) {
       const Point2i& rasterPoint = bresIter.Get();
-      decltype(localCache)::const_iterator got = localCache.find(rasterPoint);
+      auto got = localCache.find(rasterPoint);
       if(got == localCache.end()) {
         // compute new result and insert into the cache
-        const auto qnode = ((const QuadTree*)_quadTree)->GetNodeAtAddress(GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
-        const bool result = qnode && pred(qnode->GetData());
+        const QuadTreeNode* qnode = nullptr;
+        auto getNode = [&qnode] (const QuadTreeNode& n) { qnode = &n; };
+        ((const QuadTree*)_quadTree)->Fold(getNode, GetAddressForNodeCenter(rasterPoint, maxTreeHeight));
+        const bool result = qnode && pred( static_cast<const MemoryMapDataPtr&>(qnode->GetData()) );
         got = localCache.insert({rasterPoint, result}).first;
       }
       if(got->second) {
@@ -160,43 +195,6 @@ QuadTreeProcessor::AnyOfRays( const Point2f& start,
   return results;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
-{
-  // if old content type is cached
-  const EContentType oldContent = node->GetData()->type;
-  if ( IsCached(oldContent) )
-  {
-    // remove the node from that cache
-    DEV_ASSERT(_nodeSets[oldContent].find(node) != _nodeSets[oldContent].end(),
-               "QuadTreeProcessor.OnNodeDestroyed.InvalidNode");
-    _nodeSets[oldContent].erase(node);
-  }
-
-  // remove the area for this node if it was counted before
-  {
-    const bool wasOutOld = node->IsEmptyType();
-    const bool needsToRemove = !wasOutOld;
-    if ( needsToRemove )
-    {
-      const float side_m = MM_TO_M(node->GetSideLen());
-      const float area_m2 = side_m*side_m;
-      _totalExploredArea_m2 -= area_m2;
-    }
-  }
-  
-  // remove interesting edge area if it was counted before
-  {
-    const bool shouldBeCountedOld = (node->GetData()->type == EContentType::InterestingEdge);
-    const bool needsToRemove =  shouldBeCountedOld;
-    if ( needsToRemove )
-    {
-      const float side_m = MM_TO_M(node->GetSideLen());
-      const float area_m2 = side_m*side_m;
-      _totalInterestingEdgeArea_m2 -= area_m2;
-    }
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred)
@@ -208,10 +206,10 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
   for (const auto& keyValuePair : _nodeSets ) {
     for (const auto& node : keyValuePair.second ) {
       // first check if node is typeToFill
-      if ( innerPred( node->GetData() ) ) {
+      if ( innerPred( static_cast<const MemoryMapDataPtr&>(node->GetData()) ) ) {
         // check if this nodes has a neighbor of any typesToFillFrom
         for(const auto& neighbor : node->GetNeighbors()) {
-          if( outerPred( neighbor->GetData() ) ) {
+          if( outerPred( static_cast<const MemoryMapDataPtr&>(neighbor->GetData()) ) ) {
             unexpandedNodes.emplace_back( node );
             break;
           }
@@ -229,8 +227,7 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
 
     // get all of this nodes neighbors of the same type
     for(const auto& neighbor : node->GetNeighbors()) {
-      MemoryMapDataConstPtr neighborData = neighbor->GetData();
-      if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
+      if ( innerPred( static_cast<const MemoryMapDataPtr&>(neighbor->GetData()) ) && (output.find(neighbor) == output.end()) ) {
         unexpandedNodes.push_back( neighbor );
       }
     }
@@ -239,22 +236,6 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
   return output;
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapDataPtr& data)
-{
-  DEV_ASSERT_MSG(IsCached(filledType),
-                 "QuadTreeProcessor.FillBorder.FilledTypeNotCached",
-                 "%s is not cached, which is needed for fast processing operations",
-                 EContentTypeToString(filledType));
-  NodePredicate innerCheckFunc = [&filledType](MemoryMapDataConstPtr inside) {
-    return (filledType == inside->type);
-  };
-  NodePredicate outerCheckFunc = [&fillingTypeFlags](MemoryMapDataConstPtr outside) {
-    return IsInEContentTypePackedType(outside->type, fillingTypeFlags);
-  };
-  return FillBorder( innerCheckFunc, outerCheckFunc, data );
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data)
 {

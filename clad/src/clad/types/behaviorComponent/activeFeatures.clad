@@ -11,7 +11,7 @@ enum uint_8 ActiveFeatureType {
 
   Invalid = 0,
 
-  // system features that don't fit elsewhere
+  // System features or features that dont fit elsewhere
   System,
 
   Onboarding,
@@ -24,17 +24,18 @@ enum uint_8 ActiveFeatureType {
   // sleep
   Sleep,
 
-  // self-direted activities the robots do
+  // self-directed activities the robots do
   Autonomous,
 
   // features that attempt to interact with humans
   Social,
 
-  // utility functions
+  // utility functions that are useful to the _user_
   Utility,
 
   // playful / game features
   Play,
+
 }
 
 enum uint_32 ActiveFeature {
@@ -56,6 +57,7 @@ enum uint_32 ActiveFeature {
   FistBump,
   Frustrated,
   GoHome,
+  HowOldAreYou,
   InTheAir,
   InteractWithFaces,
   Keepaway,
@@ -76,8 +78,17 @@ enum uint_32 ActiveFeature {
   Petting,
   PlayingMessage,
   PopAWheelie,
+  ReactToAbuse,
+  ReactToAffirmative,
+  ReactToApology,
   ReactToCliff,
   ReactToGazeDirection,
+  ReactToGoodBye,
+  ReactToGoodMorning,
+  ReactToHand,
+  ReactToHello,
+  ReactToLove,
+  ReactToNegative,
   ReactToRobotOnSide,
   RecordingMessage,
   RequestCharger,
@@ -88,6 +99,7 @@ enum uint_32 ActiveFeature {
   SeasonalHappyNewYear,
   Sleeping,
   ShutUp,
+  StuckOnEdge,
   TakeAPhoto,
   TimerCanceled,
   TimerChecked,
@@ -122,6 +134,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   FistBump                = verbatim ActiveFeatureType::Social,
   Frustrated              = verbatim ActiveFeatureType::Failure,
   GoHome                  = verbatim ActiveFeatureType::Autonomous,
+  HowOldAreYou            = verbatim ActiveFeatureType::Social,
   InTheAir                = verbatim ActiveFeatureType::Social,
   InteractWithFaces       = verbatim ActiveFeatureType::Social,
   Keepaway                = verbatim ActiveFeatureType::Play,
@@ -142,8 +155,17 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   Petting                 = verbatim ActiveFeatureType::Social,
   PlayingMessage          = verbatim ActiveFeatureType::Utility,
   PopAWheelie             = verbatim ActiveFeatureType::Autonomous,
+  ReactToAbuse            = verbatim ActiveFeatureType::Social,
+  ReactToAffirmative      = verbatim ActiveFeatureType::Social,
+  ReactToApology          = verbatim ActiveFeatureType::Social,
   ReactToCliff            = verbatim ActiveFeatureType::Autonomous,
   ReactToGazeDirection    = verbatim ActiveFeatureType::Autonomous,
+  ReactToGoodBye          = verbatim ActiveFeatureType::Social,
+  ReactToGoodMorning      = verbatim ActiveFeatureType::Social,
+  ReactToHand             = verbatim ActiveFeatureType::Autonomous,
+  ReactToHello            = verbatim ActiveFeatureType::Social,
+  ReactToLove             = verbatim ActiveFeatureType::Social,
+  ReactToNegative         = verbatim ActiveFeatureType::Social,
   ReactToRobotOnSide      = verbatim ActiveFeatureType::Autonomous,
   RecordingMessage        = verbatim ActiveFeatureType::Utility,
   RequestCharger          = verbatim ActiveFeatureType::Failure,
@@ -154,6 +176,7 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   SeasonalHappyNewYear    = verbatim ActiveFeatureType::Social,
   Sleeping                = verbatim ActiveFeatureType::Sleep,
   ShutUp                  = verbatim ActiveFeatureType::Autonomous,
+  StuckOnEdge             = verbatim ActiveFeatureType::Autonomous,
   TakeAPhoto              = verbatim ActiveFeatureType::Utility,
   TimerCanceled           = verbatim ActiveFeatureType::Utility,
   TimerChecked            = verbatim ActiveFeatureType::Utility,
@@ -161,11 +184,10 @@ enum_concept ActiveFeatureType GetActiveFeatureType[ActiveFeature] {
   TimerRinging            = verbatim ActiveFeatureType::Utility,
   TimerSet                = verbatim ActiveFeatureType::Utility,
   UnmatchedVoiceIntent    = verbatim ActiveFeatureType::Failure,
-  VolumeAdjustment        = verbatim ActiveFeatureType::Utility,
+  VolumeAdjustment        = verbatim ActiveFeatureType::System,
   BasicVoiceCommand       = verbatim ActiveFeatureType::Social,
   Weather                 = verbatim ActiveFeatureType::Utility,
   WhatsMyName             = verbatim ActiveFeatureType::Social,
-
   VC_Greeting             = verbatim ActiveFeatureType::Social
 }
 

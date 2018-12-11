@@ -100,10 +100,12 @@ public:
   void PushResponseToTriggerWord(const std::string& id, const TriggerWordResponseData& newState);
   void PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger, 
                                  const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
-                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
+                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled,
+                                 int32_t minStreamingDuration_ms = -1);
   void PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName = "", 
                                  const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent = {},
-                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled);
+                                 StreamAndLightEffect streamAndLightEffect = StreamAndLightEffect::StreamingDisabled,
+                                 int32_t minStreamingDuration_ms = -1);
   void PopResponseToTriggerWord(const std::string& id);
 
   // Copies the current response to the trigger word but overrides the shouldStream and ShouldSimulateStream
@@ -132,8 +134,13 @@ public:
   // Clear the pending trigger word. All subsequent calls to IsTriggerWordPending will return false until
   // another trigger word comes in.
   void ClearPendingTriggerWord();
-
-  void SetTriggerWordPending(const bool willOpenStream);
+  
+  // Sets the trigger word as pending if there is an engine response.
+  // muteEdgeCase: if the trigger word started from mute, then the behavior stack will be in Wait,
+  // with no trigger word response, until a couple ticks after mute ends. In this case, wait longer
+  // before the pending trigger expires and ignore any previous calls to DisableEngineResponseToTriggerWord().
+  // TODO (VIC-11795): no muteEdgeCase param
+  void SetTriggerWordPending(const bool willOpenStream, const bool muteEdgeCase = false);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // User Intent:
@@ -277,7 +284,7 @@ private:
   std::string GetServerName(const Robot& robot) const;
   
   void SendWebVizIntents();
-
+  
   void SetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source);
   void SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
 
@@ -330,9 +337,9 @@ private:
       float feedbackShutOffTime = 0.0f;
   } _activeIntentFeedback;
 
-  // for debugging -- intents should be processed within one tick so track the ticks here
-  size_t _pendingTriggerTick = 0;
-  size_t _pendingIntentTick = 0;
+  // for debugging -- intents should be processed within n ticks so track the ticks here
+  size_t _pendingTriggerTimeout = 0; // expiration tick
+  size_t _pendingIntentTick = 0; // occurrence tick
   bool _pendingIntentTimeoutEnabled = true;
   
   // holds cloud and trigger word event handles

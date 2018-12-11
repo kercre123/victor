@@ -633,12 +633,7 @@ namespace Anki {
     {
       EraseQuad((uint32_t)VizConstants::ALL_QUAD_TYPEs, (uint32_t)VizConstants::ALL_QUAD_IDs);
     }
-    
-    void VizManager::EraseAllPlannerObstacles(const bool isReplan)
-    {
-      EraseAllPaths();
-    }
-    
+
     void VizManager::EraseAllMatMarkers()
     {
       EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_MAT_MARKER);
@@ -649,7 +644,7 @@ namespace Anki {
     void VizManager::EraseSegments(const std::string& identifier)
     {
       ANKI_CPU_PROFILE("VizManager::EraseSegments");
-      SendMessage(VizInterface::MessageViz(VizInterface::EraseSegmentPrimitives{identifier}));
+      SendMessage(VizInterface::MessageViz(VizInterface::EraseLineSegments{identifier}));
     }
     
     // =============== Circle methods ==================

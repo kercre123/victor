@@ -25,7 +25,7 @@
 
 #include <algorithm>
 
-
+#define LOG_CHANNEL "Microphones"
 #define DEBUG_MIC_REACTION_VERBOSE 0 // add some verbose debugging if trying to track down issues
 
 namespace Anki {
@@ -356,7 +356,8 @@ void BehaviorReactToMicDirection::RespondToSound()
   // normally we would play an animation, but currently we don't have animation ready, so for now we'll just turn to sound
   if ( EClockDirection::Invalid != _dVars.reactionDirection )
   {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Reacting", "Responding to sound from direction [%u]", _dVars.reactionDirection );
+    LOG_DEBUG( "BehaviorReactToMicDirection.Reacting",
+               "Responding to sound from direction [%u]", _dVars.reactionDirection );
 
     // if an animation was specified, use it, else procedurally turn to the facing direction
     const DirectionResponse& response = GetResponseData( _dVars.reactionDirection );
@@ -366,8 +367,8 @@ void BehaviorReactToMicDirection::RespondToSound()
 
       #if DEBUG_MIC_REACTION_VERBOSE
       {
-        PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Debug", "Playing reaction anim [%s]",
-                        AnimationTriggerToString(response.animation) );
+        LOG_DEBUG( "BehaviorReactToMicDirection.Debug", "Playing reaction anim [%s]",
+                   AnimationTriggerToString(response.animation) );
       }
       #endif
     }
@@ -381,8 +382,8 @@ void BehaviorReactToMicDirection::RespondToSound()
 
         #if DEBUG_MIC_REACTION_VERBOSE
         {
-          PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Debug", "Playing reaction turn to [%d] degrees",
-                          (int)RAD_TO_DEG(rads.ToFloat()) );
+          LOG_DEBUG( "BehaviorReactToMicDirection.Debug", "Playing reaction turn to [%d] degrees",
+                     (int)RAD_TO_DEG(rads.ToFloat()) );
         }
         #endif
       }

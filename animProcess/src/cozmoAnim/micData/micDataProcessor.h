@@ -92,7 +92,9 @@ public:
 
   void VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
 
-  void FakeTriggerWordDetection();
+  void FakeTriggerWordDetection(bool fromMute = false);
+
+  void GetLatestMicDirectionData(MicDirectionData& out_lastSample, DirectionIndex& out_dominantDirection) const;
 
 
 private:
@@ -170,6 +172,7 @@ private:
     Invalid=0,
     Voice,
     Button,
+    ButtonFromMute,
   };
   
 
@@ -179,7 +182,7 @@ private:
                                  const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
   
   // Return 0 if the stream job can not be created
-  RobotTimeStamp_t CreateTriggerWordDetectedJobs();
+  RobotTimeStamp_t CreateTriggerWordDetectedJobs(bool shouldStream);
   
   void ProcessRawAudio(RobotTimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,

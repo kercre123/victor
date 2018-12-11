@@ -6,6 +6,8 @@
 
   "behaviors": [
     "SingletonPoweringRobotOff",
+    "AlexaSignInOut",
+    "Alexa",
     "EmergencyMode",
     "ShutUpMode",
     "QuietMode",

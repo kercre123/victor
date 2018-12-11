@@ -36,13 +36,14 @@
 #include "cozmoAnim/alexa/alexaKeywordObserver.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/alexa/alexaRevokeAuthObserver.h"
-#include "cozmoAnim/alexa/media/player.h"
+#include "cozmoAnim/alexa/media/alexaMediaPlayer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "osState/osState.h"
 #include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 
@@ -121,6 +122,7 @@ namespace {
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING: return "LISTENING";
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::EXPECTING: return "EXPECTING";
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING: return "SPEAKING";
+      default: return "UNKNOWN";
     }
   }
 
@@ -141,6 +143,27 @@ namespace {
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::BAD_REQUEST: return "BAD_REQUEST";
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_OTHER_ERROR: return "SERVER_OTHER_ERROR";
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INVALID_AUTH: return "INVALID_AUTH";
+      default: return "UNKNOWN";
+    }
+  }
+
+  const char* AuthErrorToString(const avsCommon::sdkInterfaces::AuthObserverInterface::Error& error) {
+    switch(error) {
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SUCCESS: return "SUCCESS";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNKNOWN_ERROR: return "UNKNOWN_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_FAILED: return "AUTHORIZATION_FAILED";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNAUTHORIZED_CLIENT: return "UNAUTHORIZED_CLIENT";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SERVER_ERROR: return "SERVER_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_REQUEST: return "INVALID_REQUEST";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_VALUE: return "INVALID_VALUE";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_EXPIRED: return "AUTHORIZATION_EXPIRED";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNSUPPORTED_GRANT_TYPE: return "UNSUPPORTED_GRANT_TYPE";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CODE_PAIR: return "INVALID_CODE_PAIR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_PENDING: return "AUTHORIZATION_PENDING";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SLOW_DOWN: return "SLOW_DOWN";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INTERNAL_ERROR: return "INTERNAL_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CBL_CLIENT_ID: return "INVALID_CBL_CLIENT_ID";
+      default: return "UNKNOWN";
     }
   }
 }
@@ -151,6 +174,7 @@ AlexaImpl::AlexaImpl()
   , _uxState{ AlexaUXState::Idle }
   , _dialogState{ DialogUXState::IDLE }
   , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
+  , _initState{ InitState::Uninitialized }
 {
   static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
                  "Our shorthand SourceId type differs" );
@@ -159,6 +183,11 @@ AlexaImpl::AlexaImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::~AlexaImpl()
 {
+  if( _observer ) {
+    // note: once VIC-11427 is implemented, this might not be necessary, but it wouldn't hurt
+    _observer->Shutdown();
+  }
+  
   if( _capabilitiesDelegate ) {
     // TODO (VIC-11427): this is likely leaking something when commented out, but running shutdown() causes a lock
     //_capabilitiesDelegate->shutdown();
@@ -186,9 +215,10 @@ AlexaImpl::~AlexaImpl()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AlexaImpl::Init( const AnimContext* context )
+void AlexaImpl::Init( const AnimContext* context, InitCompleteCallback&& completionCallback )
 {
   _context = context;
+  _initCompleteCallback = std::move(completionCallback);
 
   _lastWallTime = WallTime::getInstance()->GetApproximateTime();
   _lastWallTimeCheck_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -213,16 +243,26 @@ bool AlexaImpl::Init( const AnimContext* context )
   }
 #endif
   
+  // start the sdk async init process via Update()
+  _initState = InitState::PreInit;
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::InitThread()
+{
   auto configs = GetConfigs();
   if( configs.empty() ) {
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // TODO: docs say this should be called before any other threads start. I'm guessing theyre talking
   // about alexa threads.
   if( !avsCommon::avs::initialization::AlexaClientSDKInit::initialize( configs ) ) {
     CRITICAL_SDK("Failed to initialize SDK!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // The observer logs important changes in a variety of sdk components, and calls back to AlexaImpl
@@ -241,7 +281,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                    std::bind(&AlexaImpl::OnAVSConnectionChanged, this, std::placeholders::_1, std::placeholders::_2),
                    std::bind(&AlexaImpl::OnSendComplete, this, std::placeholders::_1),
                    std::bind(&AlexaImpl::OnSDKLogout, this),
-                   std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1) );
+                   std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1),
+                   std::bind(&AlexaImpl::OnAlertState, this, std::placeholders::_1, std::placeholders::_2) );
   
   const auto& rootConfig = avsCommon::utils::configuration::ConfigurationNode::getRoot();
   
@@ -254,7 +295,13 @@ bool AlexaImpl::Init( const AnimContext* context )
   std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo = avsCommon::utils::DeviceInfo::create( rootConfig );
   if( !deviceInfo ) {
     CRITICAL_SDK("Creation of DeviceInfo failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
+  }
+  else {
+    DASMSG(avs_device_info, "alexa.device_info", "we created an alexa object with the given device info");
+    DASMSG_SET(s1, deviceInfo->getProductId(), "product id (from json)");
+    DASMSG_SEND();
   }
   
   // Creating the AuthDelegate - this component takes care of LWA and authorization of the client.
@@ -271,7 +318,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   std::shared_ptr<storage::sqliteStorage::SQLiteMiscStorage> miscStorage = storage::sqliteStorage::SQLiteMiscStorage::create(rootConfig);
   if( !miscStorage ) {
     CRITICAL_SDK("Creation of miscStorage failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // Create HTTP Put handler
@@ -279,7 +327,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   if( !authDelegate ) {
     CRITICAL_SDK("Creation of AuthDelegate failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   authDelegate->addAuthObserver( _observer );
   
@@ -294,7 +343,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                                                           deviceInfo );
   if( !_capabilitiesDelegate ) {
     CRITICAL_SDK("Creation of CapabilitiesDelegate failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   _capabilitiesDelegate->addCapabilitiesObserver( _observer );
   
@@ -312,16 +362,16 @@ bool AlexaImpl::Init( const AnimContext* context )
   auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
   _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::TTS,
                                                         httpContentFetcherFactory );
-  _ttsMediaPlayer->Init(context);
+  _ttsMediaPlayer->Init( _context );
   _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Alerts,
                                                            httpContentFetcherFactory );
-  _alertsMediaPlayer->Init( context );
+  _alertsMediaPlayer->Init( _context );
   _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Audio,
                                                           httpContentFetcherFactory );
-  _audioMediaPlayer->Init( context );
+  _audioMediaPlayer->Init( _context );
   _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Notifications,
                                                                   httpContentFetcherFactory );
-  _notificationsMediaPlayer->Init( context );
+  _notificationsMediaPlayer->Init( _context );
   
   // the alerts/audio/notifications speakers dont change UX so we observe them
   _alertsMediaPlayer->setObserver( _observer );
@@ -335,7 +385,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   auto internetConnectionMonitor = avsCommon::utils::network::InternetConnectionMonitor::create(httpContentFetcherFactory);
   if( !internetConnectionMonitor ) {
     CRITICAL_SDK("Failed to create InternetConnectionMonitor");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   const avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion = GetFirmwareVersion();
@@ -365,7 +416,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   if( !_client ) {
     CRITICAL_SDK("Failed to create SDK client!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
@@ -373,6 +425,7 @@ bool AlexaImpl::Init( const AnimContext* context )
   _client->AddSpeakerManagerObserver( _observer );
   _client->AddInternetConnectionObserver( _observer );
   _client->AddNotificationsObserver( _observer );
+  _client->AddAlertObserver( _observer );
   
    // Creating the revoke authorization observer.
   auto revokeObserver = std::make_shared<AlexaRevokeAuthObserver>( _client->GetRegistrationManager() );
@@ -388,7 +441,8 @@ bool AlexaImpl::Init( const AnimContext* context )
 
   if( !sharedDataStream ) {
     CRITICAL_SDK("Failed to create shared data stream!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
 
   avsCommon::utils::AudioFormat compatibleAudioFormat;
@@ -452,15 +506,26 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   _capabilitiesDelegate->addCapabilitiesObserver( _client );
   
-  // try connecting
+  // try connecting... this is already async but let's trigger it from this thread to keep everything in one place
   _client->Connect( _capabilitiesDelegate );
   
-  return true;
+  _initState = InitState::ThreadComplete;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Update()
 {
+  if( (_initState == InitState::PreInit) ||
+      (_initState == InitState::Initing) ||
+      (_initState == InitState::ThreadComplete) ||
+      (_initState == InitState::ThreadFailed) )
+  {
+    UpdateAsyncInit();
+  } else if( _initState != InitState::Completed ) {
+    return;
+  }
+    
+  
   if( _observer != nullptr ) {
     _observer->Update();
   }
@@ -505,27 +570,66 @@ void AlexaImpl::Update()
   }
 
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
+    LOG_INFO( "AlexaImpl.Update.SetDialogStateIDle", "the timer to set idle elapsed, updating dialog state to idle" );
     _dialogState = DialogUXState::IDLE;
     CheckForUXStateChange();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::UpdateAsyncInit()
+{
+  if( (_initState == InitState::Uninitialized) ||
+      (_initState == InitState::Completed)     ||
+      (_initState == InitState::Failed) )
+  {
+    return;
+  }
+  
+  if( !_initThread.joinable() ) {
+    _initState = InitState::Initing;
+    _initThread = std::thread(&AlexaImpl::InitThread, this);
+    return;
+  }
+  
+  if( (_initState == InitState::ThreadComplete) || (_initState == InitState::ThreadFailed) ) {
+    // loading is now done
+    _initThread.join();
+    _initThread = std::thread();
+    const bool success = (_initState == InitState::ThreadComplete);
+    _initState = success ? InitState::Completed : InitState::Failed;
+    if( _initCompleteCallback ) {
+      _initCompleteCallback( success );
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Logout()
 {
+  bool logoutCalled = false;
+
   if( _client ) {
     auto regManager = _client->GetRegistrationManager();
     if( regManager ) {
       regManager->logout();
+      logoutCalled = true;
     }
+  }
+
+  if( !logoutCalled ) {
+    DASMSG(user_sign_out_result, "alexa.user_sign_out_result", "User signed out of AVS SDK");
+    DASMSG_SET(s1, "FAILURE", "SUCCESS or FAILURE (note that this instance always sends failure)");
+    DASMSG_SET(s2, "INTERNAL_ERROR", "error type (only INTERNAL_ERROR currently exists, meaning could not call logout)");
+    DASMSG_SEND();
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::StopForegroundActivity()
+void AlexaImpl::StopAlert()
 {
   if( _client ) {
-    _client->StopForegroundActivity();
+    _client->StopAlerts();
   }
 }
   
@@ -597,14 +701,31 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING("AlexaImpl.OnAuthStateChange", "authStateChanged newState=%d, error=%d", (int)newState, (int)error);
+
+
+  auto sendResultDas = [](bool success, avsCommon::sdkInterfaces::AuthObserverInterface::Error error) {
+    DASMSG(user_sign_in_result, "alexa.user_sign_in_result", "Result of initial user sign in attempt");
+    DASMSG_SET(s1, success ? "SUCCESS" : "FAILURE", "SUCCESS or FAILURE");
+    DASMSG_SET(s2, AuthErrorToString(error), "Error reason (from AVS SDK)");
+    DASMSG_SEND();
+  };
   
   // if not SUCCESS or AUTHORIZATION_PENDING, fail. AUTHORIZATION_PENDING seems like a valid error
   // to me: "Waiting for user to authorize the specified code pair."
   if( (error != Error::SUCCESS) && (error != Error::AUTHORIZATION_PENDING) ) {
-    LOG_ERROR( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
+    LOG_WARNING( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
+
+    sendResultDas(false, error);
+
     const bool errFlag = true;
     SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
     return;
+  }
+
+  if( _authState == AlexaAuthState::WaitingForCode ) {
+    const bool success = (newState == State::REFRESHED);
+
+    sendResultDas(success, error);
   }
 
   switch( newState ) {
@@ -656,7 +777,7 @@ void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 void AlexaImpl::CheckForUXStateChange()
 {
   const auto oldState = _uxState;
-  const bool anyPlaying = !_playingSources.empty();
+  const bool anyPlaying = !_playingSources.empty() || _alertActive;
   
   // reset idle timer
   _timeToSetIdle_s = -1.0f;
@@ -719,11 +840,12 @@ void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
     }
   } else {
     auto it = _playingSources.find( id );
-    if( ANKI_VERIFY( it != _playingSources.end(),
-                     "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id ) )
-    {
+    if( it != _playingSources.end() ) {
       _playingSources.erase( it );
       CheckForUXStateChange();
+    } else {
+      // this may be ok, depending on whether or not there was an error
+      LOG_WARNING( "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id );
     }
   }
 }
@@ -752,6 +874,11 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
+
+  DASMSG(send_complete, "alexa.response_to_request", "SDK responded to a sent message");
+  DASMSG_SET(s1, MessageStatusToString(status), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
+  DASMSG_SEND();
+
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
   switch( status ) {
     case Status::PENDING: // The message has not yet been processed for sending.
@@ -808,6 +935,14 @@ void AlexaImpl::OnSDKLogout()
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnLogout", "User logged out" );
+
+  // NOTE:(bn) This doesn't get called if we log out, nor if you de-register from Amazon, not sure when it would
+  // get called
+  DASMSG(user_sign_out_result,
+         "alexa.user_remote_sign_out",
+         "User remotely signed out of AVS SDK (unclear when this happens)");
+  DASMSG_SEND();
+
   if( _onLogout != nullptr ) {
     _onLogout();
   }
@@ -828,6 +963,44 @@ void AlexaImpl::OnNotificationsIndicator( avsCommon::avs::IndicatorState state )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::alerts::AlertObserverInterface::State state )
+{
+  using State = capabilityAgents::alerts::AlertObserverInterface::State;
+  _alertStates[alertID] = state;
+  const bool oldAlertActive = _alertActive;
+  _alertActive = false;
+  for( auto& alertPair : _alertStates ) {
+    bool canBeCancelled;
+    switch( alertPair.second ) {
+      case State::STARTED: // The alert has started.
+      case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
+        canBeCancelled = true;
+        break;
+      case State::READY: // The alert is ready to start, and is waiting for channel focus.
+      case State::STOPPED: // The alert has stopped due to user or system intervention.
+      case State::SNOOZED: // The alert has snoozed.
+      case State::COMPLETED: // The alert has completed on its own.
+      case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
+      case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
+      case State::ERROR: // The alert has encountered an error.
+        canBeCancelled = false;
+        break;
+    }
+    _alertActive |= canBeCancelled;
+  }
+  // TODO (VIC-11517): downgrade. for now this is useful in webots
+  LOG_WARNING( "AlexaImpl.OnAlertState",
+               "alert '%s' changed to %d, _alertActive=%d", alertID.c_str(), (int)state, _alertActive );
+  if( oldAlertActive != _alertActive ) {
+    // note: this is ok to only have two options, not three (e.g., "unknown") since _alertActive
+    // is initialized as false, in which case if the initial assignment to _alertActive is false, we don't
+    // need to call CheckForUXStateChange anyway
+    CheckForUXStateChange();
+  }
+    
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
   // always send WaitingForCode in case url or code changed
@@ -843,15 +1016,17 @@ void AlexaImpl::NotifyOfTapToTalk()
 {
   if( _client != nullptr ) {
     if( !_isTapOccurring ) {
+      _client->StopForegroundActivity();
       // check info known about connection before trying. these often don't get updated until sending fails
       if( !_client->IsAVSConnected() ) {
         SetNetworkConnectionError();
       } else {
-        _client->StopForegroundActivity();
-        ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
-                     "AlexaImpl.NotifyOfTapToTalk.Failed",
-                     "Failed to notify tap to talk" );
-        _isTapOccurring = true;
+        if( !_alertActive ) {
+          ANKI_VERIFY( _client->NotifyOfTapToTalk( *_tapToTalkAudioProvider ).get(),
+                       "AlexaImpl.NotifyOfTapToTalk.Failed",
+                       "Failed to notify tap to talk" );
+          _isTapOccurring = true;
+        }
       }
     } else {
       _client->NotifyOfTapToTalkEnd();
@@ -861,7 +1036,7 @@ void AlexaImpl::NotifyOfTapToTalk()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
+void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
@@ -871,7 +1046,7 @@ void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
 
 #if ANKI_DEV_CHEATS
   if( _debugMicrophone ) {
-    const size_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
+    const uint64_t totalNumSamples = _debugMicrophone->GetTotalNumSamples();
 
     static int sAudioDumpIdx = 0;
     const std::string filename = _alexaCacheFolder + "audioInput_" + std::to_string(sAudioDumpIdx++) + ".pcm";
@@ -901,10 +1076,10 @@ void AlexaImpl::NotifyOfWakeWord( size_t fromIndex, size_t toIndex )
       fileOut.close();
 
       // "absolute" index is total bytes ever, not the current size of the ring buffer
-      const size_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
-      const size_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
+      const uint64_t debugEndIdx =  totalNumRead - (totalNumSamples - toIndex);
+      const uint64_t debugStartIdx =  debugEndIdx - (toIndex - fromIndex);
       LOG_INFO("AlexaImpl.WroteAudioInput",
-               "Wrote mic data to file '%s'. Trigger range %zu to %zu",
+               "Wrote mic data to file '%s'. Trigger range %llu to %llu",
                filename.c_str(),
                debugStartIdx,
                debugEndIdx);

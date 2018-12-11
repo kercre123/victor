@@ -15,26 +15,26 @@
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/alexa/alexaImpl.h" // impl declaration
 
+#include "cozmoAnim/animProcessMessages.h" // must come before clad includes........
+
 #include "audioEngine/audioCallback.h"
 #include "audioEngine/audioTypeTranslator.h"
-#include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/audio/cozmoAudioController.h"
-#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
-#include "clad/types/alexaTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
+#include "clad/types/alexaTypes.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/animContext.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
-
-
 
 namespace Anki {
 namespace Vector {
@@ -48,6 +48,9 @@ namespace {
   
   const float kTimeUntilWakeWord_s = 3.0f;
   
+  // If true, the wake word is enabled when signed out if the user has _ever_ been signed in. Saying "alexa"
+  // triggers an error. If false, no wake work is running.
+  const bool kPlayErrorIfSignedOut = false;
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
 }
@@ -100,7 +103,7 @@ void Alexa::Init(const AnimContext* context)
   
   if( authenticatedLastBoot ) {
     SetAlexaActive( true );
-  } else if( _authenticatedEver ) {
+  } else if( _authenticatedEver && kPlayErrorIfSignedOut ) {
     // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
     // when they say the wake word, it plays "Your device isnt registered. For help, go it its companion app."
     // TODO: it might make sense to load the least sensitive model to avoid false positives
@@ -112,6 +115,7 @@ void Alexa::Init(const AnimContext* context)
 void Alexa::Update()
 {
   if( _impl != nullptr) {
+    // should be called even if not initialized, because this drives the init process
     _impl->Update();
   }
   
@@ -128,6 +132,7 @@ void Alexa::Update()
   if( (_timeToEndError_s >= 0.0f) && (currTime_s >= _timeToEndError_s) ) {
     // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
     _timeToEndError_s = -1.0f;
+    LOG_INFO( "Alexa.Update.RestoreStateAfterError", "returning to UX state after error state is complete" );
     OnAlexaUXStateChanged( _pendingUXState );
   }
 }
@@ -146,15 +151,20 @@ void Alexa::SetAlexaUsage(bool optedIn)
   } else {
     // if we were in the process of authenticating alexa, cancel that now (does nothing if not loggin in).
     // need to do this before we reset _authStartedByUser
-    CancelPendingAlexaAuth();
+    CancelPendingAlexaAuth("OPT_OUT");
   }
 
   _authStartedByUser = optedIn;
 
   const bool loggingOut = !optedIn && HasImpl();
   if( loggingOut ) {
-    // log out of amazon. this should delete persistent data, but we also nuke the folder just in case
-    _impl->Logout();
+    // if the impl hasnt finished initializing, don't try calling any impl methods for safety. the user
+    // would have to sign in and out quickly to do this, which isnt normally possible, and we nuke the
+    // impl anyway
+    if( _impl->IsInitialized() ) {
+      // log out of amazon. this should delete persistent data, but we also nuke the folder just in case
+      _impl->Logout();
+    }
     // the sdk callback from this should call OnLogout, but just in case something went wrong, do it first here
     OnLogout();
   }
@@ -179,7 +189,7 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // create impl
     CreateImpl();
   } else if( !active && HasImpl() ) {
-    const auto simpleState = _authenticatedEver ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
+    const auto simpleState = (_authenticatedEver && kPlayErrorIfSignedOut) ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
     SetSimpleState( simpleState );
     DeleteImpl();
   }
@@ -203,11 +213,33 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::CancelPendingAlexaAuth()
+void Alexa::CancelPendingAlexaAuth(const std::string& reason)
 {
+  if( !_authStartedByUser ) {
+    // various components in animprocess will call this method based on user actions like exiting pairing screen or
+    // saying hey vector. We don't want this to cancel a pending authorization that started when the robot booted,
+    // and instead only want it to cancel a user-initiated auth
+    return;
+  }
+
+  LOG_INFO( "Alexa.CancelPendingAlexaAuth",
+            "From auth state '%s', canceling for reason '%s'",
+            EnumToString(_authState),
+            reason.c_str() );
+  
   switch( _authState ) {
-    case AlexaAuthState::RequestingAuth:
     case AlexaAuthState::WaitingForCode:
+    {
+
+      DASMSG(sign_in_canceled,
+             "alexa.user_sign_in_result",
+             "Result of sign in attempt (this instance is for cancellations");
+      DASMSG_SET(s1, "CANCEL", "result (CANCEL)");
+      DASMSG_SET(s2, reason, "the reason this attempt was canceled");
+      DASMSG_SEND();
+    }
+      // fall through
+    case AlexaAuthState::RequestingAuth:
     {
       // if the robot is authorizing, cancel it. go through this method instead of SetAlexaActive so that any code face
       // is removed
@@ -253,20 +285,22 @@ void Alexa::CreateImpl()
   _impl->SetOnLogout( std::bind( &Alexa::OnLogout, this) );
   _impl->SetOnNetworkError( std::bind( &Alexa::OnAlexaNetworkError, this, std::placeholders::_1 ) );
   _impl->SetOnNotificationsChanged( std::bind( &Alexa::OnNotificationsChanged, this, std::placeholders::_1 ) );
-  const bool success = _impl->Init( _context );
-  if( success ) {
-    // initialization was successful.
-    // The sdk is likely trying to connect at this point. If this is NOT a user-initiated
-    // authentication attempt, turn on the wakeword by default after some amount of time has
-    // elapsed. If they say the wake word before we can connect to avs, we play an error sound. If
-    // there's a failure in auth, disable the wakeword. If auth changes in any way, clear the _timeEnableWakeWord_s.
-    if( !_authStartedByUser && (_authState == AlexaAuthState::RequestingAuth) ) {
-      _timeEnableWakeWord_s = kTimeUntilWakeWord_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // start an async initialization process
+  auto initCallback = [this](bool success) {
+    if( success ) {
+      // initialization was successful, and the sdk is trying to connect at this point. If this is NOT a user-initiated
+      // authentication attempt, turn on the wakeword by default after some amount of time has
+      // elapsed. If they say the wake word before we can connect to avs, we play an error sound. If
+      // there's a failure in auth, disable the wakeword. If auth changes in any way, clear the _timeEnableWakeWord_s.
+      if( !_authStartedByUser && (_authState == AlexaAuthState::RequestingAuth) ) {
+        _timeEnableWakeWord_s = kTimeUntilWakeWord_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      }
+    } else {
+      // initialization was unsuccessful
+      SetAlexaActive( false );
     }
-  } else {
-    // initialization was unsuccessful
-    SetAlexaActive( false );
-  }
+  };
+  _impl->Init( _context, std::move(initCallback) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -279,13 +313,28 @@ void Alexa::DeleteImpl()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool Alexa::HasInitializedImpl() const
+{
+  if( _impl != nullptr ) {
+    return _impl->IsInitialized(); // done loading SDK, but maybe not connected yet
+  } else {
+    return false;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
   const auto oldState = _authState;
   bool codeExpired = false;
-  
+
   // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "Alexa.OnAlexaAuthChanged", "%d url='%s' code='%s'", (int)(state), url.c_str(), code.c_str() );
+  LOG_WARNING( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
+               EnumToString(oldState),
+               EnumToString(state),
+               url.c_str(),
+               code.c_str() );
+
   switch( state ) {
     case AlexaAuthState::Uninitialized:
     {
@@ -429,11 +478,21 @@ void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
   if( !IsErrorPlaying() ) {
     SetUXState( newState );
   }
+  else {
+    LOG_INFO( "Alexa.OnAlexaUXStateChanged.SetPendingAfterError",
+              "An error is playing, so isntead of changing UX state now, set the pending state to '%s'",
+              EnumToString(newState));
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::SetUXState( AlexaUXState newState )
 {
+
+  LOG_INFO( "Alexa.SetUXState", "new State '%s', old state was '%s'",
+            EnumToString(newState),
+            EnumToString(_uxState) );
+
   const auto oldState = _uxState;
   _uxState = newState;
   
@@ -456,7 +515,10 @@ void Alexa::SetUXState( AlexaUXState newState )
     auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
     if( showStreamStateManager != nullptr ) {
       if( showStreamStateManager->HasValidAlexaUXResponse( _uxState ) ) {
-        showStreamStateManager->StartAlexaResponse( _uxState );
+        // play alexa get-in/audio requested by engine. switching out of mute plays an animation
+        // that shan't be interrupted by the alexa get-in
+        const bool skipGetIn = (_notifyType == NotifyType::ButtonFromMute);
+        showStreamStateManager->StartAlexaResponse( _uxState, skipGetIn );
       }
     }
   }
@@ -465,15 +527,15 @@ void Alexa::SetUXState( AlexaUXState newState )
   using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
   // Play Audio Event for state change
   if (_uxState == AlexaUXState::Listening) {
-    if ( (oldState == AlexaUXState::Idle) && (_notifyType != None) ) {
+    if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
       // Alexa triggered by voice or button press
       PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
-      _notifyType = None;
     }
     else if (oldState == AlexaUXState::Speaking) {
       // Play EarCon for follow up question
       PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
     }
+    _notifyType = NotifyType::None;
   }
   else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
     // Play when listening ends
@@ -488,6 +550,15 @@ void Alexa::OnAlexaNetworkError( AlexaNetworkErrorType errorType )
   _pendingUXState = _uxState;
   SetUXState( AlexaUXState::Error );
   PlayErrorAudio( errorType );
+
+  DASMSG(local_error_msg, "alexa.local_error", "A local (network) error response is being played");
+  DASMSG_SET(s1,
+             EnumToString(errorType),
+             "type of the error (see AlexaNetworkErrorType in alexaTypes.clad)");
+  DASMSG_SET(s2,
+             EnumToString(_pendingUXState),
+             "former UX state before the error happened (see alexaTypes.clad)");
+  DASMSG_SEND();
 }
   
 
@@ -623,37 +694,51 @@ void Alexa::AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, s
   // note: this can be called on another thread. guard access to _impl in case it is being deleted.
   // it might make more sense to move calls to this to the main thread as a precaution, sacrificing a copy
   std::lock_guard<std::mutex> lg{ _implMutex };
-  if( _impl != nullptr ) {
+  if( HasInitializedImpl() ) {
     _impl->AddMicrophoneSamples( samples, nSamples );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfTapToTalk()
+bool Alexa::StopAlertIfActive()
 {
-  if( ANKI_VERIFY( _impl != nullptr,
-                   "Alexa.NotifyOfTapToTalk.Disabled",
-                   "Tap-to-talk was issued when alexa was disabled" ) )
-  {
-    _notifyType = Button;
+  if( _impl != nullptr && _impl->IsAlertActive() ) {
+    _impl->StopAlert();
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::NotifyOfTapToTalk( bool fromMute )
+{
+  if( HasInitializedImpl() ) {
+    _notifyType = fromMute ? NotifyType::ButtonFromMute : NotifyType::Button;
     _impl->NotifyOfTapToTalk();
+  } else {
+    // sanity check
+    ANKI_VERIFY( _impl != nullptr,
+                 "Alexa.NotifyOfTapToTalk.Disabled",
+                 "Tap-to-talk was issued when alexa was disabled" );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex )
+void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
 {
+  // wake word should not be enabled if impl is not initialized, but it doesn't hurt to check
   bool hasImpl = false;
   {
     std::lock_guard<std::mutex> lg{ _implMutex };
-    if( _impl != nullptr ) {
-      _notifyType = Voice;
+    hasImpl = HasImpl();
+    if( hasImpl && _impl->IsInitialized() ) {
+      _notifyType = NotifyType::Voice;
       _impl->NotifyOfWakeWord( fromSampleIndex, toSampleIndex );
-      hasImpl = true;
     }
   }
   
-  if( !hasImpl && _authenticatedEver ) {
+  if( kPlayErrorIfSignedOut && !hasImpl && _authenticatedEver ) {
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }
@@ -675,6 +760,7 @@ void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
       if( IsErrorPlaying() ) {
         // reset error flag, then set the ux state with whatever the impl most recently sent as the ux state
         _timeToEndError_s = -1.0f;
+        LOG_INFO( "Alexa.Callback.RestoreStateAfterError", "returning to UX state after error callback" );
         OnAlexaUXStateChanged( _pendingUXState );
       }
     });

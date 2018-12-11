@@ -210,8 +210,6 @@ void BehaviorDriveOffCharger::BehaviorUpdate()
   }
 
   if( !IsControlDelegated() ) {
-    BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);
-    
     if(GetBEI().HasMoodManager()){
       auto& moodManager = GetBEI().GetMoodManager();
       moodManager.TriggerEmotionEvent("DriveOffCharger",

@@ -472,7 +472,7 @@ void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPe
 {
   auto* alexa = _context->GetAlexa();
   if (alexa != nullptr) {
-    alexa->CancelPendingAlexaAuth();
+    alexa->CancelPendingAlexaAuth(EnumToString(msg.reason));
   }
 }
 
@@ -610,6 +610,11 @@ void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
       _context->GetMicDataSystem()->UpdateTimeZone(timeZone);
       break;
   }
+}
+
+void Process_fakeWakeWordFromExternalInterface(const RobotInterface::FakeWakeWordFromExternalInterface& msg)
+{
+  _context->GetMicDataSystem()->FakeTriggerWordDetection();
 }
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)

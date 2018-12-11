@@ -14,10 +14,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/alexa/behaviorAlexa.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/alexa/behaviorAlexaSignInOut.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorCountingAnimation.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/appBehaviors/behaviorEyeColor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/attentionTransfer/behaviorAttentionTransferIfNeeded.h"
@@ -44,6 +46,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/behaviorBlackJack.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/character/howOldAreYou/behaviorHowOldAreYou.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateInHabitat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateWhileInAir.h"
@@ -213,6 +216,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::AlexaSignInOut:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAlexaSignInOut(config));
+      break;
+    }
+    
     case BehaviorClass::AnimGetInLoop:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAnimGetInLoop(config));
@@ -234,6 +243,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::AnimSequenceWithObject:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAnimSequenceWithObject(config));
+      break;
+    }
+    
+    case BehaviorClass::CountingAnimation:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCountingAnimation(config));
       break;
     }
     
@@ -390,6 +405,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::BlackJack:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorBlackJack(config));
+      break;
+    }
+    
+    case BehaviorClass::HowOldAreYou:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorHowOldAreYou(config));
       break;
     }
     

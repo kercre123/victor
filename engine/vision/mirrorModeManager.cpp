@@ -28,11 +28,12 @@ namespace {
   
   // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
   // and in mirror mode (at specified scale)
-  CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,    "Vision.MirrorMode", 0.f, 0.f, 1.f);
-  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
-  CONSOLE_VAR(bool, kDisplayExposureInMirrorMode,       "Vision.MirrorMode", true);
-  CONSOLE_VAR(f32,  kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
-  CONSOLE_VAR(s32,  kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
+  CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,           "Vision.MirrorMode", 0.f, 0.f, 1.f);
+  CONSOLE_VAR(bool,        kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
+  CONSOLE_VAR(bool,        kDisplayExposureInMirrorMode,       "Vision.MirrorMode", true);
+  CONSOLE_VAR(f32,         kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
+  CONSOLE_VAR(s32,         kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
+  CONSOLE_VAR_RANGED(f32,  kMirrorModeFaceDebugFontScale,      "Vision.MirrorMode", 0.5f, 0.1f, 1.f);
   
   // TODO: Figure out the original image resolution? This just assumes "Default" for marker/face detection
   constexpr f32 kXmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
@@ -132,9 +133,28 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
     _screenImg.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
                         color, 3);
     
-    std::string dispName(name.empty() ? "<unknown>" : name);
-    dispName += "[" + std::to_string(faceID) + "]";
-    _screenImg.DrawText({1.f, _screenImg.GetNumRows()-1}, dispName, NamedColors::YELLOW, 0.6f, true);
+    const auto& debugInfo = faceDetection.GetRecognitionDebugInfo();
+    if(!debugInfo.empty())
+    {
+      const Vec2f fontSize = _screenImg.GetTextSize("Test", kMirrorModeFaceDebugFontScale, 1);
+      s32 line = 1;
+      for(const auto& info : debugInfo)
+      {
+        const std::string& name = info.name;
+        std::string dispName(name.empty() ? "<unknown>" : name);
+        dispName += "[" + std::to_string(info.matchedID) + "]: " + std::to_string(info.score);
+        const Point2f position{1.f, _screenImg.GetNumRows()-1-(debugInfo.size()-line)*(fontSize.y()+1)};
+        _screenImg.DrawText(position, dispName, NamedColors::YELLOW, kMirrorModeFaceDebugFontScale, true);
+        ++line;
+      }
+    }
+    else
+    {
+      const float kFontScale = 0.6f;
+      std::string dispName(name.empty() ? "<unknown>" : name);
+      dispName += "[" + std::to_string(faceID) + "]";
+      _screenImg.DrawText({1.f, _screenImg.GetNumRows()-1}, dispName, NamedColors::YELLOW, kFontScale, true);
+    }
   }
 }
   

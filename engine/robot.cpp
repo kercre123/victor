@@ -274,9 +274,9 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 
   LOG_INFO("Robot.Robot", "Created");
 
-  // Check for /run/data_cleared file
+  // Check for /tmp/data_cleared file
   // VIC-6069: OS needs to write this file following Clear User Data reboot
-  static const std::string dataClearedFile = "/run/data_cleared";
+  static const std::string dataClearedFile = "/tmp/data_cleared";
   if (Util::FileUtils::FileExists(dataClearedFile)) {
     DASMSG(robot_cleared_user_data, "robot.cleared_user_data", "User data was cleared");
     DASMSG_SEND();
@@ -2037,7 +2037,7 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
     msgProfiler.Update((int)msg.GetTag(), msg.Size());
   } else {
     const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
-    Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);
+    LOG_WARNING("Robot.SendMessage", "Robot %d failed to send a message type %s", _ID, msgTypeName);
     msgProfiler.ReportOnFailure();
   }
   return sendResult;

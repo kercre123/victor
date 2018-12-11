@@ -365,18 +365,18 @@ struct AudioParameter FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_PARAMETERID = 4,
     VT_VALUE = 6,
     VT_TIME_MS = 8,
-    VT_CURVE = 10
+    VT_CURVETYPE = 10
   };
-  uint32_t parameterId() const { return GetField<uint32_t>(VT_PARAMETERID, 0); }
+  uint32_t parameterID() const { return GetField<uint32_t>(VT_PARAMETERID, 0); }
   float value() const { return GetField<float>(VT_VALUE, 0.0f); }
   uint32_t time_ms() const { return GetField<uint32_t>(VT_TIME_MS, 0); }
-  uint8_t curve() const { return GetField<uint8_t>(VT_CURVE, 0); }
+  uint8_t curveType() const { return GetField<uint8_t>(VT_CURVETYPE, 0); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_PARAMETERID) &&
            VerifyField<float>(verifier, VT_VALUE) &&
            VerifyField<uint32_t>(verifier, VT_TIME_MS) &&
-           VerifyField<uint8_t>(verifier, VT_CURVE) &&
+           VerifyField<uint8_t>(verifier, VT_CURVETYPE) &&
            verifier.EndTable();
   }
 };
@@ -384,10 +384,10 @@ struct AudioParameter FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct AudioParameterBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_parameterId(uint32_t parameterId) { fbb_.AddElement<uint32_t>(AudioParameter::VT_PARAMETERID, parameterId, 0); }
+  void add_parameterID(uint32_t parameterID) { fbb_.AddElement<uint32_t>(AudioParameter::VT_PARAMETERID, parameterID, 0); }
   void add_value(float value) { fbb_.AddElement<float>(AudioParameter::VT_VALUE, value, 0.0f); }
   void add_time_ms(uint32_t time_ms) { fbb_.AddElement<uint32_t>(AudioParameter::VT_TIME_MS, time_ms, 0); }
-  void add_curve(uint8_t curve) { fbb_.AddElement<uint8_t>(AudioParameter::VT_CURVE, curve, 0); }
+  void add_curveType(uint8_t curveType) { fbb_.AddElement<uint8_t>(AudioParameter::VT_CURVETYPE, curveType, 0); }
   AudioParameterBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   AudioParameterBuilder &operator=(const AudioParameterBuilder &);
   flatbuffers::Offset<AudioParameter> Finish() {
@@ -397,15 +397,15 @@ struct AudioParameterBuilder {
 };
 
 inline flatbuffers::Offset<AudioParameter> CreateAudioParameter(flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t parameterId = 0,
+    uint32_t parameterID = 0,
     float value = 0.0f,
     uint32_t time_ms = 0,
-    uint8_t curve = 0) {
+    uint8_t curveType = 0) {
   AudioParameterBuilder builder_(_fbb);
   builder_.add_time_ms(time_ms);
   builder_.add_value(value);
-  builder_.add_parameterId(parameterId);
-  builder_.add_curve(curve);
+  builder_.add_parameterID(parameterID);
+  builder_.add_curveType(curveType);
   return builder_.Finish();
 }
 

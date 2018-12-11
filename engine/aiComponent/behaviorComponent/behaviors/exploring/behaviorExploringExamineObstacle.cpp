@@ -286,7 +286,9 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     if(_dVars.handSeen)
     {
       SET_STATE(ReactToHand);
-      DelegateNow(_iConfig.handReactionBehavior.get(), &BehaviorExploringExamineObstacle::TransitionToNextAction);
+      if (_iConfig.handReactionBehavior->WantsToBeActivated()) {
+        DelegateNow(_iConfig.handReactionBehavior.get(), &BehaviorExploringExamineObstacle::TransitionToNextAction);
+      }
       return;
       
     } else {
@@ -525,9 +527,7 @@ bool BehaviorExploringExamineObstacle::RobotPathFreeOfObstacle( float dist_mm, b
     Vec3f offset(dist_mm, 0.0f, 0.0f);
     Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
     const Point2f p2 = (currRobotPose.GetTransform() * Transform3d(rot, offset)).GetTranslation();
-    hasCollision = memoryMap->HasCollisionWithTypes({{Point2f{currRobotPose.GetTranslation()},
-                                                      p2}},
-                                                    MemoryMapTypes::kTypesThatAreObstacles);
+    hasCollision = GetBEI().GetMapComponent().CheckForCollisions(FastPolygon{{Point2f{currRobotPose.GetTranslation()}, p2}});
   } else {
     
     // quad the width of the robot and extending dist_mm past the robot
@@ -542,7 +542,7 @@ bool BehaviorExploringExamineObstacle::RobotPathFreeOfObstacle( float dist_mm, b
     const Point2f p3 = (currRobotPose.GetTransform() * Transform3d(rot, offset2 + offset3)).GetTranslation();
     const Point2f p4 = (currRobotPose.GetTransform() * Transform3d(rot, offset1 + offset3)).GetTranslation();
     
-    hasCollision = memoryMap->HasCollisionWithTypes({{p1, p2, p3, p4}}, MemoryMapTypes::kTypesThatAreObstacles);
+    hasCollision = GetBEI().GetMapComponent().CheckForCollisions(FastPolygon{{p1, p2, p3, p4}});
     
   }
   
@@ -578,9 +578,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesObstacleInFront( float dist_mm, 
     return ret;
   };
   
-  const bool foundNewObstacle = memoryMap->AnyOf( {{Point2f{currRobotPose.GetTranslation()},
-                                                   p2}},
-                                                 evalFunc );
+  const bool foundNewObstacle = memoryMap->AnyOf( FastPolygon{{Point2f{currRobotPose.GetTranslation()}, p2}}, evalFunc );
   return foundNewObstacle;
 }
   
@@ -622,7 +620,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
     return sameType && newObstacle;
   };
   
-  const bool foundNewObstacle = memoryMap->AnyOf( {{ t1, t2, t3 }}, evalFunc );
+  const bool foundNewObstacle = memoryMap->AnyOf( FastPolygon{{ t1, t2, t3 }}, evalFunc );
   return foundNewObstacle;
 }
   

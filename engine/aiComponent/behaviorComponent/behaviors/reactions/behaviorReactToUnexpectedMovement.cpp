@@ -246,10 +246,7 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   
   AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
-                                                         kNumLoops, kInterruptRunning, tracksToLock), [this]()
-  {
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
-  });  
+                                                         kNumLoops, kInterruptRunning, tracksToLock));  
 }
 
   

@@ -9,7 +9,10 @@
  **/
 #include "util/random/randomGenerator.h"
 
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
+
+#define LOG_CHANNEL "RandomGenerator"
 
 namespace Anki{ namespace Util {
 
@@ -32,7 +35,13 @@ void RandomGenerator::SetSeed(const std::string& who, uint32_t seed)
   if(!who.empty())
   {
     // Log the actual random seed used and who set it
-    Util::sInfoF("app.random_seed", {{DDATA, who.c_str()}}, "%u", seed);
+    DASMSG(random_generator.seed, "random_generator.seed",
+           "RandomGenerator::SetSeed was called to set a new random seed");
+    DASMSG_SET(i1, seed, "New random seed");
+    DASMSG_SET(s1, who, "Identifier for who set the random seed");
+    DASMSG_SEND();
+    
+    LOG_INFO("random_generator.seed", "seed %u, who %s", seed, who.c_str());
   }
 }
 

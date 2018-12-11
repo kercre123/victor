@@ -53,7 +53,7 @@ bool MicTriggerConfig::Init(const std::string& triggerKey, const Json::Value& in
   // Verify this is a object of triggers
   if (!initData.isObject())
   {
-    PRINT_NAMED_ERROR("MicTriggerConfig.Init.JsonData", "Mic init data is not an object.");
+    LOG_ERROR("MicTriggerConfig.Init.JsonData", "Mic init data is not an object.");
     return false;
   }
   
@@ -62,7 +62,7 @@ bool MicTriggerConfig::Init(const std::string& triggerKey, const Json::Value& in
   // Verify this is a list of locale data
   if (!triggerData.isArray())
   {
-    PRINT_NAMED_ERROR("MicTriggerConfig.Init.JsonData", "Mic trigger data is not an array.");
+    LOG_ERROR("MicTriggerConfig.Init.JsonData", "Mic trigger data is not an array.");
     return false;
   }
 
@@ -70,33 +70,33 @@ bool MicTriggerConfig::Init(const std::string& triggerKey, const Json::Value& in
   {
     if (!localeData.isObject())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.Init.JsonData", "Locale config data is not an object.");
+      LOG_ERROR("MicTriggerConfig.Init.JsonData", "Locale config data is not an object.");
       continue;
     }
 
     // Get the Locale type
     if (!localeData.isMember(kLocaleKey) || !localeData[kLocaleKey].isString())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.LocaleJsonData",
-                        "Locale data item does not contain locale type.\n%s",
-                        Json::StyledWriter().write(localeData).c_str());
+      LOG_ERROR("MicTriggerConfig.LocaleJsonData",
+                "Locale data item does not contain locale type.\n%s",
+                Json::StyledWriter().write(localeData).c_str());
       continue;
     }
     const auto& nextLocale = Util::Locale::LocaleFromString(localeData[kLocaleKey].asString());
     if (_localeTriggerDataMap.find(nextLocale) != _localeTriggerDataMap.end())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.LocaleTypeUnique",
-                        "Data for locale %s already added. Ignoring.",
-                        nextLocale.ToString().c_str());
+      LOG_ERROR("MicTriggerConfig.LocaleTypeUnique",
+                "Data for locale %s already added. Ignoring.",
+                nextLocale.ToString().c_str());
       continue;
     }
 
     // Load the default model type for this locale
     if (!localeData.isMember(kDefaultModelTypeKey) || !localeData[kDefaultModelTypeKey].isString())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.LocaleDefaultModelType",
-                        "Locale data item does not contain default model type.\n%s",
-                        Json::StyledWriter().write(localeData).c_str());
+      LOG_ERROR("MicTriggerConfig.LocaleDefaultModelType",
+                "Locale data item does not contain default model type.\n%s",
+                Json::StyledWriter().write(localeData).c_str());
       continue;
     }
     const auto& defaultModelType = ModelTypeFromString(localeData[kDefaultModelTypeKey].asString());
@@ -104,18 +104,18 @@ bool MicTriggerConfig::Init(const std::string& triggerKey, const Json::Value& in
     // Load the model data list, make sure there's at least one entry
     if (!localeData.isMember(kModelListKey) || !localeData[kModelListKey].isArray())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.LocaleModelData",
-                        "Locale data item does not contain model data.\n%s",
-                        Json::StyledWriter().write(localeData).c_str());
+      LOG_ERROR("MicTriggerConfig.LocaleModelData",
+                "Locale data item does not contain model data.\n%s",
+                Json::StyledWriter().write(localeData).c_str());
       continue;
     }
     const Json::Value& modelDataList = localeData[kModelListKey];
     auto newModelDataMap = InitModelData(modelDataList);
     if (newModelDataMap.empty())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.LocaleModelData",
-                        "Locale data item model data is empty, ignoring.\n%s",
-                        Json::StyledWriter().write(localeData).c_str());
+      LOG_ERROR("MicTriggerConfig.LocaleModelData",
+                "Locale data item model data is empty, ignoring.\n%s",
+                Json::StyledWriter().write(localeData).c_str());
       continue;
     }
 
@@ -133,7 +133,7 @@ MicTriggerConfig::ModelDataMap MicTriggerConfig::InitModelData(const Json::Value
   // Verify this is a list of model data
   if (!modelDataList.isArray())
   {
-    PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.JsonData", "Model data is not an array.");
+    LOG_ERROR("MicTriggerConfig.InitModelData.JsonData", "Model data is not an array.");
     return ModelDataMap{};
   }
 
@@ -144,34 +144,34 @@ MicTriggerConfig::ModelDataMap MicTriggerConfig::InitModelData(const Json::Value
     const Json::Value& modelData = modelDataList[i];
     if (!modelData.isObject())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.JsonData", "Model data is not an object.");
+      LOG_ERROR("MicTriggerConfig.InitModelData.JsonData", "Model data is not an object.");
       continue;
     }
 
     // Verify the model type
     if (!modelData.isMember(kModelTypeKey) || !modelData[kModelTypeKey].isString())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.ModelType",
-                        "Model data item does not contain model type.\n%s",
-                        Json::StyledWriter().write(modelData).c_str());
+      LOG_ERROR("MicTriggerConfig.InitModelData.ModelType",
+                "Model data item does not contain model type.\n%s",
+                Json::StyledWriter().write(modelData).c_str());
       continue;
     }
     auto nextModelType = ModelTypeFromString(modelData[kModelTypeKey].asString());
     if (nextModelType == ModelType::Count || newModelDataMap.find(nextModelType) != newModelDataMap.end())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.ModelType",
-                        "Model type %d(%s)not valid or already used", 
-                        (int) nextModelType, 
-                        kModelTypeStrings[(int) nextModelType].c_str());
+      LOG_ERROR("MicTriggerConfig.InitModelData.ModelType",
+                "Model type %d(%s)not valid or already used",
+                (int) nextModelType,
+                kModelTypeStrings[(int) nextModelType].c_str());
       continue;
     }
 
     // Verify the data directory is specified
     if (!modelData.isMember(kDataDirectoryKey) || !modelData[kDataDirectoryKey].isString())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.DataDirectory",
-                        "Model data item does not contain DataDirectory.\n%s",
-                        Json::StyledWriter().write(modelData).c_str());
+      LOG_ERROR("MicTriggerConfig.InitModelData.DataDirectory",
+                "Model data item does not contain DataDirectory.\n%s",
+                Json::StyledWriter().write(modelData).c_str());
       continue;
     }
     const auto& dataDir = modelData[kDataDirectoryKey].asString();
@@ -179,9 +179,9 @@ MicTriggerConfig::ModelDataMap MicTriggerConfig::InitModelData(const Json::Value
     // Verify the net file name is specified
     if (!modelData.isMember(kNetFileNameKey) || !modelData[kNetFileNameKey].isString())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.NetFileName",
-                        "Model data item does not contain NetFileName.\n%s",
-                        Json::StyledWriter().write(modelData).c_str());
+      LOG_ERROR("MicTriggerConfig.InitModelData.NetFileName",
+                "Model data item does not contain NetFileName.\n%s",
+                Json::StyledWriter().write(modelData).c_str());
       continue;
     }
     const auto& netFileName = modelData[kNetFileNameKey].asString();
@@ -189,9 +189,9 @@ MicTriggerConfig::ModelDataMap MicTriggerConfig::InitModelData(const Json::Value
     // Verify the default search file index is specified
     if (!modelData.isMember(kDefaultSearchFileIndexKey) || !modelData[kDefaultSearchFileIndexKey].isInt())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.DefaultSearchFileIndex",
-                        "Model data item does not contain DefaultSearchFileIndex.\n%s",
-                        Json::StyledWriter().write(modelData).c_str());
+      LOG_ERROR("MicTriggerConfig.InitModelData.DefaultSearchFileIndex",
+                "Model data item does not contain DefaultSearchFileIndex.\n%s",
+                Json::StyledWriter().write(modelData).c_str());
       continue;
     }
     const auto defaultSearchFileIndex = modelData[kDefaultSearchFileIndexKey].asInt();
@@ -199,9 +199,9 @@ MicTriggerConfig::ModelDataMap MicTriggerConfig::InitModelData(const Json::Value
     // Verify the search file list is specified
     if (!modelData.isMember(kSearchFileListKey) || !modelData[kSearchFileListKey].isArray())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.SearchFileList",
-                        "Model data item does not contain SearchFileList.\n%s",
-                        Json::StyledWriter().write(modelData).c_str());
+      LOG_ERROR("MicTriggerConfig.InitModelData.SearchFileList",
+                "Model data item does not contain SearchFileList.\n%s",
+                Json::StyledWriter().write(modelData).c_str());
       continue;
     }
     
@@ -212,30 +212,30 @@ MicTriggerConfig::ModelDataMap MicTriggerConfig::InitModelData(const Json::Value
       const Json::Value& searchFileData = searchFileList[i];
       if (!searchFileData.isObject())
       {
-        PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.SearchFileData", "SearchFile data is not an object.");
+        LOG_ERROR("MicTriggerConfig.InitModelData.SearchFileData", "SearchFile data is not an object.");
         continue;
       }
 
       // Verify the search file index
       if (!searchFileData.isMember(kSearchFileIndexKey) || !searchFileData[kSearchFileIndexKey].isIntegral())
       {
-        PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.SearchFileIndex",
-                          "Search file data item does not contain index.");
+        LOG_ERROR("MicTriggerConfig.InitModelData.SearchFileIndex",
+                  "Search file data item does not contain index.");
         continue;
       }
       auto searchFileIndex = searchFileData[kSearchFileIndexKey].asInt();
       if (newSearchFileMap.find(searchFileIndex) != newSearchFileMap.end())
       {
-        PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.SearchFileIndex",
-                          "SearchFileIndex %d already used", searchFileIndex);
+        LOG_ERROR("MicTriggerConfig.InitModelData.SearchFileIndex",
+                  "SearchFileIndex %d already used", searchFileIndex);
         continue;
       }
 
       // Verify the search file name
       if (!searchFileData.isMember(kSearchFileNameKey) || !searchFileData[kSearchFileNameKey].isString())
       {
-        PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.SearchFileName",
-                          "Search file data item does not contain file name.");
+        LOG_ERROR("MicTriggerConfig.InitModelData.SearchFileName",
+                  "Search file data item does not contain file name.");
         continue;
       }
       const auto& searchFileName = searchFileData[kSearchFileNameKey].asString();
@@ -244,8 +244,8 @@ MicTriggerConfig::ModelDataMap MicTriggerConfig::InitModelData(const Json::Value
 
     if (newSearchFileMap.empty())
     {
-      PRINT_NAMED_ERROR("MicTriggerConfig.InitModelData.SearchFiles",
-                        "Model data item does not contain SearchFiles.");
+      LOG_ERROR("MicTriggerConfig.InitModelData.SearchFiles",
+                "Model data item does not contain SearchFiles.");
       continue;
     }
 

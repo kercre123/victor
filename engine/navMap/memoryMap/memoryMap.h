@@ -13,11 +13,8 @@
 #define ANKI_COZMO_MEMORY_MAP_H
 
 #include "engine/navMap/iNavMap.h"
-
-#include "coretech/common/engine/robotTimeStamp.h"
-
 #include "engine/navMap/quadTree/quadTree.h"
-
+#include "engine/navMap/quadTree/quadTreeProcessor.h"
 
 #include <shared_mutex>
 
@@ -31,22 +28,22 @@ friend class CST_NavMap;    // allow access for webots test for NavMap
 
 public:
 
-  using EContentType     = MemoryMapTypes::EContentType;
-  using FullContentArray = MemoryMapTypes::FullContentArray;
-  using MemoryMapRegion  = MemoryMapTypes::MemoryMapRegion;
+  using EContentType           = MemoryMapTypes::EContentType;
+  using FullContentArray       = MemoryMapTypes::FullContentArray;
+  using MemoryMapRegion        = MemoryMapTypes::MemoryMapRegion;
+  using MemoryMapDataConstList = MemoryMapTypes::MemoryMapDataConstList;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   MemoryMap();
-  virtual ~MemoryMap() {}
+  virtual ~MemoryMap();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // From INavMemoryMap
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
   
   // add data to the memory map defined by poly
-  virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) override { return Insert(MemoryMapRegion( FastPolygon(poly) ), data); }
   virtual bool Insert(const MemoryMapRegion& r, const MemoryMapData& data) override;
   virtual bool Insert(const MemoryMapRegion& r, NodeTransformFunction transform) override;
   
@@ -56,68 +53,44 @@ public:
   // subclass
   virtual bool Merge(const INavMap& other, const Pose3d& transform) override;
   
-  // change the content type from typeToReplace into newData if there's a border from any of the neighborsToFillFrom towards typeToReplace
-  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, const MemoryMapDataPtr& newData) override;
-  
   // fills inner regions satisfying innerPred( inner node ) && outerPred(neighboring node), converting
   // the inner region to the given data
   bool FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data) override;
   
-  // attempt to apply a transformation function to all nodes in the tree
-  virtual bool TransformContent(NodeTransformFunction transform) override;
-  
-  // attempt to apply a transformation function to any node intersecting the poly
-  virtual bool TransformContent(const MemoryMapRegion& poly, NodeTransformFunction transform) override;
-
-  // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
+  // attempt to apply a transformation function to any node intersecting the region
+  virtual bool TransformContent(NodeTransformFunction transform, const MemoryMapRegion& region) override;
   
   // populate a list of all data that matches the predicate inside poly
-  virtual void FindContentIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
-  virtual void FindContentIf(const MemoryMapRegion& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
-
+  virtual void FindContentIf(const NodePredicate& pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const override;
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const override;
-  // return the size of the area currently flagged as interesting edges
-  virtual double GetInterestingEdgeAreaM2() const override;
-  
-  // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
-  // the region that the point generated to store the point could have an error of up to this length.
-  virtual float GetContentPrecisionMM() const override;
-  
-  // checks if the given polygon collides with the given types (any quad with that type)
-  virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const override;
-  
+    
   // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
-  virtual bool AnyOf(const Poly2f& p, NodePredicate f)          const override;
-  virtual bool AnyOf(const MemoryMapRegion& p, NodePredicate f) const override;
+  virtual bool AnyOf(const MemoryMapRegion& p, const NodePredicate& f) const override;
 
   // multi-ray variant of the AnyOf method
   // implementation may optimize for this case
-  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const override;
+  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, const NodePredicate& pred) const override;
 
   // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)
-  virtual float GetArea(const MemoryMapRegion& p, const NodePredicate& f) const override;
-  virtual float GetArea(const NodePredicate& f) const override;
+  virtual float GetArea(const NodePredicate& f, const MemoryMapRegion& r) const override;
 
-  // returns true if there are any nodes of the given type, false otherwise
-  virtual bool HasContentType(EContentType type) const override;
-  
   // Broadcast the memory map
   virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const override;
-
-  // get the timestamp the QT was last measured (we can update the QT with a new timestamp even if the content
-  // does not change)
-  virtual RobotTimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetData()->GetLastObservedTime();}
 
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // processor for this quadtree
+  QuadTreeProcessor _processor;
+
   // underlaying data container
   QuadTree          _quadTree;
+
+  // safe thread access for planner
   mutable std::shared_timed_mutex _writeAccess;
   
 }; // class

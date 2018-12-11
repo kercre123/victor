@@ -10,7 +10,6 @@
 #include "clad/types/activeObjectAccel.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorComponent/behaviorIDs.clad"
-#include "clad/types/behaviorComponent/behaviorObjectives.clad"
 #include "clad/types/behaviorComponent/userIntent.clad"
 #include "clad/types/behaviorSlot.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -628,11 +627,6 @@ message EngineErrorCodeMessage {
 //notify the game that behavior has transitioned
 message BehaviorTransition{
 }
-
-message BehaviorObjectiveAchieved{
-  BehaviorObjective behaviorObjective
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  Onboarding  ///////////////////////////////

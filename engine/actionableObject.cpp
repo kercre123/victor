@@ -295,10 +295,10 @@ namespace Anki {
           // TODO: In computing poseID to pass to DrawPreDockPose, multiply object ID by the max number of
           //       preaction poses we expect to visualize per object. Currently, hardcoded to 48 (4 dock and
           //       4 roll per side). We probably won't have more than this.
-          _vizPreActionPoseHandles.emplace_back(_vizManager->DrawPreDockPose(poseID + GetID().GetValue()*48,
-                                                                             pose.GetPose().GetWithRespectToRoot(),
-                                                                             PreActionPose::GetVisualizeColor(actionType)));
-          
+          _vizPreActionPoseHandles.emplace(_vizManager->DrawPreDockPose(poseID + GetID().GetValue()*48,
+                                                                        pose.GetPose().GetWithRespectToRoot(),
+                                                                        PreActionPose::GetVisualizeColor(actionType)));
+
           ++poseID;
         }
         

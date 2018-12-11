@@ -29,6 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
@@ -51,18 +52,19 @@
 
 #define DEBUG_TRIGGER_WORD_VERBOSE 0 // add some verbose debugging if trying to track down issues
 
-#define CONSOLE_GROUP  "TriggerWord"
+#define LOG_CHANNEL "Microphones"
+#define CONSOLE_GROUP "TriggerWord"
 
 #if DEBUG_TRIGGER_WORD_VERBOSE
   // only print these debug if we're tracking down something so we don't spam the logs
   #define PRINT_TRIGGER_DEBUG( format, ... ) \
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.TriggerWord", format, ##__VA_ARGS__ )
+    LOG_DEBUG( "BehaviorReactToVoiceCommand.TriggerWord", format, ##__VA_ARGS__ )
 #else
   #define PRINT_TRIGGER_DEBUG( format, ... )
 #endif
 
 #define PRINT_TRIGGER_INFO( format, ... ) \
-  PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.TriggerWord", format, ##__VA_ARGS__ )
+  LOG_INFO( "BehaviorReactToVoiceCommand.TriggerWord", format, ##__VA_ARGS__ )
 
 
 namespace Anki {
@@ -83,6 +85,9 @@ namespace {
   const char* kPushResponseKey                     = "pushResponse";
   const char* kNotifyOnWifiErrorsKey               = "notifyOnWifiErrors";
   const char* kNotifyOnCloudErrorsKey              = "notifyOnCloudErrors";
+
+  // If supplied, any received intent not whitelisted will be consumed and the "unknown intent" outcome execized
+  const char* kIntentWhitelistKey                  = "whiteListedIntents";
 
   CONSOLE_VAR( bool, kRespondsToTriggerWord, CONSOLE_GROUP, true );
 
@@ -242,9 +247,20 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
                         GetDebugLabel().c_str());
   }
 
+  if( !config[kIntentWhitelistKey].isNull() )
+  {
+    const Json::Value& whiteListedIntents = ConditionUserIntentPending::GenerateConfig(config[kIntentWhitelistKey]);
+    _iVars.intentWhitelistCondition = std::make_unique<ConditionUserIntentPending>(whiteListedIntents);
+  }
+
   SetRespondToTriggerWord( true );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Public destructor must be explicitly defined to allow std::unique_ptr<FwdDeclaredType> (ConditionUserIntentPending)
+BehaviorReactToVoiceCommand::~BehaviorReactToVoiceCommand()
+{
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
@@ -262,7 +278,8 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kExitAfterListeningIfNotStreamingKey,
     kPushResponseKey,
     kNotifyOnWifiErrorsKey,
-    kNotifyOnCloudErrorsKey
+    kNotifyOnCloudErrorsKey,
+    kIntentWhitelistKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -301,6 +318,12 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   {
     RobotInterface::RobotToEngineTag::triggerWordDetected
   });
+
+  if( nullptr != _iVars.intentWhitelistCondition )
+  {
+    _iVars.intentWhitelistCondition->SetOwnerDebugLabel(GetDebugLabel());
+    _iVars.intentWhitelistCondition->Init(GetBEI());
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -346,8 +369,8 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
 
     #if DEBUG_TRIGGER_WORD_VERBOSE
     {
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Debug",
-                     "Received TriggerWordDetected event with direction [%d]", (int)_triggerDirection );
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.Debug",
+                 "Received TriggerWordDetected event with direction [%d]", (int)_triggerDirection );
     }
     #endif
   }
@@ -389,10 +412,16 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   _dVars.expectingStream = uic.WillPendingTriggerWordOpenStream();
 
   // Trigger word is heard (since we've been activated) ...
-  PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Activated",
-                  "Reacting to trigger word from direction [%d] (%s stream)",
-                  (int)GetReactionDirection(),
-                  _dVars.expectingStream ? "expecting" : "not expecting");
+  LOG_DEBUG( "BehaviorReactToVoiceCommand.Activated",
+             "Reacting to trigger word from direction [%d] (%s stream)",
+             (int)GetReactionDirection(),
+             _dVars.expectingStream ? "expecting" : "not expecting" );
+
+  if( nullptr != _iVars.intentWhitelistCondition )
+  {
+    const bool setActive = true;
+    _iVars.intentWhitelistCondition->SetActive(GetBEI(), setActive);
+  }
 
   StartListening();
 }
@@ -431,6 +460,12 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
       }
     }
     gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordEnd) );
+  }
+
+  if( nullptr != _iVars.intentWhitelistCondition )
+  {
+    const bool setActive = false;
+    _iVars.intentWhitelistCondition->SetActive(GetBEI(), setActive);
   }
 
   // we've done all we can, now it's up to the next behavior to consume the user intent
@@ -506,8 +541,8 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     {
       // kill delegates, we'll handle next steps with callbacks
       // note: passing true to CancelDelegates doesn't call the callback if we also delegate
-      PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.StopListening.IntentPending",
-                    "Stopping listening because an intent is pending");
+      LOG_INFO( "BehaviorReactToVoiceCommand.StopListening.IntentPending",
+                "Stopping listening because an intent is pending" );
       CancelDelegates( false );
       StopListening();
     }
@@ -521,9 +556,9 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
       const double listeningTimeout = GetListeningTimeout();
       if ( currTime_s >= listeningTimeout )
       {
-        PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.StopListening.Error",
-                       "Stopping listening because of a(n) %s",
-                       GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
+        LOG_INFO( "BehaviorReactToVoiceCommand.StopListening.Error",
+                  "Stopping listening because of a(n) %s",
+                  GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
         CancelDelegates( false );
         StopListening();
       }
@@ -669,8 +704,8 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetDirectionFromMicHistory() cons
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnStreamingBegin()
 {
-  PRINT_CH_INFO("MicData", "BehaviorReactToVoiceCommand.OnStreamingBegin",
-                "Got notice that cloud stream is open");
+  LOG_INFO( "BehaviorReactToVoiceCommand.OnStreamingBegin",
+            "Got notice that cloud stream is open" );
   _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
   _dVars.streamingEndTime = 0.0; // reset this to we can match our start/ends
 }
@@ -683,8 +718,8 @@ void BehaviorReactToVoiceCommand::OnStreamingEnd()
   const bool notAlreadyRecordedEnd = ( _dVars.streamingEndTime <= 0.0 );
   if ( hasBegunStreaming && notAlreadyRecordedEnd )
   {
-    PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand.OnStreamingEnd",
-                   "Got notice that cloud stream is closed" );
+    LOG_INFO( "BehaviorReactToVoiceCommand.OnStreamingEnd",
+              "Got notice that cloud stream is closed" );
 
     _dVars.streamingEndTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
 
@@ -783,10 +818,18 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
 
     _dVars.intentStatus = EIntentStatus::IntentHeard;
 
-    PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Heard",
-                   "Heard an intent");
+    LOG_DEBUG( "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Heard",
+               "Heard an intent" );
 
     bool shouldTransitionToIntentFeedback = true;
+
+    if( nullptr != _iVars.intentWhitelistCondition && !_iVars.intentWhitelistCondition->AreConditionsMet(GetBEI()) )
+    {
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.NotOnWhitelist",
+                 "Heard an intent, but it was not on the intent whitelist" );
+      uic.DropAnyUserIntent();
+      _dVars.intentStatus = EIntentStatus::IntentUnknown;
+    }
 
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if ( uic.IsUserIntentPending( unmatched ) )
@@ -795,8 +838,8 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
 
       SmartActivateUserIntent( unmatched, false );
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
-      PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Unknown",
-                     "Heard an intent, but it was unknown");
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Unknown",
+                 "Heard an intent, but it was unknown" );
     }
 
     static const UserIntentTag silence = USER_INTENT(silence);
@@ -806,8 +849,8 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
 
       SmartActivateUserIntent( silence, false );
       _dVars.intentStatus = EIntentStatus::SilenceTimeout;
-      PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Silence",
-                     "Got response declaring silence timeout occurred");
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Silence",
+                 "Got response declaring silence timeout occurred" );
     }
 
     // so we're assuming that a behavior is going to come along and consume this pending intent, so we want to
@@ -820,8 +863,8 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
   else if( uic.WasUserIntentError() ) {
     uic.ResetUserIntentError();
     _dVars.intentStatus = EIntentStatus::Error;
-    PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Error",
-                   "latest user intent was an error");
+    LOG_DEBUG( "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Error",
+               "latest user intent was an error" );
   }
 }
 
@@ -830,7 +873,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
 {
   _dVars.state = EState::Thinking;
 
-  PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.TransitionToThinking", "Thinking state starting");
+  LOG_DEBUG( "BehaviorReactToVoiceCommand.TransitionToThinking", "Thinking state starting");
 
   auto callback = [this]()
   {
@@ -858,9 +901,9 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
         PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
         _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
-        PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",
-                       "Setting reaction behavior direction to [%d]",
-                       (int)triggerDirection);
+        LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",
+                   "Setting reaction behavior direction to [%d]",
+                   (int)triggerDirection );
 
         // allow the reaction to not want to run in certain directions/states
         if ( _iVars.reactionBehavior->WantsToBeActivated() )
@@ -869,16 +912,16 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
         }
         else
         {
-          PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.ReactionDoesntWantToActivate",
-                         "%s: intent reaction behavior '%s' doesn't want to activate",
-                         GetDebugLabel().c_str(),
-                         _iVars.reactionBehavior->GetDebugLabel().c_str());
+          LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.ReactionDoesntWantToActivate",
+                     "%s: intent reaction behavior '%s' doesn't want to activate",
+                     GetDebugLabel().c_str(),
+                     _iVars.reactionBehavior->GetDebugLabel().c_str() );
         }
       }
       else
       {
-        PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Thinking.TurnDisabled",
-                       "Turn after intent is received has been disabled this tick, skipping");
+        LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.TurnDisabled",
+                   "Turn after intent is received has been disabled this tick, skipping" );
       }
     }
 
@@ -904,7 +947,7 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
   {
     case EIntentStatus::IntentHeard: {
       // no animation for valid intent, go straight into the intent behavior
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Heard", "Heard valid user intent, woot!" );
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Heard", "Heard valid user intent, woot!" );
 
       // also reset the attention transfer counters since we got a valid intent
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::UnmatchedIntent);
@@ -916,8 +959,8 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
     }
 
     case EIntentStatus::IntentUnknown: {
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Unknown",
-                      "Heard user intent but could not understand it" );
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Unknown",
+                 "Heard user intent but could not understand it" );
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
       if( _iVars.unmatchedIntentBehavior->WantsToBeActivated() ) {
         // this behavior will (should) interact directly with the attention transfer component
@@ -931,8 +974,8 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
     }
 
     case EIntentStatus::SilenceTimeout: {
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Silence",
-                      "Heard silence from the user");
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Silence",
+                 "Heard silence from the user" );
       GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
       if( _iVars.silenceIntentBehavior->WantsToBeActivated() ) {
         DelegateIfInControl(_iVars.silenceIntentBehavior.get());
@@ -956,8 +999,8 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 void BehaviorReactToVoiceCommand::HandleStreamFailure()
 {
 
-  PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error",
-                  "Intent processing returned an error (or timeout)" );
+  LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Error",
+             "Intent processing returned an error (or timeout)" );
   GetBEI().GetMoodManager().TriggerEmotionEvent( "NoValidVoiceIntent" );
 
 
@@ -971,8 +1014,8 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
   ICozmoBehaviorPtr errorBehavior;
 
   if( hasSSID ) {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoCloud",
-                    "has wifi, so error must be on the internet or cloud side" );
+    LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Error.NoCloud",
+               "has wifi, so error must be on the internet or cloud side" );
 
     _iVars.cloudErrorTracker.AddOccurrence();
     if( _iVars.cloudErrorHandle && _iVars.cloudErrorHandle->AreConditionsMet() )
@@ -985,8 +1028,8 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
     }
   }
   else {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent.Error.NoWifi",
-                    "no wifi SSID, error is local" );
+    LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Error.NoWifi",
+               "no wifi SSID, error is local" );
 
     _iVars.wifiErrorTracker.AddOccurrence();
     if( _iVars.wifiErrorHandle && _iVars.wifiErrorHandle->AreConditionsMet() )
@@ -1003,9 +1046,9 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
     const MicDirectionIndex triggerDirection = GetReactionDirection();
     _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
-    PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error.SetReactionDirection",
-                   "Setting reaction behavior direction to [%d]",
-                   (int)triggerDirection);
+    LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Error.SetReactionDirection",
+               "Setting reaction behavior direction to [%d]",
+               (int)triggerDirection );
 
     auto errorBehaviorCallback = [this,errorBehavior](){
       if( ANKI_VERIFY( errorBehavior->WantsToBeActivated(),
@@ -1023,10 +1066,10 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
     }
     else
     {
-      PRINT_CH_DEBUG("MicData", "BehaviorReactToVoiceCommand.Intent.Error",
-                     "%s: intent reaction behavior '%s' doesn't want to activate (in case of intent error)",
-                     GetDebugLabel().c_str(),
-                     _iVars.reactionBehavior->GetDebugLabel().c_str());
+      LOG_DEBUG( "BehaviorReactToVoiceCommand.Intent.Error",
+                 "%s: intent reaction behavior '%s' doesn't want to activate (in case of intent error)",
+                 GetDebugLabel().c_str(),
+                 _iVars.reactionBehavior->GetDebugLabel().c_str() );
       errorBehaviorCallback();
     }
   }

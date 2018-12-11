@@ -36,6 +36,8 @@
 
 #include "webServerProcess/src/webVizSender.h"
 
+#define LOG_CHANNEL "Actions"
+
 namespace Anki {
 
   namespace Vector {
@@ -78,14 +80,14 @@ namespace Anki {
     PlayAnimationAction::~PlayAnimationAction()
     {
       if (HasStarted() && !_stoppedPlaying) {
-        PRINT_CH_INFO("Actions", "PlayAnimationAction.Destructor.StillStreaming",
-                         "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
-                         _animName.c_str());
+        LOG_INFO("PlayAnimationAction.Destructor.StillStreaming",
+                 "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
+                 _animName.c_str());
         if (HasRobot()) {
           GetRobot().GetAnimationComponent().StopAnimByName(_animName);          
         } else {
           // This shouldn't happen if HasStarted()...
-          PRINT_NAMED_WARNING("PlayAnimationAction.Dtor.NoRobot", "");
+          LOG_WARNING("PlayAnimationAction.Dtor.NoRobot", "");
         }
       }
 
@@ -121,9 +123,9 @@ namespace Anki {
                                                         "PlayAnimationAction.LockBodyOnCharger" );
           _bodyTrackManuallyLocked = true;
 
-          PRINT_CH_DEBUG("Animations", "PlayAnimationAction.LockingBodyOnCharger",
-                         "anim '%s' is not in the whitelist, locking the body track",
-                         _animName.c_str());
+          LOG_DEBUG("PlayAnimationAction.LockingBodyOnCharger",
+                    "anim '%s' is not in the whitelist, locking the body track",
+                    _animName.c_str());
         }
       }
     }
@@ -272,8 +274,8 @@ namespace Anki {
       {
         _animGroupName = data_ldr->GetAnimationForTrigger(_animTrigger);
         if(_animGroupName.empty()) {
-          PRINT_NAMED_WARNING("TriggerAnimationAction.EmptyAnimGroupNameForTrigger",
-                              "Event: %s", EnumToString(_animTrigger));
+          LOG_WARNING("TriggerAnimationAction.EmptyAnimGroupNameForTrigger",
+                      "Event: %s", EnumToString(_animTrigger));
         }
       }
 
@@ -283,8 +285,8 @@ namespace Anki {
     {
       if(_animGroupName.empty())
       {
-        PRINT_NAMED_WARNING("TriggerAnimationAction.NoAnimationForTrigger",
-                            "Event: %s", EnumToString(_animTrigger));
+        LOG_WARNING("TriggerAnimationAction.NoAnimationForTrigger",
+                    "Event: %s", EnumToString(_animTrigger));
 
         return ActionResult::NO_ANIM_NAME;
       }
@@ -431,14 +433,57 @@ namespace Anki {
         // StopAfterNextLoop() was called before Init(). Set a flag to stop on the first call to
         // CheckIfDone(), since the other flags (_numLoopsRemaining, etc) get set during Init().
         _completeImmediately = true;
-        PRINT_CH_INFO("Actions", "ReselectingLoopAnimationAction.StopAfterNextLoop.NotStarted",
-                         "Action was told to StopAfterNextLoop, but hasn't started, so will end before the first loop");
+        LOG_INFO("ReselectingLoopAnimationAction.StopAfterNextLoop.NotStarted",
+                 "Action was told to StopAfterNextLoop, but hasn't started, so will end before the first loop");
       }
       
       _numLoopsRemaining = 1;
       _loopForever = false;
     }
 
+    #pragma mark ---- LoopAnimWhileAction ----
+    
+    LoopAnimWhileAction::LoopAnimWhileAction(IActionRunner* primaryAction,
+                                             const AnimationTrigger loopAnim,
+                                             const float maxWaitTime_sec)
+      : CompoundActionParallel()
+      , _maxWaitTime_sec(maxWaitTime_sec)
+    {
+      _primaryAction = AddAction(primaryAction);
+      _animAction = AddAction(new ReselectingLoopAnimationAction(loopAnim));
+    }
+    
+    Result LoopAnimWhileAction::UpdateDerived()
+    {
+      const auto now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      const bool primaryActionComplete = _primaryAction.expired();
+      if (primaryActionComplete && _timePrimaryActionCompleted < 0.f) {
+        // Primary action just completed
+        _timePrimaryActionCompleted = now_sec;
+        
+        if (auto ptr = _animAction.lock()) {
+          auto animActionPtr = std::static_pointer_cast<ReselectingLoopAnimationAction>(ptr);
+          if (animActionPtr != nullptr) {
+            animActionPtr->StopAfterNextLoop();
+          }
+        }
+      }
+      
+      // Check for max wait timeout
+      const bool hasMaxWaitTime = (_maxWaitTime_sec >= 0.f);
+      if (primaryActionComplete &&
+          hasMaxWaitTime &&
+          (now_sec - _timePrimaryActionCompleted) > _maxWaitTime_sec) {
+        LOG_WARNING("LoopAnimWhileAction.UpdateDerived.MaxWaitTimeExceeded",
+                    "The primary action has completed, and we have been waiting for the animation to complete for too "
+                    "long, so cancelling the action (maxWaitTime %.2f sec)",
+                    _maxWaitTime_sec);
+        return RESULT_FAIL;
+      }
+      
+      return RESULT_OK;
+    }
 
   }
 }

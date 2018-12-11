@@ -21,7 +21,6 @@
 namespace Anki {
 namespace Vector {
 
-class MemoryMapData;
 class QuadTreeNode;
 
 namespace QuadTreeTypes {
@@ -30,23 +29,46 @@ namespace QuadTreeTypes {
 // Types
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
 
-// content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
-struct NodeContent {
-  explicit NodeContent(const MemoryMapData& m);
-  explicit NodeContent(MemoryMapDataPtr m);
-  
-  // comparison operators
-  bool operator==(const NodeContent& other) const;
-  bool operator!=(const NodeContent& other) const;
-  
-  MemoryMapDataPtr data;
+// wrapper for a tuple that allows implicit casting to any of its contained types
+template <typename... Ts>
+class SmartTuple : public std::tuple<Ts...> {
+private:
+  // general case - assume false since Types can be empty
+  template <typename... Types>
+  struct has_type : std::false_type {};
+
+  // Test type is different from Head, so recurse on Tail
+  template <typename Test, typename Head, typename... Tail>
+  struct has_type<Test, Head, Tail...> : has_type<Test, Tail...> {};
+
+  // Head and Test are the same type, so we have Test type
+  template <typename Test, typename... Tail>
+  struct has_type<Test, Test, Tail...> : std::true_type {};
+
+  // the empty list of types is Unique
+  template <typename... Types>
+  struct is_unique_set : std::true_type {};
+
+  // to be unique, Tail must not contain Head, and Tail must be unique
+  template <typename Head, typename... Tail>
+  struct is_unique_set<Head, Tail...> : std::integral_constant<bool, !has_type<Head, Tail...>::value && is_unique_set<Tail...>::value> {};
+
+public:
+  // make sure SmartTuple only contains unique types
+  static_assert(is_unique_set<Ts...>::value, "SmartTuple cannot have duplicate types");
+
+  SmartTuple() : std::tuple<Ts...>() {}
+  SmartTuple(const SmartTuple<Ts...>& n) : std::tuple<Ts...>(n) {}
+
+  // NOTE: use `enable_if_t` here, otherwise we will try to cast to find `SmartTuple<Ts...>` inside `std::tuple<Ts...>`
+  //       and get `tuple:1017:5: error: static_assert failed "type not found in type list"` 
+  template <typename U, typename = std::enable_if_t<has_type<U, Ts...>::value>>
+  SmartTuple(const U& u) : std::tuple<Ts...>() { std::get<U>(*this) = u; }
+
+  template <typename U, typename = std::enable_if_t<has_type<U, Ts...>::value>>
+  operator U() const { return std::get<U>(*this); }
 };
-
-
-using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
-using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
 
 // wrapper class for specifying the interface between QT actions and geometry methods
 class FoldableRegion {
@@ -102,15 +124,18 @@ enum class EQuadrant : uint8_t {
   PlusXMinusY  = 1,
   MinusXPlusY  = 2,
   MinusXMinusY = 3,
-  Root     = 4, // needed for the root node, who has no parent
-  Invalid  = 255
+  Root         = 4 // needed for the root node, who has no parent
 };
 
 // movement direction
 enum class EDirection { PlusX, PlusY, MinusX, MinusY };
 
-// a sequence of quadrants that can be used to find a specific node in a full QuadTree without geometry checks
-using NodeAddress = std::vector<EQuadrant>;
+using MemoryMapDataPtr      = MemoryMapDataWrapper<MemoryMapData>;
+using NodeContent           = SmartTuple<MemoryMapDataPtr>;
+using NodeTransformFunction = std::function<NodeContent (const NodeContent&)>;
+using NodeAddress           = std::vector<EQuadrant>;
+using FoldFunctor           = std::function<void (QuadTreeNode& node)>;
+using FoldFunctorConst      = std::function<void (const QuadTreeNode& node)>;;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions

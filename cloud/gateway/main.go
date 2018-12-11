@@ -32,6 +32,7 @@ import (
 // Most useful for debugging the json output being sent to the app.
 const (
 	logVerbose          = false
+	logMessageContent   = false
 	hostProtocolVersion = 2
 	minProtocolVersion  = 0
 )
@@ -68,9 +69,17 @@ func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Un
 	}()
 	nameList := strings.Split(info.FullMethod, "/")
 	name := nameList[len(nameList)-1]
-	log.Printf("Received rpc request %s(%#v)\n", name, req)
+	if logMessageContent {
+		log.Printf("Received rpc request %s(%#v)\n", name, req)
+	} else {
+		log.Printf("Received rpc request %s\n", name)
+	}
 	resp, err := handler(ctx, req)
-	log.Printf("Sending rpc response %s(%#v)\n", name, resp)
+	if logMessageContent {
+		log.Printf("Sending rpc response %s(%#v)\n", name, resp)
+	} else {
+		log.Printf("Sending rpc response %s\n", name)
+	}
 	return resp, err
 }
 
@@ -83,7 +92,11 @@ func LoggingStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.
 	}()
 	nameList := strings.Split(info.FullMethod, "/")
 	name := nameList[len(nameList)-1]
-	log.Printf("Received stream request %s(%#v)\n", name, srv)
+	if logMessageContent {
+		log.Printf("Received stream request %s(%#v)\n", name, srv)
+	} else {
+		log.Printf("Received stream request %s\n", name)
+	}
 	return handler(srv, ss)
 }
 

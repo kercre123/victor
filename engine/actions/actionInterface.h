@@ -125,7 +125,7 @@ namespace Anki {
 
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action should not try to lock or unlock tracks it uses
-      void ShouldSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
+      void ShouldSuppressTrackLocking(bool tf);
       bool IsSuppressingTrackLocking() const { return _suppressTrackLocking; }
 
       // By default, the completion of any action could cause a mood event (the robot's mood manager defines

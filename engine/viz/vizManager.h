@@ -240,12 +240,6 @@ namespace Anki {
       void DrawRobotBoundingBox(const u32 quadID,
                                 const Quadrilateral<3,T>& quad,
                                 const ColorRGBA& color);
-      
-      template<typename T>
-      void DrawPlannerObstacle(const bool isReplan,
-                               const u32 quadID,
-                               const Polygon<2,T>& poly,
-                               const ColorRGBA& color);
 
       template<typename T>
       void DrawPoseMarker(const u32 quadID,
@@ -280,12 +274,10 @@ namespace Anki {
       // Erases all quads
       void EraseAllQuads();
       
-      void EraseAllPlannerObstacles(const bool isReplan);
-      
       void EraseAllMatMarkers();
 
       // ==== Draw functions without identifier =====
-      // This supports sending requests to draw primitives without requiring to assign a single ID to every
+      // This supports sending requests to draw segments without requiring to assign a single ID to every
       // one of them, but a group. Used for debugging purposes where the underlaying geometry is not directly
       // related to a given object
       
@@ -531,19 +523,7 @@ namespace Anki {
     {
       DrawQuad(VizQuadType::VIZ_QUAD_MAT_MARKER, quadID, quad, color);
     }
-    
-    template<typename T>
-    void VizManager::DrawPlannerObstacle(const bool isReplan,
-                                         const u32 polyID,
-                                         const Polygon<2,T>& poly,
-                                         const ColorRGBA& color)
-    {
-      // const u32 polyType = (isReplan ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE);
-      
-      DrawPoly(polyID, poly, color);
-    }
 
-    
     template<typename T>
     void VizManager::DrawRobotBoundingBox(const u32 quadID,
                                           const Quadrilateral<3,T>& quad,
@@ -565,7 +545,7 @@ namespace Anki {
     void VizManager::DrawSegment(const std::string& identifier,
       const Point<3,T>& from, const Point<3,T>& to, const ColorRGBA& color, bool clearPrevious, float zOffset)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::SegmentPrimitive
+      SendMessage(VizInterface::MessageViz(VizInterface::LineSegment
         {identifier,
          color.AsRGBA(),
          { {Anki::Util::numeric_cast<float>(MM_TO_M(from.x())),

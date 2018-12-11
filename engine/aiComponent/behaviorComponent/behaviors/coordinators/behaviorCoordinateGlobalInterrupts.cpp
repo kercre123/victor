@@ -54,9 +54,11 @@ namespace{
                                                                            BEHAVIOR_CLASS(RollBlock) }};
 
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressReactToSound = {{ BEHAVIOR_CLASS(BlackJack),
+                                                                                   BEHAVIOR_CLASS(DanceToTheBeat),
                                                                                    BEHAVIOR_CLASS(FetchCube),
                                                                                    BEHAVIOR_CLASS(FistBump),
                                                                                    BEHAVIOR_CLASS(Keepaway),
+                                                                                   BEHAVIOR_CLASS(ListenForBeats),
                                                                                    BEHAVIOR_CLASS(InspectCube),
                                                                                    BEHAVIOR_CLASS(PickUpCube),
                                                                                    BEHAVIOR_CLASS(PopAWheelie),

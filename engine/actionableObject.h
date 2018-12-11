@@ -93,7 +93,7 @@ namespace Anki {
       //void AddActiveLED(const Pose3d& poseWrtObject);
       
     private:      
-      mutable std::vector<VizManager::Handle_t> _vizPreActionPoseHandles;
+      mutable std::set<VizManager::Handle_t> _vizPreActionPoseHandles;
       
       // Set of pathIDs for visualizing the preActionLines
       mutable std::set<u32> _vizPreActionLineIDs;

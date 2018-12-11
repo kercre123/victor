@@ -15,13 +15,14 @@
 #define __AnimProcess_CozmoAnim_MicDataSystem_H_
 
 #include "micDataTypes.h"
-#include "clad/types/beatDetectorTypes.h"
 #include "coretech/common/shared/types.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 #include "util/global/globalDefinitions.h"
 #include "util/environment/locale.h"
 
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/beatDetectorTypes.h"
 
 #include <cstdint>
 #include <deque>
@@ -142,6 +143,7 @@ private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
   std::string _writeLocationDir = "";
+  std::string _persistentFolder;
   // Members for the the mic jobs
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
   std::shared_ptr<MicDataInfo> _currentStreamingJob;
@@ -189,12 +191,20 @@ private:
   
   std::atomic<bool> _micMuted;
 
+  // if hey vector is spoken, we'll need to abort the alexa pairing screen if it's active. The overly verbose
+  // name is becuase we hardcode the "reason" that we are leaving the pairing screen based on the assumption
+  // that this is triggered via a "hey vector" wakeword
+  std::atomic<bool> _abortAlexaScreenDueToHeyVector;
+
   void SetWillStream(bool willStream) const;
 
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
+  void SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info,
+                            const char* stateStr) const;
+
   const AnimContext* _context;
 };
 

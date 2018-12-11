@@ -1091,7 +1091,7 @@ void MovementComponent::PrintLockState() const
     }
   }
 
-  LOG_DEBUG("MovementComponent.LockState", "%s", ss.str().c_str());
+  LOG_INFO("MovementComponent.LockState", "%s", ss.str().c_str());
 }
 
 std::string MovementComponent::WhoIsLocking(u8 trackFlags) const

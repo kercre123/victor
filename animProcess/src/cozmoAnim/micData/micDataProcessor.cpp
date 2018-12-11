@@ -72,7 +72,7 @@ namespace {
 
 #endif // ANKI_DEV_CHEATS
 
-  CONSOLE_VAR(bool, kBeatDetectorUseProcessedAudio, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kBeatDetectorUseProcessedAudio, CONSOLE_GROUP, true);
   
   #define ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG 0
   using MicProcessingState = MicDataProcessor::ProcessingState;
@@ -161,7 +161,7 @@ void MicDataProcessor::VoiceTriggerWordDetection(const AudioUtil::SpeechRecogniz
   TriggerWordDetectCallback(TriggerWordDetectSource::Voice, info);
 }
   
-void MicDataProcessor::FakeTriggerWordDetection()
+void MicDataProcessor::FakeTriggerWordDetection(bool fromMute)
 {
   const AudioUtil::SpeechRecognizer::SpeechCallbackInfo info {
     .result       = "",
@@ -169,7 +169,15 @@ void MicDataProcessor::FakeTriggerWordDetection()
     .endTime_ms   = 0,
     .score        = 0.0f
   };
-  TriggerWordDetectCallback(TriggerWordDetectSource::Button, info);
+  const auto source = fromMute ? TriggerWordDetectSource::ButtonFromMute : TriggerWordDetectSource::Button;
+  TriggerWordDetectCallback(source, info);
+}
+
+void MicDataProcessor::GetLatestMicDirectionData(MicDirectionData& out_lastSample,
+                                                 DirectionIndex& out_dominantDirection) const
+{
+  out_lastSample = _micImmediateDirection->GetLatestSample();
+  out_dominantDirection = _micImmediateDirection->GetDominantDirection();
 }
   
 void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
@@ -182,18 +190,31 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
     return;
   }
   
+  // By the time the earcon completes, engine may have changed its response, so assume the decision to stream
+  // should be based on the engine-requested state at the time of the trigger word callback. Ugh.
+  // Anyway, we should cache shouldStream and use it in earConCallback
+  bool shouldStream = showStreamState->ShouldStreamAfterTriggerWordResponse();
+  
   // Start command stream after EarCon completes
-  auto earConCallback = [this](bool success) {
+  auto earConCallback = [this,shouldStream](bool success) {
     // If we didn't succeed, it means that we didn't have a wake word response setup
     if (success) {
-      RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs();
+      RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs(shouldStream);
       LOG_INFO("MicDataProcessor.TWCallback", "Timestamp %d", (TimeStamp_t)mostRecentTimestamp);
     }
     else {
-      PRINT_NAMED_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
+      LOG_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
     }
   };
-  showStreamState->SetPendingTriggerResponseWithGetIn(earConCallback);
+  
+  const bool muteButton = (source == TriggerWordDetectSource::ButtonFromMute);
+  const bool buttonPress = (source == TriggerWordDetectSource::Button) || muteButton;
+  if( muteButton ) {
+    // don't play the get-in if this trigger word started from mute, because the mute animation should be playing
+    showStreamState->SetPendingTriggerResponseWithoutGetIn(earConCallback);
+  } else {
+    showStreamState->SetPendingTriggerResponseWithGetIn(earConCallback);
+  }
 
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
   const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
@@ -202,7 +223,8 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.direction = currentDirection;
-  twDetectedMessage.isButtonPress = (source == TriggerWordDetectSource::Button);
+  twDetectedMessage.isButtonPress = buttonPress;
+  twDetectedMessage.fromMute = muteButton;
   twDetectedMessage.triggerScore = (uint32_t) info.score;
   twDetectedMessage.willOpenStream = willStreamAudio;
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
@@ -290,12 +312,11 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
   return mostRecentTimestamp;
 }
 
-RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs()
+RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStream)
 {
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   RobotTimeStamp_t mostRecentTimestamp = 0;
   
-  if (showStreamState->ShouldStreamAfterTriggerWordResponse())
+  if (shouldStream)
   {
     // First we create the job responsible for streaming the intent after the trigger
     mostRecentTimestamp = CreateStreamJob(CloudMic::StreamType::Normal, kTriggerOverlapSize_ms);
@@ -713,6 +734,8 @@ void MicDataProcessor::ProcessRawLoop()
       {
         job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
       }
+      
+      _speechRecognizerSystem->UpdateRaw(audioChunk, kRawAudioChunkSize);
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
       if(!FACTORY_TEST)

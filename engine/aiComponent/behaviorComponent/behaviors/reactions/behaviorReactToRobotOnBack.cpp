@@ -116,16 +116,13 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
       AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
 
       DelegateIfInControl(new TriggerAnimationAction(anim),
-                  &BehaviorReactToRobotOnBack::DelayThenFlipDown);
+                          &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
       const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
       PRINT_CH_INFO("Behaviors", "BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
       DelegateIfInControl(new CalibrateMotorAction(true, false, EnumToString(MotorCalibrationReason::BehaviorReactToOnBack)),
-                  &BehaviorReactToRobotOnBack::DelayThenFlipDown);
+                          &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     }
-  }
-  else {
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnBack);
   }
 }
 
@@ -135,10 +132,7 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown()
 {
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnBack ) {
     DelegateIfInControl(new WaitAction(kWaitTimeBeforeRepeatAnim_s),
-                &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
-  }
-  else {
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnBack);
+                        &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
   }
 }
 

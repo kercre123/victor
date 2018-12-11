@@ -51,6 +51,13 @@ namespace Vision {
     void SetName(const std::string& newName);
     bool HasName() const;
     
+    // If this face has a name, it will be returned. Otherwise, the best guess
+    // will be returned (which could still be none/empty). The best guess need
+    // not be as confident a match as the "regular" name above, but may be useful
+    // in some situations when we're willing to be less sure about someone's identity.
+    const std::string& GetBestGuessName() const;
+    void SetBestGuessName(const std::string& name);
+    
     // Returns true if tracking is happening vs. false if face was just detected
     bool IsBeingTracked() const;
     void SetIsBeingTracked(bool tf);
@@ -107,6 +114,9 @@ namespace Vision {
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
 
+    // This is derived from gaze similar to how head
+    // pose is derived from head yaw, pitch and roll.
+    // The eye pose is independent of the head pose.
     const Pose3d& GetEyePose() const;
     void SetEyePose(Pose3d& pose);
 
@@ -176,6 +186,7 @@ namespace Vision {
     Pose3d _gazeDirectionPose;
 
     std::string    _name;
+    std::string    _bestGuessName;
     
     Rectangle<f32> _rect;
     
@@ -314,6 +325,14 @@ namespace Vision {
     _isTranslationSet = true;
   }
 
+  inline const Pose3d& TrackedFace::GetEyePose() const {
+    return _eyePose;
+  }
+
+  inline void TrackedFace::SetEyePose(Pose3d &pose) {
+    _eyePose = pose;
+  }
+
   inline const std::string& TrackedFace::GetName() const {
     return _name;
   }
@@ -332,6 +351,14 @@ namespace Vision {
   
   inline void TrackedFace::SetName(const std::string& newName) {
     _name = newName;
+  }
+  
+  inline void TrackedFace::SetBestGuessName(const std::string& name) {
+    _bestGuessName = name;
+  }
+  
+  inline const std::string& TrackedFace::GetBestGuessName() const {
+    return (HasName() ? GetName() : _bestGuessName);
   }
   
   inline void TrackedFace::SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info) {
@@ -378,14 +405,6 @@ namespace Vision {
 
   inline void TrackedFace::SetGazeDirectionPose(const Pose3d& gazeDirectionPose) {
     _gazeDirectionPose = gazeDirectionPose;
-  }
-
-  inline const Pose3d& TrackedFace::GetEyePose() const {
-    return _eyePose;
-  }
-
-  inline void TrackedFace::SetEyePose(Pose3d &pose) {
-    _eyePose = pose;
   }
 
 } // namespace Vision

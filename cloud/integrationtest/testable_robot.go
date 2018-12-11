@@ -40,19 +40,17 @@ func tokenServiceOptions(socketNameSuffix string) []token.Option {
 	}
 }
 
-func jdocsServiceOptions(socketNameSuffix string, tokener token.Accessor) []jdocs.Option {
+func jdocsServiceOptions(socketNameSuffix string) []jdocs.Option {
 	return []jdocs.Option{
 		jdocs.WithServer(),
 		jdocs.WithSocketNameSuffix(socketNameSuffix),
-		jdocs.WithTokener(tokener),
 	}
 }
 
-func logcollectorServiceOptions(socketNameSuffix string, tokener token.Accessor) []logcollector.Option {
+func logcollectorServiceOptions(socketNameSuffix string) []logcollector.Option {
 	return []logcollector.Option{
 		logcollector.WithServer(),
 		logcollector.WithSocketNameSuffix(socketNameSuffix),
-		logcollector.WithTokener(tokener),
 		logcollector.WithHTTPClient(getHTTPClient()),
 		logcollector.WithS3UrlPrefix(config.Env.LogFiles),
 		logcollector.WithAwsRegion("us-west-2"),
@@ -151,8 +149,6 @@ func (r *testableRobot) run() {
 		return
 	}
 
-	tokener := token.GetAccessor(identityProvider)
-
 	options := []cloudproc.Option{cloudproc.WithIdentityProvider(identityProvider)}
 
 	options = append(options, cloudproc.WithVoice(r.process))
@@ -160,8 +156,8 @@ func (r *testableRobot) run() {
 
 	socketNameSuffix := strconv.Itoa(r.instanceOptions.testID)
 	options = append(options, cloudproc.WithTokenOptions(tokenServiceOptions(socketNameSuffix)...))
-	options = append(options, cloudproc.WithJdocs(jdocsServiceOptions(socketNameSuffix, tokener)...))
-	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorServiceOptions(socketNameSuffix, tokener)...))
+	options = append(options, cloudproc.WithJdocs(jdocsServiceOptions(socketNameSuffix)...))
+	options = append(options, cloudproc.WithLogCollectorOptions(logcollectorServiceOptions(socketNameSuffix)...))
 
 	cloudproc.Run(context.Background(), options...)
 }

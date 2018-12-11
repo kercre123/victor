@@ -38,12 +38,15 @@
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/SoftwareInfoSenderObserverInterface.h>
+#include <Alerts/AlertObserverInterface.h>
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
 #include <AVSCommon/AVS/IndicatorState.h>
 
 #include <functional>
 #include <string>
 #include <set>
+#include <unordered_map>
+#include <thread>
 
 namespace alexaClientSDK {
   namespace capabilitiesDelegate { class CapabilitiesDelegate; }
@@ -75,20 +78,27 @@ public:
   
   ~AlexaImpl();
   
-  bool Init( const AnimContext* context );
+  // Starts an async init thread that when complete runs a callback on the same thread as callers to Update()
+  using InitCompleteCallback = std::function<void(bool initSuccessful)>;
+  void Init( const AnimContext* context, InitCompleteCallback&& completionCallback );
+  
+  // If true, the sdk is ready to go (but may not be connected yet)
+  bool IsInitialized() const { return _initState == InitState::Completed; }
   
   void Update();
   
   void Logout();
   
-  void StopForegroundActivity();
+  bool IsAlertActive() const { return _alertActive; }
+  
+  void StopAlert();
   
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples );
   
   void NotifyOfTapToTalk();
   
-  void NotifyOfWakeWord( size_t fromSampleIndex, size_t toSampleIndex );
+  void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
   
   // Callback setters
   
@@ -112,6 +122,9 @@ public:
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
   using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
+  
+  void UpdateAsyncInit();
+  void InitThread();
   
   std::vector<std::shared_ptr<std::istream>> GetConfigs() const;
   
@@ -137,6 +150,7 @@ private:
   void OnSendComplete( alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status );
   void OnSDKLogout();
   void OnNotificationsIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state );
+  void OnAlertState( const std::string& alertID, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state );
   
   
   // readable version int
@@ -164,6 +178,10 @@ private:
   float _timeToSetIdle_s = -1.0f;
   // tap to talk is active
   bool _isTapOccurring = false;
+  
+  // alert info
+  bool _alertActive = false;
+  std::unordered_map<std::string, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State> _alertStates;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
   // on vicos.... so just track if the system clock jumps and if so, refresh the timers
@@ -196,6 +214,21 @@ private:
   OnLogout _onLogout;
   OnNetworkError _onNetworkError;
   OnNotificationsChanged _onNotificationsChanged;
+  
+  InitCompleteCallback _initCompleteCallback;
+  
+  // handles state of the loading thread. some of this could be done with futures but meh
+  enum class InitState : uint8_t {
+    Uninitialized=0,
+    PreInit,        // AlexaImpl::Init was called
+    Initing,        // init thread running
+    ThreadComplete, // init thread completed successfully
+    ThreadFailed,   // init thread failed
+    Completed,      // initialization complete
+    Failed,         // initialization failed
+  };
+  std::atomic<InitState> _initState;
+  std::thread _initThread;
 };
 
 

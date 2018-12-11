@@ -64,6 +64,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/alexa
   Alexa,
+  AlexaSignInOut,
 
   // victorBehaviorTree/appBehaviors
   ChangeEyeColor,
@@ -77,6 +78,10 @@ enum uint_16 BehaviorID {
   BlackJackRequestToPlay,
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
+
+  // victorBehaviorTree/character
+  HowOldAreYou,
+  HowOldAreYouCounting,
 
   // victorBehaviorTree/clock
   ShowWallTime,
@@ -324,6 +329,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/onboarding1p2
   Onboarding1p2,
+  OnboardingComeHere,
   OnboardingLookAtPhone1p2,
   OnboardingLookAtUser1p2,
   OnboardingTeachComeHere1p2,

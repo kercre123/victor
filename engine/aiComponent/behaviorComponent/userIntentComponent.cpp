@@ -53,8 +53,8 @@ namespace Vector {
 
 namespace {
 
-static const size_t kMaxTicksToWarn = 2;
 static const size_t kMaxTicksToClear = 3;
+static const size_t kMaxTicksToClear_Extended = 120;
 static const float kTimeToClearWaitingForTriggerWordGetIn_s = 3.0f;
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
@@ -90,8 +90,10 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
 
   // setup trigger word handler
   auto triggerWordCallback = [this]( const AnkiEvent<RobotInterface::RobotToEngine>& event ){
-    const bool willStream = event.GetData().Get_triggerWordDetected().willOpenStream;
-    SetTriggerWordPending(willStream);
+    const auto& twd = event.GetData().Get_triggerWordDetected();
+    const bool willStream = twd.willOpenStream;
+    const bool muteEdgeCase = twd.fromMute;
+    SetTriggerWordPending(willStream, muteEdgeCase);
 
     HandleTriggerWordEventForDas(event.GetData().Get_triggerWordDetected());
   };
@@ -137,18 +139,26 @@ void UserIntentComponent::ClearPendingTriggerWord()
   }
 }
 
-void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream)
+void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream, const bool muteEdgeCase)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  // assume get in animation is playing
-  _waitingForTriggerWordGetInToFinish = HasAnimResponseToTriggerWord();
+  // don't assume get in animation is playing in the mute edge case (if it does, _waitingForTriggerWordGetInToFinish
+  // is also set in the callback from SetTriggerWordGetInCallback when the anim starts). Otherwise, assume the
+  // get-in is playing if there's an anim response
+  _waitingForTriggerWordGetInToFinish = HasAnimResponseToTriggerWord() && !muteEdgeCase;
   _waitingForTriggerWordGetInToFinish_setTime_s = currTime_s;
 
   if (!GetEngineShouldRespondToTriggerWord()) {
     LOG_DEBUG("UserIntentComponent.SetPendingTrigger.TriggerWordDetectionDisabled",
               "Trigger word detection disabled, so ignoring message");
-    return;
+    if( !muteEdgeCase ) {
+      return;
+    } else {
+      // in the mute edge case, the stack will be in Wait, and thus won't have an engine response
+      LOG_INFO("UserIntentComponent.SetPendingTrigger.BypassingDisable",
+               "Trigger word detection disabled, but forcibly continuing");
+    }
   }
 
   if (_pendingTrigger) {
@@ -158,12 +168,14 @@ void UserIntentComponent::SetTriggerWordPending(const bool willOpenStream)
 
   _pendingTrigger = true;
   _pendingTriggerWillStream = willOpenStream;
-  _pendingTriggerTick = BaseStationTimer::getInstance()->GetTickCount();
+  const auto ticksToClear = muteEdgeCase ? kMaxTicksToClear_Extended : kMaxTicksToClear;
+  const auto currTick = BaseStationTimer::getInstance()->GetTickCount();
+  _pendingTriggerTimeout = ticksToClear + currTick;
 
   LOG_INFO("UserIntentComponent.SetTriggerWordPending",
            "Set trigger word pending (%s stream) at tick %zu",
            willOpenStream ? "will" : "will not",
-           _pendingTriggerTick );
+           currTick);
 
   if (_wasIntentError) {
     LOG_WARNING("UserIntentComponent.SetTriggerWordPending.ClearingError",
@@ -671,8 +683,8 @@ void UserIntentComponent::InitDependent( Vector::Robot* robot, const BCCompMap& 
 {
   _robot = robot;
 
-  auto callback = [this](){
-    _waitingForTriggerWordGetInToFinish = false;
+  auto callback = [this](bool playing){
+    _waitingForTriggerWordGetInToFinish = playing;
   };
 
   _tagForTriggerWordGetInCallbacks = _robot->GetAnimationComponent().SetTriggerWordGetInCallback(callback);
@@ -840,13 +852,12 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
   // confusing. Issue warnings here and clear the pending tick / intent if they aren't handled quickly enough
 
   if (_pendingTrigger) {
-    const size_t dt = currTick - _pendingTriggerTick;
-    if (dt >= kMaxTicksToWarn) {
+    const ssize_t dt = currTick - _pendingTriggerTimeout;
+    if (dt == -1) {
       LOG_WARNING("UserIntentComponent.Update.PendingTriggerNotCleared",
                   "Trigger has been pending for %zu ticks",
                    dt);
-    }
-    if (dt >= kMaxTicksToClear) {
+    } else if (dt >= 0) {
       LOG_ERROR("UserIntentComponent.Update.PendingTriggerNotCleared.ForceClear",
                 "Trigger has been pending for %zu ticks, forcing a clear",
                  dt);
@@ -874,7 +885,7 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
   if( _pendingIntent != nullptr ) {
     if( _pendingIntentTimeoutEnabled ) {
       const size_t dt = currTick - _pendingIntentTick;
-      if( dt >= kMaxTicksToWarn ) {
+      if( dt >= kMaxTicksToClear - 1 ) {
         LOG_WARNING("UserIntentComponent.Update.PendingIntentNotCleared.Warn",
                     "Intent '%s' has been pending for %zu ticks",
                     UserIntentTagToString(_pendingIntent->intent.GetTag()),
@@ -908,7 +919,7 @@ void UserIntentComponent::StartWakeWordlessStreaming( CloudMic::StreamType strea
   RobotInterface::StartWakeWordlessStreaming message{ static_cast<uint8_t>(streamType), playGetInFromAnimProcess};
   _robot->SendMessage( RobotInterface::EngineToRobot( std::move(message) ) );
   if (playGetInFromAnimProcess) {
-    _waitingForTriggerWordGetInToFinish = playGetInFromAnimProcess && HasAnimResponseToTriggerWord();
+    _waitingForTriggerWordGetInToFinish = HasAnimResponseToTriggerWord();
     _waitingForTriggerWordGetInToFinish_setTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
@@ -920,13 +931,15 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
   auto postAudioEvent = AECH::CreatePostAudioEvent( newState.postAudioEvent,
                                                     AudioMetaData::GameObjectType::Behavior,
                                                     0 );
-  PushResponseToTriggerWord(id, newState.getInTrigger, postAudioEvent, newState.streamAndLightEffect);
+  PushResponseToTriggerWord(id, newState.getInTrigger, postAudioEvent, newState.streamAndLightEffect,
+                            newState.minStreamingDuration_ms);
 
 }
 
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const AnimationTrigger& getInAnimTrigger,
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
-                                                    StreamAndLightEffect streamAndLightEffect)
+                                                    StreamAndLightEffect streamAndLightEffect,
+                                                    int32_t minStreamingDuration_ms)
 {
   std::string animName;
   auto* data_ldr = _robot->GetContext()->GetDataLoader();
@@ -947,18 +960,20 @@ void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const
     }
   }
 
-  PushResponseToTriggerWord(id, animName, postAudioEvent, streamAndLightEffect);
+  PushResponseToTriggerWord(id, animName, postAudioEvent, streamAndLightEffect, minStreamingDuration_ms);
 }
 
 
 void UserIntentComponent::PushResponseToTriggerWord(const std::string& id, const std::string& getInAnimationName,
                                                     const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
-                                                    StreamAndLightEffect streamAndLightEffect)
+                                                    StreamAndLightEffect streamAndLightEffect,
+                                                    int32_t minStreamingDuration_ms)
 {
   RobotInterface::SetTriggerWordResponse msg;
   msg.getInAnimationTag = _tagForTriggerWordGetInCallbacks;
   msg.postAudioEvent = postAudioEvent;
   msg.getInAnimationName = getInAnimationName;
+  msg.minStreamingDuration_ms = minStreamingDuration_ms;
 
   ApplyStreamAndLightEffect(streamAndLightEffect, msg);
 

@@ -150,11 +150,9 @@ namespace Vision {
     _pImpl->PrintAverageTiming();
   }
   
-  void FaceTracker::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
- 																						  Vision::FaceID_t forFaceID,
-																						  s32 numEnrollments)
+  void FaceTracker::SetFaceEnrollmentMode(FaceID_t forFaceID, s32 numEnrollments, bool forceNewID)
   {
-    _pImpl->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
+    _pImpl->SetFaceEnrollmentMode(forFaceID, numEnrollments, forceNewID);
   }
   
   void FaceTracker::EnableEmotionDetection(bool enable)

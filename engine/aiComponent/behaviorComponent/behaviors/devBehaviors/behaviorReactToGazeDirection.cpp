@@ -209,7 +209,6 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
   turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
 
   // Now that we're looking at the point actually drive to it
-  const bool forceHeadDown = false;
   // TODO need something better than this. The duplciate code is awful.
   if (kUseDriveStraightActionForDriveTo) {
     LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingOnlyDriveStraight", "");
@@ -257,16 +256,10 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
   }else {
     LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingDriveToPoseAction", "");
     if (kUseRelativePoseForDriveTo) {
-      DriveToPoseAction* driveToAction = new DriveToPoseAction(gazePose,
-                                                               forceHeadDown,
-                                                               kDistanceToleranceForDrive_mm,
-                                                               kAngleToleranceForDrive_rad);
+      DriveToPoseAction* driveToAction = new DriveToPoseAction(gazePose);
       turnAction->AddAction(driveToAction);
     } else {
-      DriveToPoseAction* driveToAction = new DriveToPoseAction(_dVars.gazeDirectionPose,
-                                                               forceHeadDown,
-                                                               kDistanceToleranceForDrive_mm,
-                                                               kAngleToleranceForDrive_rad);
+      DriveToPoseAction* driveToAction = new DriveToPoseAction(_dVars.gazeDirectionPose);
       turnAction->AddAction(driveToAction);
     }
   }

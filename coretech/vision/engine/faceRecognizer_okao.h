@@ -81,7 +81,7 @@ namespace Vision {
     
     // Use faceID = UnknownFaceID to allow enrollments for any face.
     // Use N = -1 to allow ongoing enrollment.
-    void SetAllowedEnrollments(s32 N, FaceID_t forFaceID);
+    void SetAllowedEnrollments(s32 N, FaceID_t forFaceID, bool forceNewID = false);
     
     TrackingID_t GetEnrollmentTrackID() const { return _enrollmentTrackID; }
     FaceID_t     GetEnrollmentID()      const { return _enrollmentID; }
@@ -109,8 +109,10 @@ namespace Vision {
                              const std::vector<u8>& enrollData,
                              std::list<LoadedKnownFace>& loadedFaces);
 
-    bool GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID);
-
+    bool GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID) const;
+   
+    std::string GetBestGuessNameForTrackingID(const TrackingID_t trackingID) const;
+    
   private:
     
     // Aliases for better readability
@@ -141,6 +143,10 @@ namespace Vision {
     // for merge opportunities.
     Result UpdateRecognitionData(const FaceID_t recognizedID,
                                  const RecognitionScore score);
+    
+    void   UpdateBestGuessName(const std::vector<AlbumEntryID_t>& matchingAlbumEntries,
+                               const std::vector<RecognitionScore>& scores,
+                               const int resultNum);
     
 		bool   IsMergingAllowed(FaceID_t toFaceID) const;
     
@@ -227,6 +233,7 @@ namespace Vision {
     
     // Internal bookkeeping and parameters
     std::map<TrackingID_t, FaceID_t> _trackingToFaceID;
+    std::map<TrackingID_t, std::string> _trackingIDtoBestGuessName;
     AlbumEntryToFaceID   _albumEntryToFaceID;
     
     FaceID_t       _nextFaceID     = 1; // Skip UnknownFaceID
@@ -235,6 +242,7 @@ namespace Vision {
     // Which face we are allowed to add enrollment data for (UnknownFaceID == "any" face),
     // and how many enrollments we are allowed to add ( <0 means as many as we want)
     bool      _isEnrollmentEnabled = true;
+    bool      _forceNewEnrollment = false;
     FaceID_t  _enrollmentID = UnknownFaceID;
     FaceID_t  _enrollmentTrackID = UnknownFaceID;
     s32       _enrollmentCount = -1; // Has no effect if enrollmentID not set

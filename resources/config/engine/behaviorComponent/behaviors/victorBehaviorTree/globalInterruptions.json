@@ -8,7 +8,6 @@
     "MandatoryPhysicalReactions",
     "SDK0",
     "TriggerWordDetected",
-    "Alexa",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "DemoTimerUtilityCoordinator",
@@ -17,6 +16,7 @@
     "TakeAPhotoCoordinator",
     "ReactToRobotShaken",
     "ReactToTouchPetting",
+    "BasicVoiceCommands", // these are simple voice commands that we want to ignore obstacles
     "ReactToObstacle",
     "InterruptingVoiceReactions",
     "ChangeEyeColor",

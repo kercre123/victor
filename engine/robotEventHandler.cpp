@@ -53,10 +53,10 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "engine/pathPlanner.h"
-#include "engine/latticePlanner.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/poseStructs.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
@@ -174,11 +174,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot.GetWorldOrigin());
   targetPose.SetName("GotoPoseTarget");
 
-  // TODO: expose whether or not to drive with head down in message?
-  const bool driveWithHeadDown = false;
-
-  DriveToPoseAction* action = new DriveToPoseAction(targetPose,
-                                                    driveWithHeadDown);
+  auto* action = new DriveToPoseAction(targetPose);
 
   if(msg.motionProf.isCustom)
   {
@@ -196,11 +192,7 @@ IActionRunner* GetActionHelper(Robot& robot, const external_interface::GoToPoseR
   Pose3d targetPose(msg.rad(), Z_AXIS_3D(), Vec3f(msg.x_mm(), msg.y_mm(), 0), robot.GetWorldOrigin());
   targetPose.SetName("GotoPoseTarget");
 
-  // TODO: expose whether or not to drive with head down in message?
-  const bool driveWithHeadDown = false;
-
-  DriveToPoseAction* action = new DriveToPoseAction(targetPose,
-                                                    driveWithHeadDown);
+  DriveToPoseAction* action = new DriveToPoseAction(targetPose);
 
   PathMotionProfile pathMotionProfile = ConvertProtoPathMotionProfile(msg.motion_prof());
   if(pathMotionProfile.isCustom)
@@ -1557,9 +1549,10 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAct
       // start trying to dock with the object
       if(msg.result != ActionResult::NOT_STARTED)
       {
-        // Put action type in DDATA field and action result in s_val
-        Util::sInfoF("robot.dock_action_completed", {{DDATA, EnumToString(msg.actionType)}},
-                     "%s", EnumToString(msg.result));
+        DASMSG(robot.dock_action_completed, "robot.dock_action_completed", "A dock action completed");
+        DASMSG_SET(s1, EnumToString(msg.actionType), "Action type");
+        DASMSG_SET(s2, EnumToString(msg.result), "Action result");
+        DASMSG_SEND();
       }
 
       break;

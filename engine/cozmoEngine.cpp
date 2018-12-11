@@ -229,14 +229,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   DASMSG_SET(s1, _context->GetLocale()->GetLocaleString().c_str(), "Locale on start up");
   DASMSG_SEND();
 
-  std::time_t t = std::time(nullptr);
-  std::tm tm = *std::localtime(&t);
-  std::stringstream timeZoneString;
-  timeZoneString << std::put_time(&tm, "%Z");
-  std::stringstream timeZoneOffset;
-  timeZoneOffset << std::put_time(&tm, "%z");
-  Util::sInfoF("device.timezone", {{DDATA, timeZoneOffset.str().c_str()}}, "%s", timeZoneString.str().c_str());
-
   auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
 
   using namespace ExternalInterface;
@@ -582,7 +574,10 @@ void CozmoEngine::SetEngineState(EngineState newState)
 
   _engineState = newState;
 
-  Anki::Util::sInfoF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
+  DASMSG(engine_state, "engine.state", "EngineState has changed")
+  DASMSG_SET(s1, EngineStateToString(oldState), "Old EngineState");
+  DASMSG_SET(s2, EngineStateToString(newState), "New EngineState");
+  DASMSG_SEND()
 }
 
 Result CozmoEngine::InitInternal()

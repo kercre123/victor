@@ -271,6 +271,11 @@
     {
       "user_intent": "seasonal_happyholidays",
       "cloud_intent": "intent_seasonal_happyholidays"
+    },
+    {
+      "user_intent": "character_age",
+      "cloud_intent": "intent_character_age",
+      "feature_gate": "HowOldAreYou"
     }
   ],
 

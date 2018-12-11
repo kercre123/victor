@@ -50,7 +50,7 @@ using namespace ExternalInterface;
 namespace {
   const char* kCliffBackupDistKey = "cliffBackupDistance_mm";
   const char* kCliffBackupSpeedKey = "cliffBackupSpeed_mmps";
-  const char* kEventFlagTimeoutKey = "eventFlagTimeout_sec";
+  const char* kEventFlagTimeoutKey = "eventFlagTimeout_ms";
   
   // If the robot is at a steep pitch, it's possible it's been put down
   // purposefully on a slope, so this behavior won't activate until enough time
@@ -122,6 +122,7 @@ void BehaviorReactToCliff::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
 BehaviorReactToCliff::InstanceConfig::InstanceConfig()
 {
   stuckOnEdgeBehavior = nullptr;
+  askForHelpBehavior = nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -137,15 +138,7 @@ BehaviorReactToCliff::InstanceConfig::InstanceConfig(const Json::Value& config, 
   ANKI_VERIFY(Util::IsFltGTZero(cliffBackupSpeed_mmps), (debugName + ".InvalidCliffBackupSpeed").c_str(),
               "Value should be greater than 0.0 (not %.2f).", cliffBackupSpeed_mmps);
   
-  eventFlagTimeout_sec = JsonTools::ParseFloat(config, kEventFlagTimeoutKey, debugName);
-  // Verify that the stop event timeout limit is valid.
-  if (!ANKI_VERIFY(Util::IsFltGEZero(eventFlagTimeout_sec),
-                   (debugName + ".InvalidEventFlagTimeout").c_str(),
-                   "Value should always be greater than or equal to 0.0 (not %.2f). Making positive.",
-                   eventFlagTimeout_sec))
-  {
-    eventFlagTimeout_sec *= -1.0;
-  }
+  eventFlagTimeout_ms = JsonTools::ParseUInt32(config, kEventFlagTimeoutKey, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -158,14 +151,13 @@ BehaviorReactToCliff::DynamicVariables::DynamicVariables()
 
   cliffPose.ClearParent();
   cliffPose = Pose3d(); // identity
-
+  
   const auto kInitVal = std::numeric_limits<u16>::max();
   std::fill(persistent.cliffValsAtStart.begin(), persistent.cliffValsAtStart.end(), kInitVal);
   persistent.numStops = 0;
   persistent.numCliffReactAttempts = 0;
-  persistent.lastStopTime_sec = 0.f;
   persistent.putDownOnCliff = false;
-  persistent.lastPutDownOnCliffTime_sec = 0.f;
+  persistent.lastInScopeTime_ms = 0.f;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -501,7 +493,6 @@ Pose3d BehaviorReactToCliff::GetCliffPoseToLookAt() const
 void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
 {
   if(!kEnableVisualCliffExtension) {
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
     return;
   }
   
@@ -532,12 +523,9 @@ void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
   }
   compoundAction->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::DetectingOverheadEdges));
   
-  BehaviorSimpleCallback callback = [this] (void) -> void {
+  DelegateIfInControl(compoundAction, []() {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservationFinished", "");
-    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
-  };
-
-  DelegateIfInControl(compoundAction, callback);
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -546,6 +534,12 @@ void BehaviorReactToCliff::OnBehaviorDeactivated()
   DEBUG_SET_STATE(Inactive);
   // reset dvars
   _dVars = DynamicVariables();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::OnBehaviorLeftActivatableScope() 
+{
+  _dVars.persistent.lastInScopeTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -558,20 +552,62 @@ void BehaviorReactToCliff::GetAllDelegates(std::set<IBehavior*>& delegates) cons
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::BehaviorUpdate()
 {
+  const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
+  
   if(!IsActivated()){
-    const auto& currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const auto& currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    const auto& latestCliffStopTime_ms = cliffComp.GetLatestStopDueToCliffTime_ms();
+    const auto& lastPutDownOnCliffTime_ms = cliffComp.GetLatestPutDownOnCliffTime_ms();
+    
+    const auto& timeSinceLastStop_ms = currentTime_ms - latestCliffStopTime_ms;
+    const auto& timeSinceLastPutDownOnCliff_ms = currentTime_ms - lastPutDownOnCliffTime_ms;
+    
     if (_dVars.gotStop) {
-      const auto& timeSinceLastStop_sec = currentTime_sec - _dVars.persistent.lastStopTime_sec;
-      if (timeSinceLastStop_sec > _iConfig.eventFlagTimeout_sec) {
+      if (timeSinceLastStop_ms > _iConfig.eventFlagTimeout_ms) {
         _dVars.gotStop = false;
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.IgnoreLastStopEvent", "");
       }
+    } else {
+      // Check for stops due to a cliff while the behavior was out of scope,
+      // but still ignore events that occurred past a certain timeout horizon
+      if ( (latestCliffStopTime_ms > _dVars.persistent.lastInScopeTime_ms) &&
+           ( (timeSinceLastStop_ms < _iConfig.eventFlagTimeout_ms) ||
+           // The robot drove and stopped on a cliff while the behavior was not in scope,
+           // and was not allowed to update until a much later time, so we double-check to
+           // see if we are still stopped over a cliff (i.e. the robot hasn't moved since)
+           cliffComp.IsCliffDetected() ) ) {
+        _dVars.gotStop = true;
+        ++_dVars.persistent.numStops;
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.PossibleStopEventWhileOutOfScope", "");
+        // Record triggered cliff sensor value(s) and compare to what they are when wheels
+        // stop moving. If the values are higher, the cliff is suspicious and we should quit.
+        // NOTE(GB): Due to the delay between the latest cliff sensor data and the RobotStopped
+        // event, the raw data values at the time of retrieval may not register a cliff being
+        // detected, since the latest cliff data can arrive up to ~30 ms after the message arrives.
+        const auto& cliffData = cliffComp.GetCliffDataRawAtLastStop();
+        std::copy(cliffData.begin(), cliffData.end(), _dVars.persistent.cliffValsAtStart.begin());
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.CliffValsAtLastStopOutOfScope",
+                      "%u %u %u %u",
+                      _dVars.persistent.cliffValsAtStart[0],
+                      _dVars.persistent.cliffValsAtStart[1],
+                      _dVars.persistent.cliffValsAtStart[2],
+                      _dVars.persistent.cliffValsAtStart[3]);
+      }
     }
+    
     if (_dVars.persistent.putDownOnCliff) {
-      const auto& timeSinceLastPutDownOnCliff_sec = currentTime_sec - _dVars.persistent.lastPutDownOnCliffTime_sec;
-      if (timeSinceLastPutDownOnCliff_sec > _iConfig.eventFlagTimeout_sec) {
+      if (timeSinceLastPutDownOnCliff_ms > _iConfig.eventFlagTimeout_ms) {
         _dVars.persistent.putDownOnCliff = false;
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.IgnoreLastPossiblePutDownOnCliffEvent", "");
+      }
+    } else {
+      // Check for events where the robot was put down on a cliff while the behavior was out of scope,
+      // but double check that at the time that the behavior re-entered the activation scope,
+      // that the robot is still on a cliff.
+      if ( (lastPutDownOnCliffTime_ms > _dVars.persistent.lastInScopeTime_ms) &&
+           cliffComp.IsCliffDetected() ) {
+        _dVars.persistent.putDownOnCliff = true;
+        PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.Update.PutDownOnCliffEventWhileOutOfScope", "");
       }
     }
     // Set wantsToBeActivated to effectively give the activation conditions
@@ -604,7 +640,6 @@ void BehaviorReactToCliff::BehaviorUpdate()
   // we wait until the next engine tick to check all conditions
 
   u8 cliffsDetected = CliffSensorComponent::kNumCliffSensors;
-  const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
   for (int i=0; i<CliffSensorComponent::kNumCliffSensors; ++i) {
     if (!cliffComp.IsCliffDetected((CliffSensor)(i))) {
       // Robot is reporting that it has been picked up, but not all cliff sensors have reported
@@ -642,11 +677,13 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       
       _dVars.quitReaction = false;
       _dVars.gotStop = true;
-      _dVars.persistent.lastStopTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       ++_dVars.persistent.numStops;
 
       // Record triggered cliff sensor value(s) and compare to what they are when wheels
       // stop moving. If the values are higher, the cliff is suspicious and we should quit.
+      // NOTE(GB): Due to the delay between the latest cliff sensor data and the RobotStopped
+      // event, the raw data values at the time of retrieval may not register a cliff being
+      // detected, since the latest cliff data can arrive up to ~30 ms after the message arrives.
       const auto& cliffComp = robotInfo.GetCliffSensorComponent();
       const auto& cliffData = cliffComp.GetCliffDataRaw();
       std::copy(cliffData.begin(), cliffData.end(), _dVars.persistent.cliffValsAtStart.begin());
@@ -672,7 +709,6 @@ void BehaviorReactToCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
       if (treadsState == OffTreadsState::OnTreads && cliffsDetected) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.AlwaysHandleInScope", "Possibly put down on cliff");
         _dVars.persistent.putDownOnCliff = true;
-        _dVars.persistent.lastPutDownOnCliffTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       } else {
         _dVars.persistent.putDownOnCliff = false;
       }

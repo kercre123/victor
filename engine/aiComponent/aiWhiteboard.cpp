@@ -665,7 +665,9 @@ void AIWhiteboard::UpdatePossibleObjectRender()
   if ( kBW_DebugRenderPossibleObjects )
   {
     const Pose3d& worldOrigin = _robot.GetWorldOrigin();
-    _robot.GetContext()->GetVizManager()->EraseSegments("AIWhiteboard.PossibleObjects");
+    if (!_possibleObjects.empty()) {
+      _robot.GetContext()->GetVizManager()->EraseSegments("AIWhiteboard.PossibleObjects");
+    }
     for ( auto& possibleObjectIt : _possibleObjects )
     {
       // this offset should not be applied pose

@@ -443,7 +443,10 @@ void BehaviorOnboardingCoordinator::BehaviorUpdate()
 
   if( ShouldExitDueToTimeout() ){
     TerminateOnboarding();
-    SaveToDisk(OnboardingStages::TimedOut);
+    // For now we don't distinguish between OnboardingStages::Complete and OnboardingStages::TimedOut for any
+    // functional purpose, so just mark complete. In the future we could use TimedOut to deliberately offer users
+    // the option to redo onboarding if it times out on them.
+    SaveToDisk(OnboardingStages::Complete);
   }
 
   if( _dVars.shouldCheckPowerOff ) {
@@ -464,7 +467,7 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
 
   const auto currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  if( !_dVars.onboardingStarted ){
+  if( !_dVars.onboardingStarted && appCommandedTransition ){
     _dVars.globalExitTime_s = (_iConfig.completionTimeout_s > 0.0f) ? (currTime_s + _iConfig.completionTimeout_s) : 0.0f;
     _dVars.onboardingStarted = true;
   }

@@ -151,6 +151,11 @@ namespace Anki {
       // to false will end the CompoundActionParallel the moment any of its sub-actions end
       void SetShouldEndWhenFirstActionCompletes(bool shouldEnd) { _endWhenFirstActionCompletes = shouldEnd; }
       
+      // Called at the very beginning of UpdateInternal, so derived classes can
+      // do additional work. If this does not return RESULT_OK, then UpdateInternal
+      // will return ActionResult::UPDATE_DERIVED_FAILED.
+      virtual Result UpdateDerived() { return RESULT_OK; }
+      
     protected:
       
       virtual ActionResult UpdateInternal() override final;

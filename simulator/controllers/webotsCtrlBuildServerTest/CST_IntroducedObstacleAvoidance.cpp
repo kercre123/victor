@@ -50,6 +50,12 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       _duckNode = GetNodeByDefName("duck");
       CST_ASSERT(_duckNode != nullptr, "null duck");
       
+      // We do not want to play driving animations, so push empty anims
+      SendPushDrivingAnimations("webots_test",
+                                AnimationTrigger::Count,
+                                AnimationTrigger::Count,
+                                AnimationTrigger::Count);
+      
       SET_TEST_STATE(ExecuteStraightPath);
       break;
     }
@@ -79,8 +85,8 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
 
     case TestState::VerifyDriveToPoseCompleted:
     {
-      // Takes about 12 seconds for robot to complete the path, set timeout at 15 for some leeway.
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_driveToPoseSucceeded, 15){
+      // Takes about 12 seconds for robot to complete the path, set timeout at 20 for some leeway.
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_driveToPoseSucceeded, 20){
         SET_TEST_STATE(VerifyObstacleAvoidance);
       }
       break;

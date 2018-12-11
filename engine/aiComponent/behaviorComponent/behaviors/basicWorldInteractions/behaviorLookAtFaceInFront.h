@@ -43,6 +43,7 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
+    bool confirmFace;
   };
 
   struct DynamicVariables {

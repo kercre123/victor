@@ -17,7 +17,7 @@ def main():
 
     serial = args.serial
     if serial not in config:
-        sys.exit("ERROR: Could not find serial number: '{}'. Have you configured your robot with tools/sdk/vector-sdk/configure.py ?".format(serial))
+        sys.exit("ERROR: Could not find serial number: '{}'. Have you configured your robot with tools/sdk/vector-python-sdk-private/sdk/configure.py ?".format(serial))
 
     if "port" not in config[serial]:
         config[serial]["port"] = "443"

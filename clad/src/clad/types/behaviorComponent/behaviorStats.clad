@@ -16,6 +16,7 @@ namespace Vector {
 
 enum uint_32 BehaviorStat {
 
+  AVS, // alexa
   AnimationPlayed,
   AttemptedFistBump,
   AttemptedPounceOnCube,
@@ -36,7 +37,7 @@ enum uint_32 BehaviorStat {
   ReactedToTriggerWord,
   RolledCube,
   
-} // enum class BehaviorObjectives
+} // enum class BehaviorStat
   
 } // namespace Vector
 } // namespace Anki

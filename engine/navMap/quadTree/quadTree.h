@@ -13,7 +13,6 @@
 #define ANKI_COZMO_QUAD_TREE_H
 
 #include "quadTreeNode.h"
-#include "quadTreeProcessor.h"
 
 namespace Anki {
 
@@ -31,8 +30,10 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree();
-  ~QuadTree();
+  QuadTree(
+    std::function<void (const QuadTreeNode*)> destructorCallback,
+    std::function<void (const QuadTreeNode*, const NodeContent&)> modifiedCallback
+  );
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -41,10 +42,6 @@ public:
   // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
   // the region that the point generated to store the point could have an error of up to this length.
   float GetContentPrecisionMM() const;
-
-  // return the Processor associated to this QuadTree for queries
-        QuadTreeProcessor& GetProcessor()       { return _processor; }
-  const QuadTreeProcessor& GetProcessor() const { return _processor; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations
@@ -58,14 +55,10 @@ public:
   // it will not expand the root node
   bool Transform(const FoldableRegion& region, NodeTransformFunction transform);
   bool Transform(const NodeAddress& address, NodeTransformFunction transform);
-  bool Transform(NodeTransformFunction transform);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   bool Merge(const QuadTree& other, const Pose3d& transform);
 
-  // Tree Height is the number of edges to traverse to reach a desired node
-  // Note: nodes/cells at height=0 have sideLength=contentPrecision
-  uint8_t GetMaxTreeHeight() const { return _level; }
 
 private:
 
@@ -83,21 +76,14 @@ private:
 
   // moves this node's center towards the required points, so that they can be included in this node
   // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
-  bool ShiftRoot(const AxisAlignedQuad& region, QuadTreeProcessor& processor);
+  bool ShiftRoot(const AxisAlignedQuad& region);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
   // on a root node. Such responsibility lies in the caller, not in this node
   // Returns true if successfully expanded, false otherwise
   // maxRootLevel: it won't upgrade if the root is already higher level than the specified
-  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor);
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Attributes
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // processor for this quadtree
-  QuadTreeProcessor _processor;
+  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel);
 
 }; // class
   

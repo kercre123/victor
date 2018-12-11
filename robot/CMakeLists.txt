@@ -118,20 +118,6 @@ elseif (MACOSX)
   )
 endif()
 
-anki_build_cxx_library(robot_transport ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(robot_transport "ANKI")
-
-target_compile_definitions(robot_transport
-  PRIVATE
-  COZMO_ROBOT
-  ${PLATFORM_COMPILE_DEFS}
-)
-
-target_include_directories(robot_transport
-  PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-)
-
 #
 # displayFaultCode
 #
@@ -256,7 +242,6 @@ if (VICOS)
     PRIVATE
     robot_hal
     supervisor
-    robot_transport
     spine
     robot_interface
     robot_clad_cpplite

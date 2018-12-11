@@ -20,6 +20,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 namespace  Anki {
 namespace Vector {
@@ -121,7 +122,10 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
         }
       }
 
-      Util::sInfoF("robot.vision.detected_pet", {{DDATA, EnumToString(knownPet.GetType())}}, "%d", knownPet.GetID());
+      DASMSG(robot.vision.detected_pet, "robot.vision.detected_pet", "Detected a pet");
+      DASMSG_SET(s1, EnumToString(knownPet.GetType()), "PetType");
+      DASMSG_SET(i1, knownPet.GetID(), "PetID");
+      DASMSG_SEND();
     }
 
     // Broadcast the detection for Game/SDK

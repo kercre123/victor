@@ -77,15 +77,10 @@
 
   // in addition to the "always wakes" conditions
   "wakeFromStates": [
-    // no wake reasons from emergency sleep
-    {
-      "fromState": "Comatose",
-      "reasons": [ "AlexaInteractionComplete" ]
-    },
+    // no addiitional wake reasons from emergency sleep or comatose sleep
     {
       "fromState": "DeepSleep",
       "reasons": [
-        "AlexaInteractionComplete",
         "PickedUp",
         "Touched"
       ]
@@ -93,7 +88,6 @@
     {
       "fromState": "LightSleep",
       "reasons": [
-        "AlexaInteractionComplete",
         "PickedUp",
         "Touched",
         "Poked",

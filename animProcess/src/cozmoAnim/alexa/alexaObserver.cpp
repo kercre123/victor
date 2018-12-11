@@ -28,6 +28,8 @@
  */
 
 #include "cozmoAnim/alexa/alexaObserver.h"
+#include "json/json.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
@@ -50,6 +52,7 @@ AlexaObserver::AlexaObserver()
 , _authState{ AuthObserverInterface::State::UNINITIALIZED }
 , _authCheckCounter{ 0 }
 , _connectionStatus{ avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::DISCONNECTED }
+, _running{ true }
 {
 }
   
@@ -62,7 +65,8 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
                           const OnAVSConnectionChanged& onAVSConnectionChanged,
                           const OnSendCompleted& onSendCompleted,
                           const OnLogout& onLogout,
-                          const OnNotificationIndicator& onNotificationIndicator )
+                          const OnNotificationIndicator& onNotificationIndicator,
+                          const OnAlertState& onAlertState )
 {
   _onDialogUXStateChanged = onDialogUXStateChanged;
   _onRequestAuthorization = onRequestAuthorization;
@@ -73,6 +77,7 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
   _onSendCompleted = onSendCompleted;
   _onLogout = onLogout;
   _onNotificationIndicator = onNotificationIndicator;
+  _onAlertState = onAlertState;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,7 +85,7 @@ void AlexaObserver::Update()
 {
   // puts callables on the main thread. the sdk uses its Executor to run things sequentially, but it spins up a bunch
   // of threads
-  while( !_workQueue.empty() ) {
+  while( _running && !_workQueue.empty() ) {
     std::function<void(void)> func;
     {
       std::lock_guard<std::mutex> lg(_mutex);
@@ -90,6 +95,11 @@ void AlexaObserver::Update()
     if( func != nullptr ) {
       func();
     }
+  }
+  if( !_running ) {
+    std::lock_guard<std::mutex> lg(_mutex);
+    std::queue<QueueType> mtq; // variable name: exercise left to the reader
+    std::swap( _workQueue, mtq );
   }
 }
 
@@ -164,6 +174,19 @@ void AlexaObserver::onSetIndicator( avsCommon::avs::IndicatorState state )
   auto func = [this,state]() {
     if( _onNotificationIndicator ) {
       _onNotificationIndicator( state );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onAlertStateChange( const std::string& alertToken,
+                                        capabilityAgents::alerts::AlertObserverInterface::State state,
+                                        const std::string& reason )
+{
+  auto func = [this,alertToken,state]() {
+    if( _onAlertState ) {
+      _onAlertState( alertToken, state );
     }
   };
   AddToQueue( std::move(func) );
@@ -286,7 +309,9 @@ void AlexaObserver::onPlaybackError( SourceId id,
                                      const avsCommon::utils::mediaPlayer::ErrorType& type,
                                      std::string error )
 {
-  PRINT_NAMED_ERROR( "AlexaObserver.onPlaybackError", "Error '%s': %s", errorTypeToString(type).c_str(), error.c_str() );
+  LOG_WARNING( "AlexaObserver.onPlaybackError", "Error '%s': %s", errorTypeToString(type).c_str(), error.c_str() );
+  // now would be an ideal time to play "Sorry, music and radio playback are not supported on this device," but we
+  // don't have that clip. TODO: obtain this clip
   auto func = [this,id]() {
     if( _onSourcePlaybackChange != nullptr ) {
       _onSourcePlaybackChange( id, false );
@@ -331,7 +356,52 @@ void AlexaObserver::onSendCompleted( avsCommon::sdkInterfaces::MessageRequestObs
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaObserver::onExceptionReceived( const std::string& exceptionMessage )
 {
+  // example response when signed out
+  //  {
+  //     "header": {
+  //         "messageId": "8438931a-40ce-4612-bd2c-035fae4dd385",
+  //         "name": "Exception",
+  //         "namespace": "System"
+  //     },
+  //     "payload": {
+  //         "code": "UNAUTHORIZED_REQUEST_EXCEPTION",
+  //         "description": "Unable to authenticate the request. Please provide a valid authorization token."
+  //     }
+  //   }
+
   LOG_WARNING( "AlexaObserver.onExceptionReceived", "SDK exception: %s", exceptionMessage.c_str() );
+
+  Json::Value exceptionData;
+
+  // use the most permissive reader possible
+  Json::Reader reader(Json::Features::all());
+  const bool parsedOK = reader.parse(exceptionMessage, exceptionData, false);
+
+  std::string code = "INVALID_JSON_CANT_PARSE";
+  if( parsedOK ) {
+    if( exceptionData.isMember("payload") ) {
+      Json::Value& payload = exceptionData["payload"];
+      if( payload.isMember("code") ) {
+        Json::Value& code = payload["code"];
+        if( code.isString() ) {
+          code = code.asString();
+        }
+        else {
+          code = "INVALID_JSON_CODE_NOT_STRING";
+        }
+      }
+      else {
+        code = "INVALID_JSON_NO_CODE";
+      }
+    }
+    else {
+      code = "INVALID_JSON_NO_PAYLOAD";
+    }
+  }
+
+  DASMSG(alexa_exception_msg, "alexa.exception", "AVS SDK received an exception");
+  DASMSG_SET(s1, code, "Exception code");
+  DASMSG_SEND();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

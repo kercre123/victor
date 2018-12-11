@@ -93,10 +93,14 @@
   },
   {
     "feature": "HandDetection",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "GazeDirection",
+    "enabled": false
+  },
+  {
+    "feature": "HowOldAreYou",
     "enabled": false
   }
 ]
