@@ -110,11 +110,16 @@ void Alexa::Init(const AnimContext* context)
 
   if( authenticatedLastBoot ) {
     SetAlexaActive( true );
-  } else if( _authenticatedEver && kPlayErrorIfSignedOut ) {
-    // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
-    // when they say the wake word, it plays "Your device isn't registered. For help, go to its companion app."
-    // TODO: it might make sense to load the least sensitive model to avoid false positives
-    SetSimpleState( AlexaSimpleState::Idle );
+  } else {
+    // make sure engine knows we're signed out
+    SendAuthState();
+    
+    if( kPlayErrorIfSignedOut && _authenticatedEver ) {
+      // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
+      // when they say the wake word, it plays "Your device isn't registered. For help, go to its companion app."
+      // TODO: it might make sense to load the least sensitive model to avoid false positives
+      SetSimpleState( AlexaSimpleState::Idle );
+    }
   }
 }
 
