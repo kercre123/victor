@@ -61,6 +61,8 @@ void BehaviorCoordinateWhileInAir::InitPassThrough()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _whileInAirDispatcher = BC.FindBehaviorByID(kWhileInAirDispatcher);
   _initialPickupReaction = BC.FindBehaviorByID(BEHAVIOR_ID(InitialPickupAnimation));
+  _onBackReaction = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToRobotOnBack));
+  _onFaceReaction = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToRobotOnFace));
   {
     _suppressInAirBehaviorSet = std::make_unique<AreBehaviorsActivatedHelper>(BC, kBehaviorStatesToSuppressInAirReaction);
   }
@@ -115,10 +117,16 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
     _lastTimeWasOnTreads_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   }
 
-  const bool isInAirReactionPlaying = _whileInAirDispatcher->IsActivated();
+  const bool isInAirReactionPlaying = _whileInAirDispatcher->IsActivated() ||
+                                      _onBackReaction->IsActivated() ||
+                                      _onFaceReaction->IsActivated();
   
   // Only lock tracks if the "picked up reaction" behavior is _not_ running (since the "react to picked up" animations
-  // make use of the treads)
+  // make use of the treads).
+  //
+  // Same applies to onBack and onFace reactions as well. Since they can transition through the InAir state while 
+  // the reaction animation is playing we don't want to lock tracks in the middle since that can cause the wheels 
+  // to keep moving based on the last BodyMotionKeyFrame that went through before the lock.
   if(((offTreadsState == OffTreadsState::InAir) ||
       (offTreadsState == OffTreadsState::Falling)) &&
      !isInAirReactionPlaying){
