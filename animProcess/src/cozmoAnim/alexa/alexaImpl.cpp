@@ -216,6 +216,7 @@ AlexaImpl::~AlexaImpl()
   }
   
   // First clean up anything that depend on the the MediaPlayers.
+  _client.reset();
   
   // Now it's safe to shut down the MediaPlayers.
   if( _ttsMediaPlayer ) {
@@ -1192,6 +1193,12 @@ void AlexaImpl::RemoveCallbacksForShutdown()
 {
   if( _observer ) {
     _observer->Shutdown();
+  }
+  
+  if( _initThread.joinable() ) {
+     // shut down init thread in prep for destruction since destruction could occur on a thread
+    _initThread.join();
+    _initThread = {};
   }
   
   _onAlexaAuthStateChanged = nullptr;

@@ -144,7 +144,7 @@ void Alexa::Update()
       #endif
     };
     _implToBeDeleted = nullptr;
-    DEV_ASSERT( !_implDtorResult.valid(), "Alexa.Update.DtorThreadExists" );
+    ASSERT_NAMED( !_implDtorResult.valid(), "Alexa.Update.DtorThreadExists" );
     _implDtorResult = std::async( std::launch::async, std::move(deleteImpl) );
   }
   if( _implDtorResult.valid() && (_implDtorResult.wait_for(std::chrono::milliseconds{0}) == std::future_status::ready) ) {
