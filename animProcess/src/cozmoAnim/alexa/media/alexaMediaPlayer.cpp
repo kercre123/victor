@@ -42,6 +42,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "audioEngine/plugins/ankiPluginInterface.h"
 #include "audioEngine/plugins/streamingWavePortalPlugIn.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
@@ -57,7 +58,6 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "util/logging/logging.h"
 #include "util/threading/threadPriority.h"
 #include "util/math/math.h"
-#include "util/time/universalTime.h"
 
 #include <AVSCommon/AVS/SpeakerConstants/SpeakerConstants.h>
 #include <AVSCommon/Utils/SDS/ReaderPolicy.h>
@@ -214,6 +214,8 @@ AlexaMediaPlayer::AlexaMediaPlayer( Type type,
   : avsCommon::utils::RequiresShutdown{"AlexaMediaPlayer_" + sAudioInfo.at(type).name}
   , _type( type )
   , _state(State::Idle)
+  , _stateBeforePause(State::Idle)
+  , _playableClip( AudioEngine::kInvalidAudioEventId )
   , _mp3Buffer( new Util::RingBuffContiguousRead<uint8_t>{ kAudioBufferSize, kMaxReadSize } )
   , _dataValidity{ DataValidity::Unknown }
   , _dispatchQueue(Util::Dispatch::Create(("APlayer_" + sAudioInfo.at(type).name).c_str()))
@@ -287,8 +289,11 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
     _recognizer = _speechRegSys->GetAlexaPlaybackRecognizer();
   }
   
-  _audioCallbackPointer = std::make_shared<AudioCallbackType>([this](SourceId id){
+  _audioPlaybackFinishedPtr = std::make_shared<AudioCallbackType>([this](SourceId id){
     CallOnPlaybackFinished( id );
+  });
+  _audioPlaybackErrorPtr = std::make_shared<AudioCallbackType>([this](SourceId id){
+    CallOnPlaybackError( id );
   });
 
 }
@@ -300,7 +305,10 @@ void AlexaMediaPlayer::Update()
     return; // not init yet
   }
 
+  // switch from Playable to Playing, or from ClipPlayable to ClipPlaying
+  
   if( _state == State::Playable ) {
+    
     LOG("Update: needsToPlay");
     SetState( State::Playing );
   
@@ -310,11 +318,11 @@ void AlexaMediaPlayer::Update()
     auto* callbackContext = new AudioCallbackContext();
     callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
     callbackContext->SetExecuteAsync( false ); // run on main thread
-    std::weak_ptr<AudioCallbackType> weakCallback = _audioCallbackPointer;
-    callbackContext->SetEventCallbackFunc( [weakCallback,id=_playingSource]( const AudioCallbackContext* thisContext,
-                                                                             const AudioCallbackInfo& callbackInfo ) {
+    std::weak_ptr<AudioCallbackType> weakOnFinished = _audioPlaybackFinishedPtr;
+    callbackContext->SetEventCallbackFunc( [weakOnFinished,id=_playingSource]( const AudioCallbackContext* thisContext,
+                                                                               const AudioCallbackInfo& callbackInfo ) {
       // if the user logs out, this callback could fire after AlexaMediaPlayer is destoryed. check that here.
-      auto callback = weakCallback.lock();
+      auto callback = weakOnFinished.lock();
       if( callback && (*callback) ) {
         (*callback)( id );
       }
@@ -324,16 +332,59 @@ void AlexaMediaPlayer::Update()
     if (AudioEngine::kInvalidAudioPlayingId == playingID) {
       PRINT_NAMED_ERROR( "AlexaMediaPlayer.Update.CouldNotPlay", "Speaker '%s' could not play", _audioInfo.name.c_str() );
     }
-  }
-  
-  if( _dataValidity == DataValidity::Invalid ) {
-
-    PRINT_NAMED_WARNING( "AlexaMediaPlayer.Update.InvalidData.PlaybackError", "Speaker '%s' playing source %llu has invalid data",
-                         _audioInfo.name.c_str(), _playingSource );
-
-    CallOnPlaybackError( _playingSource );
-    // don't CallOnPlaybackError again
-    _dataValidity = DataValidity::Unknown;
+    
+  } else if( _state == State::ClipPlayable ) {
+    
+    if( ANKI_VERIFY( _playableClip != AudioEngine::kInvalidAudioEventId,
+                     "AlexaMediaPlayer.Update.PlayingInvalidClip",
+                     "State was playable but clip was invalid" ) )
+    {
+      
+      SetState( State::ClipPlaying );
+      // post event
+      using namespace AudioEngine;
+      auto* callbackContext = new AudioCallbackContext();
+      callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
+      callbackContext->SetExecuteAsync( false ); // run on main thread
+      std::weak_ptr<AudioCallbackType> weakOnFinished = _audioPlaybackFinishedPtr;
+      std::weak_ptr<AudioCallbackType> weakOnError = _audioPlaybackErrorPtr;
+      const bool invalidData = _dataValidity == DataValidity::Invalid;
+      callbackContext->SetEventCallbackFunc( [weakOnFinished,
+                                              weakOnError,
+                                              id=_playingSource,
+                                              invalidData]
+                                             ( const AudioCallbackContext* thisContext,
+                                               const AudioCallbackInfo& callbackInfo )
+      {
+        // if the user logs out, this event callback could fire after AlexaMediaPlayer is destroyed. check that here.
+        if( invalidData ) {
+          auto callback = weakOnError.lock();
+          if( callback && *callback ) {
+            (*callback)( id );
+          }
+        }
+        // not sure if weakOnFinished (CallOnPlaybackFinished) needs to be called if weakOnError was also called
+        auto callback = weakOnFinished.lock();
+        if( callback && *callback ) {
+          (*callback)( id );
+        }
+      });
+      
+      const auto playingID = _audioController->PostAudioEvent( _playableClip, _audioInfo.gameObject, callbackContext );
+      if( AudioEngine::kInvalidAudioPlayingId == playingID ) {
+        PRINT_NAMED_ERROR( "AlexaMediaPlayer.Update.CouldNotPlayClip",
+                           "Speaker '%s' could not play clip %d",
+                           _audioInfo.name.c_str(), _playableClip );
+      }
+      _clipStartTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() / 1000.0f;
+    } else {
+      // ClipPlayable did not have a valid clip
+      SetState( State::Idle );
+    }
+  } else if( _state == State::ClipPlaying ) {
+    // artificially update _offset_ms
+    const float currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() / 1000.0f;
+    _offset_ms += (currTime_ms - _clipStartTime_ms);
   }
 }
 
@@ -508,7 +559,9 @@ bool AlexaMediaPlayer::play( SourceId id )
         case State::Playable:
         case State::Paused:
           return true;
-        default:
+        case State::ClipPlayable:
+        case State::ClipPlaying:
+        case State::Idle:
           return false;
       }
     };
@@ -621,16 +674,25 @@ bool AlexaMediaPlayer::play( SourceId id )
       // but sometimes downloading finishes before that
       SetState(State::Playable);
     } else if( invalidData ) {
-      // if the decoder loop was aborted because of invalid data, set a flag that data is invalid, which
-      // the Update() loop will then handle
+      // if the decoder loop was aborted because of invalid data, switch to playing a clip instead. this
+      // play-thread method will end, and Update() will check the new state (ClipPlayable) and switch to that.
+      // we should only be in State::Preparing at this stage, since data validity is tied to not being able to
+      // decode a single byte
+      ASSERT_NAMED_EVENT( _state == State::Preparing, "AlexaMediaPlayer.play.InvalidButNotPreparing", "state='%s'", StateToString() );
       _dataValidity = DataValidity::Invalid;
+      using namespace AudioEngine;
+      using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+      _playableClip = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Cannot_Play_Song );
+      SetState( State::ClipPlayable );
+      // to be determined is whether the sdk will do something unexpected if we close the readers
+      // below when switching to playing a clip.
     }
 
     _readers[id]->Close();
     _readers[id].reset();
     _readers.erase(id);
 
-    while (!_detectedTriggers_ms.empty() && !_shuttingDown) {
+    while (!_detectedTriggers_ms.empty() && !_shuttingDown && (_dataValidity != DataValidity::Invalid) ) {
       if (_state == State::Idle) {
         break;
       }
@@ -697,6 +759,10 @@ bool AlexaMediaPlayer::pause( SourceId id )
   }
 
   _executor.submit([id, this]() {
+    // copy into _stateBeforePause (atomic-ness doesnt matter) explicitly since copy ctor is deleted
+    const State state = _state;
+    _stateBeforePause = state;
+    
     SetState(State::Paused);
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
@@ -725,7 +791,10 @@ bool AlexaMediaPlayer::resume( SourceId id )
   }
 
   _executor.submit([id, this]() {
-    SetState( State::Playing );
+    ASSERT_NAMED( _stateBeforePause != State::Idle, "AlexaMediaPlayer.resume.InvalidResumeState" );
+    // set state with what it was before pause (atomic read not applicable since _stateBeforePause isnt being changed)
+    const State stateBeforePause = _stateBeforePause;
+    SetState( stateBeforePause );
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
       LOG( "calling onPlaybackResumed for source %d", (int)id );
@@ -955,6 +1024,8 @@ const char* const AlexaMediaPlayer::StateToString() const
     case State::Playable: return "Playable";
     case State::Playing: return "Playing";
     case State::Paused: return "Paused";
+    case State::ClipPlayable: return "ClipPlayable";
+    case State::ClipPlaying: return "ClipPlaying";
   };
 }
 

@@ -35,15 +35,9 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #ifndef ANIMPROCESS_COZMO_ALEXA_ALEXAMEDIAPLAYER_H
 #define ANIMPROCESS_COZMO_ALEXA_ALEXAMEDIAPLAYER_H
 
-
-#include <memory>
-#include <sstream>
-#include <unordered_set>
-#include <atomic>
-#include <map>
-#include <mutex>
-#include <queue>
-
+#include "audioEngine/audioTools/standardWaveDataContainer.h"
+#include "audioEngine/audioTools/streamingWaveDataInstance.h"
+#include "audioEngine/audioTypes.h"
 
 #include <AVSCommon/SDKInterfaces/SpeakerInterface.h>
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerInterface.h>
@@ -56,8 +50,13 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <AVSCommon/Utils/RequiresShutdown.h>
 #include "minimp3/minimp3.h"
 
-#include "audioEngine/audioTools/standardWaveDataContainer.h"
-#include "audioEngine/audioTools/streamingWaveDataInstance.h"
+#include <memory>
+#include <sstream>
+#include <unordered_set>
+#include <atomic>
+#include <map>
+#include <mutex>
+#include <queue>
 
 // TEMP
 struct SpeexResamplerState_;
@@ -188,9 +187,12 @@ private:
     Preparing,
     Playable,
     Playing,
-    Paused
+    Paused,
+    ClipPlayable,
+    ClipPlaying,
   };
   std::atomic<State> _state;
+  std::atomic<State> _stateBeforePause;
 
   void SetState( State state );
 
@@ -202,7 +204,12 @@ private:
   SourceId _playingSource = 0;
 
   std::map<SourceId, std::unique_ptr< AlexaReader >> _readers;
-  short _decodedPcm[1152*2]; // Got value from minimp3.h MINIMP3_MAX_SAMPLES_PER_FRAME
+  short _decodedPcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
+  
+  // A baked in wwise event that should play once state is ClipPlayable
+  AudioEngine::AudioEventId _playableClip;
+  // Time the baked-in wwise event started
+  float _clipStartTime_ms = -1.0f;
 
   // An internal executor that performs execution of callable objects passed to it sequentially but asynchronously.
   alexaClientSDK::avsCommon::utils::threading::Executor _executor;
@@ -222,7 +229,7 @@ private:
     Valid,
     Invalid,
   };
-  std::atomic<DataValidity> _dataValidity;
+  DataValidity _dataValidity;
 
   StreamingWaveDataPtr _waveData;
 
@@ -254,7 +261,8 @@ private:
   static std::array<float, kFilterSize> _filterCoeffs24;
   // for ensuring callbacks don't fire after this class was deleted
   using AudioCallbackType = std::function<void(SourceId)>;
-  std::shared_ptr<AudioCallbackType> _audioCallbackPointer;
+  std::shared_ptr<AudioCallbackType> _audioPlaybackFinishedPtr;
+  std::shared_ptr<AudioCallbackType> _audioPlaybackErrorPtr;
   
   std::atomic<bool> _shuttingDown;
   // guards access to _observers. not sure of order of sdk calls, so recursive just in case
