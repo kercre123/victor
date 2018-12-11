@@ -865,6 +865,16 @@ void AlexaClient::AddAlertObserver( std::shared_ptr<capabilityAgents::alerts::Al
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::AddAudioPlayerObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::AudioPlayerObserverInterface> observer )
+{
+  if( ANKI_VERIFY( _audioPlayer != nullptr,
+                   "AlexaClient.AddAudioPlayerObserver.Null",
+                   "audio player is null") )
+  {
+    _audioPlayer->addObserver( observer );
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::shared_ptr<registrationManager::RegistrationManager> AlexaClient::GetRegistrationManager()

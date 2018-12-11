@@ -66,7 +66,8 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
                           const OnSendCompleted& onSendCompleted,
                           const OnLogout& onLogout,
                           const OnNotificationIndicator& onNotificationIndicator,
-                          const OnAlertState& onAlertState )
+                          const OnAlertState& onAlertState,
+                          const OnPlayerActivity& onPlayerActivity)
 {
   _onDialogUXStateChanged = onDialogUXStateChanged;
   _onRequestAuthorization = onRequestAuthorization;
@@ -78,6 +79,7 @@ void AlexaObserver::Init( const OnDialogUXStateChangedFunc& onDialogUXStateChang
   _onLogout = onLogout;
   _onNotificationIndicator = onNotificationIndicator;
   _onAlertState = onAlertState;
+  _onPlayerActivity = onPlayerActivity;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -187,6 +189,18 @@ void AlexaObserver::onAlertStateChange( const std::string& alertToken,
   auto func = [this,alertToken,state]() {
     if( _onAlertState ) {
       _onAlertState( alertToken, state );
+    }
+  };
+  AddToQueue( std::move(func) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaObserver::onPlayerActivityChanged(alexaClientSDK::avsCommon::avs::PlayerActivity state,
+                                            const alexaClientSDK::avsCommon::sdkInterfaces::AudioPlayerObserverInterface::Context& context)
+{
+  auto func = [this, state]() {
+    if( _onPlayerActivity ) {
+      _onPlayerActivity( state );
     }
   };
   AddToQueue( std::move(func) );

@@ -38,6 +38,7 @@
   #include "cozmoAnim/alexa/devShutdownChecker.h"
 #endif
 
+#include <AVSCommon/SDKInterfaces/AudioPlayerInterface.h>
 #include <AVSCommon/SDKInterfaces/AuthObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
@@ -164,6 +165,7 @@ private:
   void OnSDKLogout();
   void OnNotificationsIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state );
   void OnAlertState( const std::string& alertID, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state );
+  void OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity state );
   
   
   // readable version int
@@ -196,6 +198,10 @@ private:
   bool _alertActive = false;
   bool _backgroundAlertActive = false;
   std::unordered_map<std::string, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State> _alertStates;
+
+  // audio player info (for the audio channel, e.g. flash briefing)
+  bool _audioActive = false;
+  float _audioActiveLastChangeTime_s = 0.0f;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
   // on vicos.... so just track if the system clock jumps and if so, refresh the timers
