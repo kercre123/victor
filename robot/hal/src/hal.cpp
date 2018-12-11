@@ -951,7 +951,7 @@ void PrintBodyDataUpdate()
         const MotorState& left = bodyData_->motor[MOTOR_LEFT];
         const MotorState& right = bodyData_->motor[MOTOR_RIGHT];
         AnkiInfo("HAL.BodyData.Motors", 
-                 "Status 0x%2x, "
+                 "Status 0x%02x, "
                  "H: (pos %d, dlt %d, tm %u), "
                  "L: (pos %d, dlt %d, tm %u), "
                  "WL: (pos %d, dlt %d, tm %u), "
@@ -966,7 +966,7 @@ void PrintBodyDataUpdate()
         const uint16_t* cliff = bodyData_->cliffSense;
         const RangeData& prox = bodyData_->proximity;
         AnkiInfo("HAL.BodyData.Prox",
-                 "Status 0x%2x, "
+                 "Status 0x%02x, "
                  "Cliff: %4u %4u %4u %4u, "
                  "Prox: range %u, sig %u, amb %u, spadCnt %u, sampCnt %u, calibRes %u",
                  bodyData_->flags, 
@@ -976,7 +976,7 @@ void PrintBodyDataUpdate()
       if (_bodyDataPrintBattery) {
         const BatteryState& batt = bodyData_->battery;               
         AnkiInfo("HAL.BodyData.Battery", 
-                 "Status 0x%2x, battV %d, chgr %d, temp %d, battFlags 0x%4x",
+                 "Status 0x%02x, battV %d, chgr %d, temp %d, battFlags 0x%4x",
                  bodyData_->flags, batt.main_voltage, batt.charger, batt.temperature, batt.flags);
       }
 
