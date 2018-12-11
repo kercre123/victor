@@ -35,9 +35,15 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  static const std::set<BehaviorID> kDoNotInterruptBehaviors = {
-    BEHAVIOR_ID(FistBump),
-    BEHAVIOR_ID(FistBumpVoiceCommand),
+  static const std::set<BehaviorID> kDoNotInterruptBehaviorIds = {
+    BEHAVIOR_ID(NoCloud),
+    BEHAVIOR_ID(NoWifi),
+  };
+  
+  static const std::set<BehaviorClass> kDoNotInterruptBehaviorClasses = {
+    BEHAVIOR_CLASS(BlackJack),
+    BEHAVIOR_CLASS(FistBump),
+    BEHAVIOR_CLASS(TakeAPhotoCoordinator),
   };
 }
 
@@ -56,20 +62,21 @@ BehaviorReactToUncalibratedHeadAndLift::~BehaviorReactToUncalibratedHeadAndLift(
 bool BehaviorReactToUncalibratedHeadAndLift::WantsToBeActivatedBehavior() const
 {
   const bool inPowerSaveMode = GetBEI().GetPowerStateManager().InPowerSaveMode();
+  const bool isAnimating = GetBEI().GetAnimationComponent().IsPlayingAnimation();
   bool shouldActivate = !inPowerSaveMode &&
+                        !isAnimating &&
                         (GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsHeadEncoderInvalid()   ||
                          GetBEI().GetRobotInfo().IsLiftEncoderInvalid());
 
   if (shouldActivate) {
-    const AnimationComponent& animComponent = GetBEI().GetAnimationComponent();
-
-    // If a calibration seems necessary, first verify that we're not in the FistBump behavior which we know
-    // can cause the lift encoder to become invalid since manipulation by user is expected.
-    const auto checkInterruptCallback = [&shouldActivate, &animComponent](const ICozmoBehavior& behavior)->bool {
-      auto got = kDoNotInterruptBehaviors.find(behavior.GetID());
-      if(got != kDoNotInterruptBehaviors.end() || animComponent.IsPlayingAnimation()) {
+    // If a calibration seems necessary, first verify that we are not in a behavior which we know can cause an encoder
+    // to become invalid since manipulation by user is expected.
+    const auto checkInterruptCallback = [&shouldActivate](const ICozmoBehavior& behavior)->bool {
+      const bool idActive = (kDoNotInterruptBehaviorIds.find(behavior.GetID()) != kDoNotInterruptBehaviorIds.end());
+      const bool classActive = (kDoNotInterruptBehaviorClasses.find(behavior.GetClass()) != kDoNotInterruptBehaviorClasses.end());
+      if (idActive || classActive) {
         shouldActivate = false;
         return false; // stop iterating
       }
