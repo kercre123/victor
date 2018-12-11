@@ -37,6 +37,8 @@
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
 
+#include <chrono>
+
 namespace Anki {
 namespace Vector {
   
@@ -89,8 +91,12 @@ Alexa::Alexa()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// is defined here since AlexaImpl is not defined in the header
-Alexa::~Alexa() = default;
+Alexa::~Alexa()
+{
+  if( _implDtorResult.valid() ) {
+    _implDtorResult.wait();
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Init(const AnimContext* context)
@@ -126,12 +132,28 @@ void Alexa::Init(const AnimContext* context)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Update()
 {
-  {
-    std::lock_guard<std::mutex> lg{ _implMutex };
-    if( _impl != nullptr) {
-      // should be called even if not initialized, because this drives the init process
-      _impl->Update();
-    }
+  if( _implToBeDeleted != nullptr ) {
+    // the impl destructor calls shutdown() on a bunch of components. During shutdown(), media players
+    // join() on a processing loop that includes calls to thread::sleep_for, and other components
+    // could also be doing work, so run the destructor on another thread.
+    auto deleteImpl = [impl=std::move(_implToBeDeleted)](){
+      delete impl;
+      // won't provide any useful info if another impl was since created
+      #if ANKI_DEV_CHEATS
+        AlexaImpl::ConfirmShutdown();
+      #endif
+    };
+    _implToBeDeleted = nullptr;
+    DEV_ASSERT( !_implDtorResult.valid(), "Alexa.Update.DtorThreadExists" );
+    _implDtorResult = std::async( std::launch::async, std::move(deleteImpl) );
+  }
+  if( _implDtorResult.valid() && (_implDtorResult.wait_for(std::chrono::milliseconds{0}) == std::future_status::ready) ) {
+    _implDtorResult = {};
+  }
+  
+  if( _impl != nullptr) {
+    // should be called even if not initialized, because this drives the init process
+    _impl->Update();
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -321,12 +343,16 @@ void Alexa::CreateImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::DeleteImpl()
 {
-  std::lock_guard<std::mutex> lg{ _implMutex };
-  ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" );
-  _impl.reset();
-#if ANKI_DEV_CHEATS
-  AlexaImpl::ConfirmShutdown();
-#endif
+  {
+    std::lock_guard<std::mutex> lg{ _implMutex };
+    if( ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" ) ) {
+      // Prevent further callbacks from impl
+      _impl->RemoveCallbacksForShutdown();
+    }
+    // Don't delete the impl just yet, since the current call to DeleteImpl could have originated from an impl callback
+    ASSERT_NAMED( _implToBeDeleted == nullptr, "Alexa.DeleteImpl.Leak" );
+    _implToBeDeleted = _impl.release();
+  }
   SetAuthState( AlexaAuthState::Uninitialized );
 }
   

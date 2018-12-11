@@ -196,6 +196,7 @@ AlexaImpl::AlexaImpl()
   , _dialogState{ DialogUXState::IDLE }
   , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
   , _initState{ InitState::Uninitialized }
+  , _runSetNetworkConnectionError{ false }
 {
   static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
                  "Our shorthand SourceId type differs" );
@@ -204,10 +205,7 @@ AlexaImpl::AlexaImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::~AlexaImpl()
 {
-  if( _observer ) {
-    // note: once VIC-11427 is implemented, this might not be necessary, but it wouldn't hurt
-    _observer->Shutdown();
-  }
+  RemoveCallbacksForShutdown();
   
   if( _capabilitiesDelegate ) {
     _capabilitiesDelegate->shutdown();
@@ -558,7 +556,11 @@ void AlexaImpl::Update()
   } else if( _initState != InitState::Completed ) {
     return;
   }
-    
+  
+  if( _runSetNetworkConnectionError ) {
+    _runSetNetworkConnectionError = false;
+    SetNetworkConnectionError();
+  }
   
   if( _observer != nullptr ) {
     _observer->Update();
@@ -1079,7 +1081,8 @@ void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
-    SetNetworkConnectionError();
+    // run SetNetworkConnectionError on main thread
+    _runSetNetworkConnectionError = true;
     return;
   }
 
@@ -1128,6 +1131,21 @@ void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
   
   // this can generate SdsReader:seekFailed:reason=seekOverwrittenData if the time indices contain overwritten data
   _keywordObserver->onKeyWordDetected( _wakeWordAudioProvider->stream, "ALEXA", fromIndex, toIndex, nullptr);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::RemoveCallbacksForShutdown()
+{
+  if( _observer ) {
+    _observer->Shutdown();
+  }
+  
+  _onAlexaAuthStateChanged = nullptr;
+  _onAlexaUXStateChanged = nullptr;
+  _onLogout = nullptr;
+  _onNetworkError = nullptr;
+  _onNotificationsChanged = nullptr;
+  _initCompleteCallback = nullptr;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
