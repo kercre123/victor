@@ -324,6 +324,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/onboarding1p2
   Onboarding1p2,
   OnboardingComeHere,
+  OnboardingEmulate1p0WaitForVC,
   OnboardingLookAtPhone1p2,
   OnboardingLookAtUser1p2,
   OnboardingTeachComeHere1p2,
