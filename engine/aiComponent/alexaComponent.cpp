@@ -93,11 +93,11 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
     _signalHandles.push_back( ri->Subscribe( RobotInterface::RobotToEngineTag::alexaUXChanged, callback ) );
   }
   auto forceOptIn = [this](ConsoleFunctionContextRef context) {
-   SetAlexaOption( true, UserIntentSource::Unknown );
+    SetRequest( Request::SignInApp );
   };
   _consoleFuncs.emplace_front( "ForceAlexaOptIn", std::move(forceOptIn), "Alexa", "" );
   auto forceOptOut = [this](ConsoleFunctionContextRef context) {
-    SetAlexaOption( false, UserIntentSource::Unknown );
+    SetRequest( Request::SignOutApp );
   };
   _consoleFuncs.emplace_front( "ForceAlexaOptOut", std::move(forceOptOut), "Alexa", "" );
   auto fakeAppDisconnect = [this](ConsoleFunctionContextRef context) {
@@ -154,11 +154,11 @@ void AlexaComponent::UpdateDependent(const AICompMap& dependentComps)
   
   if( _uic->IsUserIntentPending(kSignInIntent) ) {
     if( _featureFlagEnabled ) {
-     SetAlexaOption( true, UserIntentSource::Voice );
+      SetRequest( Request::SignInVC );
     }
   } else if( _uic->IsUserIntentPending(kSignOutIntent) ) {
     if( _featureFlagEnabled ) {
-      SetAlexaOption( false, UserIntentSource::Voice );
+      SetRequest( Request::SignOutVC );
     }
   }
   
@@ -232,19 +232,8 @@ void AlexaComponent::SignOut()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaComponent::SetAlexaOption( bool optedIn, UserIntentSource source )
+void AlexaComponent::SetAlexaOption( bool optedIn )
 {
-  if( optedIn ) {
-    DASMSG(alexa_opt_in, "alexa.user_sign_in_attempt", "User attempted to sign in to alexa");
-    DASMSG_SET(s1, UserIntentSourceToString( source ), "source of the request (Voice or App)");
-    DASMSG_SEND();
-  }
-  else {
-    DASMSG(alexa_opt_in, "alexa.user_sign_out_attempt", "User attempted to sign out of alexa");
-    DASMSG_SET(s1, UserIntentSourceToString( source ), "source of the request (Voice or App)");
-    DASMSG_SEND();
-  }
-
   _pendingAuthIsFromOptIn = optedIn;
   // send anim message to opt IN/OUT
   _robot.SendMessage( RobotInterface::EngineToRobot( RobotInterface::SetAlexaUsage(optedIn) ) );
@@ -274,7 +263,8 @@ void AlexaComponent::HandleAppEvents( const AnkiEvent<external_interface::Gatewa
     {
       if( _featureFlagEnabled ) {
         const bool optIn = msg.alexa_opt_in_request().opt_in();
-        SetAlexaOption( optIn, UserIntentSource::App );
+        const auto request = optIn ? Request::SignInApp : Request::SignOutApp;
+        SetRequest( request );
       }
     }
       break;
@@ -345,7 +335,8 @@ void AlexaComponent::SendAuthStateToApp( bool isResponse )
                       "Feature flag was disabled but the alexa state is '%s'",
                       AlexaAuthStateToString(_authState) ) ) {
       // try disabling alexa
-      SetAlexaOption( false, UserIntentSource::Unknown );
+      SignOut();
+      SendSignOutDAS( UserIntentSource::Unknown );
       return;
     }
   }
