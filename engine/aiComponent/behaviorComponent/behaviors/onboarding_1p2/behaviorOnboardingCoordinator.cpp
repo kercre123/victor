@@ -587,7 +587,10 @@ void BehaviorOnboardingCoordinator::TransitionToPoweringOff()
     _dVars.poweringOff = false;
     // Restore whatever phase we were in when the power button was pressed
     if( OnboardingPhase::InvalidPhase != _dVars.currentPhase ){
-      TransitionToPhase(_dVars.currentPhase);
+      const bool appCommandedTransition = false;
+      // pick up where we left off, if possible, and don't reset phase timeouts
+      const bool resumingPhaseAfterInterruption = true;
+      TransitionToPhase(_dVars.currentPhase, appCommandedTransition, resumingPhaseAfterInterruption);
     }
   });
 }
