@@ -194,6 +194,7 @@ private:
   
   // alert info
   bool _alertActive = false;
+  bool _backgroundAlertActive = false;
   std::unordered_map<std::string, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State> _alertStates;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
