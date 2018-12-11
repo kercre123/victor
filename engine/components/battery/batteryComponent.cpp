@@ -455,6 +455,7 @@ void BatteryComponent::SetIsCharging(const bool isCharging)
     DASMSG_SET(i2, _battTemperature_C,  "Battery temperature (C)");
     DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
     DASMSG_SET(i4, _battDisconnected, "Battery is (1) disconnected or (0) connected");
+    DASMSG_SET(s1, std::to_string((int)(1000.f * GetChargerVoltsRaw())), "Charger voltage (mV)");
     DASMSG_SEND();
   }
 }
