@@ -105,7 +105,7 @@ public:
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
   
-  // Callback setters
+  // Callback setters. Callbacks will run on the same thread as Update()
   
   // this callback should not call AuthDelegate methods
   using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&, bool)>;
@@ -123,6 +123,9 @@ public:
   
   using OnNotificationsChanged = std::function<void(bool hasNotification)>;
   void SetOnNotificationsChanged( const OnNotificationsChanged& callback ) { _onNotificationsChanged = callback; }
+  
+  // Removes all callbacks passed above, and also stops internally processing callbacks from the sdk in prep for being destroyed
+  void RemoveCallbacksForShutdown();
   
 #if ANKI_DEV_CHEATS
   static void ConfirmShutdown();
@@ -239,6 +242,8 @@ private:
   };
   std::atomic<InitState> _initState;
   std::thread _initThread;
+  
+  std::atomic<bool> _runSetNetworkConnectionError;
 
 #if ANKI_DEV_CHEATS
   static DevShutdownChecker _shutdownChecker;

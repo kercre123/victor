@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <future>
 #include <list>
 
 namespace Anki {
@@ -134,6 +135,8 @@ private:
   void PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback = nullptr ) const;
   
   std::unique_ptr<AlexaImpl> _impl;
+  AlexaImpl* _implToBeDeleted = nullptr;
+  std::future<void> _implDtorResult;
   
   const AnimContext* _context = nullptr;
   
@@ -170,7 +173,9 @@ private:
   
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
   
-  mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
+  // guards access to _impl when releasing it on main thread, and when used in NotifyOfWakeWord
+  // and AddMicrophoneSamples, which can be called off thread
+  mutable std::mutex _implMutex;
 };
 
 
