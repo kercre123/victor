@@ -8,7 +8,7 @@
     // Unique device serial number. e.g. 123456
     "deviceSerialNumber":"<SERIAL_NUMBER>", // this serial number gets replaced at runtime
     // The Client ID of the Product from developer.amazon.com
-    "clientId": "amzn1.application-oa2-client.3aa9f81ea6ec4f3298af931b6479ab57",
+    "clientId": "amzn1.application-oa2-client.8113d4b1309d4ba6bcffb4ee4e53bbeb",
     // Product ID from developer.amazon.com
     "productId": "vector_dev"
   },
