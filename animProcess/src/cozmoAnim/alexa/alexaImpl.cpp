@@ -96,6 +96,8 @@ namespace {
   
   const std::string kDirectivesFile = "directives.txt";
   const std::string kAlexaFolder = "alexa";
+
+  static const float kTimeToHoldSpeakingBetweenAudioPlays_s = 1.0f;
   
   // If the DialogUXState is set to Idle, but a directive was received to Play, then wait this long before
   // setting to idle
@@ -115,6 +117,8 @@ namespace {
   // it may have jumped. If so, refresh the alexa timers
   CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
 
+
+  // TODO:(bn) cleanup: the AVS SDK already provides all of these with slightly different names, so let's use those instead...
   const char* DialogUXStateToString( const avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState& duxState ) {
     switch( duxState ) {
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED: return "FINISHED";
@@ -298,7 +302,8 @@ void AlexaImpl::InitThread()
                    std::bind(&AlexaImpl::OnSendComplete, this, std::placeholders::_1),
                    std::bind(&AlexaImpl::OnSDKLogout, this),
                    std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1),
-                   std::bind(&AlexaImpl::OnAlertState, this, std::placeholders::_1, std::placeholders::_2) );
+                   std::bind(&AlexaImpl::OnAlertState, this, std::placeholders::_1, std::placeholders::_2),
+                   std::bind(&AlexaImpl::OnPlayerActivity, this, std::placeholders::_1));
   
   const auto& rootConfig = avsCommon::utils::configuration::ConfigurationNode::getRoot();
   
@@ -442,6 +447,7 @@ void AlexaImpl::InitThread()
   _client->AddInternetConnectionObserver( _observer );
   _client->AddNotificationsObserver( _observer );
   _client->AddAlertObserver( _observer );
+  _client->AddAudioPlayerObserver( _observer );
   
    // Creating the revoke authorization observer.
   auto revokeObserver = std::make_shared<AlexaRevokeAuthObserver>( _client->GetRegistrationManager() );
@@ -815,7 +821,18 @@ void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 void AlexaImpl::CheckForUXStateChange()
 {
   const auto oldState = _uxState;
-  const bool anyPlaying = !_playingSources.empty() || _alertActive || _backgroundAlertActive;
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // When playing sequential audio (e.g. flash news briefing) there is often a very short gap between one
+  // source ending and the next starting. So, if one is playing, consider it playing, but also consider it
+  // playing if it stopped recently
+  const bool audioPlaying = _audioActive || (currTime_s - _audioActiveLastChangeTime_s <= kTimeToHoldSpeakingBetweenAudioPlays_s);
+
+  // Consider a timer / alarm active if it's really active or if it's in the background, since background
+  // timers will jump to foreground as soon as nothing higher priority (i.e. Dialog) is playing
+  const bool alertActive = _alertActive || _backgroundAlertActive;
+
+  const bool anyPlaying = !_playingSources.empty() || alertActive || audioPlaying;
   
   // reset idle timer
   _timeToSetIdle_s = -1.0f;
@@ -824,7 +841,6 @@ void AlexaImpl::CheckForUXStateChange()
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED:
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE:
     {
-      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       // if nothing is playing, it could be because something is about to play. We only know because a
       // directive for "Play" or "Speak" has arrived. If one has arrived recently, don't switch to idle yet,
       // and instead set a timer so that it will switch to idle only if no other state change occurs.
@@ -1065,7 +1081,20 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
   }
     
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity state )
+{
+  const bool playing = ( state == alexaClientSDK::avsCommon::avs::PlayerActivity::PLAYING );
+  if( playing != _audioActive ) {
+    LOG_INFO("AlexaImpl.OnPlayerActivity", "state %s, now %s",
+             alexaClientSDK::avsCommon::avs::playerActivityToString(state).c_str(),
+             playing ? "playing" : "not playing");
+    _audioActive = playing;
+    _audioActiveLastChangeTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
