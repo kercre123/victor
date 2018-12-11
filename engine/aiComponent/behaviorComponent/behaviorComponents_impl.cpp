@@ -44,6 +44,7 @@ class AttentionTransferComponent;
 class PowerStateManager;
 class MoodManager;
 class SleepTracker;
+class OnboardingMessageHandler;
 
 } // namespace Vector
 
@@ -72,6 +73,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(AttentionTransferComponent,         BCComponentID, A
 LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,                  BCComponentID, PowerStateManager)
 LINK_COMPONENT_TYPE_TO_ENUM(MoodManager,                        BCComponentID, MoodManager)
 LINK_COMPONENT_TYPE_TO_ENUM(SleepTracker,                       BCComponentID, SleepTracker)
+LINK_COMPONENT_TYPE_TO_ENUM(OnboardingMessageHandler,           BCComponentID, OnboardingMessageHandler)
 
 // Translate entity into string
 template<>
@@ -104,6 +106,7 @@ std::string GetComponentStringForID<Vector::BCComponentID>(Vector::BCComponentID
     CASE(RobotInfo)
     CASE(RobotStatsTracker)
     CASE(SleepTracker)
+    CASE(OnboardingMessageHandler)
     CASE(UserDefinedBehaviorTreeComponent)
     CASE(UserIntentComponent)
     CASE(Count)

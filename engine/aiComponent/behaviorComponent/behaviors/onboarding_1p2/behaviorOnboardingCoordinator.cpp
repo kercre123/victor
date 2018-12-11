@@ -15,12 +15,13 @@
 #include "clad/types/onboardingPhase.h"
 #include "clad/types/onboardingPhaseState.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboarding1p0.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/iOnboardingPhaseWithProgress.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/iOnboardingPhaseWithProgress.h"
+#include "engine/aiComponent/behaviorComponent/onboardingMessageHandler.h"
 #include "engine/components/battery/batteryComponent.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -105,8 +106,13 @@ BehaviorOnboardingCoordinator::DynamicVariables::DynamicVariables()
 , globalExitTime_s(0.0f)
 , phaseExitTime_s(0.0f)
 , appDisconnectExitTime_s(0.0f)
+, markCompleteAndExitOnNextUpdate(false)
+, skipOnboardingOnNextUpdate(false)
+, emulate1p0Onboarding(false)
+, started1p0WakeUp(false)
 , onboardingStarted(false)
 , waitingForAppReconnect(false)
+, waitingForTermination(false)
 , terminatedNaturally(true)
 , shouldCheckPowerOff(false)
 , isStimMaxed(false)
@@ -119,16 +125,6 @@ BehaviorOnboardingCoordinator::BehaviorOnboardingCoordinator(const Json::Value& 
  : ICozmoBehavior(config)
  , _iConfig(config)
 {
-  SubscribeToAppTags({
-    AppToEngineTag::kOnboardingWakeUpRequest,
-    AppToEngineTag::kOnboardingWakeUpStartedRequest,
-    AppToEngineTag::kOnboardingSetPhaseRequest,
-    AppToEngineTag::kOnboardingPhaseProgressRequest,
-    AppToEngineTag::kOnboardingChargeInfoRequest,
-    AppToEngineTag::kOnboardingSkipOnboarding,
-    AppToEngineTag::kOnboardingMarkCompleteAndExit,
-    AppToEngineTag::kAppDisconnected
-  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -168,7 +164,6 @@ void BehaviorOnboardingCoordinator::GetBehaviorOperationModifiers(BehaviorOperat
 void BehaviorOnboardingCoordinator::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_iConfig.behaviorPowerOff.get());
-  delegates.insert(_iConfig.behaviorOnboarding1p0.get());
   for(auto& pair : _iConfig.OnboardingPhaseMap){
     delegates.insert( pair.second.behavior.get() );
   }
@@ -177,11 +172,21 @@ void BehaviorOnboardingCoordinator::GetAllDelegates(std::set<IBehavior*>& delega
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingCoordinator::InitBehavior()
 {
-  const auto& BC = GetBEI().GetBehaviorContainer();
+  // Subscribe for App messages via the OnboardingMessageHandler
+  GetBehaviorComp<OnboardingMessageHandler>().SubscribeToAppTags({
+    AppToEngineTag::kOnboardingRestart,
+    AppToEngineTag::kOnboardingWakeUpRequest,
+    AppToEngineTag::kOnboardingWakeUpStartedRequest,
+    AppToEngineTag::kOnboardingSetPhaseRequest,
+    AppToEngineTag::kOnboardingPhaseProgressRequest,
+    AppToEngineTag::kOnboardingChargeInfoRequest,
+    AppToEngineTag::kOnboardingSkipOnboarding,
+    AppToEngineTag::kOnboardingMarkCompleteAndExit,
+    AppToEngineTag::kAppDisconnected
+  }, 
+  std::bind(&BehaviorOnboardingCoordinator::HandleOnboardingMessageFromApp, this, std::placeholders::_1));
 
-  BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(Onboarding),
-                                  BEHAVIOR_CLASS(Onboarding1p0),
-                                  _iConfig.behaviorOnboarding1p0);
+  const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.behaviorPowerOff = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingPowerOff) );
 
   for(auto& pair : _iConfig.OnboardingPhaseMap){
@@ -205,12 +210,23 @@ void BehaviorOnboardingCoordinator::InitBehavior()
 
   // Dev console utilities
   if( ANKI_DEV_CHEATS ) {
+    auto clearOnboardingDataFunc = [this](ConsoleFunctionContextRef context){
+      const std::string filename = _iConfig.saveFolder + kOnboardingFilename;
+      Util::FileUtils::DeleteFile( filename );
+      GetBEI().GetCubeCommsComponent().ForgetPreferredCube();
+      if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+        auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+        ei->Broadcast(ExternalInterface::MessageGameToEngine{ExternalInterface::EraseAllEnrolledFaces{}});
+      }
+    };
+    _iConfig.consoleFuncs.emplace_front("Clear Onboarding Data",
+                                        std::move(clearOnboardingDataFunc),
+                                        "OnboardingCoordinator",
+                                        "");
+
     for(auto& phaseDataPair : _iConfig.OnboardingPhaseMap){
       OnboardingPhase phase = phaseDataPair.first;
       auto setPhaseFunc = [this, phase](ConsoleFunctionContextRef context){
-        if(!IsActivated()){
-          return;
-        }
         external_interface::GatewayWrapper wrapper;
         auto* request = new external_interface::OnboardingSetPhaseRequest;
         request->set_phase(CladProtoTypeTranslator::ToProtoEnum(phase));
@@ -221,88 +237,6 @@ void BehaviorOnboardingCoordinator::InitBehavior()
       auto funcNameStr = "Set Phase: " + std::string(EnumToString(phase));
       _iConfig.consoleFuncs.emplace_front(funcNameStr, std::move(setPhaseFunc), "OnboardingCoordinator", "");
     }
-
-    auto simulateDisconnectFunc = [this](ConsoleFunctionContextRef context){
-      if(!IsActivated()){
-        return;
-      }
-      external_interface::GatewayWrapper wrapper;
-      wrapper.set_allocated_app_disconnected(new external_interface::AppDisconnected);
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-      gi->Broadcast(wrapper);
-    };
-    _iConfig.consoleFuncs.emplace_front("Simulate App Disconnect",
-                                        std::move(simulateDisconnectFunc),
-                                        "OnboardingCoordinator",
-                                        "");
-
-    auto terminateIncompleteFunc = [this](ConsoleFunctionContextRef context){
-      if(!IsActivated()){
-        return;
-      }
-      external_interface::GatewayWrapper wrapper;
-      wrapper.set_allocated_onboarding_skip_onboarding(new external_interface::OnboardingSkipOnboarding);
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-      gi->Broadcast(wrapper);
-    };
-    _iConfig.consoleFuncs.emplace_front("Terminate - Skip",
-                                        std::move(terminateIncompleteFunc),
-                                        "OnboardingCoordinator",
-                                        "");
-
-    auto terminateCompleteFunc = [this](ConsoleFunctionContextRef context){
-      if(!IsActivated()){
-        return;
-      }
-      external_interface::GatewayWrapper wrapper;
-      wrapper.set_allocated_onboarding_mark_complete_and_exit(new external_interface::OnboardingMarkCompleteAndExit);
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-      gi->Broadcast(wrapper);
-    };
-    _iConfig.consoleFuncs.emplace_front("Terminate - Mark Complete",
-                                        std::move(terminateCompleteFunc),
-                                        "OnboardingCoordinator",
-                                        "");
-
-    auto terminateDevDoNothingFunc = [this](ConsoleFunctionContextRef context){
-      if(!IsActivated()){
-        return;
-      }
-      TerminateOnboarding();
-      SaveToDisk(OnboardingStages::DevDoNothing);
-    };
-    _iConfig.consoleFuncs.emplace_front("Terminate - DevDoNothing",
-                                        std::move(terminateDevDoNothingFunc),
-                                        "OnboardingCoordinator",
-                                        "");
-
-    auto hailMaryWakeUpFunc = [this](ConsoleFunctionContextRef context){
-      if(!IsActivated()){
-        return;
-      }
-      external_interface::GatewayWrapper wrapper;
-      wrapper.set_allocated_onboarding_wake_up_request(new external_interface::OnboardingWakeUpRequest);
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-      gi->Broadcast(wrapper);
-    };
-    _iConfig.consoleFuncs.emplace_front("Hail Mary: Send Wake Up Request",
-                                        std::move(hailMaryWakeUpFunc),
-                                        "OnboardingCoordinator",
-                                        "");
-
-    auto hailMaryWakeUpStartedFunc = [this](ConsoleFunctionContextRef context){
-      if(!IsActivated()){
-        return;
-      }
-      external_interface::GatewayWrapper wrapper;
-      wrapper.set_allocated_onboarding_wake_up_started_request(new external_interface::OnboardingWakeUpStartedRequest);
-      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-      gi->Broadcast(wrapper);
-    };
-    _iConfig.consoleFuncs.emplace_front("Hail Mary: Send Wake Up Started Request",
-                                        std::move(hailMaryWakeUpStartedFunc),
-                                        "OnboardingCoordinator",
-                                        "");
   }// Dev console utilities
 }
 
@@ -337,31 +271,37 @@ void BehaviorOnboardingCoordinator::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingCoordinator::HandleWhileActivated(const AppToEngineEvent& event)
+void BehaviorOnboardingCoordinator::HandleOnboardingMessageFromApp(const AppToEngineEvent& event)
 {
-  // Disable message handling if we've delegated to the Hail Mary behavior for back compat. The delegate
-  // will handle App messaging as appropriate
-  if( _iConfig.behaviorOnboarding1p0->IsActivated() ){
-    return;
-  }
-
   switch( event.GetData().GetTag() ){
+    case AppToEngineTag::kOnboardingRestart:
+    {
+      RestartOnboarding();
+      break;
+    }
     // kOnboardingWakeUpRequest and kOnboardingWakeUpStartedRequest are maintained for backward compatiblity
     // with older app versions which use "hail mary" onboarding sequence
     case AppToEngineTag::kOnboardingWakeUpRequest:
+    {
+      _dVars.emulate1p0Onboarding = true;
+      const float chargerTime_s = GetBEI().GetRobotInfo().GetBatteryComponent().GetSuggestedChargerTime();
+      const bool canWakeUp = (chargerTime_s == 0.0f);
+      Send1p0WakeUpResponseToApp(canWakeUp);
+      // Internal handling of the emulation
+      if(canWakeUp){
+        _dVars.pendingPhase = OnboardingPhase::WakeUp;
+        _dVars.started1p0WakeUp = true;
+      }
+      break;
+    }
     case AppToEngineTag::kOnboardingWakeUpStartedRequest:
     {
-      if( _iConfig.behaviorOnboarding1p0->WantsToBeActivated() ){
-        CancelDelegates(false);
-        DelegateIfInControl(_iConfig.behaviorOnboarding1p0.get());
-        _iConfig.behaviorOnboarding1p0->FwdEventToHandleWhileActivated(event);
-        // Disable timeouts, Hail Mary does its own thing here
-        _dVars.globalExitTime_s = 0.0f;
-        _dVars.phaseExitTime_s = 0.0f;
-        _dVars.appDisconnectExitTime_s = 0.0f;
-      }
-      else{
-        TerminateOnboarding();
+      _dVars.emulate1p0Onboarding = true;
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( nullptr != gi ) {
+        // tell app wakeup started if we already received the wakeup command from the app
+        auto* msg = new external_interface::OnboardingWakeUpStartedResponse{ _dVars.started1p0WakeUp };
+        gi->Broadcast( ExternalMessageRouter::WrapResponse(msg) );
       }
       break;
     }
@@ -372,6 +312,7 @@ void BehaviorOnboardingCoordinator::HandleWhileActivated(const AppToEngineEvent&
       auto iter = _iConfig.OnboardingPhaseMap.find(_dVars.lastSetPhase); 
       _dVars.lastSetPhaseBehavior = (_iConfig.OnboardingPhaseMap.end() != iter) ? iter->second.behavior : nullptr;
       _dVars.lastSetPhaseState = OnboardingPhaseState::PhasePending;
+      SendSetPhaseResponseToApp();
       break;
     }
     case AppToEngineTag::kOnboardingPhaseProgressRequest:
@@ -386,27 +327,31 @@ void BehaviorOnboardingCoordinator::HandleWhileActivated(const AppToEngineEvent&
     }
     case AppToEngineTag::kOnboardingSkipOnboarding:
     {
-      TerminateOnboarding();
-      // Skipping is treated just like it never started, and should overwrite previous timeouts
-      SaveToDisk(OnboardingStages::NotStarted);
+      _dVars.skipOnboardingOnNextUpdate = true;
       break;
     }
     case AppToEngineTag::kOnboardingMarkCompleteAndExit:
     {
-      TerminateOnboarding();
-      SaveToDisk(OnboardingStages::Complete);
+      _dVars.markCompleteAndExitOnNextUpdate = true;
       break;
     }
     case AppToEngineTag::kAppDisconnected:
     {
-      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      const bool appDisconnectTimeOutSet = _iConfig.appDisconnectTimeout_s > 0.0f;
-      _dVars.appDisconnectExitTime_s = appDisconnectTimeOutSet ? (currTime_s + _iConfig.appDisconnectTimeout_s) : 0.0f;
+      // If we were running 1p0 onboarding emulation and we've already started waking up, don't react to the
+      // lost connection, just let the emulation behavior finish up onboarding naturally on a 60 sec timeout
+      // or the first voice command
+      if( !_dVars.emulate1p0Onboarding || !_dVars.started1p0WakeUp ){
+        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        const bool appDisconnectTimeOutSet = _iConfig.appDisconnectTimeout_s > 0.0f;
+        _dVars.appDisconnectExitTime_s = appDisconnectTimeOutSet ? (currTime_s + _iConfig.appDisconnectTimeout_s) : 0.0f;
+      }
       // This particular message should NOT reset appDisconnect params; return early
       return;
     }
     default:
     {
+      LOG_WARNING("BehaviorOnboardingCoordinator.HandleOnboardingMessageFromApp.UnhandledAppMessageReceived",
+                  "Received App message which is not yet handled");
       // Simply return for unsupported messages
       return;
     }
@@ -426,7 +371,18 @@ void BehaviorOnboardingCoordinator::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingCoordinator::BehaviorUpdate()
 {
-  if( !IsActivated() || _dVars.poweringOff ) {
+  if( !IsActivated() || _dVars.poweringOff || _dVars.waitingForTermination ){
+    return;
+  }
+
+  if(_dVars.markCompleteAndExitOnNextUpdate){
+    TerminateOnboarding();
+    SaveToDisk(OnboardingStages::Complete);
+    return;
+  } else if(_dVars.skipOnboardingOnNextUpdate){
+    // Skipping is treated just like it never started, and should overwrite previous timeouts
+    TerminateOnboarding();
+    SaveToDisk(OnboardingStages::NotStarted);
     return;
   }
 
@@ -460,6 +416,7 @@ void BehaviorOnboardingCoordinator::BehaviorUpdate()
     // functional purpose, so just mark complete. In the future we could use TimedOut to deliberately offer users
     // the option to redo onboarding if it times out on them.
     SaveToDisk(OnboardingStages::Complete);
+    return;
   }
 
   if( _dVars.shouldCheckPowerOff ) {
@@ -517,15 +474,17 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
         });
     }
     else {
-      LOG_ERROR("BehaviorOnboardingCooordinator.TransitionToPhase.PhaseBehaviorFailure",
+      LOG_ERROR("BehaviorOnboardingCoordinator.TransitionToPhase.PhaseBehaviorFailure",
                 "Phase %s behavior did not want to be activated. Setting Default phase if available",
                 EnumToString(phase));
       if( OnboardingPhase::Default != phase ){
         TransitionToPhase(OnboardingPhase::Default);
       }
       else{
-        // If we can't get to the default phase, exit onboarding
+        // If we can't get to the default phase, exit onboarding and don't re-enter it... its broken.
         TerminateOnboarding();
+        SaveToDisk(OnboardingStages::Complete);
+        return;
       }
 
       if( appCommandedTransition ){
@@ -541,8 +500,10 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
       TransitionToPhase(OnboardingPhase::Default);
     }
     else{
-      // If the "default" phase is invalid, exit onboarding
+      // If the "default" phase is invalid, exit onboarding and don't re-enter it... its broken.
       TerminateOnboarding();
+      SaveToDisk(OnboardingStages::Complete);
+      return;
     }
 
     if( appCommandedTransition ){
@@ -552,13 +513,7 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
 
   // Send the SetPhaseResponse back to the App
   if( appCommandedTransition ){
-    auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-    if(nullptr != gi){
-      auto* msg = new external_interface::OnboardingSetPhaseResponse;
-      msg->set_phase(CladProtoTypeTranslator::ToProtoEnum(phase));
-      msg->set_phase_state(CladProtoTypeTranslator::ToProtoEnum(_dVars.lastSetPhaseState));
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(msg) );
-    }
+    SendSetPhaseResponseToApp();
   }
 }
 
@@ -568,6 +523,24 @@ void BehaviorOnboardingCoordinator::OnPhaseComplete(const OnboardingPhase& phase
   LOG_INFO("BehaviorOnboardingCoordinator.OnPhaseComplete",
            "Completed onboarding phase %s. Idling.",
            EnumToString(phase));
+
+  if( _dVars.emulate1p0Onboarding ){
+    if( OnboardingPhase::WakeUp == phase ){
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        auto* onboardingWakeUpFinished = new external_interface::OnboardingWakeUpFinished;
+        gi->Broadcast( ExternalMessageRouter::Wrap(onboardingWakeUpFinished) );
+      }
+      TransitionToPhase(OnboardingPhase::Emulate1p0WaitForVC);
+    } else if ( OnboardingPhase::Emulate1p0WaitForVC == phase ){
+      // If we come back from the Emulation phase, always exit. We either got a voice command
+      // or something broke
+      TerminateOnboarding();
+      SaveToDisk(OnboardingStages::Complete);
+    }
+    return;
+  }
+
   const auto currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasIdleTimeout = _iConfig.idleTimeout_s > 0.0f;
   _dVars.phaseExitTime_s = hasIdleTimeout ? (currTime_s + _iConfig.idleTimeout_s) : 0.0f;
@@ -649,11 +622,39 @@ bool BehaviorOnboardingCoordinator::IsBatteryCountdownDone() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboardingCoordinator::SendSetPhaseResponseToApp()
+{
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if(nullptr != gi){
+    auto* msg = new external_interface::OnboardingSetPhaseResponse;
+    if(!IsActivated()){
+      // Indicate to the App that this message was handled atypically incase the App wants to disregard results
+      msg->set_allocated_status(new external_interface::ResponseStatus(
+        external_interface::ResponseStatus::StatusCode::ResponseStatus_StatusCode_UNKNOWN));
+    } else {
+      msg->set_allocated_status(new external_interface::ResponseStatus(
+        external_interface::ResponseStatus::StatusCode::ResponseStatus_StatusCode_OK));
+    }
+    msg->set_phase(CladProtoTypeTranslator::ToProtoEnum(_dVars.lastSetPhase));
+    msg->set_phase_state(CladProtoTypeTranslator::ToProtoEnum(_dVars.lastSetPhaseState));
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(msg) );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingCoordinator::SendChargeInfoResponseToApp()
 {
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( nullptr != gi ) {
     auto* msg = new external_interface::OnboardingChargeInfoResponse;
+    if(!IsActivated()){
+      // Indicate to the App that this message was handled atypically incase the App wants to disregard results
+      msg->set_allocated_status(new external_interface::ResponseStatus(
+        external_interface::ResponseStatus::StatusCode::ResponseStatus_StatusCode_UNKNOWN));
+    } else {
+      msg->set_allocated_status(new external_interface::ResponseStatus(
+        external_interface::ResponseStatus::StatusCode::ResponseStatus_StatusCode_OK));
+    }
     msg->set_on_charger( _dVars.batteryInfo.onCharger );
     msg->set_needs_to_charge( _dVars.batteryInfo.needsToCharge );
     msg->set_required_charge_time( _dVars.batteryInfo.chargerTime_s );
@@ -664,11 +665,40 @@ void BehaviorOnboardingCoordinator::SendChargeInfoResponseToApp()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboardingCoordinator::Send1p0WakeUpResponseToApp(bool canWakeUp)
+{
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( nullptr != gi ) {
+    auto* chargingInfo = new external_interface::Onboarding1p0ChargingInfo;
+    chargingInfo->set_on_charger( _dVars.batteryInfo.onCharger );
+    chargingInfo->set_needs_to_charge( _dVars.batteryInfo.needsToCharge );
+    chargingInfo->set_suggested_charger_time( GetChargerTime() );
+    
+    LOG_INFO("BehaviorOnboarding.OnboardingStatus.Received1p0Wakeup",
+            "Received wakeup. Responding with ok=%d, onCharger=%d, needsToCharger=%d, chargerTime=%f",
+            canWakeUp, _dVars.batteryInfo.onCharger, _dVars.batteryInfo.needsToCharge, GetChargerTime());
+    
+    auto* onboardingWakeUpResponse = new external_interface::OnboardingWakeUpResponse;
+    onboardingWakeUpResponse->set_waking_up( canWakeUp );
+    onboardingWakeUpResponse->set_allocated_charging_info( chargingInfo );
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingWakeUpResponse) );
+  }      
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingCoordinator::SendPhaseProgressResponseToApp()
 {
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if(nullptr != gi){
     auto* msg = new external_interface::OnboardingPhaseProgressResponse;
+    if(!IsActivated()){
+      // Indicate to the App that this message was handled atypically incase the App wants to disregard results
+      msg->set_allocated_status(new external_interface::ResponseStatus(
+        external_interface::ResponseStatus::StatusCode::ResponseStatus_StatusCode_UNKNOWN));
+    } else {
+      msg->set_allocated_status(new external_interface::ResponseStatus(
+        external_interface::ResponseStatus::StatusCode::ResponseStatus_StatusCode_OK));
+    }
     msg->set_last_set_phase(CladProtoTypeTranslator::ToProtoEnum(_dVars.lastSetPhase));
     msg->set_last_set_phase_state(CladProtoTypeTranslator::ToProtoEnum(_dVars.lastSetPhaseState));
 
@@ -679,6 +709,31 @@ void BehaviorOnboardingCoordinator::SendPhaseProgressResponseToApp()
     msg->set_percent_completed(progress);
     gi->Broadcast( ExternalMessageRouter::WrapResponse(msg) );
 }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboardingCoordinator::RestartOnboarding()
+{
+  if(IsActivated()){
+    CancelDelegates(false);
+  }
+
+  _dVars.waitingForTermination = true;
+  _dVars.terminatedNaturally = true;
+
+  // we shouldn't CancelSelf() because this is the base behavior in the stack. But we can
+  // tell the BehaviorsBootLoader to reboot with a different stack
+  if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+    auto* ei = GetBEI().GetRobotInfo().GetExternalInterface();
+    ExternalInterface::OnboardingState state;
+    state.stage = OnboardingStages::NotStarted;
+    state.forceSkipStackReset = false; // reset the stack into normal operation
+    ei->Broadcast(ExternalInterface::MessageEngineToGame{std::move(state)});
+  }
+
+  SaveToDisk(OnboardingStages::NotStarted);
+  LOG_INFO("BehaviorOnboardingCoordinator.RestartOnboarding.OnboardingStatus",
+           "Restarting onboarding");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

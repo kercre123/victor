@@ -66,16 +66,17 @@ public:
   // or if there is a "pending" behavior that should be the next base behavior upon reset
   IBehavior* GetBootBehavior();
 
+  OnboardingStages GetOnboardingStage(){return _stage;}
+
 private:
   
   void InitOnboarding();
-  
+
   void RestartOnboarding();
-  
+
   void SetNewBehavior(BehaviorID behavior, bool requestStackReset = true);
   
   IExternalInterface* _externalInterface = nullptr;
-  IGatewayInterface* _gatewayInterface = nullptr;
   const BehaviorContainer* _behaviorContainer = nullptr;
   
   IBehavior* _bootBehavior = nullptr;

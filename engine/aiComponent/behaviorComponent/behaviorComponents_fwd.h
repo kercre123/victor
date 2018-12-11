@@ -53,6 +53,7 @@ enum class BCComponentID{
   PowerStateManager,
   MoodManager,
   SleepTracker,
+  OnboardingMessageHandler,
   Count
 };
 

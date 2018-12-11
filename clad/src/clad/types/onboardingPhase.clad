@@ -14,7 +14,10 @@ enum uint_8 OnboardingPhase
   LookAtUser,
   TeachWakeWord,
   TeachComeHere,
-  TeachMeetVictor
+  TeachMeetVictor,
+
+  // Internal Only phases (not commandable by App)
+  Emulate1p0WaitForVC = 100 
 }
 
 }

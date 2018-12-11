@@ -57,6 +57,12 @@ public:
   const static std::string kOnboardingFilename;
   const static std::string kOnboardingStageKey;
 
+  // Onboarding is a little weird in that it may need to handle messages from the App even if it isn't
+  // currently active to appropriately coordinate around Mute and CustomerCare screens which reset the
+  // behavior stack on Entry/Exit. This function is called from the OnboardingMessageHandler BCComponent
+  // whether or not this behavior is currently active so messages from the App are always handled.
+  void HandleOnboardingMessageFromApp(const AppToEngineEvent& event);
+
 protected:
 
   // Enforce creation through BehaviorFactory
@@ -71,11 +77,8 @@ protected:
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
-  virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
-
-  // virtual void HandleWhileActivated(const AppToEngineEvent& event) override;
 
 private:
 
@@ -95,9 +98,12 @@ private:
   // Evaluates active timeouts and returns TRUE if any are expired
   bool ShouldExitDueToTimeout();
 
+  void DelegateTo1p0Onboarding();
+
   void FixStimAtMax();
   void UnFixStim();
 
+  void RestartOnboarding();
   void TerminateOnboarding();
   void SaveToDisk(OnboardingStages phase) const;
 
@@ -106,8 +112,10 @@ private:
   float GetChargerTime() const;
   bool IsBatteryCountdownDone() const;
 
+  void SendSetPhaseResponseToApp();
   void SendChargeInfoResponseToApp();
   void SendPhaseProgressResponseToApp();
+  void Send1p0WakeUpResponseToApp(bool canWakeUp);
 
   struct OnboardingPhaseData{
     std::string       behaviorIDStr;
@@ -124,7 +132,6 @@ private:
     std::string saveFolder;
 
     ICozmoBehaviorPtr behaviorPowerOff;
-    std::shared_ptr<BehaviorOnboarding1p0> behaviorOnboarding1p0;
 
     float startTimeout_s;
     float completionTimeout_s;
@@ -150,6 +157,13 @@ private:
     float globalExitTime_s;
     float phaseExitTime_s;
     float appDisconnectExitTime_s;
+
+    bool markCompleteAndExitOnNextUpdate;
+    bool skipOnboardingOnNextUpdate;
+
+    bool emulate1p0Onboarding;
+    bool started1p0WakeUp;
+
     bool onboardingStarted;
     bool waitingForAppReconnect;
     bool waitingForTermination;

@@ -46,6 +46,12 @@
       "phaseBehaviorID" : "OnboardingTeachMeetVictor1p2",
       "phaseTimeout_s" : 300.0,
       "allowCoordinatorPowerOff" : true
+    },
+    {
+      "phaseName" : "Emulate1p0WaitForVC",
+      "phaseBehaviorID" : "OnboardingEmulate1p0WaitForVC",
+      "phaseTimeout_s" : 60.0,
+      "allowCoordinatorPowerOff" : true
     }
   ],
 

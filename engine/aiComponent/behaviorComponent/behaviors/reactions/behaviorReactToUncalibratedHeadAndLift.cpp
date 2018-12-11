@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUncalibratedHeadAndLift.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/powerStateManager.h"
 #include "engine/actions/basicActions.h"
@@ -61,10 +62,15 @@ BehaviorReactToUncalibratedHeadAndLift::~BehaviorReactToUncalibratedHeadAndLift(
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUncalibratedHeadAndLift::WantsToBeActivatedBehavior() const
 {
+  // This shouldn't interrupt pending intents. Its a rare coincidence, except apparently when transitioning from
+  // onboarding to normal operation with a pending intent, when it happens constantly... could be my robot is kinda
+  // borked... but this shouldn't hurt anything.
+  const bool userIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
   const bool inPowerSaveMode = GetBEI().GetPowerStateManager().InPowerSaveMode();
   const bool isAnimating = GetBEI().GetAnimationComponent().IsPlayingAnimation();
   bool shouldActivate = !inPowerSaveMode &&
                         !isAnimating &&
+                        !userIntentPending &&
                         (GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsHeadEncoderInvalid()   ||
