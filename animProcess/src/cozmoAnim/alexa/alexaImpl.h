@@ -202,6 +202,9 @@ private:
   // audio player info (for the audio channel, e.g. flash briefing)
   bool _audioActive = false;
   float _audioActiveLastChangeTime_s = 0.0f;
+  
+  // todo: merge with _timeToSetIdle_s
+  float _nextUXStateCheckTime_s = 0.0f;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
   // on vicos.... so just track if the system clock jumps and if so, refresh the timers
