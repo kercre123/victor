@@ -50,9 +50,10 @@ namespace {
   const char* kPlayListeningGetInKey              = "playListeningGetIn";
   const char* kPlayListeningGetOutKey             = "playListeningGetOut";
   const char* kMaxRepromptKey                     = "maxNumberOfReprompts";
-  constexpr uint32_t kStreamingTimeoutAddition_ms = 2000;
-  constexpr uint32_t kMaxRecordTime_ms            = ( MicData::kStreamingTimeout_ms + kStreamingTimeoutAddition_ms );
-  constexpr float kMaxRecordTime_s                = ( (float)kMaxRecordTime_ms / 1000.0f );
+  constexpr float kMaxRecordTime_s                = 10.0f; // matches timeouts for TriggerWord and KnowledgeGraph
+
+  static_assert( kMaxRecordTime_s >= ( ( MicData::kStreamingTimeout_ms + 2000 ) / 1000.f ),
+                 "kMaxRecordTime_s should be >= kStreamingTimeout_ms by about 2 seconds to give chipper time to respond" );
 
   // when we heard something but don't have a matching intent, do we want to stop immediately or wait for animation timeout?
   const bool kStopListeningOnUnknownIntent        = false;
