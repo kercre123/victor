@@ -612,12 +612,21 @@ void AlexaImpl::Update()
     _lastWallTimeCheck_s = currTime_s;
   }
 
+  // TODO: merge _nextUXStateCheckTime_s logic into _timeToSetIdle_s
+  bool checkedUXState = false;
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
     if( _dialogState != DialogUXState::IDLE) {
       _dialogState = DialogUXState::IDLE;
       LOG_INFO( "AlexaImpl.Update.SetDialogStateIdle", "the timer to set idle elapsed, updating dialog state to idle" );
     }
+    checkedUXState = true;
     CheckForUXStateChange();
+  }
+  if( (_nextUXStateCheckTime_s > 0.0f) && (currTime_s >= _nextUXStateCheckTime_s) ) {
+    _nextUXStateCheckTime_s = 0.0f;
+    if( !checkedUXState ) {
+      CheckForUXStateChange();
+    }
   }
 }
 
@@ -1088,11 +1097,14 @@ void AlexaImpl::OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity
 {
   const bool playing = ( state == alexaClientSDK::avsCommon::avs::PlayerActivity::PLAYING );
   if( playing != _audioActive ) {
-    LOG_INFO("AlexaImpl.OnPlayerActivity", "state %s, now %s",
-             alexaClientSDK::avsCommon::avs::playerActivityToString(state).c_str(),
-             playing ? "playing" : "not playing");
     _audioActive = playing;
-    _audioActiveLastChangeTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _audioActiveLastChangeTime_s = currTime_s;
+    CheckForUXStateChange();
+    // call CheckForUXStateChange() again once kTimeToHoldSpeakingBetweenAudioPlays_s expires
+    // todo: merge _nextUXStateCheckTime_s logic into _timeToSetIdle_s
+    _nextUXStateCheckTime_s = std::max(_nextUXStateCheckTime_s, currTime_s + kTimeToHoldSpeakingBetweenAudioPlays_s + 0.1f);
+    
   }
 }
 

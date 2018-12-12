@@ -57,6 +57,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 #include "util/threading/threadPriority.h"
+#include "util/logging/DAS.h"
 #include "util/math/math.h"
 
 #include <AVSCommon/AVS/SpeakerConstants/SpeakerConstants.h>
@@ -738,6 +739,10 @@ bool AlexaMediaPlayer::play( SourceId id )
       SetState( State::ClipPlayable );
       // to be determined is whether the sdk will do something unexpected if we close the readers
       // below when switching to playing a clip.
+      DASMSG(alexa_unsupported_audio_format,
+             "alexa.unsupported_audio_format",
+             "The audio decoder had trouble with the given media");
+      DASMSG_SEND();
     }
 
     _readers[id]->Close();
