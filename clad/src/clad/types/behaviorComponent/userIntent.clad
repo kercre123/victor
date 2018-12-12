@@ -124,6 +124,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             imperative_fetchcube,
   UserIntent_Void             imperative_findcube,
   UserIntent_Void             imperative_lookatme,
+  UserIntent_Void             imperative_lookoverthere,
   UserIntent_Void             imperative_love,
   UserIntent_Void             imperative_praise,
   UserIntent_Void             imperative_negative,
