@@ -23,7 +23,6 @@
 #include "coretech/common/shared/radians.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -1146,79 +1145,6 @@ namespace Vector {
       {
         if (entry.second.face.IsMakingEyeContact())
         {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::GetGazeDirectionPose(const u32 withinLast_ms, Pose3d& gazeDirectionPose,
-                                       SmartFaceID& faceID) const
-  {
-    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
-    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
-                                        ( lastImgTime - withinLast_ms ) :
-                                        0;
-
-    for (const auto& entry: _faceEntries)
-    {
-      if (ShouldReturnFace(entry.second, recentTime, false))
-      {
-        if (entry.second.face.IsGazeDirectionStable())
-        {
-          gazeDirectionPose = entry.second.face.GetGazeDirectionPose();
-          faceID.Reset(*_robot, entry.second.face.GetID());
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::AnyStableGazeDirection(const u32 withinLast_ms) const
-  {
-    Pose3d gazeDirectionPose;
-    SmartFaceID faceID;
-    return GetGazeDirectionPose(withinLast_ms, gazeDirectionPose, faceID);
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::ClearGazeDirectionHistory(const SmartFaceID& faceID)
-  {
-    // Loop over all the faces and see if any of them are making eye contact
-    for (const auto& entry: _faceEntries)
-    {
-      if (faceID.MatchesFaceID(entry.second.face.GetID()))
-      {
-        const auto& gazeDirectionEntry = _gazeDirection.find(entry.second.face.GetID());
-        if (gazeDirectionEntry != _gazeDirection.end()) {
-          gazeDirectionEntry->second.ClearHistory();
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
-                                  const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const
-  {
-    for (const auto& entry: _faceEntries)
-    {
-      const auto& headPose = entry.second.face.GetHeadPose();
-      Pose3d headPoseWRTRobot;
-      if (headPose.GetWithRespectTo(robotPose, headPoseWRTRobot))
-      {
-        const Radians& horizontalFOV = _robot->GetVisionComponent().GetCamera().GetCalibration()->ComputeHorizontalFOV();
-        const Radians faceTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(headPoseWRTRobot.GetTranslation());
-        if (Util::InRange( turnAngle - faceTurnAngle, -horizontalFOV/2.f, horizontalFOV/2.f) &&
-            !smartFaceIDToIgnore.MatchesFaceID(entry.second.face.GetID()))
-        {
-          faceIDToTurnTowards.Reset(*_robot, entry.second.face.GetID());
           return true;
         }
       }
