@@ -50,7 +50,9 @@ namespace {
   const char* kPlayListeningGetInKey              = "playListeningGetIn";
   const char* kPlayListeningGetOutKey             = "playListeningGetOut";
   const char* kMaxRepromptKey                     = "maxNumberOfReprompts";
-  constexpr float kMaxRecordTime_s                = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
+  constexpr uint32_t kStreamingTimeoutAddition_ms = 2000;
+  constexpr uint32_t kMaxRecordTime_ms            = ( MicData::kStreamingTimeout_ms + kStreamingTimeoutAddition_ms );
+  constexpr float kMaxRecordTime_s                = ( (float)kMaxRecordTime_ms / 1000.0f );
 
   // when we heard something but don't have a matching intent, do we want to stop immediately or wait for animation timeout?
   const bool kStopListeningOnUnknownIntent        = false;
