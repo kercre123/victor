@@ -117,6 +117,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtPhone1p2.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtUser1p2.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingTeachWakeWord.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingWakeUp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorAestheticallyCenterFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemo.h"
@@ -832,6 +833,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::OnboardingTeachWakeWord:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingTeachWakeWord(config));
+      break;
+    }
+    
+    case BehaviorClass::OnboardingWakeUp:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingWakeUp(config));
       break;
     }
     
