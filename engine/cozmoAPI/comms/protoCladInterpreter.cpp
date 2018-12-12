@@ -14,6 +14,7 @@
 #include "protoCladInterpreter.h"
 
 #include "util/logging/logging.h"
+#include "proto/external_interface/messages.pb.h"
 
 #include "engine/cozmoEngine.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -222,6 +223,7 @@ external_interface::CladRect * ProtoCladInterpreter::CladCladRectToProto(
   return clad_rect;
 }
 
+//TODO: templatize the ENUM converters do DRY out the code:
 external_interface::FacialExpression ProtoCladInterpreter::CladFacialExpressionToProto(
     const Anki::Vision::FacialExpression & clad_message) {
 
@@ -230,7 +232,23 @@ external_interface::FacialExpression ProtoCladInterpreter::CladFacialExpressionT
   return external_interface::FacialExpression((int)clad_message + 1);
 }
 
+//TODO: templatize the ENUM converters do DRY out the code:
+external_interface::ObjectFamily ProtoCladInterpreter::CladObjectFamilyToProto(
+    const Anki::Vector::ObjectFamily & clad_message) {
 
+  // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
+  // 2) it ensures that adding a new expression doesn't require that you alter this interpreter.
+  return external_interface::ObjectFamily((int)clad_message + 1);
+}
+
+//TODO: templatize the ENUM converters do DRY out the code:
+external_interface::ObjectType ProtoCladInterpreter::CladObjectTypeToProto(
+    const Anki::Vector::ObjectType & clad_message) {
+
+  // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
+  // 2) it ensures that adding a new expression doesn't require that you alter this interpreter.
+  return external_interface::ObjectType((int)clad_message + 1);
+}
 
 
 //
@@ -240,6 +258,7 @@ void ProtoCladInterpreter::CladRobotObservedFaceToProto(
     const Anki::Vector::ExternalInterface::RobotObservedFace & clad_message,
     external_interface::GatewayWrapper & proto_message) {
   external_interface::RobotObservedFace * robot_observed_face = new external_interface::RobotObservedFace;
+  
   robot_observed_face->set_face_id(clad_message.faceID);
   robot_observed_face->set_timestamp(clad_message.timestamp);
   robot_observed_face->set_allocated_pose(CladPoseStructToProto(clad_message.pose));
@@ -292,16 +311,36 @@ void ProtoCladInterpreter::CladRobotObservedFaceToProto(
   proto_message = ExternalMessageRouter::Wrap(robot_observed_face);
 }
 
-ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
-    const Anki::Vector::ExternalInterface::ChangedObservedFaceID & clad_message,
+void ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
+    const Anki::Vector::ExternalInterface::RobotChangedObservedFaceID & clad_message,
     external_interface::GatewayWrapper & proto_message) {
-  external_interface::ChangedObservedFaceID * changed_observed_face_id = new external_interface::ChangedObservedFaceID;
+  
+  external_interface::RobotChangedObservedFaceID * changed_observed_face_id = new external_interface::RobotChangedObservedFaceID;
   
   changed_observed_face_id->set_new_id(clad_message.newID);
   changed_observed_face_id->set_old_id(clad_message.oldID);
 
   proto_message = ExternalMessageRouter::Wrap(changed_observed_face_id);
 }
+
+void ProtoCladInterpreter::CladRobotObservedObjectToProto(
+    const Anki::Vector::ExternalInterface::RobotObservedObject & clad_message,
+    external_interface::GatewayWrapper & proto_message) {
+  
+  external_interface::RobotObservedObject * robot_observed_object = new external_interface::RobotObservedObject;
+
+  robot_observed_object->set_timestamp(clad_message.timestamp);
+  robot_observed_object->set_object_family(CladObjectFamilyToProto(clad_message.objectFamily));
+  robot_observed_object->set_object_type(CladObjectTypeToProto(clad_message.objectType));
+  robot_observed_object->set_object_id(clad_message.objectID);
+  robot_observed_object->set_allocated_img_rect(CladCladRectToProto(clad_message.img_rect));
+  robot_observed_object->set_allocated_pose(CladPoseStructToProto(clad_message.pose));
+  robot_observed_object->set_top_face_orientation_rad(clad_message.topFaceOrientation_rad);
+  robot_observed_object->set_is_active(clad_message.isActive);
+
+  proto_message = ExternalMessageRouter::Wrap(robot_observed_object);
+}
+
 
 } // namespace Vector
 } // namespace Anki

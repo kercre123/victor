@@ -108,24 +108,8 @@ message ObjectAccel
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  META  /////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-enum uint_8 MessageType {
-  AnimationAvailable
-}
-
-message EndOfMessage {
-  MessageType messageType
-}
-
-///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////  ANIMATIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-message AnimationAvailable {
-  string animName
-}
 
 message RobotCompletedAction {
     uint_32 idTag,                                 // The identifier of the specific action that completed
@@ -208,6 +192,7 @@ structure BlinkAmount {
   float_32  blinkAmountRight  // Left/right are as seen in the image, *not* the face's left and right
 }
 
+/*
 // RobotObservedObject for signaling that an object
 //  with specified ID/Type/Family was seen at a particular location in the image
 //  and the world
@@ -226,6 +211,15 @@ message RobotObservedObject {
 message RobotObservedPossibleObject {
     // objectID will always be -1
     RobotObservedObject possibleObject
+}
+*/
+
+// RobotChangedObservedFaceID
+//  This generally happens when a tracked face (negative ID) is recognized and
+//  receives a positive ID or when face records get merged
+message RobotChangedObservedFaceID {
+    int_32   oldID,
+    int_32   newID
 }
 
 // Anything that the robot wishes to push to the app that 
@@ -306,17 +300,15 @@ union MessageRobotToExternal {
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
-  // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
-  AnimationAvailable                AnimationAvailable                 = 0x08,
-  EndOfMessage                      EndOfMessage                       = 0x09,
+  //RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectConnectionState             ObjectConnectionState              = 0x0A, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectMoved                       ObjectMoved                        = 0x0B, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectStoppedMoving               ObjectStoppedMoving                = 0x0C, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectUpAxisChanged               ObjectUpAxisChanged                = 0x0D, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectTapped                      ObjectTapped                       = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectAccel                       ObjectAccel                        = 0x0F, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
-  RobotObservedObject               RobotObservedObject                = 0x10, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
+  //RobotObservedObject               RobotObservedObject                = 0x10, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectAvailable                   ObjectAvailable                    = 0x11, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotDeletedFixedCustomObjects    RobotDeletedFixedCustomObjects     = 0x12,
   RobotDeletedCustomMarkerObjects   RobotDeletedCustomMarkerObjects    = 0x13,
