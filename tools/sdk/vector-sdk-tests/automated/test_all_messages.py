@@ -202,9 +202,11 @@ MESSAGES_TO_TEST = [
      TestResultMatches(protocol.EnableFaceDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # EnableMarkerDetection message
-    (client.ExternalInterfaceServicer.EnableMarkerDetection,
-     protocol.EnableMarkerDetectionRequest(),
-     TestResultMatches(protocol.EnableMarkerDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+    # 12/4/2018 thanhlelgg's Note: This usually failed with error: 
+    # `grpc._channel._Rendezvous: <_Rendezvous of RPC that terminated with (StatusCode.UNAVAILABLE, Connect Failed)>`
+    # (client.ExternalInterfaceServicer.EnableMarkerDetection,
+    #  protocol.EnableMarkerDetectionRequest(),
+    #  TestResultMatches(protocol.EnableMarkerDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # EnableMotionDetection message
     (client.ExternalInterfaceServicer.EnableMotionDetection,
@@ -257,16 +259,16 @@ MESSAGES_TO_TEST = [
                                                       result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # ConnectCube message
-    # (client.ExternalInterfaceServicer.ConnectCube,
-    #  protocol.ConnectCubeRequest(),
-    #  TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
-    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-    #                                          ["success", "factory_id"])),
+    (client.ExternalInterfaceServicer.ConnectCube,
+     protocol.ConnectCubeRequest(),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
+                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+                                             ["success", "object_id", "factory_id"])),
 
     # DisconnectCube message
-    # (client.ExternalInterfaceServicer.DisconnectCube,
-    #  protocol.DisconnectCubeRequest(),
-    #  TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+    (client.ExternalInterfaceServicer.DisconnectCube,
+     protocol.DisconnectCubeRequest(),
+     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # FlashCubeLights message
     (client.ExternalInterfaceServicer.FlashCubeLights,
@@ -304,12 +306,13 @@ MESSAGES_TO_TEST = [
     # TODO: Enable testcase once issue described below is resolved
     # This test currently fails since the BatteryStateResponse message may contain default values, and the assertion to
     # to check the number of fields retrieved does not account for default fields and thus causes a mismatch.
+    # 12/4/2018 thanhlelgg's note : new field added but problem with default fields unresolved, so I added new field and left it disabled
     # # BatteryState message
     # (client.ExternalInterfaceServicer.BatteryState,
     #  protocol.BatteryStateRequest(),
     #  TestResultIsTypeWithStatusAndFieldNames(protocol.BatteryStateResponse,
     #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-    #                                          ["battery_level", "battery_volts", "is_charging", "is_on_charger_platform"])),
+    #                                          ["battery_level", "battery_volts", "is_charging", "is_on_charger_platform", "suggested_charger_sec"])),
 
     # VersionState message
     (client.ExternalInterfaceServicer.VersionState,
@@ -326,6 +329,8 @@ MESSAGES_TO_TEST = [
                                              ["network_stats"])),
 
     # SayText message
+    # 12/4/2018 thanhlelgg's Note: This usually fails because somehow webots failed to say text with below error:
+    # `grpc._channel._Rendezvous: <_Rendezvous of RPC that terminated with (StatusCode.INTERNAL, Failed to say text)>`
     # (client.ExternalInterfaceServicer.SayText,
     #  protocol.SayTextRequest(text="hello", use_vector_voice=True),
     #  TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
