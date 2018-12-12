@@ -559,6 +559,10 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 			continue
 		}
 
+		switch msg.Tag() {
+		case gw_clad.MessageRobotToExternalTag_Event:
+			event := CladEventToProto(msg.GetEvent())
+			manager.SendEventToChannel(event)
 		case gw_clad.MessageRobotToExternalTag_ObjectAvailable:
 			event := &extint.Event{
 				EventType: &extint.Event_ObjectEvent{
@@ -620,17 +624,6 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 					ObjectEvent: &extint.ObjectEvent{
 						ObjectEventType: &extint.ObjectEvent_ObjectTapped{
 							ObjectTapped: CladObjectTappedToProto(msg.GetObjectTapped()),
-						},
-					},
-				},
-			}
-			manager.SendEventToChannel(event)
-		case gw_clad.MessageRobotToExternalTag_RobotObservedObject:
-			event := &extint.Event{
-				EventType: &extint.Event_ObjectEvent{
-					ObjectEvent: &extint.ObjectEvent{
-						ObjectEventType: &extint.ObjectEvent_RobotObservedObject{
-							RobotObservedObject: CladRobotObservedObjectToProto(msg.GetRobotObservedObject()),
 						},
 					},
 				},

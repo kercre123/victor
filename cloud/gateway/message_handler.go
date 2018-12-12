@@ -280,19 +280,6 @@ func CladObjectTappedToProto(msg *gw_clad.ObjectTapped) *extint.ObjectTapped {
 	}
 }
 
-func CladRobotObservedObjectToProto(msg *gw_clad.RobotObservedObject) *extint.RobotObservedObject {
-	return &extint.RobotObservedObject{
-		Timestamp:             msg.Timestamp,
-		ObjectFamily:          extint.ObjectFamily(msg.ObjectFamily + 1),
-		ObjectType:            extint.ObjectType(msg.ObjectType + 1),
-		ObjectId:              msg.ObjectID,
-		ImgRect:               CladCladRectToProto(&msg.ImgRect),
-		Pose:                  CladPoseToProto(&msg.Pose),
-		IsActive:              uint32(msg.IsActive),
-		TopFaceOrientationRad: msg.TopFaceOrientationRad,
-	}
-}
-
 func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
 	return &extint.NavMapInfo{
 		RootDepth:   int32(msg.RootDepth),

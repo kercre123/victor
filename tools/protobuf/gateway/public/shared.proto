@@ -65,6 +65,7 @@ message Event {
     AlexaAuthEvent                   alexa_auth_event                    = 15; // App only
     MirrorModeDisabled               mirror_mode_disabled                = 16;
     VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
+    RobotObservedObject              robot_observed_object               = 18;
   }
 }
 
@@ -253,6 +254,8 @@ message GatewayWrapper {
 
     // ------------ Events -------------------------
     RobotObservedFace             robot_observed_face                = 1800;
+    RobotChangedObservedFaceID    robot_changed_observed_face_id     = 1801;
+    RobotObservedObject           robot_observed_object              = 1802;
 
     // (when adding new categories, please create gaps between field numbers)
   }
