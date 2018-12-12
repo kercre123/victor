@@ -247,7 +247,7 @@ void BehaviorAlexa::BehaviorUpdate()
     TransitionTo_StateLoop( newState );
   }
   
-  if( alexaComp.IsIdle() && (_dVars.uxState == AlexaUXState::Idle) && animsComplete ) {
+  if( alexaComp.IsIdle() && (_dVars.uxState == AlexaUXState::Idle) && animsComplete && !IsControlDelegated() ) {
     // we might consider a timeout here if the ux state switches very briefly to idle
     CancelSelf();
   }
