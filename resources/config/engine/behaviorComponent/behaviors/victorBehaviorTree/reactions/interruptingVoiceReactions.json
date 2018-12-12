@@ -20,6 +20,7 @@
     "PRDemoComeHere",
     "ComeHereVoiceCommand",
     "LookAtMeVoiceCommand",
+    "LookOverThereVoiceCommand",
     "WhatsMyNameVoiceCommand",
     "HowOldAreYou",
     "LeaveAMessage",
