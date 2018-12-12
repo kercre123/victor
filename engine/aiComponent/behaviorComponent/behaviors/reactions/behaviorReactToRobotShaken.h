@@ -70,10 +70,9 @@ private:
     OnGround,
   };
 
-  // we can use either magnitude or duration to determine what shake level to use
-  // adding both so we can easily go between the two during iteration
+  
   EReactionLevel GetReactionLevelFromMagnitude() const;
-//  EReactionLevel GetReactionLevelFromDuration() const;
+  void UpdateCurrentReactionLevel();
 
   AnimationTrigger GetReactionAnimation( EReactionAnimation type ) const;
   AnimationTrigger GetReactionAnimation( EReactionLevel level, EReactionAnimation type ) const;
@@ -98,11 +97,12 @@ private:
 
   struct DynamicVariables
   {
-    EState state = EState::ShakeGetIn;
+    EState state                = EState::ShakeGetIn;
+    EReactionLevel currentLevel = EReactionLevel::Soft;
 
-    float shakeMaxMagnitude   = 0.f;
-    float shakeStartTime      = 0.f;
-    float shakeEndTime        = 0.f;
+    float shakeMaxMagnitude     = 0.f;
+    float shakeStartTime        = 0.f;
+    float shakeEndTime          = 0.f;
   };
 
   DynamicVariables  _dVars;
