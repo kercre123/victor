@@ -1338,8 +1338,15 @@ void AlexaMediaPlayer::doShutdown()
   // shared_ptrs in AlexaClient and AlexaImpl, even if nothing is playing. But since _observers is
   // referenced in the _executor, first stop _executor, then clear _observers.
   _executor.shutdown();
-  std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
-  _observers.clear();
+  {
+    std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
+    _observers.clear();
+  }
+
+  if( _urlConverter != nullptr ) {
+    _urlConverter->shutdown();
+    _urlConverter.reset();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
