@@ -1051,9 +1051,10 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
   _alertStates[alertID] = state;
   const bool oldAlertActive = _alertActive;
   _alertActive = false;
+  _backgroundAlertActive = false;
   for( auto& alertPair : _alertStates ) {
     bool canBeCancelled;
-    bool anyInBackground = false;
+    bool inBackground = false;
     switch( alertPair.second ) {
       case State::STARTED: // The alert has started.
       case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
@@ -1061,7 +1062,7 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
         break;
 
       case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
-        anyInBackground = true;
+        inBackground = true;
 
         // fall through
       case State::READY: // The alert is ready to start, and is waiting for channel focus.
@@ -1074,22 +1075,47 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
         break;
     }
     _alertActive |= canBeCancelled;
-    _backgroundAlertActive = anyInBackground;
+    _backgroundAlertActive |= inBackground;
   }
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnAlertState",
-               "alert '%s' changed to state '%s', _alertActive=%d, _backgroundAlertActive=%d",
+               "alert '%s' changed to state '%s', _alertActive=%d, _backgroundAlertActive=%d, %zu alerts tracked",
                alertID.c_str(),
                AlertStateToString(state),
                _alertActive,
-               _backgroundAlertActive);
+               _backgroundAlertActive,
+               _alertStates.size());
   if( oldAlertActive != _alertActive ) {
     // note: this is ok to only have two options, not three (e.g., "unknown") since _alertActive
     // is initialized as false, in which case if the initial assignment to _alertActive is false, we don't
     // need to call CheckForUXStateChange anyway
     CheckForUXStateChange();
   }
-    
+
+  // TODO:(bn) clean up / consolidate this logic with above
+  switch( state ) {
+    case State::STARTED: // The alert has started.
+    case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
+    case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
+    case State::READY: // The alert is ready to start, and is waiting for channel focus.
+    case State::SNOOZED: // The alert has snoozed.
+      break;
+
+
+    case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
+    case State::ERROR: // The alert has encountered an error.
+    case State::COMPLETED: // The alert has completed on its own.
+    case State::STOPPED: // The alert has stopped due to user or system intervention.
+    {
+      const size_t numErased = _alertStates.erase(alertID);
+      ANKI_VERIFY(numErased == 1,
+                  "AlexaImpl.OnAlertState.BadAlertRemove",
+                  "Erase of alert %s removed %zu elements",
+                  alertID.c_str(),
+                  numErased);
+      break;
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
