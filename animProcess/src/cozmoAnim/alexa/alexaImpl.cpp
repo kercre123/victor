@@ -898,6 +898,9 @@ void AlexaImpl::CheckForUXStateChange()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
 {
+  // TODO:(bn) this could cause "forever face" bugs if it gets out of sync with the actual media player
+  // state. This state duplication should be resolved (both are in anim, no need for it)
+
   if( playing ) {
     auto res = _playingSources.insert( id );
     // not fatal, but it means we don't understand the media player lifecycle correctly
@@ -1126,6 +1129,10 @@ void AlexaImpl::OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity
     _audioActive = playing;
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _audioActiveLastChangeTime_s = currTime_s;
+
+    LOG_INFO( "AlexaImpl.OnPlayerActivity", "new state = %s",
+              alexaClientSDK::avsCommon::avs::playerActivityToString(state).c_str() );
+
     CheckForUXStateChange();
     // call CheckForUXStateChange() again once kTimeToHoldSpeakingBetweenAudioPlays_s expires
     // todo: merge _nextUXStateCheckTime_s logic into _timeToSetIdle_s
