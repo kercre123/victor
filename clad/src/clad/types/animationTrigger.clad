@@ -201,6 +201,17 @@ enum int_32 AnimationTrigger
   GoToSleepGetIn,
   GoToSleepOff,
   GoToSleepSleeping,
+
+  GazingLookAtFacesGetInLeft,
+  GazingLookAtFacesGetInRight,
+  GazingLookAtFacesTurnLeft,
+  GazingLookAtFacesTurnRight,
+  GazingLookAtSurfacesGetInLeft,
+  GazingLookAtSurfacesGetInRight,
+  GazingLookAtSurfaceReaction,
+  GazingLookAtSurfaceTurnLeft,
+  GazingLookAtSurfacesTurnRight,
+  GazingLookAtVectorReaction,
   
   HighTemperatureWarningFace,
 

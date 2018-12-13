@@ -123,8 +123,15 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
     const auto& rect = faceDetection.GetRect();
     const auto& name = faceDetection.GetName();
 
+    // Only draw a yellow rectangle around the face if the face "has parts"
+    // to which the HasEyes method is a proxy
+    auto color = NamedColors::RED;
+    if (faceDetection.HasEyes()) {
+      color = NamedColors::YELLOW;
+    }
+
     _screenImg.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
-                        NamedColors::YELLOW, 3);
+                        color, 3);
     
     const auto& debugInfo = faceDetection.GetRecognitionDebugInfo();
     if(!debugInfo.empty())
