@@ -189,7 +189,7 @@ namespace Anki {
     {
       // If the robot is not on its treads, it may exhibit erratic turning behavior
       const auto otState = GetRobot().GetOffTreadsState();
-      const bool valid = validTreadStates.find(otState) != validTreadStates.end();
+      const bool valid = _validTreadStates.find(otState) != _validTreadStates.end();
       if (!valid) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.OffTreadsStateInvalid",
                             "[%d] Off tread state %s is invalid for TurnInPlace",

@@ -71,7 +71,7 @@ namespace Vector {
       void SetAccel(f32 accel_radPerSec2);
       void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
-      void SetValidOffTreadsStates(const std::set<OffTreadsState>& states);
+      void SetValidOffTreadsStates(const std::set<OffTreadsState>& states) { _validTreadStates = states; }
       void EnableProgressTrackingTimeout(const bool enable) { _shouldTimeoutOnProgressStall = enable; }
 
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
@@ -120,7 +120,7 @@ namespace Vector {
       float      _timeout_s;
       float      _expectedTotalAccelTime_s = 0.f;
       float      _expectedMaxSpeedTime_s = 0.f;
-      std::set<OffTreadsState> validTreadStates = {OffTreadsState::OnTreads, OffTreadsState::InAir};
+      std::set<OffTreadsState> _validTreadStates = {OffTreadsState::OnTreads, OffTreadsState::InAir};
       
       // To keep track of PoseFrameId changes mid-turn:
       PoseFrameID_t _prevPoseFrameId = 0;
