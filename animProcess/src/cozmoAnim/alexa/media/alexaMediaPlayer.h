@@ -178,6 +178,10 @@ private:
   void SaveSettings() const;
   void LoadSettings();
 
+  void OnNewSourceSet();
+
+  void LogPlayingSourceMismatchEvent(const std::string& func, SourceId id, SourceId playingId);
+
   mp3dec_t _mp3decoder;
   
   enum class State {

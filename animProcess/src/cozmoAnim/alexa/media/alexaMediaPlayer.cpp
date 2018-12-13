@@ -404,6 +404,7 @@ void AlexaMediaPlayer::CallOnPlaybackFinished( SourceId id, bool runOnCaller )
            id,
            _playingSource,
            StateToString() );
+      LogPlayingSourceMismatchEvent("CallOnPlaybackFinished", id, _playingSource);
     }
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
     for( auto& observer : _observers ) {
@@ -430,6 +431,7 @@ void AlexaMediaPlayer::CallOnPlaybackError( SourceId id )
            id,
            _playingSource,
            StateToString() );
+      LogPlayingSourceMismatchEvent("CallOnPlaybackError", id, _playingSource);
     }
     static const std::string kPlaybackError = "The device had trouble with playback";
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
@@ -451,14 +453,11 @@ SourceId AlexaMediaPlayer::GetNewSourceID()
 SourceId AlexaMediaPlayer::setSource( std::shared_ptr< avsCommon::avs::attachment::AttachmentReader > attachmentReader,
                                       const avsCommon::utils::AudioFormat *format )
 {
-  // TODO (VIC-9853):
-  // Implementations must make a call to onPlaybackStopped() with the previous SourceId when a new source is
-  // set if the previous source was in a non-stopped state. Any calls to a MediaPlayerInterface after an
-  // onPlaybackStopped() call will fail, as the MediaPlayer has "reset" its state.
-
   const SourceId sourceID = GetNewSourceID();
-
   LOG( "set source %llu with attachment reader (%zu previous readers)", sourceID, _readers.size() );
+
+  OnNewSourceSet();
+
   _readers[sourceID].reset( new AttachmentReader( std::move(attachmentReader) ) );
 
   using AudioFormat = avsCommon::utils::AudioFormat;
@@ -509,8 +508,31 @@ SourceId AlexaMediaPlayer::setSource( std::shared_ptr<std::istream> stream, bool
        repeat ? "true" : "false",
        _readers.size() );
 
+  OnNewSourceSet();
+
   _readers[sourceID].reset( new StreamReader( std::move(stream), repeat ) );
   return sourceID;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::OnNewSourceSet()
+{
+  // setting a new source, so if we aren't currently idle then we need to stop the previous source
+  const State state = _state;
+  if( state != State::Idle ) {
+    LOG( "Stop playing source %llu from state %s because new source is set",
+         _playingSource,
+         StateToString(state) );
+
+    DASMSG(alexa_multi_source,
+           "alexa.stop_previous_media",
+           "The AVS SDK told us to play another piece of media without stopping the last (this is a health / debugging issue)");
+    DASMSG_SET(s1, _audioInfo.name, "Audio speaker channel (e.g. TTS, Alerts)");
+    DASMSG_SET(s2, StateToString(state), "Audio processing state");
+    DASMSG_SEND();
+
+    stop(_playingSource);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -797,6 +819,7 @@ bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
           id,
           _playingSource,
           StateToString());
+      LogPlayingSourceMismatchEvent("StopInternal", id, _playingSource);
     }
 
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
@@ -822,6 +845,7 @@ bool AlexaMediaPlayer::pause( SourceId id )
          id,
          _playingSource,
          _nextSourceToPlay);
+    LogPlayingSourceMismatchEvent("pause", id, _playingSource);
     return false;
   }
 
@@ -874,6 +898,7 @@ bool AlexaMediaPlayer::resume( SourceId id )
 {
   if( _playingSource != id ) {
     LOG( "resume source %llu FAIL because playing source is %llu", id, _playingSource);
+    LogPlayingSourceMismatchEvent("resume", id, _playingSource);
     return false;
   }
 
@@ -915,6 +940,7 @@ std::chrono::milliseconds AlexaMediaPlayer::getOffset( SourceId id )
               "requesting source for id %llu, but last playing is %llu",
               id,
               _playingSource);
+    LogPlayingSourceMismatchEvent("getOffset", id, _playingSource);
     return std::chrono::milliseconds{0};
   }
 }
@@ -1368,6 +1394,21 @@ void AlexaMediaPlayer::UpdateDetectorState(float& inout_lastPlayedMs)
     }
   }
   inout_lastPlayedMs = playedMs;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaMediaPlayer::LogPlayingSourceMismatchEvent(const std::string& func, SourceId id, SourceId playingId)
+{
+  int sourceDelta = (int)id - (int)playingId;
+
+  DASMSG(source_mismatch_event,
+         "alexa.source_mismatch",
+         "Media player source mismatch. This is a health / debugging event that is expected to happen sometimes");
+  DASMSG_SET(s1, _audioInfo.name, "Audio speaker channel (e.g. TTS, Alerts)");
+  DASMSG_SET(s2, func, "Calling funciton / identifier");
+  DASMSG_SET(s3, StateToString(), "Current audio processing state");
+  DASMSG_SET(i1, sourceDelta, "Delta between source being operated on and the playing source");
+  DASMSG_SEND();
 }
 
 
