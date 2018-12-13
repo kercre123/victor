@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
+#include "engine/components/battery/batteryComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
@@ -80,6 +81,9 @@ void RobotManager::Shutdown(ShutdownReason reason)
 
   if(_robot != nullptr)
   {
+    const auto battFilt_mV = static_cast<int>(1000 * _robot->GetBatteryComponent().GetBatteryVolts());
+    const auto battRaw_mV  = static_cast<int>(1000 * _robot->GetBatteryComponent().GetBatteryVoltsRaw());
+
     _robot.reset();
 
     // SHUTDOWN_UNKNOWN can occur when the process is being stopped
@@ -99,6 +103,8 @@ void RobotManager::Shutdown(ShutdownReason reason)
       DASMSG_SET(s1, EnumToString(reason), "Reason for shutdown");
       DASMSG_SET(i1, upTime_sec,           "Uptime (seconds)");
       DASMSG_SET(i2, numFreeBytes,         "Free space in /data (bytes)");
+      DASMSG_SET(i3, battFilt_mV,          "Battery voltage (mV) - filtered");
+      DASMSG_SET(i4, battRaw_mV,           "Battery voltage (mV) - raw");
       DASMSG_SEND();
   
       // Send fault code

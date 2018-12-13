@@ -165,7 +165,7 @@ namespace Anki {
 
       void CheckForCriticalBatteryShutdown()
       {        
-        static const int   CRITICAL_BATTERY_THRESH_TICS = 20;
+        static const int   CRITICAL_BATTERY_THRESH_TICS = 66;
         static const float CRITICAL_BATTERY_THRESH_VOLTS = 3.45f;
         static const float HAL_SHUTDOWN_DELAY_MS = 2000;
         static TimeStamp_t shutdownTime_ms = 0;
