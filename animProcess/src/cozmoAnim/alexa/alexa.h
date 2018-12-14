@@ -70,6 +70,10 @@ public:
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
 
+  // Whether there is a session that is active or in the process of initializing.
+  // Assumes that the existence of the impl is still tied to opt-in state (which may change)
+  bool IsOptedIn() const { return HasImpl(); }
+
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
   Alexa(const Alexa& other) = delete;
