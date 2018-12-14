@@ -2,7 +2,7 @@
   "behaviorID": "LookOverThereVoiceCommand",
   "behaviorClass": "FindFaceAndThen",
 
-  "associatedActiveFeature": "LookAtMe",
+  "associatedActiveFeature": "ReactToGazeDirection",
 
   "respondToUserIntents" : [
     { "type": "imperative_lookoverthere" }
@@ -14,7 +14,7 @@
   "shouldLeaveChargerFirst": true,
   "driveOffChargerBehavior": "DriveOffChargerStraight",
 
-  "behavior": "LookOverThereInternal",
+  "behavior": "ReactToGazeDirectionSurface",
   "timeUntilCancelFollowup_s": 15.0,
 
   "useBodyDetector": true,
@@ -23,21 +23,5 @@
 
   "animWhenSeesFace": "FoundFace",
   
-  "anonymousBehaviors": [
-    {
-      "behaviorName" : "LookOverThereInternal",
-      "behaviorClass" : "ReactToGazeDirection",
-      "searchForPointsOnSurface": true,
-
-      "wantsToBeActivatedCondition":  {
-        "conditionType": "FeatureGate",
-        "feature": "GazeDirection",
-        "expected": true
-      },
-
-      "associatedActiveFeature": "ReactToGazeDirection"
-    }
-  ],
-
   "postBehaviorSuggestion": "Socialize"
 }

@@ -30,6 +30,7 @@
 #include "engine/moodSystem/moodManager.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #define LOG_CHANNEL "Behaviors"
 
@@ -794,31 +795,41 @@ void BehaviorOnboardingCoordinator::UnFixStim()
 bool BehaviorOnboardingCoordinator::ShouldExitDueToTimeout()
 {
   float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  bool shouldTimeOut = false;
+  const char* reason = "";
 
   if( ( _dVars.globalExitTime_s > 0.0f ) && ( _dVars.globalExitTime_s < currTime_s ) ){
+    auto timeoutType = _dVars.onboardingStarted ? "DELAYED_COMPLETION" : "DELAYED_START";
     LOG_INFO( "BehaviorOnboardingCoordinator.TimeoutExpired",
-              "Onboarding aborted due to expired %s timeout. Onboarding will repeat on reboot",
-              _dVars.onboardingStarted ? "Completion" : "Start" );
-    // TODO:(STR) reimplement onboarding DAS messaging
-    return true;
+              "Onboarding aborted due to %s timeout.",
+              timeoutType );
+    reason = timeoutType;
+    shouldTimeOut = true;
+  }
+  else if( ( _dVars.phaseExitTime_s > 0.0f ) && ( _dVars.phaseExitTime_s < currTime_s ) ){
+    std::string timeoutType(EnumToString(_dVars.currentPhase));
+    std::transform(timeoutType.begin(), timeoutType.end(), timeoutType.begin(), ::toupper);
+    timeoutType += "_PHASE_TIMEOUT";
+    LOG_INFO( "BehaviorOnboardingCoordinator.TimeoutExpired",
+              "Onboarding aborted due to expired %s.",
+              timeoutType.c_str() );
+    reason = timeoutType.c_str();
+    shouldTimeOut = true;
+  }
+  else if( ( _dVars.appDisconnectExitTime_s > 0.0f ) && ( _dVars.appDisconnectExitTime_s < currTime_s ) ){
+    LOG_INFO( "BehaviorOnboardingCoordinator.TimeoutExpired",
+              "Onboarding aborted due to expired AppDisconnected timeout while waiting to reconnect.");
+    reason = "APP_RECONNECT_TIMEOUT";
+    shouldTimeOut = true;
   }
 
-  if( ( _dVars.phaseExitTime_s > 0.0f ) && ( _dVars.phaseExitTime_s < currTime_s ) ){
-    LOG_INFO( "BehaviorOnboardingCoordinator.TimeoutExpired",
-              "Onboarding aborted due to expired %s phase timeout. Onboarding will repeat on reboot",
-              EnumToString(_dVars.currentPhase));
-    // TODO:(STR) reimplement onboarding DAS messaging
-    return true;
+  if(shouldTimeOut){
+    DASMSG(onboarding_timeout, "onboarding.timeout", "Onboarding timed out and why");
+    DASMSG_SET(s1, reason, "The reason onboarding timed out")
+    DASMSG_SEND();
   }
 
-  if( ( _dVars.appDisconnectExitTime_s > 0.0f ) && ( _dVars.appDisconnectExitTime_s < currTime_s ) ){
-    LOG_INFO( "BehaviorOnboardingCoordinator.TimeoutExpired",
-              "Onboarding aborted due to expired AppDisconnected timeout. Onboarding will repeat on reboot");
-    // TODO:(STR) reimplement onboarding DAS messaging
-    return true;
-  }
-
-  return false;
+  return shouldTimeOut;
 }
 
 } // namespace Vector

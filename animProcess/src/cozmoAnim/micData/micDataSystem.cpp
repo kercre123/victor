@@ -225,7 +225,7 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 
 void MicDataSystem::FakeTriggerWordDetection()
 {
-  // completely ignore _micMuted and _buttonPressIsAlexa and stop alerts no matter what
+  // completely ignore _micMuted and IsButtonPressAlexa() and stop alerts no matter what
   Alexa* alexa = _context->GetAlexa();
   ASSERT_NAMED(alexa != nullptr, "");
   if( alexa->StopAlertIfActive() ) {
@@ -241,7 +241,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     DEV_ASSERT( !_micMuted, "MicDataSystem.FakeTriggerWordDetect.StillMuted" );
   }
   
-  if( _buttonPressIsAlexa ) {
+  if( IsButtonPressAlexa() ) {
     ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
     if( showStreamState->HasAnyAlexaResponse() ) {
       // "Alexa" button press
@@ -821,6 +821,24 @@ void MicDataSystem::SetButtonWakeWordIsAlexa(bool isAlexa)
   _buttonPressIsAlexa = isAlexa;
 }
 
+bool MicDataSystem::IsButtonPressAlexa() const
+{
+  // Instead of only using _buttonPressIsAlexa, also check whether alexa has been opted in.
+  // If the user sets the button to alexa, clears user data, reverts to factory and then
+  // OTAs to latest, Alexa's init sequence will message engine that alexa is disabled, which
+  // sets the button functionality back to hey vector. But if jdocs settings are pulled _after_
+  // that, it can switch back to alexa. For now, we check here instead of having engine's 
+  // SettingsManager check the AlexaComponent's auth state, since that is tied to the
+  // order of messages received from anim and so would need to track more state.
+  // As a result, the user's button setting will still be set to alexa, even if alexa is disabled.
+  // However, currently the app doesnt show this setting if alexa is disabled, to it will be
+  // functionally equivalent to the user.
+  // TODO (VIC-12527): handle this in engine instead (or in addition to here, since this
+  // extra check doesnt actually hurt if the app doesn't show the setting and no other anim
+  // components are listening to SetButtonWakeWordIsAlexa)
+  Alexa* alexa = _context->GetAlexa();
+  return _buttonPressIsAlexa && (alexa != nullptr) && alexa->IsOptedIn();
+}
 
 void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
 {
