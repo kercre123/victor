@@ -11,6 +11,9 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+#ifndef _ENGINE_COMMS_PROTOCLADINTERPRETER_H__
+#define _ENGINE_COMMS_PROTOCLADINTERPRETER_H__
+
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 
@@ -35,36 +38,38 @@ private:
   // Proto-to-Clad interpreters
   //
   static void ProtoDriveWheelsRequestToClad(
-      const external_interface::GatewayWrapper & proto_message,
-      ExternalInterface::MessageGameToEngine & clad_message);
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
 
   static void ProtoPlayAnimationRequestToClad(
-      const external_interface::GatewayWrapper & proto_message,
-      ExternalInterface::MessageGameToEngine & clad_message);
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
 
   static void ProtoListAnimationsRequestToClad(
-      const external_interface::GatewayWrapper & proto_message,
-      ExternalInterface::MessageGameToEngine & clad_message);
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
 
   //
   // Clad-to-Proto interpreters
   //
   static void CladDriveWheelsToProto(
-      const ExternalInterface::MessageGameToEngine & clad_message,
-      external_interface::GatewayWrapper & proto_message);
+      const ExternalInterface::MessageGameToEngine& clad_message,
+      external_interface::GatewayWrapper& proto_message);
 
   static void CladPlayAnimationToProto(
-      const ExternalInterface::MessageGameToEngine & clad_message,
-      external_interface::GatewayWrapper & proto_message);
+      const ExternalInterface::MessageGameToEngine& clad_message,
+      external_interface::GatewayWrapper& proto_message);
 
   static void CladAnimationAvailableToProto(
-      const ExternalInterface::MessageEngineToGame & clad_message, 
-      external_interface::GatewayWrapper & proto_message);
+      const ExternalInterface::MessageEngineToGame& clad_message, 
+      external_interface::GatewayWrapper& proto_message);
 
   static void CladEndOfMessageToProto(
-      const ExternalInterface::MessageEngineToGame & clad_message, 
-      external_interface::GatewayWrapper & proto_message);
+      const ExternalInterface::MessageEngineToGame& clad_message, 
+      external_interface::GatewayWrapper& proto_message);
 };
 
 } // namespace Vector
 } // namespace Anki
+
+#endif // _ENGINE_COMMS_PROTOCLADINTERPRETER_H__
