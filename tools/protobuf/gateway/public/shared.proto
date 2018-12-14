@@ -258,5 +258,6 @@ message GatewayWrapper {
     RobotObservedObject           robot_observed_object              = 1802;
 
     // (when adding new categories, please create gaps between field numbers)
+    // ------------  -------------------------
   }
 }

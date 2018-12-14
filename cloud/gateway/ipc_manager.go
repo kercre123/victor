@@ -181,10 +181,12 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 			defer wg.Done()
 			select {
 			case listener <- msg:
+				log.Printf("ron_proto SendToListeners: %s", msg.GetEvent().String())
 				if logVerbose {
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}
 			case <-time.After(250 * time.Millisecond):
+				log.Errorf("EngineProtoIpcManager.SendToListeners: Failed to send message %s for listener #%d. There might be a problem with the channel.\n", tag, idx)
 				markedForDelete <- listener
 			}
 		}(idx, listener, msg)
@@ -575,6 +577,7 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 			}
 			manager.SendEventToChannel(event)
 		case gw_clad.MessageRobotToExternalTag_ObjectConnectionState:
+			log.Printf("ron_proto: ProcessMessages() case ObjectConnectionState")
 			event := &extint.Event{
 				EventType: &extint.Event_ObjectEvent{
 					ObjectEvent: &extint.ObjectEvent{

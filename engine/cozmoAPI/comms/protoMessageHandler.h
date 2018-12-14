@@ -74,9 +74,6 @@ private:
   // Send a message to a specified ID
   virtual void DeliverToExternal(const external_interface::GatewayWrapper& message) override;
 
-  //TODO: Remove. (Unused) You'll have to kill _hostProtoDeviceID and _lastPingTime_ms at the same time.
-  bool ConnectToProtoDevice(ISocketComms::DeviceId deviceId);
-
   // ============================== Private Member Vars ==============================
 
   std::unique_ptr<RobotExternalRequestComponent>          _externalRequestComponent;
@@ -90,11 +87,7 @@ private:
   std::vector<external_interface::GatewayWrapper>         _threadedMsgs;
   std::mutex                                              _mutex;
 
-  uint32_t                                                _hostProtoDeviceID = 0;
-
   uint32_t                                                _updateCount = 0;
-
-  double                                                  _lastPingTime_ms = 0.f;
 
   bool                                                    _isInitialized = false;
 

@@ -177,23 +177,6 @@ func SliceToArray(msg []uint32) [3]uint32 {
 	return arr
 }
 
-func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
-	return &extint.CladRect{
-		XTopLeft: msg.XTopLeft,
-		YTopLeft: msg.YTopLeft,
-		Width:    msg.Width,
-		Height:   msg.Height,
-	}
-}
-
-func CladCladPointsToProto(msg []gw_clad.CladPoint2d) []*extint.CladPoint {
-	var points []*extint.CladPoint
-	for _, point := range msg {
-		points = append(points, &extint.CladPoint{X: point.X, Y: point.Y})
-	}
-	return points
-}
-
 func CladExpressionValuesToProto(msg []uint8) []uint32 {
 	var expression_values []uint32
 	for _, val := range msg {
@@ -936,6 +919,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
 			}
 			event := response.GetEvent()
+			log.Printf("ron_proto EventStream: %s", event.String())
 			if checkFilters(event, whiteList, blackList) {
 				if logVerbose {
 					log.Printf("EventStream: Sending event to client: %#v\n", *event)

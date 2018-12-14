@@ -34,11 +34,6 @@ public:
   // Events
   //
 
-  static void CladRobotObservedObjectToProto(
-    const Anki::Vector::ExternalInterface::RobotObservedObject & clad_message,
-    external_interface::GatewayWrapper & proto_message);
-
-
   static void CladRobotObservedFaceToProto(
       const Anki::Vector::ExternalInterface::RobotObservedFace & clad_message,
       external_interface::GatewayWrapper & proto_message);
@@ -46,6 +41,11 @@ public:
   static void CladRobotChangedObservedFaceIDToProto(
       const Anki::Vector::ExternalInterface::RobotChangedObservedFaceID & clad_message,
       external_interface::GatewayWrapper & proto_message);
+
+  static void CladRobotObservedObjectToProto(
+    const Anki::Vector::ExternalInterface::RobotObservedObject & clad_message,
+    external_interface::GatewayWrapper & proto_message);
+
 
 private:
   ProtoCladInterpreter() {}

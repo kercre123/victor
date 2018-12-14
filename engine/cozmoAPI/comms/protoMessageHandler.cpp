@@ -210,6 +210,7 @@ Result ProtoMessageHandler::Update()
   ANKI_CPU_PROFILE("ProtoMH::Update");
 
   ++_updateCount;
+  LOG_WARNING("ron_proto", "ProtoMessageHandler _updateCount: %d", _updateCount);
 
   // Update all the comms
   if (_socketComms)

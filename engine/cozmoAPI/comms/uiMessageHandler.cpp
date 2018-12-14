@@ -40,8 +40,6 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
-#include "stdio.h"  //DO NOT SUBMIT
-
 #ifdef SIMULATOR
 #include "osState/osState.h"
 #endif
@@ -205,6 +203,8 @@ namespace Anki {
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, g2e_callback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::TransferFile, g2e_callback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace, e2g_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID, e2g_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedObject, e2g_callback));
 
       return RESULT_OK;
     }
@@ -696,7 +696,7 @@ namespace Anki {
 
     void UiMessageHandler::HandleEngineToGameEvents(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
     {
-      LOG_WARNING("ron_proto_handle_events", "Received clad event");
+      //LOG_WARNING("ron_proto_handle_events", "Received clad event");
       external_interface::GatewayWrapper proto_message;
       switch (event.GetData().GetTag()) {
         case ExternalInterface::MessageEngineToGameTag::RobotObservedFace:
@@ -711,7 +711,17 @@ namespace Anki {
         default:
           return;
       }
-      LOG_WARNING("ron_proto_handle_events", "Broadcasting proto_message");
+      auto debug_string = proto_message.DebugString();
+      int last_ch = 0;
+      remove_if(
+        debug_string.begin(), 
+        debug_string.end(), 
+        [last_ch](int ch)mutable->int{
+          bool retval = ((ch=='\n') | (last_ch == ' ' and ch == ' '));
+          last_ch = ch;
+          return retval;
+        });
+      LOG_WARNING("ron_proto_handle_events", "Broadcasting Object: %s", debug_string.c_str());
       _context->GetGatewayInterface()->Broadcast(proto_message);
     }
 
