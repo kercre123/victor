@@ -1246,12 +1246,13 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::GetFaceEyesDirectedAtSurface(const SmartFaceID& faceID) const
+  bool FaceWorld::GetFaceEyesDirectedAtSurface(const SmartFaceID& faceID, const u32 withinLast_ms) const
   {
     const auto entry = _faceEntries.find(faceID.GetID());
-    // TODO this face should be stable ... but maybe it's worth checking again?
-    if (entry != _faceEntries.end()) {
-      return entry->second.face.IsEyeGazeDirectedAtSurface();
+    if (AnyStableGazeDirection(withinLast_ms)) {
+      if (entry != _faceEntries.end()) {
+        return entry->second.face.IsEyeGazeDirectedAtSurface();
+      }
     }
     return false;
   }

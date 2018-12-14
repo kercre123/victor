@@ -372,7 +372,8 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
       // Check how we want to determine whether to search for faces
       bool searchForPointsOnSurface = _iConfig.searchForPointsOnSurface;
       if (kUseEyeGazeToLookAtSurfaceorFaces) {
-        searchForPointsOnSurface &= GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo);
+        searchForPointsOnSurface &= GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo,
+                                                                                         kMaxTimeSinceTrackedFaceUpdated_ms);
       }
 
       if (searchForPointsOnSurface) {
