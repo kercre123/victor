@@ -608,19 +608,21 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 			if !ok {
 				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
-			animName := chanResponse.GetListAnimationsResponse().AnimationNames[0].GetName()
-			// Don't change "EndOfListAnimationsResponses" - it's what we'll receive from the .cpp sender.
-			if animName == "EndOfListAnimationsResponses" {
-				done = true
-			} else {
-				if strings.Contains(animName, "_avs_") {
-					// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
-					continue
+			for _, anim := range chanResponse.GetListAnimationsResponse().AnimationNames {
+				animName := anim.GetName()
+				// Don't change "EndOfListAnimationsResponses" - it's what we'll receive from the .cpp sender.
+				if animName == "EndOfListAnimationsResponses" {
+					done = true
+				} else {
+					if strings.Contains(animName, "_avs_") {
+						// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
+						continue
+					}
+					var newAnim = extint.Animation{
+						Name: animName,
+					}
+					anims = append(anims, &newAnim)
 				}
-				var newAnim = extint.Animation{
-					Name: animName,
-				}
-				anims = append(anims, &newAnim)
 			}
 		case <-time.After(5 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
