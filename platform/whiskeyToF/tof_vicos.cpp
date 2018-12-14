@@ -42,7 +42,7 @@
 
 
 namespace Anki {
-namespace Vector {
+namespace Cozmo {
 
 namespace {
   int tofR_fd = -1;

@@ -23,7 +23,7 @@
 #endif
 
 namespace Anki {
-namespace Vector {
+namespace Cozmo {
 
 namespace {
   bool _engineSupervisorSet = false;

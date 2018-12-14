@@ -22,9 +22,9 @@
 #include <vector>
 
 namespace Anki {
-namespace Vector {
+namespace Cozmo {
 
-class RangeSensorComponent :public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
+class RangeSensorComponent : public IDependencyManagedComponent<RobotComponentID>
 {
 public:
   RangeSensorComponent();
@@ -33,7 +33,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override
   {
     _robot = robot;
   }
@@ -48,12 +48,6 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-protected:
-  virtual void NotifyOfRobotStateInternal(const RobotState& msg) override { };
-  
-  virtual std::string GetLogHeader() override;
-  virtual std::string GetLogRow() override;
-  
 private:
 
   struct RangeData

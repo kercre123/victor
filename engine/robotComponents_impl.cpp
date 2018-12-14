@@ -77,8 +77,7 @@ class JdocsManager;
 class RobotExternalRequestComponent;
 class AccountSettingsManager;
 class UserEntitlementsManager;
-
-
+class RangeSensorComponent;
 } // namespace Vector
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
