@@ -485,32 +485,7 @@ namespace Vector {
       const bool gotImage = CaptureImage(buffer);
       _hasStartedCapturingImages = true;
 
-      // Display a fault code in case we have not received an image from the camera for some amount of time
-      // and we aren't in power save mode in which case we expect to not be receiving images
-      // and image capture is enabled
-      // This is a catch-all for any issues with the camera server/daemon should something go wrong and we
-      // stop receiving images
-      static const EngineTimeStamp_t kNoImageFaultCodeTimeout_ms = 60000;
-      static EngineTimeStamp_t sTimeSinceValidImg_ms = 0;
-
-      const bool inPowerSave = _robot->GetComponent<PowerStateManager>().InPowerSaveMode();
-      if(!gotImage && !inPowerSave && _enableImageCapture)
-      {
-        const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        if(sTimeSinceValidImg_ms == 0)
-        {
-          sTimeSinceValidImg_ms = curTime_ms;
-        }
-        else if(curTime_ms - sTimeSinceValidImg_ms > kNoImageFaultCodeTimeout_ms)
-        {
-          FaultCode::DisplayFaultCode(FaultCode::CAMERA_STOPPED);
-          sTimeSinceValidImg_ms = 0;
-        }
-      }
-      else
-      {
-        sTimeSinceValidImg_ms = 0;
-      }
+      UpdateImageReceivedChecks(gotImage);
 
       if(!gotImage)
       {
@@ -2934,6 +2909,69 @@ namespace Vector {
   void VisionComponent::EnableMirrorMode(bool enable)
   {
     EnableMode(VisionMode::MirrorMode, enable);
+  }
+
+  void VisionComponent::UpdateImageReceivedChecks(bool gotImage)
+  {
+    // Display a fault code in case we have not received an image from the camera for some amount of time
+    // and we aren't in power save mode in which case we expect to not be receiving images
+    // and image capture is enabled
+    // This is a catch-all for any issues with the camera server/daemon should something go wrong and we
+    // stop receiving images
+    static const EngineTimeStamp_t kNoImageFaultCodeTimeout_ms = 60000;
+
+    // If we haven't got an image in this amount of time, try deleting and restarting the camera
+    // service just in case that knocks something loose
+    static const EngineTimeStamp_t kNoImageRestartCamera_ms = kNoImageFaultCodeTimeout_ms/4;
+    static const EngineTimeStamp_t kRestartCameraDelay_ms = 1000;
+    static EngineTimeStamp_t sTimeSinceValidImg_ms = 0;
+
+    const bool inPowerSave = _robot->GetComponent<PowerStateManager>().InPowerSaveMode();
+    if(!gotImage && !inPowerSave && _enableImageCapture)
+    {
+      const EngineTimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      if(sTimeSinceValidImg_ms == 0)
+      {
+        sTimeSinceValidImg_ms = curTime_ms;
+      }
+      // If it has been way too long since we last received an image, show a fault code
+      else if(curTime_ms - sTimeSinceValidImg_ms > kNoImageFaultCodeTimeout_ms)
+      {
+        FaultCode::DisplayFaultCode(FaultCode::CAMERA_STOPPED);
+        sTimeSinceValidImg_ms = 0;
+      }
+      // If we haven't received an image for some amount of time, try restarting camera
+      else if(curTime_ms - sTimeSinceValidImg_ms > kNoImageRestartCamera_ms)
+      {
+        // First we need to stop the camera
+        if(_restartingCameraTime_ms == 0)
+        {
+          _restartingCameraTime_ms = curTime_ms;
+          PRINT_NAMED_WARNING("VisionComponent.Update.StoppingCamera",
+                              "Too long without valid image, restarting camera");
+          auto cameraService = CameraService::getInstance();
+          cameraService->DeleteCamera();
+        }
+        // Some time after stopping the camera, try to start it back up
+        // Stopping/Starting are asynchonous so we need to wait a bit between the calls
+        else if(_restartingCameraTime_ms != 0 &&
+                curTime_ms - _restartingCameraTime_ms > kRestartCameraDelay_ms)
+        {
+          // Prevent the camera restart checks from triggering again until we either
+          // start getting images again or the CAMERA_STOPPED fault code triggers
+          _restartingCameraTime_ms = 1;
+          PRINT_NAMED_WARNING("VisionComponent.Update.RestartingCamera",
+                              "Too long without valid image, starting camera back up");
+          auto cameraService = CameraService::getInstance();
+          cameraService->InitCamera();
+        }
+      }
+    }
+    else
+    {
+      sTimeSinceValidImg_ms = 0;
+      _restartingCameraTime_ms = 0;
+    }
   }
 
 } // namespace Vector
