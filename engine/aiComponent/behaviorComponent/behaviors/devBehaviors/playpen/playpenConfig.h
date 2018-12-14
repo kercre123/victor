@@ -36,7 +36,7 @@ static bool kWriteToStorage       = true;
 // Whether or not to ignore any test failures
 // The playpen behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
-static bool kIgnoreFailures       = false;
+static bool kIgnoreFailures       = true;
 
 // Default timeout to force a playpen behavior to end
 static f32  kDefaultTimeout_ms    = 20000;
@@ -60,7 +60,7 @@ static u32  kTouchDurationToStart_ms      = 1000;
 static bool kUseButtonToStart             = true;
 
 // How long to record touch sensor data
-static u32  kDurationOfTouchToRecord_ms   = 0;
+static u32  kDurationOfTouchToRecord_ms   = 1000;
 
 // Whether or not to check for cloud cert
 static bool kCheckForCert                 = false;
@@ -107,10 +107,10 @@ static u32       kMfgIDTimeout_ms      = 500;
 static BodyColor kMinBodyColor         = BodyColor::WHITE_v15;
 
 // Minimum expected raw touch sensor value
-static u16       kMinExpectedTouchValue= 400;
+static u16       kMinExpectedTouchValue= 3000;
 
 // Maximum expected raw touch sensor value
-static u16       kMaxExpectedTouchValue= 800;
+static u16       kMaxExpectedTouchValue= 10000;
 
 // ----------Motor Calibration----------
 // Timeout to wait for motor calibration to complete
@@ -128,7 +128,7 @@ static f32 kIMUDriftAngleThreshDeg     = 0.2f;
 
 // ----------Distance Sensor----------
 // Number of distance sensor readings to record
-static u32 kNumDistanceSensorReadingsToRecord       = 1;
+static u32 kNumDistanceSensorReadingsToRecord       = 50;
 
 // Threshold on calculated distance to distance sensor target (using detected marker)
 // +/- this from the expected distance to the object/marker defined in the distance sensor
