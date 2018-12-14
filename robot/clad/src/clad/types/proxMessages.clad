@@ -40,9 +40,5 @@ structure ProxSensorData {
   uint_8   padding,
 }
 
-structure RangeDataRaw {
-  float_32 data[32]
-}
-
 } // namespace Cozmo
 } // namespace Anki

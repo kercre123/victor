@@ -22,7 +22,7 @@ namespace webots {
 }
 
 namespace Anki {
-namespace Vector {
+namespace Cozmo {
 
 class ToFSensor
 {

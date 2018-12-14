@@ -55,6 +55,7 @@ class BlockTapFilterComponent;
 class RobotToEngineImplMessaging;
 class RobotIdleTimeoutComponent;
 class MicDirectionHistory;
+class RangeSensorComponent;
 
 } // namespace Cozmo
 
@@ -129,6 +130,8 @@ template<>
 void GetComponentIDForType<Cozmo::RobotComponentID, Cozmo::RobotIdleTimeoutComponent>(Cozmo::RobotComponentID& enumToSet){enumToSet =  Cozmo::RobotComponentID::RobotIdleTimeout;}
 template<>
 void GetComponentIDForType<Cozmo::RobotComponentID, Cozmo::MicDirectionHistory>(Cozmo::RobotComponentID& enumToSet){enumToSet =  Cozmo::RobotComponentID::MicDirectionHistory;}
+template<>
+void GetComponentIDForType<Cozmo::RobotComponentID, Cozmo::RangeSensorComponent>(Cozmo::RobotComponentID& enumToSet){enumToSet =  Cozmo::RobotComponentID::RangeSensor;}
 
 
 } // namespace Anki

@@ -5,7 +5,6 @@ project(whiskeyToF)
 include(anki_build_cxx)
 
 anki_build_cxx_library(whiskeyToF ${ANKI_SRCLIST_DIR})
-anki_build_target_license(whiskeyToF "ANKI")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

@@ -1,5 +1,5 @@
 namespace Anki {
-namespace Vector {
+namespace Cozmo {
 
 structure RangeDataRaw {
   float_32 data[32]
