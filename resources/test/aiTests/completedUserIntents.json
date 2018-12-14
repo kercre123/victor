@@ -57,6 +57,10 @@
       "type": "imperative_lookatme"
     },
 
+    "imperative_lookoverthere": {
+      "type": "imperative_lookatme"
+    },
+
     "names_ask": {
       "type": "names_ask"
     },
