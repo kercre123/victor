@@ -50,7 +50,6 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "util/console/consoleInterface.h"
-#include "util/container/fixedCircularBuffer.h"
 #include "util/container/ringBuffContiguousRead.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
@@ -177,39 +176,8 @@ namespace {
 #endif
   const bool kSaveResampledPCM = false; // if true, kSaveDebugAudio will save resampled pcm instead of decoded pcm
   
-  CONSOLE_VAR(bool, kApplyHighPassFilter, "Alexa", true);
-  constexpr int kTTSSampleRate = 24000;
-  
   CONSOLE_VAR(bool, kUsePlaybackRecognizer, "Alexa", true); // must be saved and then robot rebooted
 }
-  
-// a high pass FIR filter in the form of an N-element array
-// todo: make this constexpr (will need to construct the array in its initialization using templates)
-// I'm keeping this here for now, rather than just pasting the values, so that (a) you know they were
-// computed and (b) since hopefully this will be made constexpr
-template < int N, int sampleRate >
-std::array<float, N> ComputeFilterCoeffs()
-{
-  const float cutoff_Hz = 500.0f;
-  static_assert( N % 2, "N must be odd" );
-  
-  std::array<float, N> filterCoeffs;
-  
-  // http://digitalsoundandmusic.com/7-3-2-low-pass-high-pass-bandpass-and-bandstop-filters/
-  const float f1 = cutoff_Hz/sampleRate;
-  const float omega1 = 2*M_PI_F*f1;
-  const int middle = N/2;
-  for( int i=-N/2; i<=N/2; ++i ) {
-    if (i == 0) {
-      filterCoeffs[middle] = 1-2*f1;
-    } else {
-      filterCoeffs[i + middle] = -sinf(omega1*i)/(M_PI_F*i);
-    }
-  }
-  return filterCoeffs;
-}
-std::array<float, AlexaMediaPlayer::kFilterSize> AlexaMediaPlayer::_filterCoeffs24
-  = ComputeFilterCoeffs<AlexaMediaPlayer::kFilterSize,kTTSSampleRate>();
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaMediaPlayer::AlexaMediaPlayer( Type type,
@@ -224,7 +192,6 @@ AlexaMediaPlayer::AlexaMediaPlayer( Type type,
   , _dispatchQueue(Util::Dispatch::Create(("APlayer_" + sAudioInfo.at(type).name).c_str()))
   , _contentFetcherFactory( contentFetcherFactory )
   , _audioInfo( sAudioInfo.at(_type) )
-  , _filterBuffer{ std::make_unique<Util::FixedCircularBuffer<short, kFilterSize>>() }
   , _shuttingDown( false )
   , _playLoopRunning( false )
 {
@@ -1080,24 +1047,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
           info.channels = 1;
         }
         
-        // if it's 24kHz (the tts sample rate), add a band stop filter before sending to speakers so
-        // that we can check for it in mic input.
-        // TODO: Once we cement the characteristics of the filter we want, this should be done in wwise
-        // instead, since that already has 3 filters, and apparently they can be customized by
-        // dragging control points around.
-        // TODO 2: more filters for different sample rates
-        if( kApplyHighPassFilter && (Anki::Util::Abs(info.hz - kTTSSampleRate) < 1000) ) {
-          for( int i=0; i<samples; ++i ) {
-            _filterBuffer->push_front( (float)_decodedPcm[i] );
-            float value = 0.0f;
-            for( int j=0; j<_filterBuffer->size(); ++j ) {
-              value += _filterCoeffs24[j] * (*_filterBuffer)[j];
-            }
-            _decodedPcm[i] = (short)value;
-          }
-        }
         
-
         if( (samples > 0) && !kSaveResampledPCM ) {
           SavePCM( _decodedPcm, samples );
         }
