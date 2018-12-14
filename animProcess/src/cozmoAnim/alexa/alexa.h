@@ -21,10 +21,15 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <future>
+#include <list>
 
 namespace Anki {
 namespace AudioEngine {
 class AudioCallbackContext;
+}
+namespace Util {
+  class IConsoleFunction;
 }
 namespace Vector {
   
@@ -64,7 +69,6 @@ public:
   void NotifyOfTapToTalk( bool fromMute );
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
-  
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -131,6 +135,8 @@ private:
   void PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback = nullptr ) const;
   
   std::unique_ptr<AlexaImpl> _impl;
+  AlexaImpl* _implToBeDeleted = nullptr;
+  std::future<void> _implDtorResult;
   
   const AnimContext* _context = nullptr;
   
@@ -165,7 +171,11 @@ private:
   // if the user was ever authenticated, even in a previous boot
   bool _authenticatedEver = false;
   
-  mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
+  std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
+  
+  // guards access to _impl when releasing it on main thread, and when used in NotifyOfWakeWord
+  // and AddMicrophoneSamples, which can be called off thread
+  mutable std::mutex _implMutex;
 };
 
 

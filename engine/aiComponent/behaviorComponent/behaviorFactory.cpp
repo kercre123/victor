@@ -113,9 +113,11 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboarding1p0.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboardingLookAtPhone.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/behaviorOnboardingCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingEmulate1p0WaitForVC.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtPhone1p2.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtUser1p2.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingTeachWakeWord.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingWakeUp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorAestheticallyCenterFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemo.h"
@@ -581,12 +583,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToGazeDirection(config));
       break;
     }
-
-    case BehaviorClass::ReactToGazeDirectionSurface:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToGazeDirection(config));
-      break;
-    }
     
     case BehaviorClass::PlaypenCameraCalibration:
     {
@@ -816,6 +812,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::OnboardingEmulate1p0WaitForVC:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingEmulate1p0WaitForVC(config));
+      break;
+    }
+    
     case BehaviorClass::OnboardingLookAtPhone1p2:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtPhone1p2(config));
@@ -831,6 +833,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::OnboardingTeachWakeWord:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingTeachWakeWord(config));
+      break;
+    }
+    
+    case BehaviorClass::OnboardingWakeUp:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingWakeUp(config));
       break;
     }
     

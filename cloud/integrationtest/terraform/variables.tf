@@ -29,8 +29,16 @@ variable "app_image" {
   default = "649949066229.dkr.ecr.us-west-2.amazonaws.com/load_test:latest"
 }
 
-variable "logging_role" {
-  default = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-loadtest"
+variable "logging" {
+  type    = "map"
+  default = {
+    role = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-loadtest"
+    source = "robot_fleet"
+    stream = "splunk_logs_loadtest"
+    index = "sai_loadtest"
+    type = "kinesis"
+    source_type = "sai_go_general"
+  }
 }
 
 // Note: determines if a new account is created as part of the test action
@@ -60,6 +68,15 @@ variable "timer_params" {
 
     "connection_check_interval" = "10m"
     "connection_check_stddev" = "5m"
+  }
+}
+
+variable "ramp_durations" {
+  description = "Duration for robots (across all containers) to ramp up/down (Go time.Duration format)"
+  type    = "map"
+  default = {
+    "up" = "15m"
+    "down" = "0s"
   }
 }
 

@@ -4,7 +4,7 @@ data "template_file" "ecs_task_role" {
   template = "${file("policy/AmazonECSTaskRolePolicy.json")}"
 
   vars {
-    logging_role = "${var.logging_role}"
+    logging_role = "${var.logging["role"]}"
   }
 }
 

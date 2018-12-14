@@ -22,11 +22,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboarding1p0.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/behaviorOnboardingCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
-#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
@@ -80,7 +78,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
 {
   using namespace Util;
   const Data::DataPlatform* platform = robot->GetContextDataPlatform();
-  _saveFolder = platform->pathToResource( Data::Scope::Persistent, BehaviorOnboarding1p0::kOnboardingFolder );
+  _saveFolder = platform->pathToResource( Data::Scope::Persistent, BehaviorOnboardingCoordinator::kOnboardingFolder );
   _saveFolder = FileUtils::AddTrailingFileSeparator( _saveFolder );
   
   if( FileUtils::DirectoryDoesNotExist( _saveFolder ) ) {
@@ -88,7 +86,6 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
   }
   
   _externalInterface = robot->GetExternalInterface();
-  _gatewayInterface = robot->GetGatewayInterface();
   
   _behaviorContainer = dependentComps.GetComponentPtr<BehaviorContainer>();
 
@@ -125,50 +122,45 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
       _stage = newState;
       const bool requestStackReset = !msg.forceSkipStackReset;
       if( static_cast<u8>(newState) < static_cast<u8>(OnboardingStages::Complete) ) {
-        SetNewBehavior( _behaviors.onboardingBehavior, requestStackReset );
+        RestartOnboarding();
       } else if( newState == OnboardingStages::Complete ) {
         SetNewBehavior( _behaviors.postOnboardingBehavior, requestStackReset );
       } else if( newState == OnboardingStages::DevDoNothing ) {
         SetNewBehavior( _behaviors.devBaseBehavior, requestStackReset );
       }
     };
-
     _eventHandles.push_back( ei->Subscribe(ExternalInterface::MessageEngineToGameTag::OnboardingState,
                                            onOnboardingStage) );
+
+    auto setDevDoNothingFunc = [this](ConsoleFunctionContextRef context){
+      _stage = OnboardingStages::DevDoNothing;
+      const bool requestStackReset = true;
+      SetNewBehavior(_behaviors.devBaseBehavior, requestStackReset);
+      Json::Value toSave;
+      toSave[BehaviorOnboardingCoordinator::kOnboardingStageKey] = OnboardingStagesToString(_stage);
+      const std::string filename = _saveFolder + BehaviorOnboardingCoordinator::kOnboardingFilename;
+      Util::FileUtils::WriteFile( filename, toSave.toStyledString() );
+    };
+    _consoleFuncs.emplace_front("Set active mode and boot mode to DevDoNothing",
+                                std::move(setDevDoNothingFunc),
+                                "BehaviorBootLoader",
+                                "");
+
+    auto setNormalOperationFunc = [this](ConsoleFunctionContextRef context){
+      _stage = OnboardingStages::Complete;
+      const bool requestStackReset = true;
+      SetNewBehavior( _behaviors.normalBaseBehavior, requestStackReset );
+      Json::Value toSave;
+      toSave[BehaviorOnboardingCoordinator::kOnboardingStageKey] = OnboardingStagesToString(_stage);
+      const std::string filename = _saveFolder + BehaviorOnboardingCoordinator::kOnboardingFilename;
+      Util::FileUtils::WriteFile( filename, toSave.toStyledString() );
+    };
+    _consoleFuncs.emplace_front("Set active mode and boot mode to Normal",
+                                std::move(setNormalOperationFunc),
+                                "BehaviorBootLoader",
+                                "");
   }
-  
-  auto* gi = _gatewayInterface;
-  if( gi != nullptr ) {
-    auto onRequestOnboardingState = [gi,this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
-      auto* onboardingState = new external_interface::OnboardingState{ CladProtoTypeTranslator::ToProtoEnum(_stage) };
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingState) );
-    };
-    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingStateRequest,
-                                           onRequestOnboardingState) );
-    
-    auto onRequestOnboardingComplete = [gi,this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
-      const bool completed = (_stage == OnboardingStages::Complete) || (_stage == OnboardingStages::DevDoNothing);
-      auto* onboardingComplete = new external_interface::OnboardingCompleteResponse{ completed };
-      gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingComplete) );
-    };
-    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingCompleteRequest,
-                                           onRequestOnboardingComplete) );
-    
-    auto onRestart = [this](const AnkiEvent<external_interface::GatewayWrapper>& appEvent){
-      RestartOnboarding();
-    };
-    _eventHandles.push_back( gi->Subscribe(external_interface::GatewayWrapperTag::kOnboardingRestart,
-                                           onRestart) );
-  }
-  
-  auto resetOnboarding = [ei,robot,this](ConsoleFunctionContextRef context) {
-    if( ei != nullptr ) {
-      ei->Broadcast(ExternalInterface::MessageGameToEngine{ExternalInterface::EraseAllEnrolledFaces{}});
-      robot->GetCubeCommsComponent().ForgetPreferredCube();
-    }
-    RestartOnboarding();
-  };
-  _consoleFuncs.emplace_front( "ResetOnboarding", std::move(resetOnboarding), "OnboardingCoordinator", "" );
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -180,13 +172,13 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
       bsm->ResetBehaviorStack( _behaviorToSwitchTo );
       _behaviorToSwitchTo = nullptr;
     }
-    
+
     if( _countUntilResetOnboarding > 0 ) {
       // onboarding was just stopped because we plan to reset it. Set the stage
       _stage = OnboardingStages::NotStarted;
     }
   }
-  
+
   if( (_countUntilResetOnboarding > 0) && (_behaviorToSwitchTo == nullptr) ) {
     // waiting to restart onboarding
     --_countUntilResetOnboarding;
@@ -199,7 +191,7 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
   
 void BehaviorsBootLoader::InitOnboarding()
 {
-  const std::string filename = _saveFolder + BehaviorOnboarding1p0::kOnboardingFilename;
+  const std::string filename = _saveFolder + BehaviorOnboardingCoordinator::kOnboardingFilename;
   const std::string fileContents = Util::FileUtils::ReadFile( filename );
   
   Json::Reader reader;
@@ -216,9 +208,9 @@ void BehaviorsBootLoader::InitOnboarding()
 # endif
   
   if( !fileContents.empty() && reader.parse( fileContents, onboardingStateJSON ) ) {
-    if( ANKI_VERIFY( onboardingStateJSON[BehaviorOnboarding1p0::kOnboardingStageKey].isString(), "BehaviorsBootLoader.InitOnboarding.InvalidKey", "" ) )
+    if( ANKI_VERIFY( onboardingStateJSON[BehaviorOnboardingCoordinator::kOnboardingStageKey].isString(), "BehaviorsBootLoader.InitOnboarding.InvalidKey", "" ) )
     {
-      const auto& stageStr = onboardingStateJSON[BehaviorOnboarding1p0::kOnboardingStageKey].asString();
+      const auto& stageStr = onboardingStateJSON[BehaviorOnboardingCoordinator::kOnboardingStageKey].asString();
       ANKI_VERIFY( OnboardingStagesFromString(stageStr, _stage),
                   "BehaviorsBootLoader.InitOnboarding.InvalidStage",
                   "Stage %s is invalid", stageStr.c_str() );
@@ -279,17 +271,16 @@ void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID, bool requestStac
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorsBootLoader::RestartOnboarding()
 {
-  Util::FileUtils::DeleteFile( _saveFolder + BehaviorOnboarding1p0::kOnboardingFilename );
-  
+
   // hacky way of de-activating the current onboarding and then re-activating it. Flag to start the Wait behavior,
   // when it starts change the stage within BehaviorOnboarding, pause a few ticks, then flag to start onboarding again.
   SetNewBehavior( BEHAVIOR_ID(Wait) );
   _countUntilResetOnboarding = 20;
-  
+
   DASMSG(onboarding_restart, "onboarding.restart", "User requested to start onboarding from the beginning");
   DASMSG_SEND();
 }

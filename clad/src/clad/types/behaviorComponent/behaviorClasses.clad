@@ -104,7 +104,6 @@ enum uint_8 BehaviorClass {
   PowerSaveTest,
   ReactToBody,
   ReactToGazeDirection,
-  ReactToGazeDirectionSurface,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,
@@ -171,9 +170,11 @@ enum uint_8 BehaviorClass {
   OnboardingCoordinator,
 
   // onboarding_1p2/phases
+  OnboardingEmulate1p0WaitForVC,
   OnboardingLookAtPhone1p2,
   OnboardingLookAtUser1p2,
   OnboardingTeachWakeWord,
+  OnboardingWakeUp,
 
   // photoTaking
   AestheticallyCenterFaces,

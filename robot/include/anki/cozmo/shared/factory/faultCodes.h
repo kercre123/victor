@@ -57,11 +57,11 @@ enum : uint16_t {
   NO_SWITCHBOARD        = 913,
   AUDIO_FAILURE         = 911,
   STOP_BOOT_ANIM_FAILED = 909,
-    
+
   //Body and external errors
   NO_BODY               = 899, //no response from syscon
   SPINE_SELECT_TIMEOUT  = 898,
-    
+
   //Sensor Errors
   TOUCH_SENSOR          = 895,
   TOF                   = 894,
@@ -117,32 +117,25 @@ static int DisplayFaultCode(uint16_t code)
   tracepoint(anki_ust, anki_fault_code, code);
   int fifo = open(FaultCode::kFaultCodeFifoName, O_WRONLY);
   if (fifo == -1) {
-    printf("DisplayFaultCode: Failed to open fifo %d\n", errno);
+    printf("DisplayFaultCode: Failed to open fifo (errno %d)\n", errno);
     return -1;
   }
 
   char faultCode[7] = {0};
-  snprintf(faultCode, sizeof(faultCode)-1, "%u\n", code);
+  const int numToWrite = snprintf(faultCode, sizeof(faultCode)-1, "%u\n", code);
+  const ssize_t numWritten = write(fifo, faultCode, numToWrite);
 
-  ssize_t numBytes = write(fifo, faultCode, sizeof(faultCode));
-  if(numBytes != sizeof(faultCode))
-  {
-    printf("DisplayFaultCode: Expected to write %zu bytes but only wrote %zd\n",
-	    sizeof(faultCode),
-	    numBytes);
-
-    if(numBytes == 0)
-    {
-      printf("DisplayFaultCode: Write failed %d\n", errno);
-      return errno;
-    }
+  if (close(fifo) != 0) {
+    printf("DisplayFaultCode: Failed to close fifo (errno %d)\n", errno);
   }
 
-  int rc = close(fifo);
-  if(rc < 0)
+  if (numWritten != numToWrite)
   {
-    printf("DisplayFaultCode: Failed to close fifo %d\n", errno);
-    return errno;
+    printf("DisplayFaultCode: Expected to write %d bytes but only wrote %zd (errno = %d)\n",
+           numToWrite,
+           numWritten,
+           errno);
+    return -1;
   }
 
   return 0;
@@ -153,4 +146,3 @@ static int DisplayFaultCode(uint16_t code)
 }
 
 #endif
-

@@ -118,6 +118,9 @@ public:
 
   // Enable/disable moving of eyes while tracking. Default is false.
   void SetMoveEyes(bool moveEyes);
+  
+  // Enable/disable action in certain tread-states. Default is only OnTreads.
+  void SetValidOffTreadsStates(const std::set<OffTreadsState>& states) { _validTreadStates = states; }
 
 protected:
 
@@ -230,7 +233,10 @@ private:
   f32      _clampSmallAnglesMinPeriod_s = -1.0f;
   f32      _clampSmallAnglesMaxPeriod_s = -1.0f;
   f32      _nextTimeToClampSmallAngles_s = -1.0f;
-
+  
+  // Tread states in which this action is allowed to run, can be modified.
+  std::set<OffTreadsState> _validTreadStates = {OffTreadsState::OnTreads};
+  
   const std::string _kKeepFaceAliveITrackActionName = "ITrackAction";
 
   bool HaveStopCriteria() const;

@@ -211,7 +211,6 @@ enum int_32 AnimationTrigger
   GazingLookAtSurfaceReaction,
   GazingLookAtSurfaceTurnLeft,
   GazingLookAtSurfacesTurnRight,
-  GazingLookAtVectorGetIn,
   GazingLookAtVectorReaction,
   
   HighTemperatureWarningFace,

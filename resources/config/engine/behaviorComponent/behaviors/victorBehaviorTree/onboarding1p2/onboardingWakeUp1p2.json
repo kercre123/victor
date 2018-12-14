@@ -1,33 +1,4 @@
 {
   "behaviorID" : "OnboardingWakeUp1p2",
-  "behaviorClass" : "DispatcherQueue",
-
-  "behaviors" : [
-    "WakeUpAnims",
-    "WakeUpDriveOffCharger"
-  ],
-
-  "anonymousBehaviors" : [
-    {
-      "behaviorName" : "WakeUpAnims",
-      "behaviorClass" : "AnimSequence",
-
-      "animTriggers" : [
-        "OnboardingLookAtPhoneDown",
-        "OnboardingWakeUp"
-      ]
-    },
-    {
-      "behaviorName" : "WakeUpDriveOffCharger",
-      "behaviorClass" : "AnimSequence",
-
-      "animTriggers" : [
-        "OnboardingDriveOffCharger_1p0"
-      ],
-
-      "wantsToBeActivatedCondition" : {
-        "conditionType" : "OnCharger"
-      }
-    }
-  ]
+  "behaviorClass" : "OnboardingWakeUp"
 }

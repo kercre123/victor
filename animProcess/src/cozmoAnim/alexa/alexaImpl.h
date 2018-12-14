@@ -31,8 +31,14 @@
 #pragma once
 
 #include "audioUtil/audioDataTypes.h"
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 
+#if ANKI_DEV_CHEATS
+  #include "cozmoAnim/alexa/devShutdownChecker.h"
+#endif
+
+#include <AVSCommon/SDKInterfaces/AudioPlayerInterface.h>
 #include <AVSCommon/SDKInterfaces/AuthObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
@@ -100,7 +106,7 @@ public:
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
   
-  // Callback setters
+  // Callback setters. Callbacks will run on the same thread as Update()
   
   // this callback should not call AuthDelegate methods
   using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&, bool)>;
@@ -118,6 +124,14 @@ public:
   
   using OnNotificationsChanged = std::function<void(bool hasNotification)>;
   void SetOnNotificationsChanged( const OnNotificationsChanged& callback ) { _onNotificationsChanged = callback; }
+  
+  // Removes all callbacks passed above, and also stops internally processing callbacks from the sdk in prep for being destroyed
+  void RemoveCallbacksForShutdown();
+  
+#if ANKI_DEV_CHEATS
+  static void ConfirmShutdown();
+#endif
+
   
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
@@ -151,6 +165,7 @@ private:
   void OnSDKLogout();
   void OnNotificationsIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state );
   void OnAlertState( const std::string& alertID, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state );
+  void OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity state );
   
   
   // readable version int
@@ -181,7 +196,15 @@ private:
   
   // alert info
   bool _alertActive = false;
+  bool _backgroundAlertActive = false;
   std::unordered_map<std::string, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State> _alertStates;
+
+  // audio player info (for the audio channel, e.g. flash briefing)
+  bool _audioActive = false;
+  float _audioActiveLastChangeTime_s = 0.0f;
+  
+  // todo: merge with _timeToSetIdle_s
+  float _nextUXStateCheckTime_s = 0.0f;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
   // on vicos.... so just track if the system clock jumps and if so, refresh the timers
@@ -229,6 +252,12 @@ private:
   };
   std::atomic<InitState> _initState;
   std::thread _initThread;
+  
+  std::atomic<bool> _runSetNetworkConnectionError;
+
+#if ANKI_DEV_CHEATS
+  static DevShutdownChecker _shutdownChecker;
+#endif
 };
 
 

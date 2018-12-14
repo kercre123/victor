@@ -504,12 +504,16 @@ ActionResult ITrackAction::CheckIfDone()
       
       if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && (needToMoveFwdBwd || needToPan))
       {
-        // If the robot is not on its treads, it may exhibit erratic turning behavior
-        if (GetRobot().GetOffTreadsState() != OffTreadsState::OnTreads) {
+        // If the robot is not on its treads, it may exhibit erratic turning behavior,
+        // but in some cases this is expected (e.g. driving on the palm of a user's hand)
+        // In those cases, the caller will have to specify that the action is allowed to
+        // run tread states other than OnTreads (the only state allowed by default).
+        const auto& otState = GetRobot().GetOffTreadsState();
+        if (_validTreadStates.find(otState) == _validTreadStates.end()) {
           PRINT_NAMED_WARNING("ITrackAction.CheckIfDone.OffTreadsStateInvalid",
                               "[%d] Off tread state %s is invalid for turning in place",
                               GetTag(),
-                              EnumToString(GetRobot().GetOffTreadsState()));
+                              EnumToString(otState));
           return CheckIfDoneReturnHelper(ActionResult::INVALID_OFF_TREADS_STATE, false);
         }
         

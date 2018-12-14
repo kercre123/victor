@@ -38,6 +38,7 @@ target_link_libraries(util
   jsoncpp
   kazmath
   hdr_histogram_static
+  ${ANKITRACE}
   ${PLATFORM_LIBS}
 )
 

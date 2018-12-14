@@ -32,9 +32,12 @@
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
+
+#include <chrono>
 
 namespace Anki {
 namespace Vector {
@@ -88,39 +91,73 @@ Alexa::Alexa()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// is defined here since AlexaImpl is not defined in the header
-Alexa::~Alexa() = default;
-  
+Alexa::~Alexa()
+{
+  if( _implDtorResult.valid() ) {
+    _implDtorResult.wait();
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Init(const AnimContext* context)
 {
   _context = context;
-  
+
+  // useful for testing shutting down alexa without losing your auth credentials
+  auto deleteImpl = [this](ConsoleFunctionContextRef context ) {
+    DeleteImpl();
+  };
+  _consoleFuncs.emplace_front( "DeleteImpl", std::move(deleteImpl), "Alexa", "" );
+
   // assume opted out. If there's a file indicating opted in, create the impl and try to authorize.
   // otherwise, wait for an engine msg saying to start authorization
   bool authenticatedLastBoot = DidAuthenticateLastBoot();
   _authenticatedEver = DidAuthenticateEver();
-  
+
   if( authenticatedLastBoot ) {
     SetAlexaActive( true );
-  } else if( _authenticatedEver && kPlayErrorIfSignedOut ) {
-    // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
-    // when they say the wake word, it plays "Your device isnt registered. For help, go it its companion app."
-    // TODO: it might make sense to load the least sensitive model to avoid false positives
-    SetSimpleState( AlexaSimpleState::Idle );
+  } else {
+    // make sure engine knows we're signed out
+    SendAuthState();
+    
+    if( kPlayErrorIfSignedOut && _authenticatedEver ) {
+      // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
+      // when they say the wake word, it plays "Your device isn't registered. For help, go to its companion app."
+      // TODO: it might make sense to load the least sensitive model to avoid false positives
+      SetSimpleState( AlexaSimpleState::Idle );
+    }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::Update()
 {
+  if( _implToBeDeleted != nullptr ) {
+    // the impl destructor calls shutdown() on a bunch of components. During shutdown(), media players
+    // join() on a processing loop that includes calls to thread::sleep_for, and other components
+    // could also be doing work, so run the destructor on another thread.
+    auto deleteImpl = [impl=std::move(_implToBeDeleted)](){
+      delete impl;
+      // won't provide any useful info if another impl was since created
+      #if ANKI_DEV_CHEATS
+        AlexaImpl::ConfirmShutdown();
+      #endif
+    };
+    _implToBeDeleted = nullptr;
+    ASSERT_NAMED( !_implDtorResult.valid(), "Alexa.Update.DtorThreadExists" );
+    _implDtorResult = std::async( std::launch::async, std::move(deleteImpl) );
+  }
+  if( _implDtorResult.valid() && (_implDtorResult.wait_for(std::chrono::milliseconds{0}) == std::future_status::ready) ) {
+    _implDtorResult = {};
+  }
+  
   if( _impl != nullptr) {
     // should be called even if not initialized, because this drives the init process
     _impl->Update();
   }
-  
+
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   if( (_timeEnableWakeWord_s >= 0.0f) && (currTime_s >= _timeEnableWakeWord_s) ) {
     _timeEnableWakeWord_s = -1.0f;
     // TODO (VIC-11517): downgrade. for now this is useful in webots
@@ -306,9 +343,16 @@ void Alexa::CreateImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::DeleteImpl()
 {
-  std::lock_guard<std::mutex> lg{ _implMutex };
-  ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" );
-  _impl.reset();
+  {
+    std::lock_guard<std::mutex> lg{ _implMutex };
+    if( ANKI_VERIFY( _impl != nullptr, "Alexa.DeleteImpl.DoesntExist", "Alexa implementation doesnt exist" ) ) {
+      // Prevent further callbacks from impl
+      _impl->RemoveCallbacksForShutdown();
+    }
+    // Don't delete the impl just yet, since the current call to DeleteImpl could have originated from an impl callback
+    ASSERT_NAMED( _implToBeDeleted == nullptr, "Alexa.DeleteImpl.Leak" );
+    _implToBeDeleted = _impl.release();
+  }
   SetAuthState( AlexaAuthState::Uninitialized );
 }
   
@@ -547,7 +591,11 @@ void Alexa::SetUXState( AlexaUXState newState )
 void Alexa::OnAlexaNetworkError( AlexaNetworkErrorType errorType )
 {
   LOG_INFO( "Alexa.OnAlexaNetworkError.Type", "Error: %d", (int)errorType );
-  _pendingUXState = _uxState;
+  // _uxState may be error if the user said the wake word while the error is playing. In that case, preserve the
+  // old _pendingUXState, since _pendingUXState should never be Error
+  if( _uxState != AlexaUXState::Error ) {
+    _pendingUXState = _uxState;
+  }
   SetUXState( AlexaUXState::Error );
   PlayErrorAudio( errorType );
 

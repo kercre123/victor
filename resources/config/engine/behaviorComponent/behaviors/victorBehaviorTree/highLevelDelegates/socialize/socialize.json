@@ -8,7 +8,7 @@
     "DriveOffChargerFace",
     "ShortLookAroundForFaceAndCube",
     "InteractWithFaces",
-    "SocializeGame",
-    "ReactToGazeDirection"
+    "ReactToGazeDirection",
+    "SocializeGame"
   ]
 }

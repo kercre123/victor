@@ -35,15 +35,9 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #ifndef ANIMPROCESS_COZMO_ALEXA_ALEXAMEDIAPLAYER_H
 #define ANIMPROCESS_COZMO_ALEXA_ALEXAMEDIAPLAYER_H
 
-
-#include <memory>
-#include <sstream>
-#include <unordered_set>
-#include <atomic>
-#include <map>
-#include <mutex>
-#include <queue>
-
+#include "audioEngine/audioTools/standardWaveDataContainer.h"
+#include "audioEngine/audioTools/streamingWaveDataInstance.h"
+#include "audioEngine/audioTypes.h"
 
 #include <AVSCommon/SDKInterfaces/SpeakerInterface.h>
 #include <AVSCommon/Utils/MediaPlayer/MediaPlayerInterface.h>
@@ -56,8 +50,13 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <AVSCommon/Utils/RequiresShutdown.h>
 #include "minimp3/minimp3.h"
 
-#include "audioEngine/audioTools/standardWaveDataContainer.h"
-#include "audioEngine/audioTools/streamingWaveDataInstance.h"
+#include <memory>
+#include <sstream>
+#include <unordered_set>
+#include <atomic>
+#include <map>
+#include <mutex>
+#include <queue>
 
 // TEMP
 struct SpeexResamplerState_;
@@ -129,7 +128,7 @@ public:
   void Update();
 
   virtual SourceId setSource( std::shared_ptr< alexaClientSDK::avsCommon::avs::attachment::AttachmentReader > attachmentReader,
-                              const alexaClientSDK::avsCommon::utils::AudioFormat *format=nullptr ) override;
+                              const alexaClientSDK::avsCommon::utils::AudioFormat* format=nullptr ) override;
   virtual SourceId setSource( const std::string &url, std::chrono::milliseconds offset = std::chrono::milliseconds::zero() ) override;
   virtual SourceId setSource( std::shared_ptr<std::istream> stream, bool repeat) override;
 
@@ -165,12 +164,12 @@ private:
   void OnSettingsChanged() const;
 
   // decodes from _mp3Buffer into data, returns millisec decoded
-  int Decode( const StreamingWaveDataPtr& data, bool flush = false );
+  int Decode( const StreamingWaveDataPtr& data, bool flush );
 
-  void CallOnPlaybackFinished( SourceId id );
+  void CallOnPlaybackFinished( SourceId id, bool runOnCaller = false );
   void CallOnPlaybackError( SourceId id );
-
-  const char* const StateToString() const;
+  
+  bool StopInternal( SourceId id, bool runOnCaller = false );
 
   void SavePCM( short* buff, size_t size=0 ) const;
   void SaveMP3( const unsigned char* buff, size_t size=0 ) const;
@@ -179,6 +178,10 @@ private:
   void SaveSettings() const;
   void LoadSettings();
 
+  void OnNewSourceSet();
+
+  void LogPlayingSourceMismatchEvent(const std::string& func, SourceId id, SourceId playingId);
+
   mp3dec_t _mp3decoder;
   
   enum class State {
@@ -186,17 +189,37 @@ private:
     Preparing,
     Playable,
     Playing,
-    Paused
+    Paused,
+    ClipPlayable,
+    ClipPlaying,
   };
   std::atomic<State> _state;
+  std::atomic<State> _stateBeforePause;
 
   void SetState( State state );
 
-  static SourceId _sourceID;
-  SourceId _playingSource = 0;
+  const char* const StateToString() const;
+  static const char* const StateToString(const State& state);
+
+  // return true if set, only set state if it is currently desired (atomically), otherwise returns false and
+  // doesn't impact _state
+  bool ExchangeState( State expectedCurrentState, State desiredState );
+
+  // static to keep all instances of this object returning unique source IDs
+  static std::atomic<SourceId> _nextAvailableSourceID;
+
+  SourceId GetNewSourceID();
+
+  volatile SourceId _playingSource = 0;
+  volatile SourceId _nextSourceToPlay = 0;
 
   std::map<SourceId, std::unique_ptr< AlexaReader >> _readers;
-  short _decodedPcm[1152*2]; // Got value from minimp3.h MINIMP3_MAX_SAMPLES_PER_FRAME
+  short _decodedPcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
+  
+  // A baked in wwise event that should play once state is ClipPlayable
+  AudioEngine::AudioEventId _playableClip;
+  // Time the baked-in wwise event started
+  float _clipStartTime_ms = -1.0f;
 
   // An internal executor that performs execution of callable objects passed to it sequentially but asynchronously.
   alexaClientSDK::avsCommon::utils::threading::Executor _executor;
@@ -216,7 +239,7 @@ private:
     Valid,
     Invalid,
   };
-  std::atomic<DataValidity> _dataValidity;
+  DataValidity _dataValidity;
 
   StreamingWaveDataPtr _waveData;
 
@@ -234,10 +257,10 @@ private:
   // Size of buffer before starting playback
   size_t _minPlaybackBufferSize = 0;
 
-  /// Used to create objects that can fetch remote HTTP content.
+  // Used to create objects that can fetch remote HTTP content.
   std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> _contentFetcherFactory;
 
-  /// Used to stream urls into attachments
+  // Used to stream urls into attachments
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
 
   const AudioInfo& _audioInfo;
@@ -246,6 +269,23 @@ private:
   std::unique_ptr<Util::FixedCircularBuffer<short, kFilterSize>> _filterBuffer;
   // todo: make this constexpr (see comment in ComputeFilterCoeffs)
   static std::array<float, kFilterSize> _filterCoeffs24;
+  // for ensuring callbacks don't fire after this class was deleted
+  using AudioCallbackType = std::function<void(SourceId)>;
+  std::shared_ptr<AudioCallbackType> _audioPlaybackFinishedPtr;
+  std::shared_ptr<AudioCallbackType> _audioPlaybackErrorPtr;
+  
+  std::atomic<bool> _shuttingDown;
+  // guards access to _observers. not sure of order of sdk calls, so recursive just in case
+  std::recursive_mutex _observerMutex;
+
+  // todo: these three wouldn't be necessary if we had a thread instead of a dispatch queue. We basically need to
+  // join() the play/decoding thread during doShutdown(). In the meantime, we wait for a condition variable
+
+  volatile bool _playLoopRunning;
+  std::condition_variable _playLoopRunningCondition;
+
+  // held the entire time the play loop is active
+  std::mutex _playLoopMutex;
 
   // TEMP
   SpeechRecognizerTHF*            _recognizer = nullptr;

@@ -96,9 +96,15 @@ namespace Anki {
         // During charger docking, we sometimes wait for certain conditions
         // to occur before "turning on" cliff sensor stripe correction when
         // backing up onto the charger.
-        bool cliffSensorCorrectionEnabledBL_ = false;
-        bool cliffSensorCorrectionEnabledBR_ = false;
+        bool cliffHasSeenBlackBL_ = false;
+        bool cliffHasSeenBlackBR_ = false;
+        bool robotHasStartedPitching_ = false; // becomes true once the robot has begun to tilt forward as a result of
+                                               // driving up the charger ramp.
 
+        // When charger docking, we must first tilt this amount before enabling cliff sensor correction
+        const float kChargerDockingMinPitchAngleChange_rad = DEG_TO_RAD(2.f);
+        float pitchAngleAtStartOfBackup_rad_ = 0.f;
+        
         // Charger docking wheel speeds for backing onto the charger:
         const float kChargerDockingSpeedHigh = -30.f;
         const float kChargerDockingSpeedLow  = -10.f;
@@ -356,8 +362,10 @@ namespace Anki {
                 SteeringController::ExecuteDirectDrive(kChargerDockingSpeedHigh, kChargerDockingSpeedHigh);
                 transitionTime_ = HAL::GetTimeStamp() + 7000;
                 useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
-                cliffSensorCorrectionEnabledBL_ = false;
-                cliffSensorCorrectionEnabledBR_ = false;
+                cliffHasSeenBlackBL_ = false;
+                cliffHasSeenBlackBR_ = false;
+                robotHasStartedPitching_ = false;
+                pitchAngleAtStartOfBackup_rad_ = IMUFilter::GetPitch();
                 mode_ = BACKUP_ON_CHARGER;
                 break;
               case DockAction::DA_CLIFF_ALIGN_TO_WHITE:
@@ -809,22 +817,27 @@ namespace Anki {
               const bool isBlackBL = cliffBL < kChargerCliffBlackThreshold;
               const bool isBlackBR = cliffBR < kChargerCliffBlackThreshold;
 
-              // Slow down one of the sides if it's seeing white, but only
-              // if we have first seen black at some point.
-              // This is to ensure that the robot does not veer away from
-              // the charger on initial approach with light-colored tables.
               if (isBlackBL) {
-                cliffSensorCorrectionEnabledBL_ = true;
+                cliffHasSeenBlackBL_ = true;
               }
               if (isBlackBR) {
-                cliffSensorCorrectionEnabledBR_ = true;
+                cliffHasSeenBlackBR_ = true;
               }
-
-              if (cliffSensorCorrectionEnabledBL_ && !isBlackBL) {
-                leftSpeed = kChargerDockingSpeedLow;
+              if (IMUFilter::GetPitch() < pitchAngleAtStartOfBackup_rad_ - kChargerDockingMinPitchAngleChange_rad) {
+                robotHasStartedPitching_ = true;
               }
-              if (cliffSensorCorrectionEnabledBR_ && !isBlackBR) {
-                rightSpeed = kChargerDockingSpeedLow;
+              
+              // Slow down one of the sides if it's seeing white, but only if we have first seen black at some point
+              // on that sensor, AND only if we have begun driving up onto the charger platform (based on pitch angle).
+              // This is to ensure that the robot does not veer away from the charger on initial approach with
+              // light-colored tables or tables with funky textures like the dreaded dark wood grain.
+              if (robotHasStartedPitching_) {
+                if (cliffHasSeenBlackBL_ && !isBlackBL) {
+                  leftSpeed = kChargerDockingSpeedLow;
+                }
+                if (cliffHasSeenBlackBR_ && !isBlackBR) {
+                  rightSpeed = kChargerDockingSpeedLow;
+                }
               }
 
               SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);

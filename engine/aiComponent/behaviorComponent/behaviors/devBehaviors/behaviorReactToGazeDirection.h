@@ -53,11 +53,10 @@ private:
     SmartFaceID           faceIDToTurnBackTo;
   };
 
-  std::unique_ptr<InstanceConfig> _iConfig;
+  InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
   void TransitionToCheckGazeDirection();
-  void TransitionToCompleted();
   void TransitionToCheckForFace(const Radians& turnAngle);
   void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle);
   void TransitionToCheckForPointOnSurface(const Pose3d& gazePose);

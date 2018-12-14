@@ -38,8 +38,6 @@ namespace{
   const float kDefaultShakeThresholdStop      = 13000.f;
   const float kDefaultShakeThresholdMedium    = 18000.f;
   const float kDefaultShakeThresholdHard      = 20000.f;
-//  const float kShakenDurationThresholdMedium  = 2.5f;
-//  const float kShakenDurationThresholdHard    = 5.0f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -66,8 +64,6 @@ void BehaviorReactToRobotShaken::GetBehaviorJsonKeys(std::set<const char*>& expe
   expectedKeys.insert( kKey_ShakeThresholdStop );
   expectedKeys.insert( kKey_ShakeThresholdMedium );
   expectedKeys.insert( kKey_ShakeThresholdHard );
-//  expectedKeys.insert( kKey_ShakeDurationMedium );
-//  expectedKeys.insert( kKey_ShakeDurationHard );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -119,22 +115,30 @@ void BehaviorReactToRobotShaken::PlayNextShakeReactionLoop()
   switch ( _dVars.state )
   {
     case EState::ShakeGetIn:
+    {
       _dVars.state = EState::Shaking;
-      // ... fall through
+      // the first shaking loop always begins with the EReactionLevel::Soft, so no need to update anything here ...
+
+      break;
+    }
+
     case EState::Shaking:
     {
-      // we retrigger this looping animation each time through so that we can adjust the "level" in case the shaking
-      // magnitude increases
-      const AnimationTrigger reactionAnim = GetReactionAnimation( EReactionAnimation::Loop );
-      DelegateIfInControl( new TriggerAnimationAction( reactionAnim ), &BehaviorReactToRobotShaken::PlayNextShakeReactionLoop );
+      // update our current reaction level so that we grab the appropriate animation
+      UpdateCurrentReactionLevel();
 
       break;
     }
 
     default:
       DEV_ASSERT( false, "BehaviorReactToRobotShaken.PlayNextShakeReactionLoop.InvalidState" );
-      break;
+      return;
   }
+
+  // we retrigger this looping animation each time through so that we can adjust the "level" in case the shaking
+  // magnitude increases
+  const AnimationTrigger reactionAnim = GetReactionAnimation( EReactionAnimation::Loop );
+  DelegateIfInControl( new TriggerAnimationAction( reactionAnim ), &BehaviorReactToRobotShaken::PlayNextShakeReactionLoop );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -170,8 +174,7 @@ void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
   const int shakenDuration_ms = std::round( shakeDuration_s * 1000.f );
   const int maxShakenAccelMag = std::round( _dVars.shakeMaxMagnitude );
 
-  const EReactionLevel level = GetReactionLevelFromMagnitude();
-  const std::string levelString = EReactionLevelToString( level );
+  const std::string levelString = EReactionLevelToString( _dVars.currentLevel );
 
   DASMSG( robot_dizzy_reaction, "robot.dizzy_reaction", "Robot is dizzy after being shaken" );
   DASMSG_SET( i1, maxShakenAccelMag, "max shake magnitude while robot was shaken" );
@@ -186,16 +189,36 @@ void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
              levelString.c_str() );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotShaken::UpdateCurrentReactionLevel()
+{
+  const EReactionLevel targetLevel = GetReactionLevelFromMagnitude();
+  if ( targetLevel > _dVars.currentLevel )
+  {
+    _dVars.currentLevel = (EReactionLevel)(uint8_t(_dVars.currentLevel) + 1);
+  }
+  else if ( targetLevel < _dVars.currentLevel )
+  {
+    _dVars.currentLevel = (EReactionLevel)(uint8_t(_dVars.currentLevel) - 1);
+  }
+
+  LOG_DEBUG( "BehaviorReactToRobotShaken.UpdateCurrentReactionLevel", "Current EReactionLevel now %s",
+             EReactionLevelToString( _dVars.currentLevel ) );
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotShaken::EReactionLevel BehaviorReactToRobotShaken::GetReactionLevelFromMagnitude() const
 {
   EReactionLevel reaction = EReactionLevel::Soft;
 
-  if ( _dVars.shakeMaxMagnitude >= _iVars.shakeThresholdHard )
+  // user our instantaneous magnitude to determine the shake level
+  // note: we could use a rolling average, but I don't feel it's necessary
+  const float shakeMagnitude = GetBEI().GetRobotInfo().GetHeadAccelMagnitudeFiltered();
+  if ( shakeMagnitude >= _iVars.shakeThresholdHard )
   {
     reaction = EReactionLevel::Hard;
   }
-  else if ( _dVars.shakeMaxMagnitude >= _iVars.shakeThresholdMedium )
+  else if ( shakeMagnitude >= _iVars.shakeThresholdMedium )
   {
     reaction = EReactionLevel::Medium;
   }
@@ -203,33 +226,10 @@ BehaviorReactToRobotShaken::EReactionLevel BehaviorReactToRobotShaken::GetReacti
   return reaction;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//BehaviorReactToRobotShaken::EReactionLevel BehaviorReactToRobotShaken::GetReactionLevelFromDuration() const
-//{
-//  EReactionLevel reaction = EReactionLevel::Soft;
-//
-//  // if we haven't stopped shaking yet, use the current time for our duration
-//  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-//  const float shakeEndTime = ( _dVars.shakeEndTime > 0.f ) ? _dVars.shakeEndTime : currentTime;
-//  const float shakeDuration_s = ( shakeEndTime - _dVars.shakeStartTime );
-//
-//  if ( shakeDuration_s > kShakenDurationThresholdHard )
-//  {
-//    reaction = EReactionLevel::Hard;
-//  }
-//  else if ( shakeDuration_s > kShakenDurationThresholdMedium )
-//  {
-//    reaction = EReactionLevel::Medium;
-//  }
-//
-//  return reaction;
-//}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationTrigger BehaviorReactToRobotShaken::GetReactionAnimation( EReactionAnimation type ) const
 {
-  const EReactionLevel level = GetReactionLevelFromMagnitude();
-  return GetReactionAnimation( level, type );
+  return GetReactionAnimation( _dVars.currentLevel, type );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

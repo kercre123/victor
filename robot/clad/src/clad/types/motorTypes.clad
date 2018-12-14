@@ -31,6 +31,9 @@ message MotorAutoEnabled
 
 enum uint_8 MotorCalibrationReason
 {
+  Startup,
+  Playpen,
+  Game,
   LiftMotorBurnoutProtection,
   HeadMotorBurnoutProtection,
   UnbraceAfterImpact,
@@ -38,6 +41,7 @@ enum uint_8 MotorCalibrationReason
   BehaviorReactToUncalibratedHeadAndLift,
   BehaviorReactToOnFace,
   BehaviorReactToOnBack,
+  BehaviorReactToPlacedOnSlope,
   BehaviorReactToPutDown,
   BehaviorReactToCliff
 }

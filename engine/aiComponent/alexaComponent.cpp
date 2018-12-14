@@ -286,21 +286,25 @@ void AlexaComponent::HandleAnimEvents( const AnkiEvent<RobotInterface::RobotToEn
   if( msg.GetTag() == RobotInterface::RobotToEngineTag::alexaAuthChanged ) {
     const auto newState = msg.Get_alexaAuthChanged().state;
     const auto newExtra = msg.Get_alexaAuthChanged().extra;
+    
+    // tie button functionality to auth state even if it doesn't change
+    if( (newState == AlexaAuthState::Authorized) && _pendingAuthIsFromOptIn ) {
+      // the user opted in, and now we're authorized. Design calls for switching the backpack button
+      // functionality to Alexa, so save that setting now. Note that the app may be displaying a
+      // successful login screen that contains a toggle for this setting. In case things occur out of
+      // order, the app assumes that a successful authentication implies that the setting is now Alexa.
+      // If the below code is removed, the app will need to change as well
+      _pendingAuthIsFromOptIn = false;
+      static const bool kButtonIsAlexa = true;
+      ToggleButtonWakewordSetting( kButtonIsAlexa );
+    } else if( newState == AlexaAuthState::Uninitialized ) {
+      static const bool kButtonIsAlexa = false;
+      ToggleButtonWakewordSetting( kButtonIsAlexa );
+    }
+    
     if( (newState != _authState) || (newExtra != _authStateExtra) ) {
-      _authState = msg.Get_alexaAuthChanged().state;
-      _authStateExtra = msg.Get_alexaAuthChanged().extra;
-      
-      if( (_authState == AlexaAuthState::Authorized) && _pendingAuthIsFromOptIn ) {
-        // the user opted in, and now we're authorized. Design calls for switching the backpack button
-        // functionality to Alexa, so save that setting now. Note that the app may be displaying a
-        // successful login screen that contains a toggle for this setting. In case things occur out of
-        // order, the app assumes that a successful authentication implies that the setting is now Alexa.
-        // If the below code is removed, the app will need to change as well
-        _pendingAuthIsFromOptIn = false;
-        static const bool kButtonIsAlexa = true;
-        ToggleButtonWakewordSetting( kButtonIsAlexa );
-      }
-      
+      _authState = newState;
+      _authStateExtra = newExtra;
       const bool isResponse = false;
       SendAuthStateToApp( isResponse );
     }

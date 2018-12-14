@@ -25,6 +25,13 @@
 #include "util/logging/callstack.h"
 #include "util/logging/logtypes.h"
 
+#if defined(USE_ANKITRACE)
+#include "platform/anki-trace/tracing.h"
+#else
+#define tracepoint(p,f,c)
+#define tracelog(e,m,...)
+#endif
+
 #include <string>
 #include <vector>
 
@@ -183,6 +190,7 @@ __attribute__((noreturn)) void sAbort();
 // Logging with names.
 //
 #define PRINT_NAMED_ERROR(name, format, ...) do { \
+  tracelog(TRACE_ERR, format, ##__VA_ARGS__); \
   ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); \
   ::Anki::Util::sSetErrG(); \
@@ -192,22 +200,28 @@ __attribute__((noreturn)) void sAbort();
 } while(0)
 
 #define PRINT_NAMED_WARNING(name, format, ...) do { \
+  tracelog(TRACE_WARNING, format, ##__VA_ARGS__); \
   ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sWarningF(name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
 #define PRINT_NAMED_INFO(name, format, ...) do { \
+  tracelog(TRACE_INFO, format, ##__VA_ARGS__); \
   ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledInfoF(name, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_NAMED_DEBUG(name, format, ...) do { \
+  tracelog(TRACE_DEBUG, format, ##__VA_ARGS__); \
   ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledDebugF(name, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 #else
-#define PRINT_NAMED_DEBUG(name, format, ...) ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__)
+#define PRINT_NAMED_DEBUG(name, format, ...) do { \
+  tracelog(TRACE_DEBUG, format, ##__VA_ARGS__); \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__);  \
+} while(0)
 #endif
 
 //
@@ -257,17 +271,22 @@ __attribute__((noreturn)) void sAbort();
 // Logging with channels.
 //
 #define PRINT_CH_INFO(channel, name, format, ...) do { \
+  tracelog(TRACE_INFO, format, ##__VA_ARGS__);  \
   ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_CH_DEBUG(channel, name, format, ...) do { \
+  tracelog(TRACE_DEBUG, format, ##__VA_ARGS__);           \
   ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
   ::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 #else
-#define PRINT_CH_DEBUG(channel, name, format, ...) ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__)
+#define PRINT_CH_DEBUG(channel, name, format, ...) do { \
+  tracelog(TRACE_DEBUG, format, ##__VA_ARGS__);              \
+  ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__);   \
+} while(0)
 #endif
 
 //
@@ -285,27 +304,32 @@ __attribute__((noreturn)) void sAbort();
 }
 
 // Actually use these in your code (not the helper above)
-#define PRINT_PERIODIC_CH_INFO(period, channel, name, format, ...) \
-PRINT_PERIODIC_CH_HELPER(sChanneledInfoF, period, channel, name, format, ##__VA_ARGS__)
+#define PRINT_PERIODIC_CH_INFO(period, channel, name, format, ...)  \
+  tracelog(TRACE_INFO, format, ##__VA_ARGS__);                         \
+  PRINT_PERIODIC_CH_HELPER(sChanneledInfoF, period, channel, name, format, ##__VA_ARGS__)
 
 #define PRINT_PERIODIC_CH_DEBUG(period, channel, name, format, ...) \
-PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA_ARGS__)
+  tracelog(TRACE_DEBUG, format, ##__VA_ARGS__);                      \
+  PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA_ARGS__)
 
 // Streams
 #define PRINT_STREAM_ERROR(name, args) do{         \
       std::stringstream ss; ss<<args;                   \
+      tracelog(TRACE_ERR, "%s %s", name, ss.str().c_str());    \
       ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sError(name, {}, ss.str().c_str()); \
     } while(0)
 
 #define PRINT_STREAM_WARNING(name, args) do{       \
       std::stringstream ss; ss<<args;                   \
+      tracelog(TRACE_WARNING, "%s %s", name, ss.str().c_str());\
       ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sWarning(name, {}, ss.str().c_str()); \
     } while(0)
 
 #define PRINT_STREAM_INFO(name, args) do{          \
       std::stringstream ss; ss<<args;                   \
+      tracelog(TRACE_INFO, "%s %s", name, ss.str().c_str()); \
       ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sChanneledInfo(name, name, {}, ss.str().c_str()); \
     } while(0)
@@ -313,6 +337,7 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 #if ALLOW_DEBUG_LOGGING
 #define PRINT_STREAM_DEBUG(name, args) do {         \
       std::stringstream ss; ss<<args;                   \
+      tracelog(TRACE_DEBUG, "%s %s", name, ss.str().c_str());   \
       ::Anki::Util::DropBreadcrumb(false, __FILE__, __LINE__); \
       ::Anki::Util::sChanneledDebug(name, name, {}, ss.str().c_str()); \
     } while(0)

@@ -45,5 +45,7 @@
     "conditionType": "CliffDetected"
   },
   
-  "searchBehavior": "ObservingFindFacesInAirInternal"
+  "staringTime_sec": 30.0,
+  "searchBehavior": "ObservingFindFacesInAirInternal",
+  "searchTimeout_sec": 20.0
 }

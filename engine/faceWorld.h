@@ -161,18 +161,20 @@ namespace Vector {
     bool IsMakingEyeContact(const u32 withinLast_ms) const;
 
     // This will return true and populate the pose and face with the first
-    // stable gaze direction it finds.
+    // stable gaze direction it finds. If this method returns false, no
+    // stable gaze was found for all the faces that meet the ShouldReturnFace
+    // condition.
     bool GetGazeDirectionPose(const u32 withinLast_ms, Pose3d& gazeDirectionPose,
                               SmartFaceID& faceID) const;
-    // This will return true if it finds any stable gaze direction
+    // This will return true if it finds any stable gaze direction.
     bool AnyStableGazeDirection(const u32 withinLast_ms) const;
     // This will return true if we are able to clear a the gaze history for the
-    // face given
+    // face given.
     bool ClearGazeDirectionHistory(const SmartFaceID& faceID);
     // This method checks whether there will be a different face than the one provided
     // in the FOV if the robot were to turn a specific angle, and populates that face
-    // and returns true if it finds one. Otherwise if it doesn't not find a face it
-    // returns false
+    // and returns true if it finds one. Otherwise if it does not find a face it
+    // returns false.
     bool FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
                          const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const;
     bool GetFaceEyesDirectedAtSurface(const SmartFaceID& faceID) const;

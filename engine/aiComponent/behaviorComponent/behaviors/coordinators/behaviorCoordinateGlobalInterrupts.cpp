@@ -383,6 +383,11 @@ void BehaviorCoordinateGlobalInterrupts::OnPassThroughDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateGlobalInterrupts::CreateConsoleVars()
 {
+  // deque can contain non-copyable objects. its kept here to keep the header cleaner
+  static std::deque<Anki::Util::ConsoleVar<bool>> vars;
+  if( !vars.empty() ) {
+    return;
+  }
   const auto& BC = GetBEI().GetBehaviorContainer();
   std::set<IBehavior*> passThroughList;
   GetLinkedActivatableScopeBehaviors( passThroughList );
@@ -394,10 +399,9 @@ void BehaviorCoordinateGlobalInterrupts::CreateConsoleVars()
       if( cozmoDelegate != nullptr ) {
         BehaviorID id = cozmoDelegate->GetID();
         auto pairIt = _iConfig.devActivatableOverrides.emplace( BC.FindBehaviorByID(id), true );
-        // deque can contain non-copyable objects. its kept here to keep the header cleaner
-        static std::deque<Anki::Util::ConsoleVar<bool>> vars;
+        std::string name = std::string{"Toggle_"} + BehaviorTypesWrapper::BehaviorIDToString( id );
         vars.emplace_back( pairIt.first->second,
-                           BehaviorTypesWrapper::BehaviorIDToString( id ),
+                           name.c_str(),
                            "BehaviorCoordinateGlobalInterrupts",
                            true );
       }

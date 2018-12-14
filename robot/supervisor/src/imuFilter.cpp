@@ -315,8 +315,10 @@ namespace Anki {
         if (bracingEnabled_) {
           LiftController::Unbrace();
           HeadController::Unbrace();
-          LiftController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::UnbraceAfterImpact));
-          HeadController::StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::UnbraceAfterImpact));
+          const bool autoStarted = true;
+          const auto reason = MotorCalibrationReason::UnbraceAfterImpact;
+          LiftController::StartCalibrationRoutine(autoStarted, reason);
+          HeadController::StartCalibrationRoutine(autoStarted, reason);
         }
       }
 

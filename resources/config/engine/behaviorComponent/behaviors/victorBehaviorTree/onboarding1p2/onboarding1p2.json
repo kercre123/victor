@@ -10,19 +10,18 @@
       "phaseName" : "Default",
       "phaseBehaviorID" : "OnboardingLookAtPhone1p2",
       // Note that the Default phase doesn't time out, global and AppDisconnect timeouts still apply
-      "phaseTimeout_s" : 0.0,
-      "allowCoordinatorPowerOff" : true
+      "phaseTimeout_s" : 0.0
     },
     {
       "phaseName" : "LookAtPhone",
       "phaseBehaviorID" : "OnboardingLookAtPhone1p2",
-      "phaseTimeout_s" : 60.0,
-      "allowCoordinatorPowerOff" : true
+      "phaseTimeout_s" : 60.0
     }, 
     {
       "phaseName" : "WakeUp",
       "phaseBehaviorID" : "OnboardingWakeUp1p2",
-      "phaseTimeout_s" : 60.0
+      "phaseTimeout_s" : 60.0,
+      "allowCoordinatorPowerOff" : true
     },
     {
       "phaseName" : "LookAtUser",
@@ -33,17 +32,26 @@
     {
       "phaseName" : "TeachWakeWord",
       "phaseBehaviorID" : "OnboardingTeachWakeWord1p2",
-      "phaseTimeout_s" : 300.0
+      "phaseTimeout_s" : 300.0,
+      "allowCoordinatorPowerOff" : true
     },
     {
       "phaseName" : "TeachComeHere",
       "phaseBehaviorID" : "OnboardingTeachComeHere1p2",
-      "phaseTimeout_s" : 300.0
+      "phaseTimeout_s" : 300.0,
+      "allowCoordinatorPowerOff" : true
     },
     {
       "phaseName" : "TeachMeetVictor",
       "phaseBehaviorID" : "OnboardingTeachMeetVictor1p2",
-      "phaseTimeout_s" : 300.0
+      "phaseTimeout_s" : 300.0,
+      "allowCoordinatorPowerOff" : true
+    },
+    {
+      "phaseName" : "Emulate1p0WaitForVC",
+      "phaseBehaviorID" : "OnboardingEmulate1p0WaitForVC",
+      "phaseTimeout_s" : 60.0,
+      "allowCoordinatorPowerOff" : true
     }
   ],
 

@@ -1199,22 +1199,9 @@ namespace Vector {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool FaceWorld::AnyStableGazeDirection(const u32 withinLast_ms) const
   {
-    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
-    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
-                                        ( lastImgTime - withinLast_ms ) :
-                                        0;
-
-    for (const auto& entry: _faceEntries)
-    {
-      if (ShouldReturnFace(entry.second, recentTime, false))
-      {
-        if (entry.second.face.IsGazeDirectionStable())
-        {
-          return true;
-        }
-      }
-    }
-    return false;
+    Pose3d gazeDirectionPose;
+    SmartFaceID faceID;
+    return GetGazeDirectionPose(withinLast_ms, gazeDirectionPose, faceID);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1247,9 +1234,8 @@ namespace Vector {
       {
         const Radians& horizontalFOV = _robot->GetVisionComponent().GetCamera().GetCalibration()->ComputeHorizontalFOV();
         const Radians faceTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(headPoseWRTRobot.GetTranslation());
-        if ( ((turnAngle - faceTurnAngle) <= (horizontalFOV/2.f)) &&
-             ((turnAngle - faceTurnAngle) >= (-horizontalFOV/2.f)) &&
-             !smartFaceIDToIgnore.MatchesFaceID(entry.second.face.GetID()))
+        if (Util::InRange( turnAngle - faceTurnAngle, -horizontalFOV/2.f, horizontalFOV/2.f) &&
+            !smartFaceIDToIgnore.MatchesFaceID(entry.second.face.GetID()))
         {
           faceIDToTurnTowards.Reset(*_robot, entry.second.face.GetID());
           return true;

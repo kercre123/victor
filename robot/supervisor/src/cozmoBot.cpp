@@ -109,8 +109,10 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.LiftController", "");
 
         // Calibrate motors
-        LiftController::StartCalibrationRoutine(1);
-        HeadController::StartCalibrationRoutine(1);
+        const bool autoStarted = true;
+        const auto reason = MotorCalibrationReason::Startup;
+        LiftController::StartCalibrationRoutine(autoStarted, reason);
+        HeadController::StartCalibrationRoutine(autoStarted, reason);
 
         robotStateMessageCounter_ = 0;
 
@@ -138,7 +140,7 @@ namespace Anki {
         // If we end up shutting down due to the user holding the button
         // we still want to record the current time to disk to keep our
         // clock as close to accurate as possible on the next boot.
-        (void) ForkAndExecAndForget({"/bin/systemctl", "start", "fake-hwclock-tick"});
+        (void) ForkAndExecAndForget({"sudo", "/bin/systemctl", "start", "fake-hwclock-tick"});
         #endif
       }
 
@@ -163,7 +165,7 @@ namespace Anki {
 
       void CheckForCriticalBatteryShutdown()
       {        
-        static const int   CRITICAL_BATTERY_THRESH_TICS = 20;
+        static const int   CRITICAL_BATTERY_THRESH_TICS = 66;
         static const float CRITICAL_BATTERY_THRESH_VOLTS = 3.45f;
         static const float HAL_SHUTDOWN_DELAY_MS = 2000;
         static TimeStamp_t shutdownTime_ms = 0;

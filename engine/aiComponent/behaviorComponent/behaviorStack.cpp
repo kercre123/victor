@@ -82,8 +82,6 @@ void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack, IExternalInterface
 
   PrepareDelegatesToEnterScope(nullptr);
 
-  baseOfStack->OnEnteredActivatableScope();
-
   ANKI_VERIFY(baseOfStack->WantsToBeActivated(),
               "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesNotWantToBeActivated",
               "%s",
@@ -103,15 +101,13 @@ void BehaviorStack::ClearStack()
     PopStack();
   }
 
-  // the base of the stack was manually put into scope during InitBehaviorStack, so undo that manually here
+  // Remove the base of the stack
   if(!behaviorStackAlreadyEmpty &&
      ANKI_VERIFY(! _behaviorStack.empty(),
                  "BehaviorStack.ClearStack.StackImproperlyEmpty",
                  "") ) {
-    IBehavior* oldBaseBehavior = _behaviorStack.back();
     PopStack();
     PrepareDelegatesForRemovalFromStack(nullptr);
-    oldBaseBehavior->OnLeftActivatableScope();
   }
 
   _stackMetadataMap.erase(nullptr);

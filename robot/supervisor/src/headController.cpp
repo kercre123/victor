@@ -87,6 +87,9 @@ namespace HeadController {
       // If this is the first time calibrating, repeat until it's done.
       // Shouldn't proceed until calibration is complete.
       bool firstCalibration_ = true;
+      
+      // Keep track of why we started a calibration, so that we can report this to DAS once the calibration completes
+      MotorCalibrationReason calibrationReason_ = MotorCalibrationReason::Startup;
 
       // Last time head movement was detected
       u32 lastHeadMovedTime_ms = 0;
@@ -158,22 +161,9 @@ namespace HeadController {
     }
 
 
-    void StartCalibrationRoutine(bool autoStarted, const char* calibrationReason)
+    void StartCalibrationRoutine(const bool autoStarted, const MotorCalibrationReason& reason)
     {
-      if(calibrationReason!=NULL && strlen(calibrationReason)!=0) {
-        // this DAS message mimics a similar message sent from engine
-        // by the CalibrateMotorAction. It has the same event string
-        // and i1 represents whether the head is being calibrated,
-        // and i2 represents whether the lift is being calibrated
-        DASMSG(head_controller_motor_calib_reason,
-               "calibrate_motors",
-               "send when the robot triggers calibration");
-        DASMSG_SET(s1, calibrationReason, "reason for triggering calibration");
-        DASMSG_SET(i1, 1, "is head motor being calibrated");
-        DASMSG_SET(i2, 0, "is lift motor being calibrated");
-        DASMSG_SEND();
-      }
-      
+      calibrationReason_ = reason;
       potentialBurnoutStartTime_ms_ = 0;
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
@@ -215,6 +205,30 @@ namespace HeadController {
       SetAngularVelocity(0);
     }
 
+    void OnMotorCalibrated()
+    {
+      const auto prevAngle = currentAngle_;
+      ResetLowAnglePosition();
+      
+      // How badly out of calibration was the motor?
+      const float angleError_deg = (prevAngle - currentAngle_).getDegrees();
+
+      AnkiInfo("HeadController.Calibrated",
+               "Head calibrated for reason %s. Calibration error was %.3f deg.",
+               EnumToString(calibrationReason_),
+               angleError_deg);
+      
+      // Log DAS, but not if this is a calibration due to normal startup
+      if (calibrationReason_ != MotorCalibrationReason::Startup) {
+        DASMSG(head_controller_motor_calib_reason,
+               "head_motor_calibrated",
+               "The robot's head motor has just completed a calibration");
+        DASMSG_SET(s1, EnumToString(calibrationReason_), "Reason for triggering calibration");
+        DASMSG_SET(i1, 1000.f * angleError_deg, "Angular error (millidegrees). This represents how far out of calibration the motor was.");
+        DASMSG_SEND();
+      }
+    }
+  
     void CalibrationUpdate()
     {
       if (!isCalibrated_) {
@@ -239,7 +253,6 @@ namespace HeadController {
               if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
 #ifdef          CALIB_WHILE_APPLYING_POWER
                 AnkiInfo( "HeadController.CalibratedWhileApplyingPower", "");
-                ResetLowAnglePosition();
                 calState_ = HCS_COMPLETE;
                 break;
 #else
@@ -261,8 +274,6 @@ namespace HeadController {
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
             if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
-              AnkiInfo( "HeadController.Calibrated", "");
-              ResetLowAnglePosition();
               calState_ = HCS_COMPLETE;
               // Intentional fall-through
             } else {
@@ -270,6 +281,8 @@ namespace HeadController {
             }
           case HCS_COMPLETE:
           {
+            OnMotorCalibrated();
+            
             // Turn off motor
             power_ = 0.0;
             HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
@@ -536,7 +549,8 @@ namespace HeadController {
         } else {
           // Burnout protection triggered. Recalibrating.
           AnkiWarn( "HeadController.MotorBurnoutProtection", "Recalibrating (power = %f)", power_);
-          StartCalibrationRoutine(true, EnumToString(MotorCalibrationReason::HeadMotorBurnoutProtection));
+          const bool autoStarted = true;
+          StartCalibrationRoutine(autoStarted, MotorCalibrationReason::HeadMotorBurnoutProtection);
         }
         return true;
       }

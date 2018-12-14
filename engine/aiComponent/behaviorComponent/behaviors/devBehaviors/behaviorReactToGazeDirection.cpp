@@ -15,12 +15,15 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/faceWorld.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
@@ -29,20 +32,18 @@ namespace Anki {
 namespace Vector {
 
 namespace {
+  // Console vars for tuning
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres_mm,        "Vision.GazeDirection", -25.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres_mm,        "Vision.GazeDirection",  20.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.GazeDirection", -100.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.GazeDirection",  100.f);
   CONSOLE_VAR(f32,  kTurnWaitAfterFinalTurn_s,               "Vision.GazeDirection",  1.f);
-  CONSOLE_VAR(f32,  kTurnWaitAfterInitialTurn_s,             "Vision.GazeDirection",  1.f);
-  CONSOLE_VAR(f32,  kTurnWaitAfterInitialLookBackAtFace_s,   "Vision.GazeDirection",  2.f);
   CONSOLE_VAR(f32,  kSleepTimeAfterActionCompleted_s,        "Vision.GazeDirection",  2.f);
   CONSOLE_VAR(f32,  kMaxPanSpeed_radPerSec,                  "Vision.GazeDirection",  MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
   CONSOLE_VAR(f32,  kMaxPanAccel_radPerSec2,                 "Vision.GazeDirection",  10.f);
   CONSOLE_VAR(bool, kUseEyeContact,                          "Vision.GazeDirection",  true);
   CONSOLE_VAR(f32,  kConeFor180TurnForFaceSearch_deg,        "Vision.GazeDirection",  40.f);
-  CONSOLE_VAR(f32,  kSearchForFaceTurnRightAngle_deg,        "Vision.GazeDirection",  -90.f);
-  CONSOLE_VAR(f32,  kSearchForFaceTurnLeftAngle_deg,         "Vision.GazeDirection",  90.f);
+  CONSOLE_VAR(f32,  kSearchForFaceTurnSideAngle_deg,         "Vision.GazeDirection",  -90.f);
   CONSOLE_VAR(f32,  kSearchForFaceTurnAroundAngle_deg,       "Vision.GazeDirection",  180.f);
   CONSOLE_VAR(s32,  kSearchForFaceNumberOfImagesToWait,      "Vision.GazeDirection",  5);
   CONSOLE_VAR(bool, kUseExistingFacesWhenSearchingForFaces,  "Vision.GazeDirection",  false);
@@ -63,6 +64,8 @@ namespace {
 }
 
 namespace {
+
+  // Configuration file keys
   const char* const kSearchForFaces = "searchForPointsOnSurface";
 }
 
@@ -71,7 +74,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToGazeDirection::BehaviorReactToGazeDirection(const Json::Value& config)
  : ICozmoBehavior(config)
-, _iConfig(new InstanceConfig(config))
+, _iConfig(config)
 {
 }
 
@@ -263,7 +266,7 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
       turnAction->AddAction(driveToAction);
     }
   }
-  DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
+  DelegateIfInControl(turnAction);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -274,20 +277,19 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
 
   // Check to see if our gaze points is within constraints to be considered
   // "looking" at vector.
-  const bool isWithinXConstraints = ( Util::IsFltGT(translation.x(), kFaceDirectedAtRobotMinXThres_mm) &&
-                                      Util::IsFltLT(translation.x(), kFaceDirectedAtRobotMaxXThres_mm) );
-  const bool isWithinYConstarints = ( Util::IsFltGT(translation.y(), kFaceDirectedAtRobotMinYThres_mm) &&
-                                      Util::IsFltLT(translation.y(), kFaceDirectedAtRobotMaxYThres_mm) );
+  const bool isWithinXConstraints = ( Util::InRange(translation.x(), kFaceDirectedAtRobotMinXThres_mm,
+                                                    kFaceDirectedAtRobotMaxXThres_mm) );
+  const bool isWithinYConstarints = ( Util::InRange(translation.y(), kFaceDirectedAtRobotMinYThres_mm,
+                                                    kFaceDirectedAtRobotMaxYThres_mm) );
   if ( ( isWithinXConstraints && isWithinYConstarints ) || ( makingEyeContact && kUseEyeContact) ) {
 
     // If we're making eye contact with the robot or looking at the robot, react to that.
     CompoundActionSequential* turnAction = new CompoundActionSequential();
-    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorGetIn));
     turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtVectorReaction));
     turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
     turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
     turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
-    DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
+    DelegateIfInControl(turnAction);
 
   } else {
     if (translation.LengthSq() < kMaxDriveToSurfacePointDistance_mm2) {
@@ -300,6 +302,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
                   "Translation distance squared %.3f, kMaxDriveToSurfacePointDistance_mm2 %.3f",
                   translation.LengthSq(), kMaxDriveToSurfacePointDistance_mm2);
     }
+
 
     // This is the case where we aren't looking at the robot, so we need to turn
     // right or left towards the pose, play the correct animation, and then turn
@@ -331,7 +334,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
 
       turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
     }
-    DelegateIfInControl(turnAction, &BehaviorReactToGazeDirection::TransitionToCompleted);
+    DelegateIfInControl(turnAction);
   }
 }
 
@@ -344,7 +347,7 @@ Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d&
   Radians turnAngle;
   const auto& translation = gazePose.GetTranslation();
   Radians gazeAngle = atan2f(translation.y(), translation.x());
-  auto angleDifference = Radians(DEG_TO_RAD(180)) - gazeAngle;
+  const Radians angleDifference = Radians(DEG_TO_RAD(180)) - gazeAngle;
   if ( (angleDifference <= Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) &&
        (angleDifference >= -Radians(DEG_TO_RAD(kConeFor180TurnForFaceSearch_deg/2.f))) ) {
     // Turn around
@@ -355,12 +358,12 @@ Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d&
       // turn around by turning left
       turnAngle = DEG_TO_RAD(kSearchForFaceTurnAroundAngle_deg);
     }
-  } else if (translation.y() < 0) {
+  } else if (Util::IsFltLTZero(translation.y())) {
     // Turn right
-    turnAngle = DEG_TO_RAD(kSearchForFaceTurnRightAngle_deg);
+    turnAngle = DEG_TO_RAD(kSearchForFaceTurnSideAngle_deg);
   } else {
     // Turn left
-    turnAngle = DEG_TO_RAD(kSearchForFaceTurnLeftAngle_deg);
+    turnAngle = DEG_TO_RAD(-kSearchForFaceTurnSideAngle_deg);
   }
 
   return turnAngle;
@@ -381,7 +384,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
       GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
 
       // Check how we want to determine whether to search for faces
-      bool searchForPointsOnSurface = _iConfig->searchForPointsOnSurface;
+      bool searchForPointsOnSurface = _iConfig.searchForPointsOnSurface;
       if (kUseEyeGazeToLookAtSurfaceorFaces) {
         // TODO need to have better naming
         searchForPointsOnSurface = GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo);
@@ -414,34 +417,35 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
       }
     } else {
       LOG_ERROR("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
-      TransitionToCompleted();
     }
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToGazeDirection::TransitionToCompleted()
-{
-  // CancelDelegates(false);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::FoundNewFace(ActionResult result)
 {
-  if (ActionResult::NO_FACE == result) {
-    DASMSG(behavior_react_to_gaze_direction_found_no_new_face,
-           "behavior.react_to_gaze_direction.found_no_new_face",
-           "No new face found by following the gaze direction of another face.");
-    DASMSG_SEND();
-    // No face was found so turn back to the face we started with
-    DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo),
-                        &BehaviorReactToGazeDirection::TransitionToCompleted);
-  } else if (ActionResult::SUCCESS == result) {
-    DASMSG(behavior_react_to_gaze_direction_found_new_face,
-           "behavior.react_to_gaze_direction.found_new_face",
-           "Found a new face by following the gaze direction of another face.");
-    DASMSG_SEND();
-    TransitionToCompleted();
+  switch (result)
+  {
+    case ActionResult::NO_FACE: {
+      DASMSG(behavior_react_to_gaze_direction_found_no_new_face,
+             "behavior.react_to_gaze_direction.found_no_new_face",
+             "No new face found by following the gaze direction of another face.");
+      DASMSG_SEND();
+      // No face was found so turn back to the face we started with
+      DelegateIfInControl(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+      break;
+    }
+    case ActionResult::SUCCESS: {
+      DASMSG(behavior_react_to_gaze_direction_found_new_face,
+             "behavior.react_to_gaze_direction.found_new_face",
+             "Found a new face by following the gaze direction of another face.");
+      DASMSG_SEND();
+      break;
+    }
+    default: {
+      LOG_ERROR("BehaviorReactToGazeDirection.FoundNewFace.UnexpectedResultFromTurnTowardsFace",
+                "Result: %d", result);
+      break;
+    }
   }
 }
 
@@ -465,7 +469,7 @@ void BehaviorReactToGazeDirection::SendDASEventForPoseToFollow(const Pose3d& gaz
 {
   const auto& translation = gazePose.GetTranslation();
   std::string type;
-  if (_iConfig->searchForPointsOnSurface) {
+  if (_iConfig.searchForPointsOnSurface) {
     type = "Surface";
   } else {
     type = "Face";
@@ -473,10 +477,10 @@ void BehaviorReactToGazeDirection::SendDASEventForPoseToFollow(const Pose3d& gaz
   DASMSG(behavior_react_to_gaze_direction_pose_to_follow,
          "behavior.react_to_gaze_direction.pose_to_follow",
          "Gaze point to turn towards.");
-  DASMSG_SET(s1, type.c_str(), "The type of point we turning towards");
-  DASMSG_SET(i1, static_cast<int>(translation.x()), "X coordinate of point to turn towards");
-  DASMSG_SET(i2, static_cast<int>(translation.y()), "Y coordinate of point to turn towards");
-  DASMSG_SET(i3, static_cast<int>(translation.z()), "Z coordinate of point to turn towards");
+  DASMSG_SET(s1, type.c_str(), "The type of point we are turning towards");
+  DASMSG_SET(i1, static_cast<int>(translation.x()), "X coordinate in mm of point to turn towards");
+  DASMSG_SET(i2, static_cast<int>(translation.y()), "Y coordinate in mm of point to turn towards");
+  DASMSG_SET(i3, static_cast<int>(translation.z()), "Z coordinate in mm of point to turn towards");
   DASMSG_SEND();
 }
 
