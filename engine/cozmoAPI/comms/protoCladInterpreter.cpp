@@ -25,16 +25,15 @@
 namespace Anki {
 namespace Vector {
 
-/**
- * Given a message reference, checks to see if that Oneof type used to be
- * translated (to Clad) by the gateway. If it is, it's now the engine's
- * responsibility to do the translation, so we do that, then re-broadcast
- * the Clad version of the message to uiMessageHandler - where it would
- * have arrived, had gateway left it as Clad.
- * 
- * @param message The Proto message to check-translate-rebroadcast
- * @return
-*/
+// Given a message reference, checks to see if that Oneof type used to be
+// translated (to Clad) by the gateway. If it is, it's now the engine's
+// responsibility to do the translation, so we do that, then re-broadcast
+// the Clad version of the message to uiMessageHandler - where it would
+// have arrived, had gateway left it as Clad.
+// 
+// @param message The Proto message to check-translate-rebroadcast
+// @return true, if a conversion-and-Broadcast was done, false otherwise.
+
 bool ProtoCladInterpreter::Redirect(
     const external_interface::GatewayWrapper & proto_message, CozmoContext * cozmo_context) {
   
