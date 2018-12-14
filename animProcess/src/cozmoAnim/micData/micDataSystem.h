@@ -142,6 +142,8 @@ public:
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
+  bool IsButtonPressAlexa() const;
+
   std::string _writeLocationDir = "";
   std::string _persistentFolder;
   // Members for the the mic jobs
