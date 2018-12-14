@@ -61,8 +61,12 @@ void GazeDirection::Update(const TrackedFace& face)
   }
 
   Point3f gazeDirectionPoint;
-  const bool include = GetPointFromHeadPose(_headPose, gazeDirectionPoint);
+  const bool include = GetDirectionPointFromPose(_headPose, gazeDirectionPoint);
   _gazeDirectionHistory[_currentIndex].Update(gazeDirectionPoint, include);
+
+  Point3f eyeDirectionPoint;
+  const bool includeEyeGaze = GetDirectionPointFromPose(_eyePose, eyeDirectionPoint);
+  _eyeDirectionHistory[_currentIndex].Update(eyeDirectionPoint, includeEyeGaze);
 
   // This computations only need to happen once we are initialized because
   // otherwise we're not going to output a point as stable
@@ -70,16 +74,11 @@ void GazeDirection::Update(const TrackedFace& face)
     _gazeDirectionAverage = ComputeEntireGazeDirectionAverage();
     _numberOfInliers = FindInliers(_gazeDirectionAverage);
     _gazeDirectionAverage = RecomputeGazeDirectionAverage();
-  }
 
-  Point3f eyeDirectionPoint;
-  const bool includeEyeGaze = GetPointFromEyePose(_eyePose, eyeDirectionPoint);
-  _eyeDirectionHistory[_currentIndex].Update(eyeDirectionPoint, includeEyeGaze);
-  _eyeDirectionAverage = ComputeEntireEyeDirectionAverage();
-  _numberOfEyeDirectionsInliers = FindEyeDirectionInliers(_eyeDirectionAverage);
-  PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.Update.NumberOfInliers",
-                   "Number of Inliers = %d", _numberOfInliers);
-  _eyeDirectionAverage = RecomputeEyeDirectionAverage();
+    _eyeDirectionAverage = ComputeEntireEyeDirectionAverage();
+    _numberOfEyeDirectionsInliers = FindEyeDirectionInliers(_eyeDirectionAverage);
+    _eyeDirectionAverage = RecomputeEyeDirectionAverage();
+  }
 
   _currentIndex++;
 }
@@ -97,9 +96,9 @@ Point3f GazeDirection::ComputeEntireEyeDirectionAverage()
 Point3f GazeDirection::ComputeEyeDirectionAverage(const bool filterOutliers)
 {
   Point3f averageEyeDirection = Point3f(0.f, 0.f, 0.f);
-   // Find the average, we can treat these as Cartesian
-  // coordinates instead traditional angles because the
-  // range of value does not include a wrap around
+  // Find the eye direction average, these are Cartesian
+  // coordinates. However we only want to include
+  // those coordinates that intersected the ground plane.
   u32 pointsInAverage = 0;
   for (const auto& eyeDirection: _eyeDirectionHistory) {
     if (eyeDirection.include) {
@@ -196,15 +195,15 @@ bool GazeDirection::GetExpired(const TimeStamp_t currentTime) const
   return (currentTime - _lastUpdated) > kGazeDirectionExpireThreshold_ms;
 }
 
-bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDirectionPoint)
+bool GazeDirection::GetDirectionPointFromPose(const Pose3d& pose, Point3f& gazeDirectionPoint)
 {
   // Get another point in the direction of the rotation of the head pose, to then find the
   // intersection of that line with ground plane, note that this point is in world coordinates
   // "behind" the head if the pose were looking at the ground plane if the y translation is
   // positive.
-  Pose3d translatedPose(0.f, Z_AXIS_3D(), {0.f, kGazeDirectionSecondPointTranslationY_mm, 0.f}, headPose);
+  Pose3d translatedPose(0.f, Z_AXIS_3D(), {0.f, kGazeDirectionSecondPointTranslationY_mm, 0.f}, pose);
   const auto& point = translatedPose.GetWithRespectToRoot().GetTranslation();
-  const auto& translation = headPose.GetTranslation();
+  const auto& translation = pose.GetTranslation();
 
   if (Util::IsFltNear(translation.z(), point.z())) {
     gazeDirectionPoint = point;
@@ -237,23 +236,16 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, Point3f& gazeDi
 
 int GazeDirection::FindEyeDirectionInliers(const Point3f& eyeDirectionAverage)
 {
+  // Find the eye direction inliers given the average, and only
+  // include points that have intersected with the ground plane.
+  // Here inliners are determined using a l-1 distance.
   int numberOfInliers = 0;
   for (auto& eyeDirection: _eyeDirectionHistory) {
-    /*
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.FindInliers.PointHistory",
-                     "direction x=%.3f, y=%.3f, z=%.3f", faceDirection.point.x(),
-                     faceDirection.point.y(), faceDirection.point.z());
-    */
      if (!eyeDirection.include) {
       continue;
     }
                       
     auto difference = eyeDirection.point - eyeDirectionAverage;
-    /*
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.FindInliers.Difference",
-                     "direction x=%.3f, y=%.3f, z=%.3f", difference.x(),
-                     difference.y(), difference.z());
-    */
     if (std::abs(difference.x()) < kEyeGazeDirectionInlierXThreshold_mm &&
         std::abs(difference.y()) < kEyeGazeDirectionInlierYThreshold_mm &&
         std::abs(difference.z()) < kEyeGazeDirectionInlierZThreshold_mm) {
@@ -264,40 +256,6 @@ int GazeDirection::FindEyeDirectionInliers(const Point3f& eyeDirectionAverage)
     }
   }
   return numberOfInliers;
-}
-
-bool GazeDirection::GetPointFromEyePose(const Pose3d& eyePose, Point3f& eyeDirectionPoint)
-{
-  // TODO is this too far and do we want to put this on the ground plane?
-  // Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, -1000.f, 0.f)));
-  Pose3d translatedPose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), Point3f(0.f, 500.f, 0.f)));
-  translatedPose.SetParent(eyePose);
-  auto point = translatedPose.GetWithRespectToRoot().GetTranslation();
-  auto translation = eyePose.GetTranslation();
-   PRINT_NAMED_WARNING("FaceNormalDirectedAtRobot3d.GetPointFromEyePose.Translation",
-                   "x: %.3f, y:%.3f, z:%.3f", translation.x(), translation.y(), translation.z());
-  PRINT_NAMED_WARNING("FaceNormalDirectedAtRobot3d.GetPointFromEyePose.SecondPoint",
-                   "x: %.3f, y:%.3f, z:%.3f", point.x(), point.y(), point.z());
-   float alpha = ( -point.z() ) / ( translation.z() - point.z() );
-   PRINT_NAMED_WARNING("FaceNormalDirectedAtRobot3d.GetPointFromEyePose.Alpha",
-                   "alpha: %.3f", alpha);
-   auto groundPlanePoint = translation * alpha + point * (1 - alpha);
-   PRINT_NAMED_WARNING("FaceNormalDirectedAtRobot3d.GetPointFromEyePose.GroundPlanePoint",
-                   "x: %.3f, y:%.3f, z:%.3f", groundPlanePoint.x(), groundPlanePoint.y(),
-                   groundPlanePoint.z());
-   // Alpha less than one means that the ground plane point we found is either
-  // in the line segment between our two points (0 < alpha < 1) or in the ray
-  // starting at the first point and extending in the same direction as the segment.
-  // This avoids finding a intersection with the ground plane when face normal is
-  // directed above the horizon.
-  if (alpha > 1) {
-    eyeDirectionPoint = groundPlanePoint;
-    return true;
-  } else {
-    PRINT_NAMED_INFO("FaceNormalDirectedAtRobot3d.GetPointEyePose.EyeRayAboveHorizon", "");
-    eyeDirectionPoint = point;
-    return false;
-  }
 }
 
 bool GazeDirection::IsStable() const

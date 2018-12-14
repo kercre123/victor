@@ -103,12 +103,12 @@ private:
   int FindInliers(const Point3f& faceDirectionAverage);
   int FindEyeDirectionInliers(const Point3f& eyeDirectionAverage);
 
-  bool GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint);
+  bool GetDirectionPointFromPose(const Pose3d& pose, Point3f& faceDirectionPoint);
+
   Point3f ComputeEntireGazeDirectionAverage();
   Point3f ComputeGazeDirectionAverage(const bool filterOutliers);
   Point3f RecomputeGazeDirectionAverage();
 
-  bool GetPointFromEyePose(const Pose3d& eyePose, Point3f& eyeDirectionPoint);
   Point3f ComputeEntireEyeDirectionAverage();
   Point3f ComputeEyeDirectionAverage(const bool filterOutliers);
   Point3f RecomputeEyeDirectionAverage();

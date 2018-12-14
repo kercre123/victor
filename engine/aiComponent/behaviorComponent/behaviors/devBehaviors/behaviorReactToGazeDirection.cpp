@@ -66,7 +66,7 @@ namespace {
 namespace {
 
   // Configuration file keys
-  const char* const kSearchForFaces = "searchForPointsOnSurface";
+  const char* const kSearchForPointsOnSurface = "searchForPointsOnSurface";
 }
 
 #define LOG_CHANNEL "Behaviors"
@@ -93,7 +93,7 @@ void BehaviorReactToGazeDirection::BehaviorUpdate()
 BehaviorReactToGazeDirection::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
   const std::string& debugName = "BehaviorReactToBody.InstanceConfig.LoadConfig";
-  searchForPointsOnSurface = JsonTools::ParseBool(config, kSearchForFaces, debugName);
+  searchForPointsOnSurface = JsonTools::ParseBool(config, kSearchForPointsOnSurface, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -106,7 +106,7 @@ BehaviorReactToGazeDirection::DynamicVariables::DynamicVariables()
 void BehaviorReactToGazeDirection::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-      kSearchForFaces,
+      kSearchForPointsOnSurface,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -211,36 +211,27 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
   turnAction->AddAction(turnAndAnimate);
   turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
 
-  // Now that we're looking at the point actually drive to it
-  // TODO need something better than this. The duplciate code is awful.
   if (kUseDriveStraightActionForDriveTo) {
-    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingOnlyDriveStraight", "");
     DriveStraightAction* driveStraightAction = new DriveStraightAction(kDriveStraightDistance_mm);
     turnAction->AddAction(driveStraightAction);
-    if (kDriveStraightTurnBackToFace) {
-      turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-      turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
-    }
+
   } else if (kUseHandDetectionHack) {
     float distanceToDrive_mm = kDriveStraightDistance_mm;
     if (kUseTranslationDistanceForDriveStraight) {
       distanceToDrive_mm = translation.Length();
     }
-    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingHandDetectionHack", "");
+
     CompoundActionParallel* driveAction = new CompoundActionParallel({
       new DriveStraightAction(distanceToDrive_mm),
       new ReselectingLoopAnimationAction{AnimationTrigger::ExploringReactToHandDrive},
       new WaitForLambdaAction([this](Robot& robot) {
         const bool detectedUnexpectedMovement = (robot.GetMoveComponent().IsUnexpectedMovementDetected());
-        if(detectedUnexpectedMovement) {
-          LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.GotUnexpectedMovement", "");
-        }
+
         bool proxSensorFire = false;
         auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
         uint16_t proxDist_mm = 0;
         if ( proxSensor.GetLatestDistance_mm( proxDist_mm) ) {
           if ( proxDist_mm < kProxSensorStopingDistance_mm) {
-            LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.GotProxSensorReadingThatWereClose", "");
             proxSensorFire = true;
           }
         }
@@ -251,13 +242,9 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
     // is detected (the looping anim will never finish).
     driveAction->SetShouldEndWhenFirstActionCompletes(true);
     turnAction->AddAction(driveAction);
-    if (kDriveStraightTurnBackToFace) {
-      turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-      turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
-    }
 
-  }else {
-    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface.UsingDriveToPoseAction", "");
+  } else {
+
     if (kUseRelativePoseForDriveTo) {
       DriveToPoseAction* driveToAction = new DriveToPoseAction(gazePose);
       turnAction->AddAction(driveToAction);
@@ -265,6 +252,11 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
       DriveToPoseAction* driveToAction = new DriveToPoseAction(_dVars.gazeDirectionPose);
       turnAction->AddAction(driveToAction);
     }
+  }
+
+  if (kDriveStraightTurnBackToFace) {
+    turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
+    turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
   }
   DelegateIfInControl(turnAction);
 }
@@ -292,17 +284,11 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
     DelegateIfInControl(turnAction);
 
   } else {
+    // Check if the gaze pose is too far to drive to. If kMaxDriveToSurfacePointDistance_mm2
+    // is set to -1 then driving to the gaze point is disabled.
     if (translation.LengthSq() < kMaxDriveToSurfacePointDistance_mm2) {
-      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckForPointOnSurface.Drive",
-                  "Translation distance squared %.3f, kMaxDriveToSurfacePointDistance_mm2 %.3f",
-                  translation.LengthSq(), kMaxDriveToSurfacePointDistance_mm2);
       TransitionToDriveToPointOnSurface(gazePose);
-    } else {
-      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckForPointOnSurface.NoDrive",
-                  "Translation distance squared %.3f, kMaxDriveToSurfacePointDistance_mm2 %.3f",
-                  translation.LengthSq(), kMaxDriveToSurfacePointDistance_mm2);
     }
-
 
     // This is the case where we aren't looking at the robot, so we need to turn
     // right or left towards the pose, play the correct animation, and then turn
@@ -386,12 +372,14 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
       // Check how we want to determine whether to search for faces
       bool searchForPointsOnSurface = _iConfig.searchForPointsOnSurface;
       if (kUseEyeGazeToLookAtSurfaceorFaces) {
-        // TODO need to have better naming
-        searchForPointsOnSurface = GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo);
+        searchForPointsOnSurface &= GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo);
       }
 
       if (searchForPointsOnSurface) {
-
+        // We're looking for points on the surface, similar to looking for faces
+        // but the head angle will be pointed towards the ground plane.
+        TransitionToCheckForPointOnSurface(gazeDirectionPoseWRTRobot);
+      } else {
         // Bucket the angle to turn to look for faces
         const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
 
@@ -410,10 +398,6 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
           // for a face.
           TransitionToCheckForFace(turnAngle);
         }
-      } else {
-        // We're looking for points on the surface, similar to looking for faces
-        // but the head angle will be pointed towards the ground plane.
-        TransitionToCheckForPointOnSurface(gazeDirectionPoseWRTRobot);
       }
     } else {
       LOG_ERROR("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");

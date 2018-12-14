@@ -1224,12 +1224,6 @@ namespace Vision {
       if(facePartsFound)
       {
 
-        // TODO this is the old location of this call and make sure we
-        // want it in the new one before deleting this comment. It was
-        // moved because we need the gaze to be set before we call this
-        // so we can set eye pose correctly ... clear as mud and tots obvs
-        // SetFacePoseFromParts(nHeight, nWidth, face, intraEyeDist);
-
         //LOG_INFO("FaceTrackerImpl.Update.HeadOrientation",
         //                 "Roll=%ddeg, Pitch=%ddeg, Yaw=%ddeg",
         //                 roll_deg, pitch_deg, yaw_deg);

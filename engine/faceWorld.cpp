@@ -1025,7 +1025,7 @@ namespace Vector {
         const s32 startingObjectId = 2345;
 
         const auto currentGazeDirection = gazeDirection.GetCurrentGazeDirection();
-        Pose3d currentGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentGazeDirection));
+        Pose3d currentGazePose(0.f, Z_AXIS_3D(), currentGazeDirection);
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
                                                                                 kGazeGroundPointSize,
                                                                                 currentGazePose,
@@ -1033,7 +1033,7 @@ namespace Vector {
 
         if (gazeDirection.IsStable()) {
           const auto averageGazeDirection = gazeDirection.GetGazeDirectionAverage();
-          Pose3d averageGazePose(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageGazeDirection));
+          Pose3d averageGazePose(0.f, Z_AXIS_3D(), averageGazeDirection);
           faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
                                                                                   kGazeGroundPointSize,
                                                                                   averageGazePose,
@@ -1045,13 +1045,13 @@ namespace Vector {
         if (gazeDirection.IsEyeGazeDirectedAtSurface()) {
           eyeGazeAverageColor = ::Anki::NamedColors::CYAN;
         }
-        Pose3d averageEyePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), averageEyeDirection));
+        Pose3d averageEyePose(0.f, Z_AXIS_3D(), averageEyeDirection);
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 2,
                                                                                 kGazeGroundPointSize,
                                                                                 averageEyePose,
                                                                                 eyeGazeAverageColor);
         const auto currentEyeDirection = gazeDirection.GetCurrentEyeDirection();
-        Pose3d currentEyePose = Pose3d(Transform3d(Rotation3d(0.f, Z_AXIS_3D()), currentEyeDirection));
+        Pose3d currentEyePose(0.f, Z_AXIS_3D(), currentEyeDirection);
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 3,
                                                                                 kGazeGroundPointSize,
                                                                                 currentEyePose,
