@@ -172,6 +172,13 @@ logv "start deploy"
 
 set -e
 
+#
+# Stop any victor services. If services are allowed to run during 
+# deployment, exe and shared library files can't be replaced.
+#
+logv "stop victor services"
+robot_sh "/bin/systemctl stop victor.target"
+
 logv "create target dirs"
 robot_sh mkdir -p "${INSTALL_ROOT}"
 robot_sh mkdir -p "${INSTALL_ROOT}/etc"
@@ -201,13 +208,6 @@ if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
   robot_sh "/bin/systemctl daemon-reload"
 fi
 set -e
-
-#
-# Stop any victor services. If services are allowed to run during deployment, exe and shared library
-# files can't be released.  This may tie up enough disk space to prevent deployment of replacement files.
-#
-logv "stop victor services"
-robot_sh "/bin/systemctl stop victor.target"
 
 logv "starting rsync daemon"
 robot_sh "/bin/systemctl is-active rsyncd.service > /dev/null 2>&1\
