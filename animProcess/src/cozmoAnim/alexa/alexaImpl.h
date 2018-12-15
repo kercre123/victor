@@ -132,10 +132,10 @@ public:
   static void ConfirmShutdown();
 #endif
 
+  using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
   
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
-  using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
   
   void UpdateAsyncInit();
   void InitThread();
@@ -166,7 +166,13 @@ private:
   void OnNotificationsIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state );
   void OnAlertState( const std::string& alertID, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state );
   void OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity state );
+
+  // call every tick from update, occasionally this will perform some checks to see if it looks like we are
+  // stuck in a UX state bug (e.g. "forever face")
+  void CheckStateWatchdog();
   
+  // if the watchdog fires, this function attempts to remedy the situation
+  void AttemptToFixStuckInSpeakingBug();
   
   // readable version int
   alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion GetFirmwareVersion() const;
@@ -205,6 +211,9 @@ private:
   
   // todo: merge with _timeToSetIdle_s
   float _nextUXStateCheckTime_s = 0.0f;
+
+  float _lastWatchdogCheckTime_s = 0.0f;
+  float _possibleStuckStateStartTime_s = -1.0f;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
   // on vicos.... so just track if the system clock jumps and if so, refresh the timers

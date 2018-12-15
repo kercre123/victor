@@ -777,6 +777,12 @@ bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
   _audioController->StopAllAudioEvents( _audioInfo.gameObject );
 
   auto onStop = [id, this]() {
+
+    // TODO:(bn) FIXME: the ::play async thread could be running at this point, and could still be getting
+    // into preparing. At this point, what we need to do is a try_lock on the play loop mutex, if we get it
+    // then we need to set both the state and clear _nextSourceToPlay. If we don't get it, then that means
+    // ::play or doShutdown are running, in which case just setting idle should be sufficient
+
     if( _playingSource == id ) {
       SetState(State::Idle);
       _offset_ms = 0;
@@ -1359,6 +1365,36 @@ void AlexaMediaPlayer::LogPlayingSourceMismatchEvent(const std::string& func, So
   DASMSG_SET(s3, StateToString(), "Current audio processing state");
   DASMSG_SET(i1, sourceDelta, "Delta between source being operated on and the playing source");
   DASMSG_SEND();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaMediaPlayer::IsActive()
+{
+  if( _state != State::Idle ) {
+    // simple case, not idle then we're active
+    return true;
+  }
+
+  // now to detect if we _might become_ active, first try to grab the playing lock
+  std::unique_lock<std::mutex> lk{_playLoopMutex, std::try_to_lock};
+  const bool gotLock = lk.owns_lock();
+  if( !gotLock ) {
+    // other thread is doing stuff, so we must be active
+    return true;
+  }
+
+  if( _state != State::Idle ) {
+    // state updated to non-idle after grabbing the lock
+    return true;
+  }
+
+  if( _nextSourceToPlay > _playingSource ) {
+    // about to play a new source
+    return true;
+  }
+
+  // otherwise, we must not be doing anything
+  return false;
 }
 
 

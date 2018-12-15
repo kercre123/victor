@@ -93,11 +93,17 @@ namespace {
   static const std::chrono::seconds kBufferDuration_s = std::chrono::seconds(15);
   // The size of the ring buffer.
   static const size_t kBufferSize = (kSampleRate_Hz)*kBufferDuration_s.count();
+
+  // how often to double check playing states
+  static const float kAlexaImplWatchdogCheckTime_s = 1.0f;
   
   const std::string kDirectivesFile = "directives.txt";
   const std::string kAlexaFolder = "alexa";
 
   static const float kTimeToHoldSpeakingBetweenAudioPlays_s = 1.0f;
+  static const float kAlexaImplWatchdogFailTime_s = 5.0f;
+  // TODO:(bn) FIXME: kAlexaImplWatchdogFailTime_s must be greater than kAlexaIdleDelay_s and
+  // kAlexaMaxIdleDelay_s. Should add an assert
   
   // If the DialogUXState is set to Idle, but a directive was received to Play, then wait this long before
   // setting to idle
@@ -116,6 +122,43 @@ namespace {
   // every this many seconds (in basestation time), grab the wall time (system clock) and see if it looks like
   // it may have jumped. If so, refresh the alexa timers
   CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
+
+#if ANKI_DEV_CHEATS
+
+  static AlexaImpl::SourceId sAddFakeSourcePlaying = 0;
+  static AlexaImpl::SourceId sRemoveFakeSourcePlaying = 0;
+
+  void AddFakePlayingSource(ConsoleFunctionContextRef context) {
+    const int source = ConsoleArg_Get_Int(context, "source");
+
+    if( sAddFakeSourcePlaying != 0 ) {
+      LOG_ERROR("AlexaImpl.ConsoleVar.AddFakePlayingSource.AlreadyPending",
+                "Trying to set fake source for adding to %d, but %llu is already pending",
+                source,
+                sAddFakeSourcePlaying);
+    }
+    else {
+      sAddFakeSourcePlaying = source;
+    }
+  }
+  CONSOLE_FUNC(AddFakePlayingSource, "Alexa.ImplWatchdog", int source);
+
+  void RemoveFakePlayingSource(ConsoleFunctionContextRef context) {
+    const int source = ConsoleArg_Get_Int(context, "source");
+
+    if( sRemoveFakeSourcePlaying != 0 ) {
+      LOG_ERROR("AlexaImpl.ConsoleVar.RemoveFakePlayingSource.AlreadyPending",
+                "Trying to set fake source for removal to %d, but %llu is already pending",
+                source,
+                sRemoveFakeSourcePlaying);
+    }
+    else {
+      sRemoveFakeSourcePlaying = source;
+    }
+  }
+  CONSOLE_FUNC(RemoveFakePlayingSource, "Alexa.ImplWatchdog", int source);
+
+#endif
 
 
   // TODO:(bn) cleanup: the AVS SDK already provides all of these with slightly different names, so let's use those instead...
@@ -563,6 +606,29 @@ void AlexaImpl::Update()
   } else if( _initState != InitState::Completed ) {
     return;
   }
+
+#if ANKI_DEV_CHEATS
+
+  // NOTE: these (intentionally) don't call CheckForUXStateChange, so they may not have immediate impact until
+  // something else happens
+  // TODO:(bn) console func for that too
+
+  if( sAddFakeSourcePlaying != 0 ) {
+    LOG_WARNING("AlexaImpl.Update.AddingFakePlayingSource",
+                "Adding source %llu from console var request",
+                sAddFakeSourcePlaying);
+    _playingSources.insert(sAddFakeSourcePlaying);
+    sAddFakeSourcePlaying = 0;
+  }
+
+  if( sRemoveFakeSourcePlaying != 0 ) {
+    LOG_WARNING("AlexaImpl.Update.RemovingFakePlayingSource",
+                "Removing source %llu from console var request",
+                sRemoveFakeSourcePlaying);
+    _playingSources.erase(sRemoveFakeSourcePlaying);
+    sRemoveFakeSourcePlaying = 0;
+  }
+#endif
   
   if( _runSetNetworkConnectionError ) {
     _runSetNetworkConnectionError = false;
@@ -622,11 +688,135 @@ void AlexaImpl::Update()
     checkedUXState = true;
     CheckForUXStateChange();
   }
+
   if( (_nextUXStateCheckTime_s > 0.0f) && (currTime_s >= _nextUXStateCheckTime_s) ) {
     _nextUXStateCheckTime_s = 0.0f;
     if( !checkedUXState ) {
       CheckForUXStateChange();
     }
+  }
+
+  CheckStateWatchdog();
+  // check watchdog
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::CheckStateWatchdog()
+{
+  // TODO:(bn) for now this only detects being stuck in "speaking"
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( currTime_s > _lastWatchdogCheckTime_s + kAlexaImplWatchdogCheckTime_s ) {
+
+    if( _uxState == AlexaUXState::Speaking ) {
+      // attempt to detect "forever face" bugs that could happen if we get out of sync with one of the
+      // speakers. If we think we're speaking, but nothing is playing, and this state persists for a while,
+      // then we are likely "stuck"
+
+      // NOTE: there is no code here to check if alerts are active (foreground or background). This is
+      // intentional, if the alerts are active we hold the state speaking, but we do that because we expect
+      // the Alerts player to start making noise momentarily
+
+      bool anyActivePlayers = false;
+      for(const auto& playerPtr : {_ttsMediaPlayer, _alertsMediaPlayer, _audioMediaPlayer, _notificationsMediaPlayer}) {
+        anyActivePlayers |= playerPtr->IsActive();
+      }
+
+      const bool haveStuckTimer = (_possibleStuckStateStartTime_s >= 0.0f);
+
+      if( haveStuckTimer && anyActivePlayers ) {
+        // we thought we might be stuck previously, but now we know we aren't, yay!
+        LOG_INFO( "AlexaImpl.CheckStateWatchdog.NotStuck",
+                  "previously thought we might be stuck, but a player is active so we aren't stuck (here at least)" );
+        // reset stuck timer
+        _possibleStuckStateStartTime_s = -1.0f;
+      }
+      else if( haveStuckTimer && !anyActivePlayers ) {
+        // we still appear to be stuck
+        const bool stuckForTooLong = (currTime_s >= _possibleStuckStateStartTime_s + kAlexaImplWatchdogFailTime_s);
+        if( stuckForTooLong ) {
+          // we're in a bad place, try to un-stick the state
+          LOG_ERROR("AlexaImpl.CheckStateWatchdog.FAIL",
+                    "-------------------- Watchdog timer expired --------------------");
+
+          AttemptToFixStuckInSpeakingBug();
+          _possibleStuckStateStartTime_s = -1.0f;
+        }
+        // else, we're stuck but it hasn't been long enough yet so wait a little longer
+      }
+      else if( !haveStuckTimer && !anyActivePlayers ) {
+        // uh oh, we are speaking but there are no players active. This could be OK if we are just holding
+        // speaking for a few seconds.
+
+        if( _possibleStuckStateStartTime_s < 0.0f ) {
+          _possibleStuckStateStartTime_s = currTime_s;
+          LOG_INFO( "AlexaImpl.CheckStateWatchdog.WatchdogActive",
+                    "At t=%f detected that no players are active, so we might be stuck (but probably not)",
+                    currTime_s );
+        }
+      }
+      else {
+        // LOG_INFO( "AlexaImpl.CheckStateWatchdog.HonkeyDorey", "ALL GOOD active=%d", anyActivePlayers );
+      }
+    }
+    else {
+      if( _possibleStuckStateStartTime_s > 0.0f ) {
+        LOG_INFO( "AlexaImpl.CheckStateWatchdog.Cleared",
+                  "State changed to '%s' to clearing possibly stuck state",
+                  EnumToString(_uxState) );
+        _possibleStuckStateStartTime_s = -1.0f;
+      }
+    }
+
+
+    _lastWatchdogCheckTime_s = currTime_s;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::AttemptToFixStuckInSpeakingBug()
+{
+  LOG_ERROR("AlexaImpl.WatchdogFailure.AttempToFix", "Attempting to fix watchdog state failure");
+
+  // could be a stuck playing source, so clear that out
+  const size_t sourceCounts = _playingSources.size();
+  _playingSources.clear();
+
+  // could also be a stuck alert, so let's kill those too
+  const bool alertWasActive = _alertActive;
+  _alertActive = false;
+
+  const bool alertWasBackground = _backgroundAlertActive;
+  _backgroundAlertActive = false;
+
+  const size_t alertsSize = _alertStates.size();
+  _alertStates.clear();
+
+  CheckForUXStateChange();
+
+  const bool recovered = ANKI_VERIFY(_uxState == AlexaUXState::Idle,
+                                     "AlexaImple.WatchdogFailFail",
+                                     "Failed to reset state properly (still %s), force setting ux state....",
+                                     EnumToString(_uxState) );
+
+  DASMSG(watchdog_recovery, "alexa.watchdog_failure_recovery",
+         "alexa ux state attempted to recover from ux failure");
+  DASMSG_SET(s1, recovered ? "SUCCESS" : "FAILURE", "Success or failure of recovery");
+  DASMSG_SET(s2, EnumToString(_uxState), "UX state after recovery (should be Idle if success)");
+  DASMSG_SET(i1, sourceCounts, "Number of sources that were supposedly playing");
+  DASMSG_SET(i2, alertsSize, "Number of alerts that were supposedly active");
+  DASMSG_SET(i3, alertWasActive, "Was alert counted as active?");
+  DASMSG_SET(i4, alertWasBackground, "Was alert counted as active in the background?");
+  DASMSG_SEND();
+
+  if( !recovered ) {
+    // uh oh, something went _really_ wrong, let's clear the dialog state, force the ux state and send it off
+    // so we at least might be able to get vector back
+    _dialogState = avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE;
+    _uxState = AlexaUXState::Idle;
+    _audioActive = false;
+    _audioActiveLastChangeTime_s = 0.0f;
+    _onAlexaUXStateChanged( _uxState );
   }
 }
 
