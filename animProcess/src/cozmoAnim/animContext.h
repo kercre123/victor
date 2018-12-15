@@ -109,16 +109,20 @@ private:
   // for holding the thread id (and avoiding need to include cpuThreadId.h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;
 
-  // Context holds onto these things for everybody:
+  // Context holds onto these things for everybody.
+  //
+  // Note that MicDataSystem calls into Alexa component, so MicDataSystem
+  // must be shut down BEFORE Alexa component is destroyed!
+  //
   std::unique_ptr<Util::Locale>                  _locale;
   std::unique_ptr<AudioMultiplexer>              _audioMux;
   std::unique_ptr<Util::RandomGenerator>         _random;
   std::unique_ptr<RobotDataLoader>               _dataLoader;
+  std::unique_ptr<Alexa>                         _alexa;
   std::unique_ptr<MicData::MicDataSystem>        _micDataSystem;
   std::unique_ptr<ShowAudioStreamStateManager>   _showStreamStateManager;
   std::unique_ptr<WebService::WebService>        _webService;
   std::unique_ptr<Audio::AudioPlaybackSystem>    _audioPlayer;
-  std::unique_ptr<Alexa>                         _alexa;
   std::unique_ptr<BackpackLightComponent>        _backpackLightComponent;
 
   void InitAudio(Util::Data::DataPlatform* dataPlatform);
