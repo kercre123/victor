@@ -189,6 +189,7 @@ enum uint_16 BehaviorID {
   KnowledgeGraphTTS,
 
   // victorBehaviorTree/highLevelDelegates
+  LookInPlaceHeadDownInAir,
   LookInPlaceHeadUp,
   LookInPlaceHeadUpInAir,
 
@@ -295,6 +296,11 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   WhatsMyNameVoiceCommand,
+
+  // victorBehaviorTree/highLevelDelegates/whileInAir/heldInPalm
+  ReactToJoltInPalm,
+  HeldInPalmDispatcher,
+  HeldInPalmResponses,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir
   InitialPickupAnimation,
