@@ -255,9 +255,7 @@ namespace Anki {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
 
-        if(ProtoCladInterpreter::Redirect(message, _context)) {
-          // TODO: What should be done if there's an issue?
-        }
+        (void) ProtoCladInterpreter::Redirect(message, _context);
 
         #if ANKI_DEV_CHEATS
         if (nullptr != DevLoggingSystem::GetInstance())
