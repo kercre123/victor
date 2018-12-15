@@ -778,21 +778,29 @@ bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
 
   auto onStop = [id, this]() {
 
-    // TODO:(bn) FIXME: the ::play async thread could be running at this point, and could still be getting
-    // into preparing. At this point, what we need to do is a try_lock on the play loop mutex, if we get it
-    // then we need to set both the state and clear _nextSourceToPlay. If we don't get it, then that means
-    // ::play or doShutdown are running, in which case just setting idle should be sufficient
+    {
+      // first attempt to grab the playing lock to avoid race conditions with the ::play Async call
+      std::unique_lock<std::mutex> lk{_playLoopMutex, std::try_to_lock};
 
-    if( _playingSource == id ) {
-      SetState(State::Idle);
-      _offset_ms = 0;
-    }
-    else {
-      LOG("AlexaMediaPlayer.StopInternal.OnStop.OtherSourcePlaying Stopping source %llu, but %llu is playing, so leaving state as '%s'",
-          id,
-          _playingSource,
-          StateToString());
-      LogPlayingSourceMismatchEvent("StopInternal", id, _playingSource);
+      // if we got the lock, then the play thread isn't running. If not, then it _is_ running with the lock,
+      // which means that it should stop on it's own
+
+      // if we are playing or are about to play the given source, stop it
+      if( _playingSource == id ||
+          _nextSourceToPlay == id) {
+        SetState(State::Idle);
+        _nextSourceToPlay = 0;
+        _offset_ms = 0;
+      }
+      else {
+        LOG("AlexaMediaPlayer.StopInternal.OnStop.OtherSourcePlaying Stopping source %llu, but %llu is playing, so leaving state as '%s'",
+            id,
+            _playingSource,
+            StateToString());
+        LogPlayingSourceMismatchEvent("StopInternal", id, _playingSource);
+      }
+
+      // let the play mutex guard go out of scope here. NOTE: we may not actually hold it since we used a try_to_lock
     }
 
     std::lock_guard<std::recursive_mutex> lg{ _observerMutex };
