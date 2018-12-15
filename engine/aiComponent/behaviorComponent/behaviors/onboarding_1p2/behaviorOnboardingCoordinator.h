@@ -56,6 +56,7 @@ public:
   const static std::string kOnboardingFolder;
   const static std::string kOnboardingFilename;
   const static std::string kOnboardingStageKey;
+  const static std::string kOnboardingTimeKey;
 
   // Onboarding is a little weird in that it may need to handle messages from the App even if it isn't
   // currently active to appropriately coordinate around Mute and CustomerCare screens which reset the

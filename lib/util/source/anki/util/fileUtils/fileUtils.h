@@ -120,6 +120,9 @@ public:
 
   static std::string AddTrailingFileSeparator(const std::string& path);
 
+  // Returns the time of the last modification to the given file in seconds-since-the-epoch (Jan 1, 1970)
+  static long GetFileLastModificationTime(const std::string &path);
+
 };
 
 } // namespace Util

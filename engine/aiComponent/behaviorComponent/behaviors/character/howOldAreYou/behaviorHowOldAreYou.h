@@ -18,6 +18,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorCountingAnimation.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include <chrono>
+
+
 namespace Anki {
 namespace Vector {
 
@@ -52,15 +55,15 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     // member variables here
-    float robotAge_h;
+    std::chrono::hours robotAge_h;
     std::pair<int, std::string> robotAge_presentable;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
-  float GetRobotAge();
-  std::pair<int, std::string> PresentableAgeFromHours(float age_h);
+  std::chrono::hours GetRobotAge();
+  std::pair<int, std::string> PresentableAgeFromHours(std::chrono::hours age_dh);
 
 };
 
