@@ -51,8 +51,7 @@ namespace {
   CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.GazeDirection",  500);
   CONSOLE_VAR(bool, kUseEyeGazeToLookAtSurfaceorFaces,       "Vision.GazeDirection",  false);
   // TODO disable this use -1
-  CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection",  1000000.f);
-  CONSOLE_VAR(bool, kUseRelativePoseForDriveTo,              "Vision.GazeDirection", false);
+  CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection",  -1.f);
   CONSOLE_VAR(bool, kUseDriveStraightActionForDriveTo,       "Vision.GazeDirection", false);
   CONSOLE_VAR(f32,  kDriveStraightDistance_mm,               "Vision.GazeDirection", 200);
   CONSOLE_VAR(bool, kDriveStraightTurnBackToFace,            "Vision.GazeDirection", true);
@@ -212,15 +211,16 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
   turnAction->AddAction(turnAndAnimate);
   turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
 
+  float distanceToDrive_mm = kDriveStraightDistance_mm;
+  if (kUseTranslationDistanceForDriveStraight) {
+    distanceToDrive_mm = translation.Length();
+  }
+
   if (kUseDriveStraightActionForDriveTo) {
-    DriveStraightAction* driveStraightAction = new DriveStraightAction(kDriveStraightDistance_mm);
+    DriveStraightAction* driveStraightAction = new DriveStraightAction(distanceToDrive_mm);
     turnAction->AddAction(driveStraightAction);
 
   } else if (kUseHandDetectionHack) {
-    float distanceToDrive_mm = kDriveStraightDistance_mm;
-    if (kUseTranslationDistanceForDriveStraight) {
-      distanceToDrive_mm = translation.Length();
-    }
 
     CompoundActionParallel* driveAction = new CompoundActionParallel({
       new DriveStraightAction(distanceToDrive_mm),
@@ -246,13 +246,8 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
 
   } else {
 
-    if (kUseRelativePoseForDriveTo) {
-      DriveToPoseAction* driveToAction = new DriveToPoseAction(gazePose);
-      turnAction->AddAction(driveToAction);
-    } else {
-      DriveToPoseAction* driveToAction = new DriveToPoseAction(_dVars.gazeDirectionPose);
-      turnAction->AddAction(driveToAction);
-    }
+    DriveToPoseAction* driveToAction = new DriveToPoseAction(_dVars.gazeDirectionPose);
+    turnAction->AddAction(driveToAction);
   }
 
   if (kDriveStraightTurnBackToFace) {
