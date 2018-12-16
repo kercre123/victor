@@ -120,10 +120,15 @@ namespace Vision {
     const Pose3d& GetEyePose() const;
     void SetEyePose(Pose3d& pose);
 
-    // This is the gaze direction computed using the head pose rotation matrix, and then
-    // projected onto the ground plane
-    const Pose3d& GetGazeDirectionPose() const;
-    void SetGazeDirectionPose(const Pose3d& gazeDirectionPose);
+    // This is the head direction computed using the head pose rotation
+    // matrix, and then projected onto the ground plane
+    const Pose3d& GetHeadDirectionPose() const;
+    void SetHeadDirectionPose(const Pose3d& gazeDirectionPose);
+
+    // This is the eye direction computed using the eye pose rotation
+    // matrix, and then projected onto the ground plane
+    const Pose3d& GetEyeDirectionPose() const;
+    void SetEyeDirectionPose(const Pose3d& eyeDirectionPose);
 
     // Returns true if face was roughly facing the camera when it was observed
     bool IsFacingCamera() const;
@@ -160,9 +165,6 @@ namespace Vision {
     bool IsGazeDirectionStable() const { return _isGazeDirectionStable; }
     void SetGazeDirectionStable(const bool gazeDirecitonStable);
 
-    bool IsEyeGazeDirectedAtSurface() const {return _isEyeGazeDirectedAtSurface;}
-    void SetEyeGazeDirectedAtSurface(const bool isEyeGazeDirectedAtSurface);
-
     // Has the translation of this face been set
     bool IsTranslationSet() const { return _isTranslationSet; }
 
@@ -179,11 +181,11 @@ namespace Vision {
     bool           _isFacingCamera        = false;
     bool           _isMakingEyeContact    = false;
     bool           _isGazeDirectionStable = false;
-    bool           _isEyeGazeDirectedAtSurface = false;
     bool           _isTranslationSet   = false;
     Point2f        _eyeGazeAverage;
 
-    Pose3d _gazeDirectionPose;
+    Pose3d _headDirectionPose;
+    Pose3d _eyeDirectionPose;
 
     std::string    _name;
     std::string    _bestGuessName;
@@ -395,16 +397,20 @@ namespace Vision {
     _isGazeDirectionStable = isGazeDirectionStable;
   }
 
-  inline void TrackedFace::SetEyeGazeDirectedAtSurface(const bool isEyeGazeDirectedAtSurface) {
-    _isEyeGazeDirectedAtSurface = isEyeGazeDirectedAtSurface;
+  inline const Pose3d& TrackedFace::GetHeadDirectionPose() const {
+    return _headDirectionPose;
   }
 
-  inline const Pose3d& TrackedFace::GetGazeDirectionPose() const {
-    return _gazeDirectionPose;
+  inline void TrackedFace::SetHeadDirectionPose(const Pose3d& headDirectionPose) {
+    _headDirectionPose = headDirectionPose;
   }
 
-  inline void TrackedFace::SetGazeDirectionPose(const Pose3d& gazeDirectionPose) {
-    _gazeDirectionPose = gazeDirectionPose;
+  inline const Pose3d& TrackedFace::GetEyeDirectionPose() const {
+    return _eyeDirectionPose;
+  }
+
+  inline void TrackedFace::SetEyeDirectionPose(const Pose3d& eyeDirectionPose) {
+    _eyeDirectionPose = eyeDirectionPose;
   }
 
 } // namespace Vision

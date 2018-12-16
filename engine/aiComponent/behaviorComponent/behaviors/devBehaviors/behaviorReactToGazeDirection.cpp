@@ -61,6 +61,9 @@ namespace {
   CONSOLE_VAR(bool, kUseHandDetectionHack,                   "Vision.GazeDirection", true);
   CONSOLE_VAR(f32,  kProxSensorStopingDistance_mm,           "Vision.GazeDirection", 30);
   CONSOLE_VAR(bool, kUseTranslationDistanceForDriveStraight, "Vision.GazeDirection", true);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionXSurfaceThreshold_mm,   "Vision.GazeDirection",  2000.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionYSurfaceThreshold_mm,   "Vision.GazeDirection",  2000.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionZSurfaceThreshold_mm,   "Vision.GazeDirection",  20.f);
 }
 
 namespace {
@@ -371,9 +374,29 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
 
       // Check how we want to determine whether to search for faces
       bool searchForPointsOnSurface = _iConfig.searchForPointsOnSurface;
+
+      // This serious of if statements is looking to see if we should override
+      // searchForPointsOnSurface so if any of this calls return false ... we
+      // don't want to do anything thus no else statement
       if (kUseEyeGazeToLookAtSurfaceorFaces) {
-        searchForPointsOnSurface &= GetBEI().GetFaceWorld().GetFaceEyesDirectedAtSurface(_dVars.faceIDToTurnBackTo,
-                                                                                         kMaxTimeSinceTrackedFaceUpdated_ms);
+        Pose3d eyeDirectionPose;
+        if(GetBEI().GetFaceWorld().GetEyeDirectionPose(_dVars.faceIDToTurnBackTo, kMaxTimeSinceTrackedFaceUpdated_ms, eyeDirectionPose)) {
+          Pose3d eyeDirectionPoseWRTRobot;
+          if (eyeDirectionPose.GetWithRespectTo(robotPose, eyeDirectionPoseWRTRobot)) {
+            const auto& translation = eyeDirectionPoseWRTRobot.GetTranslation();
+
+            // If the eye direction pose on the ground plane is too far out then
+            // update the searchForPointsOnSurface to be false, otherwise ... update
+            // it to be true
+            if (std::abs(translation.x()) > kEyeGazeDirectionXSurfaceThreshold_mm &&
+                std::abs(translation.y()) > kEyeGazeDirectionYSurfaceThreshold_mm &&
+                std::abs(translation.z()) > kEyeGazeDirectionZSurfaceThreshold_mm) {
+                searchForPointsOnSurface = false;
+            } else {
+                searchForPointsOnSurface = true;
+            }
+          }
+        }
       }
 
       if (searchForPointsOnSurface) {

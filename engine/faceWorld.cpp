@@ -653,10 +653,13 @@ namespace Vector {
         face.SetGazeDirectionStable(isGazeStable);
         if (isGazeStable)
         {
-          auto faceDirectionAverage = entry.GetGazeDirectionAverage();
-          Pose3d gazeDirectionPose(0.f, Z_AXIS_3D(), faceDirectionAverage, _robot->GetWorldOrigin());
-          face.SetGazeDirectionPose(gazeDirectionPose);
-          face.SetEyeGazeDirectedAtSurface(entry.IsEyeGazeDirectedAtSurface());
+          auto headDirectionAverage = entry.GetHeadDirectionAverage();
+          Pose3d headDirectionPose(0.f, Z_AXIS_3D(), headDirectionAverage, _robot->GetWorldOrigin());
+          face.SetHeadDirectionPose(headDirectionPose);
+
+          auto eyeDirectionAverage = entry.GetEyeDirectionAverage();
+          Pose3d eyeDirectionPose(0.f, Z_AXIS_3D(), eyeDirectionAverage, _robot->GetWorldOrigin());
+          face.SetEyePose(eyeDirectionPose);
         }
       }
     }
@@ -1024,7 +1027,7 @@ namespace Vector {
         const auto& gazeDirection = entry->second;
         const s32 startingObjectId = 2345;
 
-        const auto currentGazeDirection = gazeDirection.GetCurrentGazeDirection();
+        const auto currentGazeDirection = gazeDirection.GetCurrentHeadDirection();
         Pose3d currentGazePose(0.f, Z_AXIS_3D(), currentGazeDirection);
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId,
                                                                                 kGazeGroundPointSize,
@@ -1032,31 +1035,26 @@ namespace Vector {
                                                                                 ::Anki::NamedColors::ORANGE);
 
         if (gazeDirection.IsStable()) {
-          const auto averageGazeDirection = gazeDirection.GetGazeDirectionAverage();
+          const auto averageGazeDirection = gazeDirection.GetHeadDirectionAverage();
           Pose3d averageGazePose(0.f, Z_AXIS_3D(), averageGazeDirection);
           faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 1,
                                                                                   kGazeGroundPointSize,
                                                                                   averageGazePose,
                                                                                   ::Anki::NamedColors::GREEN);
-        }
 
         const auto averageEyeDirection = gazeDirection.GetEyeDirectionAverage();
-        auto eyeGazeAverageColor = ::Anki::NamedColors::BLACK;
-        if (gazeDirection.IsEyeGazeDirectedAtSurface()) {
-          eyeGazeAverageColor = ::Anki::NamedColors::CYAN;
-        }
         Pose3d averageEyePose(0.f, Z_AXIS_3D(), averageEyeDirection);
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 2,
                                                                                 kGazeGroundPointSize,
                                                                                 averageEyePose,
-                                                                                eyeGazeAverageColor);
+                                                                                ::Anki::NamedColors::BLACK);
         const auto currentEyeDirection = gazeDirection.GetCurrentEyeDirection();
         Pose3d currentEyePose(0.f, Z_AXIS_3D(), currentEyeDirection);
         faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawCuboid(startingObjectId + 3,
                                                                                 kGazeGroundPointSize,
                                                                                 currentEyePose,
                                                                                 ::Anki::NamedColors::BLUE);
-
+        }
       }
     }
 
@@ -1187,7 +1185,7 @@ namespace Vector {
       {
         if (entry.second.face.IsGazeDirectionStable())
         {
-          gazeDirectionPose = entry.second.face.GetGazeDirectionPose();
+          gazeDirectionPose = entry.second.face.GetHeadDirectionPose();
           faceID.Reset(*_robot, entry.second.face.GetID());
           return true;
         }
@@ -1246,12 +1244,19 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool FaceWorld::GetFaceEyesDirectedAtSurface(const SmartFaceID& faceID, const u32 withinLast_ms) const
+  bool FaceWorld::GetEyeDirectionPose(const SmartFaceID& faceID, const u32 withinLast_ms, Pose3d& eyeDirectionPose) const
   {
+    const RobotTimeStamp_t lastImgTime = _robot->GetLastImageTimeStamp();
+    const RobotTimeStamp_t recentTime = lastImgTime > withinLast_ms ?
+                                        ( lastImgTime - withinLast_ms ) :
+                                        0;
     const auto entry = _faceEntries.find(faceID.GetID());
-    if (AnyStableGazeDirection(withinLast_ms)) {
-      if (entry != _faceEntries.end()) {
-        return entry->second.face.IsEyeGazeDirectedAtSurface();
+    if (entry != _faceEntries.end()) {
+      if (ShouldReturnFace(entry->second, recentTime, false)) {
+        if (entry->second.face.IsGazeDirectionStable()) {
+          eyeDirectionPose = entry->second.face.GetEyeDirectionPose();
+          return true;
+        }
       }
     }
     return false;

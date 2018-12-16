@@ -4,10 +4,12 @@
  * Author: Robert Cosgriff
  * Date:   11/26/2018
  *
- * Description: Class that determines where on the ground plane a persons gaze
- *              is directed. This only uses the head rotation computed from
- *              face parts at the moment, and no information from the eyes.
- *              Thus this is not a true estimation of gaze merely a rough approximation.
+ * Description: Class that determines where on the ground plane a persons face
+ *              and eye gaze is directed. This uses the head rotation computed
+ *              from face parts and eye rotation at the moment. Currently these
+ *              two gaze estimations are not combined. Although this is towards a
+ *              more accurate estimation of gaze. Alhtough this is still not
+ *              a true estimation of gaze merely a rough approximation.
  *
  *
  * Copyright: Anki, Inc. 2018
@@ -47,10 +49,11 @@ struct GazeDirectionData
  *                 GazeDirection                   *
  ***************************************************/
 /*
-  This class' primary input is head rotation estimation from the okao library.
-  This head rotation which can also be though of as a face "normal" is then
-  projected onto the ground plane (if such a projection exists) into a point
-  in world coordinates. These points are stored in a buffer.
+  This class' primary inputs are head and eye rotation estimation from the okao
+  library. This rotations which can also be though of as a "normal" to their
+  respective objects is then projected onto the ground plane (if such a
+  projection exists) into a point in world coordinates. These points are stored
+  in a buffer.
 
   The goal of this class is to find whether these gaze ground plane points
   are sufficiently "stable" or stationary such that it is clear that the head
@@ -69,10 +72,12 @@ struct GazeDirectionData
   Additionally, there is a notion of a expiration of the history. However,
   this is only a condition and nothing is done internally to handle it.
 
-  As far as usage, the value returned from GetGazeDirectionAverage is only valid
-  if IsStable returns true. ClearHistory is method that is intended to be called
+  As far as usage, the value returned from GetHeadDirectionAverage the head gaze and
+  is only valid if IsStable returns true. ClearHistory is method that is intended to be called
   when the robot moves, or if a new gaze point estimate should start immeadiately
   instead of waiting for the points in the history to expire.
+
+  For the eye gaze GetEyeDirectionAverage is the eye gaze ground plane estimate.
 */
 
 class GazeDirection
@@ -84,15 +89,13 @@ public:
 
   // This will return the average found amoung the inliers
   // this is only accurate if IsStable returns true.
-  Point3f GetGazeDirectionAverage() const;
+  Point3f GetHeadDirectionAverage() const;
   // This will return the last point in the history and
   // is used for debugging and visualization purposes.
-  Point3f GetCurrentGazeDirection() const;
+  Point3f GetCurrentHeadDirection() const;
 
   Point3f GetEyeDirectionAverage() const;
   Point3f GetCurrentEyeDirection() const;
-
-  bool IsEyeGazeDirectedAtSurface() const;
 
   bool GetExpired(const TimeStamp_t currentTime) const;
   bool IsStable() const;

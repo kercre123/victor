@@ -177,7 +177,7 @@ namespace Vector {
     // returns false.
     bool FaceInTurnAngle(const Radians& turnAngle, const SmartFaceID& smartFaceIDToIgnore,
                          const Pose3d& robotPose, SmartFaceID& faceIDToTurnTowards) const;
-    bool GetFaceEyesDirectedAtSurface(const SmartFaceID& faceID, const u32 withinLast_ms) const;
+    bool GetEyeDirectionPose(const SmartFaceID& faceID, const u32 withinLast_ms, Pose3d& eyeDirectionPose) const;
 
     // Get the wall times that the given face ID has been observed for named faces. This implementation
     // returns at most 2 entries with front() being the wall time that was recorded first. On loading time,

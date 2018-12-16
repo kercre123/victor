@@ -32,9 +32,6 @@ namespace {
   CONSOLE_VAR(f32, kEyeGazeDirectionInlierXThreshold_mm,      "Vision.GazeDirection",  1000.f);
   CONSOLE_VAR(f32, kEyeGazeDirectionInlierYThreshold_mm,      "Vision.GazeDirection",  1000.f);
   CONSOLE_VAR(f32, kEyeGazeDirectionInlierZThreshold_mm,      "Vision.GazeDirection",  20.f);
-  CONSOLE_VAR(f32, kEyeGazeDirectionXSurfaceThreshold_mm,     "Vision.GazeDirection",  2000.f);
-  CONSOLE_VAR(f32, kEyeGazeDirectionYSurfaceThreshold_mm,     "Vision.GazeDirection",  2000.f);
-  CONSOLE_VAR(f32, kEyeGazeDirectionZSurfaceThreshold_mm,     "Vision.GazeDirection",  20.f);
 }
 
 GazeDirection::GazeDirection()
@@ -263,12 +260,12 @@ bool GazeDirection::IsStable() const
   return ( (_numberOfInliers > kGazeDirectionMinNumberOfInliers) && _initialized );
 }
 
-Point3f GazeDirection::GetGazeDirectionAverage() const
+Point3f GazeDirection::GetHeadDirectionAverage() const
 {
   return _gazeDirectionAverage + Point3f(kGazeDirectionShiftOutputPointX_mm, 0.f, 0.f);
 }
 
-Point3f GazeDirection::GetCurrentGazeDirection() const
+Point3f GazeDirection::GetCurrentHeadDirection() const
 {
   return _gazeDirectionHistory[_currentIndex].point + Point3f(kGazeDirectionShiftOutputPointX_mm, 0.f, 0.f);
 }
@@ -294,17 +291,6 @@ Point3f GazeDirection::GetCurrentEyeDirection() const
 {
   const auto point = _eyeDirectionHistory[_currentIndex].point;
   return point;
-}
-
-bool GazeDirection::IsEyeGazeDirectedAtSurface() const
-{
-  if (std::abs(_eyeDirectionAverage.x()) > kEyeGazeDirectionXSurfaceThreshold_mm ||
-      std::abs(_eyeDirectionAverage.y()) > kEyeGazeDirectionYSurfaceThreshold_mm ||
-      std::abs(_eyeDirectionAverage.z()) > kEyeGazeDirectionZSurfaceThreshold_mm) {
-    return true;
-  } else {
-    return false;
-  }
 }
 
 } // namespace Vision
