@@ -53,8 +53,6 @@ namespace {
   // TODO disable this use -1
   CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection",  1000000.f);
   CONSOLE_VAR(bool, kUseRelativePoseForDriveTo,              "Vision.GazeDirection", false);
-  CONSOLE_VAR(f32,  kAngleToleranceForDrive_rad,             "Vision.GazeDirection", M_PI_F);
-  CONSOLE_VAR(f32,  kDistanceToleranceForDrive_mm,           "Vision.GazeDirection", DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM);
   CONSOLE_VAR(bool, kUseDriveStraightActionForDriveTo,       "Vision.GazeDirection", false);
   CONSOLE_VAR(f32,  kDriveStraightDistance_mm,               "Vision.GazeDirection", 200);
   CONSOLE_VAR(bool, kDriveStraightTurnBackToFace,            "Vision.GazeDirection", true);
