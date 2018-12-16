@@ -1887,10 +1887,6 @@
     "AnimName" : "ag_gazing_lookatsurfaces_turn_right"
   },
   {
-    "CladEvent": "GazingLookAtVectorGetIn",
-    "AnimName" : "ag_gazing_lookatvector_getin"
-  },
-  {
     "CladEvent": "GazingLookAtVectorReaction",
     "AnimName" : "ag_gazing_lookatvector_reaction"
   },
