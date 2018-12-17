@@ -25,6 +25,9 @@ static const uint32_t WATCHDOG_CLOCK  = 10000;
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
 static const uint32_t* HW_REVISION    = (uint32_t*)0x08000010;
+static const uint32_t  WHISKEY_MIN_VERSION = 2;
+
+#define IS_WHISKEY (*HW_REVISION >= WHISKEY_MIN_VERSION)
 
 enum IRQ_Priority {
   PRIORITY_ADC = 0,
@@ -69,7 +72,9 @@ namespace nCHG_PWR GPIO_DEFINE(B, 9);
 namespace nVENC_EN GPIO_DEFINE(C, 13);
 namespace VEXT_SENSE GPIO_DEFINE(A, 2);
 namespace VMAIN_SENSE GPIO_DEFINE(A, 4);
-namespace MAIN_EN GPIO_DEFINE(A, 3);
+
+namespace MAIN_EN_VIC GPIO_DEFINE(A, 3);
+namespace MAIN_EN_WIS GPIO_DEFINE(A, 12);
 
 // Microphones
 namespace MIC_LR      GPIO_DEFINE(B, 15);
@@ -80,7 +85,7 @@ namespace MIC1_SCK    GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAPI GPIO_DEFINE(B, 8);
-namespace CAPO GPIO_DEFINE(A, 14);
+namespace CAPO_VIC GPIO_DEFINE(A, 14);
 
 // Communication
 namespace VEXT_TX GPIO_DEFINE(A, 2);
@@ -92,7 +97,8 @@ namespace SCL2 GPIO_DEFINE(F, 6);
 namespace SDA2 GPIO_DEFINE(F, 7);
 
 // Lights
-namespace LED_DAT GPIO_DEFINE(A, 13);
+namespace LED_DAT_VIC GPIO_DEFINE(A, 13);
+namespace LED_DAT_WIS GPIO_DEFINE(A, 14);
 namespace LED_CLK GPIO_DEFINE(A, 12);
 
 #define DFU_ENTRY_POINT (0xC0C35473)

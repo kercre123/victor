@@ -65,16 +65,29 @@ bool Analog::button_pressed = false;
 
 static inline void leds_off(void) {
   // Shifing by 5 is enough to disable LEDs
-  LED_DAT::reset();
+  #ifdef WHISKEY
+  LED_DAT_WIS::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  LED_DAT::set();
+  LED_DAT_WIS::set();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  #else
+  LED_DAT_VIC::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  LED_DAT_VIC::set();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
+  #endif  
 }
 
 void Analog::init(void) {
@@ -198,18 +211,29 @@ void Analog::init(void) {
 
   #ifndef DEBUG
   // Cap-sense
-  CAPO::reset();
-  CAPO::mode(MODE_OUTPUT);
+  #ifndef WHISKEY
+  CAPO_VIC::reset();
+  CAPO_VIC::mode(MODE_OUTPUT);
+  #endif
   CAPI::alternate(2);
   CAPI::mode(MODE_ALTERNATE);
   
   // LEDs
-  LED_DAT::type(TYPE_OPENDRAIN);
+  #ifdef WHISKEY
+  LED_DAT_WIS::type(TYPE_OPENDRAIN);
   LED_CLK::type(TYPE_OPENDRAIN);
-  LED_DAT::reset();
+  LED_DAT_WIS::reset();
   LED_CLK::reset();
-  LED_DAT::mode(MODE_OUTPUT);
+  LED_DAT_WIS::mode(MODE_OUTPUT);
   LED_CLK::mode(MODE_OUTPUT);
+  #else
+  LED_DAT_VIC::type(TYPE_OPENDRAIN);
+  LED_CLK::type(TYPE_OPENDRAIN);
+  LED_DAT_VIC::reset();
+  LED_CLK::reset();
+  LED_DAT_VIC::mode(MODE_OUTPUT);
+  LED_CLK::mode(MODE_OUTPUT);
+  #endif
 
   leds_off();
   #endif

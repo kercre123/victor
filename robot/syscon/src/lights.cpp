@@ -88,16 +88,37 @@ void Lights::disable(void) {
   enabled = false;
 }
 
-static void output_shift(uint8_t data) {
+static void output_shift_vic(uint8_t data) {
   for (int bit = 0x80; bit > 0; bit >>= 1) {
     if (data & bit) {
-      LED_DAT::set();    
+      LED_DAT_VIC::set();    
     } else {
-      LED_DAT::reset();
+      LED_DAT_VIC::reset();
     }
     LED_CLK::set(); 
     __asm { nop };
     LED_CLK::reset();
+  }
+}
+
+static void output_shift_wis(uint8_t data) {
+  for (int bit = 0x80; bit > 0; bit >>= 1) {
+    if (data & bit) {
+      LED_DAT_WIS::set();    
+    } else {
+      LED_DAT_WIS::reset();
+    }
+    LED_CLK::set(); 
+    __asm { nop };
+    LED_CLK::reset();
+  }
+}
+
+static void output_shift(uint8_t data) {
+  if (IS_WHISKEY) {
+    output_shift_wis(data);
+  } else {
+    output_shift_vic(data);
   }
 }
 
