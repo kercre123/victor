@@ -54,7 +54,9 @@ void BehaviorSelfTestScreenAndBackpack::TransitionToButtonCheck()
   }
 
   DrawTextOnScreen(robot,
-                   {"Press button if screen","and lights match"},
+                   {"Press button if screen",
+                    "and all four",
+                    "lights match"},
                    SelfTestConfig::kTextColor,
                    SelfTestConfig::kColorCheck);
 
@@ -101,8 +103,9 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
                                                          SelfTestConfig::kDriveBackwardsSpeed_mmps);
 
     // Driving backwards on the charger does not update the robot's position so the drive action
-    // will run forever. Add in some wait actions to cancel the drive after some amount of time
+    // will run forever. Add in a wait action to cancel the drive once we are one the charger
     CompoundActionParallel* action = new CompoundActionParallel();
+
     const bool ignoreFailure = true;
     std::weak_ptr<IActionRunner> drivePtr = action->AddAction(drive, ignoreFailure);
 

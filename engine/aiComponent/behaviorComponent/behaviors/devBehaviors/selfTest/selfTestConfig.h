@@ -28,28 +28,18 @@ namespace SelfTestConfig {
 
 // ----------General----------
 // Whether or not to ignore any test failures
-// The plaype behaviors should be written in such a way so that they can continue running
+// The self test behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
 static bool kIgnoreFailures       = false;
 
 // Default timeout to force a self test behavior to end
 static f32  kDefaultTimeout_ms    = 20000;
 
-// How long to display the self test result on Cozmo's face
+// How long to display the self test result on Vector's face
 static f32  kTimeToDisplayResultOnFace_ms = 10000;
 
 // Whether or not to skip checking we have heard from an active object
 static bool kSkipActiveObjectCheck        = false;
-
-// Threshold on the difference between max and min filtered touch sensor
-// values during self test
-// NOTE: This value can be overridden by value stored in EMR
-static f32 kMaxMinTouchSensorFiltDiff = 11.f;
-
-// Max allowed standard deviation of filtered touch sensor values
-// during self test
-// NOTE: This value can be overridden by value stored in EMR
-static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 
 // SSID we should try to scan and connect to for the radio check
 static std::string kWifiSSID = "AnkiSelfTest";

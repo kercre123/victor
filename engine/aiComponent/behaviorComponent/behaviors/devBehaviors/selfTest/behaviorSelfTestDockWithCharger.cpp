@@ -93,29 +93,19 @@ void BehaviorSelfTestDockWithCharger::TransitionToOnChargerChecks()
   const bool batteryVoltageGood = batteryVolts >= SelfTestConfig::kMinBatteryVoltage;
   const bool chargerVoltageGood = chargerVolts >= 4;
 
-  // If the battery is disconnected then we can only check charger voltage
-  if(disconnected)
+  // Only check battery voltage if it isn't disconnected
+  if(!disconnected && !batteryVoltageGood)
   {
-    if(!chargerVoltageGood)
-    {
-      PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.ChargerTooLow", "%fv", chargerVolts);
-      SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_VOLTAGE_TOO_LOW);
-    }
+    PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.BatteryTooLow", "%fv", batteryVolts);
+    SELFTEST_SET_RESULT(SelfTestResultCode::BATTERY_TOO_LOW);
   }
-  else
+
+  if(!chargerVoltageGood)
   {
-    // Battery is connected so first check battery voltage and then charger voltage
-    if(!batteryVoltageGood)
-    {
-      PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.BatteryTooLow", "%fv", batteryVolts);
-      SELFTEST_SET_RESULT(SelfTestResultCode::BATTERY_TOO_LOW);
-    }
-    else if(!chargerVoltageGood)
-    {
-      PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.ChargerTooLow", "%fv", chargerVolts);
-      SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_VOLTAGE_TOO_LOW);
-    }
+    PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.OnActivated.ChargerTooLow", "%fv", chargerVolts);
+    SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_VOLTAGE_TOO_LOW);
   }
+
 
   SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
 }

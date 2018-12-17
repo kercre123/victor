@@ -1,10 +1,10 @@
 /**
- * File: playpenConfig.h
+ * File: selfTestConfig.h
  *
  * Author: Al Chaussee
  * Created: 08/10/17
  *
- * Description: Configuration file for playpen
+ * Description: Configuration file for self test
  *
  * Copyright: Anki, Inc. 2017
  *

@@ -34,7 +34,7 @@ Result BehaviorSelfTestButton::OnBehaviorActivatedInternal()
 
   _buttonPressed = robot.IsPowerButtonPressed();
   _buttonStartedPressed = _buttonPressed;
-  
+
   return RESULT_OK;
 }
 
@@ -51,11 +51,10 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
     _buttonStartedPressed = false;
   }
 
-  const bool onCharger = (robot.IsOnCharger() || robot.IsCharging());
-
   const bool buttonReleased = _buttonPressed && !buttonPressed;
   if(buttonReleased && !_buttonStartedPressed)
   {
+    const bool onCharger = robot.IsOnChargerPlatform();
     if(onCharger)
     {
       // Once the button has been pressed, wait until we have stabilized
@@ -71,7 +70,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
   }
 
   _buttonPressed = buttonPressed;
-  
+
   return SelfTestStatus::Running;
 }
 
@@ -93,7 +92,7 @@ void BehaviorSelfTestButton::WaitToBeOnTreads()
   }
   else
   {
-    // Repeatadly check for OnTreads every so often until we timeout
+    // Repeatedly check for OnTreads every so often until we timeout
     AddTimer(500, [this](){
                      WaitToBeOnTreads();
                    });
@@ -102,5 +101,3 @@ void BehaviorSelfTestButton::WaitToBeOnTreads()
 
 }
 }
-
-
