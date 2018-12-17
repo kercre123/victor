@@ -209,6 +209,12 @@
       "app_intent": "intent_imperative_lookatme"
     },
     {
+      "user_intent": "imperative_lookoverthere",
+      "cloud_intent": "intent_imperative_lookoverthere",
+      "app_intent": "intent_imperative_lookoverthere",
+      "feature_gate": "GazeDirection"
+    },
+    {
       "user_intent": "imperative_fetchcube",
       "cloud_intent": "intent_imperative_fetchcube",
       "app_intent": "intent_imperative_fetchcube",
@@ -271,6 +277,11 @@
     {
       "user_intent": "seasonal_happyholidays",
       "cloud_intent": "intent_seasonal_happyholidays"
+    },
+    {
+      "user_intent": "character_age",
+      "cloud_intent": "intent_character_age",
+      "feature_gate": "HowOldAreYou"
     }
   ],
 

@@ -20,6 +20,8 @@ package Anki.Vector.external_interface;
 
 import "response_status.proto"; // App only
 
+// *** App only proto below ***
+
 enum ApiVersion {
   INVALID = 0;
   LATEST  = 1;
@@ -33,8 +35,6 @@ enum Volume {
   MEDIUM_HIGH = 4;
   HIGH        = 5;
 }
-
-// *** App only proto below ***
 
 enum JdocType {
   ROBOT_SETTINGS = 0;

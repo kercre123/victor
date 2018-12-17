@@ -79,7 +79,7 @@ private:
     float cliffBackupDist_mm;
     float cliffBackupSpeed_mmps;
     
-    float eventFlagTimeout_sec;
+    u32 eventFlagTimeout_ms;
   };
 
   InstanceConfig _iConfig;
@@ -87,8 +87,6 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     bool quitReaction;
-    bool gotStop;
-    bool wantsToBeActivated;
 
     // whether the robot has received a cliff event with a valid cliff pose
     // that serves as the look-at target for any visual observation actions
@@ -98,11 +96,11 @@ private:
     Pose3d cliffPose;
 
     struct Persistent {
+      bool gotStop;
       int numStops;
       int numCliffReactAttempts;
-      float lastStopTime_sec;
       bool  putDownOnCliff;
-      float lastPutDownOnCliffTime_sec;
+      TimeStamp_t lastActiveTime_ms;
       std::array<u16, CliffSensorComponent::kNumCliffSensors> cliffValsAtStart;
     };
     Persistent persistent;

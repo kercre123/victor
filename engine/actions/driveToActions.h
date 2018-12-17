@@ -36,40 +36,23 @@ namespace Anki {
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(const Pose3d& pose,
-                        const bool forceHeadDown,
-                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
-                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
-                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
+      DriveToPoseAction(); // Note that SetGoal(s) must be called before Update()!
       
-      DriveToPoseAction(const bool forceHeadDown); // Note that SetGoal(s) must be called before Update()!
+      DriveToPoseAction(const Pose3d& pose);
       
-      DriveToPoseAction(const std::vector<Pose3d>& poses,
-                        const bool forceHeadDown,
-                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
-                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
-                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
+      DriveToPoseAction(const std::vector<Pose3d>& poses);
       virtual ~DriveToPoseAction();
-      
-      // TODO: Add methods to adjust the goal thresholds from defaults
-      
-      // Set single goal
-      Result SetGoal(const Pose3d& pose,
-                     const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                     const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
-      
+            
       // Set possible goal options
-      Result SetGoals(const std::vector<Pose3d>& poses,
-                      const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                      const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+      Result SetGoals(const std::vector<Pose3d>& poses);
       
-      // Set possible goal options that were generated from an object's pose (predock poses)
-      Result SetGoals(const std::vector<Pose3d>& poses,
-                      const Pose3d& objectPoseGoalsGeneratedFrom,
-                      const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                      const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+      // Set goal thresholds
+      void SetGoalThresholds(const Point3f& distThreshold,
+                             const Radians& angleThreshold);
+      
+      // Call this to indicate that the goal options were generated from an object's pose (predock poses). The object's
+      // pose should be given as the argument.
+      void SetObjectPoseGoalsGeneratedFrom(const Pose3d& objectPoseGoalsGeneratedFrom);
       
       // If true and if multiple goals were provided, only the originally-selected goal will be used
       void SetMustContinueToOriginalGoal(bool mustUse) { _mustUseOriginalGoal = mustUse; }
@@ -92,20 +75,18 @@ namespace Anki {
       ActionResult HandleComputingPath();
       ActionResult HandleFollowingPath();
       
-      bool     _isGoalSet;
-      bool     _driveWithHeadDown;
+      bool     _isGoalSet = false;
       bool     _precompute = true;
       
       std::vector<Pose3d> _goalPoses;
       std::shared_ptr<Planning::GoalID> _selectedGoalIndex;
             
-      Point3f  _goalDistanceThreshold;
-      Radians  _goalAngleThreshold;
+      Point3f  _goalDistanceThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
+      Radians  _goalAngleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
       
-      float _maxPlanningTime;
-      float _maxReplanPlanningTime;
+      float _maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S;
       
-      float _timeToAbortPlanning;
+      float _timeToAbortPlanning = -1.f;
             
       // The pose of the object that the _goalPoses were generated from
       Pose3d _objectPoseGoalsGeneratedFrom;

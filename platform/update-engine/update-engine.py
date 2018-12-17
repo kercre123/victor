@@ -54,29 +54,11 @@ def make_blocking(pipe, blocking):
     else:
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
-#
-# Return milliseconds since boot for use as hardware timestamp.
-#
-def das_uptime_ms():
-  try:
-      up, _ = [float(field) for field in open("/proc/uptime").read().split()]
-  except (IOError, ValueError):
-      return 0
-  return long(up*1000)
-
-def das_event(name, s1 = "", s2 = "", s3 = "", s4 = "", i1 = "", i2 = "", i3 = "", i4 = ""):
-    fmt = "\n@{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\x1f{}\n"
-    s1 = s1.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    s2 = s2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    s3 = s3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    s4 = s4.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    i1 = i1.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    i2 = i2.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    i3 = i3.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    i4 = i4.rstrip().replace('\r', '\\r').replace('\n', '\\n')
-    sys.stdout.write(fmt.format(name, s1, s2, s3, s4, i1, i2, i3, i4, das_uptime_ms()))
-    sys.stdout.flush()
-
+def das_event(name, parameters = []):
+    args = ["/anki/bin/vic-log-event", "update-engine", name]
+    for p in parameters:
+        args.append(p.rstrip().replace('\r', '\\r').replace('\n', '\\n'))
+    subprocess.call(args)
 
 def safe_delete(name):
     "Delete a filesystem path name without error"
@@ -109,7 +91,7 @@ def write_status(file_name, status):
 def die(code, text):
     "Write out an error string and exit with given status code"
     write_status(ERROR_FILE, text)
-    das_event("robot.ota_download_end", "fail", get_prop("ro.anki.version"), str(text), "", str(code))
+    das_event("robot.ota_download_end", ["fail", get_prop("ro.anki.version"), str(text), "", str(code)])
     if DEBUG:
         sys.stderr.write(str(text))
         sys.stderr.write(os.linesep)
@@ -648,7 +630,7 @@ def update_from_url(url):
             die(202, "Could not set b slot as unbootable")
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
-    das_event("robot.ota_download_end", "success", next_boot_os_version)
+    das_event("robot.ota_download_end", ["success", next_boot_os_version])
     if reboot_after_install:
         os.system("/sbin/reboot")
 

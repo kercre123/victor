@@ -323,7 +323,7 @@ void BehaviorClearChargerArea::TransitionToPlacingCubeOnGround()
   cubePlacementPoses.push_back(Pose3d{DEG_TO_RAD(-50.f), Z_AXIS_3D(), {-50.f, -65.f, 0.f}, chargerPose});
   
   auto* action = new CompoundActionSequential();
-  action->AddAction(new DriveToPoseAction(cubePlacementPoses, false));
+  action->AddAction(new DriveToPoseAction(cubePlacementPoses));
   action->AddAction(new PlaceObjectOnGroundAction());
   
   DelegateIfInControl(action,

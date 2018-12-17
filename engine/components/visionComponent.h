@@ -427,7 +427,11 @@ struct DockingErrorSignal;
 
     bool _captureOneImage = false;
 
-    bool _sendProtoImageChunks = false; 
+    bool _sendProtoImageChunks = false;
+
+    // Time at which we attempted to restart the camera as we had not received a valid image for
+    // some amount of time
+    EngineTimeStamp_t _restartingCameraTime_ms = 0;
 
     #if REMOTE_CONSOLE_ENABLED
     // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes
@@ -476,6 +480,10 @@ struct DockingErrorSignal;
 
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);
+
+    // Tracks how long we have/haven't been receiving images for
+    // and takes appropriate action to deal with a lack of images
+    void UpdateImageReceivedChecks(bool gotImage);
 
   }; // class VisionComponent
   

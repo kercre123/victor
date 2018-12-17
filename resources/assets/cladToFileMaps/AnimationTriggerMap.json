@@ -56,6 +56,10 @@
     "AnimName": "ag_avs_listen2error"
   },
   {
+    "CladEvent": "AlexaSignOut",
+    "AnimName" : "ag_blackjack_victorlose"
+  },
+  {
     "CladEvent": "AlexaSpeak2Listen",
     "AnimName": "ag_avs_back2listen_01"
   },
@@ -298,6 +302,26 @@
   {
     "CladEvent": "ConnectWakeUpLights",
     "AnimName": "ag_rtillumination_lightonwakeup"
+  },
+  {
+    "CladEvent": "CountingFastLoop",
+    "AnimName": "ag_howold_fastloop"
+  },
+  {
+    "CladEvent": "CountingGetInEven",
+    "AnimName": "ag_howold_getin_even"
+  },
+  {
+    "CladEvent": "CountingGetInOdd",
+    "AnimName": "ag_howold_getin_odd"
+  },
+  {
+    "CladEvent": "CountingGetOut",
+    "AnimName": "ag_howold_getout"
+  },
+  {
+    "CladEvent": "CountingSlowLoop",
+    "AnimName": "ag_howold_slowloop"
   },
   {
     "CladEvent": "DEPRECATED_ComeHere_SearchForFace",
@@ -1825,6 +1849,46 @@
   {
     "CladEvent": "NoWifiIcon",
     "AnimName": "ag_nowifi_icon"
+  },
+  {
+    "CladEvent": "GazingLookAtFacesGetInLeft",
+    "AnimName" : "ag_gazing_lookatfaces_getin_left"
+  },
+  {
+    "CladEvent": "GazingLookAtFacesGetInRight",
+    "AnimName" : "ag_gazing_lookatfaces_getin_right"
+  },
+  {
+    "CladEvent": "GazingLookAtFacesTurnLeft",
+    "AnimName" : "ag_gazing_lookatfaces_turn_left"
+  },
+  {
+    "CladEvent": "GazingLookAtFacesTurnRight",
+    "AnimName" : "ag_gazing_lookatfaces_turn_right"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfacesGetInLeft",
+    "AnimName" : "ag_gazing_lookatsurfaces_getin_left"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfacesGetInRight",
+    "AnimName" : "ag_gazing_lookatsurfaces_getin_right"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfaceReaction",
+    "AnimName" : "ag_gazing_lookatsurface_reaction"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfaceTurnLeft",
+    "AnimName" : "ag_gazing_lookatsurface_turn_left"
+  },
+  {
+    "CladEvent": "GazingLookAtSurfacesTurnRight",
+    "AnimName" : "ag_gazing_lookatsurfaces_turn_right"
+  },
+  {
+    "CladEvent": "GazingLookAtVectorReaction",
+    "AnimName" : "ag_gazing_lookatvector_reaction"
   },
   {
     "CladEvent": "GreetAfterLongTime",

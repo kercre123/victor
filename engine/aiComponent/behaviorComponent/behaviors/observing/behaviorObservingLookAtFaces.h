@@ -60,14 +60,20 @@ private:
   
   struct InstanceConfig {
     InstanceConfig();
+    
     std::string searchBehaviorStr;
     ICozmoBehaviorPtr searchBehavior;
+    float searchTimeout_sec = 0.f;
+    
+    float staringTime_sec = 0.f;
   };
   
   struct DynamicVariables {
     DynamicVariables();
     // which faces we've already looked at during this activation of the behavior.
     std::vector<SmartFaceID> faceIdsLookedAt;
+    // Last time at which behavior started searching for faces
+    float latestFaceSearchStartTime_sec;
     struct Persistent {
       State state;
     };

@@ -94,6 +94,14 @@ namespace { // "Private members"
     .battery.charger      = (int16_t)(5.0/kBatteryScale),
   };
 
+  u32 _bodyDataPrintPeriod_tics = 0;
+  u32 _bodyDataPrintCounter     = 0;
+  bool _bodyDataPrintMotors     = false;
+  bool _bodyDataPrintProx       = false;
+  bool _bodyDataPrintBattery    = false;
+
+  bool maxNumSelectTimeoutsReached_ = false;
+
 } // "private" namespace
 
 // Forward Declarations
@@ -106,6 +114,7 @@ void ProcessFailureCode();
 void ProcessTouchLevel(void);
 void ProcessMicError();
 void PrintConsoleOutput(void);
+void PrintBodyDataUpdate();
 
 
 extern "C" {
@@ -129,6 +138,7 @@ bool check_select_timeout(spine_ctx_t spine)
   {
     AnkiError("spine.check_select_timeout.timeoutCountReached","");
     FaultCode::DisplayFaultCode(FaultCode::SPINE_SELECT_TIMEOUT);
+    maxNumSelectTimeoutsReached_ = true;
     return true;
   }
 
@@ -281,6 +291,9 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
     }
 
     robot_io(&spine_);
+    if (maxNumSelectTimeoutsReached_) {
+      return RESULT_FAIL_IO_TIMEOUT;
+    }
     read_count++;
   }
 
@@ -291,7 +304,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
     FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
   }
 
-  return (initialized ? RESULT_OK : RESULT_FAIL_IO_TIMEOUT);
+  return (initialized ? RESULT_OK : RESULT_FAIL_IO);
 }
 
 Result HAL::Init(const int * shutdownSignal)
@@ -377,7 +390,7 @@ void handle_payload_data(const uint8_t frame_buffer[]) {
 
 
 Result spine_get_frame() {
-  Result result = RESULT_FAIL_IO_TIMEOUT;
+  Result result = RESULT_FAIL_IO;
   uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
 
   ssize_t r = 0;
@@ -424,6 +437,11 @@ Result spine_get_frame() {
       EventStart(EventType::ROBOT_IO);
       robot_io(&spine_);
       EventStop(EventType::ROBOT_IO);
+
+      // select timed out too many times
+      if (maxNumSelectTimeoutsReached_) {
+        return RESULT_FAIL_IO_TIMEOUT;
+      }
     }
 
     if(result == RESULT_OK)
@@ -548,9 +566,13 @@ Result HAL::Step(void)
 
   do {
     result = spine_get_frame();
-  } while(result != RESULT_OK);
+  } while(result != RESULT_OK && result != RESULT_FAIL_IO_TIMEOUT);
 
   EventStop(EventType::READ_SPINE);
+
+  if (result == RESULT_FAIL_IO_TIMEOUT) {
+    return result;
+  }
 
 #else // else have dummy body
 
@@ -592,6 +614,8 @@ Result HAL::Step(void)
 
 
   PrintConsoleOutput();
+
+  PrintBodyDataUpdate();
 
   EventStop(EventType::HAL_STEP);
 
@@ -687,7 +711,7 @@ void ProcessMicError()
   }
 
   static bool sentDAS = false;
-  if(whichChannelsStuck > 0)
+  if(!sentDAS && whichChannelsStuck > 0)
   {
     sentDAS = true;
 
@@ -905,6 +929,62 @@ u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2
   return 0;//bodyData_->status.watchdogCount;
+}
+
+void HAL::PrintBodyData(u32 period_tics, bool motors, bool prox, bool battery)
+{
+  _bodyDataPrintPeriod_tics = period_tics;
+  _bodyDataPrintCounter = period_tics;
+  _bodyDataPrintMotors = motors;
+  _bodyDataPrintProx = prox;
+  _bodyDataPrintBattery = battery;
+}
+
+void PrintBodyDataUpdate()
+{
+  if (_bodyDataPrintPeriod_tics > 0) {
+    if (++_bodyDataPrintCounter >= _bodyDataPrintPeriod_tics) {
+
+      if (_bodyDataPrintMotors) {
+        const MotorState& head = bodyData_->motor[MOTOR_HEAD];
+        const MotorState& lift = bodyData_->motor[MOTOR_LIFT];
+        const MotorState& left = bodyData_->motor[MOTOR_LEFT];
+        const MotorState& right = bodyData_->motor[MOTOR_RIGHT];
+        AnkiInfo("HAL.BodyData.Motors", 
+                 "Status 0x%02x, "
+                 "H: (pos %d, dlt %d, tm %u), "
+                 "L: (pos %d, dlt %d, tm %u), "
+                 "WL: (pos %d, dlt %d, tm %u), "
+                 "WR: (pos %d, dlt %d, tm %u)",
+                 bodyData_->flags, 
+                 head.position, head.delta, head.time,
+                 lift.position, lift.delta, lift.time,
+                 left.position, left.delta, left.time,
+                 right.position, right.delta, right.time);
+      }
+      if (_bodyDataPrintProx) {
+        const uint16_t* cliff = bodyData_->cliffSense;
+        const RangeData& prox = bodyData_->proximity;
+        AnkiInfo("HAL.BodyData.Prox",
+                 "Status 0x%02x, "
+                 "Cliff: %4u %4u %4u %4u, "
+                 "Prox: range %u, sig %u, amb %u, spadCnt %u, sampCnt %u, calibRes %u",
+                 bodyData_->flags, 
+                 cliff[0], cliff[1], cliff[2], cliff[3],
+                 prox.rangeMM, prox.signalRate, prox.ambientRate, prox.spadCount, prox.sampleCount, prox.calibrationResult);
+      }
+      if (_bodyDataPrintBattery) {
+        const BatteryState& batt = bodyData_->battery;               
+        AnkiInfo("HAL.BodyData.Battery", 
+                 "Status 0x%02x, battV %d, chgr %d, temp %d, battFlags 0x%4x",
+                 bodyData_->flags, batt.main_voltage, batt.charger, batt.temperature, batt.flags);
+      }
+
+      // TODO: Add more later. Maybe with filter flags so you don't always have to print everything!
+
+      _bodyDataPrintCounter = 0;
+    }
+  }
 }
 
 void HAL::Shutdown()

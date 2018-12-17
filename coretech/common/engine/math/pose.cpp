@@ -416,10 +416,10 @@ namespace Anki {
 #pragma mark -
 #pragma mark Global Functions
   
-  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2)
+  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, const Pose3d& outputFrame)
   {
     Vec3f ret{0.f,0.f,0.f};
-    const bool comparable = ComputeVectorBetween(pose1, pose2, ret);
+    const bool comparable = ComputeVectorBetween(pose1, pose2, outputFrame, ret);
     if ( !comparable ) {
       PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent", "Could not get pose1 w.r.t. pose2.");
     }
@@ -427,54 +427,41 @@ namespace Anki {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, Vec3f& outVector)
+  bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, const Pose3d& outputFrame, Vec3f& outVector)
   {
-    // if not sharing a parent, we have to transform one of them
-    if(!pose1.HasSameParentAs(pose2))
-    {
-      // try to get pose1 with respect to 2
-      Pose3d pose1wrt2;
-      if(false == pose1.GetWithRespectTo(pose2, pose1wrt2)) {
-        // not sharing an origin, do not compute the vector
-        return false;
-      }
-      // successfully transformed, grab the relative translation
-      outVector = pose1wrt2.GetTranslation();
-    }
-    else
-    {
-      // they share a parent, we can compare translations directly
-      outVector = (pose1.GetTranslation() - pose2.GetTranslation());
+    Pose3d pose1wrtOutputFrame;
+    Pose3d pose2wrtOutputFrame;
+    
+    if (!pose1.GetWithRespectTo(outputFrame, pose1wrtOutputFrame) ||
+        !pose2.GetWithRespectTo(outputFrame, pose2wrtOutputFrame)) {
+      return false;
     }
 
+    outVector = (pose1wrtOutputFrame.GetTranslation() - pose2wrtOutputFrame.GetTranslation());
     return true;
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistance)
   {
-    Vec3f vectorBetweenPoses;
-    if ( false == ComputeVectorBetween(pose1, pose2, vectorBetweenPoses) )
-    {
-      // not comparable
+    Pose3d pose1Wrt2;
+    if (!pose1.GetWithRespectTo(pose2, pose1Wrt2)) {
       return false;
     }
     
-    outDistance = vectorBetweenPoses.Length();
+    outDistance = pose1Wrt2.GetTranslation().Length();
     return true;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool ComputeDistanceSQBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistanceSQ)
   {
-    Vec3f vectorBetweenPoses;
-    if ( false == ComputeVectorBetween(pose1, pose2, vectorBetweenPoses) )
-    {
-      // not comparable
+    Pose3d pose1Wrt2;
+    if (!pose1.GetWithRespectTo(pose2, pose1Wrt2)) {
       return false;
     }
     
-    outDistanceSQ = vectorBetweenPoses.LengthSq();
+    outDistanceSQ = pose1Wrt2.GetTranslation().LengthSq();
     return true;
   }
   

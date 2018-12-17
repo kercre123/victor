@@ -19,6 +19,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUncalibratedHeadAndLift.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/powerStateManager.h"
 #include "engine/actions/basicActions.h"
 
@@ -28,13 +30,21 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#define LOG_CHANNEL "Behaviors"
+
 namespace Anki {
 namespace Vector {
 
 namespace {
-  static const std::set<BehaviorID> kDoNotInterruptBehaviors = {
-    BEHAVIOR_ID(FistBump),
-    BEHAVIOR_ID(FistBumpVoiceCommand),
+  static const std::set<BehaviorID> kDoNotInterruptBehaviorIds = {
+    BEHAVIOR_ID(NoCloud),
+    BEHAVIOR_ID(NoWifi),
+  };
+  
+  static const std::set<BehaviorClass> kDoNotInterruptBehaviorClasses = {
+    BEHAVIOR_CLASS(BlackJack),
+    BEHAVIOR_CLASS(FistBump),
+    BEHAVIOR_CLASS(TakeAPhotoCoordinator),
   };
 }
 
@@ -52,19 +62,27 @@ BehaviorReactToUncalibratedHeadAndLift::~BehaviorReactToUncalibratedHeadAndLift(
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUncalibratedHeadAndLift::WantsToBeActivatedBehavior() const
 {
+  // This shouldn't interrupt pending intents. Its a rare coincidence, except apparently when transitioning from
+  // onboarding to normal operation with a pending intent, when it happens constantly... could be my robot is kinda
+  // borked... but this shouldn't hurt anything.
+  const bool userIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
   const bool inPowerSaveMode = GetBEI().GetPowerStateManager().InPowerSaveMode();
+  const bool isAnimating = GetBEI().GetAnimationComponent().IsPlayingAnimation();
   bool shouldActivate = !inPowerSaveMode &&
+                        !isAnimating &&
+                        !userIntentPending &&
                         (GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsHeadEncoderInvalid()   ||
                          GetBEI().GetRobotInfo().IsLiftEncoderInvalid());
 
   if (shouldActivate) {
-    // If a calibration seems necessary, first verify that we're not in the FistBump behavior which we know
-    // can cause the lift encoder to become invalid since manipulation by user is expected.
+    // If a calibration seems necessary, first verify that we are not in a behavior which we know can cause an encoder
+    // to become invalid since manipulation by user is expected.
     const auto checkInterruptCallback = [&shouldActivate](const ICozmoBehavior& behavior)->bool {
-      auto got = kDoNotInterruptBehaviors.find(behavior.GetID());
-      if(got != kDoNotInterruptBehaviors.end()) {
+      const bool idActive = (kDoNotInterruptBehaviorIds.find(behavior.GetID()) != kDoNotInterruptBehaviorIds.end());
+      const bool classActive = (kDoNotInterruptBehaviorClasses.find(behavior.GetClass()) != kDoNotInterruptBehaviorClasses.end());
+      if (idActive || classActive) {
         shouldActivate = false;
         return false; // stop iterating
       }
@@ -105,9 +123,16 @@ void BehaviorReactToUncalibratedHeadAndLift::OnBehaviorActivated()
   bool calibrateHead = robot.IsHeadMotorOutOfBounds() || robot.IsHeadEncoderInvalid();
   bool calibrateLift = robot.IsLiftMotorOutOfBounds() || robot.IsLiftEncoderInvalid();
   if(calibrateHead || calibrateLift) {
+    LOG_INFO("BehaviorReactToUncalibratedHeadAndLift.Activated",
+             "IsHeadMotorOutOfBounds %d, IsLiftMotorOutOfBounds %d, IsHeadEncoderInvalid %d, IsLiftEncoderInvalid %d",
+             GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds(),
+             GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds(),
+             GetBEI().GetRobotInfo().IsHeadEncoderInvalid(),
+             GetBEI().GetRobotInfo().IsLiftEncoderInvalid());
+    
     DelegateNow(new CalibrateMotorAction(calibrateHead,
                                          calibrateLift,
-                                         EnumToString(MotorCalibrationReason::BehaviorReactToUncalibratedHeadAndLift)));
+                                         MotorCalibrationReason::BehaviorReactToUncalibratedHeadAndLift));
   }
 }
   

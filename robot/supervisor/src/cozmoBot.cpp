@@ -1,3 +1,4 @@
+#include <sys/mman.h>
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
@@ -29,6 +30,7 @@
 #include "testModeController.h"
 #include "timeProfiler.h"
 #include "wheelController.h"
+#include "util/dispatchQueue/taskExecutor.h"
 
 #ifndef SIMULATOR
 #include <unistd.h>
@@ -41,6 +43,11 @@ namespace Anki {
       // "Private Member Variables"
       namespace {
 
+#ifdef VICOS
+        // Create background thread for fork/exec of fake-hwclock-tick service
+        // because Forking after mlockall is very expensive.
+        std::shared_ptr<Anki::Util::TaskExecutor> fakeHWClockTick_(new Anki::Util::TaskExecutor("fake-hwclock-tick", Anki::Util::ThreadPriority::Low));
+#endif
         // Parameters / Constants:
         bool wasConnected_ = false;
 
@@ -108,9 +115,28 @@ namespace Anki {
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.LiftController", "");
 
+#ifdef VICOS
+        //Move fakeHWClockTick  off RT thread
+        fakeHWClockTick_->WakeAfter([]() {
+            cpu_set_t targetCpuset;
+            cpu_set_t currentCpuset;
+            CPU_ZERO(&targetCpuset);
+            pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &currentCpuset);
+
+            for(int i = 0; i < std::thread::hardware_concurrency(); i++) {
+              if(!CPU_ISSET(i, &currentCpuset)) {
+                CPU_SET(i, &targetCpuset);
+              }
+            }
+            pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &targetCpuset);
+          }, std::chrono::steady_clock::now(), "setAffinity");
+#endif
+
         // Calibrate motors
-        LiftController::StartCalibrationRoutine(1);
-        HeadController::StartCalibrationRoutine(1);
+        const bool autoStarted = true;
+        const auto reason = MotorCalibrationReason::Startup;
+        LiftController::StartCalibrationRoutine(autoStarted, reason);
+        HeadController::StartCalibrationRoutine(autoStarted, reason);
 
         robotStateMessageCounter_ = 0;
 
@@ -138,7 +164,10 @@ namespace Anki {
         // If we end up shutting down due to the user holding the button
         // we still want to record the current time to disk to keep our
         // clock as close to accurate as possible on the next boot.
-        (void) ForkAndExecAndForget({"/bin/systemctl", "start", "fake-hwclock-tick"});
+        fakeHWClockTick_->WakeAfter([]() {
+             AnkiWarn("fake-hwclock-tick", "Starting fake-hwclock-tick");
+             (void) ForkAndExecAndForget({"sudo", "/bin/systemctl", "start", "fake-hwclock-tick"});
+        }, std::chrono::steady_clock::now(), "fake-hwclock-tick");
         #endif
       }
 
@@ -163,7 +192,7 @@ namespace Anki {
 
       void CheckForCriticalBatteryShutdown()
       {        
-        static const int   CRITICAL_BATTERY_THRESH_TICS = 20;
+        static const int   CRITICAL_BATTERY_THRESH_TICS = 66;
         static const float CRITICAL_BATTERY_THRESH_VOLTS = 3.45f;
         static const float HAL_SHUTDOWN_DELAY_MS = 2000;
         static TimeStamp_t shutdownTime_ms = 0;

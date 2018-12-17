@@ -21,12 +21,14 @@ enum uint_8 BehaviorClass {
 
   // alexa
   Alexa,
+  AlexaSignInOut,
 
   // animationWrappers
   AnimGetInLoop,
   AnimSequence,
   AnimSequenceWithFace,
   AnimSequenceWithObject,
+  CountingAnimation,
   TextToSpeechLoop,
 
   // appBehaviors
@@ -64,6 +66,9 @@ enum uint_8 BehaviorClass {
   // blackjack
   BlackJack,
 
+  // character/howOldAreYou
+  HowOldAreYou,
+
   // coordinators
   CoordinateGlobalInterrupts,
   CoordinateInHabitat,
@@ -98,6 +103,7 @@ enum uint_8 BehaviorClass {
   PowerSaveStressTest,
   PowerSaveTest,
   ReactToBody,
+  ReactToGazeDirection,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,
@@ -117,6 +123,7 @@ enum uint_8 BehaviorClass {
   DispatcherQueue,
   DispatcherRandom,
   DispatcherRerun,
+  DispatcherScoring,
   DispatcherStrictPriority,
   DispatcherStrictPriorityWithCooldown,
 
@@ -163,9 +170,11 @@ enum uint_8 BehaviorClass {
   OnboardingCoordinator,
 
   // onboarding_1p2/phases
+  OnboardingEmulate1p0WaitForVC,
   OnboardingLookAtPhone1p2,
   OnboardingLookAtUser1p2,
   OnboardingTeachWakeWord,
+  OnboardingWakeUp,
 
   // photoTaking
   AestheticallyCenterFaces,

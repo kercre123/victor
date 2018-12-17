@@ -21,10 +21,15 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <future>
+#include <list>
 
 namespace Anki {
 namespace AudioEngine {
 class AudioCallbackContext;
+}
+namespace Util {
+  class IConsoleFunction;
 }
 namespace Vector {
   
@@ -49,18 +54,25 @@ public:
   
   // handles message from engine to opt in or out
   void SetAlexaUsage(bool optedIn);
-  // cancels any pending authorization started by the user (not an auto-auth during reboot)
-  void CancelPendingAlexaAuth();
+
+  // cancels any pending authorization started by the user (not an auto-auth during reboot). Reason is
+  // included in a DAS message
+  void CancelPendingAlexaAuth(const std::string& reason);
   
   void OnEngineLoaded();
   
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples ) const;
   
+  bool StopAlertIfActive();
+  
   void NotifyOfTapToTalk( bool fromMute );
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
-  
+
+  // Whether there is a session that is active or in the process of initializing.
+  // Assumes that the existence of the impl is still tied to opt-in state (which may change)
+  bool IsOptedIn() const { return HasImpl(); }
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -92,6 +104,7 @@ private:
   void CreateImpl();
   void DeleteImpl();
   bool HasImpl() const { return _impl != nullptr; }
+  bool HasInitializedImpl() const; // done loading sdk but maybe not done connecting yet
   
   // sets this class's _authState and messages engine if it changes
   void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );
@@ -126,6 +139,8 @@ private:
   void PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::AudioCallbackContext* callback = nullptr ) const;
   
   std::unique_ptr<AlexaImpl> _impl;
+  AlexaImpl* _implToBeDeleted = nullptr;
+  std::future<void> _implDtorResult;
   
   const AnimContext* _context = nullptr;
   
@@ -160,7 +175,11 @@ private:
   // if the user was ever authenticated, even in a previous boot
   bool _authenticatedEver = false;
   
-  mutable std::mutex _implMutex; // only guards access on main thread during impl deletion
+  std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
+  
+  // guards access to _impl when releasing it on main thread, and when used in NotifyOfWakeWord
+  // and AddMicrophoneSamples, which can be called off thread
+  mutable std::mutex _implMutex;
 };
 
 

@@ -14,6 +14,7 @@
 
 #include "engine/navMap/iNavMap.h"
 #include "engine/navMap/quadTree/quadTree.h"
+#include "engine/navMap/quadTree/quadTreeProcessor.h"
 
 #include <shared_mutex>
 
@@ -27,15 +28,16 @@ friend class CST_NavMap;    // allow access for webots test for NavMap
 
 public:
 
-  using EContentType     = MemoryMapTypes::EContentType;
-  using FullContentArray = MemoryMapTypes::FullContentArray;
-  using MemoryMapRegion  = MemoryMapTypes::MemoryMapRegion;
+  using EContentType           = MemoryMapTypes::EContentType;
+  using FullContentArray       = MemoryMapTypes::FullContentArray;
+  using MemoryMapRegion        = MemoryMapTypes::MemoryMapRegion;
+  using MemoryMapDataConstList = MemoryMapTypes::MemoryMapDataConstList;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   MemoryMap();
-  virtual ~MemoryMap() {}
+  virtual ~MemoryMap();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // From INavMemoryMap
@@ -59,17 +61,17 @@ public:
   virtual bool TransformContent(NodeTransformFunction transform, const MemoryMapRegion& region) override;
   
   // populate a list of all data that matches the predicate inside poly
-  virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const override;
+  virtual void FindContentIf(const NodePredicate& pred, MemoryMapDataConstList& output, const MemoryMapRegion& region) const override;
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const override;
     
   // evaluates f along any node that the region collides with. returns true if any call to NodePredicate returns true
-  virtual bool AnyOf(const MemoryMapRegion& p, NodePredicate f) const override;
+  virtual bool AnyOf(const MemoryMapRegion& p, const NodePredicate& f) const override;
 
   // multi-ray variant of the AnyOf method
   // implementation may optimize for this case
-  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const override;
+  virtual std::vector<bool> AnyOf( const Point2f& start, const std::vector<Point2f>& ends, const NodePredicate& pred) const override;
 
   // returns the accumulated area of cells that satisfy the predicate (and region, if supplied)
   virtual float GetArea(const NodePredicate& f, const MemoryMapRegion& r) const override;
@@ -82,8 +84,13 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // processor for this quadtree
+  QuadTreeProcessor _processor;
+
   // underlaying data container
   QuadTree          _quadTree;
+
+  // safe thread access for planner
   mutable std::shared_timed_mutex _writeAccess;
   
 }; // class

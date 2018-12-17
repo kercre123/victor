@@ -340,12 +340,13 @@ namespace Anki {
       }
 
       void Process_startMotorCalibration(const RobotInterface::StartMotorCalibration& msg) {
+        const bool autoStarted = false;
         if (msg.calibrateHead) {
-          HeadController::StartCalibrationRoutine();
+          HeadController::StartCalibrationRoutine(autoStarted, msg.reason);
         }
 
         if (msg.calibrateLift) {
-          LiftController::StartCalibrationRoutine();
+          LiftController::StartCalibrationRoutine(autoStarted, msg.reason);
         }
       }
 
@@ -470,6 +471,10 @@ namespace Anki {
       }
 
       void Process_playpenStart(const RobotInterface::PlaypenStart& msg) {
+      }
+
+      void Process_printBodyData(const RobotInterface::PrintBodyData& msg) {
+        HAL::PrintBodyData(msg.period_tics, msg.motors, msg.prox, msg.battery);
       }
 
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {

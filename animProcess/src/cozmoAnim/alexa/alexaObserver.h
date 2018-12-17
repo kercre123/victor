@@ -48,6 +48,7 @@
 #include <Alerts/AlertObserverInterface.h>
 #include <RegistrationManager/RegistrationObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/MessageRequestObserverInterface.h>
+#include <AVSCommon/SDKInterfaces/AudioPlayerObserverInterface.h>
 
 #include <queue>
 
@@ -68,6 +69,7 @@ class AlexaObserver
   , public alexaClientSDK::registrationManager::RegistrationObserverInterface
   , public alexaClientSDK::avsCommon::sdkInterfaces::MessageRequestObserverInterface
   , public alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface
+  , public alexaClientSDK::avsCommon::sdkInterfaces::AudioPlayerObserverInterface
   
 {
 public:
@@ -90,6 +92,7 @@ public:
   using OnLogout = std::function<void(void)>;
   using OnNotificationIndicator = std::function<void(alexaClientSDK::avsCommon::avs::IndicatorState)>;
   using OnAlertState = std::function<void(const std::string&,alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State)>;
+  using OnPlayerActivity = std::function<void(alexaClientSDK::avsCommon::avs::PlayerActivity)>;
   void Init( const OnDialogUXStateChangedFunc& onDialogUXStateChanged,
              const OnRequestAuthorizationFunc& onRequestAuthorization,
              const OnAuthStateChangeFunc& onAuthStateChange,
@@ -99,7 +102,8 @@ public:
              const OnSendCompleted& onSendCompleted,
              const OnLogout& onLogout,
              const OnNotificationIndicator& onNotificationIndicator,
-             const OnAlertState& onAlertState );
+             const OnAlertState& onAlertState,
+             const OnPlayerActivity& onPlayerActivity);
   
 protected:
   virtual void onDialogUXStateChanged( DialogUXState state ) override;
@@ -148,6 +152,11 @@ protected:
   virtual void onAlertStateChange( const std::string& alertToken,
                                    alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state,
                                    const std::string& reason ) override;
+
+  // audio player
+  virtual void onPlayerActivityChanged(alexaClientSDK::avsCommon::avs::PlayerActivity state,
+                                       const alexaClientSDK::avsCommon::sdkInterfaces::AudioPlayerObserverInterface::Context& context) override;
+
   
 private:
   using SourceId = alexaClientSDK::avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId;
@@ -186,6 +195,7 @@ private:
   OnLogout _onLogout;
   OnNotificationIndicator _onNotificationIndicator;
   OnAlertState _onAlertState;
+  OnPlayerActivity _onPlayerActivity;
   
   std::atomic<bool> _running;
   

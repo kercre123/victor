@@ -309,7 +309,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
       targetPose.TranslateForward(-minDistanceFromCliff);
     }
     
-    action->AddAction(new DriveToPoseAction( targetPose, true ));
+    action->AddAction(new DriveToPoseAction( targetPose ));
     CancelDelegates(false);
     DelegateIfInControl(action, [this](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {

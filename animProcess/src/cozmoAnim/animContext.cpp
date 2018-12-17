@@ -37,11 +37,11 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
+  , _alexa(new Alexa())
   , _micDataSystem(new MicData::MicDataSystem(dataPlatform, this))
   , _showStreamStateManager(new ShowAudioStreamStateManager(this))
   , _webService(new WebService::WebService())
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
-  , _alexa(new Alexa())
   , _backpackLightComponent(new BackpackLightComponent(this))
 {
   InitAudio(_dataPlatform);

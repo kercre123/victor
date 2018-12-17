@@ -1,7 +1,6 @@
 namespace Anki {
 namespace Vector {
 
-// when updating this enum, please update the console enum kFeatureEnumString in cozmoFeatureGate.cpp
 enum uint_8 FeatureType {
   Invalid,
   Laser,
@@ -23,11 +22,12 @@ enum uint_8 FeatureType {
   PopAWheelie,
   ActiveIntentFeedback,
   Alexa,
-  FindFacesWhileHeld,
+  HeldInPalm,
   Volume,
   HandDetection,
   GazeDirection,
-  
+  HowOldAreYou,
+
   TestFeature,
   PRDemo,
 }

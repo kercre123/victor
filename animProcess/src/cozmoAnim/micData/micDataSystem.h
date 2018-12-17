@@ -142,6 +142,8 @@ public:
 private:
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
 
+  bool IsButtonPressAlexa() const;
+
   std::string _writeLocationDir = "";
   std::string _persistentFolder;
   // Members for the the mic jobs
@@ -190,8 +192,11 @@ private:
   AlexaSimpleState _alexaState;
   
   std::atomic<bool> _micMuted;
-  
-  std::atomic<bool> _abortAlexaScreen;
+
+  // if hey vector is spoken, we'll need to abort the alexa pairing screen if it's active. The overly verbose
+  // name is becuase we hardcode the "reason" that we are leaving the pairing screen based on the assumption
+  // that this is triggered via a "hey vector" wakeword
+  std::atomic<bool> _abortAlexaScreenDueToHeyVector;
 
   void SetWillStream(bool willStream) const;
 

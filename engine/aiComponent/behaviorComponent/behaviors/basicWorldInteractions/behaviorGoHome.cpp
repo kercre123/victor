@@ -277,9 +277,8 @@ void BehaviorGoHome::TransitionToObserveCharger()
     const bool farFromCharger = ComputeDistanceBetween(charger->GetPose(), robotPose) > kFarFromChargerThreshold_mm;
     const bool observedRecently = robotInfo.GetLastMsgTimestamp() - charger->GetLastObservedTime() < kRecentlyObservedChargerThreshold_ms;
     if (farFromCharger || !observedRecently) {
-      const bool forceHeadDown = false;
       auto* action = new CompoundActionSequential();
-      action->AddAction(new DriveToPoseAction(charger->GenerateObservationPoses(GetRNG()), forceHeadDown));
+      action->AddAction(new DriveToPoseAction(charger->GenerateObservationPoses(GetRNG())));
       action->AddAction(new VisuallyVerifyObjectAction(charger->GetID()));
       DelegateIfInControl(action, afterObservationCallback);
     } else {

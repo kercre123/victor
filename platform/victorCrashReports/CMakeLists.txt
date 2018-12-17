@@ -37,6 +37,7 @@ if (VICOS)
     )
     target_link_libraries(victorCrashReports
       PRIVATE
+      util
       breakpad_client
     )
   endif()
@@ -48,6 +49,7 @@ if (VICOS)
     )
     target_link_libraries(victorCrashReports
       PRIVATE
+      util
       cutils
     )
   endif()

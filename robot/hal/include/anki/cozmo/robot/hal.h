@@ -84,6 +84,14 @@ extern "C" TimeStamp_t GetTimeStamp(void);
 u8 GetWatchdogResetCounter(void);
 
 /************************************************************************
+ * \section Debug
+ */
+
+// Print full body data to log every specified number of tics
+// 0 disables printing
+void PrintBodyData(u32 period_tics, bool motors, bool prox, bool battery);
+
+/************************************************************************
  * \section IMU Interface
  */
 

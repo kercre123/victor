@@ -110,15 +110,11 @@ void RobotDataLoader::LoadConfigData()
   }
 
   {
-#ifdef SHIPPING
-    const std::string& alexaConfigFile = "config/alexa/alexa_prod.json";
-#else
-    const std::string& alexaConfigFile = "config/alexa/alexa_dev.json";
-#endif
-    auto path = _platform->pathToResource(Util::Data::Scope::Resources, alexaConfigFile);
-    
-    if( Util::FileUtils::FileExists( path ) ) {
-      _alexaConfig = Util::FileUtils::ReadFile( path );
+    const std::string& alexaConfigFile = "config/alexa.json";
+    const auto path = _platform->GetResourcePath(alexaConfigFile);
+
+    if (Util::FileUtils::FileExists(path)) {
+      _alexaConfig = Util::FileUtils::ReadFile(path);
     } else {
       LOG_ERROR("RobotDataLoader.AlexaConfigNotFound",
                 "Alexa config file %s not found or failed to parse",

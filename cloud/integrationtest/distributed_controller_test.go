@@ -2,50 +2,12 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
-
-type testSimulator struct {
-	*simulator
-
-	setupDone    bool
-	tearDownDone bool
-	actionDone1  bool
-	actionDone2  bool
-}
-
-func newTestSimulator() *testSimulator {
-	return &testSimulator{simulator: newSimulator()}
-}
-
-func (s *testSimulator) setupAction() error {
-	s.setupDone = true
-	return nil
-}
-
-func (s *testSimulator) tearDownAction() error {
-	s.tearDownDone = true
-	return nil
-}
-
-func (s *testSimulator) periodicAction1() error {
-	s.actionDone1 = true
-	return nil
-}
-
-func (s *testSimulator) periodicAction2() error {
-	s.actionDone2 = true
-	return nil
-}
-
-func (s *testSimulator) periodicAction3() error {
-	return nil
-}
 
 type DistributedControllerTestSuite struct {
 	suite.Suite
@@ -65,8 +27,8 @@ func (s *DistributedControllerTestSuite) SetupSuite() {
 
 	s.simulator = newTestSimulator()
 
-	s.simulator.addSetupAction(s.simulator.setupAction)
-	s.simulator.addTearDownAction(s.simulator.tearDownAction)
+	s.simulator.addSetupAction(0, s.simulator.setupAction)
+	s.simulator.addTearDownAction(0, s.simulator.tearDownAction)
 	s.simulator.addPeriodicAction("action1", time.Millisecond*50, 0, s.simulator.periodicAction1)
 	s.simulator.addPeriodicAction("action2", time.Millisecond*100, 0, s.simulator.periodicAction2)
 	s.simulator.addPeriodicAction("action3", 0, 0, s.simulator.periodicAction3)
@@ -74,45 +36,14 @@ func (s *DistributedControllerTestSuite) SetupSuite() {
 	s.controller.forwardCommands(s.simulator)
 }
 
-func (s *DistributedControllerTestSuite) waitForState(expectedState State) bool {
-	for retries := s.numRetries; retries > 0 && s.controller.state != expectedState; retries-- {
-		time.Sleep(s.pollingInterval)
-	}
-
-	return s.controller.state == expectedState
-}
-
-func (s *DistributedControllerTestSuite) waitForReriodicActions() bool {
-	for retries := s.numRetries; retries > 0 && (!s.simulator.actionDone1 || !s.simulator.actionDone2); retries-- {
-		time.Sleep(s.pollingInterval)
-	}
-
-	return s.simulator.actionDone1 && s.simulator.actionDone2
-}
-
-func (s *DistributedControllerTestSuite) TestIDIncrementer() {
-	id1, err := s.controller.provideUniqueTestID()
+func (s *DistributedControllerTestSuite) TaskIDIncrementer() {
+	id1, err := s.controller.uniqueTaskID()
 	s.NoError(err)
 
-	id2, err := s.controller.provideUniqueTestID()
+	id2, err := s.controller.uniqueTaskID()
 	s.NoError(err)
 
 	s.Equal(id2, id1+1)
-}
-
-func (s *DistributedControllerTestSuite) TestDurationDistribution() {
-	const numSamples = 1000
-
-	action := &action{meanDuration: time.Millisecond * 100, stdDevDuration: time.Millisecond * 50}
-
-	var totalDuration time.Duration
-	for i := 0; i < numSamples; i++ {
-		duration := s.simulator.calculateDuration(action, 0)
-		totalDuration += duration
-		s.True(duration >= 0)
-	}
-
-	s.True(math.Abs(float64(action.meanDuration-totalDuration/numSamples)) < float64(action.stdDevDuration))
 }
 
 func (s *DistributedControllerTestSuite) TestSetKeyValue() {
@@ -152,41 +83,41 @@ func (s *DistributedControllerTestSuite) TestSetKeyValue() {
 func (s *DistributedControllerTestSuite) TestStartStop() {
 	s.False(s.simulator.setupDone)
 	s.False(s.simulator.tearDownDone)
-	s.False(s.simulator.actionDone1)
-	s.False(s.simulator.actionDone2)
-	s.Equal(Initialized, s.controller.state)
+	s.False(s.simulator.actionDone1())
+	s.False(s.simulator.actionDone2())
+	s.Equal(SimulatorState(SimulatorInitialized), s.simulator.state)
 
 	s.controller.sendCommand("start")
 
 	// allow periodic timers to be executed
-	s.waitForState(Started)
-	s.Equal(Started, s.controller.state)
+	s.simulator.waitForState(SimulatorStarted)
+	s.Equal(SimulatorState(SimulatorStarted), s.simulator.state)
 
-	s.waitForReriodicActions()
+	s.simulator.waitForReriodicActions()
 
 	s.True(s.simulator.setupDone)
 	s.False(s.simulator.tearDownDone)
-	s.True(s.simulator.actionDone1)
-	s.True(s.simulator.actionDone2)
+	s.True(s.simulator.actionDone1())
+	s.True(s.simulator.actionDone2())
 
 	s.controller.sendCommand("stop")
 
 	// allow tear down to be executed
-	s.waitForState(Stopped)
-	s.Equal(Stopped, s.controller.state)
+	s.simulator.waitForState(SimulatorStopped)
+	s.Equal(SimulatorState(SimulatorStopped), s.simulator.state)
 
 	s.True(s.simulator.setupDone)
 	s.True(s.simulator.tearDownDone)
-	s.True(s.simulator.actionDone1)
-	s.True(s.simulator.actionDone2)
+	s.True(s.simulator.actionDone1())
+	s.True(s.simulator.actionDone2())
 
 	s.controller.sendCommand("quit")
 
 	// allow quit to be executed
-	s.waitForState(Terminated)
-	s.Equal(Terminated, s.controller.state)
+	s.simulator.waitForState(SimulatorTerminated)
+	s.Equal(SimulatorState(SimulatorTerminated), s.simulator.state)
 }
 
-func TestDistributedControllerTestSuite(t *testing.T) {
+func TestDistributedController(t *testing.T) {
 	suite.Run(t, new(DistributedControllerTestSuite))
 }

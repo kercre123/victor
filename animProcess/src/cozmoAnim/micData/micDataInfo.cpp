@@ -22,7 +22,7 @@
 #include <sstream>
 #include <thread>
 
-#define LOG_CHANNEL    "MicData"
+#define LOG_CHANNEL "Microphones"
 
 namespace Anki {
 namespace Vector {

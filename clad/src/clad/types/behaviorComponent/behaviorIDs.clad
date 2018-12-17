@@ -58,10 +58,13 @@ enum uint_16 BehaviorID {
   PowerSaveTest,
   PuzzleMaze,
   ReactToBody,
+  ReactToGazeDirection,
+  ReactToGazeDirectionSurface,
   TestStackMonitors,
 
   // victorBehaviorTree/alexa
   Alexa,
+  AlexaSignInOut,
 
   // victorBehaviorTree/appBehaviors
   ChangeEyeColor,
@@ -75,6 +78,10 @@ enum uint_16 BehaviorID {
   BlackJackRequestToPlay,
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
+
+  // victorBehaviorTree/character
+  HowOldAreYou,
+  HowOldAreYouCounting,
 
   // victorBehaviorTree/clock
   ShowWallTime,
@@ -182,6 +189,7 @@ enum uint_16 BehaviorID {
   KnowledgeGraphTTS,
 
   // victorBehaviorTree/highLevelDelegates
+  LookInPlaceHeadDownInAir,
   LookInPlaceHeadUp,
   LookInPlaceHeadUpInAir,
 
@@ -277,6 +285,7 @@ enum uint_16 BehaviorID {
   GoHomeVoiceCommand,
   KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
+  LookOverThereVoiceCommand,
   PickUpCubeVoiceCommand,
   PlayAGameVoiceCommand,
   PopAWheelieVoiceCommand,
@@ -287,6 +296,11 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   WhatsMyNameVoiceCommand,
+
+  // victorBehaviorTree/highLevelDelegates/whileInAir/heldInPalm
+  ReactToJoltInPalm,
+  HeldInPalmDispatcher,
+  HeldInPalmResponses,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir
   InitialPickupAnimation,
@@ -323,6 +337,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/onboarding1p2
   Onboarding1p2,
   OnboardingComeHere,
+  OnboardingEmulate1p0WaitForVC,
   OnboardingLookAtPhone1p2,
   OnboardingLookAtUser1p2,
   OnboardingTeachComeHere1p2,

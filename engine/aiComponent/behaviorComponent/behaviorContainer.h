@@ -50,6 +50,8 @@ public:
   virtual void UpdateDependent(const BCCompMap& dependentComps) override {};
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {
     dependencies.insert(BCComponentID::BehaviorExternalInterface);
+    // Init the onboardingMessageHandler before BC so the OnboardingCoordinator can subscribe through it
+    dependencies.insert(BCComponentID::OnboardingMessageHandler);
   }
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
   //////

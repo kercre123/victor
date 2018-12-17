@@ -172,6 +172,13 @@ logv "start deploy"
 
 set -e
 
+#
+# Stop any victor services. If services are allowed to run during 
+# deployment, exe and shared library files can't be replaced.
+#
+logv "stop victor services"
+robot_sh "/bin/systemctl stop victor.target"
+
 logv "create target dirs"
 robot_sh mkdir -p "${INSTALL_ROOT}"
 robot_sh mkdir -p "${INSTALL_ROOT}/etc"
@@ -202,13 +209,6 @@ if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
 fi
 set -e
 
-#
-# Stop any victor services. If services are allowed to run during deployment, exe and shared library
-# files can't be released.  This may tie up enough disk space to prevent deployment of replacement files.
-#
-logv "stop victor services"
-robot_sh "/bin/systemctl stop victor.target"
-
 logv "starting rsync daemon"
 robot_sh "/bin/systemctl is-active rsyncd.service > /dev/null 2>&1\
           || /bin/systemctl start rsyncd.service && sleep 0.5"
@@ -219,10 +219,10 @@ pushd ${STAGING_DIR} > /dev/null 2>&1
 # Use --inplace to avoid consuming temp space & minimize number of writes
 # Use --delete to purge files that are no longer present in build tree
 #
-RSYNC_ARGS="-rlptD -zvP --chmod=ug+rw --chown=:2901 --inplace --delete"
+RSYNC_ARGS="-rlptD -zvP --chmod=ug+rwx --chown=:2901 --inplace --delete"
 if [ $FORCE_DEPLOY -eq 1 ]; then
   # Ignore times, delete before transfer, and force deletion of directories
-  RSYNC_ARGS="-rlptD -IzvP --chmod=ug+rw --chown=:2901 --inplace --delete --delete-before --force"
+  RSYNC_ARGS="-rlptD -IzvP --chmod=ug+rwx --chown=:2901 --inplace --delete --delete-before --force"
 fi
 
 logv "rsync"

@@ -19,6 +19,8 @@ StreamReader::StreamReader(std::shared_ptr<std::istream> stream, const bool repe
 : _stream(std::move(stream))
 , _repeat(repeat)
 {
+  // NOTE: BN: no idea why this is being overwritten here, but it doesn't seem to matter.
+  // see VIC-9853
   _repeat = true;
 }
 

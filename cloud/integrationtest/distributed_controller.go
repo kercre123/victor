@@ -3,40 +3,39 @@ package main
 import (
 	"fmt"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/go-redis/redis"
 )
 
 const (
-	testIDKey            = "test_id"
-	remoteControlChannel = "load_test_control"
+	arrivalTimeKeyPrefix   = "robot:arrivalTime"
+	departureTimeKeyPrefix = "robot:departureTime"
+	taskIDKey              = "task_id"
+	remoteControlChannel   = "load_test_control"
 )
+
+type robotIdentityProvider interface {
+	uniqueTaskID() (int, error)
+	arrivalTime(robotID int) (time.Duration, error)
+	departureTime(robotID int) (time.Duration, error)
+}
 
 // This interface needs to be implemented by the remote controlled struct instance
 // (i.e. the robot simulator)
 type localController interface {
-	start()
-	stop()
+	start() error
+	stop() error
 	set(name, value string)
-	quit()
+	quit() error
 }
-
-type State int
-
-const (
-	Unknown = iota
-	Initialized
-	Started
-	Stopped
-	Terminated
-)
 
 // This struct handles incoming commands from Redis pub-sub and dispacthes them to
 // the localController
 type distributedController struct {
 	*redis.Client
 
-	state           State
 	localController localController
 	pubsub          *redis.PubSub
 }
@@ -46,13 +45,30 @@ func newDistributedController(address string) *distributedController {
 	return &distributedController{
 		Client: client,
 		pubsub: client.Subscribe(remoteControlChannel),
-		state:  Initialized,
 	}
 }
 
-func (c *distributedController) provideUniqueTestID() (int, error) {
-	id, err := c.Client.Incr(testIDKey).Result()
+func (c *distributedController) uniqueTaskID() (int, error) {
+	id, err := c.Client.Incr(taskIDKey).Result()
 	return int(id), err
+}
+
+func (c *distributedController) arrivalTime(robotID int) (time.Duration, error) {
+	delayStr, err := c.Client.Get(fmt.Sprintf("%s:%d", arrivalTimeKeyPrefix, robotID)).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	return time.ParseDuration(delayStr)
+}
+
+func (c *distributedController) departureTime(robotID int) (time.Duration, error) {
+	delayStr, err := c.Client.Get(fmt.Sprintf("%s:%d", departureTimeKeyPrefix, robotID)).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	return time.ParseDuration(delayStr)
 }
 
 func (c *distributedController) forwardCommands(localController localController) {
@@ -65,10 +81,8 @@ func (c *distributedController) forwardCommands(localController localController)
 			switch args[0] {
 			case "start":
 				c.localController.start()
-				c.state = Started
 			case "stop":
 				c.localController.stop()
-				c.state = Stopped
 			case "set":
 				keyValueParts := strings.Split(args[1], "=")
 				if len(keyValueParts) == 2 {
@@ -79,7 +93,7 @@ func (c *distributedController) forwardCommands(localController localController)
 			case "quit":
 				c.pubsub.Close()
 				c.localController.quit()
-				c.state = Terminated
+				signalChannel <- syscall.SIGINT
 			default:
 				fmt.Printf("Received unexpected remote controle command: %q\n", args[0])
 			}

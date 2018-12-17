@@ -31,7 +31,7 @@ Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true, MotorCalibrationReason::Playpen)));
   AddTimer(PlaypenConfig::kMotorCalibrationTimeout_ms,
            [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::MOTORS_UNCALIBRATED) });
   

@@ -22,6 +22,8 @@
 #include "engine/vision/visionModesHelpers.h"
 #include "webServerProcess/src/webService.h"
 
+#define LOG_CHANNEL "VisionScheduleMediator"
+
 namespace Anki{
 namespace Vector{
 
@@ -207,9 +209,9 @@ bool VisionScheduleMediator::RemoveVisionModeSubscriptions(IVisionModeSubscriber
     {
       // Don't really care if someone is trying to remove a vision mode we don't have settings for
       // Only matters if they try to subscribe to a mode we don't have settings for
-      PRINT_NAMED_DEBUG("VisionScheduleMediator.RemoveVisionModeSubscription.UnknownVisionMode",
-                        "Vision mode %s was requested by a subscriber, missing settings in visionScheduleMediator_config.json",
-                        EnumToString(mode));
+      LOG_DEBUG("VisionScheduleMediator.RemoveVisionModeSubscription.UnknownVisionMode",
+                "Vision mode %s was requested by a subscriber, missing settings in visionScheduleMediator_config.json",
+                EnumToString(mode));
     }
     else
     {
@@ -282,7 +284,7 @@ void VisionScheduleMediator::UpdateVisionSchedule(VisionComponent& visionCompone
 
   for(auto& modeDataPair : _modeDataMap)
   {
-    auto& mode = modeDataPair.first;
+    // auto& mode = modeDataPair.first;
     auto& modeData = modeDataPair.second;
     bool modeEnabledChanged = false;
     bool modeScheduleChanged = false;
@@ -303,22 +305,22 @@ void VisionScheduleMediator::UpdateVisionSchedule(VisionComponent& visionCompone
       
       if(modeData.enabled) {
         if(modeEnabledChanged || modeScheduleChanged){
-          PRINT_NAMED_INFO("visionScheduleMediator.EnablingVisionMode",
-                           "Vision Schedule Mediator is enabling mode: %s every %d frame(s).", 
-                           EnumToString(mode),
-                           modeData.updatePeriod );
+          // LOG_INFO("visionScheduleMediator.EnablingVisionMode",
+          //          "Vision Schedule Mediator is enabling mode: %s every %d frame(s).", 
+          //          EnumToString(mode),
+          //          modeData.updatePeriod );
         } else{
-          PRINT_NAMED_INFO("visionScheduleMediator.StateUnchanged",
-                           "Subscription changes for mode: %s did not result in changes to the VisionMode schedule",
-                           EnumToString(mode));
+          // LOG_INFO("visionScheduleMediator.StateUnchanged",
+          //          "Subscription changes for mode: %s did not result in changes to the VisionMode schedule",
+          //          EnumToString(mode));
         }
 
       } else {
         // Any dirty mode which is now disabled should have no subscribers
         DEV_ASSERT(modeData.requestMap.empty(), "visionScheduleMediator.ModeHasBrokenSubscribers");
-        PRINT_NAMED_INFO("visionScheduleMediator.DisablingVisionMode",
-                         "Vision Schedule Mediator is disabling mode: %s as it has no subscribers.",
-                         EnumToString(mode));
+        // LOG_INFO("visionScheduleMediator.DisablingVisionMode",
+        //          "Vision Schedule Mediator is disabling mode: %s as it has no subscribers.",
+        //          EnumToString(mode));
       }
 
       modeData.dirty = false;

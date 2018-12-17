@@ -12,9 +12,18 @@ data "template_file" "load_test" {
 
     image = "${var.app_image}"
 
-    logging_role = "${var.logging_role}"
+    logging_role = "${var.logging["role"]}"
+    logging_source = "${var.logging["source"]}"
+    logging_stream = "${var.logging["stream"]}"
+    logging_index = "${var.logging["index"]}"
+    logging_type = "${var.logging["type"]}"
+    logging_source_type = "${var.logging["source_type"]}"
 
     robots_per_process = "${var.robots_per_process}"
+    tasks_per_cluster = "${var.instance_count * var.service_count}"
+
+    ramp_up_duration = "${var.ramp_durations["up"]}"
+    ramp_down_duration = "${var.ramp_durations["down"]}"
 
     heart_beat_interval = "${var.timer_params["heart_beat_interval"]}"
     heart_beat_stddev = "${var.timer_params["heart_beat_stddev"]}"

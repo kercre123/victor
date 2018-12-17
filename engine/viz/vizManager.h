@@ -240,12 +240,6 @@ namespace Anki {
       void DrawRobotBoundingBox(const u32 quadID,
                                 const Quadrilateral<3,T>& quad,
                                 const ColorRGBA& color);
-      
-      template<typename T>
-      void DrawPlannerObstacle(const bool isReplan,
-                               const u32 quadID,
-                               const Polygon<2,T>& poly,
-                               const ColorRGBA& color);
 
       template<typename T>
       void DrawPoseMarker(const u32 quadID,
@@ -279,8 +273,6 @@ namespace Anki {
       
       // Erases all quads
       void EraseAllQuads();
-      
-      void EraseAllPlannerObstacles(const bool isReplan);
       
       void EraseAllMatMarkers();
 
@@ -531,19 +523,7 @@ namespace Anki {
     {
       DrawQuad(VizQuadType::VIZ_QUAD_MAT_MARKER, quadID, quad, color);
     }
-    
-    template<typename T>
-    void VizManager::DrawPlannerObstacle(const bool isReplan,
-                                         const u32 polyID,
-                                         const Polygon<2,T>& poly,
-                                         const ColorRGBA& color)
-    {
-      // const u32 polyType = (isReplan ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE);
-      
-      DrawPoly(polyID, poly, color);
-    }
 
-    
     template<typename T>
     void VizManager::DrawRobotBoundingBox(const u32 quadID,
                                           const Quadrilateral<3,T>& quad,

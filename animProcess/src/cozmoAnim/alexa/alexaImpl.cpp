@@ -36,13 +36,15 @@
 #include "cozmoAnim/alexa/alexaKeywordObserver.h"
 #include "cozmoAnim/alexa/alexaObserver.h"
 #include "cozmoAnim/alexa/alexaRevokeAuthObserver.h"
-#include "cozmoAnim/alexa/media/player.h"
+#include "cozmoAnim/alexa/media/alexaAudioFactory.h"
+#include "cozmoAnim/alexa/media/alexaMediaPlayer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "osState/osState.h"
 #include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
 
@@ -91,9 +93,17 @@ namespace {
   static const std::chrono::seconds kBufferDuration_s = std::chrono::seconds(15);
   // The size of the ring buffer.
   static const size_t kBufferSize = (kSampleRate_Hz)*kBufferDuration_s.count();
+
+  // how often to double check playing states
+  static const float kAlexaImplWatchdogCheckTime_s = 1.0f;
   
   const std::string kDirectivesFile = "directives.txt";
   const std::string kAlexaFolder = "alexa";
+
+  static const float kTimeToHoldSpeakingBetweenAudioPlays_s = 1.0f;
+  static const float kAlexaImplWatchdogFailTime_s = 5.0f;
+  // TODO:(bn) FIXME: kAlexaImplWatchdogFailTime_s must be greater than kAlexaIdleDelay_s and
+  // kAlexaMaxIdleDelay_s. Should add an assert
   
   // If the DialogUXState is set to Idle, but a directive was received to Play, then wait this long before
   // setting to idle
@@ -110,9 +120,48 @@ namespace {
   CONSOLE_VAR(bool, kDumpAlexaTriggerAudio, "Alexa.Init", false);
 
   // every this many seconds (in basestation time), grab the wall time (system clock) and see if it looks like
-  // it may have jumped. IF so, refresh the alexa timers
+  // it may have jumped. If so, refresh the alexa timers
   CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
 
+#if ANKI_DEV_CHEATS
+
+  static AlexaImpl::SourceId sAddFakeSourcePlaying = 0;
+  static AlexaImpl::SourceId sRemoveFakeSourcePlaying = 0;
+
+  void AddFakePlayingSource(ConsoleFunctionContextRef context) {
+    const int source = ConsoleArg_Get_Int(context, "source");
+
+    if( sAddFakeSourcePlaying != 0 ) {
+      LOG_ERROR("AlexaImpl.ConsoleVar.AddFakePlayingSource.AlreadyPending",
+                "Trying to set fake source for adding to %d, but %llu is already pending",
+                source,
+                sAddFakeSourcePlaying);
+    }
+    else {
+      sAddFakeSourcePlaying = source;
+    }
+  }
+  CONSOLE_FUNC(AddFakePlayingSource, "Alexa.ImplWatchdog", int source);
+
+  void RemoveFakePlayingSource(ConsoleFunctionContextRef context) {
+    const int source = ConsoleArg_Get_Int(context, "source");
+
+    if( sRemoveFakeSourcePlaying != 0 ) {
+      LOG_ERROR("AlexaImpl.ConsoleVar.RemoveFakePlayingSource.AlreadyPending",
+                "Trying to set fake source for removal to %d, but %llu is already pending",
+                source,
+                sRemoveFakeSourcePlaying);
+    }
+    else {
+      sRemoveFakeSourcePlaying = source;
+    }
+  }
+  CONSOLE_FUNC(RemoveFakePlayingSource, "Alexa.ImplWatchdog", int source);
+
+#endif
+
+
+  // TODO:(bn) cleanup: the AVS SDK already provides all of these with slightly different names, so let's use those instead...
   const char* DialogUXStateToString( const avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState& duxState ) {
     switch( duxState ) {
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED: return "FINISHED";
@@ -121,6 +170,7 @@ namespace {
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING: return "LISTENING";
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::EXPECTING: return "EXPECTING";
       case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING: return "SPEAKING";
+      default: return "UNKNOWN";
     }
   }
 
@@ -141,9 +191,50 @@ namespace {
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::BAD_REQUEST: return "BAD_REQUEST";
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_OTHER_ERROR: return "SERVER_OTHER_ERROR";
       case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INVALID_AUTH: return "INVALID_AUTH";
+      default: return "UNKNOWN";
     }
   }
+
+  const char* AuthErrorToString(const avsCommon::sdkInterfaces::AuthObserverInterface::Error& error) {
+    switch(error) {
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SUCCESS: return "SUCCESS";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNKNOWN_ERROR: return "UNKNOWN_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_FAILED: return "AUTHORIZATION_FAILED";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNAUTHORIZED_CLIENT: return "UNAUTHORIZED_CLIENT";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SERVER_ERROR: return "SERVER_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_REQUEST: return "INVALID_REQUEST";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_VALUE: return "INVALID_VALUE";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_EXPIRED: return "AUTHORIZATION_EXPIRED";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNSUPPORTED_GRANT_TYPE: return "UNSUPPORTED_GRANT_TYPE";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CODE_PAIR: return "INVALID_CODE_PAIR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_PENDING: return "AUTHORIZATION_PENDING";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SLOW_DOWN: return "SLOW_DOWN";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INTERNAL_ERROR: return "INTERNAL_ERROR";
+      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CBL_CLIENT_ID: return "INVALID_CBL_CLIENT_ID";
+      default: return "UNKNOWN";
+    }
+  }
+
+  const char* AlertStateToString(const capabilityAgents::alerts::AlertObserverInterface::State& state ) {
+    switch(state) {
+      case capabilityAgents::alerts::AlertObserverInterface::State::READY: return "READY";
+      case capabilityAgents::alerts::AlertObserverInterface::State::STARTED: return "STARTED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::STOPPED: return "STOPPED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::SNOOZED: return "SNOOZED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::COMPLETED: return "COMPLETED";
+      case capabilityAgents::alerts::AlertObserverInterface::State::PAST_DUE: return "PAST_DUE";
+      case capabilityAgents::alerts::AlertObserverInterface::State::FOCUS_ENTERED_FOREGROUND: return "FOCUS_ENTERED_FOREGROUND";
+      case capabilityAgents::alerts::AlertObserverInterface::State::FOCUS_ENTERED_BACKGROUND: return "FOCUS_ENTERED_BACKGROUND";
+      case capabilityAgents::alerts::AlertObserverInterface::State::ERROR: return "ERROR";
+      default: return "UNKNOWN";
+    }
+  }
+
 }
+  
+#if ANKI_DEV_CHEATS
+  DevShutdownChecker AlexaImpl::_shutdownChecker;
+#endif
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::AlexaImpl()
@@ -151,6 +242,8 @@ AlexaImpl::AlexaImpl()
   , _uxState{ AlexaUXState::Idle }
   , _dialogState{ DialogUXState::IDLE }
   , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
+  , _initState{ InitState::Uninitialized }
+  , _runSetNetworkConnectionError{ false }
 {
   static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
                  "Our shorthand SourceId type differs" );
@@ -159,19 +252,14 @@ AlexaImpl::AlexaImpl()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::~AlexaImpl()
 {
-  if( _observer ) {
-    // note: once VIC-11427 is implemented, this might not be necessary, but it wouldn't hurt
-    _observer->Shutdown();
-  }
+  RemoveCallbacksForShutdown();
   
   if( _capabilitiesDelegate ) {
-    // TODO (VIC-11427): this is likely leaking something when commented out, but running shutdown() causes a lock
-    //_capabilitiesDelegate->shutdown();
+    _capabilitiesDelegate->shutdown();
   }
   
-  // First clean up anything that depends on the the MediaPlayers.
-  // This would be a userInputManager or interactionManager, for instance.
-  // We don't have those yet.
+  // First clean up anything that depend on the the MediaPlayers.
+  _client.reset();
   
   // Now it's safe to shut down the MediaPlayers.
   if( _ttsMediaPlayer ) {
@@ -191,9 +279,10 @@ AlexaImpl::~AlexaImpl()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AlexaImpl::Init( const AnimContext* context )
+void AlexaImpl::Init( const AnimContext* context, InitCompleteCallback&& completionCallback )
 {
   _context = context;
+  _initCompleteCallback = std::move(completionCallback);
 
   _lastWallTime = WallTime::getInstance()->GetApproximateTime();
   _lastWallTimeCheck_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -218,16 +307,26 @@ bool AlexaImpl::Init( const AnimContext* context )
   }
 #endif
   
+  // start the sdk async init process via Update()
+  _initState = InitState::PreInit;
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::InitThread()
+{
   auto configs = GetConfigs();
   if( configs.empty() ) {
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // TODO: docs say this should be called before any other threads start. I'm guessing theyre talking
   // about alexa threads.
   if( !avsCommon::avs::initialization::AlexaClientSDKInit::initialize( configs ) ) {
     CRITICAL_SDK("Failed to initialize SDK!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // The observer logs important changes in a variety of sdk components, and calls back to AlexaImpl
@@ -247,7 +346,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                    std::bind(&AlexaImpl::OnSendComplete, this, std::placeholders::_1),
                    std::bind(&AlexaImpl::OnSDKLogout, this),
                    std::bind(&AlexaImpl::OnNotificationsIndicator, this, std::placeholders::_1),
-                   std::bind(&AlexaImpl::OnAlertState, this, std::placeholders::_1, std::placeholders::_2) );
+                   std::bind(&AlexaImpl::OnAlertState, this, std::placeholders::_1, std::placeholders::_2),
+                   std::bind(&AlexaImpl::OnPlayerActivity, this, std::placeholders::_1));
   
   const auto& rootConfig = avsCommon::utils::configuration::ConfigurationNode::getRoot();
   
@@ -260,7 +360,13 @@ bool AlexaImpl::Init( const AnimContext* context )
   std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo = avsCommon::utils::DeviceInfo::create( rootConfig );
   if( !deviceInfo ) {
     CRITICAL_SDK("Creation of DeviceInfo failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
+  }
+  else {
+    DASMSG(avs_device_info, "alexa.device_info", "we created an alexa object with the given device info");
+    DASMSG_SET(s1, deviceInfo->getProductId(), "product id (from json)");
+    DASMSG_SEND();
   }
   
   // Creating the AuthDelegate - this component takes care of LWA and authorization of the client.
@@ -277,7 +383,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   std::shared_ptr<storage::sqliteStorage::SQLiteMiscStorage> miscStorage = storage::sqliteStorage::SQLiteMiscStorage::create(rootConfig);
   if( !miscStorage ) {
     CRITICAL_SDK("Creation of miscStorage failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   // Create HTTP Put handler
@@ -285,7 +392,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   if( !authDelegate ) {
     CRITICAL_SDK("Creation of AuthDelegate failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   authDelegate->addAuthObserver( _observer );
   
@@ -300,7 +408,8 @@ bool AlexaImpl::Init( const AnimContext* context )
                                                           deviceInfo );
   if( !_capabilitiesDelegate ) {
     CRITICAL_SDK("Creation of CapabilitiesDelegate failed!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   _capabilitiesDelegate->addCapabilitiesObserver( _observer );
   
@@ -310,7 +419,7 @@ bool AlexaImpl::Init( const AnimContext* context )
     = capabilityAgents::notifications::SQLiteNotificationsStorage::create( rootConfig );
   
   // Creating the alert storage object to be used for rendering and storing alerts.
-  auto audioFactory = std::make_shared<applicationUtilities::resources::audio::AudioFactory>();
+  auto audioFactory = std::make_shared<AlexaAudioFactory>();
   auto alertStorage
     = capabilityAgents::alerts::storage::SQLiteAlertStorage::create( rootConfig,
                                                                      audioFactory->alerts() );
@@ -318,16 +427,16 @@ bool AlexaImpl::Init( const AnimContext* context )
   auto httpContentFetcherFactory = std::make_shared<avsCommon::utils::libcurlUtils::HTTPContentFetcherFactory>();
   _ttsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::TTS,
                                                         httpContentFetcherFactory );
-  _ttsMediaPlayer->Init(context);
+  _ttsMediaPlayer->Init( _context );
   _alertsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Alerts,
                                                            httpContentFetcherFactory );
-  _alertsMediaPlayer->Init( context );
+  _alertsMediaPlayer->Init( _context );
   _audioMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Audio,
                                                           httpContentFetcherFactory );
-  _audioMediaPlayer->Init( context );
+  _audioMediaPlayer->Init( _context );
   _notificationsMediaPlayer = std::make_shared<AlexaMediaPlayer>( AlexaMediaPlayer::Type::Notifications,
                                                                   httpContentFetcherFactory );
-  _notificationsMediaPlayer->Init( context );
+  _notificationsMediaPlayer->Init( _context );
   
   // the alerts/audio/notifications speakers dont change UX so we observe them
   _alertsMediaPlayer->setObserver( _observer );
@@ -341,7 +450,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   auto internetConnectionMonitor = avsCommon::utils::network::InternetConnectionMonitor::create(httpContentFetcherFactory);
   if( !internetConnectionMonitor ) {
     CRITICAL_SDK("Failed to create InternetConnectionMonitor");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   const avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion = GetFirmwareVersion();
@@ -371,7 +481,8 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   if( !_client ) {
     CRITICAL_SDK("Failed to create SDK client!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
   
   _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
@@ -380,6 +491,7 @@ bool AlexaImpl::Init( const AnimContext* context )
   _client->AddInternetConnectionObserver( _observer );
   _client->AddNotificationsObserver( _observer );
   _client->AddAlertObserver( _observer );
+  _client->AddAudioPlayerObserver( _observer );
   
    // Creating the revoke authorization observer.
   auto revokeObserver = std::make_shared<AlexaRevokeAuthObserver>( _client->GetRegistrationManager() );
@@ -395,7 +507,8 @@ bool AlexaImpl::Init( const AnimContext* context )
 
   if( !sharedDataStream ) {
     CRITICAL_SDK("Failed to create shared data stream!");
-    return false;
+    _initState = InitState::ThreadFailed;
+    return;
   }
 
   avsCommon::utils::AudioFormat compatibleAudioFormat;
@@ -459,15 +572,69 @@ bool AlexaImpl::Init( const AnimContext* context )
   
   _capabilitiesDelegate->addCapabilitiesObserver( _client );
   
-  // try connecting
+  // try connecting... this is already async but let's trigger it from this thread to keep everything in one place
   _client->Connect( _capabilitiesDelegate );
   
-  return true;
+  _initState = InitState::ThreadComplete;
+
+#if ANKI_DEV_CHEATS
+  #define ADD_TO_SHUTDOWN_CHECKER(x) _shutdownChecker.AddObject(#x, x)
+  ADD_TO_SHUTDOWN_CHECKER( _observer );
+  ADD_TO_SHUTDOWN_CHECKER( _capabilitiesDelegate );
+  ADD_TO_SHUTDOWN_CHECKER( _ttsMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _alertsMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _audioMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _notificationsMediaPlayer );
+  ADD_TO_SHUTDOWN_CHECKER( _tapToTalkAudioProvider );
+  ADD_TO_SHUTDOWN_CHECKER( _wakeWordAudioProvider );
+  ADD_TO_SHUTDOWN_CHECKER( _microphone );
+  ADD_TO_SHUTDOWN_CHECKER( _debugMicrophone );
+  ADD_TO_SHUTDOWN_CHECKER( _client );
+  ADD_TO_SHUTDOWN_CHECKER( _keywordObserver );
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Update()
 {
+  if( (_initState == InitState::PreInit) ||
+      (_initState == InitState::Initing) ||
+      (_initState == InitState::ThreadComplete) ||
+      (_initState == InitState::ThreadFailed) )
+  {
+    UpdateAsyncInit();
+  } else if( _initState != InitState::Completed ) {
+    return;
+  }
+
+#if ANKI_DEV_CHEATS
+
+  // NOTE: these (intentionally) don't call CheckForUXStateChange, so they may not have immediate impact until
+  // something else happens
+  // TODO:(bn) console func for that too
+
+  if( sAddFakeSourcePlaying != 0 ) {
+    LOG_WARNING("AlexaImpl.Update.AddingFakePlayingSource",
+                "Adding source %llu from console var request",
+                sAddFakeSourcePlaying);
+    _playingSources.insert(sAddFakeSourcePlaying);
+    sAddFakeSourcePlaying = 0;
+  }
+
+  if( sRemoveFakeSourcePlaying != 0 ) {
+    LOG_WARNING("AlexaImpl.Update.RemovingFakePlayingSource",
+                "Removing source %llu from console var request",
+                sRemoveFakeSourcePlaying);
+    _playingSources.erase(sRemoveFakeSourcePlaying);
+    sRemoveFakeSourcePlaying = 0;
+  }
+#endif
+  
+  if( _runSetNetworkConnectionError ) {
+    _runSetNetworkConnectionError = false;
+    SetNetworkConnectionError();
+  }
+  
   if( _observer != nullptr ) {
     _observer->Update();
   }
@@ -511,28 +678,202 @@ void AlexaImpl::Update()
     _lastWallTimeCheck_s = currTime_s;
   }
 
+  // TODO: merge _nextUXStateCheckTime_s logic into _timeToSetIdle_s
+  bool checkedUXState = false;
   if( _timeToSetIdle_s >= 0.0f && currTime_s >= _timeToSetIdle_s && _playingSources.empty() ) {
-    _dialogState = DialogUXState::IDLE;
+    if( _dialogState != DialogUXState::IDLE) {
+      _dialogState = DialogUXState::IDLE;
+      LOG_INFO( "AlexaImpl.Update.SetDialogStateIdle", "the timer to set idle elapsed, updating dialog state to idle" );
+    }
+    checkedUXState = true;
     CheckForUXStateChange();
+  }
+
+  if( (_nextUXStateCheckTime_s > 0.0f) && (currTime_s >= _nextUXStateCheckTime_s) ) {
+    _nextUXStateCheckTime_s = 0.0f;
+    if( !checkedUXState ) {
+      CheckForUXStateChange();
+    }
+  }
+
+  CheckStateWatchdog();
+  // check watchdog
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::CheckStateWatchdog()
+{
+  // TODO:(bn) for now this only detects being stuck in "speaking"
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if( currTime_s > _lastWatchdogCheckTime_s + kAlexaImplWatchdogCheckTime_s ) {
+
+    if( _uxState == AlexaUXState::Speaking ) {
+      // attempt to detect "forever face" bugs that could happen if we get out of sync with one of the
+      // speakers. If we think we're speaking, but nothing is playing, and this state persists for a while,
+      // then we are likely "stuck"
+
+      // NOTE: there is no code here to check if alerts are active (foreground or background). This is
+      // intentional, if the alerts are active we hold the state speaking, but we do that because we expect
+      // the Alerts player to start making noise momentarily
+
+      bool anyActivePlayers = false;
+      for(const auto& playerPtr : {_ttsMediaPlayer, _alertsMediaPlayer, _audioMediaPlayer, _notificationsMediaPlayer}) {
+        anyActivePlayers |= playerPtr->IsActive();
+      }
+
+      const bool haveStuckTimer = (_possibleStuckStateStartTime_s >= 0.0f);
+
+      if( haveStuckTimer && anyActivePlayers ) {
+        // we thought we might be stuck previously, but now we know we aren't, yay!
+        LOG_INFO( "AlexaImpl.CheckStateWatchdog.NotStuck",
+                  "previously thought we might be stuck, but a player is active so we aren't stuck (here at least)" );
+        // reset stuck timer
+        _possibleStuckStateStartTime_s = -1.0f;
+      }
+      else if( haveStuckTimer && !anyActivePlayers ) {
+        // we still appear to be stuck
+        const bool stuckForTooLong = (currTime_s >= _possibleStuckStateStartTime_s + kAlexaImplWatchdogFailTime_s);
+        if( stuckForTooLong ) {
+          // we're in a bad place, try to un-stick the state
+          LOG_ERROR("AlexaImpl.CheckStateWatchdog.FAIL",
+                    "-------------------- Watchdog timer expired --------------------");
+
+          AttemptToFixStuckInSpeakingBug();
+          _possibleStuckStateStartTime_s = -1.0f;
+        }
+        // else, we're stuck but it hasn't been long enough yet so wait a little longer
+      }
+      else if( !haveStuckTimer && !anyActivePlayers ) {
+        // uh oh, we are speaking but there are no players active. This could be OK if we are just holding
+        // speaking for a few seconds.
+
+        if( _possibleStuckStateStartTime_s < 0.0f ) {
+          _possibleStuckStateStartTime_s = currTime_s;
+          LOG_INFO( "AlexaImpl.CheckStateWatchdog.WatchdogActive",
+                    "At t=%f detected that no players are active, so we might be stuck (but probably not)",
+                    currTime_s );
+        }
+      }
+      else {
+        // LOG_INFO( "AlexaImpl.CheckStateWatchdog.HonkeyDorey", "ALL GOOD active=%d", anyActivePlayers );
+      }
+    }
+    else {
+      if( _possibleStuckStateStartTime_s > 0.0f ) {
+        LOG_INFO( "AlexaImpl.CheckStateWatchdog.Cleared",
+                  "State changed to '%s' to clearing possibly stuck state",
+                  EnumToString(_uxState) );
+        _possibleStuckStateStartTime_s = -1.0f;
+      }
+    }
+
+
+    _lastWatchdogCheckTime_s = currTime_s;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::AttemptToFixStuckInSpeakingBug()
+{
+  LOG_ERROR("AlexaImpl.WatchdogFailure.AttempToFix", "Attempting to fix watchdog state failure");
+
+  // could be a stuck playing source, so clear that out
+  const size_t sourceCounts = _playingSources.size();
+  _playingSources.clear();
+
+  // could also be a stuck alert, so let's kill those too
+  const bool alertWasActive = _alertActive;
+  _alertActive = false;
+
+  const bool alertWasBackground = _backgroundAlertActive;
+  _backgroundAlertActive = false;
+
+  const size_t alertsSize = _alertStates.size();
+  _alertStates.clear();
+
+  CheckForUXStateChange();
+
+  const bool recovered = ANKI_VERIFY(_uxState == AlexaUXState::Idle,
+                                     "AlexaImple.WatchdogFailFail",
+                                     "Failed to reset state properly (still %s), force setting ux state....",
+                                     EnumToString(_uxState) );
+
+  DASMSG(watchdog_recovery, "alexa.watchdog_failure_recovery",
+         "alexa ux state attempted to recover from ux failure");
+  DASMSG_SET(s1, recovered ? "SUCCESS" : "FAILURE", "Success or failure of recovery");
+  DASMSG_SET(s2, EnumToString(_uxState), "UX state after recovery (should be Idle if success)");
+  DASMSG_SET(i1, sourceCounts, "Number of sources that were supposedly playing");
+  DASMSG_SET(i2, alertsSize, "Number of alerts that were supposedly active");
+  DASMSG_SET(i3, alertWasActive, "Was alert counted as active?");
+  DASMSG_SET(i4, alertWasBackground, "Was alert counted as active in the background?");
+  DASMSG_SEND();
+
+  if( !recovered ) {
+    // uh oh, something went _really_ wrong, let's clear the dialog state, force the ux state and send it off
+    // so we at least might be able to get vector back
+    _dialogState = avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE;
+    _uxState = AlexaUXState::Idle;
+    _audioActive = false;
+    _audioActiveLastChangeTime_s = 0.0f;
+    _onAlexaUXStateChanged( _uxState );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::UpdateAsyncInit()
+{
+  if( (_initState == InitState::Uninitialized) ||
+      (_initState == InitState::Completed)     ||
+      (_initState == InitState::Failed) )
+  {
+    return;
+  }
+  
+  if( !_initThread.joinable() ) {
+    _initState = InitState::Initing;
+    _initThread = std::thread(&AlexaImpl::InitThread, this);
+    return;
+  }
+  
+  if( (_initState == InitState::ThreadComplete) || (_initState == InitState::ThreadFailed) ) {
+    // loading is now done
+    _initThread.join();
+    _initThread = std::thread();
+    const bool success = (_initState == InitState::ThreadComplete);
+    _initState = success ? InitState::Completed : InitState::Failed;
+    if( _initCompleteCallback ) {
+      _initCompleteCallback( success );
+    }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Logout()
 {
+  bool logoutCalled = false;
+
   if( _client ) {
     auto regManager = _client->GetRegistrationManager();
     if( regManager ) {
       regManager->logout();
+      logoutCalled = true;
     }
+  }
+
+  if( !logoutCalled ) {
+    DASMSG(user_sign_out_result, "alexa.user_sign_out_result", "User signed out of AVS SDK");
+    DASMSG_SET(s1, "FAILURE", "SUCCESS or FAILURE (note that this instance always sends failure)");
+    DASMSG_SET(s2, "INTERNAL_ERROR", "error type (only INTERNAL_ERROR currently exists, meaning could not call logout)");
+    DASMSG_SEND();
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::StopForegroundActivity()
+void AlexaImpl::StopAlert()
 {
   if( _client ) {
-    _client->StopForegroundActivity();
+    _client->StopAlerts();
   }
 }
   
@@ -575,7 +916,7 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnDirective(const std::string& directive, const std::string& payload)
 {
-  if( directive == "Play" || directive == "Speak" ) {
+  if( directive == "Play" || directive == "Speak" || directive == "SetAlert" || directive == "DeleteAlert" ) {
     _lastPlayDirective_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   // TODO: is there a Stop directive we can listed to? that should force the Idle ux state or at least reset idle timers
@@ -604,14 +945,31 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING("AlexaImpl.OnAuthStateChange", "authStateChanged newState=%d, error=%d", (int)newState, (int)error);
+
+
+  auto sendResultDas = [](bool success, avsCommon::sdkInterfaces::AuthObserverInterface::Error error) {
+    DASMSG(user_sign_in_result, "alexa.user_sign_in_result", "Result of initial user sign in attempt");
+    DASMSG_SET(s1, success ? "SUCCESS" : "FAILURE", "SUCCESS or FAILURE");
+    DASMSG_SET(s2, AuthErrorToString(error), "Error reason (from AVS SDK)");
+    DASMSG_SEND();
+  };
   
   // if not SUCCESS or AUTHORIZATION_PENDING, fail. AUTHORIZATION_PENDING seems like a valid error
   // to me: "Waiting for user to authorize the specified code pair."
   if( (error != Error::SUCCESS) && (error != Error::AUTHORIZATION_PENDING) ) {
     LOG_WARNING( "AlexaImpl.onAuthStateChange.Error", "Alexa authorization experiences error (%d)", (int)error );
+
+    sendResultDas(false, error);
+
     const bool errFlag = true;
     SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
     return;
+  }
+
+  if( _authState == AlexaAuthState::WaitingForCode ) {
+    const bool success = (newState == State::REFRESHED);
+
+    sendResultDas(success, error);
   }
 
   switch( newState ) {
@@ -663,7 +1021,18 @@ void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 void AlexaImpl::CheckForUXStateChange()
 {
   const auto oldState = _uxState;
-  const bool anyPlaying = !_playingSources.empty();
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // When playing sequential audio (e.g. flash news briefing) there is often a very short gap between one
+  // source ending and the next starting. So, if one is playing, consider it playing, but also consider it
+  // playing if it stopped recently
+  const bool audioPlaying = _audioActive || (currTime_s - _audioActiveLastChangeTime_s <= kTimeToHoldSpeakingBetweenAudioPlays_s);
+
+  // Consider a timer / alarm active if it's really active or if it's in the background, since background
+  // timers will jump to foreground as soon as nothing higher priority (i.e. Dialog) is playing
+  const bool alertActive = _alertActive || _backgroundAlertActive;
+
+  const bool anyPlaying = !_playingSources.empty() || alertActive || audioPlaying;
   
   // reset idle timer
   _timeToSetIdle_s = -1.0f;
@@ -672,12 +1041,13 @@ void AlexaImpl::CheckForUXStateChange()
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED:
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE:
     {
-      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      // if nothing is playing, it could be because something is about to play. We only know because
-      // a directive for "Play" or "Speak" has arrived. If one has arrived recently, don't switch to idle yet,
+      // if nothing is playing, it could be because something is about to play. We only know because a
+      // directive for "Play" or "Speak" has arrived. If one has arrived recently, don't switch to idle yet,
       // and instead set a timer so that it will switch to idle only if no other state change occurs.
       // Sometimes, if the delay is long enough, the robot will momentarily break to normal behavior before
-      // returning to alexa. Maybe we need a base delay
+      // returning to alexa. Maybe we need a base delay. Note that we also consider this delay if an alerts
+      // directive is received, because we somtimes receive the alerts directive before the corresponding TTS
+      // (e.g. "Alarm set for 5pm").
       if( anyPlaying ) {
         _uxState = AlexaUXState::Speaking;
       } else if( _lastPlayDirective_s < 0.0f || (currTime_s > _lastPlayDirective_s + kAlexaMaxIdleDelay_s) ) {
@@ -718,6 +1088,9 @@ void AlexaImpl::CheckForUXStateChange()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
 {
+  // TODO:(bn) this could cause "forever face" bugs if it gets out of sync with the actual media player
+  // state. This state duplication should be resolved (both are in anim, no need for it)
+
   if( playing ) {
     auto res = _playingSources.insert( id );
     // not fatal, but it means we don't understand the media player lifecycle correctly
@@ -734,6 +1107,22 @@ void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
       LOG_WARNING( "AlexaImpl.OnSourcePlaybackChange.NotFound", "Source %llu not found", id );
     }
   }
+
+#if ANKI_DEV_CHEATS
+
+  std::stringstream ss;
+  for( const auto& sid : _playingSources ) {
+    ss << ((int)sid) << ", ";
+  }
+
+  LOG_INFO("AlexaImpl.OnSourcePlaybackChange",
+           "Source %llu set to %s, %zu are now playing: %s",
+           id,
+           playing ? "playing" : "not playing",
+           _playingSources.size(),
+           ss.str().c_str());
+#endif
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -760,6 +1149,11 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
+
+  DASMSG(send_complete, "alexa.response_to_request", "SDK responded to a sent message");
+  DASMSG_SET(s1, MessageStatusToString(status), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
+  DASMSG_SEND();
+
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
   switch( status ) {
     case Status::PENDING: // The message has not yet been processed for sending.
@@ -816,6 +1210,14 @@ void AlexaImpl::OnSDKLogout()
 {
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnLogout", "User logged out" );
+
+  // NOTE:(bn) This doesn't get called if we log out, nor if you de-register from Amazon, not sure when it would
+  // get called
+  DASMSG(user_sign_out_result,
+         "alexa.user_remote_sign_out",
+         "User remotely signed out of AVS SDK (unclear when this happens)");
+  DASMSG_SEND();
+
   if( _onLogout != nullptr ) {
     _onLogout();
   }
@@ -840,31 +1242,95 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
 {
   using State = capabilityAgents::alerts::AlertObserverInterface::State;
   _alertStates[alertID] = state;
+  const bool oldAlertActive = _alertActive;
   _alertActive = false;
+  _backgroundAlertActive = false;
   for( auto& alertPair : _alertStates ) {
     bool canBeCancelled;
+    bool inBackground = false;
     switch( alertPair.second ) {
       case State::STARTED: // The alert has started.
+      case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
         canBeCancelled = true;
         break;
+
+      case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
+        inBackground = true;
+
+        // fall through
       case State::READY: // The alert is ready to start, and is waiting for channel focus.
       case State::STOPPED: // The alert has stopped due to user or system intervention.
       case State::SNOOZED: // The alert has snoozed.
       case State::COMPLETED: // The alert has completed on its own.
       case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
-      case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
-      case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
       case State::ERROR: // The alert has encountered an error.
         canBeCancelled = false;
         break;
     }
     _alertActive |= canBeCancelled;
+    _backgroundAlertActive |= inBackground;
   }
   // TODO (VIC-11517): downgrade. for now this is useful in webots
   LOG_WARNING( "AlexaImpl.OnAlertState",
-               "alert '%s' changed to %d, _alertActive=%d", alertID.c_str(), (int)state, _alertActive );
+               "alert '%s' changed to state '%s', _alertActive=%d, _backgroundAlertActive=%d, %zu alerts tracked",
+               alertID.c_str(),
+               AlertStateToString(state),
+               _alertActive,
+               _backgroundAlertActive,
+               _alertStates.size());
+  if( oldAlertActive != _alertActive ) {
+    // note: this is ok to only have two options, not three (e.g., "unknown") since _alertActive
+    // is initialized as false, in which case if the initial assignment to _alertActive is false, we don't
+    // need to call CheckForUXStateChange anyway
+    CheckForUXStateChange();
+  }
+
+  // TODO:(bn) clean up / consolidate this logic with above
+  switch( state ) {
+    case State::STARTED: // The alert has started.
+    case State::FOCUS_ENTERED_FOREGROUND: // The alert has entered the foreground.
+    case State::FOCUS_ENTERED_BACKGROUND: // The alert has entered the background.
+    case State::READY: // The alert is ready to start, and is waiting for channel focus.
+    case State::SNOOZED: // The alert has snoozed.
+      break;
+
+
+    case State::PAST_DUE: // The alert has been determined to be past-due, and will not be rendered.
+    case State::ERROR: // The alert has encountered an error.
+    case State::COMPLETED: // The alert has completed on its own.
+    case State::STOPPED: // The alert has stopped due to user or system intervention.
+    {
+      const size_t numErased = _alertStates.erase(alertID);
+      ANKI_VERIFY(numErased == 1,
+                  "AlexaImpl.OnAlertState.BadAlertRemove",
+                  "Erase of alert %s removed %zu elements",
+                  alertID.c_str(),
+                  numErased);
+      break;
+    }
+  }
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity state )
+{
+  const bool playing = ( state == alexaClientSDK::avsCommon::avs::PlayerActivity::PLAYING );
+  if( playing != _audioActive ) {
+    _audioActive = playing;
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _audioActiveLastChangeTime_s = currTime_s;
+
+    LOG_INFO( "AlexaImpl.OnPlayerActivity", "new state = %s",
+              alexaClientSDK::avsCommon::avs::playerActivityToString(state).c_str() );
+
+    CheckForUXStateChange();
+    // call CheckForUXStateChange() again once kTimeToHoldSpeakingBetweenAudioPlays_s expires
+    // todo: merge _nextUXStateCheckTime_s logic into _timeToSetIdle_s
+    _nextUXStateCheckTime_s = std::max(_nextUXStateCheckTime_s, currTime_s + kTimeToHoldSpeakingBetweenAudioPlays_s + 0.1f);
+    
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
 {
@@ -882,8 +1348,6 @@ void AlexaImpl::NotifyOfTapToTalk()
   if( _client != nullptr ) {
     if( !_isTapOccurring ) {
       _client->StopForegroundActivity();
-      _client->StopAlerts();
-      
       // check info known about connection before trying. these often don't get updated until sending fails
       if( !_client->IsAVSConnected() ) {
         SetNetworkConnectionError();
@@ -907,7 +1371,8 @@ void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
 {
   
   if( !_client->IsAVSConnected() ) {
-    SetNetworkConnectionError();
+    // run SetNetworkConnectionError on main thread
+    _runSetNetworkConnectionError = true;
     return;
   }
 
@@ -956,6 +1421,27 @@ void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
   
   // this can generate SdsReader:seekFailed:reason=seekOverwrittenData if the time indices contain overwritten data
   _keywordObserver->onKeyWordDetected( _wakeWordAudioProvider->stream, "ALEXA", fromIndex, toIndex, nullptr);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::RemoveCallbacksForShutdown()
+{
+  if( _observer ) {
+    _observer->Shutdown();
+  }
+  
+  if( _initThread.joinable() ) {
+     // shut down init thread in prep for destruction since destruction could occur on a thread
+    _initThread.join();
+    _initThread = {};
+  }
+  
+  _onAlexaAuthStateChanged = nullptr;
+  _onAlexaUXStateChanged = nullptr;
+  _onLogout = nullptr;
+  _onNetworkError = nullptr;
+  _onNotificationsChanged = nullptr;
+  _initCompleteCallback = nullptr;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1025,6 +1511,15 @@ void AlexaImpl::SetNetworkError( AlexaNetworkErrorType errorType )
     _onNetworkError( errorType );
   }
 }
+  
+#if ANKI_DEV_CHEATS
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::ConfirmShutdown()
+{
+  _shutdownChecker.PrintRemaining();
+  AlexaClient::ConfirmShutdown();
+}
+#endif
 
 } // namespace Vector
 } // namespace Anki

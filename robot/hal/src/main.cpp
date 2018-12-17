@@ -100,10 +100,13 @@ int main(int argc, const char* argv[])
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
     if (Anki::Vector::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Vector::Robot::step_MainExecution() != Anki::RESULT_OK) {
-        AnkiError("robot.main", "MainExecution failed");
+        AnkiError("robot.main.MainStepFailed", "");
         Anki::Victor::UninstallCrashReporter();
         return -1;
       }
+    } else {
+      AnkiError("robot.main.HALStepFailed", "");
+      return -2;
     }
 
     auto end = std::chrono::steady_clock::now();

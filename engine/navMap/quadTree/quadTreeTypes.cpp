@@ -10,35 +10,12 @@
  **/
 #include "quadTreeTypes.h"
 
-#include "engine/navMap/memoryMap/data/memoryMapData.h"
-
 #include "coretech/common/engine/exceptions.h"
 #include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
 namespace Vector {
 namespace QuadTreeTypes {
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NodeContent::NodeContent(const MemoryMapData& m)
-: data(m.Clone()) {}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NodeContent::NodeContent(MemoryMapTypes::MemoryMapDataPtr m)
-: data(m) {}
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NodeContent::operator==(const NodeContent& other) const
-{
-  return (data == other.data);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NodeContent::operator!=(const NodeContent& other) const
-{
-  const bool ret = !(this->operator==(other));
-  return ret;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vec2f Quadrant2Vec(EQuadrant dir) 
@@ -75,13 +52,13 @@ NodeAddress GetAddressForNodeCenter(const Point2i& nodeCenter, const uint8_t& de
   }
   // (0,0) is the furthest possible leaf node in the MinusXMinusY direction
   // thus the binary mask of the cell is directly used to compute the address
-  NodeAddress addr(depth+1, EQuadrant::Invalid);
+  NodeAddress addr(depth);
   addr[0] = EQuadrant::Root;
   uint32_t dirX = ~nodeCenter.x();
   uint32_t dirY = ~nodeCenter.y();
   uint32_t mask = 1;
   bool minusX, minusY;
-  for(int i=depth; i>=1; --i) {
+  for(int i=depth-1; i>=0; --i) {
     minusX = dirX & mask;
     minusY = dirY & mask;
     addr[i] = (EQuadrant) (((minusX) << 1) + minusY);
@@ -102,7 +79,6 @@ std::string ToString(const NodeAddress& addr)
       case EQuadrant::MinusXPlusY:  return "-+";
       case EQuadrant::MinusXMinusY: return "--";
       case EQuadrant::Root:         return "root";
-      case EQuadrant::Invalid:      return "n/a";
     }
     return "";
   };

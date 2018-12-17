@@ -218,6 +218,10 @@ done
 rsync -raz --delete \
   ${TOPLEVEL}/EXTERNALS/avs-device-sdk/avs-device-sdk \
   ${TOPLEVEL}/EXTERNALS/coretech_external/build/
+# same thing for pffft
+rsync -raz --delete \
+  ${TOPLEVEL}/EXTERNALS/pffft/pffft \
+  ${TOPLEVEL}/EXTERNALS/coretech_external/build/
 
 #
 # Get short commit sha

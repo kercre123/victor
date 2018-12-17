@@ -472,7 +472,7 @@ void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPe
 {
   auto* alexa = _context->GetAlexa();
   if (alexa != nullptr) {
-    alexa->CancelPendingAlexaAuth();
+    alexa->CancelPendingAlexaAuth(EnumToString(msg.reason));
   }
 }
 
@@ -585,6 +585,8 @@ void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnima
 void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
+
+  FaceInfoScreenManager::getInstance()->OnEngineLoaded();
 
   auto* alexa = _context->GetAlexa();
   if( alexa != nullptr ) {

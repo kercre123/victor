@@ -272,22 +272,45 @@ stage("${primaryStageName} Build") {
     agent = new EphemeralAgent()
     node('master') {
         stage('Spin up ephemeral VM') {
-            uuid = agent.getMachineName()
-            vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
-                customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                linkedClone: true, powerOn: false, resourcePool: 'vic-os',
-                sourceName: 'photonos-test', timeoutInSeconds: 60], serverName: vSphereServer
-
             try {
+                uuid = agent.getMachineName()
+                vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
+                    customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
+                    linkedClone: true, powerOn: false, resourcePool: 'vic-os',
+                    sourceName: 'photonos-test', timeoutInSeconds: 60], serverName: vSphereServer
+
                 vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
-                    coresPerSocket: '1', cpuCores: '2']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU 
+                    coresPerSocket: '1', cpuCores: '2']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
 
                 vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
 
                 def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
                 agent.setIPAddress(buildAgentIP)
-            } catch (e) {
-                throw e
+            } catch (Exception exc) {
+                def jobName = "${env.JOB_NAME}"
+                jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
+                def reason = exc.getMessage()
+                notifySlack("", slackNotificationChannel,
+                    [
+                        title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+                        title_link: "${env.BUILD_URL}",
+                        color: "warning",
+                        text: "${reason}",
+                    ]
+                )
+                node('master') {
+                    stage('Cleaning master workspace') {
+                        def workspace = pwd()
+                        dir("${workspace}@script") {
+                            deleteDir()
+                        }
+                    }
+                    stage('Destroy ephemeral VM') {
+                        vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+                    }
+                }
+                currentBuild.rawBuild.result = Result.ABORTED
+                throw new hudson.AbortException('vSphere Exception!')
             }
         }
         stage('Attach ephemeral build agent VM to Jenkins') {

@@ -573,15 +573,14 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   {
     // TODO: Keep some kind of OctTree data structure to make these queries faster?
 
-    Vec3f closestDist(distThreshold);
-    //ObservableObject* matchingObject = nullptr;
+    // Note: This function only considers the magnitude of distThreshold, not the individual elements (see VIC-12526)
+    float closestDist = distThreshold.Length();
 
     BlockWorldFilter filter(filterIn);
     filter.AddFilterFcn([&pose, &closestDist](const ObservableObject* current)
                         {
-                          Vec3f dist = ComputeVectorBetween(pose, current->GetPose());
-                          dist.Abs();
-                          if(dist.Length() < closestDist.Length()) {
+                          const float dist = ComputeDistanceBetween(pose, current->GetPose());
+                          if(dist < closestDist) {
                             closestDist = dist;
                             return true;
                           } else {

@@ -45,6 +45,8 @@ private:
   EngineTimeStamp_t _lastTimeWasOnTreads_ms = 0;
 
   ICozmoBehaviorPtr _initialPickupReaction;
+  ICozmoBehaviorPtr _onBackReaction;
+  ICozmoBehaviorPtr _onFaceReaction;
 
   std::unique_ptr<AreBehaviorsActivatedHelper> _inAirDispatcherBehaviorSet;
   std::unique_ptr<AreBehaviorsActivatedHelper> _suppressInAirBehaviorSet;

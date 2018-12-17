@@ -21,6 +21,9 @@ namespace Vector{
 class IOnboardingPhaseWithProgress{
 public:
   virtual int GetPhaseProgressInPercent() const = 0;
+  // phases with internal state must be able to handle resuming in the event they are interrupted
+  // externally since the App may be relying on their state
+  virtual void ResumeUponNextActivation() = 0;
 };
 
 }//namespace Vector

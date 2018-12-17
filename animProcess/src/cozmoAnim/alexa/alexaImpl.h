@@ -31,8 +31,14 @@
 #pragma once
 
 #include "audioUtil/audioDataTypes.h"
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 
+#if ANKI_DEV_CHEATS
+  #include "cozmoAnim/alexa/devShutdownChecker.h"
+#endif
+
+#include <AVSCommon/SDKInterfaces/AudioPlayerInterface.h>
 #include <AVSCommon/SDKInterfaces/AuthObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/ConnectionStatusObserverInterface.h>
 #include <AVSCommon/SDKInterfaces/DialogUXStateObserverInterface.h>
@@ -46,6 +52,7 @@
 #include <string>
 #include <set>
 #include <unordered_map>
+#include <thread>
 
 namespace alexaClientSDK {
   namespace capabilitiesDelegate { class CapabilitiesDelegate; }
@@ -77,13 +84,20 @@ public:
   
   ~AlexaImpl();
   
-  bool Init( const AnimContext* context );
+  // Starts an async init thread that when complete runs a callback on the same thread as callers to Update()
+  using InitCompleteCallback = std::function<void(bool initSuccessful)>;
+  void Init( const AnimContext* context, InitCompleteCallback&& completionCallback );
+  
+  // If true, the sdk is ready to go (but may not be connected yet)
+  bool IsInitialized() const { return _initState == InitState::Completed; }
   
   void Update();
   
   void Logout();
   
-  void StopForegroundActivity();
+  bool IsAlertActive() const { return _alertActive; }
+  
+  void StopAlert();
   
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples );
@@ -92,7 +106,7 @@ public:
   
   void NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex );
   
-  // Callback setters
+  // Callback setters. Callbacks will run on the same thread as Update()
   
   // this callback should not call AuthDelegate methods
   using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&, bool)>;
@@ -111,9 +125,20 @@ public:
   using OnNotificationsChanged = std::function<void(bool hasNotification)>;
   void SetOnNotificationsChanged( const OnNotificationsChanged& callback ) { _onNotificationsChanged = callback; }
   
+  // Removes all callbacks passed above, and also stops internally processing callbacks from the sdk in prep for being destroyed
+  void RemoveCallbacksForShutdown();
+  
+#if ANKI_DEV_CHEATS
+  static void ConfirmShutdown();
+#endif
+
+  using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
+  
 private:
   using DialogUXState = alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState;
-  using SourceId = uint64_t; // matches SDK's MediaPlayerInterface::SourceId, static asserted in cpp
+  
+  void UpdateAsyncInit();
+  void InitThread();
   
   std::vector<std::shared_ptr<std::istream>> GetConfigs() const;
   
@@ -140,7 +165,14 @@ private:
   void OnSDKLogout();
   void OnNotificationsIndicator( alexaClientSDK::avsCommon::avs::IndicatorState state );
   void OnAlertState( const std::string& alertID, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State state );
+  void OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity state );
+
+  // call every tick from update, occasionally this will perform some checks to see if it looks like we are
+  // stuck in a UX state bug (e.g. "forever face")
+  void CheckStateWatchdog();
   
+  // if the watchdog fires, this function attempts to remedy the situation
+  void AttemptToFixStuckInSpeakingBug();
   
   // readable version int
   alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion GetFirmwareVersion() const;
@@ -170,7 +202,18 @@ private:
   
   // alert info
   bool _alertActive = false;
+  bool _backgroundAlertActive = false;
   std::unordered_map<std::string, alexaClientSDK::capabilityAgents::alerts::AlertObserverInterface::State> _alertStates;
+
+  // audio player info (for the audio channel, e.g. flash briefing)
+  bool _audioActive = false;
+  float _audioActiveLastChangeTime_s = 0.0f;
+  
+  // todo: merge with _timeToSetIdle_s
+  float _nextUXStateCheckTime_s = 0.0f;
+
+  float _lastWatchdogCheckTime_s = 0.0f;
+  float _possibleStuckStateStartTime_s = -1.0f;
 
   // hack to check if time is synced. As of this moment, OSState::IsWallTimeSynced() is not reliable and fast
   // on vicos.... so just track if the system clock jumps and if so, refresh the timers
@@ -203,6 +246,27 @@ private:
   OnLogout _onLogout;
   OnNetworkError _onNetworkError;
   OnNotificationsChanged _onNotificationsChanged;
+  
+  InitCompleteCallback _initCompleteCallback;
+  
+  // handles state of the loading thread. some of this could be done with futures but meh
+  enum class InitState : uint8_t {
+    Uninitialized=0,
+    PreInit,        // AlexaImpl::Init was called
+    Initing,        // init thread running
+    ThreadComplete, // init thread completed successfully
+    ThreadFailed,   // init thread failed
+    Completed,      // initialization complete
+    Failed,         // initialization failed
+  };
+  std::atomic<InitState> _initState;
+  std::thread _initThread;
+  
+  std::atomic<bool> _runSetNetworkConnectionError;
+
+#if ANKI_DEV_CHEATS
+  static DevShutdownChecker _shutdownChecker;
+#endif
 };
 
 

@@ -28,6 +28,7 @@ public:
 
   // IOnboardingPhaseWithProgress
   virtual int GetPhaseProgressInPercent() const override;
+  virtual void ResumeUponNextActivation() override {_dVars.resumeUponActivation = true;}
 
 protected:
 
@@ -75,7 +76,11 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     TeachWakeWordState state;
-    int numWakeWordDetections;
+    bool resumeUponActivation;
+    struct PersistentVars{
+      PersistentVars();
+      int numWakeWordDetections;
+    } persistent;
   };
 
   InstanceConfig _iConfig;

@@ -79,7 +79,9 @@ func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
-	log.Printf("%T: writing '%#v' Proto message to Engine\n", *manager, msg)
+	if logMessageContent {
+		log.Printf("%T: writing '%#v' Proto message to Engine\n", *manager, msg)
+	}
 	return manager.conn.Write(buf.Bytes())
 }
 
@@ -114,7 +116,9 @@ func (manager *EngineProtoIpcManager) deleteListenerCallback(listener chan extin
 func (manager *EngineProtoIpcManager) CreateChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper) {
 	result := make(chan extint.GatewayWrapper, numChannels)
 	reflectedType := reflect.TypeOf(tag).String()
-	log.Println("Listening for", reflectedType)
+	if logVerbose {
+		log.Println("Listening for", reflectedType)
+	}
 	manager.managerMutex.Lock()
 	defer manager.managerMutex.Unlock()
 	slice := manager.managedChannels[reflectedType]
@@ -293,7 +297,9 @@ func (manager *SwitchboardIpcManager) Write(msg *gw_clad.SwitchboardRequest) (in
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
-	log.Printf("%T: writing '%#v' message to Switchboard\n", *manager, *msg)
+	if logMessageContent {
+		log.Printf("%T: writing '%#v' message to Switchboard\n", *manager, *msg)
+	}
 	return manager.conn.Write(buf.Bytes())
 }
 
@@ -327,7 +333,9 @@ func (manager *SwitchboardIpcManager) deleteListenerCallback(listener chan gw_cl
 
 func (manager *SwitchboardIpcManager) CreateChannel(tag gw_clad.SwitchboardResponseTag, numChannels int) (func(), chan gw_clad.SwitchboardResponse) {
 	result := make(chan gw_clad.SwitchboardResponse, numChannels)
-	log.Printf("Listening for %+v\n", tag)
+	if logVerbose {
+		log.Printf("Listening for %+v\n", tag)
+	}
 	manager.managerMutex.Lock()
 	defer manager.managerMutex.Unlock()
 	slice := manager.managedChannels[tag]
@@ -418,7 +426,9 @@ func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) 
 
 	manager.connMutex.Lock()
 	defer manager.connMutex.Unlock()
-	log.Printf("%T: writing '%#v' CLAD message to Engine\n", *manager, *msg)
+	if logMessageContent {
+		log.Printf("%T: writing '%#v' CLAD message to Engine\n", *manager, *msg)
+	}
 	return manager.conn.Write(buf.Bytes())
 }
 
@@ -452,7 +462,9 @@ func (manager *EngineCladIpcManager) deleteListenerCallback(listener chan gw_cla
 
 func (manager *EngineCladIpcManager) CreateChannel(tag gw_clad.MessageRobotToExternalTag, numChannels int) (func(), chan gw_clad.MessageRobotToExternal) {
 	result := make(chan gw_clad.MessageRobotToExternal, numChannels)
-	log.Printf("Listening for %+v\n", tag)
+	if logVerbose {
+		log.Printf("Listening for %+v\n", tag)
+	}
 	manager.managerMutex.Lock()
 	defer manager.managerMutex.Unlock()
 	slice := manager.managedChannels[tag]

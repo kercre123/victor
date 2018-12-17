@@ -72,7 +72,7 @@ namespace {
 
 #endif // ANKI_DEV_CHEATS
 
-  CONSOLE_VAR(bool, kBeatDetectorUseProcessedAudio, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kBeatDetectorUseProcessedAudio, CONSOLE_GROUP, true);
   
   #define ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG 0
   using MicProcessingState = MicDataProcessor::ProcessingState;
@@ -203,7 +203,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
       LOG_INFO("MicDataProcessor.TWCallback", "Timestamp %d", (TimeStamp_t)mostRecentTimestamp);
     }
     else {
-      PRINT_NAMED_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
+      LOG_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
     }
   };
   

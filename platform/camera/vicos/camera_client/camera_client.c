@@ -694,9 +694,9 @@ static int read_incoming_data(struct client_ctx *ctx)
   }
   while (rc > 0);
 
-  if (rc == 0) {
-    process_incoming_messages(ctx);
-  }
+  // Attempt to process any incoming messages
+  // Should do nothing if we didn't receive any messages
+  process_incoming_messages(ctx);
 
   return rc;
 }
@@ -815,7 +815,17 @@ static void *camera_client_thread(void *camera_handle_ptr)
 // Initializes the camera
 int camera_init(struct anki_camera_handle **camera)
 {
-  s_pwdn_gpio = gpio_create(PWDN_PIN, gpio_DIR_OUTPUT, gpio_LOW);
+  if(s_pwdn_gpio != NULL)
+  {
+    gpio_close(s_pwdn_gpio);
+  }
+  
+  int res = gpio_create(PWDN_PIN, gpio_DIR_OUTPUT, gpio_LOW, &s_pwdn_gpio);
+  if(res < 0)
+  {
+    loge("%s: failed to create pwdn gpio %d", __func__, res);
+    return -1;
+  }
   
   // configure logging
   setAndroidLoggingTag("anki-cam-client");
@@ -871,8 +881,29 @@ int camera_stop(struct anki_camera_handle *camera)
 void camera_pause(struct anki_camera_handle *camera, int pause)
 {
   struct client_ctx *client = &CAMERA_HANDLE_P(camera)->camera_client;
-  
-  gpio_set_value(s_pwdn_gpio, (pause == 0 ? gpio_LOW : gpio_HIGH));
+
+  const enum Gpio_Level value = (pause == 0 ? gpio_LOW : gpio_HIGH);
+  int res = gpio_set_value(s_pwdn_gpio, value);
+  if(res < 0)
+  {
+    // VIC-12258 981 fault code randomly occuring
+    // This is assuming gpio_set_value failed due to the gpio no longer existing
+    // I think either mm-anki-camera or mm-qcamera-daemon unexports it when it cleans up
+    // the open stream. What might be happening is one of those processes is crashing and being
+    // being automatically restarted (we handle this and can recover).
+    // During the crash gpio94 is unexported so we fail to set its value and bring the
+    // camera out of standby. This results in engine no longer receiving frames and eventually
+    // showing the 981 fault code.
+    // If this is the issue then it should be fixable by simply recreating gpio94.
+    fprintf(stderr, "camera_pause %d Failed to set gpio %d, recreating\n", pause, errno);
+    gpio_close(s_pwdn_gpio);
+    res = gpio_create(PWDN_PIN, gpio_DIR_OUTPUT, value, &s_pwdn_gpio);
+    if(res < 0)
+    {
+      fprintf(stderr, "camera_pause Failed to recreate gpio, camera left in previous pause state\n");
+      return;
+    }
+  }
   
   if(pause)
   {

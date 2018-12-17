@@ -37,7 +37,7 @@
 
 
 #define PRINT_DEBUG( format, ... ) \
-  PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", format, ##__VA_ARGS__ )
+  PRINT_CH_DEBUG( "Microphones", "BehaviorReactToSound", format, ##__VA_ARGS__ )
 
 
 namespace Anki {
@@ -219,7 +219,7 @@ void BehaviorReactToSound::RespondToSound()
 {
   if ( kInvalidMicDirectionIndex != _triggeredDirection )
   {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Responding to sound from direction [%d]", _triggeredDirection );
+    PRINT_DEBUG( "Responding to sound from direction [%d]", _triggeredDirection );
 
     // Send das message ONLY when we're reacting to a valid sound
     DASMSG( robot_reacted_to_sound, "robot.reacted_to_sound", "Robot is reacting to a valid sound" );

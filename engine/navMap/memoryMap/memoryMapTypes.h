@@ -94,7 +94,7 @@ using MemoryMapDataConstPtr  = MemoryMapDataWrapper<const MemoryMapData>;
 using MemoryMapDataList      = std::unordered_set<MemoryMapDataPtr, MemoryMapDataHasher<MemoryMapData>>;
 using MemoryMapDataConstList = std::unordered_set<MemoryMapDataConstPtr, MemoryMapDataHasher<const MemoryMapData>>;
 
-using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
+using NodeTransformFunction  = QuadTreeTypes::NodeTransformFunction;
 using NodePredicate          = std::function<bool (MemoryMapDataConstPtr)>;
 
 using QuadInfoVector         = std::vector<ExternalInterface::MemoryMapQuadInfo>;
@@ -110,9 +110,6 @@ bool ExpectsAdditionalData(EContentType type);
 
 // String representing ENodeContentType for debugging purposes
 const char* EContentTypeToString(EContentType contentType);
-
-// convert between our internal node content type and an external content type
-ExternalInterface::ENodeContentTypeEnum ConvertContentType(EContentType contentType);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Array of content that provides an API with compilation checks for algorithms that require combinations

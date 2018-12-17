@@ -17,6 +17,7 @@
 
 #include "engine/navMap/quadTree/quadTreeTypes.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
+#include "engine/navMap/memoryMap/data/memoryMapData.h"
 
 #include "util/helpers/templateHelpers.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
@@ -55,7 +56,7 @@ public:
   void SetRoot(QuadTree* tree) { _quadTree = tree; };
 
   // notification when the content type changes for the given node
-  void OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldContent, const bool wasEmpty);
+  void OnNodeContentChanged(const QuadTreeNode* node, const NodeContent& oldContent);
 
   // notification when a node is going to be removed entirely
   void OnNodeDestroyed(const QuadTreeNode* node);
@@ -75,7 +76,7 @@ public:
   bool HasContentType(EContentType type) const;
 
   // multi-ray based collision checking optimization with memoization of result point info
-  std::vector<bool> AnyOfRays(const Point2f& start, const std::vector<Point2f>& ends, NodePredicate pred) const;
+  std::vector<bool> AnyOfRays(const Point2f& start, const std::vector<Point2f>& ends, const NodePredicate& pred) const;
  
 private:
 
