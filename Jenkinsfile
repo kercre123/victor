@@ -286,19 +286,18 @@ stage("${primaryStageName} Build") {
 
                 def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
                 agent.setIPAddress(buildAgentIP)
-            } catch (e) {
+            } catch (Exception exc) {
                 def jobName = "${env.JOB_NAME}"
                 jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
+                def reason = exc.getMessage()
                 notifySlack("", slackNotificationChannel,
                     [
                         title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
                         title_link: "${env.BUILD_URL}",
                         color: "warning",
-                        text: "vSphere Exception: Build not run!",
+                        text: "${reason}",
                     ]
                 )
-                throw e
-            } finally {
                 node('master') {
                     stage('Cleaning master workspace') {
                         def workspace = pwd()
@@ -310,6 +309,8 @@ stage("${primaryStageName} Build") {
                         vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
                     }
                 }
+                currentBuild.rawBuild.result = Result.ABORTED
+                throw new hudson.AbortException('vSphere Exception!')
             }
         }
         stage('Attach ephemeral build agent VM to Jenkins') {
