@@ -214,11 +214,13 @@ ActionResult TurnToAlignWithChargerAction::Init()
   // itself toward the charger origin.
   const float distanceIntoChargerToAimFor_mm = 10.f;
   Pose3d poseToAngleToward(0.f, Z_AXIS_3D(),
-                           {distanceIntoChargerToAimFor_mm, 0.f, 0.f});
-  poseToAngleToward.PreComposeWith(charger->GetPose());
-  poseToAngleToward.SetParent(GetRobot().GetWorldOrigin());
-  
-  const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(), poseToAngleToward);
+                           {distanceIntoChargerToAimFor_mm, 0.f, 0.f},
+                           charger->GetPose());
+
+  // Get the vector from the target pose to the drive center pose, expressed in the world origin frame
+  const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(),
+                                                     poseToAngleToward,
+                                                     GetRobot().GetWorldOrigin());
   const float angleToTurnTo = atan2f(targetToRobotVec.y(), targetToRobotVec.x());
   
   auto* turnAction = new TurnInPlaceAction(angleToTurnTo, true);

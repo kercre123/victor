@@ -306,23 +306,26 @@ namespace Anki {
   Pose2d operator* (const Pose2d& pose1, const Pose2d& pose2);
   Pose3d operator* (const Pose3d& pose1, const Pose3d& pose2);
   
-  // Compute vector from pose2's translation to pose1's translation
-  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2);
+  // Compute vector from pose2's translation to pose1's translation (see note about outputFrame below)
+  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, const Pose3d& outputFrame);
   
-  // Compute distance between the two poses' translations
-  inline f32 ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2) {
-    return ComputeVectorBetween(pose1, pose2).Length();
-  }
-
-  // calculate vector between pose's translations (rotation is ignored)
-  // returns true/false depending on whether poses are comparable (share root)
+  // Calculate vector from pose2's translation to pose1's translation (rotations of the input poses are ignored), with
+  // the resulting vector expressed in the outputFrame (which can be any pose in the same tree as pose1 and pose2).
+  // returns true/false depending on whether poses (and output frame) are comparable (share root)
   // stores result in outVector if the return value is true, untouched if false
-  bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, Vec3f& outVector);
+  bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, const Pose3d& outputFrame, Vec3f& outVector);
   
   // calculate distance between pose's translations (rotation is ignored)
   // returns true/false depending on whether poses are comparable (share root)
   // stores result in outDistance if the return value is true, untouched if false
   bool ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistance);
+  
+  // Compute distance between the two poses' translations
+  inline f32 ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2) {
+    f32 dist = 0.f;
+    ComputeDistanceBetween(pose1, pose2, dist);
+    return dist;
+  }
   
   // calculate distance squared between pose's translations (rotation is ignored)
   // returns true/false depending on whether poses are comparable (share root)
