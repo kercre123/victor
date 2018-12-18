@@ -218,9 +218,15 @@ ActionResult TurnToAlignWithChargerAction::Init()
                            charger->GetPose());
 
   // Get the vector from the target pose to the drive center pose, expressed in the world origin frame
-  const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(),
-                                                     poseToAngleToward,
-                                                     GetRobot().GetWorldOrigin());
+  Vec3f targetToRobotVec;
+  if (!ComputeVectorBetween(GetRobot().GetDriveCenterPose(),
+                            poseToAngleToward,
+                            GetRobot().GetWorldOrigin(),
+                            targetToRobotVec)) {
+    PRINT_NAMED_WARNING("TurnToAlignWithChargerAction.Init.CouldNotComputeVector",
+                        "Failed to compute vector from target pose to robot pose");
+    return ActionResult::BAD_POSE;
+  }
   const float angleToTurnTo = atan2f(targetToRobotVec.y(), targetToRobotVec.x());
   
   auto* turnAction = new TurnInPlaceAction(angleToTurnTo, true);

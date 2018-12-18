@@ -579,7 +579,12 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     BlockWorldFilter filter(filterIn);
     filter.AddFilterFcn([&pose, &closestDist](const ObservableObject* current)
                         {
-                          const float dist = ComputeDistanceBetween(pose, current->GetPose());
+                          float dist = 0.f;
+                          if (!ComputeDistanceBetween(pose, current->GetPose(), dist)) {
+                            LOG_ERROR("BlockWorld.FindLocatedObjectClosestToHelper.FilterFcn",
+                                      "Failed to compute distance between input pose and block pose");
+                            return false;
+                          }
                           if(dist < closestDist) {
                             closestDist = dist;
                             return true;
@@ -1154,7 +1159,12 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       // We use the distance to the observed object to decide (a) if the object is
       // close enough to do localization/identification and (b) to use only the
       // closest object in each coordinate frame for localization.
-      const f32 distToObjSeen = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
+      f32 distToObjSeen = 0.f;
+      if (!ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose(), distToObjSeen)) {
+        LOG_ERROR("BlockWorld.AddAndUpdateObjects.ComputeDistanceFailure",
+                  "Failed to compute distance between robot and object seen");
+        return RESULT_FAIL;
+      }
 
       // First thing that we have to do is ask the PoseConfirmer whether this is a confirmed object,
       // or a visual observation of an object that we want to consider for the future (unconfirmed object).

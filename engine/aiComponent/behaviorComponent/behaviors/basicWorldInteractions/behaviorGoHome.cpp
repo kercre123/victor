@@ -273,8 +273,12 @@ void BehaviorGoHome::TransitionToObserveCharger()
       }
     };
     
-    const auto& robotPose = robotInfo.GetPose();
-    const bool farFromCharger = ComputeDistanceBetween(charger->GetPose(), robotPose) > kFarFromChargerThreshold_mm;
+    float robotToChargerDist_mm = 0.f;
+    if (!ComputeDistanceBetween(charger->GetPose(), robotInfo.GetPose(), robotToChargerDist_mm)) {
+      LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger.ComputeDistanceFailure", "poses not comparable");
+      return;
+    }
+    const bool farFromCharger = (robotToChargerDist_mm > kFarFromChargerThreshold_mm);
     const bool observedRecently = robotInfo.GetLastMsgTimestamp() - charger->GetLastObservedTime() < kRecentlyObservedChargerThreshold_ms;
     if (farFromCharger || !observedRecently) {
       auto* action = new CompoundActionSequential();

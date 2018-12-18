@@ -415,16 +415,6 @@ namespace Anki {
   
 #pragma mark -
 #pragma mark Global Functions
-  
-  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, const Pose3d& outputFrame)
-  {
-    Vec3f ret{0.f,0.f,0.f};
-    const bool comparable = ComputeVectorBetween(pose1, pose2, outputFrame, ret);
-    if ( !comparable ) {
-      PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent", "Could not get pose1 w.r.t. pose2.");
-    }
-    return ret;
-  }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, const Pose3d& outputFrame, Vec3f& outVector)

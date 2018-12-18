@@ -532,10 +532,22 @@ namespace Vector {
     {
       // Update the last observed face pose.
       // If more than one was observed in the same timestamp then take the closest one.
-      if (((_lastObservedFaceTimeStamp != faceEntry->face.GetTimeStamp()) ||
-          (ComputeDistanceBetween(_robot->GetPose(), _lastObservedFacePose) >
-           ComputeDistanceBetween(_robot->GetPose(), faceEntry->face.GetHeadPose()))))
-      {
+      const bool newerThanLastObservation = (faceEntry->face.GetTimeStamp() > _lastObservedFaceTimeStamp);
+      bool closerThanLastObservation = false; // note: only computed if there were multiple observations in one tick
+      if (!newerThanLastObservation) {
+        // More than one face was observed in the same timestamp, so see if this one is closest
+        float lastObservedFaceDist_mm = 0.f;
+        float thisFaceDist_mm = 0.f;
+        if (!ComputeDistanceBetween(_robot->GetPose(), _lastObservedFacePose, lastObservedFaceDist_mm) ||
+            !ComputeDistanceBetween(_robot->GetPose(), faceEntry->face.GetHeadPose(), thisFaceDist_mm)) {
+          LOG_ERROR("FaceWorld.AddOrUpdateFace.ComputeDistanceFailure",
+                    "Failed computing distance between robot and faces");
+          return RESULT_FAIL;
+        }
+        closerThanLastObservation = (thisFaceDist_mm < lastObservedFaceDist_mm);
+      }
+      
+      if (newerThanLastObservation || closerThanLastObservation) {
         _lastObservedFacePose = faceEntry->face.GetHeadPose();
         _lastObservedFaceTimeStamp = faceEntry->face.GetTimeStamp();
 

@@ -286,88 +286,101 @@ TEST(PoseTest, ComputeVectorBetween)
             parent2);
   
   const float tol = 0.001f;
+  float dist = 0.f;
   
-  EXPECT_NEAR(60.22835, ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(60.22835, dist, tol);
   
   // Since parent1 and parent2 have the same rotation/translation, we expect results to be the same when we use
   // either parent1 or parent2 as the outputFrame
-  auto vec = ComputeVectorBetween(p1, p2, parent1);
+  Vec3f vec;
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent1, vec));
   EXPECT_NEAR(vec.x(), p1_trans.x() - p2_trans.x(), tol);
   EXPECT_NEAR(vec.y(), p1_trans.y() - p2_trans.y(), tol);
   EXPECT_NEAR(vec.z(), p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
-  vec = ComputeVectorBetween(p1, p2, parent2);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent2, vec));
   EXPECT_NEAR(vec.x(), p1_trans.x() - p2_trans.x(), tol);
   EXPECT_NEAR(vec.y(), p1_trans.y() - p2_trans.y(), tol);
   EXPECT_NEAR(vec.z(), p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
   // Changing the rotation of p1 and p2 should not affect the results (since ComputeVectorBetween should be invariant
   // to the input poses' rotations)
   p1.SetRotation(0.f, {0.f, 0.f, 1.f});
   p2.SetRotation(0.f, {0.f, 0.f, 1.f});
 
-  vec = ComputeVectorBetween(p1, p2, parent1);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent1, vec));
   EXPECT_NEAR(vec.x(), p1_trans.x() - p2_trans.x(), tol);
   EXPECT_NEAR(vec.y(), p1_trans.y() - p2_trans.y(), tol);
   EXPECT_NEAR(vec.z(), p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
-  vec = ComputeVectorBetween(p1, p2, parent2);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent2, vec));
   EXPECT_NEAR(vec.x(), p1_trans.x() - p2_trans.x(), tol);
   EXPECT_NEAR(vec.y(), p1_trans.y() - p2_trans.y(), tol);
   EXPECT_NEAR(vec.z(), p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
   // Though an unusual case, setting the outputFrame to be one of the input poses should result in the vector simply
   // being equal to the difference between the pose1 and pose2's translations (since we have set the rotations to 0).
   // This result should be the same regardless of if we set the outputFrame to pose1 or pose2 (since their rotations
   // are the same).
   
-  vec = ComputeVectorBetween(p1, p2, p1);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, p1, vec));
   EXPECT_NEAR(vec.x(), p1_trans.x() - p2_trans.x(), tol);
   EXPECT_NEAR(vec.y(), p1_trans.y() - p2_trans.y(), tol);
   EXPECT_NEAR(vec.z(), p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
 
-  vec = ComputeVectorBetween(p1, p2, p2);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, p2, vec));
   EXPECT_NEAR(vec.x(), p1_trans.x() - p2_trans.x(), tol);
   EXPECT_NEAR(vec.y(), p1_trans.y() - p2_trans.y(), tol);
   EXPECT_NEAR(vec.z(), p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
   // Rotating parent2 about the z axis by 180 degrees should also rotate pose2 by 180 degrees. The z value should be
   // the same as before.
   parent2.SetRotation(M_PI_F, {0.f, 0.f, 1.f});
   
-  vec = ComputeVectorBetween(p1, p2, parent2);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent2, vec));
   EXPECT_NEAR(vec.x(), -(p1_trans.x() + p2_trans.x()), tol);
   EXPECT_NEAR(vec.y(), -(p1_trans.y() + p2_trans.y()), tol);
   EXPECT_NEAR(vec.z(),   p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
-  vec = ComputeVectorBetween(p1, p2, parent1);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent1, vec));
   EXPECT_NEAR(vec.x(), +(p1_trans.x() + p2_trans.x()), tol);
   EXPECT_NEAR(vec.y(), +(p1_trans.y() + p2_trans.y()), tol);
   EXPECT_NEAR(vec.z(),   p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
   // Translating parent2 in the y direction should reflect in the results (other axes should be the same)
   const float yOffset = 10.f;
   parent2.SetTranslation(Vec3f{0.f, yOffset, 0.f});
   
-  vec = ComputeVectorBetween(p1, p2, parent2);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent2, vec));
   EXPECT_NEAR(vec.x(), -(p1_trans.x() + p2_trans.x()), tol);
   EXPECT_NEAR(vec.y(), -(p1_trans.y() + p2_trans.y()) + yOffset, tol);
   EXPECT_NEAR(vec.z(),   p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
-  vec = ComputeVectorBetween(p1, p2, parent1);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p2, parent1, vec));
   EXPECT_NEAR(vec.x(), +(p1_trans.x() + p2_trans.x()), tol);
   EXPECT_NEAR(vec.y(), +(p1_trans.y() + p2_trans.y()) - yOffset, tol);
   EXPECT_NEAR(vec.z(),   p1_trans.z() - p2_trans.z(), tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
   // Test a pose with respect to itself
   Pose3d poseWrtItself;
@@ -379,19 +392,21 @@ TEST(PoseTest, ComputeVectorBetween)
   EXPECT_NEAR(poseWrtItself.GetTranslation().z(), 0, tol);
 
   // Vector between self should be 0
-  vec = ComputeVectorBetween(p1, p1, p1);
+  ASSERT_TRUE(ComputeVectorBetween(p1, p1, p1, vec));
   EXPECT_NEAR(vec.x(), 0, tol);
   EXPECT_NEAR(vec.y(), 0, tol);
   EXPECT_NEAR(vec.z(), 0, tol);
   EXPECT_NEAR(vec.Length(), 0, tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p1, p1), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p1, p1, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
   
-  vec = ComputeVectorBetween(p2, p2, p2);
+  ASSERT_TRUE(ComputeVectorBetween(p2, p2, p2, vec));
   EXPECT_NEAR(vec.x(), 0, tol);
   EXPECT_NEAR(vec.y(), 0, tol);
   EXPECT_NEAR(vec.z(), 0, tol);
   EXPECT_NEAR(vec.Length(), 0, tol);
-  EXPECT_NEAR(vec.Length(), ComputeDistanceBetween(p2, p2), tol);
+  ASSERT_TRUE(ComputeDistanceBetween(p2, p2, dist));
+  EXPECT_NEAR(vec.Length(), dist, tol);
 }
 
 
