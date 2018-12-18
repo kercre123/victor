@@ -93,6 +93,9 @@
         "builds": {
             "coretech_external": {
                 "build_type_id": "Cte_Master",
+                "checksums": {
+                    "sha256": "fe6008376eed0adf374897057d0d097d7345a79bf81da285c6f9ed2d10e0b56b"
+                },
                 "extension": "tar.gz",
                 "package_name": "Cte",
                 "version": "195"
