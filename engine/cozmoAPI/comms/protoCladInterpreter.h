@@ -74,6 +74,10 @@ public:
       const Anki::Vector::ExternalInterface::ObjectTapped& clad_message,
       external_interface::GatewayWrapper& proto_message);
 
+  static void CladObjectConnectionStateToProto(
+      const Anki::Vector::ExternalInterface::ObjectConnectionState& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
 private:
   ProtoCladInterpreter() {}
 

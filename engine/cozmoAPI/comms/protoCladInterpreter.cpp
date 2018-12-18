@@ -443,6 +443,23 @@ void ProtoCladInterpreter::CladObjectTappedToProto(
   proto_message = ExternalMessageRouter::Wrap(object_event);
 }
 
+void ProtoCladInterpreter::CladObjectConnectionStateToProto(
+    const Anki::Vector::ExternalInterface::ObjectConnectionState& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
+
+  LOG_WARNING("ron_proto", "CladObjectConnectionStateToProto()");
+  external_interface::ObjectConnectionState* object_connection_state = new external_interface::ObjectConnectionState;
+
+  object_connection_state->set_object_id(clad_message.objectID);
+  object_connection_state->set_factory_id(clad_message.factoryID);
+  object_connection_state->set_object_type(CladObjectTypeToProto(clad_message.object_type));
+  object_connection_state->set_connected(clad_message.connected);
+
+  external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ object_connection_state };
+
+  proto_message = ExternalMessageRouter::Wrap(object_event);
+}
+
 
 } // namespace Vector
 } // namespace Anki

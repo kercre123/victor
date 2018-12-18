@@ -4,41 +4,6 @@ namespace Anki {
 namespace Victor {
 namespace Gateway {
 
-structure ActiveAccel
-{
-  float_32 x,
-  float_32 y,
-  float_32 z
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  CUBES  ////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-// Indicates that a cube has connected or disconnected
-message ObjectConnectionState
-{
-  uint_32 objectID,
-  string factoryID,
-  ObjectType  object_type,
-  bool connected
-}
-
-/*
-message ObjectTapped
-{
-  uint_32 timestamp,
-  uint_32 objectID,
-}
-*/
-
-message ObjectAccel
-{
-  uint_32 timestamp,
-  uint_32 objectID,
-  ActiveAccel accel,
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////  ANIMATIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -134,9 +99,6 @@ message MemoryMapMessageEnd
 union MessageRobotToExternal {
   Event                             Event                              = 0x02,
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
-  ObjectConnectionState             ObjectConnectionState              = 0x0A, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  //ObjectTapped                      ObjectTapped                       = 0x0E, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  ObjectAccel                       ObjectAccel                        = 0x0F, // TODO: The engine is not yet sending this message, holding this tag id near the other object events for when it's implemented
   RobotDeletedFixedCustomObjects    RobotDeletedFixedCustomObjects     = 0x12,
   RobotDeletedCustomMarkerObjects   RobotDeletedCustomMarkerObjects    = 0x13,
   CreatedFixedCustomObject          CreatedFixedCustomObject           = 0x14,

@@ -217,15 +217,6 @@ func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	}
 }
 
-func CladObjectConnectionStateToProto(msg *gw_clad.ObjectConnectionState) *extint.ObjectConnectionState {
-	return &extint.ObjectConnectionState{
-		ObjectId:   msg.ObjectID,
-		FactoryId:  msg.FactoryID,
-		ObjectType: extint.ObjectType(msg.ObjectType + 1),
-		Connected:  msg.Connected,
-	}
-}
-
 func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
 	return &extint.NavMapInfo{
 		RootDepth:   int32(msg.RootDepth),

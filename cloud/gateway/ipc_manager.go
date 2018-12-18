@@ -565,19 +565,6 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 		case gw_clad.MessageRobotToExternalTag_Event:
 			event := CladEventToProto(msg.GetEvent())
 			manager.SendEventToChannel(event)
-		case gw_clad.MessageRobotToExternalTag_ObjectConnectionState:
-			log.Printf("ron_proto: ProcessMessages() case ObjectConnectionState")
-			event := &extint.Event{
-				EventType: &extint.Event_ObjectEvent{
-					ObjectEvent: &extint.ObjectEvent{
-						ObjectEventType: &extint.ObjectEvent_ObjectConnectionState{
-							ObjectConnectionState: CladObjectConnectionStateToProto(msg.GetObjectConnectionState()),
-						},
-					},
-				},
-			}
-			manager.SendEventToChannel(event)
-
 		default:
 			manager.SendToListeners(msg)
 		}
