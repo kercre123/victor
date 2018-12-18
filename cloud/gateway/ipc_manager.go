@@ -565,17 +565,6 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 		case gw_clad.MessageRobotToExternalTag_Event:
 			event := CladEventToProto(msg.GetEvent())
 			manager.SendEventToChannel(event)
-		case gw_clad.MessageRobotToExternalTag_ObjectAvailable:
-			event := &extint.Event{
-				EventType: &extint.Event_ObjectEvent{
-					ObjectEvent: &extint.ObjectEvent{
-						ObjectEventType: &extint.ObjectEvent_ObjectAvailable{
-							ObjectAvailable: CladObjectAvailableToProto(msg.GetObjectAvailable()),
-						},
-					},
-				},
-			}
-			manager.SendEventToChannel(event)
 		case gw_clad.MessageRobotToExternalTag_ObjectConnectionState:
 			log.Printf("ron_proto: ProcessMessages() case ObjectConnectionState")
 			event := &extint.Event{
@@ -583,50 +572,6 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 					ObjectEvent: &extint.ObjectEvent{
 						ObjectEventType: &extint.ObjectEvent_ObjectConnectionState{
 							ObjectConnectionState: CladObjectConnectionStateToProto(msg.GetObjectConnectionState()),
-						},
-					},
-				},
-			}
-			manager.SendEventToChannel(event)
-		case gw_clad.MessageRobotToExternalTag_ObjectMoved:
-			event := &extint.Event{
-				EventType: &extint.Event_ObjectEvent{
-					ObjectEvent: &extint.ObjectEvent{
-						ObjectEventType: &extint.ObjectEvent_ObjectMoved{
-							ObjectMoved: CladObjectMovedToProto(msg.GetObjectMoved()),
-						},
-					},
-				},
-			}
-			manager.SendEventToChannel(event)
-		case gw_clad.MessageRobotToExternalTag_ObjectStoppedMoving:
-			event := &extint.Event{
-				EventType: &extint.Event_ObjectEvent{
-					ObjectEvent: &extint.ObjectEvent{
-						ObjectEventType: &extint.ObjectEvent_ObjectStoppedMoving{
-							ObjectStoppedMoving: CladObjectStoppedMovingToProto(msg.GetObjectStoppedMoving()),
-						},
-					},
-				},
-			}
-			manager.SendEventToChannel(event)
-		case gw_clad.MessageRobotToExternalTag_ObjectUpAxisChanged:
-			event := &extint.Event{
-				EventType: &extint.Event_ObjectEvent{
-					ObjectEvent: &extint.ObjectEvent{
-						ObjectEventType: &extint.ObjectEvent_ObjectUpAxisChanged{
-							ObjectUpAxisChanged: CladObjectUpAxisChangedToProto(msg.GetObjectUpAxisChanged()),
-						},
-					},
-				},
-			}
-			manager.SendEventToChannel(event)
-		case gw_clad.MessageRobotToExternalTag_ObjectTapped:
-			event := &extint.Event{
-				EventType: &extint.Event_ObjectEvent{
-					ObjectEvent: &extint.ObjectEvent{
-						ObjectEventType: &extint.ObjectEvent_ObjectTapped{
-							ObjectTapped: CladObjectTappedToProto(msg.GetObjectTapped()),
 						},
 					},
 				},

@@ -205,6 +205,11 @@ namespace Anki {
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace, e2g_callback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID, e2g_callback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedObject, e2g_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::ObjectMoved, e2g_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::ObjectAvailable, e2g_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::ObjectStoppedMoving, e2g_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged, e2g_callback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageEngineToGameTag::ObjectTapped, e2g_callback));
 
       return RESULT_OK;
     }
@@ -694,17 +699,37 @@ namespace Anki {
 
     void UiMessageHandler::HandleEngineToGameEvents(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
     {
-      //LOG_WARNING("ron_proto_handle_events", "Received clad event");
+      LOG_WARNING("ron_proto", "Received clad event: %d", event.GetType());
       external_interface::GatewayWrapper proto_message;
       switch (event.GetData().GetTag()) {
         case ExternalInterface::MessageEngineToGameTag::RobotObservedFace:
           ProtoCladInterpreter::CladRobotObservedFaceToProto(event.GetData().Get_RobotObservedFace(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID:
-          ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(event.GetData().Get_RobotChangedObservedFaceID(), proto_message);
+          ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
+              event.GetData().Get_RobotChangedObservedFaceID(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
-          ProtoCladInterpreter::CladRobotObservedObjectToProto(event.GetData().Get_RobotObservedObject(), proto_message);
+          ProtoCladInterpreter::CladRobotObservedObjectToProto(
+              event.GetData().Get_RobotObservedObject(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+          ProtoCladInterpreter::CladObjectMovedToProto(event.GetData().Get_ObjectMoved(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectAvailable:
+          ProtoCladInterpreter::CladObjectAvailableToProto(event.GetData().Get_ObjectAvailable(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectStoppedMoving:
+          ProtoCladInterpreter::CladObjectStoppedMovingToProto(
+              event.GetData().Get_ObjectStoppedMoving(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:
+          ProtoCladInterpreter::CladObjectUpAxisChangedToProto(
+              event.GetData().Get_ObjectUpAxisChanged(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectTapped:
+          ProtoCladInterpreter::CladObjectTappedToProto(
+              event.GetData().Get_ObjectTapped(), proto_message);
           break;
         default:
           return;

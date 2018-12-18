@@ -225,43 +225,6 @@ func CladObjectConnectionStateToProto(msg *gw_clad.ObjectConnectionState) *extin
 		Connected:  msg.Connected,
 	}
 }
-func CladObjectAvailableToProto(msg *gw_clad.ObjectAvailable) *extint.ObjectAvailable {
-	return &extint.ObjectAvailable{
-		FactoryId: msg.FactoryId,
-	}
-}
-func CladObjectMovedToProto(msg *gw_clad.ObjectMoved) *extint.ObjectMoved {
-	return &extint.ObjectMoved{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-	}
-}
-func CladObjectStoppedMovingToProto(msg *gw_clad.ObjectStoppedMoving) *extint.ObjectStoppedMoving {
-	return &extint.ObjectStoppedMoving{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-	}
-}
-func CladObjectUpAxisChangedToProto(msg *gw_clad.ObjectUpAxisChanged) *extint.ObjectUpAxisChanged {
-	// In clad, unknown is the final value
-	// In proto, the convention is that 0 is unknown
-	upAxis := extint.UpAxis_INVALID_AXIS
-	if msg.UpAxis != gw_clad.UpAxis_UnknownAxis {
-		upAxis = extint.UpAxis(msg.UpAxis + 1)
-	}
-
-	return &extint.ObjectUpAxisChanged{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-		UpAxis:    upAxis,
-	}
-}
-func CladObjectTappedToProto(msg *gw_clad.ObjectTapped) *extint.ObjectTapped {
-	return &extint.ObjectTapped{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-	}
-}
 
 func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
 	return &extint.NavMapInfo{

@@ -214,9 +214,9 @@ void ProtoCladInterpreter::CladEndOfMessageToProto(
 //
 // Misc Support Translators
 //
-external_interface::PoseStruct * ProtoCladInterpreter::CladPoseStructToProto(
-    const Anki::PoseStruct3d & clad_message) {
-  external_interface::PoseStruct * pose_struct = new external_interface::PoseStruct;
+external_interface::PoseStruct* ProtoCladInterpreter::CladPoseStructToProto(
+    const Anki::PoseStruct3d& clad_message) {
+  external_interface::PoseStruct* pose_struct = new external_interface::PoseStruct;
   pose_struct->set_x(clad_message.x);
   pose_struct->set_y(clad_message.y);
   pose_struct->set_z(clad_message.z);
@@ -229,9 +229,10 @@ external_interface::PoseStruct * ProtoCladInterpreter::CladPoseStructToProto(
   return pose_struct;
 }
 
-external_interface::CladRect * ProtoCladInterpreter::CladCladRectToProto(
-    const Anki::CladRect & clad_message) {
-  external_interface::CladRect * clad_rect = new external_interface::CladRect;
+external_interface::CladRect* ProtoCladInterpreter::CladCladRectToProto(
+    const Anki::CladRect& clad_message) {
+  
+  external_interface::CladRect* clad_rect = new external_interface::CladRect;
   clad_rect->set_x_top_left(clad_message.x_topLeft);
   clad_rect->set_y_top_left(clad_message.y_topLeft);
   clad_rect->set_width(clad_message.width);
@@ -242,7 +243,7 @@ external_interface::CladRect * ProtoCladInterpreter::CladCladRectToProto(
 
 //TODO: templatize the ENUM converters do DRY out the code:
 external_interface::FacialExpression ProtoCladInterpreter::CladFacialExpressionToProto(
-    const Anki::Vision::FacialExpression & clad_message) {
+    const Anki::Vision::FacialExpression& clad_message) {
 
   // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
   // 2) it ensures that adding a new expression doesn't require that you alter this interpreter.
@@ -251,7 +252,7 @@ external_interface::FacialExpression ProtoCladInterpreter::CladFacialExpressionT
 
 //TODO: templatize the ENUM converters do DRY out the code:
 external_interface::ObjectFamily ProtoCladInterpreter::CladObjectFamilyToProto(
-    const Anki::Vector::ObjectFamily & clad_message) {
+    const Anki::Vector::ObjectFamily& clad_message) {
 
   // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
   // 2) it ensures that adding a new expression doesn't require that you alter this interpreter.
@@ -260,11 +261,20 @@ external_interface::ObjectFamily ProtoCladInterpreter::CladObjectFamilyToProto(
 
 //TODO: templatize the ENUM converters do DRY out the code:
 external_interface::ObjectType ProtoCladInterpreter::CladObjectTypeToProto(
-    const Anki::Vector::ObjectType & clad_message) {
+    const Anki::Vector::ObjectType& clad_message) {
 
   // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
   // 2) it ensures that adding a new expression doesn't require that you alter this interpreter.
   return external_interface::ObjectType((int)clad_message + 1);
+}
+
+//TODO: templatize the ENUM converters do DRY out the code:
+external_interface::UpAxis ProtoCladInterpreter::CladUpAxisToProto(
+    const Anki::Vector::UpAxis& clad_message) {
+
+  // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
+  // 2) it ensures that adding a new expression doesn't require that you alter this interpreter.
+  return external_interface::UpAxis((int)clad_message + 1);
 }
 
 
@@ -272,9 +282,10 @@ external_interface::ObjectType ProtoCladInterpreter::CladObjectTypeToProto(
 // Events
 //
 void ProtoCladInterpreter::CladRobotObservedFaceToProto(
-    const Anki::Vector::ExternalInterface::RobotObservedFace & clad_message,
-    external_interface::GatewayWrapper & proto_message) {
-  external_interface::RobotObservedFace * robot_observed_face = new external_interface::RobotObservedFace;
+    const Anki::Vector::ExternalInterface::RobotObservedFace& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
+  
+  external_interface::RobotObservedFace* robot_observed_face = new external_interface::RobotObservedFace;
   
   robot_observed_face->set_face_id(clad_message.faceID);
   robot_observed_face->set_timestamp(clad_message.timestamp);
@@ -329,11 +340,10 @@ void ProtoCladInterpreter::CladRobotObservedFaceToProto(
 }
 
 void ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
-    const Anki::Vector::ExternalInterface::RobotChangedObservedFaceID & clad_message,
-    external_interface::GatewayWrapper & proto_message) {
+    const Anki::Vector::ExternalInterface::RobotChangedObservedFaceID& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
   
-  LOG_WARNING("ron_proto", "CladRobotChangedObservedFaceIDToProto: %s:%d", __FILE__, __LINE__);
-  external_interface::RobotChangedObservedFaceID * changed_observed_face_id = 
+  external_interface::RobotChangedObservedFaceID* changed_observed_face_id = 
     new external_interface::RobotChangedObservedFaceID;
   
   changed_observed_face_id->set_new_id(clad_message.newID);
@@ -343,12 +353,10 @@ void ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
 }
 
 void ProtoCladInterpreter::CladRobotObservedObjectToProto(
-    const Anki::Vector::ExternalInterface::RobotObservedObject & clad_message,
-    external_interface::GatewayWrapper & proto_message) {
+    const Anki::Vector::ExternalInterface::RobotObservedObject& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
   
-  LOG_WARNING("ron_proto", "CladRobotObservedObjectToProto %s:%d", __FILE__, __LINE__);
-
-  external_interface::RobotObservedObject * robot_observed_object = new external_interface::RobotObservedObject;
+  external_interface::RobotObservedObject* robot_observed_object = new external_interface::RobotObservedObject;
 
   robot_observed_object->set_timestamp(clad_message.timestamp);
   robot_observed_object->set_object_family(CladObjectFamilyToProto(clad_message.objectFamily));
@@ -360,6 +368,77 @@ void ProtoCladInterpreter::CladRobotObservedObjectToProto(
   robot_observed_object->set_is_active(clad_message.isActive);
 
   external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ robot_observed_object };
+
+  proto_message = ExternalMessageRouter::Wrap(object_event);
+}
+
+void ProtoCladInterpreter::CladObjectMovedToProto(
+    const Anki::Vector::ExternalInterface::ObjectMoved& clad_message,
+    external_interface::GatewayWrapper & proto_message) {
+
+  external_interface::ObjectMoved* object_moved = new external_interface::ObjectMoved;
+
+  object_moved->set_timestamp(clad_message.timestamp);
+  object_moved->set_object_id(clad_message.objectID);
+
+  external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ object_moved };
+
+  proto_message = ExternalMessageRouter::Wrap(object_event);
+}
+
+void ProtoCladInterpreter::CladObjectAvailableToProto(
+    const Anki::Vector::ExternalInterface::ObjectAvailable& clad_message,
+    external_interface::GatewayWrapper & proto_message) {
+
+  external_interface::ObjectAvailable* object_available = new external_interface::ObjectAvailable;
+
+  object_available->set_factory_id(clad_message.factory_id);
+  //there is no objectType or factory_id in the proto format.
+
+  external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ object_available };
+
+  proto_message = ExternalMessageRouter::Wrap(object_event);
+}
+
+void ProtoCladInterpreter::CladObjectStoppedMovingToProto(
+    const Anki::Vector::ExternalInterface::ObjectStoppedMoving & clad_message,
+    external_interface::GatewayWrapper & proto_message) {
+
+  external_interface::ObjectStoppedMoving* object_stopped_moving = new external_interface::ObjectStoppedMoving;
+
+  object_stopped_moving->set_timestamp(clad_message.timestamp);
+  object_stopped_moving->set_object_id(clad_message.objectID);
+
+  external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ object_stopped_moving };
+
+  proto_message = ExternalMessageRouter::Wrap(object_event);
+}
+
+void ProtoCladInterpreter::CladObjectUpAxisChangedToProto(
+    const Anki::Vector::ExternalInterface::ObjectUpAxisChanged& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
+
+  external_interface::ObjectUpAxisChanged* object_up_axis_changed = new external_interface::ObjectUpAxisChanged;
+
+  object_up_axis_changed->set_timestamp(clad_message.timestamp); 
+  object_up_axis_changed->set_object_id(clad_message.objectID);
+  object_up_axis_changed->set_up_axis(CladUpAxisToProto(clad_message.upAxis));
+  
+  external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ object_up_axis_changed };
+
+  proto_message = ExternalMessageRouter::Wrap(object_event);
+}
+
+void ProtoCladInterpreter::CladObjectTappedToProto(
+    const Anki::Vector::ExternalInterface::ObjectTapped& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
+
+  external_interface::ObjectTapped* object_tapped = new external_interface::ObjectTapped;
+
+  object_tapped->set_timestamp(clad_message.timestamp);
+  object_tapped->set_object_id(clad_message.objectID);
+
+  external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ object_tapped };
 
   proto_message = ExternalMessageRouter::Wrap(object_event);
 }
