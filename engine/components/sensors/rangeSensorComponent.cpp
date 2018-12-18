@@ -31,9 +31,9 @@ RangeSensorComponent::RangeSensorComponent()
 {
 }
 
-void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
+void RangeSensorComponent::Update()
 {
-  const RangeDataRaw data = ToFSensor::getInstance()->GetData();
+  _latestRawRangeData = ToFSensor::getInstance()->GetData();
  
   Pose3d co = _robot->GetCameraPose(_robot->GetHeadAngle());
   // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
@@ -89,12 +89,9 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 
     for(int c = 0; c < TOF_RESOLUTION; c++)
     {
-      RangeData left;
-      RangeData right;
-      
       const f32 yaw = sin(kPixToAngle[c]);
 
-      const f32 leftDist_mm = data.data[c + (r*8)] * 1000; 
+      const f32 leftDist_mm = _latestRawRangeData.data[c + (r*8)].processedRange_m * 1000; 
 
       const f32 yl = yaw * leftDist_mm;
       const f32 zl = pitch * leftDist_mm;
@@ -104,10 +101,9 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
       _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
                                                         {3, 3, 3},
                                                         rootl);
-      left.sensorPoint = lp.GetWithRespectToRoot();
-      left.worldPoint = rootl;
+      _latestRangeData[r*8 + c] = pl.GetTranslation();
       
-      const f32 rightDist_mm = data.data[4+c + (r*8)] * 1000;
+      const f32 rightDist_mm = _latestRawRangeData.data[4+c + (r*8)].processedRange_m * 1000;
       const f32 yr = yaw * rightDist_mm;
       const f32 zr = pitch * rightDist_mm;
         
@@ -116,26 +112,9 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
       _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
                                                         {3, 3, 3},
                                                         rootr);
-      right.sensorPoint = rp.GetWithRespectToRoot();
-      right.worldPoint = rootr;
-
-      navMapData.push_back(left);
-      navMapData.push_back(right);
+      _latestRangeData[r*8 + c + 4] = pr.GetTranslation();
     }
   }
-
-  UpdateNavMap(navMapData);
-}
-  
-void RangeSensorComponent::UpdateNavMap(const std::vector<RangeData>& data)
-{
-  for(const auto& rangeData : data)
-  {
-    (void)rangeData;
-    // TODO Find intersection point of vector formed between rangeData.sensorPoint and rangeData.worldPoint
-    // and the XY ground plane to update nav map
-  }
-  
 }
 
 } // Cozmo namespace

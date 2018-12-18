@@ -767,24 +767,24 @@ namespace Anki {
     ProxSensorDataRaw HAL::GetRawProxData()
     {
       ProxSensorDataRaw proxData;
-      if (PowerGetMode() == POWER_MODE_ACTIVE) {
-        proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
-        // Note: These fields are spoofed with simple defaults for now, but should be computed
-        // to reflect the actual behavior of the sensor once we do some more testing with it.
-        proxData.signalIntensity  = 25.f;
-        proxData.ambientIntensity = 0.25f;
-        proxData.spadCount        = 90.f;
-        proxData.timestamp_ms     = HAL::GetTimeStamp();
-        proxData.rangeStatus      = RangeStatus::RANGE_VALID;
-      } else {
-        // Calm mode values
-        proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
-        proxData.signalIntensity  = 0.f;
-        proxData.ambientIntensity = 0.f;
-        proxData.spadCount        = 200.f;
-        proxData.timestamp_ms     = HAL::GetTimeStamp();
-        proxData.rangeStatus      = RangeStatus::RANGE_VALID;
-      }
+      // if (PowerGetMode() == POWER_MODE_ACTIVE) {
+      //   proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
+      //   // Note: These fields are spoofed with simple defaults for now, but should be computed
+      //   // to reflect the actual behavior of the sensor once we do some more testing with it.
+      //   proxData.signalIntensity  = 25.f;
+      //   proxData.ambientIntensity = 0.25f;
+      //   proxData.spadCount        = 90.f;
+      //   proxData.timestamp_ms     = HAL::GetTimeStamp();
+      //   proxData.rangeStatus      = RangeStatus::RANGE_VALID;
+      // } else {
+      //   // Calm mode values
+      //   proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
+      //   proxData.signalIntensity  = 0.f;
+      //   proxData.ambientIntensity = 0.f;
+      //   proxData.spadCount        = 200.f;
+      //   proxData.timestamp_ms     = HAL::GetTimeStamp();
+      //   proxData.rangeStatus      = RangeStatus::RANGE_VALID;
+      // }
 
       return proxData;
     }

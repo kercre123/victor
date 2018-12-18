@@ -3,11 +3,11 @@ PROTO WhiskeyToF_SideBySide [
   field SFRotation rotation 0 0 1 0
 
   # 12.5 degree rotation
-  field SFVec3f    rightTranslation 0 0.005 0
-  field SFRotation rightRotation 1 0 0 0.2181661565
+  field SFVec3f    rightTranslation 0 0.008 0
+  field SFRotation rightRotation 1 0 0 -0.2094395102
 
-  field SFVec3f    leftTranslation 0 -0.005 0
-  field SFRotation leftRotation 1 0 0 -0.2181661565
+  field SFVec3f    leftTranslation 0 -0.008 0
+  field SFRotation leftRotation 1 0 0 0.2094395102
 
   field SFFloat fov 0.3316
   field SFFloat minRange 0.0011

@@ -5,6 +5,7 @@
 
 #include "clad/types/birthCertificate.clad"
 #include "clad/types/proxMessages.clad"
+#include "clad/types/tofTypes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -196,6 +197,13 @@ structure DistanceSensorData {
   ProxSensorDataRaw proxSensorData,
   float_32          visualDistanceToTarget_mm,
   float_32          visualAngleAwayFromTarget_rad
+}
+
+structure RangeSensorData {
+  RangeDataRaw rangeData,
+  float_32     visualDistanceToTarget_mm,
+  float_32     visualAngleAwayFromTarget_rad,
+  float_32     headAngle_rad
 }
 
 structure TouchSensorValues {

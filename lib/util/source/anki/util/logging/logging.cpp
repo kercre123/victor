@@ -516,7 +516,7 @@ void sDebugBreak()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #ifndef ALLOW_BREAK_ON_ERROR
-#define ALLOW_BREAK_ON_ERROR 1
+#define ALLOW_BREAK_ON_ERROR 0
 #endif
 
 void sDebugBreakOnError()

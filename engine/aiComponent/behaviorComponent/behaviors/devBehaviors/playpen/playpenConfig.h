@@ -136,6 +136,10 @@ static f32 kDistanceSensorReadingThresh_mm = 20;
 // Bias adjustment for raw distance sensor reading when comparing to visual distance
 static f32 kDistanceSensorBiasAdjustment_mm = 30;
 
+// Angle to move the head to when doing the distance sensor check
+// Whiskey ToF is angled 15 degrees down so move head to 15 degrees so ToF is looking forwards
+static f32 kDistanceSensorHeadAngle_rad = DEG_TO_RAD(15);
+
 // ----------Camera Calibration----------
 // Exposure setting for playpen
 static u16 kExposure_ms                               = 31;
