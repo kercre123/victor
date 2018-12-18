@@ -2294,7 +2294,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) async_otaCancel {
-  Clad::SendRtsMessage_2<Anki::Vector::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
+  Clad::SendRtsMessage_5<Anki::Vector::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
 }
 
 - (void) async_otaProgress {
@@ -2395,11 +2395,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         
         bool forgetAll = words[1] == "#all";
         
-        Clad::SendRtsMessage_3<Anki::Vector::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, forgetAll, ssid);
+        Clad::SendRtsMessage_5<Anki::Vector::ExternalComms::RtsWifiForgetRequest>(self, _commVersion, forgetAll, ssid);
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
         Clad::SendRtsMessage<Anki::Vector::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "anki-auth") == 0) {
-        Clad::SendRtsMessage_3<Anki::Vector::ExternalComms::RtsCloudSessionRequest>(self, _commVersion, words[1]);
+        Clad::SendRtsMessage_5<Anki::Vector::ExternalComms::RtsCloudSessionRequest_2>(self, _commVersion, words[1], "mac-client", "");
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
         std::string url = "http://ota.global.anki-dev-services.com/vic/master-dev/lo8awreh23498sf/full/latest.ota";
         if(words.size() > 1) {
@@ -2412,7 +2412,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         if(_commVersion < 2) {
           printf("ota-cancel not supported in version %d\n", _commVersion);
         } else {
-          Clad::SendRtsMessage_2<Anki::Vector::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
+          Clad::SendRtsMessage_5<Anki::Vector::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
         }
         _readyForNextCommand = true;
         _currentCommand = "";
@@ -2437,7 +2437,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           printf("Downloading log dump over BLE. This may take a couple minutes.\n");
           std::vector<std::string> filter;
-          Clad::SendRtsMessage_2<Anki::Vector::ExternalComms::RtsLogRequest>(self, _commVersion, 0, filter);
+          Clad::SendRtsMessage_5<Anki::Vector::ExternalComms::RtsLogRequest>(self, _commVersion, 0, filter);
         }
       } else if(strcmp(words[0].c_str(), "disconnect") == 0) {
         Clad::SendRtsMessage<Anki::Vector::ExternalComms::RtsForceDisconnect>(self, _commVersion);
@@ -2484,7 +2484,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
   
   // connection id
-  if(_commVersion >= 4) {
+  if(_commVersion >= 3) {
     std::string connId = "mac-client-";
     std::vector<std::string> nums = {{"0","1","2","3","4","5","6","7","8","9", "a", "b", "c", "d", "e", "f"}};
     
@@ -2498,8 +2498,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     if(_reconnection) {
       _hasAuthed = true;
     }
-    Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsStatusRequest>(self, _commVersion);
-    Clad::SendRtsMessage_4<Anki::Vector::ExternalComms::RtsAppConnectionIdRequest>(self, _commVersion, connId);
+    Clad::SendRtsMessage_5<Anki::Vector::ExternalComms::RtsStatusRequest>(self, _commVersion);
+    Clad::SendRtsMessage_5<Anki::Vector::ExternalComms::RtsAppConnectionIdRequest>(self, _commVersion, connId);
   } else {
     [self startPrompt];
   }
