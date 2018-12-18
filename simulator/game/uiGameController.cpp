@@ -763,7 +763,7 @@ namespace Anki {
     {
       // Only look for the robot node once at the beginning
       if (_robotNode == nullptr) {
-        const auto& cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "CozmoBot");
+        const auto& cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "WhiskeyBot");
         DEV_ASSERT(cozmoBotNodeInfo.nodePtr != nullptr, "UiGameController.UpdateActualObjectPoses.NoCozmoBot");
         DEV_ASSERT(cozmoBotNodeInfo.type == webots::Node::SUPERVISOR, "UiGameController.UpdateActualObjectPoses.CozmoBotNotSupervisor");
         

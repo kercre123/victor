@@ -19,6 +19,8 @@
 
 #include "util/entityComponent/entity.h"
 
+#include "clad/types/tofTypes.h"
+
 #include <vector>
 
 namespace Anki {
@@ -41,24 +43,24 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override { }  
   
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override { }
-    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override { }
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override { }
 
-  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
 
-private:
+  void Update();
 
-  struct RangeData
-  {
-    Pose3d sensorPoint;
-    Pose3d worldPoint;
-  };
-  void UpdateNavMap(const std::vector<RangeData>& data);
+  using RangeData = std::array<Vec3f, 32>;
+  const RangeData& GetLatestRangeData() const { return _latestRangeData; }
+  const RangeDataRaw& GetLatestRawRangeData() const { return _latestRawRangeData; }
+  
+private:
 
   Robot* _robot = nullptr;
   
+  RangeDataRaw _latestRawRangeData;
+  RangeData _latestRangeData;
 };
 
 

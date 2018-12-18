@@ -303,13 +303,27 @@ void ParseData(Sensor whichSensor,
   // Convert roi number to index in 8x4 rangeData output array
   const int index = (mz_data.RoiNumber / 4 * 8) + (mz_data.RoiNumber % 4) + offset;
 
-  rangeData.data[index] = 0;
+  RangingData& roiData = rangeData.data[index];
+  roiData.readings.clear();
+  roiData.roi = mz_data.RoiNumber;
+  roiData.numObjects = mz_data.NumberOfObjectsFound;
+  roiData.roiStatus = mz_data.RoiStatus;
+  roiData.spadCount = mz_data.EffectiveSpadRtnCount / 256.f;
+  roiData.processedRange_m = 0;
 
   if(mz_data.NumberOfObjectsFound > 0)
   {
     int16_t minDist = 2000;
     for(int r = 0; r < mz_data.NumberOfObjectsFound; r++)
     {
+      RangeReading reading;
+      reading.status = mz_data.RangeData[r].RangeStatus;
+      // The following two readings come up in 16.16 fixed point so convert
+      reading.signalRate_mcps = ((float)mz_data.RangeData[r].SignalRateRtnMegaCps * (float)(1/(2^16)));
+      reading.ambientRate_mcps = ((float)mz_data.RangeData[r].AmbientRateRtnMegaCps * (float)(1/(2^16)));
+      reading.sigma_mm = mz_data.RangeData[r].SigmaMilliMeter;
+      reading.rawRange_mm = mz_data.RangeData[r].RangeMilliMeter;
+      
       // The right sensor reports a lot of invalid RangeStatuses, usually
       // WRAP_TARGET_FAIL. The range data still appears valid though so we ignore the
       // invalid status.
@@ -332,9 +346,11 @@ void ParseData(Sensor whichSensor,
       //          mz_data.RoiStatus,
       //          mz_data.EffectiveSpadRtnCount);
       // }
+      roiData.readings.push_back(reading);
     }
-    rangeData.data[index] = minDist / 1000.f;
+    roiData.processedRange_m = minDist;
   }
+
 }
 
 void ReadDataFromSensor(Sensor which, RangeDataRaw& rangeData)

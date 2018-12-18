@@ -14,7 +14,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
@@ -117,11 +117,12 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
   {
     --_numRecordedReadingsLeft;
     
-    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
-    DistanceSensorData data;
-    data.proxSensorData = proxData;
+    const auto& rangeData = robot.GetRangeSensorComponent().GetLatestRawRangeData();
+    RangeSensorData data;
+    data.rangeData = rangeData;
     data.visualDistanceToTarget_mm = 0;
     data.visualAngleAwayFromTarget_rad = 0;
+    data.headAngle_rad = robot.GetHeadAngle();
     
     Pose3d markerPose;
     const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
@@ -145,20 +146,21 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
     }
 
-    if(robot.IsPhysical() &&
-       !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
-                     data.visualDistanceToTarget_mm,
-                     PlaypenConfig::kDistanceSensorReadingThresh_mm))
-    {
-      PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
-                          "Sensor reading %u - %f not near visual reading %f with threshold %f",
-                          data.proxSensorData.distance_mm,
-                          PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
-                          data.visualDistanceToTarget_mm,
-                          PlaypenConfig::kDistanceSensorReadingThresh_mm);
+    // TODO NEED TO REWRITE TO CHECK ALL ROIs
+    // if(robot.IsPhysical() &&
+    //    !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
+    //                  data.visualDistanceToTarget_mm,
+    //                  PlaypenConfig::kDistanceSensorReadingThresh_mm))
+    // {
+    //   PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
+    //                       "Sensor reading %u - %f not near visual reading %f with threshold %f",
+    //                       data.proxSensorData.distance_mm,
+    //                       PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
+    //                       data.visualDistanceToTarget_mm,
+    //                       PlaypenConfig::kDistanceSensorReadingThresh_mm);
 
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, PlaypenStatus::Running);
-    }
+    //   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, PlaypenStatus::Running);
+    // }
     
     return PlaypenStatus::Running;
   }
@@ -186,7 +188,8 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  auto action = std::make_unique<TurnInPlaceAction>(0, false);
+  auto action = std::make_unique<CompoundActionParallel>();
+  TurnInPlaceAction* turn = new TurnInPlaceAction(0, false);
 
   // Get the pose of the marker we should be seeing
   Pose3d markerPose;
@@ -225,8 +228,12 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
                      "Turning %f degrees to be perpendicular to marker",
                      angle.getDegrees());
     
-    action->SetRequestedTurnAngle(angle.ToFloat());
+    turn->SetRequestedTurnAngle(angle.ToFloat());
   }
+  action->AddAction(turn);
+
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(PlaypenConfig::kDistanceSensorHeadAngle_rad);
+  action->AddAction(head);
   
   // Once we are perpendicular to the marker, start recording distance sensor readings
   DelegateIfInControl(action.release(), [this]() { TransitionToRecordSensor(); });

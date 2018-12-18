@@ -78,7 +78,7 @@ ToFSensor::~ToFSensor()
 Result ToFSensor::Update()
 {
   if (nullptr != _engineSupervisor) {
-    if (_engineSupervisor->step(Vector::ROBOT_TIME_STEP_MS) == -1) {
+    if (_engineSupervisor->step(ROBOT_TIME_STEP_MS) == -1) {
       return RESULT_FAIL;
     }
   }
@@ -97,10 +97,34 @@ RangeDataRaw ToFSensor::GetData()
     for(int j = 0; j < 4; j++)
     {
       int index = i*8 + j;
-      rangeData.data[index] = leftImage[i*4 + j];
-      rangeData.data[index + 4] = rightImage[i*4 + j];
+      RangingData& lData = rangeData.data[index];
+      RangingData& rData = rangeData.data[index + 4];
+
+      lData.numObjects = 1;
+      lData.roiStatus = 0;
+      lData.spadCount = 90.f;
+      rData = lData;
+      
+      lData.roi = index;
+      rData.roi = index + 4;
+      
+      lData.processedRange_m = leftImage[i*4 + j];
+      rData.processedRange_m = rightImage[i*4 + j];
+
+      RangeReading reading;
+      reading.signalRate_mcps = 25.f;
+      reading.ambientRate_mcps = 0.25f;
+      reading.sigma_mm = 0.f;
+      reading.status = 0;
+
+      reading.rawRange_mm = leftImage[i*4 + j] * 1000;
+      lData.readings.push_back(reading);
+
+      reading.rawRange_mm = rightImage[i*4 + j] * 1000;
+      rData.readings.push_back(reading);
     }
   }
+  
   return rangeData;
 }
   

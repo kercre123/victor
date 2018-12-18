@@ -894,7 +894,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   // Update sensor components:
   GetCliffSensorComponent().Update(msg);
-  GetProxSensorComponent().Update(msg);
+  //GetProxSensorComponent().Update(msg);
   GetTouchSensorComponent().Update(msg);
 
   // update current path segment in the path component
@@ -1315,6 +1315,8 @@ Result Robot::Update()
   */
 
   BEGIN_DONT_RUN_AFTER_PACKOUT
+
+  GetRangeSensorComponent().Update();
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent

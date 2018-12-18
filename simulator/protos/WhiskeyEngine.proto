@@ -39,20 +39,20 @@ Supervisor {
       #rotation    0.57735 -0.57735 -0.57735 2.0944 # look straight ahead
     }
 
-    #WhiskeyToF_SideBySide {
-    #  translation 0.01884 0 -0.00796 # Matches engine definitions
-    #  rotation 0 1 0 -1.50098 # 4-degree look-down
-    #}
+    WhiskeyToF_SideBySide {
+      translation 0.01884 0 -0.00796 # Matches engine definitions
+      rotation 0 1 0 -1.308996939 # 15-degree look-down (11-degrees down relative to camera)
+    }
 
     #WhiskeyToF_AboveBelow {
     #  translation 0.01884 0 -0.00796 # Matches engine definitions
     #  rotation 0 1 0 -1.5707963268
     #}
 
-    WhiskeyToF_CenterOfFace {
-      translation 0.01884 0 -0.00796 # Matches engine definitions
-      rotation 0 1 0 -1.5707963268
-    }
+    #WhiskeyToF_CenterOfFace {
+    #  translation 0.01884 0 -0.00796 # Matches engine definitions
+    #  rotation 0 1 0 -1.5707963268
+    #}
 
     # This IMU is positioned in the same place as the one in CozmoBot2.proto
     # as way to simulate access to the same IMU from both the engine and robot processes

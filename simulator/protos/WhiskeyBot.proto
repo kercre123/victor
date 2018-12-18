@@ -13,15 +13,14 @@ PROTO WhiskeyBot [
   field SFFloat liftAngle 0
   field SFFloat liftAngle_lowLimit  -0.01  # Should be 0, but Webots needs it to be less than liftAngle
   #field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
-  field SFFloat liftAngle_highLimit 3.3     # Roughly 190 degrees range
+  field SFFloat liftAngle_highLimit 1.06
 
   field SFBool filterLogs FALSE
   field SFBool colorizeStderrOutput FALSE
   field SFString controller "webotsCtrlRobot2"
   field SFString controllerArgs ""
 
-  field SFColor bodyColor 0.3 0.3 0.3
-  field SFColor wheelColor 0.2 0.2 0.2
+  field SFColor bodyColor 0.92 0.92 0.8
 
   # Set to TRUE if you just want to use the model for visualization.
   field SFBool vizMode FALSE
@@ -39,20 +38,6 @@ PROTO WhiskeyBot [
 
   # Press backpack button
   field SFBool backpackButtonPressed FALSE
-  
-  # Touch sensor
-  field SFBool touchSensorTouched FALSE
-
-  # Robot battery voltage
-  field SFFloat batteryVolts  4.2
-  
-  # Rates at which battery voltage changes while on/off the charger
-  field SFFloat batteryChargeRate_voltsPerMin     0.09
-  field SFFloat batteryDischargeRate_voltsPerMin -0.02
-
-  # Simulate slower processing of the neural nets process
-  field SFInt32 neuralNetPollingPeriod_ms 250
-  field SFBool  runNeuralNets FALSE   # TODO: Default to TRUE once VIC-4169 is sorted out
 ]
 {
 
@@ -122,17 +107,17 @@ Supervisor {
         
 
         # if you modify the length, you need to update FORWARD_RANGE_SENSOR_MIN/MAX_DISTANCE_MM
-        #DistanceSensor {
-        #  name "forwardProxSensor"
-        #  translation 0.01 0 0
-        #  rotation 0 1 0 -0.10472
-        #  type "generic"
-        #  lookupTable [ 0.015    25  .0,
-        #                0.400   410  .0,
-        #                1.200  1210  .0] # offset for its own translation
-        #  numberOfRays 1
-        #  aperture 0.218
-        #}
+        DistanceSensor {
+          name "forwardProxSensor"
+          translation 0.01 0 0
+          rotation 0 1 0 -0.10472
+          type "generic"
+          lookupTable [ 0.015    25  .0,
+                        0.400   410  .0,
+                        1.200  1210  .0] # offset for its own translation
+          numberOfRays 1
+          aperture 0.218
+        }
 
         %{ end }%  # vizMode
 
@@ -283,17 +268,6 @@ Supervisor {
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
                 }
-
-                # Vic-gateway process:
-                Gateway {
-                }
-
-                %{ if fields.runNeuralNets.value then }%
-                # NeuralNet process:
-                NeuralNetProcessor {
-                  pollingPeriod_ms IS neuralNetPollingPeriod_ms
-                }
-                %{ end }%
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
                 # as way to simulate access to the same IMU from both the robot and engine processes 
@@ -513,6 +487,19 @@ Supervisor {
                 }
               ]
             } # BACKPACK_GROUP
+
+            # Touch sensor (upper side of the back. For when pet from above)
+            # Works by receiving on a specific channel that is only emitted
+            # by the hand object proto
+            Receiver {
+              name                "touchSensorUpper"
+              translation         -0.003 0 0.025
+              type                "radio"             # for penetrating obstacles (aka other cozmo components)
+              aperture            3.14159             # full half sphere of detection
+              channel             84                  # arbitrarily chosen
+              signalStrengthNoise 0.1
+              directionNoise      0.1
+            }
             
             # Visualization of the Touch Sensor receiver (a small disc on the back)
             # intersecting this with the hand object will trigger touch measurements
@@ -604,7 +591,7 @@ Supervisor {
                     Shape {
                       appearance DEF WHEEL_MATERIAL Appearance {
                         material Material {
-                          diffuseColor IS wheelColor
+                          diffuseColor 0.7 0.7 0.7
                         }
                       }
                       geometry Cylinder {
