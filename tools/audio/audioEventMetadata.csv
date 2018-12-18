@@ -534,6 +534,7 @@ Event,,Play__Robot_Vic_Sfx__Scrn_Surprised_Short,4031777881,Robot_Vic_Sfx,Scrn_S
 Event,,Play__Robot_Vic_Sfx__Shaking_Level_1_Play,995249895,Robot_Vic_Sfx,Shaking_Level_1_Play,
 Event,,Play__Robot_Vic_Sfx__Shaking_Level_2_Play,1723140054,Robot_Vic_Sfx,Shaking_Level_2_Play,
 Event,,Play__Robot_Vic_Sfx__Shaking_Level_3_Play,505667781,Robot_Vic_Sfx,Shaking_Level_3_Play,
+Event,,Play__Robot_Vic_Sfx__Shaking_Slowmo,497523539,Robot_Vic_Sfx,Shaking_Slowmo,
 Event,,Play__Robot_Vic_Sfx__Sleeping_3,1751049963,Robot_Vic_Sfx,Sleeping_3,
 Event,,Play__Robot_Vic_Sfx__Sleeping_4,1751049964,Robot_Vic_Sfx,Sleeping_4,
 Event,,Play__Robot_Vic_Sfx__Sleeping_5,1751049965,Robot_Vic_Sfx,Sleeping_5,
