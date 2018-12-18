@@ -11,6 +11,14 @@
     "expected" : false
   },
 
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
+  },
+
   "animTooClose": "AlreadyAtFace",      
   "timeUntilCancelFaceTrack_s": 5.0,
   "minDriveToFaceDistanceKey_mm": 200,

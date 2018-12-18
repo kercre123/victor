@@ -463,6 +463,13 @@ void BehaviorFindFaceAndThen::TransitionToTurningTowardsFace()
     CancelDelegates(false);
     DelegateIfInControl(action, callback);
   }
+  else {
+    if( _iConfig.searchFaceBehavior != nullptr ) {
+      TransitionToSearchingForFace();
+    } else {
+      CancelSelf();
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
