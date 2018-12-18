@@ -18,6 +18,12 @@ import glob
 import binary_conversion
 import validate_anim_data
 
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+
+sys.path.insert(0, os.path.join(THIS_DIR, '..', '..', 'tools', 'build', 'tools'))
+
+import ankibuild.util
+
 # configure unbuffered output
 # https://stackoverflow.com/a/107717/217431
 class Unbuffered(object):
@@ -62,6 +68,10 @@ MANIFEST_LENGTH_KEY = "length_ms"
 # fact available, we trigger that validation if either the animation or the audio is updated.
 ASSET_VALIDATION_TRIGGERS = ["victor-animation-assets", "victor-audio-assets"]
 
+def get_anki_deps_cache_directory():
+    anki_deps_cache_dir = os.path.join(os.path.expanduser("~"), ".anki", "deps-cache", "sha256")
+    ankibuild.util.File.mkdir_p(anki_deps_cache_dir)
+    return anki_deps_cache_dir
 
 
 def is_tool(name):
@@ -101,6 +111,28 @@ def is_up(url_string):
     except ConnectionResetError, e:
         response.close()
         os.exit(e)
+
+
+def sha256sum(filename):
+    import hashlib
+    sha256 = hashlib.sha256()
+    with open(filename, 'rb') as f:
+        for chunk in iter(lambda: f.read(65536), b''):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
+def read_int_from_file(filename):
+   val = None
+   if filename and os.path.isfile(filename):
+      with open(filename, 'r') as f:
+         data = f.read().strip()
+         val = int(data)
+   return val
+
+def write_int_to_file(filename, val):
+   with open(filename, 'w') as f:
+      f.write(str(val))
 
 
 def is_valid_checksum(url_string):
@@ -560,6 +592,7 @@ def files_package(files):
 
 
 def teamcity_package(tc_dict):
+    anki_deps_cache_dir = get_anki_deps_cache_directory()
     downloaded_builds = []
     teamcity=True
     tool = "curl"
@@ -581,98 +614,93 @@ def teamcity_package(tc_dict):
         return downloaded_builds
 
     for build in builds:
-        new_version = True
-        version = builds[build].get("version", "undefined")
+        required_version = builds[build].get("version", None)
+        unpack_path = os.path.join(DEPENDENCY_LOCATION, build)
+        version_file_path = os.path.join(unpack_path, "VERSION")
+        stored_version = read_int_from_file(version_file_path)
+        if required_version == str(stored_version):
+           continue
+
+        # Clear out and re-create unpack destination
+        ankibuild.util.File.rm_rf(unpack_path)
+        ankibuild.util.File.mkdir_p(unpack_path)
+
         build_type_id = builds[build].get("build_type_id", "undefined")
         package_name = builds[build].get("package_name", "undefined")
         ext = builds[build].get("extension", "undefined")
-        checksums = builds[build].get("checksums", "undefined")
-        # TODO:  Switch parameters and compression tool based on extension.
+        checksums = builds[build].get("checksums", None)
+        sha = None
+        if checksums:
+           sha = checksums.get("sha256", "undefined")
 
-        loc = os.path.join(DEPENDENCY_LOCATION, build)
-        unpackage_location = loc
-        version_file = os.path.join(loc, "VERSION")
         package = package_name + '.' + ext
         dist = os.path.join(DEPENDENCY_LOCATION, package)
-        #This is different from svn_package because upackage_location instead of loc (it can't be assumed that the package has a folder.
-        unpack = [ptool] + ptool_options + [dist, '-C', unpackage_location]
-        if teamcity:
-          combined_url = "{0}/repository/download/{1}/{2}/{3}_{4}.{5}".format(root_url, build_type_id, version, package_name, version, ext)
-          pull_down = [tool, '--user', "{0}:{1}".format(user, password), '-f', combined_url, '-o', dist]
+        if sha:
+           dist = os.path.join(anki_deps_cache_dir, sha)
+           if os.path.isfile(dist) and sha != sha256sum(dist):
+              os.remove(dist)
         else:
-          # Note the version is in the path and the name of the file.
-          combined_url = "{0}/{1}/{2}/{4}/{3}_{4}.{5}".format(root_url, build, build_type_id, package_name, version, ext)
-          pull_down = [tool, '-f', combined_url, '-o', dist]
+           ankibuild.util.File.rm_rf(dist)
+
+        # Unlike svn_package, we need to unpack inside 'unpack_path' because the package
+        # may not have its own folder structure
+        # TODO:  Switch parameters and compression tool based on extension.
+        unpack = [ptool] + ptool_options + [dist, '-C', unpack_path]
+
+        # If we don't already have a cached copy of the package, download it
+        if not os.path.isfile(dist):
+           if teamcity:
+              combined_url = "{0}/repository/download/{1}/{2}/{3}_{4}.{5}".format(root_url,
+                                                                                  build_type_id,
+                                                                                  required_version,
+                                                                                  package_name,
+                                                                                  required_version,
+                                                                                  ext)
+              pull_down = [tool, '--user', "{0}:{1}".format(user, password), '-f', combined_url, '-o', dist]
+           else:
+              # Note the required_version is in the path and the name of the file.
+              combined_url = "{0}/{1}/{2}/{4}/{3}_{4}.{5}".format(root_url,
+                                                                  build,
+                                                                  build_type_id,
+                                                                  package_name,
+                                                                  required_version,
+                                                                  ext)
+              pull_down = [tool, '-f', combined_url, '-o', dist]
+           if VERBOSE:
+              pull_down += ['-v']
+
+           for n in range(RETRIES):
+              pipe = subprocess.Popen(pull_down, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+              curl_info, err = pipe.communicate()
+              status = pipe.poll()
+              if status == 0:
+                 if sha:
+                    downloaded_sha = sha256sum(dist)
+                    if sha != downloaded_sha:
+                       print("ERROR downloading {0}!!".format(package_name))
+                       print("Expected hash of download: {0}".format(sha))
+                       print("Actual hash of download: {0}".format(downloaded_sha))
+                       os.remove(dist)
+                       sys.exit("Assume binary corruption.")
+                 print("{0} Downloaded.  New version {1} ".format(build.title(), required_version))
+                 downloaded_builds.append(build.title())
+                 break
+              else:
+                 print(err)
+                 if os.path.isfile(dist):
+                    os.remove(dist)
+              print("ERROR {0}ing {1}.  {2} of {3} attempts.".format(tool, package, n+1, RETRIES))
+
+
+        # Unpack package to destination
+        pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        successful, err = pipe.communicate()
+        if not sha:
+           ankibuild.util.File.rm_rf(dist)
+        if not os.path.isfile(version_file_path):
+           write_int_to_file(version_file_path, required_version)
         if VERBOSE:
-            pull_down += ['-v']
-
-        try:
-            sha = checksums.get("sha256", "undefined")
-            if VERBOSE:
-                print("{0}'s stored hash is {1}".format(package_name, sha))
-                print("{0}'s actual hash is {1}".format(package_name, is_valid_checksum(combined_url)))
-            if sha == is_valid_checksum(combined_url):
-                print("{0} checksum validated.".format(package_name))
-            else:
-                sys.exit("{0} checksum invalid. Assume binary corruption.".format(package_name))
-        except AttributeError:
-            pass
-
-        if not is_up(combined_url):
-            print "WARNING {0} is not available.  Cannot verify {1}.".format(combined_url, build)
-            return downloaded_builds
-
-        if not os.path.exists(loc):
-            os.makedirs(loc)
-            vfile = open(version_file, mode="w")
-            vfile.write(str(version))
-            vfile.close()
-        else:
-            if os.path.isfile(version_file):
-                with open(version_file, 'r') as vfile:
-                    read_data = vfile.read().strip()
-                    if int(read_data) == int(version):
-                        # Prevent anymore work if files. are the same.
-                        new_version = False
-            else:
-                #Should only get here if VERSION file was manually removed.
-                if VERBOSE:
-                    print "Generating version file."
-                vfile = open(version_file, mode="w")
-                vfile.write(str(version))
-                vfile.close()
-                new_version = False
-
-        if new_version and os.path.isdir(loc):
-            for n in range(RETRIES):
-                pipe = subprocess.Popen(pull_down, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-                curl_info, err = pipe.communicate()
-                status = pipe.poll()
-                if status == 0:
-                    print("{0} Downloaded.  New version {1} ".format(build.title(), version))
-                    downloaded_builds.append(build.title())
-                    # TODO: use checksum to verify download
-                    break
-                else:
-                    print(err)
-                    if os.path.isfile(dist):
-                        os.remove(dist)
-                    print("ERROR {0}ing {1}.  {2} of {3} attempts.".format(tool, package, n+1, RETRIES))
-            else:
-                sys.exit("ERROR {0}ing {1}.  Please rerun configure.".format(tool, package))
-        else:
-            print "{0} does not need to be updated.  Current version {1}".format(build.title(), version)
-        if os.path.isfile(dist):
-            if os.path.isdir(unpackage_location):
-                shutil.rmtree(unpackage_location)
-                os.mkdir(unpackage_location)
-            else:
-                os.mkdir(unpackage_location)
-            pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            successful, err = pipe.communicate()
-            os.remove(dist)
-            if VERBOSE:
-                print err
+           print err
 
     return downloaded_builds
 
@@ -689,8 +717,7 @@ def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=T
     """
     global DEPENDENCY_LOCATION
     DEPENDENCY_LOCATION = location
-    if not os.path.isdir(location):
-        os.makedirs(location)
+    ankibuild.util.File.mkdir_p(location)
     updated_deps = json_parser(version_file)
     updated_deps = map(str, updated_deps)
     if validate_assets and len(set(updated_deps) & set(ASSET_VALIDATION_TRIGGERS)) > 0:
