@@ -222,6 +222,9 @@ message GatewayWrapper {
     EnableImageStreamingRequest   enable_image_streaming_request     = 1110;
     EnableImageStreamingResponse  enable_image_streaming_response    = 1111;
 
+    IsImageStreamingEnabledRequest  is_image_streaming_enabled_request  = 1112;
+    IsImageStreamingEnabledResponse is_image_streaming_enabled_response = 1113;
+
     // ------------ Message and response for cloud connectivity check ------------
     CheckCloudRequest             check_cloud_request                = 1200;
     CheckCloudResponse            check_cloud_response               = 1201;

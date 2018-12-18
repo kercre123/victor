@@ -2305,6 +2305,28 @@ func (service *rpcService) EnableImageStreaming(ctx context.Context, request *ex
 	return response, nil
 }
 
+// indicates if image streaming is enabled or not
+func (service *rpcService) IsImageStreamingEnabled(ctx context.Context, request *extint.IsImageStreamingEnabledRequest) (*extint.IsImageStreamingEnabledResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_IsImageStreamingEnabledResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_IsImageStreamingEnabledRequest{
+			IsImageStreamingEnabledRequest: request,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetIsImageStreamingEnabledResponse()
+	return &extint.IsImageStreamingEnabledResponse{
+		IsImageStreamingEnabled: response.IsImageStreamingEnabled,
+	}, nil
+}
+
 type CameraFeedCache struct {
 	Data        []byte
 	ImageId     int32

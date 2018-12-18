@@ -327,7 +327,8 @@ struct DockingErrorSignal;
     void EnableMirrorMode(bool enable);
 
     void EnableSendingSDKImageChunks(bool enable) { _sendProtoImageChunks = enable; }
-    
+    bool IsSendingSDKImageChunks() { return _sendProtoImageChunks; }
+
   protected:
     
     // Non-rotated points representing the lift cross bar

@@ -85,6 +85,7 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableMirrorModeRequest,      callback));
     // _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kCaptureSingleImageRequest,    callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableImageStreamingRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kIsImageStreamingEnabledRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -182,6 +183,23 @@ void SDKComponent::UpdateDependent(const RobotCompMap& dependentComps)
     }
     ++_SDK_SAMPLE_GROUP_ID;
   }
+}
+
+// Determine whether or not image streaming is enabled on the robot
+void SDKComponent::IsImageStreamingEnabledRequest(
+  const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  if (gi == nullptr) {
+    return;
+  }
+
+  const bool is_enabled = _robot->GetVisionComponent().IsSendingSDKImageChunks();
+  external_interface::IsImageStreamingEnabledResponse* isEnabledResponse =
+    new external_interface::IsImageStreamingEnabledResponse();
+  isEnabledResponse->set_is_image_streaming_enabled(is_enabled);
+
+  gi->Broadcast(ExternalMessageRouter::WrapResponse(isEnabledResponse));
 }
 
 void SDKComponent::OnSendAudioModeRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
@@ -326,7 +344,14 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         _robot->GetVisionComponent().EnableSendingSDKImageChunks(enable);
       }
       break;
-      
+
+    case external_interface::GatewayWrapperTag::kIsImageStreamingEnabledRequest:
+      {
+        // Determine if the image streaming is enabled on the robot
+        IsImageStreamingEnabledRequest(event);
+      }
+      break;
+
     default:
       _robot->GetRobotEventHandler().HandleMessage(event);
       break;
