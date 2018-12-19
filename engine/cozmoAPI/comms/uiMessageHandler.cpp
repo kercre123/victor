@@ -713,7 +713,6 @@ namespace Anki {
 
     void UiMessageHandler::HandleEngineToGameEvents(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
     {
-      LOG_WARNING("ron_proto", "Received clad event: %d", event.GetType());
       external_interface::GatewayWrapper proto_message;
       switch (event.GetData().GetTag()) {
         case ExternalInterface::MessageEngineToGameTag::RobotObservedFace:
@@ -762,7 +761,6 @@ namespace Anki {
           last_ch = ch;
           return retval;
         });
-      LOG_WARNING("ron_proto_handle_events", "Broadcasting Object: %s", debug_string.c_str());
       _context->GetGatewayInterface()->Broadcast(proto_message);
     }
 
