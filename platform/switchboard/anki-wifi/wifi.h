@@ -112,6 +112,7 @@ void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool i
 std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
+bool RemoveWifiService(std::string ssid);
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);

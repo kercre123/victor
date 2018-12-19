@@ -47,6 +47,8 @@ private:
   // Private handler for WifiScanRequest from Engine (for playpen test)
   void HandleWifiScanRequest();
 
+  void HandleWifiConnectRequest(const std::string& ssid);
+  
   LocalUdpClient _client;
   PairingStatusSignal _pairingStatusSignal;
   // anything that isn't pairing status should be attached to a different signal

@@ -33,9 +33,10 @@ BehaviorPlaypenEndChecks::BehaviorPlaypenEndChecks(const Json::Value& config)
     EngineToGameTag::ObjectAvailable
   });
 
-  SubscribeToTags({
-    GameToEngineTag::WifiScanResponse
-  });
+  SubscribeToTags({{
+    GameToEngineTag::WifiScanResponse,
+    GameToEngineTag::WifiConnectResponse
+      }});
       
 }
 
@@ -192,6 +193,16 @@ void BehaviorPlaypenEndChecks::AlwaysHandleInScope(const GameToEngineEvent& even
                         scanResponse.ssid_count,
                         scanResponse.status_code);
     if ((scanResponse.status_code == 0) && (scanResponse.ssid_count > 0)) {
+      _wifiScanPassed = true;
+    }
+  }
+  else if(eventData.GetTag() == GameToEngineTag::WifiConnectResponse) {
+    auto response = eventData.Get_WifiConnectResponse();
+    PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.AlwaysHandleInScope.WifiConnectResponse",
+                     "status %u",
+                     response.status_code);
+    if(response.status_code == 0)
+    {
       _wifiScanPassed = true;
     }
   }
