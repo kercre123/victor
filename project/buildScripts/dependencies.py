@@ -46,6 +46,7 @@ VERBOSE = True
 REPORT_ERRORS = True
 RETRIES = 10
 SVN_INFO_CMD = "svn info %s %s --xml"
+SVN_LS_CMD = "svn ls -R %s"
 SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trust-server-cert"
 PROJECT_ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DEPS_FILE = os.path.join(PROJECT_ROOT_DIR, 'DEPS')
@@ -69,9 +70,67 @@ MANIFEST_LENGTH_KEY = "length_ms"
 ASSET_VALIDATION_TRIGGERS = ["victor-animation-assets", "victor-audio-assets"]
 
 def get_anki_deps_cache_directory():
-    anki_deps_cache_dir = os.path.join(os.path.expanduser("~"), ".anki", "deps-cache", "sha256")
-    ankibuild.util.File.mkdir_p(anki_deps_cache_dir)
-    return anki_deps_cache_dir
+   anki_deps_cache_dir = os.path.join(os.path.expanduser("~"), ".anki", "deps-cache")
+   ankibuild.util.File.mkdir_p(anki_deps_cache_dir)
+   return anki_deps_cache_dir
+
+
+def get_anki_sha256_cache_directory():
+   anki_sha256_cache_dir = os.path.join(get_anki_deps_cache_directory(), "sha256")
+   ankibuild.util.File.mkdir_p(anki_sha256_cache_dir)
+   return anki_sha256_cache_dir
+
+
+def get_anki_svn_cache_directory(url = None):
+   anki_svn_cache_dir = os.path.join(get_anki_deps_cache_directory(), "svn")
+   if url:
+      url = url.replace('/', '-')
+      anki_svn_cache_dir = os.path.join(anki_svn_cache_dir, url)
+   ankibuild.util.File.mkdir_p(anki_svn_cache_dir)
+   return anki_svn_cache_dir
+
+def get_anki_svn_cache_tarball(url, rev):
+   anki_svn_cache_dir = get_anki_svn_cache_directory(url)
+   tarball = os.path.join(anki_svn_cache_dir, "r" + str(rev) + ".tgz")
+   return tarball
+
+def extract_svn_cache_tarball_to_directory(url, rev, loc):
+   tarball = get_anki_svn_cache_tarball(url, rev)
+   if not os.path.isfile(tarball):
+      return False
+   ankibuild.util.File.rm_rf(loc)
+   ankibuild.util.File.mkdir_p(loc)
+   ptool = "tar"
+   ptool_options = ['-v', '-x', '-z', '-f']
+   unpack = [ptool] + ptool_options + [tarball, '-C', loc]
+   pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+   (stdout, stderr) = pipe.communicate()
+   status = pipe.poll()
+   if status != 0:
+      ankibuild.util.File.rm_rf(loc)
+   return status == 0
+
+def save_svn_cache_tarball_from_directory(url, rev, loc, cred):
+   tarball = get_anki_svn_cache_tarball(url, rev)
+   tmp_tarball = tarball + ".tmp"
+   ankibuild.util.File.rm_rf(tarball)
+   ankibuild.util.File.rm_rf(tmp_tarball)
+   svn_ls_cmd = SVN_LS_CMD % (cred)
+   pipe = subprocess.Popen(svn_ls_cmd.split(), stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, close_fds=True, cwd=loc)
+   (stdoutdata, stderrdata) = pipe.communicate()
+   status = pipe.poll()
+   if status != 0:
+      return False
+   files = stdoutdata.split('\n')
+   with tarfile.open(tmp_tarball, "w:gz") as tar:
+      tar.add(os.path.join(loc, '.svn'), arcname = '.svn', recursive = True)
+      for f in files:
+         if f:
+            fullpath = os.path.join(loc, f)
+            if os.path.exists(fullpath):
+               tar.add(fullpath, arcname = f, recursive = False)
+   os.rename(tmp_tarball, tarball)
 
 
 def is_tool(name):
@@ -368,11 +427,20 @@ def get_svn_file_rev(file_from_svn, cred=''):
       return rev
 
 
-def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=VERBOSE):
-    pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-    successful, err = pipe.communicate()
-    status = pipe.poll()
-    #print("status = %s" % status)
+def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                 unpack, package, allow_extra_files, verbose=VERBOSE):
+    status = 0
+    err = ''
+    successful = ''
+    # Try to import an svn tarball from the cache before contacting the server
+    need_to_cache_svn_checkout = not extract_svn_cache_tarball_to_directory(url, r_rev, loc)
+    if need_to_cache_svn_checkout:
+       pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, close_fds=True)
+       successful, err = pipe.communicate()
+       status = pipe.poll()
+       #print("status = %s" % status)
+
     if err == '' and status == 0:
         print(successful.strip())
         # Equivalent to a git clean
@@ -386,6 +454,8 @@ def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=
                     shutil.rmtree(a_file)
                 elif os.path.isfile(a_file):
                     os.remove(a_file)
+        if need_to_cache_svn_checkout:
+           save_svn_cache_tarball_from_directory(url, r_rev, loc, cred)
         if os.path.isfile(package):
             # call waits for the result.  Moving on to the next checkout doesnt need this to finish.
             pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
@@ -483,14 +553,16 @@ def svn_package(svn_dict):
             if need_to_checkout:
                 print("Checking out '{0}'".format(repo))
                 checked_out_repos.append(repo)
-                err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                                   unpack, package, allow_extra_files)
                 if err:
                     print("Error in checking out {0}: {1}".format(repo, err.strip()))
                     if DIFF_BRANCH_MSG in err:
                         print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
                         shutil.rmtree(loc)
                         print("Checking out '{0}' again".format(repo))
-                        err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                        err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                                           unpack, package, allow_extra_files)
                         if err:
                             print("Error in checking out {0}: {1}".format(repo, err.strip()))
                             print(stale_warning)
@@ -592,7 +664,7 @@ def files_package(files):
 
 
 def teamcity_package(tc_dict):
-    anki_deps_cache_dir = get_anki_deps_cache_directory()
+    cache_dir = get_anki_sha256_cache_directory()
     downloaded_builds = []
     teamcity=True
     tool = "curl"
@@ -636,7 +708,7 @@ def teamcity_package(tc_dict):
         package = package_name + '.' + ext
         dist = os.path.join(DEPENDENCY_LOCATION, package)
         if sha:
-           dist = os.path.join(anki_deps_cache_dir, sha)
+           dist = os.path.join(cache_dir, sha)
            if os.path.isfile(dist) and sha != sha256sum(dist):
               os.remove(dist)
         else:
