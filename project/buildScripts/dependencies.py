@@ -89,6 +89,14 @@ def get_anki_svn_cache_directory(url = None):
    ankibuild.util.File.mkdir_p(anki_svn_cache_dir)
    return anki_svn_cache_dir
 
+def get_anki_file_cache_directory(url = None):
+   anki_file_cache_dir = os.path.join(get_anki_deps_cache_directory(), "files")
+   if url:
+      url = url.replace('/', '-')
+      anki_file_cache_dir = os.path.join(anki_file_cache_dir, url)
+   ankibuild.util.File.mkdir_p(anki_file_cache_dir)
+   return anki_file_cache_dir
+
 def get_anki_svn_cache_tarball(url, rev):
    anki_svn_cache_dir = get_anki_svn_cache_directory(url)
    tarball = os.path.join(anki_svn_cache_dir, "r" + str(rev) + ".tgz")
@@ -639,7 +647,12 @@ def files_package(files):
     assert isinstance(files, dict)
     for file in files:
         url = files[file].get("url", "undefined")
+        cached_file = os.path.join(get_anki_file_cache_directory(url), file)
         outfile = os.path.join(DEPENDENCY_LOCATION, file)
+        if os.path.isfile(cached_file):
+           ankibuild.util.File.cp(cached_file, outfile)
+           continue
+
         if not is_up(url):
             print "WARNING File {0} is not available. Please check your internet connection.".format(url)
             return pulled_files
@@ -657,6 +670,7 @@ def files_package(files):
                 output.write(stdout)
                 print "Updated {0} from {1}".format(file, url)
                 pulled_files.append(outfile)
+            ankibuild.util.File.cp(outfile, cached_file)
         else:
             print "File {0} does not need to be updated".format(file)
 
