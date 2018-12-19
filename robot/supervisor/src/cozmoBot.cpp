@@ -11,7 +11,6 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "platform/anki-trace/tracing.h"
-#include "util/threading/fork_and_exec.h"
 
 #include "backpackLightController.h"
 #include "dockingController.h"
@@ -31,8 +30,44 @@
 #include "wheelController.h"
 
 #ifndef SIMULATOR
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #endif
+
+#ifdef VICOS
+static int triggerFakeHwClock() {
+  static const char* kFakeHwClockFifoName = "/run/fake-hwclock-cmd";
+  char cmd[] = "tick";
+  int fifo = open(kFakeHwClockFifoName, O_WRONLY);
+  if (fifo == -1) {
+    AnkiError("CozmoBot.triggerFakeHwClock",
+              "Failed to open fifo (errno %d)\n", errno);
+    return -1;
+  }
+
+  const int numToWrite = sizeof(cmd);
+  const ssize_t numWritten = write(fifo, &cmd, numToWrite);
+
+  if (close(fifo) != 0) {
+    AnkiError("CozmoBot.triggerFakeHwClock",
+              "Failed to close fifo (errno %d)\n", errno);
+  }
+
+  if(numWritten != numToWrite) {
+    AnkiError("CozmoBot.triggerFakeHwClock",
+              "Expected to write %d bytes but only wrote %zd (errno = %d)\n",
+              numToWrite,
+              numWritten,
+              errno);
+    return -1;
+  }
+
+  return 0;
+}
+#endif
+
 
 namespace Anki {
   namespace Vector {
@@ -140,7 +175,7 @@ namespace Anki {
         // If we end up shutting down due to the user holding the button
         // we still want to record the current time to disk to keep our
         // clock as close to accurate as possible on the next boot.
-        (void) ForkAndExecAndForget({"sudo", "/bin/systemctl", "start", "fake-hwclock-tick"});
+        triggerFakeHwClock();
         #endif
       }
 
@@ -363,6 +398,7 @@ namespace Anki {
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_usec_ != 0) {
           u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_usec_;
+          tracepoint(anki_ust, vic_robot_robot_step, timeBetweenCycles);
           if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH_USEC) {
             EventStart(EventType::MAIN_CYCLE_TOO_LATE);
             ++mainTooLateCnt_;
