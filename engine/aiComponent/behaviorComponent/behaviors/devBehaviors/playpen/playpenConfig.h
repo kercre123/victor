@@ -83,6 +83,8 @@ static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 // during playpen
 // NOTE: This value can be overridden by value stored in EMR
 static f32 kTouchSensorFiltStdDevThresh = 1.8f;
+
+static std::string kWifiSSID = "AnkiGuest";
  
 // ----------InitChecks----------
 // Whether or not to check firmware version
