@@ -25,7 +25,7 @@ static const uint32_t WATCHDOG_CLOCK  = 10000;
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
 static const uint32_t* HW_REVISION    = (uint32_t*)0x08000010;
-static const uint32_t  WHISKEY_MIN_VERSION = 2;
+static const uint32_t  WHISKEY_MIN_VERSION = 7;
 
 #define IS_WHISKEY (*HW_REVISION >= WHISKEY_MIN_VERSION)
 
