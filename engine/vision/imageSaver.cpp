@@ -16,6 +16,7 @@
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/undistorter.h"
 #include "engine/vision/imageSaver.h"
+#include "engine/vision/visionProcessingResult.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 
@@ -52,6 +53,25 @@ ImageSaverParams::ImageSaverParams(const std::string&     pathIn,
 , sharpeningAmount(sharpeningAmountIn)
 {
   
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ImageSaverParams::SaveConditionTypeFromString(const std::string& str, SaveConditionType& saveCondType)
+{
+  static const std::map<std::string, SaveConditionType> LUT{
+    {"ModeProcessed", ImageSaverParams::SaveConditionType::ModeProcessed},
+    {"OnDetection",   ImageSaverParams::SaveConditionType::OnDetection},
+    {"NoDetection",   ImageSaverParams::SaveConditionType::NoDetection},
+  };
+  
+  auto iter = LUT.find(str);
+  if(iter == LUT.end())
+  {
+    return false;
+  }
+  
+  saveCondType = iter->second;
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,6 +150,49 @@ bool ImageSaver::WantsToSave() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ImageSaver::WantsToSave(const VisionProcessingResult& result, const TimeStamp_t timestamp) const
+{
+  if(!WantsToSave())
+  {
+    return false;
+  }
+  
+  if(_params.saveConditions.empty())
+  {
+    return true;
+  }
+  
+  for(const auto& condition : _params.saveConditions)
+  {
+    const VisionMode mode = condition.first;
+    if(result.modesProcessed.Contains(mode))
+    {
+      switch(condition.second)
+      {
+        case ImageSaverParams::SaveConditionType::ModeProcessed:
+          return true;
+          
+        case ImageSaverParams::SaveConditionType::OnDetection:
+          if(result.ContainsDetectionsForMode(mode, timestamp))
+          {
+            return true;
+          }
+          break;
+          
+        case ImageSaverParams::SaveConditionType::NoDetection:
+          if(!result.ContainsDetectionsForMode(mode, timestamp))
+          {
+            return true;
+          }
+          break;
+      }
+    }
+  }
+  
+  return false;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ImageSaver::ShouldSaveSensorData() const
 {
   return (Mode::SingleShotWithSensorData == _params.mode) || (Mode::Stream == _params.mode);
@@ -138,13 +201,22 @@ bool ImageSaver::ShouldSaveSensorData() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
 {
+  const Vision::ImageRGB& cachedImage = imageCache.GetRGB(_params.size);
+  return Save(cachedImage, frameNumber);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ImageSaver::Save(const Vision::ImageRGB& inputImg, const s32 frameNumber)
+{
   const std::string fullFilename = GetFullFilename(frameNumber, GetExtension(_params.quality));
   
   PRINT_CH_INFO(kLogChannelName, "ImageSaver.Save.SavingImage", "Saving image with timestamp %u to %s",
-                imageCache.GetTimeStamp(), fullFilename.c_str());
+                inputImg.GetTimestamp(), fullFilename.c_str());
   
   // Resize into a new image to avoid affecting downstream updates
-  Vision::ImageRGB sizedImage = imageCache.GetRGB(_params.size);
+  Vision::ImageRGB sizedImage;
+  inputImg.CopyTo(sizedImage);
+  
   if(_params.removeDistortion)
   {
     // This should have already been checked during SetParams
@@ -216,12 +288,13 @@ Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
     _params.mode = ImageSendMode::Off;
   }
   
+  Result finalResult = RESULT_OK;
   if((RESULT_OK != saveResult) || (thumbnailResult != RESULT_OK))
   {
-    return RESULT_FAIL;
+    finalResult = RESULT_FAIL;
   }
   
-  return RESULT_OK;
+  return finalResult;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

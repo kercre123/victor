@@ -248,13 +248,12 @@ Result INeuralNetMain::Run()
             }
             else
             {
-              // Remove the image file we were working with to signal that we're done with it
-              // and ready for a new image, even if this one was corrupted
+              // Remove the corrupted image image to show we are ready for a new one
               if(neuralNet->IsVerbose())
               {
-                LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", fullImagePath.c_str());
+                LOG_INFO("INeuralNetMain.Run.DeletingCorruptedImageFile", "%s", fullImagePath.c_str());
               }
-              remove(fullImagePath.c_str());
+              Util::FileUtils::DeleteFile(fullImagePath);
               continue; // no need to stop the process, it was just a bad image, won't happen again
             }
           }
@@ -279,30 +278,41 @@ Result INeuralNetMain::Run()
         
         // Write out the Json
         {
-          ScopedTicToc ticToc("WriteJSON", LOG_CHANNEL);
-          const std::string jsonFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Result});
-          if(neuralNet->IsVerbose())
+          if(!imageFileProvided)
           {
-            LOG_INFO("INeuralNetMain.Run.WritingResults", "%s", jsonFilename.c_str());
+            // Remove the image file now that we're done working with it
+            if(neuralNet->IsVerbose())
+            {
+              LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", fullImagePath.c_str());
+            }
+            Util::FileUtils::DeleteFile(fullImagePath);
           }
           
-          const bool success = WriteResults(jsonFilename, detectionResults);
+          ScopedTicToc ticToc("WriteJSON", LOG_CHANNEL);
+          const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, "tempResult.json"});
+          if(neuralNet->IsVerbose())
+          {
+            LOG_INFO("INeuralNetMain.Run.WritingTempResults", "%s", tempFilename.c_str());
+          }
+          
+          bool success = WriteResults(tempFilename, detectionResults);
           if(!success)
           {
             anyFailures = true;
             break;
           }
-        }
-        
-        if(!imageFileProvided)
-        {
-          // Remove the image file we were working with to signal that we're done with it
-          // and ready for a new image
+          
+          const std::string jsonFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Result});
           if(neuralNet->IsVerbose())
           {
-            LOG_INFO("INeuralNetMain.Run.DeletingImageFile", "%s", fullImagePath.c_str());
+            LOG_INFO("INeuralNetMain.Run.MovingToFinalResults", "%s", jsonFilename.c_str());
           }
-          remove(fullImagePath.c_str());
+          success = Util::FileUtils::MoveFile(jsonFilename, tempFilename);
+          if(!success)
+          {
+            anyFailures = true;
+            break;
+          }
         }
       }
       else if(imageFileProvided)
@@ -384,7 +394,7 @@ void INeuralNetMain::ConvertSalientPointsToJson(const std::list<Vision::SalientP
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool INeuralNetMain::WriteResults(const std::string jsonFilename, const Json::Value& detectionResults)
+bool INeuralNetMain::WriteResults(const std::string& jsonFilename, const Json::Value& detectionResults)
 {
   // Write to a temporary file, then move into place once the write is complete (poor man's "lock")
   const std::string tempFilename = jsonFilename + ".lock";
@@ -398,11 +408,11 @@ bool INeuralNetMain::WriteResults(const std::string jsonFilename, const Json::Va
   writer.write(fs, detectionResults);
   fs.close();
   
-  const bool success = (rename(tempFilename.c_str(), jsonFilename.c_str()) == 0);
+  const bool success = Util::FileUtils::MoveFile(jsonFilename, tempFilename);
   if (!success)
   {
     LOG_ERROR("INeuralNetMain.WriteResults.RenameFail",
-                      "%s -> %s", tempFilename.c_str(), jsonFilename.c_str());
+              "%s -> %s", tempFilename.c_str(), jsonFilename.c_str());
     return false;
   }
   

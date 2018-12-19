@@ -133,10 +133,10 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
     timestampFile.close();
 
     // Rename to what vic-neuralnets process expects once the data is fully written (poor man's "lock")
-    const bool success = (rename(tempFilename.c_str(), imageFilename.c_str()) == 0);
+    const bool success = Util::FileUtils::MoveFile(imageFilename, tempFilename);
     if (!success)
     {
-      PRINT_NAMED_ERROR("StandaloneInferenceProcess.FailedToRenameFile",
+      PRINT_NAMED_ERROR("NeuralNetRunner.Model.Run.FailedToRenameFile",
                         "%s -> %s", tempFilename.c_str(), imageFilename.c_str());
       return RESULT_FAIL;
     }
@@ -150,7 +150,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
   bool resultAvailable = false;
   f32 startTime_sec = 0.f, currentTime_sec = 0.f;
   {
-    auto pollTicToc = _profiler.TicToc("StandaloneInferenceProcess.Polling");
+    auto pollTicToc = _profiler.TicToc("NeuralNetRunner.Model.Run.Polling");
     startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     currentTime_sec = startTime_sec;
     
@@ -169,7 +169,7 @@ Result NeuralNetRunner::Model::Run(const ImageRGB& img, std::list<SalientPoint>&
   
   if(resultAvailable)
   {
-    auto readTicToc = _profiler.TicToc("StandaloneInferenceProcess.ReadingResult");
+    auto readTicToc = _profiler.TicToc("NeuralNetRunner.Model.Run.ReadingResult");
     
     PRINT_CH_DEBUG(kLogChannelName, "NeuralNetRunner.Model.FoundDetectionResultsJSON", "%s",
                    resultFilename.c_str());

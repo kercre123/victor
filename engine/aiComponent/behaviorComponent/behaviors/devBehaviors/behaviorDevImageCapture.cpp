@@ -78,6 +78,9 @@ const char* const kNumImagesPerCaptureKey = "num_images_per_capture";
 const char* const kDistanceRangeKey = "distance_range_mm";
 const char* const kHeadAngleRangeKey = "head_angle_range_deg";
 const char* const kBodyAngleRangeKey = "body_angle_range_deg";
+  
+const char* const kFalsePositiveStr = "FalsePositives";
+const char* const kFalseNegativeStr = "FalseNegatives";
 }
 
 
@@ -220,6 +223,7 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   // Grab the serial number to use in the filename:
   auto *osstate = OSState::getInstance();
   _iConfig.serialNumber = osstate->GetSerialNumberAsString();
+  _iConfig.buildSha = osstate->GetBuildSha();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -526,6 +530,7 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
   const auto time_sec = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
   std::string basename = (_iConfig.imageSavePrefix
                           + _iConfig.serialNumber + "_"
+                          + _iConfig.buildSha + "_"
                           + std::to_string(time_sec));
   if(_iConfig.numImagesPerCapture > 1)
   {
@@ -533,30 +538,52 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
   }
   
   // Tell VisionComponent to save an image
-  const ImageSaverParams params(GetSavePath(),
-                                sendMode,
-                                _iConfig.imageSaveQuality,
-                                basename,
-                                _iConfig.imageSaveSize);
+  ImageSaverParams params(GetSavePath(),
+                          sendMode,
+                          _iConfig.imageSaveQuality,
+                          basename,
+                          _iConfig.imageSaveSize);
+  
+  // Special case: if class name is FalsePositive or FalseNegative, set up save conditions to
+  //  only save image at the right time
+  if(!_iConfig.visionModesBesidesSaving.empty() && _dVars.currentClassIter != _iConfig.classNames.end())
+  {
+    const std::string currentClass(*_dVars.currentClassIter);
+    if(kFalsePositiveStr == currentClass)
+    {
+      for(const auto visionMode : _iConfig.visionModesBesidesSaving)
+      {
+        params.saveConditions[visionMode] = ImageSaverParams::SaveConditionType::OnDetection;
+      }
+    }
+    else if(kFalseNegativeStr == currentClass)
+    {
+      for(const auto visionMode : _iConfig.visionModesBesidesSaving)
+      {
+        params.saveConditions[visionMode] = ImageSaverParams::SaveConditionType::NoDetection;
+      }
+    }
+  }
   
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetComponent<VisionComponent>();
   visionComponent.SetSaveImageParameters(params);
   
   if(!_dVars.isStreaming)
   {
-    if(_iConfig.useShutterSound)
-    {
-      // Shutter sound
-      using GE = AudioMetaData::GameEvent::GenericEvent;
-      using GO = AudioMetaData::GameObjectType;
-      GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Camera_Flash,
-                                               GO::Behavior);
-    }
-    
     WaitForImagesAction* waitAction = new WaitForImagesAction(1, VisionMode::SavingImages);
     
     DelegateIfInControl(waitAction, [this]() {
       _dVars.imagesSaved++;
+      
+      if(!_dVars.isStreaming && _iConfig.useShutterSound)
+      {
+        // Shutter sound once save completes
+        using GE = AudioMetaData::GameEvent::GenericEvent;
+        using GO = AudioMetaData::GameObjectType;
+        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Camera_Flash,
+                                                 GO::Behavior);
+      }
+      
       if(_dVars.imagesSaved == 1)
       {
         // After the first image is taken, store starting angles for each button press so we can move to

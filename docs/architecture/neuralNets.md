@@ -44,4 +44,11 @@ In the "NeuralNets" field of [`vision_config.json`](/resources/config/engine/vis
 
 Model files are stored using git large file storage (LFS). Check them into `resources/config/engine/vision/dnn_models` as normal. There's a filter built into our repo that will automatically use LFS for `.pb` and `.tflite` files.
 
+### Saving Images
+
+For data collection, hard example mining, and debugging purposes, it is possible to save images that are processed by neural nets, along with Json files containing SalientPoints detected, if any. This currently relies on the DevImageCapture behavior, configured to use special class names in conjunction with one or more VisionModes enabled that use neural nets. These images are saved under `<cachePath>/vision/camera/images` and can be retrieved (or erased) using the `project/victor/scripts/get-dev-images.sh` (or `wipe-dev-images.sh`) scripts. 
+  
+  - If "FalsePositives" is the current class name, then the next image that results in a detection (a SalientPoint being created) will be saved after the backpack button is pressed.
+  - If "FalseNegatives" is the current class name, then the next image that does _not_ result in a a detection (no SalientPoints returned) will be saved after the backpack button is pressed.
+
 
