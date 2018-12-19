@@ -255,7 +255,7 @@ public:
   void SetDontActivateThisTick(const std::string& coordinatorName);
 
   // if an active feature is associated with this behavior, return true and set it in arguments
-  bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
+  virtual bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
 
   UserIntentPtr ActivateUserIntentHelper(UserIntentTag tag, const std::string& owner = "");
   void DeactivateUserIntentHelper(UserIntentTag tag);

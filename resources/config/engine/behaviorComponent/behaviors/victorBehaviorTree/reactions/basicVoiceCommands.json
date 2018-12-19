@@ -4,6 +4,7 @@
 
   "linkScope": true,
   "interruptActiveBehavior": true,
+  "actAsSelector" : true,
 
   // all behaviors below this count as "greetings"
   "associatedActiveFeature": "BasicVoiceCommand",

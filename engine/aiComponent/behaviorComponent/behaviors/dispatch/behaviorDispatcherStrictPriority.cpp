@@ -97,7 +97,8 @@ bool BehaviorDispatcherStrictPriority::WantsToBeActivatedBehavior() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherStrictPriority::BehaviorDispatcher_OnActivated(){
+void BehaviorDispatcherStrictPriority::BehaviorDispatcher_OnActivated()
+{
   _dVars = DynamicVariables();
 }
 

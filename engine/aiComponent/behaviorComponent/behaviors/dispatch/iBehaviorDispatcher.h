@@ -39,6 +39,8 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const final override;
 
+  virtual bool GetAssociatedActiveFeature(ActiveFeature& feature) const override;
+
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
@@ -76,6 +78,9 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
+
+    bool          activeFeatureSet;
+    ActiveFeature delegatedFeature;
   };
 
   InstanceConfig   _iConfig;

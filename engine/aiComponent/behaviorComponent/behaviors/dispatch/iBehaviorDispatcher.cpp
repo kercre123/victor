@@ -16,6 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "clad/types/behaviorComponent/activeFeatures.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -35,7 +36,9 @@ IBehaviorDispatcher::InstanceConfig::InstanceConfig()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorDispatcher::DynamicVariables::DynamicVariables()
+IBehaviorDispatcher::DynamicVariables::DynamicVariables() :
+  activeFeatureSet( false ),
+  delegatedFeature( ActiveFeature::NoFeature )
 {
 }
 
@@ -140,6 +143,7 @@ void IBehaviorDispatcher::OnBehaviorActivated()
 void IBehaviorDispatcher::OnBehaviorDeactivated()
 {
   BehaviorDispatcher_OnDeactivated();
+  _dVars.activeFeatureSet = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,8 +204,31 @@ void IBehaviorDispatcher::BehaviorUpdate()
       DEV_ASSERT_MSG(delegated, "IBehaviorDispatcher.BehaviorUpdate.DelegateFailed",
                      "Failed to delegate to behavior '%s'",
                      desiredBehavior->GetDebugLabel().c_str());
+
+      // only set the ActiveFeature if we're delegating (which is now)
+      // + default it to whatever (if anything) was set in config
+      // + allow the delegate behavior to override
+      // + if nobody explicitly sets anything, _dVars.activeFeatureSet will be false
+      _dVars.activeFeatureSet = ICozmoBehavior::GetAssociatedActiveFeature(_dVars.delegatedFeature);
+      _dVars.activeFeatureSet |= desiredBehavior->GetAssociatedActiveFeature(_dVars.delegatedFeature);
     }
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehaviorDispatcher::GetAssociatedActiveFeature(ActiveFeature& feature) const
+{
+  // if we have delegated to a behavior that has an ActiveFeature, then return that.
+  // VIC-12106 : There is a single frame when our delegated behavior is finished and now we're active on the stack
+  //             waiting to be cleared.  Since IBehaviorDispatcher is meant to always dispatch and can't do anything
+  //             standalone, simply return the ActiveFeature of the previoud delegated behavior until we've been re-activated.
+  if( _dVars.activeFeatureSet ) {
+    feature = _dVars.delegatedFeature;
+    return true;
+  }
+
+  // if we haven't delegated to anything, don't set the ActiveFeature since it doesn't make sense for a dispatcher
+  return false;
 }
 
 }
