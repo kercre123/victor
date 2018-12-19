@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
 
 #include "clad/types/proxMessages.h"

@@ -34,7 +34,7 @@
 #include "util/logging/logging.h"
 
 #include "coretech/common/engine/math/matrix.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 #include "coretech/common/engine/math/poseBase.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/rotation.h"

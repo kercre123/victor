@@ -1,6 +1,5 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/math/poseTreeNode.h" // DO_DEV_POSE_CHECKS

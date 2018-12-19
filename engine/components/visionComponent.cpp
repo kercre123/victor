@@ -51,7 +51,6 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"

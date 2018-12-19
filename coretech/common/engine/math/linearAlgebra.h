@@ -21,7 +21,7 @@
 #define ANKI_COMMON_BASESTATION_MATH_LINEAR_ALGEBRA_H
 
 #include "coretech/common/engine/math/matrix.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 
 namespace Anki {
   

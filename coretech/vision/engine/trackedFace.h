@@ -13,7 +13,7 @@
 #ifndef __Anki_Vision_TrackedFace_H__
 #define __Anki_Vision_TrackedFace_H__
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 #include "coretech/common/engine/math/rect.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/math/pose.h"

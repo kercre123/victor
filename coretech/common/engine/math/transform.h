@@ -16,7 +16,6 @@
 #include "util/logging/logging.h"
 
 #include "coretech/common/engine/math/matrix.h"
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/shared/radians.h"
 

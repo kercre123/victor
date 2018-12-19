@@ -15,7 +15,6 @@
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/logging/logging.h"
@@ -53,22 +52,6 @@ QuadTree::QuadTree(
 
   _destructorCallback = destructorCallback;
   _modifiedCallback   = modifiedCallback;
-
-  // make sure math invariants hold before we allow anyone to use the QT
-  DEV_ASSERT(Vec2Quadrant( Vec2f( 1.f,  1.f) ) == EQuadrant::PlusXPlusY,   "Incorrect Quadrant 1");
-  DEV_ASSERT(Vec2Quadrant( Vec2f( 1.f, -1.f) ) == EQuadrant::PlusXMinusY,  "Incorrect Quadrant 2");
-  DEV_ASSERT(Vec2Quadrant( Vec2f(-1.f,  1.f) ) == EQuadrant::MinusXPlusY,  "Incorrect Quadrant 3");
-  DEV_ASSERT(Vec2Quadrant( Vec2f(-1.f, -1.f) ) == EQuadrant::MinusXMinusY, "Incorrect Quadrant 4");
-
-  DEV_ASSERT(Vec2Quadrant( Vec2f( 1.f,  0.f) ) == EQuadrant::PlusXPlusY,   "Incorrect +x +0y Axis quadrant");
-  DEV_ASSERT(Vec2Quadrant( Vec2f( 1.f, -0.f) ) == EQuadrant::PlusXMinusY,  "Incorrect +x -0y Axis quadrant");
-  DEV_ASSERT(Vec2Quadrant( Vec2f(-1.f,  0.f) ) == EQuadrant::MinusXPlusY,  "Incorrect -x +0y Axis quadrant");
-  DEV_ASSERT(Vec2Quadrant( Vec2f(-1.f, -0.f) ) == EQuadrant::MinusXMinusY, "Incorrect -x -0y Axis quadrant");
-
-  DEV_ASSERT(Vec2Quadrant( Vec2f( 0.f,  1.f) ) == EQuadrant::PlusXPlusY,   "Incorrect +0x +y Axis quadrant");
-  DEV_ASSERT(Vec2Quadrant( Vec2f(-0.f,  1.f) ) == EQuadrant::MinusXPlusY,  "Incorrect -0x +y Axis quadrant");
-  DEV_ASSERT(Vec2Quadrant( Vec2f( 0.f, -1.f) ) == EQuadrant::PlusXMinusY,  "Incorrect +0x -y Axis quadrant");
-  DEV_ASSERT(Vec2Quadrant( Vec2f(-0.f, -1.f) ) == EQuadrant::MinusXMinusY, "Incorrect -0x -y Axis quadrant");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

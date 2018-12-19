@@ -36,7 +36,7 @@
 //#include <cstdio>
 
 #include "coretech/common/engine/array2d.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 
 namespace Anki {
   

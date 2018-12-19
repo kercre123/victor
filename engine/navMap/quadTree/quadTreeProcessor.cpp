@@ -13,7 +13,6 @@
 #include "quadTree.h"
 
 #include "coretech/common/engine/math/bresenhamLine2d.h"
-#include "coretech/common/engine/math/point_impl.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"

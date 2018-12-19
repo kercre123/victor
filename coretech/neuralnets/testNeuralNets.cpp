@@ -11,6 +11,7 @@
 #endif
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point.h"
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetFilenames.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"

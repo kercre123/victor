@@ -5,7 +5,6 @@
 #include <functional>
 
 #include "coretech/common/engine/array2d_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"

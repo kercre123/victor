@@ -18,7 +18,6 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/enrolledFaceStorage.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/shared/radians.h"
 

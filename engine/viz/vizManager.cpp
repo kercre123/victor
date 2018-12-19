@@ -14,7 +14,6 @@
 #include "engine/viz/vizObjectBaseId.h"
 #include "engine/debug/devLoggingSystem.h"
 #include "coretech/common/engine/exceptions.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/vision/engine/imageIO.h"

@@ -17,8 +17,7 @@
 #include "util/logging/logging.h"
 #include "util/jsonWriter/jsonWriter.h"
 
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 #include "coretech/common/engine/jsonTools.h"
 #include "json/json.h"
 

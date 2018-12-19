@@ -26,9 +26,9 @@
 #define _ANKICORETECH_MATRIX_IMPL_H_
 
 #include "coretech/common/engine/math/matrix.h"
+#include "coretech/common/engine/math/point.h"
 
 #include "coretech/common/engine/array2d_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 
 #include <ostream>
 #include <cstdio>

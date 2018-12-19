@@ -1,6 +1,7 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
 #include "coretech/common/engine/math/matrix_impl.h"
+#include "util/math/math.h"
 #include <iostream>
 
 // For test debug printing

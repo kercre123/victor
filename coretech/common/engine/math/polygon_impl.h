@@ -15,7 +15,6 @@
 #ifndef __COMMON_BASESTATION_MATH_POLYGON_IMPL_H__
 #define __COMMON_BASESTATION_MATH_POLYGON_IMPL_H__
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rotatedRect.h"

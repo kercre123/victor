@@ -16,7 +16,6 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"

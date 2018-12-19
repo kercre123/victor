@@ -15,7 +15,6 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSearchWithinBoundingBox__
 #pragma once
 
-#include "coretech/common/engine/math/point.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {

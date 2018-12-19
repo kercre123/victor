@@ -13,7 +13,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/cubeSpinnerGame.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"

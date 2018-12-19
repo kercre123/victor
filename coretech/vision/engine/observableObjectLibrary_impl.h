@@ -18,7 +18,6 @@
 #include "coretech/vision/engine/observableObjectLibrary.h"
 
 #include "coretech/common/engine/exceptions.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/quad_impl.h"
 

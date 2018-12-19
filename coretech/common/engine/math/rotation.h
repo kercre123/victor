@@ -29,8 +29,8 @@
 #define __CoreTech_Math__rotation__
 
 #include "coretech/common/shared/radians.h"
-#include "matrix.h"
-#include "point.h"
+#include "coretech/common/engine/math/matrix.h"
+#include "coretech/common/engine/math/point.h"
 
 namespace Anki {
   

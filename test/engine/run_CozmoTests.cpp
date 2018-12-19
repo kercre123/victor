@@ -2,7 +2,6 @@
 #define protected public
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/robot/matlabInterface.h"

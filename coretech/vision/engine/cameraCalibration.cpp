@@ -11,8 +11,7 @@
 #include "coretech/common/engine/jsonTools.h"
 
 #include "coretech/common/engine/math/matrix_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 
 namespace Anki {
 namespace Vision {

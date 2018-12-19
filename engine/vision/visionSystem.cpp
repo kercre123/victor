@@ -15,7 +15,6 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
 #include "coretech/common/engine/math/linearClassifier.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"

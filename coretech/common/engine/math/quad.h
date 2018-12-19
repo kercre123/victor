@@ -15,10 +15,7 @@
 #ifndef _ANKICORETECH_COMMON_QUAD_H_
 #define _ANKICORETECH_COMMON_QUAD_H_
 
-#include "coretech/common/engine/math/point.h"
-
-#include <array>
-#include <vector>
+#include "coretech/common/engine/math/point_fwd.h"
 
 namespace Anki {
 

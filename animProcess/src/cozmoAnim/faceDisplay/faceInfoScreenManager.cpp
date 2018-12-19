@@ -28,7 +28,6 @@
 #include "micDataTypes.h"
 
 #include "coretech/common/engine/array2d_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"

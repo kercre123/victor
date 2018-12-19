@@ -16,7 +16,7 @@
 #ifndef __BASESTATION_MINIMALANGLEPLANNER_H__
 #define __BASESTATION_MINIMALANGLEPLANNER_H__
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 #include "coretech/common/shared/radians.h"
 #include "pathPlanner.h"
 

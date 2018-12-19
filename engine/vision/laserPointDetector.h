@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_LaserPointDetector_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 
 #include "coretech/vision/engine/compressedImage.h"
 #include "coretech/vision/engine/image.h"

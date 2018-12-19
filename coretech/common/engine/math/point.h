@@ -5,13 +5,13 @@
  * Created: 9/10/2013
  *
  *
- * Description: Defines a general N-dimensional Point class and two 
+ * Description: Implements a general N-dimensional Point class and two
  *              subclasses for commonly-used 2D and 3D points.  The latter have
  *              special accessors for x, y, and z components as well. All offer
  *              math capabilities and are templated to store any type.
  *
- *              NOTE: These classes may also be useful to store 2-, 3- or 
- *                    N-dimensional vectors as well. Thus there are also 
+ *              NOTE: These classes may also be useful to store 2-, 3- or
+ *                    N-dimensional vectors as well. Thus there are also
  *                    aliases for Vec3f and Vec2f.
  *
  * Copyright: Anki, Inc. 2013
@@ -21,320 +21,773 @@
 #ifndef _ANKICORETECH_COMMON_POINT_H_
 #define _ANKICORETECH_COMMON_POINT_H_
 
-#include "coretech/common/shared/types.h"
+#include "util/math/math.h"
 
-#include "clad/types/cladPoint.h"
+#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/radians.h"
 
-#if ANKICORETECH_USE_OPENCV
-#include "opencv2/core.hpp"
-#endif
 
-#include <array>
+#include <cmath>
+#include <functional>
+#include <numeric>
+
+namespace Anki {
+  // Returns true if all elements of p1 match p2 according to compareFcn
+  template<PointDimType N, typename T, class Compare>
+  inline constexpr bool AllHelper(const Point<N,T>& p1, const Point<N,T>& p2, Compare&& compareFcn)
+  {
+    for(PointDimType i=0; i<N; ++i)
+    {
+      // Return false as soon as any member fails
+      if(!compareFcn(p1[i], p2[i]))
+      {
+        return false;
+      }
+    }
+    
+    // Nothing failed check, so all must be true
+    return true;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// STL specializations for common template comparison types 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace std {
+  
+// if type T is 32 bit or less, then we can hash with a bitshift
+template <typename T> 
+struct std::hash<Anki::Point2<T>> {
+  std::enable_if_t<sizeof(T) <= 4, s64> 
+  constexpr operator()(const Anki::Point2<T>& p) const
+  { 
+    return ((s64) p.x()) << 32 | ((s64) p.y()); 
+  }
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <Anki::PointDimType N, typename T>
+struct std::equal_to<Anki::Point<N,T>>  {
+  template <typename T1, typename = std::enable_if_t<std::is_floating_point<T1>::value> >
+  constexpr bool operator()(const Anki::Point<N,T1>& p, const Anki::Point<N,T1>& q) const 
+  { 
+    return AllHelper(p, q, [] (T1 a, T1 b) { return FLT_NEAR(a, b); });
+  }
+
+  constexpr bool operator()(const Anki::Point<N,T>& p, const Anki::Point<N,T>& q) const 
+  { 
+    return AllHelper(p, q, std::equal_to<T>());
+  }
+};
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <Anki::PointDimType N, typename T>
+struct std::not_equal_to<Anki::Point<N,T>>  {
+  constexpr bool operator()(const Anki::Point<N,T>& p, const Anki::Point<N,T>& q) const 
+  { 
+    return !std::equal_to<Anki::Point<N,T>>()(p,q);
+  }
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <Anki::PointDimType N, typename T>
+struct std::less<Anki::Point<N,T>>  {
+  template <typename T1, typename = std::enable_if_t<std::is_floating_point<T1>::value> >
+  constexpr bool operator()(const Anki::Point<N,T1>& p, const Anki::Point<N,T1>& q) const 
+  { 
+    return AllHelper(p, q, [] (T1 a, T1 b) { return FLT_LT(a, b); });
+  }
+
+  constexpr bool operator()(const Anki::Point<N,T>& p, const Anki::Point<N,T>& q) const 
+  { 
+    return AllHelper(p, q, std::less<T>());
+  }
+};
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <Anki::PointDimType N, typename T>
+struct std::less_equal<Anki::Point<N,T>>  {
+  template <typename T1, typename = std::enable_if_t<std::is_floating_point<T1>::value> >
+  constexpr bool operator()(const Anki::Point<N,T1>& p, const Anki::Point<N,T1>& q) const 
+  { 
+    return AllHelper(p, q, [] (T1 a, T1 b) { return FLT_LTE(a, b); });
+  }
+
+  constexpr bool operator()(const Anki::Point<N,T>& p, const Anki::Point<N,T>& q) const 
+  { 
+    return AllHelper(p, q, std::less_equal<T>());
+  }
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <Anki::PointDimType N, typename T>
+struct std::greater<Anki::Point<N,T>>  {
+  template <typename T1, typename = std::enable_if_t<std::is_floating_point<T1>::value> >
+  constexpr bool operator()(const Anki::Point<N,T1>& p, const Anki::Point<N,T1>& q) const 
+  { 
+    return AllHelper(p, q, [] (T1 a, T1 b) { return FLT_GT(a, b); });
+  }
+
+  constexpr bool operator()(const Anki::Point<N,T>& p, const Anki::Point<N,T>& q) const 
+  { 
+    return AllHelper(p, q, std::greater<T>());
+  }
+};
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <Anki::PointDimType N, typename T>
+struct std::greater_equal<Anki::Point<N,T>>  {
+  template <typename T1, typename = std::enable_if_t<std::is_floating_point<T1>::value> >
+  constexpr bool operator()(const Anki::Point<N,T1>& p, const Anki::Point<N,T1>& q) const 
+  { 
+    return AllHelper(p, q, [] (T1 a, T1 b) { return FLT_GTE(a, b); });
+  }
+
+  constexpr bool operator()(const Anki::Point<N,T>& p, const Anki::Point<N,T>& q) const 
+  { 
+    return AllHelper(p, q, std::greater_equal<T>());
+  }
+};
+
+}
+
+namespace {
+  // NOTE: since `std::fill` is not constexpr until C++20, use an index_sequence to create 
+  //       pack expansion for an initializer list
+  template <typename T, Anki::PointDimType N, size_t... Is>
+  constexpr std::array<T,N> fill_array(const T& init, std::index_sequence<Is...> const&) {
+    // use `Is` to duplicate `init`, but cast `Is` to void to ignore it
+    return {{ ((void)Is, init)...}}; 
+  }
+    
+  template <typename T, Anki::PointDimType N>
+  constexpr std::array<T,N> fill_array(const T& init) {
+    return fill_array<T,N>( init, std::make_index_sequence<N>{} );
+  }
+
+  template <typename T, Anki::PointDimType N, typename Generator, size_t... Is>
+  constexpr std::array<T,N> generate_array(const Generator& gen, std::index_sequence<Is...> const&) {
+    return {{ gen[Is]... }};
+  }
+    
+  template <typename T, Anki::PointDimType N, typename Generator>
+  constexpr std::array<T,N> generate_array(const Generator& gen) {
+    return generate_array<T,N>( gen, std::make_index_sequence<N>{} );
+  }
+}
 
 namespace Anki {
   
-  // Forward declaration
-  class Radians;
-  template<MatDimType,MatDimType,typename> class SmallMatrix;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Constructors
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr Point<N,T>::Point(const T scalar) 
+: std::array<T,N>( fill_array<T,N>(scalar) ) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <PointDimType N, typename T>
+template <PointDimType M, typename>
+constexpr Point<N,T>::Point(const Point<M,T>& pt) 
+: std::array<T,N>( generate_array<T,N>(pt) ) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template <PointDimType N, typename T>
+template <typename... Ts, typename>
+constexpr  Point<N,T>::Point(Ts... ts)
+: std::array<T,N>{{ T(ts)... }} {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr Point<N,T>::Point(const SmallMatrix<N,1,T>& M)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] = M((s32)i,0);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr Point<N,T>::Point(const CladPoint2d& cladPoint)
+: Point(cladPoint.x, cladPoint.y) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr Point<N,T>::Point(const CladPoint3d& cladPoint)
+: Point(cladPoint.x, cladPoint.y, cladPoint.z) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>::Point(const cv::Point_<T>& pt)
+: Point(pt.x, pt.y) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>::Point(const cv::Point3_<T>& pt)
+: Point(pt.x, pt.y, pt.z) {}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>::Point(const cv::Vec<T, N>& vec)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] = vec[(s32)i];
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Type Converters
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+cv::Point_<T> Point<N,T>::get_CvPoint_() const
+{
+  static_assert(N==2, "N must be 2 to convert to cv::Point_<T>.");
+  return cv::Point_<T>(this->x(), this->y());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+cv::Point3_<T> Point<N,T>::get_CvPoint3_() const
+{
+  static_assert(N==3, "N must be 3 to convert to cv::Point3_<T>.");
+  return cv::Point3_<T>(this->x(), this->y(), this->z());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+template<typename T_other>
+Point<N,T>& Point<N,T>::SetCast(const Point<N,T_other> &other)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] = static_cast<T>(other[i]);
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+template<typename T_other>
+Point<N,T>& Point<N,T>::SetCast(const T_other &value)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] = static_cast<T>(value);
+  }
+  return *this;
+}// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+template<typename T_other>
+constexpr Point<N, T_other> Point<N,T>::CastTo() const
+{
+  Point<N, T_other> to_cast;
+  to_cast.SetCast(*this);
+  return to_cast;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr CladPoint2d Point<N,T>::ToCladPoint2d() const
+{
+  static_assert(N==2, "Only 2D points can be converted directly to CladPoint2d");
   
-  using PointDimType = size_t;
+  const CladPoint2d cladPoint(static_cast<float>(this->x()),
+                              static_cast<float>(this->y()));
+  return cladPoint;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr CladPoint3d Point<N,T>::ToCladPoint3d() const
+{
+  static_assert(N==3, "Only 3D points can be converted directly to CladPoint3d");
   
-  // Generic N-dimensional Point class
-  template<PointDimType N, typename T>
-  class Point //: public std::array<T,N>
+  const CladPoint3d cladPoint(static_cast<float>(this->x()),
+                              static_cast<float>(this->y()),
+                              static_cast<float>(this->z()));
+  return cladPoint;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Convenience Getters
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T& Point<N,T>::x()             
+{ 
+  return std::get<0>(*this); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T& Point<N,T>::y()             
+{ 
+  return std::get<1>(*this); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T& Point<N,T>::z()             
+{ 
+  return std::get<2>(*this); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr const T& Point<N,T>::x() const 
+{ 
+  return std::get<0>(*this); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr const T& Point<N,T>::y() const 
+{ 
+  return std::get<1>(*this); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr const T& Point<N,T>::z() const 
+{ 
+  return std::get<2>(*this); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Arithmetic Operations
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator=(const T &value)
+{
+  std::fill(this->begin(), this->end(), value);
+  return (*this);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator*= (const T value)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] *= value;
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator+= (const T value)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] += value;
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator-= (const T value)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] -= value;
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator/= (const T value)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] /= value;
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T> Point<N,T>::operator* (const T value) const
+{
+  Point<N,T> res(*this);
+  for(PointDimType i=0; i<N; ++i) {
+    res[i] *= value;
+  }
+  return res;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T> Point<N,T>::operator+ (const T value) const
+{
+  Point<N,T> res(*this);
+  for(PointDimType i=0; i<N; ++i) {
+    res[i] += value;
+  }
+  return res;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator+= (const Point<N,T> &other)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] += other[i];
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator-= (const Point<N,T> &other)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] -= other[i];
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator*= (const Point<N,T> &other)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] *= other[i];
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::operator/= (const Point<N,T> &other)
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] /= other[i];
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T> Point<N,T>::operator-() const
+{
+  Point<N,T> p;
+  for(PointDimType i=0; i<N; ++i) {
+    p[i] = -(*this)[i];
+  }
+  return p;
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T> operator+ (const Point<N,T> &point1, const Point<N,T> &point2)
+{
+  Point<N,T> newPoint(point1);
+  newPoint += point2;
+  return newPoint;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T> operator- (const Point<N,T> &point1, const Point<N,T> &point2)
+{
+  Point<N,T> newPoint(point1);
+  newPoint -= point2;
+  return newPoint;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T DotProduct(const Point<N,T> &point1, const Point<N,T> &point2)
+{
+  float dotProduct = point1[0]*point2[0];
+  for(PointDimType i=1; i<N; ++i) {
+    dotProduct += point1[i]*point2[i];
+  }
+  return dotProduct;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+Point3<T> CrossProduct(const Point3<T> &point1, const Point3<T> &point2)
+{
+  return Point3<T>(point1.y()*point2.z() - point2.y()*point1.z(),
+                   point2.x()*point1.z() - point1.x()*point2.z(),
+                   point1.x()*point2.y() - point2.x()*point1.y());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2)
+{
+  return (point1 - point2).Length();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+Point<N,T>& Point<N,T>::Abs()
+{
+  for(PointDimType i=0; i<N; ++i) {
+    (*this)[i] = std::abs((*this)[i]);
+  }
+  return *this;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+T Point<N,T>::MakeUnitLength(void)
+{
+  const T lengthSq = this->LengthSq();
+  if(lengthSq > 0) {
+    const T length = std::sqrt(lengthSq);
+    (*this) *= T(1)/length;
+    return length;
+  } else {
+    return T(0);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Comparison Operators
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::operator< (const Point<N,T>& other) const
+{
+  return std::less<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::operator> (const Point<N,T>& other) const
+{
+  return std::greater<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::operator<= (const Point<N,T>& other) const
+{
+  return other;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::operator>= (const Point<N,T>& other) const
+{
+  return std::greater_equal<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::operator==(const Point<N,T>& other) const
+{
+  return std::equal_to<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool operator== (const Point<N,T> &point1, const Point<N,T> &point2)
+{
+  return std::equal_to<Point<N,T>>()(point1, point2);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::operator!=(const Point<N,T>& other) const
+{
+  return std::not_equal_to<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool operator!= (const Point<N,T> &point1, const Point<N,T> &point2)
+{
+  return std::not_equal_to<Point<N,T>>()(point1, point2);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AnyGT(const Point<N,T>& other) const
+{
+  return !AllLTE(other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AnyLT(const Point<N,T>& other) const
+{
+  return !AllGTE(other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AnyLTE(const Point<N,T>& other) const
+{
+  return !AllGT(other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AnyGTE(const Point<N,T>& other) const
+{
+  return !AllLT(other);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AllGT(const Point<N,T>& other) const
+{
+  return std::greater<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AllLT(const Point<N,T>& other) const
+{
+  return std::less<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AllGTE(const Point<N,T>& other) const
+{
+  return std::greater_equal<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool Point<N,T>::AllLTE(const Point<N,T>& other) const
+{
+  return std::less_equal<Point<N,T>>()(*this, other);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool IsNearlyEqual (const Point<N,T> &point1, const Point<N,T> &point2, const T eps)
+{
+  auto near = [eps](T value1, T value2) -> bool
   {
-    static_assert(N>0, "Cannot create an empty Point.");
-    
-  public:
-    
-    // Constructors
-    Point( void );
-    
-    //Point(const std::array<T,N>& array); // Creates ambiguity with opencv Point3_ constructor below
-    
-    // Populate all dimensions with the same scalar value
-    Point(const T scalar);
-    
-    // Construct a point from a higher-dimensional point by just dropping the
-    // the last dimensions. For example, construct a 2D point from a 3D point
-    // by just using the (x,y) dimensions and ignoring z.
-    Point(const Point<N+1,T>& pt);
-    
-    // Create from a CladPoint
-    Point(const CladPoint2d& cladPoint);
-    Point(const CladPoint3d& cladPoint);
-    
-    explicit Point(const SmallMatrix<N,1,T>& M);
-
-#if __cplusplus >= 201103L
-    // Point(T x1, T x2, ..., T xN);
-    // This is ugly variadic template syntax to get this constructor to
-    // work for all N and generate a compile-time error if you try to do
-    // something like: Point<2,int> p(1, 2, 3);
-    //
-    // See here for more:
-    //  http://stackoverflow.com/questions/8158261/templates-how-to-control-number-of-constructor-args-using-template-variable
-    template <typename... Tail>
-    Point(typename std::enable_if<sizeof...(Tail)+1 == N, T>::type head, Tail... tail)
-    : data{{ head, T(tail)... }} {}
-#else
-#warning No variadic templates.
-    Point(const T x, const T y); // Only valid if N==2
-    Point(const T x, const T y, const T z); // Only valid if N==3
-#endif
-    
-    // Assignment operator:
-    Point<N,T>& operator=(const T &value);
-    Point<N,T>& operator=(const Point<N,T> &other);
-    
-    // Assign and cast
-    template<typename T_other>
-    Point<N,T>& SetCast(const Point<N,T_other> &other);
-    template<typename T_other>
-    Point<N,T>& SetCast(const T_other &value);
-    
-    // Remove implicit casting
-    template<typename T_other>
-    Point<N,T>& operator=(const T_other &value) = delete;
-    template<typename T_other>
-    Point<N,T>& operator=(const Point<N,T_other> &other) = delete;
-    
-    // Return a cast version of this
-    template<typename T_other>
-    Point<N, T_other> CastTo() const;
-    
-    // Return a CladPoint
-    CladPoint2d ToCladPoint2d() const;
-    CladPoint3d ToCladPoint3d() const;
-    
-    // Accessors:
-    T& operator[] (const PointDimType i);
-    const T& operator[] (const PointDimType i) const;
-    
-    // Special mnemonic accessors for the first, second,
-    // and third elements, available when N is large enough.
-    
-    T& x();
-    T& y();
-    T& z();
-    const T& x() const;
-    const T& y() const;
-    const T& z() const;
-    
-#if ANKICORETECH_USE_OPENCV
-    explicit Point(const cv::Point_<T>& pt);
-    explicit Point(const cv::Point3_<T>& pt);
-    explicit Point(const cv::Vec<T,N>& vec);
-    
-    cv::Point_<T> get_CvPoint_() const;
-    cv::Point3_<T> get_CvPoint3_() const;
-#endif
-    
-    // Arithmetic Operators
-    Point<N,T>& operator+= (const T value);
-    Point<N,T>& operator-= (const T value);
-    Point<N,T>& operator*= (const T value);
-    Point<N,T>& operator/= (const T value);
-    Point<N,T>  operator*  (const T value) const;
-    Point<N,T>  operator+  (const T value) const;
-    Point<N,T>& operator+= (const Point<N,T> &other);
-    Point<N,T>& operator-= (const Point<N,T> &other);
-    Point<N,T>& operator*= (const Point<N,T> &other);
-    Point<N,T>& operator/= (const Point<N,T> &other);
-    Point<N,T>  operator-() const;
-    
-    // Comparison
-    // NOTE: Comparison of *all* elements must be true for the operator to return true!!!
-    //       See Any/All methods below to make this more explicit.
-    bool operator< (const Point<N,T>& other) const; // all elements less than
-    bool operator> (const Point<N,T>& other) const; // all elements greater than
-    bool operator==(const Point<N,T>& other) const; // all elements equal
-    bool operator!=(const Point<N,T>& other) const; // all elements equal
-    bool operator<=(const Point<N,T>& other) const; // all elements less than or equal
-    bool operator>=(const Point<N,T>& other) const; // all elements greater than or equal
-    
-    // Explicit Any vs. All comparison for choosing whether all elements or any element
-    // has to satisfy the comparison.
-    // GT = Greater Than, GTE = Greater Than or Equal, LT = Less Than, etc.
-    bool AnyGT(const Point<N,T>& other) const;
-    bool AllGT(const Point<N,T>& other) const;
-    bool AnyLT(const Point<N,T>& other) const;
-    bool AllLT(const Point<N,T>& other) const;
-    bool AnyGTE(const Point<N,T>& other) const;
-    bool AllGTE(const Point<N,T>& other) const;
-    bool AnyLTE(const Point<N,T>& other) const;
-    bool AllLTE(const Point<N,T>& other) const;
-    
-    // Absolute value of each element
-    Point<N,T>  GetAbs() const;
-    Point<N,T>& Abs(); // in place
-    
-    // Return length (squared) of the vector from the origin to the point
-    T Length(void) const;
-    T LengthSq(void) const;
-    
-    // Get Min/Max element (and optionally, which dimension)
-    T GetMin(PointDimType* whichDim = nullptr) const;
-    T GetMax(PointDimType* whichDim = nullptr) const;
-    
-    // Makes the point into a unit vector from the origin, while
-    // returning its original length. IMPORTANT: if the point was
-    // originally the origin, it cannot be made into a unit vector
-    // and will be left at the origin, and zero will be returned.
-    T MakeUnitLength(void);
-
-    // Returns "(x, y, ...)"
-    std::string ToString() const;
-    
-  protected:
-    
-    std::array<T,N> data;
-    
-  }; // class Point
-  
-  // Create some convenience aliases/typedefs for 2D and 3D points:
-  template <typename T>
-  using Point2 = Point<2, T>;
-  
-  template <typename T>
-  using Point3 = Point<3, T>;
-  
-  using Point2f = Point2<f32>;
-  using Point3f = Point3<f32>;
-  
-  using Point2i = Point2<s32>;
-  using Point3i = Point3<s32>;
-  
-  using Vec2f = Point2f;
-  using Vec3f = Point3f;
-  
-  const Vec2f& X_AXIS_2D();
-  const Vec2f& Y_AXIS_2D();
-  
-  const Vec3f& X_AXIS_3D();
-  const Vec3f& Y_AXIS_3D();
-  const Vec3f& Z_AXIS_3D();
-
-  
-  enum class AxisName {
-    Z_NEG = -3,
-    Y_NEG = -2,
-    X_NEG = -1,
-    X_POS =  1,
-    Y_POS =  2,
-    Z_POS =  3
+    return NEAR(value1, value2, eps);
   };
-
-  // returns single character axis for AxisName (ignoring sign)
-  char AxisToChar(AxisName axis);
-
-  // returns +/- N_AXIS_3D() where N = {X,Y,Z}
-  Vec3f AxisToVec3f(AxisName axis);
   
-  // returns two character string for AxisName (e.g. "+X" or "-Z")
-  const char* AxisToCString(AxisName axis);
+  return AllHelper(point1, point2, near);
+}
 
-  // Helper for compile-time conversion from character axis ('X', 'Y', or 'Z')
-  // to index (0, 1, or 2, respectively). Any other character for AXIS will fail
-  // to compile.
-  template<char AXIS> s32 AxisToIndex();
-  
-  template<> inline s32 AxisToIndex<'X'>() { return 0; }
-  template<> inline s32 AxisToIndex<'Y'>() { return 1; }
-  template<> inline s32 AxisToIndex<'Z'>() { return 2; }
-
-  inline s32 AxisToIndex(AxisName axis)
-  {
-    switch(axis)
-    {
-      case AxisName::X_POS:
-      case AxisName::X_NEG:
-        return AxisToIndex<'X'>();
-        
-      case AxisName::Y_POS:
-      case AxisName::Y_NEG:
-        return AxisToIndex<'Y'>();
-        
-      case AxisName::Z_POS:
-      case AxisName::Z_NEG:
-        return AxisToIndex<'Z'>();
-    }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Query
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T Point<N,T>::LengthSq(void) const
+{
+  T retVal = (*this)[0]*(*this)[0];
+  for(PointDimType i=1; i<N; ++i) {
+    retVal += (*this)[i]*(*this)[i];
   }
   
-  /*
-  template<PointDimType N, typename T>
-  class UnitVector : public Point<N,T>
-  {
-    template <typename... Tail>
-    UnitVector(typename std::enable_if<sizeof...(Tail)+1 == N, T>::type head, Tail... tail)
-    : Point<N,T>(head, T(tail)...)
-    {
-      this->makeUnitLength();
+  return retVal;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T Point<N,T>::Length(void) const
+{
+  return std::sqrt(LengthSq());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr Point<N,T> Point<N,T>::GetAbs() const
+{
+  Point<N,T> copy(*this);
+  return copy.Abs();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T Point<N,T>::GetMin(PointDimType* whichDim) const
+{
+  PointDimType minDim = 0;
+  T retVal = (*this)[minDim];
+  for(PointDimType i=1 ; i<N; ++i) {
+    if((*this)[i] < retVal) {
+      retVal = (*this)[i];
+      minDim = i;
     }
-    
-    // All setters call superclass set function and then renormalize?
-    
-    // Always returns one:
-    T length(void) const { return T(1); };
-    
-  }; // class UnitVector
-  */
-  
-  /*
-   // TODO: Do need a separate Vec class?
-  template<PointDimType N, typename T>
-  class Vec : public Point<N,T>
-  {
-    
-  }; // class Vec
-  
-  template<typename T>
-  using Vec2 = Vec<2,T>;
-  
-  template<typename T>
-  using Vec3 = Vec<3,T>;
-  */
-  
-  // Display / Logging:
-  template<PointDimType N, typename T>
-  std::ostream& operator<<(std::ostream& out, const Point<N,T>& p);
-  
-  // Binary mathematical operations:
-  template<PointDimType N, typename T>
-  bool operator== (const Point<N,T> &point1, const Point<N,T> &point2);
-  
-  template<PointDimType N, typename T>
-  bool operator!= (const Point<N,T> &point1, const Point<N,T> &point2);
+  }
+  if(nullptr != whichDim) {
+    *whichDim = minDim;
+  }
+  return retVal;
+}
 
-  template<PointDimType N, typename T>
-  bool IsNearlyEqual(const Point<N,T> &point1, const Point<N,T> &point2,
-                   const T eps = T(10)*std::numeric_limits<T>::epsilon());
-  
-  template<PointDimType N, typename T>
-  Point<N,T> operator+ (const Point<N,T> &point1, const Point<N,T> &point2);
-  
-  template<PointDimType N, typename T>
-  Point<N,T> operator- (const Point<N,T> &point1, const Point<N,T> &point2);
-  
-  template<PointDimType N, typename T>
-  T DotProduct(const Point<N,T> &point1, const Point<N,T> &point2);
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr T Point<N,T>::GetMax(PointDimType* whichDim) const
+{
+  PointDimType maxDim = 0;
+  T retVal = t(*this)[maxDim];
+  for(PointDimType i=1 ; i<N; ++i) {
+    if((*this)[i] > retVal) {
+      retVal = (*this)[i];
+      maxDim = i;
+    }
+  }
+  if(nullptr != whichDim) {
+    *whichDim = maxDim;
+  }
+  return retVal;
+}
 
-  template<typename T>
-  Point3<T> CrossProduct(const Point3<T> &point1, const Point3<T> &point2);
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr bool AreVectorsAligned(const Point<N,T>& point1, const Point<N,T>& point2, const Radians& angleThreshold)
+{
+  Point<N,f32> unitVec1(point1);
+  unitVec1.MakeUnitLength();
   
-  // TODO: should output type always be float/double?
-  template<PointDimType N, typename T>
-  T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
+  Point<N,f32> unitVec2(point2);
+  unitVec2.MakeUnitLength();
   
-  // Return true if the two points (vectors) are aligned within the given angle threshold
-  template<PointDimType N, typename T>
-  bool AreVectorsAligned(const Point<N,T>& point1, const Point<N,T>& point2, const Radians& angleThreshold);
+  return AreUnitVectorsAligned(unitVec1, unitVec2, angleThreshold);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N>
+constexpr bool AreUnitVectorsAligned(const Point<N,f32>& unitVec1, const Point<N,f32>& unitVec2, const Radians& angleThreshold)
+{
+  assert(NEAR(unitVec1.Length(), 1.f, 10.f*std::numeric_limits<f32>::epsilon()));
+  assert(NEAR(unitVec2.Length(), 1.f, 10.f*std::numeric_limits<f32>::epsilon()));
   
-  // Return true if the two unit vectors are aligned within the given angle threshold
-  // NOTE: In DEBUG, the unit vectors' lengths are confirmed (i.e. asserted) to be 1.0, but not in RELEASE.
-  template<PointDimType N>
-  bool AreUnitVectorsAligned(const Point<N,f32>& unitVec1, const Point<N,f32>& unitVec2, const Radians& angleThreshold);
+  const f32 dotProduct = DotProduct(unitVec1, unitVec2);
+  const f32 dotProductThreshold = 1.f - std::cos(angleThreshold.ToFloat());
+  
+  const bool areAligned = NEAR(std::abs(dotProduct), 1.f, dotProductThreshold);
+  
+  return areAligned;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// String Operations
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+std::string Point<N,T>::ToString() const
+{
+  // Convert all but the last element to avoid a trailing ","
+  static_assert(N>0, "Point must not be empty");
+  std::ostringstream oss;
+  oss << "(";
+  std::copy(this->begin(), this->end()-1, std::ostream_iterator<T>(oss, ", "));
+  
+  // Now add the last element with no delimiter
+  oss << this->back() << ")";
+  
+  return oss.str();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+constexpr std::ostream& operator<<(std::ostream& out, const Point<N,T>& p)
+{
+  for (PointDimType i=0; i<N; ++i) {
+    out << p[i] << " ";
+  }
+  return out;
+}
   
 } // namespace Anki
 
-#endif // _ANKICORETECH_COMMON_POINT_H_
+#endif // _ANKICORETECH_COMMON_POINT_IMPL_H_

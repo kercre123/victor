@@ -15,7 +15,7 @@
 
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 #include "json/json-forwards.h"
 #include "util/math/math.h"
 #include <string>
