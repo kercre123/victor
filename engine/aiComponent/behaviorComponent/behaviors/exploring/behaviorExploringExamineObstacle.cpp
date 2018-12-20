@@ -78,7 +78,7 @@ namespace {
   
   float kReturnToCenterSpeed_deg_s = 300.0f;
   
-  const unsigned int kNumFloodFillSteps = 3;
+  const unsigned int kNumFloodFillSteps = 10;
   
   
   // if discovered an obstacle within this long, and an unrelated path brings you nearby turn toward it
