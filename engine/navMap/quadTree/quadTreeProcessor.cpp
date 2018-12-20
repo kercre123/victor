@@ -193,17 +193,17 @@ void QuadTreeProcessor::OnNodeDestroyed(const QuadTreeNode* node)
 QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred)
 {
   NodeSet output;
+  NodeSet unexpandedNodes;
 
   // find any node of typeToFill that satisfies pred(node, neighbor)
-  std::deque<const QuadTreeNode*> unexpandedNodes;
   for (const auto& keyValuePair : _nodeSets ) {
     for (const auto& node : keyValuePair.second ) {
       // first check if node is typeToFill
       if ( innerPred( node->GetData() ) ) {
         // check if this nodes has a neighbor of any typesToFillFrom
         for(const auto& neighbor : node->GetNeighbors()) {
-          if( outerPred( neighbor->GetData() ) ) {
-            unexpandedNodes.emplace_back( node );
+          if( outerPred( static_cast<const MemoryMapDataPtr&>(neighbor->GetData()) ) ) {
+            unexpandedNodes.emplace( node );
             break;
           }
         }
@@ -214,15 +214,15 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
   // expand all nodes for fill
   while(!unexpandedNodes.empty()) {
     // get the next node and add it to the output list
-    const QuadTreeNode* node = unexpandedNodes.front();
-    unexpandedNodes.pop_front();
+    auto front = unexpandedNodes.begin();
+    const QuadTreeNode* node = *front;
     output.insert(node);
+    unexpandedNodes.erase(front);
 
     // get all of this nodes neighbors of the same type
     for(const auto& neighbor : node->GetNeighbors()) {
-      MemoryMapDataConstPtr neighborData = neighbor->GetData();
-      if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
-        unexpandedNodes.push_back( neighbor );
+     if ( innerPred( static_cast<const MemoryMapDataPtr&>(neighbor->GetData()) ) && (output.find(neighbor) == output.end()) ) {
+        unexpandedNodes.emplace( neighbor );
       }
     }
   } // all nodes expanded
@@ -233,10 +233,6 @@ QuadTreeProcessor::NodeSet QuadTreeProcessor::GetNodesToFill(const NodePredicate
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data)
 {
-  // calculate nodes being flooded directly. Note that we are not going to cause filled nodes to flood forward
-  // into others. A second call to FillBorder would be required for that (consider for local fills when we have them,
-  // since they'll be significally faster).
-
   bool changed = false;
   for( const auto& node : GetNodesToFill(innerPred, outerPred) ) {
     changed |= _quadTree->Transform( node->GetAddress(), [&data] (auto) { return data; } );
