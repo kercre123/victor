@@ -162,76 +162,17 @@ namespace {
 
 #endif
 
-
-  // TODO:(bn) cleanup: the AVS SDK already provides all of these with slightly different names, so let's use those instead...
-  const char* DialogUXStateToString( const avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState& duxState ) {
-    switch( duxState ) {
-      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::FINISHED: return "FINISHED";
-      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE: return "IDLE";
-      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING: return "THINKING";
-      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING: return "LISTENING";
-      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::EXPECTING: return "EXPECTING";
-      case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING: return "SPEAKING";
-      default: return "UNKNOWN";
-    }
+  std::string MessageStatusToString(const avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status& status ) {
+    std::stringstream ss;
+    ss << status;
+    return ss.str();
   }
 
-  const char* MessageStatusToString(const avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status& status ) {
-    switch( status ) {
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::PENDING: return "PENDING";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SUCCESS: return "SUCCESS";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SUCCESS_NO_CONTENT: return "SUCCESS_NO_CONTENT";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::NOT_CONNECTED: return "NOT_CONNECTED";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::NOT_SYNCHRONIZED: return "NOT_SYNCHRONIZED";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::TIMEDOUT: return "TIMEDOUT";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::PROTOCOL_ERROR: return "PROTOCOL_ERROR";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INTERNAL_ERROR: return "INTERNAL_ERROR";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_INTERNAL_ERROR_V2: return "SERVER_INTERNAL_ERROR_V2";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::REFUSED: return "REFUSED";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::CANCELED: return "CANCELED";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::THROTTLED: return "THROTTLED";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::BAD_REQUEST: return "BAD_REQUEST";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::SERVER_OTHER_ERROR: return "SERVER_OTHER_ERROR";
-      case avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status::INVALID_AUTH: return "INVALID_AUTH";
-      default: return "UNKNOWN";
-    }
+  std::string AuthErrorToString(const avsCommon::sdkInterfaces::AuthObserverInterface::Error& error) {
+    std::stringstream ss;
+    ss << error;
+    return ss.str();
   }
-
-  const char* AuthErrorToString(const avsCommon::sdkInterfaces::AuthObserverInterface::Error& error) {
-    switch(error) {
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SUCCESS: return "SUCCESS";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNKNOWN_ERROR: return "UNKNOWN_ERROR";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_FAILED: return "AUTHORIZATION_FAILED";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNAUTHORIZED_CLIENT: return "UNAUTHORIZED_CLIENT";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SERVER_ERROR: return "SERVER_ERROR";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_REQUEST: return "INVALID_REQUEST";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_VALUE: return "INVALID_VALUE";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_EXPIRED: return "AUTHORIZATION_EXPIRED";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::UNSUPPORTED_GRANT_TYPE: return "UNSUPPORTED_GRANT_TYPE";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CODE_PAIR: return "INVALID_CODE_PAIR";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::AUTHORIZATION_PENDING: return "AUTHORIZATION_PENDING";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::SLOW_DOWN: return "SLOW_DOWN";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INTERNAL_ERROR: return "INTERNAL_ERROR";
-      case avsCommon::sdkInterfaces::AuthObserverInterface::Error::INVALID_CBL_CLIENT_ID: return "INVALID_CBL_CLIENT_ID";
-      default: return "UNKNOWN";
-    }
-  }
-
-  const char* AlertStateToString(const capabilityAgents::alerts::AlertObserverInterface::State& state ) {
-    switch(state) {
-      case capabilityAgents::alerts::AlertObserverInterface::State::READY: return "READY";
-      case capabilityAgents::alerts::AlertObserverInterface::State::STARTED: return "STARTED";
-      case capabilityAgents::alerts::AlertObserverInterface::State::STOPPED: return "STOPPED";
-      case capabilityAgents::alerts::AlertObserverInterface::State::SNOOZED: return "SNOOZED";
-      case capabilityAgents::alerts::AlertObserverInterface::State::COMPLETED: return "COMPLETED";
-      case capabilityAgents::alerts::AlertObserverInterface::State::PAST_DUE: return "PAST_DUE";
-      case capabilityAgents::alerts::AlertObserverInterface::State::FOCUS_ENTERED_FOREGROUND: return "FOCUS_ENTERED_FOREGROUND";
-      case capabilityAgents::alerts::AlertObserverInterface::State::FOCUS_ENTERED_BACKGROUND: return "FOCUS_ENTERED_BACKGROUND";
-      case capabilityAgents::alerts::AlertObserverInterface::State::ERROR: return "ERROR";
-      default: return "UNKNOWN";
-    }
-  }
-
 }
   
 #if ANKI_DEV_CHEATS
@@ -323,8 +264,6 @@ void AlexaImpl::InitThread()
     return;
   }
   
-  // TODO: docs say this should be called before any other threads start. I'm guessing theyre talking
-  // about alexa threads.
   if( !avsCommon::avs::initialization::AlexaClientSDKInit::initialize( configs ) ) {
     CRITICAL_SDK("Failed to initialize SDK!");
     _initState = InitState::ThreadFailed;
@@ -1005,7 +944,7 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   auto sendResultDas = [](bool success, avsCommon::sdkInterfaces::AuthObserverInterface::Error error) {
     DASMSG(user_sign_in_result, "alexa.user_sign_in_result", "Result of initial user sign in attempt");
     DASMSG_SET(s1, success ? "SUCCESS" : "FAILURE", "SUCCESS or FAILURE");
-    DASMSG_SET(s2, AuthErrorToString(error), "Error reason (from AVS SDK)");
+    DASMSG_SET(s2, AuthErrorToString(error).c_str(), "Error reason (from AVS SDK)");
     DASMSG_SEND();
   };
   
@@ -1061,8 +1000,8 @@ void AlexaImpl::OnRequestAuthorization( const std::string& url, const std::strin
 void AlexaImpl::OnDialogUXStateChanged( DialogUXState state )
 {
   LOG_INFO("AlexaImpl.OnDialogUXStateChanged", "from '%s' to '%s'",
-           DialogUXStateToString(_dialogState),
-           DialogUXStateToString(state));
+           avsCommon::sdkInterfaces::DialogUXStateObserverInterface::stateToString(_dialogState).c_str(),
+           avsCommon::sdkInterfaces::DialogUXStateObserverInterface::stateToString(state).c_str());
 
 
   _dialogState = state;
@@ -1200,10 +1139,10 @@ void AlexaImpl::OnAVSConnectionChanged( const avsCommon::sdkInterfaces::Connecti
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status )
 {
-  LOG_INFO("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
+  LOG_INFO("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status).c_str());
 
   DASMSG(send_complete, "alexa.response_to_request", "SDK responded to a sent message");
-  DASMSG_SET(s1, MessageStatusToString(status), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
+  DASMSG_SET(s1, MessageStatusToString(status).c_str(), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
   DASMSG_SEND();
 
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
@@ -1324,7 +1263,7 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
   LOG_INFO( "AlexaImpl.OnAlertState",
             "alert '%s' changed to state '%s', _alertActive=%d, _backgroundAlertActive=%d, %zu alerts tracked",
             alertID.c_str(),
-            AlertStateToString(state),
+            capabilityAgents::alerts::AlertObserverInterface::stateToString(state).c_str(),
             _alertActive,
             _backgroundAlertActive,
             _alertStates.size());
@@ -1362,16 +1301,16 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::OnPlayerActivity( alexaClientSDK::avsCommon::avs::PlayerActivity state )
+void AlexaImpl::OnPlayerActivity( avsCommon::avs::PlayerActivity state )
 {
-  const bool playing = ( state == alexaClientSDK::avsCommon::avs::PlayerActivity::PLAYING );
+  const bool playing = ( state == avsCommon::avs::PlayerActivity::PLAYING );
   if( playing != _audioActive ) {
     _audioActive = playing;
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _audioActiveLastChangeTime_s = currTime_s;
 
     LOG_INFO( "AlexaImpl.OnPlayerActivity", "new state = %s",
-              alexaClientSDK::avsCommon::avs::playerActivityToString(state).c_str() );
+              avsCommon::avs::playerActivityToString(state).c_str() );
 
     CheckForUXStateChange();
     // call CheckForUXStateChange() again once kTimeToHoldSpeakingBetweenAudioPlays_s expires
