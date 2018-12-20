@@ -57,6 +57,12 @@ BleClient::BleClient(struct ev_loop* loop)
 }
 
   
+BleClient::~BleClient()
+{
+  Stop();
+}
+  
+
 void BleClient::Start()
 {
   // Read the on-disk firmware file to ensure it exists.
@@ -98,11 +104,9 @@ void BleClient::Stop()
 {
   DisconnectFromCube();
   
-  // Signal the ev loop thread to break out of its loop
-  _asyncBreakSignal.send();
-  
-  // Wait for the loop thread to complete
+  // Signal the ev loop thread to break out of its loop and wait for the thread to complete
   if (_loopThread.joinable()) {
+    _asyncBreakSignal.send();
     _loopThread.join();
   }
 }
