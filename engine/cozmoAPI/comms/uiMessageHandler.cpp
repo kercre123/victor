@@ -19,6 +19,7 @@
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/externalInterface/gatewayInterface.h"
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
@@ -193,13 +194,36 @@ namespace Anki {
       _context = context;
 
       // We'll use this callback for simple events we care about
-      auto commonCallback = std::bind(&UiMessageHandler::HandleEvents, this, std::placeholders::_1);
+      auto g2e_callback = std::bind(&UiMessageHandler::HandleGameToEngineEvents, this, std::placeholders::_1);
+      auto e2g_callback = std::bind(&UiMessageHandler::HandleEngineToGameEvents, this, std::placeholders::_1);
 
       // Subscribe to desired simple events
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, commonCallback));
-      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::TransferFile, commonCallback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, g2e_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, g2e_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, g2e_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageGameToEngineTag::TransferFile, g2e_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::RobotObservedFace, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::RobotObservedObject, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::ObjectMoved, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::ObjectAvailable, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::ObjectStoppedMoving, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::ObjectTapped, e2g_callback));
+      _signalHandles.push_back(Subscribe(
+          ExternalInterface::MessageEngineToGameTag::ObjectConnectionState, e2g_callback));
 
       return RESULT_OK;
     }
@@ -683,7 +707,60 @@ namespace Anki {
       return success;
     }
 
-    void UiMessageHandler::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    void UiMessageHandler::HandleEngineToGameEvents(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+    {
+      external_interface::GatewayWrapper proto_message;
+      switch (event.GetData().GetTag()) {
+        case ExternalInterface::MessageEngineToGameTag::RobotObservedFace:
+          ProtoCladInterpreter::CladRobotObservedFaceToProto(event.GetData().Get_RobotObservedFace(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID:
+          ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
+              event.GetData().Get_RobotChangedObservedFaceID(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
+          ProtoCladInterpreter::CladRobotObservedObjectToProto(
+              event.GetData().Get_RobotObservedObject(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+          ProtoCladInterpreter::CladObjectMovedToProto(event.GetData().Get_ObjectMoved(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectAvailable:
+          ProtoCladInterpreter::CladObjectAvailableToProto(event.GetData().Get_ObjectAvailable(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectStoppedMoving:
+          ProtoCladInterpreter::CladObjectStoppedMovingToProto(
+              event.GetData().Get_ObjectStoppedMoving(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:
+          ProtoCladInterpreter::CladObjectUpAxisChangedToProto(
+              event.GetData().Get_ObjectUpAxisChanged(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectTapped:
+          ProtoCladInterpreter::CladObjectTappedToProto(
+              event.GetData().Get_ObjectTapped(), proto_message);
+          break;
+        case ExternalInterface::MessageEngineToGameTag::ObjectConnectionState:
+          ProtoCladInterpreter::CladObjectConnectionStateToProto(
+              event.GetData().Get_ObjectConnectionState(), proto_message);
+          break;
+        default:
+          return;
+      }
+      auto debug_string = proto_message.DebugString();
+      int last_ch = 0;
+      remove_if(
+        debug_string.begin(), 
+        debug_string.end(), 
+        [last_ch](int ch)mutable->int{
+          bool retval = ((ch=='\n') | (last_ch == ' ' and ch == ' '));
+          last_ch = ch;
+          return retval;
+        });
+      _context->GetGatewayInterface()->Broadcast(proto_message);
+    }
+
+    void UiMessageHandler::HandleGameToEngineEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
       switch (event.GetData().GetTag())
       {

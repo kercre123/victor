@@ -120,7 +120,15 @@ namespace Anki {
       
       HandleRobotObservedFace(msg);
     }
-    
+
+    // FOR CODE REVIEW: Should these even still exist?
+    void UiGameController::HandleRobotObservedObjectBase(const ExternalInterface::RobotObservedObject& msg)
+    {
+      _lastObservedFaceID = msg.faceID;
+      
+      HandleRobotObservedObject(msg);
+    }
+
     void UiGameController::HandleRobotObservedPetBase(const ExternalInterface::RobotObservedPet& msg)
     {
       HandleRobotObservedPet(msg);

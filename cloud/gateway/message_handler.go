@@ -177,58 +177,12 @@ func SliceToArray(msg []uint32) [3]uint32 {
 	return arr
 }
 
-func CladCladRectToProto(msg *gw_clad.CladRect) *extint.CladRect {
-	return &extint.CladRect{
-		XTopLeft: msg.XTopLeft,
-		YTopLeft: msg.YTopLeft,
-		Width:    msg.Width,
-		Height:   msg.Height,
-	}
-}
-
-func CladCladPointsToProto(msg []gw_clad.CladPoint2d) []*extint.CladPoint {
-	var points []*extint.CladPoint
-	for _, point := range msg {
-		points = append(points, &extint.CladPoint{X: point.X, Y: point.Y})
-	}
-	return points
-}
-
 func CladExpressionValuesToProto(msg []uint8) []uint32 {
 	var expression_values []uint32
 	for _, val := range msg {
 		expression_values = append(expression_values, uint32(val))
 	}
 	return expression_values
-}
-
-func CladRobotObservedFaceToProto(msg *gw_clad.RobotObservedFace) *extint.RobotObservedFace {
-	// BlinkAmount, Gaze and SmileAmount are not exposed to the SDK
-	return &extint.RobotObservedFace{
-		FaceId:    msg.FaceID,
-		Timestamp: msg.Timestamp,
-		Pose:      CladPoseToProto(&msg.Pose),
-		ImgRect:   CladCladRectToProto(&msg.ImgRect),
-		Name:      msg.Name,
-
-		Expression: extint.FacialExpression(msg.Expression + 1), // protobuf enums have a 0 start value
-
-		// Individual expression values histogram, sums to 100 (Exception: all zero if expressio: msg.
-		ExpressionValues: CladExpressionValuesToProto(msg.ExpressionValues[:]),
-
-		// Face landmarks
-		LeftEye:  CladCladPointsToProto(msg.LeftEye),
-		RightEye: CladCladPointsToProto(msg.RightEye),
-		Nose:     CladCladPointsToProto(msg.Nose),
-		Mouth:    CladCladPointsToProto(msg.Mouth),
-	}
-}
-
-func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFaceID) *extint.RobotChangedObservedFaceID {
-	return &extint.RobotChangedObservedFaceID{
-		OldId: msg.OldID,
-		NewId: msg.NewID,
-	}
 }
 
 func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
@@ -260,65 +214,6 @@ func CladEventToProto(msg *gw_clad.Event) *extint.Event {
 	default:
 		log.Println(tag, "tag is not yet implemented")
 		return nil
-	}
-}
-
-func CladObjectConnectionStateToProto(msg *gw_clad.ObjectConnectionState) *extint.ObjectConnectionState {
-	return &extint.ObjectConnectionState{
-		ObjectId:   msg.ObjectID,
-		FactoryId:  msg.FactoryID,
-		ObjectType: extint.ObjectType(msg.ObjectType + 1),
-		Connected:  msg.Connected,
-	}
-}
-func CladObjectAvailableToProto(msg *gw_clad.ObjectAvailable) *extint.ObjectAvailable {
-	return &extint.ObjectAvailable{
-		FactoryId: msg.FactoryId,
-	}
-}
-func CladObjectMovedToProto(msg *gw_clad.ObjectMoved) *extint.ObjectMoved {
-	return &extint.ObjectMoved{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-	}
-}
-func CladObjectStoppedMovingToProto(msg *gw_clad.ObjectStoppedMoving) *extint.ObjectStoppedMoving {
-	return &extint.ObjectStoppedMoving{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-	}
-}
-func CladObjectUpAxisChangedToProto(msg *gw_clad.ObjectUpAxisChanged) *extint.ObjectUpAxisChanged {
-	// In clad, unknown is the final value
-	// In proto, the convention is that 0 is unknown
-	upAxis := extint.UpAxis_INVALID_AXIS
-	if msg.UpAxis != gw_clad.UpAxis_UnknownAxis {
-		upAxis = extint.UpAxis(msg.UpAxis + 1)
-	}
-
-	return &extint.ObjectUpAxisChanged{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-		UpAxis:    upAxis,
-	}
-}
-func CladObjectTappedToProto(msg *gw_clad.ObjectTapped) *extint.ObjectTapped {
-	return &extint.ObjectTapped{
-		Timestamp: msg.Timestamp,
-		ObjectId:  msg.ObjectID,
-	}
-}
-
-func CladRobotObservedObjectToProto(msg *gw_clad.RobotObservedObject) *extint.RobotObservedObject {
-	return &extint.RobotObservedObject{
-		Timestamp:             msg.Timestamp,
-		ObjectFamily:          extint.ObjectFamily(msg.ObjectFamily + 1),
-		ObjectType:            extint.ObjectType(msg.ObjectType + 1),
-		ObjectId:              msg.ObjectID,
-		ImgRect:               CladCladRectToProto(&msg.ImgRect),
-		Pose:                  CladPoseToProto(&msg.Pose),
-		IsActive:              uint32(msg.IsActive),
-		TopFaceOrientationRad: msg.TopFaceOrientationRad,
 	}
 }
 
@@ -980,6 +875,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
 			}
 			event := response.GetEvent()
+			log.Printf("ron_proto EventStream: %s", event.String())
 			if checkFilters(event, whiteList, blackList) {
 				if logVerbose {
 					log.Printf("EventStream: Sending event to client: %#v\n", *event)
