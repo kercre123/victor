@@ -424,10 +424,10 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
   
   // Look forward, then wait a brief time to acquire some more images and
   // a more accurate pose of the charger. Then verify pose.
-  const float kWaitBeforeVerifyTime_sec = 0.3f;
+  const int kNumImagesToWaitFor = 2;
   auto* compoundAction = new CompoundActionSequential();
   compoundAction->AddAction(new MoveHeadToAngleAction(0.f));
-  compoundAction->AddAction(new WaitAction(kWaitBeforeVerifyTime_sec));
+  compoundAction->AddAction(new WaitForImagesAction(kNumImagesToWaitFor, VisionMode::DetectingMarkers));
   compoundAction->AddAction(new VisuallyVerifyObjectAction(_dVars.chargerID));
 
   auto checkPoseFunc = [this]() -> bool {
