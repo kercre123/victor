@@ -30,30 +30,6 @@ var (
 )
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
-		LeftWheelMmps:   msg.LeftWheelMmps,
-		RightWheelMmps:  msg.RightWheelMmps,
-		LeftWheelMmps2:  msg.LeftWheelMmps2,
-		RightWheelMmps2: msg.RightWheelMmps2,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.MessageExternalToRobot {
-	if msg.Animation == nil {
-		return nil
-	}
-	return gw_clad.NewMessageExternalToRobotWithPlayAnimation(&gw_clad.PlayAnimation{
-		NumLoops:        msg.Loops,
-		AnimationName:   msg.Animation.Name,
-		IgnoreBodyTrack: msg.IgnoreBodyTrack,
-		IgnoreHeadTrack: msg.IgnoreHeadTrack,
-		IgnoreLiftTrack: msg.IgnoreLiftTrack,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
 		SpeedRadPerSec: msg.SpeedRadPerSec,
@@ -121,10 +97,6 @@ func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.Mes
 		SayName:     msg.SayName,
 		UseMusic:    msg.UseMusic,
 	})
-}
-
-func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithRequestAvailableAnimations(&gw_clad.RequestAvailableAnimations{})
 }
 
 func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
@@ -570,7 +542,12 @@ func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.Proto
 }
 
 func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
-	_, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DriveWheelsRequest{
+			DriveWheelsRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +562,12 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 	f, animResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlayAnimationResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoPlayAnimationToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PlayAnimationRequest{
+			PlayAnimationRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -602,14 +584,17 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 }
 
 func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResponse, error) {
-	// 50 messages are sent per engine tick, so this channel is set to read 50 at a time
-	f1, animationAvailableResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_AnimationAvailable, 50)
-	defer f1()
+	// 50 messages are sent per engine tick, however, in case it puts out multiple ticks before we drain, we need a buffer to hold lots o' data.
+	delete_listener_callback, animationAvailableResponse := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ListAnimationsResponse{}, 500)
+	defer delete_listener_callback()
 
-	f2, endOfMessageResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_EndOfMessage, 1)
-	defer f2()
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ListAnimationsRequest{
+			ListAnimationsRequest: in,
+		},
+	}
 
-	_, err := engineCladManager.Write(ProtoListAnimationsToClad(in))
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -617,31 +602,27 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 	var anims []*extint.Animation
 
 	done := false
-	remaining := -1
-	for done == false || remaining != 0 {
+	for done == false {
 		select {
 		case chanResponse, ok := <-animationAvailableResponse:
 			if !ok {
 				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
-			var newAnim = extint.Animation{
-				Name: chanResponse.GetAnimationAvailable().AnimName,
-			}
-
-			if strings.Contains(newAnim.Name, "_avs_") {
-				// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
-				continue
-			}
-
-			anims = append(anims, &newAnim)
-			remaining = remaining - 1
-		case chanResponse, ok := <-endOfMessageResponse:
-			if !ok {
-				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-			}
-			if chanResponse.GetEndOfMessage().MessageType == gw_clad.MessageType_AnimationAvailable {
-				remaining = len(animationAvailableResponse)
-				done = true
+			for _, anim := range chanResponse.GetListAnimationsResponse().AnimationNames {
+				animName := anim.GetName()
+				// Don't change "EndOfListAnimationsResponses" - it's what we'll receive from the .cpp sender.
+				if animName == "EndOfListAnimationsResponses" {
+					done = true
+				} else {
+					if strings.Contains(animName, "_avs_") {
+						// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
+						continue
+					}
+					var newAnim = extint.Animation{
+						Name: animName,
+					}
+					anims = append(anims, &newAnim)
+				}
 			}
 		case <-time.After(5 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")

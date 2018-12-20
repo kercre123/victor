@@ -176,7 +176,11 @@ message GatewayWrapper {
     GoToPoseResponse              go_to_pose_response                = 511;
     DockWithCubeRequest           dock_with_cube_request             = 512;
     DockWithCubeResponse          dock_with_cube_response            = 513;
-
+    DriveWheelsRequest            drive_wheels_request               = 514;
+    DriveWheelsResponse           drive_wheels_response              = 515;
+    ListAnimationsRequest         list_animations_request            = 516;
+    ListAnimationsResponse        list_animations_response           = 517;
+    
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 600;
     RobotHistoryResponse          robot_history_response             = 601;

@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/cozmoAPI/comms/protoCladInterpreter.h"
 #include "engine/components/robotExternalRequestComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -103,7 +104,6 @@ void ProtoMessageHandler::DeliverToExternal(const external_interface::GatewayWra
   }
 }
 
-
 Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes, const size_t packetSize, bool isSingleMessage)
 {
   ANKI_CPU_PROFILE("ProtoMH::ProcessMessageBytes");
@@ -123,6 +123,10 @@ Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes
                          "Failed to parse buffer as protobuf message.");
       return RESULT_FAIL;
     }
+
+    // Is there a potential, in adding the redirect and not returning (on success), for these messages
+    // to arrive at their destination twice?
+    (void) ProtoCladInterpreter::Redirect(message, _context);
 
     ++_messageCountIncoming;
 

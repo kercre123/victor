@@ -888,13 +888,10 @@ message RobotHistoryRequest {
 autounion MessageGameToEngine
 {
   UiDeviceConnectionWrongVersion     UiDeviceConnectionWrongVersion     = 0x00, // DO NOT CHANGE THIS VALUE
-  DriveWheels                        DriveWheels                        = 0x01,
-  PlayAnimation                      PlayAnimation                      = 0x02,
   MoveHead                           MoveHead                           = 0x03,
   MoveLift                           MoveLift                           = 0x04,
   DriveArc                           DriveArc                           = 0x05,
   RobotHistoryRequest                RobotHistoryRequest                = 0x06,
-  // Empty, feel free to use
   DisplayFaceImageRGBChunk           DisplayFaceImageRGBChunk           = 0x08,
   AppIntent                          AppIntent                          = 0x09,
   CancelFaceEnrollment               CancelFaceEnrollment               = 0x0A,
@@ -910,7 +907,6 @@ autounion MessageGameToEngine
   TurnInPlace                        TurnInPlace                        = 0x14,
   SetHeadAngle                       SetHeadAngle                       = 0x15,
   SetLiftHeight                      SetLiftHeight                      = 0x16,
-  SetBackpackLEDs                    SetBackpackLEDs                    = 0x17,
   AlignWithObject                    AlignWithObject                    = 0x18,
   SetLiftAngle                       SetLiftAngle                       = 0x19,
   DeleteCustomMarkerObjects          DeleteCustomMarkerObjects          = 0x1A,
