@@ -85,8 +85,10 @@ Result ToFSensor::Update()
   return RESULT_OK;
 }
 
-RangeDataRaw ToFSensor::GetData()
+RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
 {
+  dataUpdated = true;
+  
   RangeDataRaw rangeData;
 
   const float* rightImage = rightSensor_->getRangeImage();

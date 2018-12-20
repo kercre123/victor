@@ -33,7 +33,7 @@ RangeSensorComponent::RangeSensorComponent()
 
 void RangeSensorComponent::Update()
 {
-  _latestRawRangeData = ToFSensor::getInstance()->GetData();
+  _latestRawRangeData = ToFSensor::getInstance()->GetData(_rawDataIsNew);
  
   Pose3d co = _robot->GetCameraPose(_robot->GetHeadAngle());
   // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
@@ -69,8 +69,8 @@ void RangeSensorComponent::Update()
             "rightProx");
 
   #ifndef SIMULATOR
-  rp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
-  lp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
+  //rp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
+  //lp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
   #endif
   
   // 

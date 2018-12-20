@@ -588,7 +588,7 @@ namespace Vector {
       // << "\nVisualDistance_mm: " << data.visualDistanceToTarget_mm
       // << "\nVisualAngleAway_rad: " << data.visualAngleAwayFromTarget_rad;
     }
-    PRINT_NAMED_INFO("FactoryTestLogger.Append.DistanceSensorData", "%s", ss.str().c_str());
+    //PRINT_NAMED_INFO("FactoryTestLogger.Append.DistanceSensorData", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
 
