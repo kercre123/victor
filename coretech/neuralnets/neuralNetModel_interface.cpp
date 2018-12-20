@@ -58,6 +58,8 @@ INeuralNetModel::INeuralNetModel(const std::string& cachePath)
 
 }
   
+INeuralNetModel::~INeuralNetModel() = default;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result INeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
 {
@@ -80,11 +82,72 @@ Result INeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Small helper class used by ClassificationOutputHelper to do sliding windows of scores
+class INeuralNetModel::SlidingWindow
+{
+public:
+  SlidingWindow(size_t numFrames, float firstEntry)
+  : index(0)
+  , scores(numFrames, 0.f)
+  {
+    scores[0] = firstEntry;
+  }
+  
+  void Insert(float newEntry)
+  {
+    ++index;
+    if(index>=scores.size())
+    {
+      index=0;
+    }
+    scores[index] = newEntry;
+  }
+  
+  void GetAverageAboveThreshold(const float threshold, f32& average, s32& numAboveThresh) const
+  {
+    average = 0.f;
+    numAboveThresh = 0;
+    for(auto score : scores)
+    {
+      if(Util::IsFltGT(score, threshold))
+      {
+        average += score;
+        ++numAboveThresh;
+      }
+    }
+    if(numAboveThresh>0)
+    {
+      average /= (float)numAboveThresh;
+    }
+  }
+  
+private:
+  size_t index=0;
+  std::vector<float> scores;
+};
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+inline T InitScore(const float minScore);
+
+template<>
+float InitScore(const float minScore)
+{
+  return minScore;
+}
+
+template<>
+uint8_t InitScore(const float minScore)
+{
+  return Util::numeric_cast_clamped<uint8_t>(std::round(minScore*255.f));
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 void INeuralNetModel::ClassificationOutputHelper(const T* outputData, TimeStamp_t timestamp,
                                                  std::list<Vision::SalientPoint>& salientPoints)
 {
-  T maxScore = _params.minScore;
+  T maxScore = InitScore<T>(_params.minScore);
   int labelIndex = -1;
   for(int i=0; i<_labels.size(); ++i)
   {
@@ -95,43 +158,85 @@ void INeuralNetModel::ClassificationOutputHelper(const T* outputData, TimeStamp_
     }
   }
   
-  const Rectangle<int32_t> imgRect(0.f,0.f,1.f,1.f);
-  const Poly2i imgPoly(imgRect);
-  
   // Special case: If the first label is "background", don't report it
   DEV_ASSERT(!_labels.empty(), "INeuralNetModel.ClassificationOutputHelper.EmptyLabels");
   static const bool minLabel = (Util::StringCaseInsensitiveEquals(_labels.front(), "background") ? 1 : 0);
   
+  // Add the score to the sliding window of scores for this label (or create one
+  // if needed)
+  auto updated = _slidingScoreWindows.end();
   if(labelIndex >= minLabel)
   {
-    const std::string& label = (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>");
-    
-    // Find a matching SalientPointType for the label if there is one. Otherwise, default to "Object".
-    Vision::SalientPointType salientType = Vision::SalientPointType::Unknown;
-    if(!Vision::SalientPointTypeFromString(label, salientType))
+    auto result = _slidingScoreWindows.emplace(labelIndex, new SlidingWindow(_params.numFrames, maxScore));
+    if(!result.second)
     {
-      LOG_WARNING("INeuralNetModel.ClassificationOutputHelper.UnknownLabel",
-                  "Could not convert label '%s' to a SalientPointType. Using Unknown.",
-                  label.c_str());
+      auto & existingSlidingWindow = result.first->second;
+      existingSlidingWindow->Insert(maxScore);
     }
-    
-    Vision::SalientPoint salientPoint(timestamp, 0.5f, 0.5f, maxScore, 1.f,
-                                      salientType,
-                                      label,
-                                      imgPoly.ToCladPoint2dVector(),0);
-    
-    if(_params.verbose)
-    {
-      LOG_INFO("INeuralNetModel.ClassificationOutputHelper.ObjectFound",
-               "Name: %s, Score: %f, Timestamp:%ums",
-               salientPoint.description.c_str(), salientPoint.score, salientPoint.timestamp);
-    }
-    
-    salientPoints.push_back(std::move(salientPoint));
+    updated = result.first;
   }
-  else if(_params.verbose)
+  
+  // Insert zeros into all other existing sliding windows
+  for(auto iter = _slidingScoreWindows.begin(); iter != _slidingScoreWindows.end(); ++iter)
   {
-    LOG_INFO("INeuralNetModel.ClassificationOutputHelper.NoObjects", "MinScore: %f", _params.minScore);
+    if(iter != updated)
+    {
+      iter->second->Insert(0.f);
+    }
+  }
+  
+  if(!_slidingScoreWindows.empty())
+  {
+    // See if any sliding window has enough scores above the threshold to be considered a detection
+    float avgScore = 0.f;
+    s32 numAboveThresh = 0;
+    int bestLabel = -1;
+    for(const auto& entry : _slidingScoreWindows)
+    {
+      const auto& slidingWindow = entry.second;
+      slidingWindow->GetAverageAboveThreshold(_params.minScore, avgScore, numAboveThresh);
+      if(numAboveThresh >= _params.majority)
+      {
+        bestLabel = entry.first;
+        break;
+      }
+      // TODO: consider removing entries for which all scores in the window are zero?
+    }
+    
+    if(bestLabel >= 0)
+    {
+      const Rectangle<int32_t> imgRect(0.f,0.f,1.f,1.f);
+      const Poly2i imgPoly(imgRect);
+      
+      const std::string& label = (bestLabel < _labels.size() ? _labels.at((size_t)bestLabel) : "<UNKNOWN>");
+        
+      // Find a matching SalientPointType for the label if there is one. Otherwise, default to "Object".
+      Vision::SalientPointType salientType = Vision::SalientPointType::Unknown;
+      if(!Vision::SalientPointTypeFromString(label, salientType))
+      {
+        LOG_WARNING("INeuralNetModel.ClassificationOutputHelper.UnknownLabel",
+                    "Could not convert label '%s' to a SalientPointType. Using Unknown.",
+                    label.c_str());
+      }
+        
+      Vision::SalientPoint salientPoint(timestamp, 0.5f, 0.5f, avgScore, 1.f,
+                                        salientType,
+                                        label,
+                                        imgPoly.ToCladPoint2dVector(),0);
+      
+      if(_params.verbose)
+      {
+        LOG_INFO("INeuralNetModel.ClassificationOutputHelper.ObjectFound",
+                 "Name: %s, Score: %f, Timestamp:%ums",
+                 salientPoint.description.c_str(), salientPoint.score, salientPoint.timestamp);
+      }
+      
+      salientPoints.push_back(std::move(salientPoint));
+    }
+    else if(_params.verbose)
+    {
+      LOG_INFO("INeuralNetModel.ClassificationOutputHelper.NoObjects", "MinScore: %f", _params.minScore);
+    }
   }
 }
   

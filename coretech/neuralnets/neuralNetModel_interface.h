@@ -32,10 +32,7 @@ public:
 
   explicit INeuralNetModel(const std::string& cachePath);
 
-  ~INeuralNetModel()
-  {
-    
-  }
+  ~INeuralNetModel();
   
   bool IsVerbose() const { return _params.verbose; }
   
@@ -92,6 +89,9 @@ private:
   void SaveResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
                         const TimeStamp_t timestamp);
   std::string _cachePath;
+  
+  class SlidingWindow;
+  std::map<int,std::unique_ptr<SlidingWindow>> _slidingScoreWindows;
 };
 
 } // namespace NeuralNets

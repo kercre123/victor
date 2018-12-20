@@ -370,6 +370,134 @@ GTEST_TEST(NeuralNets, MultipleModels)
   ASSERT_EQ(2, salientPoints.size());
 }
 
+GTEST_TEST(NeuralNets, ClassificationConsensus)
+{
+  using namespace Anki;
+ 
+  // Read config file
+  Json::Value config;
+  
+# if defined(ANKI_NEURALNETS_USE_TENSORFLOW)
+  config[JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_frozen.pb";
+  config["useFloatInput"] = true;
+# elif defined(ANKI_NEURALNETS_USE_TFLITE)
+  config[NeuralNets::JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_quant.tflite";
+  config["useFloatInput"] = false;
+# endif
+  
+  config["labelsFile"] = "mobilenet_labels.txt";
+  config["architecture"] = "custom";
+  config["inputWidth"] = 224;
+  config["inputHeight"] = 224;
+  config["inputShift"] = -1;
+  config["inputScale"] = 127.5;
+  config["memoryMapGraph"] = false;
+  config["minScore"] = 0.1f;
+  config["inputLayerName"] = "input";
+  config["outputLayerNames"] = "MobilenetV1/Predictions/Reshape_1";
+  config["outputType"] = "classification";
+  config["verbose"] = true;
+  config["benchmarkRuns"] = 0;
+  
+  // Have to see the class in 3 of 5 frames to report it
+  const int kNumFrames = 5;
+  const int kMajority = 3;
+  config["numFrames"] = kNumFrames;
+  config["majority"] = kMajority;
+  
+  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
+  const Result loadResult = neuralNet.LoadModel(TestPaths::ModelPath, config);
+  ASSERT_EQ(RESULT_OK, loadResult);
+  
+  struct Test {
+    std::string imageFile;
+    std::string expectedLabel;
+    std::vector<bool> schedule;
+    std::vector<bool> expectedDetections;
+  };
+  
+  // "schedule" is true when the image with the expected label present is shown
+  // "expectedDetections" is true when the classifier is expected to return
+  //   a detection, given the NumFrames/Majority settings above
+  const std::vector<Test> tests{
+    Test{
+      .imageFile = "grace_hopper.jpg",
+      .expectedLabel = "653:military uniform",
+      .schedule           = {true,  false, true,  false, true, false, false},
+      .expectedDetections = {false, false, false, false, true, false, false},
+    },
+    Test{
+      .imageFile = "cat.jpg",
+      .expectedLabel = "283:tiger cat",
+      .schedule           = {false, false, true,  true,  true, false, false},
+      .expectedDetections = {false, false, false, false, true, true,  true},
+    },
+    Test{
+      .imageFile = "cat.jpg",
+      .expectedLabel = "283:tiger cat",
+      .schedule           = {true,  true,  true, true, true, false, false, false},
+      .expectedDetections = {false, false, true, true, true, true,  true,  false},
+    },
+  };
+  
+  TimeStamp_t timestamp = 0;
+  for(auto const& test : tests)
+  {
+    const std::string testImageFile = Util::FileUtils::FullFilePath({TestPaths::ImagePath, test.imageFile});
+    
+    Vision::ImageRGB img;
+    const Result imgLoadResult = img.Load(testImageFile);
+    ASSERT_EQ(RESULT_OK, imgLoadResult);
+    img.SetTimestamp(timestamp);
+    
+    Vision::ImageRGB nothing(img.GetNumRows(), img.GetNumCols());
+    nothing.FillWith(0);
+    
+    int numTimesShown = 0;
+    ASSERT_GE(test.schedule.size(), kNumFrames);
+    ASSERT_EQ(test.schedule.size(), test.expectedDetections.size());
+    for(int iCount=0; iCount<test.schedule.size(); ++iCount)
+    {
+      Vision::ImageRGB* imgToShow = (test.schedule[iCount] ? &img : &nothing);
+      
+      imgToShow->SetTimestamp(timestamp);
+      
+      if(test.schedule[iCount])
+      {
+        ++numTimesShown;
+      }
+      
+      std::list<Vision::SalientPoint> salientPoints;
+      const Result detectResult = neuralNet.Detect(*imgToShow, salientPoints);
+      ASSERT_EQ(RESULT_OK, detectResult);
+      
+      if(test.expectedDetections[iCount])
+      {
+        EXPECT_EQ(1, salientPoints.size());
+        if(!salientPoints.empty())
+        {
+          EXPECT_EQ(test.expectedLabel, salientPoints.front().description);
+          EXPECT_EQ(timestamp, salientPoints.front().timestamp);
+        }
+      }
+      else
+      {
+        EXPECT_TRUE(salientPoints.empty());
+      }
+
+      timestamp += 10;
+    }
+    
+    // "Clear" the results by showing a bunch of "nothing" frames
+    for(int i=0; i<kNumFrames; ++i)
+    {
+      std::list<Vision::SalientPoint> salientPoints;
+      const Result detectResult = neuralNet.Detect(nothing, salientPoints);
+      ASSERT_EQ(RESULT_OK, detectResult);
+    }
+  }
+}
+
 
 int main(int argc, char ** argv)
 {

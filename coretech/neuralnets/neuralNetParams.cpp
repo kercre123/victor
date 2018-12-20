@@ -149,6 +149,18 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
     GetFromConfig(inputScale);
   }
   
+  if(OutputType::Classification == outputType)
+  {
+    if(config.isMember("numFrames"))
+    {
+      SetFromConfigHelper(config["numFrames"], numFrames);
+    }
+    if(config.isMember("majority"))
+    {
+      SetFromConfigHelper(config["majority"], majority);
+    }
+  }
+  
   return RESULT_OK;
 }
 

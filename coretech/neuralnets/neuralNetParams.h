@@ -33,6 +33,11 @@ struct NeuralNetParams
   
   float                     minScore = 0.5f; // in [0,1]
   
+  // When outputType = Classification, a class must appear in majority of numFrames
+  // to be reported. Note that this adds lag. 
+  int32_t                   numFrames = 1;
+  int32_t                   majority = 1;
+  
   // Used by "custom" architectures
   std::string               inputLayerName;
   std::vector<std::string>  outputLayerNames;

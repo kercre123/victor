@@ -24,7 +24,7 @@
         "inputHeight"         : 224,
         "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
         "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
-        "minScore"            : 0.5,
+        "minScore"            : 0.1,
         "verbose"             : 1,
         "pollPeriod_ms"       : 10,
         "timeoutDuration_sec" : 10.0,
@@ -45,7 +45,7 @@
         "inputHeight"         : 128,
         "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
         "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
-        "minScore"            : 0.5,
+        "minScore"            : 0.1,
         "verbose"             : 1,
         "pollPeriod_ms"       : 10,
         "timeoutDuration_sec" : 10.0,
