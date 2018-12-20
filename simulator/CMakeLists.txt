@@ -456,37 +456,3 @@ symlink_target(
   DST "${CONTROLLERS_DIR}/webotsCtrlGateway/"
 )
 
-#
-# webotsCtrlNeuralNets
-#
-
-webots_build_cxx_executable(webotsCtrlNeuralNets ${ANKI_SRCLIST_DIR})
-anki_build_target_license(webotsCtrlNeuralNets "ANKI")
-
-target_compile_definitions(webotsCtrlNeuralNets
-  PRIVATE
-  ${PLATFORM_DEFINITIONS}
-  SIMULATOR
-)
-
-target_link_libraries(webotsCtrlNeuralNets
-  PRIVATE
-  jsoncpp
-  util
-  cti_common
-  cti_vision
-  ${OPENCV_LIBS}
-  cti_neuralnets
-  ${WEBOTS_LIBS}
-)
-
-symlink_target(
-  TARGET webotsCtrlNeuralNets
-  DST "${CONTROLLERS_DIR}/webotsCtrlNeuralNets/"
-)
-
-symlink_target(
-  TARGET webotsCtrlNeuralNets
-  SRC ${BUILT_RESOURCES_DIR}
-  DST ${CONTROLLERS_DIR}/webotsCtrlNeuralNets/resources
-)

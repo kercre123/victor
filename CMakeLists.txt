@@ -173,7 +173,6 @@ add_subdirectory("animProcess")
 add_subdirectory("webServerProcess")
 add_subdirectory("testCrash")
 add_subdirectory("dasmgr")
-add_subdirectory("neuralnets")
 
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
