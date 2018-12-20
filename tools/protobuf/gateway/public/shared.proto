@@ -66,6 +66,7 @@ message Event {
     AlexaAuthEvent                   alexa_auth_event                    = 15; // App only
     MirrorModeDisabled               mirror_mode_disabled                = 16;
     VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
+    RobotObservedObject              robot_observed_object               = 18;
   }
 }
 
@@ -253,6 +254,16 @@ message GatewayWrapper {
     SetEyeColorRequest            set_eye_color_request              = 1700;
     SetEyeColorResponse           set_eye_color_response             = 1701;
 
+    // ------------ Events -------------------------
+    RobotObservedFace             robot_observed_face                = 1800;
+    RobotChangedObservedFaceID    robot_changed_observed_face_id     = 1801;
+    RobotObservedObject           robot_observed_object              = 1802;
+    ObjectMoved                   object_moved                       = 1803;
+    ObjectAvailable               object_available                   = 1804;
+    ObjectStoppedMoving           object_stopped_moving              = 1805;
+    ObjectUpAxisChanged           object_up_axis_changed             = 1806;
+    ObjectTapped                  object_tapped                      = 1807;
+    ObjectConnectionState         object_connection_state            = 1808;
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

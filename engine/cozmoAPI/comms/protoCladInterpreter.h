@@ -17,8 +17,10 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/gateway/messageRobotToExternalTag.h"
+#include "proto/external_interface/messages.pb.h"
 #include "proto/external_interface/shared.pb.h"
 
 namespace Anki {
@@ -27,9 +29,54 @@ namespace Vector {
 
 class ProtoCladInterpreter {
 public:
-    static bool Redirect(const external_interface::GatewayWrapper& message, CozmoContext* cozmo_context);
-    static bool Redirect(const ExternalInterface::MessageGameToEngine& message, CozmoContext* cozmo_context);
-    static bool Redirect(const ExternalInterface::MessageEngineToGame& message, CozmoContext* cozmo_context);
+  static bool Redirect(const external_interface::GatewayWrapper& message, CozmoContext* cozmo_context);
+  static bool Redirect(const ExternalInterface::MessageGameToEngine& message, CozmoContext* cozmo_context);
+  static bool Redirect(const ExternalInterface::MessageEngineToGame& message, CozmoContext* cozmo_context);
+
+  //
+  // Events
+  //
+
+  static void CladRobotObservedFaceToProto(
+      const Anki::Vector::ExternalInterface::RobotObservedFace& clad_message,
+      external_interface::GatewayWrapper & proto_message);
+
+
+  //
+  // Object Events
+  //
+
+  static void CladRobotChangedObservedFaceIDToProto(
+      const Anki::Vector::ExternalInterface::RobotChangedObservedFaceID& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladRobotObservedObjectToProto(
+      const Anki::Vector::ExternalInterface::RobotObservedObject& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladObjectMovedToProto(
+      const Anki::Vector::ExternalInterface::ObjectMoved& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladObjectAvailableToProto(
+      const Anki::Vector::ExternalInterface::ObjectAvailable& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladObjectStoppedMovingToProto(
+      const Anki::Vector::ExternalInterface::ObjectStoppedMoving& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladObjectUpAxisChangedToProto(
+      const Anki::Vector::ExternalInterface::ObjectUpAxisChanged& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladObjectTappedToProto(
+      const Anki::Vector::ExternalInterface::ObjectTapped& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladObjectConnectionStateToProto(
+      const Anki::Vector::ExternalInterface::ObjectConnectionState& clad_message,
+      external_interface::GatewayWrapper& proto_message);
 
 private:
   ProtoCladInterpreter() {}
@@ -67,6 +114,30 @@ private:
   static void CladEndOfMessageToProto(
       const ExternalInterface::MessageEngineToGame& clad_message, 
       external_interface::GatewayWrapper& proto_message);
+
+
+  //
+  // Misc Support Translators
+  //
+
+  static external_interface::PoseStruct* CladPoseStructToProto(
+      const Anki::PoseStruct3d& clad_message);
+
+  static external_interface::CladRect* CladCladRectToProto(
+      const Anki::CladRect& clad_message);
+
+  static external_interface::FacialExpression CladFacialExpressionToProto(
+      const Anki::Vision::FacialExpression& clad_message);
+
+  static external_interface::ObjectFamily CladObjectFamilyToProto(
+      const Anki::Vector::ObjectFamily& clad_message);
+
+  static external_interface::ObjectType CladObjectTypeToProto(
+      const Anki::Vector::ObjectType& clad_message);
+
+  static external_interface::UpAxis CladUpAxisToProto(
+    const Anki::Vector::UpAxis& clad_message);
+
 };
 
 } // namespace Vector

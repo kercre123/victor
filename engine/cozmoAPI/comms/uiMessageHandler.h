@@ -123,7 +123,8 @@ namespace Anki {
       virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId = kDestinationIdEveryone) override;
       
       bool ConnectToUiDevice(ISocketComms::DeviceId deviceId, UiConnectionType connectionType);
-      void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+      void HandleGameToEngineEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+      void HandleEngineToGameEvents(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
       
       // ============================== Private Types ==============================
       
