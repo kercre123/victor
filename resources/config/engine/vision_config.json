@@ -113,7 +113,8 @@
     //
     "Models" : [
       {
-        "networkName"        : "person_detector",
+        "modelType"           : "TFLite",
+        "networkName"         : "person_detector",
         "graphFile"           : "dfp_victor_6x6_tiny_128x128_36b906234ae4405dbf479d42d87787da.tflite",
         "memoryMapGraph"      : 0,
         "labelsFile"          : "person-labels.txt",
@@ -136,6 +137,7 @@
         "benchmarkRuns"       : 0
       },
       {
+        "modelType"           : "TFLite",
         "networkName"         : "hand_detector",
         "graphFile"           : "hand_detector_fcde4ff411c44baa9e7184c733d3b943.tflite",
         "memoryMapGraph"      : 0,

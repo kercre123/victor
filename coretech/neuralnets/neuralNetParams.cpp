@@ -1,3 +1,4 @@
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/neuralnets/neuralNetParams.h"
 
 #include "util/helpers/quoteMacro.h"
@@ -75,7 +76,7 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
   GetFromConfig(memoryMapGraph);
   GetFromConfig(benchmarkRuns);
 
-  if (config.isMember("visualizationDirectory"))
+  if (config.isMember(JsonKeys::VisualizationDir))
   {
     GetFromConfig(visualizationDirectory);
   }

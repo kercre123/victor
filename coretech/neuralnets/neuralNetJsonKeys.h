@@ -25,8 +25,14 @@ namespace JsonKeys {
   extern const char* const GraphFile;
   extern const char* const InputHeight;
   extern const char* const InputWidth;
+  extern const char* const ModelType;
   extern const char* const PollingPeriod;
   extern const char* const TimeoutDuration;
+  extern const char* const VisualizationDir;
+  
+  // Model types:
+  extern const char* const OffboardModelType;
+  extern const char* const TFLiteModelType;
   
 }
   

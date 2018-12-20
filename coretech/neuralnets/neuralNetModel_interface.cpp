@@ -10,8 +10,10 @@
  **/
 
 #include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/neuralnets/neuralNetModel_interface.h"
 #include "coretech/vision/engine/image_impl.h"
 
@@ -50,15 +52,24 @@ inline static float QuantizedScalingHelper(const uint8_t output, const float sca
 {
   return scale * (output - zero_point);
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Note that these must be implemented (even as default) here in the cpp file because of the use of a unique_ptr with
+//   forward-declared SlidingWindow class.
+INeuralNetModel::INeuralNetModel() = default;
+INeuralNetModel::~INeuralNetModel() = default;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-INeuralNetModel::INeuralNetModel(const std::string& cachePath)
-: _cachePath(cachePath)
+Result INeuralNetModel::LoadModel(const std::string& modelPath, const Json::Value& config)
 {
-
-}
+  if(!JsonTools::GetValueOptional(config, JsonKeys::NetworkName, _name))
+  {
+    LOG_ERROR("INeuralNetModel.LoadModel.MissingName", "");
+    return RESULT_FAIL;
+  }
   
-INeuralNetModel::~INeuralNetModel() = default;
+  return LoadModelInternal(modelPath, config);
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result INeuralNetModel::ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
@@ -445,6 +456,14 @@ void INeuralNetModel::ResponseMapOutputHelper(const T* outputData, TimeStamp_t t
   salientPoints.push_back(std::move(salientPoint));
 }
 
+// Explicitly instantiate for float and uint8
+template void INeuralNetModel::ResponseMapOutputHelper(const float* outputData,   TimeStamp_t timestamp,
+                                                       const int numberOfChannels,
+                                                       std::list<Vision::SalientPoint>& salientPoints);
+template void INeuralNetModel::ResponseMapOutputHelper(const uint8_t* outputData, TimeStamp_t timestamp,
+                                                       const int numberOfChannels,
+                                                       std::list<Vision::SalientPoint>& salientPoints);
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
                                        const TimeStamp_t timestamp)
@@ -455,7 +474,7 @@ void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, con
       cv::Point2i channelMinLoc(0, 0), channelMaxLoc(0, 0);
       cv::minMaxLoc(channels[channel], &channelMin, &channelMax, &channelMinLoc, &channelMaxLoc);
 
-      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath,
+      const std::string saveFilename = Util::FileUtils::FullFilePath({
         _params.visualizationDirectory, std::to_string(timestamp) + "_" +
         std::to_string(channel) + ".png"});
 
@@ -465,20 +484,14 @@ void INeuralNetModel::SaveResponseMaps(const std::vector<cv::Mat>& channels, con
       imageToSave.convertTo(imageToSave, CV_8UC1, 1.f/(channelMax - channelMin),  -channelMin / (channelMax - channelMin));
       cv::imwrite(saveFilename, imageToSave);
 
-      const std::string salientPointFilename = Util::FileUtils::FullFilePath({_cachePath,
-        "objectnessResponseMap", std::to_string(timestamp) + ".txt"});
+      const std::string salientPointFilename = Util::FileUtils::FullFilePath({
+        _params.visualizationDirectory, std::to_string(timestamp) + ".txt"});
       std::ofstream salientPointFile(salientPointFilename);
       salientPointFile << channelMaxLoc.x << " " << channelMaxLoc.y << " " << channelMax << + " "
         << channelMinLoc.x << " " << channelMinLoc.y << " " << channelMin;
       salientPointFile.close();
     }
 }
-  // Explicitly instantiate for float and uint8
-  template void INeuralNetModel::ResponseMapOutputHelper(const float* outputData,   TimeStamp_t timestamp,
-                                                         const int numberOfChannels,
-                                                         std::list<Vision::SalientPoint>& salientPoints);
-  template void INeuralNetModel::ResponseMapOutputHelper(const uint8_t* outputData, TimeStamp_t timestamp,
-                                                         const int numberOfChannels,
-                                                         std::list<Vision::SalientPoint>& salientPoints); 
+
 } // namespace NeuralNets
 } // namespace Anki

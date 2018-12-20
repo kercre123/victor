@@ -40,7 +40,7 @@ namespace Vision {
   
 namespace NeuralNets {
   
-class NeuralNetModel;
+class INeuralNetModel;
  
 class INeuralNetMain
 {
@@ -98,7 +98,7 @@ private:
                        const std::string& timestampFilename,
                        Vision::ImageRGB&  img);
   
-  std::map<std::string, std::unique_ptr<NeuralNetModel>> _neuralNets;
+  std::map<std::string, std::unique_ptr<INeuralNetModel>> _neuralNets;
   
   std::string _cachePath;
   std::string _imageFilename;

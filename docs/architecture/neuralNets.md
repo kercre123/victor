@@ -2,8 +2,8 @@
 
 ### Quick Summary
 
-* Forward inference through neural nets run as their own process, `vic-neuralnets`
-  - NeuralNetRunner is a sub-component of the VisionSystem which communicates with the underlying NeuralNetModel and abstracts away the additional level of asynchrony from the engine's point of view.
+* Forward inference through neural nets runs asynchronously within the VisionSystem, via a `std::future`
+  - NeuralNetRunner is a sub-component of the VisionSystem which communicates with the underlying INeuralNetModel and abstracts away the additional level of asynchrony from the engine's point of view.
   - We have wrappers for OpenCV's DNN module (deprecated), TensorFlow, and TensorFlow Lite (TFLite). TFLite is the current default.
   - We have our own ["private fork" of TensorFlow](https://github.com/anki/tensorflow), which has an `anki` branch with an `anki` subdirectory containing our special build scripts (e.g. for building a `vicos`-compatible version of TensorFlow / TFLite).
 * Parameters of the underlying network model are configured in their own section of [`vision_config.json`](/resources/config/engine/vision_config.json)
@@ -13,13 +13,13 @@
 
 ### Details
 
-In the VisionSystem, we have a NeuralNetRunner, which wraps the underlying system actually doing forward inference with the neural net. This means that the rest of the engine / VisionSystem does not need to know whether the neural net is running in a separate process (as is the current approach) or as part of the same thread (as we used to do), and this class handles the additional asynchrony for us (using a `std::future`). The current underlying "model" it uses is a "messenger", which communicates with the standalone process, `vic-neuralnets`. Currently this is using "poor man's" interprocess communication (IPC): a.k.a. the file system. That file system is currently memory-mapped to improve performance, but we intend to switch to a shared memory approach soon.
+In the VisionSystem, we have a NeuralNetRunner, which wraps the underlying system actually doing forward inference with the neural net. This means that the rest of the engine / VisionSystem does not need to know whether the neural net is running in a separate process (which we did for awhile, as `vic-neuralnets`), as a thread in the same process (which we are back to using), or even offboard in the cloud or on a laptop (which we may do in the future). This class handles the additional asynchrony for us (using a `std::future`). 
 
 A side effect of the additional asynchrony here is that the NeuralNetRunner is handled slightly differently by the VisionSystem versus other vision sub-components. SalientPoints may appear in a VisionProcessingResult for an image well after the one used for forward inference through the network. Thus the SalientPoints' timestamps may not match the VisionProcessingResult's timestamp. I.e., the SalientPoints may not be from the same image as markers, faces, etc, returned in the same VisionProcessingResult.
 
-The neural net process has a NeuralNetModel, which implements an INeuralNetModel interface. Currently, we have two implementations: one for "full" [TensorFlow](https://www.tensorflow.org/) models, and one for [TensorFlow Lite](https://www.tensorflow.org/mobile/tflite/) models. The latter is far better optimized and supports quantization, and is the one we use in production.
+The NeuralNetRunner has a model, which implements an INeuralNetModel interface. Currently, we have three implementations: one for "full" [TensorFlow](https://www.tensorflow.org/) models, one for [TensorFlow Lite](https://www.tensorflow.org/mobile/tflite/) models, and one for "offboard" models. The TFLite model is far better optimized and supports quantization, and is the one we use in production for on-board neural nets.
 
-Note that both `vic-neuralnets`, which runs on the robot, and `webotsCtrlNeuralnets`, which is the corresponding Webots controller for running neural nets in simulation, use a common base class, INeuralNetMain. That class handles the IPC, i.e. polling for new image files to process and writing SalientPoint outputs from the neural net model to disk for the NeuralNetRunner in the VisionSystem to pick up.
+Note that we also have an INeuralNetMain interface, which we used to use both for `vic-neuralnets`, which ran as a separate process on the robot, and `webotsCtrlNeuralnets`, which was the corresponding Webots controller for running neural nets in simulation. That class handles the "IPC", i.e. polling for new image files to process and writing SalientPoint outputs from the neural net model to disk for the NeuralNetRunner in the VisionSystem to pick up. Now that we run models back within the engine process again, this is not currently used in production code, but the interface still exists within the `cti_neuralnets` library.
 
 See also the [Rock, Paper Scissors project from the 2018 R&D Sprint](https://ankiinc.atlassian.net/wiki/spaces/RND/pages/197591128/Rock+Paper+Scissors+using+Deep+Learning), and the associated slides for more details.
 
@@ -27,6 +27,7 @@ See also the [Rock, Paper Scissors project from the 2018 R&D Sprint](https://ank
 
 In the "NeuralNets" field of [`vision_config.json`](/resources/config/engine/vision_config.json), you can specify several parameters of the model you want to load. See NeuralNetParams for additional info beyond the following.
 
+* `modelType` - Maps to which implementation of INeuralNetModel the runner will use. Currently we only have "TFLite" models in place, but this will allow us to have some models running "offboard" in the future as well.
 * `graphFile` - The graph representing the model you want to load, assumed to be in `resources/config/engine/vision/dnn_models` (see also the next section about model storage).
   - `<filename.{pb|tflite}>` will load a TensorFlow (Lite) model stored in a Google protobuf file
   - `<modelname>` (without extension) assumes you are specifying a Caffe model and will load the model from `<modelname>.prototxt` and `<modelname>.caffemodel`, which must _both_ exist.  

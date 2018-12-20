@@ -30,6 +30,7 @@
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetFilenames.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
+#include "coretech/neuralnets/neuralNetModel_offboard.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
@@ -146,14 +147,37 @@ Result INeuralNetMain::Init(const std::string& configFilename,
     }
 
     const std::string name = modelConfig[JsonKeys::NetworkName].asString();
-    auto insertionResult = _neuralNets.emplace(name, new NeuralNets::NeuralNetModel(cachePath));
+    std::unique_ptr<INeuralNetModel> model;
+    
+    if(!config.isMember(NeuralNets::JsonKeys::ModelType))
+    {
+      LOG_ERROR("INeuralNetModel.CreateFromTypeConfig.MissingConfig", "%s", NeuralNets::JsonKeys::ModelType);
+      CleanupAndExit(RESULT_FAIL);
+    }
+    
+    const std::string& modelTypeString = config[JsonKeys::ModelType].asString();
+    if(NeuralNets::JsonKeys::TFLiteModelType == modelTypeString)
+    {
+      model.reset( new NeuralNets::TFLiteModel() );
+    }
+    else if(NeuralNets::JsonKeys::OffboardModelType == modelTypeString)
+    {
+      model.reset( new NeuralNets::OffboardModel(_cachePath) );
+    }
+    else
+    {
+      LOG_ERROR("NeuralNetRunner.Init.UnknownModelType", "%s", modelTypeString.c_str());
+      CleanupAndExit(RESULT_FAIL);
+    }
+    
+    auto insertionResult = _neuralNets.emplace(name, std::move(model));
     if(!insertionResult.second)
     {
       LOG_ERROR("INeuralNetMain.Init.DuplicateModelName", "More than one model named '%s'", name.c_str());
       CleanupAndExit(RESULT_FAIL);
     }
     
-    std::unique_ptr<NeuralNetModel>& neuralNet = insertionResult.first->second;
+    std::unique_ptr<INeuralNetModel>& neuralNet = insertionResult.first->second;
     ScopedTicToc ticToc("LoadModel", LOG_CHANNEL);
     result = neuralNet->LoadModel(modelPath, modelConfig);
     
@@ -212,7 +236,7 @@ Result INeuralNetMain::Run()
     for(auto & model : _neuralNets)
     {
       const std::string& networkName = model.first;
-      std::unique_ptr<NeuralNets::NeuralNetModel>& neuralNet = model.second;
+      std::unique_ptr<NeuralNets::INeuralNetModel>& neuralNet = model.second;
       
       // Is there an image file available in the cache?
       const std::string fullImagePath = (imageFileProvided ?

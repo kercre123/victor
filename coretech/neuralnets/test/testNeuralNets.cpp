@@ -5,7 +5,7 @@
 #elif defined(ANKI_NEURALNETS_USE_OPENCV_DNN)
 #  include "objectDetector_opencvdnn.h"
 #elif defined(ANKI_NEURALNETS_USE_TFLITE)
-#  include "neuralNetModel_tflite.h"
+#  include "coretech/neuralnets/neuralNetModel_tflite.h"
 #else
 #  error One of ANKI_NEURALNETS_USE_{TENSORFLOW | CAFFE2 | OPENCVDNN | TFLITE} must be defined
 #endif
@@ -18,11 +18,11 @@
 #include "coretech/vision/engine/image.h"
 
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 
-#include "gtest/gtest.h"
 #include "json/json.h"
 
 #include <fstream>
@@ -63,7 +63,7 @@ GTEST_TEST(NeuralNets, InitFromConfigAndLoadModel)
   ASSERT_TRUE(neuralNetConfig.isMember(NeuralNets::JsonKeys::Models));
   const Json::Value& modelsConfig = neuralNetConfig[NeuralNets::JsonKeys::Models];
 
-  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
+  NeuralNets::TFLiteModel neuralNet;
 
   ASSERT_TRUE(modelsConfig.isArray());
   for(const auto& modelConfig : modelsConfig)
@@ -82,13 +82,14 @@ GTEST_TEST(NeuralNets, MobileNet)
   Json::Value config;
 
 # if defined(ANKI_NEURALNETS_USE_TENSORFLOW)
-  config[JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_frozen.pb";
+  config[NeuralNets::JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_frozen.pb";
   config["useFloatInput"] = true;
 # elif defined(ANKI_NEURALNETS_USE_TFLITE)
   config[NeuralNets::JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_quant.tflite";
   config["useFloatInput"] = false;
 # endif
   
+  config[NeuralNets::JsonKeys::NetworkName] = "mobilenet";
   config["labelsFile"] = "mobilenet_labels.txt";
   config["architecture"] = "custom";
   config["inputWidth"] = 224;
@@ -103,7 +104,7 @@ GTEST_TEST(NeuralNets, MobileNet)
   config["verbose"] = true;
   config["benchmarkRuns"] = 0;
   
-  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
+  NeuralNets::TFLiteModel neuralNet;
   const Result loadResult = neuralNet.LoadModel(TestPaths::ModelPath, config);
   ASSERT_EQ(RESULT_OK, loadResult);
   
@@ -185,7 +186,7 @@ GTEST_TEST(NeuralNets, PersonDetection)
   ASSERT_TRUE(config.isMember(NeuralNets::JsonKeys::NeuralNets));
   const Json::Value& neuralNetConfig = config[NeuralNets::JsonKeys::NeuralNets];
   
-  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
+  NeuralNets::TFLiteModel neuralNet;
   
   ASSERT_TRUE(neuralNetConfig.isMember(NeuralNets::JsonKeys::Models));
   const Json::Value& modelsConfig = neuralNetConfig[NeuralNets::JsonKeys::Models];
@@ -405,7 +406,7 @@ GTEST_TEST(NeuralNets, ClassificationConsensus)
   config["numFrames"] = kNumFrames;
   config["majority"] = kMajority;
   
-  NeuralNets::NeuralNetModel neuralNet(TestPaths::CachePath);
+  NeuralNets::TFLiteModel neuralNet;
   const Result loadResult = neuralNet.LoadModel(TestPaths::ModelPath, config);
   ASSERT_EQ(RESULT_OK, loadResult);
   

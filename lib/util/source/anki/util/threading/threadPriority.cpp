@@ -18,10 +18,10 @@
 #include <pthread.h>
 #include <string.h>
 
-
 namespace Anki {
 namespace Util {
-  
+
+static const size_t kMaxThreadNameLength = 16;
   
 static int ThreadPriorityToPolicy(ThreadPriority threadPriority)
 {
@@ -132,7 +132,7 @@ bool SetThreadName(std::thread::native_handle_type inThread, const char* threadN
   // The thread name length is restricted to 16 characters,including the terminating null byte ('\0').
   // A C string is as long as the number of characters between the beginning of the string and the terminating null
   // character (without including the terminating null character itself).
-  ASSERT_NAMED(strlen(threadName) < 16, "SetThreadPriority.NameTooLong");
+  ASSERT_NAMED(strlen(threadName) < kMaxThreadNameLength, "SetThreadPriority.NameTooLong");
   
   // RETURN VALUE - On success, these functions return 0; on error, they return a nonzero  error number.
   int returnValue = 0;
@@ -150,6 +150,11 @@ bool SetThreadName(std::thread::native_handle_type inThread, const char* threadN
   return returnValue == 0;
 }
 
+bool SetThreadName(std::thread::native_handle_type inThread, const std::string& threadName)
+{
+  return SetThreadName(inThread, threadName.substr(0,kMaxThreadNameLength-1).c_str());
+}
+  
 }
 }
 
