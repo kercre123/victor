@@ -65,6 +65,8 @@ namespace {
    LEFT = 1,
   };
 
+  bool _dataUpdatedSinceLastGetCall = false;
+
   // Don't setup and read from the sensors until this console var is true
   CONSOLE_VAR(bool, kStartToF, "ToF", false);
 }
@@ -269,7 +271,7 @@ int setup(Sensor which) {
 
   // Set output mode
   PRINT_NAMED_ERROR("","set output mode\n");
-  rc = output_mode_set(fd, VL53L1_OUTPUTMODE_NEAREST);
+  rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
   // Start the sensor
@@ -305,7 +307,7 @@ void ParseData(Sensor whichSensor,
 
   RangingData& roiData = rangeData.data[index];
   roiData.readings.clear();
-  roiData.roi = mz_data.RoiNumber;
+  roiData.roi = index;
   roiData.numObjects = mz_data.NumberOfObjectsFound;
   roiData.roiStatus = mz_data.RoiStatus;
   roiData.spadCount = mz_data.EffectiveSpadRtnCount / 256.f;
@@ -318,10 +320,10 @@ void ParseData(Sensor whichSensor,
     {
       RangeReading reading;
       reading.status = mz_data.RangeData[r].RangeStatus;
-      // The following two readings come up in 16.16 fixed point so convert
+      // The following three readings come up in 16.16 fixed point so convert
       reading.signalRate_mcps = ((float)mz_data.RangeData[r].SignalRateRtnMegaCps * (float)(1/(2^16)));
       reading.ambientRate_mcps = ((float)mz_data.RangeData[r].AmbientRateRtnMegaCps * (float)(1/(2^16)));
-      reading.sigma_mm = mz_data.RangeData[r].SigmaMilliMeter;
+      reading.sigma_mm = ((float)mz_data.RangeData[r].SigmaMilliMeter * (float)(1/2^16));
       reading.rawRange_mm = mz_data.RangeData[r].RangeMilliMeter;
       
       // The right sensor reports a lot of invalid RangeStatuses, usually
@@ -368,6 +370,10 @@ void ReadDataFromSensor(Sensor which, RangeDataRaw& rangeData)
       if(rc == 0)
       {
         ParseData(which, mz_data, rangeData);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("","FAILED TO GET_MZ_DATA %d\n", rc);
       }
     }
   }
@@ -421,12 +427,13 @@ void ProcessLoop()
     return;
   }
 
-  while(kStartToF && !_stopProcessing)
+  while(!_stopProcessing)
   {
     RangeDataRaw data = ReadData();
     
     {
       std::lock_guard<std::mutex> lock(_mutex);
+      _dataUpdatedSinceLastGetCall = true;
       _latestData = data;
     }
 
@@ -456,9 +463,11 @@ Result ToFSensor::Update()
   return RESULT_OK;
 }
 
-RangeDataRaw ToFSensor::GetData()
+RangeDataRaw ToFSensor::GetData(bool& hasDataUpdatedSinceLastCall)
 {
   std::lock_guard<std::mutex> lock(_mutex);
+  hasDataUpdatedSinceLastCall = _dataUpdatedSinceLastGetCall;
+  _dataUpdatedSinceLastGetCall = false;
   return _latestData;
 }
   

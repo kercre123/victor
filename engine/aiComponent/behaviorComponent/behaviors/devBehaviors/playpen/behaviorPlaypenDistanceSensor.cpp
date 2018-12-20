@@ -115,15 +115,19 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
   // We have distance readings left to record
   else if(_numRecordedReadingsLeft > 0)
   {
-    --_numRecordedReadingsLeft;
+    bool isNewData = false;
+    const auto& rangeData = robot.GetRangeSensorComponent().GetLatestRawRangeData(isNewData);
+    if(isNewData)
+    {
+      --_numRecordedReadingsLeft;
+    }
     
-    const auto& rangeData = robot.GetRangeSensorComponent().GetLatestRawRangeData();
     RangeSensorData data;
     data.rangeData = rangeData;
     data.visualDistanceToTarget_mm = 0;
     data.visualAngleAwayFromTarget_rad = 0;
     data.headAngle_rad = robot.GetHeadAngle();
-    
+
     Pose3d markerPose;
     const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
     if(res)

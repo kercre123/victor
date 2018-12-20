@@ -42,7 +42,7 @@ public:
 
 #endif
 
-  RangeDataRaw GetData();
+  RangeDataRaw GetData(bool& hasDataUpdatedSinceLastCall);
 
   
 private:

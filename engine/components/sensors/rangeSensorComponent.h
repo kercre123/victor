@@ -53,7 +53,7 @@ public:
 
   using RangeData = std::array<Vec3f, 32>;
   const RangeData& GetLatestRangeData() const { return _latestRangeData; }
-  const RangeDataRaw& GetLatestRawRangeData() const { return _latestRawRangeData; }
+  const RangeDataRaw& GetLatestRawRangeData(bool& isNew) const { isNew = _rawDataIsNew; return _latestRawRangeData; }
   
 private:
 
@@ -61,6 +61,7 @@ private:
   
   RangeDataRaw _latestRawRangeData;
   RangeData _latestRangeData;
+  bool _rawDataIsNew = false;
 };
 
 
