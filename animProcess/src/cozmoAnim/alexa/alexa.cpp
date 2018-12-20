@@ -166,8 +166,7 @@ void Alexa::Update()
 
   if( (_timeEnableWakeWord_s >= 0.0f) && (currTime_s >= _timeEnableWakeWord_s) ) {
     _timeEnableWakeWord_s = -1.0f;
-    // TODO (VIC-11517): downgrade. for now this is useful in webots
-    LOG_WARNING("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
+    LOG_INFO("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
     // enable the wakeword
     SetSimpleState( AlexaSimpleState::Idle );
   }
@@ -378,12 +377,11 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
   const auto oldState = _authState;
   bool codeExpired = false;
 
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
-               EnumToString(oldState),
-               EnumToString(state),
-               url.c_str(),
-               code.c_str() );
+  LOG_INFO( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
+            EnumToString(oldState),
+            EnumToString(state),
+            url.c_str(),
+            code.c_str() );
 
   switch( state ) {
     case AlexaAuthState::Uninitialized:

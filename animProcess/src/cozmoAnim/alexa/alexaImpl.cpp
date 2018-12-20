@@ -675,10 +675,10 @@ void AlexaImpl::Update()
     auto deltaSeconds = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
 
     if( std::abs( deltaSeconds - kAlexaHackCheckForSystemClockSyncPeriod_s ) > kTimeToConsiderJump_s ) {
-      PRINT_NAMED_WARNING("AlexaImpl.Update.TimeJumpDetected.ResetTimers",
-                          "Detected a time jump of %lld seconds (in %f BS seconds), refreshing timers",
-                          deltaSeconds,
-                          kAlexaHackCheckForSystemClockSyncPeriod_s);
+      LOG_WARNING("AlexaImpl.Update.TimeJumpDetected.ResetTimers",
+                  "Detected a time jump of %lld seconds (in %f BS seconds), refreshing timers",
+                  deltaSeconds,
+                  kAlexaHackCheckForSystemClockSyncPeriod_s);
       _client->ReinitializeAllTimers();
     }
 
@@ -1000,9 +1000,7 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
   using State = avsCommon::sdkInterfaces::AuthObserverInterface::State;
   using Error = avsCommon::sdkInterfaces::AuthObserverInterface::Error;
   
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING("AlexaImpl.OnAuthStateChange", "authStateChanged newState=%d, error=%d", (int)newState, (int)error);
-
+  LOG_INFO("AlexaImpl.OnAuthStateChange", "authStateChanged newState=%d, error=%d", (int)newState, (int)error);
 
   auto sendResultDas = [](bool success, avsCommon::sdkInterfaces::AuthObserverInterface::Error error) {
     DASMSG(user_sign_in_result, "alexa.user_sign_in_result", "Result of initial user sign in attempt");
@@ -1185,8 +1183,7 @@ void AlexaImpl::OnSourcePlaybackChange( SourceId id, bool playing )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnInternetConnectionChanged( bool connected )
 {
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING("AlexaImpl.OnInternetConnectionChanged", "Connected=%d", connected);
+  LOG_INFO("AlexaImpl.OnInternetConnectionChanged", "Connected=%d", connected);
   _internetConnected = connected;
 }
   
@@ -1194,8 +1191,7 @@ void AlexaImpl::OnInternetConnectionChanged( bool connected )
 void AlexaImpl::OnAVSConnectionChanged( const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status status,
                                         const avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::ChangedReason reason )
 {
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING("AlexaImpl.OnAVSConnectionChanged", "status=%d, reason=%d", status, reason);
+  LOG_INFO("AlexaImpl.OnAVSConnectionChanged", "status=%d, reason=%d", status, reason);
   if( status == avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::CONNECTED ) {
     _avsEverConnected = true;
   }
@@ -1204,8 +1200,7 @@ void AlexaImpl::OnAVSConnectionChanged( const avsCommon::sdkInterfaces::Connecti
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status status )
 {
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
+  LOG_INFO("AlexaImpl.OnSendComplete", "status '%s'", MessageStatusToString(status));
 
   DASMSG(send_complete, "alexa.response_to_request", "SDK responded to a sent message");
   DASMSG_SET(s1, MessageStatusToString(status), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
@@ -1265,8 +1260,7 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnSDKLogout()
 {
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "AlexaImpl.OnLogout", "User logged out" );
+  LOG_INFO( "AlexaImpl.OnLogout", "User logged out" );
 
   // NOTE:(bn) This doesn't get called if we log out, nor if you de-register from Amazon, not sure when it would
   // get called
@@ -1283,8 +1277,7 @@ void AlexaImpl::OnSDKLogout()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::OnNotificationsIndicator( avsCommon::avs::IndicatorState state )
 {
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "AlexaImpl.OnNotificationsIndicator", "Indicator: %d", (int)state );
+  LOG_INFO( "AlexaImpl.OnNotificationsIndicator", "Indicator: %d", (int)state );
   
   const bool changed = (_notificationsIndicator != state);
   if( changed && _onNotificationsChanged ) {
@@ -1327,14 +1320,14 @@ void AlexaImpl::OnAlertState( const std::string& alertID, capabilityAgents::aler
     _alertActive |= canBeCancelled;
     _backgroundAlertActive |= inBackground;
   }
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "AlexaImpl.OnAlertState",
-               "alert '%s' changed to state '%s', _alertActive=%d, _backgroundAlertActive=%d, %zu alerts tracked",
-               alertID.c_str(),
-               AlertStateToString(state),
-               _alertActive,
-               _backgroundAlertActive,
-               _alertStates.size());
+
+  LOG_INFO( "AlexaImpl.OnAlertState",
+            "alert '%s' changed to state '%s', _alertActive=%d, _backgroundAlertActive=%d, %zu alerts tracked",
+            alertID.c_str(),
+            AlertStateToString(state),
+            _alertActive,
+            _backgroundAlertActive,
+            _alertStates.size());
   if( oldAlertActive != _alertActive ) {
     // note: this is ok to only have two options, not three (e.g., "unknown") since _alertActive
     // is initialized as false, in which case if the initial assignment to _alertActive is false, we don't

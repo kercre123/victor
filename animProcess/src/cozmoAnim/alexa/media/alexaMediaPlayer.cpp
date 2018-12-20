@@ -300,7 +300,7 @@ void AlexaMediaPlayer::Update()
 
     const auto playingID = _audioController->PostAudioEvent(eventID, _audioInfo.gameObject, callbackContext );
     if (AudioEngine::kInvalidAudioPlayingId == playingID) {
-      PRINT_NAMED_ERROR( "AlexaMediaPlayer.Update.CouldNotPlay", "Speaker '%s' could not play", _audioInfo.name.c_str() );
+      LOG_ERROR( "AlexaMediaPlayer.Update.CouldNotPlay", "Speaker '%s' could not play", _audioInfo.name.c_str() );
     }
     
   } else if( _state == State::ClipPlayable ) {
@@ -342,9 +342,9 @@ void AlexaMediaPlayer::Update()
       
       const auto playingID = _audioController->PostAudioEvent( _playableClip, _audioInfo.gameObject, callbackContext );
       if( AudioEngine::kInvalidAudioPlayingId == playingID ) {
-        PRINT_NAMED_ERROR( "AlexaMediaPlayer.Update.CouldNotPlayClip",
-                           "Speaker '%s' could not play clip %d",
-                           _audioInfo.name.c_str(), _playableClip );
+        LOG_ERROR( "AlexaMediaPlayer.Update.CouldNotPlayClip",
+                   "Speaker '%s' could not play clip %d",
+                   _audioInfo.name.c_str(), _playableClip );
       }
       _clipStartTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() / 1000.0f;
     } else {
@@ -686,12 +686,12 @@ bool AlexaMediaPlayer::play( SourceId id )
       }
 
       if( (_dataValidity == DataValidity::Unknown) && (_attemptedDecodeBytes > kMaxInvalidDataBeforeAbort) ) {
-        PRINT_NAMED_WARNING("AlexaMediaPlayer.Play.InvalidData.DecodeError",
-                            "%s: source %llu Attempted to decode %zu bytes (> limit of %zu), setting data invalid",
-                            _audioInfo.name.c_str(),
-                            id,
-                            _attemptedDecodeBytes,
-                            kMaxInvalidDataBeforeAbort);
+        LOG_WARNING("AlexaMediaPlayer.Play.InvalidData.DecodeError",
+                    "%s: source %llu Attempted to decode %zu bytes (> limit of %zu), setting data invalid",
+                    _audioInfo.name.c_str(),
+                    id,
+                    _attemptedDecodeBytes,
+                    kMaxInvalidDataBeforeAbort);
         invalidData = true; // this will cause a break further down
       }
 
@@ -1000,8 +1000,8 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 
       bool success = _mp3Buffer->AdvanceCursor( consumed );
       if( !success ) {
-        PRINT_NAMED_ERROR( "AlexaMediaPlayer.Decode.ReadPtr", "Could not move read pointer by %d (size=%zu)",
-                           consumed, _mp3Buffer->Size() );
+        LOG_ERROR( "AlexaMediaPlayer.Decode.ReadPtr", "Could not move read pointer by %d (size=%zu)",
+                   consumed, _mp3Buffer->Size() );
       }
 
       if( samples > 0 ) {
@@ -1030,7 +1030,7 @@ int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
                                                &error);
 
             if( error != 0 ) {
-              PRINT_NAMED_WARNING("AlexaMediaPlayer::Decode", "speex_resampler_init error %d", error);
+              LOG_WARNING("AlexaMediaPlayer.Decode", "speex_resampler_init error %d", error);
             }
 
             // Set callback for this thread
