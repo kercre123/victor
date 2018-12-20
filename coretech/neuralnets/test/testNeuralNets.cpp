@@ -15,7 +15,7 @@
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetFilenames.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
-#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/image_impl.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
@@ -89,6 +89,7 @@ GTEST_TEST(NeuralNets, MobileNet)
   config["useFloatInput"] = false;
 # endif
   
+  config[NeuralNets::JsonKeys::ModelType] = "TFLite";
   config[NeuralNets::JsonKeys::NetworkName] = "mobilenet";
   config["labelsFile"] = "mobilenet_labels.txt";
   config["architecture"] = "custom";
@@ -379,13 +380,15 @@ GTEST_TEST(NeuralNets, ClassificationConsensus)
   Json::Value config;
   
 # if defined(ANKI_NEURALNETS_USE_TENSORFLOW)
-  config[JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_frozen.pb";
+  config[NeuralNets::JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_frozen.pb";
   config["useFloatInput"] = true;
 # elif defined(ANKI_NEURALNETS_USE_TFLITE)
   config[NeuralNets::JsonKeys::GraphFile] = "mobilenet_v1_1.0_224_quant.tflite";
   config["useFloatInput"] = false;
 # endif
   
+  config[NeuralNets::JsonKeys::ModelType] = "TFLite";
+  config[NeuralNets::JsonKeys::NetworkName] = "mobilenet";
   config["labelsFile"] = "mobilenet_labels.txt";
   config["architecture"] = "custom";
   config["inputWidth"] = 224;

@@ -149,13 +149,13 @@ Result INeuralNetMain::Init(const std::string& configFilename,
     const std::string name = modelConfig[JsonKeys::NetworkName].asString();
     std::unique_ptr<INeuralNetModel> model;
     
-    if(!config.isMember(NeuralNets::JsonKeys::ModelType))
+    if(!modelConfig.isMember(JsonKeys::ModelType))
     {
-      LOG_ERROR("INeuralNetModel.CreateFromTypeConfig.MissingConfig", "%s", NeuralNets::JsonKeys::ModelType);
+      LOG_ERROR("INeuralNetModel.CreateFromTypeConfig.MissingConfig", "%s", JsonKeys::ModelType);
       CleanupAndExit(RESULT_FAIL);
     }
-    
-    const std::string& modelTypeString = config[JsonKeys::ModelType].asString();
+
+    const std::string& modelTypeString = modelConfig[JsonKeys::ModelType].asString();
     if(NeuralNets::JsonKeys::TFLiteModelType == modelTypeString)
     {
       model.reset( new NeuralNets::TFLiteModel() );
