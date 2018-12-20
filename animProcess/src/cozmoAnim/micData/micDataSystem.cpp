@@ -52,25 +52,22 @@ namespace {
 
 #define LOG_CHANNEL "Microphones"
 # define CONSOLE_GROUP "MicData"
-  
+
+#if ANKI_DEV_CHEATS
+
+CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
 CONSOLE_VAR(bool, kSuppressTriggerResponse, "SpeechRecognizer", false);
 
-#if ANKI_DEV_CHEATS
-  std::string _debugMicDataWriteLocation = "";
-
-  void ClearMicData(ConsoleFunctionContextRef context)
+std::string _debugMicDataWriteLocation = "";
+void ClearMicData(ConsoleFunctionContextRef context)
+{
+  if (!_debugMicDataWriteLocation.empty())
   {
-    if (!_debugMicDataWriteLocation.empty())
-    {
-      Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
-    }
+    Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
   }
-  CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
-
-#endif
-
-#if ANKI_DEV_CHEATS
-  CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
+}
+CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
+ 
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
