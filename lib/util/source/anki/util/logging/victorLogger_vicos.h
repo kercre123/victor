@@ -30,7 +30,7 @@ public:
   // Implements ILoggerProvider
   virtual void PrintLogE(const char * name, const KVPairVector & keyvals, const char * strval)
   {
-    Log(ANDROID_LOG_ERROR, name, keyvals, strval);
+    LogError(ANDROID_LOG_ERROR, name, keyvals, strval);
   }
 
   virtual void PrintLogW(const char* name, const KVPairVector & keyvals, const char * strval)
@@ -76,6 +76,11 @@ private:
   void LogEvent(android_LogPriority prio,
     const char * name,
     const KVPairVector & keyvals);
+
+  void LogError(android_LogPriority prio,
+    const char * name,
+    const KVPairVector & keyvals,
+    const char * strval);
 
   void LogEvent(LogLevel level, const DasMsg & dasMsg);
 

@@ -7,6 +7,8 @@ ${GIT_PROJ_ROOT}/project/victor/build-victor.sh \
                 -DANKI_NO_WEBSERVER_ENABLED=1 \
                 -DANKI_DEV_CHEATS=0 \
                 -DANKI_PROFILING_ENABLED=0 \
+                -DANKI_REPORT_ERRORS_TO_DAS=0 \
+                -DANKI_REPORT_ERRORS_WITH_STRVAL_TO_DAS=0 \
                 -DANKI_MESSAGE_PROFILER_ENABLED=0 \
                 -DANKI_BREADCRUMBS=0 \
                 -DANKI_RESOURCE_SHIPPING=1 \
