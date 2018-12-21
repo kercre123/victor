@@ -30,10 +30,24 @@
   #ifndef ANKI_PROFILING_ENABLED
     #define ANKI_PROFILING_ENABLED  0
   #endif
+
+  // For macros like PRINT_NAMED_ERROR or LOG_ERROR, send these to DAS
+  #ifndef ANKI_REPORT_ERRORS_TO_DAS
+     #define ANKI_REPORT_ERRORS_TO_DAS 1
+  #endif
+
+  // If sending ERRORs to DAS, also include the descriptive message along
+  // with the error name to help in debugging.  It is expected that this
+  // will only be turned on for non-shipping builds.
+  #ifndef ANKI_REPORT_ERRORS_WITH_STRVAL_TO_DAS
+     #define ANKI_REPORT_ERRORS_WITH_STRVAL_TO_DAS 1
+  #endif
 #else
   #define ANKI_DEVELOPER_CODE     1
   #define ANKI_DEV_CHEATS         1
   #define ANKI_PROFILING_ENABLED  1
+  #define ANKI_REPORT_ERRORS_TO_DAS 1
+  #define ANKI_REPORT_ERRORS_WITH_STRVAL_TO_DAS 1
 #endif
 
 //

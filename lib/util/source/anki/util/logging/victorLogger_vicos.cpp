@@ -9,6 +9,7 @@
 
 #include "util/logging/victorLogger.h"
 #include "util/logging/DAS.h"
+#include "util/global/globalDefinitions.h"
 
 #include <android/log.h>
 #include <assert.h>
@@ -126,6 +127,31 @@ void VictorLogger::LogEvent(android_LogPriority prio,
   __android_log_print(prio, _tag.c_str(), "@%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%llu",
                       name, str1, str2, str3, str4, int1, int2, int3, int4, uptime_ms);
 
+}
+
+void VictorLogger::LogError(android_LogPriority prio,
+  const char * name,
+  const KVPairVector & keyvals,
+  const char * strval)
+{
+#if ANKI_REPORT_ERRORS_TO_DAS
+  // Normally errors just go to the local log system, but with this enabled
+  // we will send them up to the DAS server.
+  KVPairVector kv;
+  kv.emplace_back(DAS::STR1, name);
+#if ANKI_REPORT_ERRORS_WITH_STRVAL_TO_DAS
+  // Move strval to s2 value for DAS event.  This can be useful for
+  // debugging the error.  It is expected that this will NOT be used
+  // in shipping builds.
+  kv.emplace_back(DAS::STR2, strval);
+  // Append any existing keyvals to the end of kv.  If keyvals has a value for s1 or s2,
+  // they will supersede what is in kv when processed by LogEvent
+#endif // ANKI_REPORT_ERRORS_WITH_STRVAL_TO_DAS
+  kv.insert(std::end(kv), std::begin(keyvals), std::end(keyvals));
+  LogEvent(prio, "log.error", kv);
+#else
+  Log(prio, name, keyvals, strval);
+#endif // ANKI_REPORT_ERRORS_TO_DAS
 }
 
 //
