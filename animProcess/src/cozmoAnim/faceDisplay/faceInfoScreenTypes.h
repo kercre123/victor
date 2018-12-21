@@ -30,6 +30,7 @@ enum class ScreenName : uint8_t {
   ClearUserDataFail,
   Rebooting,
   SelfTest,
+  SelfTestRunning,
   Network,
   SensorInfo,
   IMUInfo,

@@ -347,6 +347,17 @@ void BackpackLightComponent::SetPairingLight(bool isOn)
 
 void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
 {
+  if(_systemLightState == SystemLightState::Off &&
+     _selfTestRunning)
+  {
+    _systemLightState = SystemLightState::SelfTest;
+  }
+  else if(_systemLightState == SystemLightState::SelfTest &&
+          !_selfTestRunning)
+  {
+    _systemLightState = SystemLightState::Off;
+  }
+
   // Check if cloud streaming has changed
   // Only show streaming system light if we are not showing anything else
   // We don't want to accidentally override the pairing light. We will still
@@ -361,7 +372,7 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
   {
     _systemLightState = SystemLightState::Off; 
   }
-  
+
   static SystemLightState prevState = SystemLightState::Invalid;
   if(prevState != _systemLightState)
   {
@@ -376,6 +387,7 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
         return;
       }
       break;
+      
       case SystemLightState::Off:
       {
         light.onColor = 0x00FF0000;
@@ -406,6 +418,19 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
         // Pulsing cyan
         light.onColor = 0x00FFFF00;
         light.offColor = 0x00FFFF00;
+        light.onPeriod_ms = 960;
+        light.offPeriod_ms = 960;
+        light.transitionOnPeriod_ms = 0;
+        light.transitionOffPeriod_ms = 0;
+        light.offset_ms = 0;
+      }
+      break;
+
+      case SystemLightState::SelfTest:
+      {
+        // White
+        light.onColor = 0xFFFFFF00;
+        light.offColor = 0xFFFFFF00;
         light.onPeriod_ms = 960;
         light.offPeriod_ms = 960;
         light.transitionOnPeriod_ms = 0;

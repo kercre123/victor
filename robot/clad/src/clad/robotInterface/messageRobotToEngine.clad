@@ -149,6 +149,11 @@ message BeatDetectorState
   BeatInfo latestBeat
 }
 
+message StartSelfTest
+{
+
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -193,6 +198,7 @@ union RobotToEngine {
   RobotPoked                 robotPoked             = 0xC8,
 
   RunFactoryTest             runFactoryTest         = 0xCA,
+  StartSelfTest              startSelfTest          = 0xCB,
 
   RobotServerDisconnect      robotServerDisconnect  = 0xCD,
 

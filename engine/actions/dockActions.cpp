@@ -576,7 +576,7 @@ namespace Anki {
             _dockAnim->Cancel();
             _dockAnim->PrepForCompletion();
           }
-          if (ShouldPlayDockingAnimations()) {
+          if (ShouldPlayDockingAnimations() && _getOutDockTrigger != AnimationTrigger::Count) {
             _dockAnim.reset(new TriggerAnimationAction(_getOutDockTrigger));
             _dockAnim->SetRobot(&GetRobot());
           }
@@ -781,9 +781,14 @@ namespace Anki {
           if(_curDockTrigger == AnimationTrigger::Count)
           {
             _curDockTrigger = _getInDockTrigger;
-            // Init docking anim
-            _dockAnim.reset(new TriggerAnimationAction(_getInDockTrigger));
-            _dockAnim->SetRobot(&GetRobot());
+
+            if(_curDockTrigger != AnimationTrigger::Count)
+            {
+              // Init docking anim
+              _dockAnim.reset(new TriggerAnimationAction(_getInDockTrigger));
+              _dockAnim->SetRobot(&GetRobot());
+            }
+            
             UpdateDockingAnim();
           }
         }
@@ -822,8 +827,12 @@ namespace Anki {
         if(_dockAnim == nullptr && ShouldPlayDockingAnimations())
         {
           _curDockTrigger = _loopDockTrigger;
-          _dockAnim.reset(new TriggerAnimationAction(_loopDockTrigger));
-          _dockAnim->SetRobot(&GetRobot());
+
+          if(_curDockTrigger != AnimationTrigger::Count)
+          {
+            _dockAnim.reset(new TriggerAnimationAction(_loopDockTrigger));
+            _dockAnim->SetRobot(&GetRobot());
+          }
         }
 
         // Still docking so update dock anim

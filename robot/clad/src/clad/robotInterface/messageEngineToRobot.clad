@@ -243,6 +243,11 @@ message PlaypenStart
 
 }
 
+message SelfTestEnd
+{
+
+}
+
 message PrintBodyData
 {
   // Print syscon body data to log every specified number of tics.
@@ -853,6 +858,8 @@ union EngineToRobot
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,
   AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
+
+  SelfTestEnd                   selfTestEnd                 = 0xA4,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 

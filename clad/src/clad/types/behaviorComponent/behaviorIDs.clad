@@ -60,6 +60,24 @@ enum uint_16 BehaviorID {
   ReactToBody,
   ReactToGazeDirection,
   ReactToGazeDirectionSurface,
+
+  // devBehaviors/selfTest
+  SelfTest,
+  SelfTestButton,
+  SelfTestDockWithCharger,
+  SelfTestDriftCheck,
+  SelfTestDriveForwards,
+  SelfTestInitChecks,
+  SelfTestLookAtCharger,
+  SelfTestMotorCalibration,
+  SelfTestPickup,
+  SelfTestPutOnCharger,
+  SelfTestPutOnCharger2,
+  SelfTestScreenAndBackpack,
+  SelfTestSoundCheck,
+  SelfTestTouch,
+
+  // devBehaviors
   TestStackMonitors,
 
   // victorBehaviorTree/alexa

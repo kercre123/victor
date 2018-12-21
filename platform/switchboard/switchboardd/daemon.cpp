@@ -617,6 +617,14 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
       _engineMessagingClient->HandleWifiScanRequest();
       break;
     }
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::WifiConnectRequest: {
+      Log::Write("Got WifiConnectRequest\n");
+      const auto& payload = message.Get_WifiConnectRequest();
+      _engineMessagingClient->HandleWifiConnectRequest(std::string((char*)&payload.ssid),
+                                                       std::string((char*)&payload.pwd),
+                                                       payload.disconnectAfterConnection);
+      break;
+    }
     default: {
       printf("Unknown Tag: %hhu\n", tag);
       break;

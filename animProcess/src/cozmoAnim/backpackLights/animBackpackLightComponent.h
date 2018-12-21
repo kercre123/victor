@@ -70,6 +70,8 @@ public:
   // Set backpack lights to indicate whether alexa is streaming
   void SetAlexaStreaming(bool streaming) { _alexaStreaming = streaming; }
 
+  void SetSelfTestRunning(bool running) { _selfTestRunning = running; }
+
   // Update battery status as we need to know when to play charging/low battery lights
   // Priority of battery related lights Low Battery > Charging > Fully Charged (Off)
   void UpdateBatteryStatus(const RobotInterface::BatteryStatus& msg);
@@ -134,6 +136,7 @@ private:
     Off,
     Pairing,
     Streaming,
+    SelfTest,
   };
   SystemLightState _systemLightState = SystemLightState::Off;
 
@@ -152,7 +155,8 @@ private:
   bool _alexaStreaming = false; // separate state in case we decide to change lights
   bool _micMuted = false;
   bool _hasNotification = false;
-  
+
+  bool _selfTestRunning = false;
 
 };
 

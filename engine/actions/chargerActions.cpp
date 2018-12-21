@@ -368,7 +368,8 @@ ActionResult BackupOntoChargerAction::Verify()
 #pragma mark ---- DriveToAndMountChargerAction ----
   
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
-                                                           const bool useCliffSensorCorrection)
+                                                           const bool useCliffSensorCorrection,
+                                                           const bool enableDockingAnims)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -380,11 +381,17 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));
-  AddAction(new MountChargerAction(objectID, useCliffSensorCorrection));
+
+  auto mountAction = new MountChargerAction(objectID, useCliffSensorCorrection);
+  if(!enableDockingAnims)
+  {
+    mountAction->SetDockingAnimTriggers(AnimationTrigger::Count,
+                                        AnimationTrigger::Count,
+                                        AnimationTrigger::Count);
+  }
+  AddAction(mountAction);
 }
   
-  
-
 } // namespace Vector
 } // namespace Anki
 
