@@ -1,0 +1,15 @@
+{
+  "salientPoints" : [
+    {
+      "timestamp"     : 1234567890,
+      "x_img"         : 0.5,
+      "y_img"         : 0.5,
+      "score"         : 1.0,
+      "area_fraction" : -1.0,
+      "salientType"   : "Unknown",
+      "description"   : "Test",
+      "shape"         : [],
+      "color_rgba"    : 0
+    }
+  ]
+}
