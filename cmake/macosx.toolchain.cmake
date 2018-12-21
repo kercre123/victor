@@ -54,3 +54,15 @@ set(CMAKE_MODULE_LINKER_FLAGS "${MACOSX_LINKER_FLAGS} ${CMAKE_MODULE_LINKER_FLAG
 set(CMAKE_EXE_LINKER_FLAGS    "${MACOSX_LINKER_FLAGS} ${MACOSX_LINKER_FLAGS_EXE} ${CMAKE_EXE_LINKER_FLAGS}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
+option(USE_ANKIASAN "Enable address sanitizer" OFF)
+if (USE_ANKIASAN)
+  set(ASAN_CXX_FLAGS           PRIVATE
+                               -fno-omit-frame-pointer
+                               -fsanitize=address
+  )
+
+  set(ASAN_LINKER_FLAGS        PRIVATE
+                               -fsanitize=address
+  )
+endif()

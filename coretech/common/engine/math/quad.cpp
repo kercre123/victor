@@ -38,7 +38,7 @@ namespace Anki {
     
     q.SortCornersClockwise();
     
-    Point2f n;
+    //Point2f n;
     //q.SortCornersClockwise(n); // Should fail: triggers static assert because N==2
     
     Quad3f q3;

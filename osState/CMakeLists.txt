@@ -27,12 +27,13 @@ PRIVATE
   cti_common
 # platform
   ${PLATFORM_LIBS}
+  ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET osState)
 
 target_compile_definitions(osState
-  PRIVATE
+  PUBLIC
   ${PLATFORM_COMPILE_DEFS}
 )
 

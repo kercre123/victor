@@ -31,6 +31,7 @@ elseif (MACOSX)
 endif()
 
 target_link_libraries(util
+  PUBLIC
   # anki libs
   clad
   util_clad
@@ -40,6 +41,7 @@ target_link_libraries(util
   hdr_histogram_static
   ${ANKITRACE}
   ${PLATFORM_LIBS}
+  ${ASAN_SHARED_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET util)

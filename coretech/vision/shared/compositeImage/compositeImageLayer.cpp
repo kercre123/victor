@@ -328,7 +328,6 @@ CompositeImageLayer::SpriteBox::SpriteBox(const SerializedSpriteBox& spriteBox)
   if(spriteBox.layoutModifierInterleavedLength > 0){
     layoutModifier = std::make_unique<CompositeImageLayoutModifier>();
     const auto modifierLength = spriteBox.layoutModifierInterleavedLength/2;
-    Point2i point;
     for(int i = 0; i < modifierLength; i++){
       Point2i point(spriteBox.layoutModifier.interleavedModifierList[i], 
                     spriteBox.layoutModifier.interleavedModifierList[i + 1]);

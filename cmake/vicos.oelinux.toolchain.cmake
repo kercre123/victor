@@ -282,3 +282,31 @@ set(CMAKE_SIZEOF_VOID_P 4)
 message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
+
+option(USE_ANKIASAN "Enable address sanitizer" OFF)
+if (USE_ANKIASAN)
+  # Depends on -shared-libasan, convert to OPTION
+  set(ASAN_CXX_FLAGS           PUBLIC
+                               -fsanitize=address
+                               -fno-omit-frame-pointer
+  )
+
+  set(ASAN_LINKER_FLAGS        PUBLIC
+                               -fsanitize=address
+  )
+
+  set(ASAN_SHARED_LINKER_FLAGS PUBLIC
+                               -fsanitize=address
+                               # requires SDK support -shared-libasan
+                               -ldl
+                               -lrt
+                               -l${VICOS_SDK}/prebuilt/lib/clang/5.0.1/lib/linux/libclang_rt.asan-arm.a
+  )
+
+  set(ASAN_EXE_LINKER_FLAGS    PUBLIC
+                               -fsanitize=address
+                               -ldl
+                               -lrt
+                               -l${VICOS_SDK}/prebuilt/lib/clang/5.0.1/lib/linux/libclang_rt.asan-arm.a
+  )
+endif()

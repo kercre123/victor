@@ -39,6 +39,7 @@ add_custom_command(
 # NOTE: protobuf generated files must be linked directly to cozmo_engine
 #       Otherwise, there is a problem comparing the default string, and it
 #       generates incorrect serialized messages.
+
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR} ${GATEWAY_PROTO_CPP_GEN_SRCS} ${GATEWAY_PROTO_CPP_GEN_HEADERS})
 anki_build_target_license(cozmo_engine "ANKI")
 
@@ -106,11 +107,13 @@ target_link_libraries(cozmo_engine
   # platform
   ${PLATFORM_LIBS}
   ${ANKITRACE}
+  ${ASAN_SHARED_LINKER_FLAGS}
 )
 
 target_compile_options(cozmo_engine PRIVATE
   ${SYMBOL_VISIBILITY_FLAGS}
   "${PLATFORM_FLAGS}"
+  ${ASAN_CXX_FLAGS} 
 )
 
 anki_build_strip(TARGET cozmo_engine)
@@ -120,7 +123,7 @@ target_compile_definitions(cozmo_engine
   USE_DAS=$<BOOL:${USE_DAS}>
   PRIVATE
   CORETECH_ENGINE
-  "${PLATFORM_COMPILE_DEFS}"
+  ${PLATFORM_COMPILE_DEFS}
 )
 
 target_include_directories(cozmo_engine

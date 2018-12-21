@@ -22,6 +22,11 @@ endif()
 anki_build_cxx_executable(vic-engine ${ANKI_SRCLIST_DIR})
 anki_build_target_license(vic-engine "ANKI")
 
+target_compile_definitions(vic-engine
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
+)
+
 target_link_libraries(vic-engine
   PRIVATE
   # anki libs
@@ -30,6 +35,7 @@ target_link_libraries(vic-engine
   victorCrashReports
   # platform
   ${PLATFORM_LIBS}
+  ${ASAN_EXE_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET vic-engine)

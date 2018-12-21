@@ -17,8 +17,10 @@ target_compile_definitions(cti_messaging
 )
 
 target_link_libraries(cti_messaging
+  PRIVATE
   cti_common
   clad
+  ${ASAN_LINKER_FLAGS}
 )
 
 target_include_directories(cti_messaging
@@ -42,6 +44,7 @@ target_include_directories(cti_messaging_robot
 target_link_libraries(cti_messaging_robot
   PUBLIC
   cti_common_robot
+  ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_cxx_library(cti_messaging_shared ${ANKI_SRCLIST_DIR} STATIC)
@@ -61,4 +64,5 @@ target_include_directories(cti_messaging_shared
 target_link_libraries(cti_messaging_shared
   PUBLIC
   cti_common_shared
+  ${ASAN_LINKER_FLAGS}
 )
