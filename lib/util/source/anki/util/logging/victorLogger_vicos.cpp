@@ -143,7 +143,8 @@ void VictorLogger::LogError(android_LogPriority prio,
   // Move strval to s2 value for DAS event.  This can be useful for
   // debugging the error.  It is expected that this will NOT be used
   // in shipping builds.
-  kv.emplace_back(DAS::STR2, strval);
+  std::string escaped = Anki::Util::DAS::Escape(strval);
+  kv.emplace_back(DAS::STR2, escaped.c_str());
   // Append any existing keyvals to the end of kv.  If keyvals has a value for s1 or s2,
   // they will supersede what is in kv when processed by LogEvent
 #endif // ANKI_REPORT_ERRORS_WITH_STRVAL_TO_DAS
