@@ -18,6 +18,7 @@
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
 #include "engine/activeObject.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -183,6 +184,16 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
     }
     _disconnectFromCubeTime_sec = -1.f;
   }
+  
+  
+  if( _timeToConnect > 0.0f && now_sec >= _timeToConnect ) {
+    _timeToConnect = 0.0f;
+    RequestConnectToCube();
+  } else if( _timeToConnect < 0.0f ) {
+    _timeToConnect = now_sec + 5.0f; // give time for ble client to connect
+  }
+  
+  
 }
 
 
@@ -541,6 +552,24 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
                  "%s is not a valid object type. We expect to hear only from objects of type %s",
                  ObjectTypeToString(msg.objectType),
                  ObjectTypeToString(kValidCubeType));
+  
+  if( !msg.extraPayload.empty() ) {
+    std::stringstream ss;
+    for( auto& x : msg.extraPayload ) {
+      ss << std::to_string((int)x) << " ";
+    }
+    PRINT_NAMED_WARNING("WHATNOW", "CubeCommsComponent %s (rssi=%d) = %s", msg.factory_id.c_str(), msg.rssi, ss.str().c_str());
+    auto it = _vectorMap.find(msg.factory_id);
+    if( (it == _vectorMap.end()) || (it->second.extraPayload != msg.extraPayload) ) {
+      using GE = AudioMetaData::GameEvent::GenericEvent;
+      using GO = AudioMetaData::GameObjectType;
+      const auto event = GE::Play__Dev_Robot__Tone_10_Frames_01;
+      _robot->GetAudioClient()->PostEvent(event, GO::Behavior);
+    }
+    _vectorMap[msg.factory_id] = msg;
+  } else {
+    PRINT_NAMED_WARNING("WHATNOW", "CubeCommsComponent NODATA %s", msg.factory_id.c_str());
+  }
 
   const bool cubeUnknown = (_cubeScanResults.find(msg.factory_id) == _cubeScanResults.end());
   _cubeScanResults[msg.factory_id] = msg.rssi;

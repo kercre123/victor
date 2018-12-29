@@ -67,7 +67,7 @@ namespace Vector {
       _scanDuration_sec = static_cast<ev_tstamp>(duration_sec);
     }
     
-    using AdvertisementCallback = std::function<void(const std::string& addr, const int rssi)>;
+    using AdvertisementCallback = std::function<void(const std::string& addr, const int rssi, const std::vector<uint8_t>& extraPayload)>;
     using ReceiveDataCallback = std::function<void(const std::string& addr, const std::vector<uint8_t>& data)>;
     using ScanFinishedCallback = std::function<void(void)>;
     

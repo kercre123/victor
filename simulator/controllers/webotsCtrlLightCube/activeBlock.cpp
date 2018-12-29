@@ -351,7 +351,7 @@ Result Update()
       SendMessageHelper(discoveryEmitter_,
                         ExternalInterface::ObjectAvailable(factoryID_,
                                                            objectType_,
-                                                           0));
+                                                           0, {}));
       objAvailableSendCtr = kObjectAvailableMessagePeriod_cycles;
     }
     

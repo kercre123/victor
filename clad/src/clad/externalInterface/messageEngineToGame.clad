@@ -492,7 +492,8 @@ message ObjectAvailable
 {
   string      factory_id,
   ObjectType  objectType,
-  int_8       rssi
+  int_8       rssi,
+  uint_8      extraPayload[uint_8],
 }
 
 // Indicates that a cube has connected or disconnected

@@ -169,6 +169,13 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        // Forward to switchboard
                                                        robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
                                                      }));
+                                                     
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::cycleAdvertisement,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       // Forward to switchboard
+                                                       PRINT_NAMED_WARNING("WHATNOW", "cycleAdvert in robotToEngineImplMessaging");
+                                                       robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::CycleAdvertisement()));
+                                                     }));
 
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::prepForShutdown,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){

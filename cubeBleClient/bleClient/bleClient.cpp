@@ -22,6 +22,8 @@
 #include "util/string/stringUtils.h"
 
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
 namespace Anki {
 namespace Vector {
@@ -241,7 +243,46 @@ void BleClient::OnScanResults(int error, const std::vector<BluetoothDaemon::Scan
   
   if (_advertisementCallback) {
     for (const auto& r : records) {
-      _advertisementCallback(r.address, r.rssi);
+      
+      // char address[kAddressSize] = {0};
+      // int rssi = 0;
+      // int num_service_uuids = 0;
+      // char service_uuids[4][k128BitUUIDSize] = {{0}};
+      // char local_name[kLocalNameSize] = {0};
+      // int manufacturer_data_len = 0;
+      // uint8_t manufacturer_data[kManufacturerDataMaxSize] = {0};
+      // int advertisement_length = 0;
+      // uint8_t advertisement_data[kMaxAdvertisingLength] = {0};
+      std::string service_uuids;
+      for( int i=0; i<r.num_service_uuids; ++i ) {
+        service_uuids += "uuid" + std::to_string(i) + "= " + std::string{service_uuids[i]} + ", ";
+      }
+      std::ostringstream manufacturer_data;
+      manufacturer_data << "manufac= ";// << std::hex << std::uppercase << std::setfill( '0' );
+      std::vector<uint8_t> num4;
+      const bool isVector = std::string{r.local_name}.find("Vector") != std::string::npos;
+      for( int i=0; i<r.manufacturer_data_len; ++i ) {
+        if( isVector && i >= 4 ) {
+          num4.push_back( r.manufacturer_data[i] );
+        } 
+        manufacturer_data << std::to_string((int)r.manufacturer_data[i]);
+      }
+      std::ostringstream advertisement_data;
+      advertisement_data << "advert= " << std::hex << std::uppercase << std::setfill( '0' );
+      for( int i=0; i<r.advertisement_length; ++i ) {
+        advertisement_data << std::setw( 2 ) << r.advertisement_data[i];
+      }
+
+      // if( !num4.empty() ) {
+      //   PRINT_NAMED_WARNING("WHATNOW", "spotting vector %s with extra bytes", r.address );
+      // }
+
+      _advertisementCallback(r.address, r.rssi, num4);
+      // PRINT_NAMED_WARNING( "WHATNOW", 
+      //                      "scanned address=%s, rssi=%d, %s, local_name=%s, %s, %s",
+      //                      r.address, r.rssi, service_uuids.c_str(), r.local_name,
+      //                      manufacturer_data.str().c_str(), 
+      //                      advertisement_data.str().c_str() );
     }
   }
 }
@@ -374,8 +415,8 @@ void BleClient::AsyncBreakCallback(ev::async& w, int revents)
 void BleClient::AsyncStartScanCallback(ev::async& w, int revents)
 {
   // Commence scanning and start the timer
-  StartScan(Anki::kCubeService_128_BIT_UUID);
-  _scanningTimer.start(_scanDuration_sec);
+  StartScan(Anki::kAnkiSingleMessageService_128_BIT_UUID);//kCubeService_128_BIT_UUID);
+  _scanningTimer.start(180.0f);//_scanDuration_sec);
 }
 
 

@@ -997,7 +997,8 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     } else if (currScreenName == ScreenName::None) {
       // Fake trigger word on single press
       LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotSinglePress", "Triggering wake word");
-      _context->GetMicDataSystem()->FakeTriggerWordDetection();
+      //_context->GetMicDataSystem()->FakeTriggerWordDetection();
+      RobotInterface::SendAnimToEngine(SwitchboardInterface::CycleAdvertisement{});
     }
   }
 

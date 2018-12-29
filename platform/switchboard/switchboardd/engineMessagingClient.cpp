@@ -89,6 +89,7 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
     switch(messageTag) {
       case EMessageTag::EnterPairing:
       case EMessageTag::ExitPairing:
+      case EMessageTag::CycleAdvertisement:
       case EMessageTag::WifiScanRequest:
       case EMessageTag::WifiConnectRequest:
       {

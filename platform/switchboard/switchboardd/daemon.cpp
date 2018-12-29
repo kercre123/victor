@@ -41,6 +41,9 @@
 #include "util/logging/victorLogger.h"
 #include "switchboardd/daemon.h"
 
+
+#include <sys/timex.h>
+
 #define LOG_PROCNAME "vic-switchboard"
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -211,6 +214,34 @@ void Daemon::InitializeBleComms() {
   ev_timer_again(_loop, &_ankibtdTimer);
 }
 
+bool IsWallTimeSynced()
+{
+  struct timex txc = {};
+
+  if (adjtimex(&txc) < 0) {
+    LOG_ERROR("OSState.IsWallTimeSynced.CantGetTimex", "Invalid return from adjtimex");
+    return false;
+  }
+
+  if (txc.status & STA_UNSYNC) {
+    return false;
+  }
+
+  return true;
+}
+
+void Daemon::AddExtraData(std::vector<uint8_t>& data) const
+{
+  if( !IsWallTimeSynced() ) {
+    PRINT_NAMED_WARNING("WHATNOW", "time not synced");
+    return;
+  }
+
+  static uint8_t manuDataInt = 0;
+  ++manuDataInt;
+  data.push_back( manuDataInt );
+}
+
 void Daemon::UpdateAdvertisement(bool pairing) {
   if(_bleClient == nullptr || !_bleClient->IsConnected()) {
     Log::Write("Tried to update BLE advertisement when not connected to ankibluetoothd.");
@@ -224,12 +255,15 @@ void Daemon::UpdateAdvertisement(bool pairing) {
     _securePairing->SetIsPairing(pairing);
   }
 
+  Log::Write("WHATNOW Upating advert");
+
   Anki::BLEAdvertiseSettings settings;
   settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiSingleMessageService_128_BIT_UUID);
   settings.GetAdvertisement().SetIncludeDeviceName(true);
   std::vector<uint8_t> mdata = Anki::kAnkiBluetoothSIGCompanyIdentifier;
   mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
-  mdata.push_back(pairing?'p':0x00); // to indicate whether we are pairing
+  mdata.push_back(pairing?'p':0); // to indicate whether we are pairing
+  AddExtraData(mdata);
   settings.GetAdvertisement().SetManufacturerData(mdata);
 
   std::string robotName = SavedSessionManager::GetRobotName();
@@ -600,6 +634,10 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
   Anki::Vector::ExternalInterface::MessageEngineToGameTag tag = message.GetTag();
 
   switch(tag){
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::CycleAdvertisement: {
+      UpdateAdvertisement(false);
+      break;
+    }
     case Anki::Vector::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
       StartPairing();
       break;

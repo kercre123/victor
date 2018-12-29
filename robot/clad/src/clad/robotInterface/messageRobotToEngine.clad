@@ -245,6 +245,8 @@ union RobotToEngine {
   MicRecordingComplete       micRecordingComplete   = 0xE8,
   MicDataState               micDataState           = 0xE9,
 
+  SwitchboardInterface::CycleAdvertisement   cycleAdvertisement   = 0xEA,
+
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process
   RobotState                 state                  = 0xF0,

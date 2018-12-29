@@ -233,6 +233,10 @@ private:
   
   // Next time we should send data to webviz
   float _nextSendWebVizDataTime_sec = 0.f;
+  
+  float _timeToConnect = -1.0f;
+  
+  std::unordered_map<std::string, ExternalInterface::ObjectAvailable> _vectorMap;
 };
 
 

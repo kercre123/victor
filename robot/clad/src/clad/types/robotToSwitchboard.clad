@@ -28,6 +28,10 @@ message WifiConnectRequest
   bool disconnectAfterConnection
 }
 
+message CycleAdvertisement
+{
+}
+
 } // SwitchboardInterface
 } // Cozmo
 } // Anki

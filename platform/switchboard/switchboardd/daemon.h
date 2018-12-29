@@ -107,6 +107,8 @@ namespace Switchboard {
       void HandlePairingTimeout();
       int GetOtaProgress(uint64_t* progress, uint64_t* expected);
 
+      void AddExtraData(std::vector<uint8_t>& data) const;
+
       Signal::SmartHandle _pinHandle;
       Signal::SmartHandle _otaHandle;
       Signal::SmartHandle _endHandle;

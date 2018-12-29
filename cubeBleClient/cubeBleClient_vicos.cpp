@@ -52,9 +52,10 @@ namespace {
   
   // shared queue for buffering advertisement messages received on the client thread
   struct CubeAdvertisementInfo {
-    CubeAdvertisementInfo(const std::string& addr, const int rssi) : addr(addr), rssi(rssi) { }
+    CubeAdvertisementInfo(const std::string& addr, const int rssi, const std::vector<uint8_t>& extraPayload) : addr(addr), rssi(rssi), extraPayload(extraPayload) { }
     std::string addr;
     int rssi;
+    std::vector<uint8_t> extraPayload;
   };
   using CubeAdvertisementBuffer = std::queue<CubeAdvertisementInfo>;
   CubeAdvertisementBuffer _cubeAdvertisementBuffer;
@@ -84,9 +85,9 @@ CubeBleClient::CubeBleClient()
   _loop = ev_default_loop(EVBACKEND_SELECT);
   _bleClient = std::make_unique<BleClient>(_loop);
   
-  _bleClient->RegisterAdvertisementCallback([](const std::string& addr, const int rssi) {
+  _bleClient->RegisterAdvertisementCallback([](const std::string& addr, const int rssi, const std::vector<uint8_t>& extraPayload) {
     std::lock_guard<std::mutex> lock(_cubeAdvertisementBuffer_mutex);
-    _cubeAdvertisementBuffer.emplace(addr, rssi);
+    _cubeAdvertisementBuffer.emplace(addr, rssi, extraPayload);
   });
   
   _bleClient->RegisterReceiveDataCallback([](const std::string& addr, const std::vector<uint8_t>& data){
@@ -245,6 +246,9 @@ bool CubeBleClient::UpdateInternal()
     msg.factory_id = data.addr;
     msg.objectType = ObjectType::Block_LIGHTCUBE1; // TODO - update this with the Victor cube type once it's defined
     msg.rssi = Util::numeric_cast_clamped<decltype(msg.rssi)>(data.rssi);
+    for( int i=0; i<data.extraPayload.size(); ++i ) {
+      msg.extraPayload.push_back( Util::numeric_cast_clamped<decltype(msg.extraPayload)::value_type>(data.extraPayload[i]));
+    }
     if (_cubeConnectionState == CubeConnectionState::ScanningForCubes) {
       for (const auto& callback : _objectAvailableCallbacks) {
         callback(msg);
