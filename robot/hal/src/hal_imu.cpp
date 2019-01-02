@@ -109,7 +109,7 @@ void ProcessIMUEvents()
       DASMSG_SEND_ERROR();
     }
   }
-  
+
   for (int i=0; i < imu_read_samples; i++) {
     for (int j=0 ; j<3 ; j++) {
       imuData.accel[j] = rawData[i].acc[j]  * IMU_ACCEL_SCALE_G  * MMPS2_PER_GEE;
@@ -190,7 +190,6 @@ void InitIMU()
   // Spin up the processing thread and detach it
   // This will open, init, and read the imu
   _processor = std::thread(ProcessLoop);
-  _processor.detach();
 #else
   OpenIMU();
 #endif
@@ -200,6 +199,9 @@ void StopIMU()
 {
 #if PROCESS_IMU_ON_THREAD
   _stopProcessing = true;
+  if (_processor.joinable()) {
+    _processor.join();
+  }
 #else
   imu_close();
 #endif
