@@ -149,6 +149,9 @@ include(protobuf) # for protobuf target
 include(breakpad) # for breakpad targets
 include(avs-device-sdk)
 
+include(speexdsp)
+include(pffft)
+
 import(util "lib/util")
 import(ble_cozmo "lib/BLECozmo")
 import(DAS "lib/das-client")

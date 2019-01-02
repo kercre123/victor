@@ -30,22 +30,19 @@ if (TARGET copy_pffft_libs)
     return()
 endif()
 
-set(INSTALL_LIBS
-  "${PFFFT_LIBS}")
-
 message(STATUS "pffft libs: ${INSTALL_LIBS}")
 
 set(OUTPUT_FILES "")
 
-foreach(lib ${INSTALL_LIBS})
+foreach(lib ${PFFFT_LIBS})
     get_target_property(LIB_PATH ${lib} IMPORTED_LOCATION)
     get_filename_component(LIB_FILENAME ${LIB_PATH} NAME)
     set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_FILENAME}") 
     message(STATUS "copy pffft lib: ${lib} ${LIB_PATH} -> ${DST_PATH}")
     add_custom_command(
-        OUTPUT "${DST_PATH}"
-        COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_if_different "${LIB_PATH}" "${DST_PATH}"
+        OUTPUT ${DST_PATH}
+        DEPENDS ${LIB_PATH}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LIB_PATH} ${DST_PATH}
         COMMENT "copy ${LIB_PATH}"
         VERBATIM
     )

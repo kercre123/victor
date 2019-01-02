@@ -22,4 +22,5 @@ foreach(LIB ${SPEEXDSP_LIBS})
         "${SPEEXDSP_LIB_PATH}/lib${LIB}.a"
         INTERFACE_INCLUDE_DIRECTORIES
         "${SPEEXDSP_INCLUDE_PATHS}")
+    anki_build_target_license(${LIB} "Xiph.org,${CMAKE_SOURCE_DIR}/licenses/speexdsp.license")
 endforeach()

@@ -52,7 +52,7 @@ foreach(LIB ${AVS_LIBS})
     "${LIBAVS_LIB_PATH}/lib${LIB}${AVS_LIB_EXT}"
     INTERFACE_INCLUDE_DIRECTORIES
     "${LIBAVS_INCLUDE_PATH}")
-  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/avs-device-sdk.license" "curl,${CMAKE_SOURCE_DIR}/licenses/curl.license" "OpenSSL/SSLeay,${CMAKE_SOURCE_DIR}/licenses/openssl.license" "MIT,${CMAKE_SOURCE_DIR}/licenses/nghttp2.license")
+  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/avs-device-sdk.license" "curl,${CMAKE_SOURCE_DIR}/licenses/curl.license" "OpenSSL-SSLeay,${CMAKE_SOURCE_DIR}/licenses/openssl.license" "MIT,${CMAKE_SOURCE_DIR}/licenses/nghttp2.license")
 endforeach()
 
 if (VICOS)
