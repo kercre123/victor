@@ -20,6 +20,7 @@
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/robot.h"
 
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
 namespace Vector {
@@ -317,8 +318,8 @@ ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
   if (GetRobot().GetBatteryComponent().IsOnChargerContacts()) {
-    PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
-                  "Robot has mounted charger.");
+    LOG_INFO("BackupOntoChargerAction.Verify.MountingChargerComplete",
+             "Robot has mounted charger.");
     return ActionResult::SUCCESS;
   }
   
