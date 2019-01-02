@@ -13,8 +13,10 @@
 #include "engine/components/sensors/rangeSensorComponent.h"
 
 #include "engine/cozmoContext.h"
+#include "engine/robotStateHistory.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/robot.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/viz/vizManager.h"
@@ -50,6 +52,16 @@ std::string RangeSensorComponent::GetLogRow()
 void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   const RangeDataRaw data = ToFSensor::getInstance()->GetData();
+
+  RobotTimeStamp_t t;
+  HistRobotState state;
+  _robot->GetStateHistory()->ComputeStateAt(_robot->GetLastMsgTimestamp(), t, state, true);
+ 
+  float headangle = state.GetHeadAngle_rad();
+  headangle += 0;
+
+  Pose3d robotPose = state.GetPose().GetWithRespectToRoot();
+
  
   Pose3d co = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle());
   // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
@@ -97,7 +109,7 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
                              -kInnerAngle_rad,
                              -kOuterAngle_rad};
 
-  std::vector<RangeData> navMapData;
+  std::vector<Point3f> navMapData;
   
   for(int r = 0; r < TOF_RESOLUTION; r++)
   {
@@ -110,7 +122,8 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
       
       const f32 yaw = sin(kPixToAngle[c]);
 
-      const f32 leftDist_mm = data.data[c + (r*8)] * 1000; 
+      // clamp at 500
+      const f32 leftDist_mm = fmin(data.data[c + (r*8)] * 1000, 500); 
 
       const f32 yl = yaw * leftDist_mm;
       const f32 zl = pitch * leftDist_mm;
@@ -119,11 +132,11 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
       Pose3d rootl = pl.GetWithRespectToRoot();
       _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
                                                         {3, 3, 3},
-                                                        rootl);
+                                                        rootl, (leftDist_mm >= 499.f) ? NamedColors::RED : NamedColors::GREEN);
       left.sensorPoint = lp.GetWithRespectToRoot();
       left.worldPoint = rootl;
       
-      const f32 rightDist_mm = data.data[4+c + (r*8)] * 1000;
+      const f32 rightDist_mm = fmin(data.data[4+c + (r*8)] * 1000, 500);
       const f32 yr = yaw * rightDist_mm;
       const f32 zr = pitch * rightDist_mm;
         
@@ -131,27 +144,70 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
       Pose3d rootr = pr.GetWithRespectToRoot();
       _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
                                                         {3, 3, 3},
-                                                        rootr);
+                                                        rootr, (rightDist_mm >= 499.f) ? NamedColors::RED : NamedColors::GREEN);
       right.sensorPoint = rp.GetWithRespectToRoot();
       right.worldPoint = rootr;
 
-      navMapData.push_back(left);
-      navMapData.push_back(right);
+      navMapData.push_back(left.worldPoint.GetTranslation());
+      navMapData.push_back(right.worldPoint.GetTranslation());
     }
   }
 
-  UpdateNavMap(navMapData);
+  UpdateNavMap(navMapData, c.GetWithRespectToRoot().GetTranslation(), robotPose.GetTranslation());
 }
-  
-void RangeSensorComponent::UpdateNavMap(const std::vector<RangeData>& data)
-{
-  for(const auto& rangeData : data)
-  {
-    (void)rangeData;
-    // TODO Find intersection point of vector formed between rangeData.sensorPoint and rangeData.worldPoint
-    // and the XY ground plane to update nav map
+
+namespace {
+  inline Point3f groundIntersection(Point3f lineOrigin, Vec3f lineDirection) {
+    return (lineDirection.z() == 0) ? Point3f{0,0,0}
+                                    : lineOrigin - lineDirection * ((lineOrigin.z() + 10.f) / lineDirection.z());
   }
+} 
   
+void RangeSensorComponent::UpdateNavMap(const std::vector<Point3f>& data, const Point3f& camera, const Point3f& robot)
+{
+  std::vector<Point2f> groundPlane, cliffPoints, obstaclePoints;
+  int n = 0;
+  for(const auto& pt : data) {
+
+    if (n & 0b1)_robot->GetContext()->GetVizManager()->DrawCuboid(n, {3, 3, 3}, Pose3d(0, Z_AXIS_3D(), pt), NEAR(pt.z(), 0.f, 2) ? NamedColors::GREEN : NamedColors::RED);
+    ++n;
+
+    const float rayLen = (pt - robot).Length();
+
+    if (NEAR(pt.z(), 0.f, 10.f) && (rayLen < 350) && (rayLen > 40)) { 
+      groundPlane.emplace_back(pt); 
+    }
+
+    if (FLT_GT(pt.z(), 25.f) && (rayLen < 350)  && (rayLen > 40) ) { 
+      obstaclePoints.emplace_back(pt); 
+    }
+
+    if (FLT_LT(pt.z(), -70.f) && (rayLen > 40)) { 
+      cliffPoints.emplace_back( groundIntersection(camera, pt - camera) ); 
+    }
+  }
+
+  if (groundPlane.size() >= 2) {
+    auto ch = ConvexPolygon::ConvexHull( std::move(groundPlane) );
+
+    // TODO: get actual message timestamp from incoming message
+    _robot->GetMapComponent().InsertData(ch, MemoryMapData(MemoryMapTypes::EContentType::ClearOfCliff, _robot->GetLastMsgTimestamp()));
+  }
+
+  for(const auto& pt : cliffPoints) {
+    Ball2f b( pt, 8.f );
+
+    Pose3d cliffPose(0.f, Z_AXIS_3D(), Point3f(pt.x(), pt.y(), 0.f));
+    _robot->GetMapComponent().InsertData( b, MemoryMapData_Cliff(cliffPose, _robot->GetLastMsgTimestamp()) );
+  }
+
+  for(const auto& pt : obstaclePoints) {
+    Ball2f b( pt, 5.f );
+
+    Pose2d proxPose(0.f, pt);
+    _robot->GetMapComponent().InsertData( b, MemoryMapData_ProxObstacle(MemoryMapData_ProxObstacle::NOT_EXPLORED, proxPose, _robot->GetLastMsgTimestamp()) );
+  }
+
 }
 
 } // Cozmo namespace

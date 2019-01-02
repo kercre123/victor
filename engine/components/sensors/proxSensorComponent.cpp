@@ -59,7 +59,7 @@ namespace {
 } // end anonymous namespace
 
 // enable/disable prox sensor data
-CONSOLE_VAR(bool, kProxSensorEnabled, "ProxSensorComponent", true);
+CONSOLE_VAR(bool, kProxSensorEnabled, "ProxSensorComponent", false);
 
 // extra padding to add to prox obstacle
 CONSOLE_VAR(float, kObsPadding_x_mm, "ProxSensorComponent", 6.f);
