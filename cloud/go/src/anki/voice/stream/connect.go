@@ -26,11 +26,21 @@ const (
 func (strm *Streamer) newChipperConn(ctx context.Context) (Conn, *CloudError) {
 	if strm.opts.checkOpts != nil {
 		// for connection check, first try the connection check URL with no tls
-		otaURL := "http://" + config.Env.Check
-		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
+		esn, _ := robot.ReadESN()
+		ankiver := robot.AnkiVersion()
+		victorver := robot.VictorVersion()
+		suffix := "?emresn=" + esn + "&ankiversion=" + ankiver + "&victorversion=" + victorver
+		otaURL := "http://" + config.Env.Check + suffix
+		req, err := http.NewRequest("HEAD", otaURL, nil)
+		if err != nil {
 			log.Println("Error creating CDN server http head request:", err)
 			return nil, &CloudError{cloud.ErrorType_Connectivity, err}
-		} else if resp, err := http.DefaultClient.Do(req.WithContext(ctx)); err != nil {
+		}
+
+		agent := "Victor-CCHECK/" + ankiver
+		req.Header.Set("User-Agent", agent)
+
+		if resp, err := http.DefaultClient.Do(req.WithContext(ctx)); err != nil {
 			log.Println("Error requesting head of CDN server:", err)
 			return nil, &CloudError{cloud.ErrorType_Connectivity, err}
 		} else {
@@ -47,11 +57,16 @@ func (strm *Streamer) newChipperConn(ctx context.Context) (Conn, *CloudError) {
 			},
 		}
 
-		otaURL = "https://" + config.Env.Check
-		if req, err := http.NewRequest("HEAD", otaURL, nil); err != nil {
+		otaURL = "https://" + config.Env.Check + suffix
+		req, err = http.NewRequest("HEAD", otaURL, nil)
+		if err != nil {
 			log.Println("Error creating CDN server https head request:", err)
 			return nil, &CloudError{cloud.ErrorType_TLS, err}
-		} else if resp, err := httpsClient.Do(req.WithContext(ctx)); err != nil {
+		}
+
+		req.Header.Set("User-Agent", agent)
+
+		if resp, err := httpsClient.Do(req.WithContext(ctx)); err != nil {
 			log.Println("Error requesting head of CDN server over https:", err)
 			strm.receiver.OnError(cloud.ErrorType_TLS, err)
 			return nil, &CloudError{cloud.ErrorType_TLS, err}
