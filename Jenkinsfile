@@ -19,6 +19,18 @@ def getListOfOnlineNodesForLabel(label) {
   return nodes
 }
 
+@NonCPS
+def checkIfAgentsAreBusy() {
+    for (node in hudson.model.Hudson.instance.slaves) {
+        if (node.getLabelString() == 'victor-shipping') {
+            if (node.getComputer().countIdle() > 0) {
+                return false
+            }
+            return true
+        }
+    }
+}
+
 enum buildConfig {
     SHIPPING, DEBUG, RELEASE, MASTER
 
@@ -269,35 +281,140 @@ stage("${primaryStageName} Build") {
             }
         }
     }*/
-    agent = new EphemeralAgent()
-    node('master') {
-        stage('Spin up ephemeral VM') {
+    def staticAgentsBusy = checkIfAgentsAreBusy()
+    if (!staticAgentsBusy) {
+        node('victor-static') {
             try {
-                uuid = agent.getMachineName()
-                vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
-                    customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                    linkedClone: true, powerOn: false, resourcePool: 'vic-os',
-                    sourceName: 'photonos-test', timeoutInSeconds: 60], serverName: vSphereServer
-
-                vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
-                    coresPerSocket: '1', cpuCores: '2']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
-
-                vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
-
-                def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
-                agent.setIPAddress(buildAgentIP)
+                withEnv(['PLATFORM=mac', 'CONFIGURATION=release', 'PATH+HOMEBREW=/usr/local/sbin:/usr/local/bin:/usr/local/share/dotnet']) {
+                    stage('Git Checkout') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: scm.branches,
+                        gitTool: '/usr/local/bin/git',
+                        doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                        extensions: scm.extensions,
+                        userRemoteConfigs: scm.userRemoteConfigs
+                    ])
+                        sh 'git submodule update --init --recursive'
+                        sh 'git submodule update --recursive'
+                    }
+                    if (env.CHANGE_ID) {
+                        buildPRStepsMacOS type: 'Debug'
+                    } else {
+                        stage("Build MacOS ${CONFIGURATION}") {
+                            sh "./project/victor/scripts/victor_build_${CONFIGURATION}.sh -p ${PLATFORM}"
+                        }
+                    }
+                }
+                stage('Webots') {
+                    timeout(time: 60, unit: 'MINUTES') {
+                        sh './project/build-scripts/webots/webotsTest.py'
+                    }
+                }
+                stage('Unit Tests') {
+                    withEnv(['TESTCONFIG=Debug']){
+                        sh "./project/buildServer/steps/unittestsUtil.sh -c ${TESTCONFIG}"
+                        sh "./project/buildServer/steps/unittestsCoretech.sh -c ${TESTCONFIG}"
+                        sh "./project/buildServer/steps/unittestsEngine.sh -c ${TESTCONFIG}"
+                    }
+                }
+                stage('DAS Unit Tests') {
+                    withEnv(["CXX=clang++", "LDFLAGS=-lpthread -luuid -lcurl -stdlib=libc++ -v"]) {
+                        sh "make -C ./lib/das-client/unix run-unit-tests"
+                        sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
+                    }
+                }
+                notifyBuildStatus('Success')
             } catch (Exception exc) {
-                def jobName = "${env.JOB_NAME}"
-                jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
                 def reason = exc.getMessage()
-                notifySlack("", slackNotificationChannel,
-                    [
-                        title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
-                        title_link: "${env.BUILD_URL}",
-                        color: "warning",
-                        text: "${reason}",
-                    ]
-                )
+                notifyBuildStatus("Failure: ${reason}")
+                throw exc
+            } finally {
+                stage('Cleaning slave workspace') {
+                    cleanWs()
+                }
+                node('master') {
+                    stage('Cleaning master workspace') {
+                        def workspace = pwd()
+                        dir("${workspace}@script") {
+                            deleteDir()
+                        }
+                    }
+                }
+            } 
+        }
+    } else {
+        agent = new EphemeralAgent()
+        node('master') {
+            stage('Spin up ephemeral VM') {
+                try {
+                    uuid = agent.getMachineName()
+                    vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
+                        customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
+                        linkedClone: true, powerOn: false, resourcePool: 'vic-os',
+                        sourceName: 'photonos-test', timeoutInSeconds: 60], serverName: vSphereServer
+
+                    vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
+                        coresPerSocket: '1', cpuCores: '2']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
+
+                    vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
+
+                    def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
+                    agent.setIPAddress(buildAgentIP)
+                } catch (Exception exc) {
+                    def jobName = "${env.JOB_NAME}"
+                    jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
+                    def reason = exc.getMessage()
+                    notifySlack("", slackNotificationChannel,
+                        [
+                            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+                            title_link: "${env.BUILD_URL}",
+                            color: "warning",
+                            text: "${reason}",
+                        ]
+                    )
+                    node('master') {
+                        stage('Cleaning master workspace') {
+                            def workspace = pwd()
+                            dir("${workspace}@script") {
+                                deleteDir()
+                            }
+                        }
+                        stage('Destroy ephemeral VM') {
+                            vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+                        }
+                    }
+                    currentBuild.rawBuild.result = Result.ABORTED
+                    throw new hudson.AbortException('vSphere Exception!')
+                }
+            }
+            stage('Attach ephemeral build agent VM to Jenkins') {
+                agent.Attach()
+            }
+        }
+        node(uuid) {
+            try {
+                withDockerEnv {
+                    buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                    stage('DAS Unit Tests') {
+                        withEnv(["CXX=clang++", "LDFLAGS=-lpthread -luuid -lcurl -stdlib=libc++ -v"]) {
+                            sh "make -C ./lib/das-client/unix run-unit-tests"
+                            sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
+                        }
+                    }
+                    //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
+                }
+                notifyBuildStatus('Success')
+            } catch (FlowInterruptedException ae) {
+                notifyBuildStatus('Aborted')
+                throw ae
+            } catch (exc) {
+                notifyBuildStatus('Failure')
+                throw exc
+            } finally {
+                stage('Cleaning slave workspace') {
+                    cleanWs()
+                }
                 node('master') {
                     stage('Cleaning master workspace') {
                         def workspace = pwd()
@@ -308,50 +425,9 @@ stage("${primaryStageName} Build") {
                     stage('Destroy ephemeral VM') {
                         vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
                     }
-                }
-                currentBuild.rawBuild.result = Result.ABORTED
-                throw new hudson.AbortException('vSphere Exception!')
-            }
-        }
-        stage('Attach ephemeral build agent VM to Jenkins') {
-            agent.Attach()
-        }
-    }
-    node(uuid) {
-        try {
-            withDockerEnv {
-                buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
-                stage('DAS Unit Tests') {
-                    withEnv(["CXX=clang++", "LDFLAGS=-lpthread -luuid -lcurl -stdlib=libc++ -v"]) {
-                        sh "make -C ./lib/das-client/unix run-unit-tests"
-                        sh "make -f Makefile_sqs -C ./lib/das-client/unix run-unit-tests"
+                    stage('Detach ephemeral build agent from Jenkins') {
+                        agent.Detach()
                     }
-                }
-                //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
-            }
-            notifyBuildStatus('Success')
-        } catch (FlowInterruptedException ae) {
-            notifyBuildStatus('Aborted')
-            throw ae
-        } catch (exc) {
-            notifyBuildStatus('Failure')
-            throw exc
-        } finally {
-            stage('Cleaning slave workspace') {
-                cleanWs()
-            }
-            node('master') {
-                stage('Cleaning master workspace') {
-                    def workspace = pwd()
-                    dir("${workspace}@script") {
-                        deleteDir()
-                    }
-                }
-                stage('Destroy ephemeral VM') {
-                    vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-                }
-                stage('Detach ephemeral build agent from Jenkins') {
-                    agent.Detach()
                 }
             }
         }
