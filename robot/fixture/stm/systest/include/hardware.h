@@ -55,7 +55,8 @@ namespace CHG_PWR     GPIO_DEFINE(B, 9);
 namespace nVDDs_EN    GPIO_DEFINE(C, 13); //a.k.a. #VENC_EN
 namespace VEXT_SENSE  GPIO_DEFINE(A, 2);
 namespace VIN_SENSE   GPIO_DEFINE(A, 4);
-namespace MAIN_EN     GPIO_DEFINE(A, 3);
+namespace MAIN_EN     GPIO_DEFINE(A, 12);
+namespace NTC_ADC     GPIO_DEFINE(A, 3);
 //namespace CHG_EN      GPIO_DEFINE(A, 15); //removed in DVT3 (logic'd from another signal)
 
 //namespace CHRG1 GPIO_DEFINE(F, 1);
@@ -83,6 +84,6 @@ namespace SDA2    GPIO_DEFINE(F, 7);
 
 // Lights
 namespace LED_DAT GPIO_DEFINE(A, 13);
-namespace LED_CLK GPIO_DEFINE(A, 12);
+namespace LED_CLK GPIO_DEFINE(A, 14);
 
 #endif
