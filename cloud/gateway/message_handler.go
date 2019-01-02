@@ -1936,28 +1936,6 @@ func (service *rpcService) VersionState(ctx context.Context, in *extint.VersionS
 	return payload.GetVersionStateResponse(), nil
 }
 
-func (service *rpcService) NetworkState(ctx context.Context, in *extint.NetworkStateRequest) (*extint.NetworkStateResponse, error) {
-	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_NetworkStateResponse{}, 1)
-	defer f()
-
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_NetworkStateRequest{
-			NetworkStateRequest: in,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	payload, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-	}
-	payload.GetNetworkStateResponse().Status = &extint.ResponseStatus{
-		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-	}
-	return payload.GetNetworkStateResponse(), nil
-}
-
 func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextRequest) (*extint.SayTextResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SayTextResponse{}, 1)
 	defer f()

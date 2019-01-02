@@ -211,9 +211,6 @@ def test_battery_state(vector_connection):
 def test_version_state(vector_connection):
     vector_connection.send("v1/version_state", p.VersionStateRequest(), p.VersionStateResponse())
 
-def test_network_state(vector_connection):
-    vector_connection.send("v1/network_state", p.NetworkStateRequest(), p.NetworkStateResponse())
-
 def test_say_text(vector_connection):
     vector_connection.send("v1/say_text", p.SayTextRequest(), p.SayTextResponse())
 
