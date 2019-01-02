@@ -108,6 +108,9 @@ void AnimContext::SetLocale(const std::string & locale)
   if (_micDataSystem != nullptr) {
     _micDataSystem->UpdateLocale(*_locale);
   }
+  if (_alexa != nullptr) {
+    _alexa->UpdateLocale(*_locale);
+  }
 }
 } // namespace Vector
 } // namespace Anki
