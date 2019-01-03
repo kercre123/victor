@@ -113,7 +113,7 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
-  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+  InstallCrashReporter(LOG_PROCNAME);
 
   // - create and set logger
   Util::VictorLogger logger(LOG_PROCNAME);
@@ -130,7 +130,7 @@ int main(void)
     LOG_ERROR("victorWebServerMain.WebServerConfigNotFound",
               "Web server config file %s not found or failed to parse",
               wsConfigPath.c_str());
-    Anki::Victor::UninstallCrashReporter();
+    UninstallCrashReporter();
     Util::gLoggerProvider = nullptr;
     exit(1);
   }
@@ -191,7 +191,7 @@ int main(void)
 
   LOG_INFO("victorWebServerMain", "exit(0)");
   Util::gLoggerProvider = nullptr;
-  Anki::Victor::UninstallCrashReporter();
+  UninstallCrashReporter();
   sync();
   exit(0);
 }

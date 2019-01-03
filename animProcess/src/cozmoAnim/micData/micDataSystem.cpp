@@ -122,7 +122,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  const std::string sockName = std::string{Victor::MIC_SERVER_BASE_PATH} + (robotID == 0 ? "" : std::to_string(robotID));
+  const std::string sockName = std::string{MIC_SERVER_BASE_PATH} + (robotID == 0 ? "" : std::to_string(robotID));
   _udpServer->SetBindClients(false);
   const bool udpSuccess = _udpServer->StartListening(sockName);
   ANKI_VERIFY(udpSuccess,
@@ -370,7 +370,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
         // Send the results back to engine
         ReportCloudConnectivity msgToEngine;
-        msgToEngine.code            = static_cast<Anki::Vector::ConnectionCode>(msg.Get_connectionResult().code);
+        msgToEngine.code            = static_cast<ConnectionCode>(msg.Get_connectionResult().code);
         msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
         msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
         RobotInterface::SendAnimToEngine(msgToEngine);

@@ -108,12 +108,12 @@ namespace Anki {
         }
         case UiConnectionType::Switchboard:
         {
-          ISocketComms* comms = new LocalUdpSocketComms(true, Anki::Victor::ENGINE_SWITCH_SERVER_PATH);
+          ISocketComms* comms = new LocalUdpSocketComms(true, ENGINE_SWITCH_SERVER_PATH);
           return comms;
         }
         case UiConnectionType::Gateway:
         {
-          ISocketComms* comms = new LocalUdpSocketComms(true, Anki::Victor::ENGINE_GATEWAY_SERVER_PATH);
+          ISocketComms* comms = new LocalUdpSocketComms(true, ENGINE_GATEWAY_SERVER_PATH);
           return comms;
         }
         default:

@@ -127,8 +127,8 @@ void ReportSocketBufferStats()
 Result InitRobotComms()
 {
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  const std::string & client_path = std::string(Victor::ANIM_ROBOT_CLIENT_PATH) + std::to_string(robotID);
-  const std::string & server_path = std::string(Victor::ANIM_ROBOT_SERVER_PATH) + std::to_string(robotID);
+  const std::string & client_path = std::string(ANIM_ROBOT_CLIENT_PATH) + std::to_string(robotID);
+  const std::string & server_path = std::string(ANIM_ROBOT_SERVER_PATH) + std::to_string(robotID);
 
   LOG_INFO("AnimComms.InitRobotComms", "Connect from %s to %s", client_path.c_str(), server_path.c_str());
 
@@ -145,7 +145,7 @@ Result InitRobotComms()
 Result InitEngineComms()
 {
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  const std::string & server_path = std::string(Victor::ENGINE_ANIM_SERVER_PATH) + std::to_string(robotID);
+  const std::string & server_path = std::string(ENGINE_ANIM_SERVER_PATH) + std::to_string(robotID);
 
   LOG_INFO("AnimComms.InitEngineComms", "Start listening at %s", server_path.c_str());
 

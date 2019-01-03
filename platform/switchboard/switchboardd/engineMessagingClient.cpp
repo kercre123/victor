@@ -48,7 +48,7 @@ bool EngineMessagingClient::Init() {
 }
 
 bool Anki::Switchboard::EngineMessagingClient::Connect() {
-  bool connected = _client.Connect(Anki::Victor::ENGINE_SWITCH_CLIENT_PATH, Anki::Victor::ENGINE_SWITCH_SERVER_PATH);
+  bool connected = _client.Connect(Anki::Vector::ENGINE_SWITCH_CLIENT_PATH, Anki::Vector::ENGINE_SWITCH_SERVER_PATH);
 
   if(connected) {
     ev_timer_start(loop_, &_handleEngineMessageTimer.timer);

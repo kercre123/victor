@@ -708,7 +708,7 @@ static void ExitHandler(int status = 0) {
   Anki::Util::gLoggerProvider = nullptr;
   Anki::Util::gEventProvider = nullptr;
 
-  Anki::Victor::UninstallCrashReporter();
+  Anki::Vector::UninstallCrashReporter();
 
   _exit(status);
 }
@@ -732,7 +732,7 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 
 int SwitchboardMain() {
 
-  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+  Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
   Anki::Util::VictorLogger logger(LOG_PROCNAME);
   Anki::Util::gLoggerProvider = &logger;

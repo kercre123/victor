@@ -18,12 +18,12 @@
 #endif
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 void InstallCrashReporter(const char * filenamePrefix)
 {
   #ifdef USE_TOMBSTONE_HOOKS
-  Anki::Victor::InstallTombstoneHooks();
+  InstallTombstoneHooks();
   #endif
 
   #ifdef USE_GOOGLE_BREAKPAD
@@ -39,10 +39,10 @@ void UninstallCrashReporter()
   #endif
 
   #ifdef USE_TOMBSTONE_HOOKS
-  Anki::Victor::UninstallTombstoneHooks();
+  UninstallTombstoneHooks();
   #endif
 
 }
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki

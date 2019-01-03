@@ -55,7 +55,7 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
   Anki::Util::SetThreadName(pthread_self(), "BehaviorServer");
   // Start UDP server
   _server.SetBindClients(false);
-  _server.StartListening(Victor::AI_SERVER_BASE_PATH + sockName);
+  _server.StartListening(AI_SERVER_BASE_PATH + sockName);
   char buf[4096];
   while (!_shutdown) {
     const ssize_t received = _server.Recv(buf, sizeof(buf));

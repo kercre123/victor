@@ -11,7 +11,7 @@
 #define __victorCrashReports_tombstoneHooks_h
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 // Enable calls to debugger dump_tombstone
 void InstallTombstoneHooks();
@@ -19,7 +19,7 @@ void InstallTombstoneHooks();
 // Disable calls to debugger dump_tombstone
 void UninstallTombstoneHooks();
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __victorCrashReports_tombstoneHooks_h

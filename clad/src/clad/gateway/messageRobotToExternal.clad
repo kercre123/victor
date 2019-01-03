@@ -1,7 +1,7 @@
 #include "clad/gateway/shared.clad"
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 namespace Gateway {
 
 message UiDeviceConnected {

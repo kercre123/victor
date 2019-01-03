@@ -13,7 +13,7 @@
   #pragma once
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
   //
   // Local (unix-domain) socket paths.

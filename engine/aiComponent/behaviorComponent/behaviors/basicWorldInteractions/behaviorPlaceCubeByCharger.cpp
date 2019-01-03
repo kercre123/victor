@@ -467,5 +467,5 @@ void BehaviorPlaceCubeByCharger::StartNextSearchForChargerTurn()
   }
 }
 
-} // namespace Victor
+} // namespace Vector
 } // namespace Anki

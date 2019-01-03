@@ -52,7 +52,7 @@ int main(int argc, const char * argv[])
   using namespace Anki::Vector;
 
   // Set up crash reporter
-  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+  InstallCrashReporter(LOG_PROCNAME);
 
   // Set up logging
   auto logger = std::make_unique<VictorLogger>(LOG_PROCNAME);

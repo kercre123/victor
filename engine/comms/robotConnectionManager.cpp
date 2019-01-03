@@ -106,8 +106,8 @@ Result RobotConnectionManager::Connect(RobotID_t robotID)
     _udpClient.Disconnect();
   }
 
-  const std::string & client_path = Anki::Victor::ENGINE_ANIM_CLIENT_PATH + std::to_string(robotID);
-  const std::string & server_path = Anki::Victor::ENGINE_ANIM_SERVER_PATH + std::to_string(robotID);
+  const std::string & client_path = ENGINE_ANIM_CLIENT_PATH + std::to_string(robotID);
+  const std::string & server_path = ENGINE_ANIM_SERVER_PATH + std::to_string(robotID);
 
   const bool ok = _udpClient.Connect(client_path, server_path);
   if (!ok) {

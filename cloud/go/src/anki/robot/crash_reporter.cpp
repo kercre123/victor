@@ -17,14 +17,14 @@ extern "C"
 void InstallCrashReporter(const char* proctag)
 {
 #ifdef ANKI_PLATFORM_VICOS
-  Anki::Victor::InstallCrashReporter(proctag);
+  Anki::Vector::InstallCrashReporter(proctag);
 #endif
 }
 
 void UninstallCrashReporter()
 {
 #ifdef ANKI_PLATFORM_VICOS
-  Anki::Victor::UninstallCrashReporter();
+  Anki::Vector::UninstallCrashReporter();
 #endif
 }
 

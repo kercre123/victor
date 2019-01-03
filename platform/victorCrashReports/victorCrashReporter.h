@@ -11,7 +11,7 @@
 #define __victorCrashReporter_h
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 //
 // Install signal and exception handlers.
@@ -24,7 +24,7 @@ void InstallCrashReporter(const char * filenamePrefix);
 //
 void UninstallCrashReporter();
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __victorCrashReporter_h

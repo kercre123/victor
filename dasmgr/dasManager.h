@@ -25,7 +25,7 @@
 typedef struct AndroidLogEntry_t AndroidLogEntry;
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 class DASManager {
 public:
@@ -117,7 +117,7 @@ private:
 
 };
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __platform_dasmgr_dasManager_h

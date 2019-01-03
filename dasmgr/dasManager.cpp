@@ -153,7 +153,7 @@ static inline void serialize(std::ostream & ostr, const std::string & key, LogLe
 }
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 DASManager::DASManager(const DASConfig & dasConfig)
 {
@@ -916,5 +916,5 @@ Result DASManager::Run(const bool & shutdown)
   return result;
 }
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki
