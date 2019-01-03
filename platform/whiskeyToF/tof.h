@@ -44,6 +44,13 @@ public:
 
   RangeDataRaw GetData(bool& hasDataUpdatedSinceLastCall);
 
+  int SetupSensors();
+  int StartRanging();
+  int StopRanging();
+  
+#if FACTORY_TEST
+  int PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance);
+#endif
   
 private:
   

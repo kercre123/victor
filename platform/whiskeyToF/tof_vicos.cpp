@@ -53,6 +53,8 @@ namespace {
   std::mutex _mutex;
   bool _stopProcessing = false;
 
+  std::atomic<bool> _rangingEnabled;
+
   // The latest available tof data
   RangeDataRaw _latestData;
 
@@ -66,6 +68,9 @@ namespace {
   };
 
   bool _dataUpdatedSinceLastGetCall = false;
+
+  VL53L1_CalibrationData_t _origCalib_left;
+  VL53L1_CalibrationData_t _origCalib_right;
 
   // Don't setup and read from the sensors until this console var is true
   CONSOLE_VAR(bool, kStartToF, "ToF", false);
@@ -102,6 +107,21 @@ int open_dev(const int dev_no)
   }
 
   return open(dev_fi_name ,O_RDWR);
+}
+
+/// Read last device error
+int last_error_get(const int dev) {
+  struct stmvl53l1_parameter params;
+  params.is_read = 1;
+  params.name = VL53L1_LASTERROR_PAR;
+  int rc = ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);
+  PRINT_NAMED_ERROR("","ERROR %u %d", rc, params.value);
+  if(rc < 0)
+  {
+    return rc;
+  }
+  
+  return params.value;
 }
 
 /// Stop all ranging activity
@@ -230,6 +250,429 @@ int setup_roi_grid(const int dev, const int rows, const int cols) {
   return ret; \
 }} while(0)
 
+#if FACTORY_TEST
+
+int perform_refspad_calibration(const int dev)
+{
+  struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_REF_SPAD, 0, 0, 0};
+  int rc = ioctl(dev, VL53L1_IOCTL_PERFORM_CALIBRATION, &ioctl_cal);
+  return rc;
+}
+
+int perform_xtalk_calibration(const int dev)
+{
+  // Contrary to the comments in stmvl53l1_if.h, param2 is in fact used and is the preset mode to use
+  // for crosstalk calibration
+  // Note: For SINGLE_TARGET calibration, only AUTONOMOUS, LOWPOWER_AUTONOMOUS, and LITE_RANGING preset modes are
+  // supported
+  struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_CROSSTALK,
+                                                            VL53L1_XTALKCALIBRATIONMODE_NO_TARGET,
+                                                            VL53L1_PRESETMODE_MULTIZONES_SCANNING,
+                                                            0};
+  int rc = ioctl(dev, VL53L1_IOCTL_PERFORM_CALIBRATION, &ioctl_cal);
+
+  return rc;  
+}
+
+int get_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
+{
+  struct stmvl53l1_ioctl_calibration_data_t calibData;
+  calibData.is_read = 1;
+  int rc = ioctl(dev, VL53L1_IOCTL_CALIBRATION_DATA, &calibData);
+  if(rc >= 0)
+  {
+    calib = calibData.data;
+  }
+  return rc;
+}
+
+int set_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
+{
+  struct stmvl53l1_ioctl_calibration_data_t calibData;
+  calibData.data = calib;
+  calibData.is_read = 0;
+  return ioctl(dev, VL53L1_IOCTL_CALIBRATION_DATA, &calibData);
+}
+
+int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
+                             int dev)
+{
+  PRINT_NAMED_ERROR("","SAVING %u %u %u", dev, tofR_fd, tofL_fd);
+  char path[32];
+  sprintf(path, "/tof_%s.bin", (dev == tofR_fd ? "right" : "left"));
+  PRINT_NAMED_ERROR("","%s", path);
+  int rc = -1;
+  FILE* f = fopen(path, "w+");
+  if(f != nullptr)
+  {
+    rc = fwrite(&calib, sizeof(calib), 1, f);
+    (void)fclose(f);
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("","FAILED TO OPEN FILE %u", errno);
+  }
+  return rc;
+}
+
+int load_calibration_from_disk(VL53L1_CalibrationData_t& calib,
+                               const std::string& path)
+{
+  int rc = -1;
+  FILE* f = fopen(path.c_str(), "r");
+  if(f != nullptr)
+  {
+    rc = fread(&calib, sizeof(calib), 1, f);
+    (void)fclose(f);
+  }
+  return rc;
+}
+
+void print_offset_calibration(const VL53L1_CalibrationData_t& calib)
+{
+  PRINT_NAMED_ERROR("OFFSET CALIBRATION DATA",
+                    "range_offset_mm:%d\n"
+                    "inner_offset:%d\n"
+                    "outer_offset:%d\n"
+                    "inner_act_eff_spads:%u\n"
+                    "outer_act_eff_spads:%u\n"
+                    "innter_peak_count:%u\n"
+                    "outer_peak_count:%u\n"
+                    "act_eff_spads:%u\n"
+                    "peak_signal_count:%u\n"
+                    "distance:%u\n"
+                    "reflet:%u\n"
+                    "glass_trans:%u\n",
+                    calib.customer.algo__part_to_part_range_offset_mm,
+                    calib.customer.mm_config__inner_offset_mm,
+                    calib.customer.mm_config__outer_offset_mm,
+                    calib.add_off_cal_data.result__mm_inner_actual_effective_spads,
+                    calib.add_off_cal_data.result__mm_outer_actual_effective_spads,
+                    calib.add_off_cal_data.result__mm_inner_peak_signal_count_rtn_mcps,
+                    calib.add_off_cal_data.result__mm_outer_peak_signal_count_rtn_mcps,
+                    calib.cust_dmax_cal.ref__actual_effective_spads,
+                    calib.cust_dmax_cal.ref__peak_signal_count_rate_mcps,
+                    calib.cust_dmax_cal.ref__distance_mm,
+                    calib.cust_dmax_cal.ref_reflectance_pc,
+                    calib.cust_dmax_cal.coverglass_transmission);
+}
+
+void print_refspad_calibration(const VL53L1_CalibrationData_t& calib)
+{
+  PRINT_NAMED_ERROR("REFSPAD CALIBRATION DATA",
+                    "ref_0: %u\n ref_1:%u\n ref_2:%u\n ref_3:%u\n ref_4:%u\n ref_5:%u\n requested:%u\n ref_loc:%u\n",
+                    calib.customer.global_config__spad_enables_ref_0,
+                    calib.customer.global_config__spad_enables_ref_1,
+                    calib.customer.global_config__spad_enables_ref_2,
+                    calib.customer.global_config__spad_enables_ref_3,
+                    calib.customer.global_config__spad_enables_ref_4,
+                    calib.customer.global_config__spad_enables_ref_5,
+                    calib.customer.ref_spad_man__num_requested_ref_spads,
+                    calib.customer.ref_spad_man__ref_location);
+
+}
+
+void print_xtalk_calibration(const VL53L1_CalibrationData_t& calib)
+{
+  PRINT_NAMED_ERROR("XTALK CALIBRATION DATA",
+                    "plane_offset: %u\n"
+                    "x_plane_offset:%d\n" 
+                    "y_plane_offset:%d\n"
+                    "zone_id:%u\n"
+                    "time_stamp:%u\n" 
+                    "first_bin:%u\n" 
+                    "buffer_size:%u\n" 
+                    "num_bins:%u\n" 
+                    "bin0:%u\n" 
+                    "bin1:%u\n" 
+                    "bin2:%u\n" 
+                    "bin3:%u\n" 
+                    "bin4:%u\n" 
+                    "bin5:%u\n"
+                    "bin6:%u\n" 
+                    "bin7:%u\n" 
+                    "bin8:%u\n" 
+                    "bin9:%u\n" 
+                    "bin10:%u\n" 
+                    "bin11:%u\n" 
+                    "ref_phase:%u\n" 
+                    "phase_vcsel_start:%u\n" 
+                    "cal_vcsel_start:%u\n"
+                    "vcsel_width:%u\n"
+                    "osc:%u\n"
+                    "dist_phase:%u\n",
+                    calib.customer.algo__crosstalk_compensation_plane_offset_kcps,
+                    calib.customer.algo__crosstalk_compensation_x_plane_gradient_kcps,
+                    calib.customer.algo__crosstalk_compensation_y_plane_gradient_kcps,                    
+                    calib.xtalkhisto.xtalk_shape.zone_id,
+                    calib.xtalkhisto.xtalk_shape.time_stamp,
+                    calib.xtalkhisto.xtalk_shape.VL53L1_PRM_00019,
+                    calib.xtalkhisto.xtalk_shape.VL53L1_PRM_00020,
+                    calib.xtalkhisto.xtalk_shape.VL53L1_PRM_00021,
+                    calib.xtalkhisto.xtalk_shape.bin_data[0],
+                    calib.xtalkhisto.xtalk_shape.bin_data[1],
+                    calib.xtalkhisto.xtalk_shape.bin_data[2],
+                    calib.xtalkhisto.xtalk_shape.bin_data[3],
+                    calib.xtalkhisto.xtalk_shape.bin_data[4],
+                    calib.xtalkhisto.xtalk_shape.bin_data[5],
+                    calib.xtalkhisto.xtalk_shape.bin_data[6],
+                    calib.xtalkhisto.xtalk_shape.bin_data[7],
+                    calib.xtalkhisto.xtalk_shape.bin_data[8],
+                    calib.xtalkhisto.xtalk_shape.bin_data[9],
+                    calib.xtalkhisto.xtalk_shape.bin_data[10],
+                    calib.xtalkhisto.xtalk_shape.bin_data[11],
+                    calib.xtalkhisto.xtalk_shape.phasecal_result__reference_phase,
+                    calib.xtalkhisto.xtalk_shape.phasecal_result__vcsel_start,
+                    calib.xtalkhisto.xtalk_shape.cal_config__vcsel_start,
+                    calib.xtalkhisto.xtalk_shape.vcsel_width,
+                    calib.xtalkhisto.xtalk_shape.VL53L1_PRM_00022,
+                    calib.xtalkhisto.xtalk_shape.zero_distance_phase);
+}
+
+void zero_xtalk_calibration(VL53L1_CalibrationData_t& calib)
+{
+  calib.customer.algo__crosstalk_compensation_plane_offset_kcps = 0;
+  calib.customer.algo__crosstalk_compensation_x_plane_gradient_kcps = 0;
+  calib.customer.algo__crosstalk_compensation_y_plane_gradient_kcps = 0;                  
+  memset(&calib.xtalkhisto, 0, sizeof(calib.xtalkhisto));
+}
+
+
+int run_refspad_calibration(const int dev)
+{
+  VL53L1_CalibrationData_t calib;
+  memset(&calib, 0, sizeof(calib));
+  int rc = get_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "1 Get calibration data failed: %d %d", rc, errno);
+
+  PRINT_NAMED_ERROR("ORIG REFSPAD CALIBRATION DATA",
+                    "ref_0: %u\n ref_1:%u\n ref_2:%u\n ref_3:%u\n ref_4:%u\n ref_5:%u\n requested:%u\n ref_loc:%u\n",
+                    calib.customer.global_config__spad_enables_ref_0,
+                    calib.customer.global_config__spad_enables_ref_1,
+                    calib.customer.global_config__spad_enables_ref_2,
+                    calib.customer.global_config__spad_enables_ref_3,
+                    calib.customer.global_config__spad_enables_ref_4,
+                    calib.customer.global_config__spad_enables_ref_5,
+                    calib.customer.ref_spad_man__num_requested_ref_spads,
+                    calib.customer.ref_spad_man__ref_location);
+  
+
+  rc = perform_refspad_calibration(dev);
+  return_if_not(rc >= 0, rc, "RefSPAD calibration failed: %d %d", rc, errno);
+
+  usleep(50000);
+  
+  memset(&calib, 0, sizeof(calib));
+  rc = get_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "2 Get calibration data failed: %d %d", rc, errno);
+
+  PRINT_NAMED_ERROR("REFSPAD CALIBRATION DATA",
+                    "ref_0: %u\n ref_1:%u\n ref_2:%u\n ref_3:%u\n ref_4:%u\n ref_5:%u\n requested:%u\n ref_loc:%u\n",
+                    calib.customer.global_config__spad_enables_ref_0,
+                    calib.customer.global_config__spad_enables_ref_1,
+                    calib.customer.global_config__spad_enables_ref_2,
+                    calib.customer.global_config__spad_enables_ref_3,
+                    calib.customer.global_config__spad_enables_ref_4,
+                    calib.customer.global_config__spad_enables_ref_5,
+                    calib.customer.ref_spad_man__num_requested_ref_spads,
+                    calib.customer.ref_spad_man__ref_location);
+
+  rc = save_calibration_to_disk(calib, dev);
+  return_if_not(rc >= 0, rc, "Save calibration to disk failed: %d %d", rc, errno);
+
+  // rc = set_calibration_data(dev, calib);
+  // return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
+
+  usleep(50000);
+  
+  return rc;
+}
+
+int run_xtalk_calibration(const int dev)
+{
+  VL53L1_CalibrationData_t calib;
+  memset(&calib, 0, sizeof(calib));
+  int rc = get_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "1 Get calibration data failed: %d %d", rc, errno);
+
+  print_xtalk_calibration(calib);
+
+  rc = perform_xtalk_calibration(dev);
+  //return_if_not(rc >= 0, rc, "Xtalk calibration failed: %d %d", rc, errno);
+  bool noXtalk = false;
+  if(rc < 0 && errno == EIO)
+  {
+    // An error -22 may be issued after calibration if the system failed to find
+    // a valid cross talk value. This is due to the fact that the coverglass
+    // quality is very good. In this case, no crosstalk data should be applied.
+    int deviceErr = last_error_get(dev);
+    if(deviceErr == VL53L1_ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL)
+    {
+      PRINT_NAMED_ERROR("","NO CROSSTALK FOUND");
+      noXtalk = true;
+    }
+  }
+  
+  usleep(50000);
+
+  memset(&calib, 0, sizeof(calib));
+  rc = get_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "2 Get calibration data failed: %d %d", rc, errno);
+
+  if(!noXtalk)
+  {
+    print_xtalk_calibration(calib);
+  }
+  else
+  {
+    zero_xtalk_calibration(calib);
+  }
+    
+  rc = save_calibration_to_disk(calib, dev);
+  return_if_not(rc >= 0, rc, "Save calibration to disk failed: %d %d", rc, errno);
+
+  rc = set_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
+  
+  return rc;
+}
+
+
+
+int perform_offset_calibration(const int dev, uint32_t distanceToTarget_mm, float targetReflectance)
+{
+  // I think per zone offset calibration would be more desireable but was unable to get it to work, kept getting
+  // ctrl_perform_zone_calibration_offset_lock: VL53L1_PerformOffsetCalibration fail => -35
+  // target might have been too reflective...
+  // struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_OFFSET_PER_ZONE,
+  //                                                           VL53L1_OFFSETCALIBRATIONMODE_MULTI_ZONE,
+  //                                                           distanceToTarget_mm,
+  //                                                           (FixPoint1616_t)(targetReflectance * (2^16))};
+
+  struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_OFFSET,
+                                                            VL53L1_OFFSETCALIBRATIONMODE_PRERANGE_ONLY,
+                                                            distanceToTarget_mm,
+                                                            (FixPoint1616_t)(targetReflectance * (2^16))};
+
+  int rc = ioctl(dev, VL53L1_IOCTL_PERFORM_CALIBRATION, &ioctl_cal);
+  return rc;
+}
+
+int run_offset_calibration(const int dev, uint32_t distanceToTarget_mm, float targetReflectance)
+{
+  VL53L1_CalibrationData_t calib;
+  memset(&calib, 0, sizeof(calib));
+  int rc = get_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "1 Get calibration data failed: %d %d", rc, errno);
+
+  PRINT_NAMED_ERROR("","ORIG");
+  print_offset_calibration(calib);
+
+  rc = perform_offset_calibration(dev, distanceToTarget_mm, targetReflectance);
+  return_if_not(rc >= 0, rc, "offset calibration failed: %d %d", rc, errno);
+
+  usleep(50000);
+  
+  memset(&calib, 0, sizeof(calib));
+  rc = get_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "2 Get calibration data failed: %d %d", rc, errno);
+
+  PRINT_NAMED_ERROR("","NEW");
+  print_offset_calibration(calib);
+  
+  rc = save_calibration_to_disk(calib, dev);
+  return_if_not(rc >= 0, rc, "Save calibration to disk failed: %d %d", rc, errno);
+
+  rc = set_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
+
+  return rc;
+}
+
+
+
+#endif
+
+int perform_calibration(int dev,
+                        uint32_t distanceToTarget_mm,
+                        float targetReflectance)
+{
+  // Stop all ranging so we can change settings
+  PRINT_NAMED_ERROR("","stop ranging\n");
+  int rc = stop_ranging(dev);
+  return_if_not(rc == 0, -1, "ioctl error stopping ranging: %d", errno);
+
+  // Have the device reset when ranging is stopped
+  PRINT_NAMED_ERROR("","reset on stop\n");
+  rc = reset_on_stop_set(dev, 0);
+  return_if_not(rc == 0, -1, "ioctl error reset on stop: %d", errno);
+
+  // Switch to multi-zone scanning mode
+  PRINT_NAMED_ERROR("","Switch to multi-zone scanning\n");
+  rc = preset_mode_set(dev, VL53L1_PRESETMODE_MULTIZONES_SCANNING);
+  return_if_not(rc == 0, -1, "ioctl error setting preset_mode: %d", errno);
+
+  // Setup ROIs
+  PRINT_NAMED_ERROR("","Setup ROI grid\n");
+  rc = setup_roi_grid(dev, 4, 4);
+  return_if_not(rc == 0, -1, "ioctl error setting up preset grid: %d", errno);
+
+  // Setup timing budget
+  PRINT_NAMED_ERROR("","set timing budget\n");
+  rc = timing_budget_set(dev, 16*2000);
+  return_if_not(rc == 0, -1, "ioctl error setting timing budged: %d", errno);
+
+  // Set distance mode
+  PRINT_NAMED_ERROR("","set distance mode\n");
+  rc = distance_mode_set(dev, VL53L1_DISTANCEMODE_SHORT);
+  return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
+
+  // Set output mode
+  PRINT_NAMED_ERROR("","set output mode\n");
+  rc = output_mode_set(dev, VL53L1_OUTPUTMODE_STRONGEST);
+  return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
+
+
+  rc = run_refspad_calibration(dev);
+  return_if_not(rc >= 0, rc, "perform_calibration: run_refspad_calibration %u", rc);
+  
+  rc = run_xtalk_calibration(dev);
+  return_if_not(rc >= 0, rc, "perform_calibration: run_xtalk_calibration %u", rc);
+
+  rc = run_offset_calibration(dev, distanceToTarget_mm, targetReflectance);
+  return_if_not(rc >= 0, rc, "perform_calibration: run_offset_calibration %u", rc);
+
+  return rc;
+}
+
+int run_calibration(uint32_t distanceToTarget_mm,
+                    float targetReflectance)
+{
+  int rcR = perform_calibration(tofR_fd, distanceToTarget_mm, targetReflectance);
+  if(rcR < 0)
+  {
+    PRINT_NAMED_ERROR("ToFSensor.PerformCalibration.RightFailed",
+                      "Failed to calibrate right sensor %u",
+                      rcR);
+  }
+
+  int rcL = perform_calibration(tofL_fd, distanceToTarget_mm, targetReflectance);
+  if(rcL < 0)
+  {
+    PRINT_NAMED_ERROR("ToFSensor.PerformCalibration.LeftFailed",
+                      "Failed to calibrate left sensor %u",
+                      rcL);
+  }
+
+  return (rcR >= 0 ? rcL : rcR);
+}
+
+int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
+                                  float targetReflectance)
+{
+  return run_calibration(distanceToTarget_mm, targetReflectance);
+}
+
 /// Setup 4x4 multi-zone imaging
 int setup(Sensor which) {
   int fd = -1;
@@ -244,6 +687,11 @@ int setup(Sensor which) {
   rc = stop_ranging(fd);
   return_if_not(rc == 0, -1, "ioctl error stopping ranging: %d", errno);
 
+  auto* origCalib = (which == LEFT ? &_origCalib_left : &_origCalib_right);
+  memset(origCalib, 0, sizeof(*origCalib));
+  rc = get_calibration_data(fd, *origCalib);
+  return_if_not(rc == 0, -1, "ioctl error getting calibration: %d", errno);
+  
   // Have the device reset when ranging is stopped
   PRINT_NAMED_ERROR("","reset on stop\n");
   rc = reset_on_stop_set(fd, 0);
@@ -274,13 +722,6 @@ int setup(Sensor which) {
   rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
-  // Start the sensor
-  PRINT_NAMED_ERROR("","start ranging\n");
-  rc = start_ranging(fd);
-  return_if_not(rc == 0, -1, "ioctl error starting ranging: %d", errno);
-
-  usleep(1000000);
-  
   return fd;
 }
 
@@ -398,46 +839,103 @@ RangeDataRaw ReadData()
   return rangeData;
 }
 
-void ProcessLoop()
+int ToFSensor::StartRanging()
 {
-  // Only setup the sensors when the console var is true
-  // There used to be issues with starting ranging on startup
-  // due to an unstable driver/daemon (I think these have been fixed...)
-  while(!kStartToF)
+  if(tofR_fd < 0 || tofL_fd < 0)
   {
-    if(_stopProcessing)
-    {
-      return;
-    }
-    
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    SetupSensors();
   }
+  
+  _rangingEnabled = true;
+  return 0;
+}
 
-  tofR_fd = setup(RIGHT);
+int ToFSensor::StopRanging()
+{
+  _rangingEnabled = false;
+  return 0;
+}
+
+int ToFSensor::SetupSensors()
+{
+  int res = 0;
+  if(tofR_fd < 0)
+  {
+    tofR_fd = setup(RIGHT);
+  }
   if(tofR_fd < 0)
   {
     PRINT_NAMED_ERROR("","FAILED TO OPEN TOF R");
-    return;
+    res = -1;
   }
-  
-  tofL_fd = setup(LEFT);
+
+  if(tofL_fd < 0)
+  {
+    tofL_fd = setup(LEFT);
+  }
   if(tofL_fd < 0)
   {
     PRINT_NAMED_ERROR("","FAILED TO OPEN TOF L");
-    return;
+    res = -1;
   }
 
+  return res;
+}
+
+void ProcessLoop()
+{
+  bool wasRangingEnabled = _rangingEnabled;
+  
   while(!_stopProcessing)
   {
-    RangeDataRaw data = ReadData();
-    
+    if(_rangingEnabled && !wasRangingEnabled)
     {
-      std::lock_guard<std::mutex> lock(_mutex);
-      _dataUpdatedSinceLastGetCall = true;
-      _latestData = data;
-    }
+      // Start the sensor
+      PRINT_NAMED_ERROR("","start ranging\n");
+      int rc = start_ranging(tofR_fd);
+      if(rc < 0)
+      {
+        break;
+      }
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(32));
+      // Start the sensor
+      PRINT_NAMED_ERROR("","start ranging\n");
+      rc = start_ranging(tofL_fd);
+      if(rc < 0)
+      {
+        break;
+      }
+    }
+    // Stopping will reset the sensor...
+    else if(!_rangingEnabled && wasRangingEnabled)
+    {
+      PRINT_NAMED_ERROR("","stop ranging\n");
+      int rc = stop_ranging(tofR_fd);
+      if(rc < 0)
+      {
+        break;
+      }
+
+      PRINT_NAMED_ERROR("","stop ranging\n");
+      rc = stop_ranging(tofL_fd);
+      if(rc < 0)
+      {
+        break;
+      }
+    }
+    wasRangingEnabled = _rangingEnabled;
+    
+    if(_rangingEnabled)
+    {
+      RangeDataRaw data = ReadData();
+    
+      {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _dataUpdatedSinceLastGetCall = true;
+        _latestData = data;
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(32));
   }
 
   stop_ranging(tofR_fd);
@@ -449,6 +947,7 @@ void ProcessLoop()
 
 ToFSensor::ToFSensor()
 {
+  _rangingEnabled = false;
   _processor = std::thread(ProcessLoop);
   _processor.detach();
 }

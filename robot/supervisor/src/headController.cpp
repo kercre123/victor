@@ -210,8 +210,8 @@ namespace HeadController {
             break;
 
           case HCS_RAISE_HEAD:
-            power_ = 0.4f;
-            HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
+            // power_ = 0.4f;
+            // HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             lowHeadAngleDuringCalib_rad_ = currentAngle_.ToFloat();
             calState_ = HCS_LOWER_HEAD;
@@ -222,8 +222,8 @@ namespace HeadController {
             {
               if( HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME)
               {
-                power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
-                HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
+                // power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
+                // HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
                 lastHeadMovedTime_ms = HAL::GetTimeStamp();
                 lowHeadAngleDuringCalib_rad_ = currentAngle_.ToFloat();
                 calState_ = HCS_WAIT_FOR_STOP;
