@@ -477,12 +477,14 @@ static void BodyChargeContactElectricalDebug(void)
 
 TestFunction* TestBody0GetTests(void)
 {
+  (void)BodyChargeContactElectricalDebug;
+  
   static TestFunction m_tests_0a[] = {
     BodyShortCircuitTest,
     BodyCheckProgramLockout,
     BodyTryReadSerial, //--skip serial read to force blank state
-    //BodyLoadTestFirmware,
-    BodyChargeContactElectricalDebug,
+    BodyLoadTestFirmware,
+    //BodyChargeContactElectricalDebug,
     NULL,
   };
   static TestFunction m_tests_0[] = {
