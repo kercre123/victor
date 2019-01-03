@@ -199,17 +199,17 @@ Result OffboardModel::DetectWithCLAD(const Vision::ImageRGB& img, std::list<Visi
   
   const bool kIsCompressed = true; // We chose to use JPG above
   const bool kIsEncrypted = false;
-  Vision::OffboardImageReady imageReadMsg(img.GetTimestamp(),
-                                          img.GetNumRows(),
-                                          img.GetNumCols(),
-                                          img.GetNumChannels(),
-                                          kIsCompressed,
-                                          kIsEncrypted,
-                                          imageFilename);
+  Vision::OffboardImageReady imageReadyMsg(img.GetTimestamp(),
+                                           img.GetNumRows(),
+                                           img.GetNumCols(),
+                                           img.GetNumChannels(),
+                                           kIsCompressed,
+                                           kIsEncrypted,
+                                           imageFilename);
   
-  const auto expectedSize = imageReadMsg.Size();
-  std::vector<uint8_t> messageData(imageReadMsg.Size());
-  const auto packedSize = imageReadMsg.Pack(messageData.data(), expectedSize);
+  const auto expectedSize = imageReadyMsg.Size();
+  std::vector<uint8_t> messageData(imageReadyMsg.Size());
+  const auto packedSize = imageReadyMsg.Pack(messageData.data(), expectedSize);
   if(!ANKI_VERIFY(packedSize == expectedSize, "OffboardModel.DetectWithCLAD.MessageSizeMismatch",
                   "PackedSize:%zu ExpectedSize:%zu", packedSize, expectedSize))
   {
