@@ -198,25 +198,6 @@ func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
 	}
 }
 
-func CladEventToProto(msg *gw_clad.Event) *extint.Event {
-	switch tag := msg.Tag(); tag {
-	// Event is currently unused in CLAD, but if you start
-	// using it again, replace [MessageName] with your msg name
-	// case gw_clad.EventTag_[MessageName]:
-	// 	return &extint.Event{
-	// 		EventType: &extint.Event_[MessageName]{
-	// 			Clad[MessageName]ToProto(msg.Get[MessageName]()),
-	// 		},
-	// 	}
-	case gw_clad.EventTag_INVALID:
-		log.Println(tag, "tag is invalid")
-		return nil
-	default:
-		log.Println(tag, "tag is not yet implemented")
-		return nil
-	}
-}
-
 func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
 	return &extint.NavMapInfo{
 		RootDepth:   int32(msg.RootDepth),
@@ -2454,6 +2435,8 @@ func (service *rpcService) DeleteCustomObjects(ctx context.Context, in *extint.D
 func (service *rpcService) CreateFixedCustomObject(ctx context.Context, in *extint.CreateFixedCustomObjectRequest) (*extint.CreateFixedCustomObjectResponse, error) {
 	f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_CreatedFixedCustomObject, 1)
 	defer f()
+
+	log.Printf("ron_proto CreateFixedCustomObject")
 
 	cladData := ProtoCreateFixedCustomObjectToClad(in)
 
