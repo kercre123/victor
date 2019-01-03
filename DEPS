@@ -13,11 +13,11 @@
             "avs-device-sdk": {
                 "build_type_id": "anki",
                 "checksums": {
-                    "sha256": "19d7cdb0ff93590b3f2100e6108f9456f5b11b5f8d396daf38ee87edb27d7231"
+                    "sha256": "031fde1a05dd81bb4b794adacc60c08c5400ffe97b56d29e1fe6318741dbb75f"
                 },
                 "extension": "tar.gz",
                 "package_name": "avs-device-sdk",
-                "version": "4"
+                "version": "5"
             },
             "pffft": {
                 "build_type_id": "anki",
@@ -80,7 +80,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4790"
+                "version": "4800"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

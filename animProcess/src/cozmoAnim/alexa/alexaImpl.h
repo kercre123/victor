@@ -64,6 +64,11 @@ namespace alexaClientSDK {
 
 
 namespace Anki {
+  
+namespace Util {
+  class Locale;
+}
+  
 namespace Vector {
 
 class AlexaAudioInput;
@@ -92,6 +97,8 @@ public:
   bool IsInitialized() const { return _initState == InitState::Completed; }
   
   void Update();
+  
+  void SetLocale( const Util::Locale& locale );
   
   void Logout();
   

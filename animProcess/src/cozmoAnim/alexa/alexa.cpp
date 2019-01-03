@@ -33,6 +33,7 @@
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
+#include "util/environment/locale.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
@@ -149,6 +150,11 @@ void Alexa::Update()
   }
   if( _implDtorResult.valid() && (_implDtorResult.wait_for(std::chrono::milliseconds{0}) == std::future_status::ready) ) {
     _implDtorResult = {};
+  }
+  
+  if( _pendingLocale && HasInitializedImpl() ) {
+    _impl->SetLocale( *_pendingLocale );
+    _pendingLocale.reset();
   }
   
   if( _impl != nullptr) {
@@ -788,6 +794,17 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
   
   if( kPlayErrorIfSignedOut && !hasImpl && _authenticatedEver ) {
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::UpdateLocale( const Util::Locale& locale )
+{
+  if( HasInitializedImpl() ) {
+    _impl->SetLocale( locale );
+    _pendingLocale.reset();
+  } else {
+    _pendingLocale.reset( new Util::Locale{locale} );
   }
 }
   

@@ -36,6 +36,7 @@
 #include "clad/types/cladRect.clad"
 #include "clad/types/robotCompletedAction.clad"
 #include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/selfTestTypes.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/visionModes.clad"
@@ -448,6 +449,15 @@ message RobotCompletedFactoryDotTest {
 // Engine->Engine message for asynchronous playpen checks
 message PlaypenBehaviorFailed {
   FactoryTestResultCode result
+}
+
+// Engine->Engine message for asynchronous selftest checks
+message SelfTestBehaviorFailed {
+  SelfTestResultCode result
+}
+
+message SelfTestEnd {
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////

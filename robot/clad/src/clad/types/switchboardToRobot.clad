@@ -43,6 +43,11 @@ message WifiScanResponse
   uint_8  status_code
 }
 
+message WifiConnectResponse
+{
+  uint_8 status_code
+}
+
 }
 }
 }

@@ -201,8 +201,6 @@ message GatewayWrapper {
     BatteryStateResponse            battery_state_response           = 801;
     VersionStateRequest             version_state_request            = 802;
     VersionStateResponse            version_state_response           = 803;
-    NetworkStateRequest             network_state_request            = 804;
-    NetworkStateResponse            network_state_response           = 805;
 
     // ------------ text-to-speech pairs ------------
     SayTextRequest                say_text_request                   = 900;

@@ -17,6 +17,8 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
+#define LOG_CHANNEL "Actions"
+
 namespace Anki {
 namespace Vector {
   
@@ -71,9 +73,9 @@ namespace Vector {
     const ActionResult compoundResult = _compoundAction->Update();
     if(ActionResult::RUNNING != compoundResult)
     {
-      PRINT_CH_INFO("Actions", "IVisuallyVerifyAction.CheckIfDone.TimedOut",
-                       "%s: Did not see object before processing %d images",
-                       GetName().c_str(), GetNumImagesToWaitFor());
+      LOG_INFO("IVisuallyVerifyAction.CheckIfDone.TimedOut",
+               "%s: Did not see object before processing %d images",
+               GetName().c_str(), GetNumImagesToWaitFor());
       
       return ActionResult::VISUAL_OBSERVATION_FAILED;
     }
@@ -170,9 +172,9 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
           observedMarkerNames += " ";
         }
         
-        PRINT_CH_INFO("Actions", "VisuallyVerifyObjectAction.HaveSeenObject.WrongMarker",
-                         "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
-                         GetTag(), _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
+        LOG_INFO("VisuallyVerifyObjectAction.HaveSeenObject.WrongMarker",
+                 "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
+                 GetTag(), _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
       }
     } // if(!_markerSeen)
     
@@ -349,11 +351,11 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
     // there isn't actually an object at the pose but blockworld thinks there is
     if(GetRobot().GetBlockWorld().FindLocatedObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
     {
-      PRINT_CH_DEBUG("Actions", "VisuallyVerifyNoObjectAtPose.FoundObject",
-                     "Seeing object near pose (%f %f %f)",
-                     _pose.GetTranslation().x(),
-                     _pose.GetTranslation().y(),
-                     _pose.GetTranslation().z());
+      LOG_DEBUG("VisuallyVerifyNoObjectAtPose.FoundObject",
+                "Seeing object near pose (%f %f %f)",
+                _pose.GetTranslation().x(),
+                _pose.GetTranslation().y(),
+                _pose.GetTranslation().z());
       return ActionResult::VISUAL_OBSERVATION_FAILED;
     }
     

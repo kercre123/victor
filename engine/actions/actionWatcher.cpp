@@ -16,6 +16,7 @@
 #include "util/helpers/templateHelpers.h"
 
 #define DEBUG_ACTION_WATCHER 0
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
 namespace Vector {
@@ -278,7 +279,7 @@ void ActionWatcher::Print(const ActionTag tag)
   
   ss << " with a total of " << numLeaves << " leaf actions";
   
-  PRINT_CH_DEBUG("Actions", "ActionWatcher.Print", "%s", ss.str().c_str());
+  LOG_DEBUG("ActionWatcher.Print", "%s", ss.str().c_str());
 }
 
 void ActionWatcher::PrintHelper(const Node* node, int level, int child, int& numLeaves)
@@ -299,7 +300,7 @@ void ActionWatcher::PrintHelper(const Node* node, int level, int child, int& num
     PrintHelper(node, level + 1, c, numLeaves);
     c++;
   }
-  PRINT_CH_DEBUG("Actions", "ActionWatcher.Print", "%s", ss.str().c_str());
+  LOG_DEBUG("ActionWatcher.Print", "%s", ss.str().c_str());
 }
   
   

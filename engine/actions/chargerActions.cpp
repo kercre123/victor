@@ -20,6 +20,7 @@
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/robot.h"
 
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
 namespace Vector {
@@ -317,8 +318,8 @@ ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
   if (GetRobot().GetBatteryComponent().IsOnChargerContacts()) {
-    PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
-                  "Robot has mounted charger.");
+    LOG_INFO("BackupOntoChargerAction.Verify.MountingChargerComplete",
+             "Robot has mounted charger.");
     return ActionResult::SUCCESS;
   }
   
@@ -368,7 +369,8 @@ ActionResult BackupOntoChargerAction::Verify()
 #pragma mark ---- DriveToAndMountChargerAction ----
   
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
-                                                           const bool useCliffSensorCorrection)
+                                                           const bool useCliffSensorCorrection,
+                                                           const bool enableDockingAnims)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -380,11 +382,17 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));
-  AddAction(new MountChargerAction(objectID, useCliffSensorCorrection));
+
+  auto mountAction = new MountChargerAction(objectID, useCliffSensorCorrection);
+  if(!enableDockingAnims)
+  {
+    mountAction->SetDockingAnimTriggers(AnimationTrigger::Count,
+                                        AnimationTrigger::Count,
+                                        AnimationTrigger::Count);
+  }
+  AddAction(mountAction);
 }
   
-  
-
 } // namespace Vector
 } // namespace Anki
 

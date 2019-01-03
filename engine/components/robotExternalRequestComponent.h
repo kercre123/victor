@@ -34,7 +34,6 @@ public:
   ~RobotExternalRequestComponent() = default;
   void Init(CozmoContext* context);
   void GetVersionState(const AnkiEvent<external_interface::GatewayWrapper>& event);
-  void GetNetworkState(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void GetBatteryState(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void SayText(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event);

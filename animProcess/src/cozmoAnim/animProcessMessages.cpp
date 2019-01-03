@@ -594,6 +594,11 @@ void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
   }
 }
 
+void Process_selfTestEnd(const RobotInterface::SelfTestEnd& msg)
+{
+  FaceInfoScreenManager::getInstance()->SelfTestEnd(_animStreamer);
+}
+
 void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen& msg)
 {
   FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);

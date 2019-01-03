@@ -43,6 +43,7 @@
 #include "osState/osState.h"
 #include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
+#include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
@@ -64,6 +65,7 @@
 #include <CBLAuthDelegate/CBLAuthDelegate.h>
 #include <CBLAuthDelegate/SQLiteCBLAuthDelegateStorage.h>
 #include <Notifications/SQLiteNotificationsStorage.h>
+#include <Settings/SQLiteSettingStorage.h>
 #include <CapabilitiesDelegate/CapabilitiesDelegate.h>
 #include <SQLiteStorage/SQLiteMiscStorage.h>
 #include <Settings/SQLiteSettingStorage.h>
@@ -418,6 +420,8 @@ void AlexaImpl::InitThread()
   auto notificationsStorage
     = capabilityAgents::notifications::SQLiteNotificationsStorage::create( rootConfig );
   
+  auto settingsStorage = capabilityAgents::settings::SQLiteSettingStorage::create( rootConfig );
+  
   // Creating the alert storage object to be used for rendering and storing alerts.
   auto audioFactory = std::make_shared<AlexaAudioFactory>();
   auto alertStorage
@@ -463,6 +467,7 @@ void AlexaImpl::InitThread()
                                  std::move(messageStorage),
                                  std::move(alertStorage),
                                  std::move(notificationsStorage),
+                                 std::move(settingsStorage),
                                  audioFactory,
                                  {_observer},
                                  {_observer},
@@ -574,6 +579,9 @@ void AlexaImpl::InitThread()
   
   // try connecting... this is already async but let's trigger it from this thread to keep everything in one place
   _client->Connect( _capabilitiesDelegate );
+  
+  // Send default settings set by the user to AVS.
+  _client->SendDefaultSettings();
   
   _initState = InitState::ThreadComplete;
 
@@ -847,6 +855,55 @@ void AlexaImpl::UpdateAsyncInit()
     }
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::SetLocale( const Util::Locale& locale )
+{
+  if( ANKI_VERIFY( _client != nullptr,
+                   "AlexaImpl.SetLocale.NotInitialized",
+                   "Could not set locale without a client" ) )
+  {
+    const std::string kSettingKey = "locale";
+    
+    // possible values: de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-FR, ja-JP
+    // ( https://developer.amazon.com/docs/alexa-voice-service/settings.html )
+    // obtain the en-COUNTRY locale string from the passed-in locale's country. Note that if a
+    // user goes into their alexa app and changes locale to something like fr-CA, then goes into chewie
+    // and selects CA, we send to amazon en-CA, and they'll have to go back into the alexa app if they
+    // need to reselect french.
+    std::string settingValue;
+    switch( locale.GetCountry() ) {
+      case Util::Locale::CountryISO2::US:
+      {
+        settingValue = "en-US";
+        break;
+      }
+      case Util::Locale::CountryISO2::CA:
+      {
+        settingValue = "en-CA";
+        break;
+      }
+      case Util::Locale::CountryISO2::GB:
+      {
+        settingValue = "en-GB";
+        break;
+      }
+      case Util::Locale::CountryISO2::AU:
+      {
+        settingValue = "en-AU";
+        break;
+      }
+      default:
+        break;
+    }
+    
+    // Only notify the client if the user selected a country we expect (i.e., those listed in chewie)
+    if( !settingValue.empty() ) {
+      _client->ChangeSetting( kSettingKey, settingValue );
+    }
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::Logout()

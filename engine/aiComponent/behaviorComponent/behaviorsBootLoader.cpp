@@ -47,6 +47,7 @@ BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
 {
   _behaviors.factoryBehavior = BEHAVIOR_ID(PlaypenTest);
   _behaviors.prDemoBehavior = BEHAVIOR_ID(InitPRDemo);
+  _behaviors.selfTestBehavior = BEHAVIOR_ID(SelfTest);
   
   if( ANKI_VERIFY(!config.empty(), "BehaviorsBootLoader.Ctor.InvalidConfig", "Empty config") ) {
     
@@ -107,6 +108,28 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
   } else {
     InitOnboarding();
   }
+
+  auto* msgHandler = robot->GetRobotMessageHandler();
+  if(msgHandler != nullptr)
+  {
+    auto startSelfTestLambda = [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+      {
+        // When the self test starts, save the current boot behavior as well as the
+        // bottom of the behavior stack in order to restore them when the self test ends
+        // Note: The bottom of the stack should be the wait behavior due to having to go through
+        // the customer care screen to start the self test
+        _prevBootBehavior = GetBootBehavior();
+        
+        auto& bsm = robot->GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
+        _prevBottomOfStackBehavior = const_cast<IBehavior*>(bsm.GetBaseBehavior());
+
+        // Switch to the self test behavior
+        SetNewBehavior(_behaviors.selfTestBehavior);
+      };
+
+    _eventHandles.push_back(msgHandler->Subscribe(RobotInterface::RobotToEngineTag::startSelfTest,
+                                                  startSelfTestLambda));
+  }
                                                                   
   auto* ei = _externalInterface;
   if( ei != nullptr ) {
@@ -132,6 +155,14 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
     _eventHandles.push_back( ei->Subscribe(ExternalInterface::MessageEngineToGameTag::OnboardingState,
                                            onOnboardingStage) );
 
+
+    auto selfTestEndLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& selfTestEnd){
+      _selfTestEnded = true;
+    };
+    
+    _eventHandles.push_back(ei->Subscribe(ExternalInterface::MessageEngineToGameTag::SelfTestEnd,
+                                          selfTestEndLambda));
+  
     auto setDevDoNothingFunc = [this](ConsoleFunctionContextRef context){
       _stage = OnboardingStages::DevDoNothing;
       const bool requestStackReset = true;
@@ -140,6 +171,7 @@ void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependen
       toSave[BehaviorOnboardingCoordinator::kOnboardingStageKey] = OnboardingStagesToString(_stage);
       const std::string filename = _saveFolder + BehaviorOnboardingCoordinator::kOnboardingFilename;
       Util::FileUtils::WriteFile( filename, toSave.toStyledString() );
+
     };
     _consoleFuncs.emplace_front("Set active mode and boot mode to DevDoNothing",
                                 std::move(setDevDoNothingFunc),
@@ -186,6 +218,21 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
       // flag to start onboarding
       SetNewBehavior( _behaviors.onboardingBehavior );
     }
+  }
+
+  if(_selfTestEnded)
+  {
+    // Self test has ended so reset the behavior stack to what
+    // it was before the self ran as well as the boot behavior
+    _selfTestEnded = false;
+
+    auto* bsm = dependentComps.GetComponentPtr<BehaviorSystemManager>();
+    bsm->ResetBehaviorStack(_prevBottomOfStackBehavior);
+    
+    _bootBehavior = _prevBootBehavior;
+      
+    _prevBootBehavior = nullptr;
+    _prevBottomOfStackBehavior = nullptr;
   }
 }
   
@@ -252,9 +299,17 @@ void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID, bool requestStac
   DEV_ASSERT(_behaviorContainer != nullptr, "BehaviorsBootLoader.SetNewBehavior.NoBC");
   
   IBehavior* behavior = _behaviorContainer->FindBehaviorByID(behaviorID).get();
-  if( ANKI_VERIFY(behavior != nullptr,
+  ANKI_VERIFY(behavior != nullptr,
               "BehaviorsBootLoader.SetNewBehavior.Invalid",
-              "No %s", BehaviorTypesWrapper::BehaviorIDToString(behaviorID)) )
+              "No %s", BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
+    
+  SetNewBehavior(behavior, requestStackReset);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorsBootLoader::SetNewBehavior(IBehavior* behavior, bool requestStackReset)
+{
+  if(behavior != nullptr)
   {
     if( (behavior != _bootBehavior) || _pendingBehavior ) {
       if( _hasGrabbedBootBehavior && requestStackReset ) {

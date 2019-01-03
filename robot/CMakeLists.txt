@@ -24,6 +24,7 @@ if (MACOSX)
   )
 endif()
 
+if (VICOS)
 
 add_library(robot_hal STATIC
   ${CMAKE_SOURCE_DIR}/robot/hal/src/hal.cpp
@@ -61,6 +62,8 @@ target_compile_definitions(robot_hal
 )
 
 anki_build_target_license(robot_hal "ANKI")
+
+endif()
 
 # Create a lib for cube firmware led animation code, so
 # we can link into it from webotsCtrlLightCube

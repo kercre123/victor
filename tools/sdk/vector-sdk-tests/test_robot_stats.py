@@ -10,9 +10,11 @@ def main():
 
     # Fetch robot stats
     with anki_vector.Robot(args.serial) as robot:
-        robot.get_battery_state()  # Fetch the battery level
+        battery_state = robot.get_battery_state()  # Fetch the battery level
+        if battery_state:
+            print("Robot battery_state: {0}".format(battery_state))
+
         robot.get_version_state()  # Fetch the os version and engine build version
-        robot.get_network_state()  # Fetch the network stats
 
     print("------ finished testing fetching robot stats ------")
 

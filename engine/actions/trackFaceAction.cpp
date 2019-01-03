@@ -18,6 +18,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #define DEBUG_TRACKING_ACTIONS 0
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
 namespace Vector {
@@ -108,9 +109,9 @@ ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle,
 
   if(DEBUG_TRACKING_ACTIONS)
   {
-    PRINT_CH_INFO("Actions", "TrackFaceAction.UpdateTracking.HeadPose",
-                     "Translation w.r.t. robot = (%.1f, %.1f, %.1f) [t=%d]",
-                     xDist, yDist, zDist, face->GetTimeStamp());
+    LOG_INFO("TrackFaceAction.UpdateTracking.HeadPose",
+             "Translation w.r.t. robot = (%.1f, %.1f, %.1f) [t=%d]",
+             xDist, yDist, zDist, face->GetTimeStamp());
   }
   
   const f32 xyDistSq = xDist*xDist + yDist*yDist;

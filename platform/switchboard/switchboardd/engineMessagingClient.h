@@ -39,6 +39,9 @@ public:
   void SendBLEConnectionStatus(bool connected);
   void ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status);
   void HandleWifiScanRequest();
+  void HandleWifiConnectRequest(const std::string& ssid,
+                                const std::string& pwd,
+                                bool disconnectAfterConnection);
   EngineMessageSignal& OnReceivePairingStatus() {
     return _pairingStatusSignal;
   }

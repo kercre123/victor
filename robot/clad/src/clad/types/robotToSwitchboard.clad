@@ -17,6 +17,17 @@ message WifiScanRequest
 {
 }
 
+// Scans for and attempts to connect to ssid
+// Will immediately disconnect if connection was successful
+// Sends WifiConnectResponse back indicating if connection to
+// ssid was successfull
+message WifiConnectRequest
+{
+  uint_8 ssid[33], // 32 plus null
+  uint_8 pwd[33],
+  bool disconnectAfterConnection
+}
+
 } // SwitchboardInterface
 } // Cozmo
 } // Anki

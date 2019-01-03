@@ -109,6 +109,8 @@ public:
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
+  void SelfTestEnd(AnimationStreamer* animStreamer);
+
   // Note when the engine has finished loading for internal use
   void OnEngineLoaded() {_engineLoaded = true;}
 

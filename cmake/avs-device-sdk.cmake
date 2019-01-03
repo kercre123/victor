@@ -33,6 +33,7 @@ set(AVS_LIBS
   PlaybackController
   PlaylistParser
   RegistrationManager
+  Settings
   SpeakerManager
   SpeechSynthesizer
   SQLiteStorage

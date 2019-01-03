@@ -112,6 +112,7 @@ public:
                                               std::shared_ptr<alexaClientSDK::certifiedSender::MessageStorageInterface> messageStorage,
                                               std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface>   alertStorage,
                                               std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
+                                              std::shared_ptr<alexaClientSDK::capabilityAgents::settings::SettingsStorageInterface> settingsStorage,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -129,6 +130,10 @@ public:
                                               alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion );
   
   void Connect( const std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::CapabilitiesDelegateInterface>& capabilitiesDelegate );
+  
+  void SendDefaultSettings();
+  
+  void ChangeSetting( const std::string& key, const std::string& value );
   
   std::future<bool> NotifyOfTapToTalk( alexaClientSDK::capabilityAgents::aip::AudioProvider& tapToTalkAudioProvider,
                                        alexaClientSDK::avsCommon::avs::AudioInputStream::Index beginIndex
@@ -190,6 +195,7 @@ private:
              std::shared_ptr<alexaClientSDK::certifiedSender::MessageStorageInterface> messageStorage,
              std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
              std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
+             std::shared_ptr<alexaClientSDK::capabilityAgents::settings::SettingsStorageInterface> settingsStorage,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -249,6 +255,8 @@ private:
   std::shared_ptr<alexaClientSDK::capabilityAgents::playbackController::PlaybackRouter> _playbackRouter;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::playbackController::PlaybackController> _playbackController;
+  
+  std::shared_ptr<alexaClientSDK::capabilityAgents::settings::Settings> _settings;
   
   std::shared_ptr<alexaClientSDK::capabilityAgents::speakerManager::SpeakerManager> _speakerManager;
   

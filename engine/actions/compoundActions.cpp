@@ -24,6 +24,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "util/helpers/templateHelpers.h"
 
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
   namespace Vector {
@@ -257,10 +258,10 @@ namespace Anki {
       {
         for(auto action : _actions) {
           if(action->GetTag() == _proxyTag) {
-            PRINT_CH_DEBUG("Actions", "ICompoundAction.GetCompletionUnion.UsingProxy",
-                           "%s [%d] using proxy action %s [%d] completion union",
-                           GetName().c_str(), GetTag(),
-                           action->GetName().c_str(), action->GetTag());
+            LOG_DEBUG("ICompoundAction.GetCompletionUnion.UsingProxy",
+                      "%s [%d] using proxy action %s [%d] completion union",
+                      GetName().c_str(), GetTag(),
+                      action->GetName().c_str(), action->GetTag());
             
             return action->GetCompletionUnion(completionUnion);
           }
@@ -268,10 +269,10 @@ namespace Anki {
 
         auto iter = _completedActionInfoStack.find(_proxyTag);
         if(iter != _completedActionInfoStack.end()) {
-          PRINT_CH_DEBUG("Actions", "ICompoundAction.GetCompletionUnion.UsingProxy",
-                         "%s [%d] using proxy action with tag %d completion union",
-                         GetName().c_str(), GetTag(),
-                         iter->first);
+          LOG_DEBUG("ICompoundAction.GetCompletionUnion.UsingProxy",
+                    "%s [%d] using proxy action with tag %d completion union",
+                    GetName().c_str(), GetTag(),
+                    iter->first);
           
           completionUnion = iter->second.completionUnion;
           return;
@@ -331,10 +332,10 @@ namespace Anki {
         # endif
         return ActionResult::SUCCESS;
       } else if(currentTime_secs >= _waitUntilTime) {
-        PRINT_CH_INFO("Actions", "CompoundActionSequential.Update.NextAction",
-                         "Moving to action %s [%d]",
-                         (*_currentAction)->GetName().c_str(),
-                         (*_currentAction)->GetTag());
+        LOG_INFO("CompoundActionSequential.Update.NextAction",
+                 "Moving to action %s [%d]",
+                 (*_currentAction)->GetName().c_str(),
+                 (*_currentAction)->GetTag());
         
         // If the compound action is suppressing track locking then the constituent actions should too
         if ((*_currentAction)->IsSuppressingTrackLocking() != IsSuppressingTrackLocking()) {
@@ -382,7 +383,7 @@ namespace Anki {
       
       Result derivedUpdateResult = UpdateDerived();
       if(RESULT_OK != derivedUpdateResult) {
-        PRINT_CH_INFO("Actions", "CompoundActionSequential.UpdateInternal.UpdateDerivedFailed", "");
+        LOG_INFO("CompoundActionSequential.UpdateInternal.UpdateDerivedFailed", "");
         return ActionResult::UPDATE_DERIVED_FAILED;
       }
       
@@ -425,8 +426,8 @@ namespace Anki {
               // A constituent action failed . Reset all the constituent actions
               // and try again as long as there are retries remaining
               if(RetriesRemain()) {
-                PRINT_CH_INFO("Actions", "CompoundActionSequential.Update.Retrying",
-                                 "%s triggered retry", (*_currentAction)->GetName().c_str());
+                LOG_INFO("CompoundActionSequential.Update.Retrying",
+                         "%s triggered retry", (*_currentAction)->GetName().c_str());
                 Reset();
                 return ActionResult::RUNNING;
               }
@@ -444,19 +445,19 @@ namespace Anki {
               if(ShouldIgnoreFailure(subResult, *_currentAction))
               {
                 // We are ignoring this action's failures, so just move to next action
-                PRINT_CH_INFO("Actions", "CompoundActionSequential.UpdateInternal",
-                              "Ignoring failure for %s[%d] moving to next action",
-                              (*_currentAction)->GetName().c_str(),
-                              (*_currentAction)->GetTag());
+                LOG_INFO("CompoundActionSequential.UpdateInternal",
+                         "Ignoring failure for %s[%d] moving to next action",
+                         (*_currentAction)->GetName().c_str(),
+                         (*_currentAction)->GetTag());
                 return MoveToNextAction(currentTime);
               }
               else
               {
-                PRINT_CH_DEBUG("Actions", "CompoundActionSequential.UpdateInternal",
-                               "Current action %s[%d] failed with %s deleting",
-                               (*_currentAction)->GetName().c_str(),
-                               (*_currentAction)->GetTag(),
-                               EnumToString(subResult));
+                LOG_DEBUG("CompoundActionSequential.UpdateInternal",
+                          "Current action %s[%d] failed with %s deleting",
+                          (*_currentAction)->GetName().c_str(),
+                          (*_currentAction)->GetTag(),
+                          EnumToString(subResult));
                 StoreUnionAndDelete(_currentAction);
                 return subResult;
               }
@@ -545,8 +546,8 @@ namespace Anki {
           {
             // If any retries are left, reset the group and try again.
             if(RetriesRemain()) {
-              PRINT_CH_INFO("Actions", "CompoundActionParallel.Update.Retrying",
-                            "%s triggered retry", (*currentAction)->GetName().c_str());
+              LOG_INFO("CompoundActionParallel.Update.Retrying",
+                       "%s triggered retry", (*currentAction)->GetName().c_str());
               Reset();
               return ActionResult::RUNNING;
             }
