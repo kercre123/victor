@@ -625,29 +625,39 @@ func (service *rpcService) CancelFaceEnrollment(ctx context.Context, in *extint.
 }
 
 func (service *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.RequestEnrolledNamesRequest) (*extint.RequestEnrolledNamesResponse, error) {
-	f, enrolledNamesResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_EnrolledNamesResponse, 1)
-	defer f()
+	delete_listener_callback, enrolledNamesResponse :=
+		engineProtoManager.CreateChannel(&extint.GatewayWrapper_RequestEnrolledNamesResponse{}, 1)
+	defer delete_listener_callback()
 
-	_, err := engineCladManager.Write(ProtoRequestEnrolledNamesToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_RequestEnrolledNamesRequest{
+			RequestEnrolledNamesRequest: in,
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
+
 	names, ok := <-enrolledNamesResponse
 	if !ok {
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
 	var faces []*extint.LoadedKnownFace
-	for _, element := range names.GetEnrolledNamesResponse().Faces {
+
+	for _, element := range names.GetRequestEnrolledNamesResponse().Faces {
 		var newFace = extint.LoadedKnownFace{
 			SecondsSinceFirstEnrolled: element.SecondsSinceFirstEnrolled,
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
 			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
-			FaceId:                    element.FaceID,
+			FaceId:                    element.FaceId,
 			Name:                      element.Name,
 		}
 		faces = append(faces, &newFace)
 	}
+
 	return &extint.RequestEnrolledNamesResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_RESPONSE_RECEIVED,

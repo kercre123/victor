@@ -124,7 +124,7 @@ Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes
 
     // Is there a potential, in adding the redirect and not returning (on success), for these messages
     // to arrive at their destination twice?
-    (void) ProtoCladInterpreter::Redirect(message, _context);
+    (void) _context->GetProtoCladInterpreter()->Redirect(message);
 
     ++_messageCountIncoming;
 

@@ -181,7 +181,6 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 			defer wg.Done()
 			select {
 			case listener <- msg:
-				log.Printf("ron_proto SendToListeners: %s", msg.GetEvent().String())
 				if logVerbose {
 					log.Printf("Sent to listener #%d: %s\n", idx, tag)
 				}

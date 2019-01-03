@@ -51,6 +51,7 @@ class RobotManager;
 class VizManager;
 class PerfMetric;
 class AppToEngineHandler;
+class ProtoCladInterpreter;
 
 namespace WebService {
   class WebService;
@@ -97,6 +98,7 @@ public:
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
+  ProtoCladInterpreter*                 GetProtoCladInterpreter() const { return _protoCladInterpreter.get(); }
 
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
 
@@ -137,7 +139,7 @@ private:
   std::unique_ptr<PerfMetric>                           _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;
   std::unique_ptr<AppToEngineHandler>                   _appToEngineHandler;
-
+  std::unique_ptr<ProtoCladInterpreter>                 _protoCladInterpreter;
 };
 
 
