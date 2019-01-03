@@ -8,14 +8,6 @@ namespace Gateway {
 ///////////////////////////////  ANIMATIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// Anything that the robot wishes to push to the app that 
-// is not a response to a request from the app.
-// DEPRECATED. Please try to use protobuf's Event instead
-message RequiredEmptyMessage{}
-union Event {
-  RequiredEmptyMessage replaceMe,
-}
-
 // RobotDeletedFixedCustomObjects
 message RobotDeletedFixedCustomObjects {
 }
@@ -83,7 +75,6 @@ message MemoryMapMessageEnd
 
 // Note: these values and messages must match the values that get added to MessageEngineToGame
 union MessageRobotToExternal {
-  Event                             Event                              = 0x02,
   RobotDeletedFixedCustomObjects    RobotDeletedFixedCustomObjects     = 0x12,
   RobotDeletedCustomMarkerObjects   RobotDeletedCustomMarkerObjects    = 0x13,
   CreatedFixedCustomObject          CreatedFixedCustomObject           = 0x14,

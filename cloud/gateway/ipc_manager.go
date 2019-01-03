@@ -560,12 +560,6 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 			continue
 		}
 
-		switch msg.Tag() {
-		case gw_clad.MessageRobotToExternalTag_Event:
-			event := CladEventToProto(msg.GetEvent())
-			manager.SendEventToChannel(event)
-		default:
-			manager.SendToListeners(msg)
-		}
+		manager.SendToListeners(msg)
 	}
 }
