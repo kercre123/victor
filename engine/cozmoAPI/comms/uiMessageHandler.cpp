@@ -274,7 +274,7 @@ namespace Anki {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
 
-        (void) ProtoCladInterpreter::Redirect(message, _context);
+        (void) _context->GetProtoCladInterpreter()->Redirect(message);
 
         #if ANKI_DEV_CHEATS
         if (nullptr != DevLoggingSystem::GetInstance())
@@ -712,36 +712,39 @@ namespace Anki {
       external_interface::GatewayWrapper proto_message;
       switch (event.GetData().GetTag()) {
         case ExternalInterface::MessageEngineToGameTag::RobotObservedFace:
-          ProtoCladInterpreter::CladRobotObservedFaceToProto(event.GetData().Get_RobotObservedFace(), proto_message);
+          _context->GetProtoCladInterpreter()->CladRobotObservedFaceToProto(
+              event.GetData().Get_RobotObservedFace(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID:
-          ProtoCladInterpreter::CladRobotChangedObservedFaceIDToProto(
+          _context->GetProtoCladInterpreter()->CladRobotChangedObservedFaceIDToProto(
               event.GetData().Get_RobotChangedObservedFaceID(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
-          ProtoCladInterpreter::CladRobotObservedObjectToProto(
+          _context->GetProtoCladInterpreter()->CladRobotObservedObjectToProto(
               event.GetData().Get_RobotObservedObject(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
-          ProtoCladInterpreter::CladObjectMovedToProto(event.GetData().Get_ObjectMoved(), proto_message);
+          _context->GetProtoCladInterpreter()->CladObjectMovedToProto(
+              event.GetData().Get_ObjectMoved(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::ObjectAvailable:
-          ProtoCladInterpreter::CladObjectAvailableToProto(event.GetData().Get_ObjectAvailable(), proto_message);
+          _context->GetProtoCladInterpreter()->CladObjectAvailableToProto(
+              event.GetData().Get_ObjectAvailable(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::ObjectStoppedMoving:
-          ProtoCladInterpreter::CladObjectStoppedMovingToProto(
+          _context->GetProtoCladInterpreter()->CladObjectStoppedMovingToProto(
               event.GetData().Get_ObjectStoppedMoving(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:
-          ProtoCladInterpreter::CladObjectUpAxisChangedToProto(
+          _context->GetProtoCladInterpreter()->CladObjectUpAxisChangedToProto(
               event.GetData().Get_ObjectUpAxisChanged(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::ObjectTapped:
-          ProtoCladInterpreter::CladObjectTappedToProto(
+          _context->GetProtoCladInterpreter()->CladObjectTappedToProto(
               event.GetData().Get_ObjectTapped(), proto_message);
           break;
         case ExternalInterface::MessageEngineToGameTag::ObjectConnectionState:
-          ProtoCladInterpreter::CladObjectConnectionStateToProto(
+          _context->GetProtoCladInterpreter()->CladObjectConnectionStateToProto(
               event.GetData().Get_ObjectConnectionState(), proto_message);
           break;
         default:

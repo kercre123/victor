@@ -264,6 +264,11 @@ message GatewayWrapper {
     ObjectUpAxisChanged           object_up_axis_changed             = 1806;
     ObjectTapped                  object_tapped                      = 1807;
     ObjectConnectionState         object_connection_state            = 1808;
+
+    // ------------ Facial Registration -------------------------
+    RequestEnrolledNamesRequest   request_enrolled_names_request     = 2000;
+    RequestEnrolledNamesResponse  request_enrolled_names_response    = 2001;
+
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

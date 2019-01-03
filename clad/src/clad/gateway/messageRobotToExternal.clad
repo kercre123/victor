@@ -8,20 +8,6 @@ namespace Gateway {
 ///////////////////////////////  ANIMATIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-message LoadedKnownFace {
-    int_64   secondsSinceFirstEnrolled,
-    int_64   secondsSinceLastUpdated,
-    int_64   secondsSinceLastSeen,
-    int_64   lastSeenSecondsSinceEpoch,
-    int_32   faceID,
-    string   name,
-}
-
-// Receives the requested list of names and IDs.
-message EnrolledNamesResponse {
-  LoadedKnownFace faces[uint_8],
-}
-
 // Anything that the robot wishes to push to the app that 
 // is not a response to a request from the app.
 // DEPRECATED. Please try to use protobuf's Event instead
@@ -98,7 +84,6 @@ message MemoryMapMessageEnd
 // Note: these values and messages must match the values that get added to MessageEngineToGame
 union MessageRobotToExternal {
   Event                             Event                              = 0x02,
-  EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
   RobotDeletedFixedCustomObjects    RobotDeletedFixedCustomObjects     = 0x12,
   RobotDeletedCustomMarkerObjects   RobotDeletedCustomMarkerObjects    = 0x13,
   CreatedFixedCustomObject          CreatedFixedCustomObject           = 0x14,
