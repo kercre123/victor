@@ -18,6 +18,10 @@ structure OffboardImageReady {
   bool              isEncrypted = 0,
   string            filename
 }
-      
+
+structure OffboardResultReady {
+  string            jsonResult
+}
+
 } // namespace Vision
 } // namespace Anki

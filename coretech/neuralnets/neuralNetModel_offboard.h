@@ -43,9 +43,11 @@ private:
   
   Result DetectWithCLAD(const Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints);
   
-  bool WaitForResultFile(const std::string& resultFilename);
-  bool WaitForResultCLAD();
+  bool WaitForResultFile(const std::string& resultFilename, std::list<Vision::SalientPoint>& salientPoints);
+  bool WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPoints);
   
+  static Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
+                                           std::list<Vision::SalientPoint>& salientPoints);
   std::string _cachePath;
   int         _pollPeriod_ms;
   bool        _isVerbose = false;

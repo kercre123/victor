@@ -133,51 +133,15 @@ Result OffboardModel::DetectWithFileIO(const Vision::ImageRGB& img, std::list<Vi
               imageFilename.c_str(), img.GetTimestamp());
   }
 
-  // Wait for detection result JSON to appear
+  // Wait for detection result JSON to appear (blocking until timeout!)
   const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, Filenames::Result});
-  const bool resultAvailable = WaitForResultFile(resultFilename);
+  Json::Value salientPointsJson;
+  const bool resultAvailable = WaitForResultFile(resultFilename, salientPoints);
 
   // Delete image file (whether we got the result or timed out)
   LOG_DEBUG("NeuralNetRunner.DetectWithFileIO.DeletingImageFile", "%s, deleting %s",
             (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
   Util::FileUtils::DeleteFile(imageFilename);
-  
-  if(resultAvailable)
-  {
-    LOG_DEBUG("OffboardModel.DetectWithFileIO.FoundDetectionResultsJSON", "%s",
-              resultFilename.c_str());
-    
-    Json::Reader reader;
-    Json::Value detectionResult;
-    std::ifstream file(resultFilename);
-    const bool success = reader.parse(file, detectionResult);
-    if(!success)
-    {
-      LOG_ERROR("OffboardModel.DetectWithFileIO.FailedToReadJSON", "%s", resultFilename.c_str());
-    }
-    else
-    {
-      // Translate JSON into a SalientPoint and put it in the output
-      const Json::Value& salientPointsJson = detectionResult["salientPoints"];
-      if(salientPointsJson.isArray())
-      {
-        for(auto const& salientPointJson : salientPointsJson)
-        {
-          Vision::SalientPoint salientPoint;
-          const bool success = salientPoint.SetFromJSON(salientPointJson);
-          if(!success)
-          {
-            LOG_ERROR("OffboardModel.DetectWithFileIO.FailedToSetFromJSON", "");
-            continue;
-          }
-          
-          salientPoints.emplace_back(std::move(salientPoint));
-        }
-      }
-    }
-    file.close();
-    Util::FileUtils::DeleteFile(resultFilename);
-  }
   
   return RESULT_OK;
 }
@@ -224,102 +188,55 @@ Result OffboardModel::DetectWithCLAD(const Vision::ImageRGB& img, std::list<Visi
     return RESULT_FAIL;
   }
   
-  // TODO: Wait for CLAD with SalientPoints to appear
-  // For now, just pole for a file, same as above
-  // Wait for detection result CLAD to appear
+  // Wait for detection result CLAD to appear (blocking until timeout!)
   const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, Filenames::Result});
-  const bool resultAvailable = WaitForResultFile(resultFilename);
-  //  f32 startTime_sec = 0.f, currentTime_sec = 0.f;
-  //  {
-  //    startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  //    currentTime_sec = startTime_sec;
-  //
-  //    while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
-  //    {
-  //
-  //      while (_udpClient->IsConnected()) {
-  //        char buf[MAX_PACKET_BUFFER_SIZE];
-  //        const ssize_t n = _udpClient->Recv(buf, sizeof(buf));
-  //        if (n < 0) {
-  //          LOG_ERROR("RobotConnectionManager.ProcessArrivedMessages", "Read error from robot");
-  //          break;
-  //        } else if (n == 0) {
-  //          //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Nothing to read");
-  //          break;
-  //        } else {
-  //          //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Read %zd/%lu from robot", n, sizeof(buf));
-  //
-  //          _currentConnectionData->PushArrivedMessage((const uint8_t *) buf, (uint32_t) n, addr);
-  //          resultAvailable = true;
-  //        }
-  //      }
-  //
-  //      currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  //    }
-  //  }
+  const bool resultAvailable = WaitForResultCLAD(salientPoints);
   
   // Delete image file (whether we got the result or timed out)
   LOG_DEBUG("NeuralNetRunner.Detect.DeletingImageFile", "%s, deleting %s",
             (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
   Util::FileUtils::DeleteFile(imageFilename);
   
+  return RESULT_OK;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool OffboardModel::WaitForResultFile(const std::string& resultFilename,
+                                      std::list<Vision::SalientPoint>& salientPoints)
+{
+  bool resultAvailable = false;
+  const f32 startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  f32 currentTime_sec = startTime_sec;
+    
+  while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
+    resultAvailable = Util::FileUtils::FileExists(resultFilename);
+    currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+  
   if(resultAvailable)
   {
-    LOG_DEBUG("OffboardModel.Detect.FoundDetectionResultsJSON", "%s",
+    LOG_DEBUG("OffboardModel.DetectWithFileIO.FoundDetectionResultsJSON", "%s",
               resultFilename.c_str());
     
     Json::Reader reader;
     Json::Value detectionResult;
     std::ifstream file(resultFilename);
-    const bool success = reader.parse(file, detectionResult);
-    if(!success)
+    const bool parseSuccess = reader.parse(file, detectionResult);
+    file.close();
+    if(parseSuccess)
     {
-      LOG_ERROR("OffboardModel.Detect.FailedToReadJSON", "%s", resultFilename.c_str());
+      resultAvailable = ParseSalientPointsFromJson(detectionResult, salientPoints);
     }
     else
     {
-      // Translate JSON into a SalientPoint and put it in the output
-      const Json::Value& salientPointsJson = detectionResult["salientPoints"];
-      if(salientPointsJson.isArray())
-      {
-        for(auto const& salientPointJson : salientPointsJson)
-        {
-          Vision::SalientPoint salientPoint;
-          const bool success = salientPoint.SetFromJSON(salientPointJson);
-          if(!success)
-          {
-            LOG_ERROR("OffboardModel.Detect.FailedToSetFromJSON", "");
-            continue;
-          }
-          
-          salientPoints.emplace_back(std::move(salientPoint));
-        }
-      }
+      LOG_ERROR("OffboardModel.WaitForResultFile.FailedToReadJSON", "%s", resultFilename.c_str());
     }
-    file.close();
-  }
-  
-  return RESULT_OK;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool OffboardModel::WaitForResultFile(const std::string& resultFilename)
-{
-  bool resultAvailable = false;
-  f32 startTime_sec = 0.f, currentTime_sec = 0.f;
-  {
-    startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    currentTime_sec = startTime_sec;
     
-    while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
-      resultAvailable = Util::FileUtils::FileExists(resultFilename);
-      currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    }
+    Util::FileUtils::DeleteFile(resultFilename);
   }
-  
-  if(!resultAvailable)
+  else
   {
     LOG_WARNING("OffboardModel.WaitForResultFile.PollingForResultTimedOut",
                 "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
@@ -330,9 +247,71 @@ bool OffboardModel::WaitForResultFile(const std::string& resultFilename)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool OffboardModel::WaitForResultCLAD()
+bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPoints)
 {
-  DEV_ASSERT(false, "OffboardModel.WaitForResultsCLAD.NotImplementedYet");
+  bool resultAvailable = false;
+  const f32 startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  f32 currentTime_sec = startTime_sec;
+  
+  while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
+  {
+    // TODO: copy-and-pasted from robot comms, baustin is gonna implement this for realz
+    while (_udpClient->IsConnected())
+    {
+      char buf[MAX_PACKET_BUFFER_SIZE];
+      const ssize_t n = _udpClient->Recv(buf, sizeof(buf));
+      if (n < 0) {
+        LOG_ERROR("RobotConnectionManager.ProcessArrivedMessages", "Read error from robot");
+        break;
+      } else if (n == 0) {
+        //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Nothing to read");
+        break;
+      } else {
+        //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Read %zd/%lu from robot", n, sizeof(buf));
+
+        Vision::OffboardResultReady resultReadyMsg;
+        // TODO: turn buf into resultReadyMsg
+        // _currentConnectionData->PushArrivedMessage((const uint8_t *) buf, (uint32_t) n, addr);
+        Json::Reader reader;
+        Json::Value detectionResult;
+        const bool parseSuccess = reader.parse(resultReadyMsg.jsonResult, detectionResult);
+        if(parseSuccess)
+        {
+          resultAvailable |= ParseSalientPointsFromJson(detectionResult, salientPoints);
+        }
+      }
+    }
+
+    currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
+
+  return resultAvailable;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& salientPointsJson,
+                                                 std::list<Vision::SalientPoint>& salientPoints)
+{
+  if(!salientPointsJson.isArray())
+  {
+    LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");
+    return RESULT_FAIL;
+  }
+  
+  for(auto const& salientPointJson : salientPointsJson)
+  {
+    Vision::SalientPoint salientPoint;
+    const bool success = salientPoint.SetFromJSON(salientPointJson);
+    if(!success)
+    {
+      LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToSetFromJSON", "");
+      continue;
+    }
+    
+    salientPoints.emplace_back(std::move(salientPoint));
+  }
+  
+  return RESULT_OK;
 }
   
 } // namespace Vision
