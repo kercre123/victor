@@ -4,7 +4,7 @@
  *      *** Do not modify ! ***
  *
  * Project: 'systest' 
- * Target:  'REVD' 
+ * Target:  'REVG' 
  */
 
 #ifndef RTE_COMPONENTS_H

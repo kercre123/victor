@@ -9,7 +9,8 @@ static const uint32_t SYSTEM_CLOCK = 48000000;
 static const uint32_t CONTACT_BAUDRATE = 57600;
 static const uint32_t COMMS_BAUDRATE = 3000000;
 
-static const uint32_t WATCHDOG_CLOCK  = 10000;
+//static const uint32_t WATCHDOG_CLOCK  = 10000;
+#define               WATCHDOG_CLOCK    10000
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
 enum IRQ_Priority {
@@ -22,6 +23,8 @@ enum IRQ_Priority {
   PRIORITY_MICS = 3,
   PRIORITY_TOUCH_SENSE = 3
 };
+
+#ifdef __cplusplus
 
 // H-Bridge
 namespace LP1 GPIO_DEFINE(F, 0);
@@ -71,7 +74,7 @@ namespace MIC1_SCK    GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAP1I GPIO_DEFINE(B, 8);
-namespace CAPO  GPIO_DEFINE(A, 14);
+//namespace CAPO  GPIO_DEFINE(A, 14);
 
 // Communication
 namespace VEXT_TX GPIO_DEFINE(A, 2);
@@ -85,5 +88,7 @@ namespace SDA2    GPIO_DEFINE(F, 7);
 // Lights
 namespace LED_DAT GPIO_DEFINE(A, 13);
 namespace LED_CLK GPIO_DEFINE(A, 14);
+
+#endif /* __cplusplus */
 
 #endif

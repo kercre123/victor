@@ -11,7 +11,11 @@
 //-----------------------------------------------------------
 
 //hardware version string
-#if defined(HWVER_REVD)
+#if defined(HWVER_REVG)
+  #define HWVERS "REVG"
+#elif defined(HWVER_REVF)
+  #define HWVERS "REVF"
+#elif defined(HWVER_REVD)
   #define HWVERS "REVD"
 #elif defined(HWVER_DVT3A)
   #define HWVERS "DVT3A"
@@ -26,6 +30,16 @@
 //-----------------------------------------------------------
 
 #ifdef __cplusplus
+
+//channel args for Board::getAdcMv()
+enum adc_chan_e {
+  ADC_VEXT_SENSE  = 2,
+  ADC_NTC         = 3,
+  ADC_VIN_SENSE   = 4,
+  ADC_TEMP_CPU    = 16, //internal Temperature sensor
+  ADC_VREFINT     = 17, //internal Vref (bandgap)
+};
+
 namespace Board
 {
   void init();
@@ -35,6 +49,9 @@ namespace Board
   void pwr_vdds(bool en); //vdds (VENC) sensor rail
   void pwr_vmain(bool en); //VMAIN enable
   void pwr_charge(bool en); //VEXT connect
+  
+  uint32_t adcRead(adc_chan_e chan, int oversample = 0); //2^oversample = # samples (averaged)
+  uint32_t adcReadMv(adc_chan_e chan, int oversample = 0); //2^oversample = # samples (averaged)
 }
 #endif /* __cplusplus */
 

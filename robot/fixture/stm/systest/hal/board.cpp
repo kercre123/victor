@@ -31,6 +31,8 @@ void Power_enableClocking(void) {
 //    Local
 //------------------------------------------------
 
+extern "C" void hal_delay_us(uint32_t us);
+
 static void NopLoopDelayMs_(unsigned int ms) {
 	for(; ms>0; ms--) {
     //MicroWait(1000) -- Not Optimized. Runs about 0.6 us long.
@@ -83,6 +85,34 @@ void Board::init()
   //LED_DAT::mode(MODE_INPUT); LED_DAT::alternate(0);
   //LED_CLK::mode(MODE_INPUT); LED_CLK::alternate(0);
   
+  //analog pin cfg
+  VEXT_SENSE::init(MODE_ANALOG, PULL_NONE, TYPE_PUSHPULL, SPEED_HIGH);
+  VIN_SENSE::init(MODE_ANALOG, PULL_NONE, TYPE_PUSHPULL, SPEED_HIGH);
+  NTC_ADC::init(MODE_ANALOG, PULL_NONE, TYPE_PUSHPULL, SPEED_HIGH);
+  
+  //ADC
+  NVIC_DisableIRQ(ADC1_IRQn);
+  if ((ADC1->CR & ADC_CR_ADEN) != 0)
+    ADC1->CR |= ADC_CR_ADDIS;
+  while ((ADC1->CR & ADC_CR_ADEN) != 0)
+    ;
+  hal_delay_us(20); //wait vreg to stabilize (NA on ths mcu?)
+  ADC1->CFGR1 = 0 //12bit, no-DMA
+    //| ADC_CFGR1_ALIGN //L-align (default R)
+    | ADC_CFGR1_OVRMOD | ADC_CFGR1_DISCEN //overrun-mode, discontinuous (one-shot), 1-channel
+    ;
+  ADC1->CFGR2 = 0; //use ADCCLK
+  ADC1->SMPR = 6; //sample time 71.5 adc clock cycles
+  ADC->CCR = ADC_CCR_TSEN | ADC_CCR_VREFEN; //en internal channels: Temp,Vref
+  ADC1->CR |= ADC_CR_ADCAL; //start calibration
+  while( ADC1->CR & ADC_CR_ADCAL )
+    ;
+  ADC1->IER = 0;
+  ADC1->ISR = 0x7ff; //clear flags
+  ADC1->CR |= ADC_CR_ADEN; //enable ADC
+  while( !(ADC1->ISR & ADC_ISR_ADRDY) )
+    ;
+  
   inited = true;
 }
 
@@ -129,6 +159,62 @@ void Board::pwr_charge(bool en)
     //CHG_EN::mode(MODE_OUTPUT);
   }
   */
+}
+
+//-----------------------------------------------------------------------------
+//                  ADC
+//----------------------------------------------------------------------------
+
+//VREFINT bandgap voltage, calibrated value @30C+-5C VDDA = 3.3V+-10mV
+#define VREFINT_CAL_ADDR  ((uint16_t*)0x1FFFF7BA)
+#define VREFINT_CAL_VAL   (*VREFINT_CAL_ADDR)
+
+//VDDA = 3.3V x VREFINT_CAL / VREFINT_DATA
+//VCHANNELx = (VDDA * ADC_DATAx) / FULL_SCALE
+//VCHANNELx = (3.3V * VREFINT_CAL * ADC_DATAx) / (VREFINT_DATA * FULL_SCALE)
+//where:  VREFINT_CAL is the VREFINT calibration value
+//        VREFINT_DATA is the actual VREFINT output value converted by the ADC
+//        ADC_DATAx is the value measured by the ADC on channel x (right-aligned)
+//        FULL_SCALE is the maximum digital value of the ADC output. (e.g. 12-bit = 4095)
+
+static uint32_t adcReadChannel_(int chan) //single channel sample
+{
+  if( chan < 0 || chan > 17 )
+    return 0;
+  
+  ADC1->CHSELR = (1 << chan);
+  ADC1->ISR = ADC_ISR_EOS; //clear end-of-sequence flag
+  ADC1->CR |= ADC_CR_ADSTART; //start conversion
+  while( !(ADC1->ISR & ADC_ISR_EOS) )
+    ;
+  //ADC1->ISR = ADC_ISR_EOC; //w1 to clear
+  return ADC1->DR; //reading DR clears EOC
+}
+
+uint32_t Board::adcRead(adc_chan_e chan, int oversample)
+{
+  uint32_t adc_raw=0;
+  for(int x=0; x < (1 << oversample); x++) {
+    adc_raw += adcReadChannel_((int)chan);
+  }
+  return adc_raw >> oversample;
+}
+
+uint32_t Board::adcReadMv(adc_chan_e chan, int oversample)
+{
+  uint32_t adc_raw=0, vrefint=0;
+  
+  for(int x=0; x < (1 << oversample); x++) {
+    vrefint += adcReadChannel_((int)ADC_VREFINT);
+    adc_raw += adcReadChannel_((int)chan);
+  }
+  vrefint >>= oversample;
+  adc_raw >>= oversample;
+  
+  //Vref[mV] = 3300 * VrefCal / adcMax <-- cal @ 12-bit resolution?
+  //Vref[mV] = Vdda * vrefint / adcMax  <-- as measured
+  const int VDDA = 3300 * VREFINT_CAL_VAL / vrefint;
+  return ((adc_raw * VDDA) >> 12);
 }
 
 //------------------------------------------------  
