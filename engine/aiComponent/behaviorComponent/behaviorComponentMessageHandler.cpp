@@ -39,7 +39,7 @@
 
 #include "clad/types/behaviorComponent/userIntent.h"
 
-#define LOG_CHANNEL "BehaviorSystem"
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -205,7 +205,7 @@ void BehaviorComponentMessageHandler::UpdateDependent(const BCCompMap& dependent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bContainer, BehaviorSystemManager& bsm )
 {
-  LOG_DEBUG("BehaviorComponentMessageHandler.OnInfoFaceStarted", "");
+  LOG_INFO("BehaviorComponentMessageHandler.OnEnterInfoFace", "");
   ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
   ANKI_VERIFY(waitBehavior != nullptr, "BehaviorComponentMessageHandler.OnEnterInfoFace.NoWait", "Could not find wait behavior");
 
@@ -246,7 +246,7 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
                                                       bool clearTrigger )
 {
 
-  LOG_DEBUG("BehaviorComponentMessageHandler.OnInfoFaceStarted.ExitPairing", "");
+  LOG_INFO("BehaviorComponentMessageHandler.OnExitInfoFace", "clearTrigger:%d", clearTrigger);
 
   auto& contComp = _robot.GetAIComponent().GetComponent<ContinuityComponent>();
   contComp.UpdateInfoFace(false);

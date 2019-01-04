@@ -1,0 +1,5 @@
+{
+  "behaviorID": "BoxDemoAlexaGetIn",
+  "behaviorClass": "AnimSequence",
+  "animTriggers": ["WakeupGetout"]
+}

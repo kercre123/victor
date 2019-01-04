@@ -4,7 +4,8 @@
 
   "behaviors": [
     "ResetStateInternal",
-    "ModeSelector"
+    // TODO:(bn) master: don't hardcode mode selector here, what if we are in onboarding or dev do nothing!
+    "BoxDemoBase"
   ],
 
   "anonymousBehaviors": [

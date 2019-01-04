@@ -24,7 +24,8 @@
 
 // if set to 1, use strings to avoid triggering massive rebuilds when clad changes
 // otherwise, use the enums to guarantee compile-time errors for invalid ids
-#define BEHAVIOR_ID_DEV_MODE ANKI_DEVELOPER_CODE
+// TEMP: BOX: disable this in release builds to speed up incremental builds for device
+#define BEHAVIOR_ID_DEV_MODE ANKI_DEV_CHEATS // ANKI_DEVELOPER_CODE
 
 #if BEHAVIOR_ID_DEV_MODE
 // forward declare behavior id rather than include

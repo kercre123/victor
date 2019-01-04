@@ -192,7 +192,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   for( const auto& stateConfig : config[kStateConfigKey] ) {
     State state(stateConfig);
     if (kDebugInternalStatesBehavior) {
-      PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.LoadStateFromConfig", "%s", state._name.c_str());
+      LOG_DEBUG("InternalStatesBehavior.LoadStateFromConfig", "%s", state._name.c_str());
     }
     AddState(std::move(state));
   }
@@ -269,9 +269,9 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
                         _states->size());
   }
 
-  PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.StatesCreated",
-                 "Created %zu states",
-                 _states->size());
+  LOG_DEBUG("InternalStatesBehavior.StatesCreated",
+            "Created %zu states",
+            _states->size());
 
   const std::string& initialStateStr = JsonTools::ParseString(config, kInitialStateKey, "InternalStatesBehavior.StateConfig");
   auto stateIt = _stateNameToID.find(initialStateStr);
@@ -364,7 +364,7 @@ void InternalStatesBehavior::InitBehavior()
     strategy->Init(GetBEI());
   }
 
-  PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.Init",
+  LOG_DEBUG("InternalStatesBehavior.Init",
                  "initialized %zu states",
                  _states->size());
 }
@@ -583,7 +583,7 @@ void InternalStatesBehavior::BehaviorUpdate()
     // TODO:(bn) can behaviors be null?
     if( !IsControlDelegated() ) {
       if( nullptr == state._behavior ) {
-        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.BehaviorUpdate.CancelSelf",
+        LOG_INFO("InternalStatesBehavior.BehaviorUpdate.CancelSelf",
                       "%s: in state '%s', behavior not specified, canceling self",
                       GetDebugLabel().c_str(),
                       state._name.c_str());
@@ -624,9 +624,9 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   // TODO:(bn) channel for high level ai?
   const std::string& oldStateStr = (_currState  != InvalidStateID) ? _states->at(_currState )._name : "<NONE>";
   const std::string& newStateStr = (targetState != InvalidStateID) ? _states->at(targetState)._name : "<NONE>";
-  PRINT_CH_INFO("Unfiltered", "InternalStatesBehavior.TransitionToState",
-                "Transition from state '%s' -> '%s'",
-                oldStateStr.c_str(), newStateStr.c_str());
+  LOG_INFO("InternalStatesBehavior.TransitionToState",
+           "Transition from state '%s' -> '%s'",
+           oldStateStr.c_str(), newStateStr.c_str());
   // tell subclass for debug/das
   OnStateNameChange( oldStateStr, newStateStr );
 
@@ -677,7 +677,7 @@ bool InternalStatesBehavior::PutDownBlockIfNecessary(State& state)
       _isRunningPutDownBlock = true;
       DelegateIfInControl(_putDownBlockBehavior.get(),
         [this, &state](){
-          PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.PutDownBlockBehavior.Complete",
+          LOG_INFO("InternalStatesBehavior.PutDownBlockBehavior.Complete",
                         "%s: in state '%s', finished PutDownBlock behavior",
                         GetDebugLabel().c_str(),
                         state._name.c_str());
@@ -699,14 +699,14 @@ bool InternalStatesBehavior::RunStateGetInIfAble(State& state)
   if(state._getInBehavior != nullptr ) {
     if( state._getInBehavior->WantsToBeActivated() ) {
       _isRunningGetIn = true;
-      PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Delegate",
+      LOG_INFO("InternalStatesBehavior.GetInBehavior.Delegate",
                     "%s: transitioning into state '%s', so will delegate to get in '%s'",
                     GetDebugLabel().c_str(),
                     state._name.c_str(),
                     state._getInBehavior->GetDebugLabel().c_str());
       DelegateIfInControl(state._getInBehavior.get(),
         [this, &state](){
-          PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Complete",
+          LOG_INFO("InternalStatesBehavior.GetInBehavior.Complete",
                         "%s: in state '%s', finished get in behavior",
                         GetDebugLabel().c_str(),
                         state._name.c_str());
@@ -716,7 +716,7 @@ bool InternalStatesBehavior::RunStateGetInIfAble(State& state)
       return true;
     }
     else {
-      PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Skip",
+      LOG_INFO("InternalStatesBehavior.GetInBehavior.Skip",
                     "%s: transitioning into state '%s', but get in behavior '%s' doesn't want to activate",
                     GetDebugLabel().c_str(),
                     state._name.c_str(),
@@ -731,7 +731,7 @@ bool InternalStatesBehavior::RunStateGetInIfAble(State& state)
 void InternalStatesBehavior::RunMainStateBehavior(State& state)
 {
   if( nullptr == state._behavior ) {
-    PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.TransitionToState.CancelSelf",
+    LOG_INFO("InternalStatesBehavior.TransitionToState.CancelSelf",
                   "%s: in state '%s', doesn't have normal behavior, canceling",
                   GetDebugLabel().c_str(),
                   state._name.c_str());
@@ -814,7 +814,7 @@ void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
                    _name.c_str(),
                    _getInBehaviorName.c_str());
 
-    PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.GetInBehavior.Defined",
+    LOG_DEBUG("InternalStatesBehavior.GetInBehavior.Defined",
                    "state '%s' found behavior %p matching name '%s'",
                    _name.c_str(),
                    _getInBehavior.get(),
@@ -881,7 +881,7 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
 
       _adjustedStartTime_s += pausedFor_s;
 
-      PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.State.PausedFor",
+      LOG_DEBUG("InternalStatesBehavior.State.PausedFor",
                      "State '%s' was paused for %fs",
                      _name.c_str(),
                      pausedFor_s);
