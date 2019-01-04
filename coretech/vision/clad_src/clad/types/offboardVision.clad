@@ -20,7 +20,7 @@ structure OffboardImageReady {
 }
 
 structure OffboardResultReady {
-  string            jsonResult
+  string[uint_16]   jsonResult
 }
 
 } // namespace Vision

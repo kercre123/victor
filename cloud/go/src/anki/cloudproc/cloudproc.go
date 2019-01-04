@@ -1,6 +1,7 @@
 package cloudproc
 
 import (
+	"anki/box"
 	"anki/jdocs"
 	"anki/log"
 	"anki/logcollector"
@@ -76,6 +77,9 @@ func Run(ctx context.Context, procOptions ...Option) {
 			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
+	launchProcess(&wg, func() {
+		box.Run(ctx)
+	})
 	wg.Wait()
 }
 

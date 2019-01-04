@@ -14,6 +14,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "coretech/messaging/shared/LocalUdpClient.h"
+#include "coretech/messaging/shared/socketConstants.h"
 
 #include "coretech/neuralnets/neuralNetFilenames.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
@@ -81,9 +82,11 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
   }
   
   // Anything not talking over FileIO is assumed to be talking over UDP
-  if(Vision::OffboardCommsType::FileIO != _commsType)
+  if(Vision::OffboardCommsType::FileIO != _commsType && _udpClient == nullptr)
   {
     _udpClient.reset(new LocalUdpClient());
+    const bool udpSuccess = _udpClient->Connect(LOCAL_SOCKET_PATH "box_server", LOCAL_SOCKET_PATH "_box_vision_client");
+    LOG_INFO("OffboardModel.Connect.Result", "%s", udpSuccess ? "Success" : "FAILED");
   }
   
   return RESULT_OK;
@@ -269,9 +272,7 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
       } else {
         //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Read %zd/%lu from robot", n, sizeof(buf));
 
-        Vision::OffboardResultReady resultReadyMsg;
-        // TODO: turn buf into resultReadyMsg
-        // _currentConnectionData->PushArrivedMessage((const uint8_t *) buf, (uint32_t) n, addr);
+        Vision::OffboardResultReady resultReadyMsg{(const uint8_t*)buf, (size_t)n};
         Json::Reader reader;
         Json::Value detectionResult;
         const bool parseSuccess = reader.parse(resultReadyMsg.jsonResult, detectionResult);
