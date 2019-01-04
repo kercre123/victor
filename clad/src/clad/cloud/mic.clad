@@ -53,7 +53,8 @@ structure AudioData {
 structure IntentResult {
 	string intent,
 	string[uint_16] parameters,
-	string[uint_16] metadata
+	string[uint_16] metadata,
+	string[uint_16] query,
 }
 
 structure IntentError {

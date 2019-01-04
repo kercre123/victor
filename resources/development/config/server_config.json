@@ -4,5 +4,6 @@
 	"chipper": "chipper-dev.api.anki.com:443",
 	"check": "conncheck.global.anki-dev-services.com/ok",
 	"logfiles": "s3://anki-device-logs-dev/victor",
-	"appkey": "xiepae8Ach2eequiphee4U"
+	"appkey": "xiepae8Ach2eequiphee4U",
+	"box": "TODO"
 }

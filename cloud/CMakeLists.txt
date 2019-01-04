@@ -46,7 +46,8 @@ set(GATEWAY_PROTO_SRCS "${GATEWAY_PROTO_SRCS}" PARENT_SCOPE)
 set(PROTOBUF_OUTPUT_DIR "${PROTOBUF_OUTPUT_DIR}" PARENT_SCOPE)
 set(GATEWAY_PROTO_HOME_DIR "${GATEWAY_PROTO_HOME_DIR}" PARENT_SCOPE)
 
-set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATEWAY_GRPC_GO_GEN_SRCS}" "${CLAD_GATEWAY_GEN_SRCS}")
+get_property(VISION_CLAD_SRCS GLOBAL PROPERTY VISION_GO_GEN_SRCS)
+set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATEWAY_GRPC_GO_GEN_SRCS}" "${CLAD_GATEWAY_GEN_SRCS}" "${VISION_CLAD_SRCS}")
 
 # preserving this now-unused option as an example of how to set variables at build times
 # hopefully someday this saves someone hours of figuring out how many backslashes are necessary
