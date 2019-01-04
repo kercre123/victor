@@ -97,6 +97,11 @@ enum uint_16 BehaviorID {
   BlackJackRequestToPlayAgain,
   BlackJackTextToSpeech,
 
+  // victorBehaviorTree/box
+  BoxDemoAlexa,
+  BoxDemoBase,
+  BoxDemoBoot,
+
   // victorBehaviorTree/character
   HowOldAreYou,
   HowOldAreYouCounting,

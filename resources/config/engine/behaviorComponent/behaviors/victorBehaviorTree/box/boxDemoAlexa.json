@@ -1,0 +1,9 @@
+{
+  "behaviorID": "BoxDemoAlexa",
+  "behaviorClass": "DispatcherStrictPriority",
+  "interruptActiveBehavior": true,
+  "behaviors": [
+    "Alexa",
+    "Wait"
+  ]
+}

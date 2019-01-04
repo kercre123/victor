@@ -1,0 +1,5 @@
+{
+  "behaviorID": "BoxDemoBoot",
+  "behaviorClass": "AnimSequence",
+  "animTriggers": ["InitialWakeUp"]
+}

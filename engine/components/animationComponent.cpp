@@ -651,11 +651,14 @@ void AnimationComponent::AddKeepFaceAliveDisableLock(const std::string& lockName
 
 void AnimationComponent::RemoveKeepFaceAliveDisableLock(const std::string& lockName)
 {
-  if( ANKI_VERIFY( _numKeepFaceAliveDisableLocks > 0,
-                   "AnimationComponent.RemoveKeepFaceAliveDisableLock.NotLocked",
-                   "Removing lock '%s', but no locks present",
-                   lockName.c_str() ) ) {
+  // if( ANKI_VERIFY( _numKeepFaceAliveDisableLocks > 0,
+  //                  "AnimationComponent.RemoveKeepFaceAliveDisableLock.NotLocked",
+  //                  "Removing lock '%s', but no locks present",
+  //                  lockName.c_str() ) ) {
 
+  if( _numKeepFaceAliveDisableLocks > 0 ) {
+    // BN: commented out above assert to avoid dealing with face info screen issues
+  
     _numKeepFaceAliveDisableLocks--;
 
     LOG_INFO("AnimationComponent.KeepFaceAlive.DisableLock.Removed",
