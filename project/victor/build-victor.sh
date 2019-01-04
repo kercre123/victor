@@ -223,6 +223,13 @@ rsync -raz --delete \
   ${TOPLEVEL}/EXTERNALS/pffft/pffft \
   ${TOPLEVEL}/EXTERNALS/coretech_external/build/
 
+# PUK ONLY 
+# for pocketSphinx (dev wakeword engine)
+# this will force a full build each time :(
+# but --keep-old-files would mess with switching branches.
+tar -C ${TOPLEVEL}/EXTERNALS/anki-thirdparty/ -xzf ${TOPLEVEL}/pocketSphinx.tar.gz
+# /PUK ONLY
+
 #
 # Get short commit sha
 #

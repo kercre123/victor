@@ -7,6 +7,7 @@ asset_project(
                 ('assets', 'cubeFirmware/cube.dfu'),
                 ('externals/anki-thirdparty/sensory', 'hey_vector/**/*.raw'),
                 ('externals/anki-thirdparty/sensory', 'alexa/**/*.raw'),
+                ('externals/anki-thirdparty/pocketsphinx', 'model/**/*'),
                 ('externals/animation-assets', 'animations/**/*.bin'),
                 ('externals/animation-assets', 'animationGroups/**/*.json'),
                 ('externals/animation-assets', 'sprites/**/*.png'),

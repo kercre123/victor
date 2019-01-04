@@ -155,7 +155,8 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
     _micDataProcessor->VoiceTriggerWordDetection( info );
     SendRecognizerDasLog( info, nullptr );
   };
-  _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
+  //_speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
+  _speechRecognizerSystem->InitPocketSphinx(dataLoader, callback);
   _micDataProcessor->Init();
   
   if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
