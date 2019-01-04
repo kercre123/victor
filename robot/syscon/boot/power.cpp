@@ -26,25 +26,15 @@ void Power::init(void) {
 }
 
 static inline void disableHead(void) {
-  #ifdef WHISKEY
   MAIN_EN_WIS::mode(MODE_OUTPUT);
   MAIN_EN_WIS::reset();
-  #else
-  MAIN_EN_VIC::mode(MODE_OUTPUT);
-  MAIN_EN_VIC::reset();
-  #endif
 }
 
 static inline void enableHead(void) {
   BODY_TX::mode(MODE_OUTPUT);
 
-  #ifdef WHISKEY
   MAIN_EN_WIS::mode(MODE_OUTPUT);
   MAIN_EN_WIS::set();
-  #else
-  MAIN_EN_VIC::mode(MODE_OUTPUT);
-  MAIN_EN_VIC::set();
-  #endif
 }
 
 void Power::setMode(PowerMode set) {

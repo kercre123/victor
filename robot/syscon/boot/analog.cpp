@@ -64,8 +64,7 @@ static uint16_t volatile adc_values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
 
 static inline void leds_off(void) {
-  // Shifing by 5 is enough to disable LEDs
-  #ifdef WHISKEY
+  // Shifing by 5 is enough to disable LEDs (WHISKEY ONLY)
   LED_DAT_WIS::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
@@ -76,18 +75,6 @@ static inline void leds_off(void) {
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
   __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  #else
-  LED_DAT_VIC::reset();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  LED_DAT_VIC::set();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  __nop(); LED_CLK::set(); __nop(); LED_CLK::reset();
-  #endif  
 }
 
 void Analog::init(void) {
@@ -155,7 +142,6 @@ void Analog::init(void) {
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
 
   // Configure all our GPIO to what it needs to be
-  #ifdef BOOTLOADER
   nCHG_PWR::type(TYPE_PUSHPULL);
   nCHG_PWR::mode(MODE_OUTPUT);
   nCHG_PWR::reset();
@@ -209,34 +195,20 @@ void Analog::init(void) {
   nVENC_EN::set();
   nVENC_EN::mode(MODE_OUTPUT);
 
-  #ifndef DEBUG
-  // Cap-sense
-  #ifndef WHISKEY
-  CAPO_VIC::reset();
-  CAPO_VIC::mode(MODE_OUTPUT);
-  #endif
   CAPI::alternate(2);
   CAPI::mode(MODE_ALTERNATE);
-  
-  // LEDs
-  #ifdef WHISKEY
+
+  #ifndef DEBUG
+  // LEDs (WHISKEY ONLY)
   LED_DAT_WIS::type(TYPE_OPENDRAIN);
-  LED_CLK::type(TYPE_OPENDRAIN);
   LED_DAT_WIS::reset();
-  LED_CLK::reset();
   LED_DAT_WIS::mode(MODE_OUTPUT);
-  LED_CLK::mode(MODE_OUTPUT);
-  #else
-  LED_DAT_VIC::type(TYPE_OPENDRAIN);
+
   LED_CLK::type(TYPE_OPENDRAIN);
-  LED_DAT_VIC::reset();
   LED_CLK::reset();
-  LED_DAT_VIC::mode(MODE_OUTPUT);
   LED_CLK::mode(MODE_OUTPUT);
-  #endif
 
   leds_off();
-  #endif
   #endif
 
   POWER_EN::mode(MODE_INPUT);
