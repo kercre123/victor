@@ -97,9 +97,9 @@ namespace SCL2 GPIO_DEFINE(F, 6);
 namespace SDA2 GPIO_DEFINE(F, 7);
 
 // Lights
-namespace LED_DAT_VIC GPIO_DEFINE(A, 13);
-namespace LED_DAT_WIS GPIO_DEFINE(A, 14);
-namespace LED_CLK GPIO_DEFINE(A, 12);
+namespace LED_DAT GPIO_DEFINE(A, 13);
+namespace LED_CLK_VIC GPIO_DEFINE(A, 12);
+namespace LED_CLK_WIS GPIO_DEFINE(A, 14);
 
 #define DFU_ENTRY_POINT (0xC0C35473)
 #define DFU_FLAG (*(uint32_t*)0x20001FFC)
