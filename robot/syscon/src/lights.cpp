@@ -91,26 +91,26 @@ void Lights::disable(void) {
 static void output_shift_vic(uint8_t data) {
   for (int bit = 0x80; bit > 0; bit >>= 1) {
     if (data & bit) {
-      LED_DAT_VIC::set();    
+      LED_DAT::set();    
     } else {
-      LED_DAT_VIC::reset();
+      LED_DAT::reset();
     }
-    LED_CLK::set(); 
+    LED_CLK_VIC::set(); 
     __asm { nop };
-    LED_CLK::reset();
+    LED_CLK_VIC::reset();
   }
 }
 
 static void output_shift_wis(uint8_t data) {
   for (int bit = 0x80; bit > 0; bit >>= 1) {
     if (data & bit) {
-      LED_DAT_WIS::set();    
+      LED_DAT::set();    
     } else {
-      LED_DAT_WIS::reset();
+      LED_DAT::reset();
     }
-    LED_CLK::set(); 
+    LED_CLK_WIS::set(); 
     __asm { nop };
-    LED_CLK::reset();
+    LED_CLK_WIS::reset();
   }
 }
 
