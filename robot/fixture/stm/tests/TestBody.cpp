@@ -214,7 +214,7 @@ static void BodyLoadTestFirmware(void)
   
   //DEBUG:
   if( g_fixmode < FIXMODE_BODY1 ) {
-    TestCommon::consoleBridge(TO_CONTACTS,5000,0,BRIDGE_OPT_CHG_DISABLE);
+    TestCommon::consoleBridge(TO_CONTACTS,5000,0, BRIDGE_OPT_LOCAL_ECHO | BRIDGE_OPT_LINEBUFFER | BRIDGE_OPT_CHG_DISABLE);
   }
   
   //flush systest line buffer
