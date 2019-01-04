@@ -67,7 +67,7 @@ TEST(DelegationTree, DesignedControlTest)
   
 }
 
-TEST(DelegationTree, DumpBehaviorTransitionsToFile)
+TEST(DelegationTree, DISABLED_DumpBehaviorTransitionsToFile)
 {
   // the accompanying python script will be looking for this file
   std::string outFilename;
@@ -118,7 +118,7 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
   EXPECT_EQ(res, true) << "Error writing file " << outFilename;
 }
 
-TEST(DelegationTree, DumpBehaviorTreeBranchesToFile)	
+TEST(DelegationTree, DISABLED_DumpBehaviorTreeBranchesToFile)	
 {	
   // Creates a file that lists all possible behavior stacks
   std::string outFilename;	
@@ -158,7 +158,7 @@ TEST(DelegationTree, DumpBehaviorTreeBranchesToFile)
   EXPECT_EQ(res, true) << "Error writing file " << outFilename;	
 }
 
-TEST(DelegationTree, CheckActiveFeatures)
+TEST(DelegationTree, DISABLED_CheckActiveFeatures)
 {
   // this test checks that active features are correctly defined, and also dumps the active feature per
   // behavior branch to a file, if specified in the environment
@@ -304,7 +304,7 @@ TEST(DelegationTree, CheckActiveFeatures)
   }
 }
 
-TEST(DelegationTree, PrepareToBeForceActivated)
+TEST(DelegationTree, DISABLED_PrepareToBeForceActivated)
 {
   // doesn't actually test anything. makes a list of those behaviors whose PrepareTobeForceActivated
   // arent sufficient, and they still don't want to be activated

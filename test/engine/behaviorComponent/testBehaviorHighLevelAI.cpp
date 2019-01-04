@@ -207,7 +207,7 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
   
 }
 
-TEST(BehaviorHighLevelAI, PostBehaviorSuggestionsConsidered)
+TEST(BehaviorHighLevelAI, DISABLED_PostBehaviorSuggestionsConsidered)
 {
   // tests that when voice commands that offer post-behavior suggestions end, and then HLAI resumes,
   // that the state is set properly. Typically post-behavior suggestions are non-binding, but we want

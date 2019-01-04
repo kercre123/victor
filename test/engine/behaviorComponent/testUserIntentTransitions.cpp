@@ -33,7 +33,7 @@ MAKE_REGISTRAR( UserIntentsRegistrar )
 #define TEST_INTENT(a,b, testID) static UserIntentsRegistrar autoRegUserIntents_##b(testID);\
         TEST(a,b)
   
-TEST_INTENT(UserIntentsTransitions, SetTimer, "set_timer")
+TEST_INTENT(UserIntentsTransitions, DISABLED_SetTimer, "set_timer")
 {
   TestBehaviorFramework tbf;
   tbf.InitializeStandardBehaviorComponent();
@@ -74,67 +74,67 @@ bool PlaySpecificHelper( std::string entityBehavior, BehaviorID behavior, bool o
 //  EXPECT_TRUE(res);
 //}
 
-TEST_INTENT(UserIntentsTransitions, FistBump, "fist_bump")
+TEST_INTENT(UserIntentsTransitions, DISABLED_FistBump, "fist_bump")
 {
   const bool res = PlaySpecificHelper( "fist_bump", BehaviorID::FistBumpVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
-TEST_INTENT(UserIntentsTransitions, RollCube, "roll_cube")
+TEST_INTENT(UserIntentsTransitions, DISABLED_RollCube, "roll_cube")
 {
   const bool res = PlaySpecificHelper( "roll_cube", BehaviorID::RollCubeVoiceCommand, true );
   EXPECT_TRUE(res);
 }
 
-TEST_INTENT(UserIntentsTransitions, ComeHere, "imperative_come")
+TEST_INTENT(UserIntentsTransitions, DISABLED_ComeHere, "imperative_come")
 {
   const bool res = IntentHelper( UserIntent::Createimperative_come({}), BehaviorID::ComeHereVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
-TEST_INTENT(UserIntentsTransitions, LookAtMe, "imperative_lookatme")
+TEST_INTENT(UserIntentsTransitions, DISABLED_LookAtMe, "imperative_lookatme")
 {
   const bool res = IntentHelper( UserIntent::Createimperative_lookatme({}), BehaviorID::LookAtMeVoiceCommand, true );
   EXPECT_TRUE(res);
 }
 
-TEST_INTENT(UserIntentsTransitions, LookOverThere, "imperative_lookoverthere")
+TEST_INTENT(UserIntentsTransitions, DISABLED_LookOverThere, "imperative_lookoverthere")
 {
   const bool res = IntentHelper( UserIntent::Createimperative_lookoverthere({}), BehaviorID::LookOverThereVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
-TEST_INTENT(UserIntentsTransitions, WhatsMyName, "names_ask")
+TEST_INTENT(UserIntentsTransitions, DISABLED_WhatsMyName, "names_ask")
 {
   const bool res = IntentHelper( UserIntent::Createnames_ask({}), BehaviorID::WhatsMyNameVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
-TEST_INTENT(UserIntentsTransitions, MeetVictor, "meet_victor")
+TEST_INTENT(UserIntentsTransitions, DISABLED_MeetVictor, "meet_victor")
 {
   const bool res = IntentHelper( UserIntent::Createmeet_victor( UserIntent_MeetVictor("cozmo") ), BehaviorID::MeetVictor, true );
   EXPECT_TRUE(res);
 }
   
-TEST_INTENT(UserIntentsTransitions, BeQuiet, "be_quiet")
+TEST_INTENT(UserIntentsTransitions, DISABLED_BeQuiet, "be_quiet")
 {
   const bool res = IntentHelper( UserIntent::Createimperative_quiet({}), BehaviorID::BeQuietAnims, true );
   EXPECT_TRUE(res);
 }
 
-TEST_INTENT(UserIntentsTransitions, GoHome, "system_charger")
+TEST_INTENT(UserIntentsTransitions, DISABLED_GoHome, "system_charger")
 {
   const bool res = IntentHelper( UserIntent::Createsystem_charger({}), BehaviorID::FindAndGoToHome, true );
   EXPECT_TRUE(res);
 }
   
-TEST_INTENT(UserIntentsTransitions, ShutUp, "shut_up")
+TEST_INTENT(UserIntentsTransitions, DISABLED_ShutUp, "shut_up")
 {
   const bool res = IntentHelper( UserIntent::Createimperative_shutup({}), BehaviorID::ShutUpAnims, true );
   EXPECT_TRUE(res);
 }
 
-TEST_INTENT(UserIntentsTransitions, Sleep, "system_sleep")
+TEST_INTENT(UserIntentsTransitions, DISABLED_Sleep, "system_sleep")
 {
   const bool res = IntentHelper( UserIntent::Createsystem_sleep({}), BehaviorID::GoToSleep, true );
   EXPECT_TRUE(res);
@@ -162,7 +162,7 @@ TEST_INTENT(UserIntentsTransitions, Sleep, "system_sleep")
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // the testing of the tests
-TEST(UserIntentsTransitions, CompletedHaveTests)
+TEST(UserIntentsTransitions, DISABLED_CompletedHaveTests)
 {
   TestIntentsFramework tif;
   const auto& completedLabels = tif.GetCompletedLabels( TestIntentsFramework::EHandledLocation::Elsewhere );

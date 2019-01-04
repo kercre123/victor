@@ -32,7 +32,7 @@ extern CozmoContext* cozmoContext;
 
 namespace {
   
-TEST(UserIntentsParsing, CloudSampleFileParses)
+TEST(UserIntentsParsing, DISABLED_CloudSampleFileParses)
 {
   Json::Value config;
   
@@ -130,7 +130,7 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
   }
 }
 
-TEST(UserIntentsParsing, CompletedInCloudList)
+TEST(UserIntentsParsing, DISABLED_CompletedInCloudList)
 {
   // tests that every completed intent has a match for both app and cloud in user_intent_map.
   
