@@ -33,6 +33,7 @@ set(COMMON_LIBS
   jsoncpp
   util
   cti_common
+  cti_messaging    # For offboard neural net comms
   cti_vision
   ${OPENCV_LIBS}
 )

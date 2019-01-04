@@ -28,6 +28,7 @@ static const Util::SymmetricMap<VisionMode, std::string> sNetModeLUT{
   {VisionMode::DetectingPeople, "person_detector"},
   {VisionMode::DetectingHands,  "hand_detector"},
   {VisionMode::DetectingPets,   "mobilenet"}, // TODO: Update to real network
+  {VisionMode::OffboardVision,  "test_offboard_model"},
 };
   
 bool GetNeuralNetsForVisionMode(const VisionMode mode, std::set<std::string>& networkNames)

@@ -11,6 +11,7 @@ set(CLAD_INCLUDES
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/coretech/vision")
 set(PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
+set(GO_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladgo/src/clad/vision")
 
 generate_clad_cpp(LIBRARY "cti_vision_clad"
   STATIC
@@ -27,6 +28,19 @@ generate_clad_py(
   INCLUDES "${CLAD_INCLUDES}"
   OUTPUT_SRCS CLAD_PY_GEN_SRCS
 )
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/cti_vision_clad_go.srcs.lst" GO_SRCS)
+generate_clad(
+    TARGET "cti_vision_clad_go"
+    SRCS "${GO_SRCS}"
+    RELATIVE_SRC_DIR "clad/types"
+    OUTPUT_DIR "${GO_OUTPUT_DIR}"
+    EMITTER "${CLAD_BASE_DIR}/emitters/Go_emitter.py"
+    OUTPUT_EXTS ".go"
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS VISION_GO_GEN_SRCS
+)
+set_property(GLOBAL PROPERTY VISION_GO_GEN_SRCS "${VISION_GO_GEN_SRCS}")
 
 target_include_directories(cti_vision_clad
   PUBLIC

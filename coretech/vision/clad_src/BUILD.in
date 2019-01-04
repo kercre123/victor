@@ -14,3 +14,11 @@ cxx_project(
     headers = [],
     platform_headers = [],
 )
+
+cxx_project(
+    name = 'cti_vision_clad_go',
+    srcs = glob(['clad/types/offboardVision.clad']),
+    platform_srcs = [],
+    headers = [],
+    platform_headers = [],
+)

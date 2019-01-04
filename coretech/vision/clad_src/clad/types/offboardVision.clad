@@ -1,0 +1,27 @@
+/** Clad message definitions for communicating with offboard vision processes
+ */
+
+namespace Anki {
+namespace Vision {
+
+enum uint_8 OffboardCommsType {
+  FileIO,
+  CLAD
+}
+
+structure OffboardImageReady {
+  uint_32           timestamp,
+  uint_32           numRows, 
+  uint_32           numCols,
+  uint_32           numChannels,
+  bool              isCompressed = 1,
+  bool              isEncrypted = 0,
+  string            filename
+}
+
+structure OffboardResultReady {
+  string[uint_16]   jsonResult
+}
+
+} // namespace Vision
+} // namespace Anki

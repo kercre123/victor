@@ -13,6 +13,7 @@ type URLs struct {
 	Check    string `json:"check"`
 	LogFiles string `json:"logfiles"`
 	AppKey   string `json:"appkey"`
+	Box      string `json:"box"`
 }
 
 // DefaultURLs provides a default, hard-coded configuration that can be used
@@ -24,6 +25,7 @@ var DefaultURLs = URLs{
 	Check:    "conncheck.global.anki-dev-services.com/ok",
 	LogFiles: "s3://anki-device-logs-dev/victor",
 	AppKey:   "xiepae8Ach2eequiphee4U",
+	Box:      "",
 }
 
 // Env represents the URLs associated with the most recent successful call to
