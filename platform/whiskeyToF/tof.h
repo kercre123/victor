@@ -47,9 +47,12 @@ public:
   int SetupSensors();
   int StartRanging();
   int StopRanging();
+  bool IsRanging();
   
 #if FACTORY_TEST
   int PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance);
+  bool IsCalibrating();
+  void SetLogPath(const std::string& path);
 #endif
   
 private:

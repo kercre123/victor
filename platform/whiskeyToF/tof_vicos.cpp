@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <thread>
 #include <mutex>
+#include <queue>
 
 #ifdef SIMULATOR
 #error SIMULATOR should be defined by any target using tof_vicos.cpp
@@ -53,7 +54,18 @@ namespace {
   std::mutex _mutex;
   bool _stopProcessing = false;
 
+  std::mutex _commandLock;
+  enum Command
+    {
+     StartRanging,
+     StopRanging,
+     SetupSensors,
+     PerformCalibration
+    };
+  std::queue<Command> _commandQueue;
+
   std::atomic<bool> _rangingEnabled;
+  std::atomic<bool> _isCalibrating;
 
   // The latest available tof data
   RangeDataRaw _latestData;
@@ -71,6 +83,11 @@ namespace {
 
   VL53L1_CalibrationData_t _origCalib_left;
   VL53L1_CalibrationData_t _origCalib_right;
+
+  uint32_t _distanceToCalibTarget_mm = 0;
+  float _calibTargetReflectance = 0;
+
+  std::string _logPath = "/";
 
   // Don't setup and read from the sensors until this console var is true
   CONSOLE_VAR(bool, kStartToF, "ToF", false);
@@ -128,7 +145,7 @@ int last_error_get(const int dev) {
 int stop_ranging(const int dev_no) {
   const int rc = ioctl(dev_no, VL53L1_IOCTL_STOP, NULL);
   if (errno == EBUSY) {
-    warn("already stopped");
+    PRINT_NAMED_WARNING("","already stopped");
     return 0;
   }
   return rc;
@@ -138,7 +155,7 @@ int stop_ranging(const int dev_no) {
 int start_ranging(const int dev) {
   int rc = ioctl(dev, VL53L1_IOCTL_START, NULL);
   if (errno == EBUSY) {
-    warn("Already started or calibrating");
+    PRINT_NAMED_WARNING("","already started or calibrating");
     return 0;
   }
   return rc;
@@ -295,11 +312,12 @@ int set_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
 }
 
 int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
-                             int dev)
+                             int dev,
+                             std::string meta = "")
 {
   PRINT_NAMED_ERROR("","SAVING %u %u %u", dev, tofR_fd, tofL_fd);
-  char path[32];
-  sprintf(path, "/tof_%s.bin", (dev == tofR_fd ? "right" : "left"));
+  char path[128];
+  sprintf(path, "%stof_%s%s.bin", _logPath.c_str(), (dev == tofR_fd ? "right" : "left"), meta.c_str());
   PRINT_NAMED_ERROR("","%s", path);
   int rc = -1;
   FILE* f = fopen(path, "w+");
@@ -480,8 +498,8 @@ int run_refspad_calibration(const int dev)
   rc = save_calibration_to_disk(calib, dev);
   return_if_not(rc >= 0, rc, "Save calibration to disk failed: %d %d", rc, errno);
 
-  // rc = set_calibration_data(dev, calib);
-  // return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
+  rc = set_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
 
   usleep(50000);
   
@@ -589,8 +607,6 @@ int run_offset_calibration(const int dev, uint32_t distanceToTarget_mm, float ta
   return rc;
 }
 
-
-
 #endif
 
 int perform_calibration(int dev,
@@ -633,6 +649,15 @@ int perform_calibration(int dev,
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
 
+  VL53L1_CalibrationData_t calib;
+  memset(&calib, 0, sizeof(calib));
+  rc = get_calibration_data(dev, calib);
+  return_if_not(rc >= 0, rc, "1 Get calibration data failed: %d %d", rc, errno);
+
+  rc = save_calibration_to_disk(calib, dev, "Orig");
+  return_if_not(rc >= 0, rc, "Save calibration to disk failed: %d %d", rc, errno);
+  
+
   rc = run_refspad_calibration(dev);
   return_if_not(rc >= 0, rc, "perform_calibration: run_refspad_calibration %u", rc);
   
@@ -643,6 +668,11 @@ int perform_calibration(int dev,
   return_if_not(rc >= 0, rc, "perform_calibration: run_offset_calibration %u", rc);
 
   return rc;
+}
+
+void ToFSensor::SetLogPath(const std::string& path)
+{
+  _logPath = path;
 }
 
 int run_calibration(uint32_t distanceToTarget_mm,
@@ -663,24 +693,26 @@ int run_calibration(uint32_t distanceToTarget_mm,
                       "Failed to calibrate left sensor %u",
                       rcL);
   }
+  _isCalibrating = false;
 
   return (rcR >= 0 ? rcL : rcR);
 }
 
-int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
-                                  float targetReflectance)
+int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance)
 {
-  return run_calibration(distanceToTarget_mm, targetReflectance);
+  std::lock_guard<std::mutex> lock(_commandLock);
+  _commandQueue.push(Command::PerformCalibration);
+  _distanceToCalibTarget_mm = distanceToTarget_mm;
+  _calibTargetReflectance = targetReflectance;
+  _isCalibrating = true;
+  return 0;
 }
 
 /// Setup 4x4 multi-zone imaging
 int setup(Sensor which) {
-  int fd = -1;
   int rc = 0;
 
-  PRINT_NAMED_ERROR("","open dev\n");
-  fd = open_dev(which);
-  return_if_not(fd >= 0, -1, "Could not open VL53L1 device");
+  int fd = (which == LEFT ? tofL_fd : tofR_fd);
 
   // Stop all ranging so we can change settings
   PRINT_NAMED_ERROR("","stop ranging\n");
@@ -841,90 +873,123 @@ RangeDataRaw ReadData()
 
 int ToFSensor::StartRanging()
 {
-  if(tofR_fd < 0 || tofL_fd < 0)
-  {
-    SetupSensors();
-  }
-  
-  _rangingEnabled = true;
+  std::lock_guard<std::mutex> lock(_commandLock);
+  _commandQueue.push(Command::StartRanging);
   return 0;
 }
 
 int ToFSensor::StopRanging()
 {
-  _rangingEnabled = false;
+  std::lock_guard<std::mutex> lock(_commandLock);
+  _commandQueue.push(Command::StopRanging);
   return 0;
 }
 
 int ToFSensor::SetupSensors()
 {
-  int res = 0;
-  if(tofR_fd < 0)
-  {
-    tofR_fd = setup(RIGHT);
-  }
-  if(tofR_fd < 0)
-  {
-    PRINT_NAMED_ERROR("","FAILED TO OPEN TOF R");
-    res = -1;
-  }
-
-  if(tofL_fd < 0)
-  {
-    tofL_fd = setup(LEFT);
-  }
-  if(tofL_fd < 0)
-  {
-    PRINT_NAMED_ERROR("","FAILED TO OPEN TOF L");
-    res = -1;
-  }
-
-  return res;
+  std::lock_guard<std::mutex> lock(_commandLock);
+  _commandQueue.push(Command::SetupSensors);
+  return 0;
 }
 
 void ProcessLoop()
 {
-  bool wasRangingEnabled = _rangingEnabled;
-  
   while(!_stopProcessing)
   {
-    if(_rangingEnabled && !wasRangingEnabled)
+    _commandLock.lock();
+    if(_commandQueue.size() > 0)
     {
-      // Start the sensor
-      PRINT_NAMED_ERROR("","start ranging\n");
-      int rc = start_ranging(tofR_fd);
-      if(rc < 0)
-      {
-        break;
-      }
-
-      // Start the sensor
-      PRINT_NAMED_ERROR("","start ranging\n");
-      rc = start_ranging(tofL_fd);
-      if(rc < 0)
-      {
-        break;
-      }
-    }
-    // Stopping will reset the sensor...
-    else if(!_rangingEnabled && wasRangingEnabled)
-    {
-      PRINT_NAMED_ERROR("","stop ranging\n");
-      int rc = stop_ranging(tofR_fd);
-      if(rc < 0)
-      {
-        break;
-      }
-
-      PRINT_NAMED_ERROR("","stop ranging\n");
-      rc = stop_ranging(tofL_fd);
-      if(rc < 0)
-      {
-        break;
-      }
-    }
-    wasRangingEnabled = _rangingEnabled;
+      Command cmd = _commandQueue.front();
+      _commandQueue.pop();
+      _commandLock.unlock();
     
+      switch(cmd)
+      {
+        case Command::StartRanging:
+          {
+            PRINT_NAMED_ERROR("","Command start ranging");
+            int rc = start_ranging(tofR_fd);
+            if(rc < 0)
+            {
+              break;
+            }
+
+            rc = start_ranging(tofL_fd);
+            if(rc < 0)
+            {
+              break;
+            }
+            _rangingEnabled = true;
+          }
+          break;
+        case Command::StopRanging:
+          {
+            PRINT_NAMED_ERROR("","Command stop ranging");
+            int rc = stop_ranging(tofR_fd);
+            if(rc < 0)
+            {
+              break;
+            }
+            
+            rc = stop_ranging(tofL_fd);
+            if(rc < 0)
+            {
+              break;
+            }
+            _rangingEnabled = false;
+          }
+          break;
+        case Command::SetupSensors:
+          {
+            PRINT_NAMED_ERROR("","Command setup sensors")
+            _rangingEnabled = false;
+
+            if(tofR_fd < 0)
+            {
+              tofR_fd = open_dev(RIGHT);
+              if(tofR_fd < 0)
+              {
+                PRINT_NAMED_ERROR("","FAILED TO OPEN RIGHT");
+                break;
+              }
+            }
+            if(tofL_fd < 0)
+            {
+              tofL_fd = open_dev(RIGHT);
+              if(tofL_fd < 0)
+              {
+                PRINT_NAMED_ERROR("","FAILED TO OPEN LEFT");
+                break;
+              }
+            }
+            
+            tofR_fd = setup(RIGHT);
+            if(tofR_fd < 0)
+            {
+              PRINT_NAMED_ERROR("","FAILED TO OPEN TOF R");
+            }
+
+            tofL_fd = setup(LEFT);
+            if(tofL_fd < 0)
+            {
+              PRINT_NAMED_ERROR("","FAILED TO OPEN TOF L");
+            }
+          }
+          break;
+        case Command::PerformCalibration:
+          {
+            PRINT_NAMED_ERROR("","Command perform calibration");
+            _rangingEnabled = false;
+            run_calibration(_distanceToCalibTarget_mm, _calibTargetReflectance);
+          }
+          break;
+      }
+    }
+    else
+    {
+      _commandLock.unlock();
+    }
+
     if(_rangingEnabled)
     {
       RangeDataRaw data = ReadData();
@@ -944,10 +1009,20 @@ void ProcessLoop()
   close(tofL_fd);
 }
 
+bool ToFSensor::IsRanging()
+{
+  return _rangingEnabled;
+}
+
+bool ToFSensor::IsCalibrating()
+{
+  return _isCalibrating;
+}
 
 ToFSensor::ToFSensor()
 {
   _rangingEnabled = false;
+  _isCalibrating = false;
   _processor = std::thread(ProcessLoop);
   _processor.detach();
 }
