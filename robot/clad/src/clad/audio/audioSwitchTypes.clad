@@ -111,6 +111,22 @@ enum uint_32 SwitchGroupType
   Robot_Vic_Stim_Switch_Old_Reference_Only = 2717392740,
   Robot_Vic_Tread_Drive = 4283612440,
   Robot_Vic_Tread_Speed = 724346585,
+  Vic_Robot_Sfx_Rnd_Chirps_Durations = 2640642381,
+}
+
+enum uint_32 Vic_Robot_Sfx_Rnd_Chirps_Durations
+{
+  Duration_01 = 506020965,
+  Duration_02 = 506020966,
+  Duration_03 = 506020967,
+  Duration_04 = 506020960,
+  Duration_05 = 506020961,
+  Duration_06 = 506020962,
+  Duration_07 = 506020963,
+  Duration_08 = 506020972,
+  Duration_09 = 506020973,
+  Duration_10 = 522798551,
+  Invalid = 0,
 }
 
 } // SwitchState

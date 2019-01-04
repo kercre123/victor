@@ -50,6 +50,9 @@ enum uint_32 ParameterType
   Ss_Air_Storm = 3715662592,
   Ss_Air_Timeofday = 3203397129,
   Ss_Air_Turbulence = 4160247818,
+  Victor_Robot_Chirps_Amplitude = 1830018221,
+  Victor_Robot_Chirps_Duration = 2699802478,
+  Victor_Robot_Chirps_Pitch = 769696412,
 }
 
 } // GameParameter
