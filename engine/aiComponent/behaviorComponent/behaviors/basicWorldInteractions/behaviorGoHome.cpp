@@ -283,7 +283,11 @@ void BehaviorGoHome::TransitionToObserveCharger()
     if (farFromCharger || !observedRecently) {
       auto* action = new CompoundActionSequential();
       action->AddAction(new DriveToPoseAction(charger->GenerateObservationPoses(GetRNG())));
-      action->AddAction(new VisuallyVerifyObjectAction(charger->GetID()));
+      
+      auto* visuallyVerifyAction = new VisuallyVerifyObjectAction(charger->GetID());
+      visuallyVerifyAction->SetUseCyclingExposure();
+      action->AddAction(visuallyVerifyAction);
+      
       DelegateIfInControl(action, afterObservationCallback);
     } else {
       afterObservationCallback();
@@ -371,19 +375,12 @@ void BehaviorGoHome::TransitionToDriveToCharger()
   
   auto* driveToAction = new DriveToObjectAction(_dVars.chargerID, PreActionPose::ActionType::DOCKING);
   driveToAction->SetPreActionPoseAngleTolerance(kDriveToChargerPreActionPoseAngleTol_rad);
+  driveToAction->SetVisuallyVerifyWhenDone(false); // We will visually verify position in TransitionToCheckPreTurnPosition()
   DelegateIfInControl(driveToAction,
                       [this](ActionResult result) {
                         const auto resultCategory = IActionRunner::GetActionResultCategory(result);
                         if (resultCategory == ActionResultCategory::SUCCESS) {
                           TransitionToCheckPreTurnPosition();
-                        } else if (result == ActionResult::VISUAL_OBSERVATION_FAILED) {
-                          // If visual observation failed, then we've successfully gotten to the charger
-                          // pre-action pose, but it is no longer there. Delete the charger from the map.
-                          PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToDriveToCharger.DeletingCharger",
-                                              "Deleting charger with ID %d since visual verification failed",
-                                              _dVars.chargerID.GetValue());
-                          const bool removeChargerFromBlockworld = true;
-                          ActionFailure(removeChargerFromBlockworld);
                         } else if ((_dVars.driveToRetryCount++ < _iConfig.driveToRetryCount) &&
                                    ((resultCategory == ActionResultCategory::RETRY) ||
                                     (result == ActionResult::PATH_PLANNING_FAILED_ABORT))) {
@@ -422,13 +419,14 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
   // have moved. This is the last chance to verify that we're in a
   // good position to start the docking sequence.
   
-  // Look forward, then wait a brief time to acquire some more images and
-  // a more accurate pose of the charger. Then verify pose.
-  const int kNumImagesToWaitFor = 2;
+  // Verify that we're seeing the charger, then wait for additional images to ensure we have an accurate pose.
   auto* compoundAction = new CompoundActionSequential();
-  compoundAction->AddAction(new MoveHeadToAngleAction(0.f));
-  compoundAction->AddAction(new WaitForImagesAction(kNumImagesToWaitFor, VisionMode::DetectingMarkers));
-  compoundAction->AddAction(new VisuallyVerifyObjectAction(_dVars.chargerID));
+  auto* visuallyVerifyAction = new VisuallyVerifyObjectAction(_dVars.chargerID);
+  visuallyVerifyAction->SetUseCyclingExposure();
+  compoundAction->AddAction(visuallyVerifyAction);
+  
+  const int kNumAdditionalImagesToWaitFor = 2;
+  compoundAction->AddAction(new WaitForImagesAction(kNumAdditionalImagesToWaitFor, VisionMode::DetectingMarkers));
 
   auto checkPoseFunc = [this]() -> bool {
     const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
@@ -471,6 +469,14 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
                         const bool poseOk = checkPoseFunc();
                         if ((resultCategory == ActionResultCategory::SUCCESS) && poseOk) {
                           TransitionToTurn();
+                        } else if (result == ActionResult::VISUAL_OBSERVATION_FAILED) {
+                          // If visual observation failed, then we've successfully gotten to the charger
+                          // pre-action pose, but it is no longer there. Delete the charger from the map.
+                          PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
+                                              "Deleting charger with ID %d since visual verification failed",
+                                              _dVars.chargerID.GetValue());
+                          const bool removeChargerFromBlockworld = true;
+                          ActionFailure(removeChargerFromBlockworld);
                         } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
                           // Simply go back to the starting pose, which will allow visual
                           // verification to happen again, etc.

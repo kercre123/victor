@@ -77,6 +77,12 @@ namespace Vector {
     
     virtual ~VisuallyVerifyObjectAction();
     
+    // When called, this will cause the action to use the "cycling exposure" vision mode when looking for the object.
+    // This is useful for more robustly verifying an object under adverse lighting conditions, for example. Note that
+    // this will also set NumImagesToWaitFor to a value appropriate for cycling exposure mode.
+    // Note: This must be called before the action is started.
+    void SetUseCyclingExposure();
+    
   protected:
     virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
     virtual ActionResult InitInternal() override;
@@ -86,6 +92,7 @@ namespace Vector {
     Vision::Marker::Code    _whichCode;
     bool                    _objectSeen = false;
     bool                    _markerSeen = false;
+    bool                    _useCyclingExposure = false;
     
   }; // class VisuallyVerifyObjectAction
   

@@ -103,9 +103,22 @@ VisuallyVerifyObjectAction::~VisuallyVerifyObjectAction()
 
 }
 
+void VisuallyVerifyObjectAction::SetUseCyclingExposure()
+{
+  _useCyclingExposure = true;
+
+  // The CyclingExposure mode cycles exposures every 5 frames, with a cycle length of 3. Therefore, wait for 15 images.
+  // Note: This should be computed directly from the vision config instead (VIC-12803)
+  const int kNumImagesToWaitFor = 15;
+  SetNumImagesToWaitFor(kNumImagesToWaitFor);
+}
+
 void VisuallyVerifyObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
   requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  if (_useCyclingExposure) {
+    requests.insert({ VisionMode::CyclingExposure, EVisionUpdateFrequency::High });
+  }
 }
 
 ActionResult VisuallyVerifyObjectAction::InitInternal()

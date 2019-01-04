@@ -279,7 +279,11 @@ namespace Anki {
         // are doing a DriveToPlaceCarriedObject action)
         if(!GetRobot().GetCarryingComponent().IsCarryingObject(object->GetID()))
         {
-          TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_objectID, Radians(0), true, false);
+          const bool headTrackWhenDone = false;
+          auto* turnTowardsObjectAction = new TurnTowardsObjectAction(_objectID,
+                                                                      Radians(0),
+                                                                      _visuallyVerifyWhenDone,
+                                                                      headTrackWhenDone);
           LOG_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                     GetTag(),
                     GetName().c_str(),
