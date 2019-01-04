@@ -21,6 +21,8 @@
 
 #include "coretech/common/engine/jsonTools.h"
 
+#include "whiskeyToF/tof.h"
+
 namespace Anki {
 namespace Vector {
 
@@ -29,6 +31,7 @@ static const char* const kAngleToTurnKey    = "AngleToTurnToSeeTarget_deg";
 static const char* const kDistToDriveKey    = "DistanceToDriveToSeeTarget_mm";
 static const char* const kExpectedObjectKey = "ExpectedObjectType";
 static const char* const kExpectedDistKey   = "ExpectedDistance_mm";
+static const char* const kPerformCalibrationKey   = "PerformCalibration";
 }
 
 BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& config)
@@ -60,6 +63,13 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
                       "Missing %s key from PlaypenDistanceSensor Config", kExpectedDistKey);
   }
 
+  res = JsonTools::GetValueOptional(config, kPerformCalibrationKey, _performCalibration);
+  if(!res)
+  {
+    PRINT_NAMED_ERROR("BehaviorPlaypenDistanceSensor.Constructor.MissingConfigKey",
+                      "Missing %s key from PlaypenDistanceSensor Config", kPerformCalibrationKey.c_str());
+  }
+  
   JsonTools::GetValueOptional(config, kDistToDriveKey, _distToDrive_mm);
   
   SubscribeToTags({EngineToGameTag::RobotObservedObject});
@@ -92,6 +102,11 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
 
   // Record starting angle
   _startingAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
+
+  _calibrationComplete = false;
+  _calibrationRunning = false;
+
+  ToFSensor::getInstance()->SetupSensors();
 
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
@@ -191,8 +206,11 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
 
 void BehaviorPlaypenDistanceSensor::OnBehaviorDeactivated()
 {
+  ToFSensor::getInstance()->StopRanging();
   _startingAngle = 0;
   _numRecordedReadingsLeft = -1;
+  _calibrationComplete = false;
+  _calibrationRunning = false;
 }
 
 void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
@@ -247,14 +265,58 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
 
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(PlaypenConfig::kDistanceSensorHeadAngle_rad);
   action->AddAction(head);
-  
+
   // Once we are perpendicular to the marker, start recording distance sensor readings
   DelegateIfInControl(action.release(), [this]() { TransitionToRecordSensor(); });
 }
 
 void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
 {
-  _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;
+  if(_performCalibration)
+  {
+    WaitForLambdaAction* action = new WaitForLambdaAction([this](Robot& robot)
+      {
+        const bool isCalibrating = ToFSensor::getInstance()->IsCalibrating();
+        if(!_calibrationComplete)
+        {
+          _calibrationComplete = (!isCalibrating && _calibrationRunning);
+        }
+
+        if(!isCalibrating && !_calibrationComplete)
+        {
+          Pose3d markerPose;
+          const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
+          if(res)
+          {
+            float visualDistanceToTarget_mm = markerPose.GetTranslation().x();
+            if(visualDistanceToTarget_mm == 0)
+            {
+              PRINT_NAMED_WARNING("","VISUAL DIST 0 USING EXPECTED");
+              visualDistanceToTarget_mm = _expectedDistanceToObject_mm;
+            }
+            PRINT_NAMED_WARNING("","STARTING CALIBRATION %f", visualDistanceToTarget_mm);
+            ToFSensor::getInstance()->PerformCalibration(visualDistanceToTarget_mm,
+                                                         PlaypenConfig::kDistanceSensorTargetReflectance);
+          }
+        }
+        
+        if(_calibrationComplete)
+        {
+          PRINT_NAMED_ERROR("","CALIBRATION COMPLETE");
+          ToFSensor::getInstance()->StartRanging();
+        }
+        _calibrationRunning = isCalibrating;
+        
+        return _calibrationComplete;
+      });
+    
+    DelegateIfInControl(action, [this]() { _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord; });
+  }
+  else
+  {
+    ToFSensor::getInstance()->StartRanging();
+    _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;
+  }
 }
 
 void BehaviorPlaypenDistanceSensor::TransitionToTurnBack()
@@ -318,9 +380,12 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
       }
     }
 
-    if(lastObservedTime < robot.GetLastImageTimeStamp())
+    if(!Util::IsNear(lastObservedTime, robot.GetLastImageTimeStamp(), 500.f))
     {
-      PRINT_CH_INFO("Behaviors", "BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld","");
+      PRINT_CH_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld",
+                    "%u %u",
+                    lastObservedTime,
+                    robot.GetLastImageTimeStamp());
       return false;
     }
     

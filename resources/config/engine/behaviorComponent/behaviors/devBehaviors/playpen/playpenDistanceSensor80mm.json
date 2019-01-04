@@ -4,5 +4,6 @@
   "AngleToTurnToSeeTarget_deg": -90,
   "DistanceToDriveToSeeTarget_mm": 100,
   "ExpectedObjectType": "Block_LIGHTCUBE3",
-  "ExpectedDistance_mm": 80
+  "ExpectedDistance_mm": 80,
+  "PerformCalibration": false
 }

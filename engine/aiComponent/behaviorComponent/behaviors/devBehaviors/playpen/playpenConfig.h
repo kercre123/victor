@@ -142,6 +142,8 @@ static f32 kDistanceSensorBiasAdjustment_mm = 30;
 // Whiskey ToF is angled 11 degrees down so move head to 11 degrees so ToF is looking forwards
 static f32 kDistanceSensorHeadAngle_rad = DEG_TO_RAD(0); // should be 11 but can't see marker at that angle
 
+static f32 kDistanceSensorTargetReflectance = 50;
+
 // ----------Camera Calibration----------
 // Exposure setting for playpen
 static u16 kExposure_ms                               = 31;
