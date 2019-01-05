@@ -66,6 +66,9 @@ namespace Vector {
   CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,           CONSOLE_GROUP, 1.14f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
 
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
+
+  CONSOLE_VAR(bool, kTheBox_showEyes, "TheBox.Screen", false);
+
 #else
   static const s32 kProcFace_NoiseNumFrames = 0;
 #endif
@@ -658,6 +661,12 @@ namespace Vector {
                                       const Util::RandomGenerator& rng,
                                       Vision::ImageRGB565& output)
   {
+    if( !kTheBox_showEyes ) {
+      // TEMP: the box has no soul
+      // output.FillWith(0);
+      return;
+    }
+
     ANKI_CPU_PROFILE("DrawFace");
 
     bool dirty = false; // set to true to force all stages to render, previous pipeline
