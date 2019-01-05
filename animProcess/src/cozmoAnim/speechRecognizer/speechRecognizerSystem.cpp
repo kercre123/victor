@@ -307,11 +307,8 @@ void SpeechRecognizerSystem::InitAlexa(const RobotDataLoader& dataLoader,
   }
 
   // wrap callback with another check for whether the input signal contains a notch
-  const auto wrappedCallback = [callback=std::move(callback), this](const AudioUtil::SpeechRecognizerCallbackInfo& info){
-    
-    LOG_WARNING("SpeechRecognizerSystem.InitAlexaCallback.Test", "info: %s", info.Description().c_str());
-
-    
+  const auto wrappedCallback = [callback=std::move(callback), this](const AudioUtil::SpeechRecognizerCallbackInfo& info)
+  {
     bool validSignal = true;
     if (_notchDetectorActive || kForceRunNotchDetector) {
       std::lock_guard<std::mutex> lg{_notchMutex};
