@@ -7,6 +7,7 @@ include(aubio)
 include(flatbuffers)
 include(opencv)
 include(text2speech)
+include(pryon_lite)
 include(sensory)
 include(robot_core)
 
@@ -53,6 +54,7 @@ target_link_libraries(victor_anim
   ${FLATBUFFERS_LIBS}
   signal_essence
   ${TEXT2SPEECH_LIBS}
+  ${PRYON_LITE_LIBS}
   ${SENSORY_LIBS}
   ${SPEEXDSP_LIBS}
   # platform

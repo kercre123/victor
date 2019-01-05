@@ -324,6 +324,18 @@ std::vector<std::string> MicTriggerConfig::GetAllTriggerModelFiles() const
   return triggerDataList;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string MicTriggerConfig::TriggerDataPaths::GenerateNetFilePath(const std::string& prefixPath) const
+{
+  return Util::FileUtils::FullFilePath( {prefixPath, _dataDir, _netFile} );
+}
+
+std::string MicTriggerConfig::TriggerDataPaths::GenerateSearchFilePath(const std::string& prefixPath) const
+{
+  return Util::FileUtils::FullFilePath( {prefixPath, _dataDir, _searchFile} );
+}
+
 } // namespace MicData
 } // namespace Vector
 } // namespace Anki

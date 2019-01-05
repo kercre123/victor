@@ -35,6 +35,10 @@ namespace Anki {
     class NotchDetector;
     class RobotDataLoader;
     class SpeechRecognizerTHF;
+    class SpeechRecognizerPryonLite;
+    namespace {
+      struct TriggerModelTypeData;
+    }
   }
   namespace Util {
     class Locale;
@@ -108,22 +112,33 @@ public:
 private:
   
   // Trigger context
+  template <class SpeechRecognizerType>
   struct TriggerContext {
-    std::unique_ptr<SpeechRecognizerTHF>        recognizer;
+    std::unique_ptr<SpeechRecognizerType>       recognizer;
     std::unique_ptr<MicData::MicTriggerConfig>  micTriggerConfig;
+
     // For tracking and altering the trigger model being used
     MicData::MicTriggerConfig::TriggerDataPaths currentTriggerPaths;
     MicData::MicTriggerConfig::TriggerDataPaths nextTriggerPaths;
-    
-    TriggerContext();
+
+    TriggerContext()
+    : recognizer(std::make_unique<SpeechRecognizerType>())
+    , micTriggerConfig(std::make_unique<MicData::MicTriggerConfig>())
+    { }
   };
+  
+  using TriggerContextThf = TriggerContext<SpeechRecognizerTHF>;
+  using TriggerContextPryon = TriggerContext<SpeechRecognizerPryonLite>;
   
   const AnimContext*                          _context = nullptr;
   MicData::MicDataSystem*                     _micDataSystem = nullptr;
-  std::unique_ptr<TriggerContext>             _victorTrigger;
-  std::unique_ptr<TriggerContext>             _alexaTrigger;
+  std::unique_ptr<TriggerContextThf>          _victorTrigger;
+  
+  std::unique_ptr<TriggerContextPryon>        _alexaTrigger;
   Alexa*                                      _alexaComponent = nullptr;
-  std::unique_ptr<TriggerContext>             _alexaPlaybackTrigger;
+  bool                                        _isAlexaActive = false;
+  
+  std::unique_ptr<TriggerContextThf>          _alexaPlaybackTrigger;
   std::string                                 _triggerWordDataDir;
   
   std::mutex                                  _triggerModelMutex;
@@ -132,11 +147,12 @@ private:
   std::shared_ptr<NotchDetector>              _notchDetector;
   std::mutex                                  _notchMutex;
   bool                                        _notchDetectorActive = false;
-  
+
   // Set custom model and search files for locale
   // Return true when locale file was found and is different then current locale
   // NOTE: This only sets the _nextTriggerPaths the locale will be updated in the Update() call
-  bool UpdateTriggerForLocale(TriggerContext& trigger,
+  template <class SpeechRecognizerType>
+  bool UpdateTriggerForLocale(TriggerContext<SpeechRecognizerType>& trigger,
                               const Util::Locale newLocale,
                               const MicData::MicTriggerConfig::ModelType modelType,
                               const int searchFileIndex);
@@ -144,12 +160,24 @@ private:
   // This should only be called from the Update() methods, needs to be performed on the same thread
   void ApplyLocaleUpdate();
   
+  template <class SpeechRecognizerType>
+  void ApplySpeechRecognizerLoacleUpdate(TriggerContext<SpeechRecognizerType>& aTrigger);
+  
+  bool UpdateRecognizerModel(TriggerContext<SpeechRecognizerTHF>& aTrigger);
+  bool UpdateRecognizerModel(TriggerContext<SpeechRecognizerPryonLite>& aTrigger);
+  
+  // Check Alexa component states to update _isAlexaActive flag
+  void UpdateAlexaActiveState();
+  
   // Console Var methods
   // NOTE: These methods provide no functionality when ANKI_DEV_CHEATS is turned off
   void SetupConsoleFuncs();
+  
+  template <class SpeechRecognizerType>
   std::string UpdateRecognizerHelper(size_t& inOut_modelIdx, size_t new_modelIdx,
                                      int& inOut_searchIdx, int new_searchIdx,
-                                     SpeechRecognizerSystem::TriggerContext& trigger);
+                                     const TriggerModelTypeData modelTypeDataList[],
+                                     TriggerContext<SpeechRecognizerType>& trigger);
 };
 
 
