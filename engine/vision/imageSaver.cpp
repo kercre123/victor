@@ -173,14 +173,14 @@ bool ImageSaver::WantsToSave(const VisionProcessingResult& result, const TimeSta
           return true;
           
         case ImageSaverParams::SaveConditionType::OnDetection:
-          if(result.ContainsDetectionsForMode(mode, timestamp))
+          if(result.ContainsDetectionsForMode(mode, timestamp) > 0)
           {
             return true;
           }
           break;
           
         case ImageSaverParams::SaveConditionType::NoDetection:
-          if(!result.ContainsDetectionsForMode(mode, timestamp))
+          if(result.ContainsDetectionsForMode(mode, timestamp) == 0)
           {
             return true;
           }

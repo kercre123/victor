@@ -123,7 +123,7 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
       SetFromConfigHelper(config["useGrayscale"], useGrayscale);
     }
   }
-  else
+  else if(config[JsonKeys::ModelType].asString() != JsonKeys::OffboardModelType)
   {
     PRINT_NAMED_ERROR("NeuralNetParams.SetFromConfig.UnrecognizedArchitecture", "%s",
                       architecture.c_str());

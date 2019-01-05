@@ -237,8 +237,6 @@ namespace Vector {
     
     std::map<std::string, std::unique_ptr<Vision::NeuralNetRunner>> _neuralNetRunners;
     
-    Vision::ImageRGB                                _neuralNetRunnerImage;
-
     Vision::CompressedImage _compressedDisplayImg;
     s32 _imageCompressQuality = 0;
     
@@ -312,7 +310,7 @@ namespace Vector {
     Result UpdateGroundPlaneClassifier(Vision::ImageCache& image);
     
     void CheckForNeuralNetResults();
-    void AddFakeDetections(const std::set<VisionMode>& modes); // For debugging
+    void AddFakeDetections(const TimeStamp_t atTimestamp, const std::set<VisionMode>& modes); // For debugging
     
     Result SaveSensorData() const;
 

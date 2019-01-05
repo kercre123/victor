@@ -14,14 +14,17 @@
 #ifndef __Cozmo_Basestation_VisionModesHelpers_H__
 #define __Cozmo_Basestation_VisionModesHelpers_H__
 
-
 #include "clad/types/visionModes.h"
+#include "coretech/common/shared/types.h"
 #include "util/enums/enumOperators.h"
 
 #include <set>
 
 namespace Anki {
 namespace Vector {
+
+// Forward declaration
+struct VisionProcessingResult;
 
 DECLARE_ENUM_INCREMENT_OPERATORS(VisionMode);
 
@@ -36,6 +39,10 @@ bool GetVisionModesForNeuralNet(const std::string& networkName, std::set<VisionM
   
 // Return the set of VisionModes that have a neural net registered.
 const std::set<VisionMode>& GetVisionModesUsingNeuralNets();
+  
+// Checks if the given vision mode wants to run based on what's already in the given processing result
+// If true is returned, the TimeStamp_t argument indicates the timestamp of the image that should be used
+bool ShouldVisionModeRun(const VisionMode& visionMode, const VisionProcessingResult& result, TimeStamp_t& t);
   
 } // namespace Vector
 } // namespace Anki

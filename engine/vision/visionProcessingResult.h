@@ -59,11 +59,12 @@ struct VisionProcessingResult
   // Used to pass debug images back to main thread for display:
   DebugImageList<Vision::CompressedImage> debugImages;
   
-  // Returns true if there is a detection for the corresponding mode present in this result.
-  // The detection(s) must match the given timestamp as well (since in some cases, such as salientPoints,
-  //  a detections' timestamp may not match the VisionProcessingResult's timestamp).
+  // Returns timestamp of the first detection for the corresponding mode in this result, zero if none.
+  // If atTimestamp != 0, the detection(s) must match the given timestamp as well (since in some cases,
+  //  such as salientPoints, a detections' timestamp may not match the VisionProcessingResult's timestamp).
+  //  In this case, the returned timestamp, if any, will of course match atTimestamp.
   // Note that this method may not be true even if the mode was processed, as indicated by 'modesProcessed'.
-  bool ContainsDetectionsForMode(const VisionMode mode, const TimeStamp_t atTimestamp) const;
+  TimeStamp_t ContainsDetectionsForMode(const VisionMode mode, const TimeStamp_t atTimestamp) const;
   
 };
 

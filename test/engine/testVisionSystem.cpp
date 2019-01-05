@@ -664,22 +664,27 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   ASSERT_TRUE(allModelsConfig.isArray());
   for(const auto& modelConfig : allModelsConfig)
   {
-    Vision::NeuralNetRunner neuralNetRunner;
-    const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, modelConfig);
-    ASSERT_EQ(RESULT_OK, loadRunnerResult);
-    
-    ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
-    const std::string modelFileName = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
-    
-    // Make sure we have correct extension
-    const size_t extIndex = modelFileName.find_last_of(".");
-    ASSERT_NE(std::string::npos, extIndex); // must have extension
-    const std::string extension = modelFileName.substr(extIndex, std::string::npos);
-    ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
-    
-    // Make sure model file exists
-    const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
-    ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+    ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::ModelType));
+    const std::string& modelTypeStr = modelConfig[NeuralNets::JsonKeys::ModelType].asString();
+    if(modelTypeStr == NeuralNets::JsonKeys::TFLiteModelType)
+    {
+      Vision::NeuralNetRunner neuralNetRunner;
+      const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, modelConfig);
+      ASSERT_EQ(RESULT_OK, loadRunnerResult);
+      
+      ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
+      const std::string modelFileName = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
+      
+      // Make sure we have correct extension
+      const size_t extIndex = modelFileName.find_last_of(".");
+      ASSERT_NE(std::string::npos, extIndex); // must have extension
+      const std::string extension = modelFileName.substr(extIndex, std::string::npos);
+      ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
+      
+      // Make sure model file exists
+      const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
+      ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+    }
   }
 }
 

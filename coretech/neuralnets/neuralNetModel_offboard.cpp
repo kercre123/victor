@@ -89,6 +89,17 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
     LOG_INFO("OffboardModel.Connect.Result", "%s", udpSuccess ? "Success" : "FAILED");
   }
   
+  // Use the network architecture as the processing type
+  // TODO: Support multiple procTypes (comma-delimited?)
+  _procTypes.resize(1);
+  if(!Vision::OffboardProcTypeFromString(_params.architecture, _procTypes[0]))
+  {
+    LOG_ERROR("OffboardModel.LoadModelInternal.BadArchitecture",
+              "Could not get OffboardProcType(s) from architecture: %s",
+              _params.architecture.c_str());
+    return RESULT_FAIL;
+  }
+  
   return RESULT_OK;
 }
 
@@ -140,6 +151,7 @@ Result OffboardModel::DetectWithFileIO(const Vision::ImageRGB& img, std::list<Vi
   const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, Filenames::Result});
   Json::Value salientPointsJson;
   const bool resultAvailable = WaitForResultFile(resultFilename, salientPoints);
+# pragma unused(resultAvailable)
 
   // Delete image file (whether we got the result or timed out)
   LOG_DEBUG("NeuralNetRunner.DetectWithFileIO.DeletingImageFile", "%s, deleting %s",
@@ -172,6 +184,7 @@ Result OffboardModel::DetectWithCLAD(const Vision::ImageRGB& img, std::list<Visi
                                            img.GetNumChannels(),
                                            kIsCompressed,
                                            kIsEncrypted,
+                                           _procTypes,
                                            imageFilename);
   
   const auto expectedSize = imageReadyMsg.Size();
@@ -194,6 +207,7 @@ Result OffboardModel::DetectWithCLAD(const Vision::ImageRGB& img, std::list<Visi
   // Wait for detection result CLAD to appear (blocking until timeout!)
   const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, Filenames::Result});
   const bool resultAvailable = WaitForResultCLAD(salientPoints);
+# pragma unused(resultAvailable)
   
   // Delete image file (whether we got the result or timed out)
   LOG_DEBUG("NeuralNetRunner.Detect.DeletingImageFile", "%s, deleting %s",

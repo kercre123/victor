@@ -73,5 +73,11 @@ void VisionModeSet::Enable(VisionMode mode, bool enable)
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool VisionModeSet::ContainsAllOf(const VisionModeSet& other) const
+{
+  return (_modes == other._modes);
+}
+  
 } // namespace Vector
 } // namespace Anki

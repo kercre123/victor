@@ -53,6 +53,8 @@ public:
   template<class Container>
   bool ContainsAnyOf(const Container& modes) const;
   
+  bool ContainsAllOf(const VisionModeSet& other) const;
+  
   bool IsEmpty() const { return _modes.empty(); }
   void Clear() { _modes.clear(); }
   

@@ -12,6 +12,8 @@
 
 
 #include "engine/vision/visionModesHelpers.h"
+#include "engine/vision/visionModeSet.h"
+#include "engine/vision/visionProcessingResult.h"
 #include "util/container/symmetricMap.h"
 #include "util/enums/stringToEnumMapper.hpp"
 
@@ -31,18 +33,21 @@ static const Util::SymmetricMap<VisionMode, std::string> sNetModeLUT{
   {VisionMode::OffboardVision,  "test_offboard_model"},
 };
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool GetNeuralNetsForVisionMode(const VisionMode mode, std::set<std::string>& networkNames)
 {
   sNetModeLUT.Find(mode, networkNames);
   return (!networkNames.empty());
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool GetVisionModesForNeuralNet(const std::string& networkName, std::set<VisionMode>& modes)
 {
   sNetModeLUT.Find(networkName, modes);
   return (!modes.empty());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const std::set<VisionMode>& GetVisionModesUsingNeuralNets()
 {
   static std::set<VisionMode> sModes;
@@ -53,6 +58,64 @@ const std::set<VisionMode>& GetVisionModesUsingNeuralNets()
     sNetModeLUT.GetKeys(sModes);
   }
   return sModes;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ShouldVisionModeRun(const VisionMode& visionMode, const VisionProcessingResult& result, TimeStamp_t& usingTimestamp)
+{
+  usingTimestamp = 0;
+  
+  // TODO: Unify with SaveConditionType from ImageSaver
+  // NOTE: In order for an ALL condition to be true, all the detections must have the same timestamp
+  enum ConditionType { ANY, ALL };
+  struct RunCondition {
+    ConditionType type;
+    VisionModeSet modes;
+  };
+ 
+  // Set of any modes that must be present in order for a given mode to run
+  // TODO: Get this from Json config
+  const std::map<VisionMode, RunCondition> kRequiredModesToRun{
+    {VisionMode::OffboardVision, RunCondition{ANY, {VisionMode::DetectingFaces, VisionMode::DetectingPeople}}},
+  };
+  
+  auto iter = kRequiredModesToRun.find(visionMode);
+  if(iter == kRequiredModesToRun.end())
+  {
+    // No entry in the table means there are no required modes, so always run
+    usingTimestamp = (TimeStamp_t)result.timestamp;
+    return true;
+  }
+  
+  const TimeStamp_t kAnyTimestamp = 0;
+  switch(iter->second.type)
+  {
+    case ANY:
+    {
+      for(VisionMode requiredMode : iter->second.modes)
+      {
+        usingTimestamp = result.ContainsDetectionsForMode(requiredMode, kAnyTimestamp);
+        if(usingTimestamp > 0)
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+      
+    case ALL:
+    {
+      for(VisionMode requiredMode : iter->second.modes)
+      {
+        usingTimestamp = result.ContainsDetectionsForMode(requiredMode, kAnyTimestamp);
+        if(usingTimestamp == 0)
+        {
+          return false;
+        }
+      }
+      return true;
+    }
+  } // switch(type)
 }
   
 } // namespace Vector

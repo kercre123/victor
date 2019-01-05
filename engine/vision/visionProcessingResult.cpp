@@ -15,24 +15,31 @@
 
 namespace Anki {
 namespace Vector {
-    
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static bool SalientPointDetectionPresent(const std::list<Vision::SalientPoint>& salientPoints,
-                                         const Vision::SalientPointType salientType,
-                                         const TimeStamp_t atTimestamp)
+static inline bool TimeStampsMatch(const TimeStamp_t t_ref, const TimeStamp_t t)
+{
+  const bool anyTimeStamp = (t_ref == 0);
+  return anyTimeStamp || (t_ref == t);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static TimeStamp_t SalientPointDetectionPresent(const std::list<Vision::SalientPoint>& salientPoints,
+                                                const Vision::SalientPointType salientType,
+                                                const TimeStamp_t atTimestamp)
 {
   for(const auto& salientPoint : salientPoints)
   {
-    if( (atTimestamp == salientPoint.timestamp) && (salientType == salientPoint.salientType) )
+    if( TimeStampsMatch(atTimestamp, salientPoint.timestamp) && (salientType == salientPoint.salientType) )
     {
-      return true;
+      return salientPoint.timestamp;
     }
   }
   return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, const TimeStamp_t atTimestamp) const
+TimeStamp_t VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, const TimeStamp_t atTimestamp) const
 {
   switch(mode)
   {
@@ -40,24 +47,24 @@ bool VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, co
     {
       for(const auto& marker: observedMarkers)
       {
-        if(marker.GetTimeStamp() == atTimestamp)
+        if(TimeStampsMatch(atTimestamp, marker.GetTimeStamp()))
         {
-          return true;
+          return marker.GetTimeStamp();
         }
       }
-      return false;
+      return 0;
     }
       
     case VisionMode::DetectingFaces:
     {
       for(const auto& face : faces)
       {
-        if(face.GetTimeStamp() == atTimestamp)
+        if(TimeStampsMatch(atTimestamp, face.GetTimeStamp()))
         {
-          return true;
+          return face.GetTimeStamp();
         }
       }
-      return false;
+      return 0;
     }
       
     case VisionMode::DetectingHands:
@@ -69,7 +76,7 @@ bool VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, co
     default:
       LOG_ERROR("VisionProcessingResult.ContainsDetectionsForMode.ModeNotSupported",
                 "VisionMode:%s", EnumToString(mode));
-      return false;
+      return 0;
   }
 }
   

@@ -55,6 +55,7 @@ public:
   
   // Returns true if image was used, false if otherwise occupied or image wasn't suitable (e.g., not color)
   bool StartProcessingIfIdle(ImageCache& imageCache);
+  bool StartProcessingIfIdle(const Vision::ImageRGB& img);
   
   // Returns true if processing of the last image provided using StartProcessingIfIdle is complete
   // and populates salientPoints with any detections.
@@ -69,6 +70,8 @@ public:
   //  StartProcessingIfIdle(imageCache);
   //
   
+  const ImageRGB& GetOrigImg() const { return _imgOrig; }
+  
 private:
   
   Profiler _profiler;
@@ -76,7 +79,11 @@ private:
   std::unique_ptr<NeuralNets::INeuralNetModel> _model;
   std::future<std::list<SalientPoint>> _future; // for processing aysnchronously
 
-  // We process asynchronsously, so need a copy of the image data (at processing resolution)
+  // Stores a copy of the "original" image, from which the processed image is resized,
+  // which can be used for saving or chained processing
+  ImageRGB              _imgOrig;
+  
+  // We process asynchronously, so need a copy of the image data (at processing resolution)
   ImageRGB              _imgBeingProcessed;
   
   std::string           _cachePath;
@@ -91,6 +98,7 @@ private:
   
   void ApplyGamma(ImageRGB& img);
   
+  bool StartProcessingHelper();
   std::list<SalientPoint> RunModel();
   
 }; // class NeuralNetworkRunner

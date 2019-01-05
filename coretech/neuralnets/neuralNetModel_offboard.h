@@ -53,6 +53,7 @@ private:
   bool        _isVerbose = false;
   float       _timeoutDuration_sec = 10.f;
   Vision::OffboardCommsType _commsType = Vision::OffboardCommsType::FileIO;
+  std::vector<Vision::OffboardProcType> _procTypes;
   
   // For non-FileIO comms
   std::unique_ptr<LocalUdpClient> _udpClient;

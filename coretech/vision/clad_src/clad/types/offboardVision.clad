@@ -9,17 +9,31 @@ enum uint_8 OffboardCommsType {
   CLAD
 }
 
+enum uint_8 OffboardProcType {
+  CelebrityFace,
+  ImageSegmentation,
+  HumanPose
+}
+
 structure OffboardImageReady {
+  // Info about the image data
   uint_32           timestamp,
   uint_32           numRows, 
   uint_32           numCols,
   uint_32           numChannels,
   bool              isCompressed = 1,
   bool              isEncrypted = 0,
+  
+  // Array of processing types requested for this image
+  // OffboardResultReady message below will be generated for each
+  OffboardProcType  procTypes[uint_8],
+  
+  // Where to find the image
   string            filename
 }
 
 structure OffboardResultReady {
+  OffboardProcType  procType,
   string[uint_16]   jsonResult
 }
 

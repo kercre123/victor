@@ -161,9 +161,9 @@
       {
         "modelType"           : "offboard",
         "networkName"         : "test_offboard_model",
-        "commsType"           : "FileIO",
+        "commsType"           : "CLAD",
         "labelsFile"          : "hand-labels.txt",
-        "architecture"        : "custom",
+        "architecture"        : "CelebrityFace", // One of OffboardProcType (TODO: Support multiple)
         "inputLayerName"      : "input",
         "outputLayerNames"    : "probabilities",
         "outputType"          : "classification",
