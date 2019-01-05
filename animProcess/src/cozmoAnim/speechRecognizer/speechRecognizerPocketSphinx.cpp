@@ -17,10 +17,9 @@
 
 #include "audioUtil/speechRecognizer.h"
 #include "util/logging/logging.h"
-#include "util/container/ringBuffContiguousRead.h"
 #include "util/fileUtils/fileUtils.h"
 
-#if defined(ANKI_PLATFORM_VICOS)
+#if defined(VICOS)
 #define PRYON_ENABLED 1
 #else
 #define PRYON_ENABLED 0
@@ -37,6 +36,7 @@
 #include <mutex>
 #include <string>
 #include <sstream>
+#include <thread>
 
 namespace Anki {
 namespace Vector {
@@ -44,20 +44,33 @@ namespace Vector {
 #define LOG_CHANNEL "SpeechRecognizer"
   
 namespace {
-  const char* const kWakeWord = "elemental";
-  const unsigned int kBuffSize = 1024; // I tried 2048 (slower) and no buffer at all (equiv to 160, wayyyy slower). Nothing else
+  const char* const kWakeWord __attribute((unused)) = "elemental";
+  // I tried 2048 (slower) and no buffer at all (equiv to 160, wayyyy slower), then 1024, which worked well.
+  // then I switched to double buffering, where logic is easier if its a multiple of 160 (audio input size)
+  const unsigned int kBuffSize = 7*160;
 }
   
 struct SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinxData
 {
-  SpeechRecognizerPocketSphinxData();
-  
   IndexType                         index = InvalidIndex;
-  mutable std::recursive_mutex      recogMutex;
   bool                              disabled = false;
   std::atomic<bool>                 initDone;
   
-  Util::RingBuffContiguousRead<int16_t> buff;
+  std::thread                       detectionThread;
+  mutable std::mutex                mutex;
+  std::condition_variable           cv;
+  bool                              detectionRunning;
+  
+  int16_t buffA[kBuffSize];
+  int16_t buffB[kBuffSize];
+  bool writingBuffA = true;
+  unsigned int writeIdx = 0;
+  int16_t* readBuff = nullptr; // also serves as the flag for the recognizer thread that there's a new readBuff
+  std::unique_ptr<AudioUtil::SpeechRecognizerCallbackInfo> callbackInfo;
+  
+  // check if there's a callback.
+  // fully write to buffX. set readBuff to buffX and notify. flip writingBuffA.
+  
   
   #if PRYON_ENABLED
   ps_decoder_t* ps = nullptr;
@@ -67,11 +80,6 @@ struct SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinxData
   uint8 in_speech;
   #endif
 };
-  
-SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinxData::SpeechRecognizerPocketSphinxData()
-  : buff{ kBuffSize, kBuffSize }
-{
-}
   
 SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinx()
 : _impl(new SpeechRecognizerPocketSphinxData())
@@ -106,7 +114,6 @@ void SpeechRecognizerPocketSphinx::SwapAllData(SpeechRecognizerPocketSphinx& oth
 
 void SpeechRecognizerPocketSphinx::SetRecognizerIndex(IndexType index)
 {
-  std::lock_guard<std::recursive_mutex>(_impl->recogMutex);
   _impl->index = index;
 }
   
@@ -117,7 +124,6 @@ void SpeechRecognizerPocketSphinx::SetRecognizerFollowupIndex(IndexType index)
 
 SpeechRecognizerPocketSphinx::IndexType SpeechRecognizerPocketSphinx::GetRecognizerIndex() const
 {
-  std::lock_guard<std::recursive_mutex>(_impl->recogMutex);
   return _impl->index;
 }
 
@@ -160,6 +166,9 @@ bool SpeechRecognizerPocketSphinx::Init(const std::string& modelBasePath)
   ps_set_search( _impl->ps, "keyphrase_search" );
   ps_start_utt( _impl->ps );
   
+  _impl->detectionRunning = true;
+  _impl->detectionThread = std::thread( &SpeechRecognizerPocketSphinx::RecognizerThread, this );
+  
   _impl->initDone = true;
   
 # endif
@@ -171,7 +180,12 @@ bool SpeechRecognizerPocketSphinx::Init(const std::string& modelBasePath)
 void SpeechRecognizerPocketSphinx::Cleanup()
 {
 # if PRYON_ENABLED
-  std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
+  
+  if( _impl->detectionThread.joinable() ) {
+    _impl->detectionRunning = false;
+    _impl->detectionThread.join();
+  }
+  
   if( _impl->ps ) {
     ps_end_utt( _impl->ps );
     ps_free( _impl->ps );
@@ -187,77 +201,136 @@ void SpeechRecognizerPocketSphinx::Cleanup()
 
 void SpeechRecognizerPocketSphinx::Update( const AudioUtil::AudioSample* audioData, unsigned int audioDataLen )
 {
+  // needs mutex
+  auto checkCallbackUnsafe = [&]() {
+    //PRINT_NAMED_WARNING("WHATNOW", "checking for callback");
+    if( _impl->callbackInfo ) {
+      DoCallback(*_impl->callbackInfo.get());
+      LOG_INFO("SpeechRecognizerPocketSphinx.Update", "Recognizer -  %s", _impl->callbackInfo->Description().c_str());
+      _impl->callbackInfo.reset();
+    }
+  };
+  
   if( _impl->disabled || !_impl->initDone ) {
     // Don't process audio data in recognizer
     return;
   }
   
-  unsigned int idxRemaining;
-  if( _impl->buff.Capacity() > _impl->buff.Size() + audioDataLen ) {
-    _impl->buff.AddData( audioData, audioDataLen );
-    
+  auto* writeBuff = _impl->writingBuffA ? _impl->buffA : _impl->buffB;
+  if( !ANKI_VERIFY( _impl->writeIdx + audioDataLen <= kBuffSize, "", "" ) ) {
     return;
-  } else {
-    const int numToAdd = _impl->buff.Capacity() - _impl->buff.Size();
-    _impl->buff.AddData( audioData, numToAdd );
-    idxRemaining = numToAdd;
   }
   
-# if PRYON_ENABLED
-  
-  using namespace std;
-  clock_t begin = clock();
-  
-  const char* hyp = nullptr;
-  
-  auto buffSize = _impl->buff.GetContiguousSize();
-  auto* buff = _impl->buff.ReadData( buffSize );
-  
-  ps_process_raw( _impl->ps, buff, buffSize, false, false );
-  
-  _impl->in_speech = ps_get_in_speech( _impl->ps );
-  
-  if( _impl->in_speech && !_impl->utt_started ) {
-    _impl->utt_started = true;
+  {
+    // check if there's a callback
+    std::unique_lock<std::mutex> lk(_impl->mutex, std::try_to_lock);
+    if( lk.owns_lock() ) {
+      checkCallbackUnsafe();
+    }
   }
   
-  if( !_impl->in_speech && _impl->utt_started ) {
-    ps_end_utt( _impl->ps );
-    int32 score = 0;
-    hyp = ps_get_hyp( _impl->ps, &score );
-    if( hyp != nullptr ) {
+  for( int i=0; i<audioDataLen; ++i ) {
+    writeBuff[_impl->writeIdx++] = audioData[i];
+  }
+  //PRINT_NAMED_WARNING("WHATNOW", "_impl->writeIdx=%d", _impl->writeIdx);
+  
+  static_assert( kBuffSize % 160 == 0, "");
+  if( _impl->writeIdx == kBuffSize )
+  {
+    {
+      //PRINT_NAMED_WARNING("WHATNOW", "trying to get lock to swap buffers");
+      // get a lock on the mutex shared with the read op
+      std::lock_guard<std::mutex> lk{ _impl->mutex };
+      //PRINT_NAMED_WARNING("WHATNOW", "swapping buffers");
+      ANKI_VERIFY( _impl->readBuff == nullptr, "", "" );
       
-      // Get results for callback struct
-      std::string foundString{ hyp };
-      AudioUtil::SpeechRecognizerCallbackInfo info {
-        .result       = foundString.c_str(),
-        .startTime_ms = 0,
-        .endTime_ms   = 0,
-        .score        = static_cast<float>(score),
-      };
-
-      LOG_INFO("SpeechRecognizerPocketSphinx.Update", "Recognizer -  %s", info.Description().c_str());
-      DoCallback(info);
+      checkCallbackUnsafe();
+      
+      _impl->readBuff = writeBuff;
+      _impl->writingBuffA = !_impl->writingBuffA;
+      _impl->writeIdx = 0;
+    }
+    //PRINT_NAMED_WARNING("WHATNOW", "buffers avaialble");
+    _impl->cv.notify_one();
+  }
+  
+  
+}
+  
+void SpeechRecognizerPocketSphinx::RecognizerThread()
+{
+#if defined(ANKI_PLATFORM_VICOS)
+  // Setup the thread's affinity mask
+  // We don't want to run this on the same cores as mic processor
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  CPU_SET(0, &cpu_set);
+  CPU_SET(3, &cpu_set);
+  int error = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set);
+  if (error != 0) {
+    LOG_ERROR("AlexaMediaPlayer.play", "SetAffinityMaskError %d", error);
+  }
+#endif
+  
+  while( _impl->detectionRunning ) {
+    
+    // wait for a new readBuff
+    std::unique_lock<std::mutex> lk{ _impl->mutex };
+    _impl->cv.wait( lk, [this]{ return (_impl->readBuff != nullptr); } );
+    
+    //PRINT_NAMED_WARNING("WHATNOW", "processing readBuff");
+    // we own readBuff now
+    
+    using namespace std;
+    clock_t begin = clock();
+    
+#   if PRYON_ENABLED
+    
+    
+    
+    const char* hyp = nullptr;
+    
+    ps_process_raw( _impl->ps, _impl->readBuff, kBuffSize, false, false );
+    
+    _impl->in_speech = ps_get_in_speech( _impl->ps );
+    
+    if( _impl->in_speech && !_impl->utt_started ) {
+      _impl->utt_started = true;
     }
     
-    // restart the next utterance
-    if( ps_start_utt( _impl->ps ) < 0 ) {
-      LOG_ERROR( "SpeechRecognizerPocketSphinx.Update.StartUttFailed", "Failed to start utterance" );
+    if( !_impl->in_speech && _impl->utt_started ) {
+      ps_end_utt( _impl->ps );
+      int32 score = 0;
+      hyp = ps_get_hyp( _impl->ps, &score );
+      if( hyp != nullptr ) {
+        PRINT_NAMED_WARNING("SpeechRecognizerPocketSphinx.RecogThread.Detected", "Detected %s", hyp);
+        
+        // Get results for callback struct
+        std::string foundString{ hyp };
+        _impl->callbackInfo = std::make_unique<AudioUtil::SpeechRecognizerCallbackInfo>();
+        _impl->callbackInfo->result       = foundString.c_str();
+        _impl->callbackInfo->startTime_ms = 0;
+        _impl->callbackInfo->endTime_ms   = 0;
+        _impl->callbackInfo->score        = static_cast<float>(score);
+      }
+      
+      // restart the next utterance
+      if( ps_start_utt( _impl->ps ) < 0 ) {
+        LOG_ERROR( "SpeechRecognizerPocketSphinx.Update.StartUttFailed", "Failed to start utterance" );
+      }
+      _impl->utt_started = false;
     }
-    _impl->utt_started = false;
+    
+#   endif
+    
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    PRINT_NAMED_WARNING("WHATNOW", "Duration = %f ms", elapsed_secs*1000);
+    
+    // done with the readbuff
+    _impl->readBuff = nullptr;
+    //PRINT_NAMED_WARNING("WHATNOW", "done processing readBuff");
   }
-  
-# endif
-  
-  _impl->buff.AdvanceCursor( buffSize );
-
-  if( idxRemaining < audioDataLen ) {
-    _impl->buff.AddData( audioData + idxRemaining, audioDataLen - idxRemaining );
-  }
-  
-  clock_t end = clock();
-  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-  PRINT_NAMED_WARNING("WHATNOW", "Duration = %f ms", elapsed_secs*1000);
 }
   
 void SpeechRecognizerPocketSphinx::StartInternal()

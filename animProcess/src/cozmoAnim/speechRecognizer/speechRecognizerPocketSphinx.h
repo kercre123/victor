@@ -45,6 +45,8 @@ private:
 
   void Cleanup();
   
+  void RecognizerThread();
+  
   virtual void StartInternal() override;
   virtual void StopInternal() override;
   
