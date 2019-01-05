@@ -39,6 +39,8 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
   }
 
+  virtual void OnBehaviorActivatedInternal() override;
+
 private:
 
   struct InstanceConfig {

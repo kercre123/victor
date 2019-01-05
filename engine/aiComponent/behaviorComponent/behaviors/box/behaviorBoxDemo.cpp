@@ -31,12 +31,18 @@ BehaviorBoxDemo::DynamicVariables::DynamicVariables()
 BehaviorBoxDemo::BehaviorBoxDemo(const Json::Value& config)
  : InternalStatesBehavior( config, CreateCustomConditions() )
 {
-  // TODO: read config into _iConfig
+  AddConsoleVarTransitions( "TheBoxMoveToState", "TheBox.State" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBoxDemo::~BehaviorBoxDemo()
 {
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBoxDemo::OnBehaviorActivatedInternal()
+{
+  SmartDisableKeepFaceAlive();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

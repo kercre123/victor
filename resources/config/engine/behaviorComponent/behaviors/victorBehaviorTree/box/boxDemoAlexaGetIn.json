@@ -1,5 +1,6 @@
 {
   "behaviorID": "BoxDemoAlexaGetIn",
-  "behaviorClass": "AnimSequence",
-  "animTriggers": ["WakeupGetout"]
+  "behaviorClass": "ShowText",
+  "text": ["Alexa", "Enabled"],
+  "timeout_s": -1.0 // run for one tick to show the text
 }
