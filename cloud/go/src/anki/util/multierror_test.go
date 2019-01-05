@@ -37,3 +37,37 @@ func TestMultierror(t *testing.T) {
 		t.Fatalf("unexpected error format: got %s, expected %s", e.Error().Error(), expected)
 	}
 }
+
+func TestNewErrors(t *testing.T) {
+	e := NewErrors(nil)
+	if e.Error() != nil {
+		t.Fatalf("nil error should not return a non-nil error")
+	}
+
+	e = NewErrors(nil, nil)
+	if e.Error() != nil {
+		t.Fatalf("nil errors should not return a non-nil error")
+	}
+
+	real := errors.New("blah")
+	e = NewErrors(real)
+	if e.Error() != real {
+		t.Fatalf("single error should map to original error")
+	}
+
+	table := []*Errors{
+		NewErrors(real, nil),
+		NewErrors(nil, real),
+		NewErrors(nil, real, nil),
+	}
+	for _, e = range table {
+		if e.Error() != real {
+			t.Fatalf("adding nil should not change above test")
+		}
+	}
+
+	e = NewErrors(real, real)
+	if e.Error() == real {
+		t.Fatalf("multiple errors should not map to original error")
+	}
+}

@@ -9,6 +9,7 @@ import (
 	"clad/vision"
 	"context"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/gwatts/rootcerts"
 	"google.golang.org/grpc"
@@ -54,11 +55,39 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(defaultTLSCert))
-	rpcConn, err := grpc.DialContext(ctx, config.Env.Box, dialOpts...)
+
+	var wg util.SyncGroup
+
+	// dial server and read file data in parallel
+	var rpcConn *grpc.ClientConn
+	var rpcErr error
+	rpcClose := func() error { return nil }
+
+	var fileData []byte
+	var fileErr error
+
+	// dial server, make it blocking
+	wg.AddFunc(func() {
+		rpcConn, rpcErr = grpc.DialContext(ctx, config.Env.Box, append(dialOpts, grpc.WithBlock())...)
+		if rpcErr == nil {
+			rpcClose = rpcConn.Close
+		}
+	})
+
+	// read file data
+	wg.AddFunc(func() {
+		fileData, fileErr = ioutil.ReadFile(msg.Filename)
+	})
+
+	// wait for both routines above to finish
+	wg.Wait()
+	// if rpc connection didn't fail, this will be set to rpcConn.Close()
+	defer rpcClose()
+
+	err := util.NewErrors(rpcErr, fileErr).Error()
 	if err != nil {
 		return nil, err
 	}
-	defer rpcConn.Close()
 
 	// todo: instantiate grpc client
 	// client := pb.NewBoxClient(rpcConn)

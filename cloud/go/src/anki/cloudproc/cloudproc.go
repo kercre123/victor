@@ -7,9 +7,9 @@ import (
 	"anki/logcollector"
 	"anki/token"
 	"anki/token/identity"
+	"anki/util"
 	"anki/voice"
 	"context"
-	"sync"
 )
 
 var devServer func() error
@@ -20,9 +20,9 @@ func Run(ctx context.Context, procOptions ...Option) {
 		o(&opts)
 	}
 
-	var wg sync.WaitGroup
+	var wg util.SyncGroup
 	if devServer != nil {
-		launchProcess(&wg, func() {
+		wg.AddFunc(func() {
 			if err := devServer(); err != nil {
 				log.Println("dev HTTP server reported error:", err)
 			}
@@ -47,12 +47,12 @@ func Run(ctx context.Context, procOptions ...Option) {
 		return
 	}
 	addHandlers(token.GetDevHandlers, tokenServer)
-	launchProcess(&wg, func() {
+	wg.AddFunc(func() {
 		tokenServer.Run(ctx, opts.tokenOpts...)
 	})
 	tokener := token.GetAccessor(identityProvider, tokenServer)
 	if opts.voice != nil {
-		launchProcess(&wg, func() {
+		wg.AddFunc(func() {
 			// provide default token accessor
 			voiceOpts := append([]voice.Option{voice.WithTokener(tokener),
 				voice.WithErrorListener(tokenServer.ErrorListener())},
@@ -61,7 +61,7 @@ func Run(ctx context.Context, procOptions ...Option) {
 		})
 	}
 	if opts.jdocOpts != nil {
-		launchProcess(&wg, func() {
+		wg.AddFunc(func() {
 			// provide default token accessor
 			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener),
 				jdocs.WithErrorListener(tokenServer.ErrorListener())},
@@ -70,23 +70,15 @@ func Run(ctx context.Context, procOptions ...Option) {
 		})
 	}
 	if opts.logcollectorOpts != nil {
-		launchProcess(&wg, func() {
+		wg.AddFunc(func() {
 			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener),
 				logcollector.WithErrorListener(tokenServer.ErrorListener())},
 				opts.logcollectorOpts...)
 			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
-	launchProcess(&wg, func() {
+	wg.AddFunc(func() {
 		box.Run(ctx)
 	})
 	wg.Wait()
-}
-
-func launchProcess(wg *sync.WaitGroup, launcher func()) {
-	wg.Add(1)
-	go func() {
-		launcher()
-		wg.Done()
-	}()
 }
