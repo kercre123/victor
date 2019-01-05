@@ -87,3 +87,25 @@ func TestTimeFunc(t *testing.T) {
 // 	assert.False(t, util.SleepSelect(time.Millisecond, ctx.Done()))
 // 	assert.True(t, util.SleepSelect(15*time.Millisecond, ctx.Done()))
 // }
+
+func TestSyncGroup(t *testing.T) {
+	assert := assert.New(t)
+	{
+		var wg util.SyncGroup
+		ts := time.Now()
+		wg.AddFunc(nil)
+		wg.Wait()
+		assert.True(time.Now().Sub(ts) < 3*time.Millisecond)
+	}
+
+	{
+		var wg util.SyncGroup
+		ts := time.Now()
+		longDelay := 20 * time.Millisecond
+		wg.AddFunc(func() { time.Sleep(longDelay / 2) })
+		wg.AddFunc(func() { time.Sleep(longDelay) })
+		wg.Wait()
+		diff := time.Now().Sub(ts)
+		assert.True(diff >= longDelay && diff < longDelay*6, "actual: ", diff)
+	}
+}

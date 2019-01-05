@@ -25,6 +25,8 @@ func runServer(ctx context.Context) {
 		}()
 	}
 
+	log.Println("Elemental box server is running")
+
 	for c := range serv.NewConns() {
 		cl := client{Conn: c}
 		go cl.handleConn(ctx)
