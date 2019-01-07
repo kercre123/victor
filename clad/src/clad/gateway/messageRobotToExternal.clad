@@ -16,11 +16,6 @@ message RobotDeletedFixedCustomObjects {
 message RobotDeletedCustomMarkerObjects {
 }
 
-// CreatedFixedCustomObject
-message CreatedFixedCustomObject {
-  uint_32 objectID
-}
-
 // DefinedCustomObject
 message DefinedCustomObject {
   bool success     // false if the last custom object definition failed (e.g. due to duplicate marker already in use)
@@ -77,7 +72,6 @@ message MemoryMapMessageEnd
 union MessageRobotToExternal {
   RobotDeletedFixedCustomObjects    RobotDeletedFixedCustomObjects     = 0x12,
   RobotDeletedCustomMarkerObjects   RobotDeletedCustomMarkerObjects    = 0x13,
-  CreatedFixedCustomObject          CreatedFixedCustomObject           = 0x14,
   DefinedCustomObject               DefinedCustomObject                = 0x15,
   MemoryMapMessageBegin             MemoryMapMessageBegin              = 0x16,
   MemoryMapMessage                  MemoryMapMessage                   = 0x17,

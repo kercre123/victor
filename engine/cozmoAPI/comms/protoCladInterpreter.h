@@ -106,6 +106,11 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  void ProtoCreateFixedCustomObjectRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+
   //
   // Clad-to-Proto interpreters
   //
@@ -136,6 +141,10 @@ private:
 
   external_interface::PoseStruct* CladPoseStructToProto(
       const Anki::PoseStruct3d& clad_message);
+
+  void ProtoPoseStructToClad(
+      const external_interface::PoseStruct& proto_message,
+      Anki::PoseStruct3d& clad_message);
 
   external_interface::CladRect* CladCladRectToProto(
       const Anki::CladRect& clad_message);

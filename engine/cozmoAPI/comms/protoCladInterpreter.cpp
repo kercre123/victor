@@ -87,6 +87,11 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
       ProtoRequestEnrolledNamesRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kCreateFixedCustomObjectRequest:
+    {
+      ProtoCreateFixedCustomObjectRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -208,6 +213,18 @@ void ProtoCladInterpreter::ProtoRequestEnrolledNamesRequestToClad(
   clad_message.Set_RequestEnrolledNames(request_enrolled_names);
 }
 
+void ProtoCladInterpreter::ProtoCreateFixedCustomObjectRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  Anki::Vector::ExternalInterface::CreateFixedCustomObject create_fixed_custom_object;
+  create_fixed_custom_object.xSize_mm = proto_message.create_fixed_custom_object_request().x_size_mm();
+  create_fixed_custom_object.ySize_mm = proto_message.create_fixed_custom_object_request().y_size_mm();
+  create_fixed_custom_object.zSize_mm = proto_message.create_fixed_custom_object_request().z_size_mm();
+  ProtoPoseStructToClad(proto_message.create_fixed_custom_object_request().pose(), create_fixed_custom_object.pose);
+  clad_message.Set_CreateFixedCustomObject(create_fixed_custom_object);
+}
+
 
 void ProtoCladInterpreter::CladDriveWheelsToProto(
     const ExternalInterface::MessageGameToEngine& clad_message,
@@ -281,6 +298,21 @@ external_interface::PoseStruct* ProtoCladInterpreter::CladPoseStructToProto(
 
   return pose_struct;
 }
+
+
+void ProtoCladInterpreter::ProtoPoseStructToClad(
+    const external_interface::PoseStruct& proto_message,
+    Anki::PoseStruct3d& clad_message) {
+  clad_message.x = proto_message.x();
+  clad_message.y = proto_message.y();
+  clad_message.z = proto_message.z();
+  clad_message.q0 = proto_message.q0();
+  clad_message.q1 = proto_message.q1();
+  clad_message.q2 = proto_message.q2();
+  clad_message.q3 = proto_message.q3();
+  clad_message.originID = proto_message.origin_id();
+}
+
 
 external_interface::CladRect* ProtoCladInterpreter::CladCladRectToProto(
     const Anki::CladRect& clad_message) {
