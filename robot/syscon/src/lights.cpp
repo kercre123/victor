@@ -22,10 +22,10 @@ struct LightWorkspace {
 static const int LIGHT_CHANNELS   = 4;
 static const int LIGHT_COLORS     = 3;
 static const int LIGHT_MINIMUM    = 128;
-static const int LIGHT_SHIFT      = 17;
+static const int LIGHT_SHIFT      = 16;
 
-static const uint16_t WIS_GAMMA_TABLE[] = { 0xEA60, 0xEA60, 0xEA60 };
-static const uint16_t VIC_GAMMA_TABLE[] = { 0xEA60, 0xEA60, 0xEA60 };
+static const uint16_t WIS_GAMMA_TABLE[] = { 30000, 30000, 30000 };
+static const uint16_t VIC_GAMMA_TABLE[] = { 20000, 20000, 50000 };
 
 static const uint8_t REORDER[] = { 
    0,  3,  6,  9, 
