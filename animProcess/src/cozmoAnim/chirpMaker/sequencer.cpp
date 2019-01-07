@@ -150,7 +150,7 @@ void Sequencer::MainLoop()
   using GP = AudioMetaData::GameParameter::ParameterType;
   
   auto sendStart = [&](uint32_t duration_ms) {
-    const float durationParam = Util::Clamp((float)duration_ms, 0.0f, 1000.0f);
+    const float durationParam = Util::Clamp((float)duration_ms, 0.0f, 1000.0f)/1000.0f;
     if( _audioController != nullptr ) {
       _audioController->SetParameter( ToAudioParameterId( GP::Victor_Robot_Chirps_Duration ),
                                       durationParam,
