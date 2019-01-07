@@ -344,7 +344,6 @@ void Sequencer::Test_Pitch( const float pitch0_Hz, const float pitch1_Hz, const 
 void Sequencer::Test_ShaveHaircut( uint32_t quarterNode_ms, uint32_t delay_ms )
 {
   
-  uint32_t quarterNote = 500;
   std::vector<Chirp> chirps;
   
   const float G_Hz = 391.995f;
@@ -366,14 +365,14 @@ void Sequencer::Test_ShaveHaircut( uint32_t quarterNode_ms, uint32_t delay_ms )
     chirps.push_back( std::move(chirp) );
   };
   
-  emplaceChirp( G_Hz, quarterNote );
-  emplaceChirp( D_Hz, quarterNote/2 );
-  emplaceChirp( D_Hz, quarterNote/2 );
-  emplaceChirp( E_Hz, quarterNote );
-  emplaceChirp( D_Hz, quarterNote );
-  nextStartTime += quarterNote;
-  emplaceChirp( Fsharp_Hz, quarterNote );
-  emplaceChirp( G_Hz, quarterNote );
+  emplaceChirp( G_Hz, quarterNode_ms );
+  emplaceChirp( D_Hz, quarterNode_ms/2 );
+  emplaceChirp( D_Hz, quarterNode_ms/2 );
+  emplaceChirp( E_Hz, quarterNode_ms );
+  emplaceChirp( D_Hz, quarterNode_ms );
+  nextStartTime += quarterNode_ms;
+  emplaceChirp( Fsharp_Hz, quarterNode_ms );
+  emplaceChirp( G_Hz, quarterNode_ms );
   
   AddChirps( chirps );
 }
