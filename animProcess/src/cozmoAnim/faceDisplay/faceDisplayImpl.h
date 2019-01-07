@@ -17,6 +17,12 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 
+#ifdef SIMULATOR
+namespace webots {
+  class Supervisor;
+}
+#endif
+
 namespace Anki {
 namespace Vector {
   
@@ -46,6 +52,13 @@ public:
 
   // set face display brightness (int 0..20)
   void SetFaceBrightness(int level);
+  
+#ifdef SIMULATOR
+  // Assign Webots supervisor
+  // Webots processes must do this before creating FaceDisplay for the first time.
+  // Unit test processes must call SetSupervisor(nullptr) to run without a supervisor.
+  static void SetSupervisor(webots::Supervisor* sup);
+#endif
   
 private:
   

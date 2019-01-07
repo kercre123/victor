@@ -46,6 +46,8 @@ namespace MicData {
 class RobotDataLoader;
 class ShowAudioStreamStateManager;
 class ThreadIDInternal;
+  
+class Sequencer;
 
 namespace Audio {
 class AudioPlaybackSystem;
@@ -90,6 +92,7 @@ public:
   Audio::AudioPlaybackSystem*           GetAudioPlaybackSystem() const { return _audioPlayer.get(); }
   Alexa*                                GetAlexa() const { return _alexa.get(); }
   BackpackLightComponent*               GetBackpackLightComponent() const { return _backpackLightComponent.get(); }
+  Sequencer*                            GetSequencer() const { return _chirpSequencer.get(); }
 
   void SetRandomSeed(uint32_t seed);
 
@@ -124,6 +127,7 @@ private:
   std::unique_ptr<WebService::WebService>        _webService;
   std::unique_ptr<Audio::AudioPlaybackSystem>    _audioPlayer;
   std::unique_ptr<BackpackLightComponent>        _backpackLightComponent;
+  std::unique_ptr<Sequencer>                     _chirpSequencer;
 
   void InitAudio(Util::Data::DataPlatform* dataPlatform);
 };

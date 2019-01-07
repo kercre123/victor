@@ -23,7 +23,7 @@
 #error SIMULATOR should be defined by any target using faceDisplay_mac.cpp
 #endif
 
-extern webots::Supervisor animSupervisor;
+
 
 namespace Anki {
 namespace Vector {
@@ -32,6 +32,8 @@ namespace { // "Private members"
 
   // Face display
   webots::Display* face_;
+  
+  webots::Supervisor* animSupervisor;
   
   // Face 'image' to send to webots each frame
   u32 faceImg_[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT] = {0};
@@ -50,7 +52,7 @@ namespace { // "Private members"
 //      DEV_ASSERT(TIME_STEP >= animSupervisor->getBasicTimeStep(), "animSupervisor.UnexpectedTimeStep");
 
     // Face display
-    face_ = animSupervisor.getDisplay("face_display");
+    face_ = animSupervisor->getDisplay("face_display");
     assert(face_->getWidth() == FACE_DISPLAY_WIDTH);
     assert(face_->getHeight() == FACE_DISPLAY_HEIGHT);
     face_->setFont("Lucida Console", 8, true);
@@ -103,6 +105,11 @@ namespace { // "Private members"
   void FaceDisplayImpl::SetFaceBrightness(int level)
   {
     // not supported for mac
+  }
+  
+  void FaceDisplayImpl::SetSupervisor(webots::Supervisor* sup)
+  {
+    animSupervisor = sup;
   }
 
 } // namespace Vector

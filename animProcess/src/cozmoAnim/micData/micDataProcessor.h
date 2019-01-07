@@ -40,6 +40,7 @@ namespace Anki {
     struct SpeechRecognizerCallbackInfo;
   }
   namespace Vector {
+    class ChirpMaker;
     class BeatDetector;
     namespace MicData {
       class MicDataSystem;
@@ -86,6 +87,8 @@ public:
   float GetIncomingMicDataPercentUsed();
   
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
+  
+  ChirpMaker* GetChirpMaker() { return _chirpMaker.get(); }
 
   // Create and start stream audio data job
   // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
@@ -205,6 +208,8 @@ private:
   const char* GetProcessingStateName(ProcessingState state) const;
   
   void SetupConsoleFuncs();
+  
+  std::unique_ptr<ChirpMaker> _chirpMaker;
 };
 
 } // namespace MicData

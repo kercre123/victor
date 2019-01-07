@@ -4,9 +4,36 @@
 
 #define private public
 #include "cozmoAnim/micData/audioFFT.h"
+#include "cozmoAnim/chirpMaker/sequencer.h"
+#include "util/logging/logging.h"
 
 using namespace Anki;
 using namespace Anki::Vector;
+
+TEST(AudioFFT, Sequencer) {
+  Sequencer sequencer;
+  sequencer.Init(nullptr);
+  
+  // bad design means you shouldnt add for a little while, so the thread is waiting
+  // at the right spot when you add a chirp
+  std::this_thread::sleep_for( std::chrono::milliseconds{40} );
+  
+  if( 0 ) {
+    sequencer.Test_Triplet( 300.0f, 30 );
+  } else if( 0 ) {
+    sequencer.Test_Pitch( 300.0f, 500.0, 1000 );
+  } else {
+    sequencer.Test_ShaveHaircut( 500 );
+  }
+  
+  for( int i=0; i<200; ++i ) {
+    if( !sequencer.HasChirps() ) {
+      break;
+    }
+    std::this_thread::sleep_for( std::chrono::milliseconds{40} );
+    sequencer.Update();
+  }
+}
 
 TEST(AudioFFT, SineWave)
 {

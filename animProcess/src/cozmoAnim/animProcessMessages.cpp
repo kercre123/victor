@@ -30,6 +30,8 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
+#include "cozmoAnim/chirpMaker/chirpMaker.h"
+#include "cozmoAnim/chirpMaker/sequencer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "coretech/common/engine/array2d_impl.h"
@@ -56,6 +58,8 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/messageProfiler/messageProfiler.h"
+
+#include "cozmoAnim/micData/micDataProcessor.h"
 
 #include <unistd.h>
 
@@ -225,6 +229,14 @@ void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
            "Animation File: %s", path.c_str());
 
   _context->GetDataLoader()->LoadAnimationFile(path);
+}
+  
+void Process_startChattering(const Anki::Vector::RobotInterface::StartChattering& msg)
+{
+  uint64_t startTime_ms = msg.startTime_ms;
+  using namespace std::chrono;
+  const auto delayMillis = duration_cast<milliseconds>(milliseconds{startTime_ms} - system_clock::now().time_since_epoch());
+  _context->GetMicDataSystem()->GetMicDataProcessor()->GetChirpMaker()->StartChattering( delayMillis );
 }
 
 void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
@@ -872,6 +884,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);
   _context->GetShowAudioStreamStateManager()->Update();
   _context->GetAlexa()->Update();
+  _context->GetSequencer()->Update();
 
   // Process incoming messages from engine
   u32 dataLen;

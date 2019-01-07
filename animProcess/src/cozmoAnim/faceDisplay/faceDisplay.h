@@ -25,6 +25,12 @@
 #include <thread>
 #include <atomic>
 
+#ifdef SIMULATOR
+namespace webots {
+  class Supervisor;
+}
+#endif
+
 namespace Anki {
 
 namespace Vision {
@@ -51,6 +57,13 @@ public:
 
   // Stops the boot animation process if it is running
   void StopBootAnim();
+  
+#ifdef SIMULATOR
+  // Assign Webots supervisor
+  // Webots processes must do this before creating FaceDisplay for the first time.
+  // Unit test processes must call SetSupervisor(nullptr) to run without a supervisor.
+  static void SetSupervisor(webots::Supervisor* sup);
+#endif
   
 protected:
   FaceDisplay();

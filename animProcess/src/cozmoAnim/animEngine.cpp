@@ -29,6 +29,8 @@
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
+#include "cozmoAnim/chirpMaker/sequencer.h"
+
 #include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -151,6 +153,7 @@ Result AnimEngine::Init()
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
   _context->GetAlexa()->Init(_context.get());
+  _context->GetSequencer()->Init(_context.get());
 
   // Make sure OpenCV isn't threading
   Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );

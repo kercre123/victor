@@ -1,0 +1,17 @@
+// Chirp info
+//
+// Copyright: Anki Inc (c) 2018
+
+namespace Anki {
+namespace Vector {
+
+structure Chirp {
+  uint_64  startTime_ms, // absolute wrt std::chrono::steady_clock::now()
+  uint_32  duration_ms,  
+  float_32 pitch0_Hz,    // start pitch, in [kMinPitch_Hz, kMaxPitch_Hz]
+  float_32 pitch1_Hz,    // end pitch, in [kMinPitch_Hz, kMaxPitch_Hz]
+  float_32 volume,       // in [0,1]
+}
+
+} // namespace Vector
+} // namespace Anki

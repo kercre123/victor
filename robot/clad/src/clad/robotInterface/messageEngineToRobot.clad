@@ -192,6 +192,10 @@ message AbsoluteLocalizationUpdate
   float_32 headingAngle,
 }
 
+message StartChattering {
+  uint_64 startTime_ms,
+}
+
 // Used only for testing with simulated robots. Engine will never send this message if it is talking
 // talking to a simulated robot
 message ForceDelocalizeSimulatedRobot
@@ -825,6 +829,8 @@ union EngineToRobot
   EnableMirrorModeScreen           enableMirrorModeScreen              = 0x66,
 
   SetButtonWakeWord                setButtonWakeWord                   = 0x67,
+
+  StartChattering                  startChattering                     = 0x68,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

@@ -10,6 +10,8 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
+#include "cozmoAnim/chirpMaker/sequencer.h"
+
 #include "webServerProcess/src/webService.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -43,6 +45,7 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _webService(new WebService::WebService())
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
   , _backpackLightComponent(new BackpackLightComponent(this))
+  , _chirpSequencer(new Sequencer)
 {
   InitAudio(_dataPlatform);
 }

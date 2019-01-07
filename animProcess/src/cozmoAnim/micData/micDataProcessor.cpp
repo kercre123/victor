@@ -27,6 +27,7 @@
 #include "cozmoAnim/micData/micImmediateDirection.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
+#include "cozmoAnim/chirpMaker/chirpMaker.h"
 #include "audioUtil/speechRecognizer.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
@@ -111,6 +112,7 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
 , _writeLocationDir(writeLocation)
 , _micImmediateDirection(std::make_unique<MicImmediateDirection>())
 , _beatDetector(std::make_unique<BeatDetector>())
+, _chirpMaker(std::make_unique<ChirpMaker>())
 {
   // Init the various SE processing
   MMIfInit(0, nullptr);
@@ -134,6 +136,8 @@ void MicDataProcessor::Init()
                "MicDataProcessor.Init._micDataSystem.GetSpeechRecognizerSystem.IsNull");
   // Link recognizer
   _speechRecognizerSystem = _micDataSystem->GetSpeechRecognizerSystem();
+  
+  _chirpMaker->Init( _context );
   
   // Set initial processing state
   SetActiveMicDataProcessingState(kDefaultProcessingState);
@@ -814,6 +818,10 @@ void MicDataProcessor::ProcessTriggerLoop()
       _speechRecognizerSystem->Update(processedAudio.data(),
                                       (unsigned int)processedAudio.size(),
                                       (_micImmediateDirection->GetLatestSample().activeState != 0));
+    }
+    
+    {
+      _chirpMaker->AddSamples( processedAudio.data(), (unsigned int)processedAudio.size() );
     }
 
     // Now we're done using this audio with the recognizer, so let it go

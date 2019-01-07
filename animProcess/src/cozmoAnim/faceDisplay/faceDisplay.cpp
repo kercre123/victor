@@ -69,6 +69,13 @@ namespace {
 #endif
 }
   
+#ifdef SIMULATOR
+void FaceDisplay::SetSupervisor(webots::Supervisor* sup)
+{
+  FaceDisplayImpl::SetSupervisor(sup);
+}
+#endif
+  
 FaceDisplay::FaceDisplay()
 : _stopBootAnim(false)
 {

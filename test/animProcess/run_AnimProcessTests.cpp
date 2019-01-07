@@ -5,6 +5,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
 
 namespace Anki {
 namespace Vector {
@@ -86,6 +87,8 @@ int main(int argc, char ** argv)
 
   // Initialize OSState singleton without supervisor
   OSState::SetSupervisor(nullptr);
+  
+  FaceDisplay::SetSupervisor(nullptr);
 
   // Initialize CubeBleClient singleton without supervisor
   CubeBleClient::SetSupervisor(nullptr);
