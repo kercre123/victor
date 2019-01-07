@@ -118,6 +118,10 @@ CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f,
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
+
+// Distance within which to rotate MirrorMode display. Near/Far used for hysteresis. Set either to 0 to disable.
+CONSOLE_VAR_RANGED(s32, kTheBox_FaceDistanceToRotateScreenNear_mm, "TheBox.Screen", 300, 0, 1000);
+CONSOLE_VAR_RANGED(s32, kTheBox_FaceDistanceToRotateScreenFar_mm,  "TheBox.Screen", 400, 0, 1000);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -1524,6 +1528,33 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Enable(VisionMode::DetectingSmileAmount,          detectingSmile);
       visionModesProcessed.Enable(VisionMode::DetectingGaze,                 detectingGaze);
       visionModesProcessed.Enable(VisionMode::DetectingBlinkAmount,          detectingBlink);
+      
+      // The Box Demo: If face is close and mirror mode is enabled, rotate the mirror mode image by 180 degrees
+      if(IsModeEnabled(VisionMode::MirrorMode) &&
+         kTheBox_FaceDistanceToRotateScreenFar_mm>0 &&
+         kTheBox_FaceDistanceToRotateScreenNear_mm>0)
+      {
+        static bool faceCloseEnough = false;
+        const s32 currentTreshold = (faceCloseEnough ?
+                                     kTheBox_FaceDistanceToRotateScreenFar_mm :
+                                     kTheBox_FaceDistanceToRotateScreenNear_mm);
+        
+        faceCloseEnough = false;
+        for(const auto& face : _currentResult.faces)
+        {
+          if(face.GetHeadPose().GetTranslation().LengthSq() < (currentTreshold*currentTreshold))
+          {
+            faceCloseEnough = true;
+            break;
+          }
+        }
+        
+        if(faceCloseEnough)
+        {
+          visionModesProcessed.Insert(VisionMode::MirrorModeRotate180);
+          visionModesProcessed.Insert(VisionMode::MirrorModeUnmirrored);
+        }
+      }
     }
     Toc("TotalDetectingFaces");
   }

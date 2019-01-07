@@ -60,6 +60,10 @@ namespace Vector {
     CyclingExposure,             // Cycles through a list of AE target values to aid search in extreme lighting
     MinGainAutoExposure,         // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
 
+    // Require MirrorMode
+    MirrorModeRotate180,         // Displays the mirror mode image rotated 180 degrees (upside down from normal)
+    MirrorModeUnmirrored,        // Despite being in "mirror" mode, just display the normal image, unmirrored
+    
     Count
   }
 

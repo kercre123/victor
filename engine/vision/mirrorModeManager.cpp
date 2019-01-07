@@ -35,6 +35,13 @@ namespace {
   CONSOLE_VAR(s32,         kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
   CONSOLE_VAR_RANGED(f32,  kMirrorModeFaceDebugFontScale,      "Vision.MirrorMode", 0.5f, 0.1f, 1.f);
   
+  // Set to true to have the default image be rotated 180º from "normal" (upside down on Vector's face)
+  CONSOLE_VAR(bool, kTheBox_RotateImage180ByDefault, "TheBox.Screen", false);
+  
+  // Set to true to use normal MirrorMode, in which the screen display is flipped to be like a mirror.
+  // Set to false, to just display the image as seen by the camera.
+  CONSOLE_VAR(bool, kTheBox_UseMirroredImages, "TheBox.Screen", true);
+  
   // TODO: Figure out the original image resolution? This just assumes "Default" for marker/face detection
   constexpr f32 kXmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
   constexpr f32 kHeightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
@@ -50,45 +57,56 @@ MirrorModeManager::MirrorModeManager()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static Rectangle<f32> DisplayMirroredRectHelper(f32 x_topLeft, f32 y_topLeft, f32 width, f32 height)
+static Rectangle<f32> DisplayMirroredRectHelper(f32 x_topLeft, f32 y_topLeft, f32 width, f32 height, bool doMirror)
 {
-  const f32 x_topRight = x_topLeft + width; // will become upper left after mirroring
-  const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - kWidthScale*x_topRight, // mirror rectangle for display
-                            y_topLeft * kHeightScale,
-                            width * kWidthScale,
-                            height * kHeightScale);
-  
-  return rect;
+  if(doMirror)
+  {
+    const f32 x_topRight = x_topLeft + width; // will become upper left after mirroring
+    const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - kWidthScale*x_topRight, // mirror rectangle for display
+                              y_topLeft * kHeightScale,
+                              width * kWidthScale,
+                              height * kHeightScale);
+    return rect;
+  }
+  else
+  {
+    const Rectangle<f32> rect(x_topLeft * kWidthScale,
+                              y_topLeft * kHeightScale,
+                              width * kWidthScale,
+                              height * kHeightScale);
+    return rect;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-static inline Point<2,T> MirrorPointHelper(const Point<2,T>& pt)
+static inline Point<2,T> MirrorPointHelper(const Point<2,T>& pt, bool doMirror)
 {
-  const Point<2,T> pt_mirror(kWidthScale*(kXmax - pt.x()), pt.y()*kHeightScale);
+  const Point<2,T> pt_mirror((doMirror ? kWidthScale*(kXmax - pt.x()) : kWidthScale*pt.x()),
+                             pt.y()*kHeightScale);
   return pt_mirror;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad)
+static Quad2f DisplayMirroredQuadHelper(const Quad2f& quad, bool doMirror)
 {
   // Mirror x coordinates, swap left/right points, and scale for each point in the quad:
-  const Quad2f quad_mirrored(MirrorPointHelper(quad.GetTopRight()),
-                             MirrorPointHelper(quad.GetBottomRight()),
-                             MirrorPointHelper(quad.GetTopLeft()),
-                             MirrorPointHelper(quad.GetBottomLeft()));
+  const Quad2f quad_mirrored(MirrorPointHelper(quad.GetTopRight(), doMirror),
+                             MirrorPointHelper(quad.GetBottomRight(), doMirror),
+                             MirrorPointHelper(quad.GetTopLeft(), doMirror),
+                             MirrorPointHelper(quad.GetBottomLeft(), doMirror));
   
   return quad_mirrored;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-static Polygon<2,T> DisplayMirroredPolyHelper(const Polygon<2,T>& poly)
+static Polygon<2,T> DisplayMirroredPolyHelper(const Polygon<2,T>& poly, bool doMirror)
 {
   Polygon<2,T> poly_mirrored;
   for(auto & pt : poly)
   {
-    poly_mirrored.emplace_back(MirrorPointHelper(pt));
+    poly_mirrored.emplace_back(MirrorPointHelper(pt, doMirror));
   }
   
   return poly_mirrored;
@@ -105,7 +123,7 @@ void MirrorModeManager::DrawVisionMarkers(const std::list<Vision::ObservedMarker
     const auto& quad = visionMarker.GetImageCorners();
     const auto& name = std::string(visionMarker.GetCodeName());
     
-    _screenImg.DrawQuad(DisplayMirroredQuadHelper(quad), drawColor, 3);
+    _screenImg.DrawQuad(DisplayMirroredQuadHelper(quad, _doMirror), drawColor, 3);
     if(Util::IsFltGTZero(kDisplayMarkerNamesScale))
     {
       _screenImg.DrawText({1., _screenImg.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos),
@@ -130,7 +148,7 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
       color = NamedColors::YELLOW;
     }
 
-    _screenImg.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
+    _screenImg.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight(), _doMirror),
                         color, 3);
     
     const auto& debugInfo = faceDetection.GetRecognitionDebugInfo();
@@ -254,7 +272,7 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
     }
     
     _screenImg.DrawFilledCircle(mirroredCentroid, color, 3);
-    _screenImg.DrawPoly(DisplayMirroredPolyHelper(poly), color, 2);
+    _screenImg.DrawPoly(DisplayMirroredPolyHelper(poly, _doMirror), color, 2);
   }
 }
   
@@ -264,9 +282,16 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
 {
   cameraImg.Resize(_screenImg, Vision::ResizeMethod::NearestNeighbor);
 
+  // Only do mirroring if it's enabled and we're not being told to "unmirror" by the VisionModes in the result
+  // Note that Unmirroring does nothing if mirroring is not enabled in the first place.
+  _doMirror = (kTheBox_UseMirroredImages && !visionProcResult.modesProcessed.Contains(VisionMode::MirrorModeUnmirrored));
+  
   // Flip image around the y axis (before we draw anything on it)
-  cv::flip(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), 1);
-
+  if(_doMirror)
+  {
+    cv::flip(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), 1);
+  }
+  
   if(kDisplayDetectionsInMirrorMode)
   {
     DrawVisionMarkers(visionProcResult.observedMarkers);
@@ -288,6 +313,15 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
     {
       _gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
     }
+  }
+  
+  // Whether rotate "upside down" for display is an XOR. Either:
+  //  - we rotate by default and the special vision mode is NOT present
+  //    (since that would be double rotation, meaning upright image)
+  //  - we don't rotate by default but the special vision mode IS present
+  if(kTheBox_RotateImage180ByDefault ^ visionProcResult.modesProcessed.Contains(VisionMode::MirrorModeRotate180))
+  {
+    cv::rotate(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), cv::ROTATE_180);
   }
   
   visionProcResult.mirrorModeImg.SetFromImageRGB(_screenImg, _gammaLUT);
