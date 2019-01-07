@@ -705,7 +705,7 @@ namespace Anki {
     {
       // Only look for the robot node once at the beginning
       if (_robotNode == nullptr) {
-        auto cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "CozmoBot");
+        auto cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "Boxy");
         if (cozmoBotNodeInfo.nodePtr == nullptr) {
           // If there's no Vector, look for a Whiskey
           cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "WhiskeyBot");

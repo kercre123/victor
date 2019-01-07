@@ -171,7 +171,7 @@ void VizControllerImpl::Init()
 
   // Look for controller-less CozmoBot in children.
   // These will be used as visualization robots.
-  auto nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(_vizSupervisor, "CozmoBot");
+  auto nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(_vizSupervisor, "Boxy");
   if (nodeInfo.nodePtr == nullptr) {
     // If there's no Vector, look for a Whiskey
     nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(_vizSupervisor, "WhiskeyBot");

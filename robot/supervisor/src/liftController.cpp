@@ -451,6 +451,8 @@ namespace Anki {
 
       void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
+        if (THEBOX) return;      
+
         // Command a target height based on the sign of the desired speed
         bool useVPG = true;
         f32 targetAngle = 0.f;
@@ -510,7 +512,7 @@ namespace Anki {
         }
 #endif
 
-        if (!enable_ || bracing_) {
+        if (!enable_ || bracing_ || THEBOX) {
           return;
         }
 

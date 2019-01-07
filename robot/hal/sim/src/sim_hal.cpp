@@ -770,7 +770,7 @@ namespace Anki {
     ProxSensorDataRaw HAL::GetRawProxData()
     {
       ProxSensorDataRaw proxData;
-      if (PowerGetMode() == POWER_MODE_ACTIVE) {
+      if (!THEBOX && PowerGetMode() == POWER_MODE_ACTIVE) {
         proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
         // Note: These fields are spoofed with simple defaults for now, but should be computed
         // to reflect the actual behavior of the sensor once we do some more testing with it.
@@ -807,6 +807,8 @@ namespace Anki {
         }
         case BUTTON_POWER:
         {
+          if (THEBOX) return 0;
+          
           return backpackButtonPressedField_->getSFBool() ? 1 : 0;
         }
         default:
@@ -822,7 +824,7 @@ namespace Anki {
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {
       assert(cliff_id < HAL::CLIFF_COUNT);
-      if (PowerGetMode() == POWER_MODE_ACTIVE) {
+      if (!THEBOX && PowerGetMode() == POWER_MODE_ACTIVE) {
         return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
       }
 
@@ -860,16 +862,22 @@ namespace Anki {
 
     f32 HAL::BatteryGetVoltage()
     {
+      if (THEBOX) return 5.f;
+
       return batteryVoltsField_->getSFFloat();
     }
 
     bool HAL::BatteryIsCharging()
     {
+      if (THEBOX) return false;
+
       return (chargeContact_->getPresence() == 1);
     }
 
     bool HAL::BatteryIsOnCharger()
     {
+      if (THEBOX) return false;
+
       // The _physical_ robot only knows that it's on the charger if
       // the charge contacts are powered, so treat this the same as
       // BatteryIsCharging()

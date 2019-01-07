@@ -29,7 +29,8 @@ namespace{
 //   0,    -1.f, 0,
 //});
 // 4-degree look down:
-const RotationMatrix3d kDefaultHeadCamRotation = RotationMatrix3d({
+const RotationMatrix3d kDefaultHeadCamRotation = THEBOX ? RotationMatrix3d() : 
+RotationMatrix3d({
   0,      -0.0698f,  0.9976f,
 -1.0000f,  0,        0,
   0,      -0.9976f, -0.0698f,

@@ -304,12 +304,21 @@ int imu_manage(struct IMURawData* data)
       return i;
     }
     else {
-      data[i].gyro[0] =  ((sample_data[ 5] << 8) | sample_data[ 4]);
-      data[i].gyro[1] =  ((sample_data[ 3] << 8) | sample_data[ 2]);
-      data[i].gyro[2] = -((sample_data[ 1] << 8) | sample_data[ 0]);
-      data[i].acc[0]  =  ((sample_data[11] << 8) | sample_data[10]);
-      data[i].acc[1]  =  ((sample_data[ 9] << 8) | sample_data[ 8]);
-      data[i].acc[2]  = -((sample_data[ 7] << 8) | sample_data[ 6]);
+      //if (THEBOX) {
+        data[i].gyro[0] = -((sample_data[ 1] << 8) | sample_data[ 0]);
+        data[i].gyro[1] = -((sample_data[ 3] << 8) | sample_data[ 2]);
+        data[i].gyro[2] =  ((sample_data[ 5] << 8) | sample_data[ 4]);  
+        data[i].acc[0]  = -((sample_data[ 7] << 8) | sample_data[ 6]);
+        data[i].acc[1]  = -((sample_data[ 9] << 8) | sample_data[ 8]);
+        data[i].acc[2]  = ((sample_data[11] << 8) | sample_data[10]);
+      // } else {
+      //   data[i].gyro[0] =  ((sample_data[ 5] << 8) | sample_data[ 4]);
+      //   data[i].gyro[1] =  ((sample_data[ 3] << 8) | sample_data[ 2]);
+      //   data[i].gyro[2] = -((sample_data[ 1] << 8) | sample_data[ 0]);
+      //   data[i].acc[0]  =  ((sample_data[11] << 8) | sample_data[10]);
+      //   data[i].acc[1]  =  ((sample_data[ 9] << 8) | sample_data[ 8]);
+      //   data[i].acc[2]  = -((sample_data[ 7] << 8) | sample_data[ 6]);
+      // }
       data[i].temperature = m_latest_temperature;
       
 #if REALTIME_CONSOLE_OUTPUT

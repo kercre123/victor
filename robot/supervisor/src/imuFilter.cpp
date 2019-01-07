@@ -46,7 +46,7 @@
 #define RECORD_AND_SEND_MODE RECORD_AND_SEND_RAW_DATA
 
 // Whether or not to tuck head and lift down when falling is detected
-#define DEFAULT_BRACE_WHEN_FALLING true
+#define DEFAULT_BRACE_WHEN_FALLING (!THEBOX)
 
 namespace Anki {
   namespace Vector {

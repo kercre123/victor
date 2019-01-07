@@ -1,0 +1,359 @@
+#VRML_SIM V7.3.0 utf8
+PROTO Boxy [
+  field SFString name "Boxy"
+  field SFInt32 robotID 0
+
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 0 1 0
+
+  field SFFloat headAngle          0
+  field SFFloat headAngle_lowLimit -0.383972 # 22 degrees down
+  field SFFloat headAngle_highLimit 0.785398 # 45 degrees up
+
+  field SFFloat liftAngle 0
+  field SFFloat liftAngle_lowLimit  -0.01  # Should be 0, but Webots needs it to be less than liftAngle
+  #field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
+  field SFFloat liftAngle_highLimit 1.06
+
+  field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
+  field SFString controller "webotsCtrlRobot2"
+  field SFString controllerArgs ""
+
+  field SFColor bodyColor 0.3 0.3 0.3
+  field SFColor wheelColor 0.2 0.2 0.2
+
+  # Set to TRUE if you just want to use the model for visualization.
+  field SFBool vizMode FALSE
+  
+  # Tread wheel parameters
+  field SFFloat frontWheelRadiusM   0.0145
+  field SFFloat rearWheelRadiusM    0.01075
+  field SFFloat rearWheelDistToFrontWheelM 0.048
+
+  # The number of intermediate wheels to simulate in each tread between the two end wheels.
+  field SFInt32 numInterTreadWheels 2
+
+  # Used for animation tests, specify animation to test
+  field SFString animationTestName ""
+
+  # Press backpack button
+  field SFBool backpackButtonPressed FALSE
+  
+  # Touch sensor
+  field SFBool touchSensorTouched FALSE
+
+  # Robot battery voltage
+  field SFFloat batteryVolts  4.2
+  
+  # Rates at which battery voltage changes while on/off the charger
+  field SFFloat batteryChargeRate_voltsPerMin     0.09
+  field SFFloat batteryDischargeRate_voltsPerMin -0.02
+
+  # Camera angle above horizontal
+  field SFFloat cameraAngle_deg 45
+]
+{
+
+Supervisor {
+  translation IS translation
+  rotation IS rotation
+  name IS name
+
+  %{ if not fields.vizMode.value then }%
+
+    # append optional command line parameters
+    %{ autoArgs=fields.controllerArgs.value }%
+    %{ if fields.filterLogs.value then }%
+      %{ autoArgs = autoArgs .. " --applyLogFilter"}%
+    %{ end }%
+    %{ if fields.colorizeStderrOutput.value then }%
+      %{ autoArgs = autoArgs .. " --colorizeStderrOutput"}%
+    %{ end }%
+
+    controller IS controller
+    controllerArgs "%{=autoArgs}%"
+  %{ else }%
+    controller ""
+    controllerArgs ""
+  %{ end }%
+
+  %{ if not fields.vizMode.value then }%
+    physics Physics {
+      density 0.1  # This value needs to be small for some reason otherwise it starts doing the slow-mo rocking thing
+      #mass 0.17 # about 6 ounces
+    }
+  %{ end }%
+
+  children [
+    Transform {
+      translation 0 0 0
+      children [
+
+        %{ if not fields.vizMode.value then }%
+
+        # Are these still needed?
+        GPS {
+          name "gps"
+          translation 0 0 0
+        }
+        Compass {
+          name "compass"
+        }
+
+        # TODO: These cliff sensor positions need to be verified
+        CozmoCliffSensor {
+          name "cliffSensorFL"
+          translation 0 0.015 -0.013
+        }
+        CozmoCliffSensor {
+          name "cliffSensorFR"
+          translation 0 -0.015 -0.013
+        }
+        CozmoCliffSensor {
+          name "cliffSensorBL"
+          translation -0.045 0.015 -0.013
+        }
+        CozmoCliffSensor {
+          name "cliffSensorBR"
+          translation -0.045 -0.015 -0.013
+        }        
+        
+
+        # if you modify the length, you need to update FORWARD_RANGE_SENSOR_MIN/MAX_DISTANCE_MM
+        DistanceSensor {
+          name "forwardProxSensor"
+          translation 0.01 0 0
+          rotation 0 1 0 -0.10472
+          type "generic"
+          lookupTable [ 0.015    25  .0,
+                        0.400   410  .0,
+                        1.200  1210  .0] # offset for its own translation
+          numberOfRays 1
+          aperture 0.218
+        }
+
+
+        # This IMU is positioned in the same place as the one in CozmoEngine2.proto
+        # as way to simulate access to the same IMU from both the robot and engine processes 
+        # which we might in theory be able to eventually do via AndroidHAL.
+        CozmoIMU {
+          translation 0.0058 -0.0135 0
+        }
+
+        Connector {
+                name        "ChargeContact"
+                model       "ChargeContact"
+                type        "symmetric"
+                isLocked    FALSE
+                autoLock    FALSE
+                distanceTolerance 0.01
+                axisTolerance   0.2
+                rotationTolerance   1.5708
+                numberOfRotations   4
+                snap      FALSE
+        }
+
+        HingeJoint {
+          device [
+            RotationalMotor {
+              name "HeadMotor"
+              maxTorque 10
+            }
+            PositionSensor {
+              name "HeadMotorPosSensor"
+              resolution 0.001
+            }
+          ]
+        }
+
+        HingeJoint {
+          device [
+            RotationalMotor {
+              name "LiftMotor"
+              maxVelocity 30
+              maxTorque 30
+            }
+            PositionSensor {
+              name "LiftMotorPosSensor"
+              resolution 0.005
+            }
+          ]
+        }
+
+                          
+        Connector {
+          name "gripperConnector"
+          translation 0.0035 0 -0.0145
+          rotation 0 1 0 1.57
+          model "magnetic"
+          distanceTolerance 0.005
+          type "active"
+          isLocked FALSE
+          autoLock TRUE
+          tensileStrength 1
+          shearStrength 2
+        }
+
+        Track {
+          name "left track"
+          device [     
+            LinearMotor {
+              name "LeftWheelMotor"
+            }
+            PositionSensor {
+              name "LeftWheelMotorPosSensor"
+              resolution 0.0001
+            }
+          ]
+        }
+
+        Track {
+          name "right track"
+          device [     
+            LinearMotor {
+              name "RightWheelMotor"
+            }
+            PositionSensor {
+              name "RightWheelMotorPosSensor"
+              resolution 0.0001
+            }
+          ]
+        }
+
+        #Backpack lights (directional)
+        Transform {
+          children [
+            %{
+              for i=0,3 do
+                led_name = string.format("backpackLED%d", i)
+                xpos = -(i)*0.004
+            }%
+            LED {
+              name "%{=led_name}%"
+              children [
+              DEF BACKPACK_HEALTH_LED_SHAPE Group {
+                children [
+                  Shape {
+                    appearance Appearance {
+                      material Material {
+                              diffuseColor 0.3 0.3 0.3
+                      }
+                    }
+                    geometry Box {
+                      size 0.001 0.001 0.001
+                    }
+                  }
+                ]
+              }
+              ]
+              translation %{=xpos}% 0 0
+              color []
+              gradual TRUE
+            }
+            %{ end }%   # End light for loop
+          ]
+        } # Backpack lights
+
+
+        %{ end }%  # vizMode
+
+
+        DEF BODY Solid {
+          name "Body"
+          rotation 1 0 0 1.570795
+          children [
+            DEF HEAD_SHAPE Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 0.1 0.1 0.1
+                }
+              }
+              geometry Cylinder {
+                height 0.025
+                radius 0.03
+                subdivision 16
+              }
+            }
+          ]
+
+          %{ if not fields.vizMode.value then }%
+          boundingObject USE HEAD_SHAPE
+          physics Physics {
+            density 1000
+          }
+          %{ end }%
+        }
+
+        DEF CAMERA_MARKER Solid {
+          name "CameraMarker"
+          translation 0.02 0 0.016
+          rotation 1 0 0 1.570795
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 0.7 0 0
+                }
+              }
+              geometry Cylinder {
+                height 0.001
+                radius 0.005
+                subdivision 16
+              }
+            }
+          ]
+        }
+
+        DEF SCREEN Transform {
+          translation 0 0 0
+          rotation 0 1 0 -1.570795
+          children [
+            
+            %{ if not fields.vizMode.value then }%
+            
+            # Anim process:
+            CozmoAnim {
+              robotID IS robotID
+              filterLogs IS filterLogs
+              colorizeStderrOutput IS colorizeStderrOutput
+            }
+            
+            # Web server process:
+            CozmoWebServer {
+              robotID IS robotID
+              filterLogs IS filterLogs
+              colorizeStderrOutput IS colorizeStderrOutput
+            }
+            
+            Transform {
+              %{ cameraAngle_rad = (90 - fields.cameraAngle_deg.value) * 3.14159 / 180 }%
+              rotation 0 1 0 %{=cameraAngle_rad}%
+              children [
+                # Engine process (aka camera)
+                CozmoEngine2 {
+                  robotID IS robotID
+                  filterLogs IS filterLogs
+                  colorizeStderrOutput IS colorizeStderrOutput
+                }
+              ]
+            }
+            
+            # Vic-gateway process:
+            Gateway {
+            }
+
+            %{ end }%  #vizMode
+          ]
+         
+        } # DEF HEAD Transform
+
+        
+      ] # Children
+
+    } # Transform
+
+  ] # Supervisor children
+} # Supervisor
+
+} # PROTO definition

@@ -582,7 +582,9 @@ Result HAL::Step(void)
 
 #endif // #ifndef HAL_DUMMY_BODY
 
-  ProcessFailureCode();
+  if (!THEBOX) {
+    ProcessFailureCode();
+  }
 
   ProcessMicError();
 
@@ -827,7 +829,7 @@ ProxSensorDataRaw HAL::GetRawProxData()
   if (proxData.rangeStatus != RangeStatus::RANGE_VALID) {
     ++invalidProxSensorStatusCounts.at(proxData.rangeStatus);
   }
-  if (HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
+  if (!THEBOX && HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
     proxData.distance_mm      = FlipBytes(bodyData_->proximity.rangeMM);
     // Signal/Ambient Rate are fixed point 9.7, so convert to float:
     proxData.signalIntensity  = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
@@ -858,7 +860,7 @@ u16 HAL::GetButtonState(const ButtonID button_id)
 u16 HAL::GetRawCliffData(const CliffID cliff_id)
 {
   assert(cliff_id < DROP_SENSOR_COUNT);
-  if (HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
+  if (!THEBOX && HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
     return bodyData_->cliffSense[cliff_id];
   }
 
@@ -877,12 +879,16 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 
 f32 HAL::BatteryGetVoltage()
 {
+  if (THEBOX) return 5.f;
+
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
   return kBatteryScale * bodyData_->battery.main_voltage;
 }
 
 bool HAL::BatteryIsCharging()
 {
+  if (THEBOX) return false;
+
   // The POWER_IS_CHARGING flag is set whenever syscon has the charging
   // circuitry enabled. It does not necessarily mean the charging circuit
   // is actually charging the battery. It may remain true even after the
@@ -892,6 +898,8 @@ bool HAL::BatteryIsCharging()
 
 bool HAL::BatteryIsOnCharger()
 {
+  if (THEBOX) return false;
+
   // The POWER_ON_CHARGER flag is set whenever there is sensed voltage on
   // the charge contacts.
   return bodyData_->battery.flags & POWER_ON_CHARGER;
@@ -899,6 +907,8 @@ bool HAL::BatteryIsOnCharger()
 
 bool HAL::BatteryIsDisconnected()
 {
+  if (THEBOX) return false;
+
   // The POWER_BATTERY_DISCONNECTED flag is set whenever the robot is on
   // the charge base, but the battery has been disconnected from the
   // charging circuit.
@@ -907,17 +917,23 @@ bool HAL::BatteryIsDisconnected()
 
 bool HAL::BatteryIsOverheated()
 {
+  if (THEBOX) return false;
+
   return bodyData_->battery.flags & POWER_IS_OVERHEATED;
 }
 
 f32 HAL::ChargerGetVoltage()
 {
+  if (THEBOX) return 0.f;
+
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
   return kBatteryScale * bodyData_->battery.charger;
 }
 
 u8 HAL::BatteryGetTemperature_C()
 {
+  if (THEBOX) return 35;
+
   if (bodyData_->battery.temperature > 0xff) {
     AnkiWarn("HAL.BatteryGetTemperature_C.InvalidTemp", "%u", bodyData_->battery.temperature);
     return 0;
@@ -1021,6 +1037,8 @@ HAL::PowerState HAL::PowerGetMode()
 
 bool HAL::AreEncodersDisabled()
 {
+  if (THEBOX) return false;
+
   if(bodyData_ != nullptr)
   {
     return (bodyData_->flags & ENCODERS_DISABLED);
@@ -1030,6 +1048,8 @@ bool HAL::AreEncodersDisabled()
 
 bool HAL::IsHeadEncoderInvalid()
 {
+  if (THEBOX) return false;
+
   if(bodyData_ != nullptr)
   {
     return (bodyData_->flags & ENCODER_HEAD_INVALID);
@@ -1039,6 +1059,8 @@ bool HAL::IsHeadEncoderInvalid()
 
 bool HAL::IsLiftEncoderInvalid()
 {
+  if (THEBOX) return false;
+
   if(bodyData_ != nullptr)
   {
     return (bodyData_->flags & ENCODER_LIFT_INVALID);

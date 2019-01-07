@@ -235,6 +235,8 @@ bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose) co
 
 void ProxSensorComponent::UpdateNavMap()
 {
+  if (THEBOX) return;
+
   if (_latestDataRaw.spadCount == 0)
   {
     PRINT_NAMED_WARNING("ProxSensorComponent.UpdateNavMap", "Invalid sensor reading, SpadCount == 0");

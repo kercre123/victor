@@ -14,6 +14,10 @@
 namespace Anki {
 namespace Vector {
 
+  #define THEBOX 1
+  const f32 THEBOX_HEAD_ANGLE_RAD = DEG_TO_RAD(45);  // i.e. angle of camera wrt horizon
+
+
   /***************************************************************************
    *
    *                          Physical Robot Geometry

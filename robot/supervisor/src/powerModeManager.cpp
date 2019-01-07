@@ -15,7 +15,7 @@ namespace PowerModeManager {
 namespace {
 
   // Whether or not active mode (i.e. opposite of calm mdoe) is enabled
-  bool enable_        = false;
+  bool enable_        = THEBOX;
 
   // Whether or not motors should be calibrated when transitioning from calm to active
   bool calibOnEnable_ = false;
@@ -61,7 +61,7 @@ void Update()
     
     HAL::PowerSetDesiredMode(HAL::POWER_MODE_ACTIVE);
 
-    if (calibOnEnable_ && enable_) {
+    if (!THEBOX && calibOnEnable_ && enable_) {
       AnkiInfo("PowerModeManager.CalibrateOnActiveMode", "");
       const bool autoStarted = true;
       LiftController::StartCalibrationRoutine(autoStarted, MotorCalibrationReason::PowerSaveEnteringActiveMode);

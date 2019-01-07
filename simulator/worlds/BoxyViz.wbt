@@ -1,0 +1,34 @@
+#VRML_SIM R2018a utf8
+CozmoWorldInfo {
+  info [
+    "For connecting to cozmoEngine+cozmoRobot running on physical robot / Android device"
+  ]
+}
+Viewpoint {
+  fieldOfView 0.8
+  orientation 1 0 0 0.56
+  position 0 -0.55 0.84
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.75
+}
+CozmoMat {
+}
+DEF CozmoViz_1 Boxy {
+  name "CozmoBot_1"
+  translation 0 1 0
+  vizMode TRUE
+}
+CozmoVizDisplay {
+  streamResolution "NHD"
+  colorizeStderrOutput TRUE
+}
+WebotsKeyboardController {
+  colorizeStderrOutput TRUE
+  engineIP "192.168.43.7"
+}

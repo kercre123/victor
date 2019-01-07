@@ -189,7 +189,7 @@ namespace HeadController {
 
     void ResetLowAnglePosition()
     {
-      currentAngle_ = MIN_HEAD_ANGLE;
+      currentAngle_ = THEBOX ? 0.f : MIN_HEAD_ANGLE;
       HAL::MotorResetPosition(MotorID::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_HEAD);
       isCalibrated_ = true;
@@ -379,6 +379,8 @@ namespace HeadController {
 
     void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
+      if (THEBOX) return;
+
       // Command a target angle based on the sign of the desired speed
       f32 targetAngle = 0;
       bool useVPG = true;
@@ -415,7 +417,7 @@ namespace HeadController {
     void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
                                   f32 speed_rad_per_sec, f32 accel_rad_per_sec2, bool useVPG)
     {
-      if (!enable_ || bracing_) {
+      if (!enable_ || bracing_ || THEBOX) {
         return;
       }
 

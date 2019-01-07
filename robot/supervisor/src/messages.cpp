@@ -81,7 +81,7 @@ namespace Anki {
         robotState_.pose.pitch_angle = IMUFilter::GetPitch();
         robotState_.pose.roll_angle = IMUFilter::GetRoll();
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
-        robotState_.headAngle  = HeadController::GetAngleRad();
+        robotState_.headAngle  = THEBOX ? THEBOX_HEAD_ANGLE_RAD : HeadController::GetAngleRad();
         robotState_.liftAngle  = LiftController::GetAngleRad();
 
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();

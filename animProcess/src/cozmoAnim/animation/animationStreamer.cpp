@@ -1395,6 +1395,7 @@ namespace Vector {
     }
 
     // Draw a colored square in the upper right corner if there's memory pressure
+#ifndef SIMULATOR    
     if (kDisplayMemoryPressure)
     {
       OSState::MemoryInfo info;
@@ -1408,6 +1409,7 @@ namespace Vector {
                             NamedColors::BLACK, 0.55, false, 1, true);
       }
     }
+#endif    
 
 #endif // ANKI_DEV_CHEATS
 

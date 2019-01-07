@@ -446,7 +446,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   //
   // DVT hardware => disabled
   // PVT hardware => enabled
-  if(!_enabled) {
+  if(!THEBOX && !_enabled) {
     return;
   }
   
