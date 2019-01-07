@@ -230,10 +230,6 @@ message ExecuteTestPlan {
     PathMotionProfile motionProf
 }
 
-message PlannerRunMode {
-    bool isSync
-}
-
 // SelectNextObject
 message SelectNextObject {
 
@@ -440,12 +436,6 @@ message FakeUserIntent {
   string intent,
 }
 
-// ExecuteBehavior
-message ExecuteBehaviorByExecutableType {
-  string behaviorType,
-  int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
-}
-
 message ExecuteBehaviorByID {
   string behaviorID,
   int_32 numRuns = -1, // Number of times to run the behavior (-1 is infinite)
@@ -472,14 +462,6 @@ message StartTestMode {
     int_32 p2,
     int_32 p3,
     TestMode mode
-}
-
-
-// Engine will preserve the head and lift state between reactionary behaviors
-message SetDefaultHeadAndLiftState {
-  bool enable,
-  float_32 headAngle,
-  float_32 liftHeight
 }
 
 
@@ -674,16 +656,6 @@ message SetBackpackLEDs {
 message EnableLightStates {
   bool enable,
   int_32 objectID = -1 // -1 is to enable/disable all cube light states
-}
-
-message EnableCubeSleep {
-  bool enable,
-  bool skipAnimation = 0 // If true will skip the fadeout part of the sleep anim
-}
-
-// Makes the specified object flash its lights
-message FlashCurrentLightsState {
-  uint_32 objectID
 }
 
 // Plays a cube animation on the specified object

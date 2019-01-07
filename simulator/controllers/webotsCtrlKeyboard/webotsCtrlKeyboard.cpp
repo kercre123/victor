@@ -1224,20 +1224,6 @@ namespace Vector {
                                                        ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1, false)));
   }
   
-  void WebotsKeyboardController::ToggleSendAvailableObjects()
-  {
-    static bool enable = true;
-    ExternalInterface::SendAvailableObjects msg;
-    msg.enable = enable;
-    
-    LOG_INFO("SendAvailableObjects", "enable: %d", enable);
-    ExternalInterface::MessageGameToEngine msgWrapper;
-    msgWrapper.Set_SendAvailableObjects(msg);
-    SendMessage(msgWrapper);
-    
-    enable = !enable;
-  }
-  
   void WebotsKeyboardController::SetFaceDisplayHue()
   {
     using namespace ExternalInterface;
@@ -1849,7 +1835,7 @@ namespace Vector {
     REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT,  PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_NONE, , "");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_ALT, , "");
-    REGISTER_SHIFTED_KEY_FCN('@', MOD_NONE, ToggleSendAvailableObjects,        "Toggle sending of available objects");
+//      REGISTER_SHIFTED_KEY_FCN('@', MOD_NONE, , "");
     REGISTER_SHIFTED_KEY_FCN('@', MOD_ALT,  ExecutePlaypenTest,                "Execute playpen test");
 //      REGISTER_SHIFTED_KEY_FCN('#', MOD_NONE, ,                      "");
 //      REGISTER_SHIFTED_KEY_FCN('#', MOD_ALT, , "");
