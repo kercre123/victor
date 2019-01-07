@@ -112,15 +112,6 @@ func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
 	}
 }
 
-func ProtoCreateFixedCustomObjectToClad(msg *extint.CreateFixedCustomObjectRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithCreateFixedCustomObject(&gw_clad.CreateFixedCustomObject{
-		Pose:    *ProtoPoseToClad(msg.Pose),
-		XSizeMm: msg.XSizeMm,
-		YSizeMm: msg.YSizeMm,
-		ZSizeMm: msg.ZSizeMm,
-	})
-}
-
 func ProtoDefineCustomBoxToClad(msg *extint.DefineCustomObjectRequest, def *extint.CustomBoxDefinition) *gw_clad.MessageExternalToRobot {
 	// Convert from the proto defined CustomObject enum to the more general clad ObjectType enum space
 	object_type := gw_clad.ObjectType(int(msg.CustomType) - int(extint.CustomType_CUSTOM_TYPE_00) + int(gw_clad.ObjectType_CustomType00))
@@ -2418,14 +2409,10 @@ func (service *rpcService) DeleteCustomObjects(ctx context.Context, in *extint.D
 }
 
 func (service *rpcService) CreateFixedCustomObject(ctx context.Context, in *extint.CreateFixedCustomObjectRequest) (*extint.CreateFixedCustomObjectResponse, error) {
-	f, responseChan := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_CreatedFixedCustomObject, 1)
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CreateFixedCustomObjectResponse{}, 1)
 	defer f()
 
-	log.Printf("ron_proto CreateFixedCustomObject")
-
-	cladData := ProtoCreateFixedCustomObjectToClad(in)
-
-	_, err := engineCladManager.Write(cladData)
+	_, err := engineProtoManager.Write(in)
 	if err != nil {
 		return nil, err
 	}
@@ -2434,13 +2421,13 @@ func (service *rpcService) CreateFixedCustomObject(ctx context.Context, in *exti
 	if !ok {
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
-	response := chanResponse.GetCreatedFixedCustomObject()
+	response := chanResponse.GetCreateFixedCustomObjectResponse()
 
 	return &extint.CreateFixedCustomObjectResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 		},
-		ObjectId: response.ObjectID,
+		ObjectId: response.ObjectId,
 	}, nil
 }
 
