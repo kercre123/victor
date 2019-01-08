@@ -126,6 +126,16 @@ enum uint_32 Vic_Robot_Sfx_Rnd_Chirps_Durations
   Duration_08 = 506020972,
   Duration_09 = 506020973,
   Duration_10 = 522798551,
+  Duration_11 = 522798550,
+  Duration_12 = 522798549,
+  Duration_13 = 522798548,
+  Duration_14 = 522798547,
+  Duration_15 = 522798546,
+  Duration_16 = 522798545,
+  Duration_17 = 522798544,
+  Duration_18 = 522798559,
+  Duration_19 = 522798558,
+  Duration_20 = 539576138,
   Invalid = 0,
 }
 
