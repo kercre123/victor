@@ -126,7 +126,7 @@ func (strm *Streamer) openChipperStream(ctx context.Context, creds credentials.P
 	opts = append(opts, chipper.WithSessionID(sessionID))
 	opts = append(opts, chipper.WithFirmwareVersion(robot.OSVersion()))
 	opts = append(opts, chipper.WithBootID(robot.BootID()))
-	conn, err := chipper.NewConn(ctx, strm.opts.url, strm.opts.secret, opts...)
+	conn, err := chipper.NewConn(ctx, strm.opts.url, opts...)
 	if err != nil {
 		log.Println("Error getting chipper connection:", err)
 		return nil, nil, &CloudError{cloud.ErrorType_Connecting, err}

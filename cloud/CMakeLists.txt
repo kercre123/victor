@@ -49,15 +49,10 @@ set(GATEWAY_PROTO_HOME_DIR "${GATEWAY_PROTO_HOME_DIR}" PARENT_SCOPE)
 get_property(VISION_CLAD_SRCS GLOBAL PROPERTY VISION_GO_GEN_SRCS)
 set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATEWAY_GRPC_GO_GEN_SRCS}" "${CLAD_GATEWAY_GEN_SRCS}" "${VISION_CLAD_SRCS}")
 
-if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
-  message(WARNING "Need chipper_key file to be able to connect to cloud services!")
-  message(WARNING "Check your VPN settings. You must be on VPN or office network to get chipper key.")
-  message(FATAL_ERROR "Can't build cloud without chipper key")
-endif()
-
-set(chipper_flags "")
-file(READ "${ANKI_EXTERNAL_DIR}/chipper_key" chipper_flags)
-set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
+# preserving this now-unused option as an example of how to set variables at build times
+# hopefully someday this saves someone hours of figuring out how many backslashes are necessary
+# set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
+# anki_go_set_ldflags(${target_name} ${chipper_flags})
 
 if(VICOS)
   set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-vicos)
@@ -73,7 +68,6 @@ endif()
 
 
 macro(_add_chipper_flags target_name)
-  anki_go_set_ldflags(${target_name} ${chipper_flags})
   anki_go_add_include_dir(${target_name} ${__opus_build_dir}/include/opus)
   anki_go_add_c_library(${target_name} opus)
 endmacro()

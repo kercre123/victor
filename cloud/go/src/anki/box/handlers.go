@@ -1,4 +1,4 @@
-package token
+package box
 
 import "net/http"
 
@@ -9,5 +9,3 @@ func GetDevHandlers(s *http.ServeMux) {
 		devHandlers(s)
 	}
 }
-
-var SetDevServer = func(s *Server) {}

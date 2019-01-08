@@ -1,0 +1,9 @@
+<html>
+<h1>Title</h1>
+
+{{range .}}
+  <div><a href="request?file={{.Name}}">{{.Name}}<br><img src="images/{{.Name}}"></div>
+{{else}}
+  <div>No files found - please add test photos to resources/webserver/cloud/box/images in the Victor repo.</div>
+{{end}}
+</html>

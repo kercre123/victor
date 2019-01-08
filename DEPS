@@ -50,9 +50,6 @@
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "files": {
-        "chipper_key": {
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
-        },
         "victor-blobstore-qalogs-key": {
             "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
         }

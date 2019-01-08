@@ -46,7 +46,8 @@ func Run(ctx context.Context, procOptions ...Option) {
 		log.Println("Fatal error initializing token service:", err)
 		return
 	}
-	addHandlers(token.GetDevHandlers, tokenServer)
+	token.SetDevServer(tokenServer)
+	addHandlers(token.GetDevHandlers)
 	wg.AddFunc(func() {
 		tokenServer.Run(ctx, opts.tokenOpts...)
 	})
@@ -80,5 +81,6 @@ func Run(ctx context.Context, procOptions ...Option) {
 	wg.AddFunc(func() {
 		box.Run(ctx)
 	})
+	addHandlers(box.GetDevHandlers)
 	wg.Wait()
 }

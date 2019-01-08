@@ -22,7 +22,6 @@ type options struct {
 	checkOpts    *chipper.ConnectOpts
 	streamOpts   *chipper.StreamOpts
 	url          string
-	secret       string
 	connectFn    ConnectFunc
 }
 
@@ -61,12 +60,6 @@ func WithConnectionCheckOptions(opts chipper.ConnectOpts) Option {
 func WithChipperURL(url string) Option {
 	return func(o *options) {
 		o.url = url
-	}
-}
-
-func WithChipperSecret(secret string) Option {
-	return func(o *options) {
-		o.secret = secret
 	}
 }
 

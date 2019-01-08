@@ -25,7 +25,7 @@ var DefaultURLs = URLs{
 	Check:    "conncheck.global.anki-dev-services.com/ok",
 	LogFiles: "s3://anki-device-logs-dev/victor",
 	AppKey:   "xiepae8Ach2eequiphee4U",
-	Box:      "",
+	Box:      "chipper-dev.api.anki.com:443",
 }
 
 // Env represents the URLs associated with the most recent successful call to
