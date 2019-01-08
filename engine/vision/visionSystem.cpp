@@ -1531,6 +1531,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       
       // The Box Demo: If face is close and mirror mode is enabled, rotate the mirror mode image by 180 degrees
       if(IsModeEnabled(VisionMode::MirrorMode) &&
+         IsModeEnabled(VisionMode::FlipScreenOnCloseFace) &&
          kTheBox_FaceDistanceToRotateScreenFar_mm>0 &&
          kTheBox_FaceDistanceToRotateScreenNear_mm>0)
       {

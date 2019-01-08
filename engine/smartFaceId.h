@@ -42,7 +42,7 @@ public:
 
   bool operator==(const SmartFaceID& other) const;
   bool operator!=(const SmartFaceID& other) const { return !(other == *this);}
-
+  
   void Reset();
 
   // true if this tracks a valid face, false otherwise

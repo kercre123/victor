@@ -13,7 +13,7 @@
     },
     {
       "name": "PersonDetector",
-      "behavior": "DevImageCapture"
+      "behavior": "BoxDemoFaceTracking"
     },
     {
       "name": "WaitForAlexaPutDown",

@@ -102,6 +102,7 @@ enum uint_16 BehaviorID {
   BoxDemoAlexaGetIn,
   BoxDemoBase,
   BoxDemoBoot,
+  BoxDemoFaceTracking,
 
   // victorBehaviorTree/character
   HowOldAreYou,

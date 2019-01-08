@@ -6,7 +6,7 @@
     // If a vision mode is not listed, it is scheduled to never run (might still be enabled)
     // Specify either an array of bools indicating a specific schedule, or an integer
     // value to process every Nth frame
-    "DetectingMarkers" : 4, // Remove with VIC-6838 
+    // No marker detection on TheBox! "DetectingMarkers" : 4, // Remove with VIC-6838 
     "AutoExposure"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
     "WhiteBalance"     : 5 // NOTE: Should probably be no more frequent than every 5th frame
   },

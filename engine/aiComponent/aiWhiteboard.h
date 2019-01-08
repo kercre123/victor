@@ -15,6 +15,7 @@
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent_fwd.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
+#include "engine/smartFaceId.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"
@@ -41,7 +42,6 @@ namespace Vector {
 class ObservableObject;
 class Robot;
 class SayNameProbabilityTable;
-class SmartFaceID;
 enum class OnboardingStages : uint8_t;
 
 namespace DefaultFailToUseParams {
@@ -227,6 +227,16 @@ public:
   OnboardingStages GetCurrentOnboardingStage() { return _onboardingStage; }
   void SetMostRecentOnboardingStage(OnboardingStages stage) { _onboardingStage = stage; } // doesn't save or broadcast
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // TheBox Demo
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // Returns true if new face was inserted, false if it was already present
+  bool InsertNewFace(const SmartFaceID& smartFaceID);
+  
+  // TODO: Call this on some kind of "Forget faces" VC
+  void ClearFacesRespondedTo() { _boxDemoFaces.clear(); }
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -315,6 +325,8 @@ private:
   float _exploringTransitionCooldownBase_s = 0.0f;
   float _exploringTransitionCooldownExtra_s = 0.0f;
   float _lastExploringCooldownUpdateTime_s = 0.0f;
+  
+  std::list<SmartFaceID> _boxDemoFaces;
 };
   
 

@@ -30,10 +30,11 @@ namespace {
   // and in mirror mode (at specified scale)
   CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,           "Vision.MirrorMode", 0.f, 0.f, 1.f);
   CONSOLE_VAR(bool,        kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
-  CONSOLE_VAR(bool,        kDisplayExposureInMirrorMode,       "Vision.MirrorMode", true);
+  CONSOLE_VAR(bool,        kDisplayExposureInMirrorMode,       "Vision.MirrorMode", false);
+  CONSOLE_VAR(bool,        kDisplayFaceNamesInMirrorMode,      "Vision.MirrorMode", true);
   CONSOLE_VAR(f32,         kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
   CONSOLE_VAR(s32,         kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
-  CONSOLE_VAR_RANGED(f32,  kMirrorModeFaceDebugFontScale,      "Vision.MirrorMode", 0.5f, 0.1f, 1.f);
+  CONSOLE_VAR_RANGED(f32,  kMirrorModeFaceFontScale,      "Vision.MirrorMode", 0.7f, 0.1f, 1.f);
   
   // Set to true to have the default image be rotated 180º from "normal" (upside down on Vector's face)
   CONSOLE_VAR(bool, kTheBox_RotateImage180ByDefault, "TheBox.Screen", false);
@@ -42,10 +43,20 @@ namespace {
   // Set to false, to just display the image as seen by the camera.
   CONSOLE_VAR(bool, kTheBox_UseMirroredImages, "TheBox.Screen", true);
   
+  CONSOLE_VAR(s32,  kTheBox_MaxFaceStrings, "TheBox.Screen", 3);
+  
+  // Set to false to skip displaying names/data strings for faces with "unknown" ID
+  CONSOLE_VAR(bool, kTheBox_DisplayUnknownFaceNames, "TheBox.Screen", false);
+  
+  // Set to true to use ID to select consistent draw color.
+  // Set to false draws faces with eyes detected in yellow and faces with no eyes detected in red.
+  CONSOLE_VAR(bool, kTheBox_ColorFacesBasedOnID, "TheBox.Screen", true);
+  
   // TODO: Figure out the original image resolution? This just assumes "Default" for marker/face detection
   constexpr f32 kXmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
   constexpr f32 kHeightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
   constexpr f32 kWidthScale  = (f32)FACE_DISPLAY_WIDTH / (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
+  const char* const kUnknownName = "Person_";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,47 +142,106 @@ void MirrorModeManager::DrawVisionMarkers(const std::list<Vision::ObservedMarker
     }
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline bool ShouldDisplayFace(const Vision::TrackedFace& face)
+{
+  return (kTheBox_DisplayUnknownFaceNames || (face.GetID() > 0));
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDetections)
 {
-  for(auto const& faceDetection : faceDetections)
+  // Create a list of iterators for display, to avoid copying all the TrackedFaces
+  // Only keep those faces we "should" display
+  std::list<std::list<Vision::TrackedFace>::const_iterator> facesToDisplay;
+  
+  s32 numDisplayFaces = 0;
+  for(auto iter = faceDetections.begin();
+      iter != faceDetections.end() && numDisplayFaces < kTheBox_MaxFaceStrings;
+      ++iter)
   {
+    if(ShouldDisplayFace(*iter))
+    {
+      facesToDisplay.emplace_back(iter);
+      ++numDisplayFaces;
+    }
+  }
+  
+  // Nothing to display? Just abort now
+  if(facesToDisplay.empty())
+  {
+    return;
+  }
+  
+  // Sort the faces in order of ID to keep display order consistent
+  facesToDisplay.sort([](std::list<Vision::TrackedFace>::const_iterator& faceIter1,
+                         std::list<Vision::TrackedFace>::const_iterator& faceIter2)
+  {
+    return faceIter1->GetID() < faceIter2->GetID();
+  });
+  
+  s32 faceLine = 1;
+  for(const auto& faceToDisplay : facesToDisplay)
+  {
+    const Vision::TrackedFace& faceDetection = *faceToDisplay;
     const auto& faceID = faceDetection.GetID();
     const auto& rect = faceDetection.GetRect();
     const auto& name = faceDetection.GetName();
 
-    // Only draw a yellow rectangle around the face if the face "has parts"
-    // to which the HasEyes method is a proxy
-    auto color = NamedColors::RED;
-    if (faceDetection.HasEyes()) {
+    ColorRGBA color = NamedColors::RED;
+    if(kTheBox_ColorFacesBasedOnID)
+    {
+      color = ColorRGBA::CreateFromColorIndex((u32)faceDetection.GetID());
+    }
+    else if (faceDetection.HasEyes())
+    {
+      // Only draw a yellow rectangle around the face if the face "has parts"
+      // to which the HasEyes method is a proxy
       color = NamedColors::YELLOW;
     }
-
+    
     _screenImg.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight(), _doMirror),
                         color, 3);
     
-    const auto& debugInfo = faceDetection.GetRecognitionDebugInfo();
-    if(!debugInfo.empty())
+    const bool kUseDropShadow = true;
+    if(kDisplayFaceNamesInMirrorMode && ShouldDisplayFace(faceDetection))
     {
-      const Vec2f fontSize = _screenImg.GetTextSize("Test", kMirrorModeFaceDebugFontScale, 1);
-      s32 line = 1;
-      for(const auto& info : debugInfo)
+      const Vec2f fontSize = _screenImg.GetTextSize("Test", kMirrorModeFaceFontScale, 1);
+      
+      const auto& debugInfo = faceDetection.GetRecognitionDebugInfo();
+      if(!debugInfo.empty() && kTheBox_MaxFaceStrings==1)
       {
-        const std::string& name = info.name;
-        std::string dispName(name.empty() ? "<unknown>" : name);
-        dispName += "[" + std::to_string(info.matchedID) + "]: " + std::to_string(info.score);
-        const Point2f position{1.f, _screenImg.GetNumRows()-1-(debugInfo.size()-line)*(fontSize.y()+1)};
-        _screenImg.DrawText(position, dispName, NamedColors::YELLOW, kMirrorModeFaceDebugFontScale, true);
-        ++line;
+        s32 debugLine = 1;
+        for(const auto& info : debugInfo)
+        {
+          const std::string& name = info.name;
+          std::string dispName(name.empty() ? kUnknownName : name);
+          dispName += "[" + std::to_string(info.matchedID) + "]: " + std::to_string(info.score);
+          const Point2f position{1.f, _screenImg.GetNumRows()-1-(debugInfo.size()-debugLine)*(fontSize.y()+1)};
+          _screenImg.DrawText(position, dispName, color, kMirrorModeFaceFontScale, kUseDropShadow);
+          ++debugLine;
+        }
       }
-    }
-    else
-    {
-      const float kFontScale = 0.6f;
-      std::string dispName(name.empty() ? "<unknown>" : name);
-      dispName += "[" + std::to_string(faceID) + "]";
-      _screenImg.DrawText({1.f, _screenImg.GetNumRows()-1}, dispName, NamedColors::YELLOW, kFontScale, true);
+      else
+      {
+        std::string dispName;
+        if(name.empty())
+        {
+          dispName = kUnknownName + std::to_string(faceID);
+        }
+        else
+        {
+          dispName = name;
+        }
+        const Point2f position{1.f, _screenImg.GetNumRows()-1-(numDisplayFaces-faceLine)*(fontSize.y()+1)};
+        _screenImg.DrawText(position, dispName, color, kMirrorModeFaceFontScale, kUseDropShadow);
+        ++faceLine;
+        if(faceLine > kTheBox_MaxFaceStrings)
+        {
+          break;
+        }
+      }
     }
   }
 }

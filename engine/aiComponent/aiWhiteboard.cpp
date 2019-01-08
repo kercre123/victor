@@ -831,5 +831,21 @@ void AIWhiteboard::UpdateExploringTransitionCooldown()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::InsertNewFace(const SmartFaceID& smartFaceID)
+{
+  for(const auto& knownID : _boxDemoFaces)
+  {
+    if(knownID == smartFaceID)
+    {
+      return false;
+    }
+  }
+  
+  _boxDemoFaces.push_back(smartFaceID);
+  
+  return true;
+}
+  
 } // namespace Vector
 } // namespace Anki

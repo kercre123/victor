@@ -230,8 +230,32 @@
     },
     {
       "mode"         : "MirrorMode",
-      "low"          : 16,
-      "med"          : 8,
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
+    },
+    {
+      "mode"         : "MirrorModeRotate180",
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
+    },
+    {
+      "mode"         : "MirrorModeUnmirrored",
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
+    },
+    {
+      "mode"         : "FlipScreenOnCloseFace",
+      "low"          : 1,
+      "med"          : 1,
       "high"         : 1,
       "standard"     : 1,
       "relativeCost" : 1
