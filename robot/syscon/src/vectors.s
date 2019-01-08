@@ -30,6 +30,7 @@ __heap_limit
                 DCD     __initial_sp    ;
                 DCD     __main
                 SPACE   16
+                DCD     0x0000574B
 
                 AREA    ||.ARM.__AT_0x20000000||, DATA, READWRITE
 

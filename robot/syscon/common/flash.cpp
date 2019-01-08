@@ -53,19 +53,12 @@ void Flash::eraseApplication(void) {
 
   for (uint32_t i = 0; i < COZMO_APPLICATION_SIZE; i += FLASH_PAGE_SIZE) {
     uint32_t* target = (uint32_t*)(COZMO_APPLICATION_ADDRESS + i);
-    for (int idx = 0; idx < FLASH_PAGE_SIZE / sizeof(uint32_t); idx ++) {
-      // Word is erased
-      if (~target[idx] == 0) {
-        continue;
-      }
+
+    // Erase this page
+    FLASH->AR = (uint32_t) target;
+    FLASH->CR |= FLASH_CR_STRT;
       
-      // Erase this page
-      FLASH->AR = (uint32_t) target;
-      FLASH->CR |= FLASH_CR_STRT;
-      
-      waitForFlash();
-      break ;
-    }
+    waitForFlash();
   }
 
   FLASH->CR &= ~FLASH_CR_PER;
@@ -74,8 +67,6 @@ void Flash::eraseApplication(void) {
 }
 
 void Flash::writeFaultReason(FaultType reason) {
-  unlockFlash();
-
   // Write to first available fault slot
   for (int i = 0; i < MAX_FAULT_COUNT; i++) {
     if (APP->faultCounter[i] != FAULT_NONE) continue ;
