@@ -17,28 +17,38 @@
 
 #include "util/logging/logging.h"
 
+#define WORKING_LCD 0
+
 namespace Anki {
 namespace Cozmo {
 
   FaceDisplayImpl::FaceDisplayImpl()
   {
-    //lcd_init();
+#if WORKING_LCD
+    lcd_init();
+#endif
   }
 
   FaceDisplayImpl::~FaceDisplayImpl()
   {
-    //FaceClear();
-    //lcd_shutdown();
+#if WORKING_LCD
+    FaceClear();
+    lcd_shutdown();
+#endif
   }
   
   void FaceDisplayImpl::FaceClear()
   {
-    //lcd_clear_screen();
+#if WORKING_LCD
+    lcd_clear_screen();
+#endif
   }
   
   void FaceDisplayImpl::FaceDraw(const u16* frame)
   {
-    //lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
+#if WORKING_LCD
+    lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
+#endif
   }
   
   void FaceDisplayImpl::FacePrintf(const char* format, ...)
