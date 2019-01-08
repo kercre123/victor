@@ -209,6 +209,11 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
   ANKI_VERIFY(waitBehavior != nullptr, "BehaviorComponentMessageHandler.OnEnterInfoFace.NoWait", "Could not find wait behavior");
 
+  if( THEBOX ) {
+    // our behaviors will handle this
+    return;
+  }
+
   // Return early if already in wait behavior
   if (bsm.GetBaseBehavior() == waitBehavior.get()) {
     LOG_DEBUG("BehaviorComponentMessageHandler.OnEnterInfoFace.AlreadyInWait", "");
@@ -250,6 +255,11 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
 
   auto& contComp = _robot.GetAIComponent().GetComponent<ContinuityComponent>();
   contComp.UpdateInfoFace(false);
+
+  if( THEBOX ) {
+    // our behaviors will handle this
+    return;
+  }
 
   // ignore any unclaimed trigger word or intent warnings, if a user said the wake word or a command
   // just prior to accessing a dev screen, unless clearTrigger
