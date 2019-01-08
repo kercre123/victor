@@ -141,6 +141,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
     if(isNewData)
     {
       --_numRecordedReadingsLeft;
+      PRINT_NAMED_WARNING("","RECORDING %u MORE", _numRecordedReadingsLeft);
     }
     
     RangeSensorData data;

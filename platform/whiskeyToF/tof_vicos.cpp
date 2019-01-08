@@ -41,6 +41,7 @@
 #define error(fmt, ...)  fprintf(stderr, "[E] " fmt"\n", ##__VA_ARGS__)
 #define warn(fmt, ...)  fprintf(stderr, "[W] " fmt"\n", ##__VA_ARGS__)
 
+#define USE_BOTH_SENSORS 1
 
 namespace Anki {
 namespace Cozmo {
@@ -686,13 +687,16 @@ ToFSensor::CommandResult run_calibration(uint32_t distanceToTarget_mm,
                       rcR);
   }
 
-  int rcL = perform_calibration(tofL_fd, distanceToTarget_mm, targetReflectance);
+  int rcL = 0;
+  #if USE_BOTH_SENSORS
+  rcL = perform_calibration(tofL_fd, distanceToTarget_mm, targetReflectance);
   if(rcL < 0)
   {
     PRINT_NAMED_ERROR("ToFSensor.PerformCalibration.LeftFailed",
                       "Failed to calibrate left sensor %u",
                       rcL);
   }
+  #endif
   _isCalibrating = false;
 
   ToFSensor::CommandResult res = ToFSensor::CommandResult::Success;
@@ -867,16 +871,19 @@ RangeDataRaw ReadData()
   static RangeDataRaw rangeData;
 
   // Alternate reading from each sensor
-  static bool b = false;
+  static bool b = true;
   if(b)
   {
     ReadDataFromSensor(RIGHT, rangeData);
   }
+#if USE_BOTH_SENSORS
   else
   {
     ReadDataFromSensor(LEFT, rangeData);
   }
   b = !b;
+#endif
+
   
   return rangeData;
 }
@@ -926,12 +933,14 @@ void ProcessLoop()
               break;
             }
 
+            #if USE_BOTH_SENSORS
             rc = start_ranging(tofL_fd);
             if(rc < 0)
             {
               res = ToFSensor::CommandResult::StartRangingLeftFailed;
               break;
             }
+            #endif
             _rangingEnabled = true;
           }
           break;
@@ -945,12 +954,14 @@ void ProcessLoop()
               break;
             }
             
+            #if USE_BOTH_SENSORS
             rc = stop_ranging(tofL_fd);
             if(rc < 0)
             {
               res = ToFSensor::CommandResult::StopRangingLeftFailed;
               break;
             }
+            #endif
             _rangingEnabled = false;
           }
           break;
@@ -969,9 +980,10 @@ void ProcessLoop()
                 break;
               }
             }
+            #if USE_BOTH_SENSORS
             if(tofL_fd < 0)
             {
-              tofL_fd = open_dev(RIGHT);
+              tofL_fd = open_dev(LEFT);
               if(tofL_fd < 0)
               {
                 res = ToFSensor::CommandResult::OpenLeftDevFailed;
@@ -979,6 +991,7 @@ void ProcessLoop()
                 break;
               }
             }
+            #endif
             
             tofR_fd = setup(RIGHT);
             if(tofR_fd < 0)
@@ -987,12 +1000,14 @@ void ProcessLoop()
               PRINT_NAMED_ERROR("","FAILED TO OPEN TOF R");
             }
 
+            #if USE_BOTH_SENSORS
             tofL_fd = setup(LEFT);
             if(tofL_fd < 0)
             {
               res = ToFSensor::CommandResult::SetupLeftFailed;
               PRINT_NAMED_ERROR("","FAILED TO OPEN TOF L");
             }
+            #endif
           }
           break;
         case Command::PerformCalibration:
@@ -1025,7 +1040,10 @@ void ProcessLoop()
         _latestData = data;
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(32));
+    else
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(32));
+    }
   }
 
   stop_ranging(tofR_fd);
