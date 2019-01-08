@@ -43,6 +43,8 @@ enum : uint16_t {
   WIFI_HW_FAILURE       = 970, //local wifi hw checks only
   
   IMU_FAILURE           = 960,
+
+  TOF_FAILURE           = 950,
   
   //critical processes
   SYSTEMD               = 919,

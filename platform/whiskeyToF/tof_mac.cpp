@@ -110,8 +110,8 @@ RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
       lData.roi = index;
       rData.roi = index + 4;
       
-      lData.processedRange_m = leftImage[i*4 + j];
-      rData.processedRange_m = rightImage[i*4 + j];
+      lData.processedRange_mm = leftImage[i*4 + j];
+      rData.processedRange_mm = rightImage[i*4 + j];
 
       RangeReading reading;
       reading.signalRate_mcps = 25.f;

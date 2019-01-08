@@ -596,7 +596,7 @@ namespace Cozmo {
         rangeNode["NumObjects"] = range.numObjects;
         rangeNode["RoiStatus"] = range.roiStatus;
         rangeNode["SpadCount"] = range.spadCount;
-        rangeNode["ProcessedRange_m"] = range.processedRange_m;
+        rangeNode["ProcessedRange_mm"] = range.processedRange_mm;
       }
       
       newNode["VisualDistance_mm"] = data.visualDistanceToTarget_mm;

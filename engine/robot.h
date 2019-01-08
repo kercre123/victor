@@ -813,6 +813,7 @@ protected:
 
   // Performs various startup checks and displays fault codes as appropriate
   Result UpdateStartupChecks();
+  Result UpdateToFStartupChecks(bool& isDone);
 }; // class Robot
 
   

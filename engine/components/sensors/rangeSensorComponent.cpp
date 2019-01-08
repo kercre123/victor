@@ -17,9 +17,12 @@
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/robot.h"
 #include "engine/robotComponents_fwd.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/viz/vizManager.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "whiskeyToF/tof.h"
 
@@ -31,10 +34,62 @@ RangeSensorComponent::RangeSensorComponent()
 {
 }
 
+void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
+{
+  _robot = robot;
+
+  // Subscribe to motor command ack      
+  auto sendRangeDataLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+                             {
+                               _sendRangeData = event.GetData().Get_sendRangeData().enable;
+                               if(_sendRangeData)
+                               {
+                                 ToFSensor::getInstance()->StartRanging(nullptr);
+                               }
+                               else
+                               {
+                                 ToFSensor::getInstance()->StopRanging(nullptr);
+                               }
+                             };
+  
+  _signalHandle = _robot->GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::sendRangeData,
+                                                              sendRangeDataLambda);
+
+}
+  
+
+
 void RangeSensorComponent::Update()
 {
   _latestRawRangeData = ToFSensor::getInstance()->GetData(_rawDataIsNew);
- 
+
+  if(_sendRangeData)
+  {
+    using namespace RobotInterface;
+    
+    RangeDataToDisplay msg;
+    auto& disp = msg.data.data;
+    for(const auto& e : _latestRawRangeData.data)
+    {
+      disp[e.roi].signalRate_mcps = -1;
+      disp[e.roi].status = 255;
+      for(const auto& reading : e.readings)
+      {
+        if(Util::IsFltNear((f32)reading.rawRange_mm, e.processedRange_mm))
+        {
+          disp[e.roi].signalRate_mcps = reading.signalRate_mcps;
+          disp[e.roi].status = reading.status;
+        }
+      }
+
+      disp[e.roi].processedRange_mm = e.processedRange_mm;
+      disp[e.roi].spadCount = e.spadCount;
+      disp[e.roi].roi = e.roi;
+      disp[e.roi].roiStatus = e.roiStatus;
+    }
+    _robot->SendRobotMessage<RangeDataToDisplay>(msg);
+  }
+  
   Pose3d co = _robot->GetCameraPose(_robot->GetHeadAngle());
   // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
   // also account for angle tof sensor is relative to camera
@@ -91,7 +146,7 @@ void RangeSensorComponent::Update()
     {
       const f32 yaw = sin(kPixToAngle[c]);
 
-      const f32 leftDist_mm = _latestRawRangeData.data[c + (r*8)].processedRange_m * 1000; 
+      const f32 leftDist_mm = _latestRawRangeData.data[c + (r*8)].processedRange_mm; 
 
       const f32 yl = yaw * leftDist_mm;
       const f32 zl = pitch * leftDist_mm;
@@ -103,7 +158,7 @@ void RangeSensorComponent::Update()
                                                         rootl);
       _latestRangeData[r*8 + c] = pl.GetTranslation();
       
-      const f32 rightDist_mm = _latestRawRangeData.data[4+c + (r*8)].processedRange_m * 1000;
+      const f32 rightDist_mm = _latestRawRangeData.data[4+c + (r*8)].processedRange_mm;
       const f32 yr = yaw * rightDist_mm;
       const f32 zr = pitch * rightDist_mm;
         

@@ -44,13 +44,33 @@ public:
 
   RangeDataRaw GetData(bool& hasDataUpdatedSinceLastCall);
 
-  int SetupSensors();
-  int StartRanging();
-  int StopRanging();
+  enum class CommandResult
+    {
+     Success = 0,
+     Failure = -1,
+     OpenLeftDevFailed,
+     OpenRightDevFailed,
+     SetupRightFailed,
+     SetupLeftFailed,
+     StartRangingLeftFailed,
+     StartRangingRightFailed,
+     StopRangingLeftFailed,
+     StopRangingRightFailed,
+     CalibrateRightFailed,
+     CalibrateLeftFailed
+    };
+  // Callbacks are called on a thread
+  using CommandCallback = std::function<void(CommandResult)>;
+  int SetupSensors(const CommandCallback& callback);
+  int StartRanging(const CommandCallback& callback);
+  int StopRanging(const CommandCallback& callback);
   bool IsRanging();
+
+  bool IsValidRoiStatus(uint8_t status);
   
 #if FACTORY_TEST
-  int PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance);
+  int PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance,
+                         const CommandCallback& callback);
   bool IsCalibrating();
   void SetLogPath(const std::string& path);
 #endif

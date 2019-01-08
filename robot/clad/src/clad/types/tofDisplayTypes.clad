@@ -1,0 +1,20 @@
+namespace Anki {
+namespace Cozmo {
+
+structure RangingDataDisplay {
+  float_32 signalRate_mcps,
+  float_32 spadCount,
+  float_32 processedRange_mm,
+  uint_8 roi,
+  uint_8 roiStatus,
+  uint_8 status,
+
+  uint_8 padding
+}
+
+structure RangeDataDisplay {
+  RangingDataDisplay data[32]
+}
+
+} // namespace Vector
+} // namespace Anki

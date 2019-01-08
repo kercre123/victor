@@ -62,7 +62,7 @@ namespace {
      SetupSensors,
      PerformCalibration
     };
-  std::queue<Command> _commandQueue;
+  std::queue<std::pair<Command, ToFSensor::CommandCallback>> _commandQueue;
 
   std::atomic<bool> _rangingEnabled;
   std::atomic<bool> _isCalibrating;
@@ -675,8 +675,8 @@ void ToFSensor::SetLogPath(const std::string& path)
   _logPath = path;
 }
 
-int run_calibration(uint32_t distanceToTarget_mm,
-                    float targetReflectance)
+ToFSensor::CommandResult run_calibration(uint32_t distanceToTarget_mm,
+                                         float targetReflectance)
 {
   int rcR = perform_calibration(tofR_fd, distanceToTarget_mm, targetReflectance);
   if(rcR < 0)
@@ -695,13 +695,23 @@ int run_calibration(uint32_t distanceToTarget_mm,
   }
   _isCalibrating = false;
 
-  return (rcR >= 0 ? rcL : rcR);
+  ToFSensor::CommandResult res = ToFSensor::CommandResult::Success;
+  if(rcR < 0)
+  {
+    res = ToFSensor::CommandResult::CalibrateRightFailed;
+  }
+  else if(rcL < 0)
+  {
+    res = ToFSensor::CommandResult::CalibrateLeftFailed;
+  }
+  return res;
 }
 
-int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance)
+int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance,
+                                  const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
-  _commandQueue.push(Command::PerformCalibration);
+  _commandQueue.push({Command::PerformCalibration, callback});
   _distanceToCalibTarget_mm = distanceToTarget_mm;
   _calibTargetReflectance = targetReflectance;
   _isCalibrating = true;
@@ -784,11 +794,11 @@ void ParseData(Sensor whichSensor,
   roiData.numObjects = mz_data.NumberOfObjectsFound;
   roiData.roiStatus = mz_data.RoiStatus;
   roiData.spadCount = mz_data.EffectiveSpadRtnCount / 256.f;
-  roiData.processedRange_m = 0;
+  roiData.processedRange_mm = 0;
 
   if(mz_data.NumberOfObjectsFound > 0)
   {
-    int16_t minDist = 2000;
+    int16_t minDist = 1000;
     for(int r = 0; r < mz_data.NumberOfObjectsFound; r++)
     {
       RangeReading reading;
@@ -823,7 +833,7 @@ void ParseData(Sensor whichSensor,
       // }
       roiData.readings.push_back(reading);
     }
-    roiData.processedRange_m = minDist;
+    roiData.processedRange_mm = minDist;
   }
 
 }
@@ -871,24 +881,24 @@ RangeDataRaw ReadData()
   return rangeData;
 }
 
-int ToFSensor::StartRanging()
+int ToFSensor::StartRanging(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
-  _commandQueue.push(Command::StartRanging);
+  _commandQueue.push({Command::StartRanging, callback});
   return 0;
 }
 
-int ToFSensor::StopRanging()
+int ToFSensor::StopRanging(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
-  _commandQueue.push(Command::StopRanging);
+  _commandQueue.push({Command::StopRanging, callback});
   return 0;
 }
 
-int ToFSensor::SetupSensors()
+int ToFSensor::SetupSensors(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
-  _commandQueue.push(Command::SetupSensors);
+  _commandQueue.push({Command::SetupSensors, callback});
   return 0;
 }
 
@@ -899,11 +909,12 @@ void ProcessLoop()
     _commandLock.lock();
     if(_commandQueue.size() > 0)
     {
-      Command cmd = _commandQueue.front();
+      auto cmd = _commandQueue.front();
       _commandQueue.pop();
       _commandLock.unlock();
-    
-      switch(cmd)
+
+      ToFSensor::CommandResult res = ToFSensor::CommandResult::Success;
+      switch(cmd.first)
       {
         case Command::StartRanging:
           {
@@ -911,12 +922,14 @@ void ProcessLoop()
             int rc = start_ranging(tofR_fd);
             if(rc < 0)
             {
+              res = ToFSensor::CommandResult::StartRangingRightFailed;
               break;
             }
 
             rc = start_ranging(tofL_fd);
             if(rc < 0)
             {
+              res = ToFSensor::CommandResult::StartRangingLeftFailed;
               break;
             }
             _rangingEnabled = true;
@@ -928,12 +941,14 @@ void ProcessLoop()
             int rc = stop_ranging(tofR_fd);
             if(rc < 0)
             {
+              res = ToFSensor::CommandResult::StopRangingRightFailed;
               break;
             }
             
             rc = stop_ranging(tofL_fd);
             if(rc < 0)
             {
+              res = ToFSensor::CommandResult::StopRangingLeftFailed;
               break;
             }
             _rangingEnabled = false;
@@ -941,7 +956,7 @@ void ProcessLoop()
           break;
         case Command::SetupSensors:
           {
-            PRINT_NAMED_ERROR("","Command setup sensors")
+            PRINT_NAMED_ERROR("","Command setup sensors");
             _rangingEnabled = false;
 
             if(tofR_fd < 0)
@@ -949,6 +964,7 @@ void ProcessLoop()
               tofR_fd = open_dev(RIGHT);
               if(tofR_fd < 0)
               {
+                res = ToFSensor::CommandResult::OpenRightDevFailed;
                 PRINT_NAMED_ERROR("","FAILED TO OPEN RIGHT");
                 break;
               }
@@ -958,6 +974,7 @@ void ProcessLoop()
               tofL_fd = open_dev(RIGHT);
               if(tofL_fd < 0)
               {
+                res = ToFSensor::CommandResult::OpenLeftDevFailed;
                 PRINT_NAMED_ERROR("","FAILED TO OPEN LEFT");
                 break;
               }
@@ -966,12 +983,14 @@ void ProcessLoop()
             tofR_fd = setup(RIGHT);
             if(tofR_fd < 0)
             {
+              res = ToFSensor::CommandResult::SetupRightFailed;
               PRINT_NAMED_ERROR("","FAILED TO OPEN TOF R");
             }
 
             tofL_fd = setup(LEFT);
             if(tofL_fd < 0)
             {
+              res = ToFSensor::CommandResult::SetupLeftFailed;
               PRINT_NAMED_ERROR("","FAILED TO OPEN TOF L");
             }
           }
@@ -980,9 +999,15 @@ void ProcessLoop()
           {
             PRINT_NAMED_ERROR("","Command perform calibration");
             _rangingEnabled = false;
-            run_calibration(_distanceToCalibTarget_mm, _calibTargetReflectance);
+            res = run_calibration(_distanceToCalibTarget_mm, _calibTargetReflectance);
           }
           break;
+      }
+
+      // Call command callback
+      if(cmd.second != nullptr)
+      {
+        cmd.second(res);
       }
     }
     else
@@ -1034,6 +1059,7 @@ ToFSensor::~ToFSensor()
 
 Result ToFSensor::Update()
 {
+  
   return RESULT_OK;
 }
 
@@ -1044,6 +1070,11 @@ RangeDataRaw ToFSensor::GetData(bool& hasDataUpdatedSinceLastCall)
   _dataUpdatedSinceLastGetCall = false;
   return _latestData;
 }
-  
+
+bool ToFSensor::IsValidRoiStatus(uint8_t status)
+{
+  return (status != VL53L1_ROISTATUS_NOT_VALID);
+}
+
 }
 }
