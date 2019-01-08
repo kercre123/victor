@@ -60,6 +60,8 @@ namespace {
   CONSOLE_VAR_RANGED(uint32_t, kTreadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kHeadCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   CONSOLE_VAR_RANGED(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
+
+  CONSOLE_VAR(bool, kTheBox_disableProceduralAudio, "TheBox.Audio", THEBOX);
   
   static const AudioEngine::AudioGameObject kProceduralGameObj =
     AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::Procedural);
@@ -139,7 +141,9 @@ void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &
     {
       // Wait for syncRobotAck to indicate the robot's motors are settled and ready to start making noise
       // NOTE: This may need improvments, perhaps use motor calibration messages
-      _isActive = true;
+      if( !kTheBox_disableProceduralAudio ) {
+        _isActive = true;
+      }
       break;
     }
     default:
