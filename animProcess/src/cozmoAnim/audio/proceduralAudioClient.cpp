@@ -139,7 +139,8 @@ void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &
     {
       // Wait for syncRobotAck to indicate the robot's motors are settled and ready to start making noise
       // NOTE: This may need improvments, perhaps use motor calibration messages
-      _isActive = true;
+      // disable procedural audio
+      //_isActive = true;
       break;
     }
     default:

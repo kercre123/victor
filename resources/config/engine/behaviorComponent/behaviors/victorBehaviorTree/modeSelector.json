@@ -6,11 +6,12 @@
 
   "behaviors": [
     "SingletonPoweringRobotOff",
-    "AlexaSignInOut",
-    "Alexa",
-    "EmergencyMode",
-    "ShutUpMode",
-    "QuietMode",
-    "SleepCycle"
+    "Wait"
+//    "AlexaSignInOut",
+//    "Alexa",
+//    "EmergencyMode",
+//    "ShutUpMode",
+//    "QuietMode",
+//    "SleepCycle"
   ]
 }

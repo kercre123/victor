@@ -10,7 +10,13 @@
 #include "cozmoAnim/chirpMaker/IAnalyzer.h"
 
 namespace Anki {
+  namespace Util {
+    template <typename T>
+    class RingBuffContiguousRead;
+  }
 namespace Vector {
+  
+class SyllableDetector;
   
 class HumanSyllableAnalyzer : public IAnalyzer
 {
@@ -19,6 +25,11 @@ public:
   
   void AddSamples( const int16_t* samples, unsigned int numSamples );
   
+  void RunDetector();
+
+private:
+  std::unique_ptr<SyllableDetector> _syllableDetector;
+  std::unique_ptr<Util::RingBuffContiguousRead<int16_t>> _buff;
 };
 
 
