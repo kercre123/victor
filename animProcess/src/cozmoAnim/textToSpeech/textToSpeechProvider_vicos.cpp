@@ -37,6 +37,16 @@ namespace Anki {
 namespace Vector {
 namespace TextToSpeech {
 
+
+BB_S32 ShawnTestCallback(BABILE_EventCallBackStruct* cb)
+{
+  if (cb->event_type == 1)
+  {
+    LOG_INFO("TextToSpeechProviderImpl.ShawnTestCallback", "Called back type=%ld, viseme=%ld", cb->event_type, cb->viseme);
+  }
+  return 0;
+}
+
 TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config)
 {
   // Caller must provide context & RNG
@@ -186,6 +196,7 @@ Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
   _BAB_MemParam->nlpModule = nlpModule;
   _BAB_MemParam->synthLS = synthLS;
   _BAB_MemParam->synthModule = synthModule;
+  _BAB_MemParam->markCallback = ShawnTestCallback;
 
   // Ask Babile how much memory is needed for each segment
   BABILE_alloc(_BAB_MemParam, _BAB_MemRec);
