@@ -165,7 +165,7 @@ void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
         
         Log::Write("HandleWifiConnectRequest: Found requested ssid from scan, attempting to connect");
         bool res = Anki::ConnectWiFiBySsid(result.ssid,
-                                           "goforanki",
+                                           "KlaatuBaradaNikto!",
                                            (uint8_t)result.auth,
                                            result.hidden,
                                            nullptr,

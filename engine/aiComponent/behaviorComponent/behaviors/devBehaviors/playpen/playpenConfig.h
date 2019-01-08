@@ -87,7 +87,7 @@ static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 // NOTE: This value can be overridden by value stored in EMR
 static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 
-static std::string kWifiSSID = "AnkiGuest";
+static std::string kWifiSSID = "AnkiRobits";
  
 // ----------InitChecks----------
 // Whether or not to check firmware version

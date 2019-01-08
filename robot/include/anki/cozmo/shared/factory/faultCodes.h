@@ -83,6 +83,8 @@ enum : uint16_t {
 // from the fifo
 static int DisplayFaultCode(uint16_t code)
 {
+  printf("DisplayFaultCode: %u\n", code);
+  
   // If the fifo doesn't exist create it
   if(access(FaultCode::kFaultCodeFifoName, F_OK) == -1)
   {
