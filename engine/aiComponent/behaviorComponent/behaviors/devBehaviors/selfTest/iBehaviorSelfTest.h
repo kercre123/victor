@@ -168,6 +168,16 @@ protected:
   // Returns and resets if we have gotten the fft result
   bool DidReceiveFFTResult();
 
+public: // make public for the show text behavior for the box
+  // TODO:(bn) move this to another file, maybe make it a non-static of ICozmoBehavior?
+
+  static void DrawTextOnScreen(BehaviorExternalInterface& bei,
+                               const std::vector<std::string>& text,
+                               ColorRGBA textColor = NamedColors::WHITE,
+                               ColorRGBA bg = NamedColors::BLACK,
+                               f32 rotate_deg = 0.f);
+
+protected:
   // Draws each element in the text vector on a separate line to the screen
   // Will make all lines the same size such that the longest can fit on the screen
   // Rotates the image by rotate_deg before displaying

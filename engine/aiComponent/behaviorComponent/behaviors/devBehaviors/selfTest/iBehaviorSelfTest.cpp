@@ -392,6 +392,16 @@ void IBehaviorSelfTest::IncreaseTimeoutTimer(TimeStamp_t time_ms)
   }
 }
 
+void IBehaviorSelfTest::DrawTextOnScreen(BehaviorExternalInterface& bei,
+                                         const std::vector<std::string>& text,
+                                         ColorRGBA textColor,
+                                         ColorRGBA bg,
+                                         f32 rotate_deg)
+{
+  Robot& robot = bei.GetRobotInfo()._robot;
+  DrawTextOnScreen(robot, text, textColor, bg, rotate_deg);
+}
+
 void IBehaviorSelfTest::DrawTextOnScreen(Robot& robot,
                                          const std::vector<std::string>& text,
                                          ColorRGBA textColor,
