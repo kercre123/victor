@@ -85,14 +85,14 @@ if [ $COMMAND = "test" ]; then
         -tags shipping \
         -c -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
-        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \
+        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ -X\ \'anki/opentracing.OpenTracerApiKey=${TRACING_API_KEY}\' \
         ./${TARGET_DIR}
 else
     go ${COMMAND} \
         -tags shipping \
         -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
-        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \
+        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ -X\ \'anki/opentracing.OpenTracerApiKey=${TRACING_API_KEY}\' \
         ./${TARGET_DIR}
 fi
 

@@ -3,6 +3,7 @@ package main
 import (
 	"anki/config"
 	"anki/log"
+	"anki/opentracing"
 	"anki/token/identity"
 	"os"
 
@@ -18,6 +19,8 @@ func main() {
 	// init logging and make sure it gets cleaned up
 	scli.SetupLogging()
 	defer scli.CleanupAndExit()
+
+	opentracing.Init()
 
 	app := mcli.App("robot_simulator", "Robot cloud simulation tool")
 
