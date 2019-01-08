@@ -24,6 +24,8 @@
 
 namespace{
 const int32_t kUseDefaultStreamingDuration = -1;
+
+CONSOLE_VAR(bool, kTheBox_skipEarcon, "TheBox.Audio", THEBOX);
 }
 
 namespace Anki {
@@ -34,6 +36,7 @@ ShowAudioStreamStateManager::ShowAudioStreamStateManager(const AnimContext* cont
 , _minStreamingDuration_ms(kUseDefaultStreamingDuration)
 {
   // Initialize this value to prevent errors before the TriggerResponse is first set
+  // NOTE for the box: this is still set and read, just not actually played
   _postAudioEvent.audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid;
 }
 
@@ -133,30 +136,38 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
     return;
   }
 
-  Audio::CozmoAudioController* controller = _context->GetAudioController();
-  if(nullptr != controller){
-    AudioCallbackContext* audioCallbackContext = nullptr;
-    if(callback){
-      audioCallbackContext = new AudioCallbackContext();
-      audioCallbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
-      audioCallbackContext->SetExecuteAsync( false ); // Execute callbacks synchronously (on main thread)
-      audioCallbackContext->SetEventCallbackFunc([callbackFunc = std::move(callback)]
-                                                 (const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo)
-      {
-        callbackFunc(true);
-      });
-    }
-
-    controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
-                               ToAudioGameObject(_postAudioEvent.gameObject),
-                               audioCallbackContext);
+  if( kTheBox_skipEarcon ) {
+    // for the box, if set, skip the earcon and call the callback right now
+    callback(true);
   }
-  else
-  {
-    // even though we don't have a valid audio controller, we still had a valid trigger response so return true
-    if(callback){
-      callback(true);
+  else {
+  
+    Audio::CozmoAudioController* controller = _context->GetAudioController();
+    if(nullptr != controller){
+      AudioCallbackContext* audioCallbackContext = nullptr;
+      if(callback){
+        audioCallbackContext = new AudioCallbackContext();
+        audioCallbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
+        audioCallbackContext->SetExecuteAsync( false ); // Execute callbacks synchronously (on main thread)
+        audioCallbackContext->SetEventCallbackFunc([callbackFunc = std::move(callback)]
+                                                   (const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo)
+                                                   {
+                                                     callbackFunc(true);
+                                                   });
+      }
+
+      controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
+                                 ToAudioGameObject(_postAudioEvent.gameObject),
+                                 audioCallbackContext);
     }
+    else
+    {
+      // even though we don't have a valid audio controller, we still had a valid trigger response so return true
+      if(callback){
+        callback(true);
+      }
+    }
+    
   }
 }
 
