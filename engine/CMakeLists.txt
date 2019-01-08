@@ -72,6 +72,14 @@ else()
   )
 endif()
 
+set(ZBAR_LIBS zbar)
+
+add_library(zbar STATIC IMPORTED)
+
+set_target_properties(zbar PROPERTIES
+  IMPORTED_LOCATION "/Users/paul/Downloads/zbar-0.10/zbar/.libs/libzbar.a"
+  INTERFACE_INCLUDE_DIRECTORIES "/Users/paul/Downloads/zbar-0.10/include")
+
 target_link_libraries(cozmo_engine
   PUBLIC
   # anki libs
@@ -101,6 +109,7 @@ target_link_libraries(cozmo_engine
   ${PROTOBUF_LIBS}
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
+  ${QUIRC_LIBS}
   # system
   z
   # platform

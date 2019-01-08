@@ -51,6 +51,7 @@ struct VisionProcessingResult
   std::list<Vision::CameraCalibration>                  cameraCalibration;
   std::list<OverheadEdgeFrame>                          visualObstacles;
   std::list<Vision::SalientPoint>                       salientPoints;
+  std::list<std::string>                                qrCodes;
   ExternalInterface::RobotObservedIllumination          illumination;
   
   Vision::CompressedImage compressedDisplayImg;

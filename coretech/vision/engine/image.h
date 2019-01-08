@@ -317,6 +317,10 @@ namespace Vision {
 
     ImageRGB(const ImageRGB565& imgRGB565);
 
+    u8* GetRawDataPointer() {
+      return reinterpret_cast<u8*>(Array2d<PixelRGB>::GetDataPointer());
+    }
+
     void DrawSubImage(const ImageRGB& subImage, const Point2f& topLeftCorner, bool drawBlankPixels = true) {
       return ImageBase<PixelRGB>::DrawSubImage<ImageRGB>(subImage, topLeftCorner, Vision::PixelRGB(), drawBlankPixels);
     }
