@@ -31,6 +31,7 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationTypes.h"
@@ -220,6 +221,9 @@ namespace Vector {
   CONSOLE_VAR(u32,  kThermalAlertTemp_C, "AnimationStreamer.System", 90);
 
   CONSOLE_VAR(bool, kDisplayMemoryPressure, "AnimationStreamer.System", true);
+
+  // Rendering backpack lights on screen
+  CONSOLE_VAR(bool, kDisplayBackpackLights, "AnimationStreamer", THEBOX);
 
   //////////
   /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
@@ -1369,6 +1373,40 @@ namespace Vector {
     }
 
     UpdateCaptureFace(faceImg565);
+
+    // Draw backpack lights
+    // Render 4 lights along right side of the screen
+    if (kDisplayBackpackLights) 
+    {
+      auto& backpackLEDState = _context->GetBackpackLightComponent()->GetBackpackLEDState();
+
+      const u32 kFillRadius = 3;
+      const u32 LED_WIDTH   = 5;
+      const u32 LED_HEIGHT  = 10;
+      const u32 LED_OFFSET  = 10;
+      const u32 LED_SPACING = 4;
+
+      const Point2f pt_system(FACE_DISPLAY_WIDTH-kFillRadius, LED_OFFSET + 0.5 * LED_HEIGHT);
+      faceImg565.DrawFilledCircle(pt_system, backpackLEDState.system, kFillRadius);
+
+      Rectangle<s32> rect_front(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                                LED_OFFSET + LED_HEIGHT + LED_SPACING, 
+                                LED_WIDTH, 
+                                LED_HEIGHT);
+      faceImg565.DrawFilledRect(rect_front, backpackLEDState.front);
+
+      Rectangle<s32> rect_middle(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                                 LED_OFFSET + 2 * (LED_HEIGHT + LED_SPACING), 
+                                 LED_WIDTH, 
+                                 LED_HEIGHT);
+      faceImg565.DrawFilledRect(rect_middle, backpackLEDState.middle);
+
+      Rectangle<s32> rect_back(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                               LED_OFFSET + 3 * (LED_HEIGHT + LED_SPACING), 
+                               LED_WIDTH, 
+                               LED_HEIGHT);
+      faceImg565.DrawFilledRect(rect_back, backpackLEDState.back);
+    }
 
     // Display temperature if exceeds threshold
     if (kDisplayHighTemperature)

@@ -20,6 +20,7 @@
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/ledTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/internetUtils/internetUtils.h"
@@ -278,6 +279,12 @@ Result BackpackLightComponent::SendBackpackLights(const BackpackLightAnimation::
   RobotInterface::SetBackpackLights setBackpackLights = lights.lights;
   setBackpackLights.layer = EnumToUnderlyingType(BackpackLightLayer::BPL_USER);
 
+  // Store backpack lights here so that it can be polled by animationStreamer for 
+  // display on the screen. (For THEBOX only)
+  _currBackpackLEDState.front = setBackpackLights.lights[(int)LEDId::LED_BACKPACK_FRONT].onColor;
+  _currBackpackLEDState.middle = setBackpackLights.lights[(int)LEDId::LED_BACKPACK_MIDDLE].onColor;
+  _currBackpackLEDState.back = setBackpackLights.lights[(int)LEDId::LED_BACKPACK_BACK].onColor;
+
   const auto msg = RobotInterface::EngineToRobot(setBackpackLights);
   const bool res = AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
   return (res ? RESULT_OK : RESULT_FAIL);
@@ -451,6 +458,9 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
       light.transitionOffPeriod_ms = 0;
       light.offset_ms = 0;
     }
+
+    // Store system light for display on screen. (For THEBOX only)
+    _currBackpackLEDState.system = light.onColor;
 
     const auto msg = RobotInterface::EngineToRobot(RobotInterface::SetSystemLight({light}));
     AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());

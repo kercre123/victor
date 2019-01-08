@@ -76,6 +76,16 @@ public:
   // Priority of battery related lights Low Battery > Charging > Fully Charged (Off)
   void UpdateBatteryStatus(const RobotInterface::BatteryStatus& msg);
   
+  // Used only for THEBOX to draw backpack lights on screen
+  struct BackpackLEDState
+  {
+    u32 system = 0;    
+    u32 front  = 0;
+    u32 middle = 0;
+    u32 back   = 0;
+  };
+  const BackpackLEDState& GetBackpackLEDState() { return _currBackpackLEDState; }
+
 private:
 
   // Start playing lights from the given source
@@ -158,6 +168,7 @@ private:
 
   bool _selfTestRunning = false;
 
+  BackpackLEDState _currBackpackLEDState;
 };
 
 }
