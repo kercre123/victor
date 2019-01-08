@@ -56,6 +56,8 @@ private:
   
   void AddChirpInternal( const Chirp& chirp );
   
+  float PitchToRelativeCents( const float pitch_Hz );
+  
   uint64_t GetCurrTime() const;
   std::chrono::time_point<Clock> ConvertToTimePoint( uint64_t time_ms ) const;
   
@@ -96,6 +98,8 @@ private:
     }
   };
   std::set<ChirpInfo, ChirpInfoCompare> _chirps;
+  
+  int _octave = std::numeric_limits<int>::max();
   
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 };
