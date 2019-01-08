@@ -120,7 +120,7 @@ namespace Switchboard {
 
       Signal::SmartHandle _wifiChangedHandle;
 
-      void UpdateAdvertisement(bool pairing);
+      void UpdateAdvertisement(bool pairing, int16_t type=-1, uint64_t extra1=0);
 
       const uint8_t kOtaUpdateInterval_s = 1;
       const float kRetryInterval_s = 0.2f;
@@ -143,6 +143,8 @@ namespace Switchboard {
       ev_timer _engineTimer;
       ev_timer _ankibtdTimer;
       ev_timer _tokenTimer;
+
+      std::vector<uint8_t> _proposition8;
 
       struct ev_TimerStruct {
         ev_timer timer;

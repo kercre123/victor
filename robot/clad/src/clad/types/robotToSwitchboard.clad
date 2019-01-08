@@ -30,6 +30,9 @@ message WifiConnectRequest
 
 message CycleAdvertisement
 {
+  uint_32 extra1, // needs to be uin64
+  uint_32 extra2, // needs to be uin64
+  uint_8  typeVal,
 }
 
 } // SwitchboardInterface

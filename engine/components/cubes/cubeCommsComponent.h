@@ -237,6 +237,15 @@ private:
   float _timeToConnect = -1.0f;
   
   std::unordered_map<std::string, ExternalInterface::ObjectAvailable> _vectorMap;
+  
+  int _protocolState = 0;
+  enum class PlayerType {
+    Unknown=0,
+    Host,
+    Client,
+  };
+  PlayerType _playerType = PlayerType::Unknown;
+  uint64_t _startTime_ms = 0;
 };
 
 

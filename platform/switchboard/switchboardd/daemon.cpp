@@ -44,6 +44,8 @@
 
 #include <sys/timex.h>
 
+#include <chrono>
+
 #define LOG_PROCNAME "vic-switchboard"
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -54,6 +56,10 @@
 
 namespace Anki {
 namespace Switchboard {
+
+namespace {
+  const auto kStartTime = std::chrono::steady_clock::now();
+}
 
 void Daemon::Start() {
   setAndroidLoggingTag("vic-switchboard");
@@ -237,12 +243,36 @@ void Daemon::AddExtraData(std::vector<uint8_t>& data) const
     return;
   }
 
+  static std::vector<uint8_t> oldData;
+  if( oldData.empty() ) { 
+    // first two bytes are uptime in seconds (~18 hours before overflow)
+    auto uptimeTmp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - kStartTime).count();
+    uint16_t uptime_s;
+    if( uptimeTmp > std::numeric_limits<unsigned short>::max() ) {
+      uptime_s = std::numeric_limits<unsigned short>::max();
+    } else {
+      uptime_s = static_cast<uint16_t>(uptimeTmp);
+    }
+    oldData.push_back( (uint8_t) ((uptime_s >> 1) & 0xF) );
+    oldData.push_back( (uint8_t) (uptime_s & 0xF) );
+  }
+  
+  // one byte always increments on a change (so we can cause refresh on backpack click)
   static uint8_t manuDataInt = 0;
   ++manuDataInt;
   data.push_back( manuDataInt );
+  
+  if( !oldData.empty() ) {
+    data.insert( data.end(), oldData.begin(), oldData.end() );
+  }
+
+  if( !_proposition8.empty() ) {
+    data.insert( data.end(), _proposition8.begin(), _proposition8.end() ); 
+  }
+  
 }
 
-void Daemon::UpdateAdvertisement(bool pairing) {
+void Daemon::UpdateAdvertisement(bool pairing, int16_t type, uint64_t extra1) {
   if(_bleClient == nullptr || !_bleClient->IsConnected()) {
     Log::Write("Tried to update BLE advertisement when not connected to ankibluetoothd.");
     return;
@@ -253,6 +283,21 @@ void Daemon::UpdateAdvertisement(bool pairing) {
 
   if(_securePairing != nullptr) {
     _securePairing->SetIsPairing(pairing);
+  }
+
+  if( type == 1 ) {
+    // extra1 is the proposed start time
+    auto proposedStartTime = extra1;
+    unsigned int cnt = 0;
+    _proposition8.clear();
+    _proposition8.resize(8, 0);
+    for( int i=7; i>=0; --i ) {
+      _proposition8[i] = ((proposedStartTime >> cnt) & 0xF);
+      cnt += 8;
+    }
+  } else if( type == 2 ) {
+    _proposition8.clear();
+    _proposition8.push_back( 255 );
   }
 
   Log::Write("WHATNOW Upating advert");
@@ -635,7 +680,11 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
 
   switch(tag){
     case Anki::Vector::ExternalInterface::MessageEngineToGameTag::CycleAdvertisement: {
-      UpdateAdvertisement(false);
+      const uint8_t type = message.Get_CycleAdvertisement().typeVal;
+      const uint32_t extra1 = message.Get_CycleAdvertisement().extra1;
+      const uint32_t extra2 = message.Get_CycleAdvertisement().extra2;
+      const uint64_t extra = ((uint64_t)extra1 << 32) | (uint64_t)extra2;
+      UpdateAdvertisement(false, type, extra);
       break;
     }
     case Anki::Vector::ExternalInterface::MessageEngineToGameTag::EnterPairing: {

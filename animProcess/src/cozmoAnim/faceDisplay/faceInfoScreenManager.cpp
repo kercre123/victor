@@ -981,7 +981,6 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
                       buttonReleasedEvent, 
                       singlePressDetected, 
                       doublePressDetected);
-
   const bool isOnCharger = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
 
   const ScreenName currScreenName = GetCurrScreenName();
@@ -998,7 +997,9 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       // Fake trigger word on single press
       LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotSinglePress", "Triggering wake word");
       //_context->GetMicDataSystem()->FakeTriggerWordDetection();
-      RobotInterface::SendAnimToEngine(SwitchboardInterface::CycleAdvertisement{});
+      SwitchboardInterface::CycleAdvertisement msg;
+      msg.typeVal = 0; // click increment
+      RobotInterface::SendAnimToEngine(std::move(msg));
     }
   }
 
