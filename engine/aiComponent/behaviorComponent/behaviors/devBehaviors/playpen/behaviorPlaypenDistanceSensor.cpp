@@ -106,7 +106,13 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
   _calibrationComplete = false;
   _calibrationRunning = false;
 
-  ToFSensor::getInstance()->SetupSensors();
+  ToFSensor::getInstance()->SetupSensors([this](ToFSensor::CommandResult res)
+                                         {
+                                           if(res != ToFSensor::CommandResult::Success)
+                                           {
+                                             PLAYPEN_SET_RESULT(FactoryTestResultCode::SETUP_TOF_FAILED);
+                                           }
+                                         });
 
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
@@ -206,7 +212,13 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
 
 void BehaviorPlaypenDistanceSensor::OnBehaviorDeactivated()
 {
-  ToFSensor::getInstance()->StopRanging();
+  ToFSensor::getInstance()->StopRanging([this](ToFSensor::CommandResult res)
+                                        {
+                                          if(res != ToFSensor::CommandResult::Success)
+                                          {
+                                            PLAYPEN_SET_RESULT(FactoryTestResultCode::STOP_TOF_FAILED);
+                                          }
+                                        });
   _startingAngle = 0;
   _numRecordedReadingsLeft = -1;
   _calibrationComplete = false;
@@ -296,14 +308,27 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
             }
             PRINT_NAMED_WARNING("","STARTING CALIBRATION %f", visualDistanceToTarget_mm);
             ToFSensor::getInstance()->PerformCalibration(visualDistanceToTarget_mm,
-                                                         PlaypenConfig::kDistanceSensorTargetReflectance);
+                                                         PlaypenConfig::kDistanceSensorTargetReflectance,
+                                                         [this](ToFSensor::CommandResult res)
+                                                         {
+                                                           if(res != ToFSensor::CommandResult::Success)
+                                                           {
+                                                             PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATE_TOF_FAILED);
+                                                           }
+                                                         });
           }
         }
         
         if(_calibrationComplete)
         {
           PRINT_NAMED_ERROR("","CALIBRATION COMPLETE");
-          ToFSensor::getInstance()->StartRanging();
+          ToFSensor::getInstance()->StartRanging([this](ToFSensor::CommandResult res)
+                                                 {
+                                                   if(res != ToFSensor::CommandResult::Success)
+                                                   {
+                                                     PLAYPEN_SET_RESULT(FactoryTestResultCode::START_TOF_FAILED);
+                                                   }
+                                                 });
         }
         _calibrationRunning = isCalibrating;
         
@@ -314,7 +339,14 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
   }
   else
   {
-    ToFSensor::getInstance()->StartRanging();
+    ToFSensor::getInstance()->StartRanging([this](ToFSensor::CommandResult res)
+                                           {
+                                             if(res != ToFSensor::CommandResult::Success)
+                                             {
+                                               PLAYPEN_SET_RESULT(FactoryTestResultCode::START_TOF_FAILED);
+                                             }
+                                           });
+    
     _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;
   }
 }

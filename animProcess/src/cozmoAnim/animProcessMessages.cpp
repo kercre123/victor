@@ -40,6 +40,7 @@
 #include "clad/robotInterface/messageEngineToRobotTag.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
+#include "clad/types/tofTypes.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
@@ -561,6 +562,11 @@ void Process_showUrlFace(const RobotInterface::ShowUrlFace& msg)
 void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
 {
   SetBLEPin(msg.pin);
+}
+
+void Process_rangeDataToDisplay(const Anki::Cozmo::RobotInterface::RangeDataToDisplay& msg)
+{
+  FaceInfoScreenManager::getInstance()->DrawToF(msg.data);
 }
 
 void Process_sendBLEConnectionStatus(const Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus& msg)

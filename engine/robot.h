@@ -717,11 +717,13 @@ protected:
   void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
 
   // Performs various startup checks and displays fault codes as appropriate
+
   // Returns true if the check is complete, false if the check is still running
   // If return true, then res will be set appropriately
   bool UpdateStartupChecks(Result& res);
   bool UpdateCameraStartupChecks(Result& res);
   bool UpdateGyroCalibChecks(Result& res);
+  Result UpdateToFStartupChecks(bool& isDone);
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
 }; // class Robot

@@ -46,6 +46,8 @@ enum : uint16_t {
 
   IMU_FAILURE           = 960,
 
+  TOF_FAILURE           = 950,
+  
   //critical processes
   NO_CLOUD_PROCESS      = 923,
   NO_GATEWAY            = 921,

@@ -397,6 +397,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
 
   // This will create the AndroidHAL instance if it doesn't yet exist
   CameraService::getInstance();
+  ToFSensor::getInstance();
 
 } // Constructor: Robot
 
@@ -2572,6 +2573,13 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 
 bool Robot::UpdateCameraStartupChecks(Result& res)
 {
+  bool tofCheckDone = false;
+  Result res = UpdateToFStartupChecks(tofCheckDone);
+  if(res != RESULT_OK)
+  {
+    return res;
+  }
+  
   enum State {
     FAILED = -1,
     WAITING,
@@ -2614,8 +2622,138 @@ bool Robot::UpdateCameraStartupChecks(Result& res)
     }
   }
 
-  res = (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
-  return (state != State::WAITING);
+  // Once the camera and tof startup checks are done (successful)
+  // Play a sound to indicate "successful" boot
+  static bool playedSound = false;
+  if(state == State::PASSED && tofCheckDone && !playedSound)
+  {
+    #if FACTORY_TEST
+    // Manually init AnimationComponent
+    // Normally it would init when we receive syncTime from robot process
+    // but since there might not be a body (robot process won't init)
+    // we need to do it here
+    GetAnimationComponent().Init();
+        
+    // Once we have gotten a frame from the camera play a sound to indicate 
+    // a "successful" boot
+    GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+    GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
+    playedSound = true;
+    #endif    
+  }
+  
+  return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
+Result Robot::UpdateToFStartupChecks(bool& isDone)
+{
+  isDone = false;
+  
+  enum class State
+  {
+   WaitingForCallback,
+   Setup,
+   StartRanging,
+   EndRanging,
+   Success,
+   Failure,
+  };
+  static State state = State::Setup;
+
+#define HANDLE_RESULT(res, nextState) {                                 \
+    if(res != ToFSensor::CommandResult::Success) {                      \
+      PRINT_NAMED_ERROR("Robot.UpdateToFStartupChecks.Fail", "State: %u", state); \
+      FaultCode::DisplayFaultCode(FaultCode::TOF_FAILURE);              \
+      state = State::Failure;                                           \
+    } else {                                                            \
+      state = nextState;                                                \
+    }                                                                   \
+  } 
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  static float startTime_sec = currentTime_sec;
+  
+  // If the ToF check has been running for more than 10 seconds assume failure
+  // This will handle failing should we not get any valid ROIs or for some reason
+  // one of the command callbacks is not called (never seen it happen but who knows...)
+  if((state != State::Failure && state != State::Success) &&
+     currentTime_sec - startTime_sec > 10.f)
+  {
+    HANDLE_RESULT(ToFSensor::CommandResult::Failure, State::Failure);
+  }
+  
+  switch(state)
+  {
+    case State::Setup:
+      {
+        state = State::WaitingForCallback;
+        ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
+                                               {
+                                                 HANDLE_RESULT(res, State::StartRanging);
+                                               });
+      }
+      break;
+
+    case State::StartRanging:
+      {
+        state = State::WaitingForCallback;
+        ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
+                                               {
+                                                 HANDLE_RESULT(res, State::EndRanging);
+                                               });
+      }
+      break;
+
+    case State::EndRanging:
+      {
+        bool isDataNew = false;
+        RangeDataRaw data = ToFSensor::getInstance()->GetData(isDataNew);
+        if(isDataNew)
+        {
+          bool atLeastOneValidRoi = false;
+          for(const auto& roiReading : data.data)
+          {
+            if(ToFSensor::getInstance()->IsValidRoiStatus(roiReading.roiStatus))
+            {
+              atLeastOneValidRoi = true;
+            }
+          }
+
+          if(atLeastOneValidRoi)
+          {
+            state = State::WaitingForCallback;
+            ToFSensor::getInstance()->StopRanging([](ToFSensor::CommandResult res)
+                                                  {
+                                                    PRINT_NAMED_INFO("Robot.UpdateToFStartupChecks.Success","");
+                                                    HANDLE_RESULT(res, State::Success);
+                                                  });
+          }
+        }
+      }
+      break;
+
+    case State::Success:
+      {
+        isDone = true;
+      }
+      // Intentional fallthrough
+    case State::WaitingForCallback:
+      {
+        return RESULT_OK;
+      }
+      break;
+
+    case State::Failure:
+      {
+        isDone = true;
+        return RESULT_FAIL;
+      }
+      break;
+  }
+
+  return RESULT_OK;
+  
+  #undef HANDLE_RESULT
 }
 
 bool Robot::UpdateGyroCalibChecks(Result& res)

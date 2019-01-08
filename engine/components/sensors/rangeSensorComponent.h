@@ -21,6 +21,8 @@
 
 #include "clad/types/tofTypes.h"
 
+#include "util/signals/simpleSignal_fwd.h"
+
 #include <vector>
 
 namespace Anki {
@@ -35,11 +37,8 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override
-  {
-    _robot = robot;
-  }
-  
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override;
+
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override { }  
   
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override { }
@@ -58,10 +57,14 @@ public:
 private:
 
   Robot* _robot = nullptr;
+
+  Signal::SmartHandle _signalHandle;
   
   RangeDataRaw _latestRawRangeData;
   RangeData _latestRangeData;
   bool _rawDataIsNew = false;
+
+  bool _sendRangeData = false;
 };
 
 
