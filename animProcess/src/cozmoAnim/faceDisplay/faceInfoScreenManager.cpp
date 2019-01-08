@@ -1768,9 +1768,9 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
   }
 
   
-  img.Save("/test.png", 100);
+  //  img.Save("/test.png", 100);
   
-  //DrawScratch();
+  DrawScratch();
 }
 
 

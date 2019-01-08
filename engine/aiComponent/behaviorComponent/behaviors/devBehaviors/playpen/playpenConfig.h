@@ -39,7 +39,7 @@ static bool kWriteToStorage       = true;
 static bool kIgnoreFailures       = true;
 
 // Default timeout to force a playpen behavior to end
-static f32  kDefaultTimeout_ms    = 20000;
+static f32  kDefaultTimeout_ms    = 30000;
 
 // How long to display the playpen result on Cozmo's face
 static f32  kTimeToDisplayResultOnFace_ms = 10000;
@@ -124,7 +124,7 @@ static f32 kIMUDriftAngleThreshDeg     = 0.2f;
 
 // ----------Distance Sensor----------
 // Number of distance sensor readings to record
-static u32 kNumDistanceSensorReadingsToRecord       = 50;
+static u32 kNumDistanceSensorReadingsToRecord       = 40;
 
 // Threshold on calculated distance to distance sensor target (using detected marker)
 // +/- this from the expected distance to the object/marker defined in the distance sensor
