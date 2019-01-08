@@ -129,5 +129,21 @@
   "golang.org/x/time": {
     "commit": "fbb02b2291d28baffd63558aa44b4b56f178d650",
     "branch": "master"
+  },
+  "github.com/lightstep/lightstep-tracer-go": {
+    "commit": "c9cafc033badd91d4e27900874429fc30a5ffdc2",
+    "branch": "master"
+  },
+  "github.com/lightstep/thrift": {
+    "commit": "de6c3c01b88c1fc8ae76cec4a30f0441ef55a4a4",
+    "branch": "master"
+  },
+  "github.com/opentracing-contrib/go-grpc": {
+    "commit": "4b5a12d3ff02ba61ae861b7797e17a0c4f0ecea9",
+    "branch": "master"
+  },
+  "github.com/opentracing/opentracing-go": {
+    "commit": "8b5a441dc60e8d9bb9bf9d22060b6d94fa599983",
+    "branch": "master"
   }
 }

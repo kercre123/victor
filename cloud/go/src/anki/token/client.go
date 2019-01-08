@@ -1,6 +1,7 @@
 package token
 
 import (
+	"anki/opentracing"
 	"anki/robot"
 	"anki/token/identity"
 	"anki/util"
@@ -8,6 +9,7 @@ import (
 	"io/ioutil"
 
 	pb "github.com/anki/sai-token-service/proto/tokenpb"
+	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -92,6 +94,8 @@ func (c *conn) Close() error {
 func getDialOptions(identityProvider identity.Provider, creds credentials.PerRPCCredentials) []grpc.DialOption {
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(identityProvider.TransportCredentials()))
+	dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(opentracing.OpenTracer)))
+	dialOpts = append(dialOpts, grpc.WithStreamInterceptor(otgrpc.OpenTracingStreamClientInterceptor(opentracing.OpenTracer)))
 	if creds != nil {
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
 	}

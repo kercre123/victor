@@ -3,6 +3,7 @@ package jdocs
 import (
 	"anki/config"
 	"anki/log"
+	"anki/opentracing"
 	"anki/token"
 	"anki/util"
 	"clad/cloud"
@@ -11,6 +12,7 @@ import (
 
 	pb "github.com/anki/sai-jdocs/proto/jdocspb"
 	"github.com/gwatts/rootcerts"
+	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -30,6 +32,8 @@ func newConn(ctx context.Context, opts *options) (*conn, error) {
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(defaultTLSCert))
+	dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(opentracing.OpenTracer)))
+	dialOpts = append(dialOpts, grpc.WithStreamInterceptor(otgrpc.OpenTracingStreamClientInterceptor(opentracing.OpenTracer)))
 	if opts.tokener != nil {
 		creds, err := opts.tokener.Credentials()
 		if err != nil {
