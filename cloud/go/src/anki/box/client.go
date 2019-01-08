@@ -11,10 +11,14 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
+	"github.com/google/uuid"
 	"github.com/gwatts/rootcerts"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
+
+var deviceID = "mac-build"
 
 type client struct {
 	ipc.Conn
@@ -89,9 +93,17 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		return nil, err
 	}
 
-	// todo: instantiate grpc client
-	// client := pb.NewBoxClient(rpcConn)
-	// client.ProtoOperation(request)
-	// ...return result
+	sessionID := uuid.New().String()[:16]
+	r := &pb.ImageRequest{
+		Session:  sessionID,
+		DeviceId: deviceID,
+		Lang:     "en",
+		Payload:  fileData,
+	}
+
+	client := pb.NewChipperGrpcClient(rpcConn)
+	resp, err := client.AnalyzeImage(ctx, r)
+	log.Println("image analysis response: ", resp.String())
+
 	return &vision.OffboardResultReady{JsonResult: "[]"}, nil
 }

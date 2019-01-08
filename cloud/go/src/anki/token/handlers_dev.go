@@ -15,6 +15,9 @@ func init() {
 	devHandlers = func(s *http.ServeMux) {
 		s.HandleFunc("/tokenauth", provisionHandler)
 	}
+	SetDevServer = func(s *Server) {
+		TokenServer = s
+	}
 }
 
 func provisionHandler(w http.ResponseWriter, r *http.Request) {
