@@ -2573,6 +2573,24 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 
 bool Robot::UpdateCameraStartupChecks(Result& res)
 {
+  static bool rampostFileRead = false;
+  static bool rampostError = false;
+  if(!rampostFileRead)
+  {
+    rampostFileRead = true;
+    const Result res = Robot::CheckForRampostError();
+    if(res != RESULT_OK)
+    {
+      rampostError = true;
+      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);    
+    }
+  }
+
+  if(rampostError)
+  {
+    return RESULT_FAIL;
+  }
+  
   bool tofCheckDone = false;
   Result res = UpdateToFStartupChecks(tofCheckDone);
   if(res != RESULT_OK)
@@ -2921,5 +2939,43 @@ void Robot::Shutdown(ShutdownReason reason)
   _shutdownReason = reason;
 }
 
-} // namespace Vector
+Result Robot::CheckForRampostError()
+{
+  const std::string path = "/dev/rampost_error";
+  struct stat buffer;
+  int rc = stat(path.c_str(), &buffer);
+  if(rc == 0)
+  {
+    FILE* f = fopen(path.c_str(), "r");
+    if(f != nullptr)
+    {
+      char data[32] = {0};
+      rc = fread(data, sizeof(data), 1, f);
+      (void)fclose(f);
+      if(rc < 0)
+      {
+        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
+                          "Failed to read from rampost_error file %u %u",
+                          rc,
+                          errno);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
+      }
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
+                        "%d",
+                        rc);
+    }
+    
+    return RESULT_FAIL;
+  }
+
+  return RESULT_OK;
+}
+
+} // namespace Cozmo
 } // namespace Anki

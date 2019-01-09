@@ -595,6 +595,8 @@ public:
   // i.e. Calibration is necessary!
   bool IsLiftEncoderInvalid() const { return IsStatusFlagSet(RobotStatusFlag::ENCODER_LIFT_INVALID); }
 
+  static Result CheckForRampostError();
+  
 protected:
   bool _toldToShutdown = false;
   ShutdownReason _shutdownReason = ShutdownReason::SHUTDOWN_UNKNOWN;
@@ -724,8 +726,10 @@ protected:
   bool UpdateCameraStartupChecks(Result& res);
   bool UpdateGyroCalibChecks(Result& res);
   Result UpdateToFStartupChecks(bool& isDone);
+  Result UpdateRampostErrorChecks();
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
+
 }; // class Robot
 
 

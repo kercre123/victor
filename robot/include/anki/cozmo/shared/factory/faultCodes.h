@@ -47,7 +47,7 @@ enum : uint16_t {
   IMU_FAILURE           = 960,
 
   TOF_FAILURE           = 950,
-  
+
   //critical processes
   NO_CLOUD_PROCESS      = 923,
   NO_GATEWAY            = 921,
@@ -65,6 +65,8 @@ enum : uint16_t {
   NO_BODY               = 899, //no response from syscon
   SPINE_SELECT_TIMEOUT  = 898,
 
+  RAMPOST_ERROR         = 897,
+  
   //Sensor Errors
   TOUCH_SENSOR          = 895,
   TOF                   = 894,
