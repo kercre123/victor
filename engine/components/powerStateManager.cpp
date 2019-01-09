@@ -274,6 +274,7 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
     }
 
     case PowerSaveSetting::Camera: {
+      break;
       if( !CameraService::hasInstance() ) {
         PRINT_NAMED_WARNING("PowerStateManager.Toggle.CameraService.NoInstance",
                             "Trying to interact with camera service, but it doesn't exist");

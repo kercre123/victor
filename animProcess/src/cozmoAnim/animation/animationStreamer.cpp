@@ -486,8 +486,21 @@ namespace Vector {
   }
 
   Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, u32 startAt_ms,
-                                                  bool interruptRunning, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
+                                                  bool interruptRunning, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue, u8 hackQrState)
   {
+    if(hackQrState == 2) {
+      qrSkipAnim = false;
+      return RESULT_OK;
+    }
+    
+    if(qrSkipAnim) {
+      return RESULT_OK;
+    }
+
+    if(hackQrState == 1) {
+      qrSkipAnim = true;
+    }
+
     // Special case: stop streaming the current animation
     if(name.empty()) {
       if(DEBUG_ANIMATION_STREAMING) {

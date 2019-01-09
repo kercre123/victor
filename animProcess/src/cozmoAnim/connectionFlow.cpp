@@ -113,7 +113,7 @@ void DrawWifiScreen(AnimationStreamer* animStreamer)
   const bool shouldOverrideEyeHue = true;
   const bool shouldRenderInEyeHue = false;
   animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0, 0, shouldInterrupt,
-                                      shouldOverrideEyeHue, shouldRenderInEyeHue);
+                                      shouldOverrideEyeHue, shouldRenderInEyeHue, 1);
 }
 
 // Uses a png sequence animation to draw os updating icon to screen
@@ -232,7 +232,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     case ConnectionStatus::SETTING_WIFI:
     {
       DrawWifiScreen(animStreamer);
-     }
+    }
     break;
     case ConnectionStatus::UPDATING_OS:
     {
@@ -251,6 +251,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     break;
     case ConnectionStatus::END_PAIRING:
     {
+      animStreamer->SetStreamingAnimation("", 0, 0, 0, false, false, false, 2);
       if(s_enteredAnyScreen)
       {
         animStreamer->Abort();

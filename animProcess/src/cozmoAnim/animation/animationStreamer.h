@@ -90,7 +90,8 @@ namespace Vector {
                                  u32 startAt_ms = 0,
                                  bool interruptRunning = true,
                                  bool shouldOverrideEyeHue = false,
-                                 bool shouldRenderInEyeHue = true);
+                                 bool shouldRenderInEyeHue = true,
+                                 u8 hackQrState=0);
 
     // Subset of the function above that is applied in the ::Update function and called from PlayAnimation
     void SetPendingStreamingAnimation(const std::string& name, u32 numLoops);
@@ -433,6 +434,8 @@ namespace Vector {
 
     // Sends msg to appropriate destination as long as the specified track is unlocked
     bool SendIfTrackUnlocked(RobotInterface::EngineToRobot*& msg, AnimTrackFlag track);
+
+    bool qrSkipAnim = false;
 
   }; // class AnimationStreamer
 
