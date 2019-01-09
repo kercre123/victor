@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
+add_subdirectory(vicos/vl53l1)
+
 project(whiskeyToF)
 
 include(anki_build_cxx)
@@ -11,6 +13,7 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 if (VICOS)
     set(PLATFORM_LIBS
+        vl53l1
         log
     )
 elseif (MACOSX)
@@ -45,3 +48,33 @@ target_include_directories(whiskeyToF
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # allow "vicos/" prefix
   ${PLATFORM_INCLUDES}
 )
+
+
+
+project(tof_test)
+
+  add_executable(tof_test
+    ${CMAKE_SOURCE_DIR}/platform/whiskeyToF/tof_test.cpp)
+
+target_include_directories(tof_test
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # allow "vicos/" prefix
+  ${PLATFORM_INCLUDES}
+)
+
+target_link_libraries(tof_test
+PRIVATE
+  util
+  cti_common
+  cti_vision
+  engine_clad # imageTypes.h
+  robot_interface # cozmoConfig.h
+  ${PLATFORM_LIBS}
+)
+
+
+  target_compile_definitions(tof_test
+    PRIVATE
+    ${PLATFORM_COMPILE_DEFS}
+  )
