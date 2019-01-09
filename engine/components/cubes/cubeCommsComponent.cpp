@@ -55,7 +55,7 @@ namespace {
 #ifdef SIMULATOR
   const float kDefaultDiscoveryTime_sec = 3.f;
 #else
-  const float kDefaultDiscoveryTime_sec = 7.f;
+  const float kDefaultDiscoveryTime_sec = 30.f;
 #endif
 
   const float kSendWebVizDataPeriod_sec = 1.0f;
