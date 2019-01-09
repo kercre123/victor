@@ -37,17 +37,19 @@ def convert_to_raw(img):
 
 RAW = 1
 
-def extractFrames(inGif):
+def convert_frame_to_data(frame):
+    newframe = frame.convert('RGBA')
+    newframe = convert_to_raw(newframe)
+    data = array.array("H",newframe)
+    return data
 
-
+def extractGifFrames(inGif):
     frame = Image.open(inGif)
     nframes = 0
     with open('%s.raw' % (os.path.basename(inGif),), "wb+") as f:
         while frame:
 #            newframe = frame.rotate(90).resize( SIZE, Image.ANTIALIAS).convert('RGBA')
-            newframe = frame.convert('RGBA')
-            newframe = convert_to_raw(newframe)
-            data = array.array("H",newframe)
+            data = convert_frame_to_data(frame)
             f.write(data.tostring())
             nframes += 1
             try:
@@ -56,5 +58,24 @@ def extractFrames(inGif):
                 break;
     return True
 
+def convertImages(dirname, images):
+    outfilename = '%s/anim.raw' % dirname
+    with open(outfilename, "wb+") as f:
+        nframes = 0
+        for filename in images:
+            frame = Image.open(filename)
+            data = convert_frame_to_data(frame)
+            f.write(data.tostring())
+            nframes += 1
 
-extractFrames(sys.argv[1])
+        print('wrote {} frames to {}'.format(nframes, outfilename))
+            
+if len(sys.argv) == 1:
+    print('error: pass in a .gif file or a folder of sequentail images')
+    exit(-1)
+elif len(sys.argv) == 2:
+    extractGifFrames(sys.argv[1])
+else:
+    print('got {} images'.format(len(sys.argv)))
+    images = sorted(sys.argv[1:])
+    convertImages(os.path.basename(sys.argv[0]), images)
