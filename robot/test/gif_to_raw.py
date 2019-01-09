@@ -71,7 +71,7 @@ def convertImages(dirname, images):
         print('wrote {} frames to {}'.format(nframes, outfilename))
             
 if len(sys.argv) == 1:
-    print('error: pass in a .gif file or a folder of sequentail images')
+    print('error: pass in a .gif file or a folder of sequential images')
     exit(-1)
 elif len(sys.argv) == 2:
     extractGifFrames(sys.argv[1])
