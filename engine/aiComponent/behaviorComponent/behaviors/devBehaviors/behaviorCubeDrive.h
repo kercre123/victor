@@ -40,19 +40,19 @@ struct ActiveAccel;
 
 class BehaviorCubeDrive : public ICozmoBehavior
 {
-public: 
+public:
   virtual ~BehaviorCubeDrive();
 
 protected:
 
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorCubeDrive(const Json::Value& config);  
+  explicit BehaviorCubeDrive(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
