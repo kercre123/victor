@@ -253,7 +253,7 @@ static void handleTemperature() {
   int32_t temp_now;
   // Temperature logic
   if (IS_WHISKEY) {
-    temp_now = (adc_values[ADC_TEMP] * 4) / 112 - 53;
+    temp_now = (adc_values[ADC_THERMISTOR] * 4) / 112 - 53;
   } else {
     temp_now = *TEMP30_CAL_ADDR - ((EXACT_ADC(ADC_TEMP) * TEMP_VOLT_ADJ) >> 16);
     temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 16) + 30;
