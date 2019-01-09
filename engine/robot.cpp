@@ -939,6 +939,47 @@ void UpdateFaceImageRGBExample(Robot& robot)
   robot.GetAnimationComponent().DisplayFaceImage(img, duration_ms);
 }
 
+void Robot::ProcessTheBoxTriggers()
+{
+  // Enter/Exit pairing trigger vars
+  // Hold on side and tap touch three times in 2 seconds
+  const int kPairingTouchCount = 3;
+  const float kPairingTouchWindow_s = 2.f;
+  static int touchCount = 0;
+  static float touchStartTime_s = 0;
+  static bool enterPairing = true;
+
+  // Capsense touch detection
+  const auto& touchComp = GetTouchSensorComponent();
+  const bool pressed = touchComp.GetIsPressed();
+  static bool wasPressed = false;
+
+  // Only trigger if offTread state is OnLeftSide
+  const auto offTreadState = GetOffTreadsState();
+  if (offTreadState != OffTreadsState::OnLeftSide) {
+    touchCount = 0;
+  } else if (pressed && !wasPressed) {
+    const float now_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();    
+    if (touchCount == 0 || now_s - touchStartTime_s > kPairingTouchWindow_s) {
+      touchStartTime_s = now_s;
+      touchCount = 1;
+    } else {
+      ++touchCount;
+      if (touchCount == kPairingTouchCount) {
+        if (enterPairing) {
+          LOG_INFO("TheBox.EnterPairing", "");
+          Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
+        } else {
+          LOG_INFO("TheBox.ExitPairing", "");
+          Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
+        }
+        enterPairing = !enterPairing;
+      }
+    }
+  }
+  wasPressed = pressed;
+}
+
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
   ANKI_CPU_PROFILE("Robot::UpdateFullRobotState");
@@ -1048,6 +1089,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
 
   _hasMovedSinceLocalization |= (GetMoveComponent().IsCameraMoving() || _offTreadsState != OffTreadsState::OnTreads);
+
+  // Process triggers for THEBOX
+  ProcessTheBoxTriggers();
 
   if (isDelocalizing)
   {

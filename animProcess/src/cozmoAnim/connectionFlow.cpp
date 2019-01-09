@@ -257,7 +257,10 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
       }
       s_enteredAnyScreen = false;
       
-
+      
+      // THEBOX: Blank the face since we're not displaying eyes that will draw over what's currently on the screen
+      animStreamer->BlankFace();
+      
       // Probably will never get here because we will restart
       // while updating os
       if(FACTORY_TEST)

@@ -729,6 +729,9 @@ protected:
   bool UpdateGyroCalibChecks(Result& res);
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
+
+  // Process IMU/capsense triggers
+  void ProcessTheBoxTriggers();
 }; // class Robot
 
 

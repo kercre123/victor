@@ -224,6 +224,9 @@ namespace Vector {
 
   // Rendering backpack lights on screen
   CONSOLE_VAR(bool, kDisplayBackpackLights, "AnimationStreamer", THEBOX);
+  BackpackLightComponent::BackpackLEDState s_lastDrawnBackpackLEDState;
+  Vision::ImageRGB565 s_lastDrawnImage565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+
 
   //////////
   /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
@@ -846,6 +849,16 @@ namespace Vector {
     _expectingCompositeImage = true;
   }
 
+  Result AnimationStreamer::BlankFace()
+  {
+    auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    img->FillWith(Vision::PixelRGBA(0, 0));
+
+    auto handle = std::make_shared<Vision::SpriteWrapper>(img);
+    const bool shouldRenderInEyeHue = false;
+    return SetFaceImage(handle, shouldRenderInEyeHue, 0);
+  }
+
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
   {
     if (_redirectFaceImagesToDebugScreen) {
@@ -1323,6 +1336,11 @@ namespace Vector {
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
 
 #if ANKI_DEV_CHEATS
+
+    // Keep a copy of the last drawn face in case we want to redraw to update backpack lights overlay
+    faceImg565.CopyTo(s_lastDrawnImage565);
+
+
     static int kProcFace_GammaType_old = (int)FaceGammaType::None;
     static f32 kProcFace_Gamma_old = -1.f;
 
@@ -1378,8 +1396,7 @@ namespace Vector {
     // Render 4 lights along right side of the screen
     if (kDisplayBackpackLights) 
     {
-      auto& backpackLEDState = _context->GetBackpackLightComponent()->GetBackpackLEDState();
-
+      s_lastDrawnBackpackLEDState = _context->GetBackpackLightComponent()->GetBackpackLEDState();
       const u32 kFillRadius = 3;
       const u32 LED_WIDTH   = 5;
       const u32 LED_HEIGHT  = 10;
@@ -1387,25 +1404,25 @@ namespace Vector {
       const u32 LED_SPACING = 4;
 
       const Point2f pt_system(FACE_DISPLAY_WIDTH-kFillRadius, LED_OFFSET + 0.5 * LED_HEIGHT);
-      faceImg565.DrawFilledCircle(pt_system, backpackLEDState.system, kFillRadius);
+      faceImg565.DrawFilledCircle(pt_system, s_lastDrawnBackpackLEDState.system, kFillRadius);
 
       Rectangle<s32> rect_front(FACE_DISPLAY_WIDTH-LED_WIDTH, 
                                 LED_OFFSET + LED_HEIGHT + LED_SPACING, 
                                 LED_WIDTH, 
                                 LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_front, backpackLEDState.front);
+      faceImg565.DrawFilledRect(rect_front, s_lastDrawnBackpackLEDState.front);
 
       Rectangle<s32> rect_middle(FACE_DISPLAY_WIDTH-LED_WIDTH, 
                                  LED_OFFSET + 2 * (LED_HEIGHT + LED_SPACING), 
                                  LED_WIDTH, 
                                  LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_middle, backpackLEDState.middle);
+      faceImg565.DrawFilledRect(rect_middle, s_lastDrawnBackpackLEDState.middle);
 
       Rectangle<s32> rect_back(FACE_DISPLAY_WIDTH-LED_WIDTH, 
                                LED_OFFSET + 3 * (LED_HEIGHT + LED_SPACING), 
                                LED_WIDTH, 
                                LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_back, backpackLEDState.back);
+      faceImg565.DrawFilledRect(rect_back, s_lastDrawnBackpackLEDState.back);
     }
 
     // Display temperature if exceeds threshold
@@ -1992,6 +2009,14 @@ namespace Vector {
 
     // Send the data
     SendAnimationMessages(messageWrapper);
+
+#if ANKI_DEV_CHEATS
+    // If a new face wasn't drawn, but the backpack light state has changed
+    // then update the face anyway.
+    if (s_lastDrawnBackpackLEDState != _context->GetBackpackLightComponent()->GetBackpackLEDState()) {
+      BufferFaceToSend(s_lastDrawnImage565);
+    }
+#endif
 
     // Send animState message
     if (--_numTicsToSendAnimState == 0) {

@@ -83,6 +83,13 @@ public:
     u32 front  = 0;
     u32 middle = 0;
     u32 back   = 0;
+
+    bool operator!=(const BackpackLEDState& other) {
+      return this->system != other.system ||
+             this->front  != other.front ||
+             this->middle != other.middle ||
+             this->back   != other.back;
+    }
   };
   const BackpackLEDState& GetBackpackLEDState() { return _currBackpackLEDState; }
 
