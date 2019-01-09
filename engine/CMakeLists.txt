@@ -52,15 +52,19 @@ if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
-  include(webots)
-  set(PLATFORM_LIBS
-    ${FOUNDATION}
-    ${OPENCV_LIBS}
-    ${WEBOTS_LIBS}
-  )
-  set(PLATFORM_COMPILE_DEFS
-    SIMULATOR
-  )
+  if (WEBOTS)
+    include(webots)
+    set(PLATFORM_LIBS
+        ${FOUNDATION}
+        ${OPENCV_LIBS}
+        ${WEBOTS_LIBS}
+    )
+  else()
+    set(PLATFORM_LIBS
+        ${FOUNDATION}
+        ${OPENCV_LIBS}
+    )
+  endif()
 endif()
 
 if(ANKI_HAS_LIBARCHIVE)
@@ -112,7 +116,7 @@ target_link_libraries(cozmo_engine
 
 target_compile_options(cozmo_engine PRIVATE
   ${SYMBOL_VISIBILITY_FLAGS}
-  "${PLATFORM_FLAGS}"
+  ${PLATFORM_FLAGS}
   ${ASAN_CXX_FLAGS} 
 )
 
@@ -134,8 +138,7 @@ target_include_directories(cozmo_engine
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated>
 )
 
-if (VICOS)
-  # TODO: support tools on mac
+if (VICOS OR (SIMULATOR AND NOT WEBOTS))
   add_subdirectory(tools)
 
   # Placeholder install task for cozmo_engine. We will eventually transition to using

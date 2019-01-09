@@ -12,7 +12,7 @@
 #if defined(VICOS) && VICOS
 #include "victorLogger_vicos.h"
 #else
-#error "This class (VictorLogger) is not supported on this platform"
+#include "victorLogger_macos.h"
 #endif
 
 #endif //__util_logging_victorLogger_h

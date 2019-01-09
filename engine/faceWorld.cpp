@@ -312,7 +312,7 @@ namespace Vector {
 
         // Note we're using really loose thresholds for checking pose sameness
         // since our ability to accurately localize face's 3D pose is limited.
-        Vec3f Tdiff;
+        // Vec3f Tdiff;
         Radians angleDiff;
 
         const auto & entryRect = faceEntryIter->second.face.GetRect();

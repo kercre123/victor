@@ -20,8 +20,8 @@ cxx_project(
 cxx_project(
     name = 'vic-robot',
     srcs = cxx_src_glob(['hal/src',],
-                        excludes = ['hal.cpp', 'hal_motors.cpp', '*_android.*', 'android/**/*']),
-    platform_srcs = [],
+                        excludes = ['hal.cpp', 'hal_imu.cpp', 'hal_motors.cpp', '*_android.*', 'android/**/*']),
+    platform_srcs = [('vicos',['hal/src/hal_imu.cpp','hal/src/hal_motors.cpp'])],
     headers = cxx_header_glob(['hal/src/**/*.h',]),
     platform_headers = []
 )
@@ -30,14 +30,17 @@ cxx_project(
 cxx_project(
     name = 'spine',
     srcs = cxx_src_glob(['hal/spine'],
-                        excludes = ['*_android.*', 'android/**/*']),
+                        excludes = ['*_android.*', 'android/**/*','imu.c','cc_commander.c']),
     platform_srcs = [
-        ('android', glob(['hal/spine/**/android/**/*.c',
-                          'hal/spine/**/*_android.c']))
+        ('vicos', glob(['hal/spine/**/android/**/*.c',
+                          'hal/spine/**/*_android.c',
+                          'hal/spine/cc_commander.c',
+                          'hal/spine/imu.c',
+                          'hal/spine/spine.c']))
     ],
     headers = cxx_header_glob(['hal/spine/**/*.h']),
     platform_headers = [
-        ('android', glob(['hal/spine/**/android/**/*.h',
+        ('vicos', glob(['hal/spine/**/android/**/*.h',
                           'hal/spine/**/*_android.h']))
     ]
 )

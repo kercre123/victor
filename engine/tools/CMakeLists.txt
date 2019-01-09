@@ -11,7 +11,10 @@ set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 
 if (VICOS)
-  set(PLATFORM_LIBS log)
+set(PLATFORM_LIBS
+    log
+    victorCrashReports
+)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
@@ -32,7 +35,6 @@ target_link_libraries(vic-engine
   # anki libs
   util
   cozmo_engine
-  victorCrashReports
   # platform
   ${PLATFORM_LIBS}
   ${ASAN_EXE_LINKER_FLAGS}

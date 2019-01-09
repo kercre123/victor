@@ -12,12 +12,14 @@
 #include  "../spine/cc_commander.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
+#ifdef VICOS
 #include "platform/victorCrashReports/victorCrashReporter.h"
+#endif
 
 #define LOG_PROCNAME "vic-robot"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
-#ifdef HAL_DUMMY_BODY
+#if defined(HAL_DUMMY_BODY) || defined(SIMULATOR)
   #define HAL_NOT_PROVIDING_CLOCK
 #endif
 
@@ -52,18 +54,22 @@ int main(int argc, const char* argv[])
 {
   using Result = Anki::Result;
 
+#ifdef VICOS
   struct sched_param params;
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
+#endif
 
   signal(SIGTERM, Shutdown);
 
+#ifdef VICOS
   Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
   if (argc > 1) {
     ccc_set_shutdown_function(Shutdown);
     ccc_parse_command_line(argc-1, argv+1);
   }
+#endif
 
   AnkiInfo("robot.main", "Starting robot process");
 
@@ -72,7 +78,9 @@ int main(int argc, const char* argv[])
   const Result result = Anki::Vector::Robot::Init(&shutdownSignal);
   if (result != Result::RESULT_OK) {
     AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
+#ifdef VICOS
     Anki::Vector::UninstallCrashReporter();
+#endif
     sync();
     if (shutdownSignal == SIGTERM) {
       return 0;
@@ -101,7 +109,9 @@ int main(int argc, const char* argv[])
     if (Anki::Vector::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Vector::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main.MainStepFailed", "");
+#ifdef VICOS
         Anki::Vector::UninstallCrashReporter();
+#endif
         return -1;
       }
     } else {
@@ -156,7 +166,9 @@ int main(int argc, const char* argv[])
         Anki::Vector::Robot::Destroy();
       } else if (shutdownCounter == 0) {
         AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
+#ifdef VICOS
         Anki::Vector::UninstallCrashReporter();
+#endif
         sync();
         exit(0);
       }
@@ -166,15 +178,17 @@ int main(int argc, const char* argv[])
   return 0;
 }
 
-#ifdef DEBUG_SPINE_TEST
+#ifdef VICOS
 #include "spine/spine.h"
 int main_test(int argc, const char* argv[])
 {
   mlockall(MCL_FUTURE);
 
+#ifdef VICOS
   struct sched_param params;
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
+#endif
 
   signal(SIGTERM, Shutdown);
 

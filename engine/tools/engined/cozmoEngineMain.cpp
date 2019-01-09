@@ -279,7 +279,9 @@ int main(int argc, char* argv[])
   // Install signal handler
   signal(SIGTERM, sigterm);
 
+#ifdef VICOS
   Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
+#endif
 
   char cwd[PATH_MAX] = { 0 };
   (void)getcwd(cwd, sizeof(cwd));
@@ -300,7 +302,7 @@ int main(int argc, char* argv[])
   };
 
   char config_file_path[PATH_MAX] = { 0 };
-  const char* env_config = getenv("VIC_ENGINE_CONFIG");
+  const char* env_config = "/anki/etc/config/platform_config.json"; // TODO:REG getenv("VIC_ENGINE_CONFIG");
   if (env_config != NULL) {
     strncpy(config_file_path, env_config, sizeof(config_file_path));
   }
@@ -381,7 +383,9 @@ int main(int argc, char* argv[])
   int res = cozmo_start(config);
   if (0 != res) {
       printf("failed to start engine\n");
+#ifdef VICOS
       Anki::Vector::UninstallCrashReporter();
+#endif
       exit(res);
   }
 
@@ -398,7 +402,8 @@ int main(int argc, char* argv[])
   LOG_INFO("CozmoEngineMain.main", "Stopping engine");
   res = cozmo_stop();
 
+#ifdef VICOS
   Anki::Vector::UninstallCrashReporter();
-
+#endif
   return res;
 }
