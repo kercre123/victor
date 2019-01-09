@@ -138,6 +138,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAskForHelp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorCheckForAndReactToSalientPoint.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToBoundary.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToDarkness.h"
@@ -972,6 +973,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::CheckForAndReactToSalientPoint:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorCheckForAndReactToSalientPoint(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToBoundary:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBoundary(config));
       break;
     }
     

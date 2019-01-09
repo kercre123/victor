@@ -97,10 +97,14 @@ public:
   // - cliff detected flags used to estimate the cliff's pose relative to the robot
   bool ComputeCliffPose(uint32_t timestampOfCliff, uint8_t cliffDetectedFlags, Pose3d& cliffPose) const;
 
-  // given a set of cliff detected flags, gets the pose of the cliff relative to the robot
+  // given a set of cliff detected flags, gets the pose of the _cliff_ (not the cliff _sensor_) relative to the robot
   // returns true if the output pose is valid
   bool GetCliffPoseRelativeToRobot(const uint8_t cliffDetectedFlags, Pose3d& relativePose) const;
 
+  // Compute the pose of the given cliff sensor w.r.t. the given robotPose. The resulting pose's parent will be
+  // robotPose, and its rotation will match robotPose.
+  static Pose3d GetCliffSensorPoseWrtRobot(const CliffSensor& cliffSensor, const Pose3d& robotPose);
+  
   // mark a quad of fixed dimensions as cliff-type obstacles in the navmap
   void UpdateNavMapWithCliffAt(const Pose3d& pose, const uint32_t timestamp) const;
 
@@ -110,6 +114,8 @@ public:
 
   // Returns whether or not stop-on-white is enabled
   bool IsStopOnWhiteEnabled() const { return _stopOnWhiteEnabled; }
+  
+  void SendWhiteDetectThresholdsToRobot(const CliffSensorDataArray& whiteThresholds) const;
   
   // Returns latest timestamp in seconds of when the robot was put down on a cliff.
   TimeStamp_t GetLatestPutDownOnCliffTime_ms() const { return _lastPutDownOnCliffTime_ms; }

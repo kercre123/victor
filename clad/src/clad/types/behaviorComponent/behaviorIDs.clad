@@ -395,6 +395,7 @@ enum uint_16 BehaviorID {
   ReactToAbuse,
   ReactToAffirmative,
   ReactToApology,
+  ReactToBoundary,
   ReactToCliff,
   ReactToCliffDuringFetch,
   ReactToDarkness,

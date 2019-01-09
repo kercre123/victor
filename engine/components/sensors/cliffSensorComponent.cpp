@@ -352,6 +352,30 @@ bool CliffSensorComponent::ComputeCliffPose(uint32_t timestampOfCliff, uint8_t c
   return true;
 }
 
+Pose3d CliffSensorComponent::GetCliffSensorPoseWrtRobot(const CliffSensor& cliffSensor, const Pose3d& robotPose)
+{
+  Pose3d cliffPose;
+  cliffPose.SetParent(robotPose);
+  switch(cliffSensor) {
+    case CliffSensor::CLIFF_FL:
+      cliffPose.SetTranslation({kCliffSensorXOffsetFront_mm,  kCliffSensorYOffset_mm, 0.f});
+      break;
+    case CliffSensor::CLIFF_FR:
+      cliffPose.SetTranslation({kCliffSensorXOffsetFront_mm, -kCliffSensorYOffset_mm, 0.f});
+      break;
+    case CliffSensor::CLIFF_BL:
+      cliffPose.SetTranslation({kCliffSensorXOffsetRear_mm,   kCliffSensorYOffset_mm, 0.f});
+      break;
+    case CliffSensor::CLIFF_BR:
+      cliffPose.SetTranslation({kCliffSensorXOffsetRear_mm,  -kCliffSensorYOffset_mm, 0.f});
+      break;
+    case CliffSensor::CLIFF_COUNT:
+      DEV_ASSERT(false, "CliffSensorComponent.GetCliffSensorPoseWrtRobot.InvalidCliffSensor");
+      break;
+  }
+  return cliffPose;
+}
+
 void CliffSensorComponent::UpdateNavMapWithCliffAt(const Pose3d& pose, const uint32_t timestamp) const
 {
   Point2f cliffSize = MarkerlessObject(ObjectType::CliffDetection).GetSize();
@@ -378,6 +402,11 @@ void CliffSensorComponent::EnableStopOnWhite(bool stopOnWhite)
       _robot->SendRobotMessage<RobotInterface::EnableStopOnWhite>(stopOnWhite);
     }
   }
+}
+
+void CliffSensorComponent::SendWhiteDetectThresholdsToRobot(const CliffSensorDataArray& whiteThresholds) const
+{
+  _robot->SendRobotMessage<SetWhiteDetectThresholds>(whiteThresholds);
 }
   
 } // Vector namespace

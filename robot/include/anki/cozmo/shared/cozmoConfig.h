@@ -203,12 +203,10 @@ namespace Vector {
   // Cliff sensor value must rise this far above the threshold to 'untrigger' cliff detection.
   const u16 CLIFF_DETECT_HYSTERESIS = 30;
   
-  // V2 cliff sensors (assumes 4 cliff sensors are arranged in a rectangle symmetric about the robot x axis)
-  // NOTE: These values are approximate and should be verified for final V2 design.
+  // Cliff sensor position offsets (assumes 4 cliff sensors are arranged in a rectangle symmetric about the robot x axis)
   const f32 kCliffSensorYOffset_mm      = 14.f;  // y (lateral) distance from robot origin to the cliff sensors
   const f32 kCliffSensorXOffsetFront_mm = 2.f;   // x (longitudinal) offset from robot origin to front cliff sensors
   const f32 kCliffSensorXOffsetRear_mm  = -50.f; // x (longitudinal) offset from robot origin to rear cliff sensors
-  
 
   // The minimum value expected of cliff sensor when
   // it's detecting a white line in the habitat
@@ -224,8 +222,12 @@ namespace Vector {
 
   // Amount below MIN_CLIFF_STOP_ON_WHITE_VAL at which a white
   // value is undetected
+#ifdef SIMULATOR
+  const u16 CLIFF_STOP_ON_WHITE_HYSTERSIS = 0;
+#else
   const u16 CLIFF_STOP_ON_WHITE_HYSTERSIS = 50;
-
+#endif
+  
   // In calm mode, cliffs are never detected
   const u16 CLIFF_CALM_MODE_VAL = 1000;
 

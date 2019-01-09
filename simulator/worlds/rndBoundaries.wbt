@@ -1,0 +1,70 @@
+#VRML_SIM R2018a utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.2509295871209444 0.3814133578875686 0.8896955618256404 4.20071983507121
+  position -1.3680983136023424 0.6481622956426542 1.4453594964237322
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  Color 0.6 0.6 0.6
+}
+RubberDuck {
+  translation 0.6119656021553781 -0.01845006876339894 0.02000000100693445
+  rotation 1 0 0 1.5707963220000003
+}
+ComputerMouse {
+  translation 0.3166505672751756 -0.34713488989526753 0
+  rotation -0.7745966627804132 0.4472136021675802 0.4472136000232374 4.459708721808911
+}
+VictorCharger {
+  translation -0.3396917145328071 -0.09633452527884445 3.6637359812630166e-15
+  rotation 1.6453488989785742e-9 -1.520736373929812e-8 0.9999999999999999 3.926990785820413
+}
+Face {
+  translation 0.34 -0.97 0.27
+}
+CozmoBot2 {
+  translation -0.1303884126722044 -0.28689785860775296 -8.881784197001252e-16
+  rotation 0 0 1 2
+  filterLogs TRUE
+  colorizeStderrOutput TRUE
+}
+WebotsKeyboardController {
+  #behaviorName "FindAndGoToHome"
+  behaviorName "MandatoryPhysicalReactions"
+  consoleVarName "DevDispatchAfterShake"
+  consoleVarValue "1"
+  colorizeStderrOutput TRUE
+  translation 0.288125 0.0208444 0.08
+}
+CozmoVizDisplay {
+  streamResolution "NHD"
+  colorizeStderrOutput TRUE
+}
+CalibrationPattern {
+  translation -0.21000000000000002 -0.17 0.0010000008151323737
+  rotation 1 0 0 1.5707963220000003
+  patternWidth 0.01
+  image ""
+  imageAspectRatio 25
+}
