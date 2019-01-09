@@ -142,34 +142,34 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
     {
       --_numRecordedReadingsLeft;
       PRINT_NAMED_WARNING("","RECORDING %u MORE", _numRecordedReadingsLeft);
-    }
     
-    RangeSensorData data;
-    data.rangeData = rangeData;
-    data.visualDistanceToTarget_mm = 0;
-    data.visualAngleAwayFromTarget_rad = 0;
-    data.headAngle_rad = robot.GetHeadAngle();
+      RangeSensorData data;
+      data.rangeData = rangeData;
+      data.visualDistanceToTarget_mm = 0;
+      data.visualAngleAwayFromTarget_rad = 0;
+      data.headAngle_rad = robot.GetHeadAngle();
 
-    Pose3d markerPose;
-    const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
-    if(res)
-    {
-      data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
+      Pose3d markerPose;
+      const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
+      if(res)
+      {
+        data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
 
-      markerPose = markerPose.GetWithRespectToRoot();
-      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
-      // rotated 90 degrees. So when the robot is looking at a marker, you have to add
-      // 90 degrees to get its rotation to match that of the robot
-      // Taking the difference of these two angles tells us how much the robot needs to turn
-      // to be perpendicular with the marker
-      const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
-                          robot.GetPose().GetRotation().GetAngleAroundZaxis());
-      data.visualAngleAwayFromTarget_rad = angle.ToFloat();
-    }
+        markerPose = markerPose.GetWithRespectToRoot();
+        // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
+        // rotated 90 degrees. So when the robot is looking at a marker, you have to add
+        // 90 degrees to get its rotation to match that of the robot
+        // Taking the difference of these two angles tells us how much the robot needs to turn
+        // to be perpendicular with the marker
+        const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
+                            robot.GetPose().GetRotation().GetAngleAroundZaxis());
+        data.visualAngleAwayFromTarget_rad = angle.ToFloat();
+      }
     
-    if(!GetLogger().Append(GetDebugLabel(), std::move(data)))
-    {
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
+      if(!GetLogger().Append(GetDebugLabel(), std::move(data)))
+      {
+        PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
+      }
     }
 
     // TODO NEED TO REWRITE TO CHECK ALL ROIs
