@@ -30,7 +30,10 @@ message WifiConnectRequest
 
 message QrCodeRequest
 {
-  string data,
+  uint_8 ssidLength,
+  uint_8 ssid[64],
+  uint_8 passwordLength,
+  uint_8 password[64],
 }
 
 } // SwitchboardInterface

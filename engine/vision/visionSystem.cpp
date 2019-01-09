@@ -1438,8 +1438,6 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Begin image processing
   // QR code
   if(IsModeEnabled(VisionMode::DetectingQRCodes)) {
-    PRINT_NAMED_WARNING("Paolo.QR", "Processing QR code... [%d]", (uint32_t)_imageCache->GetBuffer().GetFormat());
-
     Anki::Vision::Image grayImg;
     bool didConvert = _imageCache->GetBuffer().GetGray(grayImg, Anki::Vision::ImageCacheSize::Full); 
     if(didConvert) {
@@ -1455,7 +1453,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       for(zbar::Image::SymbolIterator symbol = img.symbol_begin();
         symbol != img.symbol_end();
         ++symbol) {
-        PRINT_NAMED_WARNING("Paolo.QR", "found[%s][%s]", symbol->get_type_name().c_str(), symbol->get_data().c_str());
+        PRINT_NAMED_WARNING("VisionSystem.QrCode", "Detected QR code.");
         _currentResult.qrCodes.push_back(symbol->get_data());
       }
     }

@@ -26,6 +26,7 @@
 #include <linux/reboot.h>
 #include <sys/reboot.h>
 #include <fstream>
+#include <iomanip>
 
 #include "anki-ble/common/log.h"
 #include "anki-ble/common/anki_ble_uuids.h"
@@ -626,7 +627,30 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
       break;
     }
     case Anki::Vector::ExternalInterface::MessageEngineToGameTag::QrCodeRequest: {
-      Log::Write("QR code: [%s]", message.Get_QrCodeRequest().data);
+      const auto& qr = message.Get_QrCodeRequest();
+      std::string ssid = std::string((char*)qr.ssid, qr.ssidLength);
+      std::string password = std::string((char*)qr.password, qr.passwordLength);
+
+      std::string hexSsid = "";
+      for(int i = 0; i < ssid.size(); i++) {
+        std::stringstream ss;
+        ss << std::setfill('0') << std::setw(2) << std::hex << (int)ssid.at(i);
+        hexSsid += ss.str();
+      }
+
+      _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
+      std::vector<Wifi::WiFiScanResult> scanResults;
+      (void)ScanForWiFiAccessPoints(scanResults);
+      Wifi::ConnectWifiResult connected = Wifi::ConnectWiFiBySsid(hexSsid,
+        password,
+        Anki::Wifi::AUTH_WPA2_PSK,
+        false,
+        nullptr,
+        nullptr);
+      _engineMessagingClient->ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+
+      Log::Write("Connecting to \'%s\'... [%d]", hexSsid.c_str(), (int)connected);
+      
       break;
     }
     default: {

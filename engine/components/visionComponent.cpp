@@ -80,6 +80,8 @@
 
 #include "opencv2/highgui/highgui.hpp"
 
+#include <algorithm>
+
 #define LOG_CHANNEL "VisionComponent"
 
 namespace Anki {
@@ -991,7 +993,14 @@ namespace Vector {
   {
     for(auto qrData : result.qrCodes) // deliberate copy
     {
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::QrCodeRequest(qrData)));
+      uint8_t ssidLen = (uint8_t)qrData.at(0);
+      std::array<uint8_t, 64> ssid;
+      memcpy(ssid.data(), (uint8_t*)qrData.substr(1, ssidLen).c_str(), std::max((uint8_t)64, ssidLen));
+      uint8_t passwordLen = (uint8_t)qrData.at(ssidLen + 1);
+      std::array<uint8_t, 64> password;
+      memcpy(password.data(), (uint8_t*)qrData.substr(ssidLen + 2, passwordLen).c_str(), std::max((uint8_t)64, passwordLen));
+      SwitchboardInterface::QrCodeRequest qrCodeRequest = SwitchboardInterface::QrCodeRequest(ssidLen, ssid, passwordLen, password);
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(qrCodeRequest)));
     }
 
     return RESULT_OK; 
