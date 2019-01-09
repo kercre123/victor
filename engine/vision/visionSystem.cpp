@@ -63,7 +63,7 @@
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "quirc.h"
+#include "zbar.h"
 
 #define DEBUG_MOTION_DETECTION    0
 #define DEBUG_FACE_DETECTION      0
@@ -1437,53 +1437,26 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   // Begin image processing
   // QR code
-    if(_frameNumber % 30 == 0) {
+  if(_frameNumber % 15 == 0) {
     PRINT_NAMED_WARNING("Paolo.QR", "Processing QR code... [%d]", (uint32_t)_imageCache->GetBuffer().GetFormat());
 
-    /// move this code outside of update loop --should be once
-    struct quirc *qr;
-    qr = quirc_new();
-    if(!qr) {
-      PRINT_NAMED_WARNING("Paolo.QR", "Failed to allocate quirc mem");
-    } else {
-      Anki::Vision::Image grayImg;
-      bool didConvert = _imageCache->GetBuffer().GetGray(grayImg, Anki::Vision::ImageCacheSize::Full); 
-      if(didConvert) {
-        uint32_t w = grayImg.GetBoundingRect().GetWidth();
-        uint32_t h = grayImg.GetBoundingRect().GetHeight(); 
+    Anki::Vision::Image grayImg;
+    bool didConvert = _imageCache->GetBuffer().GetGray(grayImg, Anki::Vision::ImageCacheSize::Full); 
+    if(didConvert) {
+      uint32_t w = grayImg.GetBoundingRect().GetWidth();
+      uint32_t h = grayImg.GetBoundingRect().GetHeight(); 
+      zbar::ImageScanner scanner;
+      scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
 
-        if(quirc_resize(qr, w, h) < 0) {
-          PRINT_NAMED_WARNING("Paolo.QR", "Failed to resize image.");
-        }
+      zbar::Image img(w, h, "GREY", grayImg.GetRawDataPointer(), w*h);
+      int n = scanner.scan(img);
+      (void)n;
 
-        // fill in image with camera feed
-        uint8_t* img;
-        int width, height;
-
-        img = quirc_begin(qr, &width, &height);
-
-        memcpy(img, grayImg.GetRawDataPointer(), w * h);
-
-        quirc_end(qr);
-
-        // iterate through possible codes detected
-        int numCodes = quirc_count(qr);
-        for(int i = 0; i < numCodes; i++) {
-          struct quirc_code code;
-          struct quirc_data data;
-          quirc_decode_error_t err;
-          quirc_extract(qr, i, &code);
-          err = quirc_decode(&code, &data);
-          if(err) {
-            //
-          } else {
-            result.qrCodes.push_back(std::string((char*)&data.payload, data.payload_len));
-            PRINT_NAMED_WARNING("Paolo.QR", "Decoded[%d|%s]", data.payload_len, data.payload);
-          }
-        }
+      for(zbar::Image::SymbolIterator symbol = img.symbol_begin();
+        symbol != img.symbol_end();
+        ++symbol) {
+        PRINT_NAMED_WARNING("Paolo.QR", "found[%s][%s]", symbol->get_type_name().c_str(), symbol->get_data().c_str());
       }
-    
-      quirc_destroy(qr);
     }
   }
 

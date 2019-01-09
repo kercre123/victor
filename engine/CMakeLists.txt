@@ -109,7 +109,7 @@ target_link_libraries(cozmo_engine
   ${PROTOBUF_LIBS}
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
-  ${QUIRC_LIBS}
+  ${ZBAR_LIBS}
   # system
   z
   # platform
