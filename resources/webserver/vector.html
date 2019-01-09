@@ -6,14 +6,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Elemental Demo</title>
+  <title>Vector Demo</title>
   <link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.css">
   <link rel="stylesheet" href="style.css">
   <script src="jquery-1.12.4.js"></script>
   <script src="jquery-ui.js"></script>
 
   <script>
-    var hostname = "";  // (Effectively, the device IP)
+    var hostname = "";  // (Effectively, the robot IP)
     var host = "";      // hostname and port (e.g. "192.168.42.82:8888"
     var STANDALONE_PORT = "8887";
     var ENGINE_PORT = "8888";
@@ -21,17 +21,18 @@
 
 
     $(document).ready(function() {
-        $('#btn_thebox_stop').click(ButtonHandler_StopThebox);
-        $('#btn_thebox_restart').click(ButtonHandler_RestartThebox);
-        $('#btn_thebox_restart_device').click(ButtonHandler_RestartDevice);
+        $('#btn_vector_stop').click(ButtonHandler_StopVector);
+        $('#btn_vector_restart').click(ButtonHandler_RestartVector);
+        $('#btn_vector_restart_robot').click(ButtonHandler_RestartRobot);
         $('#disp_stop_message').hide();
         $('#btn_webviz_mic_data').click(ButtonHandler_WebVizMicData);
-        $('#btn_webviz_cpu').click(ButtonHandler_WebVizCpu);
+        $('#btn_webviz_nav_map').click(ButtonHandler_WebVizNavMap);
+        $('#btn_webviz_stim_level').click(ButtonHandler_WebVizStimLevel);
         $('#btn_webviz_behavior').click(ButtonHandler_WebVizBehavior);
         $('#btn_clear_webviz').click(ButtonHandler_ClearWebViz);
         InitConfirmDialog();
 
-        // Pull out hostname (device IP) so we can use it in here to call into ANY of the webservers
+        // Pull out hostname (robot IP) so we can use it in here to call into ANY of the webservers
         var urlObject = new URL(document.URL);
         host = urlObject.host;
         hostname = urlObject.hostname;
@@ -39,8 +40,8 @@
         console.log('hostname is: ' + hostname);
 
         // To attempt to force a re-load of the cache of these two iframes, we add a random number to the URL
-        $('#iViewEngine').prop('src', 'http://' + hostname + ':' + ENGINE_PORT + '/demoEngine.html?' + ExtraURLToForceReload());
-        //$('#iViewAnim')  .prop('src', 'http://' + hostname + ':' + ANIM_PORT +   '/demoAnim.html?'   + ExtraURLToForceReload());
+        $('#iViewEngine').prop('src', 'http://' + hostname + ':' + ENGINE_PORT + '/vectorEngine.html?' + ExtraURLToForceReload());
+        //$('#iViewAnim')  .prop('src', 'http://' + hostname + ':' + ANIM_PORT +   '/vectorAnim.html?'   + ExtraURLToForceReload());
     });
     $(function() {
         $("button").click(function(event) {
@@ -100,18 +101,19 @@
       $('#iViewEngine').remove();
       //$('#iViewAnim').remove();
       ButtonHandler_ClearWebViz();
-      $('#btn_thebox_stop').hide();
-      $('#btn_thebox_restart').hide();
-      $('#btn_thebox_restart_device').hide();
+      $('#btn_vector_stop').hide();
+      $('#btn_vector_restart').hide();
+      $('#btn_vector_restart_robot').hide();
       $('#btn_webviz_mic_data').hide();
-      $('#btn_webviz_cpu').hide();
+      $('#btn_webviz_nav_map').hide();
+      $('#btn_webviz_stim_level').hide();
       $('#btn_webviz_behavior').hide();
       $('#btn_clear_webviz').hide();
     }
 
-    function ButtonHandler_StopThebox() {
-      StartConfirmDialog("", "Stop Device:", function() {
-        var msg = 'Shutting Device process down; this webpage will no longer be active. You must physically restart, then refresh this page after a few seconds.';
+    function ButtonHandler_StopVector() {
+      StartConfirmDialog("", "Stop Vector:", function() {
+        var msg = 'Shutting Vector down; this webpage will no longer be active. You must physically restart Vector, then refresh this page after a few seconds.';
         $('#disp_stop_message').html(msg);
         $('#disp_stop_message').show();
         GoingAwayNow();
@@ -119,9 +121,9 @@
       });
     }
 
-    function ButtonHandler_RestartThebox() {
-      StartConfirmDialog("", "Restart Device:", function() {
-        var msg = 'Restarting Device processes (soft reboot).  After a few seconds, refresh this page.';
+    function ButtonHandler_RestartVector() {
+      StartConfirmDialog("", "Restart Vector:", function() {
+        var msg = 'Restarting Vector processes.  After a few seconds, refresh this page.';
         $('#disp_stop_message').html(msg);
         $('#disp_stop_message').show();
         GoingAwayNow();
@@ -129,9 +131,9 @@
       });
     }
 
-    function ButtonHandler_RestartDevice() {
-      StartConfirmDialog("", "Restart Device:", function() {
-        var msg = 'Restarting device.  After several seconds, place device on charger, and after several more seconds, refresh this page.';
+    function ButtonHandler_RestartRobot() {
+      StartConfirmDialog("", "Restart Robot:", function() {
+        var msg = 'Restarting robot.  After several seconds, place robot on charger, and after several more seconds, refresh this page.';
         $('#disp_stop_message').html(msg);
         $('#disp_stop_message').show();
         GoingAwayNow();
@@ -141,7 +143,7 @@
 
     function ActivateWebVizIFrame(url, port) {
       var delim = (url === "") ? '?' : '&';
-      var fullUrl = 'http://' + hostname + ':' + port + '/webViz2.html' + url + delim + ExtraURLToForceReload();
+      var fullUrl = 'http://' + hostname + ':' + port + '/webViz.html' + url + delim + ExtraURLToForceReload();
       $('#iViewWebViz').prop('src', fullUrl);
     }
 
@@ -149,8 +151,12 @@
       ActivateWebVizIFrame("?tab=micdata", ANIM_PORT);
     }
 
-    function ButtonHandler_WebVizCpu() {
-      ActivateWebVizIFrame("?tab=cpu", ENGINE_PORT);
+    function ButtonHandler_WebVizNavMap() {
+      ActivateWebVizIFrame("?tab=navmap", ENGINE_PORT);
+    }
+
+    function ButtonHandler_WebVizStimLevel() {
+      ActivateWebVizIFrame("?tab=mood", ENGINE_PORT);
     }
 
     function ButtonHandler_WebVizBehavior() {
@@ -168,23 +174,26 @@
 
 <body class="ui-widget-content" style="border:0;">
   <div>
-    <img src='images/elemental.png' style='display:block;margin-left:auto;margin-right:auto;width:25%;height:25%'>
+    <img src='images/logo_vectortitle.png' style='display:block;margin-left:auto;margin-right:auto;width:25%;height:25%'>
     <br>
-    <div id="id_title0" style="color:gray; font-size:18pt; text-align:center;">DEMO  -  CONFIDENTIAL</div>
-    <div id='main_section'>
+    <div id="id_title0" style="color:blue; font-size:18pt; text-align:center;">DEMO  -  CONFIDENTIAL</div>
     <hr>
-    <iframe src="" id="iViewEngine" style="width:100%;height:120px;border:none" frameborder="0"></iframe>
+    <div id='main_section'>
+    <iframe src="" id="iViewEngine" style="width:100%;height:280px;border:none" frameborder="0"></iframe>
 <!--       <iframe src="" id="iViewAnim"   style="width:100%;height:100%;border:none" frameborder="0"></iframe>
  -->
-      <button id='btn_webviz_cpu' class='ui-button ui-corner-all ui-widget'>CPU viz</button>
       <button id='btn_webviz_mic_data' class='ui-button ui-corner-all ui-widget'>Mic data viz</button>
+      <button id='btn_webviz_nav_map' class='ui-button ui-corner-all ui-widget'>Navigation map viz</button>
+      <button id='btn_webviz_stim_level' class='ui-button ui-corner-all ui-widget'>Stimulation level viz</button>
       <button id='btn_webviz_behavior' class='ui-button ui-corner-all ui-widget'>Behavior viz</button>
       <button id='btn_clear_webviz' class='ui-button ui-corner-all ui-widget'>Clear webviz panel</button>
-      <iframe src="" id="iViewWebViz" style="width:100%;height:500px;border:none" frameborder="0"></iframe>
+      <br>
+      <iframe src="" id="iViewWebViz" style="width:100%;height:800px;border:none" frameborder="0"></iframe>
       <hr>
-      <button id='btn_thebox_stop' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Stop Processes</button>
-      <button id='btn_thebox_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Processes</button>
-      <button id='btn_thebox_restart_device' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Device</button>
+      <br>
+      <button id='btn_vector_stop' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Stop Vector</button>
+      <button id='btn_vector_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Vector Processes</button>
+      <button id='btn_vector_restart_robot' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Robot</button>
       <br><br>
       <div id='disp_stop_message' style='color:darksalmon;'></div>
     </div>

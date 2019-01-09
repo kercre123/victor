@@ -19,3 +19,8 @@ table {
 .ui-draggable, .ui-droppable {
 	background-position: top;
 }
+
+#main_section{
+    width: 800px;
+    margin: 20px auto;
+}

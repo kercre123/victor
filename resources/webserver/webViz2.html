@@ -1,0 +1,572 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Victor Veb Viz</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="/p5.min.js"></script> <!--this has a v0.6.0 bugfix so isnt CDN-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.16/js/jquery.dataTables.min.js"></script>
+  
+  <script>
+    // add new modules here, which also become the tab
+    // names. The (case-insensitive) key should match
+    // the moduleName used when your c++ code passes
+    // data to the webservice.
+    var modules8888 = {
+      Cpu : 'webVizModules/cpu.js',
+      CloudIntents : 'webVizModules/cloud.js',
+      VisionScheduleMediator : 'webVizModules/visionScheduleMediator.js',
+      AnimationEngine: 'webVizModules/animationEngine.js',
+      Behaviors : 'webVizModules/behaviors.js'
+    }
+    var modules8889 = {
+      MicData : 'webVizModules/micData.js'
+    }
+  </script>
+
+  <!-- for datatables -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.16/css/jquery.dataTables.min.css">
+
+  <style>
+    *, *:before, *:after {
+      margin: 0;
+      padding: 0;
+      box-sizing:border-box;
+      -moz-box-sizing:border-box;
+    }
+
+    body {
+      font: 12px sans-serif;
+    }
+
+    #container,
+    #popouts {
+      width: 800px;
+      margin: 20px auto;
+
+    }
+
+    ul.tabs {
+      -ms-box-orient: horizontal;
+      display: -webkit-box;
+      display: -moz-box;
+      display: -ms-flexbox;
+      display: -moz-flex;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-wrap: wrap-reverse;
+      flex-wrap: wrap-reverse;
+      align-items: stretch;
+      width:100%;
+      position: relative;
+      text-align: center;
+      list-style: none;
+      margin: 0;
+      padding: 0px 6px;
+      line-height: 24px;
+      overflow: hidden;
+    }
+    ul.tabs:after {
+      position: absolute;
+      content: "";
+      width: 100%;
+      bottom: 0;
+      left: 0;
+      border-bottom: 1px solid #AAA;
+      z-index: 1;
+    }
+    ul.tabs li {
+      padding: 10px 15px;
+      font-size: 12px; 
+      text-align: center;
+      background: #aaa;
+      cursor: pointer;    
+      flex: 0 1 auto;
+
+      position: relative;
+      margin: 0 8px -1px 8px;
+      padding: 0 13px;
+      border: 1px solid #AAA;
+      border-width: 1px 0px 1px 0px;
+      background-color: #d9d9d9;
+      background-image: linear-gradient(to bottom, #d9d9d9 50%, #bcbcbc 100%);
+      box-shadow: inset 0 1px 0 #FFF;
+      text-shadow: 0 1px #FFF;
+      z-index: 0;
+    }
+    ul.tabs li:before,
+    ul.tabs li:after {
+      position: absolute;
+      bottom: -1px;
+      width: 15px;
+      height: 26px;
+      content: " ";
+      border: 1px solid #AAA;
+      background: linear-gradient(to bottom, #d9d9d9 50%, #bcbcbc 100%);
+      z-index: 3;
+    }
+    ul.tabs li:before {
+      left: -10px;
+      border-right: none;
+      border-top-left-radius: 6px;
+      transform: skew(-20deg);
+      box-shadow: -2px 0px 2px rgba(0, 0, 0, 0.1), inset 0 1px 0 #FFF;
+    }
+    ul.tabs li:after {
+      right: -10px;
+      border-left: none;
+      border-top-right-radius: 6px;
+      transform: skew(20deg);
+      box-shadow: 2px 0px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 #FFF;
+    }
+
+    ul.tabs li.current {
+      background: #ededed;
+      color: #000;
+      z-index: 2;
+      border-bottom-color: #ededed;
+    }
+
+    ul.tabs li.current:before,
+    ul.tabs li.current:after {
+      background: #ededed;
+      border-bottom-color: #ededed;
+    }
+
+    .tab-content {
+      background: #ededed;
+      padding: 15px;
+      border: 1px solid #AAA;
+      border-top:none;
+      position:relative;
+    }
+    .tab-content:not(.poppedOut),
+    .tab-content.tab-placeholder {
+      display: none;
+    }
+
+    .tab-content.current {
+      display: inherit;
+    }
+    .tab-placeholder {
+      height:10px;
+    }
+
+    #tab-overview p {
+      padding:10px;
+    }
+    #tab-overview h3 {
+      padding:10px;
+    }
+
+    #status {
+      position:fixed;
+      bottom:10px;
+      right:10px;
+      font-size:20px;
+      color:red;
+    }
+
+    .popoutIcon,
+    .nowItsAPinIcon {
+      position:absolute;
+      top:0px;
+      right:0px;
+      width:16px;
+      height:16px;
+      background-image:url(images/webVizPins.png);
+      cursor:pointer;
+    }
+    .nowItsAPinIcon {
+      background-position: -16px 0px;
+    }
+
+    #popouts {
+      margin-top: 50px;
+    }
+    #popouts .tab-content {
+      border-top: 1px solid #AAA;
+      margin-bottom:20px;
+    }
+    
+  </style>
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+
+  <div id="status">Not connected to device</div>
+  <div id="container">
+
+    <ul class="tabs">
+      <li class="tab-link current" data-tab="tab-overview">Overview</li>
+    </ul>
+
+  <div id="tab-overview" class="tab-content current">
+      <p>This page will display data "pushed" from the Elemental engine to multiple drawing modules.</p>
+      <p>Each tab contains its own module. Open the tab to subscribe to the data source for that module.</p>
+      <p>To add new modules, start with the template file module.js.template.</p>
+      <p><b>Are you always disconnected or not seeing new tabs or new functionality? In Chrome, hit Command + Shift + R to re-download all the assets for this site.</b></p>
+
+    </div>
+
+    
+  </div>
+
+  <div id="popouts">
+  </div>
+
+
+  <script>
+
+    var modules;
+
+    var fakeData;
+
+    var kUpdatePeriod_ms = 200; // todo: maybe a module should request its period?
+
+    function createStyles(moduleName, rules) {
+      // use the styles rules provided by the module, but prepend the tab name
+      // to all of them by creating a style sheet in the DOM, parsing it, then
+      // creating a modified version with tab-Module prepended, and finally
+      // removing the original style sheet
+      var styleId = 'sty-' + moduleName;
+      var origStyleId = styleId + '-orig';
+      var styleOrig = document.createElement('style');
+      styleOrig.type = 'text/css';
+      styleOrig.innerHTML = rules;
+      styleOrig.id = origStyleId
+      document.getElementsByTagName('head')[0].appendChild(styleOrig);
+
+      var newSheetText = '';
+
+      var sheets = $(document.styleSheets); 
+      for (var idxSheet=0; idxSheet<sheets.length; ++idxSheet ){
+        if( sheets[idxSheet].ownerNode.id == origStyleId ){
+          var ruleSet = sheets[idxSheet].cssRules || sheets[idxSheet].rules;
+          for( var idxRule=0; idxRule<ruleSet.length; ++idxRule ) {
+            var oldSelector = ruleSet[idxRule].selectorText;
+            if( typeof oldSelector === 'undefined' ) {
+              // maybe it's a media selector? use it as is
+              newSheetText += ruleSet[idxRule].cssText += '\n';
+            } else {
+              var oldSelectors = oldSelector.split(',');
+
+              var selectorText = '';
+              for( var idxSelector=0; idxSelector<oldSelectors.length; ++idxSelector ) {
+                selectorText += '#tab-' + moduleName + ' ' + oldSelectors[idxSelector];
+                if( idxSelector < oldSelectors.length-1 ) {
+                  selectorText += ',';
+                }
+              }
+             
+              newSheetText += selectorText + '{' + ruleSet[idxRule].style.cssText + '}\n';
+            }
+          }
+          break;               
+        }
+      }
+
+      styleOrig.parentNode.removeChild(styleOrig);
+      
+      var style = document.createElement('style');
+      style.type = 'text/css';
+      style.id = styleId;
+      style.innerHTML = newSheetText;
+
+      document.getElementsByTagName('head')[0].appendChild(style);
+
+    }
+    var originalNamesMap = {};
+    function makeTabs() {
+      // add tabs and tab content
+      for( var moduleName in modules ) {
+        var originalName = originalNamesMap[moduleName];
+        $('ul.tabs').append('<li class="tab-link" data-tab="tab-' + moduleName + '">' 
+                            + originalName 
+                            + '</li>');
+        var tab = $('<div id="tab-' + moduleName + '" class="tab-content"></div>').appendTo('#container');
+        tab.append('<div class="popoutIcon"></div>');
+      }
+      // handle tab clicks (assumes no new tabs created after this)
+      $('ul.tabs li').click(function(){
+        var tab_id = $(this).attr('data-tab');
+
+        $('ul.tabs li').removeClass('current');
+        $('.tab-content').removeClass('current');
+        $('.tab-placeholder').hide();
+
+        $(this).addClass('current');
+        var tab = $('#'+tab_id);
+        if( tab.hasClass('poppedOut') ) {
+          $('.tab-placeholder').show();
+        } else {
+          tab.addClass('current');
+        }
+
+        var moduleName = tab_id.substring(4); // after "tab-"
+        if( typeof modules[moduleName] === 'undefined' ) {
+          return;
+        }
+
+        // on first click, subscribe to engine updates and create css styles
+        if( !isSubscribed(moduleName) ) {
+          subscribe(moduleName);
+          // activate style sheets
+          var styles = modules[moduleName].getStyles();
+          if( typeof styles !== 'undefined' ) {
+            createStyles(moduleName, styles);
+          }
+        
+          modules[moduleName].init($('#' + tab_id)[0]);
+
+          if( typeof fakeData !== 'undefined' && typeof fakeData[moduleName] !== 'undefined' ) {
+            fakeData[moduleName].forEach(function(entry){
+              onNewData(moduleName, entry);
+            });
+          }
+        }
+      });
+      $('.popoutIcon').click(function(){
+        var tab = $(this).parent();
+        if( !$(this).hasClass('nowItsAPinIcon') ) {
+          tab.detach().addClass('poppedOut').appendTo('#popouts');
+          $(this).addClass('nowItsAPinIcon');
+          $('.tab-placeholder').show();
+        } else {
+          tab.detach().removeClass('poppedOut').appendTo('#container');
+          $(this).removeClass('nowItsAPinIcon');
+          var currTab = $('.tab-link.current').attr('data-tab');
+          if( currTab == tab.attr('id') ) {
+            $('.tab-placeholder').hide();
+          }
+        }
+      });
+      // add a placeholder for when tabs are popped out
+      $('<div class="tab-content tab-placeholder"></div>').appendTo('#container');
+    }
+
+    var isSubscribed = function(moduleName) {
+      return (subscribedModules.indexOf(moduleName) >= 0);
+    }
+
+    var startUpdateLoop = function(dt) {
+      setTimeout(function() {
+        for( var moduleName in modules ) {
+          if( isSubscribed(moduleName) ) {
+            modules[moduleName].update(dt / 1000.0);
+          }
+        }
+        startUpdateLoop(dt);
+      }, dt);
+    }
+
+    var hasShownAlert = false;
+    var onNewData = function(moduleName, data) {
+      if( typeof modules[moduleName] !== 'undefined' ) {
+        var elem = $('#tab-' + moduleName)[0];
+        try {
+          modules[moduleName].onData(data, elem);
+        } catch(err) {
+          console.log(err);
+          if( !hasShownAlert ) {
+            alert('The module ' + moduleName + ' has an error. Displayed results may be invalid');
+            hasShownAlert = true;
+          }
+        }
+      }
+    }
+
+    var autoOpenTabRef = "";
+    var socket;
+    var subscribedModules = [];
+    function setupSocket() {
+      if( typeof socket !== 'undefined' ) {
+        return;
+      }
+      var loc = window.location;
+      var uri = "ws:" + "//" + loc.host + "/socket";
+      socket = new WebSocket(uri);
+      socket.onopen = function(){
+        // notify that we've connected
+        $('#status').text('Connected').css('color','limegreen');
+        if (autoOpenTabRef !== "") {
+          console.log('auto navigating to ' + autoOpenTabRef);
+          $('.tab-link[data-tab=' + autoOpenTabRef + ']').trigger('click');
+        }
+      }
+      socket.onmessage = function(msg){
+        var jsonData = JSON.parse(msg.data);
+        var moduleName = jsonData["module"].toLowerCase();
+        var data = jsonData["data"];
+        onNewData(moduleName, data);
+        return false; // keep open
+      }
+      socket.onclose = function(e){
+        $('#status').text('Disconnected').css('color','red');
+        for( var moduleName in modules ) {
+          var idx = subscribedModules.indexOf(moduleName);
+          if( idx >= 0 ) {
+            subscribedModules.splice(idx, 1);
+          }
+        }
+      } 
+      socket.onerror=function (e) {
+        $('#status').text('WebSockets error: ' + e.code + ' '  + e.reason).css('color','red');
+      } 
+    }
+    var subscribe = function(moduleName) {
+      if( !isSubscribed(moduleName) ) {
+        var subscribeData = {"type": "subscribe", "module": moduleName};
+        socket.send( JSON.stringify(subscribeData) ); 
+        subscribedModules.push(moduleName);
+      }
+    }
+    var unsubscribe = function(moduleName) {
+      var unsubscribeData = {"type": "unsubscribe", "module": moduleName};
+      socket.send( JSON.stringify(unsubscribeData) ); 
+      var idx = subscribedModules.indexOf(moduleName);
+      if( idx >= 0 ) {
+        subscribedModules.splice(idx, 1);
+      }
+    }
+    var sendToSocket = function(moduleName, data) {
+      var payload = {"type": "data", "module": moduleName.toLowerCase(), "data": data};
+      socket.send( JSON.stringify(payload) );
+    }
+    var getPortLink = function(port) {
+      return 'http://' + window.location.hostname + ':' + port + window.location.pathname;
+    }
+    function parseQuery(queryString) {
+      var query = {};
+      var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+      for (var i = 0; i < pairs.length; i++) {
+        var pair = pairs[i].split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+      }
+      return query;
+    }
+
+    var modulesContexts = {};
+    var moduleMethods = {}; // global passed to modules
+    var moduleSendDataFunc; // global passed to modules
+    $(function(){
+
+      modules = modules8888;
+      var missingTabsStr = '<h3>Looking for ';
+      if( location.port == 8889 ) {
+        modules = modules8889;
+        missingTabsStr += Object.keys(modules8888).join(' or ') + '? Change the port to <a href="' + getPortLink(8888) + '">8888</a></h3>';
+      } else {
+        missingTabsStr += Object.keys(modules8889).join(' or ') + '? Change the port to <a href="' + getPortLink(8889) + '">8889</a></h3>';
+      } 
+      $('#tab-overview').append( missingTabsStr );
+
+
+      // load module data
+      var moduleIndex = 0;
+      var moduleNames = Object.keys(modules).sort();
+      
+      var loadJS = function(moduleIndex, onLoad, elem){
+
+        // add an empty object for methods and callbacks
+        modulesContexts[moduleNames[moduleIndex]] = {
+          methods: {},
+          sendFunc: {}
+        };
+
+        // bind moduleName to the function passed to the module
+        modulesContexts[moduleNames[moduleIndex]].sendFunc 
+          = (function (moduleName) { 
+              return function(data){
+                  sendToSocket(moduleName, data);
+              } 
+            })(moduleNames[moduleIndex]);
+
+        // these refs will be sent to the module
+        moduleMethods = modulesContexts[moduleNames[moduleIndex]].methods;
+        moduleSendDataFunc = modulesContexts[moduleNames[moduleIndex]].sendFunc;
+
+        var url = modules[moduleNames[moduleIndex]];
+
+        var scriptTag = document.createElement('script');
+        scriptTag.src = url;
+
+        scriptTag.onload = onLoad;
+        scriptTag.onreadystatechange = onLoad;
+
+        elem.appendChild(scriptTag);
+      };
+      var onModuleLoad = function(){
+        if( (typeof moduleMethods.init === 'undefined') ||
+            (typeof moduleMethods.onData === 'undefined') ||
+            (typeof moduleMethods.update === 'undefined') ||
+            (typeof moduleMethods.getStyles === 'undefined') ) {
+          alert('Module ' + moduleNames[moduleIndex] + ' has a syntax error or does not expose required methods. Bailing');
+          delete modules[moduleNames[moduleIndex]]
+          moduleNames.splice(moduleIndex,1);
+          moduleIndex = moduleIndex - 1;
+        } else {
+          // replace file path with functions, and convert to lowercase if needed
+          if( moduleNames[moduleIndex] != moduleNames[moduleIndex].toLowerCase() ) {
+            delete modules[moduleNames[moduleIndex]]
+            modules[moduleNames[moduleIndex].toLowerCase()] = moduleMethods;
+            originalNamesMap[moduleNames[moduleIndex].toLowerCase()] = moduleNames[moduleIndex];
+            moduleNames[moduleIndex] = moduleNames[moduleIndex].toLowerCase();
+          } else {
+            modules[moduleNames[moduleIndex]] = moduleMethods;
+            originalNamesMap[moduleNames[moduleIndex]] = moduleNames[moduleIndex];
+          }
+        }
+        if( moduleIndex >= moduleNames.length - 1 ) {
+          // done loading modules.
+
+          // make tabs
+          makeTabs();
+
+          // connect to websockets
+          setupSocket();
+
+          startUpdateLoop(kUpdatePeriod_ms);
+
+          // See if url had specification of which tab to auto-navigate to
+          autoOpenTabRef = "";
+          var fullUrl = document.URL;
+          var index = fullUrl.indexOf('?');
+          if (index >= 0) {
+            var queryPairs = parseQuery(fullUrl.substring(index + 1));
+            for (var key in queryPairs) {
+              var value = queryPairs[key];
+              if (key === 'tab') {
+                // Save the tab reference, so when the socket finishes
+                // connecting, we can auto-navigate to that tab
+                autoOpenTabRef = 'tab-' + value;
+                break;
+              }
+            }
+          }
+ 
+        } else {
+          // increment and continue
+          ++moduleIndex;
+          loadJS(moduleIndex, onModuleLoad, document.body);
+        }
+      }
+      loadJS(moduleIndex, onModuleLoad, document.body);
+
+      
+
+
+    });
+  </script>
+
+</body>
+</html>
