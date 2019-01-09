@@ -4,7 +4,7 @@ namespace Anki {
 namespace Vision {
 
 
-enum uint_8 SpriteName
+enum uint_16 SpriteName
 {
   Battery_Overheated,
   Blackjack_Player_Card_Back,
@@ -260,6 +260,7 @@ enum uint_8 SpriteName
   Pairing_Icon_Wifi,
   Vig_Always_Helpful_Knowledgegraph,
   Vig_Always_Helpful_Timer,
+  elemental,
   Count
 }
 
@@ -518,6 +519,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Pairing_Icon_Wifi = 1,
   Vig_Always_Helpful_Knowledgegraph = 1,
   Vig_Always_Helpful_Timer = 1,
+  elemental = 1,
   Count = 0
 }
 

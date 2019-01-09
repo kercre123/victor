@@ -156,6 +156,10 @@ void AnimationComponent::Init()
 
     _availableAnims[jsonAnim[kNameField].asCString()].length_ms = jsonAnim[kLengthField].asInt();
   }
+
+  // THEBOX: add this one since it's not in the manifest from SVN
+  _availableAnims["anim_elemental"].length_ms = 0;
+
   LOG_INFO("AnimationComponent.Init.ManifestRead", "%zu animations loaded", _availableAnims.size());
 
   if( ANKI_DEVELOPER_CODE ) {

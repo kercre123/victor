@@ -1,5 +1,6 @@
 {
   "behaviorID": "BoxDemoBoot",
   "behaviorClass": "AnimSequence",
-  "animTriggers": ["InitialWakeUp"]
+  "animNames": ["anim_elemental"],
+  "renderInEyeHue": false
 }

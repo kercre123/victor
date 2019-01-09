@@ -1014,5 +1014,9 @@
   {
     "CladEvent" : "Vig_Always_Helpful_Timer",
     "SpriteName" : "vig_always_helpful_timer"
+  },
+  {
+    "CladEvent" : "elemental",
+    "SpriteName" : "elemental"
   }
 ]
