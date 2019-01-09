@@ -30,12 +30,12 @@ var (
 
 func (c *client) handleConn(ctx context.Context) {
 	for {
-		buf := c.ReadBlock()
-		if buf == nil || len(buf) == 0 {
+		msgbuf := c.ReadBlock()
+		if msgbuf == nil || len(msgbuf) == 0 {
 			return
 		}
 		var msg vision.OffboardImageReady
-		if err := msg.Unpack(bytes.NewBuffer(buf)); err != nil {
+		if err := msg.Unpack(bytes.NewBuffer(msgbuf)); err != nil {
 			log.Println("Could not unpack box request:", err)
 			continue
 		}
@@ -44,13 +44,15 @@ func (c *client) handleConn(ctx context.Context) {
 		if err != nil {
 			log.Println("Error handling box request:", err)
 		}
-		if resp != nil {
-			var buf bytes.Buffer
-			if err := resp.Pack(&buf); err != nil {
-				log.Println("Error packing box response:", err)
-			} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
-				log.Println("Error sending box response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
-			}
+		if resp == nil {
+			resp = &vision.OffboardResultReady{}
+		}
+
+		var buf bytes.Buffer
+		if err := resp.Pack(&buf); err != nil {
+			log.Println("Error packing box response:", err)
+		} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
+			log.Println("Error sending box response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
 		}
 	}
 }
@@ -95,15 +97,19 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 
 	sessionID := uuid.New().String()[:16]
 	r := &pb.ImageRequest{
-		Session:  sessionID,
-		DeviceId: deviceID,
-		Lang:     "en",
-		Payload:  fileData,
+		Session:   sessionID,
+		DeviceId:  deviceID,
+		Lang:      "en",
+		ImageData: fileData,
 	}
 
 	client := pb.NewChipperGrpcClient(rpcConn)
 	resp, err := client.AnalyzeImage(ctx, r)
+	if err != nil {
+		log.Println("image analysis error: ", err)
+		return nil, err
+	}
 	log.Println("image analysis response: ", resp.String())
 
-	return &vision.OffboardResultReady{JsonResult: "[]"}, nil
+	return &vision.OffboardResultReady{JsonResult: resp.RawResult}, nil
 }
