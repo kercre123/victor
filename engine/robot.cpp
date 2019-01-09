@@ -2970,6 +2970,24 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 
 Result Robot::UpdateStartupChecks()
 {
+  static bool rampostFileRead = false;
+  static bool rampostError = false;
+  if(!rampostFileRead)
+  {
+    rampostFileRead = true;
+    const Result res = Robot::CheckForRampostError();
+    if(res != RESULT_OK)
+    {
+      rampostError = true;
+      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);    
+    }
+  }
+
+  if(rampostError)
+  {
+    return RESULT_FAIL;
+  }
+  
   bool tofCheckDone = false;
   Result res = UpdateToFStartupChecks(tofCheckDone);
   if(res != RESULT_OK)
@@ -3181,6 +3199,44 @@ void Robot::GetTouchSensorFiltResults(f32& min, f32& max, f32& stddev) const
                  [mean](float x) { return x - mean; });
   f32 sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
   stddev = std::sqrt(sq_sum / _touchSensorFiltDeque.size());
+}
+
+Result Robot::CheckForRampostError()
+{
+  const std::string path = "/dev/rampost_error";
+  struct stat buffer;
+  int rc = stat(path.c_str(), &buffer);
+  if(rc == 0)
+  {
+    FILE* f = fopen(path.c_str(), "r");
+    if(f != nullptr)
+    {
+      char data[32] = {0};
+      rc = fread(data, sizeof(data), 1, f);
+      (void)fclose(f);
+      if(rc < 0)
+      {
+        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
+                          "Failed to read from rampost_error file %u %u",
+                          rc,
+                          errno);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
+      }
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
+                        "%d",
+                        rc);
+    }
+    
+    return RESULT_FAIL;
+  }
+
+  return RESULT_OK;
 }
 
 } // namespace Cozmo

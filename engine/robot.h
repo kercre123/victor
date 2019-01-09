@@ -642,6 +642,8 @@ public:
       _touchSensorFiltDeque.clear();
     }
   }
+
+  static Result CheckForRampostError();
   
 protected:
   bool _trackTouchSensorFilt = false;
@@ -814,6 +816,7 @@ protected:
   // Performs various startup checks and displays fault codes as appropriate
   Result UpdateStartupChecks();
   Result UpdateToFStartupChecks(bool& isDone);
+  Result UpdateRampostErrorChecks();
 }; // class Robot
 
   
