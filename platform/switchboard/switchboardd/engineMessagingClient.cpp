@@ -91,6 +91,7 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
       case EMessageTag::ExitPairing:
       case EMessageTag::WifiScanRequest:
       case EMessageTag::WifiConnectRequest:
+      case EMessageTag::QrCodeRequest:
       {
         // Emit signal for message
         wData->signal->emit(message);

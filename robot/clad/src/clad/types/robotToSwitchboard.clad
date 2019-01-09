@@ -28,6 +28,11 @@ message WifiConnectRequest
   bool disconnectAfterConnection
 }
 
+message QrCodeRequest
+{
+  string data,
+}
+
 } // SwitchboardInterface
 } // Cozmo
 } // Anki

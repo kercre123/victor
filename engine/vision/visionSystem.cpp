@@ -1437,7 +1437,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   // Begin image processing
   // QR code
-  if(_frameNumber % 15 == 0) {
+  if(IsModeEnabled(VisionMode::DetectingQRCodes)) {
     PRINT_NAMED_WARNING("Paolo.QR", "Processing QR code... [%d]", (uint32_t)_imageCache->GetBuffer().GetFormat());
 
     Anki::Vision::Image grayImg;
@@ -1456,8 +1456,11 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         symbol != img.symbol_end();
         ++symbol) {
         PRINT_NAMED_WARNING("Paolo.QR", "found[%s][%s]", symbol->get_type_name().c_str(), symbol->get_data().c_str());
+        _currentResult.qrCodes.push_back(symbol->get_data());
       }
     }
+
+    visionModesProcessed.Insert(VisionMode::DetectingQRCodes);
   }
 
   // Apply CLAHE if enabled:

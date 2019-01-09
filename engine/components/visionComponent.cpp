@@ -70,6 +70,7 @@
 
 #include "proto/external_interface/shared.pb.h"
 
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -916,6 +917,9 @@ namespace Vector {
           }
         };
         
+        // QR code detection
+        tryAndReport(&VisionComponent::UpdateQrCodes, {VisionMode::DetectingQRCodes});
+        
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
         tryAndReport(&VisionComponent::UpdateVisionMarkers,        {VisionMode::DetectingMarkers});
@@ -982,6 +986,16 @@ namespace Vector {
       return RESULT_OK;
     }
   } // UpdateAllResults()
+
+  Result VisionComponent::UpdateQrCodes(const VisionProcessingResult& result)
+  {
+    for(auto qrData : result.qrCodes) // deliberate copy
+    {
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::QrCodeRequest(qrData)));
+    }
+
+    return RESULT_OK; 
+  }
 
   Result VisionComponent::UpdateVisionMarkers(const VisionProcessingResult& procResult)
   {

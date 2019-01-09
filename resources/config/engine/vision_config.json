@@ -8,7 +8,8 @@
     // value to process every Nth frame
     "DetectingMarkers" : 4, // Remove with VIC-6838 
     "AutoExposure"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
-    "WhiteBalance"     : 5 // NOTE: Should probably be no more frequent than every 5th frame
+    "WhiteBalance"     : 5, // NOTE: Should probably be no more frequent than every 5th frame
+    "DetectingQRCodes" : 10
   },
 
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)

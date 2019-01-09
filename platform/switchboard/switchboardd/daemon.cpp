@@ -625,6 +625,10 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
                                                        payload.disconnectAfterConnection);
       break;
     }
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::QrCodeRequest: {
+      Log::Write("QR code: [%s]", message.Get_QrCodeRequest().data);
+      break;
+    }
     default: {
       printf("Unknown Tag: %hhu\n", tag);
       break;

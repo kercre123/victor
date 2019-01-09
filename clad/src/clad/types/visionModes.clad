@@ -15,6 +15,7 @@ namespace Vector {
     DetectingMotion,
     DetectingBrightColors,
     DetectingOverheadEdges,
+    DetectingQRCodes,
     ComputingCalibration,
     AutoExposure,        
     WhiteBalance,

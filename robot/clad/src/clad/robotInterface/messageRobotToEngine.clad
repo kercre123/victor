@@ -229,6 +229,7 @@ union RobotToEngine {
   SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,
   StreamCameraImages         streamCameraImages     = 0xDE,
   DebugScreenMode            debugScreenMode        = 0xDF,
+  SwitchboardInterface::QrCodeRequest qrCodeRequest = 0xF4,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
