@@ -30,7 +30,7 @@ static const Util::SymmetricMap<VisionMode, std::string> sNetModeLUT{
   {VisionMode::DetectingPeople, "person_detector"},
   {VisionMode::DetectingHands,  "hand_detector"},
   {VisionMode::DetectingPets,   "mobilenet"}, // TODO: Update to real network
-  {VisionMode::OffboardVision,  "test_offboard_model"},
+  {VisionMode::OffboardSceneDescription,  "test_offboard_model"},
 };
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,7 +76,7 @@ bool ShouldVisionModeRun(const VisionMode& visionMode, const VisionProcessingRes
   // Set of any modes that must be present in order for a given mode to run
   // TODO: Get this from Json config
   const std::map<VisionMode, RunCondition> kRequiredModesToRun{
-    {VisionMode::OffboardVision, RunCondition{ANY, {VisionMode::DetectingFaces, VisionMode::DetectingPeople}}},
+    //{VisionMode::OffboardFaceRecognition, RunCondition{ANY, {VisionMode::DetectingFaces}}},
   };
   
   auto iter = kRequiredModesToRun.find(visionMode);

@@ -166,6 +166,9 @@ namespace Vision {
     void SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info);
     const std::list<FaceRecognitionMatch>& GetRecognitionDebugInfo() const;
     
+    u32 GetAge() const { return _age; }
+    void SetAge(u32 age) { _age = age; }
+    
   private:
     
     FaceID_t       _id                    = UnknownFaceID;
@@ -196,6 +199,7 @@ namespace Vision {
     SmileAmount _smileAmount;
     Gaze        _gaze;
     BlinkAmount _blinkAmount;
+    u32         _age = 0;
     
     Radians _roll, _pitch, _yaw;
     

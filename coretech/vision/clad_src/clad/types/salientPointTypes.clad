@@ -10,6 +10,7 @@ enum uint_8 SalientPointType
 {
   Unknown, // Generally means something is wrong
   Object,  // For general "objectness" (vs. specific known object types)
+  Face,
   Person,
   Hand,
   Cat,

@@ -73,12 +73,17 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
   GetFromConfig(inputHeight);
   GetFromConfig(inputWidth);
   GetFromConfig(architecture);
-  GetFromConfig(memoryMapGraph);
   GetFromConfig(benchmarkRuns);
 
   if (config.isMember(JsonKeys::VisualizationDir))
   {
     GetFromConfig(visualizationDirectory);
+  }
+  
+  if(config[JsonKeys::ModelType].asString() != JsonKeys::OffboardModelType)
+  {
+    // TODO: move other keys here?
+    GetFromConfig(memoryMapGraph);
   }
   
   if("ssd_mobilenet" == architecture)
@@ -123,7 +128,7 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
       SetFromConfigHelper(config["useGrayscale"], useGrayscale);
     }
   }
-  else if(config[JsonKeys::ModelType].asString() != JsonKeys::OffboardModelType)
+  else
   {
     PRINT_NAMED_ERROR("NeuralNetParams.SetFromConfig.UnrecognizedArchitecture", "%s",
                       architecture.c_str());

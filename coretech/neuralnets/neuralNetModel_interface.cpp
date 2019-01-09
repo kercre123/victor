@@ -67,6 +67,12 @@ Result INeuralNetModel::LoadModel(const std::string& modelPath, const Json::Valu
     LOG_ERROR("INeuralNetModel.LoadModel.MissingName", "");
     return RESULT_FAIL;
   }
+ 
+  const Result paramsResult = _params.SetFromConfig(config);
+  if(RESULT_OK != paramsResult)
+  {
+    return paramsResult;
+  }
   
   return LoadModelInternal(modelPath, config);
 }

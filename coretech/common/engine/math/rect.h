@@ -20,6 +20,7 @@
 #endif
 
 #include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "clad/types/cladRect.h"
 
 namespace Anki {
@@ -44,6 +45,9 @@ namespace Anki {
     // Construct bounding boxes:
     template<typename T_other>
     explicit Rectangle(const Quadrilateral<2,T_other>& quad);
+    
+    template<typename T_other>
+    explicit Rectangle(const Polygon<2,T_other>& poly);
     
     template<typename T_other>
     explicit Rectangle(const std::vector<Point<2,T_other> >& points);

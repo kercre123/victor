@@ -89,13 +89,13 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
     LOG_INFO("OffboardModel.Connect.Result", "%s", udpSuccess ? "Success" : "FAILED");
   }
   
-  // Use the network architecture as the processing type
+  // Use the graphFile from params as the processing type
   // TODO: Support multiple procTypes (comma-delimited?)
   _procTypes.resize(1);
-  if(!Vision::OffboardProcTypeFromString(_params.architecture, _procTypes[0]))
+  if(!Vision::OffboardProcTypeFromString(_params.graphFile, _procTypes[0]))
   {
     LOG_ERROR("OffboardModel.LoadModelInternal.BadArchitecture",
-              "Could not get OffboardProcType(s) from architecture: %s",
+              "Could not get OffboardProcType(s) from graphFile: %s",
               _params.architecture.c_str());
     return RESULT_FAIL;
   }
@@ -304,9 +304,17 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& salientPointsJson,
+Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& detectionResult,
                                                  std::list<Vision::SalientPoint>& salientPoints)
 {
+  if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
+  {
+    LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
+              "%s", NeuralNets::JsonKeys::SalientPoints);
+    return RESULT_FAIL;
+  }
+  
+  const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
   if(!salientPointsJson.isArray())
   {
     LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");

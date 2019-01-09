@@ -28,6 +28,7 @@ namespace JsonKeys {
   extern const char* const NetworkName;
   extern const char* const OffboardCommsType;
   extern const char* const PollingPeriod;
+  extern const char* const SalientPoints;
   extern const char* const TimeoutDuration;
   extern const char* const Verbose;
   extern const char* const VisualizationDir;

@@ -234,6 +234,12 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
         {
           dispName = name;
         }
+        
+        if(faceDetection.GetAge() > 0)
+        {
+          dispName += ": " + std::to_string(faceDetection.GetAge());
+        }
+        
         const Point2f position{1.f, _screenImg.GetNumRows()-1-(numDisplayFaces-faceLine)*(fontSize.y()+1)};
         _screenImg.DrawText(position, dispName, color, kMirrorModeFaceFontScale, kUseDropShadow);
         ++faceLine;

@@ -1960,7 +1960,8 @@ namespace Vision {
         if(resultNum == 0 || scores[0] < kFaceRecognitionThreshold-kFaceRecognitionThresholdMarginForAdding)
         {
           LOG_INFO("RecognizeFace.AddingNewUser",
-                        "Observed new person. Adding to album.");
+                   "Observed new person. Adding to album. Top match:%d",
+                   resultNum==0 ? -1 : scores[0]);
           Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, faceID);
           if(RESULT_OK != lastResult) {
             return lastResult;

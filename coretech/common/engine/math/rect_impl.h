@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/rect.h"
 
 #include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
 #include "util/logging/logging.h"
 
@@ -212,6 +213,13 @@ namespace Anki {
   Rectangle<T>::Rectangle(const Quadrilateral<2,T_other>& quad)
   {
     InitFromPointContainer(quad);
+  }
+  
+  template<typename T>
+  template<typename T_other>
+  Rectangle<T>::Rectangle(const Polygon<2,T_other>& poly)
+  {
+    InitFromPointContainer(poly);
   }
   
   template<typename T>

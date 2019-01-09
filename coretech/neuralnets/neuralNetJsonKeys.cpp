@@ -27,6 +27,7 @@ namespace JsonKeys {
   const char* const ModelType        = "modelType";
   const char* const OffboardCommsType= "commsType";
   const char* const PollingPeriod    = "pollPeriod_ms";
+  const char* const SalientPoints    = "salientPoints";
   const char* const TimeoutDuration  = "timeoutDuration_sec";
   const char* const Verbose          = "verbose";
   const char* const VisualizationDir = "visualizationDirectory";

@@ -73,6 +73,7 @@ namespace Vector {
   // Forward declaration:
   class CameraCalibrator;
   class CozmoContext;
+  class FaceMetaDataStorage;
   class IlluminationDetector;
   class ImageSaver;
   struct ImageSaverParams;
@@ -221,6 +222,7 @@ namespace Vector {
 
     // Sub-components for detection/tracking/etc:
     std::unique_ptr<Vision::FaceTracker>            _faceTracker;
+    std::unique_ptr<FaceMetaDataStorage>            _faceMetaDataStorage;
     std::unique_ptr<Vision::PetTracker>             _petTracker;
     std::unique_ptr<Vision::MarkerDetector>         _markerDetector;
     std::unique_ptr<Vision::BrightColorDetector>    _brightColorDetector;

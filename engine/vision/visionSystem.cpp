@@ -22,6 +22,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/vision/cropScheduler.h"
+#include "engine/vision/faceMetaDataStorage.h"
 #include "engine/vision/groundPlaneClassifier.h"
 #include "engine/vision/illuminationDetector.h"
 #include "engine/vision/imageSaver.h"
@@ -136,6 +137,8 @@ namespace {
 
 static const char * const kLogChannelName = "VisionSystem";
 
+static const char * const kOffboardFaceRecognitionNetworkName = "offboard_face_recognition";
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionSystem::VisionSystem(const CozmoContext* context)
 : _rollingShutterCorrector()
@@ -151,6 +154,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
                                                              _currentCameraParams))
 , _poseOrigin("VisionSystemOrigin")
 , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
+, _faceMetaDataStorage(new FaceMetaDataStorage())
 , _petTracker(new Vision::PetTracker())
 , _markerDetector(new Vision::MarkerDetector(_camera))
 , _laserPointDetector(new LaserPointDetector(_vizManager))
@@ -1277,6 +1281,16 @@ void VisionSystem::CheckForNeuralNetResults()
                      "Network:%s NumSalientPoints:%zu",
                      networkName.c_str(), _currentResult.salientPoints.size());
       
+      if(THEBOX && (networkName == kOffboardFaceRecognitionNetworkName))
+      {
+        _faceMetaDataStorage->Update(_currentResult.salientPoints,
+                                     neuralNetRunner->GetOrigImg().GetNumRows(),
+                                     neuralNetRunner->GetOrigImg().GetNumCols());
+        
+        _currentResult.modesProcessed.Insert(VisionMode::OffboardFaceRecognition);
+        continue;
+      }
+      
       std::set<VisionMode> modes;
       const bool success = GetVisionModesForNeuralNet(networkName, modes);
       if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
@@ -1720,6 +1734,49 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         for(const auto& networkName : networkNames)
         {
           networksToRun.emplace(networkName, usingTimestamp);
+        }
+      }
+    }
+  }
+  
+  if(THEBOX && IsModeEnabled(VisionMode::OffboardFaceRecognition))
+  {
+    // Update the ID data for the FaceMetaDataStorage if anything changed
+    for(const auto& updatedID : _currentResult.updatedFaceIDs)
+    {
+      _faceMetaDataStorage->OnUpdatedID(updatedID.oldID, updatedID.newID);
+    }
+   
+    // If there are any faces with no metadata in the image, pass them to the offboard face recognizer to get metadata
+    std::list<Vision::TrackedFace> facesToUpdate;
+    for(auto& face : _currentResult.faces)
+    {
+      // NOTE: this will update "face" with meta data if available
+      const bool hasMetaData = _faceMetaDataStorage->GetMetaData(face);
+      //PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.FaceMetaDataCheck", "ID:%d", face.GetID()); // Very verbose
+      if(!hasMetaData)
+      {
+        facesToUpdate.emplace_back(face);
+      }
+      else
+      {
+        PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.GotFaceMetaData", "ID:%d Name:%s Age:%u",
+                       face.GetID(), face.GetName().c_str(), face.GetAge());
+      }
+    }
+    
+    if(!facesToUpdate.empty())
+    {
+      // There are faces in this image that we have no metadata for. Run them through the neural net.
+      const bool started = _neuralNetRunners.at(kOffboardFaceRecognitionNetworkName)->StartProcessingIfIdle(imageCache);
+      if(started)
+      {
+        // If the neural net wasn't already waiting for a response, let the FaceMetaDataStorage know
+        // that these are the faces being processed so we can establish correspondence once any
+        // results come back from the neural net
+        for(const auto& face : facesToUpdate)
+        {
+          _faceMetaDataStorage->SetFaceBeingProcessed(face);
         }
       }
     }
