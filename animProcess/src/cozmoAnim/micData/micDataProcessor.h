@@ -53,6 +53,8 @@ namespace Anki {
   }
   namespace Util {
     class Locale;
+    template <typename T>
+    class RingBuffContiguousRead;
   }
 }
 
@@ -163,6 +165,9 @@ private:
   size_t _procAudioRawComplete = 0;
   size_t _procAudioXferCount = 0;
   std::atomic<ProcessingState> _activeProcState{ProcessingState::None};
+  
+  std::unique_ptr<Util::RingBuffContiguousRead<int16_t>> _prerollBuff;
+  std::atomic<bool> _firstTickSinceWakeWord;
 
   // Mutex for different accessing signal essence software
   std::mutex _seInteractMutex;

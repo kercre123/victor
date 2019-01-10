@@ -161,8 +161,8 @@ if [ ${VER_CMP} -ne 0 ]; then
     echo "Ignoring OS version mismatch"
   else
     echo "OS version mismatch. Use -f to force."
-    cleanup
-    exit 1
+    # cleanup
+    # exit 1
   fi
 fi
 

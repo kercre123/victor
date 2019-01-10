@@ -35,6 +35,7 @@ namespace Anki {
     class NotchDetector;
     class RobotDataLoader;
     class SpeechRecognizerTHF;
+    class SpeechRecognizerPocketSphinx;
   }
   namespace Util {
     class Locale;
@@ -63,6 +64,10 @@ public:
   void InitVector(const RobotDataLoader& dataLoader,
                   const Util::Locale& locale,
                   TriggerWordDetectedCallback callback);
+  
+  // Init pocketSphinx recognizer, for whatever wake word we decide on
+  void InitPocketSphinx(const RobotDataLoader& dataLoader,
+                        TriggerWordDetectedCallback callback);
   
   // Init Alexa trigger detector
   // Note: This is done after Alex user has been authicated
@@ -121,6 +126,7 @@ private:
   const AnimContext*                          _context = nullptr;
   MicData::MicDataSystem*                     _micDataSystem = nullptr;
   std::unique_ptr<TriggerContext>             _victorTrigger;
+  std::unique_ptr<SpeechRecognizerPocketSphinx> _pocketSphinxRecognizer;
   std::unique_ptr<TriggerContext>             _alexaTrigger;
   Alexa*                                      _alexaComponent = nullptr;
   std::unique_ptr<TriggerContext>             _alexaPlaybackTrigger;

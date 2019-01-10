@@ -223,6 +223,14 @@ rsync -raz --delete \
   ${TOPLEVEL}/EXTERNALS/pffft/pffft \
   ${TOPLEVEL}/EXTERNALS/coretech_external/build/
 
+# THEBOX ONLY
+# for pocketSphinx (dev wakeword engine)
+# this will force a -f build each time :(
+# but --keep-old-files would mess with switching branches.
+tar -C ${TOPLEVEL}/EXTERNALS/anki-thirdparty/ -xzf ${TOPLEVEL}/pocketSphinx.tar.gz
+# source files available in CTE branch ross/cte-add-pocketsphinx
+# /THEBOX ONLY
+
 #
 # Get short commit sha
 #

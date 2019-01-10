@@ -18,6 +18,7 @@
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerTHFSimple.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerPocketSphinx.h"
 #include "cozmoAnim/micData/notchDetector.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
@@ -230,12 +231,33 @@ SpeechRecognizerSystem::SpeechRecognizerSystem(const AnimContext* context,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpeechRecognizerSystem::~SpeechRecognizerSystem()
 {
-  _victorTrigger->recognizer->Stop();
+  if( _victorTrigger ) {
+    _victorTrigger->recognizer->Stop();
+  }
+  if( _pocketSphinxRecognizer ) {
+    _pocketSphinxRecognizer->Stop();
+  }
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::InitPocketSphinx(const RobotDataLoader& dataLoader,
+                                              TriggerWordDetectedCallback callback)
+{
+  if (_pocketSphinxRecognizer) {
+    LOG_WARNING("SpeechRecognizerSystem.InitVector", "Victor Recognizer is already running");
+    return;
+  }
+  
+  _pocketSphinxRecognizer = std::make_unique<SpeechRecognizerPocketSphinx>();
+  _pocketSphinxRecognizer->Init( Util::FileUtils::AddTrailingFileSeparator(Util::FileUtils::AddTrailingFileSeparator(_triggerWordDataDir) + "model") );
+  _pocketSphinxRecognizer->SetCallback(callback);
+  _pocketSphinxRecognizer->Start();
+  
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
                                         const Util::Locale& locale,
@@ -439,8 +461,11 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
     ApplyLocaleUpdate();
   }
   // Update recognizer
-  if (vadActive) {
+  if (vadActive && _victorTrigger) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
+  }
+  if (vadActive && _pocketSphinxRecognizer) {
+    _pocketSphinxRecognizer->Update(audioData, audioDataLen);
   }
 
   if (_alexaComponent != nullptr && _alexaTrigger != nullptr) {
@@ -461,7 +486,9 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale newLocale
   // Set local using defualt locale settings
   bool success = false;
   // We always expect to have victorTrigger
-  success = UpdateTriggerForLocale(*_victorTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
+  if( _victorTrigger ) {
+    success = UpdateTriggerForLocale(*_victorTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
+  }
   if (_alexaTrigger) {
     success &= UpdateTriggerForLocale(*_alexaTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
   }
@@ -478,7 +505,7 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(TriggerContext& trigger,
   trigger.nextTriggerPaths = trigger.micTriggerConfig->GetTriggerModelDataPaths(newLocale, modelType, searchFileIndex);
   bool success = false;
   
-  if (!_victorTrigger->nextTriggerPaths.IsValid()) {
+  if (_victorTrigger && !_victorTrigger->nextTriggerPaths.IsValid()) {
     LOG_WARNING("SpeechRecognizerSystem.UpdateTriggerForLocale.NoPathsFoundForLocale",
                 "locale: %s modelType: %d searchFileIndex: %d",
                 newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
