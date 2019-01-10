@@ -717,7 +717,7 @@ static inline void spine_get_sr_(robot_sr_t* out_sr, uint8_t sensor)
     {
       case RCOM_SENSOR_BATTERY:
         out_sr->bat.raw = b2h->battery.main_voltage;
-        out_sr->bat.temp = b2h->battery.temperature;
+        out_sr->bat.tempC = b2h->battery.temperature;
         break;
       case RCOM_SENSOR_CLIFF:
         out_sr->cliff.fL = b2h->cliffSense[DROP_SENSOR_FRONT_LEFT];

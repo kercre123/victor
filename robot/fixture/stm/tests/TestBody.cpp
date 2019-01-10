@@ -225,6 +225,17 @@ static void BodyLoadTestFirmware(void)
   //print version to test contact comms
   cmdSend(CMD_IO_CONTACTS, "getvers");
   
+  //test battery + temp sensor
+  robot_sr_t bat = rcomGet(3, RCOM_SENSOR_BATTERY, RCOM_PRINT_LEVEL_ALL)[1];
+  int vbat_mv = RCOM_BAT_RAW_TO_MV(bat.bat.raw);
+  ConsolePrintf("battery %imv temp %iC\n", vbat_mv, bat.bat.tempC);
+  if( vbat_mv < 3400 || vbat_mv > 3800 ) { //fixture supplies VBat=~3600mV
+    if( g_fixmode < FIXMODE_BODY1 ) ConsolePrintf("----ERROR_SENSOR_VBAT\n"); else throw ERROR_SENSOR_VBAT;
+  }
+  if( bat.bat.tempC < 15 || bat.bat.tempC > 25 ) {
+    if( g_fixmode < FIXMODE_BODY1 ) ConsolePrintf("----ERROR_SENSOR_TEMP\n"); else throw ERROR_SENSOR_TEMP;
+  }
+  
   //test tread encoders
   cmdSend(CMD_IO_CONTACTS, "encoders", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS);
   if( cmdStatus() >= ERROR_BODY && cmdStatus() < ERROR_BODY_RANGE_END )
@@ -236,12 +247,6 @@ static void BodyLoadTestFirmware(void)
   if( g_fixmode < FIXMODE_BODY1 ) {
     robot_sr_t cliff = rcomGet(3, RCOM_SENSOR_CLIFF, RCOM_PRINT_LEVEL_ALL)[1];
     ConsolePrintf("cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
-  }
-  
-  //XXX: TEST BATTERY READ -----------------------------------
-  if( g_fixmode < FIXMODE_BODY1 ) {
-    robot_sr_t bat = rcomGet(3, RCOM_SENSOR_BATTERY, RCOM_PRINT_LEVEL_ALL)[1];
-    ConsolePrintf("battery = %i.%03iV\n", RCOM_BAT_RAW_TO_MV(bat.bat.raw)/1000, RCOM_BAT_RAW_TO_MV(bat.bat.raw)%1000);
   }
   
   //XXX: TEST POWER SYSTEMS CONTROL -----------------------------------

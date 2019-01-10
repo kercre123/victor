@@ -235,6 +235,7 @@ typedef int error_t;
 #define ERROR_SENSOR_CLIFF_BOOT_FAIL_BR   361 // cliff sensor failed to boot (back right)  problem with bus communication or sensor power
 #define ERROR_SENSOR_TOF_BOOT_FAIL        362 // distance sensor failed to boot. problem with bus communication or sensor power
 #define ERROR_SENSOR_UNHANDLED_FAILURE    363 // unknown sensor error reported by body firmware. SEND LOGS TO ANKI. check for shorts and sensor power.
+#define ERROR_SENSOR_TEMP                 364 // temperature sensor reading out-of-range. Ensure room temperature for test. possible SMT problem.
 
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed

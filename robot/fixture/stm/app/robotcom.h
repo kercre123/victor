@@ -86,7 +86,7 @@ typedef struct {
 typedef union {
   int32_t val[5];
   struct { int32_t dat[4]; int32_t failureCode; } meta; //syscon-reported hw failures (1x uint16)
-  struct { int32_t raw; int32_t temp; int32_t ntc; } bat; //battery: Vin-adc, cpu_temp-?adc, ntc-adc (2x int16)
+  struct { int32_t raw; int32_t tempC; } bat; //battery: Vin[adc], temp[C] (vector=cpu, whiskey=NTC) (2x int16)
   struct { int32_t fL; int32_t fR; int32_t bL; int32_t bR; } cliff; //cliff sensors: front/back L/R (4x uint16)
   struct { int32_t pos; int32_t speed; int32_t delta; } enc; //encoder: position, speed, [delta,spine-only] (2[3]x int32)
   struct { int32_t rangeMM; int32_t spadCnt; int32_t signalRate; int32_t ambientRate; } prox; //proximity,TOF (4x uint16)
