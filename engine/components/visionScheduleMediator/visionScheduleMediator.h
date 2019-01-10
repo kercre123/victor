@@ -27,6 +27,7 @@
 
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace Anki{
@@ -124,7 +125,7 @@ private:
       return (minRecord == requestMap.end() ? 0 : minRecord->second);
     }
   };
-
+  
   // Internal call to parse the subscription record and send the emergent config to the VisionComponent if it changed
   void UpdateVisionSchedule(VisionComponent& visionComponent, const CozmoContext* context);
 
@@ -146,7 +147,9 @@ private:
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
   bool _subscriptionRecordIsDirty = false;
   uint8_t _framesSinceSendingDebugViz = 0;
-
+  std::unordered_set<VisionMode> _singleShotModes;
+  bool _forceGenerateSchedule = false;
+  
   // Final fully balanced schedule that VisionComponent will use
   AllVisionModesSchedule _schedule;
 }; // class VisionScheduleMediator

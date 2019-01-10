@@ -143,6 +143,12 @@ void VisionScheduleMediator::UpdateModeDataMapWithRequests(IVisionModeSubscriber
         "Vision mode %s was requested by a subscriber, missing settings in visionScheduleMediator_config.json",
         EnumToString(request.mode));
     }
+    else if(request.frequency == EVisionUpdateFrequency::SingleShot)
+    {
+      // Track these separately since they don't persist
+      _singleShotModes.insert(request.mode);
+      _subscriptionRecordIsDirty = true;
+    }
     else
     {
       // Record the new request
@@ -327,18 +333,36 @@ void VisionScheduleMediator::UpdateVisionSchedule(VisionComponent& visionCompone
     }
   }
 
-  if(scheduleDirty){
+  if(scheduleDirty || _forceGenerateSchedule){
     auto modeScheduleList = GenerateBalancedSchedule(visionComponent);
     const bool kUseDefaultsForUnspecified = true;
     _schedule = AllVisionModesSchedule(modeScheduleList, kUseDefaultsForUnspecified);
+    _forceGenerateSchedule = false;
   }
 
+  // Add any single shot modes to the schedule
+  if(_singleShotModes.empty())
+  {
+    _subscriptionRecordIsDirty = false;
+  }
+  else
+  {
+    const VisionModeSchedule singleShotSchedule(true);
+    for(auto & mode : _singleShotModes)
+    {
+      _schedule.GetScheduleForMode(mode) = singleShotSchedule;
+    }
+    _singleShotModes.clear();
+    
+    // Force regeneration of the schedule on next update
+    _subscriptionRecordIsDirty = true;  // Forces this method to be called again
+    _forceGenerateSchedule = true;    // Forces _schedule to be regenerated
+  }
+  
   // On any occasion where we made updates, update the debug viz
   if(ANKI_DEV_CHEATS && (scheduleDirty || activeModesDirty)){
     SendDebugVizMessages(context);
   }
-
-  _subscriptionRecordIsDirty = false;
 }
 
 const AllVisionModesSchedule::ModeScheduleList VisionScheduleMediator::GenerateBalancedSchedule(
