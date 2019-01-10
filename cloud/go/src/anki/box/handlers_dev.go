@@ -17,6 +17,7 @@ import (
 
 const baseDir = "/anki/data/assets/cozmo_resources/webserver/cloud/box"
 const imageDir = baseDir + "/images"
+const cacheDir = "/data/data/com.anki.victor/cache/boxtest"
 
 func init() {
 	devHandlers = func(s *http.ServeMux) {
@@ -24,7 +25,7 @@ func init() {
 		s.HandleFunc("/box/request", reqHandler)
 
 		imgPrefix := "/box/images/"
-		s.Handle(imgPrefix, http.StripPrefix(imgPrefix, http.FileServer(http.Dir(imageDir))))
+		s.Handle(imgPrefix, http.StripPrefix(imgPrefix, http.HandlerFunc(imgHandler)))
 
 		log.Println("Box dev handlers added")
 	}
@@ -37,6 +38,11 @@ func boxHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Error listing images: ", err)
 		return
+	}
+
+	// cache dir is optional, skip it if it causes an error
+	if cacheFiles, err := ioutil.ReadDir(cacheDir); err == nil {
+		files = append(files, cacheFiles...)
 	}
 
 	t, err := template.ParseFiles(baseDir + "/index.html")
@@ -73,12 +79,15 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// make sure file exists
+	// make sure file exists - first try image path, then cache dir
 	file := path.Join(imageDir, reqFile)
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "File does not exist: ", reqFile)
-		return
+		file = path.Join(cacheDir, reqFile)
+		if _, err := os.Stat(file); os.IsNotExist(err) {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, "File does not exist: ", reqFile)
+			return
+		}
 	}
 
 	var msg vision.OffboardImageReady
@@ -106,4 +115,15 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprint(w, resp)
+}
+
+func imgHandler(w http.ResponseWriter, r *http.Request) {
+	file := path.Join(imageDir, r.URL.Path)
+	var dir string
+	if _, err := os.Stat(file); !os.IsNotExist(err) {
+		dir = imageDir
+	} else {
+		dir = cacheDir
+	}
+	http.FileServer(http.Dir(dir)).ServeHTTP(w, r)
 }
