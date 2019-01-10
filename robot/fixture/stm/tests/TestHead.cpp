@@ -14,7 +14,7 @@
 #include "timer.h"
 
 static headid_t headnfo;
-static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_MP;
+static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_WHSK_DVT1;
 static const int CURRENT_HEAD_MODEL = 1;
 const int HEAD_PRESENT_CURRENT_MA = 10;
 

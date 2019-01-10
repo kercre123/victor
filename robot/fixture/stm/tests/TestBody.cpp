@@ -36,7 +36,7 @@
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
-static const int CURRENT_BODY_HW_REV = BODYID_HWREV_MP;
+static const int CURRENT_BODY_HW_REV = BODYID_HWREV_WHSK_DVT1;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -105,10 +105,12 @@ static void mcu_flash_verify_(uint32_t flash_addr, const uint8_t* bin_start, con
 }
 
 static void mcu_jtag_lock_(void) {
-  try { swd_stm32_lock_jtag(); }
+  #warning "JTAG LOCK DISABLED"
+  ConsolePrintf("(jtag lock disabled)\n");
+  /*try { swd_stm32_lock_jtag(); }
   catch(int e) {
     throw e;
-  }
+  }*/
 }
 
 //-----------------------------------------------------------------------------
@@ -274,7 +276,7 @@ static void BodyLoadProductionFirmware(void)
       bodyid.esn = BODYID_ESN_EMPTY;
   }
   
-  //buffer the bootlaoder image and insert ESN/HW info
+  //buffer the bootloader image and insert ESN/HW info
   const int bodybootSize = g_BodyBootEnd - g_BodyBoot;
   uint8_t* bodyboot = app_global_buffer;
   memcpy( bodyboot, g_BodyBoot, bodybootSize );
