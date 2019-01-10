@@ -155,6 +155,10 @@ function(anki_build_copydirectory_assets)
          RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/${cpassets_SRCLIST_DIR}
          ${CMAKE_CURRENT_SOURCE_DIR}/${cpassets_SRCLIST_DIR}/*)
 
+    set(INPUT_FILES "")
+    set(OUTPUT_FILES "")
+    set(OUTPUT_RELATIVE_DSTS "")
+
     foreach(src ${SRCS})
         list(APPEND INPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${cpassets_SRCLIST_DIR}/${src})
         list(APPEND OUTPUT_FILES ${cpassets_OUTPUT_DIR}/${src})
