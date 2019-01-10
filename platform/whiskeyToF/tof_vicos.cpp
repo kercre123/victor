@@ -564,15 +564,15 @@ int perform_offset_calibration(const int dev, uint32_t distanceToTarget_mm, floa
   // I think per zone offset calibration would be more desireable but was unable to get it to work, kept getting
   // ctrl_perform_zone_calibration_offset_lock: VL53L1_PerformOffsetCalibration fail => -35
   // target might have been too reflective...
-  // struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_OFFSET_PER_ZONE,
-  //                                                           VL53L1_OFFSETCALIBRATIONMODE_MULTI_ZONE,
-  //                                                           distanceToTarget_mm,
-  //                                                           (FixPoint1616_t)(targetReflectance * (2^16))};
-
-  struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_OFFSET,
-                                                            VL53L1_OFFSETCALIBRATIONMODE_PRERANGE_ONLY,
+  struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_OFFSET_PER_ZONE,
+                                                            VL53L1_OFFSETCALIBRATIONMODE_MULTI_ZONE,
                                                             distanceToTarget_mm,
                                                             (FixPoint1616_t)(targetReflectance * (2^16))};
+
+  // struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_OFFSET,
+  //                                                           VL53L1_OFFSETCALIBRATIONMODE_PRERANGE_ONLY,
+  //                                                           distanceToTarget_mm,
+  //                                                           (FixPoint1616_t)(targetReflectance * (2^16))};
 
   int rc = ioctl(dev, VL53L1_IOCTL_PERFORM_CALIBRATION, &ioctl_cal);
   return rc;
@@ -811,7 +811,7 @@ void ParseData(Sensor whichSensor,
       // The following three readings come up in 16.16 fixed point so convert
       reading.signalRate_mcps = ((float)mz_data.RangeData[r].SignalRateRtnMegaCps * (float)(1/(2^16)));
       reading.ambientRate_mcps = ((float)mz_data.RangeData[r].AmbientRateRtnMegaCps * (float)(1/(2^16)));
-      reading.sigma_mm = ((float)mz_data.RangeData[r].SigmaMilliMeter * (float)(1/2^16));
+      reading.sigma_mm = ((float)mz_data.RangeData[r].SigmaMilliMeter * (float)(1/(2^16)));
       reading.rawRange_mm = mz_data.RangeData[r].RangeMilliMeter;
       
       // The right sensor reports a lot of invalid RangeStatuses, usually
