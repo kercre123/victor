@@ -1,9 +1,0 @@
-{
-  "behaviorID"      : "BlackJackTextToSpeech",
-  "behaviorClass"   : "TextToSpeechLoop",
-
-  "associatedActiveFeature": "Blackjack",
-
-  "getInAnimation"           : "BlackJack_SpeechGetIn",
-  "loopAnimation"            : "BlackJack_SpeechShortStatement"
-}

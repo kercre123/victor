@@ -42,7 +42,6 @@ namespace {
   };
   
   static const std::set<BehaviorClass> kDoNotInterruptBehaviorClasses = {
-    BEHAVIOR_CLASS(BlackJack),
     BEHAVIOR_CLASS(FistBump),
     BEHAVIOR_CLASS(TakeAPhotoCoordinator),
   };

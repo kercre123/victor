@@ -27,8 +27,7 @@ namespace Vector {
 
 namespace{
 // The set of behaviors which maintain control of the robot, even when it's in the air
-static const std::set<BehaviorID> kBehaviorStatesToSuppressInAirReaction = {{ BEHAVIOR_ID(BlackJack),
-                                                                              BEHAVIOR_ID(ReactToTouchPetting),
+static const std::set<BehaviorID> kBehaviorStatesToSuppressInAirReaction = {{ BEHAVIOR_ID(ReactToTouchPetting),
                                                                               BEHAVIOR_ID(TakeAPhotoCoordinator),
                                                                               BEHAVIOR_ID(WeatherResponses),
                                                                               BEHAVIOR_ID(ShowWallTime),

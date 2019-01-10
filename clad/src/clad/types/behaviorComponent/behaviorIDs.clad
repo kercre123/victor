@@ -27,7 +27,6 @@ enum uint_16 BehaviorID {
   DevImageCapture_PetsAndHands,
   DevPlannerTest,
   DevSquawkBoxTest,
-  DevTestBlackjackViz,
   DevTestConnectToCube,
   DevTestPersonDetectorBehavior,
   DevTestPromptUser,
@@ -86,16 +85,6 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/appBehaviors
   ChangeEyeColor,
-
-  // victorBehaviorTree/blackjack
-  BlackJack,
-  BlackJackGoodLuckTTS,
-  BlackJackHandleRTPResponses,
-  BlackJackHitOrStandPrompt,
-  BlackJackLookAtFaceInFront,
-  BlackJackRequestToPlay,
-  BlackJackRequestToPlayAgain,
-  BlackJackTextToSpeech,
 
   // victorBehaviorTree/box
   BoxDemoAlexa,
@@ -302,7 +291,6 @@ enum uint_16 BehaviorID {
   TrackFaceTest,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
-  BlackJackVoiceCommand,
   DoATrickVoiceCommand,
   FetchCubeVoiceCommand,
   FindYourCubeVoiceCommand,

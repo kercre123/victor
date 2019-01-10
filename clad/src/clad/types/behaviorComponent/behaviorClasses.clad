@@ -63,9 +63,6 @@ enum uint_8 BehaviorClass {
   TurnToFace,
   WiggleOntoChargerContacts,
 
-  // blackjack
-  BlackJack,
-
   // box
   BoxDemo,
   BoxDemoFaceTracking,
@@ -95,7 +92,6 @@ enum uint_8 BehaviorClass {
   DevEventSequenceCapture,
   DevImageCapture,
   DevSquawkBoxTest,
-  DevTestBlackjackViz,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DevViewCubeBackpackLights,
