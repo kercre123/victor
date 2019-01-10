@@ -47,8 +47,8 @@ extern HeadToBody headData_;  //-we own this one.
 namespace { // "Private members"
 
   //map power -1.0 .. 1.0 to -32767 to 32767
-  static const f32 HAL_MOTOR_POWER_SCALE = 0x7FFF;
-  static const f32 HAL_MOTOR_POWER_OFFSET = 0;
+  //static const f32 HAL_MOTOR_POWER_SCALE = 0x7FFF;
+  //static const f32 HAL_MOTOR_POWER_OFFSET = 0;
 
   //convert per syscon tick -> /sec
   static const f32 HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
@@ -65,9 +65,9 @@ namespace { // "Private members"
     (0.25 * 3.14159265359) / 366.211,   //Head radians
   };
 
-  static f32 HAL_MOTOR_DIRECTION[MOTOR_COUNT] = {
-    1.0, -1.0, 1.0, 1.0
-  };
+  // static f32 HAL_MOTOR_DIRECTION[MOTOR_COUNT] = {
+  //   1.0, -1.0, 1.0, 1.0
+  // };
 
   static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.3f;
 
@@ -106,10 +106,11 @@ float HAL::MotorGetCalibPower(MotorID motor)
 // Set the motor power in the unitless range [-1.0, 1.0]
 void HAL::MotorSetPower(MotorID motor, f32 power)
 {
-  const auto m = EnumToUnderlyingType(motor);
-  assert(m < MOTOR_COUNT);
-  SAVE_MOTOR_POWER(m, power);
-  headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
+  // THEBOX: Never command power
+  // const auto m = EnumToUnderlyingType(motor);
+  // assert(m < MOTOR_COUNT);
+  // SAVE_MOTOR_POWER(m, power);
+  //headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
 }
 
 // Reset the internal position of the specified motor to 0

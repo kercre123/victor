@@ -945,39 +945,62 @@ void Robot::ProcessTheBoxTriggers()
   // Hold on side and tap touch three times in 2 seconds
   const int kPairingTouchCount = 3;
   const float kPairingTouchWindow_s = 2.f;
-  static int touchCount = 0;
-  static float touchStartTime_s = 0;
-  static bool enterPairing = true;
 
   // Capsense touch detection
   const auto& touchComp = GetTouchSensorComponent();
-  const bool pressed = touchComp.GetIsPressed();
-  static bool wasPressed = false;
+  const bool touched = touchComp.GetIsPressed();
 
   // Only trigger if offTread state is OnLeftSide
   const auto offTreadState = GetOffTreadsState();
+  const float now_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();    
   if (offTreadState != OffTreadsState::OnLeftSide) {
-    touchCount = 0;
-  } else if (pressed && !wasPressed) {
-    const float now_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();    
-    if (touchCount == 0 || now_s - touchStartTime_s > kPairingTouchWindow_s) {
-      touchStartTime_s = now_s;
-      touchCount = 1;
+    _touchCount = 0;
+  } else if (touched && !_wasTouched) {
+    if (_touchCount == 0 || now_s - _touchStartTime_s > kPairingTouchWindow_s) {
+      _touchStartTime_s = now_s;
+      _touchCount = 1;
     } else {
-      ++touchCount;
-      if (touchCount == kPairingTouchCount) {
-        if (enterPairing) {
+      ++_touchCount;
+      if (_touchCount == kPairingTouchCount) {
+        if (_enterPairing) {
           LOG_INFO("TheBox.EnterPairing", "");
           Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
         } else {
           LOG_INFO("TheBox.ExitPairing", "");
           Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
         }
-        enterPairing = !enterPairing;
+        _enterPairing = !_enterPairing;
       }
     }
   }
-  wasPressed = pressed;
+  _wasTouched = touched;
+
+
+  // Shake detect
+  const float kShakeTimeout_s = 1.f;
+  const float kShakeAccelThresh = 16000;
+  const bool isShaken = GetHeadAccelMagnitudeFiltered() >= kShakeAccelThresh;
+  
+  if (isShaken) {
+    if (_shakeStartTime_s == 0.f) {
+      LOG_INFO("TheBox.ShakeDetect", "START");
+      _shakeStartTime_s = now_s;
+    }
+    _lastShakenTime_s = now_s;
+  } else if (_shakeStartTime_s > 0.f &&  
+             now_s - _lastShakenTime_s > kShakeTimeout_s) {
+    LOG_INFO("TheBox.ShakeDetect", "STOP (%f sec)", _lastShakenTime_s - _shakeStartTime_s);
+    _shakeStartTime_s = 0.f;
+    _lastShakenTime_s = 0.f;
+  }
+
+  // Shake as an alternative way to exit pairing
+  const float kShakeToExitPairingTime_s = 1.f;
+  if (!_enterPairing && HasBeenShakenTimeSec() > kShakeToExitPairingTime_s) {
+    LOG_INFO("TheBox.ExitPairingByShake", "");
+    Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
+    _enterPairing = true;
+  }
 }
 
 Result Robot::UpdateFullRobotState(const RobotState& msg)

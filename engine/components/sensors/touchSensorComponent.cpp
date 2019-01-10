@@ -118,11 +118,11 @@ namespace {
   
 } // end anonymous namespace
 
-void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isPickedUp, bool isPressed)
+void TouchBaselineCalibrator::UpdateBaseline(float reading, bool isBeingHeld, bool isPressed)
 {
   static float lastBaseline = 0.0f;
   
-  if( isPickedUp ) {
+  if( isBeingHeld ) {
     _numConsecNoTouch = 0;
     if(!IsCalibrated()) {
       _numStableBaselineReadings = 0;
@@ -330,7 +330,7 @@ TouchSensorComponent::TouchSensorComponent()
   u32 esn = osstate->GetSerialNumber();
   const bool isValidESN = !(esn >= 0x00e00000 && esn <= 0x00e1ffff);
   const bool isExceptionESN = exceptionESNWithPVThardware.find(esn)!=exceptionESNWithPVThardware.end();
-  _enabled = isValidESN || isExceptionESN;
+  _enabled = isValidESN || isExceptionESN || THEBOX;
   
   // send up the OS version (useful to determine if corresponding required syscon changes are present)
   int major, minor, incremental, build;
@@ -446,7 +446,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   //
   // DVT hardware => disabled
   // PVT hardware => enabled
-  if(!THEBOX && !_enabled) {
+  if(!_enabled) {
     return;
   }
   
@@ -458,7 +458,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastRawTouchValue = msg.backpackTouchSensorRaw;
   float boxFiltVal = _boxFilterTouch.ApplyFilter(msg.backpackTouchSensorRaw);
-  const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
+  const bool isBeingHeld = (msg.status & (uint32_t)RobotStatusFlag::IS_BEING_HELD) != 0;
   bool wasOnCharger = _isOnCharger;
   _isOnCharger = (msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER) != 0;
   bool lastPressed = _isPressed; // after this tick, state may change
@@ -491,7 +491,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   
   if( !_baselineCalibrator.IsCalibrated() ) {
     // note: treat isPressed as false, because we cannot detect touch while uncalibrated
-    _baselineCalibrator.UpdateBaseline(boxFiltVal, isPickedUp, false);
+    _baselineCalibrator.UpdateBaseline(boxFiltVal, isBeingHeld, false);
   } else {
     bool lastPressed = _isPressed;
     if(!_baselineCalibrator.IsChargerModeCheckRunning()) {
@@ -545,7 +545,7 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     DEV_ASSERT( _baselineCalibrator.IsCalibrated(), "TouchSensorComponent.ClassifyingBeforeCalibration");
     // note: the baseline calibrator uses the raw touch detection, instead of the confirmed
     //  one instead, because we prefer it to be consevative in the values that it will accumulate
-    _baselineCalibrator.UpdateBaseline(boxFiltVal, isPickedUp, _isPressed);
+    _baselineCalibrator.UpdateBaseline(boxFiltVal, isBeingHeld, _isPressed);
   }
   
   // dev-only logging code for touch sensor debugging

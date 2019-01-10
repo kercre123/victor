@@ -469,6 +469,9 @@ public:
   // send the request down to the robot
   Result RequestIMU(const u32 length_ms) const;
 
+  bool IsBeingShaken() const { return _shakeStartTime_s > 0.f; }
+  float HasBeenShakenTimeSec() const { return IsBeingShaken() ? _lastShakenTime_s - _shakeStartTime_s : 0.f; }
+
   // ============ IMU Event Handling/Tracking ==============
 
   // Event handler for whenever the IMU reports that the robot was poked.
@@ -730,8 +733,19 @@ protected:
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
 
+  // ====== THEBOX ========
   // Process IMU/capsense triggers
   void ProcessTheBoxTriggers();
+
+  int   _touchCount       = 0;
+  float _touchStartTime_s = 0.f;
+  bool  _enterPairing     = true;
+  bool  _wasTouched       = false;
+
+  float _shakeStartTime_s = 0.f;
+  float _lastShakenTime_s = 0.f;
+  // ====== End THEBOX =====
+
 }; // class Robot
 
 
