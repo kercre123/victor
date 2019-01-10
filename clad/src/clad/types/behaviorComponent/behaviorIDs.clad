@@ -80,6 +80,10 @@ enum uint_16 BehaviorID {
   // devBehaviors
   TestStackMonitors,
 
+  // victorBehaviorTree/adaptive
+  AdaptiveDefault,
+  AdaptiveDispatcher,
+
   // victorBehaviorTree/alexa
   Alexa,
   AlexaSignInOut,

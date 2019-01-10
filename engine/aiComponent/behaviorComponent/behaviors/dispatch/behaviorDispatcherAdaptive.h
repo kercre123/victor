@@ -48,6 +48,9 @@ protected:
 
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void InitDispatcher() override;
+  virtual void BehaviorDispatcher_OnActivated() override;
+  virtual void BehaviorDispatcher_OnDeactivated() override;
+  virtual void DispatcherUpdate() override;
 
 
 private:
@@ -56,7 +59,8 @@ private:
     InstanceConfig();
     // TODO: put configuration variables here
     std::vector<std::string> actionSpace;
-    std::string defaultBehavior; // TODO: make sure I actually need this
+    std::string defaultBehaviorName;
+    ICozmoBehaviorPtr defaultBehavior;
     // I think we'll want to store the state-action value function here
   };
 

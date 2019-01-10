@@ -16,6 +16,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherAdaptive.h"
 
+#define LOG_CHANNEL "BehaviorDispatcherAdaptive"
+
 namespace Anki {
 namespace Vector {
 
@@ -39,25 +41,26 @@ BehaviorDispatcherAdaptive::DynamicVariables::DynamicVariables()
 BehaviorDispatcherAdaptive::BehaviorDispatcherAdaptive(const Json::Value& config)
  : IBehaviorDispatcher(config)
 {
+  LOG_WARNING("BehaviorDispatcherAdaptive.Constructor.Started", "");
   // read in the action space
   const Json::Value& actionNames = config[kActionSpaceKey];
   DEV_ASSERT_MSG(!actionNames.isNull(),
-      "BehaviorDispatcherAdaptive.ActionSpaceNotSpecified", "No %s found", kActionSpaceKey);
+      "BehaviorDispatcherAdaptive.Constructor.ActionSpaceNotSpecified", "No %s found", kActionSpaceKey);
   if(!actionNames.isNull()) {
     for(const auto& behaviorIDStr: actionNames) { // not currently supporting cooldowns, etc. Could add.
       IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr.asString());
       // need to maintain the actionSpace separately
       // (default behavior will be last entry of _iConfig.behaviorStrs, but feels risky to count on that.)
-      _iConfig.actionSpace.push_back(behaviorIDStr);
+      _iConfig.actionSpace.push_back(behaviorIDStr.asString());
     }
   }
   // read in the default behavior
   const Json::Value& defaultBehaviorName = config[kDefaultBehaviorKey];
   DEV_ASSERT_MSG(!defaultBehaviorName.isNull(),
-                 "BehaviorDispatcherAdaptive.DefaultBehaviorNotSpecified", "No %s found", kDefaultBehaviorKey);
+                 "BehaviorDispatcherAdaptive.Constructor.DefaultBehaviorNotSpecified", "No %s found", kDefaultBehaviorKey);
   if(!defaultBehaviorName.isNull()) {
     IBehaviorDispatcher::AddPossibleDispatch(defaultBehaviorName.asString());
-    _iConfig.defaultBehaviorName = defaultBehaviorName; // TODO: do I actually need this?
+    _iConfig.defaultBehaviorName = defaultBehaviorName.asString(); // TODO: do I actually need this?
   }
 
 }
@@ -69,11 +72,18 @@ BehaviorDispatcherAdaptive::~BehaviorDispatcherAdaptive()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherScoring::InitDispatcher()
+void BehaviorDispatcherAdaptive::InitDispatcher()
 {
   // TODO: sanity check: check action lists here
-
-  // TODO: get the default behavior (not just the name)?
+  LOG_WARNING("BehaviorDispatcherAdaptive.InitDispatcher.SanityCheckBehaviorNames",
+      "behaviorNames:\n");
+  for(auto& b: GetAllPossibleDispatches()){
+    LOG_WARNING("BehaviorDispatcherAdaptive.InitDispatcher.SanityCheckBehaviorStrs", "\t%s\n", b->GetDebugStateName().c_str());
+  }
+  LOG_WARNING("BehaviorDispatcherAdaptive.InitDispatcher.SanityCheckDefaultBehaviorName",
+      "_iConfig.defaultBehaviorName: %s", _iConfig.defaultBehaviorName.c_str());
+  // get the default behavior (not just the name)
+  _iConfig.defaultBehavior = FindBehavior(_iConfig.defaultBehaviorName);
 
 }
 
@@ -83,7 +93,7 @@ void BehaviorDispatcherAdaptive::GetBehaviorJsonKeys(std::set<const char*>& expe
 {
   const char* list[] = {
       kActionSpaceKey,
-      kDefaultABehaviorKey
+      kDefaultBehaviorKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
   IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
@@ -98,7 +108,7 @@ void BehaviorDispatcherAdaptive::BehaviorDispatcher_OnActivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRandom::BehaviorDispatcher_OnDeactivated()
+void BehaviorDispatcherAdaptive::BehaviorDispatcher_OnDeactivated()
 {
   // TODO: any learning vars that need to be cleaned up?
 }
@@ -117,6 +127,8 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
   // probabilistically select
 
   // can I do the learning update here, or should that be in DispatcherUpdate?
+
+  return _iConfig.defaultBehavior;
 }
 
 
@@ -128,7 +140,7 @@ void BehaviorDispatcherAdaptive::DispatcherUpdate()
   // if something other than Default just finished, do a learning update
 }
 
-
+/*
 // getState
 State BehaviorDispatcherAdaptive::EvaluateState(){
   // TODO: implement (also, define State)
@@ -139,6 +151,7 @@ SAValue getStateActionValue(State s, Action a){
   // TODO: implement for real
   return 0.0;
 }
+*/
 
 // callback (?)
 

@@ -1,0 +1,12 @@
+{
+  "behaviorID": "AdaptiveDispatcher",
+  "behaviorClass": "DispatcherAdaptive",
+
+  "interruptActiveBehavior": false, // I may find this will need to be more subtle...
+
+  "actionSpace": [
+    "FistBump"//,
+    //"SomeOtherBehavior"
+  ],
+  "defaultBehavior": "AdaptiveDefault"
+}

@@ -1,0 +1,21 @@
+{
+  "behaviorID": "AdaptiveDefault",
+  "behaviorClass": "ObservingLookAtFaces",
+
+  "wantsToBeActivatedCondition": {
+    //"conditionType": "Compound",
+    //"and": [
+    //  {
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads"
+      //}//,
+      //{
+      //  "conditionType": "Emotion",
+      //  "emotion": "Stimulated",
+      //  "min": 0.1
+      //}
+    //]
+  },
+
+  "searchBehavior": "ObservingFindFaces"
+}
