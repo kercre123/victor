@@ -16,4 +16,7 @@ if(USE_ANKITRACE AND VICOS)
     dl
     ${LTTNGUST_LIBRARIES}
     )
+
+  anki_build_strip(TARGET ankitrace)
+
 endif()
