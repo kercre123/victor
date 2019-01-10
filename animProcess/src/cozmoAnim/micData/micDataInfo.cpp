@@ -52,24 +52,36 @@ void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk
   if (_typesToCollect.IsBitFlagSet(MicDataType::Processed))
   {
     AudioUtil::AudioChunk newChunk;
-    newChunk.resize(kSamplesPerBlock);
+    
+    size_t chunkSize = std::min(size, (size_t)kSamplesPerBlock);
+    newChunk.resize(chunkSize);
     
     // Apply fade in
     if (_fadeInSamples > 0) {
       size_t sampleIdx = 0;
-      for (; (sampleIdx < size) && (_fadeInScalar < 1.0f); ++sampleIdx) {
+      for (; (sampleIdx < chunkSize) && (_fadeInScalar < 1.0f); ++sampleIdx) {
         newChunk[sampleIdx] = static_cast<AudioUtil::AudioSample>(audioChunk[sampleIdx] * _fadeInScalar);
         _fadeInScalar += _fadeInStepSize;
         --_fadeInSamples;
       }
       // Copy remaining samples
-      std::copy(audioChunk + sampleIdx, audioChunk + size, newChunk.begin() + sampleIdx);
+      std::copy(audioChunk + sampleIdx, audioChunk + chunkSize, newChunk.begin() + sampleIdx);
     }
     else {
       // Copy entire chunk
-      std::copy(audioChunk, audioChunk + size, newChunk.begin());
+      std::copy(audioChunk, audioChunk + chunkSize, newChunk.begin());
     }
     _processedAudioData.push_back(std::move(newChunk));
+    
+    size_t startIdx = chunkSize;
+    while( startIdx < size ) {
+      AudioUtil::AudioChunk nextChunk;
+      chunkSize = std::min(size - startIdx, (size_t)kSamplesPerBlock);
+      nextChunk.resize(chunkSize);
+      std::copy(audioChunk + startIdx, audioChunk + startIdx + chunkSize, nextChunk.begin());
+      _processedAudioData.push_back(std::move(nextChunk));
+      startIdx += chunkSize;
+    }
   }
 }
 

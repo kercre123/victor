@@ -30,6 +30,7 @@
 #include "audioUtil/speechRecognizer.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
+#include "util/container/ringBuffContiguousRead.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
@@ -52,6 +53,8 @@ namespace {
 
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
+  
+  CONSOLE_VAR_RANGED(unsigned int, kPrerollBlocks, "TheBox.WakeWord", 160, 1, 200); // 10ms to 2 sec in increments of 10ms
 
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.
@@ -110,6 +113,7 @@ MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* mi
 , _micDataSystem(micDataSystem)
 , _writeLocationDir(writeLocation)
 , _micImmediateDirection(std::make_unique<MicImmediateDirection>())
+, _firstTickSinceWakeWord(false)
 , _beatDetector(std::make_unique<BeatDetector>())
 {
   // Init the various SE processing
@@ -286,6 +290,8 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
              "MicDataProcessor.CreateStreamJob.AudioProcIdx");
+  
+  _firstTickSinceWakeWord = true;
   
   if (overlapLength_ms > 0) {
     const auto overlapCount = overlapLength_ms / kTimePerSEBlock_ms;
@@ -782,12 +788,14 @@ void MicDataProcessor::ProcessTriggerLoop()
   {
     ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kMicDataProcessorTrigger_Logging));
     ANKI_CPU_PROFILE("ProcessTriggerLoop");
+    bool firstTickSinceWakeWord = false;
     TimedMicData* readyDataSpot = nullptr;
     {
       ANKI_CPU_PROFILE("WaitForData");
       std::unique_lock<std::mutex> lock(_procAudioXferMutex);
       auto dataReadyCheck = [this] () { return _processThreadStop || _procAudioXferCount > 0; };
       _dataReadyCondition.wait(lock, dataReadyCheck);
+      firstTickSinceWakeWord = _firstTickSinceWakeWord;
 
       // Special case if we're being signalled to shut down
       if (_processThreadStop)
@@ -802,9 +810,40 @@ void MicDataProcessor::ProcessTriggerLoop()
 
     const auto& processedAudio = readyDataSpot->audioBlock;
     std::deque<std::shared_ptr<MicDataInfo>> jobs = _micDataSystem->GetMicDataJobs();
+    
+    if( _prerollBuff == nullptr || _prerollBuff->Capacity() != kSamplesPerBlock*kPrerollBlocks ) {
+      _prerollBuff.reset( new Util::RingBuffContiguousRead<int16_t>{kSamplesPerBlock*kPrerollBlocks,kSamplesPerBlock*kPrerollBlocks} );
+    }
+    
+    size_t numAdded = _prerollBuff->AddData( processedAudio.data(), static_cast<unsigned int>(processedAudio.size()) );
+    ANKI_VERIFY(numAdded == processedAudio.size(), "MicDataProcessor.ProcessTriggerLoop.BadAdd", "Did not add all audio");
+    
+    unsigned int buffSize;
+    if( firstTickSinceWakeWord ) {
+      // flush all available data
+      buffSize = static_cast<unsigned int>(_prerollBuff->GetContiguousSize());
+      _firstTickSinceWakeWord = false;
+    } else {
+      buffSize = static_cast<unsigned int>(processedAudio.size());
+    }
+    
+    const int16_t* preroll;
+    if( !jobs.empty() ) {
+      preroll = _prerollBuff->ReadData( buffSize );
+    }
+    
     for (auto& job : jobs)
     {
-      job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
+      job->CollectProcessedAudio( preroll, buffSize );
+    }
+    
+    if( jobs.empty() ) {
+      // only advance cursor if not trying to collect preroll
+      if( _prerollBuff->Size() == _prerollBuff->Capacity() ) {
+        _prerollBuff->AdvanceCursor( static_cast<unsigned int>(processedAudio.size()) );
+      }
+    } else {
+      _prerollBuff->AdvanceCursor( buffSize );
     }
     
     // Run the trigger detection, which will use the callback defined above

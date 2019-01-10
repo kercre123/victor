@@ -92,6 +92,7 @@ enum uint_16 BehaviorID {
   BoxDemoBase,
   BoxDemoBoot,
   BoxDemoFaceTracking,
+  BoxDemoWaitWithTriggerWord,
 
   // victorBehaviorTree/character
   HowOldAreYou,

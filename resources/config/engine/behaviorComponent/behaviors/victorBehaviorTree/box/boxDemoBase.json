@@ -12,6 +12,10 @@
       "behavior": "BoxDemoBoot"
     },
     {
+      "name": "OneTriggerWord",
+      "behavior": "BoxDemoWaitWithTriggerWord"
+    },
+    {
       "name": "PersonDetector",
       "behavior": "BoxDemoFaceTracking"
     },
@@ -35,9 +39,21 @@
       "from": "BootUp",
       "exitTransitions": [
         {
-          "to": "WaitForAlexaPutDown",
+          "to": "OneTriggerWord",
           "condition": {
             "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "OneTriggerWord",
+      "interruptingTransitions": [
+        {
+          "to": "WaitForAlexaPutDown",
+          "condition": {
+            "customCondition": "TriggerPhaseComplete"
           }
         }
       ]
