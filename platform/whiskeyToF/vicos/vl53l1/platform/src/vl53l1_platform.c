@@ -170,6 +170,7 @@ VL53L1_Error VL53L1_RdWord(VL53L1_Dev_t *pdev, uint16_t index, uint16_t *pdata) 
 VL53L1_Error VL53L1_RdDWord(VL53L1_Dev_t *pdev, uint16_t index, uint32_t *pdata) {
   uint8_t data[sizeof(uint32_t)];
   VL53L1_Error err = VL53L1_ReadMulti(pdev, index, data, sizeof(uint32_t));
+  (void)err;
   *pdata = data[0] << 24 |
            data[1] << 16 |
            data[2] <<  8 |
