@@ -26,13 +26,15 @@ void Power::init(void) {
 }
 
 static inline void disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
+  MAIN_EN_WIS::mode(MODE_OUTPUT);
+  MAIN_EN_WIS::reset();
 }
 
 static inline void enableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::set();
+  BODY_TX::mode(MODE_OUTPUT);
+
+  MAIN_EN_WIS::mode(MODE_OUTPUT);
+  MAIN_EN_WIS::set();
 }
 
 void Power::setMode(PowerMode set) {

@@ -42,10 +42,6 @@ enum {
 };
 typedef uint32_t RobotMotor;
 
-enum {
-  RUNNING_FLAGS_SENSORS_VALID = 1
-};
-
 // ENUM DropSensor
 enum {
   DROP_SENSOR_FRONT_LEFT  = 0,
@@ -96,9 +92,19 @@ enum {
   POWER_ON_CHARGER    = 0x1,
   POWER_IS_CHARGING   = 0x2,
   POWER_BATTERY_DISCONNECTED = 0x4,
+  POWER_IS_OVERHEATED = 0x8,
+  POWER_CHARGER_OVERHEAT = 0x10,
   POWER_CHARGER_SHORTED = 0x8000
 };
 typedef uint16_t BatteryFlags;
+
+enum {
+  RUNNING_FLAGS_SENSORS_VALID = 1,
+  ENCODERS_DISABLED = 2,
+  ENCODER_HEAD_INVALID = 4,
+  ENCODER_LIFT_INVALID = 8
+};
+typedef uint8_t B2HFlags;
 
 // ENUM PowerState
 enum {
@@ -113,6 +119,15 @@ enum {
   POWER_CONNECT_CHARGER    = 0x4000,
 };
 typedef uint32_t PowerFlags;
+
+// ENUM TemperatureAlarm
+enum {
+  TEMP_ALARM_SAFE = 0,
+  TEMP_ALARM_LOW = 1,
+  TEMP_ALARM_MID = 2,
+  TEMP_ALARM_HOT = 3
+};
+typedef uint8_t TemperatureAlarm;
 
 // ENUM LedIndexes
 enum {
@@ -176,7 +191,7 @@ struct RangeData
   uint16_t signalRate;
   uint16_t ambientRate;
   uint16_t spadCount;
-  uint16_t spare2;
+  uint16_t sampleCount;
   uint32_t calibrationResult;
 };
 
@@ -214,7 +229,7 @@ struct BodyToHead
 {
   uint32_t framecounter;
   uint8_t flags;
-  uint8_t _unused0;
+  TemperatureAlarm tempAlarm;
   FailureCode failureCode;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
@@ -222,7 +237,8 @@ struct BodyToHead
   struct RangeData proximity;
   uint16_t touchLevel[2];
   uint16_t micError[2]; // Raw bits from a segment of mic data (stuck bit detect)
-  uint8_t _unused[28];  // Future expansion
+  uint16_t touchHires[2];
+  uint8_t _unused[24];  // Future expansion
 #if MICDATA_ENABLED
   int16_t audio[MICDATA_SAMPLES_COUNT];
 #endif

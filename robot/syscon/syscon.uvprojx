@@ -378,6 +378,11 @@
           <GroupName>src</GroupName>
           <Files>
             <File>
+              <FileName>analog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\analog.cpp</FilePath>
+            </File>
+            <File>
               <FileName>comms.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\comms.cpp</FilePath>
@@ -433,11 +438,6 @@
               <FilePath>.\src\contacts.cpp</FilePath>
             </File>
             <File>
-              <FileName>start_mics.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\src\start_mics.s</FilePath>
-            </File>
-            <File>
               <FileName>i2c.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\i2c.cpp</FilePath>
@@ -447,16 +447,16 @@
               <FileType>8</FileType>
               <FilePath>.\src\power.cpp</FilePath>
             </File>
+            <File>
+              <FileName>start_mics.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\src\start_mics.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>common</GroupName>
           <Files>
-            <File>
-              <FileName>analog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\analog.cpp</FilePath>
-            </File>
             <File>
               <FileName>flash.cpp</FileName>
               <FileType>8</FileType>
