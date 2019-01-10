@@ -177,12 +177,13 @@ void Board::pwr_charge(bool en)
 //        ADC_DATAx is the value measured by the ADC on channel x (right-aligned)
 //        FULL_SCALE is the maximum digital value of the ADC output. (e.g. 12-bit = 4095)
 
-static uint32_t adcReadChannel_(int chan) //single channel sample
+uint32_t Board::adcReadRaw(adc_chan_e chan)
 {
-  if( chan < 0 || chan > 17 )
+  int adc_channel = (int)chan;
+  if( adc_channel < 0 || adc_channel > 17 )
     return 0;
   
-  ADC1->CHSELR = (1 << chan);
+  ADC1->CHSELR = (1 << adc_channel);
   ADC1->ISR = ADC_ISR_EOS; //clear end-of-sequence flag
   ADC1->CR |= ADC_CR_ADSTART; //start conversion
   while( !(ADC1->ISR & ADC_ISR_EOS) )
@@ -193,28 +194,37 @@ static uint32_t adcReadChannel_(int chan) //single channel sample
 
 uint32_t Board::adcRead(adc_chan_e chan, int oversample)
 {
-  uint32_t adc_raw=0;
+  uint32_t adc_raw=0, vrefint=0;
+  
   for(int x=0; x < (1 << oversample); x++) {
-    adc_raw += adcReadChannel_((int)chan);
+    vrefint += Board::adcReadRaw(ADC_VREFINT);
+    adc_raw += Board::adcReadRaw(chan);
   }
-  return adc_raw >> oversample;
+  vrefint >>= oversample;
+  adc_raw >>= oversample;
+  
+  //adc-adj = adc * (VrefCal/Vref) * (3.3V / 2.8V)
+  return (adc_raw * VREFINT_CAL_VAL * 33) / (vrefint * 28);
 }
 
 uint32_t Board::adcReadMv(adc_chan_e chan, int oversample)
 {
   uint32_t adc_raw=0, vrefint=0;
-  
   for(int x=0; x < (1 << oversample); x++) {
-    vrefint += adcReadChannel_((int)ADC_VREFINT);
-    adc_raw += adcReadChannel_((int)chan);
+    vrefint += Board::adcReadRaw(ADC_VREFINT);
+    adc_raw += Board::adcReadRaw(chan);
   }
   vrefint >>= oversample;
   adc_raw >>= oversample;
   
   //Vref[mV] = 3300 * VrefCal / adcMax <-- cal @ 12-bit resolution?
   //Vref[mV] = Vdda * vrefint / adcMax  <-- as measured
-  const int VDDA = 3300 * VREFINT_CAL_VAL / vrefint;
+  const int VDDA = (3300 * VREFINT_CAL_VAL) / vrefint;
   return ((adc_raw * VDDA) >> 12);
+  
+  //Use adjusted adc value
+  //uint32_t adc_adj = Board::adcRead(chan, oversample);
+  //return (adc_adj * /*VDDA=*/2800 ) >> 12;
 }
 
 //------------------------------------------------  

@@ -50,7 +50,8 @@ namespace Board
   void pwr_vmain(bool en); //VMAIN enable
   void pwr_charge(bool en); //VEXT connect
   
-  uint32_t adcRead(adc_chan_e chan, int oversample = 0); //2^oversample = # samples (averaged)
+  uint32_t adcReadRaw(adc_chan_e chan); //raw adc value
+  uint32_t adcRead(adc_chan_e chan, int oversample = 0); //adc value, VDD compensated. 2^oversample = # samples (averaged)
   uint32_t adcReadMv(adc_chan_e chan, int oversample = 0); //2^oversample = # samples (averaged)
 }
 #endif /* __cplusplus */
