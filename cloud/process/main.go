@@ -101,9 +101,6 @@ func main() {
 	// var test bool
 	// flag.BoolVar(&test, "test", false, "enable test channel")
 
-	ms := flag.Bool("ms", false, "force microsoft handling on the server end")
-	lex := flag.Bool("lex", false, "force amazon handling on the server end")
-
 	awsRegion := flag.String("region", "us-west-2", "AWS Region")
 
 	flag.Parse()
@@ -147,11 +144,7 @@ func main() {
 	var options []cloudproc.Option
 	options = append(options, platformOpts...)
 	voiceOpts = append(voiceOpts, voice.WithCompression(true))
-	if *ms {
-		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerMicrosoft))
-	} else if *lex {
-		voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerAmazon))
-	}
+	voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerMicrosoft))
 
 	if err := config.SetGlobal(""); err != nil {
 		log.Println("Could not load server config! This is not good!:", err)
