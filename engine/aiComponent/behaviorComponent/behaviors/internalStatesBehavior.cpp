@@ -445,6 +445,8 @@ void InternalStatesBehavior::OnBehaviorDeactivated()
   const StateID endState = _currState;
   TransitionToState(InvalidStateID);
   _currState = endState;
+
+  OnBehaviorDeactivatedInternal();
 }
 
 void InternalStatesBehavior::BehaviorUpdate()
@@ -996,6 +998,18 @@ void InternalStatesBehavior::AddConsoleVarTransitions( const char* uniqueVarName
   if( ANKI_DEV_CHEATS ) {
     auto func = [this](ConsoleFunctionContextRef context) {
       const char* stateName = ConsoleArg_Get_String(context, "stateName");
+
+      // special case, just log the states and return
+      if( strncmp(stateName, "list", 5) == 0 ) {
+        std::stringstream states;
+        for( const auto& pair : _stateNameToID ) {
+          states << pair.first << ' ';
+        }
+
+        context->channel->WriteLog("%s", states.str().c_str());
+        return;
+      }
+
       // case insensitive find for convenience
       auto tolower = [](const char c) { return std::tolower(c); };
       // lower cased request
@@ -1019,6 +1033,19 @@ void InternalStatesBehavior::AddConsoleVarTransitions( const char* uniqueVarName
           _consoleFuncState = stateID;
         }
       }
+      else {
+        // state did not match, list out states to the console
+        std::stringstream states;
+        for( const auto& pair : _stateNameToID ) {
+          states << pair.first << ", ";
+        }
+
+        context->channel->WriteLog("No state '%s', available states: %s", stateName, states.str().c_str());
+
+        PRINT_NAMED_WARNING("InternalStatesBehavior.InvalidState",
+                            "No state '%s', available states: %s", stateName, states.str().c_str());
+      }
+
     };
     auto* cfunc = new Anki::Util::IConsoleFunction( uniqueVarName, std::move(func), category, "const char* stateName" );
     _consoleFunc.reset( cfunc );
