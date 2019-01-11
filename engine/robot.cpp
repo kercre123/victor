@@ -983,6 +983,16 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
   
+  {
+    const float gravity_mmps = 9810.f;
+    Point3f acc{msg.accel.x / gravity_mmps, msg.accel.y / gravity_mmps, msg.accel.z / gravity_mmps};
+    GetImuComponent().AddRawData(
+      acc,
+      {msg.gyro.x, msg.gyro.y, msg.gyro.z}, 
+      _lastMsgTimestamp
+    );
+  }
+
   for (auto imuDataFrame : msg.imuData) {
     if (imuDataFrame.timestamp > 0) {
       GetImuComponent().AddData(std::move(imuDataFrame));

@@ -14,6 +14,7 @@
 #define __Engine_Components_ImuComponent_H__
 
 #include "engine/components/sensors/iSensorComponent.h"
+#include "engine/components/sensors/imuUKF.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "coretech/common/engine/robotTimeStamp.h"
@@ -99,6 +100,12 @@ public:
 
   // process a gyro frame and add it to history
   void AddData(IMUDataFrame&& frame);
+
+  void AddRawData(const Point3f& accel, const Point3f& gyro, RobotTimeStamp_t t) 
+  {
+    _ukf.Update(accel, gyro, t);
+    // LOG_WARNING("UKF.Data","acc:%s  gyro:%s", accel.ToString().c_str(), gyro.ToString().c_str());
+  }
   
   //////
   // IDependencyManagedComponent functions
@@ -122,6 +129,7 @@ protected:
 
 private:
   ImuHistory _imuHistory;
+  ImuUKF     _ukf;
 
 };
   

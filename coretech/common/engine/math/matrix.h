@@ -127,6 +127,7 @@ namespace Anki {
     SmallMatrix<NROWS,NCOLS,T>& operator+=(T value);
     SmallMatrix<NROWS,NCOLS,T>& operator*=(const SmallMatrix<NROWS,NCOLS,T>& other);
     SmallMatrix<NROWS,NCOLS,T>& operator+=(const SmallMatrix<NROWS,NCOLS,T>& other);
+    // TODO: add subtraction...
     
     // Matrix transpose:
     void GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const;
