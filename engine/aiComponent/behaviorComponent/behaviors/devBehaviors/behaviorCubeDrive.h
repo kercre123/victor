@@ -17,6 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoObservableObject.h"
+#include "coretech/vision/engine/image_impl.h"
 
 #include <chrono>
 #include <memory>
@@ -65,6 +66,7 @@ private:
     ObjectID                                                    object_id;
     std::shared_ptr<ActiveAccel>                                filtered_cube_accel;
     std::shared_ptr<CubeAccelListeners::LowPassFilterListener>  low_pass_filter_listener;
+    Vision::Image                                               image;
     double                                                      last_lift_action_time;
     bool                                                        lift_up;
   };
@@ -72,6 +74,9 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   bool _liftIsUp;
+
+  std::string _userText;
+  float _col, _row;
   
 };
 

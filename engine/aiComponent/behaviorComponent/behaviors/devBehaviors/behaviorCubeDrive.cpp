@@ -22,9 +22,53 @@
 #include "engine/components/cubes/cubeInteractionTracker.h"
 #include "engine/components/movementComponent.h"
 
+using namespace std;
+
 namespace Anki {
 namespace Vector {
   
+namespace {
+  static constexpr float kTopLeftCornerMagicNumber = 15.f; 
+  static constexpr float kSelectRowStart           = 25.f; 
+  static const     float kTextHorzSpace            = 40.f; 
+  static const     float kTextVertSpace            = 20.f; 
+  static const     float kUserTextScale            = 0.7f; 
+  static const     float kSelectTextScale          = 0.5f; 
+  static const     float kMinAccel                 = 0.250f;
+}
+
+enum {
+      ACTION_APPEND = 0,
+      ACTION_DELETE = 1,
+      ACTION_DONE   = 2
+};
+
+struct CursorCell {
+  string Text;
+  int    Action;
+};
+
+
+const static int NUM_ROWS = 3;
+const static int NUM_COLS = 4;
+CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
+  {
+   {{"0", ACTION_APPEND},
+    {"1", ACTION_APPEND},
+    {"2", ACTION_APPEND},
+    {"3", ACTION_APPEND}},
+
+   {{"4", ACTION_APPEND},
+    {"5", ACTION_APPEND},
+    {"6", ACTION_APPEND},
+    {"7", ACTION_APPEND}},
+
+   {{"8", ACTION_APPEND},
+    {"9", ACTION_APPEND},
+    {"DEL", ACTION_DELETE},
+    {"DONE", ACTION_DONE}},
+  };
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::InstanceConfig::InstanceConfig()
@@ -120,7 +164,10 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dVars = DynamicVariables();
   _liftIsUp = false;
   SetLiftState(_liftIsUp);
-  
+  _userText = "";
+  _row = 0.0;
+  _col = 0.0;
+
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
   ActiveObject* active_object = GetBEI().GetBlockWorld().GetConnectedActiveObjectByActiveID(connected_cube_active_id);
@@ -161,20 +208,42 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     }
     float xGs = _dVars.filtered_cube_accel->x / 9810.0;
     float yGs = _dVars.filtered_cube_accel->y / 9810.0;
-    float left_wheel_mmps = -xGs * 250.0;
-    float right_wheel_mmps = -xGs * 250.0;
-
-    left_wheel_mmps += yGs * 250.0;
-    right_wheel_mmps -= yGs * 250.0;
-
-    if(abs(left_wheel_mmps)<8.0) {
-      left_wheel_mmps = 0.0;
+    if (abs(xGs) < kMinAccel) {
+      xGs = 0.0;
     }
-    if(abs(right_wheel_mmps)<8.0) {
-      right_wheel_mmps = 0.0;
+    if (abs(yGs) < kMinAccel) {
+      yGs = 0.0;
     }
+
+    _col += yGs;
+    _row += xGs;
+    if (_col < 0.0) {
+      _col = 0.0;
+    }
+    if (_col > float(NUM_COLS-1)) {
+      _col = float(NUM_COLS-1);
+    }
+    if (_row < 0.0) {
+      _row = 0.0;
+    }
+    if (_row > float(NUM_ROWS-1)) {
+      _row = float(NUM_ROWS-1);
+    }
+
+    // float left_wheel_mmps = -xGs * 250.0;
+    // float right_wheel_mmps = -xGs * 250.0;
+
+    // left_wheel_mmps += yGs * 250.0;
+    // right_wheel_mmps -= yGs * 250.0;
+
+    // if(abs(left_wheel_mmps)<8.0) {
+    //   left_wheel_mmps = 0.0;
+    // }
+    // if(abs(right_wheel_mmps)<8.0) {
+    //   right_wheel_mmps = 0.0;
+    // }
      
-    GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(left_wheel_mmps, right_wheel_mmps, 1000.0, 1000.0);
+    // GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(left_wheel_mmps, right_wheel_mmps, 1000.0, 1000.0);
 
     // double now = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
     // if(now - 0.25 > _dVars.last_lift_action_time) {
@@ -188,9 +257,45 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     // }
     if(GetBEI().GetCubeInteractionTracker().GetTargetStatus().tappedDuringLastTick) {
       // toggle lift up/down
-      _liftIsUp = !_liftIsUp;
-      SetLiftState(_liftIsUp);
+      //_liftIsUp = !_liftIsUp;
+      //SetLiftState(_liftIsUp);
+
+      CursorCell cc = CURSOR_MATRIX[int(_row)][int(_col)];
+      switch (cc.Action) {
+      case ACTION_APPEND:
+        _userText += cc.Text;
+        break;
+      case ACTION_DELETE:
+        if (_userText.length() > 0) {
+          _userText = _userText.substr(0, _userText.length()-1);
+        }
+        break;
+      case ACTION_DONE:
+        _userText = "";  // TODO
+        break;
+      }
     }
+
+    // Update the screen
+    _dVars.image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
+    _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
+                          _userText, NamedColors::WHITE, kUserTextScale);
+    // _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
+    //                       to_string(int(1000.0 * xGs)), NamedColors::WHITE, kUserTextScale);
+    for(int r = 0; r < NUM_ROWS; r++) {
+      for (int c = 0; c < NUM_COLS; c++) {
+        Point2f p = Point2f((float(c+0) * kTextHorzSpace),
+                            (float(r+1) * kTextVertSpace) + kSelectRowStart);
+        string t = CURSOR_MATRIX[r][c].Text;
+        auto color = NamedColors::RED;
+        if ((r == int(_row)) && (c == int(_col))) {
+          color = NamedColors::WHITE;
+        }
+        _dVars.image.DrawText(p, t, color, kSelectTextScale);
+      }
+    }
+
+    GetBEI().GetAnimationComponent().DisplayFaceImage(_dVars.image, 1.0f, true);
   }
 }
 
