@@ -4,6 +4,7 @@
   "interruptActiveBehavior": true,
   "behaviors": [
     "Alexa",
+    "BoxDemoDescribeScene",
     "Wait"
   ]
 }

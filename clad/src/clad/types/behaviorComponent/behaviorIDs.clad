@@ -91,6 +91,7 @@ enum uint_16 BehaviorID {
   BoxDemoAlexaGetIn,
   BoxDemoBase,
   BoxDemoBoot,
+  BoxDemoDescribeScene,
   BoxDemoFaceTracking,
   BoxDemoWaitWithTriggerWord,
 

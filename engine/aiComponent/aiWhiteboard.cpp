@@ -150,6 +150,8 @@ void AIWhiteboard::OnRobotDelocalized()
   RemovePossibleObjectsFromZombieMaps();
 
   UpdatePossibleObjectRender();
+  
+  _lastDelocalizationTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -845,6 +847,13 @@ bool AIWhiteboard::InsertNewFace(const SmartFaceID& smartFaceID)
   _boxDemoFaces.push_back(smartFaceID);
   
   return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float AIWhiteboard::GetSecondsSinceLastDelocalization() const
+{
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  return (currentTime_sec - _lastDelocalizationTime_sec);
 }
   
 } // namespace Vector

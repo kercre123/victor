@@ -11,8 +11,9 @@ enum uint_8 OffboardCommsType {
 
 enum uint_8 OffboardProcType {
   CelebrityFace,
+  HumanPose,
   ImageSegmentation,
-  HumanPose
+  SceneDescription
 }
 
 structure OffboardImageReady {

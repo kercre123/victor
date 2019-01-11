@@ -1,0 +1,9 @@
+{
+  "behaviorID":    "BoxDemoDescribeScene",
+  "behaviorClass": "BoxDemoDescribeScene",
+  
+  "delocTimeWindow_sec": 1.0,
+  "textDisplayTime_sec": 3.0,
+  "visionRequestTimeout_sec": 10.0
+}
+

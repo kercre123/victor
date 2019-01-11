@@ -46,17 +46,23 @@ private:
   bool WaitForResultFile(const std::string& resultFilename, std::list<Vision::SalientPoint>& salientPoints);
   bool WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPoints);
   
-  static Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
-                                           std::list<Vision::SalientPoint>& salientPoints);
+  Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
+                                    const Vision::OffboardProcType procType,
+                                    std::list<Vision::SalientPoint>& salientPoints);
   std::string _cachePath;
   int         _pollPeriod_ms;
   bool        _isVerbose = false;
   float       _timeoutDuration_sec = 10.f;
+  TimeStamp_t _imageTimestamp = 0;
+  
   Vision::OffboardCommsType _commsType = Vision::OffboardCommsType::FileIO;
   std::vector<Vision::OffboardProcType> _procTypes;
   
   // For non-FileIO comms
   std::unique_ptr<LocalUdpClient> _udpClient;
+  
+  bool Connect();
+  bool IsConnected() const;
   
 }; // class Model
 

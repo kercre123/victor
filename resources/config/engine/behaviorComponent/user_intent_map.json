@@ -282,6 +282,10 @@
       "user_intent": "character_age",
       "cloud_intent": "intent_character_age",
       "feature_gate": "HowOldAreYou"
+    },
+    {
+      "user_intent": "describe_scene",
+      "cloud_intent": "intent_ask_vision"
     }
   ],
 

@@ -80,13 +80,14 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
       return RESULT_FAIL;
     }
   }
-  
+   
   // Anything not talking over FileIO is assumed to be talking over UDP
   if(Vision::OffboardCommsType::FileIO != _commsType && _udpClient == nullptr)
   {
     _udpClient.reset(new LocalUdpClient());
-    const bool udpSuccess = _udpClient->Connect(LOCAL_SOCKET_PATH "box_server", LOCAL_SOCKET_PATH "_box_vision_client");
-    LOG_INFO("OffboardModel.Connect.Result", "%s", udpSuccess ? "Success" : "FAILED");
+    
+    const bool connected = Connect();
+    LOG_INFO("OffboardModel.LoadModelInternal.ConnectionStatus", "%d", connected);
   }
   
   // Use the graphFile from params as the processing type
@@ -108,13 +109,32 @@ Result OffboardModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoi
 {
   salientPoints.clear();
   
+  _imageTimestamp = img.GetTimestamp();
+  
   switch(_commsType)
   {
     case Vision::OffboardCommsType::FileIO:
       return DetectWithFileIO(img, salientPoints);
       
     case Vision::OffboardCommsType::CLAD:
-      return DetectWithCLAD(img, salientPoints);
+    {
+      // If we're not yet connected, keep trying to connect
+      bool connected = IsConnected();
+      if(!connected)
+      {
+        connected = Connect();
+      }
+    
+      if(connected)
+      {
+        return DetectWithCLAD(img, salientPoints);
+      }
+      else
+      {
+        LOG_WARNING("OffboardModel.Detect.StillNotConnected", "Will keep trying");
+        return RESULT_FAIL;
+      }
+    }
   }
 }
   
@@ -210,8 +230,8 @@ Result OffboardModel::DetectWithCLAD(const Vision::ImageRGB& img, std::list<Visi
 # pragma unused(resultAvailable)
   
   // Delete image file (whether we got the result or timed out)
-  LOG_DEBUG("NeuralNetRunner.Detect.DeletingImageFile", "%s, deleting %s",
-            (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
+  LOG_INFO("NeuralNetRunner.Detect.DeletingImageFile", "%s, deleting %s",
+           (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
   Util::FileUtils::DeleteFile(imageFilename);
   
   return RESULT_OK;
@@ -244,7 +264,17 @@ bool OffboardModel::WaitForResultFile(const std::string& resultFilename,
     file.close();
     if(parseSuccess)
     {
-      resultAvailable = ParseSalientPointsFromJson(detectionResult, salientPoints);
+      Vision::OffboardProcType procType = _procTypes[0];
+      std::string procTypeStr;
+      if(JsonTools::GetValueOptional(detectionResult, "processingType", procTypeStr))
+      {
+        if(!Vision::OffboardProcTypeFromString(procTypeStr, procType))
+        {
+          LOG_ERROR("OffboardModel.WaitForResultFile.BadProcessingType", "Could not parse %s. Assuming %s.",
+                    procTypeStr.c_str(), EnumToString(procType));
+        }
+      }
+      resultAvailable = ParseSalientPointsFromJson(detectionResult, procType, salientPoints);
     }
     else
     {
@@ -272,19 +302,21 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
   
   while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
   {
-    // TODO: copy-and-pasted from robot comms, baustin is gonna implement this for realz
     while (_udpClient->IsConnected())
     {
+      LOG_PERIODIC_INFO(100, "OffboardModel.WaitForResultCLAD.CheckingForMessage", "");
+      
       char buf[MAX_PACKET_BUFFER_SIZE];
       const ssize_t n = _udpClient->Recv(buf, sizeof(buf));
       if (n < 0) {
-        LOG_ERROR("RobotConnectionManager.ProcessArrivedMessages", "Read error from robot");
+        LOG_ERROR("OffboardModel.WaitForResultCLAD.ReceiveError", "");
         break;
       } else if (n == 0) {
-        //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Nothing to read");
+        LOG_PERIODIC_INFO(100, "OffboardModel.WaitForResultCLAD.NothingToRead", "");
+        std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
         break;
       } else {
-        //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Read %zd/%lu from robot", n, sizeof(buf));
+        LOG_INFO("OffboardModel.WaitForResultCLAD.ProcessMessage", "Read %zu/%zu", n, sizeof(buf));
 
         Vision::OffboardResultReady resultReadyMsg{(const uint8_t*)buf, (size_t)n};
         Json::Reader reader;
@@ -292,7 +324,15 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
         const bool parseSuccess = reader.parse(resultReadyMsg.jsonResult, detectionResult);
         if(parseSuccess)
         {
-          resultAvailable |= ParseSalientPointsFromJson(detectionResult, salientPoints);
+          LOG_INFO("OffboardModel.WaitForResultCLAD.ParsedMessageJson", "");
+          
+          //
+          // DEBUG! REMOVE once we have procType being set by snapper
+          //
+          resultReadyMsg.procType = Vision::OffboardProcType::SceneDescription;
+          
+          const Result parseResult = ParseSalientPointsFromJson(detectionResult, resultReadyMsg.procType, salientPoints);
+          resultAvailable |= (parseResult == RESULT_OK);
         }
       }
     }
@@ -305,37 +345,120 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& detectionResult,
+                                                 const Vision::OffboardProcType procType,
                                                  std::list<Vision::SalientPoint>& salientPoints)
 {
-  if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
+  switch(procType)
   {
-    LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
-              "%s", NeuralNets::JsonKeys::SalientPoints);
-    return RESULT_FAIL;
-  }
-  
-  const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
-  if(!salientPointsJson.isArray())
-  {
-    LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");
-    return RESULT_FAIL;
-  }
-  
-  for(auto const& salientPointJson : salientPointsJson)
-  {
-    Vision::SalientPoint salientPoint;
-    const bool success = salientPoint.SetFromJSON(salientPointJson);
-    if(!success)
+    case Vision::OffboardProcType::SceneDescription:
     {
-      LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToSetFromJSON", "");
-      continue;
+      // Assumes Json structure like this is present in detectionResult:
+      //      "description":{
+      //        "captions":[
+      //          {
+      //            "text":"a man sitting in front of a laptop",  <-- this is the scene description
+      //            "confidence":0.8529333419354393               <-- this is the "score"
+      //          }
+      //        ]
+      //      }
+      bool gotSalientPoint = false;
+      if(detectionResult.isMember("description"))
+      {
+        const Json::Value& descriptionJson = detectionResult["description"];
+        if(descriptionJson.isMember("captions"))
+        {
+          const Json::Value& captionsJson = descriptionJson["captions"];
+          for(const Json::Value& captionJson : captionsJson)
+          {
+            if(captionJson.isMember("text"))
+            {
+              f32 score = 0.f;
+              JsonTools::GetValueOptional(captionJson, "confidence", score);
+              const std::string& description = captionJson["text"].asString();
+              Vision::SalientPoint salientPoint(_imageTimestamp,
+                                                0.5f, 0.5f,
+                                                score, 1.f,
+                                                Vision::SalientPointType::SceneDescription,
+                                                description,
+                                                {}, 0);
+              
+              salientPoints.emplace_back(std::move(salientPoint));
+              
+              gotSalientPoint = true;
+            }
+          }
+        }
+      }
+      if(!gotSalientPoint)
+      {
+        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToGetSceneDescriptionSalientPoint", "");
+      }
+      break;
     }
-    
-    salientPoints.emplace_back(std::move(salientPoint));
-  }
+      
+    default:
+    {
+      // Assume the detectionResult just contains an array of SalientPoints in Json format
+      if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
+      {
+        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
+                  "%s", NeuralNets::JsonKeys::SalientPoints);
+        return RESULT_FAIL;
+      }
+      
+      const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
+      if(!salientPointsJson.isArray())
+      {
+        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");
+        return RESULT_FAIL;
+      }
+      
+      for(auto const& salientPointJson : salientPointsJson)
+      {
+        Vision::SalientPoint salientPoint;
+        const bool success = salientPoint.SetFromJSON(salientPointJson);
+        if(!success)
+        {
+          LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToSetFromJSON", "");
+          continue;
+        }
+        
+        salientPoints.emplace_back(std::move(salientPoint));
+      }
+      break;
+    }
+  } // switch(procType)
   
   return RESULT_OK;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool OffboardModel::Connect()
+{
+  static s32 numTries = 0;
+  
+  const char* serverPath = LOCAL_SOCKET_PATH "box_server";
+  const char* clientPath = LOCAL_SOCKET_PATH "_box_vision_client";
+  
+  const bool udpSuccess = _udpClient->Connect(clientPath, serverPath);
+  ++numTries;
+  
+  LOG_INFO("OffboardModel.Connect.Status", "Try %d: %s - Server:%s Client:%s",
+           numTries, (udpSuccess ? "Success" : "Fail"), serverPath, clientPath);
+  
+  return udpSuccess;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool OffboardModel::IsConnected() const
+{
+  if(ANKI_VERIFY(nullptr != _udpClient, "OffboardModel.IsConnected.NoUdpClient", "UDP client should be instantiated"))
+  {
+    return _udpClient->IsConnected();
+  }
+  return false;
+}
+  
   
 } // namespace Vision
 } // namespace Anki

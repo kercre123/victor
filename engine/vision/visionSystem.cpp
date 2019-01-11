@@ -1787,10 +1787,11 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   {
     const std::string& networkName = networkToRun.first;
     const TimeStamp_t usingTimestamp = networkToRun.second;
+    bool startedNetwork = false;
     if(usingTimestamp == imageCache.GetTimeStamp())
     {
       // Just use the image cache's image to run the network
-      _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
+      startedNetwork = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
     }
     else
     {
@@ -1802,7 +1803,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         const Vision::ImageRGB& img = neuralNetRunner.second->GetOrigImg();
         if(usingTimestamp == img.GetTimestamp())
         {
-          _neuralNetRunners.at(networkName)->StartProcessingIfIdle(img);
+          startedNetwork = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(img);
           imageFound = true;
           break;
         }
@@ -1812,6 +1813,12 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       {
         LOG_ERROR("VisionSystem.Update.NoNetworkFoundWithMatchingTimeStamp", "t:%u", usingTimestamp);
       }
+    }
+    
+    if(startedNetwork)
+    {
+      PRINT_CH_INFO("NeuralNets", "VisionSystem.Update.StartedNeuralNet", "Running %s on image at time t:%u",
+                    networkName.c_str(), usingTimestamp);
     }
   }
   

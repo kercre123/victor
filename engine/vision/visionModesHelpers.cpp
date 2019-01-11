@@ -30,7 +30,7 @@ static const Util::SymmetricMap<VisionMode, std::string> sNetModeLUT{
   {VisionMode::DetectingPeople, "person_detector"},
   {VisionMode::DetectingHands,  "hand_detector"},
   {VisionMode::DetectingPets,   "mobilenet"}, // TODO: Update to real network
-  {VisionMode::OffboardSceneDescription,  "test_offboard_model"},
+  {VisionMode::OffboardSceneDescription,  "offboard_scene_description"},
 };
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

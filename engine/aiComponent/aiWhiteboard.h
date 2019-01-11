@@ -237,6 +237,8 @@ public:
   // TODO: Call this on some kind of "Forget faces" VC
   void ClearFacesRespondedTo() { _boxDemoFaces.clear(); }
   
+  float GetSecondsSinceLastDelocalization() const;
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -312,6 +314,9 @@ private:
   float _edgeInfoTime_sec;
   float _edgeInfoClosestEdge_mm;
  
+  // time of last delocalization event from robot
+  float _lastDelocalizationTime_sec = 0.f;
+  
   // list of markers/objects we have not checked out yet
   PossibleObjectList _possibleObjects;
   

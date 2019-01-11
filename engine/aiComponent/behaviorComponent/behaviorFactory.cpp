@@ -46,6 +46,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoDescribeScene.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoFaceTracking.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/character/howOldAreYou/behaviorHowOldAreYou.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
@@ -421,6 +422,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::BoxDemo:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorBoxDemo(config));
+      break;
+    }
+    
+    case BehaviorClass::BoxDemoDescribeScene:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBoxDemoDescribeScene(config));
       break;
     }
     

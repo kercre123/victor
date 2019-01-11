@@ -160,8 +160,8 @@
       },
       {
         "modelType"           : "offboard",
-        "networkName"         : "test_offboard_model",
-        "graphFile"           : "CelebrityFace", // One of OffboardProcType (TODO: Support multiple)
+        "networkName"         : "offboard_scene_description",
+        "graphFile"           : "SceneDescription", // One of OffboardProcType (TODO: Support multiple)
         "commsType"           : "CLAD",
         "labelsFile"          : "hand-labels.txt",
         "architecture"        : "custom",
@@ -170,8 +170,8 @@
         "outputType"          : "classification",
         "useFloatInput"       : 0,
         "useGrayscale"        : 0,
-        "inputWidth"          : 256,
-        "inputHeight"         : 256,
+        "inputWidth"          : 640,
+        "inputHeight"         : 360,
         "inputScale"          : 1, // Scaling performed by the network
         "inputShift"          : 0, //    "
         "minScore"            : 0.5,

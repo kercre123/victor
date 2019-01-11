@@ -15,7 +15,8 @@ enum uint_8 SalientPointType
   Hand,
   Cat,
   Dog,
-  BrightColors  // For brightly colored areas
+  BrightColors,  // For brightly colored areas
+  SceneDescription
 
   // TODO:
   // Text,

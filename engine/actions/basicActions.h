@@ -585,9 +585,12 @@ namespace Vector {
       // This is primarily useful for debugging.
       void SetSaveParams(const ImageSaverParams& params);
       
+      // Override default, which is to never timeout (wait forever for image with specified mode to come back)
+      void SetTimeoutInSeconds(const f32 timeout_sec) { _timeout_sec = timeout_sec; }
+      
       virtual ~WaitForImagesAction();
       
-      virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
+      virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
       
     protected:
       
@@ -600,10 +603,12 @@ namespace Vector {
       
     private:
       u32 _numFramesToWaitFor;
+      f32 _timeout_sec = std::numeric_limits<f32>::max();
       RobotTimeStamp_t _afterTimeStamp;
       
       Signal::SmartHandle             _imageProcSignalHandle;
       VisionMode                      _visionMode = VisionMode::Count;
+      EVisionUpdateFrequency          _updateFrequency;
       u32                             _numModeFramesSeen = 0;
       
       std::unique_ptr<ImageSaverParams> _saveParams;

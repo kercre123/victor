@@ -2668,6 +2668,7 @@ namespace Anki {
     , _numFramesToWaitFor(numFrames)
     , _afterTimeStamp(afterTimeStamp)
     , _visionMode(visionMode)
+    , _updateFrequency(_numFramesToWaitFor==1 ? EVisionUpdateFrequency::SingleShot : EVisionUpdateFrequency::High)
     {
     
     }
@@ -2696,7 +2697,7 @@ namespace Anki {
       // be made to the VSM since the RobotProcessImage message will be sent even if no modes are
       // currently enabled.
       if(_visionMode != VisionMode::Count){
-        requests.insert({ _visionMode, EVisionUpdateFrequency::High });
+        requests.insert({ _visionMode, _updateFrequency });
       }
     }
 

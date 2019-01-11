@@ -647,6 +647,7 @@ namespace Vector {
       _visionSystemInput.modesToProcess.Enable(mode, schedule.IsTimeToProcess(mode, scheduleCount));
       _visionSystemInput.futureModesToProcess.Enable(mode, schedule.GetScheduleForMode(mode).WillEverRun());
     }
+    _robot->GetVisionScheduleMediator().AddSingleShotModesToSet(_visionSystemInput.modesToProcess);
     scheduleCount++;
 
     // We are all set to process this image so lock input
