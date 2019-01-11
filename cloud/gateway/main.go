@@ -24,6 +24,8 @@ import (
 	"anki/robot"
 	extint "proto/external_interface"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
@@ -231,11 +233,14 @@ func main() {
 	}
 	grpcServer := grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(otgrpc.OpenTracingServerInterceptor(opentracing.OpenTracer)),
-		grpc.StreamInterceptor(otgrpc.OpenTracingStreamServerInterceptor(opentracing.OpenTracer)),
-		grpc.StreamInterceptor(LoggingStreamInterceptor),
-		grpc.UnaryInterceptor(LoggingUnaryInterceptor),
-	)
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			LoggingStreamInterceptor,
+			otgrpc.OpenTracingStreamServerInterceptor(opentracing.OpenTracer),
+		)),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			LoggingUnaryInterceptor,
+			otgrpc.OpenTracingServerInterceptor(opentracing.OpenTracer),
+		)))
 	extint.RegisterExternalInterfaceServer(grpcServer, newServer())
 	ctx := context.Background()
 

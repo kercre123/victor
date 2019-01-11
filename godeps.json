@@ -149,5 +149,8 @@
   "github.com/opentracing-contrib/go-stdlib": {
     "commit": "77df8e8e70b403c6b13c0fffaa4867c9044ff4e9",
     "branch": "master"
+  },
+  "github.com/grpc-ecosystem/go-grpc-middleware": {
+    "commit": "e9c5d9645c437ab1b204cff969a2c0fb16cd4276"
   }
 }
