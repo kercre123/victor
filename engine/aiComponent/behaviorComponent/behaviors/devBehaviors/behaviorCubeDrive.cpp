@@ -29,12 +29,12 @@ namespace Vector {
   
 namespace {
   static constexpr float kTopLeftCornerMagicNumber = 15.0f; 
-  static constexpr float kSelectRowStart           = 16.0f; 
+  static constexpr float kSelectRowStart           = 20.0f; 
   static const     float kTextHorzSpace            = 17.5f; 
-  static const     float kTextVertSpace            = 16.0f; 
+  static const     float kTextVertSpace            = 22.0f; 
   static const     float kUserTextScale            = 0.70f; 
-  static const     float kSelectTextScale          = 0.60f; 
-  static const     float kMinAccel                 = 0.300f;
+  static const     float kSelectTextScale          = 0.70f; 
+  static const     float kMinAccel                 = 0.100f;
 }
 
 enum {
@@ -69,21 +69,60 @@ struct CursorCell {
 //     {"DONE", ACTION_DONE}},
 //   };
 
-const static int NUM_ROWS = 4;
+// const static int NUM_ROWS = 4;
+// const static int NUM_COLS = 10;
+// CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
+//   {
+//    {{"0", ACTION_APPEND},
+//     {"1", ACTION_APPEND},
+//     {"2", ACTION_APPEND},
+//     {"3", ACTION_APPEND},
+//     {"4", ACTION_APPEND},
+//     {"5", ACTION_APPEND},
+//     {"6", ACTION_APPEND},
+//     {"7", ACTION_APPEND},
+//     {"8", ACTION_APPEND},
+//     {"9", ACTION_APPEND}},
+
+//    {{"A", ACTION_APPEND},
+//     {"B", ACTION_APPEND},
+//     {"C", ACTION_APPEND},
+//     {"D", ACTION_APPEND},
+//     {"E", ACTION_APPEND},
+//     {"F", ACTION_APPEND},
+//     {"G", ACTION_APPEND},
+//     {"H", ACTION_APPEND},
+//     {"I", ACTION_APPEND},
+//     {"SH", ACTION_DONE},
+//     },
+
+//    {{"J", ACTION_APPEND},
+//     {"K", ACTION_APPEND},
+//     {"L", ACTION_APPEND},
+//     {"M", ACTION_APPEND},
+//     {"N", ACTION_APPEND},
+//     {"O", ACTION_APPEND},
+//     {"P", ACTION_APPEND},
+//     {"Q", ACTION_APPEND},
+//     {"R", ACTION_APPEND},
+//     {"DL", ACTION_DELETE}},
+
+//    {{"S", ACTION_APPEND},
+//     {"T", ACTION_APPEND},
+//     {"U", ACTION_APPEND},
+//     {"V", ACTION_APPEND},
+//     {"W", ACTION_APPEND},
+//     {"X", ACTION_APPEND},
+//     {"Y", ACTION_APPEND},
+//     {"Z", ACTION_APPEND},
+//     {"-", ACTION_APPEND},
+//     {"OK", ACTION_DONE}},
+//   };
+
+const static int NUM_ROWS = 3;
 const static int NUM_COLS = 10;
 CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
   {
-   {{"0", ACTION_APPEND},
-    {"1", ACTION_APPEND},
-    {"2", ACTION_APPEND},
-    {"3", ACTION_APPEND},
-    {"4", ACTION_APPEND},
-    {"5", ACTION_APPEND},
-    {"6", ACTION_APPEND},
-    {"7", ACTION_APPEND},
-    {"8", ACTION_APPEND},
-    {"9", ACTION_APPEND}},
-
    {{"A", ACTION_APPEND},
     {"B", ACTION_APPEND},
     {"C", ACTION_APPEND},
@@ -231,7 +270,8 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
 
   RestartAnimation();
 
-  Vec3f filter_coeffs(1.0, 1.0, 1.0);
+  //Vec3f filter_coeffs(1.0, 1.0, 1.0);
+  Vec3f filter_coeffs(0.2, 0.2, 0.2);
   _dVars.filtered_cube_accel = std::make_shared<ActiveAccel>();
   _dVars.low_pass_filter_listener = std::make_shared<CubeAccelListeners::LowPassFilterListener>(
       filter_coeffs,
@@ -255,8 +295,8 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       LOG_ERROR("cube_drive", "We've lost the connection to the cube");
       return;
     }
-    float xGs = _dVars.filtered_cube_accel->x / 9810.0;
-    float yGs = _dVars.filtered_cube_accel->y / 9810.0;
+    float xGs = _dVars.filtered_cube_accel->x / 9810.0 / 2;
+    float yGs = _dVars.filtered_cube_accel->y / 9810.0 / 2;
     if (abs(xGs) < kMinAccel) {
       xGs = 0.0;
     }
