@@ -28,13 +28,13 @@ namespace Anki {
 namespace Vector {
   
 namespace {
-  static constexpr float kTopLeftCornerMagicNumber = 15.f; 
-  static constexpr float kSelectRowStart           = 25.f; 
-  static const     float kTextHorzSpace            = 40.f; 
-  static const     float kTextVertSpace            = 20.f; 
-  static const     float kUserTextScale            = 0.7f; 
-  static const     float kSelectTextScale          = 0.5f; 
-  static const     float kMinAccel                 = 0.250f;
+  static constexpr float kTopLeftCornerMagicNumber = 15.0f; 
+  static constexpr float kSelectRowStart           = 16.0f; 
+  static const     float kTextHorzSpace            = 17.5f; 
+  static const     float kTextVertSpace            = 16.0f; 
+  static const     float kUserTextScale            = 0.70f; 
+  static const     float kSelectTextScale          = 0.60f; 
+  static const     float kMinAccel                 = 0.300f;
 }
 
 enum {
@@ -49,26 +49,75 @@ struct CursorCell {
 };
 
 
-const static int NUM_ROWS = 3;
-const static int NUM_COLS = 4;
+// const static int NUM_ROWS = 3;
+// const static int NUM_COLS = 4;
+// CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
+//   {
+//    {{"0", ACTION_APPEND},
+//     {"1", ACTION_APPEND},
+//     {"2", ACTION_APPEND},
+//     {"3", ACTION_APPEND}},
+
+//    {{"4", ACTION_APPEND},
+//     {"5", ACTION_APPEND},
+//     {"6", ACTION_APPEND},
+//     {"7", ACTION_APPEND}},
+
+//    {{"8", ACTION_APPEND},
+//     {"9", ACTION_APPEND},
+//     {"DEL", ACTION_DELETE},
+//     {"DONE", ACTION_DONE}},
+//   };
+
+const static int NUM_ROWS = 4;
+const static int NUM_COLS = 10;
 CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
   {
    {{"0", ACTION_APPEND},
     {"1", ACTION_APPEND},
     {"2", ACTION_APPEND},
-    {"3", ACTION_APPEND}},
-
-   {{"4", ACTION_APPEND},
+    {"3", ACTION_APPEND},
+    {"4", ACTION_APPEND},
     {"5", ACTION_APPEND},
     {"6", ACTION_APPEND},
-    {"7", ACTION_APPEND}},
+    {"7", ACTION_APPEND},
+    {"8", ACTION_APPEND},
+    {"9", ACTION_APPEND}},
 
-   {{"8", ACTION_APPEND},
-    {"9", ACTION_APPEND},
-    {"DEL", ACTION_DELETE},
-    {"DONE", ACTION_DONE}},
+   {{"A", ACTION_APPEND},
+    {"B", ACTION_APPEND},
+    {"C", ACTION_APPEND},
+    {"D", ACTION_APPEND},
+    {"E", ACTION_APPEND},
+    {"F", ACTION_APPEND},
+    {"G", ACTION_APPEND},
+    {"H", ACTION_APPEND},
+    {"I", ACTION_APPEND},
+    {"SH", ACTION_DONE},
+    },
+
+   {{"J", ACTION_APPEND},
+    {"K", ACTION_APPEND},
+    {"L", ACTION_APPEND},
+    {"M", ACTION_APPEND},
+    {"N", ACTION_APPEND},
+    {"O", ACTION_APPEND},
+    {"P", ACTION_APPEND},
+    {"Q", ACTION_APPEND},
+    {"R", ACTION_APPEND},
+    {"DL", ACTION_DELETE}},
+
+   {{"S", ACTION_APPEND},
+    {"T", ACTION_APPEND},
+    {"U", ACTION_APPEND},
+    {"V", ACTION_APPEND},
+    {"W", ACTION_APPEND},
+    {"X", ACTION_APPEND},
+    {"Y", ACTION_APPEND},
+    {"Z", ACTION_APPEND},
+    {"-", ACTION_APPEND},
+    {"OK", ACTION_DONE}},
   };
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::InstanceConfig::InstanceConfig()
