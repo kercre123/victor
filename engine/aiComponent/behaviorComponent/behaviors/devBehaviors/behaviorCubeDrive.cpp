@@ -27,8 +27,6 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#include "math.h"
-
 namespace Anki {
 namespace Vector {
 
@@ -121,7 +119,6 @@ void BehaviorCubeDrive::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys)
 }
 
 void BehaviorCubeDrive::SetLiftState(bool up) {
-  LOG_WARNING("cube_drive", "SetLiftState()");
   _dVars.lift_up = up;
   GetBEI().GetRobotInfo().GetMoveComponent().MoveLiftToHeight(
     up ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2, 0.1, nullptr);
@@ -180,7 +177,6 @@ void BehaviorCubeDrive::OnBehaviorDeactivated() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::BehaviorUpdate() {
-  LOG_WARNING("cube_drive", "BehaviorUpdate()");
   if( IsActivated() ) {
     if(not GetBEI().GetCubeCommsComponent().IsConnectedToCube()) {
       CancelSelf();
