@@ -167,6 +167,9 @@ protected:
 
   // Removes the first timer with the given name
   void RemoveTimer(const std::string& name);
+
+  // Adds time_ms more time to the default behavior timeout timer
+  void IncreaseTimeoutTimer(TimeStamp_t time_ms);
   
   // Returns whether or not we should ignore behavior failures
   bool ShouldIgnoreFailures() const;
@@ -216,6 +219,8 @@ private:
     }
 
     const std::string& GetName() const { return _name; }
+
+    void AddTime(TimeStamp_t time_ms) { _time_ms += time_ms; }
     
   private:
     EngineTimeStamp_t _time_ms = 0;
