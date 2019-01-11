@@ -13,6 +13,7 @@ include(robot_core)
 include(pffft)
 include(pocketsphinx)
 include(sphinxbase)
+include(picovoice)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "CC0,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE" "FFTPACK5,${CMAKE_SOURCE_DIR}/licenses/pffft.license")
@@ -61,6 +62,7 @@ target_link_libraries(victor_anim
   ${SPEEXDSP_LIBS}
   ${POCKETSPHINX_LIBS}
   ${SPHINXBASE_LIBS}
+  pv_porcupine
   # platform
   ${PLATFORM_LIBS}
   # Aubio beat detection
