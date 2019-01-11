@@ -21,6 +21,14 @@
 #include <chrono>
 #include <memory>
 
+namespace {
+  const char* kTriggerLiftGs           = "triggerLiftGs";
+  const char* kDeadZoneSize            = "deadZoneSize";
+  const char* kTimeBetweenLiftActions  = "timeBetweenLiftActions";
+  const char* kHighHeadAngle           = "highHeadAngle";
+  const char* kLowHeadAngle            = "lowHeadAngle";
+}
+
 namespace Anki {
 namespace Vector {
 
@@ -57,7 +65,11 @@ private:
 
   struct InstanceConfig {
     InstanceConfig();
-    // TODO: put configuration variables here
+    float                                                       trigger_lift_gs;
+    float                                                       dead_zone_size;
+    float                                                       time_between_lift_actions;
+    float                                                       high_head_angle;
+    float                                                       low_head_angle;
   };
 
   struct DynamicVariables {
