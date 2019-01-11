@@ -1,0 +1,9 @@
+.DS_Store
+.vscode
+*.code-workspace
+
+build
+*.bin
+*.hex
+*.uvgui.*
+*.uvguix.*
