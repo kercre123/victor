@@ -62,6 +62,9 @@ namespace {
   //constexpr const int DAS_INT2 = 6;
   //constexpr const int DAS_INT3 = 7;
   //constexpr const int DAS_INT4 = 8;
+
+  // Magic file used to expose state of DAS opt-in
+  constexpr const char * kAllowUploadFile = "/run/das_allow_upload";
 }
 
 //
@@ -284,6 +287,28 @@ void DASManager::EnforceStorageQuota()
   }
 }
 
+//
+// Update magic state file to match current state flag
+//
+void DASManager::SetAllowUpload(bool allow_upload)
+{
+  using FileUtils = Anki::Util::FileUtils;
+
+  LOG_DEBUG("DASManager.SetAllowUpload", "allow_upload=%d", allow_upload);
+
+  _allow_upload = allow_upload;
+
+  if (allow_upload && !FileUtils::FileExists(kAllowUploadFile)) {
+    LOG_DEBUG("DASManager.SetAllowUpload", "Create %s", kAllowUploadFile);
+    if (!FileUtils::TouchFile(kAllowUploadFile)) {
+      LOG_ERROR("DASManager.SetAllowUpload", "Unable to create %s", kAllowUploadFile);
+    }
+  } else if (!allow_upload && FileUtils::FileExists(kAllowUploadFile)) {
+    LOG_DEBUG("DASManager.SetAllowUpload", "Delete %s", kAllowUploadFile);
+    FileUtils::DeleteFile(kAllowUploadFile);
+  }
+}
+
 std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
 {
   // These values are always set by library so we don't need to check them
@@ -352,7 +377,7 @@ std::string DASManager::ConvertLogEntryToJson(const AndroidLogEntry & logEntry)
       // User has opted out of data collection
       _purge_backup_files = true;
     }
-    _allow_upload = allow_upload;
+    SetAllowUpload(allow_upload);
   }
 
   std::ostringstream ostr;
@@ -769,6 +794,9 @@ Result DASManager::Run(const bool & shutdown)
   }
 
   LoadGlobalState();
+
+  // Initialize magic state file
+  SetAllowUpload(_allow_upload);
 
   // Log global parameters so we can match up log data with DAS records
   LOG_INFO("DASManager.Run", "robot_id=%s robot_version=%s boot_id=%s feature_run_id=%s",

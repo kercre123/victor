@@ -604,6 +604,7 @@ namespace Vector {
       
       Signal::SmartHandle             _imageProcSignalHandle;
       VisionMode                      _visionMode = VisionMode::Count;
+      EVisionUpdateFrequency          _updateFrequency;
       u32                             _numModeFramesSeen = 0;
       
       std::unique_ptr<ImageSaverParams> _saveParams;

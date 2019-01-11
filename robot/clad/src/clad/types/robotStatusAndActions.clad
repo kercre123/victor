@@ -59,6 +59,28 @@ enum uint_8 DockAction
                               // of the habitat, provided one of the sensors is already detecting white.
 }
 
+// For the given DockAction, do we expect the dock object to move as a result of docking?
+// For example, aligning with a block would not cause the block to move, but picking it
+// up would. This is useful for localization.
+enum_concept bool ExpectDockObjectToMove[DockAction]
+{
+  DA_PICKUP_LOW                    = 1,
+  DA_PICKUP_HIGH                   = 1,
+  DA_PLACE_HIGH                    = 1,
+  DA_PLACE_LOW                     = 1,
+  DA_PLACE_LOW_BLIND               = 1,
+  DA_ROLL_LOW                      = 1,
+  DA_DEEP_ROLL_LOW                 = 1, 
+  DA_POST_DOCK_ROLL                = 1,
+  DA_FACE_PLANT                    = 1,
+  DA_POP_A_WHEELIE                 = 1,
+  DA_ALIGN                         = 0,
+  DA_ALIGN_SPECIAL                 = 1,
+  DA_BACKUP_ONTO_CHARGER           = 0,
+  DA_BACKUP_ONTO_CHARGER_USE_CLIFF = 0,
+  DA_CLIFF_ALIGN_TO_WHITE          = 0
+}
+
 enum uint_8 CarryState
 {
   CARRY_NONE = 0,

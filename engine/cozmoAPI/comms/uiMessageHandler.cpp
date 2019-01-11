@@ -321,10 +321,6 @@ namespace Anki {
         bytesRemaining -= bytesUnpacked;
         messagePtr += bytesUnpacked;
 
-        if (ProtoCladInterpreter::Redirect(message, _context)) {
-          return RESULT_OK;
-        }
-
         HandleProcessedMessage(message, connectionType, bytesUnpacked, handleMessagesFromConnection);
       }
 

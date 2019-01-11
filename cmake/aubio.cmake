@@ -1,7 +1,4 @@
-if (ANDROID)
-  set(LIBAUBIO_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/aubio-linux/include")
-  set(LIBAUBIO_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/aubio-linux/lib/libaubio.a")
-elseif (VICOS)
+if (VICOS)
   set(LIBAUBIO_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/aubio-vicos/include")
   set(LIBAUBIO_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/aubio-vicos/lib/libaubio.a")
 elseif (MACOSX)

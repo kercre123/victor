@@ -887,6 +887,15 @@ void AlexaImpl::AddMicrophoneSamples( const AudioUtil::AudioSample* const sample
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint64_t AlexaImpl::GetMicrophoneTotalNumSamples() const
+{
+  if( _microphone != nullptr ) {
+    return _microphone->GetTotalNumSamples();
+  }
+  return 0;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
 {
   std::vector<std::shared_ptr<std::istream>> configJsonStreams;

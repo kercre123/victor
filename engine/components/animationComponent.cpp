@@ -43,7 +43,7 @@ namespace {
   
   static const AnimationComponent::Tag kInvalidAnimationTag = 0;
 
-  const u32 kMaxNumAvailableAnimsToReportPerTic = 50;
+  const u32 kMaxNumAvailableAnimsToReportPerTic = 1000;
 
   static const u32 kNumImagePixels     = FACE_DISPLAY_HEIGHT * FACE_DISPLAY_WIDTH;
   static const u32 kNumHalfImagePixels = kNumImagePixels / 2;

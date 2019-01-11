@@ -61,7 +61,7 @@ protected:
   virtual void StartInternal() { }
   virtual void StopInternal() { }
   
-  void DoCallback(const SpeechRecognizerCallbackInfo& info);
+  void DoCallback(const SpeechRecognizerCallbackInfo& info) const;
   
 private:
   SpeechCallback _speechCallback;

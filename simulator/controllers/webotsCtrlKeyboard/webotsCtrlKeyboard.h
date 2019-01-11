@@ -101,7 +101,6 @@ protected:
   void TurnInPlaceCW();
   
   void ExecutePlaypenTest();
-  void ToggleSendAvailableObjects();
   
   void SetFaceDisplayHue();
   void SendRandomProceduralFace();

@@ -805,7 +805,17 @@ void Alexa::UpdateLocale( const Util::Locale& locale )
     _pendingLocale.reset( new Util::Locale{locale} );
   }
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint64_t Alexa::GetMichrophoneSampleIndex() const
+{
+  std::lock_guard<std::mutex> lg{ _implMutex };
+  if( HasInitializedImpl() ) {
+    return _impl->GetMicrophoneTotalNumSamples();
+  }
+  return 0;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
 {

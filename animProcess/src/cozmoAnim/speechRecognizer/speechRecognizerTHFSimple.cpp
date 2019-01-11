@@ -56,23 +56,23 @@ namespace {
 // Local definition of data used internally for more strict encapsulation
 struct SpeechRecognizerTHF::SpeechRecognizerTHFData
 {
-  thf_t*      _thfSession = nullptr;
+  thf_t*      thfSession = nullptr;
   
   // We intentionally don't store off and reuse the pronun object. Attempting to do so during testing resulted in
   // crashes when calling into thfSearchCreateFromGrammar and passing in a common pronun object. The safe way to use
   // the pronun object appears to be creating, using, and then destroying it each time a search object is to be created.
-  std::string _thfPronunPath;
+  std::string thfPronunPath;
   
-  IndexType                         _thfCurrentRecog = InvalidIndex;
-  IndexType                         _thfFollowupRecog = InvalidIndex;
-  std::map<IndexType, RecogDataSP>  _thfAllRecogs;
-  mutable std::recursive_mutex      _recogMutex;
-  const recog_t*                    _lastUsedRecognizer = nullptr;
-  size_t                            _sampleRate_kHz = 0;
-  uint64_t                          _sampleIndex = 0;
-  uint64_t                          _lastResetSampleIndex = 0;
-  bool                              _disabled = false;
-  bool                              _reset = false;
+  IndexType                         thfCurrentRecog = InvalidIndex;
+  IndexType                         thfFollowupRecog = InvalidIndex;
+  std::map<IndexType, RecogDataSP>  thfAllRecogs;
+  mutable std::recursive_mutex      recogMutex;
+  const recog_t*                    lastUsedRecognizer = nullptr;
+  size_t                            sampleRate_kHz = 0;
+  uint64_t                          sampleIndex = 0;
+  uint64_t                          lastResetSampleIndex = 0;
+  bool                              disabled = false;
+  bool                              reset = false;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
 };
@@ -110,15 +110,15 @@ void SpeechRecognizerTHF::SwapAllData(SpeechRecognizerTHF& other)
 
 const RecogDataSP SpeechRecognizerTHF::SpeechRecognizerTHFData::RetrieveDataForIndex(IndexType index) const
 {
-  std::lock_guard<std::recursive_mutex> lock(_recogMutex);
+  std::lock_guard<std::recursive_mutex> lock(recogMutex);
   if (index == InvalidIndex)
   {
     return RecogDataSP();
   }
   
   // We can only use recognizers that actually exist
-  auto indexIter = _thfAllRecogs.find(index);
-  if (indexIter == _thfAllRecogs.end())
+  auto indexIter = thfAllRecogs.find(index);
+  if (indexIter == thfAllRecogs.end())
   {
     return RecogDataSP();
   }
@@ -129,29 +129,29 @@ const RecogDataSP SpeechRecognizerTHF::SpeechRecognizerTHFData::RetrieveDataForI
 
 void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index)
 {
-  std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
-  _impl->_thfCurrentRecog = index;
+  std::lock_guard<std::recursive_mutex>(_impl->recogMutex);
+  _impl->thfCurrentRecog = index;
 }
   
 void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index)
 {
-  std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
-  _impl->_thfFollowupRecog = index;
+  std::lock_guard<std::recursive_mutex>(_impl->recogMutex);
+  _impl->thfFollowupRecog = index;
 }
 
 SpeechRecognizerTHF::IndexType SpeechRecognizerTHF::GetRecognizerIndex() const
 {
-  std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
-  return _impl->_thfCurrentRecog;
+  std::lock_guard<std::recursive_mutex>(_impl->recogMutex);
+  return _impl->thfCurrentRecog;
 }
 
 void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index)
 {
-  std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
-  auto indexIter = _impl->_thfAllRecogs.find(index);
-  if (indexIter != _impl->_thfAllRecogs.end())
+  std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
+  auto indexIter = _impl->thfAllRecogs.find(index);
+  if (indexIter != _impl->thfAllRecogs.end())
   {
-    _impl->_thfAllRecogs.erase(indexIter);
+    _impl->thfAllRecogs.erase(indexIter);
   }
 }
 
@@ -169,10 +169,10 @@ bool SpeechRecognizerTHF::Init(const std::string& pronunPath)
     HandleInitFail(failMessage);
     return false;
   }
-  _impl->_thfSession = createdSession;
+  _impl->thfSession = createdSession;
   
   // Store the pronunciation file path
-  _impl->_thfPronunPath = pronunPath;
+  _impl->thfPronunPath = pronunPath;
   
   return true;
 }
@@ -187,13 +187,13 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
                                                      const std::string& nnFilePath, const std::string& searchFilePath,
                                                      bool isPhraseSpotted, bool allowsFollowupRecog)
 {
-  std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
+  std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
   recog_t* createdRecognizer = nullptr;
   searchs_t* createdSearch = nullptr;
   
   auto cleanupAfterFailure = [&] (const std::string& failMessage)
   {
-    LOG_ERROR("SpeechRecognizerTHF.AddRecognitionDataFromFile.Fail", "%s %s", failMessage.c_str(), thfGetLastError(_impl->_thfSession));
+    LOG_ERROR("SpeechRecognizerTHF.AddRecognitionDataFromFile.Fail", "%s %s", failMessage.c_str(), thfGetLastError(_impl->thfSession));
     RecogData::DestroyData(createdRecognizer, createdSearch);
   };
   
@@ -204,8 +204,8 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   }
   
   // First check whether this spot is already taken
-  auto indexIter = _impl->_thfAllRecogs.find(index);
-  if (indexIter != _impl->_thfAllRecogs.end())
+  auto indexIter = _impl->thfAllRecogs.find(index);
+  if (indexIter != _impl->thfAllRecogs.end())
   {
     cleanupAfterFailure(std::string("Recognizer already added at index ") + std::to_string(index));
     return false;
@@ -216,7 +216,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   
   /* Create recognizer */
   auto doSpeechDetect = isPhraseSpotted ? NO_SDET : SDET;
-  createdRecognizer = thfRecogCreateFromFile(_impl->_thfSession, nnFilePath.c_str(), bufferSizeInSamples, -1, doSpeechDetect);
+  createdRecognizer = thfRecogCreateFromFile(_impl->thfSession, nnFilePath.c_str(), bufferSizeInSamples, -1, doSpeechDetect);
   if(nullptr == createdRecognizer)
   {
     cleanupAfterFailure("ERROR thfRecogCreateFromFile");
@@ -225,31 +225,31 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   
   /* Create search */
   constexpr unsigned short numBestResultsToReturn = 1;
-  createdSearch = thfSearchCreateFromFile(_impl->_thfSession, createdRecognizer, searchFilePath.c_str(), numBestResultsToReturn);
+  createdSearch = thfSearchCreateFromFile(_impl->thfSession, createdRecognizer, searchFilePath.c_str(), numBestResultsToReturn);
   if(nullptr == createdSearch)
   {
-    const char *err = thfGetLastError(_impl->_thfSession);
+    const char *err = thfGetLastError(_impl->thfSession);
     std::string errorMessage = std::string("ERROR thfSearchCreateFromFile ") + err;
     cleanupAfterFailure(errorMessage);
     return false;
   }
   
   /* Initialize recognizer */
-  if(!thfRecogInit(_impl->_thfSession, createdRecognizer, createdSearch, RECOG_KEEP_NONE))
+  if(!thfRecogInit(_impl->thfSession, createdRecognizer, createdSearch, RECOG_KEEP_NONE))
   {
     cleanupAfterFailure("ERROR thfRecogInit");
     return false;
   }
 
   // extract sample rate (so it matches file)
-  size_t sampleRate_hz = thfRecogGetSampleRate(_impl->_thfSession, createdRecognizer);
+  size_t sampleRate_hz = thfRecogGetSampleRate(_impl->thfSession, createdRecognizer);
   if( ! ANKI_VERIFY(sampleRate_hz != 0,
                     "SpeechRecognizerTHF.Init.NoSampleRate",
                     "Could not get sample rate from model") ) {
     // set it to a valid value to avoid divide by 0
     sampleRate_hz = 16000;
   }
-  _impl->_sampleRate_kHz = sampleRate_hz / 1000;
+  _impl->sampleRate_kHz = sampleRate_hz / 1000;
   
   if (allowsFollowupRecog)
   {
@@ -260,7 +260,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
     }
     
     constexpr float overlapTime_ms = 1000.f;
-    if (!thfPhrasespotConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, PS_SEQ_BUFFER, overlapTime_ms))
+    if (!thfPhrasespotConfigSet(_impl->thfSession, createdRecognizer, createdSearch, PS_SEQ_BUFFER, overlapTime_ms))
     {
       cleanupAfterFailure("ERROR thfPhrasespotConfigSet PS_SEQ_BUFFER");
       return false;
@@ -271,7 +271,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   // here for now just for reference.
   // if (isPhraseSpotted)
   // {
-  //   if (!thfPhrasespotConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, PS_DELAY, 90))
+  //   if (!thfPhrasespotConfigSet(_impl->thfSession, createdRecognizer, createdSearch, PS_DELAY, 90))
   //   {
   //     cleanupAfterFailure("ERROR thfPhrasespotConfigSet PS_DELAY");
   //     return false;
@@ -279,20 +279,20 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   // }
   
   // Everything should be happily added, so store off this recognizer
-  _impl->_thfAllRecogs[index] = MakeRecogDataSP(createdRecognizer, createdSearch, isPhraseSpotted, allowsFollowupRecog);
+  _impl->thfAllRecogs[index] = MakeRecogDataSP(createdRecognizer, createdSearch, isPhraseSpotted, allowsFollowupRecog);
   
   return true;
 }
 
 void SpeechRecognizerTHF::Cleanup()
 {
-  std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
-  _impl->_thfAllRecogs.clear();
+  std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
+  _impl->thfAllRecogs.clear();
   
-  if (_impl->_thfSession)
+  if (_impl->thfSession)
   {
-    thfSessionDestroy(_impl->_thfSession);
-    _impl->_thfSession = nullptr;
+    thfSessionDestroy(_impl->thfSession);
+    _impl->thfSession = nullptr;
   }
 }
 
@@ -316,7 +316,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   // Intentionally make a local copy of the shared ptr with the current recog data
   RecogDataSP currentRecogSP;
   {
-    std::lock_guard<std::recursive_mutex> lock(_impl->_recogMutex);
+    std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
     currentRecogSP = _impl->RetrieveDataForIndex(GetRecognizerIndex());
   }
 
@@ -327,9 +327,9 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
 
   // track the total number of samples processed
   // NOTE: on a 32 bit system with 16Khz audio this could overflow in 3 days....
-  _impl->_sampleIndex += audioDataLen;
+  _impl->sampleIndex += audioDataLen;
   
-  if (_impl->_disabled)
+  if (_impl->disabled)
   {
     // Don't process audio data in recognizer
     return;
@@ -337,29 +337,29 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   
   // If the recognizer has changed since last update, we need to potentially reset and store it again
   auto* const currentRecognizer = currentRecogSP->GetRecognizer();
-  if (_impl->_reset || currentRecognizer != _impl->_lastUsedRecognizer)
+  if (_impl->reset || currentRecognizer != _impl->lastUsedRecognizer)
   {
     // If we actually had a last recognizer set, then we need to reset
-    if (_impl->_reset || _impl->_lastUsedRecognizer)
+    if (_impl->reset || _impl->lastUsedRecognizer)
     {
-      if(thfRecogReset(_impl->_thfSession, currentRecognizer))
+      if(thfRecogReset(_impl->thfSession, currentRecognizer))
       {
-        _impl->_lastResetSampleIndex = _impl->_sampleIndex;
+        _impl->lastResetSampleIndex = _impl->sampleIndex;
       }
       else
       {
-        LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
+        LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->thfSession));
       }
     }
-    _impl->_lastUsedRecognizer = currentRecognizer;
-    _impl->_reset = false;
+    _impl->lastUsedRecognizer = currentRecognizer;
+    _impl->reset = false;
   }
   
   auto recogPipeMode = currentRecogSP->IsPhraseSpotted() ? RECOG_ONLY : SDET_RECOG;
   unsigned short status = RECOG_SILENCE;
-  if(!thfRecogPipe(_impl->_thfSession, currentRecognizer, audioDataLen, (short*)audioData, recogPipeMode, &status))
+  if(!thfRecogPipe(_impl->thfSession, currentRecognizer, audioDataLen, (short*)audioData, recogPipeMode, &status))
   {
-    LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogPipe.Fail", "%s", thfGetLastError(_impl->_thfSession));
+    LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogPipe.Fail", "%s", thfGetLastError(_impl->thfSession));
     return;
   }
   
@@ -370,9 +370,9 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     const char* wordAlign = nullptr;
     if (sPhraseForceHeard.empty())
     {
-      if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundStringRaw, &wordAlign, NULL, NULL, NULL, NULL, NULL))
+      if (!thfRecogResult(_impl->thfSession, currentRecognizer, &score, &foundStringRaw, &wordAlign, NULL, NULL, NULL, NULL, NULL))
       {
-        LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
+        LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->thfSession));
       }
     }
     else
@@ -403,8 +403,8 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
           info.endTime_ms = std::atoi(split[1].c_str()); // hope these are ints
 
           // convert to sample counts
-          info.startSampleIndex = ( info.startTime_ms * _impl->_sampleRate_kHz ) + _impl->_lastResetSampleIndex;
-          info.endSampleIndex   = ( info.endTime_ms   * _impl->_sampleRate_kHz ) + _impl->_lastResetSampleIndex;
+          info.startSampleIndex = ( info.startTime_ms * _impl->sampleRate_kHz ) + _impl->lastResetSampleIndex;
+          info.endSampleIndex   = ( info.endTime_ms   * _impl->sampleRate_kHz ) + _impl->lastResetSampleIndex;
         }
       }
       
@@ -416,34 +416,34 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     if (status == RECOG_DONE && currentRecogSP->AllowsFollowupRecog())
     {
       // Verify whether we actually have a followup recognizer set
-      const RecogDataSP nextRecogSP = _impl->RetrieveDataForIndex(_impl->_thfFollowupRecog);
+      const RecogDataSP nextRecogSP = _impl->RetrieveDataForIndex(_impl->thfFollowupRecog);
       if (nextRecogSP)
       {
         // Actually do the switch over to the new recognizer (as long as this phrase wasn't forced), which copies some buffered audio data
         if (!sPhraseForceHeard.empty() ||
-            thfRecogPrepSeq(_impl->_thfSession, nextRecogSP->GetRecognizer(), currentRecognizer))
+            thfRecogPrepSeq(_impl->thfSession, nextRecogSP->GetRecognizer(), currentRecognizer))
         {
-          std::lock_guard<std::recursive_mutex>(_impl->_recogMutex);
+          std::lock_guard<std::recursive_mutex>(_impl->recogMutex);
           LOG_INFO("SpeechRecognizerTHF.Update",
                    "Switching current recog from %d to %d",
-                   _impl->_thfCurrentRecog, _impl->_thfFollowupRecog);
-          _impl->_thfCurrentRecog = _impl->_thfFollowupRecog;
-          _impl->_thfFollowupRecog = InvalidIndex;
+                   _impl->thfCurrentRecog, _impl->thfFollowupRecog);
+          _impl->thfCurrentRecog = _impl->thfFollowupRecog;
+          _impl->thfFollowupRecog = InvalidIndex;
         }
         else
         {
-          LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogPrepSeq.Fail", "%s", thfGetLastError(_impl->_thfSession));
+          LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogPrepSeq.Fail", "%s", thfGetLastError(_impl->thfSession));
         }
       }
     }
     
-    if (thfRecogReset(_impl->_thfSession, currentRecognizer))
+    if (thfRecogReset(_impl->thfSession, currentRecognizer))
     {
-      _impl->_lastResetSampleIndex = _impl->_sampleIndex;
+      _impl->lastResetSampleIndex = _impl->sampleIndex;
     }
     else
     {
-      LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
+      LOG_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->thfSession));
     }
     
     sPhraseForceHeard = "";
@@ -452,20 +452,20 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   
 void SpeechRecognizerTHF::StartInternal()
 {
-  if (_impl->_disabled) {
-    _impl->_reset = true;
+  if (_impl->disabled) {
+    _impl->reset = true;
   }
-  _impl->_disabled = false;
+  _impl->disabled = false;
 }
 
 void SpeechRecognizerTHF::StopInternal()
 {
-  _impl->_disabled = true;
+  _impl->disabled = true;
 }
 
 void SpeechRecognizerTHF::Reset()
 {
-  _impl->_reset = true;
+  _impl->reset = true;
 }
 
 } // end namespace Vector

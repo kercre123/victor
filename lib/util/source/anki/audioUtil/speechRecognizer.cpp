@@ -25,7 +25,7 @@ void SpeechRecognizer::Stop()
   StopInternal();
 }
 
-void SpeechRecognizer::DoCallback(const SpeechRecognizerCallbackInfo& info)
+void SpeechRecognizer::DoCallback(const SpeechRecognizerCallbackInfo& info) const
 {
   if (_speechCallback)
   {

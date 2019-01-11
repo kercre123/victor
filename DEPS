@@ -60,7 +60,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "193"
+                "version": "196"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -77,7 +77,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4809"
+                "version": "4815"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

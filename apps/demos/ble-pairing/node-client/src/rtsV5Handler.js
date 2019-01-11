@@ -448,8 +448,8 @@ class RtsV5Handler {
     let self = this;
     let p = new Promise(function(resolve, reject) {
       self.storePromiseMethods('anki-auth', resolve, reject);
-      self.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsCloudSessionRequest_2(
-        new Rts.RtsCloudSessionRequest_2(sessionToken, '', '')
+      self.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsCloudSessionRequest_5(
+        new Rts.RtsCloudSessionRequest_5(sessionToken, '', '')
       ));
     });
 

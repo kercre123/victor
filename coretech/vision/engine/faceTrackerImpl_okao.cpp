@@ -126,7 +126,7 @@ namespace Vision {
       _config = config["FaceDetection"];
     } else {
       LOG_WARNING("FaceTrackerImpl.Constructor.NoFaceDetectConfig",
-                          "Did not find 'FaceDetection' field in config");
+                  "Did not find 'FaceDetection' field in config");
     }
 
     Profiler::SetProfileGroupName("FaceTracker.Profiler");
@@ -164,8 +164,8 @@ namespace Vision {
       return RESULT_FAIL;
     }
     LOG_INFO("FaceTrackerImpl.Init.FaceLibVersion",
-                     "Initializing with FaceLibVision version %d.%d",
-                     okaoVersionMajor, okaoVersionMinor);
+             "Initializing with FaceLibVision version %d.%d",
+             okaoVersionMajor, okaoVersionMinor);
 
     _okaoCommonHandle = OKAO_CO_CreateHandle();
     if(NULL == _okaoCommonHandle) {
@@ -287,7 +287,7 @@ namespace Vision {
     okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, DetectParams::kFaceThreshold);
     if(OKAO_NORMAL != okaoResult) {
       LOG_ERROR("FaceTrackerImpl.Init.FaceLibSetThresholdFailed",
-                        "FaceLib Result Code=%d", okaoResult);
+                "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL_INVALID_PARAMETER;
     }
 
@@ -306,7 +306,7 @@ namespace Vision {
     okaoResult = OKAO_PT_SetConfMode(_okaoPartDetectorHandle, PT_CONF_NOUSE);
     if(OKAO_NORMAL != okaoResult) {
       LOG_ERROR("FacetrakerImpl.Init.FaceLibPartDetectorConfModeFail",
-                        "FaceLib Result Code=%d", okaoResult);
+                "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL_INVALID_PARAMETER;
     }
 
@@ -365,7 +365,7 @@ namespace Vision {
       _isInitialized = true;
 
       LOG_INFO("FaceTrackerImpl.Init.Success",
-                       "FaceLib Vision handles created successfully.");
+               "FaceLib Vision handles created successfully.");
     }
 
     return recognizerInitResult;
@@ -473,7 +473,7 @@ namespace Vision {
     if(OKAO_NORMAL != result)
     {
       LOG_WARNING("FaceTrackerImpl.Reset.FaceLibResetFailure",
-                          "FaceLib result=%d", result);
+                  "FaceLib result=%d", result);
     }
 
     _recognizer.ClearAllTrackingData();
@@ -525,7 +525,7 @@ namespace Vision {
 
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.Update.FaceLibSetPositionFail",
-                          "FaceLib Result Code=%d", okaoResult);
+                  "FaceLib Result Code=%d", okaoResult);
       return false;
     }
     okaoResult = OKAO_PT_DetectPoint_GRAY(_okaoPartDetectorHandle, dataPtr,
@@ -534,7 +534,7 @@ namespace Vision {
     if(OKAO_NORMAL != okaoResult) {
       if(OKAO_ERR_PROCESSCONDITION != okaoResult) {
         LOG_WARNING("FaceTrackerImpl.Update.FaceLibPartDetectionFail",
-                            "FaceLib Result Code=%d", okaoResult);
+                    "FaceLib Result Code=%d", okaoResult);
       }
       return false;
     }
@@ -543,7 +543,7 @@ namespace Vision {
                                    _facialParts, _facialPartConfs);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.Update.FaceLibGetFacePartResultFail",
-                          "FaceLib Result Code=%d", okaoResult);
+                  "FaceLib Result Code=%d", okaoResult);
       return false;
     }
 
@@ -580,7 +580,7 @@ namespace Vision {
     INT32 okaoResult = OKAO_EX_SetPointFromHandle(_okaoEstimateExpressionHandle, _okaoPartDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.Update.FaceLibSetExpressionPointFail",
-                          "FaceLib Result Code=%d", okaoResult);
+                  "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL;
     }
 
@@ -593,7 +593,7 @@ namespace Vision {
       } else {
         // This should not happen
         LOG_WARNING("FaceTrackerImpl.Update.FaceLibEstimateExpressionFail",
-                            "FaceLib Result Code=%d", okaoResult);
+                    "FaceLib Result Code=%d", okaoResult);
         return RESULT_FAIL;
       }
     } else {
@@ -601,7 +601,7 @@ namespace Vision {
       okaoResult = OKAO_EX_GetResult(_okaoExpressionResultHandle, EX_EXPRESSION_KIND_MAX, _expressionValues);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceTrackerImpl.Update.FaceLibGetExpressionResultFail",
-                            "FaceLib Result Code=%d", okaoResult);
+                    "FaceLib Result Code=%d", okaoResult);
         return RESULT_FAIL;
       }
 
@@ -629,14 +629,14 @@ namespace Vision {
     INT32 okaoResult = OKAO_SM_SetPointFromHandle(_okaoSmileDetectHandle, _okaoPartDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.DetectSmile.SetPointFromHandleFailed",
-                          "FaceLib Result=%d", okaoResult);
+                  "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
 
     okaoResult = OKAO_SM_Estimate(_okaoSmileDetectHandle, dataPtr, nWidth, nHeight, _okaoSmileResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.DetectSmile.EstimateFailed",
-                          "FaceLib Result=%d", okaoResult);
+                  "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
 
@@ -645,7 +645,7 @@ namespace Vision {
     okaoResult = OKAO_SM_GetResult(_okaoSmileResultHandle, &smileDegree, &confidence);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.DetectSmile.GetResultFailed",
-                          "FaceLib Result=%d", okaoResult);
+                  "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
 
@@ -662,17 +662,17 @@ namespace Vision {
     INT32 okaoResult = OKAO_GB_SetPointFromHandle(_okaoGazeBlinkDetectHandle, _okaoPartDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.DetectGazeAndBlink.SetPointFromHandleFailed",
-                          "FaceLib Result=%d", okaoResult);
+                  "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
-
+    
     okaoResult = OKAO_GB_Estimate(_okaoGazeBlinkDetectHandle, dataPtr, nWidth, nHeight, _okaoGazeBlinkResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.DetectGazeAndBlink.EstimateFailed",
-                          "FaceLib Result=%d", okaoResult);
+                  "FaceLib Result=%d", okaoResult);
       return RESULT_FAIL;
     }
-
+    
     if(_detectGaze)
     {
       INT32 gazeLeftRight_deg = 0;
@@ -680,13 +680,13 @@ namespace Vision {
       okaoResult = OKAO_GB_GetGazeDirection(_okaoGazeBlinkResultHandle, &gazeLeftRight_deg, &gazeUpDown_deg);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceTrackerImpl.DetectGazeAndBlink.GetGazeDirectionFailed",
-                            "FaceLib Result=%d", okaoResult);
+                    "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
-
+      
       face.SetGaze(gazeLeftRight_deg, gazeUpDown_deg);
     }
-
+    
     if(_detectBlinks)
     {
       INT32 blinkDegreeLeft  = 0;
@@ -694,7 +694,7 @@ namespace Vision {
       okaoResult = OKAO_GB_GetEyeCloseRatio(_okaoGazeBlinkResultHandle, &blinkDegreeLeft, &blinkDegreeRight);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceTrackerImpl.DetectGazeAndBlink.GetEyeCloseRatioFailed",
-                            "FaceLib Result=%d", okaoResult);
+                    "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
 
@@ -872,7 +872,7 @@ namespace Vision {
     catch(const cv::Exception& e)
     {
       LOG_ERROR("FaceTrackerImpl.SetFacePoseFromParts.UndistortFailed",
-                        "OpenCV Error: %s", e.what());
+                "OpenCV Error: %s", e.what());
       return RESULT_FAIL;
     }
 
@@ -913,12 +913,12 @@ namespace Vision {
     // Handle errors here, _after_ restoring distorted points
     if(OKAO_NORMAL != okaoDirResult) {
       LOG_WARNING("FaceTrackerImpl.SetFacePoseFromParts.FaceLibGetFaceDirectionFail",
-                          "FaceLib Result Code=%d", okaoDirResult);
+                  "FaceLib Result Code=%d", okaoDirResult);
       return RESULT_FAIL;
     }
     if(OKAO_NORMAL != okaoGetResult) {
       LOG_WARNING("FaceTrackerImpl.SetFacePoseFromParts.FaceLibGetResultFail",
-                          "FaceLib Result Code=%d", okaoGetResult);
+                  "FaceLib Result Code=%d", okaoGetResult);
       return RESULT_FAIL;
     }
 
@@ -1041,17 +1041,17 @@ namespace Vision {
     okaoResult = OKAO_DT_SetEdgeMask(_okaoDetectorHandle, rcEdgeMask);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.SetCroppingMask.FaceLibSetEdgeMaskFail",
-                          "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
-                          okaoResult, rcEdgeMask.left, rcEdgeMask.top,
-                          rcEdgeMask.right, rcEdgeMask.bottom);
+                  "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
+                  okaoResult, rcEdgeMask.left, rcEdgeMask.top,
+                  rcEdgeMask.right, rcEdgeMask.bottom);
     }
     
     okaoResult = OKAO_DT_MV_SetTrackingEdgeMask(_okaoDetectorHandle, rcEdgeMask);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.SetCroppingMask.FaceLibSetTrackingEdgeMaskFail",
-                          "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
-                          okaoResult, rcEdgeMask.left, rcEdgeMask.top,
-                          rcEdgeMask.right, rcEdgeMask.bottom);
+                  "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
+                  okaoResult, rcEdgeMask.left, rcEdgeMask.top,
+                  rcEdgeMask.right, rcEdgeMask.bottom);
     }
     
   }
@@ -1070,7 +1070,7 @@ namespace Vision {
     if(kReinitDetector)
     {
       LOG_INFO("FaceTrackerImpl.Update.Reinit",
-                       "Reinitializing face tracker with current parameters");
+               "Reinitializing face tracker with current parameters");
       Deinit();
       Init();
       kReinitDetector = false;
@@ -1091,16 +1091,16 @@ namespace Vision {
                                      GRAY_ORDER_Y0Y1Y2Y3, _okaoDetectionResultHandle);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.Update.FaceLibDetectFail",
-                          "FaceLib Result Code=%d, dataPtr=%p, nWidth=%d, nHeight=%d",
-                          okaoResult, dataPtr, nWidth, nHeight);
+                  "FaceLib Result Code=%d, dataPtr=%p, nWidth=%d, nHeight=%d",
+                  okaoResult, dataPtr, nWidth, nHeight);
       return RESULT_FAIL;
     }
-
+    
     INT32 numDetections = 0;
     okaoResult = OKAO_DT_GetResultCount(_okaoDetectionResultHandle, &numDetections);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceTrackerImpl.Update.FaceLibGetResultCountFail",
-                          "FaceLib Result Code=%d", okaoResult);
+                  "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL;
     }
     Toc("FaceDetect");
@@ -1121,11 +1121,11 @@ namespace Vision {
 
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceTrackerImpl.Update.FaceLibGetResultInfoFail1",
-                            "Detection index %d of %d. FaceLib Result Code=%d",
-                            detectionIndex, numDetections, okaoResult);
+                    "Detection index %d of %d. FaceLib Result Code=%d",
+                    detectionIndex, numDetections, okaoResult);
         return RESULT_FAIL;
       }
-
+      
       // Don't re-recognize faces we're tracking whose IDs we already know.
       // In this context, a face must be named to be "known" because it's possible
       // (and common!) that we first see a face without matching it to someone
@@ -1141,7 +1141,7 @@ namespace Vision {
         skipRecognition.insert(detectionInfo.nID);
       }
     }
-
+    
     // Shuffle the set of unrecognized faces so we don't always try the same one.
     // If we know everyone, no need to random shuffle (skip all)
     if(numDetections > 1 && skipRecognition.size() != numDetections)
@@ -1149,17 +1149,17 @@ namespace Vision {
       std::random_shuffle(detectionIndices.begin(), detectionIndices.end(),
                           [this](int i) { return _rng->RandInt(i); });
     }
-
+    
     for(auto const& detectionIndex : detectionIndices)
     {
       DETECTION_INFO detectionInfo;
       okaoResult = OKAO_DT_GetRawResultInfo(_okaoDetectionResultHandle, detectionIndex,
                                             &detectionInfo);
-
+      
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceTrackerImpl.Update.FaceLibGetResultInfoFail2",
-                            "Detection index %d of %d. FaceLib Result Code=%d",
-                            detectionIndex, numDetections, okaoResult);
+                    "Detection index %d of %d. FaceLib Result Code=%d",
+                    detectionIndex, numDetections, okaoResult);
         return RESULT_FAIL;
       }
 
@@ -1189,8 +1189,8 @@ namespace Vision {
                                                  &ptLeftBottom, &ptRightBottom);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceTrackerImpl.Update.FaceLibCenterToSquareFail",
-                            "Detection index %d of %d. FaceLib Result Code=%d",
-                            detectionIndex, numDetections, okaoResult);
+                    "Detection index %d of %d. FaceLib Result Code=%d",
+                    detectionIndex, numDetections, okaoResult);
         return RESULT_FAIL;
       }
 
@@ -1236,34 +1236,34 @@ namespace Vision {
           Toc("ExpressionRecognition");
           if(RESULT_OK != expResult) {
             LOG_WARNING("FaceTrackerImpl.Update.EstimateExpressionFailed",
-                                "Detection index %d of %d.",
-                                detectionIndex, numDetections);
+                        "Detection index %d of %d.",
+                        detectionIndex, numDetections);
           }
         } // if(_detectEmotion)
-
+        
         if(_detectSmiling)
         {
           Tic("SmileDetection");
           Result smileResult = DetectSmile(nWidth, nHeight, dataPtr, face);
           Toc("SmileDetection");
-
+          
           if(RESULT_OK != smileResult) {
             LOG_WARNING("FaceTrackerImpl.Update.DetectSmileFailed",
-                                "Detection index %d of %d.",
-                                detectionIndex, numDetections);
+                        "Detection index %d of %d.",
+                        detectionIndex, numDetections);
           }
         }
-
+        
         if(_detectGaze || _detectBlinks) // In OKAO, gaze and blink are part of the same detector
         {
           Tic("GazeAndBlinkDetection");
           Result gbResult = DetectGazeAndBlink(nWidth, nHeight, dataPtr, face);
           Toc("GazeAndBlinkDetection");
-
+          
           if(RESULT_OK != gbResult) {
             LOG_WARNING("FaceTrackerImpl.Update.DetectGazeAndBlinkFailed",
-                                "Detection index %d of %d.",
-                                detectionIndex, numDetections);
+                        "Detection index %d of %d.",
+                        detectionIndex, numDetections);
           }
         }
 
@@ -1356,7 +1356,7 @@ namespace Vision {
         if(_allowedTrackedFaceID.count(update.oldID)>0)
         {
           LOG_DEBUG("FaceTrackerImpl.Update.UpdatingAllowedTrackedFaceIDs",
-                            "Remove %d, Add %d", update.oldID, update.newID);
+                    "Remove %d, Add %d", update.oldID, update.newID);
           _allowedTrackedFaceID.erase(update.oldID);
           _allowedTrackedFaceID.insert(update.newID);
         }
@@ -1482,8 +1482,8 @@ namespace Vision {
     else if(DEBUG_ENROLLABILITY)
     {
       LOG_DEBUG("FaceTrackerImpl.IsEnrollable.NotLookingStraight",
-                        "EyeDist=%.1f (vs. %.1f)",
-                        intraEyeDist, FaceEnrollParams::kFarDistanceBetweenEyesMin);
+                "EyeDist=%.1f (vs. %.1f)",
+                intraEyeDist, FaceEnrollParams::kFarDistanceBetweenEyesMin);
     }
     
     return false;
