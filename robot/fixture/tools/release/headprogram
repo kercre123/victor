@@ -20,9 +20,9 @@ cloudcert=1; oswrite=1; helper=0; argCnt=0
 for arg in "$@"; do
   #argCnt=$((argCnt+1))
   #echo arg[$argCnt] raw:\""${arg}"\" trimmed:\""$(echo ${arg} | xargs)"\"
-  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; fi
-  if [ "$(echo ${arg} | xargs)" == "nocert" ]; then echo "cloud cert disabled"; cloudcert=0; fi
-  if [ "$(echo ${arg} | xargs)" == "nos" ];    then echo "os write disabled"; oswrite=0; fi
+  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; oswrite=0; fi
+  if [ "$(echo ${arg} | xargs)" == "nocert" ]; then echo "cloud cert disabled"; cloudcert=0; oswrite=0; fi
+  if [ "$(echo ${arg} | xargs)" == "nos" ];    then echo "os write disabled"; cloudcert=0; oswrite=0; fi
 done
 
 # Enable USB

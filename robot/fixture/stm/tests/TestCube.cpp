@@ -20,7 +20,7 @@
 #include "timer.h"
 
 #define TESTCUBE_DEBUG 1
-static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_MP;
+static const int CURRENT_CUBE_HW_REV = CUBEID_HWREV_WHSK_DVT1;
 
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
@@ -321,9 +321,9 @@ static void ShortCircuitTest(void)
 }
 
 //led test array
-const int iRED_nominal=27, iRED_variance=5;
-const int iGRN_nominal=28, iGRN_variance=8;
-const int iBLU_nominal=28, iBLU_variance=8;
+const int iRED_nominal=28, iRED_variance=6;   //typ: 25-31, avg 27.9, max unit variance (statistical): 1
+const int iGRN_nominal=31, iGRN_variance=11;  //typ: 23-39, avg 30.8, max unit variance (statistical): 23.3
+const int iBLU_nominal=29, iBLU_variance=11;  //typ: 20-37, avg 29.3, max unit variance (statistical): 24.7
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
   {(char*)"All.RED", 0x1111, 12, 0,           10,             4,  ERROR_CUBE_LED    },

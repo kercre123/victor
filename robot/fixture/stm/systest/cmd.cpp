@@ -145,7 +145,7 @@ static int respond_(char* cmd, int status, const char* info)
 
 int cmd_process(char* s)
 {
-  char b[80]; int bz = sizeof(b);
+  char b[127]; int bz = sizeof(b);
   
   if(!s)
     return STATUS_NULL;
@@ -332,6 +332,65 @@ int cmd_process(char* s)
   }//-*/
   
   //==========================
+  //ADC Debug
+  /*/==========================
+  if( !strcmp(cmd, "adc") )
+  {
+    #define VREFINT_CAL (*((uint16_t*)0x1FFFF7BA))  //VREFINT bandgap voltage, calibrated value @30C+-5C VDDA = 3.3V+-10mV
+    #define TEMP30_CAL  (*((uint16_t*)((uint32_t)0x1FFFF7B8)))  //TS_CAL1: Temperature calibration value @30C+-5C VDDA=3.3V+-10mV
+    #define ADC_READ_ALL(ch, pints) \
+      ((int*)(pints))[0] = Board::adcReadRaw((ch)); \
+      ((int*)(pints))[1] = Board::adcRead((ch),2); \
+      ((int*)(pints))[2] = Board::adcReadMv((ch),2);
+    
+    {
+      struct { int raw; int adj; int mv; int mv2; } vref, vin, temp, ntc, dummy[5];
+      ADC_READ_ALL( ADC_VREFINT, &vref );
+      ADC_READ_ALL( ADC_VIN_SENSE, &vin );
+      ADC_READ_ALL( ADC_TEMP_CPU, &temp );
+      ADC_READ_ALL( ADC_NTC, &ntc );
+      
+      const uint32_t VDDA = 3300 * VREFINT_CAL / vref.raw;
+      #define ADC_TO_MV(adc,vdda)  (((adc)*(vdda))>>12)
+      vref.mv2 = ADC_TO_MV(vref.raw,VDDA);
+      vin.mv2  = ADC_TO_MV(vin.adj,2800);
+      temp.mv2 = ADC_TO_MV(temp.adj,2800);
+      ntc.mv2  = ADC_TO_MV(ntc.adj,2800);
+      
+      dummy[0].raw = 100;
+      dummy[1].raw = 1099;
+      dummy[2].raw = 2218;
+      dummy[3].raw = 3012;
+      dummy[4].raw = 4050;
+      for(int i=0; i<5; i++) {
+        dummy[i].adj = (dummy[i].raw * VREFINT_CAL * 33) / (vref.raw * 28);
+        dummy[i].mv  = ADC_TO_MV(dummy[i].adj, 2800);
+        dummy[i].mv2 = ADC_TO_MV(dummy[i].raw, VDDA);
+      }
+      
+      //linearized conversion
+      int32_t tempC_ntc = ( (ntc.raw * 4) / 112 ) - 53;
+      int32_t tempF_ntc = ((ntc.raw*9)/(28*5) - (53*9)/5) + 32;
+      
+      writes_( snformat(b,bz,"         raw  adj  mv\n", VREFINT_CAL) );
+      writes_( snformat(b,bz,"vref-cal %4d         \n", VREFINT_CAL) );
+      writes_( snformat(b,bz,"vdda     %4d         \n", VDDA) );
+      writes_( snformat(b,bz,"vref-int %4d %4d %4d,%4d(%i) \n", vref.raw, vref.adj, vref.mv, vref.mv2, ABS(vref.mv-vref.mv2) ) );
+      writes_( snformat(b,bz,"vin      %4d %4d %4d,%4d(%i)\n", vin.raw,  vin.adj,  vin.mv,  vin.mv2  , ABS(vin.mv-vin.mv2)   ) );
+      writes_( snformat(b,bz,"temp     %4d %4d %4d,%4d(%i) \n", temp.raw, temp.adj, temp.mv, temp.mv2, ABS(temp.mv-temp.mv2) ) );
+      writes_( snformat(b,bz,"ntc      %4d %4d %4d,%4d(%i) %iC %iF \n", ntc.raw,  ntc.adj,  ntc.mv,  ntc.mv2 , ABS(ntc.mv-ntc.mv2), tempC_ntc, tempF_ntc ) );
+      for(int i=0; i<5; i++) {
+      writes_( snformat(b,bz,"dummy%i   %4d %4d %4d,%4d(%i) \n", i, dummy[i].raw,  dummy[i].adj,  dummy[i].mv,  dummy[i].mv2 , ABS(dummy[i].mv-dummy[i].mv2)   ) );
+      }
+    }
+    
+    #undef VREFINT_CAL
+    #undef TEMP30_CAL
+    #undef ADC_READ_ALL
+    return respond_(cmd, STATUS_OK, 0);
+  }//-*/
+  
+  //==========================
   //Sensor Read (using charge comm protocol)
   //>>get NN sr 00 00 00 00
   //:data [data] [data] [data]
@@ -353,49 +412,38 @@ int cmd_process(char* s)
     //-------------------------------------
     if( sr == RCOM_SENSOR_BATTERY )
     {
-      #define VIN_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
+      //VREFINT bandgap voltage, calibrated value @30C+-5C VDDA = 3.3V+-10mV
+      #define VREFINT_CAL_ADDR  ((uint16_t*)0x1FFFF7BA)
+      #define VREFINT_CAL_VAL   (*VREFINT_CAL_ADDR)
       
-      /*static bool adc_init = 0;
-      if( !adc_init ) {
-        adc_init=1;
-        writes_( snformat(b,bz,"init adc\n") ); 
-        
-        RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-        RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE); //VIN_SENSE=A4
-        
-        ADC_InitTypeDef adcinit;
-        memset(&adcinit, 0, sizeof(adcinit));
-        adcinit.ADC_Resolution = ADC_Resolution_12b;
-        adcinit.ADC_ContinuousConvMode = DISABLE;
-        adcinit.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-        adcinit.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_TRGO;
-        adcinit.ADC_DataAlign = ADC_DataAlign_Right; //ADC_DataAlign_Left
-        adcinit.ADC_ScanDirection = ADC_ScanDirection_Upward;
-        ADC_Init(ADC1, &adcinit);
-      }*/
+      //Temperature calibration value @30C+-5C VDDA=3.3V+-10mV
+      #define TEMP30_CAL_ADDR ((uint16_t*)((uint32_t)0x1FFFF7B8)) /*TS_CAL1*/
+      #define TEMP30_CAL      (*TEMP30_CAL_ADDR)
       
-      VIN_SENSE::init(MODE_ANALOG);
-      Timer::wait(100);
+      //converts adc reading (Vin) to Vbattery[mV]
+      #define VIN_RAW_TO_BAT_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
       
-      //XXX
-      writes_( snformat(b,bz,"WARNING: adc disabled. reporting dummy data for debug\n") );
-      
-      writes_( snformat(b,bz,"battery(%i) rawADC temp\n", NN) );
+      writes_( snformat(b,bz,"battery(%i) Vin[adc] tempNTC[C] tempCPU[C] vbat[mv]\n", NN) );
       for(int n=0; n<NN; n++)
       {
-        //ADC_StartOfConversion(ADC1);
-        //uint16_t vin_raw = ADC_GetConversionValue(ADC1);
-        uint16_t vin_raw = 2816 + n;
+        uint32_t adc_vrefint = Board::adcReadRaw(ADC_VREFINT);
+        uint32_t adc_vin = Board::adcRead(ADC_VIN_SENSE, 1); //adjusted, "perfect VDD=2.8V"
+        uint32_t adc_temp_cpu = Board::adcReadRaw(ADC_TEMP_CPU);
+        uint32_t adc_temp_ntc = Board::adcReadRaw(ADC_NTC);
         
-        writes_( snformat(b,bz,":%i %i %i\n", vin_raw, 0, VIN_RAW_TO_MV(vin_raw)) );
+        const uint32_t VDDA = 3300 * VREFINT_CAL_VAL / adc_vrefint; //actual VDD
+        const uint32_t vbat_mv = VIN_RAW_TO_BAT_MV(adc_vin);
+        //const uint32_t ntc_mv = Board::adcReadMv(ADC_NTC); //(adc_temp_ntc * 2800) >> 12;
+        
+        #define AVG_SLOPE (5336) //AVG_SLOPE in ADC conversion step (@3.3V)/°C multiplied by 1000 for precision on the division
+        int32_t tempC_cpu = (int32_t)(((int32_t)TEMP30_CAL) - (int32_t)((adc_temp_cpu * VDDA) / 3300)) * 1000;
+        tempC_cpu = (tempC_cpu / AVG_SLOPE) + 30;
+        int32_t tempC_ntc = ( (adc_temp_ntc * 4) / 112 ) - 53;
+        //int32_t tempF_ntc = ((adc_temp_ntc*9)/(28*5) - (53*9)/5) + 32; //for sanity check??
+        
+        writes_( snformat(b,bz,":%i %i %i %i\n", adc_vin, tempC_ntc, tempC_cpu, vbat_mv) );
         Timer::delayMs(5);
       }
-      
-      VIN_SENSE::init(MODE_INPUT);
-      
-      /*writes_( snformat(b,bz,"disable adc\n") );
-      ADC_DeInit(ADC1);
-      adc_init = 0;*/
       
       return respond_(cmd, STATUS_OK, 0);
     }
@@ -426,6 +474,7 @@ int cmd_process(char* s)
           { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
           { I2C_DONE },
         };
+        (void)I2C_LOOP[0];
         
         /*writes_( snformat(b,bz,"init drop sensors\n") );
         for (int i = 0; i < 4; i++) {

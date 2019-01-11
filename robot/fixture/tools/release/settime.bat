@@ -24,19 +24,13 @@ REM METHOD2: bridge through helper head to send the command
 IF %IFADB% NEQ 1 goto :LENDADB
 
 where adb >nul 2>nul
-if %ERRORLEVEL% NEQ 0 (
-  echo adb command not found
-  exit 1
-)
+if %ERRORLEVEL% NEQ 0 ( echo "adb command not found" & goto :END )
 
 adb shell "echo shell connection established"
-if %ERRORLEVEL% NEQ 0 (
-  echo adb not connected to a device, e=%ERRORLEVEL%
-  exit 2
-)
+if %ERRORLEVEL% NEQ 0 ( echo adb not connected to a device e=%ERRORLEVEL% & goto :END )
 
 echo hijack ttyHS0
-adb shell -x "pkill helper && sleep 1"
+adb shell "killall -9 helper && sleep 1 && ps | grep ./helper | grep -v grep"
 adb shell "stty -F /dev/ttyHS0 1000000"
 
 adb shell "echo settime %UNIX_LOCAL%"
@@ -46,9 +40,9 @@ REM READ REPLY
 REM XXX no worky :(
 REM adb shell "end=$(date +%s)+2; echo $end..$((end)); while [ $((date +%s)) -lt $((end)) ]; do cat </dev/tty; done"
 
-REM echo restarting helper...
-REM adb shell "sleep 1 && cd /data/local/fixture && ./helper > /dev/null 2>&1 < /dev/null &"
-REM adb shell "sleep 1 && ps | grep helper"
+REM echo restarting helper process...
+REM adb shell "echo `cd /data/local/fixture && nohup ./helper >/dev/null 2>&1 </dev/null &` >/dev/null && sleep 1"
+REM adb shell "echo ps new: `ps | grep ./helper | grep -v grep` && sleep 1"
 
 echo rebooting...
 adb shell "sync && sleep 1"
@@ -83,5 +77,6 @@ set /a ut=y*365+y/4-y/100+y/400+(153*(100%Month%%%100+12*z-3)+2)/5+Day-719469
 set /a ut=ut*86400+100%Hour%%%100*3600+100%Minute%%%100*60+100%Second%%%100
 endlocal & set "%1=%ut%" & goto :EOF
 
+:END
 :EOF
 

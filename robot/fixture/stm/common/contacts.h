@@ -7,6 +7,7 @@ namespace Contacts
   void init(void);
   void deinit(void);
   void echo(bool on); //if supported, turns on console-echo
+  bool echoIsOn(void);
   void setModeIdle(void); //disconnect pins etc
   
   //Power control
@@ -27,6 +28,7 @@ namespace Contacts
   int  getchar(void); //get next rx'd char. -1 if rx buffer empty
   char* getline(int timeout_us = 0, int *out_len = 0); //+manages console features, if supported
   char* getlinebuffer(int *out_len = 0); //access to the raw line buffer (debug: access to partial rx)
+  int  flushline(void); //flush the line buffer. @return # of discarded chars
   int  flushRx(void); //flush the rx buffer (+line buffer). return # of discarded chars
   int getRxDroppedChars();   //get and clear count of dropped rx chars
   int getRxOverflowErrors(); //get and clear count of receive buffer overflows (uart periph)

@@ -57,6 +57,10 @@ extern "C" {
 #define FIXMODE_MOTOR2         47
 #define FIXMODE_MOTOR3         48
 
+#define FIXMODE_TOF            49
+#define FIXMODE_TOF_DEBUG      50
+#define FIXMODE_TOF_CALIB      51
+
 #define FIXMODE_BLOCK1         56
 #define FIXMODE_BLOCK2         57
 
@@ -153,9 +157,9 @@ const char*   fixtureTimeStr(time_t time); //short (20char) string representatio
   { "MOTOR1"      , TestMotorDetect     , TestMotor1GetTests          , TestMotorCleanup            , FIXMODE_MOTOR1      },  /*46*/  \
   { "MOTOR2"      , TestMotorDetect     , TestMotor2GetTests          , TestMotorCleanup            , FIXMODE_MOTOR2      },  /*47*/  \
   { "MOTOR3"      , TestMotorDetect     , TestMotor3GetTests          , TestMotorCleanup            , FIXMODE_MOTOR3      },  /*48*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "TOF"         , TestAuxTofDetect    , TestAuxTofGetTests          , TestAuxTofCleanup           , FIXMODE_TOF         },  /*49*/  \
+  { "TOF-DEBUG"   , TestAuxTofDetect    , TestAuxTofGetTests          , TestAuxTofCleanup           , FIXMODE_TOF_DEBUG   },  /*50*/  \
+  { "TOF-CAL"     , TestAuxTofDetect    , TestAuxTofGetTests          , TestAuxTofCleanup           , FIXMODE_TOF_CALIB   },  /*51*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
@@ -224,6 +228,14 @@ typedef int error_t;
 #define ERROR_SENSOR_CLIFF_BR             354 // cliff sensor malfunction (back right)
 #define ERROR_SENSOR_TOF                  355 // distance sensor malfunction
 #define ERROR_SENSOR_TOUCH                356 // touch sensor malfunction
+#define ERROR_SENSOR_CLIFF_ALL            357 // all cliff sensor readings invalid. check electrical (bus short?). Try power cycle.
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_FL   358 // cliff sensor failed to boot (front left)  problem with bus communication or sensor power
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_FR   359 // cliff sensor failed to boot (front right) problem with bus communication or sensor power
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_BL   360 // cliff sensor failed to boot (back left)   problem with bus communication or sensor power
+#define ERROR_SENSOR_CLIFF_BOOT_FAIL_BR   361 // cliff sensor failed to boot (back right)  problem with bus communication or sensor power
+#define ERROR_SENSOR_TOF_BOOT_FAIL        362 // distance sensor failed to boot. problem with bus communication or sensor power
+#define ERROR_SENSOR_UNHANDLED_FAILURE    363 // unknown sensor error reported by body firmware. SEND LOGS TO ANKI. check for shorts and sensor power.
+#define ERROR_SENSOR_TEMP                 364 // temperature sensor reading out-of-range. Ensure room temperature for test. possible SMT problem.
 
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed
@@ -288,7 +300,7 @@ typedef int error_t;
 
 //<export heading> Power System Errors
 #define ERROR_POWER_SHORT                 619 // Power short circuit detected
-//#define ERROR_BAT_LEAKAGE               620 // Too much leakage through battery when turned off
+#define ERROR_ROBOT_OFF_CHARGER           620 // Robot is off charger - unable to detect charge contact power draw (possible power circuit failure)
 #define ERROR_BAT_UNDERVOLT               621 // Battery voltage too low
 #define ERROR_BAT_CHARGER                 622 // Battery charger not working
 #define ERROR_BAT_OVERVOLT                623 // Battery voltage too high for this test (e.g. charge test)
