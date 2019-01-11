@@ -42,7 +42,7 @@
 #define error(fmt, ...)  fprintf(stderr, "[E] " fmt"\n", ##__VA_ARGS__)
 #define warn(fmt, ...)  fprintf(stderr, "[W] " fmt"\n", ##__VA_ARGS__)
 
-#define USE_BOTH_SENSORS 1
+#define USE_BOTH_SENSORS 0
 
 namespace Anki {
 namespace Cozmo {
@@ -77,8 +77,13 @@ namespace {
   // and /dev/stmvl53l1_ranging1 devices
   enum Sensor
   {
+   #if USE_BOTH_SENSORS
    RIGHT = 0,
    LEFT = 1,
+   #else
+   RIGHT = 1,
+   LEFT = 0,
+   #endif
   };
 
   bool _dataUpdatedSinceLastGetCall = false;
@@ -674,7 +679,7 @@ int perform_calibration(int dev,
 
   // Setup timing budget
   PRINT_NAMED_ERROR("","set timing budget\n");
-  rc = timing_budget_set(dev, 16*2000);
+  rc = timing_budget_set(dev, 8*2000);
   return_if_not(rc == 0, -1, "ioctl error setting timing budged: %d", errno);
 
   // Set distance mode
