@@ -92,6 +92,10 @@ public:
 
   const AllVisionModesSchedule& GetSchedule() const { return _schedule; }
   
+  // If andReset=true, also counts the single shot modes as "processed" so they won't be returned anymore after this
+  // VisionComponent (the actual user of the schedule) is expected to be the only caller to use andReset=true
+  void AddSingleShotModesToSet(VisionModeSet& modeSet, bool andReset);
+  
   // in debug builds, send viz messages to webots
   void SendDebugVizMessages(const CozmoContext* context);
   
@@ -148,7 +152,6 @@ private:
   bool _subscriptionRecordIsDirty = false;
   uint8_t _framesSinceSendingDebugViz = 0;
   std::unordered_set<VisionMode> _singleShotModes;
-  bool _forceGenerateSchedule = false;
   
   // Final fully balanced schedule that VisionComponent will use
   AllVisionModesSchedule _schedule;
