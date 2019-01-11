@@ -1,6 +1,7 @@
 #ifndef CORE_LCD_H_
 #define CORE_LCD_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define LCD_FRAME_WIDTH     184
