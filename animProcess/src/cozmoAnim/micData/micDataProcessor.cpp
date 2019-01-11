@@ -17,6 +17,8 @@
 #include "policy_actions.h"
 #include "se_diag.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/beatDetector/beatDetector.h"
@@ -867,6 +869,11 @@ void MicDataProcessor::ProcessTriggerLoop()
 void MicDataProcessor::UpdateBeatDetector(const AudioUtil::AudioSample* const samples, const uint32_t nSamples)
 {
   ANKI_CPU_PROFILE("BeatDetectorUpdate");
+
+  if( THEBOX ) {
+    // in addition to having no soul, TheBox has no groove
+    return;
+  }
 
   // Only run the beat detector if we are not in low power mode
   if (_isInLowPowerMode) {
