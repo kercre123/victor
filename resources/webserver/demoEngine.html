@@ -29,6 +29,18 @@
         hostname = urlObject.hostname;
         console.log('host is: ' + host);
         console.log('hostname is: ' + hostname);
+
+        // get the state names from the console function
+        $.get("consolefunccall?func=TheBoxMoveToState&args=list").success(function(data){
+          data.trim().split(" ").forEach(function(state) {
+            $('#DemoState')
+              .append($("<option></option>")
+                      .attr("value",state)
+                      .text(state));
+            console.log("adding demo state: " + state);
+          });
+        });
+
     });
     $(function() {
         $("button").click(function(event) {
@@ -55,6 +67,15 @@
             });
           }
         });
+        $('#DemoState').selectmenu({
+          change: function(event, data) {
+            if(data.item.value) {
+              $.post("consolefunccall", {func: "TheBoxMoveToState", args: data.item.value}, function(result){
+              });
+            }
+          }
+        });
+
     });
 
     function InitConfirmDialog() {
@@ -107,6 +128,13 @@
 
 <body class="ui-widget-content" style="border:0;background:#000000">
   <div>
+    <div>
+      <select name="DemoState" id='DemoState' class='listbox'>
+      <option value="">------</option>
+      </select>
+      <label for="DemoState-button">Switch to State</label>
+    </div>
+    <br>
     <div>
       <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
         <option>Mute</option>
