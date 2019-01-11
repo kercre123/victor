@@ -19,6 +19,7 @@
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeAccelListeners/lowPassFilterListener.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
+#include "engine/components/cubes/cubeInteractionTracker.h"
 #include "engine/components/movementComponent.h"
 
 namespace Anki {
@@ -117,7 +118,8 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
 
   // reset dynamic variables
   _dVars = DynamicVariables();
-  SetLiftState(false);
+  _liftIsUp = false;
+  SetLiftState(_liftIsUp);
   
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
@@ -174,15 +176,20 @@ void BehaviorCubeDrive::BehaviorUpdate() {
      
     GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(left_wheel_mmps, right_wheel_mmps, 1000.0, 1000.0);
 
-    double now = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-    if(now - 0.25 > _dVars.last_lift_action_time) {
-      if(_dVars.filtered_cube_accel->z > 9810.0 * 2.0) {
-        _dVars.last_lift_action_time = now;
-        SetLiftState(true);
-      } else if(_dVars.filtered_cube_accel->z < -9810.0) {
-        _dVars.last_lift_action_time = now;
-        SetLiftState(false);
-      }
+    // double now = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+    // if(now - 0.25 > _dVars.last_lift_action_time) {
+    //   if(_dVars.filtered_cube_accel->z > 9810.0 * 2.0) {
+    //     _dVars.last_lift_action_time = now;
+    //     SetLiftState(true);
+    //   } else if(_dVars.filtered_cube_accel->z < -9810.0) {
+    //     _dVars.last_lift_action_time = now;
+    //     SetLiftState(false);
+    //   }
+    // }
+    if(GetBEI().GetCubeInteractionTracker().GetTargetStatus().tappedDuringLastTick) {
+      // toggle lift up/down
+      _liftIsUp = !_liftIsUp;
+      SetLiftState(_liftIsUp);
     }
   }
 }

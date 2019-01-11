@@ -71,6 +71,7 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
+  bool _liftIsUp;
   
 };
 
