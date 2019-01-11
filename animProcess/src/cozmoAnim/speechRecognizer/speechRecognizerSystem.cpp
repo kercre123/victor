@@ -26,6 +26,8 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
+#include "util/string/stringUtils.h"
 #include <list>
 
 #include <fcntl.h>
@@ -44,6 +46,19 @@ namespace {
 #if ANKI_DEV_CHEATS
 #define CONSOLE_GROUP_VECTOR "SpeechRecognizer.Vector"
 #define CONSOLE_GROUP_ALEXA "SpeechRecognizer.Alexa"
+  
+  std::string kWakeWord = "elemental";
+  bool kWakeWordNeedsUpdate = false;
+  
+  static void SetWakeWord( ConsoleFunctionContextRef context )
+  {
+    kWakeWord = ConsoleArg_Get_String( context, "wakeWord" );
+    kWakeWord = Util::StringToLower(kWakeWord);
+    // only use first word
+    kWakeWord = Util::StringSplit(kWakeWord, ' ')[0];
+    kWakeWordNeedsUpdate = true;
+  }
+  CONSOLE_FUNC( SetWakeWord, "AAAA", const char* wakeWord );
   
 // NOTE: This enum needs to EXACTLY match the number and ordering of the kTriggerModelDataList array below
 enum class SupportedLocales
@@ -234,11 +249,44 @@ SpeechRecognizerSystem::~SpeechRecognizerSystem()
   if( _victorTrigger ) {
     _victorTrigger->recognizer->Stop();
   }
-  if( _pocketSphinxRecognizer ) {
-    _pocketSphinxRecognizer->Stop();
+  {
+    std::lock_guard<std::mutex> lk{_psMutex};
+    if( _pocketSphinxRecognizer ) {
+      _pocketSphinxRecognizer->Stop();
+    }
   }
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
+  }
+  if( _makeThread.joinable() ) {
+    _makeThread.join();
+  }
+}
+
+void SpeechRecognizerSystem::MakePocketSphinx()
+{
+  static bool first = true;
+  std::lock_guard<std::mutex> lk{_psMutex};
+  auto* recognizer = SpeechRecognizerPocketSphinx::Create( _modelPath, kWakeWord );
+  if( recognizer == nullptr ) {
+    PRINT_NAMED_WARNING("WHATNOW", "error!!!!");
+    _context->GetBackpackLightComponent()->SetMicMute(true);
+    _pocketSphinxRecognizer.reset();
+  } else {
+    _context->GetBackpackLightComponent()->SetMicMute(false);
+    _pocketSphinxRecognizer.reset( recognizer );
+    _pocketSphinxRecognizer->Init( _modelPath );
+    _pocketSphinxRecognizer->SetCallback( [this](const AudioUtil::SpeechRecognizerCallbackInfo& info) {
+      PRINT_NAMED_WARNING("WHATNOW", "this callback");
+      _callback(info);
+    });
+    _pocketSphinxRecognizer->Start();
+    // append wake word in file
+    if( !first ) {
+      Util::FileUtils::WriteFile("/data/data/com.anki.victor/persistent/chosenWakeWords.txt", kWakeWord + '\n', true);
+    } else {
+      first = false;
+    }
   }
 }
 
@@ -246,15 +294,17 @@ SpeechRecognizerSystem::~SpeechRecognizerSystem()
 void SpeechRecognizerSystem::InitPocketSphinx(const RobotDataLoader& dataLoader,
                                               TriggerWordDetectedCallback callback)
 {
+  // no lock needed here sicne its only called during init
   if (_pocketSphinxRecognizer) {
     LOG_WARNING("SpeechRecognizerSystem.InitVector", "Victor Recognizer is already running");
     return;
   }
   
-  _pocketSphinxRecognizer = std::make_unique<SpeechRecognizerPocketSphinx>();
-  _pocketSphinxRecognizer->Init( Util::FileUtils::AddTrailingFileSeparator(Util::FileUtils::AddTrailingFileSeparator(_triggerWordDataDir) + "model") );
-  _pocketSphinxRecognizer->SetCallback(callback);
-  _pocketSphinxRecognizer->Start();
+  _modelPath = Util::FileUtils::AddTrailingFileSeparator(Util::FileUtils::AddTrailingFileSeparator(_triggerWordDataDir) + "model");
+  _callback = callback;
+  
+  //_makeThread = std::thread( &SpeechRecognizerSystem::MakePocketSphinx, this);
+  MakePocketSphinx();
   
 }
   
@@ -464,8 +514,23 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   if (vadActive && _victorTrigger) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
   }
-  if (vadActive && _pocketSphinxRecognizer) {
-    _pocketSphinxRecognizer->Update(audioData, audioDataLen);
+  {
+    std::unique_lock<std::mutex> lock(_psMutex, std::try_to_lock);
+    if(lock.owns_lock()){
+      if (vadActive && _pocketSphinxRecognizer) {
+        _pocketSphinxRecognizer->Update(audioData, audioDataLen);
+      }
+    }
+    // otherwise dont send data
+  }
+  
+  if( kWakeWordNeedsUpdate ) {
+    PRINT_NAMED_WARNING("WHATNOW", "redoing wake word to %s", kWakeWord.c_str());
+    kWakeWordNeedsUpdate = false;
+    if( _makeThread.joinable() ) {
+      _makeThread.join();
+    }
+    _makeThread = std::thread( &SpeechRecognizerSystem::MakePocketSphinx, this);
   }
 
   if (_alexaComponent != nullptr && _alexaTrigger != nullptr) {

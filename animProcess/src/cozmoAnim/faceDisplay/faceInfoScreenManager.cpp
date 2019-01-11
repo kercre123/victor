@@ -1021,7 +1021,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
           _engineLoaded &&
           CanEnterPairingFromScreen(currScreenName))
   {
-    ToggleMute("DOUBLE_PRESS");
+    //ToggleMute("DOUBLE_PRESS");
   }
 
   // Check for button press to go to next debug screen

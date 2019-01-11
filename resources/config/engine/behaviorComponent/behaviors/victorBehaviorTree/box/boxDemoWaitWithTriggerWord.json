@@ -1,9 +1,0 @@
-{
-  "behaviorID": "BoxDemoWaitWithTriggerWord",
-  "behaviorClass": "DispatcherQueue",
-
-  "behaviors": [
-    "TriggerWordDetected",
-    "Wait"
-  ]
-}

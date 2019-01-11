@@ -23,7 +23,10 @@ namespace Vector {
 class SpeechRecognizerPocketSphinx : public AudioUtil::SpeechRecognizer
 {
 public:
-  SpeechRecognizerPocketSphinx();
+  
+  static SpeechRecognizerPocketSphinx* Create( const std::string& modelBasePath, const std::string& wakeWord );
+  
+  
   virtual ~SpeechRecognizerPocketSphinx();
   SpeechRecognizerPocketSphinx(SpeechRecognizerPocketSphinx&& other);
   SpeechRecognizerPocketSphinx& operator=(SpeechRecognizerPocketSphinx&& other);
@@ -38,6 +41,8 @@ public:
   virtual IndexType GetRecognizerIndex() const override;
 
 private:
+  SpeechRecognizerPocketSphinx( const std::string& modelPath, const std::string& wakeWord );
+  
   struct SpeechRecognizerPocketSphinxData;
   std::unique_ptr<SpeechRecognizerPocketSphinxData> _impl;
 
@@ -48,6 +53,8 @@ private:
   virtual void StartInternal() override;
   virtual void StopInternal() override;
   
+  std::string _wakeWord;
+  std::string _modelPath;
 
 }; // class SpeechRecognizer
 

@@ -1,0 +1,25 @@
+{
+  "behaviorID": "RndBase",
+  "behaviorClass": "DispatcherStrictPriority",
+
+  "behaviors": [
+    "RndTriggerWordInternal",
+    "Wait"
+  ],
+
+  "interruptActiveBehavior": true,
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "RndTriggerWordInternal",
+      "behaviorClass": "DispatcherQueue",
+      "wantsToBeActivatedCondition": {
+        "conditionType": "TriggerWordPending"
+      },
+      "behaviors": [
+        "RndTriggerWord",
+        "RndTriggerAnimation"
+      ]
+    }
+  ]
+}

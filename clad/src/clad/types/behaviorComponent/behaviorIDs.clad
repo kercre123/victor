@@ -427,6 +427,11 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree
   ResetSafely,
 
+  // victorBehaviorTree/rnd
+  RndBase,
+  RndTriggerAnimation,
+  RndTriggerWord,
+
   // victorBehaviorTree/sdkBehaviors
   SDK0,
 

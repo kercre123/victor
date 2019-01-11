@@ -20,6 +20,7 @@
 #include "util/container/ringBuffContiguousRead.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
+#include "util/string/stringUtils.h"
 
 #if defined(ANKI_PLATFORM_VICOS)
 #define POCKETSPHINX_ENABLED 1
@@ -38,6 +39,7 @@
 #include <mutex>
 #include <string>
 #include <sstream>
+#include <cstdlib>
 
 namespace Anki {
 namespace Vector {
@@ -45,7 +47,6 @@ namespace Vector {
 #define LOG_CHANNEL "SpeechRecognizer"
   
 namespace {
-  const char* const __attribute((unused)) kWakeWord = "elemental";
   const unsigned int kBuffSize = 1024; // I tried 2048 (slower) and no buffer at all (equiv to 160, wayyyy slower). Nothing else
 }
   
@@ -69,13 +70,34 @@ struct SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinxData
   #endif
 };
   
+
+SpeechRecognizerPocketSphinx* SpeechRecognizerPocketSphinx::Create(const std::string& modelBasePath, const std::string& wakeWord)
+{
+  const std::string fullDict = Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + "en-us/cmudict-en-us.dict";
+  const std::string newDict = "/data/data/com.anki.victor/persistent/cmudict-en-us.dict";
+  
+  Util::FileUtils::DeleteFile( newDict );
+  
+  const std::string command = "grep " + Util::StringToLower(wakeWord) + " " + fullDict + "  > " + newDict;// + " --color=never";
+  PRINT_NAMED_WARNING("WHATNOW", "cmd=%s", command.c_str());
+  ANKI_VERIFY(0 == system(command.c_str()), "", "" );
+  size_t size = Util::FileUtils::GetFileSize(newDict);
+  if( size > 0 ) {
+    return new SpeechRecognizerPocketSphinx{ newDict, wakeWord };
+  } else {
+    return nullptr;
+  }
+}
+  
 SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinxData::SpeechRecognizerPocketSphinxData()
   : buff{ kBuffSize, kBuffSize }
 {
 }
   
-SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinx()
+SpeechRecognizerPocketSphinx::SpeechRecognizerPocketSphinx(const std::string& modelPath, const std::string& wakeWord)
 : _impl(new SpeechRecognizerPocketSphinxData())
+, _wakeWord{wakeWord}
+, _modelPath{modelPath}
 {
   
 }
@@ -132,7 +154,7 @@ bool SpeechRecognizerPocketSphinx::Init(const std::string& modelBasePath)
   
   const std::string param_hmm   = Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + "en-us/en-us";
   const std::string param_lm    = Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + "en-us/en-us.lm.bin";
-  const std::string param_dict  = Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + "en-us/cmudict-en-us.dict";
+  const std::string param_dict  = _modelPath;// Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + "en-us/cmudict-en-us.dict";
   
   _impl->config
     = cmd_ln_init( NULL, ps_args(), TRUE,
@@ -157,7 +179,7 @@ bool SpeechRecognizerPocketSphinx::Init(const std::string& modelBasePath)
     return false;
   }
   
-  ps_set_keyphrase( _impl->ps, "keyphrase_search", kWakeWord);
+  ps_set_keyphrase( _impl->ps, "keyphrase_search", _wakeWord.c_str());
   ps_set_search( _impl->ps, "keyphrase_search" );
   ps_start_utt( _impl->ps );
   
@@ -196,7 +218,6 @@ void SpeechRecognizerPocketSphinx::Update( const AudioUtil::AudioSample* audioDa
   unsigned int idxRemaining;
   if( _impl->buff.Capacity() > _impl->buff.Size() + audioDataLen ) {
     _impl->buff.AddData( audioData, audioDataLen );
-    
     return;
   } else {
     const unsigned int numToAdd = static_cast<unsigned int>(_impl->buff.Capacity() - _impl->buff.Size());
@@ -214,21 +235,24 @@ void SpeechRecognizerPocketSphinx::Update( const AudioUtil::AudioSample* audioDa
   auto* buff __attribute((unused)) = _impl->buff.ReadData( buffSize );
 
 # if POCKETSPHINX_ENABLED
-  
   const char* hyp = nullptr;
   
   ps_process_raw( _impl->ps, buff, buffSize, false, false );
   
   _impl->in_speech = ps_get_in_speech( _impl->ps );
   
+  //PRINT_NAMED_WARNING("WHATNOW", "in_speech=%d, utt_started=%d", _impl->in_speech, _impl->utt_started);
+  
   if( _impl->in_speech && !_impl->utt_started ) {
     _impl->utt_started = true;
+    
   }
   
   if( !_impl->in_speech && _impl->utt_started ) {
     ps_end_utt( _impl->ps );
     int32 score = 0;
     hyp = ps_get_hyp( _impl->ps, &score );
+    PRINT_NAMED_WARNING("WHATNOW", "trying");
     if( hyp != nullptr ) {
       
       // Get results for callback struct
@@ -240,7 +264,7 @@ void SpeechRecognizerPocketSphinx::Update( const AudioUtil::AudioSample* audioDa
         .score        = static_cast<float>(score),
       };
 
-      LOG_INFO("SpeechRecognizerPocketSphinx.Update", "Recognizer -  %s", info.Description().c_str());
+      PRINT_NAMED_WARNING("WHATNOW SpeechRecognizerPocketSphinx.Update", "Recognizer -  %s", info.Description().c_str());
       DoCallback(info);
     }
     
@@ -250,7 +274,6 @@ void SpeechRecognizerPocketSphinx::Update( const AudioUtil::AudioSample* audioDa
     }
     _impl->utt_started = false;
   }
-  
 # endif
   
   _impl->buff.AdvanceCursor( buffSize );

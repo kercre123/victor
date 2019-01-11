@@ -1,0 +1,19 @@
+{
+  "behaviorClass": "ReactToVoiceCommand",
+  "behaviorID": "RndTriggerWord",
+
+  "associatedActiveFeature": "NoFeature",
+  "behaviorStatToIncrement": "ReactedToTriggerWord",
+
+  "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
+  "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+  "backpackLights"          : false,
+
+  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
+  
+  // above might be unnecessary
+  "pushResponse": false,
+
+  "exitAfterGetIn": true,
+  "exitAfterListeningIfNotStreaming" : true
+}

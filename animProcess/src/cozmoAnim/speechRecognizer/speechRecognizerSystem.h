@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <thread>
 #include <string>
 
 namespace Anki {
@@ -156,6 +157,12 @@ private:
   std::string UpdateRecognizerHelper(size_t& inOut_modelIdx, size_t new_modelIdx,
                                      int& inOut_searchIdx, int new_searchIdx,
                                      SpeechRecognizerSystem::TriggerContext& trigger);
+  
+  void MakePocketSphinx();
+  std::string _modelPath;
+  TriggerWordDetectedCallback _callback;
+  std::mutex _psMutex;
+  std::thread _makeThread;
 };
 
 

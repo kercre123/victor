@@ -1,0 +1,140 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <title>Rename wake word!</title>
+
+  <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico"/>
+  
+
+  <style>
+    *, *:before, *:after {
+      margin: 0;
+      padding: 0;
+      box-sizing:border-box;
+      -moz-box-sizing:border-box;
+    }
+
+    @font-face {
+      font-family: MyFont;
+      src:
+        url('font.woff2') format('woff2');
+    }
+
+    body {
+      font-family: 'MyFont', Fallback, Helvetica,Arial,sans-serif;
+      font-size: 16px;
+      color:white;
+      background-color: rgba(26,26,26,.8);
+    }
+
+    div {
+      margin:3px;
+      margin-bottom:7px;
+    }
+
+    .tip {
+      margin-left:10px;
+    }
+
+    #wakeword {
+      height:30px;
+      width:100%;
+      margin-bottom:5px;
+      padding-left:5px;
+    }
+
+    #loginSubmit {
+      height:30px;
+      width:100%;
+      line-height:30px;
+      background-color:#dee0de;
+      font-family: 'MyFont', Fallback, Helvetica,Arial,sans-serif;
+      font-size:15px;
+    }
+
+    .container {
+      width:60%;
+      margin:0 auto;
+      margin-top:50px;
+      border:1px solid #dee0de;
+      padding: 10px 25px 20px 25px;
+    }
+
+    @media only screen and (max-device-width : 480px) {
+      .container {
+        width: 100%;
+        border:0px;
+      }
+      body {
+        font-size:40px;
+      }
+      #wakeword {
+        height:90px;
+        width:100%;
+        margin-bottom:20px;
+        padding-left:20px;
+        font-size:40px;
+      }
+      #loginSubmit {
+        height:90px;
+        width:100%;
+        line-height:90px;
+        background-color:#dee0de;
+        font-family: 'MyFont', Fallback, Helvetica,Arial,sans-serif;
+        font-size:40px;
+      }
+    }
+
+  </style>
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+
+  <div class="container">
+    <div>DIY&nbsp; Wake&nbsp;  Word&nbsp;  Generator</div>
+    <input type="text" id="wakeword" placeholder="Enter wake word" />
+    <input type="submit" id="loginSubmit" onclick="doSubmit();" value="Submit" />
+  </div>
+
+  <script>
+  var enableSubmit = function(ele) {
+    ele.removeAttr("disabled").val("Submit")
+  }
+
+  var remainingSec = 10;
+
+  function doSubmit() {
+    var wakeWord = $('#wakeword').val();
+    if( wakeWord.length == 0 ) {
+      return;
+    }
+    $.post("../consolefunccall", {func:"SetWakeWord", args:wakeWord}, function(result){});
+    $('#wakeword').val("");
+    $('#loginSubmit').attr("disabled", true).val("10 seconds...");
+    var timer = setInterval(function() { 
+      remainingSec = remainingSec - 1;
+      $('#loginSubmit').val(remainingSec + " seconds...");
+      if( remainingSec <= 0 ) {
+        enableSubmit($('#loginSubmit')) 
+        remainingSec = 10;
+        clearInterval(timer);
+      }
+    }, 1000);
+  }
+
+  if( location.port != 8889 ) {
+    window.location = "http://" + window.location.hostname + ":8889/rename";
+  }
+    
+  </script>
+</body>
+</html>

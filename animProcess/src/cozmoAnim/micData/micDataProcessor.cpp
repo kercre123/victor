@@ -54,7 +54,7 @@ namespace {
   CONSOLE_VAR(bool, kMicData_CollectRawTriggers, CONSOLE_GROUP, false);
   CONSOLE_VAR(bool, kMicData_SpeakerNoiseDisablesMics, CONSOLE_GROUP, true);
   
-  CONSOLE_VAR_RANGED(unsigned int, kPrerollBlocks, "TheBox.WakeWord", 160, 1, 200); // 10ms to 2 sec in increments of 10ms
+  CONSOLE_VAR_RANGED(unsigned int, kPrerollBlocks, "TheBox.WakeWord", 80, 1, 200); // 10ms to 2 sec in increments of 10ms
 
   // Time necessary for the VAD logic to wait when there's no activity, before we begin skipping processing for
   // performance. Note that this probably needs to at least be as long as the trigger, which is ~ 500-750ms.

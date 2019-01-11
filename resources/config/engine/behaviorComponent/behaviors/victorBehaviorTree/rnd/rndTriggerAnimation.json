@@ -1,0 +1,5 @@
+{
+  "behaviorID":"RndTriggerAnimation",
+  "behaviorClass": "AnimSequence",
+  "animTriggers": ["ReactToGreeting", "NeutralFace"]
+}
