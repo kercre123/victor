@@ -19,10 +19,10 @@
 static const int MAX_TRANSFER = 0x1000;
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET1 96
+//#define GPIO_LCD_RESET1 96
 #define GPIO_LCD_RESET2 55
 
-static GPIO RESET_PIN1;
+//static GPIO RESET_PIN1;
 static GPIO RESET_PIN2;
 static GPIO DnC_PIN;
 
@@ -175,15 +175,12 @@ void lcd_set_brightness(int brightness)
 
 int lcd_init(void) {
 
-  // No lcd on whiskey prototypes so don't even try
-  return 0;
-  
   lcd_set_brightness(10);
 
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
 
-  RESET_PIN1 = gpio_create_open_drain_output(GPIO_LCD_RESET1, gpio_HIGH);
+  //RESET_PIN1 = gpio_create_open_drain_output(GPIO_LCD_RESET1, gpio_HIGH);
   RESET_PIN2 = gpio_create_open_drain_output(GPIO_LCD_RESET2, gpio_HIGH);
 
   // SPI setup
@@ -192,10 +189,10 @@ int lcd_init(void) {
 
   // Send reset signal
   microwait(50);
-  gpio_set_value(RESET_PIN1, 0);
+  //gpio_set_value(RESET_PIN1, 0);
   gpio_set_value(RESET_PIN2, 0);
   microwait(50);
-  gpio_set_value(RESET_PIN1, 1);
+  //gpio_set_value(RESET_PIN1, 1);
   gpio_set_value(RESET_PIN2, 1);
   microwait(50);
 
@@ -216,9 +213,9 @@ void lcd_shutdown(void) {
   if (DnC_PIN) {
     gpio_close(DnC_PIN);
   }
-  if (RESET_PIN1) {
-    gpio_close(RESET_PIN1);
-  }
+  /* if (RESET_PIN1) { */
+  /*   gpio_close(RESET_PIN1); */
+  /* } */
   if (RESET_PIN2) {
     gpio_close(RESET_PIN2);
   }

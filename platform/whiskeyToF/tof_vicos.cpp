@@ -219,6 +219,17 @@ int output_mode_set(const int dev, const int mode)
   return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);  
 }
 
+int offset_correction_mode_set(const int dev, const int mode)
+{
+  struct stmvl53l1_parameter params;
+
+  params.is_read = 0;
+  params.name = VL53L1_OFFSETCORRECTIONMODE_PAR;
+  params.value = mode;
+
+  return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);  
+}
+
 /// Setup grid of ROIs for scanning
 int setup_roi_grid(const int dev, const int rows, const int cols) {
   struct stmvl53l1_roi_full_t ioctl_roi;
@@ -275,6 +286,11 @@ int perform_refspad_calibration(const int dev)
 {
   struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_REF_SPAD, 0, 0, 0};
   int rc = ioctl(dev, VL53L1_IOCTL_PERFORM_CALIBRATION, &ioctl_cal);
+  if(rc < 0)
+  {
+    int deviceErr = last_error_get(dev);
+    PRINT_NAMED_WARNING("","perform refspad calibration failed, device error %d", deviceErr);
+  }
   return rc;
 }
 
@@ -315,14 +331,15 @@ int set_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
 
 int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
                              int dev,
-                             std::string meta = "")
+                             std::string meta,
+                             std::string path)
 {
   PRINT_NAMED_ERROR("","SAVING %u %u %u", dev, tofR_fd, tofL_fd);
-  char path[128];
-  sprintf(path, "%stof_%s%s.bin", _logPath.c_str(), (dev == tofR_fd ? "right" : "left"), meta.c_str());
-  PRINT_NAMED_ERROR("","%s", path);
+  char buf[128];
+  sprintf(buf, "%stof_%s%s.bin", path.c_str(), (dev == tofR_fd ? "right" : "left"), meta.c_str());
+  PRINT_NAMED_ERROR("","%s", buf);
   int rc = -1;
-  FILE* f = fopen(path, "w+");
+  FILE* f = fopen(buf, "w+");
   if(f != nullptr)
   {
     rc = fwrite(&calib, sizeof(calib), 1, f);
@@ -333,6 +350,15 @@ int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
     PRINT_NAMED_ERROR("","FAILED TO OPEN FILE %u", errno);
   }
   return rc;
+
+}
+
+int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
+                             int dev,
+                             std::string meta = "")
+{
+  (void)save_calibration_to_disk(calib, dev, meta, _logPath);
+  return save_calibration_to_disk(calib, dev, meta, "/factory/nvStorage/");
 }
 
 int load_calibration_from_disk(VL53L1_CalibrationData_t& calib,
@@ -480,7 +506,7 @@ int run_refspad_calibration(const int dev)
   rc = perform_refspad_calibration(dev);
   return_if_not(rc >= 0, rc, "RefSPAD calibration failed: %d %d", rc, errno);
 
-  usleep(50000);
+  //usleep(50000);
   
   memset(&calib, 0, sizeof(calib));
   rc = get_calibration_data(dev, calib);
@@ -503,7 +529,7 @@ int run_refspad_calibration(const int dev)
   rc = set_calibration_data(dev, calib);
   return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
 
-  usleep(50000);
+  //usleep(50000);
   
   return rc;
 }
@@ -525,7 +551,8 @@ int run_xtalk_calibration(const int dev)
     // An error -22 may be issued after calibration if the system failed to find
     // a valid cross talk value. This is due to the fact that the coverglass
     // quality is very good. In this case, no crosstalk data should be applied.
-    int deviceErr = last_error_get(dev);
+    int deviceErr = last_error_get(dev);    
+    PRINT_NAMED_WARNING("","perform xtalk calibration failed, device error %d", deviceErr);
     if(deviceErr == VL53L1_ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL)
     {
       PRINT_NAMED_ERROR("","NO CROSSTALK FOUND");
@@ -533,7 +560,7 @@ int run_xtalk_calibration(const int dev)
     }
   }
   
-  usleep(50000);
+  //usleep(50000);
 
   memset(&calib, 0, sizeof(calib));
   rc = get_calibration_data(dev, calib);
@@ -564,6 +591,8 @@ int perform_offset_calibration(const int dev, uint32_t distanceToTarget_mm, floa
   // I think per zone offset calibration would be more desireable but was unable to get it to work, kept getting
   // ctrl_perform_zone_calibration_offset_lock: VL53L1_PerformOffsetCalibration fail => -35
   // target might have been too reflective...
+  PRINT_NAMED_INFO("","running offset calibration at %u with reflectance %f", distanceToTarget_mm, targetReflectance);
+  
   struct stmvl53l1_ioctl_perform_calibration_t ioctl_cal = {VL53L1_CALIBRATION_OFFSET_PER_ZONE,
                                                             VL53L1_OFFSETCALIBRATIONMODE_MULTI_ZONE,
                                                             distanceToTarget_mm,
@@ -575,6 +604,11 @@ int perform_offset_calibration(const int dev, uint32_t distanceToTarget_mm, floa
   //                                                           (FixPoint1616_t)(targetReflectance * (2^16))};
 
   int rc = ioctl(dev, VL53L1_IOCTL_PERFORM_CALIBRATION, &ioctl_cal);
+  if(rc < 0)
+  {
+    int deviceErr = last_error_get(dev);
+    PRINT_NAMED_WARNING("","perform offset calibration failed, device error %d", deviceErr);
+  }
   return rc;
 }
 
@@ -588,10 +622,13 @@ int run_offset_calibration(const int dev, uint32_t distanceToTarget_mm, float ta
   PRINT_NAMED_ERROR("","ORIG");
   print_offset_calibration(calib);
 
+  rc = setup_roi_grid(dev, 4, 4);
+  return_if_not(rc == 0, -1, "ioctl error setting up preset grid: %d", errno);
+
   rc = perform_offset_calibration(dev, distanceToTarget_mm, targetReflectance);
   return_if_not(rc >= 0, rc, "offset calibration failed: %d %d", rc, errno);
 
-  usleep(50000);
+  //usleep(50000);
   
   memset(&calib, 0, sizeof(calib));
   rc = get_calibration_data(dev, calib);
@@ -684,7 +721,7 @@ ToFSensor::CommandResult run_calibration(uint32_t distanceToTarget_mm,
   if(rcR < 0)
   {
     PRINT_NAMED_ERROR("ToFSensor.PerformCalibration.RightFailed",
-                      "Failed to calibrate right sensor %u",
+                      "Failed to calibrate right sensor %d",
                       rcR);
   }
 
@@ -694,7 +731,7 @@ ToFSensor::CommandResult run_calibration(uint32_t distanceToTarget_mm,
   if(rcL < 0)
   {
     PRINT_NAMED_ERROR("ToFSensor.PerformCalibration.LeftFailed",
-                      "Failed to calibrate left sensor %u",
+                      "Failed to calibrate left sensor %d",
                       rcL);
   }
   #endif
@@ -768,6 +805,10 @@ int setup(Sensor which) {
   PRINT_NAMED_ERROR("","set output mode\n");
   rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
+
+  PRINT_NAMED_ERROR("","set offset correction mode\n");
+  rc = offset_correction_mode_set(fd, VL53L1_OFFSETCORRECTIONMODE_PERZONE);
+  return_if_not(rc == 0, -1, "ioctl error setting offset correction mode: %d", errno);
 
   return fd;
 }

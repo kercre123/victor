@@ -86,7 +86,7 @@ namespace {
   VL53L1_CalibrationData_t _origCalib_right;
 
   uint32_t _distanceToCalibTarget_mm = 90;
-  float _calibTargetReflectance = 40;
+  float _calibTargetReflectance = 50;
 }
 
 #define PRINT_NAMED_ERROR(a, b, ...) printf(a b"\n", ##__VA_ARGS__)
@@ -459,7 +459,7 @@ int run_refspad_calibration(const int dev)
   rc = perform_refspad_calibration(dev);
   return_if_not(rc >= 0, rc, "RefSPAD calibration failed: %d %d", rc, errno);
 
-  usleep(50000);
+  //usleep(50000);
   
   memset(&calib, 0, sizeof(calib));
   rc = get_calibration_data(dev, calib);
@@ -482,7 +482,7 @@ int run_refspad_calibration(const int dev)
   rc = set_calibration_data(dev, calib);
   return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
 
-  usleep(50000);
+  //usleep(50000);
   
   return rc;
 }
@@ -512,7 +512,7 @@ int run_xtalk_calibration(const int dev)
     }
   }
   
-  usleep(50000);
+  //usleep(50000);
 
   memset(&calib, 0, sizeof(calib));
   rc = get_calibration_data(dev, calib);
@@ -567,10 +567,13 @@ int run_offset_calibration(const int dev, uint32_t distanceToTarget_mm, float ta
   PRINT_NAMED_ERROR("","ORIG");
   print_offset_calibration(calib);
 
+  rc = setup_roi_grid(dev, 4, 4);
+  return_if_not(rc == 0, -1, "ioctl error setting up preset grid: %d", errno);
+
   rc = perform_offset_calibration(dev, distanceToTarget_mm, targetReflectance);
   return_if_not(rc >= 0, rc, "offset calibration failed: %d %d", rc, errno);
 
-  usleep(50000);
+  //usleep(50000);
   
   memset(&calib, 0, sizeof(calib));
   rc = get_calibration_data(dev, calib);
@@ -686,6 +689,17 @@ CommandResult run_calibration(uint32_t distanceToTarget_mm,
   return res;
 }
 
+int offset_correction_mode_set(const int dev, const int mode)
+{
+  struct stmvl53l1_parameter params;
+
+  params.is_read = 0;
+  params.name = VL53L1_OFFSETCORRECTIONMODE_PAR;
+  params.value = mode;
+
+  return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);  
+}
+
 
 /// Setup 4x4 multi-zone imaging
 int setup(Sensor which) {
@@ -733,6 +747,11 @@ int setup(Sensor which) {
   rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
+  PRINT_NAMED_ERROR("","set offset correction mode\n");
+  rc = offset_correction_mode_set(fd, VL53L1_OFFSETCORRECTIONMODE_PERZONE);
+  return_if_not(rc == 0, -1, "ioctl error setting offset correction mode: %d", errno);
+
+  
   return fd;
 }
 
@@ -986,15 +1005,28 @@ void ProcessLoop()
       {
         for(int j = 0; j < 8; j++)
         {
-          if(data.data[i*8 + j].numObjects > 0 && data.data[i*8 + j].readings[0].status == 0)
+          char status = 0;
+          if(data.data[i*8 + j].numObjects > 0)
           {
-            ss << std::setw(7) << (uint32_t)(data.data[i*8 + j].processedRange_mm);
-            lastValid.data[i*8 + j] = data.data[i*8 + j];
+            status = data.data[i*8 + j].readings[0].status;
+
+            if(data.data[i*8 + j].readings[0].status == 0)
+            {
+              ss << std::setw(7) << (uint32_t)(data.data[i*8 + j].processedRange_mm);
+              lastValid.data[i*8 + j] = data.data[i*8 + j];
+            }
+            else
+            {
+              ss << std::setw(7) << (uint32_t)(lastValid.data[i*8 + j].processedRange_mm);
+            }
           }
           else
           {
             ss << std::setw(7) << (uint32_t)(lastValid.data[i*8 + j].processedRange_mm);
+            status = -1;
           }
+        
+          ss << "[" << std::setw(2) << (int)status << "]";
         }
         ss << "\n";
       }
@@ -1022,7 +1054,7 @@ void ProcessLoop()
 int main(int argc, char** argv)
 {
   _commandQueue.push({Command::SetupSensors, nullptr});
-  //_commandQueue.push({Command::PerformCalibration, nullptr});
+  _commandQueue.push({Command::PerformCalibration, nullptr});
   _commandQueue.push({Command::StartRanging, nullptr});
   
   ProcessLoop();

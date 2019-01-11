@@ -17,7 +17,4 @@ target_include_directories(vl53l1
 
 set_target_properties(vl53l1 PROPERTIES LINKER_LANGUAGE C)
 
-target_compile_options(vl53l1 PUBLIC -Wno-error=conditional-uninitialized)
-target_compile_options(vl53l1 PUBLIC -Wno-error=unused-variable)
-
 endif()
