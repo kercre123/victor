@@ -24,8 +24,6 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#include "math.h"
-
 namespace Anki {
 namespace Vector {
   
@@ -45,7 +43,6 @@ BehaviorCubeDrive::DynamicVariables::DynamicVariables()
 BehaviorCubeDrive::BehaviorCubeDrive(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  LOG_WARNING("cube_drive", "%s()", __FUNCTION__);
   if (not JsonTools::GetValueOptional(config, kTriggerLiftGs, _iConfig.trigger_lift_gs))
     _iConfig.trigger_lift_gs = 0.5;
   if (not JsonTools::GetValueOptional(config, kDeadZoneSize, _iConfig.dead_zone_size))
@@ -67,7 +64,6 @@ BehaviorCubeDrive::~BehaviorCubeDrive()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorCubeDrive::WantsToBeActivatedBehavior() const
 {
-  LOG_WARNING("cube_drive", "WantsToBeActivatedBehavior()");
   // This method will only be called if the "modifiers" configuration caused the parent
   // WantsToBeActivated to return true. IOW, if there is a cube connection, this method
   // will be called. If there is a cube connection, we always want to run. (This won't
@@ -79,7 +75,6 @@ bool BehaviorCubeDrive::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  LOG_WARNING("cube_drive", "GetBehaviorOperationModifiers()");
   // This will cause the parent WantsToBeActivated to return false any time there is no cube connection.
   // Here, "Lazy" means that we don't want to manage the connection. That will be handled by the 
   // CubeConnectionCoordinator.
@@ -97,7 +92,6 @@ void BehaviorCubeDrive::GetBehaviorOperationModifiers(BehaviorOperationModifiers
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  LOG_WARNING("cube_drive", "GetAllDelegates()");
   // TODO: insert any behaviors this will delegate to into delegates.
   // TODO: delete this function if you don't need it
 }
@@ -105,7 +99,6 @@ void BehaviorCubeDrive::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  LOG_WARNING("cube_drive", "GetBehaviorJsonKeys()");
   static const char* list[] = {
     kTriggerLiftGs,
     kDeadZoneSize,
@@ -118,7 +111,6 @@ void BehaviorCubeDrive::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys)
 }
 
 void BehaviorCubeDrive::SetLiftState(bool up) {
-  LOG_WARNING("cube_drive", "SetLiftState()");
   _dVars.lift_up = up;
   GetBEI().GetRobotInfo().GetMoveComponent().MoveLiftToHeight(
     up ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2, 0.1, nullptr);
@@ -138,8 +130,6 @@ void BehaviorCubeDrive::RestartAnimation() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::OnBehaviorActivated() {
-  LOG_WARNING("cube_drive", "OnBehaviorActivated()");
-
   // reset dynamic variables
   _dVars = DynamicVariables();
   SetLiftState(false);
@@ -176,7 +166,6 @@ void BehaviorCubeDrive::OnBehaviorDeactivated() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::BehaviorUpdate() {
-  LOG_WARNING("cube_drive", "BehaviorUpdate()");
   if( IsActivated() ) {
     if(not GetBEI().GetCubeCommsComponent().IsConnectedToCube()) {
       CancelSelf();
