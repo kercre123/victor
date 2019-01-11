@@ -36,6 +36,7 @@ namespace Anki {
     class RobotDataLoader;
     class SpeechRecognizerTHF;
     class SpeechRecognizerPocketSphinx;
+    class SpeechRecognizerPicoVoice;
   }
   namespace Util {
     class Locale;
@@ -68,6 +69,10 @@ public:
   // Init pocketSphinx recognizer, for whatever wake word we decide on
   void InitPocketSphinx(const RobotDataLoader& dataLoader,
                         TriggerWordDetectedCallback callback);
+
+  // Init PicoVoice recognizer, currently uses "porcupine" as a wakeword
+  void InitPicoVoice(const RobotDataLoader& dataLoader,
+                     TriggerWordDetectedCallback callback);
   
   // Init Alexa trigger detector
   // Note: This is done after Alex user has been authicated
@@ -127,6 +132,7 @@ private:
   MicData::MicDataSystem*                     _micDataSystem = nullptr;
   std::unique_ptr<TriggerContext>             _victorTrigger;
   std::unique_ptr<SpeechRecognizerPocketSphinx> _pocketSphinxRecognizer;
+  std::unique_ptr<SpeechRecognizerPicoVoice>  _picoVoiceRecognizer;
   std::unique_ptr<TriggerContext>             _alexaTrigger;
   Alexa*                                      _alexaComponent = nullptr;
   std::unique_ptr<TriggerContext>             _alexaPlaybackTrigger;

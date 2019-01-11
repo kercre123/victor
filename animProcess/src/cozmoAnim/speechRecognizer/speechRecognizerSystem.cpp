@@ -19,6 +19,7 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerTHFSimple.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerPocketSphinx.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerPicoVoice.h"
 #include "cozmoAnim/micData/notchDetector.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
@@ -237,6 +238,9 @@ SpeechRecognizerSystem::~SpeechRecognizerSystem()
   if( _pocketSphinxRecognizer ) {
     _pocketSphinxRecognizer->Stop();
   }
+  if (_picoVoiceRecognizer) {
+    _picoVoiceRecognizer->Stop();
+  }
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
   }
@@ -288,6 +292,22 @@ void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
   UpdateTriggerForLocale(locale);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::InitPicoVoice(const RobotDataLoader& dataLoader,
+                                              TriggerWordDetectedCallback callback)
+{
+  if (_picoVoiceRecognizer) {
+    LOG_WARNING("SpeechRecognizerSystem.InitVector", "Victor Recognizer is already running");
+    return;
+  }
+
+  _picoVoiceRecognizer = std::make_unique<SpeechRecognizerPicoVoice>();
+  _picoVoiceRecognizer->Init( 
+    Util::FileUtils::AddTrailingFileSeparator(
+      Util::FileUtils::AddTrailingFileSeparator(_triggerWordDataDir) + "picovoice") );
+  _picoVoiceRecognizer->SetCallback(callback);
+  _picoVoiceRecognizer->Start();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::InitAlexa(const RobotDataLoader& dataLoader,
@@ -466,6 +486,9 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   }
   if (vadActive && _pocketSphinxRecognizer) {
     _pocketSphinxRecognizer->Update(audioData, audioDataLen);
+  }
+  if (vadActive && _picoVoiceRecognizer) {
+    _picoVoiceRecognizer->Update(audioData, audioDataLen);
   }
 
   if (_alexaComponent != nullptr && _alexaTrigger != nullptr) {
