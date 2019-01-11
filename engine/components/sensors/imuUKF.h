@@ -52,6 +52,8 @@ public:
   // Rotation speed in rad/sec
   // inline f32 GetYawSpeed() { return _state[6]; }
 
+  inline UnitQuaternion GetRotation() const { return _state.rotation; }
+
   // rotation quaternion plus rotational velocity: [q0,q1,q2,q3,⍵1,⍵2,⍵3]
   struct State {
     UnitQuaternion  rotation;

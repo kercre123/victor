@@ -15,15 +15,9 @@
  **/
 
 #include "imuUKF.h"
-
-
 #include "coretech/common/engine/math/matrix_impl.h"
 
-
-// #include <cmath>
-
 #define StateDim 6
-#define StateDimSq 36
 
 namespace Anki {
 namespace Vector {
@@ -115,8 +109,6 @@ namespace {
     return (A*B) * (1.f/((float)N));
   }
 
-
-  // NOTE: this may need to be negative Z?
   const Anki::UnitQuaternion kGravity(0.f, 0.f, 0.f, 1.f);
 }
 
@@ -137,9 +129,9 @@ ImuUKF::ImuUKF()
 , _lastMeasurement_ms(0)
 {
   for (int i = 0; i < StateDim; ++i) {
-    _P(i,i) = .01f;
-    _Q(i,i) = (i < 3) ? 100.f : .1f;
-    _R(i,i) = (i < 3) ? .5f : .01f;
+    _P(i,i) = .0001f;
+    _Q(i,i) = (i < 3) ? 80.f : .1f;
+    _R(i,i) = (i < 3) ? 1.f : .0001f;
   }
 }
 
@@ -246,8 +238,8 @@ void ImuUKF::MeasurementUpdate(const Point<6,float>& measurement)
   _state.rotation *= ErrorToQuat({innovation[0], innovation[1], innovation[2]});
   _state.velocity += AngularVelocity{innovation[3], innovation[4], innovation[5]};
 
-  static int i = 0;
-  LOG_WARNING("UKF","%d) q:%s  w:%s", i++, _state.rotation.ToString().c_str(), _state.velocity.ToString().c_str());
+  // static int i = 0;
+  LOG_WARNING("UKF","q:%s  w:%s", _state.rotation.ToString().c_str(), _state.velocity.ToString().c_str());
 }
 
 ImuUKF::State ImuUKF::CalculateMean(const std::array<State,12>& Y_) {

@@ -991,6 +991,11 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       {msg.gyro.x, msg.gyro.y, msg.gyro.z}, 
       _lastMsgTimestamp
     );
+
+    Point3f robotPt = this->GetPose().GetTranslation();    
+    Rotation3d headRot(msg.headAngle, Y_AXIS_3D());
+    Pose3d pose(GetImuComponent().GetRotation() * headRot, robotPt + Point3f{0.f, 0.f, 15.f});
+    this->GetContext()->GetVizManager()->DrawFrameAxes("UKF", pose);
   }
 
   for (auto imuDataFrame : msg.imuData) {
@@ -1040,7 +1045,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // the robot, and the robot updates on the next state update. But that delay guarantees that the robot knows what
   // we think it's true, rather than mixing timestamps of when it started carrying vs when the robot knows that it was
   // carrying
-  const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
+  // const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
@@ -1063,7 +1068,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   {
     _numMismatchedFrameIDs = 0;
 
-    Delocalize(isCarryingObject);
+    // Delocalize(isCarryingObject);
   }
   else
   {
@@ -1162,7 +1167,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 
         _numMismatchedFrameIDs = 0;
 
-        Delocalize(GetCarryingComponent().IsCarryingObject());
+        // Delocalize(GetCarryingComponent().IsCarryingObject());
 
         return RESULT_FAIL;
       }

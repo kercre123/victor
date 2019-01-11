@@ -104,7 +104,12 @@ public:
   void AddRawData(const Point3f& accel, const Point3f& gyro, RobotTimeStamp_t t) 
   {
     _ukf.Update(accel, gyro, t);
+
     // LOG_WARNING("UKF.Data","acc:%s  gyro:%s", accel.ToString().c_str(), gyro.ToString().c_str());
+  }
+
+  Rotation3d GetRotation() {
+    return _ukf.GetRotation();
   }
   
   //////
