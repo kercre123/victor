@@ -320,8 +320,8 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
 
   if(_performCalibration)
   {
-    CompoundActionParallel* action = new CompoundActionParallel();
-    action->AddAction(new WaitAction(1.f));
+    CompoundActionSequential* action = new CompoundActionSequential();
+    action->AddAction(new WaitAction(3.f));
     WaitForLambdaAction* wait = new WaitForLambdaAction([this, visualDistanceToTarget_mm](Robot& robot)
       {
         const bool isCalibrating = ToFSensor::getInstance()->IsCalibrating();

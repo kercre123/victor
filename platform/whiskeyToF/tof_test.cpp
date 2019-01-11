@@ -12,7 +12,7 @@
 #include <mutex>
 #include <queue>
 #include <iomanip>
-
+#include <inttypes.h>
 
 #define SPAD_COLS (16)  ///< What's in the sensor
 #define SPAD_ROWS (16)  ///< What's in the sensor
@@ -734,7 +734,7 @@ int setup(Sensor which) {
 
   // Setup timing budget
   PRINT_NAMED_ERROR("","set timing budget\n");
-  rc = timing_budget_set(fd, 16*2000);
+  rc = timing_budget_set(fd, 8*2000);
   return_if_not(rc == 0, -1, "ioctl error setting timing budged: %d", errno);
 
   // Set distance mode
@@ -1054,7 +1054,33 @@ void ProcessLoop()
 int main(int argc, char** argv)
 {
   _commandQueue.push({Command::SetupSensors, nullptr});
-  _commandQueue.push({Command::PerformCalibration, nullptr});
+  _commandQueue.push({Command::StopRanging, nullptr});
+  _commandQueue.push({Command::SetupSensors, nullptr});
+  
+  if(argc > 1)
+  {
+    if(argv[1][0] == 'c')
+    {
+      if(argc > 2)
+      {
+        char* end;
+        _distanceToCalibTarget_mm = (uint32_t)strtoimax(argv[2], &end, 10);
+      }
+      
+      if(argc > 3)
+      {
+        char* end;
+        _calibTargetReflectance = strtof(argv[3], &end);
+      }
+
+      PRINT_NAMED_ERROR("", "Calibrating at %u with reflectance %f",
+                        _distanceToCalibTarget_mm,
+                        _calibTargetReflectance);
+      
+      _commandQueue.push({Command::PerformCalibration, nullptr});
+    }
+  }
+  
   _commandQueue.push({Command::StartRanging, nullptr});
   
   ProcessLoop();
