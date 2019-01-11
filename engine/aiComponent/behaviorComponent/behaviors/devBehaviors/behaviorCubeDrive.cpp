@@ -10,16 +10,21 @@
  *
  **/
 
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorCubeDrive.h"
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/activeObjectAccel.h"
 #include "engine/activeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorCubeDrive.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeAccelListeners/lowPassFilterListener.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/movementComponent.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
+
+#include "math.h"
 
 namespace Anki {
 namespace Vector {
@@ -40,17 +45,29 @@ BehaviorCubeDrive::DynamicVariables::DynamicVariables()
 BehaviorCubeDrive::BehaviorCubeDrive(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  // TODO: read config into _iConfig
+  LOG_WARNING("cube_drive", "%s()", __FUNCTION__);
+  if (not JsonTools::GetValueOptional(config, kTriggerLiftGs, _iConfig.trigger_lift_gs))
+    _iConfig.trigger_lift_gs = 0.5;
+  if (not JsonTools::GetValueOptional(config, kDeadZoneSize, _iConfig.dead_zone_size))
+    _iConfig.dead_zone_size = 13.0;
+  if (not JsonTools::GetValueOptional(config, kTimeBetweenLiftActions, _iConfig.time_between_lift_actions))
+    _iConfig.time_between_lift_actions = 0.75;
+  if (not JsonTools::GetValueOptional(config, kHighHeadAngle, _iConfig.high_head_angle))
+    _iConfig.high_head_angle = 0.3;
+  if (not JsonTools::GetValueOptional(config, kLowHeadAngle, _iConfig.low_head_angle))
+    _iConfig.low_head_angle = 0.0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::~BehaviorCubeDrive()
 {
+  LOG_WARNING("cube_drive", "BehaviorCubeDrive()");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorCubeDrive::WantsToBeActivatedBehavior() const
 {
+  LOG_WARNING("cube_drive", "WantsToBeActivatedBehavior()");
   // This method will only be called if the "modifiers" configuration caused the parent
   // WantsToBeActivated to return true. IOW, if there is a cube connection, this method
   // will be called. If there is a cube connection, we always want to run. (This won't
@@ -62,6 +79,7 @@ bool BehaviorCubeDrive::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  LOG_WARNING("cube_drive", "GetBehaviorOperationModifiers()");
   // This will cause the parent WantsToBeActivated to return false any time there is no cube connection.
   // Here, "Lazy" means that we don't want to manage the connection. That will be handled by the 
   // CubeConnectionCoordinator.
@@ -79,6 +97,7 @@ void BehaviorCubeDrive::GetBehaviorOperationModifiers(BehaviorOperationModifiers
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
+  LOG_WARNING("cube_drive", "GetAllDelegates()");
   // TODO: insert any behaviors this will delegate to into delegates.
   // TODO: delete this function if you don't need it
 }
@@ -86,29 +105,35 @@ void BehaviorCubeDrive::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  /*
-  const char* list[] = {
-    // TODO: insert any possible root-level json keys that this class is expecting.
-    // TODO: replace this method with a simple {} in the header if this class doesn't use the ctor's "config" argument.
+  LOG_WARNING("cube_drive", "GetBehaviorJsonKeys()");
+  static const char* list[] = {
+    kTriggerLiftGs,
+    kDeadZoneSize,
+    kTimeBetweenLiftActions,
+    kHighHeadAngle,
+    kLowHeadAngle,
   };
-  expectedKeys.insert( std::begin(list), std::end(list) );
-  */
+
+  expectedKeys.insert( std::begin( list ), std::end( list ) );
 }
 
 void BehaviorCubeDrive::SetLiftState(bool up) {
+  LOG_WARNING("cube_drive", "SetLiftState()");
   _dVars.lift_up = up;
   GetBEI().GetRobotInfo().GetMoveComponent().MoveLiftToHeight(
     up ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2, 0.1, nullptr);
+  GetBEI().GetRobotInfo().GetMoveComponent().MoveHeadToAngle(
+    up ? _iConfig.high_head_angle : _iConfig.low_head_angle, 3.14, 1000.);
 }
 
 void BehaviorCubeDrive::RestartAnimation() {
   static std::function<void(void)> restart_animation_callback = std::bind(&BehaviorCubeDrive::RestartAnimation, this);
-  bool retval = GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger(
+  GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger(
       _dVars.object_id,
       CubeAnimationTrigger::CubeDrive,
-      restart_animation_callback
-  );  
-  LOG_WARNING("cube_drive", "RestartAnimation() PlayLightAnimByTrigerr() returned: %d", retval);
+      restart_animation_callback,
+      true
+  );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -118,7 +143,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   // reset dynamic variables
   _dVars = DynamicVariables();
   SetLiftState(false);
-  
+
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
   ActiveObject* active_object = GetBEI().GetBlockWorld().GetConnectedActiveObjectByActiveID(connected_cube_active_id);
@@ -151,39 +176,50 @@ void BehaviorCubeDrive::OnBehaviorDeactivated() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::BehaviorUpdate() {
+  LOG_WARNING("cube_drive", "BehaviorUpdate()");
   if( IsActivated() ) {
     if(not GetBEI().GetCubeCommsComponent().IsConnectedToCube()) {
       CancelSelf();
-      LOG_ERROR("cube_drive", "We've lost the connection to the cube");
+      LOG_WARNING("cube_drive", "We've lost the connection to the cube");
       return;
     }
+
+    RestartAnimation();
+
     float xGs = _dVars.filtered_cube_accel->x / 9810.0;
     float yGs = _dVars.filtered_cube_accel->y / 9810.0;
+    float zGs = _dVars.filtered_cube_accel->z / 9810.0;
+    float Gs = sqrt(xGs*xGs + yGs*yGs + zGs*zGs);
+    double now = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+    if((Gs < 1.0-_iConfig.trigger_lift_gs or Gs > 1.0+_iConfig.trigger_lift_gs) && 
+       (now - _iConfig.time_between_lift_actions > _dVars.last_lift_action_time)) {
+      _dVars.last_lift_action_time = now;
+      SetLiftState(not _dVars.lift_up);
+    }
+
+    // max speed is 200mm per second. I want the cube to be able to push the bot at full speed, but I've no
+    // guarantee that the accelerometer reads 9810 at 1G, as it "should". To make up for this, as well as to
+    // compensate a bit for the dead zone, I scale the accelerometer reading (measured in Gs) by 250 to get my
+    // desired wheel speed.
     float left_wheel_mmps = -xGs * 250.0;
     float right_wheel_mmps = -xGs * 250.0;
 
     left_wheel_mmps += yGs * 250.0;
     right_wheel_mmps -= yGs * 250.0;
 
-    if(abs(left_wheel_mmps)<8.0) {
+    float dead_zone_size = _iConfig.dead_zone_size;
+    if(abs(left_wheel_mmps) < dead_zone_size) {
       left_wheel_mmps = 0.0;
+    } else {
+      left_wheel_mmps -= dead_zone_size;
     }
-    if(abs(right_wheel_mmps)<8.0) {
+    if(abs(right_wheel_mmps) < dead_zone_size) {
       right_wheel_mmps = 0.0;
+    } else {
+      right_wheel_mmps -= dead_zone_size;
     }
      
     GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(left_wheel_mmps, right_wheel_mmps, 1000.0, 1000.0);
-
-    double now = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-    if(now - 0.25 > _dVars.last_lift_action_time) {
-      if(_dVars.filtered_cube_accel->z > 9810.0 * 2.0) {
-        _dVars.last_lift_action_time = now;
-        SetLiftState(true);
-      } else if(_dVars.filtered_cube_accel->z < -9810.0) {
-        _dVars.last_lift_action_time = now;
-        SetLiftState(false);
-      }
-    }
   }
 }
 
