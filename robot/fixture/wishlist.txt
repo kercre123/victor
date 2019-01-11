@@ -11,5 +11,4 @@ MOTORx: port test modes from coz1.5
 ----------------
 Helper
 ----------------
-log management: preserve last log on boot, until first test is started (allow download after POR)
 
