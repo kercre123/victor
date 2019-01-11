@@ -16,6 +16,7 @@
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
+  | ADC_CHSELR_CHSEL3
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
   | ADC_CHSELR_CHSEL16
@@ -25,10 +26,6 @@ static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
-
-static const uint16_t*  TEMP30_CAL_ADDR = (uint16_t*)0x1FFFF7B8;
-static const int32_t    TEMP_VOLT_ADJ   = (int32_t)(0x100000 * (2.8 / 3.3));
-static const int32_t    TEMP_SCALE_ADJ  = (int32_t)(0x100000 * (1.000 / 5.336));
 
 static const int POWER_DOWN_TIME = 200 * 4.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
@@ -279,8 +276,7 @@ void Analog::tick(void) {
   }
   #endif
 
-  temperature = *TEMP30_CAL_ADDR - ((adc_values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
-  temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
+  temperature = (adc_values[ADC_THERMISTOR] * 4) / 112 - 53;
 
   bool emergency_shutoff = temperature >= 70;    // Will immediately cause a reboot
   if (temperature >= 60) disable_vmain = true;

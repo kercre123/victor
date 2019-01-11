@@ -122,7 +122,9 @@ function parse_file()
 {
   infile=$1;
   echo processing "$infile"
-  dos2unix "$infile"
+  dos2unix --quiet "$infile"
+  local numlines=$(wc -l < "$infile")
+  
   lineCnt=0
   while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
     lineCnt=$((lineCnt+1))
@@ -136,7 +138,7 @@ function parse_file()
       fi
       
       #parse the current measurement value
-      current=$(echo $line | grep -oP 'current \K([0-9]+)')
+      current=$(echo $line | grep -oP 'current \K[+-]*([0-9]+)')
       
       #skip CUBEBAT startup current measurements
       if [ "$current" != "" ]; then
@@ -144,7 +146,15 @@ function parse_file()
         log_current "$led" "$current" "$infile" "$line" "$lineCnt"
       fi
     fi
+    
+    #show progress
+    if [ $(($lineCnt % 100)) -eq 0 ]; then
+      local percent=$((100*$lineCnt/$numlines))
+      echo -ne "progress: $percent% $lineCnt/$numlines lines\r"
+    fi
+    
   done < "$infile"
+  echo -ne "                                                 \r" #clear progress meter
   write_row "$infile" -1
   
   gFileCnt=$(($gFileCnt+1))
@@ -156,14 +166,14 @@ for i in "${!leds[@]}"; do values[${i}]="${leds[$i]}"; done
 write_row "logfile" -1
 
 #parse logfiles (*.log or *.txt formats)
-Tstart=$(($(date +%s%N)/1000000))
+Tstart=$(($(date +%s%N)/1000))
 for infile in ./*.log; do if [ "$infile" != "./*.log" ]; then parse_file "$infile"; fi done
 for infile in ./*.txt; do if [ "$infile" != "./*.txt" ]; then parse_file "$infile"; fi done
-Tend=$(($(date +%s%N)/1000000))
+Tend=$(($(date +%s%N)/1000))
 Tproc=$(($Tend-$Tstart))
 
 write_maths $numrows
 
-echo processed $gFileCnt files $gLineCnt lines in $(($Tproc))ms. avg $(($Tproc/$gLineCnt))ms per line
+echo processed $gFileCnt files $gLineCnt lines in $(($Tproc/1000))ms. avg $(($Tproc/$gLineCnt))us per line
 exit 0
 

@@ -80,6 +80,7 @@ void SetFixtureText(bool reinit)
   //current mode
   bool is_fixmode_head = g_fixmode==FIXMODE_HEAD1 || g_fixmode==FIXMODE_HEAD1_OL || g_fixmode==FIXMODE_HEAD2 || g_fixmode==FIXMODE_HELPER1;
   bool is_fixmode_packout = g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL;
+  bool is_fixmode_tof = g_fixmode==FIXMODE_TOF || g_fixmode==FIXMODE_TOF_DEBUG;
   
   //different colors for debug builds
   char color = 'b';
@@ -90,10 +91,13 @@ void SetFixtureText(bool reinit)
   
   //for head programming fixtures, show last written ESN on the display
   //for packout fixtures, show current RTC time on the display
+  //for TOF fixtures, show last sensor reading
   if( is_fixmode_head )
     helperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
   else if( is_fixmode_packout )
     helperLcdSetLine(1, fixtureTimeStr(RtcDisplayTime) ); //e.g. "Sun Sep16 01:03 1973"
+  else if( is_fixmode_tof )
+    helperLcdSetLine(1, snformat(b,bz,"last read: %imm", TestAuxTofLastRead()) );
   else if( !inited && !g_isReleaseBuild )
     helperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
   
@@ -151,6 +155,8 @@ void SetOKText(void)
   helperLcdShow(1,1,'g', "OK");
 }
 
+static void dbgBtnHandler(void);
+
 // Wait until the Device has been pulled off the fixture
 void WaitForDeviceOff(bool error, int debounce_ms = 500);
 void WaitForDeviceOff(bool error, int debounce_ms)
@@ -182,6 +188,7 @@ void WaitForDeviceOff(bool error, int debounce_ms)
       debounce = 0;
     
     ConsoleUpdate();  // No need to freeze up the console while waiting
+    dbgBtnHandler();  // process btn input
     
     if( g_forceStart ) { //force=1 exits this infuriating loop
       g_forceStart = 0;
@@ -215,7 +222,8 @@ static void RunTests()
   Board::ledOn(Board::LED_YLW); //test in-progress
   
   //char b[10]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
+  int logstart_timeout = helperConsecutiveFailCnt()<5 ? 3000 : CMD_DEFAULT_TIMEOUT; //if no helper attached, hurry up and fail
+  cmdSend(CMD_IO_HELPER, "logstart", logstart_timeout, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
   
   ConsolePrintf("[TEST:START]\n");
   printFixtureInfo();
@@ -286,7 +294,7 @@ static bool TryToRunTests(void)
   return TRUE;
 }
 
-inline void dbgBtnHandler(void)
+static void dbgBtnHandler(void)
 {
   //monitor unused buttons
   int x = USE_START_BTN > 0 ? Board::BTN_2 : Board::BTN_1; //skip start btn if used for testing
@@ -296,17 +304,28 @@ inline void dbgBtnHandler(void)
     if( edge != 0 )
       ConsolePrintf("btn %u %s\n", x, edge > 0 ? "pressed" : "released");
     
-    //XXX: debug backback test. Either kill it, or find a good home (not here)
-    if( g_fixmode == FIXMODE_BACKPACK1 && edge > 0 && x == Board::BTN_4 )
-      g_forceStart = 1;
-    
-    //XXX: hack to manually start head programming
-    if( (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1) && edge > 0 && x == Board::BTN_4 )
-      g_forceStart = 1;
-    
-    //XXX: run debug tests
-    if( g_fixmode == FIXMODE_DEBUG && edge > 0 && x == Board::BTN_4 )
-      g_forceStart = 1;
+    //XXX: allow button 4 to start some tests
+    if( x == Board::BTN_4 && edge > 0 )
+    {
+      if(     g_fixmode == FIXMODE_DEBUG
+          ||  g_fixmode == FIXMODE_BACKPACK1
+          || (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1)
+          ||  g_fixmode == FIXMODE_BODY1_OL
+          ||  g_fixmode == FIXMODE_CUBE_OL
+          ||  g_fixmode == FIXMODE_ROBOT1_OL
+          ||  g_fixmode == FIXMODE_ROBOT3_OL
+          ||  g_fixmode == FIXMODE_PACKOUT_OL
+          ||  g_fixmode == FIXMODE_INFO
+          ||  g_fixmode == FIXMODE_SOUND1
+          ||  g_fixmode == FIXMODE_SOUND2
+          ||  g_fixmode == FIXMODE_LOG_DL
+          ||  g_fixmode == FIXMODE_TOF || g_fixmode == FIXMODE_TOF_DEBUG
+      )
+      {
+        ConsolePrintf("manual force start\n");
+        g_forceStart = 1;
+      }
+    }
     
     /*/DEBUG: the ol' btn toggles an LED trick
     if( edge > 0 ) { 

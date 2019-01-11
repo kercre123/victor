@@ -196,6 +196,27 @@ static void dbg_test_leds_(int on_time_ms, int colorfade)
   rcomLed(leds, RCOM_PRINT_LEVEL_CMD);
 }
 
+static void dbg_test_vext_stress_(int nloops, int loop_wait_ms)
+{
+  if( loop_wait_ms < 0 ) loop_wait_ms = 5000;
+  for(int i=0; i<nloops; i++)
+  {
+    Contacts::setModeTx();
+    Timer::delayMs(35);
+    Contacts::setModeRx();
+    Timer::delayMs(150);
+    cmdSend(CMD_IO_CONTACTS, "getvers", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    cmdSend(CMD_IO_CONTACTS, "getvers", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "testcommand  extra  long  string  to  measure  gate  rise  abcd  1234567890", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "getvers", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
+    Timer::delayMs(100);
+    
+    Timer::delayMs( loop_wait_ms );
+  }
+}
+
 static void run_debug(int arg[])
 {
   if( arg[0] == 1 )
@@ -206,6 +227,8 @@ static void run_debug(int arg[])
     dbg_test_readlogs_(arg[1], arg[2]);
   if( arg[0] == 4 )
     dbg_test_leds_(arg[1], arg[2]);
+  if( arg[0] == 5 )
+    dbg_test_vext_stress_(arg[1], arg[2]);
   
   if( arg[0] == 14 )
     dbg_test_emr_( arg[1], arg[2] );
@@ -472,6 +495,7 @@ void TestRobotInfo(void)
   robot_get_batt_mv(0,false); //no error check
 }
 
+#include "../../syscon/schema/messages.h" //#include "messages.h"
 void TestRobotSensors(void)
 {
   robot_sr_t *psr;
@@ -481,6 +505,7 @@ void TestRobotSensors(void)
   //robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
   
   ConsolePrintf("Sensor Testing...\n");
+  int failCode = BOOT_FAIL_NONE;
   
   //BATTERY (ADC input)
   {
@@ -512,6 +537,15 @@ void TestRobotSensors(void)
     ConsolePrintf("cliff,fL,%i,fR,%i,bL,%i,bR,%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bL, cliff.cliff.bR);
     ConsolePrintf("..cnt,fL,%i,fR,%i,bL,%i,bR,%i\n", cnt.fL, cnt.fR, cnt.bL, cnt.bR);
     
+    //check syscon-reported failures
+    failCode = cliff.meta.failureCode;
+    ConsolePrintf("cliff,failureCode,%04x\n", failCode);
+    if( failCode == BOOT_FAIL_CLIFF1 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_FL;
+    if( failCode == BOOT_FAIL_CLIFF2 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_FR;
+    if( failCode == BOOT_FAIL_CLIFF3 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_BL;
+    if( failCode == BOOT_FAIL_CLIFF4 ) throw ERROR_SENSOR_CLIFF_BOOT_FAIL_BR;
+    
+    if( cnt.fL<2 && cnt.fR<2 && cnt.bL<2 && cnt.bR<2 ) throw ERROR_SENSOR_CLIFF_ALL; //all-zero data. hmm...
     if( cnt.fL < NN_ok )  throw ERROR_SENSOR_CLIFF_FL;
     if( cnt.fR < NN_ok )  throw ERROR_SENSOR_CLIFF_FR;
     if( cnt.bL < NN_ok )  throw ERROR_SENSOR_CLIFF_BL;
@@ -549,9 +583,20 @@ void TestRobotSensors(void)
     robot_sr_t prox = psr[NN_tof>>1];
     ConsolePrintf("prox,mm,%i,sigRate,%i,spad,%i,ambientRate,%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
     
+    //check syscon-reported failures
+    failCode = prox.meta.failureCode;
+    ConsolePrintf("tof,failureCode,%04x\n", failCode);
+    if( failCode == BOOT_FAIL_TOF )
+      throw ERROR_SENSOR_TOF_BOOT_FAIL;
+    
     if( ecount > emax )
       throw ERROR_SENSOR_TOF;
   }
+  
+  //Unhandled FailureCode
+  ConsolePrintf("robotsensor,failureCode,%04x\n", failCode);
+  if( failCode != BOOT_FAIL_NONE )
+    throw ERROR_SENSOR_UNHANDLED_FAILURE;
 }
 
 typedef struct { 
@@ -682,11 +727,11 @@ void TestRobotTreads(void)
   #else
   
   //full power: speed 1760-1980, travel 790-1160
-  TestRobotTreads_(1, 127, 1500, 600);
+  TestRobotTreads_( /*high*/ 1, /*pwr*/ 127, /*min_speed*/ 1500, /*min_travel*/ 600 );
   
   //low power (72): speed 870-1070, travel 400-550
   if( !IS_FIXMODE_PACKOUT() )
-    TestRobotTreads_(0, 75, 750, 300);
+    TestRobotTreads_( /*high*/ 0, /*pwr*/ 75, /*min_speed*/ 750, /*min_travel*/ 300 );
   
   #endif
 }
@@ -869,7 +914,7 @@ void TestRobotRange(void)
     //lift travel ~450-500 in each direction
     //head travel ~800-850 in each direction
     robot_range_t lift = { /*NN*/  55, /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
-    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
+    robot_range_t head = { /*NN*/  70, /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2100 };
     TestRobotRange(1, &lift, &head );
   } else if( !IS_FIXMODE_PACKOUT() ) {
     //lift: travel 195-200, speed 760-1600
@@ -952,7 +997,7 @@ void EmrUpdate(void)
       //| 0x00000002  //UnexpectedTouchDetectedError 
       //| 0x00000004  //NoisyTouchSensorError
       //| 0x00000008  //CubeRadioError
-      | 0x00000010  //WifiScanError
+      //| 0x00000010  //WifiScanError
     ;
     rcomSmr( EMR_FIELD_OFS(playpenTestDisableMask), PlaypenTestMask );
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
@@ -1333,10 +1378,23 @@ void Recharge(void)
 extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void)
 {
-  if( IS_FIXMODE_ROBOT1() )
-    RobotChargeTest( 425, 4000 ); //test charging circuit
-  else
-    RobotChargeTest( 425, 4100 ); //test charging circuit
+  const u16 i_done_ma = 425;
+  const u16 bat_overvolt_mv = IS_FIXMODE_ROBOT1() ? 4000 : 4100;
+  
+  int e, retries=0;
+  while(1)
+  {
+    try { RobotChargeTest( i_done_ma, bat_overvolt_mv ); e = ERROR_OK; } 
+    catch(int err) { e = err; }
+    
+    if( e==ERROR_ROBOT_OFF_CHARGER && ++retries < 3 ) 
+      ConsolePrintf("retrying %i...\n", retries);
+    else
+      break;
+  }
+  
+  if( e != ERROR_OK )
+    throw e;
 }
 
 //Test charging circuit by verifying current draw
@@ -1346,34 +1404,42 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 {
   #define CHARGE_TEST_DEBUG(x)    x
   const int NUM_SAMPLES = 16;
+  const int OFF_CHARGER_CNT = 10;
   
   Contacts::setModeRx(); //switch to comm mode
-  Timer::delayMs(500); //let battery voltage settle
+  Timer::delayMs(400); //let battery voltage settle
   int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   //Turn on charging power
+  Board::powerOff(PWR_VEXT);
+  Timer::delayMs(100); //syscon state-machine reset
   Board::powerOn(PWR_VEXT,0);
   Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS); //delay for syscon to enable charger
   
+  bool success=0;
   CHARGE_TEST_DEBUG( int ibase_ma = 0; uint32_t Tprint = 0;  );
   int avg=0, avgCnt=0, avgMax = 0, iMax = 0, offContact = 0;
-  uint32_t avgMaxTime = 0, iMaxTime = 0, Twait = Timer::get();
-  while( Timer::elapsedUs(Twait) < 5*1000*1000 )
+  uint32_t avgMaxTime = 0, iMaxTime = 0, Twait = Timer::get(), Telapsed;
+  while( (Telapsed = Timer::elapsedUs(Twait)) < 5*1000*1000 )
   {
     int current_ma = Meter::getCurrentMa(PWR_VEXT,6);
     int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
+    
+    //finish when average rises above our threshold (after minimum sample cnt)
     avg = ((avg*avgCnt) + current_ma) / (avgCnt+1); //tracking average
     avgCnt = avgCnt < NUM_SAMPLES ? avgCnt + 1 : avgCnt;
+    success = avgCnt >= NUM_SAMPLES && avg >= i_done_ma;
     
     //DEBUG: log charge current as bar graph
     CHARGE_TEST_DEBUG( {
       const int DISP_MA_PER_CHAR = 15;
       const int IDIFF_MA = 25;
       if( ABS(current_ma - ibase_ma) >= IDIFF_MA || ABS(avg - ibase_ma) >= IDIFF_MA || 
-          Timer::elapsedUs(Tprint) > 500*1000 || (avgCnt >= NUM_SAMPLES && avg >= i_done_ma) )
+          Timer::elapsedUs(Tprint) > 500*1000 || success || offContact>=OFF_CHARGER_CNT )
       {
         ibase_ma = current_ma;
         Tprint = Timer::get();
+        //ConsolePrintf("%06i ", Telapsed/1000); DEBUG
         ConsolePrintf("%04umV %03d/%03d ", voltage_mv, avg, current_ma );
         for(int x=1; x <= (avg > current_ma ? avg : current_ma); x += DISP_MA_PER_CHAR )
           ConsolePrintf( x <= avg && x <= current_ma ? "=" : x > avg ? "+" : "-" );
@@ -1391,15 +1457,16 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
       avgMaxTime = Timer::elapsedUs(Twait);
     }
     
-    //finish when average rises above our threshold (after minimum sample cnt)
-    if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
+    if( success )
       break;
     
     //error out quickly if robot removed from charge base
-    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 20) {
-      CHARGE_TEST_DEBUG( ConsolePrintf("\n"); );
-      ConsolePrintf("robot off charger\n");
-      throw ERROR_BAT_CHARGER;
+    if( Telapsed > SYSCON_CHG_PWR_DELAY_MS*1000 ) //safetey margin for charging enable before allowing off-contact detect
+    {
+      if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > OFF_CHARGER_CNT) {
+        ConsolePrintf("robot off charger\n");
+        throw ERROR_ROBOT_OFF_CHARGER;
+      }
     }
     
     //keep an eye on output voltage from crappy power supplies
@@ -1416,7 +1483,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
-  if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
+  if( success )
     return; //OK
   
   if( batt_mv >= bat_overvolt_mv )

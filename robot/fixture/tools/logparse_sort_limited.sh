@@ -71,15 +71,15 @@ function parse_file()
 }
 
 #parse logfiles (*.log or *.txt formats)
-Tstart=$(($(date +%s%N)/1000000))
+Tstart=$(($(date +%s%N)/1000))
 for infile in ./*.log; do if [ "$infile" != "./*.log" ]; then parse_file "$infile"; fi done
 for infile in ./*.txt; do if [ "$infile" != "./*.txt" ]; then parse_file "$infile"; fi done
-Tend=$(($(date +%s%N)/1000000))
+Tend=$(($(date +%s%N)/1000))
 Tproc=$(($Tend-$Tstart))
 
 #print results
 show_tally
-echo processed $gFileCnt files in $(($Tproc))ms #$gLineCnt lines in $(($Tproc))ms. avg $(($Tproc/$gLineCnt))ms per line
+echo processed $gFileCnt files in $(($Tproc/1000))ms #$gLineCnt lines in $(($Tproc/1000))ms. avg $(($Tproc/$gLineCnt))us per line
 
 exit 0
 
