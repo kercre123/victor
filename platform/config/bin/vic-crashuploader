@@ -18,6 +18,9 @@
 : ${VIC_CRASH_UPLOAD_LOG:=0}
 : ${VIC_CRASH_SCRAPE_PERIOD_SEC:=30}
 
+# Where is magic DAS opt-in file?
+DAS_ALLOW_UPLOAD_FILE=/run/das_allow_upload
+
 UPLOADED_EXT=uploaded
 LOCAL_EXT=local
 mkdir -p $VIC_CRASH_FOLDER
@@ -95,6 +98,7 @@ do
                 # use the same logic we had before (upload if running versioned build)
                 UPLOAD_THIS_CRASH=$VIC_RUNNING_VERSIONED_BUILD
             fi
+
             if [ $UPLOAD_THIS_CRASH -gt 0 ]; then
                 # If file size is greater than zero, attempt to upload it
                 echo "Uploading crash dump file ${i}"
@@ -107,7 +111,13 @@ do
                 form="${form} -F robot.os_version=${os_version}"
                 form="${form} -F robot.anki_version=${anki_version}"
 
-                if [ ${VIC_CRASH_UPLOAD_LOG} -gt 0 ]; then
+                # If user has opted out of data collection, do not upload crash log
+                UPLOAD_THIS_LOG=${VIC_CRASH_UPLOAD_LOG}
+                if [ ! -f ${DAS_ALLOW_UPLOAD_FILE} ]; then
+                    UPLOAD_THIS_LOG=0
+                fi
+
+                if [ ${UPLOAD_THIS_LOG} -gt 0 ]; then
                     if [ -f ${i}.log ]; then
                         form="${form} -F attachment_messages.log=@${i}.log"
                     fi
