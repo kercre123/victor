@@ -16,7 +16,11 @@ import (
 	"syscall"
 	"time"
 
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+
 	"anki/log"
+	"anki/opentracing"
 	"anki/robot"
 	extint "proto/external_interface"
 
@@ -151,6 +155,8 @@ func main() {
 	log.Println("Install crash reporter")
 	robot.InstallCrashReporter("vic-gateway")
 
+	opentracing.Init()
+
 	signalHandler = make(chan os.Signal, 1)
 	signal.Notify(signalHandler, syscall.SIGTERM)
 	go func() {
@@ -225,8 +231,10 @@ func main() {
 	}
 	grpcServer := grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(LoggingUnaryInterceptor),
+		grpc.UnaryInterceptor(otgrpc.OpenTracingServerInterceptor(opentracing.OpenTracer)),
+		grpc.StreamInterceptor(otgrpc.OpenTracingStreamServerInterceptor(opentracing.OpenTracer)),
 		grpc.StreamInterceptor(LoggingStreamInterceptor),
+		grpc.UnaryInterceptor(LoggingUnaryInterceptor),
 	)
 	extint.RegisterExternalInterfaceServer(grpcServer, newServer())
 	ctx := context.Background()
@@ -277,6 +285,9 @@ func main() {
 	if logVerbose {
 		handlerFunc = verboseHandlerFunc(grpcServer, gwmux)
 	}
+
+	// This may be redundant as the gRPC server is also traced and this looks to be a proxy
+	handlerFunc = nethttp.Middleware(opentracing.OpenTracer, handlerFunc)
 
 	srv := &http.Server{
 		Addr:    addr,

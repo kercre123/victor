@@ -145,5 +145,9 @@
   "github.com/opentracing/opentracing-go": {
     "commit": "8b5a441dc60e8d9bb9bf9d22060b6d94fa599983",
     "branch": "master"
+  },
+  "github.com/opentracing-contrib/go-stdlib": {
+    "commit": "77df8e8e70b403c6b13c0fffaa4867c9044ff4e9",
+    "branch": "master"
   }
 }
