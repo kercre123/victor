@@ -5,7 +5,11 @@
 #include <vector>
 
 namespace Anki {
-  namespace Vector {
+namespace Util {
+  template <typename T, size_t x>
+  class FixedCircularBuffer;
+}
+namespace Vector {
     
 
 class SyllableDetector
@@ -27,6 +31,7 @@ public:
     unsigned int startIdx;
     unsigned int endIdx;
     float avgFreq = 0.0f;
+    float peakFreq = 0.0f;
     float avgPower = 0.0f;
   };
   
@@ -47,6 +52,10 @@ private:
   DataType* _outData;
   
   std::vector<DataType> _windowCoeffs;
+  
+  constexpr static unsigned int kFilterSize = 151;
+  std::unique_ptr<Util::FixedCircularBuffer<BuffType,kFilterSize>> _filterBuffer;
+  static std::array<float, kFilterSize> _filterCoeffs16;
   
 };
     

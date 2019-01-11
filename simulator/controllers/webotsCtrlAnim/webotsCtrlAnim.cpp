@@ -13,6 +13,8 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/jsonTools.h"
 
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
+
 #include "osState/osState.h"
 
 #include "json/json.h"
@@ -58,6 +60,8 @@ int main(int argc, char **argv)
 
   // Set Webots supervisor
   OSState::SetSupervisor(&animSupervisor);
+  
+  FaceDisplay::SetSupervisor(&animSupervisor);
 
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,

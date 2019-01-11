@@ -38,7 +38,7 @@ void ChirpMaker::Init(const AnimContext* context)
   auto* sequencer = _context->GetSequencer();
   
   // create analyzers for each mode
-  _analyzers[ChirpMode::HumanSyllables].reset( new HumanSyllableAnalyzer{sequencer} );
+  _analyzers[ChirpMode::HumanSyllables].reset( new HumanSyllableAnalyzer{sequencer, _context} );
   
   // todo: something for analyzing another vector's chirps
 }

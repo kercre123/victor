@@ -32,7 +32,7 @@ namespace {
   
   uint32_t kPitchTick_ms = 10;
   
-  CONSOLE_VAR_RANGED(float, kSourcePitch_Hz, "Chirps", 1000.0f, 0.0f, 5000.0f);
+  CONSOLE_VAR_RANGED(float, kSourcePitch_Hz, "Chirps", 150.0f, 0.0f, 5000.0f);
   CONSOLE_VAR_RANGED(float, kMinPitchSlider_Hz, "Chirps", -500.0f, -10000.0f, 0.0f);
   CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps", 500.0f, 0.0f, 10000.0f);
 }
@@ -403,7 +403,7 @@ float Sequencer::PitchToRelativeCents( const float pitch_Hz )
   float minDiff = std::numeric_limits<float>::max();
   if( _octave == std::numeric_limits<int>::max() ) {
     // can be optimized i know
-    for( int i=0; i<50; ++i ) {
+    for( int i=0; i<10; ++i ) {
       const float f1 = std::pow(2.0, i) * pitch_Hz;
       float diff = fabs(f1 - kSourcePitch_Hz);
       if( diff < minDiff ) {
