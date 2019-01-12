@@ -31,6 +31,22 @@ class LowPassFilterListener;
 
 struct ActiveAccel;
 
+struct PanelCell {
+  std::string Text;
+  int         Action;
+};
+
+struct Panel {
+  int NumRows;
+  int NumCols;
+  PanelCell* Cells;
+};
+
+struct PanelSet {
+  int    NumPanels;
+  Panel* Panels;
+};
+
 class BehaviorCubeDrive : public ICozmoBehavior
 {
 public: 
@@ -56,6 +72,14 @@ protected:
 
 private:
 
+  enum {
+        DIR_U   = 0, // up
+        DIR_D   = 1, // down
+        DIR_L   = 2, // left
+        DIR_R   = 3, // right
+        NUM_DIR = 4
+  };
+
   struct InstanceConfig {
     InstanceConfig();
     // TODO: put configuration variables here
@@ -75,9 +99,14 @@ private:
   DynamicVariables _dVars;
   bool _liftIsUp;
 
+  std::string _promptText;
   std::string _userText;
-  float _col, _row;
+  int _col, _row;
+  int _dirHoldCount[NUM_DIR];
   
+  void ClearHoldCounts();
+  void NewDirEvent(int dir, int maxRow, int maxCol);
+
 };
 
 } // namespace Vector

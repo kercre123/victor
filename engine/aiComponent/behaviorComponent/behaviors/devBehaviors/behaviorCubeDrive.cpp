@@ -34,7 +34,13 @@ namespace {
   static const     float kTextVertSpace            = 22.0f; 
   static const     float kUserTextScale            = 0.70f; 
   static const     float kSelectTextScale          = 0.70f; 
-  static const     float kMinAccel                 = 0.100f;
+  static const     int   kMaxUserChars             = 14;
+
+  //static const     float kMinAccel                 = 0.100f;
+  static const     float kAccelThresh              = 0.400f;  
+  static const     int   kTicksPerRepeatSlow       = 4;
+  static const     int   kTicksPerRepeatFast       = 2;
+  static const     int   kMaxSlowEvents            = 3;
 };
 
 enum {
@@ -45,26 +51,10 @@ enum {
       ACT_NEXT   = 4
 };
 
-struct PanelCell {
-  string Text;
-  int    Action;
-};
-
-struct Panel {
-  int NumRows;
-  int NumCols;
-  PanelCell* Cells;
-};
-
 PanelCell GetPanelCell(Panel* cmp, int row, int col) {
   int idx = (row * cmp->NumCols) + col;
   return cmp->Cells[idx];
 }
-
-struct PanelSet {
-  int    NumPanels;
-  Panel* Panels;
-};
 
 PanelCell CellsUcaseLetters[] =
   {
@@ -113,6 +103,25 @@ BehaviorCubeDrive::BehaviorCubeDrive(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::~BehaviorCubeDrive()
 {
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorCubeDrive::ClearHoldCounts()
+{
+  for (int i = 0; i < NUM_DIR; i++) {
+    _dirHoldCount[i] = 0;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorCubeDrive::NewDirEvent(int dir, int maxRow, int maxCol)
+{
+  switch (dir) {
+  case DIR_U: _row = (_row <= 0)      ? 0      : (_row - 1); break;
+  case DIR_D: _row = (_row >= maxRow) ? maxRow : (_row + 1); break;
+  case DIR_L: _col = (_col <= 0)      ? 0      : (_col - 1); break;
+  case DIR_R: _col = (_col >= maxCol) ? maxCol : (_col + 1); break;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -186,9 +195,11 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dVars = DynamicVariables();
   _liftIsUp = false;
   SetLiftState(_liftIsUp);
-  _userText = "Enter Wifi Passwd";
-  _row = 0.0;
-  _col = 0.0;
+  _promptText = "<Wifi Passwd>";
+  _userText   = "";
+  _row = 0;
+  _col = 0;
+  ClearHoldCounts();
 
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
@@ -229,63 +240,39 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       LOG_ERROR("cube_drive", "We've lost the connection to the cube");
       return;
     }
-    float xGs = _dVars.filtered_cube_accel->x / 9810.0 / 2;
-    float yGs = _dVars.filtered_cube_accel->y / 9810.0 / 2;
-    if (abs(xGs) < kMinAccel) {
-      xGs = 0.0;
-    }
-    if (abs(yGs) < kMinAccel) {
-      yGs = 0.0;
-    }
+    float xGs = _dVars.filtered_cube_accel->x / 9810.0;
+    float yGs = _dVars.filtered_cube_accel->y / 9810.0;
 
-    _col += yGs;
-    _row += xGs;
+    // At most, only one direction can be active on any tick
+    int dir = NUM_DIR;  // none
+    if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+    if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+    if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
+    if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
 
     Panel* panel = &kPanelWifiPrompt;
-    if (_col < 0.0) {
-      _col = 0.0;
-    }
-    if (_col > float(panel->NumCols-1)) {
-      _col = float(panel->NumCols-1);
-    }
-    if (_row < 0.0) {
-      _row = 0.0;
-    }
-    if (_row > float(panel->NumRows-1)) {
-      _row = float(panel->NumRows-1);
+
+    // Register new scroll event if any direction is held for enough
+    // consecutive ticks
+    if (dir != NUM_DIR) {
+      if (_dirHoldCount[dir] == 0) {
+        ClearHoldCounts();
+      }
+      _dirHoldCount[dir]++;
+
+      int slowHoldCount = _dirHoldCount[dir];
+      int fastHoldCount = _dirHoldCount[dir] - (kTicksPerRepeatSlow * kMaxSlowEvents);
+      if ((fastHoldCount >= 0) && ((fastHoldCount % kTicksPerRepeatFast) == 0)) {
+        NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
+      } else if ((slowHoldCount % kTicksPerRepeatSlow) == 0) {
+        NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
+      }
+    } else {
+      ClearHoldCounts();
     }
 
-    // float left_wheel_mmps = -xGs * 250.0;
-    // float right_wheel_mmps = -xGs * 250.0;
-
-    // left_wheel_mmps += yGs * 250.0;
-    // right_wheel_mmps -= yGs * 250.0;
-
-    // if(abs(left_wheel_mmps)<8.0) {
-    //   left_wheel_mmps = 0.0;
-    // }
-    // if(abs(right_wheel_mmps)<8.0) {
-    //   right_wheel_mmps = 0.0;
-    // }
-     
-    // GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(left_wheel_mmps, right_wheel_mmps, 1000.0, 1000.0);
-
-    // double now = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-    // if(now - 0.25 > _dVars.last_lift_action_time) {
-    //   if(_dVars.filtered_cube_accel->z > 9810.0 * 2.0) {
-    //     _dVars.last_lift_action_time = now;
-    //     SetLiftState(true);
-    //   } else if(_dVars.filtered_cube_accel->z < -9810.0) {
-    //     _dVars.last_lift_action_time = now;
-    //     SetLiftState(false);
-    //   }
-    // }
     if(GetBEI().GetCubeInteractionTracker().GetTargetStatus().tappedDuringLastTick) {
-      // toggle lift up/down
-      //_liftIsUp = !_liftIsUp;
-      //SetLiftState(_liftIsUp);
-
-      PanelCell pc = GetPanelCell(panel, int(_row), int(_col));
+      PanelCell pc = GetPanelCell(panel, _row, _col);
       switch (pc.Action) {
       case ACT_APPEND:
         _userText += pc.Text;
@@ -309,8 +296,13 @@ void BehaviorCubeDrive::BehaviorUpdate() {
 
     // Update the screen
     _dVars.image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
+    string heading = (_userText != "") ? _userText : _promptText;
+    size_t hlen = heading.length();
+    if (hlen > kMaxUserChars) {
+      heading = "..." + heading.substr(hlen-kMaxUserChars+3, string::npos);
+    }
     _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
-                          _userText, NamedColors::WHITE, kUserTextScale);
+                          heading, NamedColors::WHITE, kUserTextScale);
     // _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
     //                       to_string(int(1000.0 * xGs)), NamedColors::WHITE, kUserTextScale);
     for(int r = 0; r < panel->NumRows; r++) {
@@ -319,7 +311,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
                             (float(r+1) * kTextVertSpace) + kSelectRowStart);
         string t = GetPanelCell(panel, r, c).Text;
         auto color = NamedColors::RED;
-        if ((r == int(_row)) && (c == int(_col))) {
+        if ((r == _row) && (c == _col)) {
           color = NamedColors::WHITE;
         }
         _dVars.image.DrawText(p, t, color, kSelectTextScale);
