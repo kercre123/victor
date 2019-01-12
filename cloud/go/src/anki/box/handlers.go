@@ -2,10 +2,11 @@ package box
 
 import "net/http"
 
-var devHandlers func(*http.ServeMux)
+var devHandlers func(*http.ServeMux) [][]string
 
-func GetDevHandlers(s *http.ServeMux) {
+func GetDevHandlers(s *http.ServeMux) [][]string {
 	if devHandlers != nil {
-		devHandlers(s)
+		return devHandlers(s)
 	}
+	return nil
 }
