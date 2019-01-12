@@ -586,11 +586,12 @@ void TestRobotSensors(void)
     //check syscon-reported failures
     failCode = prox.meta.failureCode;
     ConsolePrintf("tof,failureCode,%04x\n", failCode);
-    if( failCode == BOOT_FAIL_TOF )
-      throw ERROR_SENSOR_TOF_BOOT_FAIL;
     
-    if( ecount > emax )
-      throw ERROR_SENSOR_TOF;
+    failCode = 0; //TOF was removed from whiskey!!!!!!!!
+    //if( failCode == BOOT_FAIL_TOF )
+    //  throw ERROR_SENSOR_TOF_BOOT_FAIL;
+    //if( ecount > emax )
+    //  throw ERROR_SENSOR_TOF;
   }
   
   //Unhandled FailureCode
