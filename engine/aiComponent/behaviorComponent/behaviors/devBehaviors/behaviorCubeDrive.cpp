@@ -30,133 +30,59 @@ namespace Vector {
 namespace {
   static constexpr float kTopLeftCornerMagicNumber = 15.0f; 
   static constexpr float kSelectRowStart           = 20.0f; 
-  static const     float kTextHorzSpace            = 17.5f; 
+  static const     float kTextHorzSpace            = 18.5f; 
   static const     float kTextVertSpace            = 22.0f; 
   static const     float kUserTextScale            = 0.70f; 
   static const     float kSelectTextScale          = 0.70f; 
   static const     float kMinAccel                 = 0.100f;
-}
-
-enum {
-      ACTION_APPEND = 0,
-      ACTION_DELETE = 1,
-      ACTION_DONE   = 2
 };
 
-struct CursorCell {
+enum {
+      ACT_APPEND = 0,
+      ACT_DELETE = 1,
+      ACT_PANEL  = 2,  // next panel
+      ACT_DONE   = 3
+};
+
+struct PanelCell {
   string Text;
   int    Action;
 };
 
+struct Panel {
+  int NumRows;
+  int NumCols;
+  PanelCell* Cells;
+};
 
-// const static int NUM_ROWS = 3;
-// const static int NUM_COLS = 4;
-// CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
-//   {
-//    {{"0", ACTION_APPEND},
-//     {"1", ACTION_APPEND},
-//     {"2", ACTION_APPEND},
-//     {"3", ACTION_APPEND}},
+struct PanelSet {
+  int    NumPanels;
+  Panel* Panels;
+};
 
-//    {{"4", ACTION_APPEND},
-//     {"5", ACTION_APPEND},
-//     {"6", ACTION_APPEND},
-//     {"7", ACTION_APPEND}},
-
-//    {{"8", ACTION_APPEND},
-//     {"9", ACTION_APPEND},
-//     {"DEL", ACTION_DELETE},
-//     {"DONE", ACTION_DONE}},
-//   };
-
-// const static int NUM_ROWS = 4;
-// const static int NUM_COLS = 10;
-// CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
-//   {
-//    {{"0", ACTION_APPEND},
-//     {"1", ACTION_APPEND},
-//     {"2", ACTION_APPEND},
-//     {"3", ACTION_APPEND},
-//     {"4", ACTION_APPEND},
-//     {"5", ACTION_APPEND},
-//     {"6", ACTION_APPEND},
-//     {"7", ACTION_APPEND},
-//     {"8", ACTION_APPEND},
-//     {"9", ACTION_APPEND}},
-
-//    {{"A", ACTION_APPEND},
-//     {"B", ACTION_APPEND},
-//     {"C", ACTION_APPEND},
-//     {"D", ACTION_APPEND},
-//     {"E", ACTION_APPEND},
-//     {"F", ACTION_APPEND},
-//     {"G", ACTION_APPEND},
-//     {"H", ACTION_APPEND},
-//     {"I", ACTION_APPEND},
-//     {"SH", ACTION_DONE},
-//     },
-
-//    {{"J", ACTION_APPEND},
-//     {"K", ACTION_APPEND},
-//     {"L", ACTION_APPEND},
-//     {"M", ACTION_APPEND},
-//     {"N", ACTION_APPEND},
-//     {"O", ACTION_APPEND},
-//     {"P", ACTION_APPEND},
-//     {"Q", ACTION_APPEND},
-//     {"R", ACTION_APPEND},
-//     {"DL", ACTION_DELETE}},
-
-//    {{"S", ACTION_APPEND},
-//     {"T", ACTION_APPEND},
-//     {"U", ACTION_APPEND},
-//     {"V", ACTION_APPEND},
-//     {"W", ACTION_APPEND},
-//     {"X", ACTION_APPEND},
-//     {"Y", ACTION_APPEND},
-//     {"Z", ACTION_APPEND},
-//     {"-", ACTION_APPEND},
-//     {"OK", ACTION_DONE}},
-//   };
-
-const static int NUM_ROWS = 3;
-const static int NUM_COLS = 10;
-CursorCell CURSOR_MATRIX[NUM_ROWS][NUM_COLS] =
+PanelCell CellsUcaseLetters[] =
   {
-   {{"A", ACTION_APPEND},
-    {"B", ACTION_APPEND},
-    {"C", ACTION_APPEND},
-    {"D", ACTION_APPEND},
-    {"E", ACTION_APPEND},
-    {"F", ACTION_APPEND},
-    {"G", ACTION_APPEND},
-    {"H", ACTION_APPEND},
-    {"I", ACTION_APPEND},
-    {"SH", ACTION_DONE},
-    },
-
-   {{"J", ACTION_APPEND},
-    {"K", ACTION_APPEND},
-    {"L", ACTION_APPEND},
-    {"M", ACTION_APPEND},
-    {"N", ACTION_APPEND},
-    {"O", ACTION_APPEND},
-    {"P", ACTION_APPEND},
-    {"Q", ACTION_APPEND},
-    {"R", ACTION_APPEND},
-    {"DL", ACTION_DELETE}},
-
-   {{"S", ACTION_APPEND},
-    {"T", ACTION_APPEND},
-    {"U", ACTION_APPEND},
-    {"V", ACTION_APPEND},
-    {"W", ACTION_APPEND},
-    {"X", ACTION_APPEND},
-    {"Y", ACTION_APPEND},
-    {"Z", ACTION_APPEND},
-    {"-", ACTION_APPEND},
-    {"OK", ACTION_DONE}},
+   {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"^", ACT_PANEL},   
+   {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"<", ACT_DELETE}, 
+   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_DONE},   
   };
+
+PanelCell CellsLcaseLetters[] =
+  {
+   {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"^", ACT_PANEL},   
+   {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"<", ACT_DELETE}, 
+   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_DONE},   
+  };
+
+PanelCell GetPanelCell(Panel* cmp, int row, int col) {
+  int idx = (row * cmp->NumCols) + col;
+  return cmp->Cells[idx];
+}
+
+Panel kPanelUcaseLetters = {3, 10, CellsUcaseLetters};
+Panel kPanelLcaseLetters = {3, 10, CellsLcaseLetters};
+
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::InstanceConfig::InstanceConfig()
@@ -306,17 +232,19 @@ void BehaviorCubeDrive::BehaviorUpdate() {
 
     _col += yGs;
     _row += xGs;
+
+    Panel* panel = &kPanelUcaseLetters;
     if (_col < 0.0) {
       _col = 0.0;
     }
-    if (_col > float(NUM_COLS-1)) {
-      _col = float(NUM_COLS-1);
+    if (_col > float(panel->NumCols-1)) {
+      _col = float(panel->NumCols-1);
     }
     if (_row < 0.0) {
       _row = 0.0;
     }
-    if (_row > float(NUM_ROWS-1)) {
-      _row = float(NUM_ROWS-1);
+    if (_row > float(panel->NumRows-1)) {
+      _row = float(panel->NumRows-1);
     }
 
     // float left_wheel_mmps = -xGs * 250.0;
@@ -349,17 +277,20 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       //_liftIsUp = !_liftIsUp;
       //SetLiftState(_liftIsUp);
 
-      CursorCell cc = CURSOR_MATRIX[int(_row)][int(_col)];
-      switch (cc.Action) {
-      case ACTION_APPEND:
-        _userText += cc.Text;
+      PanelCell pc = GetPanelCell(panel, int(_row), int(_col));
+      switch (pc.Action) {
+      case ACT_APPEND:
+        _userText += pc.Text;
         break;
-      case ACTION_DELETE:
+      case ACT_DELETE:
         if (_userText.length() > 0) {
           _userText = _userText.substr(0, _userText.length()-1);
         }
         break;
-      case ACTION_DONE:
+      case ACT_PANEL:
+        _userText = "";  // TODO
+        break;
+      case ACT_DONE:
         _userText = "";  // TODO
         break;
       }
@@ -371,11 +302,11 @@ void BehaviorCubeDrive::BehaviorUpdate() {
                           _userText, NamedColors::WHITE, kUserTextScale);
     // _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
     //                       to_string(int(1000.0 * xGs)), NamedColors::WHITE, kUserTextScale);
-    for(int r = 0; r < NUM_ROWS; r++) {
-      for (int c = 0; c < NUM_COLS; c++) {
+    for(int r = 0; r < panel->NumRows; r++) {
+      for (int c = 0; c < panel->NumCols; c++) {
         Point2f p = Point2f((float(c+0) * kTextHorzSpace),
                             (float(r+1) * kTextVertSpace) + kSelectRowStart);
-        string t = CURSOR_MATRIX[r][c].Text;
+        string t = GetPanelCell(panel, r, c).Text;
         auto color = NamedColors::RED;
         if ((r == int(_row)) && (c == int(_col))) {
           color = NamedColors::WHITE;
