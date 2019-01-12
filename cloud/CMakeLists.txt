@@ -53,6 +53,9 @@ set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATE
 # set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
 # anki_go_set_ldflags(${target_name} ${chipper_flags})
 
+set(tracing_api_key "<<< add api key here >>>")
+set(opentracing_flags "-X \\\\\'anki/opentracing.OpenTracerApiKey=${tracing_api_key}\\\\\'")
+
 if(VICOS)
   set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-vicos)
   add_library(opus SHARED IMPORTED)
@@ -67,6 +70,7 @@ endif()
 
 
 macro(_add_chipper_flags target_name)
+  anki_go_set_ldflags(${target_name} ${opentracing_flags})
   anki_go_add_include_dir(${target_name} ${__opus_build_dir}/include/opus)
   anki_go_add_c_library(${target_name} opus)
 endmacro()
