@@ -35,7 +35,7 @@ int   helperGetTempC(int zone = DEFAULT_TEMP_ZONE);
 #define RCOM_SENSOR_RSSI        9
 #define RCOM_SENSOR_RX_PKT      10
 #define RCOM_SENSOR_DEBUG_INC   11
-const int ccr_sr_cnt[12] = {0,3,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fields per line for each type (internal:parsing & error checking)
+const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fields per line for each type (internal:parsing & error checking)
 
 //FCC test modes
 //#define RCOM_FCC_MODE_TX_CARRIER    0
