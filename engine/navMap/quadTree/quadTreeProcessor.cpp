@@ -263,6 +263,7 @@ bool QuadTreeProcessor::HasContentType(EContentType nodeType) const
 bool QuadTreeProcessor::IsCached(EContentType contentType)
 {
   switch( contentType ) {
+    case EContentType::Boundary:
     case EContentType::ObstacleObservable:
     case EContentType::ObstacleProx:
     case EContentType::ObstacleUnrecognized:

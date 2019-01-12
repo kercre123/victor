@@ -113,6 +113,7 @@ TEST( TestNavMap, FillBorder)
   constexpr FullContentArray clearOfObstacleTypes =
   {
     {EContentType::Unknown               , false},
+    {EContentType::Boundary              , false},
     {EContentType::ClearOfObstacle       , true},
     {EContentType::ClearOfCliff          , false},
     {EContentType::ObstacleObservable    , false },

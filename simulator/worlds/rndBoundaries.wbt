@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.2509295871209444 0.3814133578875686 0.8896955618256404 4.20071983507121
-  position -1.3680983136023424 0.6481622956426542 1.4453594964237322
+  orientation -0.28335036222192655 0.4214526705457392 0.8614465849479975 4.191519585600812
+  position -1.876603937653999 0.8598229434832119 1.5699708915974726
 }
 Background {
   skyColor [
@@ -50,8 +50,7 @@ CozmoBot2 {
   colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
-  #behaviorName "FindAndGoToHome"
-  behaviorName "MandatoryPhysicalReactions"
+  behaviorName "LearnBoundary"
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
   colorizeStderrOutput TRUE
@@ -67,4 +66,7 @@ CalibrationPattern {
   patternWidth 0.01
   image ""
   imageAspectRatio 25
+}
+LightCube {
+  translation 0.08140860498667979 -0.03290359936869802 0.019999999999999997
 }

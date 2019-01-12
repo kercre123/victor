@@ -22,7 +22,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/navMap/mapComponent.h"
-#include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_Boundary.h"
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/math/polygon_impl.h"
@@ -51,6 +51,9 @@ namespace {
   CONSOLE_VAR(float, kDeltaSpeed_mmps, CONSOLE_GROUP, 25.f);
   
   CONSOLE_VAR(float, kTooFarFromBoundaryThreshold_mm, CONSOLE_GROUP, 50.f);
+  
+  // Thickness of the boundary inserted into the nav map
+  const float kBoundaryThickness_mm = 10.f;
 }
   
 
@@ -124,12 +127,18 @@ void BehaviorReactToBoundary::OnBehaviorDeactivated()
   // Insert some data into the memory map if we have valid endpoints
   if (_dVars.boundaryLeftEndPoint.HasParent() &&
       _dVars.boundaryRightEndPoint.HasParent()) {
-    Poly2f boundaryQuad{
-      _dVars.boundaryLeftEndPoint.GetTranslation(),
-      _dVars.boundaryRightEndPoint.GetTranslation()
-    };
-    MemoryMapData_Cliff cliffFromSensor(_dVars.initialBoundaryPose, GetBEI().GetRobotInfo().GetLastMsgTimestamp());
-    GetBEI().GetMapComponent().InsertData(boundaryQuad, cliffFromSensor);
+    const Point2f boundaryFrom{_dVars.boundaryLeftEndPoint.GetTranslation().x(),
+                               _dVars.boundaryLeftEndPoint.GetTranslation().y()};
+    
+    const Point2f boundaryTo{_dVars.boundaryRightEndPoint.GetTranslation().x(),
+                             _dVars.boundaryRightEndPoint.GetTranslation().y()};
+    
+    MemoryMapData_Boundary boundary(boundaryFrom,
+                                    boundaryTo,
+                                    GetBEI().GetRobotInfo().GetWorldOrigin(),
+                                    kBoundaryThickness_mm,
+                                    GetBEI().GetRobotInfo().GetLastMsgTimestamp());
+    GetBEI().GetMapComponent().InsertData(Poly2f{boundary.GetQuad()}, boundary);
   }
   
   auto* vizm = GetBEI().GetRobotInfo().GetContext()->GetVizManager();

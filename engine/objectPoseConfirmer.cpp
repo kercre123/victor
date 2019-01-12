@@ -884,7 +884,9 @@ Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject*& object)
     poseConf.numTimesObserved = 0;
     poseConf.numTimesUnobserved++;
     
-    if(poseConf.numTimesUnobserved >= kMinTimesToNotObserveDirtyObject)
+    // TMP [MAM] Not doing this for now, since we don't want to remove objects that have been moved
+    //if(poseConf.numTimesUnobserved >= kMinTimesToNotObserveDirtyObject)
+    if (false)
     {
       PRINT_CH_INFO("PoseConfirmer", "MarkObjectUnobserved.MarkingUnknown",
                     "ObjectID:%d unobserved %d times, marking Unknown",

@@ -111,10 +111,12 @@ bool ActiveObject::CanBeUsedForLocalization() const
     return false;
   }
   
-  return (GetPoseState() == PoseState::Known &&
-          GetActiveID() >= 0 &&
-          GetLastPoseUpdateDistance() >= 0.f &&
-          IsRestingFlat(DEG_TO_RAD(GetRestingFlatTolForLocalization_deg())));
+  // TMP [MAM] Don't use cubes for localization
+  return false;
+//  return (GetPoseState() == PoseState::Known &&
+//          GetActiveID() >= 0 &&
+//          GetLastPoseUpdateDistance() >= 0.f &&
+//          IsRestingFlat(DEG_TO_RAD(GetRestingFlatTolForLocalization_deg())));
 }
 
 /*

@@ -40,6 +40,18 @@
         "AnimName": "interactingBehaviorLock"
     },
     {
+        "CladEvent": "LearnBoundaryNotReady",
+        "AnimName": "learnBoundaryNotReady"
+    },
+    {
+        "CladEvent": "LearnBoundaryReady",
+        "AnimName": "learnBoundaryReady"
+    },
+    {
+        "CladEvent": "LearnBoundarySuccess",
+        "AnimName": "learnBoundarySuccess"
+    },
+    {
         "CladEvent": "Onboarding",
         "AnimName": "wakeUp"
     },

@@ -19,6 +19,7 @@ structure MemoryMapInfo
 enum uint_8 ENodeContentTypeEnum
 {
   Unknown,
+  Boundary,
   ClearOfObstacle,
   ClearOfCliff,
   ObstacleCube,

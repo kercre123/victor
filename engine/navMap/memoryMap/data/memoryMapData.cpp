@@ -32,13 +32,18 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
     // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
     const bool isTotalClear = (newContentType == EContentType::ClearOfCliff);
     return isTotalClear;
+  } else if ( dataType == EContentType::Boundary ) {
+    // Boundary types cannot be overridden
+    // TODO: Is this right?
+    return false;
   }
   else if ( newContentType == EContentType::ClearOfObstacle )
   {
     // ClearOfObstacle currently comes from vision or prox sensor having a direct line of sight
     // to some object, so it can't clear obsstacles it cant see (cliffs and unrecognized). Additionally,
     // ClearOfCliff is currently a superset of Clear of Obstacle, so trust ClearOfCliff flags.
-    const bool isTotalClear = ( dataType != EContentType::Cliff ) &&
+    const bool isTotalClear = ( dataType != EContentType::Boundary ) &&
+                              ( dataType != EContentType::Cliff ) &&
                               ( dataType != EContentType::ClearOfCliff ) &&
                               ( dataType != EContentType::ObstacleUnrecognized )&&
                               ( dataType != EContentType::ObstacleObservable );
@@ -48,7 +53,8 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
   {
     // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
     // we don't want to override a recognized marked cube or a cliff with their own border
-    if ( ( dataType == EContentType::ObstacleObservable   ) ||
+    if ( ( dataType == EContentType::Boundary             ) ||
+         ( dataType == EContentType::ObstacleObservable   ) ||
          ( dataType == EContentType::ObstacleUnrecognized ) ||
          ( dataType == EContentType::Cliff                ) ||
          ( dataType == EContentType::NotInterestingEdge   ) )
@@ -58,7 +64,8 @@ bool MemoryMapData::CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent)
   }
   else if ( newContentType == EContentType::ObstacleProx )
   {
-    if ( ( dataType == EContentType::ObstacleObservable   ) ||
+    if ( ( dataType == EContentType::Boundary             ) ||
+         ( dataType == EContentType::ObstacleObservable   ) ||
          ( dataType == EContentType::Cliff                ) )
     {
       return false;
@@ -90,6 +97,7 @@ ExternalInterface::ENodeContentTypeEnum MemoryMapData::GetExternalContentType() 
   ENodeContentTypeEnum externalContentType = ENodeContentTypeEnum::Unknown;
   switch (type) {
     case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;              break; }
+    case EContentType::Boundary:              { externalContentType = ENodeContentTypeEnum::Boundary;             break; }
     case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle;      break; }
     case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;         break; }
     case EContentType::ObstacleUnrecognized:  { externalContentType = ENodeContentTypeEnum::ObstacleUnrecognized; break; }

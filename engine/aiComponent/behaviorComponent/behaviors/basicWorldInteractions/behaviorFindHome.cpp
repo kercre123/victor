@@ -72,6 +72,7 @@ namespace {
   constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
   {
     {MemoryMapTypes::EContentType::Unknown               , false},
+    {MemoryMapTypes::EContentType::Boundary              , true },
     {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
     {MemoryMapTypes::EContentType::ClearOfCliff          , false},
     {MemoryMapTypes::EContentType::ObstacleObservable    , true },

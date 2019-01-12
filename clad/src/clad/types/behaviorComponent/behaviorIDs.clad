@@ -207,6 +207,7 @@ enum uint_16 BehaviorID {
   KnowledgeGraphTTS,
 
   // victorBehaviorTree/highLevelDelegates
+  LearnBoundary,
   LookInPlaceHeadDownInAir,
   LookInPlaceHeadUp,
   LookInPlaceHeadUpInAir,

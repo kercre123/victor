@@ -35,6 +35,7 @@ bool ExpectsAdditionalData(EContentType type)
     {
       return false;
     }
+    case EContentType::Boundary:
     case EContentType::ObstacleObservable:
     case EContentType::Cliff:
     case EContentType::ObstacleProx:
@@ -54,6 +55,7 @@ const char* EContentTypeToString(EContentType contentType)
 {
   switch (contentType) {
     case EContentType::Unknown: return "Unknown";
+    case EContentType::Boundary: return "Boundary";
     case EContentType::ClearOfObstacle: return "ClearOfObstacle";
     case EContentType::ClearOfCliff: return "ClearOfCliff";
     case EContentType::ObstacleObservable: return "ObstacleObservable";

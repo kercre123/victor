@@ -36,6 +36,7 @@ namespace MemoryMapTypes {
 // content detected in the map
 enum class EContentType : uint8_t {
   Unknown,               // not discovered
+  Boundary,              // a play space boundary which the robot should not cross
   ClearOfObstacle,       // an area without obstacles
   ClearOfCliff,          // an area without obstacles or cliffs
   ObstacleObservable,    // an area with obstacles we recognize as observable

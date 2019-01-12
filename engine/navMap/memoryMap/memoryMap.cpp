@@ -107,6 +107,7 @@ ColorRGBA GetNodeVizColor(MemoryMapDataPtr node)
   switch(node->GetExternalContentType())
   {
     case ENodeContentTypeEnum::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
+    case ENodeContentTypeEnum::Boundary               : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.8f); break; }
     case ENodeContentTypeEnum::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
     case ENodeContentTypeEnum::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
     case ENodeContentTypeEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }

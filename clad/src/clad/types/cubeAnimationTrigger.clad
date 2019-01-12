@@ -21,6 +21,11 @@ enum int_32 CubeAnimationTrigger
   GatherCubesCubeInBeacon,
   Interacting,
   InteractingBehaviorLock,
+  
+  LearnBoundaryNotReady,
+  LearnBoundaryReady,
+  LearnBoundarySuccess,
+  
   Onboarding,
   ShutDown,
   Sleep,
