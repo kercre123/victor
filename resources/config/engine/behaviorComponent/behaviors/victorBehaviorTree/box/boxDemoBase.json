@@ -4,128 +4,27 @@
 
   "associatedActiveFeature": "NoFeature",
 
-  "initialState": "BootUp",
+  "initialState": "StartDemo",
 
   "states": [
     {
-      "name": "BootUp",
+      "name": "StartDemo",
       "behavior": "BoxDemoBoot"
-    },
-    {
-      "name": "OneTriggerWord",
-      "behavior": "BoxDemoWaitWithTriggerWord"
     },
     {
       "name": "PersonDetector",
       "behavior": "BoxDemoFaceTracking"
-    },
-    {
-      "name": "WaitForAlexaPutDown",
-      "behavior": "Wait"
-    },
-    {
-      "name": "WaitForPersonDetectorPutDown",
-      "behavior": "Wait"
-    },
-    {
-      "name": "Alexa",
-      "behavior": "BoxDemoAlexa",
-      "getInBehavior": "BoxDemoAlexaGetIn"
     }
   ],
 
   "transitionDefinitions": [
     {
-      "from": "BootUp",
+      "from": "StartDemo",
       "exitTransitions": [
-        {
-          "to": "OneTriggerWord",
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "OneTriggerWord",
-      "interruptingTransitions": [
-        {
-          "to": "WaitForAlexaPutDown",
-          "condition": {
-            "customCondition": "TriggerPhaseComplete"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "PersonDetector",
-      "interruptingTransitions": [
-        {
-          "to": "WaitForAlexaPutDown",
-          "condition": {
-            "conditionType": "RobotShaken"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "WaitForAlexaPutDown",
-      "interruptingTransitions": [
-        {
-          "to": "Alexa",
-          "condition": {
-            "conditionType": "Compound",
-            "not":{ 
-              "conditionType": "Compound",           
-              "or": [
-                {
-                  "conditionType": "RobotShaken"
-                },
-                {
-                  "conditionType": "BeingHeld",
-                  "shouldBeHeld": true
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "Alexa",
-      "nonInterruptingTransitions": [
-        {
-          "to": "WaitForPersonDetectorPutDown",
-          "condition": {
-            "conditionType": "RobotShaken"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "WaitForPersonDetectorPutDown",
-      "interruptingTransitions": [
         {
           "to": "PersonDetector",
           "condition": {
-            "conditionType": "Compound",
-            "not":{ 
-              "conditionType": "Compound",           
-              "or": [
-                {
-                  "conditionType": "RobotShaken"
-                },
-                {
-                  "conditionType": "BeingHeld",
-                  "shouldBeHeld": true
-                }
-              ]
-            }
+            "conditionType": "TrueCondition"
           }
         }
       ]

@@ -1,6 +1,19 @@
 {
   "behaviorID": "BoxDemoFaceTracking",
-  "behaviorClass": "BoxDemoFaceTracking"
+  "behaviorClass": "DispatcherStrictPriority",
+  
+  "interruptActiveBehavior": true,
+  
+  "behaviors": [
+    "Alexa",
+    "BoxDemoDescribeScene",
+    "BoxDemoFaceTrackingInternal"
+  ],
 
-  // TODO: Add configuration here
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "BoxDemoFaceTrackingInternal",
+      "behaviorClass": "BoxDemoFaceTracking"
+    }
+  ]
 }

@@ -12,6 +12,8 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemo.h"
+
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "util/console/consoleInterface.h"
@@ -51,6 +53,24 @@ BehaviorBoxDemo::~BehaviorBoxDemo()
 void BehaviorBoxDemo::OnBehaviorActivatedInternal()
 {
   SmartDisableKeepFaceAlive();
+
+  // NOTE: earcon is disabled at the anim level, but still required, so just use the normal one (it won't play
+  // in the box)
+  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
+  auto postAudioEvent = AECH::CreatePostAudioEvent(
+    AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
+    AudioMetaData::GameObjectType::Behavior, 0 );
+
+  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord( GetDebugLabel(),
+                                                                    AnimationTrigger::Count, // no animation
+                                                                    postAudioEvent,
+                                                                    StreamAndLightEffect::StreamingEnabled );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBoxDemo::OnBehaviorDeactivatedInternal()
+{
+  GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

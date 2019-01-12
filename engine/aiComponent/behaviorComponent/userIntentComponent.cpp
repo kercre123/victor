@@ -98,9 +98,13 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
     HandleTriggerWordEventForDas(event.GetData().Get_triggerWordDetected());
   };
 
-  if( robot.GetRobotMessageHandler() != nullptr ) {
-    _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
-                                                                        triggerWordCallback ) );
+  // ignore trigger word for the box, we don't want a listening behavior we just want streaming lights and a
+  // response
+  if( !THEBOX ) {
+    if( robot.GetRobotMessageHandler() != nullptr ) {
+      _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
+                                                                          triggerWordCallback ) );
+    }
   }
 
   // setup app intent handler

@@ -40,6 +40,7 @@ protected:
   }
 
   virtual void OnBehaviorActivatedInternal() override;
+  virtual void OnBehaviorDeactivatedInternal() override;
 
 private:
 
