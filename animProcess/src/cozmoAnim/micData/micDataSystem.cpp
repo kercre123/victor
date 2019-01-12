@@ -156,7 +156,9 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
     SendRecognizerDasLog( info, nullptr );
   };
   //_speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
-  _speechRecognizerSystem->InitPocketSphinx(dataLoader, callback);
+  //_speechRecognizerSystem->InitPocketSphinx(dataLoader, callback);
+  _speechRecognizerSystem->InitPicoVoice(dataLoader, callback);
+
   _micDataProcessor->Init();
   
   if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
