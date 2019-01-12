@@ -41,7 +41,8 @@ enum {
       ACT_APPEND = 0,
       ACT_DELETE = 1,
       ACT_PANEL  = 2,  // next panel
-      ACT_DONE   = 3
+      ACT_PREV   = 3,
+      ACT_NEXT   = 4
 };
 
 struct PanelCell {
@@ -55,6 +56,11 @@ struct Panel {
   PanelCell* Cells;
 };
 
+PanelCell GetPanelCell(Panel* cmp, int row, int col) {
+  int idx = (row * cmp->NumCols) + col;
+  return cmp->Cells[idx];
+}
+
 struct PanelSet {
   int    NumPanels;
   Panel* Panels;
@@ -64,23 +70,25 @@ PanelCell CellsUcaseLetters[] =
   {
    {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"^", ACT_PANEL},   
    {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_DONE},   
+   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_NEXT},   
   };
 
 PanelCell CellsLcaseLetters[] =
   {
    {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"^", ACT_PANEL},   
    {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_DONE},   
+   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_NEXT},   
   };
 
-PanelCell GetPanelCell(Panel* cmp, int row, int col) {
-  int idx = (row * cmp->NumCols) + col;
-  return cmp->Cells[idx];
-}
+PanelCell CellsWifiPrompt[] =
+  {
+   {"* OK",   ACT_NEXT},
+   {"* Back", ACT_PREV},
+  };
 
 Panel kPanelUcaseLetters = {3, 10, CellsUcaseLetters};
 Panel kPanelLcaseLetters = {3, 10, CellsLcaseLetters};
+Panel kPanelWifiPrompt   = {2, 1,  CellsWifiPrompt};
 
 
 
@@ -178,7 +186,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dVars = DynamicVariables();
   _liftIsUp = false;
   SetLiftState(_liftIsUp);
-  _userText = "";
+  _userText = "Enter Wifi Passwd";
   _row = 0.0;
   _col = 0.0;
 
@@ -233,7 +241,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     _col += yGs;
     _row += xGs;
 
-    Panel* panel = &kPanelUcaseLetters;
+    Panel* panel = &kPanelWifiPrompt;
     if (_col < 0.0) {
       _col = 0.0;
     }
@@ -290,7 +298,10 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       case ACT_PANEL:
         _userText = "";  // TODO
         break;
-      case ACT_DONE:
+      case ACT_PREV:
+        _userText = "";  // TODO
+        break;
+      case ACT_NEXT:
         _userText = "";  // TODO
         break;
       }
