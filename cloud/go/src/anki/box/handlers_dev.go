@@ -7,6 +7,7 @@ import (
 	"anki/log"
 	"bytes"
 	"clad/vision"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -20,7 +21,7 @@ const imageDir = baseDir + "/images"
 const cacheDir = "/data/data/com.anki.victor/cache/boxtest"
 
 func init() {
-	devHandlers = func(s *http.ServeMux) {
+	devHandlers = func(s *http.ServeMux) [][]string {
 		s.HandleFunc("/box/", boxHandler)
 		s.HandleFunc("/box/request", reqHandler)
 
@@ -28,6 +29,7 @@ func init() {
 		s.Handle(imgPrefix, http.StripPrefix(imgPrefix, http.HandlerFunc(imgHandler)))
 
 		log.Println("Box dev handlers added")
+		return [][]string{[]string{"/box", "Send test images to Snapper and see the results from MS"}}
 	}
 }
 
@@ -114,7 +116,10 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, resp)
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, []byte(resp.JsonResult), "", "\t")
+
+	fmt.Fprint(w, prettyJSON.String())
 }
 
 func imgHandler(w http.ResponseWriter, r *http.Request) {

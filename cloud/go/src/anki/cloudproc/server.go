@@ -4,9 +4,11 @@ import (
 	"net/http"
 )
 
-var addHandlerFunc func(func(*http.ServeMux))
+type handlerAdder func(*http.ServeMux) [][]string
 
-func addHandlers(f func(*http.ServeMux)) {
+var addHandlerFunc func(handlerAdder)
+
+func addHandlers(f handlerAdder) {
 	if addHandlerFunc != nil && f != nil {
 		addHandlerFunc(f)
 	}
