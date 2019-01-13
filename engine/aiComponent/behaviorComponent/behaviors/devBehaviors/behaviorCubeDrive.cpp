@@ -34,13 +34,13 @@ namespace {
   static const     float kTextVertSpace            = 22.0f; 
   static const     float kUserTextScale            = 0.70f; 
   static const     float kSelectTextScale          = 0.70f; 
-  static const     int   kMaxUserChars             = 14;
+  static const     int   kMaxUserChars             = 13;
 
   //static const     float kMinAccel                 = 0.100f;
-  static const     float kAccelThresh              = 0.400f;  
+  static const     float kAccelThresh              = 0.300f;  
   static const     int   kTicksPerRepeatSlow       = 4;
   static const     int   kTicksPerRepeatFast       = 2;
-  static const     int   kMaxSlowEvents            = 3;
+  static const     int   kMaxSlowEvents            = 1;
 };
 
 enum {
@@ -216,7 +216,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   RestartAnimation();
 
   //Vec3f filter_coeffs(1.0, 1.0, 1.0);
-  Vec3f filter_coeffs(0.2, 0.2, 0.2);
+  Vec3f filter_coeffs(0.3, 0.3, 0.3);
   _dVars.filtered_cube_accel = std::make_shared<ActiveAccel>();
   _dVars.low_pass_filter_listener = std::make_shared<CubeAccelListeners::LowPassFilterListener>(
       filter_coeffs,
@@ -245,12 +245,12 @@ void BehaviorCubeDrive::BehaviorUpdate() {
 
     // At most, only one direction can be active on any tick
     int dir = NUM_DIR;  // none
-    if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
-    if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
-    if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
-    if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
+    if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+    if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+    if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
+    if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
 
-    Panel* panel = &kPanelWifiPrompt;
+    Panel* panel = &kPanelUcaseLetters;
 
     // Register new scroll event if any direction is held for enough
     // consecutive ticks
@@ -299,7 +299,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     string heading = (_userText != "") ? _userText : _promptText;
     size_t hlen = heading.length();
     if (hlen > kMaxUserChars) {
-      heading = "..." + heading.substr(hlen-kMaxUserChars+3, string::npos);
+      heading = "..." + heading.substr(hlen-kMaxUserChars+2, string::npos);
     }
     _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
                           heading, NamedColors::WHITE, kUserTextScale);
