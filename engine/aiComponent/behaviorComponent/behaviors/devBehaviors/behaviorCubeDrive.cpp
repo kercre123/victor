@@ -37,10 +37,11 @@ namespace {
   static const     int   kMaxUserChars             = 13;
 
   //static const     float kMinAccel                 = 0.100f;
-  static const     float kAccelThresh              = 0.300f;  
-  static const     int   kTicksPerRepeatSlow       = 4;
-  static const     int   kTicksPerRepeatFast       = 2;
-  static const     int   kMaxSlowEvents            = 1;
+  static const     float kAccelThresh              = 0.150f;  
+  // static const     int   kTicksFirstEvent          = 2;
+  // static const     int   kTicksPerRepeatSlow       = 7;
+  // static const     int   kTicksPerRepeatFast       = 2;
+  // static const     int   kMaxSlowEvents            = 2;
 };
 
 enum {
@@ -200,6 +201,30 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _row = 0;
   _col = 0;
   ClearHoldCounts();
+  for(int i = 0; i < MAX_DIR_COUNT; i++) {
+    _dirCountEventMap[i] = false;
+  }
+  _dirCountEventMap[2] = true;  // first
+  // delay
+  _dirCountEventMap[12] = true; // fast repeat
+  _dirCountEventMap[14] = true;
+  _dirCountEventMap[16] = true;
+  _dirCountEventMap[18] = true;
+  _dirCountEventMap[20] = true;
+  _dirCountEventMap[22] = true;
+  _dirCountEventMap[24] = true;
+  _dirCountEventMap[26] = true;
+  _dirCountEventMap[28] = true;
+  _dirCountEventMap[30] = true;
+  _dirCountEventMap[32] = true;
+  _dirCountEventMap[34] = true;
+  _dirCountEventMap[36] = true;
+  _dirCountEventMap[38] = true;
+  _dirCountEventMap[40] = true;
+  _dirCountEventMap[42] = true;
+  _dirCountEventMap[44] = true;
+  _dirCountEventMap[46] = true;
+  _dirCountEventMap[48] = true;
 
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
@@ -260,13 +285,19 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       }
       _dirHoldCount[dir]++;
 
-      int slowHoldCount = _dirHoldCount[dir];
-      int fastHoldCount = _dirHoldCount[dir] - (kTicksPerRepeatSlow * kMaxSlowEvents);
-      if ((fastHoldCount >= 0) && ((fastHoldCount % kTicksPerRepeatFast) == 0)) {
-        NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
-      } else if ((slowHoldCount % kTicksPerRepeatSlow) == 0) {
+      if (_dirCountEventMap[_dirHoldCount[dir]]) {
         NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
       }
+    //   int firstHoldCount = _dirHoldCount[dir];
+    //   int slowHoldCount  = _dirHoldCount[dir] - kTicksFirstEvent;
+    //   int fastHoldCount  = _dirHoldCount[dir] - slowHoldCount - (kTicksPerRepeatSlow * kMaxSlowEvents);
+    //   if ((fastHoldCount >= 0) && ((fastHoldCount % kTicksPerRepeatFast) == 0)) {
+    //     NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
+    //   } else if ((slowHoldCount > 0) && (slowHoldCount % kTicksPerRepeatSlow) == 0) {
+    //     NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
+    //   } else if (firstHoldCount == kTicksFirstEvent) {
+    //     NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
+    //   }
     } else {
       ClearHoldCounts();
     }

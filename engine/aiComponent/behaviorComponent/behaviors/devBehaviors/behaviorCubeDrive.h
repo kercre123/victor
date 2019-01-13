@@ -77,7 +77,8 @@ private:
         DIR_D   = 1, // down
         DIR_L   = 2, // left
         DIR_R   = 3, // right
-        NUM_DIR = 4
+        NUM_DIR = 4,
+        MAX_DIR_COUNT = 100
   };
 
   struct InstanceConfig {
@@ -103,6 +104,7 @@ private:
   std::string _userText;
   int _col, _row;
   int _dirHoldCount[NUM_DIR];
+  bool _dirCountEventMap[MAX_DIR_COUNT];
   
   void ClearHoldCounts();
   void NewDirEvent(int dir, int maxRow, int maxCol);
