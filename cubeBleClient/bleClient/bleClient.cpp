@@ -273,9 +273,9 @@ void BleClient::OnScanResults(int error, const std::vector<BluetoothDaemon::Scan
         advertisement_data << std::setw( 2 ) << r.advertisement_data[i];
       }
 
-      // if( !num4.empty() ) {
-      //   PRINT_NAMED_WARNING("WHATNOW", "spotting vector %s with extra bytes", r.address );
-      // }
+      if( !num4.empty() ) {
+        //PRINT_NAMED_WARNING("WHATNOW", "spotting vector %s with extra bytes", r.address );
+      }
 
       _advertisementCallback(r.address, r.rssi, num4);
       // PRINT_NAMED_WARNING( "WHATNOW", 
@@ -416,7 +416,7 @@ void BleClient::AsyncStartScanCallback(ev::async& w, int revents)
 {
   // Commence scanning and start the timer
   StartScan(Anki::kAnkiSingleMessageService_128_BIT_UUID);//kCubeService_128_BIT_UUID);
-  _scanningTimer.start(180.0f);//_scanDuration_sec);
+  _scanningTimer.start(std::numeric_limits<float>::max());//_scanDuration_sec);
 }
 
 

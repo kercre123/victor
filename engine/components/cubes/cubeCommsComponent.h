@@ -56,6 +56,8 @@ public:
   
   CubeCommsComponent();
   ~CubeCommsComponent() = default;
+  
+  void SetSyncTime(uint16_t uptime);
 
   //////
   // IDependencyManagedComponent functions
@@ -246,6 +248,10 @@ private:
   };
   PlayerType _playerType = PlayerType::Unknown;
   uint64_t _startTime_ms = 0;
+  
+  void TryResolveHostClient();
+  uint16_t _thisUptime_ms = 0;
+  uint16_t _otherUptime_ms = 0;
 };
 
 

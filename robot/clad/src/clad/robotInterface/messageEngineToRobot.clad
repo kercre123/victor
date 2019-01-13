@@ -194,6 +194,7 @@ message AbsoluteLocalizationUpdate
 
 message StartChattering {
   uint_64 startTime_ms,
+  bool isHost,
 }
 
 // Used only for testing with simulated robots. Engine will never send this message if it is talking
@@ -866,6 +867,8 @@ union EngineToRobot
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
 
   SelfTestEnd                   selfTestEnd                 = 0xA4,
+
+  //SwitchboardInterface::SendUptime sendUptime   = 0xA5,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 

@@ -49,6 +49,7 @@ public:
   void Test_Pitch( const float pitch0_Hz, const float pitch1_Hz, const uint32_t duration_ms );
   void Test_ShaveHaircut( const uint32_t quarterNode_ms, uint32_t delay_ms = 1000 );
   
+  static uint64_t GetCurrTime();
 private:
   using Clock = std::chrono::steady_clock;
   
@@ -58,7 +59,7 @@ private:
   
   float PitchToRelativeCents( const float pitch_Hz );
   
-  uint64_t GetCurrTime() const;
+  
   std::chrono::time_point<Clock> ConvertToTimePoint( uint64_t time_ms ) const;
   
   AudioEngine::AudioEngineController* _audioController = nullptr;

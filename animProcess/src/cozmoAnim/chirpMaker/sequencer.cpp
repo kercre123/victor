@@ -294,7 +294,7 @@ void Sequencer::MainLoop()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint64_t Sequencer::GetCurrTime() const
+uint64_t Sequencer::GetCurrTime()
 {
   using namespace std::chrono;
   auto now = Clock::now();

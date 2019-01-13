@@ -30,7 +30,7 @@ public:
   void AddSamples( const int16_t* samples, unsigned int numSamples );
   
   // demo method to play some tune
-  void StartChattering( std::chrono::milliseconds delayUntilStart_ms );
+  void StartChattering( std::chrono::milliseconds delayUntilStart_ms, bool isHost );
   
 private:
   const AnimContext* _context = nullptr;

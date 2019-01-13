@@ -45,6 +45,7 @@
 #include <sys/timex.h>
 
 #include <chrono>
+#include <ctime>
 
 #define LOG_PROCNAME "vic-switchboard"
 
@@ -236,6 +237,19 @@ bool IsWallTimeSynced()
   return true;
 }
 
+std::chrono::system_clock::duration duration_since_midnight() {
+    auto now = std::chrono::system_clock::now();
+
+    time_t tnow = std::chrono::system_clock::to_time_t(now);
+    tm *date = std::localtime(&tnow);
+    date->tm_hour = 0;
+    date->tm_min = 0;
+    date->tm_sec = 0;
+    auto midnight = std::chrono::system_clock::from_time_t(std::mktime(date));
+
+    return now-midnight;
+}
+
 void Daemon::AddExtraData(std::vector<uint8_t>& data) const
 {
   if( !IsWallTimeSynced() ) {
@@ -246,21 +260,28 @@ void Daemon::AddExtraData(std::vector<uint8_t>& data) const
   static std::vector<uint8_t> oldData;
   if( oldData.empty() ) { 
     // first two bytes are uptime in seconds (~18 hours before overflow)
-    auto uptimeTmp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - kStartTime).count();
+    using namespace std::chrono;
+
+    const auto timeSinceMidnight = duration_since_midnight();
+    auto uptimeTmp = duration_cast<seconds>(timeSinceMidnight).count();
     uint16_t uptime_s;
-    if( uptimeTmp > std::numeric_limits<unsigned short>::max() ) {
-      uptime_s = std::numeric_limits<unsigned short>::max();
-    } else {
+    // if( uptimeTmp > std::numeric_limits<unsigned short>::max() ) {
+    //   uptime_s = std::numeric_limits<uint16_t>::max();
+    // } else {
+      // casting is ok, since we only care about the lower bits. anything after ~12pm will be as if its after ~12am
       uptime_s = static_cast<uint16_t>(uptimeTmp);
-    }
-    oldData.push_back( (uint8_t) ((uptime_s >> 1) & 0xF) );
-    oldData.push_back( (uint8_t) (uptime_s & 0xF) );
+    //}
+    oldData.push_back( (uint8_t) ((uptime_s >> 8) & 0xFF) );
+    oldData.push_back( (uint8_t) (uptime_s & 0xFF) );
+    Log::Write("WHATNOW %lld %d %d", uptimeTmp, oldData[0], oldData[1]);
+
+    _engineMessagingClient->SendUptime(uptime_s);
   }
   
-  // one byte always increments on a change (so we can cause refresh on backpack click)
-  static uint8_t manuDataInt = 0;
-  ++manuDataInt;
-  data.push_back( manuDataInt );
+  // // one byte always increments on a change (so we can cause refresh on backpack click)
+  // static uint8_t manuDataInt = 0;
+  // ++manuDataInt;
+  // data.push_back( manuDataInt );
   
   if( !oldData.empty() ) {
     data.insert( data.end(), oldData.begin(), oldData.end() );
@@ -287,20 +308,23 @@ void Daemon::UpdateAdvertisement(bool pairing, int16_t type, uint64_t extra1) {
 
   if( type == 1 ) {
     // extra1 is the proposed start time
-    auto proposedStartTime = extra1;
-    unsigned int cnt = 0;
+    //auto proposedStartTime = extra1;
+    // unsigned int cnt = 0;
     _proposition8.clear();
-    _proposition8.resize(8, 0);
-    for( int i=7; i>=0; --i ) {
-      _proposition8[i] = ((proposedStartTime >> cnt) & 0xF);
-      cnt += 8;
-    }
+    _proposition8.push_back( (extra1 >> 16) & 0xFF);
+    _proposition8.push_back( (extra1 >> 8) & 0xFF);
+    _proposition8.push_back( (extra1 >> 0) & 0xFF);
+    //_proposition8.push_back(3);
+    // _proposition8.push_back(4);
+    // _proposition8.resize(8, 0);
+    // for( int i=7; i>=0; --i ) {
+    //   _proposition8[i] = (uint8_t)((proposedStartTime >> cnt) & 0xFF);
+    //   cnt += 8;
+    // }
   } else if( type == 2 ) {
     _proposition8.clear();
     _proposition8.push_back( 255 );
   }
-
-  Log::Write("WHATNOW Upating advert");
 
   Anki::BLEAdvertiseSettings settings;
   settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiSingleMessageService_128_BIT_UUID);
@@ -309,6 +333,11 @@ void Daemon::UpdateAdvertisement(bool pairing, int16_t type, uint64_t extra1) {
   mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
   mdata.push_back(pairing?'p':0); // to indicate whether we are pairing
   AddExtraData(mdata);
+  std::stringstream ss;
+  for( auto& x : mdata ) {
+    ss << std::to_string((int)x) << " ";
+  }
+  Log::Write("WHATNOW Updating advert %s", ss.str().c_str());
   settings.GetAdvertisement().SetManufacturerData(mdata);
 
   std::string robotName = SavedSessionManager::GetRobotName();
@@ -682,9 +711,9 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
     case Anki::Vector::ExternalInterface::MessageEngineToGameTag::CycleAdvertisement: {
       const uint8_t type = message.Get_CycleAdvertisement().typeVal;
       const uint32_t extra1 = message.Get_CycleAdvertisement().extra1;
-      const uint32_t extra2 = message.Get_CycleAdvertisement().extra2;
-      const uint64_t extra = ((uint64_t)extra1 << 32) | (uint64_t)extra2;
-      UpdateAdvertisement(false, type, extra);
+      // const uint32_t extra2 = message.Get_CycleAdvertisement().extra2;
+      // const uint64_t extra = ((uint64_t)extra1 << 32) | (uint64_t)extra2;
+      UpdateAdvertisement(false, type, extra1);
       break;
     }
     case Anki::Vector::ExternalInterface::MessageEngineToGameTag::EnterPairing: {

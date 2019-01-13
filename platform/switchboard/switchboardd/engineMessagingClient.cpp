@@ -205,6 +205,12 @@ void EngineMessagingClient::SendBLEConnectionStatus(bool connected) {
   SendMessage(GMessage::CreateSendBLEConnectionStatus(std::move(msg)));
 }
 
+void EngineMessagingClient::SendUptime(uint16_t uptime) {
+  Anki::Vector::SwitchboardInterface::SendUptime msg;
+  msg.uptime_ms = uptime;
+  SendMessage(GMessage::CreateSendUptime(std::move(msg)));
+}
+
 void EngineMessagingClient::ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status) {
   Anki::Vector::SwitchboardInterface::SetConnectionStatus scs;
   scs.status = status;

@@ -37,6 +37,7 @@ public:
   void SendMessage(const Anki::Vector::ExternalInterface::MessageGameToEngine& message);
   void SetPairingPin(std::string pin);
   void SendBLEConnectionStatus(bool connected);
+  void SendUptime(uint16_t uptime);
   void ShowPairingStatus(Anki::Vector::SwitchboardInterface::ConnectionStatus status);
   void HandleWifiScanRequest();
   void HandleWifiConnectRequest(const std::string& ssid,

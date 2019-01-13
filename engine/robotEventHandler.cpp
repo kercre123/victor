@@ -31,6 +31,7 @@
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/animActions.h"
@@ -1200,6 +1201,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBLEPin>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendBLEConnectionStatus>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SendUptime>();
 
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1853,6 +1855,20 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SendBLEConnect
   } else {
     // Forward to robot
     robot->SendRobotMessage<SwitchboardInterface::SendBLEConnectionStatus>(msg.connected);
+  }
+}
+
+template<>
+void RobotEventHandler::HandleMessage(const SwitchboardInterface::SendUptime& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetRobot();
+
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSendBLEConnectionStatus.InvalidRobotID",
+                        "Failed to find robot");
+  } else {
+    // Forward to robot
+    robot->GetCubeCommsComponent().SetSyncTime(msg.uptime_ms);
   }
 }
 

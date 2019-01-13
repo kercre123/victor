@@ -236,7 +236,7 @@ void Process_startChattering(const Anki::Vector::RobotInterface::StartChattering
   uint64_t startTime_ms = msg.startTime_ms;
   using namespace std::chrono;
   const auto delayMillis = duration_cast<milliseconds>(milliseconds{startTime_ms} - system_clock::now().time_since_epoch());
-  _context->GetMicDataSystem()->GetMicDataProcessor()->GetChirpMaker()->StartChattering( delayMillis );
+  _context->GetMicDataSystem()->GetMicDataProcessor()->GetChirpMaker()->StartChattering( delayMillis, msg.isHost );
 }
 
 void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)

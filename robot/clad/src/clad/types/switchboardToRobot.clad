@@ -32,6 +32,11 @@ message SendBLEConnectionStatus
   bool connected,
 }
 
+message SendUptime
+{
+  uint_16 uptime_ms, // time when clocks synched
+}
+
 message SetBLEPin
 {
   uint_32 pin

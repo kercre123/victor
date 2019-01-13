@@ -549,6 +549,24 @@ void CubeCommsComponent::HandleAppEvents(const AnkiEvent<external_interface::Gat
   }
 }
 
+  auto GetMidnight() {
+    auto now = std::chrono::system_clock::now();
+    time_t tnow = std::chrono::system_clock::to_time_t(now);
+    tm *date = std::localtime(&tnow);
+    date->tm_hour = 0;
+    date->tm_min = 0;
+    date->tm_sec = 0;
+    auto midnight = std::chrono::system_clock::from_time_t(std::mktime(date));
+    return midnight;
+  }
+  
+std::chrono::system_clock::duration duration_since_midnight() {
+  auto now = std::chrono::system_clock::now();
+  
+  auto midnight = GetMidnight();
+  
+  return now-midnight;
+}
 
 void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAvailable& msg)
 {
@@ -559,83 +577,89 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
                  ObjectTypeToString(msg.objectType),
                  ObjectTypeToString(kValidCubeType));
   
-  // wip. returning for now so nothing breaks
-  return;
   
   if( !msg.extraPayload.empty() ) {
-    std::stringstream ss;
-    for( auto& x : msg.extraPayload ) {
-      ss << std::to_string((int)x) << " ";
-    }
-    PRINT_NAMED_WARNING("WHATNOW", "CubeCommsComponent %s (rssi=%d) = %s", msg.factory_id.c_str(), msg.rssi, ss.str().c_str());
+    
+    // each robot puts the time since midnight (in seconds) when their clock synced to NTP in the first two bytes.
+    // whichever has the earlier sync time becomes host, and the other client.
+    // the host proposes a chattering start time a few seconds from now, computes the number of milliseconds that
+    // is since midnight, divides that by 0xFFFFFF, and puts the remainder in 3 bytes (bytes 2-4)
+    // when the client sees these three bytes, it reconstructs the chattering time, starts chattering, and also sets its third byte (2) to 255.
+    // when the host sees 255 in the client, it also chattering
+    
+    
     auto it = _vectorMap.find(msg.factory_id);
-    if( (it == _vectorMap.end()) || (it->second.extraPayload != msg.extraPayload) ) {
+    const bool different = (it == _vectorMap.end()) || (it->second.extraPayload != msg.extraPayload);
+    
+    if( different ) {
+    
+      std::stringstream ss;
+      for( auto& x : msg.extraPayload ) {
+        ss << std::to_string((int)x) << " ";
+      }
+      PRINT_NAMED_WARNING("WHATNOW", "CubeCommsComponent (diff=%d), %s (rssi=%d) = %s", different, msg.factory_id.c_str(), msg.rssi, ss.str().c_str());
       
       
-      if( (it == _vectorMap.end()) || (it->second.extraPayload[0] != msg.extraPayload[0]) ) {
-        using GE = AudioMetaData::GameEvent::GenericEvent;
-        using GO = AudioMetaData::GameObjectType;
-        const auto event = GE::Play__Dev_Robot__Tone_10_Frames_01;
-        _robot->GetAudioClient()->PostEvent(event, GO::Behavior);
-      } else if( msg.extraPayload.size() >= 3 )  {
+      
+      using GE = AudioMetaData::GameEvent::GenericEvent;
+      using GO = AudioMetaData::GameObjectType;
+      const auto event = GE::Play__Dev_Robot__Tone_10_Frames_01;
+      _robot->GetAudioClient()->PostEvent(event, GO::Behavior);
+      
+      if( msg.extraPayload.size() >= 2 )  {
         // A sees B with synced clock
         // if uptime{A} < uptime{B}, A guesses a time and sends it to B
         // B responds with the same time
         // A detects the response
         
         if( _playerType == PlayerType::Unknown ) {
-          using namespace std::chrono;
-          auto thisUptimeTmp = duration_cast<seconds>(steady_clock::now().time_since_epoch() - kStartTime.time_since_epoch()).count();
-          uint16_t thisUptime_s;
-          if( thisUptimeTmp < std::numeric_limits<unsigned short>::max() ) {
-            // this should probably just be random
-            thisUptime_s = std::numeric_limits<unsigned short>::max();
-          } else {
-            thisUptime_s = static_cast<uint16_t>( thisUptimeTmp );
-          }
-          const uint16_t otherUptime_s = (msg.extraPayload[1] << 1) | msg.extraPayload[2];
-          if( thisUptime_s < otherUptime_s) { // assume that this device has synced its clock if the other one did :|
-            _playerType = PlayerType::Host;
-            
-            using namespace std::chrono;
-            _startTime_ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch() + milliseconds{ 2000 }).count();
-            
-            // tell switchboard to send a proposed start time
-            SwitchboardInterface::CycleAdvertisement msg;
-            msg.typeVal = 1; // send proposed start time
-            msg.extra1 = (_startTime_ms >> 32) & 0xFFFF;
-            msg.extra2 = (_startTime_ms >> 0) & 0xFFFF;
-            PRINT_NAMED_WARNING("WHATNOW", "setting host. proposed start time of %lld", _startTime_ms);
-            _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-          } else {
-            PRINT_NAMED_WARNING("WHATNOW", "setting client");
-            _playerType = PlayerType::Client;
-            // need to wait for the host to send us the proposed start time
-          }
-        } else if( _playerType == PlayerType::Host ) {
+          _otherUptime_ms = (uint16_t(msg.extraPayload[0]) << 8) | uint16_t(msg.extraPayload[1]);
+          TryResolveHostClient();
+        }
+        
+        if( _playerType == PlayerType::Host ) {
           // the other robot should confirm the proposed start time
-          if( msg.extraPayload.size() == 4 ) {
-            if( msg.extraPayload[3] == 255 ) {
+          if( msg.extraPayload.size() == 3 ) {
+            if( msg.extraPayload[2] == 255 ) {
               // confirmed!
               PRINT_NAMED_WARNING("WHATNOW", "host receives confirmation from client");
-              //_robot->SendMessage( RobotInterface::EngineToRobot( RobotInterface::StartChattering{ _startTime_ms } ) );
+              _robot->SendMessage( RobotInterface::EngineToRobot( RobotInterface::StartChattering{ _startTime_ms, true } ) );
             }
           }
         } else if( _playerType == PlayerType::Client ) {
-          if( msg.extraPayload.size() == 14 ) {
-            // first 6 are taken up by {A,B, p, clickIncrement, uptimeA, uptimeB}.
+          if( msg.extraPayload.size() == 5 ) {
+            // first 2 are taken up by {uptimeA, uptimeB}.
             // if we're client, the next 8 from the host should be a uint64 of the proposed time
-            unsigned int idx = 13;
-            uint64_t proposedStartTime_ms = 0;
-            unsigned int cnt = 0;
-            while( idx > 5 ) {
-              proposedStartTime_ms |= (msg.extraPayload[idx] << cnt);
-              --idx;
-              cnt += 8;
+            //unsigned int idx = 7;
+            uint32_t proposedStartTime_ms = ((uint32_t)(msg.extraPayload[2] << 16)) | ((uint32_t)(msg.extraPayload[3] << 8)) | ((uint32_t)(msg.extraPayload[4] << 0));
+//              unsigned int cnt = 0;
+//              while( idx > 5 ) {
+//                proposedStartTime_ms |= (uint64_t(msg.extraPayload[idx]) << cnt);
+//                --idx;
+//                cnt += 8;
+//              }
+            uint64_t timeSinceMidnight_ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration_since_midnight()).count();
+            const uint32_t millisInterval = 0xFFFFFF; // 3 bytes
+            uint64_t minTime = std::numeric_limits<uint64_t>::max();
+            _startTime_ms = 0;
+            for( int i=0; i<7; ++i ) {
+              uint64_t time = i*uint64_t(millisInterval) + proposedStartTime_ms;
+              if( (time > timeSinceMidnight_ms) && (time - timeSinceMidnight_ms < minTime) ) {
+                using namespace std::chrono;
+                _startTime_ms = duration_cast<milliseconds>(milliseconds{time} + GetMidnight().time_since_epoch()).count();
+                minTime = time - timeSinceMidnight_ms;
+              }
             }
-            PRINT_NAMED_WARNING("WHATNOW", "client received proposed start time of %lld", proposedStartTime_ms);
-            _startTime_ms = proposedStartTime_ms;
-            //_robot->SendMessage( RobotInterface::EngineToRobot( RobotInterface::StartChattering{ _startTime_ms } ) );
+            PRINT_NAMED_WARNING("WHATNOW", "client received proposed start time of %d, currTime = %lld, startTime=%lld", proposedStartTime_ms, timeSinceMidnight_ms, _startTime_ms);
+            
+            if( _startTime_ms == 0 ) {
+              // crash
+              PRINT_NAMED_WARNING("WHATNOW", "Could not find proper start time");
+              volatile int* a = reinterpret_cast<volatile int*>(0);
+              *a = 1;
+            }
+            
+            _robot->SendMessage( RobotInterface::EngineToRobot( RobotInterface::StartChattering{ _startTime_ms, false } ) );
             
             // tell switchboard that we agree accept the proposed start time
             SwitchboardInterface::CycleAdvertisement msg;
@@ -989,6 +1013,49 @@ void CubeCommsComponent::SendDataToWebViz()
   }
 }
 
+void CubeCommsComponent::SetSyncTime(uint16_t uptime)
+{
+  _thisUptime_ms = uptime;
+  TryResolveHostClient();
+}
+  
+void CubeCommsComponent::TryResolveHostClient()
+{
+  PRINT_NAMED_WARNING("WHATNOW", "this=%d, other=%d", _thisUptime_ms, _otherUptime_ms);
+  if( _thisUptime_ms == 0 || _otherUptime_ms == 0 ) {
+    return;
+  }
+  
+  // todo: if im the host make sure the other guy inst advertizing the full start time (mean;ing they think theyre host too)
+  if( _thisUptime_ms < _otherUptime_ms) { // assume that this device has synced its clock if the other one did :|
+    _playerType = PlayerType::Host;
+    
+    using namespace std::chrono;
+    auto now = system_clock::now().time_since_epoch();
+    auto midnight = GetMidnight().time_since_epoch();
+    const int kDelayBeforeStart = 15000; // must be enough for the other to notice a BLE change, respond to it, and for us to notice that.
+    _startTime_ms = duration_cast<milliseconds>(now + milliseconds{ kDelayBeforeStart }).count();
+    uint32_t startTimeSinceMidnight_ms = (uint32_t)duration_cast<milliseconds>(now - midnight + milliseconds{ kDelayBeforeStart }).count();
+    uint32_t startTime_ms = uint32_t((startTimeSinceMidnight_ms % 0xFFFFFF) & 0xffffff);
+    
+    // tell switchboard to send a proposed start time
+    SwitchboardInterface::CycleAdvertisement msg;
+    msg.typeVal = 1; // send proposed start time
+    msg.extra1 = startTime_ms;//(startTime_ms >> 32) & 0xFFFFFFFF;
+    //msg.extra2 = (_startTime_ms >> 0) & 0xFFFFFFFF;
+    PRINT_NAMED_WARNING("WHATNOW", "setting host. proposed start time of %lld, remainder %d, startSinceMidnight=%d", _startTime_ms, startTime_ms, startTimeSinceMidnight_ms);
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+  } else if( _thisUptime_ms == _otherUptime_ms ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Same uptime, crashing");
+    // no tie breaker, just crash so it's obvious
+    volatile int* a = reinterpret_cast<volatile int*>(0);
+    *a = 1;
+  } else {
+    PRINT_NAMED_WARNING("WHATNOW", "setting client");
+    _playerType = PlayerType::Client;
+    // need to wait for the host to send us the proposed start time
+  }
+}
 
 } // Cozmo namespace
 } // Anki namespace
