@@ -206,7 +206,8 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   }
   _dirCountEventMap[2] = true;  // first
   // delay
-  _dirCountEventMap[12] = true; // fast repeat
+  _dirCountEventMap[10] = true; // fast repeat
+  _dirCountEventMap[12] = true;
   _dirCountEventMap[14] = true;
   _dirCountEventMap[16] = true;
   _dirCountEventMap[18] = true;
