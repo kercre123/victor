@@ -242,7 +242,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   RestartAnimation();
 
   //Vec3f filter_coeffs(1.0, 1.0, 1.0);
-  Vec3f filter_coeffs(0.3, 0.3, 0.3);
+  Vec3f filter_coeffs(0.5, 0.5, 0.5);
   _dVars.filtered_cube_accel = std::make_shared<ActiveAccel>();
   _dVars.low_pass_filter_listener = std::make_shared<CubeAccelListeners::LowPassFilterListener>(
       filter_coeffs,
