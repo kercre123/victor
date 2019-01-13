@@ -37,7 +37,7 @@ namespace
 {
   const UserIntentTag kUserIntent = USER_INTENT(describe_scene);
   
-  CONSOLE_VAR_RANGED(float, kTheBox_SceneDescriptionTextScale, "TheBox.Screen", 0.55f, 0.1, 1.f);
+  CONSOLE_VAR_RANGED(float, kTheBox_SceneDescriptionTextScale, "TheBox.Screen", 0.65f, 0.1, 1.f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -227,7 +227,12 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
     {
       const bool kDropShadow = true;
       const s32  kThickness = 1;
-      dispImg.DrawText({1.f, lineNum*(lineHeight+1.f)}, line, NamedColors::YELLOW,
+      const f32  ypos = lineNum*(lineHeight+1.f);
+      if(ypos >= dispImg.GetNumRows())
+      {
+        break;
+      }
+      dispImg.DrawText({1.f, ypos}, line, NamedColors::YELLOW,
                        kTheBox_SceneDescriptionTextScale, kDropShadow, kThickness);
       ++lineNum;
     }

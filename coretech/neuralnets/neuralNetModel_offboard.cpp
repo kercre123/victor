@@ -368,23 +368,50 @@ Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& detectionRes
         if(descriptionJson.isMember("captions"))
         {
           const Json::Value& captionsJson = descriptionJson["captions"];
-          for(const Json::Value& captionJson : captionsJson)
+          
+          Vision::SalientPoint salientPoint(_imageTimestamp,
+                                            0.5f, 0.5f,
+                                            0.f, 1.f,
+                                            Vision::SalientPointType::SceneDescription,
+                                            "<no description>",
+                                            {}, 0);
+          
+          if(captionsJson.empty())
           {
-            if(captionJson.isMember("text"))
+            // If there are no captions, fall back on a comma separated list of tags
+            if(descriptionJson.isMember("tags"))
             {
-              f32 score = 0.f;
-              JsonTools::GetValueOptional(captionJson, "confidence", score);
-              const std::string& description = captionJson["text"].asString();
-              Vision::SalientPoint salientPoint(_imageTimestamp,
-                                                0.5f, 0.5f,
-                                                score, 1.f,
-                                                Vision::SalientPointType::SceneDescription,
-                                                description,
-                                                {}, 0);
+              const Json::Value& tagsJson = descriptionJson["tags"];
               
-              salientPoints.emplace_back(std::move(salientPoint));
-              
-              gotSalientPoint = true;
+              if(tagsJson.isArray() && !tagsJson.empty())
+              {
+                auto iter = tagsJson.begin();
+                salientPoint.description = iter->asString();
+                ++iter;
+                while(iter != tagsJson.end())
+                {
+                  salientPoint.description += ", " + iter->asString();
+                  ++iter;
+                }
+                salientPoints.emplace_back(std::move(salientPoint));
+                gotSalientPoint = true;
+              }
+            }
+          }
+          else
+          {
+            // Otherwise, create a SalientPoint for each caption, with the "text" field
+            // as each one's description, and "confidence" as the score, if available
+            for(const Json::Value& captionJson : captionsJson)
+            {
+              if(captionJson.isMember("text"))
+              {
+                salientPoint.score = 0.f;
+                JsonTools::GetValueOptional(captionJson, "confidence", salientPoint.score);
+                salientPoint.description = captionJson["text"].asString();
+                salientPoints.emplace_back(salientPoint);
+                gotSalientPoint = true;
+              }
             }
           }
         }
