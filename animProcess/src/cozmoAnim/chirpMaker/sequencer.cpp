@@ -33,8 +33,12 @@ namespace {
   uint32_t kPitchTick_ms = 10;
   
   CONSOLE_VAR_RANGED(float, kSourcePitch_Hz, "Chirps", 150.0f, 0.0f, 5000.0f);
-  CONSOLE_VAR_RANGED(float, kMinPitchSlider_Hz, "Chirps", -500.0f, -10000.0f, 0.0f);
-  CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps", 500.0f, 0.0f, 10000.0f);
+  CONSOLE_VAR_RANGED(float, kMinCentsSlider_Hz, "Chirps", -500.0f, -10000.0f, 0.0f);
+  CONSOLE_VAR_RANGED(float, kMaxCentsSlider_Hz, "Chirps", 500.0f, 0.0f, 10000.0f);
+  
+  const bool kRTPCIsCents = false; // true if cents, false if pich
+  CONSOLE_VAR_RANGED(float, kMinPitchSlider_Hz, "Chirps", 440, 0.F, 5000.0F);
+  CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps", 1760, 0.0f, 5000.0f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -175,20 +179,29 @@ void Sequencer::MainLoop()
     }
   };
   auto sendPitchVolume = [&](float pitch, float volume) {
-    const float cents = PitchToRelativeCents( pitch );
-    float centsParam = (cents - kMinPitchSlider_Hz) / (kMaxPitchSlider_Hz - kMinPitchSlider_Hz);// + kMinPitchSlider_Hz;
-    centsParam = Util::Clamp(centsParam, 0.0f, 1.0f);
-    PRINT_NAMED_WARNING("WHATNOW","cents=%f, param=%f", cents, centsParam);
+    float param;
+    if( kRTPCIsCents ) {
+      const float cents = PitchToRelativeCents( pitch );
+      param = (cents - kMinCentsSlider_Hz) / (kMaxCentsSlider_Hz - kMinCentsSlider_Hz);// + kMinCentsSlider_Hz;
+      param = Util::Clamp(param, 0.0f, 1.0f);
+      PRINT_NAMED_WARNING("WHATNOW","cents=%f, param=%f", cents, param);
+    } else {
+      const float transposed = PitchToOctavedPitch(pitch);
+      param = (transposed - kMinPitchSlider_Hz) / (kMaxPitchSlider_Hz - kMinPitchSlider_Hz);
+      param = Util::Clamp(param, 0.0f, 1.0f);
+      PRINT_NAMED_WARNING("WHATNOW","pitch=%f, transposed=%f, param=%f", pitch, transposed, param);
+    }
+    
     if( _audioController != nullptr ) {
       _audioController->SetParameter( ToAudioParameterId( GP::Victor_Robot_Chirps_Pitch ),
-                                      centsParam,
+                                      param,
                                       gameObject );
       _audioController->SetParameter( ToAudioParameterId( GP::Victor_Robot_Chirps_Amplitude ),
                                       Util::Clamp(volume, 0.0f, 1.0f),
                                       gameObject );
     } else {
       const auto t = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - kInvalidTime).count();
-      PRINT_NAMED_INFO("Chirps", "[t=%lld]: Setting cents=%f, vol=%f", t, centsParam, volume);
+      PRINT_NAMED_INFO("Chirps", "[t=%lld]: Setting rtpc=%f, vol=%f", t, param, volume);
     }
   };
   
@@ -425,6 +438,33 @@ float Sequencer::PitchToRelativeCents( const float pitch_Hz )
   const float cents = 1200 * log2( pitchB_Hz / kSourcePitch_Hz );
   PRINT_NAMED_WARNING("WHATNOW", "input=%f, octave=%d, closest=%f, cents=%f", pitch_Hz, _octave, pitchB_Hz, cents);
   return cents;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float Sequencer::PitchToOctavedPitch( const float pitch_Hz )
+{
+  float minDiff = std::numeric_limits<float>::max();
+  if( _octave == std::numeric_limits<int>::max() ) {
+    const float midPitch = (kMinPitchSlider_Hz + kMaxPitchSlider_Hz)/2;
+    // can be optimized i know
+    for( int i=0; i<10; ++i ) {
+      const float f1 = std::pow(2.0, i) * pitch_Hz;
+      float diff = fabs(f1 - midPitch);
+      if( diff < minDiff ) {
+        minDiff = diff;
+        _octave = i;
+      }
+      const float f2 = std::pow(2.0, -i) * pitch_Hz;
+      diff = fabs(f2 - midPitch);
+      if( diff < minDiff ) {
+        minDiff = diff;
+        _octave = -i;
+      }
+    }
+  }
+  
+  const float pitchB_Hz = std::pow(2.0, _octave) * pitch_Hz;
+  return pitchB_Hz;
 }
   
 } // namespace Vector

@@ -58,6 +58,7 @@ private:
   void AddChirpInternal( const Chirp& chirp );
   
   float PitchToRelativeCents( const float pitch_Hz );
+  float PitchToOctavedPitch( const float pitch_Hz );
   
   
   std::chrono::time_point<Clock> ConvertToTimePoint( uint64_t time_ms ) const;
