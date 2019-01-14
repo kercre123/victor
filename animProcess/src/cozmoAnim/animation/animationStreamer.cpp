@@ -226,6 +226,7 @@ namespace Vector {
   CONSOLE_VAR(bool, kDisplayBackpackLights, "AnimationStreamer", THEBOX);
   BackpackLightComponent::BackpackLEDState s_lastDrawnBackpackLEDState;
   Vision::ImageRGB565 s_lastDrawnImage565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  bool s_firstImageDrawn = false;
 
 
   //////////
@@ -457,6 +458,7 @@ namespace Vector {
     _proceduralTrackComponent->Init(*this);
 
     _faceDrawBuf.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    _faceDrawBuf.FillWith(0);  // THEBOX
     _procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     _faceImageGrayscale.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
@@ -1338,8 +1340,10 @@ namespace Vector {
 #if ANKI_DEV_CHEATS
 
     // Keep a copy of the last drawn face in case we want to redraw to update backpack lights overlay
-    faceImg565.CopyTo(s_lastDrawnImage565);
-
+    if (&faceImg565 != &s_lastDrawnImage565) {
+      faceImg565.CopyTo(s_lastDrawnImage565);
+    } 
+    s_firstImageDrawn = true;
 
     static int kProcFace_GammaType_old = (int)FaceGammaType::None;
     static f32 kProcFace_Gamma_old = -1.f;
@@ -2013,7 +2017,8 @@ namespace Vector {
 #if ANKI_DEV_CHEATS
     // If a new face wasn't drawn, but the backpack light state has changed
     // then update the face anyway.
-    if (s_lastDrawnBackpackLEDState != _context->GetBackpackLightComponent()->GetBackpackLEDState()) {
+    if (s_firstImageDrawn && 
+        s_lastDrawnBackpackLEDState != _context->GetBackpackLightComponent()->GetBackpackLEDState()) {
       BufferFaceToSend(s_lastDrawnImage565);
     }
 #endif

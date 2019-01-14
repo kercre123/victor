@@ -83,6 +83,9 @@
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
+// THEBOX
+#include "opencv2/highgui.hpp"
+
 #define LOG_CHANNEL "Robot"
 
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
@@ -2937,11 +2940,19 @@ bool Robot::UpdateGyroCalibChecks(Result& res)
     // but we haven't received syncTime yet likely because the gyro hasn't calibrated
     GetAnimationComponent().Init();
 
-    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/gyro_not_calibrated.png";
-    const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-                                                                         kGyroNotCalibratedImg);
-    Vision::ImageRGB img;
-    img.Load(imgPath);
+    // THEBOX: Replace Vector's cutesy 'gyro not calibrated' house icon with yellow screen
+    Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+    const Rectangle<f32> rect(0,0,FACE_DISPLAY_WIDTH,FACE_DISPLAY_HEIGHT);
+    img.DrawFilledRect(rect, NamedColors::YELLOW);
+    img.DrawTextCenteredHorizontally("Put me down", 
+                                     CV_FONT_NORMAL,
+                                     0.7f,  // scale
+                                     1,     // thickness
+                                     NamedColors::BLACK,
+                                     FACE_DISPLAY_HEIGHT/2,  //vertical pos
+                                     false  // drawTwice
+                                     );
+
     // Display the image indefinitely or atleast until something else is displayed
     GetAnimationComponent().DisplayFaceImage(img, 0, true);
     // Move the head to look up to show the image clearly
