@@ -28,6 +28,8 @@ var (
 	defaultTLSCert = credentials.NewClientTLSFromCert(rootcerts.ServerCertPool(), "")
 )
 
+var devURLReader func(string) ([]byte, error, bool)
+
 func (c *client) handleConn(ctx context.Context) {
 	for {
 		msgbuf := c.ReadBlock()
@@ -82,6 +84,12 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 
 	// read file data
 	wg.AddFunc(func() {
+		if devURLReader != nil {
+			var handled bool
+			if fileData, fileErr, handled = devURLReader(msg.Filename); handled {
+				return
+			}
+		}
 		fileData, fileErr = ioutil.ReadFile(msg.Filename)
 	})
 

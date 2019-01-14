@@ -1,6 +1,23 @@
 <html>
 <h1>Title</h1>
 
+<script>
+function validate() {
+	var link = document.getElementById('link').value;
+	if (link.length > 0) {
+		if (!link.startsWith('http')) {
+			link = 'http://' + link;
+		}
+		location = 'request?file=' + encodeURIComponent(link);
+	}
+	return false;
+}
+</script>
+<form onSubmit="return validate();">
+	<input id="link" type="text" />
+	<input type="submit" value="Load URL" />
+</form>
+
 {{range .}}
   <div><a href="request?file={{.Name}}">{{.Name}}<br><img src="images/{{.Name}}"></div>
 {{else}}
