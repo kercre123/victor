@@ -60,6 +60,8 @@ private:
   float PitchToRelativeCents( const float pitch_Hz );
   float PitchToOctavedPitch( const float pitch_Hz );
   
+  int ComputeBestOctave( const std::vector<Chirp>& chirps );
+  
   
   std::chrono::time_point<Clock> ConvertToTimePoint( uint64_t time_ms ) const;
   

@@ -103,12 +103,13 @@ void Sequencer::AddChirp( const Chirp& chirp )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Sequencer::AddChirps( const std::vector<Chirp>& chirps )
 {
-  _octave = std::numeric_limits<int>::max();
+  _octave = ComputeBestOctave( chirps );
   {
     std::lock_guard<std::mutex> lk{_mutex};
     for( const auto& chirp : chirps ) {
       AddChirpInternal( chirp );
     }
+    
   }
   _condVar.notify_one();
 }
@@ -465,6 +466,35 @@ float Sequencer::PitchToOctavedPitch( const float pitch_Hz )
   
   const float pitchB_Hz = std::pow(2.0, _octave) * pitch_Hz;
   return pitchB_Hz;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int Sequencer::ComputeBestOctave( const std::vector<Chirp>& chirps )
+{
+  // brute force
+  int bestOctave = std::numeric_limits<unsigned int>::max();
+  if( chirps.empty() ) {
+    return bestOctave;
+  }
+  unsigned int minCount = std::numeric_limits<unsigned int>::max();
+  for( int i = -10; i<10; ++i ) {
+    unsigned int outliers = 0;
+    for( const auto& chirp : chirps ) {
+      const float scaledPitch = chirp.pitch0_Hz*pow(2.0,i);
+      if( scaledPitch < kMinPitchSlider_Hz || scaledPitch > kMaxPitchSlider_Hz ) {
+        ++outliers;
+        if( outliers > minCount ) {
+          break;
+        }
+      }
+    }
+    if( outliers < minCount ) {
+      minCount = outliers;
+      bestOctave = i;
+    }
+  }
+  PRINT_NAMED_WARNING("WHATNOW", "best chirp octave is %d (%d outliers)", bestOctave, minCount);
+  return bestOctave;
 }
   
 } // namespace Vector

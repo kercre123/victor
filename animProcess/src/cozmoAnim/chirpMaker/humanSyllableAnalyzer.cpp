@@ -25,7 +25,7 @@ namespace {
   constexpr unsigned int kBuffSize = 3*16000; // 1 sec
   
   CONSOLE_VAR_RANGED(float, kTimeScaleFactor, "Chirps", 1.2f, 0.5f, 2.0f);
-  CONSOLE_VAR(bool, kUseTestFile, "Chirps", true);
+  CONSOLE_VAR(bool, kUseTestFile, "Chirps", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -141,7 +141,8 @@ void HumanSyllableAnalyzer::RunDetector()
     
     chirp.duration_ms *= kTimeScaleFactor;
     
-    float freq = std::min(syllable.peakFreq, syllable.avgFreq);
+    //float freq = std::min(syllable.peakFreq, syllable.avgFreq);
+    float freq = syllable.avgFreq;
     freq *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
     if( freq > 400 ) {
       freq /= 2;
