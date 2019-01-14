@@ -37,14 +37,14 @@ struct PanelCell {
 };
 
 struct Panel {
-  int NumRows;
-  int NumCols;
-  PanelCell* Cells;
+  int        NumRows; 
+  int        NumCols; 
+  PanelCell* Cells;   
 };
 
 struct PanelSet {
-  int    NumPanels;
-  Panel* Panels;
+  int     NumPanels;
+  Panel** Panels;
 };
 
 class BehaviorCubeDrive : public ICozmoBehavior
@@ -102,7 +102,7 @@ private:
 
   std::string _promptText;
   std::string _userText;
-  int _col, _row;
+  int _col, _row, _currPanel;
   int _deadZoneTicksLeft;
   int _dirHoldCount[NUM_DIR];
   bool _dirCountEventMap[MAX_DIR_COUNT];

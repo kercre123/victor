@@ -71,7 +71,21 @@ PanelCell CellsLcaseLetters[] =
   {
    {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"^", ACT_PANEL},   
    {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_NEXT},   
+   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"_", ACT_APPEND}, {">", ACT_NEXT},   
+  };
+
+PanelCell CellsNumbersAndSpecialChars[] =
+  {
+   {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"^", ACT_PANEL},   
+   {"0", ACT_APPEND}, {"!", ACT_APPEND}, {"@", ACT_APPEND}, {"#", ACT_APPEND}, {"$", ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND}, {"*", ACT_APPEND}, {"<", ACT_DELETE}, 
+   {"(", ACT_APPEND}, {")", ACT_APPEND}, {"<", ACT_APPEND}, {">", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {">", ACT_NEXT},   
+  };
+
+PanelCell CellsRemainingSpecialChars[] =
+  {
+   {"!", ACT_APPEND}, {"@", ACT_APPEND}, {"#", ACT_APPEND}, {"$", ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&",  ACT_APPEND}, {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"^", ACT_PANEL},   
+   {"(", ACT_APPEND}, {")", ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"|", ACT_APPEND},  {"<", ACT_DELETE}, 
+   {"<", ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {"=", ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"", ACT_APPEND},   {">", ACT_NEXT},   
   };
 
 PanelCell CellsWifiPrompt[] =
@@ -80,9 +94,23 @@ PanelCell CellsWifiPrompt[] =
    {"* Back", ACT_PREV},
   };
 
-Panel kPanelUcaseLetters = {3, 10, CellsUcaseLetters};
-Panel kPanelLcaseLetters = {3, 10, CellsLcaseLetters};
-Panel kPanelWifiPrompt   = {2, 1,  CellsWifiPrompt};
+Panel kPanelUcaseLetters           = {3, 10, CellsUcaseLetters};
+Panel kPanelLcaseLetters           = {3, 10, CellsLcaseLetters};
+Panel kPanelNumbersAndSpecialChars = {3, 10, CellsNumbersAndSpecialChars};
+Panel kPanelRemainingSpecialChars  = {3, 10, CellsRemainingSpecialChars};
+Panel kPanelWifiPrompt             = {2, 1,  CellsWifiPrompt};
+
+
+Panel* PasswordEntryPanels[] =
+  {
+   &kPanelUcaseLetters,
+   &kPanelLcaseLetters,
+   &kPanelNumbersAndSpecialChars,
+   &kPanelRemainingSpecialChars,
+  };
+
+PanelSet PasswordEntry = {4, PasswordEntryPanels};
+
 
 
 
@@ -203,6 +231,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _userText   = "";
   _row = 0;
   _col = 0;
+  _currPanel = 0;
   ClearHoldCounts();
   _deadZoneTicksLeft = 0;
   for(int i = 0; i < MAX_DIR_COUNT; i++) {
@@ -263,7 +292,8 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
     if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
 
-    Panel* panel = &kPanelUcaseLetters;
+    PanelSet* panelSet = &PasswordEntry;               
+    Panel*    panel    = panelSet->Panels[_currPanel]; 
 
     // Register new scroll event if any direction is held for enough
     // consecutive ticks
@@ -301,7 +331,10 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         }
         break;
       case ACT_PANEL:
-        _userText = "";  // TODO
+        _currPanel++;
+        if (_currPanel >= panelSet->NumPanels) {
+          _currPanel = 0;
+        }
         break;
       case ACT_PREV:
         _userText = "";  // TODO
