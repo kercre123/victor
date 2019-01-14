@@ -18,6 +18,9 @@
 #include "coretech/vision/shared/hueSatWrapper.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
+
+#define LOG_CHANNEL "ProcFace"
 
 namespace Anki {
 namespace Vector {

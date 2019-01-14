@@ -61,8 +61,10 @@ namespace Vector {
       processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Unprocessed;
     }
     auto ttsCallback = [robot](const UtteranceState& state) {
-      external_interface::SayTextResponse* response = new external_interface::SayTextResponse{nullptr,
-                                                                                            (external_interface::SayTextResponse::UtteranceState)state};
+      external_interface::SayTextResponse* response = new external_interface::SayTextResponse{
+          nullptr,
+          (external_interface::SayTextResponse::UtteranceState)state
+        };
       external_interface::GatewayWrapper wrapper;
       wrapper.set_allocated_say_text_response(response);
       robot->GetGatewayInterface()->Broadcast(wrapper);

@@ -19,6 +19,7 @@
 #include "textToSpeechProvider.h"
 #include "textToSpeechProviderConfig.h"
 #include "json/json.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 
 #include <string>
 
@@ -58,7 +59,13 @@ public:
   // Sets done to true when audio generation is complete.
   Result GetNextAudioData(TextToSpeechProviderData & data, bool & done);
 
+  // Callback for phoneme processing
+  static BB_S32 SpeechEventCallback(BABILE_EventCallBackStruct* cb);
+
 private:
+  ProceduralFace::Value _initial_hue;
+  std::unique_ptr<std::vector<std::tuple<BB_S32, BB_S32>>> _viseme_list;
+
   // Path to TTS resources
   std::string _tts_resource_path;
 

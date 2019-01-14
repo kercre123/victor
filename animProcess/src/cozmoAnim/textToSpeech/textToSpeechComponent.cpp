@@ -368,15 +368,16 @@ static void AppendAudioData(const std::shared_ptr<AudioEngine::StreamingWaveData
   }
 
   if (ttsData.GetNumSamples() > 0) {
-    const int sample_rate = ttsData.GetSampleRate();
-    const int num_channels = ttsData.GetNumChannels();
-    const size_t num_samples = ttsData.GetNumSamples();
-    const short * samples = ttsData.GetSamples();
+    const auto sample_rate = ttsData.GetSampleRate();
+    const auto num_channels = ttsData.GetNumChannels();
+    const auto num_samples = ttsData.GetNumSamples();
+    const auto* samples = ttsData.GetSamples();
 
     // TBD: How can we get rid of intermediate container?
     StandardWaveDataContainer waveContainer(sample_rate, num_channels, num_samples);
     waveContainer.CopyWaveData(samples, num_samples);
 
+    // Need to add a callback to this somehow...
     waveData->AppendStandardWaveData(std::move(waveContainer));
   }
   if (done) {

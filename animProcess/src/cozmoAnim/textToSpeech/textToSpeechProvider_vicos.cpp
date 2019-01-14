@@ -16,6 +16,10 @@
 
 #include "cozmoAnim/animContext.h"
 
+#include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/animEngine.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
+
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
@@ -36,16 +40,6 @@
 namespace Anki {
 namespace Vector {
 namespace TextToSpeech {
-
-
-BB_S32 ShawnTestCallback(BABILE_EventCallBackStruct* cb)
-{
-  if (cb->event_type == 1)
-  {
-    LOG_INFO("TextToSpeechProviderImpl.ShawnTestCallback", "Called back type=%ld, viseme=%ld", cb->event_type, cb->viseme);
-  }
-  return 0;
-}
 
 TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config)
 {
@@ -121,10 +115,10 @@ void TextToSpeechProviderImpl::Cleanup()
 
 Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
 {
-  LOG_DEBUG("TextToSpeechProvider.Initialize", "Initialize locale %s", locale.c_str());
+  LOG_INFO("TextToSpeechProvider.Initialize", "Initialize locale %s", locale.c_str());
 
   if (locale == _locale) {
-    LOG_DEBUG("TextToSpeechProvider.Initialize", "Already using locale %s", locale.c_str());
+    LOG_INFO("TextToSpeechProvider.Initialize", "Already using locale %s", locale.c_str());
     return RESULT_OK;
   }
 
@@ -174,7 +168,7 @@ Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
-  LOG_DEBUG("TextToSpeechProvider.Initialize.LoadIniFile",
+  LOG_INFO("TextToSpeechProvider.Initialize.LoadIniFile",
            "nlpeLS=%p synthLS=%p nlpModule=%d synthAvail=%ld synthModule=%d",
            nlpeLS, synthLS, nlpModule, synthAvail, synthModule);
 
@@ -186,6 +180,8 @@ Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
     _BAB_MemRec = (BB_MemRec *) calloc(numAlloc, sizeof(BB_MemRec));
   }
 
+  _viseme_list = std::make_unique<std::vector<std::tuple<BB_S32, BB_S32>>>();
+
   // Populate init struct
   _BAB_MemParam = (BABILE_MemParam *) calloc(1, sizeof(BABILE_MemParam));
   _BAB_MemParam->sSize = sizeof(BABILE_MemParam); /* Sanity+version check*/
@@ -196,7 +192,8 @@ Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
   _BAB_MemParam->nlpModule = nlpModule;
   _BAB_MemParam->synthLS = synthLS;
   _BAB_MemParam->synthModule = synthModule;
-  _BAB_MemParam->markCallback = ShawnTestCallback;
+  _BAB_MemParam->u32MarkCallbackInstance = _viseme_list.get();
+  _BAB_MemParam->markCallback = TextToSpeechProviderImpl::SpeechEventCallback;
 
   // Ask Babile how much memory is needed for each segment
   BABILE_alloc(_BAB_MemParam, _BAB_MemRec);
@@ -255,6 +252,26 @@ Result TextToSpeechProviderImpl::Initialize(const std::string & locale)
 
   return RESULT_OK;
 }
+
+
+BB_S32 TextToSpeechProviderImpl::SpeechEventCallback(BABILE_EventCallBackStruct* cb)
+{
+  if (cb->event_type == 1)
+  {
+    LOG_INFO("TextToSpeechProviderImpl.SpeechEventCallback",
+             "Called back type=%ld, viseme=%ld, pos=%ld, off=%ld",
+             cb->event_type,
+             cb->viseme,
+             cb->pos,
+             cb->off);
+    if (cb->off != 0 || cb->viseme != 0) {
+      auto list = (std::vector<std::tuple<BB_S32, BB_S32>>*)(cb->object);
+      list->emplace_back(std::tuple<BB_S32, BB_S32>(cb->off, cb->viseme));
+    }
+  }
+  return 0;
+}
+
 
 Result TextToSpeechProviderImpl::SetLocale(const std::string & locale)
 {
@@ -349,9 +366,11 @@ Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & dat
   BB_U32 numWanted = (sizeof(samples)/_BAB_samplesize);
   BB_U32 numSamples = 0;
 
+  LOG_INFO("TextToSpeechProvider.ShawnBefore", "BABILE_readText");
   const BB_S32 charRead = BABILE_readText(_BAB_Obj, str, samples, numWanted, &numSamples);
+  LOG_INFO("TextToSpeechProvider.ShawnAfter", "BABILE_readText");
 
-  LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "charRead=%ld numSamples=%lu", charRead, numSamples);
+  LOG_INFO("TextToSpeechProvider.GetNextAudioData", "charRead=%ld numSamples=%lu", charRead, numSamples);
 
   if (charRead < 0) {
     LOG_ERROR("TextToSpeechProvider.GetNextAudioData", "charRead=%ld", charRead);
@@ -361,12 +380,14 @@ Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & dat
 
   if (charRead == 0 && numSamples == 0) {
     if (_draining) {
-      LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Done");
+      LOG_INFO("TextToSpeechProvider.GetNextAudioData", "Done");
       done = true;
+      ProceduralFace::SetHue(_initial_hue);
       return RESULT_OK;
     }
-    LOG_DEBUG("TextToSpeechProvider.GetNextAudioData", "Start draining");
+    LOG_INFO("TextToSpeechProvider.GetNextAudioData", "Start draining");
     _draining = true;
+    _initial_hue = ProceduralFace::GetHue();
     return RESULT_OK;
   }
 
@@ -376,9 +397,19 @@ Result TextToSpeechProviderImpl::GetNextAudioData(TextToSpeechProviderData & dat
   }
 
   if (numSamples > 0) {
+    auto viseme = std::make_tuple<long, long>(-1, -1);
+    if (!_viseme_list->empty()) {
+      viseme = _viseme_list->back();
+      auto viseme_val = std::get<1>(viseme);
+      LOG_INFO("TextToSpeechProvider.VisemeMagic", "viseme=%ld", viseme_val);
+      ProceduralFace::SetHue(viseme_val / 76.0 + 0.75); // 19 options
+      _viseme_list->clear();
+    }
     // Add samples to result
     data.Init(_BAB_voicefreq, 1);
-    data.AppendSamples(samples, numSamples);
+    // TODO: add the viseme (tuple including offset and viseme) to this append samples call.
+    // Then have the call pass this even deeper into the anim engine to call everything we want.
+    data.AppendSamples(samples, numSamples/*, viseme*/);
   }
 
   return RESULT_OK;
