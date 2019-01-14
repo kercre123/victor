@@ -7,13 +7,17 @@ import (
 	"anki/log"
 	"bytes"
 	"clad/vision"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
+
+	"github.com/gwatts/rootcerts"
 )
 
 const baseDir = "/anki/data/assets/cozmo_resources/webserver/cloud/box"
@@ -31,6 +35,7 @@ func init() {
 		log.Println("Box dev handlers added")
 		return [][]string{[]string{"/box", "Send test images to Snapper and see the results from MS"}}
 	}
+	devURLReader = fetchURLData
 }
 
 func boxHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,14 +86,27 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var file string
+
+	var isURL bool
+	escapedFile, err := url.PathUnescape(reqFile)
+	if err == nil {
+		if u, err := url.Parse(escapedFile); err == nil && u.Scheme != "" {
+			isURL = true
+			file = escapedFile
+		}
+	}
+
 	// make sure file exists - first try image path, then cache dir
-	file := path.Join(imageDir, reqFile)
-	if _, err := os.Stat(file); os.IsNotExist(err) {
-		file = path.Join(cacheDir, reqFile)
+	if !isURL {
+		file = path.Join(imageDir, reqFile)
 		if _, err := os.Stat(file); os.IsNotExist(err) {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "File does not exist: ", reqFile)
-			return
+			file = path.Join(cacheDir, reqFile)
+			if _, err := os.Stat(file); os.IsNotExist(err) {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprint(w, "File does not exist: ", reqFile)
+				return
+			}
 		}
 	}
 
@@ -116,6 +134,8 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Fprint(w, "image: ", file, "\n\n")
+
 	var prettyJSON bytes.Buffer
 	json.Indent(&prettyJSON, []byte(resp.JsonResult), "", "\t")
 
@@ -131,4 +151,37 @@ func imgHandler(w http.ResponseWriter, r *http.Request) {
 		dir = cacheDir
 	}
 	http.FileServer(http.Dir(dir)).ServeHTTP(w, r)
+}
+
+func fetchURLData(path string) ([]byte, error, bool) {
+	u, err := url.Parse(path)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return nil, nil, false
+	}
+
+	httpClient := http.DefaultClient
+	if u.Scheme == "https" {
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: rootcerts.ServerCertPool(),
+				},
+			},
+		}
+	}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, err, true
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err, true
+	}
+	defer resp.Body.Close()
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err, true
+	}
+	return buf, nil, true
 }
