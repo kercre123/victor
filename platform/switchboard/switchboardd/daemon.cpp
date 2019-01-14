@@ -60,6 +60,10 @@ namespace Switchboard {
 
 namespace {
   const auto kStartTime = std::chrono::steady_clock::now();
+
+  // switch two robots' flags to true to have them play a song.
+  // if more than 2 robot have true flags, it will probably break.
+  const bool kConsensusProtocol = false;
 }
 
 void Daemon::Start() {
@@ -332,12 +336,14 @@ void Daemon::UpdateAdvertisement(bool pairing, int16_t type, uint64_t extra1) {
   std::vector<uint8_t> mdata = Anki::kAnkiBluetoothSIGCompanyIdentifier;
   mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
   mdata.push_back(pairing?'p':0); // to indicate whether we are pairing
-  AddExtraData(mdata);
-  std::stringstream ss;
-  for( auto& x : mdata ) {
-    ss << std::to_string((int)x) << " ";
+  if( kConsensusProtocol ) {
+    AddExtraData(mdata);
+    std::stringstream ss;
+    for( auto& x : mdata ) {
+      ss << std::to_string((int)x) << " ";
+    }
+    Log::Write("WHATNOW Updating advert %s", ss.str().c_str());
   }
-  Log::Write("WHATNOW Updating advert %s", ss.str().c_str());
   settings.GetAdvertisement().SetManufacturerData(mdata);
 
   std::string robotName = SavedSessionManager::GetRobotName();

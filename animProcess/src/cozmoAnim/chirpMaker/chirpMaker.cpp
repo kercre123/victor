@@ -11,6 +11,7 @@
 #include "cozmoAnim/animContext.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
+#include "cozmoAnim/chirpMaker/mrRobot.h"
 
 #include <chrono>
 
@@ -21,6 +22,9 @@ namespace {
   CONSOLE_VAR_ENUM( unsigned int, kChirpMode, "Chirps", 0, "None,HumanSyllables" );
 }
 
+  void MakeMrRobotoBase(std::vector<Chirp>& chirps, uint64_t startTime);
+  void MakeMrRobotoTreble(std::vector<Chirp>& chirps, uint64_t startTime);
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ChirpMaker::ChirpMaker()
 {
@@ -188,7 +192,11 @@ void ChirpMaker::StartChattering( std::chrono::milliseconds delayUntilStart_ms, 
     chirps.push_back(std::move(chirp3));
   }
   
-  
+  if( isHost ) {
+    MrRoboto::TreblePart(chirps, nextStartTime + 500 + 700);
+  } else {
+    MrRoboto::BasePart(chirps, nextStartTime + 500 + 700);
+  }
   
   _context->GetSequencer()->AddChirps( chirps );
   

@@ -33,6 +33,7 @@ public:
   void StartChattering( std::chrono::milliseconds delayUntilStart_ms, bool isHost );
   
 private:
+  
   const AnimContext* _context = nullptr;
   
   enum class ChirpMode {
