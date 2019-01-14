@@ -104,7 +104,7 @@ namespace TestCommon
     e[2] = which == TO_DUT_UART ? DUT_UART::getRxFramingErrors() : Contacts::getRxFramingErrors();
   }
   
-  void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms, int opts, bridge_hook_sendline_t hook_sendline )
+  void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms, int opts, bridge_hooks_t *hooks )
   {
     const char cmd_exit[5] = "exit";    int exit_idx = 0;
     const char cmd_echo[5] = "echo";    int echo_idx = 0;
@@ -133,17 +133,21 @@ namespace TestCommon
       //timeout/inactivity checks
       if( Timer::elapsedUs(Tstart) >= 1000 )
       {
+        ++idle_ms;
         Tstart = Timer::get();
         if( timeout_ms > 0 && --timeout_ms == 0 )
           break;
         if( inactivity_delay_ms > 0 && --inactivity_delay_ms == 0 )
           break;        
         if( which == TO_CONTACTS && charge_en ) {
-          if( ++idle_ms >= charge_idle_ms && !Contacts::powerIsOn() ) {
+          if( idle_ms >= charge_idle_ms && !Contacts::powerIsOn() ) {
             //ConsolePrintf("idle timeout. charging enabled\n");
             Contacts::powerOn(); //Note: prevents rx from contacts until console is re-actviated
             Board::ledOn(Board::LED_GREEN);
           }
+        }
+        if( hooks && hooks->tick_ms ) {
+          hooks->tick_ms( timeout_ms, inactivity_delay_ms, idle_ms );
         }
       }
       
@@ -161,8 +165,8 @@ namespace TestCommon
       if( (c = ConsoleReadChar()) > -1 )
       {
         inactivity_delay_ms = 0; //disabled on activity
+        idle_ms = 0; //reset idle counter
         if( which == TO_CONTACTS && charge_en ) {
-          idle_ms = 0; //reset idle counter
           if( Contacts::powerIsOn() ) {
             //ConsolePrintf("charging disabled\n");
             Contacts::setModeRx(); //re-enable contact uart
@@ -197,9 +201,9 @@ namespace TestCommon
                 line[line_len] = '\0';
                 bool allow_send = 1;
                 
-                if( hook_sendline != NULL ) //hook for external alias/substitutions
+                if( hooks && hooks->pre_send ) //hook for external alias/substitutions
                 {
-                  const char* sub_line = hook_sendline(line, line_len);
+                  const char* sub_line = hooks->pre_send(line, line_len);
                   int sub_len = sub_line != NULL ? strlen(sub_line) : 0;
                   
                   //allow hook to finish with newline to flush target rx
@@ -239,6 +243,9 @@ namespace TestCommon
                   bridge_putchar_(which, '\n', 0); //print final char and return to RX mode
                   recall_len = line_len; //save length for recall
                   line_len = 0;
+                  if( hooks && hooks->post_send ) {
+                    hooks->post_send( line, line_len );
+                  }
                 }
               }
             } else if( c == 0x1B ) { //ESC

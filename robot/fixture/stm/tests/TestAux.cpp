@@ -627,7 +627,9 @@ const char* TOF_CMD_HANDLER(const char *line, int len)
 void TOF_CLI_DEBUG(void)
 {
   const int bridgeOpts = BRIDGE_OPT_LOCAL_ECHO | BRIDGE_OPT_LINEBUFFER | BRIDGE_OPT_CHG_DISABLE;
-  TestCommon::consoleBridge(TO_CONTACTS, 0, 0, bridgeOpts, TOF_CMD_HANDLER);
+  bridge_hooks_t hooks = {0};
+  hooks.pre_send = TOF_CMD_HANDLER;
+  TestCommon::consoleBridge(TO_CONTACTS, 0, 0, bridgeOpts, &hooks );
 }
 
 //-----------------------------------------------------------------------------

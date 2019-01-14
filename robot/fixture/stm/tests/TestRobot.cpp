@@ -487,8 +487,11 @@ void TestRobotInfo(void)
   }
   
   //DEBUG: console bridge, manual testing
-  if( g_fixmode == FIXMODE_ROBOT0 )
-    TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
+  if( g_fixmode == FIXMODE_ROBOT0 ) {
+    bridge_hooks_t hooks = {0};
+    hooks.pre_send = DBG_cmd_substitution;
+    TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, &hooks );
+  }
   //-*/
   
   read_robot_info_();
@@ -571,7 +574,7 @@ void TestRobotSensors(void)
   
   //TOF
   {
-    const uint8_t NN_tof=5, emax=1;
+    const uint8_t NN_tof=5;//, emax=1;
     int ecount=0;
     psr = rcomGet(NN_tof, RCOM_SENSOR_PROX_TOF);
     for(int x=0; x<NN_tof; x++) {

@@ -15,7 +15,25 @@ enum bridge_target_e {
 #define BRIDGE_OPT_LOCAL_ECHO   0x1   /*echo chars from the console*/
 #define BRIDGE_OPT_LINEBUFFER   0x2   /*behave as buffered console input: cached line written on enter*/
 #define BRIDGE_OPT_CHG_DISABLE  0x4   /*for charge contact comms, disable 'charge while idle' behavior*/
-typedef const char*(*bridge_hook_sendline_t)(const char *line, int len);
+
+typedef struct
+{
+  //in linebuffer mode, reports the entered line prior to sending.
+  //return param allows line substitutions (alias, debug etc)
+  //@return NULL = send reported line, unmodified.
+  //        null-terminated ascii string to substitute.
+  const char*(*pre_send)(const char *line, int len);
+  
+  //in linebuffer mode, reports a line after being sent
+  void(*post_send)(const char *line, int len);
+  
+  //periodic timer tick
+  //timeout_remain_ms - remaining timeout (0=disabled)
+  //inactivity_remain_ms - remaining inactivity timer (0=disabled)
+  //idle_ms - bridge idle timer (reset to 0 on activity)
+  void(*tick_ms)(int timeout_remain_ms, int inactivity_remain_ms, int idle_ms);
+  
+} bridge_hooks_t;
 
 namespace TestCommon
 {
@@ -24,8 +42,7 @@ namespace TestCommon
   
   //create a console bridge for debugging test firmware
   //timeout:0=infinite. inactivity: timeout if console stays idle, opts:BRIDGE_OPT_
-  //hook_sendline: in linebuffer mode, hook lets caller substitute entered line for a new one (alias?). return ascii,null-term or NULL to send original.
-  void consoleBridge(bridge_target_e which, int inactivity_delay_ms=0, int timeout_ms=0, int opts = 0, bridge_hook_sendline_t hook_sendline = NULL );
+  void consoleBridge(bridge_target_e which, int inactivity_delay_ms=0, int timeout_ms=0, int opts=0, bridge_hooks_t *hooks=NULL );
   
   //block wait for any input from the console.
   //timeout[us]: 0=infinite, <0 no wait (checks once)
