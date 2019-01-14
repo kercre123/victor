@@ -286,6 +286,10 @@
     {
       "user_intent": "describe_scene",
       "cloud_intent": "intent_ask_vision"
+    },
+    {
+      "user_intent": "show_mic_data",
+      "cloud_intent": "intent_show_mic_data"
     }
   ],
 

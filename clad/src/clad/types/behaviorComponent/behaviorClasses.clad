@@ -67,6 +67,7 @@ enum uint_8 BehaviorClass {
   BoxDemo,
   BoxDemoDescribeScene,
   BoxDemoFaceTracking,
+  BoxDemoShowMicData,
 
   // character/howOldAreYou
   HowOldAreYou,

@@ -190,6 +190,8 @@ private:
 
   friend class IBehaviorSelfTest;
 
+  friend class BehaviorBoxDemoShowMicData;
+
   Robot& _robot;
 };
 

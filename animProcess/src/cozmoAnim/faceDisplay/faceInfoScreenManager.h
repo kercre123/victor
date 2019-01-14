@@ -96,6 +96,12 @@ public:
   // the vision system's "mirror mode", which displays the camera feed
   // and detections live on the robot's face. 
   void EnableMirrorModeScreen(bool enable);
+
+  // When enabled, switches to a special face screen used to show
+  // the mic directionality and power information.
+  // NOTE: when disabling (enable = false) info face is completely disabled (it doesn't keep a history of
+  // where it was before)
+  void EnableMicDirectionScreen(bool enable);
   
   // Begin drawing functionality
   // These functions update the screen only if they are relevant to the current screen

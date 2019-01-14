@@ -102,6 +102,12 @@ union dupes_allowed UserIntent
   // PLEASE KEEP ALPHABETIZED 
   // thank you in advance for caring
 
+  // THE BOX
+  UserIntent_Void             describe_scene,
+  UserIntent_Void             show_mic_data,
+
+  // Vector
+
   UserIntent_Void             amazon_signin,
   UserIntent_Void             amazon_signout,
   UserIntent_Void             blackjack_hit,
@@ -109,7 +115,6 @@ union dupes_allowed UserIntent
   UserIntent_Void             blackjack_playagain,
   UserIntent_Void             character_age,
   UserIntent_Void             check_timer,
-  UserIntent_Void             describe_scene,
   UserIntent_Void             explore_start,
   UserIntent_GlobalStop       global_stop,
   UserIntent_GlobalStop       global_delete,

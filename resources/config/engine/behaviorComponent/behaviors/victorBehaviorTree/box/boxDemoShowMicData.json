@@ -1,0 +1,14 @@
+{
+  "behaviorID": "BoxDemoShowMicData",
+  "behaviorClass": "BoxDemoShowMicData",
+
+  "respondToUserIntents": [
+    { "type": "show_mic_data" }
+  ],
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "RobotTouched",
+    "minTouchTime": 0.2
+  }
+}
+

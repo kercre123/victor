@@ -93,6 +93,7 @@ enum uint_16 BehaviorID {
   BoxDemoBoot,
   BoxDemoDescribeScene,
   BoxDemoFaceTracking,
+  BoxDemoShowMicData,
   BoxDemoWaitWithTriggerWord,
 
   // victorBehaviorTree/character
@@ -302,7 +303,6 @@ enum uint_16 BehaviorID {
   LookAtMeVoiceCommand,
   LookOverThereVoiceCommand,
   PickUpCubeVoiceCommand,
-  PlayAGameVoiceCommand,
   PopAWheelieVoiceCommand,
   RollCubeVoiceCommand,
 

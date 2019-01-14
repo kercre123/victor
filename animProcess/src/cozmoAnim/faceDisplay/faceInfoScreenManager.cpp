@@ -1775,6 +1775,17 @@ void FaceInfoScreenManager::EnableMirrorModeScreen(bool enable)
   }
 }
 
+void FaceInfoScreenManager::EnableMicDirectionScreen(bool enable)
+{
+  if (enable && GetCurrScreenName() != ScreenName::MicDirectionClock) {
+    LOG_INFO("FaceInfoScreenManager.EnableMicDirectionScreen.Enable", "");
+    SetScreen(ScreenName::MicDirectionClock);
+  } else if (!enable && GetCurrScreenName() == ScreenName::MicDirectionClock) {
+    LOG_INFO("FaceInfoScreenManager.EnableMicDirectionScreen.Disable", "");
+    SetScreen(ScreenName::None);
+  }
+}
+
 void FaceInfoScreenManager::DrawScratch()
 {
   _currScreen->DrawMenu(*_scratchDrawingImg);

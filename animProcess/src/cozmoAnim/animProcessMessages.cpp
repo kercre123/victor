@@ -604,6 +604,11 @@ void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen
   FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);
 }
 
+void Process_enableMicDirectionScreen(const RobotInterface::EnableMicDirectionScreen& msg)
+{
+  FaceInfoScreenManager::getInstance()->EnableMicDirectionScreen(msg.enable);
+}
+
 void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
 {
   using namespace RobotInterface;

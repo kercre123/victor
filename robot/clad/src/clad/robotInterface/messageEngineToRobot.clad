@@ -511,6 +511,12 @@ message EnableMirrorModeScreen
   bool enable
 }
 
+// Switch to debug screen (on face) for audio directionality
+message EnableMicDirectionScreen
+{
+  bool enable
+}
+
 // DisplayProceduralFace
 message DisplayProceduralFace
 {
@@ -825,6 +831,8 @@ union EngineToRobot
   EnableMirrorModeScreen           enableMirrorModeScreen              = 0x66,
 
   SetButtonWakeWord                setButtonWakeWord                   = 0x67,
+
+  EnableMicDirectionScreen         enableMicDirectionScreen            = 0x68,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
