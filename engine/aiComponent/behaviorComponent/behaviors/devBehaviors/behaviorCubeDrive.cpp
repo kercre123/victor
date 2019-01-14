@@ -57,22 +57,22 @@ PanelCell GetPanelCell(Panel* cmp, int row, int col) {
 
 PanelCell CellsUcaseLetters[] =
   {
-   {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"^", ACT_PANEL},   
-   {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"",  ACT_APPEND},   
+   {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"^",  ACT_PANEL},   
+   {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"<",  ACT_DELETE}, 
+   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"kk", ACT_NEXT},   
   };
 
 PanelCell CellsLcaseLetters[] =
   {
    {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"^", ACT_PANEL},   
    {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"_", ACT_APPEND}, {"-", ACT_APPEND},   
+   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND},   
   };
 
 PanelCell CellsNumbersAndSpecialChars[] =
   {
    {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"^", ACT_PANEL},   
-   {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"!", ACT_APPEND},   
+   {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"<", ACT_DELETE},   
   };
 
 PanelCell CellsRemainingSpecialChars[] =
@@ -285,25 +285,39 @@ void BehaviorCubeDrive::OnBehaviorDeactivated() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::BehaviorUpdate() {
   if( IsActivated() ) {
-    if(not GetBEI().GetCubeCommsComponent().IsConnectedToCube()) {
-      CancelSelf();
-      LOG_ERROR("cube_drive", "We've lost the connection to the cube");
-      return;
-    }
+    // if(not GetBEI().GetCubeCommsComponent().IsConnectedToCube()) {
+    //   CancelSelf();
+    //   LOG_ERROR("cube_drive", "We've lost the connection to the cube");
+    //   return;
+    // }
 
     bool isPressed      = GetBEI().GetRobotInfo().IsPowerButtonPressed();
     bool newButtonEvent = isPressed && !_buttonPressed;
     _buttonPressed      = isPressed;
 
-    float xGs = _dVars.filtered_cube_accel->x / 9810.0;
-    float yGs = _dVars.filtered_cube_accel->y / 9810.0;
+    // float xGs = _dVars.filtered_cube_accel->x / 9810.0;
+    // float yGs = _dVars.filtered_cube_accel->y / 9810.0;
+    // // At most, only one direction can be active on any tick
+    // int dir = NUM_DIR;  // none
+    // if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+    // if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+    // if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
+    // if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
 
+    float xGs = GetBEI().GetRobotInfo().GetHeadAccelData().x / 9810.0 - 0.5;
+    float yGs = GetBEI().GetRobotInfo().GetHeadAccelData().y / 9810.0;
     // At most, only one direction can be active on any tick
     int dir = NUM_DIR;  // none
-    if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
-    if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
-    if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
-    if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
+    if (abs(xGs) > abs(yGs)) {
+      yGs = 0.0;
+    } else {
+      xGs = 0.0;
+    }
+    if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+    if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+    if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
+    if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
+
 
     Panel* panel = _panelSet->Panels[_currPanel];
 

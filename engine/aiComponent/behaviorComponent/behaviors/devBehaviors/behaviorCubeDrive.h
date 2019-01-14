@@ -99,6 +99,7 @@ private:
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   bool _liftIsUp;
+  bool _buttonPressed;
 
   PanelSet*   _panelSet;
   std::string _promptText;
