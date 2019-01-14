@@ -25,10 +25,6 @@
 namespace Anki {
 namespace Vector {
 
-namespace CubeAccelListeners {
-class LowPassFilterListener;
-} // namespace CubeAccelListeners
-
 struct ActiveAccel;
 
 struct PanelCell {
@@ -67,7 +63,6 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-  void SetLiftState(bool up);
   void RestartAnimation();
 
 private:
@@ -87,13 +82,8 @@ private:
   };
 
   struct DynamicVariables {
-    DynamicVariables();
-    ObjectID                                                    object_id;
-    std::shared_ptr<ActiveAccel>                                filtered_cube_accel;
-    std::shared_ptr<CubeAccelListeners::LowPassFilterListener>  low_pass_filter_listener;
-    Vision::Image                                               image;
-    double                                                      last_lift_action_time;
-    bool                                                        lift_up;
+    DynamicVariables(); 
+    Vision::Image image;                 
   };
 
   InstanceConfig _iConfig;

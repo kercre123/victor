@@ -16,10 +16,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorCubeDrive.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/cubes/cubeAccelComponent.h"
-#include "engine/components/cubes/cubeAccelListeners/lowPassFilterListener.h"
-#include "engine/components/cubes/cubeCommsComponent.h"
-#include "engine/components/cubes/cubeInteractionTracker.h"
 #include "engine/components/movementComponent.h"
 
 using namespace std;
@@ -30,7 +26,7 @@ namespace Vector {
 namespace {
   static constexpr float kTopLeftCornerMagicNumber = 15.0f; 
   static constexpr float kSelectRowStart           = 20.0f; 
-  static const     float kTextHorzSpace            = 18.5f; 
+  static const     float kTextHorzSpace            = 17.0f; 
   static const     float kTextVertSpace            = 22.0f; 
   static const     float kSelectTextScale          = 0.70f; 
   static const     float kUserTextScaleFullSize    = 0.70f; 
@@ -39,6 +35,7 @@ namespace {
   static const     int   kUserMaxCharsMidSize      = 16;
 
   static const     float kAccelThresh              = 0.200f;
+  static const     float kAccelOffsetX             = 0.600f;
   static const     int   kDeadZoneTicks            = 7;
 };
 
@@ -59,14 +56,14 @@ PanelCell CellsUcaseLetters[] =
   {
    {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"^",  ACT_PANEL},   
    {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"<",  ACT_DELETE}, 
-   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"kk", ACT_NEXT},   
+   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"OK", ACT_NEXT},   
   };
 
 PanelCell CellsLcaseLetters[] =
   {
-   {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"^", ACT_PANEL},   
-   {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND},   
+   {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"^",  ACT_PANEL},   
+   {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"<",  ACT_DELETE}, 
+   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"OK", ACT_NEXT},   
   };
 
 PanelCell CellsNumbersAndSpecialChars[] =
@@ -79,7 +76,7 @@ PanelCell CellsRemainingSpecialChars[] =
   {
    {"!", ACT_APPEND}, {"@", ACT_APPEND}, {"#", ACT_APPEND}, {"$", ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&",  ACT_APPEND}, {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"^", ACT_PANEL},   
    {"(", ACT_APPEND}, {")", ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"|", ACT_APPEND},  {"<", ACT_DELETE}, 
-   {"<", ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {"=", ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND},  {"_", ACT_APPEND},   
+   {"<", ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {"=", ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND},  {"OK", ACT_NEXT},
   };
 
 PanelCell CellsDone[] =
@@ -126,7 +123,6 @@ BehaviorCubeDrive::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::DynamicVariables::DynamicVariables()
 {
-  last_lift_action_time = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -174,16 +170,6 @@ bool BehaviorCubeDrive::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  // This will cause the parent WantsToBeActivated to return false any time there is no cube connection.
-  // Here, "Lazy" means that we don't want to manage the connection. That will be handled by the 
-  // CubeConnectionCoordinator.
-  modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::RequiredLazy;
-  
-  // The engine will take control of the cube lights to communicate internal state to the user, unless we
-  // indicate that we want ownership. Since we're going to be using the lights to indicate where the "front"
-  // of the steering "wheel" is, we don't want that distraction.
-  modifiers.connectToCubeInBackground = true;
-
   // Don't cancel me just because I'm not delegating to someone/thing else.
   modifiers.behaviorAlwaysDelegates = false;
 }
@@ -207,20 +193,7 @@ void BehaviorCubeDrive::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys)
   */
 }
 
-void BehaviorCubeDrive::SetLiftState(bool up) {
-  _dVars.lift_up = up;
-  GetBEI().GetRobotInfo().GetMoveComponent().MoveLiftToHeight(
-    up ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2, 0.1, nullptr);
-}
-
 void BehaviorCubeDrive::RestartAnimation() {
-  static std::function<void(void)> restart_animation_callback = std::bind(&BehaviorCubeDrive::RestartAnimation, this);
-  bool retval = GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger(
-      _dVars.object_id,
-      CubeAnimationTrigger::CubeDrive,
-      restart_animation_callback
-  );  
-  LOG_WARNING("cube_drive", "RestartAnimation() PlayLightAnimByTrigerr() returned: %d", retval);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -229,9 +202,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
 
   // reset dynamic variables
   _dVars = DynamicVariables();
-  _liftIsUp = false;
   _buttonPressed = false;
-  SetLiftState(_liftIsUp);
 
   _panelSet   = &WifiSelect;
   _currPanel  = 0;
@@ -251,33 +222,12 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
     _dirCountEventMap[12 + (2*i)] = true; // fast repeat
   }
 
-  // Get the ObjectId of the connected cube and hold onto it so we can....
-  ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
-  ActiveObject* active_object = GetBEI().GetBlockWorld().GetConnectedActiveObjectByActiveID(connected_cube_active_id);
-  
-  if(active_object == nullptr) {
-    LOG_ERROR("cube_drive", "active_object came back NULL: %d", connected_cube_active_id);
-    CancelSelf();
-    return;
-  } 
-
-  _dVars.object_id = active_object->GetID();
-
   RestartAnimation();
-
-  //Vec3f filter_coeffs(1.0, 1.0, 1.0);
-  Vec3f filter_coeffs(0.5, 0.5, 0.5);
-  _dVars.filtered_cube_accel = std::make_shared<ActiveAccel>();
-  _dVars.low_pass_filter_listener = std::make_shared<CubeAccelListeners::LowPassFilterListener>(
-      filter_coeffs,
-      _dVars.filtered_cube_accel);
-  GetBEI().GetCubeAccelComponent().AddListener(_dVars.object_id, _dVars.low_pass_filter_listener);
 }
 
 void BehaviorCubeDrive::OnBehaviorDeactivated() {
   LOG_WARNING("cube_drive", "OnBehaviorDeactivated()");
   _dVars = DynamicVariables();
-  SetLiftState(false);
 
   GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(0.0, 0.0, 1000.0, 1000.0);
 }
@@ -285,26 +235,11 @@ void BehaviorCubeDrive::OnBehaviorDeactivated() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::BehaviorUpdate() {
   if( IsActivated() ) {
-    // if(not GetBEI().GetCubeCommsComponent().IsConnectedToCube()) {
-    //   CancelSelf();
-    //   LOG_ERROR("cube_drive", "We've lost the connection to the cube");
-    //   return;
-    // }
-
     bool isPressed      = GetBEI().GetRobotInfo().IsPowerButtonPressed();
     bool newButtonEvent = isPressed && !_buttonPressed;
     _buttonPressed      = isPressed;
 
-    // float xGs = _dVars.filtered_cube_accel->x / 9810.0;
-    // float yGs = _dVars.filtered_cube_accel->y / 9810.0;
-    // // At most, only one direction can be active on any tick
-    // int dir = NUM_DIR;  // none
-    // if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
-    // if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
-    // if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
-    // if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
-
-    float xGs = GetBEI().GetRobotInfo().GetHeadAccelData().x / 9810.0 - 0.5;
+    float xGs = GetBEI().GetRobotInfo().GetHeadAccelData().x / 9810.0 - kAccelOffsetX;
     float yGs = GetBEI().GetRobotInfo().GetHeadAccelData().y / 9810.0;
     // At most, only one direction can be active on any tick
     int dir = NUM_DIR;  // none
