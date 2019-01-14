@@ -40,7 +40,7 @@ namespace {
 
   //static const     float kMinAccel                 = 0.100f;
   static const     float kAccelThresh              = 0.200f;
-  static const     int   kDeadZoneTicks            = 8;
+  static const     int   kDeadZoneTicks            = 7;
   // static const     int   kTicksFirstEvent          = 2;
   // static const     int   kTicksPerRepeatSlow       = 7;
   // static const     int   kTicksPerRepeatFast       = 2;
@@ -77,8 +77,7 @@ PanelCell CellsLcaseLetters[] =
 PanelCell CellsNumbersAndSpecialChars[] =
   {
    {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"^", ACT_PANEL},   
-   {"0", ACT_APPEND}, {"!", ACT_APPEND}, {"@", ACT_APPEND}, {"#", ACT_APPEND}, {"$", ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND}, {"*", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"(", ACT_APPEND}, {")", ACT_APPEND}, {"<", ACT_APPEND}, {">", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {">", ACT_NEXT},   
+   {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {">", ACT_NEXT},   
   };
 
 PanelCell CellsRemainingSpecialChars[] =
@@ -96,7 +95,7 @@ PanelCell CellsWifiPrompt[] =
 
 Panel kPanelUcaseLetters           = {3, 10, CellsUcaseLetters};
 Panel kPanelLcaseLetters           = {3, 10, CellsLcaseLetters};
-Panel kPanelNumbersAndSpecialChars = {3, 10, CellsNumbersAndSpecialChars};
+Panel kPanelNumbersAndSpecialChars = {2, 10, CellsNumbersAndSpecialChars};
 Panel kPanelRemainingSpecialChars  = {3, 10, CellsRemainingSpecialChars};
 Panel kPanelWifiPrompt             = {2, 1,  CellsWifiPrompt};
 
