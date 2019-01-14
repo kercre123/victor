@@ -28,9 +28,9 @@ static const uint16_t WIS_GAMMA_TABLE[] = { 30000, 30000, 30000 };
 static const uint16_t VIC_GAMMA_TABLE[] = { 20000, 20000, 50000 };
 
 static const uint8_t REORDER[] = { 
-   0,  3,  6,  9, 
+   2,  5,  8, 11,
    1,  4,  7, 10,
-   2,  5,  8, 11
+   0,  3,  6,  9 
 };
 
 static const uint8_t default_value[LIGHT_CHANNELS][LIGHT_COLORS] = {
