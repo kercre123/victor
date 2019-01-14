@@ -100,11 +100,12 @@ private:
   DynamicVariables _dVars;
   bool _liftIsUp;
 
+  PanelSet*   _panelSet;
   std::string _promptText;
   std::string _userText;
-  int _col, _row, _currPanel;
-  int _deadZoneTicksLeft;
-  int _dirHoldCount[NUM_DIR];
+  int  _col, _row, _currPanel;
+  int  _deadZoneTicksLeft;
+  int  _dirHoldCount[NUM_DIR];
   bool _dirCountEventMap[MAX_DIR_COUNT];
   
   void ClearHoldCounts();

@@ -38,13 +38,8 @@ namespace {
   static const     int   kUserMaxCharsFullSize     = 12;
   static const     int   kUserMaxCharsMidSize      = 16;
 
-  //static const     float kMinAccel                 = 0.100f;
   static const     float kAccelThresh              = 0.200f;
   static const     int   kDeadZoneTicks            = 7;
-  // static const     int   kTicksFirstEvent          = 2;
-  // static const     int   kTicksPerRepeatSlow       = 7;
-  // static const     int   kTicksPerRepeatFast       = 2;
-  // static const     int   kMaxSlowEvents            = 2;
 };
 
 enum {
@@ -87,17 +82,18 @@ PanelCell CellsRemainingSpecialChars[] =
    {"<", ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {"=", ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"", ACT_APPEND},   {">", ACT_NEXT},   
   };
 
-PanelCell CellsWifiPrompt[] =
+PanelCell CellsWifiSelect[] =
   {
-   {"* OK",   ACT_NEXT},
-   {"* Back", ACT_PREV},
+   {"AnkiRobits",      ACT_NEXT}, 
+   {"BeagleBone-EDB1", ACT_NEXT}, 
+   {"SFWireless",      ACT_PREV}, 
   };
 
 Panel kPanelUcaseLetters           = {3, 10, CellsUcaseLetters};
 Panel kPanelLcaseLetters           = {3, 10, CellsLcaseLetters};
 Panel kPanelNumbersAndSpecialChars = {2, 10, CellsNumbersAndSpecialChars};
 Panel kPanelRemainingSpecialChars  = {3, 10, CellsRemainingSpecialChars};
-Panel kPanelWifiPrompt             = {2, 1,  CellsWifiPrompt};
+Panel kPanelWifiSelect             = {3, 1,  CellsWifiSelect};
 
 
 Panel* PasswordEntryPanels[] =
@@ -107,10 +103,11 @@ Panel* PasswordEntryPanels[] =
    &kPanelNumbersAndSpecialChars,
    &kPanelRemainingSpecialChars,
   };
-
 PanelSet PasswordEntry = {4, PasswordEntryPanels};
 
 
+Panel*   WifiSelectPanels[] = { &kPanelWifiSelect };
+PanelSet WifiSelect         = {1, WifiSelectPanels};
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,11 +223,14 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dVars = DynamicVariables();
   _liftIsUp = false;
   SetLiftState(_liftIsUp);
-  _promptText = "<Wifi Password>";
+
+  _panelSet   = &WifiSelect;
+  _currPanel  = 0;
+  _promptText = "Select Wifi:";
   _userText   = "";
-  _row = 0;
-  _col = 0;
-  _currPanel = 0;
+  _row        = 0;
+  _col        = 0;
+
   ClearHoldCounts();
   _deadZoneTicksLeft = 0;
   for(int i = 0; i < MAX_DIR_COUNT; i++) {
@@ -291,8 +291,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
     if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
 
-    PanelSet* panelSet = &PasswordEntry;               
-    Panel*    panel    = panelSet->Panels[_currPanel]; 
+    Panel* panel = _panelSet->Panels[_currPanel]; 
 
     // Register new scroll event if any direction is held for enough
     // consecutive ticks
@@ -331,7 +330,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         break;
       case ACT_PANEL:
         _currPanel++;
-        if (_currPanel >= panelSet->NumPanels) {
+        if (_currPanel >= _panelSet->NumPanels) {
           _currPanel = 0;
         }
         break;
@@ -339,6 +338,9 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         _userText = "";  // TODO
         break;
       case ACT_NEXT:
+        // TEMPORARY lightweight on-boarding flow: WiFi Select --> Password Entry
+        _panelSet = &PasswordEntry;               
+        _promptText = "<Wifi Password>";
         _userText = "";  // TODO
         break;
       }
