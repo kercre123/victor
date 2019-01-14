@@ -8,6 +8,7 @@
 #include "cozmoAnim/chirpMaker/sequencer.h"
 #include "cozmoAnim/chirpMaker/IAnalyzer.h"
 #include "cozmoAnim/chirpMaker/humanSyllableAnalyzer.h"
+#include "cozmoAnim/chirpMaker/offboardInput.h"
 #include "cozmoAnim/animContext.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -19,7 +20,7 @@ namespace Anki {
 namespace Vector {
   
 namespace {
-  CONSOLE_VAR_ENUM( unsigned int, kChirpMode, "Chirps", 0, "None,HumanSyllables" );
+  CONSOLE_VAR_ENUM( unsigned int, kChirpMode, "Chirps", 0, "None,HumanSyllables,OffboardInput" );
 }
 
   void MakeMrRobotoBase(std::vector<Chirp>& chirps, uint64_t startTime);
@@ -44,7 +45,7 @@ void ChirpMaker::Init(const AnimContext* context)
   // create analyzers for each mode
   _analyzers[ChirpMode::HumanSyllables].reset( new HumanSyllableAnalyzer{sequencer, _context} );
   
-  // todo: something for analyzing another vector's chirps
+  _analyzers[ChirpMode::OffboardInput].reset( new OffboardInput(sequencer) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

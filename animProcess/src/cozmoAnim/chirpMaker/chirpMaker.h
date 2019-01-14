@@ -39,6 +39,7 @@ private:
   enum class ChirpMode {
     None=0,
     HumanSyllables,
+    OffboardInput,
   };
   
   std::unordered_map<ChirpMode, std::unique_ptr<IAnalyzer>> _analyzers;
