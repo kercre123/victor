@@ -460,6 +460,29 @@ namespace Anki {
 #endif
     return res;
   }
+
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::operator+(const SmallMatrix<NROWS,NCOLS,T> &other) const
+  {
+    SmallMatrix<NROWS,NCOLS,T> res;
+    // TODO: This could probably be made more efficient by avoiding so many operator(i,j) calls
+    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+      res.val[i] = this->val[i] + other.val[i];
+    }
+    return res;
+  }
+    
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::operator-(const SmallMatrix<NROWS,NCOLS,T> &other) const
+  {
+    SmallMatrix<NROWS,NCOLS,T> res;
+    // TODO: This could probably be made more efficient by avoiding so many operator(i,j) calls
+    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+      res.val[i] = this->val[i] - other.val[i];
+    }
+    return res;
+  }
+  
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>  SmallMatrix<NROWS,NCOLS,T>::operator* (T value) const
@@ -513,17 +536,37 @@ namespace Anki {
     }
     return *this;
   }
+
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator-=(const SmallMatrix<NROWS,NCOLS,T>& other)
+  {
+    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+      this->val[i] -= other.val[i];
+    }
+    return *this;
+  }
   
   
   // Matrix transpose:
+//   template<MatDimType NROWS, MatDimType NCOLS, typename T>
+//   void SmallMatrix<NROWS,NCOLS,T>::GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const
+//   {
+// #if ANKICORETECH_USE_OPENCV
+//     outTransposed = this->t();
+// #else
+//     CORETECH_ASSERT(false);
+//     // TODO: Define our own opencv-free tranpose?
+// #endif
+//   }
+    
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  void SmallMatrix<NROWS,NCOLS,T>::GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const
+  SmallMatrix<NCOLS,NROWS,T> SmallMatrix<NROWS,NCOLS,T>::GetTranspose() const
   {
 #if ANKICORETECH_USE_OPENCV
-    outTransposed = this->t();
+    return this->t();
 #else
     CORETECH_ASSERT(false);
-    // TODO: Define our own opencv-free tranpose?
+    return *this;
 #endif
   }
   
@@ -729,6 +772,14 @@ namespace Anki {
   {
     outInverse = *this;
     outInverse.Invert();
+  }
+
+  template<MatDimType DIM, typename T>
+  SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::CopyInverse() const
+  {
+    SmallSquareMatrix<DIM,T> retv;
+    this->GetInverse(retv);
+    return retv;
   }
   
   

@@ -120,17 +120,22 @@ namespace Anki {
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
     template<MatDimType KCOLS, typename T_other, typename T_work=T>
     SmallMatrix<NROWS,KCOLS,T_work> operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const;
+
     
     SmallMatrix<NROWS,NCOLS,T>  operator* (T value) const;
     SmallMatrix<NROWS,NCOLS,T>& operator*=(T value);
     SmallMatrix<NROWS,NCOLS,T>  operator+ (T value) const;
     SmallMatrix<NROWS,NCOLS,T>& operator+=(T value);
     SmallMatrix<NROWS,NCOLS,T>& operator*=(const SmallMatrix<NROWS,NCOLS,T>& other);
+    SmallMatrix<NROWS,NCOLS,T>  operator+ (const SmallMatrix<NROWS,NCOLS,T> &other) const;
     SmallMatrix<NROWS,NCOLS,T>& operator+=(const SmallMatrix<NROWS,NCOLS,T>& other);
+    SmallMatrix<NROWS,NCOLS,T>  operator- (const SmallMatrix<NROWS,NCOLS,T> &other) const;
+    SmallMatrix<NROWS,NCOLS,T>& operator-=(const SmallMatrix<NROWS,NCOLS,T>& other);
     // TODO: add subtraction...
     
     // Matrix transpose:
-    void GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const;
+    // void GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const;
+    SmallMatrix<NCOLS,NROWS,T> GetTranspose() const;
     
     // Take absolute value of all elements (return reference to self)
     SmallMatrix<NROWS,NCOLS,T>& Abs();
@@ -213,6 +218,7 @@ namespace Anki {
     // Matrix inversion:
     SmallSquareMatrix<DIM,T>& Invert(void); // in place
     void GetInverse(SmallSquareMatrix<DIM,T>& outInverse) const;
+    SmallSquareMatrix<DIM,T> CopyInverse() const;
     
     // Compute the trace (sum of diagonal elements)
     T Trace(void) const;

@@ -157,6 +157,9 @@ namespace Anki {
 
     // Returns "(x, y, ...)"
     std::string ToString() const;
+
+    template<PointDimType A, PointDimType B, typename = std::enable_if_t< B <= N && A <= N && A<B >>
+    constexpr Point<B-A+1, T> Slice() const;
         
   }; // class Point
   
@@ -297,6 +300,10 @@ namespace Anki {
   // TODO: should output type always be float/double?
   template<PointDimType N, typename T>
   constexpr T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
+
+  
+  template<PointDimType M, PointDimType N, typename T>
+  constexpr Point<M+N,T> Concatenate(const Point<M,T>& point1, const Point<N,T>& point2);
   
   // Return true if the two points (vectors) are aligned within the given angle threshold
   template<PointDimType N, typename T>

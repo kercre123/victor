@@ -984,17 +984,16 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _robotGyro = msg.gyro;
   
   {
-    const float gravity_mmps = 9810.f;
-    Point3f acc{msg.accel.x / gravity_mmps, msg.accel.y / gravity_mmps, msg.accel.z / gravity_mmps};
     GetImuComponent().AddRawData(
-      acc,
+      {msg.accel.x, msg.accel.y, msg.accel.z},
       {msg.gyro.x, msg.gyro.y, msg.gyro.z}, 
       _lastMsgTimestamp
     );
 
     Point3f robotPt = this->GetPose().GetTranslation();    
     Rotation3d headRot(msg.headAngle, Y_AXIS_3D());
-    Pose3d pose(GetImuComponent().GetRotation() * headRot, robotPt + Point3f{0.f, 0.f, 15.f});
+    // Pose3d pose(GetImuComponent().GetRotation(), robotPt + Point3f{0.f, 0.f, 15.f});
+    Pose3d pose(GetImuComponent().GetRotation() * headRot, robotPt + Point3f{0.f, 0.f, 50.f});
     this->GetContext()->GetVizManager()->DrawFrameAxes("UKF", pose);
   }
 

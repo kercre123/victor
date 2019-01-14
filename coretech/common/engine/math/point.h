@@ -518,6 +518,26 @@ constexpr T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& p
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType M, PointDimType N, typename T>
+constexpr Point<M+N,T> Concatenate(const Point<M,T>& point1, const Point<N,T>& point2)
+{
+  Point<M+N,T> retv;
+  for (int i = 0; i < M; ++i) { retv[i] = point1[i]; }
+  for (int i = 0; i < N; ++i) { retv[i+M] = point2[i]; }
+  return retv;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+template<PointDimType A, PointDimType B, typename>
+constexpr Point<B-A+1,T> Point<N,T>::Slice() const
+{
+  Point<B-A+1,T> retv;
+  for (int i = A; i < B; ++i) { retv[i - A] = (*this)[i]; }
+  return retv;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<PointDimType N, typename T>
 Point<N,T>& Point<N,T>::Abs()
 {

@@ -181,9 +181,9 @@ namespace Anki {
     // Rotate a point/vector
     Point3<float> operator*(const Point3<float>& p) const;    
     
-    const UnitQuaternion& GetQuaternion()     const { return _q; }
-    const RotationMatrix3d       GetRotationMatrix() const;
-    const RotationVector3d       GetRotationVector() const;
+    const UnitQuaternion&  GetQuaternion()     const { return _q; }
+    const RotationMatrix3d GetRotationMatrix() const;
+    const RotationVector3d GetRotationVector() const;
     
     const Radians GetAngle() const;
     const Vec3f   GetAxis()  const;

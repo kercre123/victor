@@ -540,8 +540,7 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   const Matrix_3x3f A(initValsA);
   const Matrix_3x3f A_orig(initValsA);
   
-  Matrix_3x3f A_t;
-  A.GetTranspose(A_t);
+  Matrix_3x3f A_t = A.GetTranspose();
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix A: \n" << A << "\n";
@@ -563,8 +562,7 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   const Matrix_3x4f B(initValsB);
   const Matrix_3x4f B_orig(initValsB);
   
-  SmallMatrix<4,3,float> B_t;
-  B.GetTranspose(B_t);
+  SmallMatrix<4,3,float> B_t = B.GetTranspose();
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix B: \n" << B << "\n";
