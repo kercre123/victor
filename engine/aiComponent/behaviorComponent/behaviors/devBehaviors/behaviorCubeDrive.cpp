@@ -59,27 +59,33 @@ PanelCell CellsUcaseLetters[] =
   {
    {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"^", ACT_PANEL},   
    {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {">", ACT_NEXT},   
+   {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"",  ACT_APPEND},   
   };
 
 PanelCell CellsLcaseLetters[] =
   {
    {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"^", ACT_PANEL},   
    {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"<", ACT_DELETE}, 
-   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"_", ACT_APPEND}, {">", ACT_NEXT},   
+   {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"_", ACT_APPEND}, {"-", ACT_APPEND},   
   };
 
 PanelCell CellsNumbersAndSpecialChars[] =
   {
    {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"^", ACT_PANEL},   
-   {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {">", ACT_NEXT},   
+   {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"!", ACT_APPEND},   
   };
 
 PanelCell CellsRemainingSpecialChars[] =
   {
    {"!", ACT_APPEND}, {"@", ACT_APPEND}, {"#", ACT_APPEND}, {"$", ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&",  ACT_APPEND}, {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"^", ACT_PANEL},   
    {"(", ACT_APPEND}, {")", ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"|", ACT_APPEND},  {"<", ACT_DELETE}, 
-   {"<", ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {"=", ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"", ACT_APPEND},   {">", ACT_NEXT},   
+   {"<", ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {"=", ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND},  {"_", ACT_APPEND},   
+  };
+
+PanelCell CellsDone[] =
+  {
+   {"^",    ACT_PANEL},   
+   {"DONE", ACT_NEXT},   
   };
 
 PanelCell CellsWifiSelect[] =
@@ -93,6 +99,7 @@ Panel kPanelUcaseLetters           = {3, 10, CellsUcaseLetters};
 Panel kPanelLcaseLetters           = {3, 10, CellsLcaseLetters};
 Panel kPanelNumbersAndSpecialChars = {2, 10, CellsNumbersAndSpecialChars};
 Panel kPanelRemainingSpecialChars  = {3, 10, CellsRemainingSpecialChars};
+Panel kPanelDone                   = {2, 1,  CellsDone};
 Panel kPanelWifiSelect             = {3, 1,  CellsWifiSelect};
 
 
@@ -102,12 +109,13 @@ Panel* PasswordEntryPanels[] =
    &kPanelLcaseLetters,
    &kPanelNumbersAndSpecialChars,
    &kPanelRemainingSpecialChars,
+   &kPanelDone,
   };
-PanelSet PasswordEntry = {4, PasswordEntryPanels};
+PanelSet PasswordEntry = {sizeof(PasswordEntryPanels)/sizeof(PasswordEntryPanels[0]), PasswordEntryPanels};
 
 
 Panel*   WifiSelectPanels[] = { &kPanelWifiSelect };
-PanelSet WifiSelect         = {1, WifiSelectPanels};
+PanelSet WifiSelect         = {sizeof(WifiSelectPanels)/sizeof(WifiSelectPanels[0]), WifiSelectPanels};
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -291,7 +299,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
     if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
 
-    Panel* panel = _panelSet->Panels[_currPanel]; 
+    Panel* panel = _panelSet->Panels[_currPanel];
 
     // Register new scroll event if any direction is held for enough
     // consecutive ticks
@@ -332,6 +340,12 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         _currPanel++;
         if (_currPanel >= _panelSet->NumPanels) {
           _currPanel = 0;
+        }
+        if (_row >= _panelSet->Panels[_currPanel]->NumRows) {
+          _row = _panelSet->Panels[_currPanel]->NumRows-1;
+        }
+        if (_col >= _panelSet->Panels[_currPanel]->NumCols) {
+          _col = _panelSet->Panels[_currPanel]->NumCols-1;
         }
         break;
       case ACT_PREV:
