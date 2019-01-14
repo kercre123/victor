@@ -230,6 +230,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   // reset dynamic variables
   _dVars = DynamicVariables();
   _liftIsUp = false;
+  _buttonPressed = false;
   SetLiftState(_liftIsUp);
 
   _panelSet   = &WifiSelect;
@@ -289,6 +290,11 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       LOG_ERROR("cube_drive", "We've lost the connection to the cube");
       return;
     }
+
+    bool isPressed      = GetBEI().GetRobotInfo().IsPowerButtonPressed();
+    bool newButtonEvent = isPressed && !_buttonPressed;
+    _buttonPressed      = isPressed;
+
     float xGs = _dVars.filtered_cube_accel->x / 9810.0;
     float yGs = _dVars.filtered_cube_accel->y / 9810.0;
 
@@ -325,7 +331,8 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       }
     }
 
-    if(GetBEI().GetCubeInteractionTracker().GetTargetStatus().tappedDuringLastTick) {
+    //if(GetBEI().GetCubeInteractionTracker().GetTargetStatus().tappedDuringLastTick) {
+    if (newButtonEvent) {
       PanelCell pc = GetPanelCell(panel, _row, _col);
       switch (pc.Action) {
       case ACT_APPEND:
