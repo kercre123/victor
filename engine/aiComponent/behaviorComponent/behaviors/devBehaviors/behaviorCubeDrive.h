@@ -103,6 +103,7 @@ private:
   std::string _promptText;
   std::string _userText;
   int _col, _row;
+  int _deadZoneTicksLeft;
   int _dirHoldCount[NUM_DIR];
   bool _dirCountEventMap[MAX_DIR_COUNT];
   

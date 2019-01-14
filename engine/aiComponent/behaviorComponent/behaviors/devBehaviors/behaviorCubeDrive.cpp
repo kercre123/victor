@@ -32,12 +32,15 @@ namespace {
   static constexpr float kSelectRowStart           = 20.0f; 
   static const     float kTextHorzSpace            = 18.5f; 
   static const     float kTextVertSpace            = 22.0f; 
-  static const     float kUserTextScale            = 0.70f; 
   static const     float kSelectTextScale          = 0.70f; 
-  static const     int   kMaxUserChars             = 13;
+  static const     float kUserTextScaleFullSize    = 0.70f; 
+  static const     float kUserTextScaleMidSize     = 0.50f; 
+  static const     int   kUserMaxCharsFullSize     = 12;
+  static const     int   kUserMaxCharsMidSize      = 16;
 
   //static const     float kMinAccel                 = 0.100f;
-  static const     float kAccelThresh              = 0.150f;  
+  static const     float kAccelThresh              = 0.200f;
+  static const     int   kDeadZoneTicks            = 8;
   // static const     int   kTicksFirstEvent          = 2;
   // static const     int   kTicksPerRepeatSlow       = 7;
   // static const     int   kTicksPerRepeatFast       = 2;
@@ -196,36 +199,20 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dVars = DynamicVariables();
   _liftIsUp = false;
   SetLiftState(_liftIsUp);
-  _promptText = "<Wifi Passwd>";
+  _promptText = "<Wifi Password>";
   _userText   = "";
   _row = 0;
   _col = 0;
   ClearHoldCounts();
+  _deadZoneTicksLeft = 0;
   for(int i = 0; i < MAX_DIR_COUNT; i++) {
     _dirCountEventMap[i] = false;
   }
-  _dirCountEventMap[2] = true;  // first
+  _dirCountEventMap[4] = true;  // first
   // delay
-  _dirCountEventMap[10] = true; // fast repeat
-  _dirCountEventMap[12] = true;
-  _dirCountEventMap[14] = true;
-  _dirCountEventMap[16] = true;
-  _dirCountEventMap[18] = true;
-  _dirCountEventMap[20] = true;
-  _dirCountEventMap[22] = true;
-  _dirCountEventMap[24] = true;
-  _dirCountEventMap[26] = true;
-  _dirCountEventMap[28] = true;
-  _dirCountEventMap[30] = true;
-  _dirCountEventMap[32] = true;
-  _dirCountEventMap[34] = true;
-  _dirCountEventMap[36] = true;
-  _dirCountEventMap[38] = true;
-  _dirCountEventMap[40] = true;
-  _dirCountEventMap[42] = true;
-  _dirCountEventMap[44] = true;
-  _dirCountEventMap[46] = true;
-  _dirCountEventMap[48] = true;
+  for (int i = 0; i < 30; i++) {
+    _dirCountEventMap[12 + (2*i)] = true; // fast repeat
+  }
 
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
@@ -280,27 +267,26 @@ void BehaviorCubeDrive::BehaviorUpdate() {
 
     // Register new scroll event if any direction is held for enough
     // consecutive ticks
-    if (dir != NUM_DIR) {
-      if (_dirHoldCount[dir] == 0) {
-        ClearHoldCounts();
-      }
-      _dirHoldCount[dir]++;
+    if (_deadZoneTicksLeft > 0) {
+      _deadZoneTicksLeft--;
+    }
 
+    if ((dir == NUM_DIR) || (_dirHoldCount[dir] == 0)) {
+      // add extra "dead zone" after stopping hold count for any direction
+      for (int i = 0; i < NUM_DIR; i++) {
+        if (_dirHoldCount[i] > 0) {
+          _deadZoneTicksLeft = kDeadZoneTicks;
+        }
+      }
+      ClearHoldCounts();
+      if (dir != NUM_DIR) {
+        _dirHoldCount[dir]++;
+      }
+    } else {
+      _dirHoldCount[dir]++;
       if (_dirCountEventMap[_dirHoldCount[dir]]) {
         NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
       }
-    //   int firstHoldCount = _dirHoldCount[dir];
-    //   int slowHoldCount  = _dirHoldCount[dir] - kTicksFirstEvent;
-    //   int fastHoldCount  = _dirHoldCount[dir] - slowHoldCount - (kTicksPerRepeatSlow * kMaxSlowEvents);
-    //   if ((fastHoldCount >= 0) && ((fastHoldCount % kTicksPerRepeatFast) == 0)) {
-    //     NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
-    //   } else if ((slowHoldCount > 0) && (slowHoldCount % kTicksPerRepeatSlow) == 0) {
-    //     NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
-    //   } else if (firstHoldCount == kTicksFirstEvent) {
-    //     NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
-    //   }
-    } else {
-      ClearHoldCounts();
     }
 
     if(GetBEI().GetCubeInteractionTracker().GetTargetStatus().tappedDuringLastTick) {
@@ -328,13 +314,18 @@ void BehaviorCubeDrive::BehaviorUpdate() {
 
     // Update the screen
     _dVars.image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
+    float headingSize = kUserTextScaleFullSize;
     string heading = (_userText != "") ? _userText : _promptText;
     size_t hlen = heading.length();
-    if (hlen > kMaxUserChars) {
-      heading = "..." + heading.substr(hlen-kMaxUserChars+2, string::npos);
+    if (hlen > kUserMaxCharsMidSize) {
+      heading = "..." + heading.substr(hlen-kUserMaxCharsMidSize+2, string::npos);
+      headingSize = kUserTextScaleMidSize;
+    } else if (hlen > kUserMaxCharsFullSize) {
+      headingSize = kUserTextScaleMidSize;
     }
+
     _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
-                          heading, NamedColors::WHITE, kUserTextScale);
+                          heading, NamedColors::WHITE, headingSize);
     // _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
     //                       to_string(int(1000.0 * xGs)), NamedColors::WHITE, kUserTextScale);
     for(int r = 0; r < panel->NumRows; r++) {
