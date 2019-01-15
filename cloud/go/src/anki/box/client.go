@@ -42,24 +42,23 @@ func (c *client) handleConn(ctx context.Context) {
 			continue
 		}
 
-		resp, err := c.handleRequest(ctx, &msg)
+		resps, err := c.handleRequest(ctx, &msg)
 		if err != nil {
 			log.Println("Error handling box request:", err)
 		}
-		if resp == nil {
-			resp = &vision.OffboardResultReady{}
-		}
 
-		var buf bytes.Buffer
-		if err := resp.Pack(&buf); err != nil {
-			log.Println("Error packing box response:", err)
-		} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
-			log.Println("Error sending box response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
+		for _, resp := range resps {
+			var buf bytes.Buffer
+			if err := resp.Pack(&buf); err != nil {
+				log.Println("Error packing box response:", err)
+			} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
+				log.Println("Error sending box response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
+			}
 		}
 	}
 }
 
-func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageReady) (*vision.OffboardResultReady, error) {
+func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageReady) ([]vision.OffboardResultReady, error) {
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(defaultTLSCert))
@@ -129,5 +128,17 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 	}
 	log.Println("image analysis response: ", resp.String())
 
-	return &vision.OffboardResultReady{JsonResult: resp.RawResult}, nil
+	var resps []vision.OffboardResultReady
+	for _, r := range resp.ImageResults {
+		var resp vision.OffboardResultReady
+		resp.JsonResult = r.RawResult
+		switch r.Mode {
+		// todo: other image modes, once added to clad
+		case pb.ImageMode_DESCRIBE_SCENE:
+			resp.ProcType = vision.OffboardProcType_SceneDescription
+		}
+		resps = append(resps, resp)
+	}
+
+	return resps, nil
 }
