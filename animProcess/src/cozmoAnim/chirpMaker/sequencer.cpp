@@ -150,7 +150,7 @@ void Sequencer::Update()
 {
   
   static int lastSwitch = -1;
-  if( _audioController != nullptr ) {
+  if( (lastSwitch != kSwitchType) && (_audioController != nullptr) ) {
     const auto switchType = (kSwitchType == 0)
           ? AudioMetaData::SwitchState::Vic_Robot_Sfx_Rnd_Chirps_Content_Select::Tonegen
           : AudioMetaData::SwitchState::Vic_Robot_Sfx_Rnd_Chirps_Content_Select::Assets;
