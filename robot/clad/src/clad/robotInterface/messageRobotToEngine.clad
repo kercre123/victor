@@ -23,6 +23,7 @@ namespace RobotInterface {
 
 message SyncTimeAck
 {
+  uint_8 sysconVersion[16] // Must match VersionInfo::app_version in schema/messages.h
 }
 
 message PrepForShutdown

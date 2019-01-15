@@ -1032,7 +1032,13 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 {
   char temp[32] = "";
   sprintf(temp,
-          "CLIFF: %4u %4u %4u %4u",
+          "SYS: %s",
+          _sysconVersion.c_str());
+  const std::string syscon = temp;
+
+
+  sprintf(temp,
+          "CLF: %4u %4u %4u %4u",
           state.cliffDataRaw[0],
           state.cliffDataRaw[1],
           state.cliffDataRaw[2],
@@ -1062,8 +1068,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.battTemp_C);
   const std::string tempC = temp;
   
-
-  DrawTextOnScreen({cliffs, touch, batt, charger, tempC});
+  DrawTextOnScreen({syscon, cliffs, touch, batt, charger, tempC});
 }
 
 void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)

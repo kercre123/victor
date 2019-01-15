@@ -454,6 +454,12 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       HandleRobotStateUpdate(msg.state);
     }
     break;
+    case RobotInterface::RobotToEngine::Tag_syncTimeAck:
+    {
+      std::string version((const char*)&msg.syncTimeAck.sysconVersion, 16);
+      FaceInfoScreenManager::getInstance()->SetSysconVersion(version);
+    }
+    break;
     default:
     {
 

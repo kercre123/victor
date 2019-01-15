@@ -245,7 +245,9 @@ namespace Anki {
               IMUFilter::IsBiasFilterComplete() &&
               LiftController::IsCalibrated() &&
               HeadController::IsCalibrated()) {
+
             RobotInterface::SyncTimeAck syncTimeAckMsg;
+            memcpy(&syncTimeAckMsg.sysconVersion, HAL::GetSysconVersionInfo(), 16);
             while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
             syncTimeAckSent_ = true;
 

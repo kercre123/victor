@@ -95,6 +95,8 @@ public:
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
+  void SetSysconVersion(const std::string& version) { _sysconVersion = version; }
+
 private:
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
@@ -175,6 +177,8 @@ private:
   WebService::WebService* _webService;
   
   bool _drawFAC = false;
+
+  std::string _sysconVersion = "";
   
   // Reboot Linux
   void Reboot();
