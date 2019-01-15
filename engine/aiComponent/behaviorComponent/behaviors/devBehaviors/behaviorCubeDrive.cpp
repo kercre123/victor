@@ -31,8 +31,6 @@ namespace {
   static const     float kSelectTextScale          = 0.70f; 
   static const     float kUserTextScaleFullSize    = 0.70f; 
   static const     float kUserTextScaleMidSize     = 0.50f; 
-  static const     int   kUserMaxCharsFullSize     = 12;
-  static const     int   kUserMaxCharsMidSize      = 16;
   static const     int   kNumSelectRows            = 4; // number of rows that can be displayed at once
 
   static const     float kAccelThresh              = 0.200f;
@@ -182,6 +180,29 @@ void BehaviorCubeDrive::NewDirEvent(int dir, int maxRow, int maxCol)
   case DIR_L: _col = (_col <= 0)      ? 0      : (_col - 1); break;
   case DIR_R: _col = (_col >= maxCol) ? maxCol : (_col + 1); break;
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorCubeDrive::DisplayHeaderText(string text, ColorRGBA color, float maxWidth)
+{
+  _dVars.image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
+
+  float scale    = kUserTextScaleFullSize;
+  Vec2f textSize = _dVars.image.GetTextSize(text, scale, 1);
+  if (textSize.x() > FACE_DISPLAY_WIDTH) {
+    scale = kUserTextScaleMidSize;
+  }
+  textSize = _dVars.image.GetTextSize(text, scale, 1);
+  if (textSize.x() > maxWidth) {
+    text     = ".." + text;
+    textSize = _dVars.image.GetTextSize(text, scale, 1);
+    while (textSize.x() > maxWidth) {
+      text     = ".." + text.substr(3, string::npos);
+      textSize = _dVars.image.GetTextSize(text, scale, 1);
+    }
+  }
+  _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
+                        text, NamedColors::WHITE, scale);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -367,18 +388,8 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     }
 
     // Update the screen: heading
-    _dVars.image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
-    float headingSize = kUserTextScaleFullSize;
     string heading = (_userText != "") ? _userText : _promptText;
-    size_t hlen = heading.length();
-    if (hlen > kUserMaxCharsMidSize) {
-      heading = "..." + heading.substr(hlen-kUserMaxCharsMidSize+2, string::npos);
-      headingSize = kUserTextScaleMidSize;
-    } else if (hlen > kUserMaxCharsFullSize) {
-      headingSize = kUserTextScaleMidSize;
-    }
-    _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
-                          heading, NamedColors::WHITE, headingSize);
+    DisplayHeaderText(heading, NamedColors::WHITE, FACE_DISPLAY_WIDTH);
 
     // Update the screen: select text
     if (_row < _firstScreenRow) {

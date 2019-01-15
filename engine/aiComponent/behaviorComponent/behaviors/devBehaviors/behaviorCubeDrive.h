@@ -102,6 +102,7 @@ private:
   
   void ClearHoldCounts();
   void NewDirEvent(int dir, int maxRow, int maxCol);
+  void DisplayHeaderText(std::string text, ColorRGBA color, float maxWidth);
 
 };
 
