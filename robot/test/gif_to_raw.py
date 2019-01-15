@@ -78,4 +78,4 @@ elif len(sys.argv) == 2:
 else:
     print('got {} images'.format(len(sys.argv)))
     images = sorted(sys.argv[1:])
-    convertImages(os.path.basename(sys.argv[0]), images)
+    convertImages(os.path.dirname(sys.argv[0]), images)
