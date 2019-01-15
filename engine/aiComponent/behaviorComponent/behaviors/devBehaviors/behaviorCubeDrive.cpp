@@ -44,10 +44,11 @@ namespace {
 };
 
 enum {
-      ACT_APPEND = 0,
-      ACT_DELETE = 1,
-      ACT_PANEL  = 2,  // next panel
-      ACT_DONE   = 3
+      ACT_NOP    = 0,
+      ACT_APPEND = 1,
+      ACT_DELETE = 2,
+      ACT_PANEL  = 3,  // next panel
+      ACT_DONE   = 4
 };
 
 PanelCell GetPanelCell(Panel* cmp, int row, int col) {
@@ -55,59 +56,80 @@ PanelCell GetPanelCell(Panel* cmp, int row, int col) {
   return cmp->Cells[idx];
 }
 
+PanelCell CellsAllChars[] =
+  {
+   {"A", ACT_APPEND}, {"B",  ACT_APPEND}, {"C", ACT_APPEND}, {"D",  ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, 
+   {"H", ACT_APPEND}, {"I",  ACT_APPEND}, {"J", ACT_APPEND}, {"K",  ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, 
+   {"O", ACT_APPEND}, {"P",  ACT_APPEND}, {"Q", ACT_APPEND}, {"R",  ACT_APPEND}, {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, 
+   {"V", ACT_APPEND}, {"W",  ACT_APPEND}, {"X", ACT_APPEND}, {"Y",  ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
+   {"a", ACT_APPEND}, {"b",  ACT_APPEND}, {"c", ACT_APPEND}, {"d",  ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, 
+   {"h", ACT_APPEND}, {"i",  ACT_APPEND}, {"j", ACT_APPEND}, {"k",  ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, 
+   {"o", ACT_APPEND}, {"p",  ACT_APPEND}, {"q", ACT_APPEND}, {"r",  ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, 
+   {"v", ACT_APPEND}, {"w",  ACT_APPEND}, {"x", ACT_APPEND}, {"y",  ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
+   {"1", ACT_APPEND}, {"2",  ACT_APPEND}, {"3", ACT_APPEND}, {"4",  ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, 
+   {"8", ACT_APPEND}, {"9",  ACT_APPEND}, {"0", ACT_APPEND}, {"-",  ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, 
+   {"?", ACT_APPEND}, {"/",  ACT_APPEND}, {"~", ACT_APPEND}, {"#",  ACT_APPEND}, {"@", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
+   {"!", ACT_APPEND}, {"@",  ACT_APPEND}, {"#", ACT_APPEND}, {"$",  ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND}, 
+   {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")",  ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, 
+   {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, 
+   {"|", ACT_APPEND}, {"=",  ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
+  };
+
 PanelCell CellsUcaseLetters[] =
   {
-   {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {" OK",  ACT_DONE},
-   {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
+   {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND},
+   {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND},
+   {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND},
+   {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND},
   };
 
 PanelCell CellsLcaseLetters[] =
   {
-   {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {" OK",  ACT_DONE},
-   {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
+   {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND},
+   {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND},
+   {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND},
+   {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND},
   };
 
 PanelCell CellsNumbersAndSpecialChars[] =
   {
-   {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"@", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" OK",  ACT_DONE},
+   {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND},
+   {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND},
+   {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"@", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND},
   };
 
 PanelCell CellsRemainingSpecialChars[] =
   {
-   {"!", ACT_APPEND}, {"@", ACT_APPEND},  {"#", ACT_APPEND}, {"$",  ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")",  ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {" OK",  ACT_DONE},
-   {"|", ACT_APPEND}, {"=", ACT_APPEND},  {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
+   {"!", ACT_APPEND}, {"@", ACT_APPEND},  {"#", ACT_APPEND}, {"$",  ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND},
+   {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")",  ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND},
+   {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND},
+   {"|", ACT_APPEND}, {"=", ACT_APPEND},  {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND},
   };
 
 PanelCell CellsWifiSelect[] =
   {
-   {"AnkiRobits",      ACT_DONE}, 
-   {"Anki5Ghz",        ACT_DONE}, 
-   {"AnkiGuest",       ACT_DONE}, 
-   {"BeagleBone-EDB1", ACT_DONE}, 
-   {"SFWireless",      ACT_DONE}, 
-   {"VectorWifi",      ACT_DONE}, 
-   {"wireless",        ACT_DONE}, 
-   {"wireless-2",      ACT_DONE}, 
-   {"wireless-3",      ACT_DONE}, 
+   {"AnkiRobits", ACT_DONE}, 
+   {"Anki5Ghz",   ACT_DONE}, 
+   {"AnkiGuest",  ACT_DONE}, 
+   {"BeagleBone", ACT_DONE}, 
+   {"SFWireless", ACT_DONE}, 
+   {"VectorWifi", ACT_DONE}, 
+   {"wireless",   ACT_DONE}, 
+   {"wireless-2", ACT_DONE}, 
+   {"wireless-3", ACT_DONE}, 
   };
 
-Panel kPanelUcaseLetters           = {4, 8, CellsUcaseLetters};
-Panel kPanelLcaseLetters           = {4, 8, CellsLcaseLetters};
-Panel kPanelNumbersAndSpecialChars = {3, 8, CellsNumbersAndSpecialChars};
-Panel kPanelRemainingSpecialChars  = {4, 8, CellsRemainingSpecialChars};
-Panel kPanelWifiSelect             = {8, 1, CellsWifiSelect};
+Panel kPanelAllChars               = {15, 7, CellsAllChars};
+Panel kPanelUcaseLetters           = {4,  7, CellsUcaseLetters};
+Panel kPanelLcaseLetters           = {4,  7, CellsLcaseLetters};
+Panel kPanelNumbersAndSpecialChars = {3,  7, CellsNumbersAndSpecialChars};
+Panel kPanelRemainingSpecialChars  = {4,  7, CellsRemainingSpecialChars};
+Panel kPanelWifiSelect             = {8,  1, CellsWifiSelect};
 
 
 Panel* PasswordEntryPanels[] =
   {
+   &kPanelAllChars,
    &kPanelUcaseLetters,
    &kPanelLcaseLetters,
    &kPanelNumbersAndSpecialChars,
@@ -284,16 +306,29 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     } else {
       _dirHoldCount[dir]++;
       if (_dirCountEventMap[_dirHoldCount[dir]]) {
-        NewDirEvent(dir, panel->NumRows-1, panel->NumCols-1);
+        NewDirEvent(dir, panel->NumRows-1, panel->NumCols);
+        // Note: (col == NumCols) is for "nav column" on right-hand-side
       }
     }
 
     //if(GetBEI().GetCubeInteractionTracker().GetTargetStatus().tappedDuringLastTick) {
     if (newButtonEvent) {
-      PanelCell pc = GetPanelCell(panel, _row, _col);
-      switch (pc.Action) {
+      string text   = "";   
+      int    action = ACT_NOP; 
+      if (_col < panel->NumCols) {
+        PanelCell pc = GetPanelCell(panel, _row, _col);
+        text   = pc.Text;
+        action = pc.Action;
+      } else {
+        switch (_row - _firstScreenRow) {
+        case 1: action = ACT_DELETE; break;
+        case 2: action = ACT_DONE;   break;
+        }
+      }
+
+      switch (action) {
       case ACT_APPEND:
-        _userText += pc.Text;
+        _userText += text;
         break;
       case ACT_DELETE:
         if (_userText.length() > 0) {
@@ -367,7 +402,26 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       }
     }
 
-    // TODO: super-impose scroll info on right-hand-side
+    // Add a navigation column on the right side
+    for(int roffset = 0; roffset < 4; roffset++) {
+      int r = _firstScreenRow + roffset;
+      int c = 7;
+      string t = " .";
+      switch (roffset) {
+      case 0: if (_firstScreenRow > 0)                                 { t = " ^"; } break;
+      case 1:                                                            t = "Del";  break;
+      case 2:                                                            t = "OK";   break;
+      case 3: if ((_firstScreenRow + kNumSelectRows) < panel->NumRows) { t = " v"; } break;
+      }
+      Point2f p = Point2f((float(c)         * kTextHorzSpace),
+                          (float(roffset+1) * kTextVertSpace) + kSelectRowStart);
+
+      auto color = NamedColors::RED;
+      if ((r == _row) && (c == _col)) {
+        color = NamedColors::WHITE;
+      }
+      _dVars.image.DrawText(p, t, color, kSelectTextScale);
+    }
 
     GetBEI().GetAnimationComponent().DisplayFaceImage(_dVars.image, 1.0f, true);
   }
