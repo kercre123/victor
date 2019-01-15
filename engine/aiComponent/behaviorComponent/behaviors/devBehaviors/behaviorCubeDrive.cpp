@@ -42,11 +42,18 @@ namespace {
 };
 
 enum {
-      ACT_NOP    = 0,
-      ACT_APPEND = 1,
-      ACT_DELETE = 2,
-      ACT_PANEL  = 3,  // next panel
-      ACT_DONE   = 4
+      ACT_NOP    = 0, 
+      ACT_APPEND = 1, 
+      ACT_DELETE = 2, 
+      ACT_PANEL  = 3, // next panel 
+      ACT_DONE   = 4  
+};
+
+enum {
+      CTRL_45_REG = 0, 
+      CTRL_45_INV = 1, 
+      CTRL_HORZ   = 2, 
+      NUM_CTRL    = 3,
 };
 
 PanelCell GetPanelCell(Panel* cmp, int row, int col) {
@@ -106,15 +113,17 @@ PanelCell CellsRemainingSpecialChars[] =
 
 PanelCell CellsWifiSelect[] =
   {
-   {"AnkiRobits", ACT_DONE}, 
-   {"Anki5Ghz",   ACT_DONE}, 
-   {"AnkiGuest",  ACT_DONE}, 
-   {"BeagleBone", ACT_DONE}, 
-   {"SFWireless", ACT_DONE}, 
-   {"VectorWifi", ACT_DONE}, 
-   {"wireless",   ACT_DONE}, 
-   {"wireless-2", ACT_DONE}, 
-   {"wireless-3", ACT_DONE}, 
+   {"Ctrl-45-Reg", ACT_DONE}, 
+   {"Ctrl-45-Inv", ACT_DONE}, 
+   {"Ctrl-Horz",   ACT_DONE}, 
+   {"AnkiRobits",  ACT_DONE}, 
+   {"Anki5Ghz",    ACT_DONE}, 
+   {"AnkiGuest",   ACT_DONE}, 
+   {"BeagleBone",  ACT_DONE}, 
+   {"SFWireless",  ACT_DONE}, 
+   {"wireless",    ACT_DONE}, 
+   {"wireless-2",  ACT_DONE}, 
+   {"wireless-3",  ACT_DONE}, 
   };
 
 //                                    r   c  PanelCell[]                  IsSelectMenu
@@ -123,7 +132,7 @@ Panel kPanelUcaseLetters           = {4,  7, CellsUcaseLetters,           false}
 Panel kPanelLcaseLetters           = {4,  7, CellsLcaseLetters,           false}; 
 Panel kPanelNumbersAndSpecialChars = {3,  7, CellsNumbersAndSpecialChars, false}; 
 Panel kPanelRemainingSpecialChars  = {4,  7, CellsRemainingSpecialChars,  false}; 
-Panel kPanelWifiSelect             = {9,  1, CellsWifiSelect,             true};  
+Panel kPanelWifiSelect             = {11, 1, CellsWifiSelect,             true};  
 
 
 Panel* PasswordEntryPanels[] =
@@ -253,6 +262,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dVars = DynamicVariables();
   _buttonPressed = false;
 
+  _controlScheme  = CTRL_45_REG;
   _panelSet       = &WifiSelect;
   _currPanel      = 0;
   _promptText     = kWifiSelectPrompt;
@@ -300,11 +310,17 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     } else {
       xGs = 0.0;
     }
-    if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
-    if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
-    if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
-    if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
-
+    if (_controlScheme == CTRL_45_INV) {
+      if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+      if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+      if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
+      if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
+    } else { // CTRL_45_REG
+      if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+      if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+      if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
+      if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
+    }
 
     Panel* panel = _panelSet->Panels[_currPanel];
 
@@ -371,18 +387,22 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         break;
       case ACT_DONE:
         // XXX: lightweight on-boarding flow = toggle between Wifi Select and Password Entry
+        if (_promptText != kPasswordEntryPrompt) {
+          if (_row < NUM_CTRL) {
+            // XXX: Terrible hack to change control scheme while running
+            _controlScheme = _row;
+          }
+          _panelSet      = &PasswordEntry;
+          _promptText    = kPasswordEntryPrompt;
+        } else {
+          _panelSet      = &WifiSelect;
+          _promptText    = kWifiSelectPrompt;
+        }
         _userText       = "";
         _row            = 0;
         _col            = 0;
         _currPanel      = 0;
         _firstScreenRow = 0;
-        if (_promptText != kPasswordEntryPrompt) {
-          _panelSet   = &PasswordEntry;
-          _promptText = kPasswordEntryPrompt;
-        } else {
-          _panelSet   = &WifiSelect;
-          _promptText = kWifiSelectPrompt;
-        }
         break;
       }
     }

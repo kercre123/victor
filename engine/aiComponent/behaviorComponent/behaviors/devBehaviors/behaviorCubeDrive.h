@@ -92,6 +92,7 @@ private:
   bool _liftIsUp;
   bool _buttonPressed;
 
+  int  _controlScheme;
   PanelSet*   _panelSet;
   std::string _promptText;
   std::string _userText;
