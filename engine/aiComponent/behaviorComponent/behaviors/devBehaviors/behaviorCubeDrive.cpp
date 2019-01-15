@@ -95,8 +95,9 @@ PanelCell CellsDone[] =
 PanelCell CellsWifiSelect[] =
   {
    {"AnkiRobits",      ACT_NEXT}, 
+   {"Anki5Ghz",        ACT_NEXT}, 
    {"BeagleBone-EDB1", ACT_NEXT}, 
-   {"SFWireless",      ACT_PREV}, 
+   {"SFWireless",      ACT_NEXT}, 
   };
 
 Panel kPanelUcaseLetters           = {4, 8, CellsUcaseLetters};
@@ -104,7 +105,7 @@ Panel kPanelLcaseLetters           = {4, 8, CellsLcaseLetters};
 Panel kPanelNumbersAndSpecialChars = {3, 8, CellsNumbersAndSpecialChars};
 Panel kPanelRemainingSpecialChars  = {4, 8, CellsRemainingSpecialChars};
 Panel kPanelDone                   = {2, 1, CellsDone};
-Panel kPanelWifiSelect             = {3, 1, CellsWifiSelect};
+Panel kPanelWifiSelect             = {4, 1, CellsWifiSelect};
 
 
 Panel* PasswordEntryPanels[] =
