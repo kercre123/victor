@@ -990,6 +990,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       _lastMsgTimestamp
     );
 
+    static bool reset = true;
+    if ( reset ) { GetImuComponent().ResetUKF( this->GetPose().GetRotation() ); }
+    reset = false;
+
     Point3f robotPt = this->GetPose().GetTranslation();    
     Rotation3d headRot(msg.headAngle, Y_AXIS_3D());
     // Pose3d pose(GetImuComponent().GetRotation(), robotPt + Point3f{0.f, 0.f, 15.f});

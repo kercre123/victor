@@ -76,26 +76,8 @@ namespace {
     return {qt, meanVel};
   }
 
-  // given a mean and covariance matrix, generate a set of sigma points that represent this distribution
-  std::array<ImuUKF::State,12> GetSigmaPoints(const ImuUKF::State& mean, const SmallSquareMatrix<6,float>& cov)
-  {
-    // sample the covariance, generating the set {𝑊ᵢ} and add the mean
-    const auto S = Cholesky( cov ) * sqrtf(StateDim);
-    std::array<ImuUKF::State,12> sigma;
-    for (int i = 0; i < StateDim; ++i) {
-      const auto Si = S.GetColumn(i);
-      sigma[i].rotation = mean.rotation * ErrorToQuat({Si[0], Si[1], Si[2]}); 
-      sigma[i].velocity = mean.velocity + Point3f{Si[3], Si[4], Si[5]};
-
-      sigma[i + StateDim].rotation = mean.rotation * ErrorToQuat({-Si[0], -Si[1], -Si[2]}); 
-      sigma[i + StateDim].velocity = mean.velocity - Point3f{Si[3], Si[4], Si[5]};
-    }
-    return sigma;
-  }
-
-  
-  template<MatDimType M, MatDimType N>
-  SmallSquareMatrix<M,float> GetCovariance(const SmallMatrix<M,N,float>& A, const SmallMatrix<N,M,float>& B) {
+  template<MatDimType M, MatDimType N, MatDimType O>
+  SmallMatrix<M,O,float> GetCovariance(const SmallMatrix<M,N,float>& A, const SmallMatrix<N,O,float>& B) {
     return (A*B) * (1.f/((float)N));
   }
   
@@ -109,50 +91,69 @@ namespace {
 // UKF Implementation
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImuUKF::ImuUKF()
-: _Q{{  100.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-        0.f, 100.f, 0.f, 0.f, 0.f, 0.f,
-        0.f, 0.f, 100.f, 0.f, 0.f, 0.f,
-        0.f, 0.f, 0.f, .01f, 0.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, .01f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 0.f, .01f
-      }} // Process Uncertainty
-, _R{{  .1f, 0.f, 0.f, 0.f, 0.f, 0.f,
+: _P{{  .1f, 0.f, 0.f, 0.f, 0.f, 0.f,
         0.f, .1f, 0.f, 0.f, 0.f, 0.f,
         0.f, 0.f, .1f, 0.f, 0.f, 0.f,
+        0.f, 0.f, 0.f, .1f, 0.f, 0.f,
+        0.f, 0.f, 0.f, 0.f, .1f, 0.f,
+        0.f, 0.f, 0.f, 0.f, 0.f, .1f
+  }}
+, _Q{{  0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+        0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+        0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+        0.f, 0.f, 0.f, .1f, 0.f, 0.f,
+        0.f, 0.f, 0.f, 0.f, .1f, 0.f,
+        0.f, 0.f, 0.f, 0.f, 0.f, .1f
+      }} // Process Uncertainty
+, _R{{  .25f, 0.f, 0.f, 0.f, 0.f, 0.f,
+        0.f, .25f, 0.f, 0.f, 0.f, 0.f,
+        0.f, 0.f, .25f, 0.f, 0.f, 0.f,
         0.f, 0.f, 0.f, .01f, 0.f, 0.f,
         0.f, 0.f, 0.f, 0.f, .01f, 0.f,
         0.f, 0.f, 0.f, 0.f, 0.f, .01f
       }} // Measurement Uncertainty
 {}
 
+void ImuUKF::Reset(const Rotation3d& rot) {
+  _state = {rot, Point3f()};
+  _P = SmallSquareMatrix<6,float> {{
+    .1f, 0.f, 0.f, 0.f, 0.f, 0.f,
+    0.f, .1f, 0.f, 0.f, 0.f, 0.f,
+    0.f, 0.f, .1f, 0.f, 0.f, 0.f,
+    0.f, 0.f, 0.f, .1f, 0.f, 0.f,
+    0.f, 0.f, 0.f, 0.f, .1f, 0.f,
+    0.f, 0.f, 0.f, 0.f, 0.f, .1f
+  }};
+}
+
 void ImuUKF::Update(const Point3f& accel, const Point3f& gyro, RobotTimeStamp_t t_ms)
 {
-  float dt_s = (_lastMeasurement_ms == 0) ? 0.f : ((float)(t_ms - _lastMeasurement_ms)) / 1000;
+  if (_lastMeasurement_ms != 0) {
+    // normalize accel since we assume a unit gravity vector
+    ProcessUpdate( static_cast<float>(t_ms - _lastMeasurement_ms) / 1000 );
+    MeasurementUpdate( Concatenate(accel * (1.f/accel.Length()), gyro) );
+  }
   _lastMeasurement_ms = t_ms;
-
-  ProcessUpdate(dt_s);
-
-  // this code assumes +z is down, while in the robot frame it is up...
-  Point3f rotAcc = Rotation3d(0, Y_AXIS_3D()) * accel;
-  rotAcc.MakeUnitLength();
-
-  // normalize accel since we assume a unit gravity vector
-  MeasurementUpdate( Concatenate(rotAcc, gyro) );
 }
 
 void ImuUKF::ProcessUpdate(float dt_s)
 { 
-  // current process model assumes we continue moving at constant velocity
-  _Y = GetSigmaPoints(_state, _P + _Q);
-  for (auto& y : _Y) {
-    y.rotation *= ErrorToQuat(y.velocity * dt_s);
+  // sample the covariance, generating the set {𝑊ᵢ} and add the mean
+  const auto S = Cholesky( SmallSquareMatrix<6,float>{_P + _Q} ) * sqrtf(StateDim);
+  for (int i = 0; i < StateDim; ++i) {
+    const auto Si = S.GetColumn(i);
+
+    // current process model assumes we continue moving at constant velocity
+    _Y[i].velocity = _state.velocity + Point3f{Si[3], Si[4], Si[5]};
+    _Y[i].rotation = _state.rotation * ErrorToQuat({Si[0], Si[1], Si[2]}) * ErrorToQuat(_Y[i].velocity * dt_s); 
+
+    _Y[i + StateDim].velocity = _state.velocity - Point3f{Si[3], Si[4], Si[5]};
+    _Y[i + StateDim].rotation = _state.rotation * ErrorToQuat({-Si[0], -Si[1], -Si[2]}) * ErrorToQuat(_Y[i + StateDim].velocity * dt_s); 
   }
   _state = CalculateMean(_Y);
 
   // Calculate Process Noise by mean centering Y
   for (int i = 0; i < 2*StateDim; ++i) {
-    // something weird here:  this should be Yi * _state.Inv
-    // const auto err = QuaternionToError( _Y[i].rotation * _state.rotation.GetInverse() );
     const auto err = QuaternionToError( _state.rotation.GetInverse() * _Y[i].rotation );
     const auto omega = _Y[i].velocity - _state.velocity;
     _W.SetColumn(i, Concatenate(err, omega));
@@ -166,11 +167,8 @@ void ImuUKF::MeasurementUpdate(const Point<6,float>& measurement)
   // Calculate Predicted Measurement Distribution {Zᵢ}
   SmallMatrix<6,12,float> Z;
   const Point3f kGravity(0.f, 0.f, 1.f);
-  // const UnitQuaternion kGravity(0.f, 0.f, 0.f, 1.f);
   for (int i = 0; i < 2*StateDim; ++i) {
-    // something weird here:  this should be Yi * kGravity
     Z.SetColumn(i, Concatenate(_Y[i].rotation.GetInverse() * kGravity, _Y[i].velocity));
-    // Z.SetColumn(i, Concatenate(_Y[i].rotation * kGravity, _Y[i].velocity));
   }
 
   // mean center {Zᵢ}

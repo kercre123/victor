@@ -34,6 +34,8 @@ public:
   // Measurement Model Update
   void Update(const Point3f& accel, const Point3f& gyro, RobotTimeStamp_t t);
 
+  void Reset(const Rotation3d& rot);
+
   inline Rotation3d GetRotation() const { return _state.rotation; }
 
   // rotation quaternion plus rotational velocity: [q0,q1,q2,q3,⍵1,⍵2,⍵3]
@@ -53,7 +55,6 @@ private:
 
   // update state according to measurement and decrease uncertainty
   void MeasurementUpdate(const Point<6,float>& measurement);
-
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // UKF Variables

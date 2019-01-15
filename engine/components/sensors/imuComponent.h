@@ -108,9 +108,8 @@ public:
     // LOG_WARNING("UKF.Data","acc:%s  gyro:%s", accel.ToString().c_str(), gyro.ToString().c_str());
   }
 
-  Rotation3d GetRotation() {
-    return _ukf.GetRotation();
-  }
+  Rotation3d GetRotation() { return _ukf.GetRotation(); }
+  void ResetUKF(const Rotation3d& rot) { _ukf.Reset(rot); };
   
   //////
   // IDependencyManagedComponent functions
