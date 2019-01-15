@@ -36,9 +36,11 @@ namespace {
   CONSOLE_VAR_RANGED(float, kMinCentsSlider_Hz, "Chirps", -500.0f, -10000.0f, 0.0f);
   CONSOLE_VAR_RANGED(float, kMaxCentsSlider_Hz, "Chirps", 500.0f, 0.0f, 10000.0f);
   
-  const bool kRTPCIsCents = false; // true if cents, false if pich
+  const bool kRTPCIsCents = false; // true if cents, false if pitch
   CONSOLE_VAR_RANGED(float, kMinPitchSlider_Hz, "Chirps", 440, 0.F, 5000.0F);
   CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps", 1760, 0.0f, 5000.0f);
+  
+  CONSOLE_VAR_ENUM(int, kSwitchType, "Chirps", 0, "TONEGEN,ASSETS");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -147,6 +149,18 @@ void Sequencer::AddChirpInternal( const Chirp& chirp )
 void Sequencer::Update()
 {
   
+  static int lastSwitch = -1;
+  if( _audioController != nullptr ) {
+    const auto switchType = (kSwitchType == 0)
+          ? AudioMetaData::SwitchState::Vic_Robot_Sfx_Rnd_Chirps_Content_Select::Tonegen
+          : AudioMetaData::SwitchState::Vic_Robot_Sfx_Rnd_Chirps_Content_Select::Assets;
+    using namespace AudioEngine;
+    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Procedural );
+    _audioController->SetSwitchState( ToAudioSwitchGroupId( AudioMetaData::SwitchState::SwitchGroupType::Vic_Robot_Sfx_Rnd_Chirps_Content_Select ),
+                                      ToAudioSwitchStateId( (AudioMetaData::SwitchState::GenericSwitch) switchType ),
+                                      gameObject );
+    lastSwitch = kSwitchType;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
