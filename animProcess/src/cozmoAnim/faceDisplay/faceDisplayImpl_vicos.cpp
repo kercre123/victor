@@ -17,7 +17,7 @@
 
 #include "util/logging/logging.h"
 
-#define WORKING_LCD 0
+#define WORKING_LCD 1
 
 namespace Anki {
 namespace Cozmo {
