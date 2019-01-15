@@ -4,7 +4,7 @@
 
   "associatedActiveFeature": "NoFeature",
 
-  "initialState": "StartDemo",
+  "initialState": "PersonDetector",
 
   "states": [
     {
