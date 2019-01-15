@@ -103,12 +103,22 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		return nil, err
 	}
 
+	var modes []pb.ImageMode
+	for _, m := range msg.ProcTypes {
+		switch m {
+		// todo: other image modes, once added to CLAD
+		case vision.OffboardProcType_SceneDescription:
+			modes = append(modes, pb.ImageMode_DESCRIBE_SCENE)
+		}
+	}
+
 	sessionID := uuid.New().String()[:16]
 	r := &pb.ImageRequest{
 		Session:   sessionID,
 		DeviceId:  deviceID,
 		Lang:      "en",
 		ImageData: fileData,
+		Modes:     modes,
 	}
 
 	client := pb.NewChipperGrpcClient(rpcConn)
