@@ -9,6 +9,8 @@ import (
 	"context"
 	"time"
 
+	aot "anki/opentracing"
+
 	pb "github.com/anki/sai-token-service/proto/tokenpb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -48,7 +50,7 @@ func (q *tokenQueue) handleRequest(req *request) error {
 	var resp *cloud.TokenResponse
 	switch req.m.Tag() {
 	case cloud.TokenRequestTag_Auth:
-		resp, err = q.handleAuthRequest(req.m.GetAuth().SessionToken)
+		resp, err = q.handleAuthRequest(req.m.GetAuth())
 	case cloud.TokenRequestTag_Secondary:
 		resp, err = q.handleSecondaryAuthRequest(req.m.GetSecondary())
 	case cloud.TokenRequestTag_Reassociate:
@@ -78,6 +80,8 @@ func (q *tokenQueue) getConnection(creds credentials.PerRPCCredentials) (*conn, 
 // generate a CLAD response for token requests no matter what, and those responses
 // should indicate the stage of the request where an error occurred
 func (q *tokenQueue) handleJwtRequest(req *cloud.JwtRequest) (*cloud.TokenResponse, error) {
+	ctx := aot.ContextFromCladSpan("tokenQueue.handleJwtRequest", req.SpanContext)
+
 	existing := q.identityProvider.GetToken()
 	errorResp := func(code cloud.TokenError) *cloud.TokenResponse {
 		return cloud.NewTokenResponseWithJwt(&cloud.JwtResponse{Error: code})
@@ -92,7 +96,7 @@ func (q *tokenQueue) handleJwtRequest(req *cloud.JwtRequest) (*cloud.TokenRespon
 				return errorResp(cloud.TokenError_Connection), err
 			}
 			defer c.Close()
-			bundle, err := c.refreshJwtToken()
+			bundle, err := c.refreshJwtToken(ctx)
 			if err != nil {
 				return errorResp(cloud.TokenError_Connection), err
 			}
@@ -120,15 +124,20 @@ func sessionMetadata(sessionToken string) credentials.PerRPCCredentials {
 	return metadata
 }
 
-func (q *tokenQueue) handleAuthRequest(session string) (*cloud.TokenResponse, error) {
+func (q *tokenQueue) handleAuthRequest(req *cloud.AuthRequest) (*cloud.TokenResponse, error) {
+	ctx := aot.ContextFromCladSpan("tokenQueue.handleAuthRequest", req.SpanContext)
+
+	session := req.SessionToken
 	metadata := sessionMetadata(session)
 	requester := func(c *conn) (*pb.TokenBundle, error) {
-		return c.associatePrimary(session)
+		return c.associatePrimary(ctx, session)
 	}
 	return q.authRequester(metadata, requester, true)
 }
 
 func (q *tokenQueue) handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenResponse, error) {
+	ctx := aot.ContextFromCladSpan("tokenQueue.handleSecondaryAuthRequest", req.SpanContext)
+
 	existing := q.identityProvider.GetToken()
 	if existing == nil {
 		return authErrorResp(cloud.TokenError_NullToken), nil
@@ -136,15 +145,17 @@ func (q *tokenQueue) handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest)
 
 	metadata := tokenMetadata(existing.String())
 	requester := func(c *conn) (*pb.TokenBundle, error) {
-		return c.associateSecondary(req.SessionToken, req.ClientName, req.AppId)
+		return c.associateSecondary(ctx, req.SessionToken, req.ClientName, req.AppId)
 	}
 	return q.authRequester(metadata, requester, false)
 }
 
 func (q *tokenQueue) handleReassociateRequest(req *cloud.ReassociateRequest) (*cloud.TokenResponse, error) {
+	ctx := aot.ContextFromCladSpan("tokenQueue.handleReassociateRequest", req.SpanContext)
+
 	metadata := sessionMetadata(req.SessionToken)
 	requester := func(c *conn) (*pb.TokenBundle, error) {
-		return c.reassociatePrimary(req.ClientName, req.AppId)
+		return c.reassociatePrimary(ctx, req.ClientName, req.AppId)
 	}
 	return q.authRequester(metadata, requester, false)
 }

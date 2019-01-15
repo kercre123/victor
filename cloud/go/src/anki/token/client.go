@@ -34,57 +34,57 @@ func newConn(identityProvider identity.Provider, serverURL string, creds credent
 	return ret, nil
 }
 
-func (c *conn) associatePrimary(session string) (*pb.TokenBundle, error) {
+func (c *conn) associatePrimary(ctx context.Context, session string) (*pb.TokenBundle, error) {
 	req := pb.AssociatePrimaryUserRequest{}
 	cert, err := ioutil.ReadFile(robot.GatewayCert)
 	if err != nil {
 		return nil, err
 	}
 	req.SessionCertificate = cert
-	response, err := c.client.AssociatePrimaryUser(context.Background(), &req)
+	response, err := c.client.AssociatePrimaryUser(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
 	return response.Data, nil
 }
 
-func (c *conn) associateSecondary(session, clientName, appID string) (*pb.TokenBundle, error) {
+func (c *conn) associateSecondary(ctx context.Context, session, clientName, appID string) (*pb.TokenBundle, error) {
 	req := pb.AssociateSecondaryClientRequest{
 		UserSession: session,
 		ClientName:  clientName,
 		AppId:       appID}
-	response, err := c.client.AssociateSecondaryClient(context.Background(), &req)
+	response, err := c.client.AssociateSecondaryClient(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
 	return response.Data, nil
 }
 
-func (c *conn) reassociatePrimary(clientName, appID string) (*pb.TokenBundle, error) {
+func (c *conn) reassociatePrimary(ctx context.Context, clientName, appID string) (*pb.TokenBundle, error) {
 	req := pb.ReassociatePrimaryUserRequest{
 		ClientName: clientName,
 		AppId:      appID}
-	response, err := c.client.ReassociatePrimaryUser(context.Background(), &req)
+	response, err := c.client.ReassociatePrimaryUser(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
 	return response.Data, nil
 }
 
-func (c *conn) refreshToken(req pb.RefreshTokenRequest) (*pb.TokenBundle, error) {
-	response, err := c.client.RefreshToken(context.Background(), &req)
+func (c *conn) refreshToken(ctx context.Context, req pb.RefreshTokenRequest) (*pb.TokenBundle, error) {
+	response, err := c.client.RefreshToken(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
 	return response.Data, nil
 }
 
-func (c *conn) refreshJwtToken() (*pb.TokenBundle, error) {
-	return c.refreshToken(pb.RefreshTokenRequest{RefreshJwtTokens: true})
+func (c *conn) refreshJwtToken(ctx context.Context) (*pb.TokenBundle, error) {
+	return c.refreshToken(ctx, pb.RefreshTokenRequest{RefreshJwtTokens: true})
 }
 
-func (c *conn) refreshStsCredentials() (*pb.TokenBundle, error) {
-	return c.refreshToken(pb.RefreshTokenRequest{RefreshStsTokens: true})
+func (c *conn) refreshStsCredentials(ctx context.Context) (*pb.TokenBundle, error) {
+	return c.refreshToken(ctx, pb.RefreshTokenRequest{RefreshStsTokens: true})
 }
 
 func (c *conn) Close() error {

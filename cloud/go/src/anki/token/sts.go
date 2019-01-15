@@ -3,6 +3,7 @@ package token
 import (
 	"anki/config"
 	"anki/log"
+	"context"
 	"time"
 
 	"github.com/anki/sai-go-util/testutils/testtime"
@@ -59,7 +60,7 @@ func (c *stsCredentialsCache) getStsCredentials(accessor Accessor) (*credentials
 	}
 	defer client.Close()
 
-	bundle, err := client.refreshStsCredentials()
+	bundle, err := client.refreshStsCredentials(context.Background())
 	if err != nil {
 		return nil, err
 	}

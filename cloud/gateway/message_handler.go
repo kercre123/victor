@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"anki/log"
+	aot "anki/opentracing"
 	"anki/robot/loguploader"
 	cloud_clad "clad/cloud"
 	gw_clad "clad/gateway"
@@ -1675,7 +1676,11 @@ func (service *rpcService) UserAuthentication(ctx context.Context, in *extint.Us
 		clientName = clientName[:64]
 	}
 
+	span, spanContextString := aot.StartCladSpanFromContext(ctx, "gw.UserAuthentication")
+	defer span.Finish()
+
 	switchboardManager.Write(gw_clad.NewSwitchboardRequestWithAuthRequest(&cloud_clad.AuthRequest{
+		SpanContext:  spanContextString,
 		SessionToken: string(in.UserSessionId),
 		ClientName:   clientName,
 		AppId:        "SDK",

@@ -10,6 +10,8 @@ enum uint_8 TokenError {
 }
 
 structure AuthRequest {
+	string spanContext,
+
 	string sessionToken,
 	string clientName,
 	string appId
@@ -22,18 +24,24 @@ structure AuthResponse {
 }
 
 structure ReassociateRequest {
+	string spanContext,
+
 	string sessionToken,
 	string clientName,
 	string appId,
 }
 
 structure SecondaryAuthRequest {
+	string spanContext,
+
 	string sessionToken,
 	string clientName,
 	string appId
 }
 
 structure JwtRequest {
+	string spanContext,
+
 	bool forceRefresh
 }
 

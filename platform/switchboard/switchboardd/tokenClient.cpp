@@ -16,6 +16,8 @@
 namespace Anki {
 namespace Switchboard {
 
+const std::string testCarrier = "Ei8J0gQAAAAAAAARlCYAAAAAAAAYASIZCgZzb3VyY2USD3Rva2VuQ2xpZW50LmNwcA==";
+
 uint8_t TokenClient::sMessageData[2048];
 
 TokenClient::TokenClient(struct ev_loop* evloop, std::shared_ptr<TaskExecutor> taskExecutor) : 
@@ -58,7 +60,7 @@ std::shared_ptr<TokenResponseHandle> TokenClient::SendAuthRequest(std::string se
     _authHandles.push(handle);
 
     Anki::Vector::TokenRequest tokenRequest =
-      Anki::Vector::TokenRequest(Anki::Vector::AuthRequest(sessionToken, clientName, appId));
+      Anki::Vector::TokenRequest(Anki::Vector::AuthRequest(testCarrier, sessionToken, clientName, appId));
 
     SendMessage(tokenRequest);
   });
@@ -75,7 +77,7 @@ std::shared_ptr<TokenResponseHandle> TokenClient::SendSecondaryAuthRequest(std::
     _authHandles.push(handle);
 
     Anki::Vector::TokenRequest tokenRequest = 
-      Anki::Vector::TokenRequest(Anki::Vector::SecondaryAuthRequest(sessionToken, clientName, appId));
+      Anki::Vector::TokenRequest(Anki::Vector::SecondaryAuthRequest(testCarrier, sessionToken, clientName, appId));
 
     SendMessage(tokenRequest);
   });
@@ -92,7 +94,7 @@ std::shared_ptr<TokenResponseHandle> TokenClient::SendReassociateAuthRequest(std
     _authHandles.push(handle);
 
     Anki::Vector::TokenRequest tokenRequest = 
-      Anki::Vector::TokenRequest(Anki::Vector::ReassociateRequest(sessionToken, clientName, appId));
+      Anki::Vector::TokenRequest(Anki::Vector::ReassociateRequest(testCarrier, sessionToken, clientName, appId));
 
     SendMessage(tokenRequest);
   });
