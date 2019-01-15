@@ -1,4 +1,3 @@
-
 //
 //  robot.cpp
 //  Products_Cozmo
@@ -9,6 +8,7 @@
 
 #include "engine/robot.h"
 #include "camera/cameraService.h"
+#include "whiskeyToF/tof.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
@@ -44,6 +44,7 @@
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -213,6 +214,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Carrying,                   new CarryingComponent());
     _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ProxSensor,                 new ProxSensorComponent());
+    _components->AddDependentComponent(RobotComponentID::RangeSensor,                new RangeSensorComponent());
     _components->AddDependentComponent(RobotComponentID::TouchSensor,                new TouchSensorComponent());
     _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
@@ -281,6 +283,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // This will create the AndroidHAL instance if it doesn't yet exist
   CameraService::getInstance();
+  ToFSensor::getInstance();
 
   END_DONT_RUN_AFTER_PACKOUT
   
@@ -892,7 +895,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   // Update sensor components:
   GetCliffSensorComponent().Update(msg);
-  GetProxSensorComponent().Update(msg);
+  //GetProxSensorComponent().Update(msg);
   GetTouchSensorComponent().Update(msg);
 
   // update current path segment in the path component
@@ -1283,6 +1286,7 @@ Result Robot::Update()
   BEGIN_DONT_RUN_AFTER_PACKOUT
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
+  ToFSensor::getInstance()->Update();
 
   UpdateStartupChecks();
   END_DONT_RUN_AFTER_PACKOUT
@@ -1312,6 +1316,8 @@ Result Robot::Update()
   */
 
   BEGIN_DONT_RUN_AFTER_PACKOUT
+
+  GetRangeSensorComponent().Update();
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
@@ -2964,6 +2970,31 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 
 Result Robot::UpdateStartupChecks()
 {
+  static bool rampostFileRead = false;
+  static bool rampostError = false;
+  if(!rampostFileRead)
+  {
+    rampostFileRead = true;
+    const Result res = Robot::CheckForRampostError();
+    if(res != RESULT_OK)
+    {
+      rampostError = true;
+      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);    
+    }
+  }
+
+  if(rampostError)
+  {
+    return RESULT_FAIL;
+  }
+  
+  bool tofCheckDone = false;
+  Result res = UpdateToFStartupChecks(tofCheckDone);
+  if(res != RESULT_OK)
+  {
+    return res;
+  }
+  
   enum State {
     FAILED = -1,
     WAITING,
@@ -3004,29 +3035,142 @@ Result Robot::UpdateStartupChecks()
       else
       {
         state = State::PASSED;
-
-        #if FACTORY_TEST
-        // Manually init AnimationComponent
-        // Normally it would init when we receive syncTime from robot process
-        // but since there might not be a body (robot process won't init)
-        // we need to do it here
-        GetAnimationComponent().Init();
-        
-        // Once we have gotten a frame from the camera play a sound to indicate 
-        // a "successful" boot
-        static bool playedSound = false;
-        if(!playedSound)
-        {
-          GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-          GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
-          playedSound = true;
-        }
-        #endif
       }
     }
   }
+
+  // Once the camera and tof startup checks are done (successful)
+  // Play a sound to indicate "successful" boot
+  static bool playedSound = false;
+  if(state == State::PASSED && tofCheckDone && !playedSound)
+  {
+    #if FACTORY_TEST
+    // Manually init AnimationComponent
+    // Normally it would init when we receive syncTime from robot process
+    // but since there might not be a body (robot process won't init)
+    // we need to do it here
+    GetAnimationComponent().Init();
+        
+    // Once we have gotten a frame from the camera play a sound to indicate 
+    // a "successful" boot
+    GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+    GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
+    playedSound = true;
+    #endif    
+  }
   
   return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
+Result Robot::UpdateToFStartupChecks(bool& isDone)
+{
+  isDone = false;
+  
+  enum class State
+  {
+   WaitingForCallback,
+   Setup,
+   StartRanging,
+   EndRanging,
+   Success,
+   Failure,
+  };
+  static State state = State::Setup;
+
+#define HANDLE_RESULT(res, nextState) {                                 \
+    if(res != ToFSensor::CommandResult::Success) {                      \
+      PRINT_NAMED_ERROR("Robot.UpdateToFStartupChecks.Fail", "State: %u", state); \
+      FaultCode::DisplayFaultCode(FaultCode::TOF_FAILURE);              \
+      state = State::Failure;                                           \
+    } else {                                                            \
+      state = nextState;                                                \
+    }                                                                   \
+  } 
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  static float startTime_sec = currentTime_sec;
+  
+  // If the ToF check has been running for more than 10 seconds assume failure
+  // This will handle failing should we not get any valid ROIs or for some reason
+  // one of the command callbacks is not called (never seen it happen but who knows...)
+  if((state != State::Failure && state != State::Success) &&
+     currentTime_sec - startTime_sec > 10.f)
+  {
+    HANDLE_RESULT(ToFSensor::CommandResult::Failure, State::Failure);
+  }
+  
+  switch(state)
+  {
+    case State::Setup:
+      {
+        state = State::WaitingForCallback;
+        ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
+                                               {
+                                                 HANDLE_RESULT(res, State::StartRanging);
+                                               });
+      }
+      break;
+
+    case State::StartRanging:
+      {
+        state = State::WaitingForCallback;
+        ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
+                                               {
+                                                 HANDLE_RESULT(res, State::EndRanging);
+                                               });
+      }
+      break;
+
+    case State::EndRanging:
+      {
+        bool isDataNew = false;
+        RangeDataRaw data = ToFSensor::getInstance()->GetData(isDataNew);
+        if(isDataNew)
+        {
+          bool atLeastOneValidRoi = false;
+          for(const auto& roiReading : data.data)
+          {
+            if(ToFSensor::getInstance()->IsValidRoiStatus(roiReading.roiStatus))
+            {
+              atLeastOneValidRoi = true;
+            }
+          }
+
+          if(atLeastOneValidRoi)
+          {
+            state = State::WaitingForCallback;
+            ToFSensor::getInstance()->StopRanging([](ToFSensor::CommandResult res)
+                                                  {
+                                                    PRINT_NAMED_INFO("Robot.UpdateToFStartupChecks.Success","");
+                                                    HANDLE_RESULT(res, State::Success);
+                                                  });
+          }
+        }
+      }
+      break;
+
+    case State::Success:
+      {
+        isDone = true;
+      }
+      // Intentional fallthrough
+    case State::WaitingForCallback:
+      {
+        return RESULT_OK;
+      }
+      break;
+
+    case State::Failure:
+      {
+        isDone = true;
+        return RESULT_FAIL;
+      }
+      break;
+  }
+
+  return RESULT_OK;
+  
+  #undef HANDLE_RESULT
 }
 
 void Robot::GetTouchSensorFiltResults(f32& min, f32& max, f32& stddev) const
@@ -3057,6 +3201,43 @@ void Robot::GetTouchSensorFiltResults(f32& min, f32& max, f32& stddev) const
   stddev = std::sqrt(sq_sum / _touchSensorFiltDeque.size());
 }
 
+Result Robot::CheckForRampostError()
+{
+  const std::string path = "/dev/rampost_error";
+  struct stat buffer;
+  int rc = stat(path.c_str(), &buffer);
+  if(rc == 0)
+  {
+    FILE* f = fopen(path.c_str(), "r");
+    if(f != nullptr)
+    {
+      char data[32] = {0};
+      rc = fread(data, sizeof(data), 1, f);
+      (void)fclose(f);
+      if(rc < 0)
+      {
+        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
+                          "Failed to read from rampost_error file %u %u",
+                          rc,
+                          errno);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
+      }
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
+                        "%d",
+                        rc);
+    }
+    
+    return RESULT_FAIL;
+  }
+
+  return RESULT_OK;
+}
 
 } // namespace Cozmo
 } // namespace Anki

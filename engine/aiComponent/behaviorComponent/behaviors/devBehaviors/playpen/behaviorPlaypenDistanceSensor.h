@@ -68,6 +68,13 @@ private:
 
   // The number of distance sensor readings left to record
   int        _numRecordedReadingsLeft     = -1;
+
+  bool _performCalibration = false;
+  bool _calibrationRunning = false;
+  bool _calibrationComplete = false;
+
+  float _visualDistanceToTarget_mm = 0;
+  float _visualAngleToTarget_rad = 0;
 };
 
 }

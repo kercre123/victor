@@ -43,7 +43,9 @@ enum : uint16_t {
   WIFI_HW_FAILURE       = 970, //local wifi hw checks only
   
   IMU_FAILURE           = 960,
-  
+
+  TOF_FAILURE           = 950,
+
   //critical processes
   SYSTEMD               = 919,
   NO_ROBOT_PROCESS      = 917,
@@ -54,6 +56,8 @@ enum : uint16_t {
   //Body and external errors
   NO_BODY               = 899, //no response from syscon
 
+  RAMPOST_ERROR         = 897,
+  
   //Sensor Errors
   TOUCH_SENSOR          = 895,
   TOF                   = 894,
@@ -81,6 +85,8 @@ enum : uint16_t {
 // from the fifo
 static int DisplayFaultCode(uint16_t code)
 {
+  printf("DisplayFaultCode: %u\n", code);
+  
   // If the fifo doesn't exist create it
   if(access(FaultCode::kFaultCodeFifoName, F_OK) == -1)
   {

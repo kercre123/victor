@@ -23,6 +23,7 @@
 #include "coretech/common/engine/math/point.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/tofDisplayTypes.h"
 
 #include "util/singleton/dynamicSingleton.h"
 
@@ -88,9 +89,13 @@ public:
                            bool triggerRecognized);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
+
+  void DrawToF(const RangeDataDisplay& data);
   
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
+
+  void SetSysconVersion(const std::string& version) { _sysconVersion = version; }
 
 private:
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
@@ -172,6 +177,8 @@ private:
   WebService::WebService* _webService;
   
   bool _drawFAC = false;
+
+  std::string _sysconVersion = "";
   
   // Reboot Linux
   void Reboot();

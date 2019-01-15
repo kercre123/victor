@@ -34,6 +34,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
+#include "clad/types/tofTypes.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
@@ -357,6 +358,10 @@ void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
+void Process_rangeDataToDisplay(const Anki::Cozmo::RobotInterface::RangeDataToDisplay& msg)
+{
+  FaceInfoScreenManager::getInstance()->DrawToF(msg.data);
+}
 
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
@@ -447,6 +452,12 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     case RobotInterface::RobotToEngine::Tag_state:
     {
       HandleRobotStateUpdate(msg.state);
+    }
+    break;
+    case RobotInterface::RobotToEngine::Tag_syncTimeAck:
+    {
+      std::string version((const char*)&msg.syncTimeAck.sysconVersion, 16);
+      FaceInfoScreenManager::getInstance()->SetSysconVersion(version);
     }
     break;
     default:

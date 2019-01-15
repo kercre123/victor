@@ -111,8 +111,8 @@ namespace Anki {
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
-        robotState_.proxData = ProxSensors::GetProxData();
-        
+        //robotState_.proxData = ProxSensors::GetProxData();
+
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
         robotState_.backpackTouchSensorFilt = HAL::GetTouchSensorFilt();
         
@@ -245,7 +245,9 @@ namespace Anki {
               IMUFilter::IsBiasFilterComplete() &&
               LiftController::IsCalibrated() &&
               HeadController::IsCalibrated()) {
+
             RobotInterface::SyncTimeAck syncTimeAckMsg;
+            memcpy(&syncTimeAckMsg.sysconVersion, HAL::GetSysconVersionInfo(), 16);
             while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
             syncTimeAckSent_ = true;
 

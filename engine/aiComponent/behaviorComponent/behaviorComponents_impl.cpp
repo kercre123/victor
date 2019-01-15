@@ -36,6 +36,7 @@ class FaceWorld;
 class BEIRobotInfo;
 class BaseBehaviorWrapper;
 class UserIntentComponent;
+class RangeSensorComponent;
 
 } // namespace Cozmo
 
@@ -74,5 +75,4 @@ template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BaseBehaviorWrapper>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BaseBehaviorWrapper;}
 template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::UserIntentComponent>(Cozmo::BCComponentID& enumToSet){enumToSet = Cozmo::BCComponentID::UserIntentComponent;}
-
 } // namespace Anki

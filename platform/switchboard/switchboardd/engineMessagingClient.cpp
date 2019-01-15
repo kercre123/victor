@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
+#include <iomanip>
 #include "anki-ble/log.h"
 #include "anki-wifi/wifi.h"
 #include "switchboardd/engineMessagingClient.h"
@@ -102,6 +103,21 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
         wData->client->HandleWifiScanRequest();
       }
         break;
+      case EMessageTag::WifiConnectRequest:
+      {
+        EMessage message;
+        uint16_t msgSize = *(uint16_t*)sMessageData;
+        size_t unpackedSize = message.Unpack(msgPayload, msgSize);
+
+        if(unpackedSize != (size_t)msgSize) {
+          Log::Error("Received message from engine but had mismatch size when unpacked.");
+          continue;
+        } 
+
+        // Handle request to Run WiFi scan
+        wData->client->HandleWifiConnectRequest(message.Get_WifiConnectRequest().ssid);
+      }
+        break;
       default:
         break;
     }
@@ -120,6 +136,65 @@ void EngineMessagingClient::HandleWifiScanRequest() {
 
   Log::Write("Sending wifi scan results.");
   SendMessage(GMessage::CreateWifiScanResponse(std::move(rsp)));
+}
+
+void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid) {
+  std::stringstream ss;
+  for(char c : ssid)
+  {
+    ss << std::hex << std::setfill('0') << std::setw(2) << (int)c;
+  }
+  const std::string ssidHex = ss.str();
+  Log::Write("%s %s", ssid.c_str(), ssidHex.c_str());
+
+  Anki::Cozmo::SwitchboardInterface::WifiConnectResponse rcp;
+  rcp.status_code = 255;
+    
+  std::vector<Anki::WiFiScanResult> wifiResults;
+  Anki::WifiScanErrorCode code = Anki::ScanForWiFiAccessPoints(wifiResults);
+  
+  if(code == Anki::WifiScanErrorCode::SUCCESS)
+  {
+    bool ssidInRange = false;
+    for(const auto& result : wifiResults)
+    {
+      Log::Write("SSID %s", result.ssid.c_str());
+      if(strcmp(ssidHex.c_str(), result.ssid.c_str()) == 0)
+      {
+        ssidInRange = true;
+        
+        Log::Write("HandleWifiConnectRequest: Found requested ssid from scan, attempting to connect");
+        bool res = Anki::ConnectWiFiBySsid(result.ssid,
+                                           "KlaatuBaradaNikto!",
+                                           (uint8_t)result.auth,
+                                           result.hidden,
+                                           nullptr,
+                                           nullptr);
+
+        if(!res)
+        {
+          Log::Write("HandleWifiConnectRequest: Failed to connect to ssid");
+        }
+        
+        rcp.status_code = (uint8_t)(res ? 0 : 1);
+        break;
+      }
+    }
+    
+    if(!ssidInRange)
+    {
+      Log::Write("HandleWifiConnectRequest: Requested ssid not in range");
+    }
+  }
+  else
+  {
+    Log::Write("HandleWifiConnectRequest: Wifi scan failed");
+    rcp.status_code = (uint8_t)code;
+  }
+
+  (void)Anki::RemoveWifiService(ssidHex);
+  
+  SendMessage(GMessage::CreateWifiConnectResponse(std::move(rcp)));
 }
 
 void EngineMessagingClient::SendMessage(const GMessage& message) {
