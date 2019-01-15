@@ -79,7 +79,11 @@ message MicDataState
 // This message indicates that the robot experienced a freefall event
 message FallingEvent {
   uint_32 timestamp,       // When the fall started (as a robot timestamp)
-  uint_32 duration_ms,     // The approximate freefall duration
+  uint_32 duration_ms      // The approximate freefall duration
+}
+
+message FallImpactEvent 
+{
 }
 
 message RobotStopped
@@ -189,7 +193,7 @@ union RobotToEngine {
   CliffAlignComplete         cliffAlignComplete     = 0xBD,
 
   // Sensors
-  // FREE SLOT                                      = 0xC1,
+  FallImpactEvent            fallImpactEvent        = 0xC1,
   IMUDataChunk               imuDataChunk           = 0xC2,
   IMURawDataChunk            imuRawDataChunk        = 0xC3,
   IMUTemperature             imuTemperature         = 0xC4,
