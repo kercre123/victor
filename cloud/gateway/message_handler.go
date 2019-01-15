@@ -748,8 +748,8 @@ func (service *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
 			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
-			FaceId:                    element.FaceID,
-			Name:                      element.Name,
+			FaceId: element.FaceID,
+			Name:   element.Name,
 		}
 		faces = append(faces, &newFace)
 	}
@@ -908,17 +908,6 @@ func (service *rpcService) SDKInitialization(ctx context.Context, in *extint.SDK
 
 // Long running message for sending events to listening sdk users
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
-	// TODO: v Remove the tempEventStream handling below when the app connection properly closes v
-	tempEventStreamMutex1.Lock()
-	if tempEventStreamDone != nil {
-		close(tempEventStreamDone)
-	}
-	tempEventStreamMutex2.Lock()
-	defer tempEventStreamMutex2.Unlock()
-	tempEventStreamDone = make(chan struct{})
-	tempEventStreamMutex1.Unlock()
-	// TODO: ^ Remove the tempEventStream handling above when the app connection properly closes ^
-
 	isPrimary := service.checkConnectionID(in.ConnectionId)
 	if isPrimary {
 		service.onConnect(connectionId)
@@ -971,10 +960,6 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 
 	for {
 		select {
-		// TODO: remove entire tempEventStreamDone case when the app connection properly closes
-		case <-tempEventStreamDone:
-			log.Println("EventStream closing because another stream has opened")
-			return grpc.Errorf(codes.Unavailable, "Connection closed because another event stream has opened")
 		case response, ok := <-eventsChannel:
 			if !ok {
 				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
