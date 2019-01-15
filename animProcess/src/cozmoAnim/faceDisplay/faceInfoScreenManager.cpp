@@ -1786,6 +1786,17 @@ void FaceInfoScreenManager::EnableMicDirectionScreen(bool enable)
   }
 }
 
+void FaceInfoScreenManager::EnableNetworkScreen(bool enable)
+{
+  if (enable && GetCurrScreenName() != ScreenName::Network) {
+    LOG_INFO("FaceInfoScreenManager.EnableNetworkScreen.Enable", "");
+    SetScreen(ScreenName::Network);
+  } else if (!enable && GetCurrScreenName() == ScreenName::Network) {
+    LOG_INFO("FaceInfoScreenManager.EnableNetworkScreen.Disable", "");
+    SetScreen(ScreenName::None);
+  }
+}
+
 void FaceInfoScreenManager::DrawScratch()
 {
   _currScreen->DrawMenu(*_scratchDrawingImg);

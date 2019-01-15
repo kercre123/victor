@@ -102,7 +102,13 @@ public:
   // NOTE: when disabling (enable = false) info face is completely disabled (it doesn't keep a history of
   // where it was before)
   void EnableMicDirectionScreen(bool enable);
-  
+
+  // When enabled, switches to a special face screen used to show
+  // network info (IP, SSID, etc)
+  // NOTE: when disabling (enable = false) info face is completely disabled (it doesn't keep a history of
+  // where it was before)
+  void EnableNetworkScreen(bool enable);
+
   // Begin drawing functionality
   // These functions update the screen only if they are relevant to the current screen
   void DrawConfidenceClock(const RobotInterface::MicDirection& micData,

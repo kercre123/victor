@@ -105,6 +105,7 @@ union dupes_allowed UserIntent
   // THE BOX
   UserIntent_Void             describe_scene,
   UserIntent_Void             show_mic_data,
+  UserIntent_Void             show_ip_address,
 
   // Vector
 

@@ -290,6 +290,10 @@
     {
       "user_intent": "show_mic_data",
       "cloud_intent": "intent_show_mic_data"
+    },
+    {
+      "user_intent": "show_ip_address",
+      "cloud_intent": "intent_ip_address"
     }
   ],
 

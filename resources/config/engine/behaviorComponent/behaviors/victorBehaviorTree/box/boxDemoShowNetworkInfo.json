@@ -1,0 +1,14 @@
+{
+  "behaviorID": "BoxDemoShowNetworkInfo",
+  "behaviorClass": "BoxDemoShowNetworkInfo",
+
+  "respondToUserIntents": [
+    { "type": "show_ip_address" }
+  ],
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "RobotTouched",
+    "minTouchTime": 0.2
+  }
+}
+

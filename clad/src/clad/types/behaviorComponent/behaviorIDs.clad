@@ -96,6 +96,7 @@ enum uint_16 BehaviorID {
   BoxDemoProcessingAnim,
   BoxDemoShortAnim,
   BoxDemoShowMicData,
+  BoxDemoShowNetworkInfo,
   BoxDemoWaitWithTriggerWord,
 
   // victorBehaviorTree/character

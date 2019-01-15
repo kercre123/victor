@@ -517,6 +517,12 @@ message EnableMicDirectionScreen
   bool enable
 }
 
+// Switch to debug screen (on face) for netowrk info and ip address
+message EnableNetworkScreen
+{
+  bool enable
+}
+
 // DisplayProceduralFace
 message DisplayProceduralFace
 {
@@ -833,6 +839,7 @@ union EngineToRobot
   SetButtonWakeWord                setButtonWakeWord                   = 0x67,
 
   EnableMicDirectionScreen         enableMicDirectionScreen            = 0x68,
+  EnableNetworkScreen              enableNetworkScreen                 = 0x69,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

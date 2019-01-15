@@ -191,6 +191,7 @@ private:
   friend class IBehaviorSelfTest;
 
   friend class BehaviorBoxDemoShowMicData;
+  friend class BehaviorBoxDemoShowNetworkInfo;
 
   Robot& _robot;
 };

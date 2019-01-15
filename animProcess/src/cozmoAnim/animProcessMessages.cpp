@@ -609,6 +609,11 @@ void Process_enableMicDirectionScreen(const RobotInterface::EnableMicDirectionSc
   FaceInfoScreenManager::getInstance()->EnableMicDirectionScreen(msg.enable);
 }
 
+void Process_enableNetworkScreen(const RobotInterface::EnableNetworkScreen& msg)
+{
+  FaceInfoScreenManager::getInstance()->EnableNetworkScreen(msg.enable);
+}
+
 void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
 {
   using namespace RobotInterface;

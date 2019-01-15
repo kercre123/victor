@@ -49,6 +49,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoDescribeScene.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoFaceTracking.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoShowMicData.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoShowNetworkInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/character/howOldAreYou/behaviorHowOldAreYou.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateInHabitat.h"
@@ -441,6 +442,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::BoxDemoShowMicData:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorBoxDemoShowMicData(config));
+      break;
+    }
+    
+    case BehaviorClass::BoxDemoShowNetworkInfo:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBoxDemoShowNetworkInfo(config));
       break;
     }
     
