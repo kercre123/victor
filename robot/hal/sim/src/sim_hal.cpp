@@ -956,5 +956,11 @@ namespace Anki {
       return false;
     }
 
+    const uint8_t* const HAL::GetSysconVersionInfo()
+    {
+      static const uint8_t arr[16] = {0};
+      return arr;
+    }
+  
   } // namespace Vector
 } // namespace Anki

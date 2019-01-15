@@ -102,6 +102,8 @@ namespace { // "Private members"
 
   bool maxNumSelectTimeoutsReached_ = false;
 
+  VersionInfo _sysconVersionInfo;
+
 } // "private" namespace
 
 // Forward Declarations
@@ -263,6 +265,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
+        _sysconVersionInfo = *versionInfo;
         record_body_version(versionInfo);
         das_log_version_info(versionInfo);
       }
@@ -418,6 +421,7 @@ Result spine_get_frame() {
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         LOGD("Handling VR payload type %x\n", hdr->payload_type);
         const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
+        _sysconVersionInfo = *versionInfo;
         record_body_version(versionInfo);
         das_log_version_info(versionInfo);
       }
@@ -1046,6 +1050,10 @@ bool HAL::IsLiftEncoderInvalid()
   return true;
 }
 
+const uint8_t* const HAL::GetSysconVersionInfo()
+{
+  return _sysconVersionInfo.app_version;
+}
 
 } // namespace Vector
 } // namespace Anki

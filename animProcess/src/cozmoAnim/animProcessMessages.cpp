@@ -742,6 +742,12 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       _animStreamer->Abort();
     }
     break;
+    case RobotInterface::RobotToEngine::Tag_syncRobotAck:
+    {
+      std::string version((const char*)&msg.syncRobotAck.sysconVersion, 16);
+      FaceInfoScreenManager::getInstance()->SetSysconVersion(version);
+    }
+    break;
     default:
     {
 
