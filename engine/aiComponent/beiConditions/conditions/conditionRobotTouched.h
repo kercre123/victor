@@ -28,6 +28,8 @@ public:
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
+  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool isActive) override;
+
 private:
 
   bool IsReceivingTouch(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -35,6 +37,15 @@ private:
   // minimum time we must be touched before acknowledging
   // can be 0.0f to trigger for every gradation of touch
   float _kMinTouchTime;
+
+  // if true, then wait until the time conditions are met and the button is released. Condition will be true
+  // for the given time
+  bool _waitForRelease = false;
+
+  // if waiting for release, this is how long the condition will stay true after a release
+  float _waitForReleaseTimeout_s = -1.0f;
+
+  mutable float _timePressed_s = -1.0f;
 };
 
 } // namespace Vector

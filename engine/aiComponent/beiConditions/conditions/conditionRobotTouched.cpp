@@ -29,6 +29,8 @@ namespace Vector {
 
 namespace{
   const char* kMinTouchTimeKey = "minTouchTime";
+  const char* kWaitForReleaseKey = "waitForRelease";
+  const char* kWaitForReleaseTimeoutKey = "waitForReleaseTimeout_s";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,6 +41,13 @@ ConditionRobotTouched::ConditionRobotTouched(const Json::Value& config)
   _kMinTouchTime = JsonTools::ParseFloat(config,
       kMinTouchTimeKey,
       "ConditionRobotTouched.ConfigError.NeedsMinTouchTime");
+
+  _waitForRelease = config.get(kWaitForReleaseKey, false).asBool();
+  if( _waitForRelease ) {
+    _waitForReleaseTimeout_s = JsonTools::ParseFloat(config,
+                                                     kWaitForReleaseTimeoutKey,
+                                                     "ConditionRobotTouched.ConfigError.NeedsWaitTimeout");
+  }
 }
 
 
@@ -46,9 +55,39 @@ ConditionRobotTouched::ConditionRobotTouched(const Json::Value& config)
 bool ConditionRobotTouched::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const bool touchGestureRcvd = IsReceivingTouch(behaviorExternalInterface);
-  return touchGestureRcvd;
+
+  if( !_waitForRelease ) {
+    // simple case, true as long as touch is happening
+    return touchGestureRcvd;
+  }
+  else {
+    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if( touchGestureRcvd ) {
+      _timePressed_s = now;
+      // wait for release means this must be false while pressed
+      return false;
+    }
+    else if( _timePressed_s < 0.0f ) {
+      // never pressed
+      return false;
+    }
+    else {
+      const bool recentRelease = ( now - _timePressed_s ) <= _waitForReleaseTimeout_s;
+      // return true if we're within the recent release timeout, false otherwise
+      return recentRelease;
+    }
+  }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ConditionRobotTouched::SetActiveInternal(BehaviorExternalInterface& bei, bool isActive)
+{
+  // reset touch time if we're using it so it doesn't trigger right when we activate
+  if( isActive && _waitForRelease ) {
+    _timePressed_s = -1.0f;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ConditionRobotTouched::IsReceivingTouch(BehaviorExternalInterface& behaviorExternalInterface) const
