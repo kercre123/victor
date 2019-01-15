@@ -94,7 +94,7 @@ private:
   PanelSet*   _panelSet;
   std::string _promptText;
   std::string _userText;
-  int  _col, _row, _currPanel;
+  int  _currPanel, _row, _col, _firstScreenRow;
   int  _deadZoneTicksLeft;
   int  _dirHoldCount[NUM_DIR];
   bool _dirCountEventMap[MAX_DIR_COUNT];

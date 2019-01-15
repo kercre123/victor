@@ -33,6 +33,7 @@ namespace {
   static const     float kUserTextScaleMidSize     = 0.50f; 
   static const     int   kUserMaxCharsFullSize     = 12;
   static const     int   kUserMaxCharsMidSize      = 16;
+  static const     int   kNumSelectRows            = 4; // number of rows that can be displayed at once
 
   static const     float kAccelThresh              = 0.200f;
   static const     float kAccelOffsetX             = 0.600f;
@@ -46,8 +47,7 @@ enum {
       ACT_APPEND = 0,
       ACT_DELETE = 1,
       ACT_PANEL  = 2,  // next panel
-      ACT_PREV   = 3,
-      ACT_NEXT   = 4
+      ACT_DONE   = 3
 };
 
 PanelCell GetPanelCell(Panel* cmp, int row, int col) {
@@ -59,7 +59,7 @@ PanelCell CellsUcaseLetters[] =
   {
    {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {" ..",  ACT_PANEL},
    {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {" OK",  ACT_NEXT},
+   {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {" OK",  ACT_DONE},
    {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
   };
 
@@ -67,45 +67,43 @@ PanelCell CellsLcaseLetters[] =
   {
    {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {" ..",  ACT_PANEL},
    {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {" OK",  ACT_NEXT},
-   {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_",  ACT_NEXT},  {" ..",  ACT_PANEL},
+   {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {" OK",  ACT_DONE},
+   {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
   };
 
 PanelCell CellsNumbersAndSpecialChars[] =
   {
    {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {" ..",  ACT_PANEL},
    {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"@", ACT_APPEND}, {"-", ACT_APPEND}, {"_",  ACT_NEXT},  {" OK",  ACT_NEXT},
+   {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"@", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" OK",  ACT_DONE},
   };
 
 PanelCell CellsRemainingSpecialChars[] =
   {
    {"!", ACT_APPEND}, {"@", ACT_APPEND},  {"#", ACT_APPEND}, {"$",  ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND}, {" ..",  ACT_PANEL},
    {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")",  ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, {" Del", ACT_DELETE},
-   {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {" OK",  ACT_NEXT},
+   {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {" OK",  ACT_DONE},
    {"|", ACT_APPEND}, {"=", ACT_APPEND},  {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
-  };
-
-PanelCell CellsDone[] =
-  {
-   {" ..", ACT_PANEL},   
-   {"OK",  ACT_NEXT},   
   };
 
 PanelCell CellsWifiSelect[] =
   {
-   {"AnkiRobits",      ACT_NEXT}, 
-   {"Anki5Ghz",        ACT_NEXT}, 
-   {"BeagleBone-EDB1", ACT_NEXT}, 
-   {"SFWireless",      ACT_NEXT}, 
+   {"AnkiRobits",      ACT_DONE}, 
+   {"Anki5Ghz",        ACT_DONE}, 
+   {"AnkiGuest",       ACT_DONE}, 
+   {"BeagleBone-EDB1", ACT_DONE}, 
+   {"SFWireless",      ACT_DONE}, 
+   {"VectorWifi",      ACT_DONE}, 
+   {"wireless",        ACT_DONE}, 
+   {"wireless-2",      ACT_DONE}, 
+   {"wireless-3",      ACT_DONE}, 
   };
 
 Panel kPanelUcaseLetters           = {4, 8, CellsUcaseLetters};
 Panel kPanelLcaseLetters           = {4, 8, CellsLcaseLetters};
 Panel kPanelNumbersAndSpecialChars = {3, 8, CellsNumbersAndSpecialChars};
 Panel kPanelRemainingSpecialChars  = {4, 8, CellsRemainingSpecialChars};
-Panel kPanelDone                   = {2, 1, CellsDone};
-Panel kPanelWifiSelect             = {4, 1, CellsWifiSelect};
+Panel kPanelWifiSelect             = {8, 1, CellsWifiSelect};
 
 
 Panel* PasswordEntryPanels[] =
@@ -114,7 +112,6 @@ Panel* PasswordEntryPanels[] =
    &kPanelLcaseLetters,
    &kPanelNumbersAndSpecialChars,
    &kPanelRemainingSpecialChars,
-   &kPanelDone,
   };
 PanelSet PasswordEntry = {sizeof(PasswordEntryPanels)/sizeof(PasswordEntryPanels[0]), PasswordEntryPanels};
 
@@ -212,12 +209,13 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dVars = DynamicVariables();
   _buttonPressed = false;
 
-  _panelSet   = &WifiSelect;
-  _currPanel  = 0;
-  _promptText = kWifiSelectPrompt;
-  _userText   = "";
-  _row        = 0;
-  _col        = 0;
+  _panelSet       = &WifiSelect;
+  _currPanel      = 0;
+  _promptText     = kWifiSelectPrompt;
+  _userText       = "";
+  _row            = 0;
+  _col            = 0;
+  _firstScreenRow = 0;
 
   ClearHoldCounts();
   _deadZoneTicksLeft = 0;
@@ -314,15 +312,13 @@ void BehaviorCubeDrive::BehaviorUpdate() {
           _col = _panelSet->Panels[_currPanel]->NumCols-1;
         }
         break;
-      case ACT_PREV:
-        _userText = "";  // TODO
-        break;
-      case ACT_NEXT:
-        // TEMPORARY lightweight on-boarding flow
-        _userText  = "";
-        _row       = 0;
-        _col       = 0;
-        _currPanel = 0;
+      case ACT_DONE:
+        // XXX: lightweight on-boarding flow = toggle between Wifi Select and Password Entry
+        _userText       = "";
+        _row            = 0;
+        _col            = 0;
+        _currPanel      = 0;
+        _firstScreenRow = 0;
         if (_promptText != kPasswordEntryPrompt) {
           _panelSet   = &PasswordEntry;
           _promptText = kPasswordEntryPrompt;
@@ -334,7 +330,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       }
     }
 
-    // Update the screen
+    // Update the screen: heading
     _dVars.image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
     float headingSize = kUserTextScaleFullSize;
     string heading = (_userText != "") ? _userText : _promptText;
@@ -345,15 +341,23 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     } else if (hlen > kUserMaxCharsFullSize) {
       headingSize = kUserTextScaleMidSize;
     }
-
     _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
                           heading, NamedColors::WHITE, headingSize);
-    // _dVars.image.DrawText(Point2f(0, kTopLeftCornerMagicNumber),
-    //                       to_string(int(1000.0 * xGs)), NamedColors::WHITE, kUserTextScale);
-    for(int r = 0; r < panel->NumRows; r++) {
+
+    // Update the screen: select text
+    if (_row < _firstScreenRow) {
+      _firstScreenRow = _row;
+    } else if (_row >= (_firstScreenRow+kNumSelectRows)) {
+      _firstScreenRow = _row - kNumSelectRows + 1;
+    }
+    for(int roffset = 0; roffset < kNumSelectRows; roffset++) {
+      int r = _firstScreenRow + roffset;
+      if (r >= panel->NumRows) {
+        continue;
+      }
       for (int c = 0; c < panel->NumCols; c++) {
-        Point2f p = Point2f((float(c+0) * kTextHorzSpace),
-                            (float(r+1) * kTextVertSpace) + kSelectRowStart);
+        Point2f p = Point2f((float(c)         * kTextHorzSpace),
+                            (float(roffset+1) * kTextVertSpace) + kSelectRowStart);
         string t = GetPanelCell(panel, r, c).Text;
         auto color = NamedColors::RED;
         if ((r == _row) && (c == _col)) {
@@ -362,6 +366,8 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         _dVars.image.DrawText(p, t, color, kSelectTextScale);
       }
     }
+
+    // TODO: super-impose scroll info on right-hand-side
 
     GetBEI().GetAnimationComponent().DisplayFaceImage(_dVars.image, 1.0f, true);
   }
