@@ -924,7 +924,7 @@ void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed,
       singlePressPending = true;
     } else if (doublePressPending) {
       doublePressPending = false;
-      doublePressDetected = true;
+      doublePressDetected = false;
     }
     shutdownSent = false;
   } else if (singlePressPending && !mightBeDoublePress) {
