@@ -266,10 +266,10 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   for(int i = 0; i < MAX_DIR_COUNT; i++) {
     _dirCountEventMap[i] = false;
   }
-  _dirCountEventMap[4] = true;  // first
+  _dirCountEventMap[2] = true;  // first
   // delay
   for (int i = 0; i < 30; i++) {
-    _dirCountEventMap[12 + (2*i)] = true; // fast repeat
+    _dirCountEventMap[6 + (4*i)] = true; // repeat
   }
 
   GetBEI().GetRobotInfo().GetMoveComponent().MoveHeadToAngle(0.70 /*rad*/, 1.0 /*speed*/, 1.0 /*accel*/);
