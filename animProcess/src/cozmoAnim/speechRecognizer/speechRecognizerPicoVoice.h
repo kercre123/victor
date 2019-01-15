@@ -40,11 +40,13 @@ public:
 private:
   struct SpeechRecognizerPicoVoiceData;
   std::unique_ptr<SpeechRecognizerPicoVoiceData> _impl;
+  std::string _modelBasePath;
 
   void SwapAllData(SpeechRecognizerPicoVoice& other);
 
   void Cleanup();
-  
+  void SetupConsoleFuncs();
+
   virtual void StartInternal() override;
   virtual void StopInternal() override;
   

@@ -14,6 +14,8 @@
 
 #include "audioUtil/speechRecognizer.h"
 #include "util/logging/logging.h"
+#include "util/console/consoleInterface.h"
+#include "util/console/consoleFunction.h"
 #include "util/container/ringBuffContiguousRead.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
@@ -30,6 +32,7 @@
 
 #include <algorithm>
 #include <array>
+#include <list>
 #include <locale>
 #include <map>
 #include <mutex>
@@ -42,8 +45,35 @@ namespace Vector {
 #define LOG_CHANNEL "SpeechRecognizer"
   
 namespace {
-  const char* const __attribute((unused)) kWakeWord = "elemental";
   const unsigned int kBuffSize = 1024; // I tried 2048 (slower) and no buffer at all (equiv to 160, wayyyy slower). Nothing else
+
+  #define CONSOLE_GROUP_PICOVOICE "SpeechRecognizer.PicoVoice"
+  CONSOLE_VAR_RANGED(float, kPicoVoiceSensitivity, CONSOLE_GROUP_PICOVOICE, 0.75f, 0.f, 1.f);
+
+  const char* kRecognizerWakeWords = "porcupine, dragonfly, elemental";
+  enum PVWakeWord {
+    PVWakeWordPorcupine,
+    PVWakeWordDragonFly,
+    PVWakeWorkElemental
+  };
+  CONSOLE_VAR_ENUM(int, kPicoVoiceWakeWord, CONSOLE_GROUP_PICOVOICE, PVWakeWorkElemental, kRecognizerWakeWords);
+
+  const char* kPicoVoicePlatform = "raspberrypi";
+  const char* kPicoVoiceModelTag = "_tiny";
+  const char* PicoVoiceWakeWord()
+  {
+    switch(kPicoVoiceWakeWord) {
+      case PVWakeWordPorcupine: return "porcupine"; break;
+      case PVWakeWordDragonFly: return "dragonfly"; break;
+      case PVWakeWorkElemental: return "elemental"; break;
+    }
+    assert(false);
+    return "unknown";
+  }
+
+  #if ANKI_DEV_CHEATS
+  std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
+  #endif
 }
   
 struct SpeechRecognizerPicoVoice::SpeechRecognizerPicoVoiceData
@@ -62,7 +92,7 @@ struct SpeechRecognizerPicoVoice::SpeechRecognizerPicoVoiceData
   #endif
 
   int frameLen = 0;
-  float sensitivity = 0.5f;
+  float sensitivity = kPicoVoiceSensitivity;
   bool recognized = false;
 };
   
@@ -74,7 +104,7 @@ SpeechRecognizerPicoVoice::SpeechRecognizerPicoVoiceData::SpeechRecognizerPicoVo
 SpeechRecognizerPicoVoice::SpeechRecognizerPicoVoice()
 : _impl(new SpeechRecognizerPicoVoiceData())
 {
-  
+  SetupConsoleFuncs();
 }
 
 SpeechRecognizerPicoVoice::~SpeechRecognizerPicoVoice()
@@ -120,14 +150,21 @@ SpeechRecognizerPicoVoice::IndexType SpeechRecognizerPicoVoice::GetRecognizerInd
 }
 
 bool SpeechRecognizerPicoVoice::Init(const std::string& modelBasePath)
-{
+{  
   Cleanup();
 # if PICOVOICE_ENABLED  
   
   const std::string modelFile = 
     Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + "porcupine_tiny_params.pv";
+
+  std::string modelFileName = PicoVoiceWakeWord();
+  modelFileName += "_";
+  modelFileName += kPicoVoicePlatform;
+  modelFileName += kPicoVoiceModelTag;
+  modelFileName += ".ppn";
+
   const std::string keywordFile =
-    Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + "elemental_raspberrypi_tiny.ppn";
+    Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + modelFileName;
   
   const pv_status_t status = pv_porcupine_init_softfp(modelFile.c_str(),
                                                       keywordFile.c_str(),
@@ -144,6 +181,7 @@ bool SpeechRecognizerPicoVoice::Init(const std::string& modelBasePath)
   _impl->frameLen = pv_porcupine_frame_length();
   _impl->initDone = true;
 # endif
+  _modelBasePath = modelBasePath;
   
   return true;
 }
@@ -160,6 +198,28 @@ void SpeechRecognizerPicoVoice::Cleanup()
   _impl->frameLen = 0;
   _impl->initDone = false;
 # endif
+}
+
+void SpeechRecognizerPicoVoice::SetupConsoleFuncs()
+{
+  #if ANKI_DEV_CHEATS
+  auto update = [this](ConsoleFunctionContextRef context) {
+    SpeechRecognizerPicoVoice pv;
+    {
+      std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
+      this->Stop();
+    }
+    this->Cleanup();
+
+    pv.Init(_modelBasePath);
+    this->SwapAllData(pv);
+    
+    context->channel->WriteLog("Updated PicoVoice Recognizer :: wakeword='%s' sensitivity=%1.2f",
+                                PicoVoiceWakeWord(), pv._impl->sensitivity);
+  };
+  sConsoleFuncs.emplace_front("Update PicoVoice Recognizer", std::move(update),
+                              CONSOLE_GROUP_PICOVOICE, "");
+  #endif // #if ANKI_DEV_CHEATS
 }
 
 void SpeechRecognizerPicoVoice::Update( const AudioUtil::AudioSample* audioData, unsigned int audioDataLen )
@@ -183,8 +243,6 @@ void SpeechRecognizerPicoVoice::Update( const AudioUtil::AudioSample* audioData,
   
   using namespace std;
   clock_t begin = clock();
-  
-  
   
   const unsigned int buffSize = static_cast<unsigned int>(_impl->buff.GetContiguousSize());
   auto* buff __attribute((unused)) = _impl->buff.ReadData( buffSize );
@@ -211,7 +269,7 @@ void SpeechRecognizerPicoVoice::Update( const AudioUtil::AudioSample* audioData,
   if (recognized) {
       // Get results for callback struct
       AudioUtil::SpeechRecognizerCallbackInfo info {
-        .result       = kWakeWord,
+        .result       = PicoVoiceWakeWord(),
         .startTime_ms = 0,
         .endTime_ms   = 0,
         .score        = 1.0f,

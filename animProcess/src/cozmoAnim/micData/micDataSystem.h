@@ -209,6 +209,9 @@ private:
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
+
+  // Take ownership of SpeechRecognizerSystem
+  void InitSpeechRecognizerSystem();
   
   void SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info);
 
