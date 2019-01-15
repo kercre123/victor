@@ -36,6 +36,7 @@ struct Panel {
   int        NumRows; 
   int        NumCols; 
   PanelCell* Cells;   
+  bool       IsSelectMenu;
 };
 
 struct PanelSet {

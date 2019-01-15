@@ -25,7 +25,7 @@ namespace Vector {
   
 namespace {
   static constexpr float kTopLeftCornerMagicNumber = 15.0f; 
-  static constexpr float kSelectRowStart           = 16.0f; 
+  static constexpr float kSelectRowStart           = 15.0f; 
   static const     float kTextHorzSpace            = 20.0f; 
   static const     float kTextVertSpace            = 19.0f; 
   static const     float kSelectTextScale          = 0.70f; 
@@ -36,7 +36,7 @@ namespace {
   static const     int   kNumSelectRows            = 4; // number of rows that can be displayed at once
 
   static const     float kAccelThresh              = 0.200f;
-  static const     float kAccelOffsetX             = 0.600f;
+  static const     float kAccelOffsetX             = 0.650f;
   static const     int   kDeadZoneTicks            = 7;
 
   static const     string kWifiSelectPrompt        = "Select Wifi:";
@@ -119,12 +119,13 @@ PanelCell CellsWifiSelect[] =
    {"wireless-3", ACT_DONE}, 
   };
 
-Panel kPanelAllChars               = {15, 7, CellsAllChars};
-Panel kPanelUcaseLetters           = {4,  7, CellsUcaseLetters};
-Panel kPanelLcaseLetters           = {4,  7, CellsLcaseLetters};
-Panel kPanelNumbersAndSpecialChars = {3,  7, CellsNumbersAndSpecialChars};
-Panel kPanelRemainingSpecialChars  = {4,  7, CellsRemainingSpecialChars};
-Panel kPanelWifiSelect             = {8,  1, CellsWifiSelect};
+//                                    r   c  PanelCell[]                  IsSelectMenu
+Panel kPanelAllChars               = {15, 7, CellsAllChars,               false}; 
+Panel kPanelUcaseLetters           = {4,  7, CellsUcaseLetters,           false}; 
+Panel kPanelLcaseLetters           = {4,  7, CellsLcaseLetters,           false}; 
+Panel kPanelNumbersAndSpecialChars = {3,  7, CellsNumbersAndSpecialChars, false}; 
+Panel kPanelRemainingSpecialChars  = {4,  7, CellsRemainingSpecialChars,  false}; 
+Panel kPanelWifiSelect             = {9,  1, CellsWifiSelect,             true};  
 
 
 Panel* PasswordEntryPanels[] =
@@ -319,7 +320,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         PanelCell pc = GetPanelCell(panel, _row, _col);
         text   = pc.Text;
         action = pc.Action;
-      } else {
+      } else if (!panel->IsSelectMenu) {
         switch (_row - _firstScreenRow) {
         case 1: action = ACT_DELETE; break;
         case 2: action = ACT_DONE;   break;
@@ -394,7 +395,7 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         Point2f p = Point2f((float(c)         * kTextHorzSpace),
                             (float(roffset+1) * kTextVertSpace) + kSelectRowStart);
         string t = GetPanelCell(panel, r, c).Text;
-        auto color = NamedColors::RED;
+        ColorRGBA color(0.4f, 0.4f, 0.4f);
         if ((r == _row) && (c == _col)) {
           color = NamedColors::WHITE;
         }
@@ -408,16 +409,16 @@ void BehaviorCubeDrive::BehaviorUpdate() {
       int c = 7;
       string t = " .";
       switch (roffset) {
-      case 0: if (_firstScreenRow > 0)                                 { t = " ^"; } break;
-      case 1:                                                            t = "Del";  break;
-      case 2:                                                            t = "OK";   break;
-      case 3: if ((_firstScreenRow + kNumSelectRows) < panel->NumRows) { t = " v"; } break;
+      case 0: if (_firstScreenRow > 0)                                 { t = "/\\"; } else { t = "--"; } break;
+      case 1: if (!panel->IsSelectMenu)                                { t = "Del"; } else { t = " |"; } break;
+      case 2: if (!panel->IsSelectMenu)                                { t = "OK";  } else { t = " |"; } break;
+      case 3: if ((_firstScreenRow + kNumSelectRows) < panel->NumRows) { t = "\\/"; } else { t = "--"; } break;
       }
       Point2f p = Point2f((float(c)         * kTextHorzSpace),
                           (float(roffset+1) * kTextVertSpace) + kSelectRowStart);
 
-      auto color = NamedColors::RED;
-      if ((r == _row) && (c == _col)) {
+      ColorRGBA color = NamedColors::RED;  // XXX: It's totally NOT red
+      if ((r == _row) && (_col == panel->NumCols)) {
         color = NamedColors::WHITE;
       }
       _dVars.image.DrawText(p, t, color, kSelectTextScale);
