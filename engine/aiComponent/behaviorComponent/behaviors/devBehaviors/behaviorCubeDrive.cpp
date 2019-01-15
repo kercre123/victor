@@ -26,7 +26,7 @@ namespace Vector {
 namespace {
   static constexpr float kTopLeftCornerMagicNumber = 15.0f; 
   static constexpr float kSelectRowStart           = 16.0f; 
-  static const     float kTextHorzSpace            = 19.0f; 
+  static const     float kTextHorzSpace            = 20.0f; 
   static const     float kTextVertSpace            = 19.0f; 
   static const     float kSelectTextScale          = 0.70f; 
   static const     float kUserTextScaleFullSize    = 0.70f; 
@@ -37,6 +37,9 @@ namespace {
   static const     float kAccelThresh              = 0.200f;
   static const     float kAccelOffsetX             = 0.600f;
   static const     int   kDeadZoneTicks            = 7;
+
+  static const     string kWifiSelectPrompt        = "Select Wifi:";
+  static const     string kPasswordEntryPrompt     = "<Wifi Password>";
 };
 
 enum {
@@ -55,7 +58,7 @@ PanelCell GetPanelCell(Panel* cmp, int row, int col) {
 PanelCell CellsUcaseLetters[] =
   {
    {"A", ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {" DEL", ACT_DELETE},
+   {"H", ACT_APPEND}, {"I", ACT_APPEND}, {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, {" Del", ACT_DELETE},
    {"O", ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, {" OK",  ACT_NEXT},
    {"V", ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
   };
@@ -63,7 +66,7 @@ PanelCell CellsUcaseLetters[] =
 PanelCell CellsLcaseLetters[] =
   {
    {"a", ACT_APPEND}, {"b", ACT_APPEND}, {"c", ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {" DEL", ACT_DELETE},
+   {"h", ACT_APPEND}, {"i", ACT_APPEND}, {"j", ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {" Del", ACT_DELETE},
    {"o", ACT_APPEND}, {"p", ACT_APPEND}, {"q", ACT_APPEND}, {"r", ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {" OK",  ACT_NEXT},
    {"v", ACT_APPEND}, {"w", ACT_APPEND}, {"x", ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_",  ACT_NEXT},  {" ..",  ACT_PANEL},
   };
@@ -71,14 +74,14 @@ PanelCell CellsLcaseLetters[] =
 PanelCell CellsNumbersAndSpecialChars[] =
   {
    {"1", ACT_APPEND}, {"2", ACT_APPEND}, {"3", ACT_APPEND}, {"4", ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {" DEL", ACT_DELETE},
+   {"8", ACT_APPEND}, {"9", ACT_APPEND}, {"0", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {" Del", ACT_DELETE},
    {"?", ACT_APPEND}, {"/", ACT_APPEND}, {"~", ACT_APPEND}, {"#", ACT_APPEND}, {"@", ACT_APPEND}, {"-", ACT_APPEND}, {"_",  ACT_NEXT},  {" OK",  ACT_NEXT},
   };
 
 PanelCell CellsRemainingSpecialChars[] =
   {
    {"!", ACT_APPEND}, {"@", ACT_APPEND},  {"#", ACT_APPEND}, {"$",  ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND}, {" ..",  ACT_PANEL},
-   {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")",  ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, {" DEL", ACT_DELETE},
+   {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")",  ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, {" Del", ACT_DELETE},
    {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, {" OK",  ACT_NEXT},
    {"|", ACT_APPEND}, {"=", ACT_APPEND},  {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, {" ..",  ACT_PANEL},
   };
@@ -210,7 +213,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
 
   _panelSet   = &WifiSelect;
   _currPanel  = 0;
-  _promptText = "Select Wifi:";
+  _promptText = kWifiSelectPrompt;
   _userText   = "";
   _row        = 0;
   _col        = 0;
@@ -314,10 +317,18 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         _userText = "";  // TODO
         break;
       case ACT_NEXT:
-        // TEMPORARY lightweight on-boarding flow: WiFi Select --> Password Entry
-        _panelSet = &PasswordEntry;               
-        _promptText = "<Wifi Password>";
-        _userText = "";  // TODO
+        // TEMPORARY lightweight on-boarding flow
+        _userText  = "";
+        _row       = 0;
+        _col       = 0;
+        _currPanel = 0;
+        if (_promptText != kPasswordEntryPrompt) {
+          _panelSet   = &PasswordEntry;
+          _promptText = kPasswordEntryPrompt;
+        } else {
+          _panelSet   = &WifiSelect;
+          _promptText = kWifiSelectPrompt;
+        }
         break;
       }
     }
