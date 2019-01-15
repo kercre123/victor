@@ -111,7 +111,15 @@ enum uint_32 SwitchGroupType
   Robot_Vic_Stim_Switch_Old_Reference_Only = 2717392740,
   Robot_Vic_Tread_Drive = 4283612440,
   Robot_Vic_Tread_Speed = 724346585,
+  Vic_Robot_Sfx_Rnd_Chirps_Content_Select = 700443420,
   Vic_Robot_Sfx_Rnd_Chirps_Durations = 2640642381,
+}
+
+enum uint_32 Vic_Robot_Sfx_Rnd_Chirps_Content_Select
+{
+  Assets = 812331978,
+  Invalid = 0,
+  Tonegen = 268770541,
 }
 
 enum uint_32 Vic_Robot_Sfx_Rnd_Chirps_Durations
