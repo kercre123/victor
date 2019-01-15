@@ -9,7 +9,6 @@ include(opencv)
 include(okao)
 include(flatbuffers)
 include(protobuf)
-include(archive)
 include(anki_build_strip)
 include(anki_build_cxx)
 
@@ -59,16 +58,6 @@ elseif (MACOSX)
   )
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
-  )
-endif()
-
-if(ANKI_HAS_LIBARCHIVE)
-  list(APPEND PLATFORM_COMPILE_DEFS
-    ANKI_HAS_LIBARCHIVE=1
-  )
-else()
-  list(APPEND PLATFORM_COMPILE_DEFS
-    ANKI_HAS_LIBARCHIVE=0
   )
 endif()
 
