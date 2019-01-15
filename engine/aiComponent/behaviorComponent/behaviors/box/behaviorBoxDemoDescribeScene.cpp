@@ -12,7 +12,9 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/vision/engine/image_impl.h"
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoDescribeScene.h"
@@ -140,23 +142,28 @@ void BehaviorBoxDemoDescribeScene::OnBehaviorActivated()
   // reset dynamic variables
   _dVars = DynamicVariables();
   
-  // Put "Analyzing..." on the screen
+  CompoundActionParallel* processingAction = new CompoundActionParallel();
+
   {
-    const bool kInterruptRunning = true;
-    Vision::ImageRGB dispImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-    dispImg.FillWith(Vision::PixelRGB(0,0,0));
-    dispImg.DrawTextCenteredHorizontally("Analyzing...", CV_FONT_NORMAL, 1.f, 1, NamedColors::YELLOW,
-                                         FACE_DISPLAY_HEIGHT/2, true);
-    GetBEI().GetAnimationComponent().DisplayFaceImage(dispImg, ANIM_TIME_STEP_MS, kInterruptRunning);
+    PlayAnimationAction* playAnim = new PlayAnimationAction("anim_elemental_processing", 0);
+    playAnim->SetRenderInEyeHue(false);
+
+    processingAction->AddAction(playAnim);
   }
   
   _dVars.lastImageTime_ms = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
+
+  {
+    WaitForImagesAction* waitAction = new WaitForImagesAction(1, VisionMode::OffboardSceneDescription,
+                                                              _dVars.lastImageTime_ms);
+    waitAction->SetTimeoutInSeconds(_iConfig.visionRequestTimeout_sec); // in case we never hear back from vision
+
+    processingAction->AddAction(waitAction);
+  }
+
+  processingAction->SetShouldEndWhenFirstActionCompletes(true);
   
-  WaitForImagesAction* waitAction = new WaitForImagesAction(1, VisionMode::OffboardSceneDescription,
-                                                            _dVars.lastImageTime_ms);
-  waitAction->SetTimeoutInSeconds(_iConfig.visionRequestTimeout_sec); // in case we never hear back from vision
-  
-  DelegateIfInControl(waitAction, [this](ActionResult result)
+  DelegateIfInControl(processingAction, [this](ActionResult result)
                       {
                         if(result == ActionResult::SUCCESS)
                         {
