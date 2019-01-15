@@ -38,6 +38,7 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
 
@@ -48,6 +49,7 @@ private:
     float recentDelocTimeWindow_sec = 0.5f;
     float textDisplayTime_sec = 3.f;
     float visionRequestTimeout_sec = 5.f;
+    IBEIConditionPtr touchAndReleaseCondition;
   };
 
   struct DynamicVariables {

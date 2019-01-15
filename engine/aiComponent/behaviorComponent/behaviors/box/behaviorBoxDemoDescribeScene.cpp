@@ -11,6 +11,7 @@
  **/
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -19,8 +20,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoDescribeScene.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 
 #include "opencv2/highgui.hpp"
@@ -45,6 +48,14 @@ namespace
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBoxDemoDescribeScene::InstanceConfig::InstanceConfig()
 {
+  Json::Value config;
+  config["conditionType"] = "RobotTouched";
+  config["minTouchTime"] = 0.2f;
+  config["waitForRelease"] = true;
+  config["waitForReleaseTimeout_s"] = 1.0f;
+
+  touchAndReleaseCondition = BEIConditionFactory::CreateBEICondition(config,
+                                                                     "BehaviorBoxDemoDescribeScene.TouchAndRelease");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,6 +111,7 @@ bool BehaviorBoxDemoDescribeScene::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBoxDemoDescribeScene::InitBehavior()
 {
+  _iConfig.touchAndReleaseCondition->Init(GetBEI());
   //_iConfig.showTextBehavior = FindBehaviorByID(BehaviorID::ShowText);
 }
 
@@ -141,6 +153,8 @@ void BehaviorBoxDemoDescribeScene::OnBehaviorActivated()
   
   // reset dynamic variables
   _dVars = DynamicVariables();
+
+  _iConfig.touchAndReleaseCondition->SetActive(GetBEI(), true);
   
   CompoundActionParallel* processingAction = new CompoundActionParallel();
 
@@ -178,6 +192,13 @@ void BehaviorBoxDemoDescribeScene::OnBehaviorActivated()
                         }
                       });
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBoxDemoDescribeScene::OnBehaviorDeactivated()
+{
+  _iConfig.touchAndReleaseCondition->SetActive(GetBEI(), false);
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static void BreakIntoLines(const std::string& description, const float imageWidth,
@@ -244,10 +265,29 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
       ++lineNum;
     }
     
-    const u32 waitTime_ms = Util::SecToMilliSec(_iConfig.textDisplayTime_sec);
-    GetBEI().GetAnimationComponent().DisplayFaceImage(dispImg, waitTime_ms);
+    // display "forever" (the behavior will decide when to stop displaying)
+    GetBEI().GetAnimationComponent().DisplayFaceImage(dispImg, 0);
+
+    const float startTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-    DelegateIfInControl(new WaitAction(_iConfig.textDisplayTime_sec));
+    DelegateIfInControl(new WaitForLambdaAction([this, startTime_s](Robot& r) {
+          if( _iConfig.touchAndReleaseCondition->AreConditionsMet(GetBEI()) ) {
+            // touch and release done, time to stop the text
+            return true;
+          }
+
+          const bool pressed = GetBEI().GetTouchSensorComponent().GetIsPressed();
+          if( pressed ) {
+            // while pressed, keep displaying the text
+            return false;
+          }
+
+          // otherwise, display for the given timeout
+          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+          const bool timedOut = (currTime_s - startTime_s) > _iConfig.textDisplayTime_sec;
+          return timedOut;
+        }));
   }
 }
 
