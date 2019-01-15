@@ -1,0 +1,6 @@
+{
+  "behaviorID": "BoxDemoProcessingAnim",
+  "behaviorClass": "AnimSequence",
+  "animNames": ["anim_elemental_processing"],
+  "renderInEyeHue": false
+}

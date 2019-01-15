@@ -151,6 +151,8 @@ enum uint_8 SpriteName
   Vig_Always_Helpful_Knowledgegraph,
   Vig_Always_Helpful_Timer,
   elemental,
+  elemental_processing,
+  elemental_short,
   Count
 }
 
@@ -300,6 +302,8 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Vig_Always_Helpful_Knowledgegraph = 1,
   Vig_Always_Helpful_Timer = 1,
   elemental = 1,
+  elemental_processing = 1,
+  elemental_short = 1,
   Count = 0
 }
 

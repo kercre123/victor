@@ -67,6 +67,7 @@
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
                 ],
                 "allow_extra_files": "True",
+                "branch": "branches/thebox",
                 "export_dirname": "animation-assets",
                 "extract_types_from_tar": [
                     ".json",
@@ -77,7 +78,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4800"
+                "version": "4823"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

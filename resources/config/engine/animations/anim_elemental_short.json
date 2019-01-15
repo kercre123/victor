@@ -1,0 +1,10 @@
+{
+  "anim_elemental_short": [
+    {
+      "animName": "elemental_short",
+      "triggerTime_ms": 0.0,
+      "frameDuration_ms": 33,
+      "Name": "FaceAnimationKeyFrame"
+    }
+  ]
+}

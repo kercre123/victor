@@ -1,0 +1,10 @@
+{
+  "anim_elemental_processing": [
+    {
+      "animName": "elemental_processing",
+      "triggerTime_ms": 0.0,
+      "frameDuration_ms": 33,
+      "Name": "FaceAnimationKeyFrame"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "behaviorID": "BoxDemoShortAnim",
+  "behaviorClass": "AnimSequence",
+  "animNames": ["anim_elemental_short"],
+  "renderInEyeHue": false
+}

@@ -578,5 +578,13 @@
   {
     "CladEvent" : "elemental",
     "SpriteName" : "elemental"
+  },
+  {
+    "CladEvent" : "elemental_processing",
+    "SpriteName" : "elemental_processing"
+  },
+  {
+    "CladEvent" : "elemental_short",
+    "SpriteName" : "elemental_short"
   }
 ]

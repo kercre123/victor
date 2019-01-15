@@ -159,6 +159,8 @@ void AnimationComponent::Init()
 
   // THEBOX: add this one since it's not in the manifest from SVN
   _availableAnims["anim_elemental"].length_ms = 0;
+  _availableAnims["anim_elemental_processing"].length_ms = 0;
+  _availableAnims["anim_elemental_short"].length_ms = 0;
 
   LOG_INFO("AnimationComponent.Init.ManifestRead", "%zu animations loaded", _availableAnims.size());
 
