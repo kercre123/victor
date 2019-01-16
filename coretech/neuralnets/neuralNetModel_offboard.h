@@ -49,6 +49,13 @@ private:
   Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
                                     const Vision::OffboardProcType procType,
                                     std::list<Vision::SalientPoint>& salientPoints);
+  
+  Result ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
+                                       std::list<Vision::SalientPoint>& salientPoints);
+  
+  Result ParseObjectDetectionsFromJson(const Json::Value& jsonSalientPoints,
+                                       std::list<Vision::SalientPoint>& salientPoints);
+  
   std::string _cachePath;
   int         _pollPeriod_ms;
   bool        _isVerbose = false;

@@ -11,7 +11,8 @@ enum uint_8 SalientPointType
   Unknown, // Generally means something is wrong
   Object,  // For general "objectness" (vs. specific known object types)
   Face,
-  Person,
+  Person,        // A detection, with shape/bounding box
+  PersonPresent, // Just classification: person is somewhere in the image (no localization)
   Hand,
   Cat,
   Dog,
@@ -21,6 +22,21 @@ enum uint_8 SalientPointType
   // TODO:
   // Text,
 
+}
+
+// Return whether each SalientPointType is expected to return a localized shape/bounding box
+enum_concept bool IsSalientPointTypeLocalized[SalientPointType]
+{
+  Unknown          = 0,
+  Object           = 1,
+  Face             = 1,
+  Person           = 1,
+  PersonPresent    = 0,
+  Hand             = 0,
+  Cat              = 0,
+  Dog              = 0,
+  BrightColors     = 1,
+  SceneDescription = 0
 }
 
 structure SalientPoint {

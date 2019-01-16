@@ -65,6 +65,7 @@ enum uint_8 BehaviorClass {
 
   // box
   BoxDemo,
+  BoxDemoCountPeople,
   BoxDemoDescribeScene,
   BoxDemoFaceTracking,
   BoxDemoShowMicData,

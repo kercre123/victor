@@ -95,9 +95,9 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
   _procTypes.resize(1);
   if(!Vision::OffboardProcTypeFromString(_params.graphFile, _procTypes[0]))
   {
-    LOG_ERROR("OffboardModel.LoadModelInternal.BadArchitecture",
+    LOG_ERROR("OffboardModel.LoadModelInternal.BadOffboardProcType",
               "Could not get OffboardProcType(s) from graphFile: %s",
-              _params.architecture.c_str());
+              _params.graphFile.c_str());
     return RESULT_FAIL;
   }
   
@@ -325,12 +325,6 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
         if(parseSuccess)
         {
           LOG_INFO("OffboardModel.WaitForResultCLAD.ParsedMessageJson", "");
-          
-          //
-          // DEBUG! REMOVE once we have procType being set by snapper
-          //
-          resultReadyMsg.procType = Vision::OffboardProcType::SceneDescription;
-          
           const Result parseResult = ParseSalientPointsFromJson(detectionResult, resultReadyMsg.procType, salientPoints);
           resultAvailable |= (parseResult == RESULT_OK);
         }
@@ -351,77 +345,10 @@ Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& detectionRes
   switch(procType)
   {
     case Vision::OffboardProcType::SceneDescription:
-    {
-      // Assumes Json structure like this is present in detectionResult:
-      //      "description":{
-      //        "captions":[
-      //          {
-      //            "text":"a man sitting in front of a laptop",  <-- this is the scene description
-      //            "confidence":0.8529333419354393               <-- this is the "score"
-      //          }
-      //        ]
-      //      }
-      bool gotSalientPoint = false;
-      if(detectionResult.isMember("description"))
-      {
-        const Json::Value& descriptionJson = detectionResult["description"];
-        if(descriptionJson.isMember("captions"))
-        {
-          const Json::Value& captionsJson = descriptionJson["captions"];
-          
-          Vision::SalientPoint salientPoint(_imageTimestamp,
-                                            0.5f, 0.5f,
-                                            0.f, 1.f,
-                                            Vision::SalientPointType::SceneDescription,
-                                            "<no description>",
-                                            {}, 0);
-          
-          if(captionsJson.empty())
-          {
-            // If there are no captions, fall back on a comma separated list of tags
-            if(descriptionJson.isMember("tags"))
-            {
-              const Json::Value& tagsJson = descriptionJson["tags"];
-              
-              if(tagsJson.isArray() && !tagsJson.empty())
-              {
-                auto iter = tagsJson.begin();
-                salientPoint.description = iter->asString();
-                ++iter;
-                while(iter != tagsJson.end())
-                {
-                  salientPoint.description += ", " + iter->asString();
-                  ++iter;
-                }
-                salientPoints.emplace_back(std::move(salientPoint));
-                gotSalientPoint = true;
-              }
-            }
-          }
-          else
-          {
-            // Otherwise, create a SalientPoint for each caption, with the "text" field
-            // as each one's description, and "confidence" as the score, if available
-            for(const Json::Value& captionJson : captionsJson)
-            {
-              if(captionJson.isMember("text"))
-              {
-                salientPoint.score = 0.f;
-                JsonTools::GetValueOptional(captionJson, "confidence", salientPoint.score);
-                salientPoint.description = captionJson["text"].asString();
-                salientPoints.emplace_back(salientPoint);
-                gotSalientPoint = true;
-              }
-            }
-          }
-        }
-      }
-      if(!gotSalientPoint)
-      {
-        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToGetSceneDescriptionSalientPoint", "");
-      }
-      break;
-    }
+      return ParseSceneDescriptionFromJson(detectionResult, salientPoints);
+      
+    case Vision::OffboardProcType::ObjectDetection:
+      return ParseObjectDetectionsFromJson(detectionResult, salientPoints);
       
     default:
     {
@@ -455,6 +382,149 @@ Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& detectionRes
       break;
     }
   } // switch(procType)
+  
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result OffboardModel::ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
+                                                    std::list<Vision::SalientPoint>& salientPoints)
+{
+  // Assumes Json structure like this is present in detectionResult:
+  //      "description":{
+  //        "captions":[
+  //          {
+  //            "text":"a man sitting in front of a laptop",  <-- this is the scene description
+  //            "confidence":0.8529333419354393               <-- this is the "score"
+  //          }
+  //        ]
+  //      }
+  bool gotSalientPoint = false;
+  if(jsonSalientPoints.isMember("description"))
+  {
+    const Json::Value& descriptionJson = jsonSalientPoints["description"];
+    if(descriptionJson.isMember("captions"))
+    {
+      const Json::Value& captionsJson = descriptionJson["captions"];
+      
+      Vision::SalientPoint salientPoint(_imageTimestamp,
+                                        0.5f, 0.5f,
+                                        0.f, 1.f,
+                                        Vision::SalientPointType::SceneDescription,
+                                        "<no description>",
+                                        {}, 0);
+      
+      if(captionsJson.empty())
+      {
+        // If there are no captions, fall back on a comma separated list of tags
+        if(descriptionJson.isMember("tags"))
+        {
+          const Json::Value& tagsJson = descriptionJson["tags"];
+          
+          if(tagsJson.isArray() && !tagsJson.empty())
+          {
+            auto iter = tagsJson.begin();
+            salientPoint.description = iter->asString();
+            ++iter;
+            while(iter != tagsJson.end())
+            {
+              salientPoint.description += ", " + iter->asString();
+              ++iter;
+            }
+            salientPoints.emplace_back(std::move(salientPoint));
+            gotSalientPoint = true;
+          }
+        }
+      }
+      else
+      {
+        // Otherwise, create a SalientPoint for each caption, with the "text" field
+        // as each one's description, and "confidence" as the score, if available
+        for(const Json::Value& captionJson : captionsJson)
+        {
+          if(captionJson.isMember("text"))
+          {
+            salientPoint.score = 0.f;
+            JsonTools::GetValueOptional(captionJson, "confidence", salientPoint.score);
+            salientPoint.description = captionJson["text"].asString();
+            salientPoints.emplace_back(salientPoint);
+            gotSalientPoint = true;
+          }
+        }
+      }
+    }
+  }
+  
+  if(!gotSalientPoint)
+  {
+    LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToGetSceneDescriptionSalientPoint", "");
+  }
+  
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result OffboardModel::ParseObjectDetectionsFromJson(const Json::Value& jsonSalientPoints,
+                                                    std::list<Vision::SalientPoint>& salientPoints)
+{
+  if(jsonSalientPoints.isMember("objects"))
+  {
+    const Json::Value& objectsJson = jsonSalientPoints["objects"];
+    if(ANKI_VERIFY(objectsJson.isArray(), "OffboardModel.ParseObjectDetectionsFromJson.ExpectingObjectsArray", ""))
+    {
+      for(const auto& objectJson : objectsJson)
+      {
+        if(objectJson.isMember("name") && objectJson.isMember("bounding_poly"))
+        {
+          const std::string& name = objectJson["name"].asString();
+          
+          Vision::SalientPoint salientPoint(_imageTimestamp,
+                                            0.5f, 0.5f,
+                                            0.f, 1.f,
+                                            Vision::SalientPointType::Unknown,
+                                            name,
+                                            {}, 0);
+          
+          if(name == "Person")
+          {
+            salientPoint.salientType = Vision::SalientPointType::Person;
+          }
+          // TODO: Handle other object types
+          
+          Point2f center(0.f, 0.f);
+          const Json::Value& polyJson = objectJson["bounding_poly"];
+          for(const auto& pointJson : polyJson)
+          {
+            if(ANKI_VERIFY(pointJson.isMember("x") && pointJson.isMember("y"),
+                           "OffboardModel.ParseObjectDetectionsFromJson.ExpectingXandY", ""))
+            {
+              const Point2f point(pointJson["x"].asFloat(), pointJson["y"].asFloat());
+              center += point;
+              salientPoint.shape.emplace_back(point.ToCladPoint2d());
+            }
+          }
+          
+          if(!salientPoint.shape.empty())
+          {
+            // center contains a sum at this point: make it an average and store in SalientPoint
+            center *= 1.f / (float)salientPoint.shape.size();
+            salientPoint.x_img = center.x();
+            salientPoint.y_img = center.y();
+            
+            // For now, just using the bounding rectangle area as the area fraction
+            // TODO: Something more accurate (area of poly)
+            Rectangle<f32> boundingBox(Poly2f(salientPoint.shape));
+            salientPoint.area_fraction = boundingBox.Area();
+          }
+          
+          // Not the end of the world if we don't get a score, so make it optional
+          JsonTools::GetValueOptional(objectJson, "Score", salientPoint.score);
+          
+          salientPoints.emplace_back(std::move(salientPoint));
+        }
+      }
+    }
+  }
   
   return RESULT_OK;
 }

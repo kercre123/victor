@@ -117,6 +117,7 @@ CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 
 CONSOLE_VAR_RANGED(f32, kFakeHandDetectionProbability, "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
+CONSOLE_VAR_RANGED(f32, kPersonClassificationProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
 
@@ -1348,7 +1349,8 @@ void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::s
   // DEBUG: Randomly fake detections of hands and pets if this network was registered to those modes
   if(Util::IsFltGTZero(kFakeHandDetectionProbability) ||
      Util::IsFltGTZero(kFakeCatDetectionProbability) ||
-     Util::IsFltGTZero(kFakeDogDetectionProbability))
+     Util::IsFltGTZero(kFakeDogDetectionProbability) ||
+     Util::IsFltGTZero(kPersonClassificationProbability))
   {
     std::vector<Vision::SalientPointType> fakeDetectionsToAdd;
     for(auto & mode : modes)
@@ -1367,6 +1369,10 @@ void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::s
       if((VisionMode::DetectingPets == mode) && (rng.RandDbl() < kFakeDogDetectionProbability))
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Dog);
+      }
+      if((VisionMode::ClassifyingPeople == mode) && (rng.RandDbl() < kPersonClassificationProbability))
+      {
+        fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::PersonPresent);
       }
     }
     for(const auto& type : fakeDetectionsToAdd)
@@ -1725,7 +1731,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   for(const auto& mode : GetVisionModesUsingNeuralNets())
   {
     TimeStamp_t usingTimestamp = 0;
-    if(IsModeEnabled(mode) && ShouldVisionModeRun(mode, _currentResult, usingTimestamp))
+    // NOTE: ShouldVisionModeRun also checks that mode is enabled (in _modes)
+    if(ShouldVisionModeRun(mode, _currentResult, _modes, usingTimestamp))
     {
       std::set<std::string> networkNames;
       const bool success = GetNeuralNetsForVisionMode(mode, networkNames);

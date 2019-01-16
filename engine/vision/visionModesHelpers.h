@@ -24,6 +24,7 @@ namespace Anki {
 namespace Vector {
 
 // Forward declaration
+class VisionModeSet;
 struct VisionProcessingResult;
 
 DECLARE_ENUM_INCREMENT_OPERATORS(VisionMode);
@@ -41,8 +42,12 @@ bool GetVisionModesForNeuralNet(const std::string& networkName, std::set<VisionM
 const std::set<VisionMode>& GetVisionModesUsingNeuralNets();
   
 // Checks if the given vision mode wants to run based on what's already in the given processing result
+//   and what vision modes are enabled (Note that if visionMode is not in visionModesEnabled, this will return false!)
 // If true is returned, the TimeStamp_t argument indicates the timestamp of the image that should be used
-bool ShouldVisionModeRun(const VisionMode& visionMode, const VisionProcessingResult& result, TimeStamp_t& t);
+bool ShouldVisionModeRun(const VisionMode& visionMode,
+                         const VisionProcessingResult& result,
+                         const VisionModeSet& visionModesEnabled,
+                         TimeStamp_t& t);
   
 } // namespace Vector
 } // namespace Anki

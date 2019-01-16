@@ -9,7 +9,8 @@
     "BoxDemoDescribeScene",
     "BoxDemoShowMicData",
     "BoxDemoShowNetworkInfo",
-    "BoxDemoFaceTrackingInternal"
+    "BoxDemoFaceTrackingInternal", 
+    "BoxDemoCountPeople"
   ],
 
   "anonymousBehaviors": [

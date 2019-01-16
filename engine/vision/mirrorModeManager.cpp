@@ -52,6 +52,14 @@ namespace {
   // Set to false draws faces with eyes detected in yellow and faces with no eyes detected in red.
   CONSOLE_VAR(bool, kTheBox_ColorFacesBasedOnID, "TheBox.Screen", true);
   
+  // Set to true to only draw salient points that are expected to produced localized results
+  CONSOLE_VAR(bool, kTheBox_OnlyDrawLocalizableSalientPoints, "TheBox.Screen", true);
+  
+  // Darken edge of the screen to soften it a bit
+  CONSOLE_VAR_ENUM(s32, kTheBox_ScreenEdgeVignettingMode, "TheBox.Screen", 1, "Off,Camera,All");
+  CONSOLE_VAR_RANGED(s32, kTheBox_ScreenEdgeVignettingDist, "TheBox.Screen", 5, 0, 10);
+  CONSOLE_VAR_RANGED(f32, kTheBox_ScreenEdgeVignettingSigma, "TheBox.Screen", 3.f, 0.f, 10.f);
+  
   // TODO: Figure out the original image resolution? This just assumes "Default" for marker/face detection
   constexpr f32 kXmax = (f32)DEFAULT_CAMERA_RESOLUTION_WIDTH;
   constexpr f32 kHeightScale = (f32)FACE_DISPLAY_HEIGHT / (f32)DEFAULT_CAMERA_RESOLUTION_HEIGHT;
@@ -306,6 +314,12 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
     const std::list<Vision::SalientPoint>& salientPoints = procResult.salientPoints;
     for(auto const& salientPoint_norm : salientPoints)
     {
+      const Vision::SalientPointType salientType = salientPoint_norm.salientType;
+      if(kTheBox_OnlyDrawLocalizableSalientPoints && !Vision::IsSalientPointTypeLocalized(salientType, false))
+      {
+        continue;
+      }
+      
       // Salient points are in normalized coordinates, so scale directly to screen image size
       auto salientPoint = salientPoint_norm;
       salientPoint.x_img *= _screenImg.GetNumCols();
@@ -351,12 +365,49 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
     _screenImg.DrawPoly(DisplayMirroredPolyHelper(poly, _doMirror), color, 2);
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline f32 GetVignettingFactor(f32 x)
+{
+  return std::expf(-0.5f * (x*x) / (kTheBox_ScreenEdgeVignettingSigma*kTheBox_ScreenEdgeVignettingSigma));
+}
+  
+static void AddVignetting(Vision::ImageRGB& img)
+{
+  for(s32 i=0; i<kTheBox_ScreenEdgeVignettingDist; ++i)
+  {
+    img.get_CvMat_().row(i) *= GetVignettingFactor(kTheBox_ScreenEdgeVignettingDist-i);
+  }
+  
+  const s32 bottom = img.GetNumRows()-(kTheBox_ScreenEdgeVignettingDist+1);
+  for(s32 i=bottom; i<img.GetNumRows(); ++i)
+  {
+    img.get_CvMat_().row(i) *= GetVignettingFactor(i-bottom);
+  }
+  
+  for(s32 j=0; j<kTheBox_ScreenEdgeVignettingDist; ++j)
+  {
+    img.get_CvMat_().col(j) *= GetVignettingFactor(kTheBox_ScreenEdgeVignettingDist-j);
+  }
+  
+  const s32 right  = img.GetNumCols()-(kTheBox_ScreenEdgeVignettingDist+1);
+  for(s32 j=right; j<img.GetNumCols(); ++j)
+  {
+    img.get_CvMat_().col(j) *= GetVignettingFactor(j-right);;
+  }
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraImg,
                                                 VisionProcessingResult& visionProcResult)
 {
   cameraImg.Resize(_screenImg, Vision::ResizeMethod::NearestNeighbor);
+  
+  if(kTheBox_ScreenEdgeVignettingMode == 1)
+  {
+    // Vignette the camera feed, but nothing draw over it
+    AddVignetting(_screenImg);
+  }
 
   // Only do mirroring if it's enabled and we're not being told to "unmirror" by the VisionModes in the result
   // Note that Unmirroring does nothing if mirroring is not enabled in the first place.
@@ -398,6 +449,13 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
   if(kTheBox_RotateImage180ByDefault ^ visionProcResult.modesProcessed.Contains(VisionMode::MirrorModeRotate180))
   {
     cv::rotate(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), cv::ROTATE_180);
+  }
+  
+  if(kTheBox_ScreenEdgeVignettingMode == 2)
+  {
+    // Vignette the final image
+    // NOTE: Still does not affecting the string drawn by VisionComponent!
+    AddVignetting(_screenImg);
   }
   
   visionProcResult.mirrorModeImg.SetFromImageRGB(_screenImg, _gammaLUT);

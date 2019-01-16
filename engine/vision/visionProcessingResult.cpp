@@ -73,6 +73,17 @@ TimeStamp_t VisionProcessingResult::ContainsDetectionsForMode(const VisionMode m
     case VisionMode::DetectingPeople:
       return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::Person, atTimestamp);
       
+    case VisionMode::ClassifyingPeople:
+      return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::PersonPresent, atTimestamp);
+      
+    case VisionMode::DetectingMotion:
+    {
+      if(!observedMotions.empty())
+      {
+        return observedMotions.begin()->timestamp;
+      }
+      return 0;
+    }
     default:
       LOG_ERROR("VisionProcessingResult.ContainsDetectionsForMode.ModeNotSupported",
                 "VisionMode:%s", EnumToString(mode));

@@ -32,7 +32,9 @@ namespace Vector {
     MirrorMode,                  // Draw images/detections on the robot's face, mirrored
     
     // TheBox Demo
+    ClassifyingPeople,           // Just checks for the presence of people, does not localize them
     OffboardFaceRecognition,
+    OffboardPersonDetection,
     OffboardSceneDescription,
     
     // This is a gross thing to do: a mode to disable another mode. TODO: Remove with VIC-6838
