@@ -12,156 +12,10 @@
   <script src="jquery-1.12.4.js"></script>
   <script src="jquery-ui.js"></script>
 
-  <script>
-    var hostname = "";  // (Effectively, the device IP)
-    var host = "";      // hostname and port (e.g. "192.168.42.82:8888"
-    var STANDALONE_PORT = "8887";
-    var ENGINE_PORT = "8888";
-    var ANIM_PORT = "8889";
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
 
-
-    $(document).ready(function() {
-        $('#btn_thebox_stop').click(ButtonHandler_StopThebox);
-        $('#btn_thebox_restart').click(ButtonHandler_RestartThebox);
-        $('#btn_thebox_restart_device').click(ButtonHandler_RestartDevice);
-        $('#disp_stop_message').hide();
-        $('#btn_webviz_mic_data').click(ButtonHandler_WebVizMicData);
-        $('#btn_webviz_cpu').click(ButtonHandler_WebVizCpu);
-        $('#btn_webviz_behavior').click(ButtonHandler_WebVizBehavior);
-        $('#btn_clear_webviz').click(ButtonHandler_ClearWebViz);
-        InitConfirmDialog();
-
-        // Pull out hostname (device IP) so we can use it in here to call into ANY of the webservers
-        var urlObject = new URL(document.URL);
-        host = urlObject.host;
-        hostname = urlObject.hostname;
-        console.log('host is: ' + host);
-        console.log('hostname is: ' + hostname);
-
-        // To attempt to force a re-load of the cache of these two iframes, we add a random number to the URL
-        $('#iViewEngine').prop('src', 'http://' + hostname + ':' + ENGINE_PORT + '/demoEngine.html?' + ExtraURLToForceReload());
-        //$('#iViewAnim')  .prop('src', 'http://' + hostname + ':' + ANIM_PORT +   '/demoAnim.html?'   + ExtraURLToForceReload());
-    });
-    $(function() {
-        $("button").click(function(event) {
-            var name = event.target.name;
-            if (name.startsWith('page_')) {
-                SetPage(name);
-                event.preventDefault();
-                return;
-            }
-            event.preventDefault();
-        });
-        $("input[type='submit']").click(function(event) {
-            $.post("/"+event.target.value, function(data) {
-                $("#content").html(data);
-                $("#content").show();
-                InitConfirmDialog();
-            });
-            event.preventDefault();
-        });
-    });
-
-    function ExtraURLToForceReload()
-    {
-      var rand = Math.floor((Math.random() * 1000000) + 1);
-      var extra = 'uid=' + rand;
-      return extra;
-    }
-
-    function InitConfirmDialog() {
-      $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
-        draggable: true,
-        width: 'auto',
-        buttons: {
-          "OK": function() {
-            $("#confirm_dialog").dialog("close");
-            if (dialogOKFunction !== undefined) {
-              dialogOKFunction();
-              dialogOKFunction = undefined;
-            }
-          },
-          "Cancel": function () {
-            $("#confirm_dialog").dialog("close");
-            dialogOKFunction = undefined;
-          }
-        } });
-    }
-
-    function StartConfirmDialog(title, body, okfunction) {
-      dialogOKFunction = okfunction;
-      $("#confirm_dialog_body").html(body);
-      var d = $("#confirm_dialog");
-      d.dialog("option", "title", title);
-      d.dialog("open");
-    }
-
-    function GoingAwayNow() {
-      $('#iViewEngine').remove();
-      //$('#iViewAnim').remove();
-      ButtonHandler_ClearWebViz();
-      $('#btn_thebox_stop').hide();
-      $('#btn_thebox_restart').hide();
-      $('#btn_thebox_restart_device').hide();
-      $('#btn_webviz_mic_data').hide();
-      $('#btn_webviz_cpu').hide();
-      $('#btn_webviz_behavior').hide();
-      $('#btn_clear_webviz').hide();
-    }
-
-    function ButtonHandler_StopThebox() {
-      StartConfirmDialog("", "Stop Device:", function() {
-        var msg = 'Shutting Device process down; this webpage will no longer be active. You must physically restart, then refresh this page after a few seconds.';
-        $('#disp_stop_message').html(msg);
-        $('#disp_stop_message').show();
-        GoingAwayNow();
-        $.post('/systemctl?proc=anki-robot.target&stop', function(data) {});
-      });
-    }
-
-    function ButtonHandler_RestartThebox() {
-      StartConfirmDialog("", "Restart Device:", function() {
-        var msg = 'Restarting Device processes (soft reboot).  After a few seconds, refresh this page.';
-        $('#disp_stop_message').html(msg);
-        $('#disp_stop_message').show();
-        GoingAwayNow();
-        $.post('/systemctl?proc=anki-robot.target&restart', function(data) {});
-      });
-    }
-
-    function ButtonHandler_RestartDevice() {
-      StartConfirmDialog("", "Restart Device:", function() {
-        var msg = 'Restarting device.  After several seconds, place device on charger, and after several more seconds, refresh this page.';
-        $('#disp_stop_message').html(msg);
-        $('#disp_stop_message').show();
-        GoingAwayNow();
-        $.post('/systemctl?proc=&reboot', function(data) {});
-      });
-    }
-
-    function ActivateWebVizIFrame(url, port) {
-      var delim = (url === "") ? '?' : '&';
-      var fullUrl = 'http://' + hostname + ':' + port + '/webViz2.html' + url + delim + ExtraURLToForceReload();
-      $('#iViewWebViz').prop('src', fullUrl);
-    }
-
-    function ButtonHandler_WebVizMicData() {
-      ActivateWebVizIFrame("?tab=micdata", ANIM_PORT);
-    }
-
-    function ButtonHandler_WebVizCpu() {
-      ActivateWebVizIFrame("?tab=cpu", ENGINE_PORT);
-    }
-
-    function ButtonHandler_WebVizBehavior() {
-      ActivateWebVizIFrame("?tab=behaviors", ENGINE_PORT);
-    }
-
-    function ButtonHandler_ClearWebViz() {
-      $('#iViewWebViz').prop('src', 'about:blank'); // To clear the iframe
-    }
-
-  </script>
+  <script src="demo.js"></script>
 </head>
 
 <!-- page content -->
@@ -172,16 +26,34 @@
     <br>
     <div id="id_title0" style="color:gray; font-size:18pt; text-align:center;">DEMO  -  CONFIDENTIAL</div>
     <div id='main_section'>
-    <hr>
-    <iframe src="" id="iViewEngine" style="width:100%;height:180px;border:none" frameborder="0"></iframe>
-<!--       <iframe src="" id="iViewAnim"   style="width:100%;height:100%;border:none" frameborder="0"></iframe>
- -->
-      <button id='btn_webviz_cpu' class='ui-button ui-corner-all ui-widget'>CPU viz</button>
-      <button id='btn_webviz_mic_data' class='ui-button ui-corner-all ui-widget'>Mic data viz</button>
-      <button id='btn_webviz_behavior' class='ui-button ui-corner-all ui-widget'>Behavior viz</button>
-      <button id='btn_clear_webviz' class='ui-button ui-corner-all ui-widget'>Clear webviz panel</button>
-      <iframe src="" id="iViewWebViz" style="width:100%;height:500px;border:none" frameborder="0"></iframe>
       <hr>
+      <div>
+        <select name="DemoState" id='DemoState' class='listbox'>
+          <option value="">------</option>
+        </select>
+        <label for="DemoState-button">Switch to State</label>
+      </div>
+      <br>
+      <div>
+        <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
+          <option>Mute</option>
+          <option>Low</option>
+          <option>Medium Low</option>
+          <option>Medium</option>
+          <option>Medium High</option>
+          <option>High</option>
+        </select>
+        <label for="MasterVolumeLevel-button">Master Volume</label>
+      </div>
+      <hr>
+
+      <div id="container">
+        <ul class="tabs">
+        </ul>
+      </div>
+      
+      <hr>
+      <div id="status">Not connected to device</div>
       <button id='btn_thebox_stop' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Stop Processes</button>
       <button id='btn_thebox_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Processes</button>
       <button id='btn_thebox_restart_device' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Device</button>
