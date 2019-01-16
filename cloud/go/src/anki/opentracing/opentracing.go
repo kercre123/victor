@@ -44,6 +44,8 @@ func StartCladSpanFromContext(ctx context.Context, operationName string) (opentr
 		log.Println("Error injecting span context:", err)
 	}
 
+	log.Printf("StartCladSpanFromContext: span = %q (operation = %q)\n", spanContextString, operationName)
+
 	return span, spanContextString
 }
 
@@ -51,13 +53,23 @@ func StartCladSpanFromContext(ctx context.Context, operationName string) (opentr
 // string property) and creates a new Span that is added to a new Context that is returned.
 // See https://github.com/opentracing/opentracing-go#deserializing-from-the-wire
 func ContextFromCladSpan(operationName string, spanContextString string) context.Context {
-	wireContext, err := OpenTracer.Extract(opentracing.Binary, &spanContextString)
-	if err != nil {
-		log.Println("Error extracing span context:", err)
-	}
+	log.Printf("ContextFromCladSpan: span = %q (operation = %q)\n", spanContextString, operationName)
 
-	// TODO: this new span may again be created in the client interceptor, to be looked into.
-	serverSpan := opentracing.StartSpan(operationName, ext.RPCServerOption(wireContext))
+	var serverSpan opentracing.Span
+	if spanContextString != "" {
+		wireContext, err := OpenTracer.Extract(opentracing.Binary, &spanContextString)
+		if err != nil {
+			log.Println("Error extracting span context:", err)
+		}
+
+		// TODO: this new span may again be created in the client interceptor, to be looked into.
+		serverSpan = opentracing.StartSpan(operationName, ext.RPCServerOption(wireContext))
+	} else {
+		log.Printf("Skipping span extraction: %q\n", spanContextString)
+
+		// TODO: this new span may again be created in the client interceptor, to be looked into.
+		serverSpan = opentracing.StartSpan(operationName)
+	}
 
 	serverSpan.SetTag("protocol", "CLAD")
 
