@@ -18,7 +18,7 @@ namespace Anki {
 namespace Vector {
   
   namespace {
-    CONSOLE_VAR_RANGED(float, kStoppingThreshold, "Chirps", 30.0f, 0.0f, 50.0f);
+    CONSOLE_VAR_RANGED(float, kStoppingThreshold, "Chirps.Debug", 30.0f, 0.0f, 50.0f);
   }
   
 // ---------------------------------------------------------------------------

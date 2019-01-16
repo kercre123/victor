@@ -22,7 +22,6 @@ namespace {
   // poll this to see if there are still chirps being played. dont actually set it
   CONSOLE_VAR(bool, kStillProcessing, "Chirps.Offboard", false);
   
-  CONSOLE_VAR_RANGED(float, kTimeScaleFactor, "Chirps", 1.2f, 0.5f, 2.0f);
   CONSOLE_VAR(bool, kUseTestFile, "Chirps", false);
 }
 

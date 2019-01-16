@@ -24,8 +24,8 @@ namespace Vector {
 namespace {
   constexpr unsigned int kBuffSize = 3*16000; // 1 sec
   
-  CONSOLE_VAR_RANGED(float, kTimeScaleFactor, "Chirps", 1.2f, 0.5f, 2.0f);
-  CONSOLE_VAR(bool, kUseTestFile, "Chirps", false);
+  CONSOLE_VAR_RANGED(float, kTimeScaleFactor, "Chirps.AAA_Playback", 1.2f, 0.5f, 2.0f);
+  CONSOLE_VAR(bool, kUseTestFile, "Chirps.Debug", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,11 +124,31 @@ void HumanSyllableAnalyzer::RunDetector()
     PRINT_NAMED_INFO("WHATNOW", "no syllables");
   }
   
-  if( std::any_of(syllables.begin(), syllables.end(), [](const auto& c){ return c.avgPower >= -90; }) ) {
+  bool anyLoud = false;
+  float minVol = std::numeric_limits<float>::max();
+  float maxVol = -std::numeric_limits<float>::max();
+  for( const auto& s : syllables ) {
+    if( s.endIdx <= s.startIdx + 1 ) {
+      continue;
+    }
+    if( s.avgPower >= -90 ) {
+      anyLoud = true;
+    }
+    if( s.avgPower < minVol ) {
+      minVol = s.avgPower;
+    }
+    if( s.avgPower > maxVol ) {
+      maxVol = s.avgPower;
+    }
+  }
+  
+  
+  if( anyLoud ) {
     
     using namespace std::chrono;
     uint64_t startTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch() + milliseconds{1000}).count();
     std::vector<Chirp> chirps;
+    
     for( const auto& syllable : syllables ) {
       PRINT_NAMED_WARNING("WHATNOW","Syllable info: start=%f, end=%f, freq=%f, vol=%f",
                           syllable.startTime_s, syllable.endTime_s, syllable.avgFreq, syllable.avgPower );
@@ -156,7 +176,9 @@ void HumanSyllableAnalyzer::RunDetector()
   //    }
       chirp.pitch0_Hz = freq0;
       chirp.pitch1_Hz = freq1;
-      chirp.volume = 1.0;
+      
+      chirp.volume = ((syllable.avgPower - minVol)/(maxVol - minVol) + 1)/2; // in [0.5, 1] . todo: log
+      
       chirps.push_back( std::move(chirp) );
     }
     GetSequencer()->AddChirps(chirps);

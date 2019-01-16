@@ -33,17 +33,17 @@ namespace {
   
   uint32_t kPitchTick_ms = 10;
   
-  CONSOLE_VAR_RANGED(float, kSourcePitch_Hz, "Chirps", 150.0f, 0.0f, 5000.0f);
-  CONSOLE_VAR_RANGED(float, kMinCentsSlider_Hz, "Chirps", -500.0f, -10000.0f, 0.0f);
-  CONSOLE_VAR_RANGED(float, kMaxCentsSlider_Hz, "Chirps", 500.0f, 0.0f, 10000.0f);
+  CONSOLE_VAR_RANGED(float, kSourcePitch_Hz, "Chirps.zzCents", 150.0f, 0.0f, 5000.0f);
+  CONSOLE_VAR_RANGED(float, kMinCentsSlider_Hz, "Chirps.zzCents", -500.0f, -10000.0f, 0.0f);
+  CONSOLE_VAR_RANGED(float, kMaxCentsSlider_Hz, "Chirps.zzCents", 500.0f, 0.0f, 10000.0f);
   
   const bool kRTPCIsCents = false; // true if cents, false if pitch
-  CONSOLE_VAR_RANGED(float, kMinPitchSlider_Hz, "Chirps", 440, 0.F, 5000.0F);
-  CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps", 1760, 0.0f, 5000.0f);
+  CONSOLE_VAR_RANGED(float, kMinPitchSlider_Hz, "Chirps.Pitch", 440, 0.F, 5000.0F);
+  CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps.Pitch", 1760, 0.0f, 5000.0f);
   
-  CONSOLE_VAR_ENUM(int, kSwitchType, "Chirps", 0, "TONEGEN,ASSETS");
+  CONSOLE_VAR_ENUM(int, kSwitchType, "Chirps.AAA_Playback", 0, "TONEGEN,ASSETS");
   
-  CONSOLE_VAR(bool, kPlayAnims, "Chirps", false);
+  CONSOLE_VAR(bool, kPlayAnims, "Chirps.AAA_Playback", false);
   
   const char* kAnimLoop01 = "anim_vvv_loop_01";
   
@@ -106,24 +106,25 @@ void Sequencer::Init(const AnimContext* context, AnimationStreamer* animStreamer
     const float pitch1_Hz = ConsoleArg_Get_Float( context, "maxHz");
     Test_Pitch( pitch0_Hz, pitch1_Hz, duration_ms );
   };
-  _consoleFuncs.emplace_front( "ShaveAndAHairCutTwoBits", std::move(shaveAndHaircut), "Chirps", "uint32_t quarterNote_ms" );
-  _consoleFuncs.emplace_front( "Triplet", std::move(triplet), "Chirps", "uint32_t duration_ms, float pitchHz" );
-  _consoleFuncs.emplace_front( "ChangingPitch", std::move(changingPitch), "Chirps", "uint32_t duration_ms, float minHz, float maxHz" );
+  _consoleFuncs.emplace_front( "ShaveAndAHairCutTwoBits", std::move(shaveAndHaircut), "Chirps.Demo", "uint32_t quarterNote_ms" );
+  _consoleFuncs.emplace_front( "Triplet", std::move(triplet), "Chirps.Demo", "uint32_t duration_ms, float pitchHz" );
+  _consoleFuncs.emplace_front( "ChangingPitch", std::move(changingPitch), "Chirps.Demo", "uint32_t duration_ms, float minHz, float maxHz" );
   
   _running = true;
   _thread = std::thread{ &Sequencer::MainLoop, this };
   
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Sequencer::AddChirp( const Chirp& chirp )
-{
-  {
-    std::lock_guard<std::mutex> lk{_mutex};
-    AddChirpInternal( chirp );
-  }
-  _condVar.notify_one();
-}
+ 
+// disabled since we want to check for octaves and stuff
+//// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//void Sequencer::AddChirp( const Chirp& chirp )
+//{
+//  {
+//    std::lock_guard<std::mutex> lk{_mutex};
+//    AddChirpInternal( chirp );
+//  }
+//  _condVar.notify_one();
+//}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Sequencer::AddChirps( const std::vector<Chirp>& chirps )
@@ -136,8 +137,9 @@ void Sequencer::AddChirps( const std::vector<Chirp>& chirps )
     }
     
     _playingSyllables = (unsigned int)_chirps.size();
+    _emphasisIdx = GetEmphasis(); // do this here instead of on anim updated for the first anim
     // todo: emPHAsis on sylLABle
-    PRINT_NAMED_WARNING("WHATNOW", "setting _platingSylabbled=%d", (int)_playingSyllables);
+    PRINT_NAMED_WARNING("WHATNOW", "setting _platingSylabbled=%d, emphasis=%d", (int)_playingSyllables, _emphasisIdx);
   }
   _condVar.notify_one();
 }
@@ -233,12 +235,12 @@ void Sequencer::MainLoop()
       const float cents = PitchToRelativeCents( pitch );
       param = (cents - kMinCentsSlider_Hz) / (kMaxCentsSlider_Hz - kMinCentsSlider_Hz);// + kMinCentsSlider_Hz;
       param = Util::Clamp(param, 0.0f, 1.0f);
-      PRINT_NAMED_WARNING("WHATNOW","cents=%f, param=%f", cents, param);
+      //PRINT_NAMED_WARNING("WHATNOW","cents=%f, param=%f", cents, param);
     } else {
       const float transposed = PitchToOctavedPitch(pitch);
       param = (transposed - kMinPitchSlider_Hz) / (kMaxPitchSlider_Hz - kMinPitchSlider_Hz);
       param = Util::Clamp(param, 0.0f, 1.0f);
-      PRINT_NAMED_WARNING("WHATNOW","pitch=%f, transposed=%f, param=%f", pitch, transposed, param);
+      //PRINT_NAMED_WARNING("WHATNOW","pitch=%f, transposed=%f, param=%f", pitch, transposed, param);
     }
     
     if( _audioController != nullptr ) {
@@ -407,7 +409,7 @@ void Sequencer::Test_Pitch( const float pitch0_Hz, const float pitch1_Hz, const 
     .pitch0_Hz = pitch0_Hz,
     .pitch1_Hz = pitch1_Hz,
   };
-  AddChirp( chirp );
+  AddChirps( {chirp} );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -538,7 +540,7 @@ int Sequencer::ComputeBestOctave( const std::vector<Chirp>& chirps )
       minCount = outliers;
       bestOctave = i;
     }
-    PRINT_NAMED_WARNING("WHATNOW", "octave %d has %d outliers", i, outliers);
+    //PRINT_NAMED_WARNING("WHATNOW", "octave %d has %d outliers", i, outliers);
   }
   PRINT_NAMED_WARNING("WHATNOW", "best chirp octave is %d (%d outliers)", bestOctave, minCount);
   return bestOctave;
@@ -577,20 +579,28 @@ void Sequencer::AnimationUpdate()
     if( (_animState == AnimationState::GetIn
          || _animState == AnimationState::OneSyllable
          || _animState == AnimationState::TwoSyllable
-         || _animState == AnimationState::ThreeSyllable) && (_playingSyllables > 0) )
+         || _animState == AnimationState::ThreeSyllable) && !_chirps.empty() )
     {
       const char* anim;
+      if( _animState != AnimationState::GetIn ) {
+        // only update these vars if its not the first anim, so that we still play the syllables even if one has already started and removed from set
+        _playingSyllables = (unsigned int)_chirps.size();
+        _emphasisIdx = GetEmphasis();
+      }
       if( _playingSyllables == 1 ) {
         anim = kAnimLoop01;
         _animState = AnimationState::OneSyllable;
       } else if ( _playingSyllables == 2 ) {
-        anim = (rand() > 0.5) ? kAnimLoop02_01 : kAnimLoop02_02;
+        if( _emphasisIdx == 0 ) {
+          anim = kAnimLoop02_01;
+        } else {
+          anim = kAnimLoop02_02;
+        }
         _animState = AnimationState::TwoSyllable;
       } else {
-        const double r = rand();
-        if( r < 0.33 ) {
+        if( _emphasisIdx == 0 ) {
           anim = kAnimLoop03_01;
-        } else if ( r < 0.67 ) {
+        } else if ( _emphasisIdx == 1 ) {
           anim = kAnimLoop03_02;
         } else {
           anim = kAnimLoop03_03;
@@ -621,6 +631,26 @@ void Sequencer::OnAnimationEnded( AnimationTag tag )
   }
   // cant do anything this tick since otherwise this would be recursive
   _animEnded = true;
+}
+  
+unsigned int Sequencer::GetEmphasis()
+{
+  unsigned int idxMax = 0;
+  float maxVol = -std::numeric_limits<float>::max();
+  int i=0;
+  for( auto it = _chirps.begin(); it != _chirps.end(); ++it ) {
+    if( it->playing ) {
+      continue;
+    }
+    //PRINT_NAMED_WARNING("WHATNOW", "idx i=%d, vol=%f, max=%f", i, it->chirp.volume, maxVol);
+    if( it->chirp.volume > maxVol ) {
+      maxVol = it->chirp.volume;
+      idxMax = i;
+    }
+    ++i;
+  }
+  PRINT_NAMED_WARNING("WHATNOW", "best emphasis=%d", idxMax);
+  return idxMax;
 }
   
 } // namespace Vector

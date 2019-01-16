@@ -42,7 +42,7 @@ public:
   
   void Update();
   
-  void AddChirp( const Chirp& chirp );
+  //void AddChirp( const Chirp& chirp );
   void AddChirps( const std::vector<Chirp>& chirps );
   
   bool HasChirps() const;
@@ -69,6 +69,7 @@ private:
   
   int ComputeBestOctave( const std::vector<Chirp>& chirps );
   
+  unsigned int GetEmphasis();
   
   std::chrono::time_point<Clock> ConvertToTimePoint( uint64_t time_ms ) const;
   
@@ -124,6 +125,7 @@ private:
     GetOut,
   };
   AnimationTag _playingTag = 0;
+  int _emphasisIdx = 0;
   AnimationState _animState = AnimationState::None;
   std::atomic<int> _playingSyllables;
   bool _animEnded = false;
