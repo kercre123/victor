@@ -5,7 +5,7 @@
   
   var chartOptions = {
     legend: {
-      show: true,
+      show: false,
       position: "sw",
       labelFormatter: GetLegendLabel
     },
