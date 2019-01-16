@@ -16,7 +16,7 @@ set_target_properties(pv_porcupine PROPERTIES
     "${PICOVOICE_HOME}/include"
 )
 
-string(COMPARE EQUAL "${build_system}" SHARED _is_shared_lib)
+string(COMPARE EQUAL "${PICOVOICE_LIB_TYPE}" SHARED _is_shared_lib)
 
 if (_is_shared_lib)
   if (NOT TARGET copy_picovoice_libs)
