@@ -164,8 +164,8 @@ void HumanSyllableAnalyzer::RunDetector()
       chirp.duration_ms *= kTimeScaleFactor;
       
       //float freq = std::min(syllable.peakFreq, syllable.avgFreq);
-      float freq0 = syllable.firstFreq; //syllable.avgFreq;
-      float freq1 = syllable.lastFreq; //syllable.avgFreq;
+      float freq0 = syllable.firstPeakFreq;//syllable.firstFreq; //syllable.avgFreq;
+      float freq1 = syllable.lastPeakFreq;//syllable.lastFreq; //syllable.avgFreq;
       freq0 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
       freq1 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
   //    if( freq0 > 400 ) {

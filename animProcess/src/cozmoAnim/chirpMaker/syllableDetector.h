@@ -33,8 +33,10 @@ public:
     float avgFreq = 0.0f;
     float peakFreq = 0.0f;
     float avgPower = 0.0f;
-    float firstFreq = 0.0f;
-    float lastFreq = 0.0f;
+    float firstFreq = 0.0f; // global max freq peak at beginning of syllable
+    float lastFreq = 0.0f; // global max freq peak at end of syllable
+    float firstPeakFreq = 0.0f; // first freq peak at beginning of syllable
+    float lastPeakFreq = 0.0f; // first freq peak at end of syllable
   };
   
   std::vector<SyllableInfo> Run( const BuffType* signal, int signalLen );

@@ -9,6 +9,8 @@
 #include <iostream>
 #include <cassert>
 #include <array>
+#include <queue>
+#include <numeric>
 
 #include "util/helpers/ankiDefines.h"
 #include "util/console/consoleInterface.h"
@@ -260,14 +262,18 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
     float maxPower = 0.0f;
     std::vector<float> maxPowerAtTime;
     std::vector<int> freqIdxMaxPowerAtTime;
+    std::vector<int> freqIdxFirstPeakAtTime;
     maxPowerAtTime.resize(spectrogram.size(), -std::numeric_limits<float>::max());
     freqIdxMaxPowerAtTime.resize(spectrogram.size(), -1);
+    freqIdxFirstPeakAtTime.resize(spectrogram.size(), -1);
     for( int iTime=0; iTime<spectrogram.size(); ++iTime ) {
       if( usedTimes[iTime] ) {
         continue;
       }
       float timeMax = 0.0f;
       int timeMaxIdx = 0;
+      float freqAtFirstPeak = 0.0f;
+      float lastVal = -std::numeric_limits<float>::max();
       for( int iFreq=0; iFreq<spectrogram[iTime].size(); ++iFreq ) {
         if( maxPower <= spectrogram[iTime][iFreq] ) {
           maxPower = spectrogram[iTime][iFreq];
@@ -278,9 +284,15 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
           timeMax = spectrogram[iTime][iFreq];
           timeMaxIdx = iFreq;
         }
+        if( (spectrogram[iTime][iFreq] < lastVal) && (freqAtFirstPeak==0.0f) && (iFreq>5) ) {
+          freqAtFirstPeak = iFreq - 1;
+        } else if( spectrogram[iTime][iFreq] > lastVal ) {
+          lastVal = spectrogram[iTime][iFreq];
+        }
       }
       maxPowerAtTime[iTime] = 20*log10(timeMax);
       freqIdxMaxPowerAtTime[iTime] = timeMaxIdx;
+      freqIdxFirstPeakAtTime[iTime] = freqAtFirstPeak;
     }
     
     float amp = 20*log10(maxPower);
@@ -302,6 +314,8 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
     info.syllableTime_s = spectrogramTimes[maxPowerTimeIdx];
     int count = 0;
     
+    std::queue<float> firstPeakLocations;
+    
     float maxPowerHere = -std::numeric_limits<float>::max();
     for( int i=maxPowerTimeIdx; i>=0; --i ) {
       if( maxPowerAtTime[i] < minAmp ) {
@@ -319,6 +333,10 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
       info.avgFreq += freq;
       info.avgPower += maxPowerAtTime[i];
       info.firstFreq = freq;
+      firstPeakLocations.push( spectrogramFreqs[freqIdxFirstPeakAtTime[i]] );
+      if( firstPeakLocations.size() > 4 ) {
+        firstPeakLocations.pop();
+      }
       if( maxPowerAtTime[i] > maxPowerHere ) {
         info.peakFreq = freq;
       }
@@ -326,8 +344,20 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
       ++count;
     }
     
+    assert(!firstPeakLocations.empty());
+    info.firstPeakFreq = 0.0f;
+    size_t numQueue = firstPeakLocations.size();
+    while( !firstPeakLocations.empty() ) {
+      info.firstPeakFreq += firstPeakLocations.front();
+      firstPeakLocations.pop();
+    }
+    info.firstPeakFreq /= numQueue;
+    
+    firstPeakLocations.push( spectrogramFreqs[freqIdxFirstPeakAtTime[maxPowerTimeIdx]] );
+    
     info.endIdx = maxPowerTimeIdx*(_windowLen - _numOverlap) + _windowLen;
     info.endTime_s = spectrogramTimes[maxPowerTimeIdx];
+    info.lastFreq = spectrogramFreqs[freqIdxMaxPowerAtTime[maxPowerTimeIdx]];
     for( int i=maxPowerTimeIdx+1; i<=maxPowerAtTime.size(); ++i ) {
       if( maxPowerAtTime[i] < minAmp ) {
         break;
@@ -344,12 +374,24 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
       info.avgFreq += freq;
       info.avgPower += maxPowerAtTime[i];
       info.lastFreq = freq;
+      firstPeakLocations.push( spectrogramFreqs[freqIdxFirstPeakAtTime[i]] );
+      if( firstPeakLocations.size() > 4 ) {
+        firstPeakLocations.pop();
+      }
       if( maxPowerAtTime[i] > maxPowerHere ) {
         info.peakFreq = freq;
       }
       usedTimes[i] = true;
       ++count;
     }
+    
+    assert(!firstPeakLocations.empty());
+    numQueue = firstPeakLocations.size();
+    while( !firstPeakLocations.empty() ) {
+      info.lastPeakFreq += firstPeakLocations.front();
+      firstPeakLocations.pop();
+    }
+    info.lastPeakFreq /= numQueue;
     
     info.avgFreq /= count;
     info.avgPower /= count;
@@ -360,7 +402,8 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
   std::vector<SyllableInfo> result;
   result.reserve(syllables.size());
   for( const auto& syllable : syllables ) {
-    PRINT_NAMED_WARNING("WHATNOW", "syllable from %f to %f, avgFreq=%f, peakFreq=%f, pwr=%f, firstFreq=%f, lastFreq=%f", syllable.second.startTime_s, syllable.second.endTime_s, syllable.second.avgFreq, syllable.second.peakFreq, syllable.second.avgPower, syllable.second.firstFreq, syllable.second.lastFreq);
+    PRINT_NAMED_WARNING("WHATNOW", "syllable from %f to %f, avgFreq=%f, peakFreq=%f, pwr=%f, firstFreq=%f, lastFreq=%f, firstPeak=%f, lastFirstPeak=%f", syllable.second.startTime_s, syllable.second.endTime_s, syllable.second.avgFreq, syllable.second.peakFreq, syllable.second.avgPower, syllable.second.firstFreq, syllable.second.lastFreq,
+        syllable.second.firstPeakFreq, syllable.second.lastPeakFreq);
     //std::cout << "syllable from " << syllable.second.startTime_s << " to " << syllable.second.endTime_s << ", avgFreq=" << syllable.second.avgFreq << ", peakfreq=" << syllable.second.peakFreq << ", pwr=" << syllable.second.avgPower  << std::endl;
     result.push_back( std::move( syllable.second ) );
   }
