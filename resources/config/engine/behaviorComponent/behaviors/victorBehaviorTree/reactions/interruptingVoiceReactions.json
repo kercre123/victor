@@ -7,7 +7,6 @@
 
   "behaviors": [
     "DoATrickVoiceCommand",
-    "PlayAGameVoiceCommand",
     "FindYourCubeVoiceCommand",
     "FetchCubeVoiceCommand",
     "PickUpCubeVoiceCommand",
@@ -16,7 +15,6 @@
     "RollCubeVoiceCommand",
     "PopAWheelieVoiceCommand",
     "KeepawayVoiceCommand",
-    "BlackJackVoiceCommand",
     "PRDemoComeHere",
     "ComeHereVoiceCommand",
     "LookAtMeVoiceCommand",
