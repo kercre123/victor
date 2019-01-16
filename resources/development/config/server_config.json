@@ -1,8 +1,8 @@
 {
-	"jdocs": "jdocs-dev.api.anki.com:443",
-	"tms": "token-dev.api.anki.com:443",
-	"chipper": "chipper-dev.api.anki.com:443",
+	"jdocs": "jdocs-loadtest.api.anki.com:443",
+	"tms": "token-loadtest.api.anki.com:443",
+	"chipper": "chipper-loadtest.api.anki.com:443",
 	"check": "conncheck.global.anki-dev-services.com/ok",
 	"logfiles": "s3://anki-device-logs-dev/victor",
-	"appkey": "xiepae8Ach2eequiphee4U"
+	"appkey": "ekRUMQ9WJ8FC9aBNaxMQZF6"
 }
