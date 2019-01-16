@@ -124,7 +124,8 @@ class DriveToAndMountChargerAction : public CompoundActionSequential
 public:
   DriveToAndMountChargerAction(const ObjectID& objectID,
                                const bool useCliffSensorCorrection = true,
-                               const bool enableDockingAnims = true);
+                               const bool enableDockingAnims = true,
+                               const bool doPositionCheckOnPathCompletion = true);
   
   virtual ~DriveToAndMountChargerAction() { }
 }; // class DriveToAndMountChargerAction

@@ -66,9 +66,11 @@ Result BehaviorSelfTestDockWithCharger::OnBehaviorActivatedInternal()
 
     const bool useCliffSensorCorrection = true;
     const bool enableDockingAnims = false;
+    const bool doPositionCheckOnPathCompletion = false;
     DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(object->GetID(),
                                                                             useCliffSensorCorrection,
-                                                                            enableDockingAnims);
+                                                                            enableDockingAnims,
+                                                                            doPositionCheckOnPathCompletion);
 
     DelegateIfInControl(action, [this](){ TransitionToOnChargerChecks(); });
   }
