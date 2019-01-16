@@ -166,7 +166,8 @@ struct DockingErrorSignal;
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
     Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
     Result UpdateMirrorMode(const VisionProcessingResult& procResult);
-
+    Result UpdateProcessingStats(const VisionProcessingResult& procResult);
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
@@ -329,6 +330,13 @@ struct DockingErrorSignal;
     void EnableSendingSDKImageChunks(bool enable) { _sendProtoImageChunks = enable; }
     bool IsSendingSDKImageChunks() { return _sendProtoImageChunks; }
 
+    struct Stats
+    {
+      s32 numFramesProcessed = 0;
+      s32 numFramesSentToCloud = 0;
+    };
+    const Stats& GetProcessingStats() const { return _processingStats; }
+    
   protected:
     
     // Non-rotated points representing the lift cross bar
@@ -485,6 +493,8 @@ struct DockingErrorSignal;
     // Tracks how long we have/haven't been receiving images for
     // and takes appropriate action to deal with a lack of images
     void UpdateImageReceivedChecks(bool gotImage);
+    
+    Stats _processingStats;
 
   }; // class VisionComponent
   

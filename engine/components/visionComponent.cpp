@@ -941,7 +941,8 @@ namespace Vector {
         tryAndReport(&VisionComponent::UpdateVisualObstacles,      {VisionMode::DetectingVisualObstacles});
         tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SavingImages});
         tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::DetectingIllumination});
-
+        tryAndReport(&VisionComponent::UpdateProcessingStats,      {});
+        
         // Note: we always run this because it handles switching to the mirror mode debug screen
         // It internally checks whether the MirrorMode flag is set in modesProcessed
         tryAndReport(&VisionComponent::UpdateMirrorMode,           {}); // Use empty set to always run
@@ -974,6 +975,7 @@ namespace Vector {
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
+        
       }
     }
 
@@ -1505,6 +1507,39 @@ namespace Vector {
     return RESULT_OK;
   }
 
+  Result VisionComponent::UpdateProcessingStats(const VisionProcessingResult& procResult)
+  {
+    // TODO: Define the const lists below elsewhere or use enum_concept
+  
+    // See if we did anything other than "non-processing" modes
+    const std::list<VisionMode> kNonProcessingModes{
+      VisionMode::WhiteBalance,
+      VisionMode::AutoExposure,
+      VisionMode::MirrorMode,
+    };
+    
+    VisionModeSet modesProcessed(procResult.modesProcessed);
+    modesProcessed.Remove(kNonProcessingModes);
+    if(!modesProcessed.IsEmpty())
+    {
+      _processingStats.numFramesProcessed++;
+    }
+    
+    // See if we did any cloud processing
+    const std::list<VisionMode> kCloudModes{
+      VisionMode::OffboardFaceRecognition,
+      VisionMode::OffboardPersonDetection,
+      VisionMode::OffboardSceneDescription,
+    };
+    
+    if(modesProcessed.ContainsAnyOf(kCloudModes))
+    {
+      _processingStats.numFramesSentToCloud++;
+    }
+    
+    return RESULT_OK;
+  }
+  
   void VisionComponent::AddLiftOccluder(const RobotTimeStamp_t t_request)
   {
     // TODO: More precise check for position of lift in FOV given head angle
