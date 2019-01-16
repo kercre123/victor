@@ -105,9 +105,10 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 	var modes []pb.ImageMode
 	for _, m := range msg.ProcTypes {
 		switch m {
-		// todo: other image modes, once added to CLAD
 		case vision.OffboardProcType_SceneDescription:
 			modes = append(modes, pb.ImageMode_DESCRIBE_SCENE)
+		case vision.OffboardProcType_ObjectDetection:
+			modes = append(modes, pb.ImageMode_LOCATE_OBJECT)
 		}
 	}
 
@@ -119,6 +120,8 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		ImageData: fileData,
 		Modes:     modes,
 	}
+	// todo: possibly not hardcode this?
+	r.Configs.GroupName = "test123"
 
 	client := pb.NewChipperGrpcClient(rpcConn)
 	resp, err := client.AnalyzeImage(ctx, r)
@@ -133,9 +136,10 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		var resp vision.OffboardResultReady
 		resp.JsonResult = r.RawResult
 		switch r.Mode {
-		// todo: other image modes, once added to clad
 		case pb.ImageMode_DESCRIBE_SCENE:
 			resp.ProcType = vision.OffboardProcType_SceneDescription
+		case pb.ImageMode_LOCATE_OBJECT:
+			resp.ProcType = vision.OffboardProcType_ObjectDetection
 		}
 		resps = append(resps, resp)
 	}
