@@ -25,6 +25,7 @@ namespace {
   constexpr unsigned int kBuffSize = 3*16000; // 1 sec
   
   CONSOLE_VAR_RANGED(float, kTimeScaleFactor, "Chirps.AAA_Playback", 1.2f, 0.5f, 2.0f);
+  CONSOLE_VAR_RANGED(unsigned int, kFlatPitchDuration_ms, "Chirps.AAA_Playback", 60, 0, 1000);
   CONSOLE_VAR(bool, kUseTestFile, "Chirps.Debug", false);
 }
 
@@ -166,8 +167,14 @@ void HumanSyllableAnalyzer::RunDetector()
       //float freq = std::min(syllable.peakFreq, syllable.avgFreq);
       float freq0 = syllable.firstPeakFreq;//syllable.firstFreq; //syllable.avgFreq;
       float freq1 = syllable.lastPeakFreq;//syllable.lastFreq; //syllable.avgFreq;
+      freq0 = (0.8*freq0 + 0.2*syllable.avgFreq);
+      freq1 = (0.8*freq1 + 0.2*syllable.avgFreq);
       freq0 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
       freq1 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
+      if( chirp.duration_ms < kFlatPitchDuration_ms ) {
+        const float avg = (freq0 + freq1)/2;
+        freq0 = freq1 = avg;
+      }
   //    if( freq0 > 400 ) {
   //      freq0 /= 2;
   //      freq1 /= 2;

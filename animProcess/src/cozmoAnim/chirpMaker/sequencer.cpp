@@ -42,6 +42,7 @@ namespace {
   CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps.Pitch", 1760, 0.0f, 5000.0f);
   
   CONSOLE_VAR_ENUM(int, kSwitchType, "Chirps.AAA_Playback", 0, "TONEGEN,ASSETS");
+  CONSOLE_VAR_RANGED(unsigned int, kMaxDurationIfAssets_ms, "Chirps.Playback", 300, 50, 1500);
   
   CONSOLE_VAR(bool, kPlayAnims, "Chirps.AAA_Playback", false);
   
@@ -204,7 +205,9 @@ void Sequencer::MainLoop()
   using GP = AudioMetaData::GameParameter::ParameterType;
   
   auto sendStart = [&](uint32_t duration_ms) {
-    const float durationParam = Util::Clamp((float)duration_ms, 0.0f, 1000.0f)/1000.0f;
+    const float durationParam = (kSwitchType == 1)
+      ? Util::Clamp((float)duration_ms, 0.0f, (float)kMaxDurationIfAssets_ms)/1000.0f
+      : Util::Clamp((float)duration_ms, 0.0f, 1000.0f)/1000.0f;
     if( _audioController != nullptr ) {
       _audioController->SetParameter( ToAudioParameterId( GP::Victor_Robot_Chirps_Duration ),
                                       durationParam,
