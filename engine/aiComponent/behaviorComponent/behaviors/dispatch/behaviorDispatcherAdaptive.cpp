@@ -16,6 +16,12 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherAdaptive.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/smartFaceId.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/faceWorld.h"
+
 #define LOG_CHANNEL "BehaviorDispatcherAdaptive"
 
 namespace Anki {
@@ -78,7 +84,8 @@ void BehaviorDispatcherAdaptive::InitDispatcher()
   LOG_WARNING("BehaviorDispatcherAdaptive.InitDispatcher.SanityCheckBehaviorNames",
       "behaviorNames:\n");
   for(auto& b: GetAllPossibleDispatches()){
-    LOG_WARNING("BehaviorDispatcherAdaptive.InitDispatcher.SanityCheckBehaviorStrs", "\t%s\n", b->GetDebugStateName().c_str());
+    LOG_WARNING("BehaviorDispatcherAdaptive.InitDispatcher.SanityCheckBehaviorIDs",
+        "\t%s\n", BehaviorTypesWrapper::BehaviorIDToString( b->GetID() ) );
   }
   LOG_WARNING("BehaviorDispatcherAdaptive.InitDispatcher.SanityCheckDefaultBehaviorName",
       "_iConfig.defaultBehaviorName: %s", _iConfig.defaultBehaviorName.c_str());
@@ -119,6 +126,11 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
 {
   // here's where we choose a new behavior
   // check state
+  State state = EvaluateState();
+  LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.State",
+      "State: %d", state);
+
+
   // if delegates other than Default are available
   // evaluate state-action value for each available delegate
   // for now, call method to get state action value for each available action,
@@ -128,7 +140,10 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
 
   // can I do the learning update here, or should that be in DispatcherUpdate?
 
-  return _iConfig.defaultBehavior;
+  ICozmoBehaviorPtr desiredBehavior = _iConfig.defaultBehavior;
+  LOG_WARNING("BehaviorSispatcherAdaptive.GetDesiredBehavior.Choice",
+      "Choosing desired behavior: %s", BehaviorTypesWrapper::BehaviorIDToString(desiredBehavior->GetID()));
+  return desiredBehavior;
 }
 
 
@@ -138,20 +153,79 @@ void BehaviorDispatcherAdaptive::DispatcherUpdate()
   // if we've delegated to a behavior other than Default, let it run
   // otherwise...
   // if something other than Default just finished, do a learning update
+  // consider checking state again for better identity?
+  // how to get outcome of behavior: I think have a method on each behavior to get reward signal
 }
 
-/*
+
 // getState
 State BehaviorDispatcherAdaptive::EvaluateState(){
-  // TODO: implement (also, define State)
+  // call FFAT's GetFoundFace method
+  std::shared_ptr<BehaviorFindFaceAndThen> ffat;
+  const BehaviorContainer& container = GetBEI().GetBehaviorContainer();
+  container.FindBehaviorByIDAndDowncast<BehaviorFindFaceAndThen>(
+      BEHAVIOR_ID(AdaptiveFindFaceAndThen), // TODO: this name needs to be obtained dynamically, but that doesn't work
+      BEHAVIOR_CLASS(FindFaceAndThen), ffat);
+  SmartFaceID face = ffat->GetFoundFace();
+  if ( !face.IsValid() ){
+    LOG_WARNING("BehaviorDispatcherAdaptive.EvaluateState.Invalid",
+        "face returned by GetFoundFace is no longer valid");
+    return 0;
+  }
+  LOG_WARNING("BehaviorDispatcherAdaptive.EvaluateState.FaceDebugStr",
+              "%s", face.GetDebugStr().c_str());
+  // the only way I see to get the id from the SmartFaceID is through the debug string, which seems a little crazy
+  std::string faceDebugStr = face.GetDebugStr();
+  if (faceDebugStr == "<unknown>") {
+    return 0;
+  }
+  int id = std::stoi(faceDebugStr);
+  // negative IDs are pre-recognition IDs for tracking. We're going to map all of that to 0.
+  if (id < 0) {
+    return 0;
+  }
+  // positive IDs indicate that the face has been matched to a "named" or "session only" face.
+  // distinguish between named (enrolled) faces and session only ones
+  FaceWorld faceWorld = GetBEI().GetFaceWorld();
+  const Vision::TrackedFace* trackedFace = faceWorld.GetFace(face);
+  // for now use HasName/GetName. GetBestGuessName is an option if I want to relax assumptions
+  if (!trackedFace.HasName()){
+    // no name. Call it 0.
+    return 0;
+  }
+  LOG_WARNING("BehaviorDispatcherAdaptive.EvaluateState.Name",
+      "Face has name: %s", trackedFace.GetName().c_str());
+
+  // for now, just return.
+  return id;
 }
 
+
 // get StateActionValue for state, action
-SAValue getStateActionValue(State s, Action a){
-  // TODO: implement for real
-  return 0.0;
+SAValue BehaviorDispatcherAdaptive::GetStateActionValue(State s, Action a){
+  // check whether there's an entry for s
+  if (_iConfig.SAVTable.find(s) == _iConfig.SAVTable.end()) {
+    // if not, initialize it
+    _iConfig.SAVTable[s] = std::map< Action, SAValue >();
+    // and issue a warning so we know it happened
+    LOG_WARNING("BehaviorDispatcherAdaptive.GetStateActionValue.NewState",
+        "adding new state %d in SAVTable", s);
+  }
+  auto Vs = _iConfig.SAVTable[s];
+
+  // check whether there's an entry in V(s,.) for a
+  if (Vs.find(a) == Vs.end()) {
+    // if not, initialize it to 0
+    Vs[a] = 0.0;
+    // and issue a warning so we know it happened
+    LOG_WARNING("BehaviorDispatcherAdaptive.GetStateActionValue.NewAction",
+                "adding new action %s in SAVTable for state %d", a.c_str(), s);
+  }
+  const SAValue Vsa = Vs[a];
+
+  return Vsa;
 }
-*/
+
 
 // callback (?)
 

@@ -85,6 +85,7 @@ BehaviorFistBump::DynamicVariables::DynamicVariables()
   fistBumpRequestCnt        = 0;
   liftWaitingAngle_rad      = 0.f;
   lastTimeOffTreads_s       = 0.f;
+  lastReward                = 0.f;
 }
 
 

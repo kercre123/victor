@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorFistBump_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/ILastRewardProvider.h"
 
 namespace Anki {
 namespace Vector {
@@ -20,7 +21,7 @@ namespace Vector {
 class BEIRobotInfo;
 class IFistBumpListener;
   
-class BehaviorFistBump : public ICozmoBehavior
+class BehaviorFistBump : public ICozmoBehavior, public ILastRewardProvider
 {
 private:
   
@@ -29,7 +30,11 @@ private:
   BehaviorFistBump(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior() const override;  
+  virtual bool WantsToBeActivatedBehavior() const override;
+
+  float GetLastReward() const override {
+    return _dVars.lastReward;
+  }
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
@@ -89,6 +94,9 @@ private:
     
     // Abort when picked up for long enough
     f32 lastTimeOffTreads_s;
+
+    // AS: added for RnD Adaptive Behavior Coordinator hackery
+    float lastReward;
   };
 
   InstanceConfig   _iConfig;

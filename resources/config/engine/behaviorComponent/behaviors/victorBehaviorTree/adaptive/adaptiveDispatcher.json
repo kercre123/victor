@@ -8,5 +8,5 @@
     "FistBump"//,
     //"SomeOtherBehavior"
   ],
-  "defaultBehavior": "AdaptiveDefault"
+  "defaultBehavior": "AdaptiveFindFaceAndThen"
 }

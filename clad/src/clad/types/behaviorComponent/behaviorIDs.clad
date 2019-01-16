@@ -81,8 +81,9 @@ enum uint_16 BehaviorID {
   TestStackMonitors,
 
   // victorBehaviorTree/adaptive
-  AdaptiveDefault,
+  AdaptiveFindFaceAndThen,
   AdaptiveDispatcher,
+  AdaptiveLookAtFaces,
 
   // victorBehaviorTree/alexa
   Alexa,
