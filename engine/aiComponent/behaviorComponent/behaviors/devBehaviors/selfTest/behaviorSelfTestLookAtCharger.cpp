@@ -186,7 +186,8 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  auto action = std::make_unique<TurnInPlaceAction>(0, false);
+  CompoundActionSequential* action = new CompoundActionSequential();
+  auto turn = std::make_unique<TurnInPlaceAction>(0, false);
 
   // Get the pose of the marker we should be seeing
   Pose3d markerPose;
@@ -225,11 +226,14 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
                      "Turning %f degrees to be perpendicular to marker",
                      angle.getDegrees());
     
-    action->SetRequestedTurnAngle(angle.ToFloat());
+    turn->SetRequestedTurnAngle(angle.ToFloat());
   }
+  action->AddAction(turn.release());
+  const int kNumFrames = 5;
+  action->AddAction(new WaitForImagesAction(kNumFrames, VisionMode::DetectingMarkers));
   
   // Once we are perpendicular to the marker, start recording distance sensor readings
-  DelegateIfInControl(action.release(), [this]() { TransitionToRecordSensor(); });
+  DelegateIfInControl(action, [this]() { TransitionToRecordSensor(); });
 }
 
 void BehaviorSelfTestLookAtCharger::TransitionToRecordSensor()
