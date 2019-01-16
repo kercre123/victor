@@ -26,6 +26,7 @@
 #include <linux/reboot.h>
 #include <sys/reboot.h>
 #include <fstream>
+#include <iomanip>
 
 #include "anki-ble/common/log.h"
 #include "anki-ble/common/anki_ble_uuids.h"
@@ -90,6 +91,9 @@ void Daemon::Start() {
   InitializeCloudComms();   // must come before gateway comms
   InitializeGatewayComms();
   InitializeEngineComms();
+
+  // Log the initial wifi state
+  LogWifiState();
   Log::Write("Finished Starting");
 }
 
@@ -113,6 +117,36 @@ void Daemon::OnWifiChanged(bool connected, std::string manufacturerMac) {
     Log::Write("Daemon: OnWifiChanged -- trying to connect to wifi");
     _wifiWatcher->ConnectIfNoWifi();
   }
+}
+
+void Daemon::LogWifiState() {
+  Anki::Wifi::WiFiState wifiState = Anki::Wifi::GetWiFiState();
+
+  bool connected = (wifiState.connState == Anki::Wifi::WiFiConnState::CONNECTED) ||
+                   (wifiState.connState == Anki::Wifi::WiFiConnState::ONLINE);
+
+  std::string event = "wifi.initial_state";
+
+  DASMSG(wifi_initial_connection_status, event,
+          "WiFi connection state on Switchboard load up.");
+
+  uint8_t apMac[6];
+  bool hasMac = Anki::Wifi::GetApMacAddress(apMac);
+
+  std::string apMacManufacturerBytes = "";
+
+  if(hasMac) {
+    // Strip ap MAC of last three bytes
+    for(int i = 0; i < 3; i++) {
+      std::stringstream ss;
+      ss << std::setfill('0') << std::setw(2) << std::hex << (int)apMac[i];
+      apMacManufacturerBytes += ss.str();
+    }
+  }
+
+  DASMSG_SET(s1, connected?"connected":"disconnected", "Connection state.");
+  DASMSG_SET(s2, apMacManufacturerBytes, "Mac address prefix.");
+  DASMSG_SEND();
 }
 
 void Daemon::InitializeEngineComms() {
