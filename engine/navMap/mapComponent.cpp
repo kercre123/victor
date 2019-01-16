@@ -1509,6 +1509,29 @@ Result MapComponent::FindSensorDetectedCliffs(std::vector<MemoryMapTypes::Memory
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result MapComponent::FindBoundaries(std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& boundaries) const
+{
+  boundaries.clear();
+  const auto currentMap = GetCurrentMemoryMap();
+  if (!currentMap) {
+    return RESULT_FAIL;
+  }
+  
+  NodePredicate isBoundaryType = [](MemoryMapDataConstPtr nodeData) {
+    return (nodeData->type == EContentType::Boundary);
+  };
+  
+  MemoryMapDataConstList nodeSet;
+  currentMap->FindContentIf(isBoundaryType, nodeSet);
+  
+  for (auto& dataPtr : nodeSet) {
+    boundaries.push_back(dataPtr);
+  }
+  
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo) 
 {
   const auto currentMap = GetCurrentMemoryMap();

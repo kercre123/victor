@@ -148,6 +148,9 @@ public:
   
   void SendDASInfoAboutCurrentMap() const { SendDASInfoAboutMap(_currentMapOriginID); }
   
+  // Helper method to retrieve all boundaries in the map
+  Result FindBoundaries(std::vector<MemoryMapTypes::MemoryMapDataConstPtr>& boundaries) const;
+  
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////

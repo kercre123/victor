@@ -335,7 +335,7 @@ void BehaviorLearnBoundary::TransitionToCreateBoundary()
                                       GetBEI().GetRobotInfo().GetWorldOrigin(),
                                       kBoundaryThickness_mm,
                                       GetBEI().GetRobotInfo().GetLastMsgTimestamp());
-      GetBEI().GetMapComponent().InsertData(Poly2f{boundary.GetQuad()}, boundary);
+      GetBEI().GetMapComponent().InsertData(Poly2f{boundary._boundaryQuad}, boundary);
     }
     
     // survey the boundary after creating it

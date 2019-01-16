@@ -138,7 +138,7 @@ void BehaviorReactToTapeBoundary::OnBehaviorDeactivated()
                                     GetBEI().GetRobotInfo().GetWorldOrigin(),
                                     kBoundaryThickness_mm,
                                     GetBEI().GetRobotInfo().GetLastMsgTimestamp());
-    GetBEI().GetMapComponent().InsertData(Poly2f{boundary.GetQuad()}, boundary);
+    GetBEI().GetMapComponent().InsertData(Poly2f{boundary._boundaryQuad}, boundary);
   }
   
   auto* vizm = GetBEI().GetRobotInfo().GetContext()->GetVizManager();

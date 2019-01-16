@@ -28,6 +28,22 @@ MemoryMapData_Boundary::MemoryMapData_Boundary(const Point2f& from,
 , _thickness_mm(thickness_mm)
 , _originPose(originPose)
 {
+  // Also compute a quad representing this boundary
+  
+  // Create a rotated rectangle from the underlying line segment, then convert to Quad2f
+  // Add 90 degrees to the angle between to and from, in order to create the RotatedRect properly
+  const float ang = M_PI_2_F + atan2f(to.y() - from.y(),
+                                      to.x() - from.x());
+  
+  const float len = ComputeDistanceBetween(from, to);
+  
+  const float x0 = from.x() + 0.5 * _thickness_mm * cosf(ang);
+  const float y0 = from.y() + 0.5 * _thickness_mm * sinf(ang);
+  const float x1 = from.x() - 0.5 * _thickness_mm * cosf(ang);
+  const float y1 = from.y() - 0.5 * _thickness_mm * sinf(ang);
+  
+  const auto rect = RotatedRectangle(x0, y0, x1, y1, len);
+  _boundaryQuad = rect.GetQuad();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,34 +74,6 @@ ExternalInterface::ENodeContentTypeEnum MemoryMapData_Boundary::GetExternalConte
   return ExternalInterface::ENodeContentTypeEnum::Boundary;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Quad2f  MemoryMapData_Boundary::GetQuad()
-{
-  if (_cachedQuadDirty) {
-    const auto& from = _boundarySegment.GetFrom();
-    const auto& to = _boundarySegment.GetTo();
-    
-    // Create a rotated rectangle from the underlying line segment, then convert to Quad2f
-    // Add 90 degrees to the angle between to and from, in order to create the RotatedRect properly
-    const float ang = M_PI_2_F + atan2f(to.y() - from.y(),
-                                        to.x() - from.x());
-    
-    const float len = ComputeDistanceBetween(from, to);
-    
-    const float x0 = from.x() + 0.5 * _thickness_mm * cosf(ang);
-    const float y0 = from.y() + 0.5 * _thickness_mm * sinf(ang);
-    const float x1 = from.x() - 0.5 * _thickness_mm * cosf(ang);
-    const float y1 = from.y() - 0.5 * _thickness_mm * sinf(ang);
-    
-    const auto rect = RotatedRectangle(x0, y0, x1, y1, len);
-    _boundaryQuad = rect.GetQuad();
-    
-    _cachedQuadDirty = false;
-  }
-  
-  return _boundaryQuad;
-}
   
 } // namespace Vector
 } // namespace Anki

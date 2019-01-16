@@ -11,11 +11,12 @@
     "ReactToRobotOnFace",
     "ReactToRobotOnSide",
     "ReactToCliff",
+    "ReactToBoundary",
     "ReactToTapeBoundary",
     "ReactToUncalibratedHeadAndLift",
     "ReactToMotorCalibration",
     "ReactToPlacedOnSlope",
-    "ReactToUnexpectedMovement"
-    //"Wait" // TMP - should remove
+    "ReactToUnexpectedMovement",
+    "Wait" // TMP - should remove
   ]
 }

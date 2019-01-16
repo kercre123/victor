@@ -59,8 +59,7 @@ struct MemoryMapData_Boundary : public MemoryMapData
   // Base pose which the line segment is with respect to
   const Pose3d _originPose;
 
-  // _boundaryQuad is a quad representing the boundary. Cache it to avoid recomputing it each time with GetQuad()
-  bool _cachedQuadDirty = true;
+  // _boundaryQuad is a quad representing the boundary. This duplicates data (blergh)
   Quad2f _boundaryQuad;
   
   static bool HandlesType(EContentType otherType) {
