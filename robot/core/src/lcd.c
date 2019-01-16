@@ -256,7 +256,7 @@ int lcd_set_brightness(int brightness)
 
 int lcd_init(void) {
 
-  int res = lcd_set_brightness(10);
+  int res = lcd_set_brightness(20);  // Increased for THEBOX
   if(res < 0)
   {
     return res;

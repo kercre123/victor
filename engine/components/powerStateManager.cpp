@@ -46,8 +46,8 @@ CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ProxSensorMap, CONSOLE_GROUP, true);
 
-static constexpr const LCDBrightness kLCDBrightnessLow = LCDBrightness::LCDLevel_5mA;
-static constexpr const LCDBrightness kLCDBrightnessNormal = LCDBrightness::LCDLevel_10mA;
+static constexpr const LCDBrightness kLCDBrightnessLow = LCDBrightness::LCDLevel_20mA;    // Increased for THEBOX
+static constexpr const LCDBrightness kLCDBrightnessNormal = LCDBrightness::LCDLevel_20mA; // Increased for THEBOX
 
 static constexpr const DesiredCPUFrequency kCPUFreqSaveLow = DesiredCPUFrequency::Manual200MHz;
 static constexpr const DesiredCPUFrequency kCPUFreqSaveHigh = DesiredCPUFrequency::Manual400Mhz;
