@@ -14,7 +14,7 @@
 #define __Engine_Components_ImuComponent_H__
 
 #include "engine/components/sensors/iSensorComponent.h"
-#include "engine/components/sensors/imuUKF.h"
+#include "coretech/common/engine/imuUKF.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "coretech/common/engine/robotTimeStamp.h"

@@ -1,5 +1,5 @@
 /**
- * File: imuFilter.h
+ * File: imuFilter.cpp
  *
  * Author: Michael Willett
  * Created: 1/7/2019
@@ -14,13 +14,12 @@
  *
  **/
 
-#include "imuUKF.h"
+#include "coretech/common/engine/imuUKF.h"
 #include "coretech/common/engine/math/matrix_impl.h"
 
 #define StateDim 6
 
 namespace Anki {
-namespace Vector {
 
 namespace {
   // calculates the decomposition of a positive definite n x n matrix A s.t. A = L' * L    
@@ -85,34 +84,35 @@ namespace {
   SmallSquareMatrix<M,float> GetCovariance(const SmallMatrix<M,N,float>& A) {
     return GetCovariance(A, A.GetTranspose());
   }
+  
+  // Process Uncertainty
+  const SmallSquareMatrix<6,float> _Q{{  
+    .000001f, 0.f, 0.f, 0.f, 0.f, 0.f,
+    0.f, .000001f, 0.f, 0.f, 0.f, 0.f,
+    0.f, 0.f, .000001f, 0.f, 0.f, 0.f,
+    0.f, 0.f, 0.f, .1f, 0.f, 0.f,
+    0.f, 0.f, 0.f, 0.f, .1f, 0.f,
+    0.f, 0.f, 0.f, 0.f, 0.f, .1f
+  }}; 
+
+  // Measurement Uncertainty
+  const SmallSquareMatrix<6,float> _R{{  
+    .25f, 0.f, 0.f, 0.f, 0.f, 0.f,
+    0.f, .25f, 0.f, 0.f, 0.f, 0.f,
+    0.f, 0.f, .25f, 0.f, 0.f, 0.f,
+    0.f, 0.f, 0.f, .01f, 0.f, 0.f,
+    0.f, 0.f, 0.f, 0.f, .01f, 0.f,
+    0.f, 0.f, 0.f, 0.f, 0.f, .01f
+  }}; 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // UKF Implementation
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImuUKF::ImuUKF()
-: _P{{  .1f, 0.f, 0.f, 0.f, 0.f, 0.f,
-        0.f, .1f, 0.f, 0.f, 0.f, 0.f,
-        0.f, 0.f, .1f, 0.f, 0.f, 0.f,
-        0.f, 0.f, 0.f, .1f, 0.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, .1f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 0.f, .1f
-  }}
-, _Q{{  0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-        0.f, 0.f, 0.f, .1f, 0.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, .1f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 0.f, .1f
-      }} // Process Uncertainty
-, _R{{  .25f, 0.f, 0.f, 0.f, 0.f, 0.f,
-        0.f, .25f, 0.f, 0.f, 0.f, 0.f,
-        0.f, 0.f, .25f, 0.f, 0.f, 0.f,
-        0.f, 0.f, 0.f, .01f, 0.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, .01f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 0.f, .01f
-      }} // Measurement Uncertainty
-{}
+{ 
+  Reset( UnitQuaternion() ); 
+}
 
 void ImuUKF::Reset(const Rotation3d& rot) {
   _state = {rot, Point3f()};
@@ -196,5 +196,4 @@ void ImuUKF::MeasurementUpdate(const Point<6,float>& measurement)
   _state.velocity += {residual[3], residual[4], residual[5]};
 }
       
-} // namespace Vector
 } // namespace Anki

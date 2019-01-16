@@ -984,15 +984,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _robotGyro = msg.gyro;
   
   {
+    static bool reset = true;
+    if ( reset ) { GetImuComponent().ResetUKF( this->GetPose().GetRotation() ); }
+    reset = false;
+
     GetImuComponent().AddRawData(
       {msg.accel.x, msg.accel.y, msg.accel.z},
       {msg.gyro.x, msg.gyro.y, msg.gyro.z}, 
       _lastMsgTimestamp
     );
-
-    static bool reset = true;
-    if ( reset ) { GetImuComponent().ResetUKF( this->GetPose().GetRotation() ); }
-    reset = false;
 
     Point3f robotPt = this->GetPose().GetTranslation();    
     Rotation3d headRot(msg.headAngle, Y_AXIS_3D());

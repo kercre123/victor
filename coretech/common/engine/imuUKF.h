@@ -15,16 +15,11 @@
 #ifndef IMU_UKF_H_
 #define IMU_UKF_H_
 
-#include "clad/types/imu.h"
-#include "coretech/common/shared/radians.h"
-#include "coretech/common/shared/types.h"
-
 #include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 
 
 namespace Anki {
-namespace Vector {
 
 class ImuUKF {
 public:
@@ -59,20 +54,16 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // UKF Variables
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  State _state;              
-  SmallSquareMatrix<6,float> _P;      // current state covariance matrix
+  State _state;                   // current state estimate
+  SmallSquareMatrix<6,float> _P;  // current state covariance matrix
 
-  const SmallSquareMatrix<6,float> _Q;      // process update uncertainty
-  const SmallSquareMatrix<6,float> _R;      // measurement process uncertainty
-
-  SmallMatrix<6,12,float> _W;  // a set of points representing covariance of the state 
-  std::array<State,12> _Y;  // a set of points representing the average state
+  SmallMatrix<6,12,float> _W;     // a set of points representing covariance of the state 
+  std::array<State,12> _Y;        // a set of points representing the average state
 
   RobotTimeStamp_t _lastMeasurement_ms;    // time of last measurement update
       
 };
 
-} // namespace Vector
 } // namespace Anki
 
 #endif // IMU_FILTER_H_
