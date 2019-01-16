@@ -135,6 +135,9 @@ void Sequencer::AddChirps( const std::vector<Chirp>& chirps )
       AddChirpInternal( chirp );
     }
     
+    _playingSyllables = (unsigned int)_chirps.size();
+    // todo: emPHAsis on sylLABle
+    PRINT_NAMED_WARNING("WHATNOW", "setting _platingSylabbled=%d", (int)_playingSyllables);
   }
   _condVar.notify_one();
 }
@@ -166,11 +169,7 @@ void Sequencer::AddChirpInternal( const Chirp& chirp )
   PRINT_NAMED_INFO( "Chirps", "Added new chirp, start=%lld ms, duration=%d ms, pitch0=%f Hz, pitch1=%f Hz, vol=%f",
                     copy.startTime_ms, copy.duration_ms, copy.pitch0_Hz, copy.pitch1_Hz, copy.volume);
   _chirps.emplace( std::move(copy) );
-  
-  if( _playingSyllables == 0 ) {
-    _playingSyllables = (unsigned int)_chirps.size();
-    PRINT_NAMED_WARNING("WHATNOW", "setting _platingSylabbled=%d");
-  }
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -600,7 +599,7 @@ void Sequencer::AnimationUpdate()
       }
       _playingTag = sNextTag++;
       _animStreamer->SetStreamingAnimation( anim, _playingTag );
-      PRINT_NAMED_WARNING("WHATNOW", "STARTING LOOP for %d", _playingSyllables);
+      PRINT_NAMED_WARNING("WHATNOW", "STARTING LOOP for %d", (int)_playingSyllables);
     } else if( _animState == AnimationState::GetOut ) {
       _animState = AnimationState::None;
       PRINT_NAMED_WARNING("WHATNOW", "GETOUT DONE");

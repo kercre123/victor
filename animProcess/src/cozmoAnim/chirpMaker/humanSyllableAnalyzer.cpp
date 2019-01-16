@@ -124,43 +124,43 @@ void HumanSyllableAnalyzer::RunDetector()
     PRINT_NAMED_INFO("WHATNOW", "no syllables");
   }
   
-  using namespace std::chrono;
-  uint64_t startTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch() + milliseconds{1000}).count();
-  std::vector<Chirp> chirps;
-  for( const auto& syllable : syllables ) {
-    PRINT_NAMED_WARNING("WHATNOW","Syllable info: start=%f, end=%f, freq=%f, vol=%f",
-                        syllable.startTime_s, syllable.endTime_s, syllable.avgFreq, syllable.avgPower );
+  if( std::any_of(syllables.begin(), syllables.end(), [](const auto& c){ return c.avgPower >= -90; }) ) {
     
-    if( syllable.avgPower < -90 ) {
-      continue;
+    using namespace std::chrono;
+    uint64_t startTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch() + milliseconds{1000}).count();
+    std::vector<Chirp> chirps;
+    for( const auto& syllable : syllables ) {
+      PRINT_NAMED_WARNING("WHATNOW","Syllable info: start=%f, end=%f, freq=%f, vol=%f",
+                          syllable.startTime_s, syllable.endTime_s, syllable.avgFreq, syllable.avgPower );
+      
+      if( syllable.endIdx <= syllable.startIdx + 1 ) {
+        continue;
+      }
+      
+      Chirp chirp;
+      chirp.startTime_ms = startTime_ms + kTimeScaleFactor*syllable.startTime_s*1000;
+      chirp.duration_ms = (syllable.endTime_s - syllable.startTime_s)*1000;
+      
+      chirp.duration_ms *= kTimeScaleFactor;
+      
+      //float freq = std::min(syllable.peakFreq, syllable.avgFreq);
+      float freq0 = syllable.firstFreq; //syllable.avgFreq;
+      float freq1 = syllable.lastFreq; //syllable.avgFreq;
+      freq0 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
+      freq1 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
+  //    if( freq0 > 400 ) {
+  //      freq0 /= 2;
+  //      freq1 /= 2;
+  //    } else if( freq < 120 ) {
+  //      freq *= 2;
+  //    }
+      chirp.pitch0_Hz = freq0;
+      chirp.pitch1_Hz = freq1;
+      chirp.volume = 1.0;
+      chirps.push_back( std::move(chirp) );
     }
-    if( syllable.endIdx <= syllable.startIdx + 1 ) {
-      continue;
-    }
-    
-    Chirp chirp;
-    chirp.startTime_ms = startTime_ms + kTimeScaleFactor*syllable.startTime_s*1000;
-    chirp.duration_ms = (syllable.endTime_s - syllable.startTime_s)*1000;
-    
-    chirp.duration_ms *= kTimeScaleFactor;
-    
-    //float freq = std::min(syllable.peakFreq, syllable.avgFreq);
-    float freq0 = syllable.firstFreq; //syllable.avgFreq;
-    float freq1 = syllable.lastFreq; //syllable.avgFreq;
-    freq0 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
-    freq1 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
-//    if( freq0 > 400 ) {
-//      freq0 /= 2;
-//      freq1 /= 2;
-//    } else if( freq < 120 ) {
-//      freq *= 2;
-//    }
-    chirp.pitch0_Hz = freq0;
-    chirp.pitch1_Hz = freq1;
-    chirp.volume = 1.0;
-    chirps.push_back( std::move(chirp) );
+    GetSequencer()->AddChirps(chirps);
   }
-  GetSequencer()->AddChirps(chirps);
   
 }
   
