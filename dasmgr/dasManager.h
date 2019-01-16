@@ -107,6 +107,9 @@ private:
   uint32_t GetNextIndexForJsonFile();
   std::string GetPathNameForNextJsonLogFile();
 
+  // Update state flag and magic state file
+  void SetAllowUpload(bool allow_upload);
+
   void LoadTransientGlobals(const std::string & path);
   void LoadPersistentGlobals(const std::string & path);
   void LoadGlobalState();

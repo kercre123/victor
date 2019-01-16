@@ -52,6 +52,10 @@ int main(int argc, const char* argv[])
 {
   using Result = Anki::Result;
 
+  // Set output buffering for use with systemd journal
+  setlinebuf(stdout);
+  setlinebuf(stderr);
+
   struct sched_param params;
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
@@ -167,6 +171,7 @@ int main(int argc, const char* argv[])
 }
 
 #include "spine/spine.h"
+
 int main_test(int argc, const char* argv[])
 {
   mlockall(MCL_FUTURE);

@@ -114,6 +114,8 @@ public:
   // Note when the engine has finished loading for internal use
   void OnEngineLoaded() {_engineLoaded = true;}
 
+  void SetSysconVersion(const std::string& version) { _sysconVersion = version; }
+
 private:
   const AnimContext* _context = nullptr;
   
@@ -228,6 +230,8 @@ private:
   
   bool _drawFAC = false;
   bool _engineLoaded = false;
+
+  std::string _sysconVersion = "";
   
   // Reboot Linux
   void Reboot();

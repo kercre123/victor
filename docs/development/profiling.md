@@ -4,6 +4,9 @@ Profiling on Victor is based on [simpleperf](../../project/victor/simpleperf/REA
 
 ## Prerequisites
 
+### Robot
+SimplePerf *only works* if you have a special non-MP robot that does not have debug fuses blown. Ask someone on the engine / OS team if you need one
+
 ### Useful Aliases
 
 This documentation assumes that you are using alias commands from [usefulALiases.sh](../../project/victor/scripts/usefulALiases.sh).

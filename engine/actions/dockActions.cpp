@@ -153,7 +153,7 @@ namespace Anki {
       {
         _faceAndVerifyAction->PrepForCompletion();
       }
-      
+
       if(_dockAnim != nullptr)
       {
         _dockAnim->PrepForCompletion();
@@ -521,7 +521,7 @@ namespace Anki {
         _dockAnim->PrepForCompletion();
       }
       _dockAnim.reset(nullptr);
-      
+
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_dockObjectID));
 
       if(dockObject == nullptr)
@@ -789,7 +789,7 @@ namespace Anki {
               _dockAnim.reset(new TriggerAnimationAction(_getInDockTrigger));
               _dockAnim->SetRobot(&GetRobot());
             }
-            
+
             UpdateDockingAnim();
           }
         }
@@ -837,7 +837,7 @@ namespace Anki {
         }
 
         // Still docking so update dock anim
-        UpdateDockingAnim();       
+        UpdateDockingAnim();
       }
 
       return actionResult;
@@ -931,7 +931,7 @@ namespace Anki {
         _dockObjectID.UnSet();
       }
     }
-    
+
     void IDockAction::SetDockAnimations(const AnimationTrigger& getIn,
                                         const AnimationTrigger& loop,
                                         const AnimationTrigger& getOut)
@@ -1398,7 +1398,7 @@ namespace Anki {
         _dockAction = DockAction::DA_PICKUP_HIGH;
         SetType(RobotActionType::PICKUP_OBJECT_HIGH);
       }
-      
+
       // If we are either in the habitat or unsure, we should do the version of cube pickup where instead of driving
       // forward at the same time as raising the lift, we drive backward. This improves the cube pickup success rate
       // in case the cube is pressed against the wall of the habitat.
@@ -1551,7 +1551,6 @@ namespace Anki {
           // that we can do IsSameAs checks below.
           _dockObjectOrigPose.SetParent(GetRobot().GetPose().GetParent());
 
-          Vec3f Tdiff;
           Radians angleDiff;
           ObservableObject* objectInOriginalPose = nullptr;
           for(const auto& object : objectsWithType)

@@ -31,7 +31,7 @@ namespace Anki {
 namespace NeuralNets {
 
 #define LOG_CHANNEL "NeuralNets"
-  
+
 // TODO: Make this a parameter in config?
 constexpr int kNumThreads = 1;
 
@@ -42,7 +42,10 @@ namespace {
 struct TFLiteLogReporter : public tflite::ErrorReporter {
   int Report(const char* format, va_list args) override
   {
-    LOG_ERROR("TFLiteModel.TFLiteErrorReporter", format, args);
+    constexpr size_t kMaxStringBufferSize = 1024;
+    char buf[kMaxStringBufferSize];
+    vsnprintf(buf, sizeof(buf), format, args);
+    LOG_ERROR("TFLiteLogReporter.Report", "%s", buf);
     return 0;
   }
 };
@@ -50,16 +53,16 @@ struct TFLiteLogReporter : public tflite::ErrorReporter {
 TFLiteLogReporter gLogReporter;
 
 } // anonymous namespace
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TFLiteModel::TFLiteModel() = default;
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TFLiteModel::~TFLiteModel()
 {
   LOG_DEBUG("TFLiteModel.Destructor", "");
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result TFLiteModel::LoadModelInternal(const std::string& modelPath, const Json::Value& config)
 {
@@ -68,55 +71,55 @@ Result TFLiteModel::LoadModelInternal(const std::string& modelPath, const Json::
   {
     return paramsResult;
   }
-   
+
   DEV_ASSERT(!modelPath.empty(), "TFLiteModel.LoadModelInternal.EmptyModelPath");
-  
+
   std::vector<int> sizes = {1, _params.inputHeight, _params.inputWidth, 3};
-  
+
   const std::string graphFileName = Util::FileUtils::FullFilePath({modelPath,_params.graphFile});
-  
+
   if(!Util::FileUtils::FileExists(graphFileName))
   {
     LOG_ERROR("TFLiteModel.LoadModelInternal.GraphFileDoesNotExist", "%s", graphFileName.c_str());
     return RESULT_FAIL;
   }
-  
+
   _model = tflite::FlatBufferModel::BuildFromFile(graphFileName.c_str(), &gLogReporter);
-  
+
   if (!_model)
   {
     LOG_ERROR("TFLiteModel.LoadModelInternal.FailedToBuildFromFile", "%s", graphFileName.c_str());
     return RESULT_FAIL;
   }
-  
+
   LOG_INFO("TFLiteModel.LoadModelInternal.Success", "Loaded: %s",
            graphFileName.c_str());
-  
+
   //_model->error_reporter();
   //LOG_INFO("TFLiteModel.LoadModelInternal.ResolvedReporter", "");
-  
+
 #ifdef TFLITE_CUSTOM_OPS_HEADER
   tflite::MutableOpResolver resolver;
   RegisterSelectedOps(&resolver);
 #else
   tflite::ops::builtin::BuiltinOpResolver resolver;
 #endif
-  
+
   tflite::InterpreterBuilder(*_model, resolver)(&_interpreter);
   if (!_interpreter)
   {
     LOG_ERROR("TFLiteModel.LoadModelInternal.FailedToConstructInterpreter", "");
     return RESULT_FAIL;
   }
-  
+
   if (kNumThreads != -1)
   {
     _interpreter->SetNumThreads(kNumThreads);
   }
-  
+
   const int input = _interpreter->inputs()[0];
   _interpreter->ResizeInputTensor(input, sizes);
-  
+
   if (_interpreter->AllocateTensors() != kTfLiteOk)
   {
     LOG_ERROR("TFLiteModel.LoadModelInternal.FailedToAllocateTensors", "");
@@ -130,7 +133,7 @@ Result TFLiteModel::LoadModelInternal(const std::string& modelPath, const Json::
   {
     return readLabelsResult;
   }
-  
+
   return RESULT_OK;
 }
 
@@ -140,14 +143,14 @@ void TFLiteModel::ScaleImage(Vision::ImageRGB& img)
   DEV_ASSERT(_interpreter != nullptr, "TFLiteModel.ScaleImage.NullInterpreter");
 
   const int inputIndex = _interpreter->inputs()[0];
-  
+
   const auto kResizeMethod = Vision::ResizeMethod::Linear;
-  
+
   if(_params.useFloatInput)
   {
     float* scaledInputData = _interpreter->typed_tensor<float>(inputIndex);
     DEV_ASSERT(scaledInputData != nullptr, "TFLiteModel.ScaleImage.NullInputData");
-    
+
     // Resize uint8 image data, and *then* convert smaller image to float below
     // TODO: Resize and convert directly into the scaledInputData (ideally using NEON?)
     if(img.GetNumRows() != _params.inputHeight || img.GetNumCols() != _params.inputWidth)
@@ -159,12 +162,12 @@ void TFLiteModel::ScaleImage(Vision::ImageRGB& img)
       LOG_INFO("TFLiteModel.ScaleImage.SkipResize", "Skipping actual resize: image already correct size");
     }
     DEV_ASSERT(img.IsContinuous(), "TFLiteModel.ScaleImage.ImageNotContinuous");
-    
+
     // Scale/shift resized image directly into the tensor data
     DEV_ASSERT(img.GetNumChannels() == 3, "TFLiteModel.ScaleImage.BadNumChannels");
-    
+
     cv::Mat cvTensor(_params.inputHeight, _params.inputWidth, CV_32FC3, scaledInputData);
-    
+
     img.get_CvMat_().convertTo(cvTensor, CV_32FC3, 1.f/_params.inputScale, _params.inputShift);
   }
   else
@@ -194,7 +197,7 @@ Result TFLiteModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint
   else
   {
     tflite::profiling::Profiler profiler;
-    
+
     _interpreter->SetProfiler(&profiler);
 
     profiler.StartProfiling();
@@ -212,21 +215,21 @@ Result TFLiteModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint
     profiler.StopProfiling();
     // TODO: Upgrade to TF r1.10 in order to build profile_summarizer.cc for detailed timing
     auto profile_events = profiler.GetProfileEvents();
-    for (auto const& e : profile_events) 
+    for (auto const& e : profile_events)
     {
       auto op_index = e->event_metadata;
       const auto node_and_registration =
           _interpreter->node_and_registration(op_index);
       const TfLiteRegistration registration = node_and_registration->second;
       LOG_INFO("TFLiteModel.Detect.Profiling", "Num Runs: %d, Avg: %f ms, Node: %u, OpCode: %i, %s \n",
-              _params.benchmarkRuns, 
+              _params.benchmarkRuns,
               (e->end_timestamp_us - e->begin_timestamp_us) / (1000.0 * _params.benchmarkRuns),
               op_index, registration.builtin_code,
               EnumNameBuiltinOperator(
                 static_cast<tflite::BuiltinOperator>(registration.builtin_code)));
     }
   }
-  
+
   switch(_params.outputType)
   {
     case NeuralNetParams::OutputType::Classification:
@@ -241,10 +244,10 @@ Result TFLiteModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint
         const uint8_t* outputData = _interpreter->typed_output_tensor<uint8_t>(0);
         ClassificationOutputHelper(outputData, img.GetTimestamp(), salientPoints);
       }
-      
+
       break;
     }
-      
+
     case NeuralNetParams::OutputType::BinaryLocalization:
     {
       if(_params.useFloatInput)
@@ -261,10 +264,10 @@ Result TFLiteModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint
         const int zero_point = outputTensor->params.zero_point;
         LocalizedBinaryOutputHelper(outputData, img.GetTimestamp(), scale, zero_point, salientPoints);
       }
-      
+
       break;
     }
-      
+
     case NeuralNetParams::OutputType::AnchorBoxes:
       //GetDetectedObjects(outputTensors, t, salientPoints);
     case NeuralNetParams::OutputType::Segmentation:
@@ -274,10 +277,10 @@ Result TFLiteModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint
       return RESULT_FAIL;
     }
   }
-  
+
   return RESULT_OK;
 }
-  
+
 } // namespace Vision
 } // namespace Anki
 

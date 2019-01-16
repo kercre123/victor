@@ -25,7 +25,7 @@ namespace Vision {
 namespace{
 // Keep consistent with value in compositeImageTypes.clad
 // Should be half the value so that points can be interleaved
-const uint8_t kMaxModifierSequenceSerializationLength = 125; 
+const uint8_t kMaxModifierSequenceSerializationLength = 125;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -42,7 +42,7 @@ CompositeImageLayer::CompositeImageLayer(const Json::Value& layoutSpec)
 
   // Verify that a layout is specified
   if(!ANKI_VERIFY(layoutSpec.isMember(kSpriteBoxLayoutKey),
-                  (templateDebugStr + kSpriteBoxLayoutKey).c_str(), 
+                  (templateDebugStr + kSpriteBoxLayoutKey).c_str(),
                   "No sprite box layout provided for composite image")){
     return;
   }
@@ -63,7 +63,7 @@ CompositeImageLayer::CompositeImageLayer(const Json::Value& layoutSpec)
 
     const std::string sbString = JsonTools::ParseString(entry, kSpriteBoxNameKey, templateDebugStr);
     SpriteBoxName sbName = SpriteBoxNameFromString(sbString);
-    
+
     _layoutMap.emplace(std::make_pair(sbName, SpriteBox(sbName, renderConfig, Point2i(x, y), width, height)));
   }
 }
@@ -75,7 +75,7 @@ CompositeImageLayer::~CompositeImageLayer()
 
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::operator==(const CompositeImageLayer& other) const{
   return _layerName == other._layerName &&
@@ -97,7 +97,7 @@ bool CompositeImageLayer::GetSpriteSequenceName(SpriteBoxName sbName, Vision::Sp
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool CompositeImageLayer::GetFrame(SpriteBoxName sbName, const u32 index, 
+bool CompositeImageLayer::GetFrame(SpriteBoxName sbName, const u32 index,
                                    Vision::SpriteHandle& handle) const
 {
   auto imageMapIter = _imageMap.find(sbName);
@@ -130,7 +130,7 @@ void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spr
   // If map entry already exists, just update existing iterator
   if(!resultPair.second){
     resultPair.first->second = spriteBox;
-  }  
+  }
 }
 
 
@@ -170,7 +170,7 @@ bool CompositeImageLayer::GetSpriteEntry(const SpriteBox& sb, SpriteEntry& outEn
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec, 
+void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec,
                                       SpriteCache* cache, SpriteSequenceContainer* seqContainer)
 {
   using namespace CompositeImageConfigKeys;
@@ -199,7 +199,7 @@ bool CompositeImageLayer::IsValidImageMap(const ImageMap& imageMap, bool require
     if(!ANKI_VERIFY(_layoutMap.size() == imageMap.size(),
                     "CompositeImageLayerDef.IsValidImplementation.AllQuadrantsNotSpecified",
                     "Layout has %zu quadrants, but implementation only has %zu",
-                    _layoutMap.size(), 
+                    _layoutMap.size(),
                     imageMap.size())){
       return false;
     }
@@ -243,8 +243,8 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
       }
       serialized.layoutModifierInterleavedLength = idx;
     }else{
-      PRINT_NAMED_ERROR("CompositeImageLayer.SpriteBox.Serialize.ModifierIssue", 
-                        "Can't serialize modifier of length %zu, max length is %d", 
+      PRINT_NAMED_ERROR("CompositeImageLayer.SpriteBox.Serialize.ModifierIssue",
+                        "Can't serialize modifier of length %zu, max length is %d",
                         seq.size(), kMaxModifierSequenceSerializationLength);
     }
   }
@@ -272,7 +272,7 @@ bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteBox::operator==(const SpriteBox& other) const
 {
@@ -324,13 +324,12 @@ CompositeImageLayer::SpriteBox::SpriteBox(const SerializedSpriteBox& spriteBox)
 , height(spriteBox.height)
 {
   ValidateRenderConfig();
-  
+
   if(spriteBox.layoutModifierInterleavedLength > 0){
     layoutModifier = std::make_unique<CompositeImageLayoutModifier>();
     const auto modifierLength = spriteBox.layoutModifierInterleavedLength/2;
-    Point2i point;
     for(int i = 0; i < modifierLength; i++){
-      Point2i point(spriteBox.layoutModifier.interleavedModifierList[i], 
+      Point2i point(spriteBox.layoutModifier.interleavedModifierList[i],
                     spriteBox.layoutModifier.interleavedModifierList[i + 1]);
       layoutModifier->UpdatePositionForFrame(i, point);
     }
@@ -340,7 +339,7 @@ CompositeImageLayer::SpriteBox::SpriteBox(const SerializedSpriteBox& spriteBox)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImageLayer::SpriteBox::GetPositionForFrame(const u32 frameIdx, Point2i& outTopLeftCorner, 
+void CompositeImageLayer::SpriteBox::GetPositionForFrame(const u32 frameIdx, Point2i& outTopLeftCorner,
                                                          int& outWidth, int& outHeight) const
 {
   if(layoutModifier != nullptr){
@@ -348,8 +347,8 @@ void CompositeImageLayer::SpriteBox::GetPositionForFrame(const u32 frameIdx, Poi
   }else{
     outTopLeftCorner = topLeftCorner;
   }
-  
-  
+
+
   outWidth = width;
   outHeight = height;
 }
@@ -410,10 +409,9 @@ bool CompositeImageLayer::SpriteEntry::GetFrame(const u32 index, Vision::SpriteH
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteEntry::operator == (const SpriteEntry& other) const {
-  return (_spriteName == other._spriteName) && 
+  return (_spriteName == other._spriteName) &&
          (_frameStartOffset == other._frameStartOffset);
 }
 
 }; // namespace Vision
 }; // namespace Anki
-
