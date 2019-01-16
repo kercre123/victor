@@ -279,7 +279,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   _dirCountEventMap[2] = true;  // first
   // delay
   for (int i = 0; i < 30; i++) {
-    _dirCountEventMap[6 + (4*i)] = true; // repeat
+    _dirCountEventMap[10 + (4*i)] = true; // repeat
   }
 
   GetBEI().GetRobotInfo().GetMoveComponent().MoveHeadToAngle(0.70 /*rad*/, 1.0 /*speed*/, 1.0 /*accel*/);
@@ -301,25 +301,37 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     bool newButtonEvent = isPressed && !_buttonPressed;
     _buttonPressed      = isPressed;
 
-    float xGs = GetBEI().GetRobotInfo().GetHeadAccelData().x / 9810.0 - kAccelOffsetX;
+    float xGs = GetBEI().GetRobotInfo().GetHeadAccelData().x / 9810.0;
     float yGs = GetBEI().GetRobotInfo().GetHeadAccelData().y / 9810.0;
+    float zGs = GetBEI().GetRobotInfo().GetHeadAccelData().z / 9810.0;
     // At most, only one direction can be active on any tick
     int dir = NUM_DIR;  // none
-    if (abs(xGs) > abs(yGs)) {
-      yGs = 0.0;
-    } else {
-      xGs = 0.0;
-    }
-    if (_controlScheme == CTRL_45_INV) {
-      if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
-      if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+    if (_controlScheme != CTRL_HORZ) {
+      xGs -= kAccelOffsetX;
+      if (abs(xGs) > abs(yGs)) {
+        yGs = 0.0;
+      } else {
+        xGs = 0.0;
+      }
       if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
       if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
-    } else { // CTRL_45_REG
-      if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
-      if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
-      if ((yGs < (-kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_R; }
-      if ((yGs > (+kAccelThresh)) && (abs(xGs) < kAccelThresh)) { dir = DIR_L; }
+      if (_controlScheme == CTRL_45_INV) {
+        if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+        if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+      } else {
+        if ((xGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
+        if ((xGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+      }
+    } else {  // _controlScheme == CTRL_HORZ
+      if (abs(zGs) > abs(yGs)) {
+        yGs = 0.0;
+      } else {
+        zGs = 0.0;
+      }
+      if ((yGs < (-kAccelThresh)) && (abs(zGs) < kAccelThresh)) { dir = DIR_R; }
+      if ((yGs > (+kAccelThresh)) && (abs(zGs) < kAccelThresh)) { dir = DIR_L; }
+      if ((zGs < (-kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_U; }
+      if ((zGs > (+kAccelThresh)) && (abs(yGs) < kAccelThresh)) { dir = DIR_D; }
     }
 
     Panel* panel = _panelSet->Panels[_currPanel];
