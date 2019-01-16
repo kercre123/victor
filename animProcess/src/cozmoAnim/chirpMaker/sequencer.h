@@ -8,6 +8,7 @@
 #pragma once
 
 #include "clad/types/chirpTypes.h"
+#include "anki/cozmo/shared/animationTag.h"
 
 #include <mutex>
 #include <thread>
@@ -28,6 +29,7 @@ namespace Vector {
   
 class AnimContext;
 struct Chirp;
+class AnimationStreamer;
 
 class Sequencer
 {
@@ -36,7 +38,7 @@ public:
   Sequencer();
   ~Sequencer();
   
-  void Init( const AnimContext* context );
+  void Init( const AnimContext* context, AnimationStreamer* streamer );
   
   void Update();
   
@@ -50,7 +52,12 @@ public:
   void Test_ShaveHaircut( const uint32_t quarterNode_ms, uint32_t delay_ms = 1000 );
   
   static uint64_t GetCurrTime();
+  
+  void OnAnimationEnded( AnimationTag tag );
 private:
+  
+  void AnimationUpdate();
+  
   using Clock = std::chrono::steady_clock;
   
   void MainLoop();
@@ -65,6 +72,7 @@ private:
   
   std::chrono::time_point<Clock> ConvertToTimePoint( uint64_t time_ms ) const;
   
+  AnimationStreamer* _animStreamer = nullptr;
   AudioEngine::AudioEngineController* _audioController = nullptr;
   
   mutable std::mutex _mutex;
@@ -106,6 +114,19 @@ private:
   int _octave = std::numeric_limits<int>::max();
   
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
+  
+  enum class AnimationState {
+    None=0,
+    OneSyllable=1,
+    TwoSyllable=2,
+    ThreeSyllable=3,
+    GetIn,
+    GetOut,
+  };
+  AnimationTag _playingTag = 0;
+  AnimationState _animState = AnimationState::None;
+  std::atomic<int> _playingSyllables;
+  bool _animEnded = false;
 };
 
 

@@ -83,7 +83,7 @@ template < int N, int sampleRate >
 std::array<float, N> ComputeFilterCoeffs()
 {
   const float lowCutoff = 50.0f;
-  const float highCutoff = 600.0f;
+  const float highCutoff = 300.0f;
   static_assert( N % 2, "N must be odd" );
 
   std::array<float, N> filterCoeffs;
@@ -318,6 +318,7 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
       const float freq = spectrogramFreqs[freqIdxMaxPowerAtTime[i]];
       info.avgFreq += freq;
       info.avgPower += maxPowerAtTime[i];
+      info.firstFreq = freq;
       if( maxPowerAtTime[i] > maxPowerHere ) {
         info.peakFreq = freq;
       }
@@ -342,6 +343,7 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
       const float freq = spectrogramFreqs[freqIdxMaxPowerAtTime[i]];
       info.avgFreq += freq;
       info.avgPower += maxPowerAtTime[i];
+      info.lastFreq = freq;
       if( maxPowerAtTime[i] > maxPowerHere ) {
         info.peakFreq = freq;
       }
@@ -358,7 +360,7 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
   std::vector<SyllableInfo> result;
   result.reserve(syllables.size());
   for( const auto& syllable : syllables ) {
-    PRINT_NAMED_WARNING("WHATNOW", "syllable from %f to %f, avgFreq=%f, peakFreq=%f, pwr=%f", syllable.second.startTime_s, syllable.second.endTime_s, syllable.second.avgFreq, syllable.second.peakFreq, syllable.second.avgPower);
+    PRINT_NAMED_WARNING("WHATNOW", "syllable from %f to %f, avgFreq=%f, peakFreq=%f, pwr=%f, firstFreq=%f, lastFreq=%f", syllable.second.startTime_s, syllable.second.endTime_s, syllable.second.avgFreq, syllable.second.peakFreq, syllable.second.avgPower, syllable.second.firstFreq, syllable.second.lastFreq);
     //std::cout << "syllable from " << syllable.second.startTime_s << " to " << syllable.second.endTime_s << ", avgFreq=" << syllable.second.avgFreq << ", peakfreq=" << syllable.second.peakFreq << ", pwr=" << syllable.second.avgPower  << std::endl;
     result.push_back( std::move( syllable.second ) );
   }

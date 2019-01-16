@@ -153,7 +153,7 @@ Result AnimEngine::Init()
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
   _context->GetAlexa()->Init(_context.get());
-  _context->GetSequencer()->Init(_context.get());
+  _context->GetSequencer()->Init(_context.get(), _animationStreamer.get());
 
   // Make sure OpenCV isn't threading
   Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );

@@ -967,7 +967,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   }
     
   if (!atLeastOneCallback &&
-      (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM))) {
+      (payload.animName != EnumToString(AnimConstants::PROCEDURAL_ANIM)) && (payload.animName.find("vvv") != std::string::npos)) {
     LOG_WARNING("AnimationComponent.AnimEnded.UnexpectedTag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     return;
   }

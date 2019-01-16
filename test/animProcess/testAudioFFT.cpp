@@ -12,7 +12,7 @@ using namespace Anki::Vector;
 
 TEST(AudioFFT, Sequencer) {
   Sequencer sequencer;
-  sequencer.Init(nullptr);
+  sequencer.Init(nullptr, nullptr);
   
   // bad design means you shouldnt add for a little while, so the thread is waiting
   // at the right spot when you add a chirp

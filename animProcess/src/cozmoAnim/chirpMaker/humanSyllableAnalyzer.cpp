@@ -134,6 +134,9 @@ void HumanSyllableAnalyzer::RunDetector()
     if( syllable.avgPower < -90 ) {
       continue;
     }
+    if( syllable.endIdx <= syllable.startIdx + 1 ) {
+      continue;
+    }
     
     Chirp chirp;
     chirp.startTime_ms = startTime_ms + kTimeScaleFactor*syllable.startTime_s*1000;
@@ -142,15 +145,18 @@ void HumanSyllableAnalyzer::RunDetector()
     chirp.duration_ms *= kTimeScaleFactor;
     
     //float freq = std::min(syllable.peakFreq, syllable.avgFreq);
-    float freq = syllable.avgFreq;
-    freq *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
-    if( freq > 400 ) {
-      freq /= 2;
-    } else if( freq < 120 ) {
-      freq *= 2;
-    }
-    chirp.pitch0_Hz = freq;
-    chirp.pitch1_Hz = freq;
+    float freq0 = syllable.firstFreq; //syllable.avgFreq;
+    float freq1 = syllable.lastFreq; //syllable.avgFreq;
+    freq0 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
+    freq1 *= 15625.0f/16000; // rescale based on actual syscon freq and 16k
+//    if( freq0 > 400 ) {
+//      freq0 /= 2;
+//      freq1 /= 2;
+//    } else if( freq < 120 ) {
+//      freq *= 2;
+//    }
+    chirp.pitch0_Hz = freq0;
+    chirp.pitch1_Hz = freq1;
     chirp.volume = 1.0;
     chirps.push_back( std::move(chirp) );
   }

@@ -18,6 +18,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "coretech/vision/shared/compositeImage/compositeImageBuilder.h"
+#include "cozmoAnim/chirpMaker/sequencer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
 #include "cannedAnimLib/cannedAnims/animationInterpolator.h"
@@ -534,10 +535,10 @@ namespace Vector {
         return RESULT_FAIL;
       }
 
-      LOG_INFO("AnimationStreamer.SetStreamingAnimation.Aborting",
-               "Animation %s is interrupting animation %s",
-               anim != nullptr ? anim->GetName().c_str() : "NULL",
-               _streamingAnimation->GetName().c_str());
+//      LOG_INFO("AnimationStreamer.SetStreamingAnimation.Aborting",
+//               "Animation %s is interrupting animation %s",
+//               anim != nullptr ? anim->GetName().c_str() : "NULL",
+//               _streamingAnimation->GetName().c_str());
 
       Abort(kNotAnimatingTag, shouldClearProceduralAnim);
     }
@@ -979,13 +980,13 @@ namespace Vector {
     if (nullptr != _streamingAnimation &&
         (tag == _tag || tag == kNotAnimatingTag) )
     {
-      LOG_INFO("AnimationStreamer.Abort",
-               "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
-               _tag,
-               _streamingAnimation->GetName().c_str(),
-               _streamingAnimation->HasFramesLeft(),
-               _startOfAnimationSent,
-               _endOfAnimationSent);
+//      LOG_INFO("AnimationStreamer.Abort",
+//               "Tag=%d %s hasFramesLeft=%d startSent=%d endSent=%d",
+//               _tag,
+//               _streamingAnimation->GetName().c_str(),
+//               _streamingAnimation->HasFramesLeft(),
+//               _startOfAnimationSent,
+//               _endOfAnimationSent);
 
       StopTracksInUse();
 
@@ -1538,6 +1539,7 @@ namespace Vector {
     if (abortingAnim || (_loopCtr == _numLoops - 1)) {
       // Don't actually send end message for proceduralFace or neutralFace anims since
       // they weren't requested by engine
+      _context->GetSequencer()->OnAnimationEnded(_tag);
       if (!_playingInternalAnim) {
         AnimationEnded endMsg;
         memcpy(endMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
@@ -2221,6 +2223,16 @@ namespace Vector {
           "anim_avs_l_getin_03",
           "anim_avs_suddenspeak_03",
           "PROCEDURAL_ANIM",
+          "anim_vvv_loop_03_03",
+          "anim_vvv_loop_03_02",
+          "anim_vvv_loop_03_01",
+          "anim_vvv_loop_02_01",
+          "anim_vvv_loop_02_02",
+          "anim_vvv_loop_02_01",
+          "anim_vvv_getout_01",
+          "anim_vvv_getout_02",
+          "anim_vvv_getin_01",
+          "anim_vvv_getin_02"
         };
         if(knownIssues.find(animName) == knownIssues.end()) {
           LOG_WARNING("AnimationStreamer.InvalidateBannedTracks.UnknownIssue",

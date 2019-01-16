@@ -21,7 +21,7 @@ public:
                              unsigned int windowLen,
                              unsigned int numOverlap,
                              unsigned int fftLen,
-                             float stoppingThreshold_dB = 20.0f );
+                             float stoppingThreshold_dB = 30.0f );
   ~SyllableDetector();
   
   struct SyllableInfo {
@@ -33,6 +33,8 @@ public:
     float avgFreq = 0.0f;
     float peakFreq = 0.0f;
     float avgPower = 0.0f;
+    float firstFreq = 0.0f;
+    float lastFreq = 0.0f;
   };
   
   std::vector<SyllableInfo> Run( const BuffType* signal, int signalLen );

@@ -17,6 +17,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "cozmoAnim/animation/animationStreamer.h"
 
 #include <chrono>
 
@@ -41,11 +42,32 @@ namespace {
   CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps", 1760, 0.0f, 5000.0f);
   
   CONSOLE_VAR_ENUM(int, kSwitchType, "Chirps", 0, "TONEGEN,ASSETS");
+  
+  CONSOLE_VAR(bool, kPlayAnims, "Chirps", false);
+  
+  const char* kAnimLoop01 = "anim_vvv_loop_01";
+  
+  const char* kAnimLoop02_01 = "anim_vvv_loop_02_01"; // first syl
+  const char* kAnimLoop02_02 = "anim_vvv_loop_02_02";
+  
+  const char* kAnimLoop03_01 = "anim_vvv_loop_03_01";
+  const char* kAnimLoop03_02 = "anim_vvv_loop_03_02";
+  const char* kAnimLoop03_03 = "anim_vvv_loop_03_03";
+  
+  const char* kAnimGetIn01 = "anim_vvv_getin_01";
+  const char* kAnimGetIn02 = "anim_vvv_getin_02";
+  
+  const char* kAnimGetOut01 = "anim_vvv_getout_01";
+  const char* kAnimGetOut02 = "anim_vvv_getout_02";
+  
+  
+  static int sNextTag = 10; // in case some other anims played, like the boot sequence
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Sequencer::Sequencer()
  : _waitUntil{ kInvalidTime }
+ , _playingSyllables{0}
 {
   
 }
@@ -61,12 +83,13 @@ Sequencer::~Sequencer()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Sequencer::Init(const AnimContext* context)
+void Sequencer::Init(const AnimContext* context, AnimationStreamer* animStreamer)
 {
   if( context != nullptr ) {
     // could happen in unit tests
     _audioController = context->GetAudioController();
   }
+  _animStreamer = animStreamer;
   
   auto shaveAndHaircut = [&](ConsoleFunctionContextRef context ) {
     const uint32_t quarterNote_ms = ConsoleArg_Get_UInt32( context, "quarterNote_ms");
@@ -143,6 +166,11 @@ void Sequencer::AddChirpInternal( const Chirp& chirp )
   PRINT_NAMED_INFO( "Chirps", "Added new chirp, start=%lld ms, duration=%d ms, pitch0=%f Hz, pitch1=%f Hz, vol=%f",
                     copy.startTime_ms, copy.duration_ms, copy.pitch0_Hz, copy.pitch1_Hz, copy.volume);
   _chirps.emplace( std::move(copy) );
+  
+  if( _playingSyllables == 0 ) {
+    _playingSyllables = (unsigned int)_chirps.size();
+    PRINT_NAMED_WARNING("WHATNOW", "setting _platingSylabbled=%d");
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -161,6 +189,9 @@ void Sequencer::Update()
                                       gameObject );
     lastSwitch = kSwitchType;
   }
+  
+  
+  AnimationUpdate();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -191,6 +222,10 @@ void Sequencer::MainLoop()
     } else {
       const auto t = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - kInvalidTime).count();
       PRINT_NAMED_INFO("Chirps", "[t=%lld]: Stopping", t);
+    }
+    if( _chirps.size() == 0 ) {
+      PRINT_NAMED_WARNING("WHATNOW", "setting _platingSylabbled=0");
+      _playingSyllables = 0;
     }
   };
   auto sendPitchVolume = [&](float pitch, float volume) {
@@ -247,9 +282,9 @@ void Sequencer::MainLoop()
       auto& chirpInfo = *it;
       if( chirpInfo.playing ) {
         if( (currTime_ms >= chirpInfo.GetEndTime()) ) {
+          it = _chirps.erase( it );
           // send stop event
           sendStop();
-          it = _chirps.erase( it );
         } else if( !chirpInfo.ConstantPitch() ) {
           // still playing, and pitch is fluctuating
           stillPlaying = true;
@@ -357,9 +392,7 @@ void Sequencer::Test_Triplet( const float pitch_Hz, const uint32_t duration_ms )
   Chirp chirp3 = chirp1;
   chirp2.startTime_ms = chirp1.startTime_ms + chirp1.duration_ms;
   chirp3.startTime_ms = chirp2.startTime_ms + chirp2.duration_ms;
-  AddChirp(chirp1);
-  AddChirp(chirp2);
-  AddChirp(chirp3);
+  AddChirps({chirp1, chirp2, chirp3});
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -506,9 +539,89 @@ int Sequencer::ComputeBestOctave( const std::vector<Chirp>& chirps )
       minCount = outliers;
       bestOctave = i;
     }
+    PRINT_NAMED_WARNING("WHATNOW", "octave %d has %d outliers", i, outliers);
   }
   PRINT_NAMED_WARNING("WHATNOW", "best chirp octave is %d (%d outliers)", bestOctave, minCount);
   return bestOctave;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Sequencer::AnimationUpdate()
+{
+  if( !kPlayAnims ) {
+    return;
+  }
+  std::unique_lock<std::mutex> lk{ _mutex };
+//  if( _playingSyllables == 0 ) {
+//    if( (_animState != AnimationState::GetOut) && (_animState != AnimationState::None) ) {
+//      // play get out
+//      _playingTag = sNextTag++;
+//      const auto getOut = (rand() > 0.5) ? "anim_vvv_getout_01" : "anim_vvv_getout_02";
+//      _animStreamer->SetStreamingAnimation( getOut, _playingTag );
+//      _animState = AnimationState::GetOut;
+//    }
+//  } else {
+  if( _playingSyllables != 0 ) {
+    if( _animState == AnimationState::None ) {
+      // play get in
+      _playingTag = sNextTag++;
+      const auto getIn = (rand() > 0.5) ? kAnimGetIn01 : kAnimGetIn02;
+      _animStreamer->SetStreamingAnimation( getIn, _playingTag );
+      _animState = AnimationState::GetIn;
+      PRINT_NAMED_WARNING("WHATNOW", "STARTING GET IN");
+    }
+  }
+  
+  if( _animEnded ) {
+    _animEnded = false;
+    
+    if( (_animState == AnimationState::GetIn
+         || _animState == AnimationState::OneSyllable
+         || _animState == AnimationState::TwoSyllable
+         || _animState == AnimationState::ThreeSyllable) && (_playingSyllables > 0) )
+    {
+      const char* anim;
+      if( _playingSyllables == 1 ) {
+        anim = kAnimLoop01;
+        _animState = AnimationState::OneSyllable;
+      } else if ( _playingSyllables == 2 ) {
+        anim = (rand() > 0.5) ? kAnimLoop02_01 : kAnimLoop02_02;
+        _animState = AnimationState::TwoSyllable;
+      } else {
+        const double r = rand();
+        if( r < 0.33 ) {
+          anim = kAnimLoop03_01;
+        } else if ( r < 0.67 ) {
+          anim = kAnimLoop03_02;
+        } else {
+          anim = kAnimLoop03_03;
+        }
+        _animState = AnimationState::ThreeSyllable;
+      }
+      _playingTag = sNextTag++;
+      _animStreamer->SetStreamingAnimation( anim, _playingTag );
+      PRINT_NAMED_WARNING("WHATNOW", "STARTING LOOP for %d", _playingSyllables);
+    } else if( _animState == AnimationState::GetOut ) {
+      _animState = AnimationState::None;
+      PRINT_NAMED_WARNING("WHATNOW", "GETOUT DONE");
+    } else if( _playingSyllables == 0 &&  _animState != AnimationState::None ) {
+      _playingTag = sNextTag++;
+      const auto getIn = (rand() > 0.5) ? kAnimGetOut01 : kAnimGetOut02;
+      _animStreamer->SetStreamingAnimation( getIn, _playingTag );
+      _animState = AnimationState::GetOut;
+      PRINT_NAMED_WARNING("WHATNOW", "ANIM ENDED, SWITCHING TO GETOUT");
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Sequencer::OnAnimationEnded( AnimationTag tag )
+{
+  if( !kPlayAnims ) {
+    return;
+  }
+  // cant do anything this tick since otherwise this would be recursive
+  _animEnded = true;
 }
   
 } // namespace Vector
