@@ -550,6 +550,17 @@ void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetCo
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
+void Process_showUrlFace(const RobotInterface::ShowUrlFace& msg)
+{
+  if(msg.show) {
+    using namespace SwitchboardInterface;
+    Anki::Vector::SwitchboardInterface::SetConnectionStatus connMsg;
+    connMsg.status = ConnectionStatus::START_PAIRING;
+
+    UpdateConnectionFlow(std::move(connMsg), _animStreamer, _context);
+  }
+}
+
 void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
 {
   SetBLEPin(msg.pin);

@@ -48,6 +48,11 @@ message WifiConnectResponse
   uint_8 status_code
 }
 
+message HasBleKeysResponse
+{
+  bool hasBleKeys
+}
+
 }
 }
 }

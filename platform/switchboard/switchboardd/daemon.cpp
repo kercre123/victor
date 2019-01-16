@@ -232,6 +232,8 @@ bool Daemon::TryConnectToTokenServer() {
 void Daemon::InitializeBleComms() {
   Log::Write("Initialize BLE");
 
+  _engineMessagingClient->HandleHasBleKeysRequest();
+
   if(_bleClient.get() == nullptr) {
     _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
 
@@ -657,6 +659,10 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
       _engineMessagingClient->HandleWifiConnectRequest(std::string((char*)&payload.ssid),
                                                        std::string((char*)&payload.pwd),
                                                        payload.disconnectAfterConnection);
+      break;
+    }
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::HasBleKeysRequest: {
+      _engineMessagingClient->HandleHasBleKeysRequest();
       break;
     }
     default: {

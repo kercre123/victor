@@ -43,6 +43,9 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
+  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) override;
+
 
 private:
 
@@ -61,6 +64,7 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
+  bool _hasBleKeys = true;
 
 };
 

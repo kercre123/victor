@@ -505,6 +505,11 @@ message DrawTextOnScreen
   string   text
 }
 
+message ShowUrlFace
+{
+  bool show
+}
+
 // Switch to the debug screen used for the vision system's "MirrorMode"
 message EnableMirrorModeScreen
 {
@@ -833,6 +838,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   FakeWakeWordFromExternalInterface fakeWakeWordFromExternalInterface = 0x80,
+  ShowUrlFace                   showUrlFace                 = 0x81,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
