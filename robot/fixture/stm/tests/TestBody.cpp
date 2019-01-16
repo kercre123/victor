@@ -186,9 +186,32 @@ static void BodyTryReadSerial(void)
   if( !BODYID_HWREV_IS_VALID(bodyid.hwrev) || !BODYID_MODEL_IS_VALID(bodyid.model) || 
       ein1 != BODYID_ESN_EMPTY || ein2 != BODYID_ESN_EMPTY || ein3 != BODYID_ESN_EMPTY )
   {
+    ConsolePrintf("invalid fields detected. clearing serial data.\n");
     bodyid.hwrev = BODYID_HWREV_EMPTY;
     bodyid.model = BODYID_MODEL_EMPTY;
     bodyid.esn = BODYID_ESN_EMPTY;
+  }
+  else
+  {
+    //Debug modes allow manual clear of existing serial data (force regenerate)
+    if( g_fixmode < FIXMODE_BODY1 || g_fixmode >= FIXMODE_BODY2 ) {
+      ConsolePrintf("CLEAR SERIAL DATA? --- press \"y\" to clear\n");
+      while( ConsoleReadChar() > -1 );
+      uint32_t Tstart = Timer::get();
+      while( Timer::elapsedUs(Tstart) < 7*1000*1000 ) {
+        int c = ConsoleReadChar();
+        if( c > -1 ) {
+          if( c == 'y' || c == 'Y' ) {
+            ConsolePrintf("serial data cleared\n");
+            bodyid.hwrev = BODYID_HWREV_EMPTY;
+            bodyid.model = BODYID_MODEL_EMPTY;
+            bodyid.esn = BODYID_ESN_EMPTY;
+            Timer::delayMs(1000);
+          }
+          break;
+        }
+      }
+    }//debug
   }
 }
 
@@ -273,12 +296,30 @@ static void BodyLoadProductionFirmware(void)
   bodyid.model = BODYID_MODEL_BLACK_STD;
   if( bodyid.hwrev == BODYID_HWREV_EMPTY && g_fixmode == FIXMODE_BODY1 )
     bodyid.hwrev = CURRENT_BODY_HW_REV; //only set valid hwrev in production mode
-  if( !bodyid.esn || bodyid.esn == BODYID_ESN_EMPTY )
-  {
-    if( g_fixmode == FIXMODE_BODY1 )
-      bodyid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
-    else
-      bodyid.esn = BODYID_ESN_EMPTY;
+  if( !bodyid.esn ) //invalid, corner case
+    bodyid.esn = BODYID_ESN_EMPTY;
+  if( bodyid.esn == BODYID_ESN_EMPTY && g_fixmode == FIXMODE_BODY1 )
+    bodyid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
+  
+  //Debug modes allow force esn generate
+  if( bodyid.esn == BODYID_ESN_EMPTY ) {
+    if( g_fixmode < FIXMODE_BODY1 || g_fixmode == FIXMODE_BODY3 ) {
+      ConsolePrintf("FORCE GENERATE ESN? --- press \"y\" to assign new ESN\n");
+      while( ConsoleReadChar() > -1 );
+      uint32_t Tstart = Timer::get();
+      while( Timer::elapsedUs(Tstart) < 7*1000*1000 ) {
+        int c = ConsoleReadChar();
+        if( c > -1 ) {
+          if( c == 'y' || c == 'Y' ) {
+            bodyid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
+            bodyid.hwrev = CURRENT_BODY_HW_REV;
+            ConsolePrintf("generated esn %08x hwrev %i\n", bodyid.esn, bodyid.hwrev);
+            Timer::delayMs(1000);
+          }
+          break;
+        }
+      }
+    }
   }
   
   //buffer the bootloader image and insert ESN/HW info
@@ -489,7 +530,7 @@ TestFunction* TestBody0GetTests(void)
   static TestFunction m_tests_0a[] = {
     BodyShortCircuitTest,
     BodyCheckProgramLockout,
-    BodyTryReadSerial, //--skip serial read to force blank state
+    BodyTryReadSerial,
     BodyLoadTestFirmware,
     //BodyChargeContactElectricalDebug,
     NULL,
@@ -527,7 +568,7 @@ TestFunction* TestBody2GetTests(void)
   static TestFunction m_tests[] = {
     BodyShortCircuitTest,
     BodyCheckProgramLockout,
-    BodyTryReadSerial, //skip serial read to force blank state (generate new ESN)
+    BodyTryReadSerial,
     //BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
     BodyVerifyProductionFirmware,
