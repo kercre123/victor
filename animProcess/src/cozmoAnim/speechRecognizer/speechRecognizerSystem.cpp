@@ -19,6 +19,7 @@
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerTHFSimple.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerPocketSphinx.h"
+#include "cozmoAnim/speechRecognizer/speechRecognizerPicoVoice.h"
 #include "cozmoAnim/micData/notchDetector.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
@@ -127,6 +128,17 @@ std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 CONSOLE_VAR(bool, kSaveRawMicInput, CONSOLE_GROUP_ALEXA, false);
 // 0: don't run; 1: compute power as if _notchDetectorActive; 2: analyze power every tick
 CONSOLE_VAR_RANGED(unsigned int, kForceRunNotchDetector, CONSOLE_GROUP_ALEXA, 0, 0, 2);
+
+// Internal SpeechRecognizerClass
+enum SpeechRecognizerSystemClass {
+  kSpeechRecognizerSensory,
+  kSpeechRecognizerPocketSphinx,
+  kSpeechRecognizerPicoVoice
+};
+
+// Speech Recognizer Toggle
+CONSOLE_VAR_ENUM(int, kSpeechRecognizerSystemClass, "SpeechRecognizer.System",
+                      kSpeechRecognizerPocketSphinx, "Sensory,PocketSphinx,PicoVoice");
 } // namespace
 
 void SpeechRecognizerSystem::SetupConsoleFuncs()
@@ -237,6 +249,9 @@ SpeechRecognizerSystem::~SpeechRecognizerSystem()
   if( _pocketSphinxRecognizer ) {
     _pocketSphinxRecognizer->Stop();
   }
+  if (_picoVoiceRecognizer) {
+    _picoVoiceRecognizer->Stop();
+  }
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
   }
@@ -288,6 +303,22 @@ void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
   UpdateTriggerForLocale(locale);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::InitPicoVoice(const RobotDataLoader& dataLoader,
+                                              TriggerWordDetectedCallback callback)
+{
+  if (_picoVoiceRecognizer) {
+    LOG_WARNING("SpeechRecognizerSystem.InitVector", "Victor Recognizer is already running");
+    return;
+  }
+
+  _picoVoiceRecognizer = std::make_unique<SpeechRecognizerPicoVoice>();
+  _picoVoiceRecognizer->Init( 
+    Util::FileUtils::AddTrailingFileSeparator(
+      Util::FileUtils::AddTrailingFileSeparator(_triggerWordDataDir) + "picovoice") );
+  _picoVoiceRecognizer->SetCallback(callback);
+  _picoVoiceRecognizer->Start();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::InitAlexa(const RobotDataLoader& dataLoader,
@@ -461,11 +492,18 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
     ApplyLocaleUpdate();
   }
   // Update recognizer
-  if (vadActive && _victorTrigger) {
+
+  if (vadActive && _victorTrigger 
+      && (kSpeechRecognizerSystemClass == kSpeechRecognizerSensory)) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
   }
-  if (vadActive && _pocketSphinxRecognizer) {
+  if (vadActive && _pocketSphinxRecognizer 
+      && (kSpeechRecognizerSystemClass == kSpeechRecognizerPocketSphinx)) {
     _pocketSphinxRecognizer->Update(audioData, audioDataLen);
+  }
+  if (vadActive && _picoVoiceRecognizer
+      && (kSpeechRecognizerSystemClass == kSpeechRecognizerPicoVoice)) {
+    _picoVoiceRecognizer->Update(audioData, audioDataLen);
   }
 
   if (_alexaComponent != nullptr && _alexaTrigger != nullptr) {

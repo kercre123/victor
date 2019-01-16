@@ -55,6 +55,8 @@ namespace {
 
 #if ANKI_DEV_CHEATS
 
+std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
+
 CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
 CONSOLE_VAR(bool, kSuppressTriggerResponse, "SpeechRecognizer", false);
 
@@ -133,8 +135,34 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
-  // SpeechRecognizerSystem
-  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
+  InitSpeechRecognizerSystem();
+
+  _micDataProcessor->Init();
+  
+  if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
+    ToggleMicMute();
+  }
+}
+
+MicDataSystem::~MicDataSystem()
+{
+  // Tear down the mic data processor explicitly first, because it uses functionality owned by MicDataSystem
+  _micDataProcessor.reset();
+
+  // Tear down speech recognizer
+  _speechRecognizerSystem.reset();
+
+  _udpServer->StopListening();
+}
+
+void MicDataSystem::InitSpeechRecognizerSystem()
+{
+  RobotDataLoader* loader = _context->GetDataLoader();
+  RobotDataLoader& dataLoader = *loader;
+  
+    // SpeechRecognizerSystem
+  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = 
+    [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
     
  #if ANKI_DEV_CHEATS
     SendTriggerDetectionToWebViz(info);
@@ -155,21 +183,11 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
     _micDataProcessor->VoiceTriggerWordDetection( info );
     SendRecognizerDasLog( info, nullptr );
   };
-  //_speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
+
+  // Init all speech recognizers
+  _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
   _speechRecognizerSystem->InitPocketSphinx(dataLoader, callback);
-  _micDataProcessor->Init();
-  
-  if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
-    ToggleMicMute();
-  }
-}
-
-MicDataSystem::~MicDataSystem()
-{
-  // Tear down the mic data processor explicitly first, because it uses functionality owned by MicDataSystem
-  _micDataProcessor.reset();
-
-  _udpServer->StopListening();
+  _speechRecognizerSystem->InitPicoVoice(dataLoader, callback);
 }
 
 void MicDataSystem::ProcessMicDataPayload(const RobotInterface::MicData& payload)

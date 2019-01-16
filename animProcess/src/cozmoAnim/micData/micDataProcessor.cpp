@@ -744,7 +744,10 @@ void MicDataProcessor::ProcessRawLoop()
         job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
       }
       
-      _speechRecognizerSystem->UpdateRaw(audioChunk, kRawAudioChunkSize);
+      SpeechRecognizerSystem* speechRecognizerSystem = _micDataSystem->GetSpeechRecognizerSystem();
+      if (speechRecognizerSystem) {
+        speechRecognizerSystem->UpdateRaw(audioChunk, kRawAudioChunkSize);
+      }
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
       if(!FACTORY_TEST)
@@ -852,9 +855,12 @@ void MicDataProcessor::ProcessTriggerLoop()
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
       // Note we skip it if there is no activity as of the latest processed audioblock
-      _speechRecognizerSystem->Update(processedAudio.data(),
+      SpeechRecognizerSystem* speechRecognizerSystem = _micDataSystem->GetSpeechRecognizerSystem();
+      if (speechRecognizerSystem) {
+        speechRecognizerSystem->Update(processedAudio.data(),
                                       (unsigned int)processedAudio.size(),
                                       (_micImmediateDirection->GetLatestSample().activeState != 0));
+      }
     }
 
     // Now we're done using this audio with the recognizer, so let it go
