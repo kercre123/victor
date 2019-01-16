@@ -11,7 +11,7 @@
     "ReactToRobotOnFace",
     "ReactToRobotOnSide",
     "ReactToCliff",
-    "ReactToBoundary",
+    "ReactToTapeBoundary",
     "ReactToUncalibratedHeadAndLift",
     "ReactToMotorCalibration",
     "ReactToPlacedOnSlope",

@@ -205,7 +205,6 @@ enum uint_8 BehaviorClass {
   // reactions
   AskForHelp,
   CheckForAndReactToSalientPoint,
-  ReactToBoundary,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,
@@ -221,6 +220,7 @@ enum uint_8 BehaviorClass {
   ReactToRobotOnSide,
   ReactToRobotShaken,
   ReactToSound,
+  ReactToTapeBoundary,
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,

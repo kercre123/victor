@@ -1,5 +1,5 @@
 /**
- * File: BehaviorReactToBoundary.cpp
+ * File: BehaviorReactToTapeBoundary.cpp
  *
  * Author: Matt Michini
  * Created: 2019-01-08
@@ -11,7 +11,7 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToBoundary.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToTapeBoundary.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -29,7 +29,7 @@
 
 #include "util/console/consoleInterface.h"
 
-#define CONSOLE_GROUP "BehaviorReactToBoundary"
+#define CONSOLE_GROUP "BehaviorReactToTapeBoundary"
 
 namespace Anki {
 namespace Vector {
@@ -58,35 +58,35 @@ namespace {
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToBoundary::BehaviorReactToBoundary(const Json::Value& config)
+BehaviorReactToTapeBoundary::BehaviorReactToTapeBoundary(const Json::Value& config)
  : ICozmoBehavior(config)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToBoundary::~BehaviorReactToBoundary()
+BehaviorReactToTapeBoundary::~BehaviorReactToTapeBoundary()
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToBoundary::WantsToBeActivatedBehavior() const
+bool BehaviorReactToTapeBoundary::WantsToBeActivatedBehavior() const
 {
   return (GetCliffsDetectingBoundary() != 0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+void BehaviorReactToTapeBoundary::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.behaviorAlwaysDelegates = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::GetAllDelegates(std::set<IBehavior*>& delegates) const
+void BehaviorReactToTapeBoundary::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+void BehaviorReactToTapeBoundary::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
 //  const char* list[] = {
 //  };
@@ -94,7 +94,7 @@ void BehaviorReactToBoundary::GetBehaviorJsonKeys(std::set<const char*>& expecte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::OnBehaviorActivated() 
+void BehaviorReactToTapeBoundary::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
@@ -107,7 +107,7 @@ void BehaviorReactToBoundary::OnBehaviorActivated()
                                                  _dVars.initialBoundaryPose);
 
   if (!result) {
-    LOG_WARNING("BehaviorReactToBoundary.OnBehaviorActivated.FailedComputingBoundaryPose", "");
+    LOG_WARNING("BehaviorReactToTapeBoundary.OnBehaviorActivated.FailedComputingBoundaryPose", "");
     CancelSelf();
     return;
   }
@@ -122,7 +122,7 @@ void BehaviorReactToBoundary::OnBehaviorActivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::OnBehaviorDeactivated()
+void BehaviorReactToTapeBoundary::OnBehaviorDeactivated()
 {
   // Insert some data into the memory map if we have valid endpoints
   if (_dVars.boundaryLeftEndPoint.HasParent() &&
@@ -151,7 +151,7 @@ void BehaviorReactToBoundary::OnBehaviorDeactivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::BehaviorUpdate() 
+void BehaviorReactToTapeBoundary::BehaviorUpdate()
 {
   if (!IsActivated()) {
     return;
@@ -181,7 +181,7 @@ void BehaviorReactToBoundary::BehaviorUpdate()
   }
   
   if (_dVars.lineFollowingLeft || _dVars.lineFollowingRight) {
-    DEV_ASSERT(_iConfig.doLineFollowing, "BehaviorReactToBoundary.BehaviorUpdate.ShouldNotBeLineFollowing");
+    DEV_ASSERT(_iConfig.doLineFollowing, "BehaviorReactToTapeBoundary.BehaviorUpdate.ShouldNotBeLineFollowing");
     
     float lSpeed = kForwardSpeed_mmps;
     float rSpeed = kForwardSpeed_mmps;
@@ -264,7 +264,7 @@ void BehaviorReactToBoundary::BehaviorUpdate()
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint8_t BehaviorReactToBoundary::GetCliffsDetectingBoundary() const
+uint8_t BehaviorReactToTapeBoundary::GetCliffsDetectingBoundary() const
 {
   const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
   const auto& cliffData = cliffComp.GetCliffDataRaw();
@@ -281,7 +281,7 @@ uint8_t BehaviorReactToBoundary::GetCliffsDetectingBoundary() const
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToInitialReaction()
+void BehaviorReactToTapeBoundary::TransitionToInitialReaction()
 {
   // Play an appropriate animation based on which cliff sensor(s) saw the white stripe
   static const std::map<uint8_t, AnimationTrigger> reactionsAnimMap {
@@ -298,19 +298,19 @@ void BehaviorReactToBoundary::TransitionToInitialReaction()
   const auto it = reactionsAnimMap.find(cliffsSeeingBoundary);
   if (it == reactionsAnimMap.end()) {
     // No anim found.. simply cancel the behavior.
-    LOG_WARNING("BehaviorReactToBoundary.TransitionToInitialReaction.NoAnimForCliffs", "");
+    LOG_WARNING("BehaviorReactToTapeBoundary.TransitionToInitialReaction.NoAnimForCliffs", "");
     CancelSelf();
     return;
   }
 
   const auto animToPlay = it->second;
   DelegateIfInControl(new TriggerAnimationAction(animToPlay),
-                      &BehaviorReactToBoundary::TransitionToApproachBoundary);
+                      &BehaviorReactToTapeBoundary::TransitionToApproachBoundary);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToApproachBoundary()
+void BehaviorReactToTapeBoundary::TransitionToApproachBoundary()
 {
   // Enable recording of the cliff sensor poses when they encounter the boundary again
   _dVars.recordBoundaryCliffPoses = true;
@@ -323,13 +323,13 @@ void BehaviorReactToBoundary::TransitionToApproachBoundary()
   }));
   
   DelegateIfInControl(action,
-                      &BehaviorReactToBoundary::TransitionToAlignWithBoundary);
+                      &BehaviorReactToTapeBoundary::TransitionToAlignWithBoundary);
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToAlignWithBoundary()
+void BehaviorReactToTapeBoundary::TransitionToAlignWithBoundary()
 {
   auto* action = new CompoundActionParallel{};
   action->SetShouldEndWhenFirstActionCompletes(true);
@@ -340,12 +340,12 @@ void BehaviorReactToBoundary::TransitionToAlignWithBoundary()
   }));
   
   DelegateIfInControl(action,
-                      &BehaviorReactToBoundary::TransitionToRefineBoundaryPose);
+                      &BehaviorReactToTapeBoundary::TransitionToRefineBoundaryPose);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToRefineBoundaryPose()
+void BehaviorReactToTapeBoundary::TransitionToRefineBoundaryPose()
 {
   // Since we're now aligned with the boundary and we've recorded the cliff sensor poses upon
   // encountering it, now 'refine' the initial boundary pose
@@ -386,7 +386,7 @@ void BehaviorReactToBoundary::TransitionToRefineBoundaryPose()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToTraceBoundaryRight()
+void BehaviorReactToTapeBoundary::TransitionToTraceBoundaryRight()
 {
   // Drive to a pose such that the front right cliff sensor is at boundaryFL, and angled to be able to trace the line
   Pose3d poseToDriveTo(Rotation3d(M_PI_2_F, Z_AXIS_3D()),
@@ -401,7 +401,7 @@ void BehaviorReactToBoundary::TransitionToTraceBoundaryRight()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToTraceBoundaryLeft()
+void BehaviorReactToTapeBoundary::TransitionToTraceBoundaryLeft()
 {
   // Drive to a pose such that the front left cliff sensor is at the last endpoint, and angled toward the initial boundary pose
   Pose3d poseToDriveTo(Rotation3d(-M_PI_2_F, Z_AXIS_3D()),
@@ -416,7 +416,7 @@ void BehaviorReactToBoundary::TransitionToTraceBoundaryLeft()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToViewBoundary()
+void BehaviorReactToTapeBoundary::TransitionToViewBoundary()
 {
   const float distAwayFromBoundary = 70.f;
   
@@ -442,7 +442,7 @@ void BehaviorReactToBoundary::TransitionToViewBoundary()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToApproachBoundaryLeft()
+void BehaviorReactToTapeBoundary::TransitionToApproachBoundaryLeft()
 {
   // Drive to a pose to the left of the initial boundary point, and just behind the boundary
   Pose3d poseToDriveTo(Rotation3d(0.f, Z_AXIS_3D()),
@@ -476,13 +476,13 @@ void BehaviorReactToBoundary::TransitionToApproachBoundaryLeft()
                           _dVars.boundaryLeftEndPoint = cliffFRPose.GetWithRespectToRoot();
                         }
                         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToCliffFront),
-                                            &BehaviorReactToBoundary::TransitionToApproachBoundaryRight);
+                                            &BehaviorReactToTapeBoundary::TransitionToApproachBoundaryRight);
                       });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToBoundary::TransitionToApproachBoundaryRight()
+void BehaviorReactToTapeBoundary::TransitionToApproachBoundaryRight()
 {
   // Drive to a pose to the right of the initial boundary point, and just behind the boundary
   Pose3d poseToDriveTo(Rotation3d(0.f, Z_AXIS_3D()),
@@ -516,7 +516,7 @@ void BehaviorReactToBoundary::TransitionToApproachBoundaryRight()
                           _dVars.boundaryRightEndPoint = cliffFLPose.GetWithRespectToRoot();
                         }
                         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToCliffFront),
-                                            &BehaviorReactToBoundary::TransitionToViewBoundary);
+                                            &BehaviorReactToTapeBoundary::TransitionToViewBoundary);
                       });
 }
 

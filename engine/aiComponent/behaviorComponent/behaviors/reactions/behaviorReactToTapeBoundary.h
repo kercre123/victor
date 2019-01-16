@@ -1,5 +1,5 @@
 /**
- * File: BehaviorReactToBoundary.h
+ * File: BehaviorReactToTapeBoundary.h
  *
  * Author: Matt Michini
  * Created: 2019-01-08
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToBoundary__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToBoundary__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToTapeBoundary__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToTapeBoundary__
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -21,16 +21,16 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorReactToBoundary : public ICozmoBehavior
+class BehaviorReactToTapeBoundary : public ICozmoBehavior
 {
 public: 
-  virtual ~BehaviorReactToBoundary();
+  virtual ~BehaviorReactToTapeBoundary();
 
 protected:
 
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorReactToBoundary(const Json::Value& config);  
+  explicit BehaviorReactToTapeBoundary(const Json::Value& config);  
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
@@ -91,4 +91,4 @@ private:
 } // namespace Vector
 } // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToBoundary__
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorReactToTapeBoundary__

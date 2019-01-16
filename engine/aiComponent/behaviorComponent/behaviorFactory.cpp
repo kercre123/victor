@@ -138,7 +138,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAskForHelp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorCheckForAndReactToSalientPoint.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToBoundary.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToDarkness.h"
@@ -154,6 +153,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToTapeBoundary.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUncalibratedHeadAndLift.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
@@ -977,12 +977,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::ReactToBoundary:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBoundary(config));
-      break;
-    }
-    
     case BehaviorClass::ReactToCliff:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCliff(config));
@@ -1070,6 +1064,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToSound:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToTapeBoundary:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToTapeBoundary(config));
       break;
     }
     
