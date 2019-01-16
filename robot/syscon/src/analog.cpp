@@ -268,6 +268,8 @@ static void handleTemperature() {
     samples = 0;
     filt_temp = 0;
   }
+  
+  return ;
 
   // Our filtered temp is cool enough to reset the counter
   if (temperature < 47) {
