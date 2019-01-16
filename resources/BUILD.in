@@ -15,10 +15,22 @@ asset_project(
                 ('externals/animation-assets', 'anim_manifest.json'),
                 ('externals/animation-assets', 'compositeImageResources/imageLayouts/**/*.json'),
                 ('externals/animation-assets', 'compositeImageResources/imageMaps/**/*.json'),
-                ('speech-recognition', 'picovoice/**/*'),
+                ('speech-recognition', 'picovoice/**/*.pv')
                 ],
                 prefix = 'assets'
             ),
+    platform_srcs = [
+        ('vicos', subdir_glob([
+                ('speech-recognition', 'picovoice/**/*_raspberrypi_*.ppn')
+                ],
+                prefix = 'assets')
+        ),
+        ('mac', subdir_glob([
+                ('speech-recognition', 'picovoice/**/*_mac_*.ppn')
+                ],
+                prefix = 'assets')
+        ),
+    ]
 )
 
 

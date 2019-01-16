@@ -20,7 +20,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 
-#if defined(ANKI_PLATFORM_VICOS)
+#if defined(ANKI_PLATFORM_VICOS) || defined(ANKI_PLATFORM_OSX)
 #define PICOVOICE_ENABLED 1
 #else
 #define PICOVOICE_ENABLED 0
@@ -50,7 +50,7 @@ namespace {
   #define CONSOLE_GROUP_PICOVOICE "SpeechRecognizer.PicoVoice"
   CONSOLE_VAR_RANGED(float, kPicoVoiceSensitivity, CONSOLE_GROUP_PICOVOICE, 0.75f, 0.f, 1.f);
 
-  const char* kRecognizerWakeWords = "porcupine, dragonfly, elemental";
+  const char* kRecognizerWakeWords __attribute((unused)) = "porcupine, dragonfly, elemental";
   enum PVWakeWord {
     PVWakeWordPorcupine,
     PVWakeWordDragonFly,
@@ -58,8 +58,13 @@ namespace {
   };
   CONSOLE_VAR_ENUM(int, kPicoVoiceWakeWord, CONSOLE_GROUP_PICOVOICE, PVWakeWorkElemental, kRecognizerWakeWords);
 
-  const char* kPicoVoicePlatform = "raspberrypi";
-  const char* kPicoVoiceModelTag = "_tiny";
+#if defined(ANKI_PLATFORM_VICOS)
+  const char* kPicoVoicePlatform __attribute((unused)) = "raspberrypi";
+#elif defined(ANKI_PLATFORM_OSX)
+  const char* kPicoVoicePlatform __attribute((unused)) = "mac";
+#endif
+  const char* kPicoVoiceModelTag __attribute((unused)) = "_tiny";
+
   const char* PicoVoiceWakeWord()
   {
     switch(kPicoVoiceWakeWord) {
@@ -166,10 +171,17 @@ bool SpeechRecognizerPicoVoice::Init(const std::string& modelBasePath)
   const std::string keywordFile =
     Util::FileUtils::AddTrailingFileSeparator(modelBasePath) + modelFileName;
   
+# ifdef ANKI_PLATFORM_VICOS
   const pv_status_t status = pv_porcupine_init_softfp(modelFile.c_str(),
                                                       keywordFile.c_str(),
                                                       &_impl->sensitivity,
                                                       &_impl->pv);
+# elif defined(ANKI_PLATFORM_OSX)
+  const pv_status_t status = pv_porcupine_init(modelFile.c_str(),
+                                               keywordFile.c_str(),
+                                               _impl->sensitivity,
+                                               &_impl->pv);
+# endif
 
   if (status != PV_STATUS_SUCCESS) {
     LOG_ERROR("SpeechRecognizerPicoVoice.Init.BadConfig",
@@ -215,7 +227,7 @@ void SpeechRecognizerPicoVoice::SetupConsoleFuncs()
     this->SwapAllData(pv);
     
     context->channel->WriteLog("Updated PicoVoice Recognizer :: wakeword='%s' sensitivity=%1.2f",
-                                PicoVoiceWakeWord(), pv._impl->sensitivity);
+                                PicoVoiceWakeWord(), kPicoVoiceSensitivity);
   };
   sConsoleFuncs.emplace_front("Update PicoVoice Recognizer", std::move(update),
                               CONSOLE_GROUP_PICOVOICE, "");
@@ -256,7 +268,7 @@ void SpeechRecognizerPicoVoice::Update( const AudioUtil::AudioSample* audioData,
   bool recognized = false;
 
   // process audio data in frameLen chunks until we recognize something
-  while (!recognized && (remaining > frameLen)) {
+  while (!recognized && (remaining >= frameLen)) {
     const int16_t* pcm = static_cast<const int16_t*>(buff) + offset;
     pv_status_t status = pv_porcupine_process(_impl->pv, pcm, &recognized);
     if (status != PV_STATUS_SUCCESS) {

@@ -70,7 +70,7 @@ public:
   void InitPocketSphinx(const RobotDataLoader& dataLoader,
                         TriggerWordDetectedCallback callback);
 
-  // Init PicoVoice recognizer, currently uses "porcupine" as a wakeword
+  // Init PicoVoice recognizer, wakeword is configurable by providing appropriate data files
   void InitPicoVoice(const RobotDataLoader& dataLoader,
                      TriggerWordDetectedCallback callback);
   
