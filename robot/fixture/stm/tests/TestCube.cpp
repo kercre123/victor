@@ -321,14 +321,14 @@ static void ShortCircuitTest(void)
 }
 
 //led test array
-const int iRED_nominal=28, iRED_variance=6;   //typ: 25-31, avg 27.9, max unit variance (statistical): 1
-const int iGRN_nominal=31, iGRN_variance=11;  //typ: 23-39, avg 30.8, max unit variance (statistical): 23.3
-const int iBLU_nominal=29, iBLU_variance=11;  //typ: 20-37, avg 29.3, max unit variance (statistical): 24.7
+const int iRED_nominal=21, iRED_variance=10;  //XXX: readjust for Whiskey changed resistor values //typ: 25-31, avg 27.9, max unit variance (statistical): 1
+const int iGRN_nominal=12, iGRN_variance=10;  //XXX: readjust for Whiskey changed resistor values //typ: 23-39, avg 30.8, max unit variance (statistical): 23.3
+const int iBLU_nominal=9,  iBLU_variance=7;   //XXX: readjust for Whiskey changed resistor values //typ: 20-37, avg 29.3, max unit variance (statistical): 24.7
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED", 0x1111, 12, 0,           10,             4,  ERROR_CUBE_LED    },
-  {(char*)"All.GRN", 0x2222, 12, 0,           10,             4,  ERROR_CUBE_LED    },
-  {(char*)"All.BLU", 0x4444, 12, 0,            9,             4,  ERROR_CUBE_LED    },
+  {(char*)"All.RED", 0x1111, 12, 0,            7,             4,  ERROR_CUBE_LED    },
+  {(char*)"All.GRN", 0x2222, 12, 0,            3,             2,  ERROR_CUBE_LED    },
+  {(char*)"All.BLU", 0x4444, 12, 0,            3,             2,  ERROR_CUBE_LED    },
   {(char*)"D1.RED",  0x0001,  1, 0, iRED_nominal, iRED_variance,  ERROR_CUBE_LED_D1 },
   {(char*)"D1.GRN",  0x0002,  1, 0, iGRN_nominal, iGRN_variance,  ERROR_CUBE_LED_D1 },
   {(char*)"D1.BLU",  0x0004,  1, 0, iBLU_nominal, iBLU_variance,  ERROR_CUBE_LED_D1 },
