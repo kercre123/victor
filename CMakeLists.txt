@@ -77,6 +77,9 @@ endif()
 #
 # Factory build options
 #
+option(FACTORY_TEST "Enable factory test features" OFF)
+option(FACTORY_TEST_DEV "Enable factory test development features" OFF)
+
 if (FACTORY_TEST)
   add_definitions(-DFACTORY_TEST=1)
 else()
