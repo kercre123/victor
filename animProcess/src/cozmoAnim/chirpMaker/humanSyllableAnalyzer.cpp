@@ -147,8 +147,10 @@ void HumanSyllableAnalyzer::RunDetector()
   if( anyLoud ) {
     
     using namespace std::chrono;
-    uint64_t startTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch() + milliseconds{1000}).count();
+    uint64_t startTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch() + milliseconds{50}).count();
     std::vector<Chirp> chirps;
+    
+    const auto firstStartTime = syllables.empty() ? 0 : syllables[0].startTime_s;
     
     for( const auto& syllable : syllables ) {
       PRINT_NAMED_WARNING("WHATNOW","Syllable info: start=%f, end=%f, freq=%f, vol=%f",
@@ -159,10 +161,8 @@ void HumanSyllableAnalyzer::RunDetector()
       }
       
       Chirp chirp;
-      chirp.startTime_ms = startTime_ms + kTimeScaleFactor*syllable.startTime_s*1000;
-      chirp.duration_ms = (syllable.endTime_s - syllable.startTime_s)*1000;
-      
-      chirp.duration_ms *= kTimeScaleFactor;
+      chirp.startTime_ms = startTime_ms + kTimeScaleFactor*(syllable.startTime_s-firstStartTime)*1000;
+      chirp.duration_ms = (syllable.endTime_s - syllable.startTime_s) * 1000 * kTimeScaleFactor;
       
       //float freq = std::min(syllable.peakFreq, syllable.avgFreq);
       float freq0 = syllable.firstPeakFreq;//syllable.firstFreq; //syllable.avgFreq;

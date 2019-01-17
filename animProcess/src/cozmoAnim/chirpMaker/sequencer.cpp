@@ -46,21 +46,23 @@ namespace {
   
   CONSOLE_VAR(bool, kPlayAnims, "Chirps.AAA_Playback", false);
   
-  const char* kAnimLoop01 = "anim_vvv_loop_01";
-  
-  const char* kAnimLoop02_01 = "anim_vvv_loop_02_01"; // first syl
-  const char* kAnimLoop02_02 = "anim_vvv_loop_02_02";
-  
-  const char* kAnimLoop03_01 = "anim_vvv_loop_03_01";
-  const char* kAnimLoop03_02 = "anim_vvv_loop_03_02";
-  const char* kAnimLoop03_03 = "anim_vvv_loop_03_03";
   
   const char* kAnimGetIn01 = "anim_vvv_getin_01";
   const char* kAnimGetIn02 = "anim_vvv_getin_02";
   
+  const char* kAnimLoop01 = "anim_vvv_loop_01"; // one syllable
+  
+  const char* kAnimLoop02_01 = "anim_vvv_loop_02_01"; // two syllables, first is emphasized
+  const char* kAnimLoop02_02 = "anim_vvv_loop_02_02"; // two syllables, second is emphasized
+  
+  const char* kAnimLoop03_01 = "anim_vvv_loop_03_01"; // etc
+  const char* kAnimLoop03_02 = "anim_vvv_loop_03_02";
+  const char* kAnimLoop03_03 = "anim_vvv_loop_03_03";
+  
   const char* kAnimGetOut01 = "anim_vvv_getout_01";
   const char* kAnimGetOut02 = "anim_vvv_getout_02";
   
+  const unsigned int kGetInDuration_ms = 33000/30; // 33 frames, 30 fps
   
   static int sNextTag = 10; // in case some other anims played, like the boot sequence
 }
@@ -139,6 +141,7 @@ void Sequencer::AddChirps( const std::vector<Chirp>& chirps )
     
     _playingSyllables = (unsigned int)_chirps.size();
     _emphasisIdx = GetEmphasis(); // do this here instead of on anim updated for the first anim
+    
     // todo: emPHAsis on sylLABle
     PRINT_NAMED_WARNING("WHATNOW", "setting _platingSylabbled=%d, emphasis=%d", (int)_playingSyllables, _emphasisIdx);
   }
@@ -150,6 +153,9 @@ void Sequencer::AddChirpInternal( const Chirp& chirp )
 {
   // make sure all chirps are disjoint before adding
   Chirp copy = chirp;
+  if( kPlayAnims ) {
+    copy.startTime_ms += kGetInDuration_ms;
+  }
   for( const auto& existingChirp : _chirps ) {
     const auto existingEnd = existingChirp.GetEndTime();
     const auto newEnd = copy.startTime_ms + copy.duration_ms;
@@ -172,7 +178,6 @@ void Sequencer::AddChirpInternal( const Chirp& chirp )
   PRINT_NAMED_INFO( "Chirps", "Added new chirp, start=%lld ms, duration=%d ms, pitch0=%f Hz, pitch1=%f Hz, vol=%f",
                     copy.startTime_ms, copy.duration_ms, copy.pitch0_Hz, copy.pitch1_Hz, copy.volume);
   _chirps.emplace( std::move(copy) );
-
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
