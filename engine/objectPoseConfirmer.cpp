@@ -886,7 +886,7 @@ Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject*& object)
     
     if(poseConf.numTimesUnobserved >= kMinTimesToNotObserveDirtyObject)
     {
-      PRINT_CH_INFO("PoseConfirmer", "MarkObjectUnobserved.MakingUnknown",
+      PRINT_CH_INFO("PoseConfirmer", "MarkObjectUnobserved.MarkingUnknown",
                     "ObjectID:%d unobserved %d times, marking Unknown",
                     objectID.GetValue(), poseConf.numTimesUnobserved);
       
