@@ -72,7 +72,7 @@ func (c *client) handleConn(ctx context.Context) {
 func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageReady) ([]vision.OffboardResultReady, error) {
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, util.CommonGRPC()...)
-	dialOpts = append(dialOpts, grpc.WithTransportCredentials(defaultTLSCert))
+	dialOpts = append(dialOpts, grpc.WithInsecure())
 
 	var wg util.SyncGroup
 
