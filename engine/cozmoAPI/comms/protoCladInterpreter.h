@@ -82,6 +82,7 @@ public:
       const Anki::Vector::ExternalInterface::ObjectConnectionState& clad_message,
       external_interface::GatewayWrapper& proto_message);
 
+
 private:
   CozmoContext*                                  _context;
   std::vector<Signal::SmartHandle>               _signalHandlers;
@@ -110,6 +111,13 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  void ProtoDeleteCustomObjectsRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoDefineCustomObjectRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
 
   //
   // Clad-to-Proto interpreters
@@ -134,6 +142,17 @@ private:
       const ExternalInterface::MessageEngineToGame& clad_message, 
       external_interface::GatewayWrapper& proto_message);
 
+  void CladCreatedFixedCustomObjectToProto(
+      const ExternalInterface::MessageEngineToGame& clad_message, 
+      external_interface::GatewayWrapper& proto_message);
+
+  void CladDeletedCustomObjectsToProto(
+      const ExternalInterface::MessageEngineToGame& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+   void CladDefinedCustomObjectToProto(
+      const ExternalInterface::MessageEngineToGame& clad_message,
+      external_interface::GatewayWrapper& proto_message);
 
   //
   // Misc Support Translators

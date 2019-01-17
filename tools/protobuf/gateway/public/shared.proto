@@ -257,7 +257,11 @@ message GatewayWrapper {
     // ------------ Custom Objects -------------------               
     CreateFixedCustomObjectRequest  create_fixed_custom_object_request  = 1750;
     CreateFixedCustomObjectResponse create_fixed_custom_object_response = 1751;
-
+    DeleteCustomObjectsRequest      delete_custom_objects_request       = 1752;
+    DeleteCustomObjectsResponse     delete_custom_objects_response      = 1753;
+    DefineCustomObjectRequest       define_custom_object_request        = 1754;
+    DefineCustomObjectResponse      define_custom_object_response       = 1755;
+    
     // ------------ Events -------------------------
     RobotObservedFace             robot_observed_face                = 1800;
     RobotChangedObservedFaceID    robot_changed_observed_face_id     = 1801;
