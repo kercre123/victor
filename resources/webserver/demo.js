@@ -2,10 +2,6 @@ var hostname = "";  // (Effectively, the device IP)
 var host = "";      // hostname and port (e.g. "192.168.42.82:8888")
 
 $(function() {
-  $('#btn_thebox_stop').click(ButtonHandler_StopThebox);
-  $('#btn_thebox_restart').click(ButtonHandler_RestartThebox);
-  $('#btn_thebox_restart_device').click(ButtonHandler_RestartDevice);
-  $('#disp_stop_message').hide();
   InitConfirmDialog();
 
   // Pull out hostname (device IP) so we can use it in here to call into ANY of the webservers
@@ -293,6 +289,8 @@ $(function() {
     change: function(event, data) {
       if(data.item.value) {
         $.post("consolefunccall", {func: "TheBoxMoveToState", args: data.item.value}, function(result){
+          // go back to none after sending
+          $('#DemoState').prop("selectedIndex", "none").selectmenu('refresh');
         });
       }
     }
@@ -324,42 +322,4 @@ function StartConfirmDialog(title, body, okfunction) {
   var d = $("#confirm_dialog");
   d.dialog("option", "title", title);
   d.dialog("open");
-}
-
-function GoingAwayNow() {
-  $('#iViewEngine').remove();
-  //$('#iViewAnim').remove();
-  $('#btn_thebox_stop').hide();
-  $('#btn_thebox_restart').hide();
-  $('#btn_thebox_restart_device').hide();
-}
-
-function ButtonHandler_StopThebox() {
-  StartConfirmDialog("", "Stop Device:", function() {
-    var msg = 'Shutting Device process down; this webpage will no longer be active. You must physically restart, then refresh this page after a few seconds.';
-    $('#disp_stop_message').html(msg);
-    $('#disp_stop_message').show();
-    GoingAwayNow();
-    $.post('/systemctl?proc=anki-robot.target&stop', function(data) {});
-  });
-}
-
-function ButtonHandler_RestartThebox() {
-  StartConfirmDialog("", "Restart Device:", function() {
-    var msg = 'Restarting Device processes (soft reboot).  After a few seconds, refresh this page.';
-    $('#disp_stop_message').html(msg);
-    $('#disp_stop_message').show();
-    GoingAwayNow();
-    $.post('/systemctl?proc=anki-robot.target&restart', function(data) {});
-  });
-}
-
-function ButtonHandler_RestartDevice() {
-  StartConfirmDialog("", "Restart Device:", function() {
-    var msg = 'Restarting device.  After several seconds, place device on charger, and after several more seconds, refresh this page.';
-    $('#disp_stop_message').html(msg);
-    $('#disp_stop_message').show();
-    GoingAwayNow();
-    $.post('/systemctl?proc=&reboot', function(data) {});
-  });
 }

@@ -31,9 +31,16 @@
     <div id="id_title0" style="color:gray; font-size:18pt; text-align:center;">DEMO  -  CONFIDENTIAL</div>
     <div id='main_section'>
       <hr>
+
+      <div id="container">
+        <ul class="tabs">
+        </ul>
+      </div>
+
+      <hr>
       <div>
         <select name="DemoState" id='DemoState' class='listbox'>
-          <option value="">------</option>
+          <option value="none">------</option>
         </select>
         <label for="DemoState-button">Switch to State</label>
       </div>
@@ -49,23 +56,12 @@
         </select>
         <label for="MasterVolumeLevel-button">Master Volume</label>
       </div>
-      <hr>
 
-      <div id="container">
-        <ul class="tabs">
-        </ul>
-      </div>
-      
       <hr>
       <div id="status">Not connected to device</div>
-      <button id='btn_thebox_stop' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Stop Processes</button>
-      <button id='btn_thebox_restart' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Processes</button>
-      <button id='btn_thebox_restart_device' style='color:darksalmon;' class='ui-button ui-corner-all ui-widget'>Restart Device</button>
-      <br><br>
-      <div id='disp_stop_message' style='color:darksalmon;'></div>
     </div>
 
-    <div id="confirm_dialog" title="">
+    <div id="confirm_dialog" title=""> <!-- BN: not currently used but may be useful -->
       <p id='confirm_dialog_body'></p>
       <p>Are you sure?</p>
     </div>
