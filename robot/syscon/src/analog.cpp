@@ -249,6 +249,9 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 }
 
 static void handleTemperature() {
+  temperature = 20;
+  return ;
+
   // Temperature logic
   int32_t temp_now = *TEMP30_CAL_ADDR - ((EXACT_ADC(ADC_TEMP) * TEMP_VOLT_ADJ) >> 16);
   temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 16) + 30;
@@ -269,8 +272,6 @@ static void handleTemperature() {
     filt_temp = 0;
   }
   
-  return ;
-
   // Our filtered temp is cool enough to reset the counter
   if (temperature < 47) {
     temp_alarm = TEMP_ALARM_SAFE;
