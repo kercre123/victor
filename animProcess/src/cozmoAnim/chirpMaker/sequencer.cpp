@@ -113,6 +113,13 @@ void Sequencer::Init(const AnimContext* context, AnimationStreamer* animStreamer
   _consoleFuncs.emplace_front( "Triplet", std::move(triplet), "Chirps.Demo", "uint32_t duration_ms, float pitchHz" );
   _consoleFuncs.emplace_front( "ChangingPitch", std::move(changingPitch), "Chirps.Demo", "uint32_t duration_ms, float minHz, float maxHz" );
   
+  auto resetAnims = [&](ConsoleFunctionContextRef context ) {
+    _playingSyllables = 0;
+    _animState = AnimationState::None;
+    _animEnded = false;
+  };
+  _consoleFuncs.emplace_front( "ResetAnimSystem", std::move(resetAnims), "Chirps.Playback", "" );
+  
   _running = true;
   _thread = std::thread{ &Sequencer::MainLoop, this };
   

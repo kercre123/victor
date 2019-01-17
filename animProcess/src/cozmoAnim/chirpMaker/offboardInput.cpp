@@ -62,9 +62,9 @@ void OffboardInput::Parse( const std::string& data )
 {
   std::lock_guard<std::mutex> lk{_mutex};
   
-  const auto chirpStrings = Util::StringSplit(data, '|');
+  const auto chirpStrings = Util::StringSplit(data, '-');
   for( const auto& chirpString : chirpStrings ) {
-    const auto params = Util::StringSplit(chirpString, ':');
+    const auto params = Util::StringSplit(chirpString, '_');
     if( params.size() == 5 ) {
       Chirp chirp;
       try {
