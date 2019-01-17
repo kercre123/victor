@@ -16,8 +16,6 @@
 namespace Anki {
 namespace Switchboard {
 
-const std::string testCarrier = "Ei8J0gQAAAAAAAARlCYAAAAAAAAYASIZCgZzb3VyY2USD3Rva2VuQ2xpZW50LmNwcA==";
-
 uint8_t TokenClient::sMessageData[2048];
 
 TokenClient::TokenClient(struct ev_loop* evloop, std::shared_ptr<TaskExecutor> taskExecutor) : 
@@ -51,16 +49,17 @@ bool TokenClient::Connect() {
   return connected;
 }
 
-std::shared_ptr<TokenResponseHandle> TokenClient::SendAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
+std::shared_ptr<TokenResponseHandle> TokenClient::SendAuthRequest(std::string spanContext, std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
   std::shared_ptr<TokenResponseHandle> handle = std::make_shared<TokenResponseHandle>();
 
-  _taskExecutor->Wake([this, handle, callback, sessionToken, clientName, appId]() {
+  _taskExecutor->Wake([this, handle, callback, spanContext, sessionToken, clientName, appId]() {
     // add callback to queue
     _authCallbacks.push(callback);
     _authHandles.push(handle);
 
+    // ./generated/clad/engine/clad/cloud/token.h
     Anki::Vector::TokenRequest tokenRequest =
-      Anki::Vector::TokenRequest(Anki::Vector::AuthRequest(testCarrier, sessionToken, clientName, appId));
+      Anki::Vector::TokenRequest(Anki::Vector::AuthRequest(spanContext, sessionToken, clientName, appId));
 
     SendMessage(tokenRequest);
   });
@@ -68,16 +67,16 @@ std::shared_ptr<TokenResponseHandle> TokenClient::SendAuthRequest(std::string se
   return handle;
 }
 
-std::shared_ptr<TokenResponseHandle> TokenClient::SendSecondaryAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
+std::shared_ptr<TokenResponseHandle> TokenClient::SendSecondaryAuthRequest(std::string spanContext, std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
   std::shared_ptr<TokenResponseHandle> handle = std::make_shared<TokenResponseHandle>();
 
-  _taskExecutor->Wake([this, handle, callback, sessionToken, clientName, appId]() {
+  _taskExecutor->Wake([this, handle, callback, spanContext, sessionToken, clientName, appId]() {
     // add callback to queue
     _authCallbacks.push(callback);
     _authHandles.push(handle);
 
     Anki::Vector::TokenRequest tokenRequest = 
-      Anki::Vector::TokenRequest(Anki::Vector::SecondaryAuthRequest(testCarrier, sessionToken, clientName, appId));
+      Anki::Vector::TokenRequest(Anki::Vector::SecondaryAuthRequest(spanContext, sessionToken, clientName, appId));
 
     SendMessage(tokenRequest);
   });
@@ -85,16 +84,16 @@ std::shared_ptr<TokenResponseHandle> TokenClient::SendSecondaryAuthRequest(std::
   return handle;
 }
 
-std::shared_ptr<TokenResponseHandle> TokenClient::SendReassociateAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
+std::shared_ptr<TokenResponseHandle> TokenClient::SendReassociateAuthRequest(std::string spanContext, std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback) {
   std::shared_ptr<TokenResponseHandle> handle = std::make_shared<TokenResponseHandle>();
 
-  _taskExecutor->Wake([this, handle, callback, sessionToken, clientName, appId]() {
+  _taskExecutor->Wake([this, handle, callback, spanContext, sessionToken, clientName, appId]() {
     // add callback to queue
     _authCallbacks.push(callback);
     _authHandles.push(handle);
 
     Anki::Vector::TokenRequest tokenRequest = 
-      Anki::Vector::TokenRequest(Anki::Vector::ReassociateRequest(testCarrier, sessionToken, clientName, appId));
+      Anki::Vector::TokenRequest(Anki::Vector::ReassociateRequest(spanContext, sessionToken, clientName, appId));
 
     SendMessage(tokenRequest);
   });
@@ -102,16 +101,16 @@ std::shared_ptr<TokenResponseHandle> TokenClient::SendReassociateAuthRequest(std
   return handle;
 }
 
-std::shared_ptr<TokenResponseHandle> TokenClient::SendJwtRequest(JwtRequestCallback callback) {
+std::shared_ptr<TokenResponseHandle> TokenClient::SendJwtRequest(std::string spanContext, JwtRequestCallback callback) {
   std::shared_ptr<TokenResponseHandle> handle = std::make_shared<TokenResponseHandle>();
 
-  _taskExecutor->Wake([this, handle, callback]() {
+  _taskExecutor->Wake([this, handle, callback, spanContext]() {
     // add callback to queue
     _jwtCallbacks.push(callback);
     _jwtHandles.push(handle);
 
     Anki::Vector::TokenRequest tokenRequest = 
-      Anki::Vector::TokenRequest(Anki::Vector::JwtRequest());
+      Anki::Vector::TokenRequest(Anki::Vector::JwtRequest(spanContext, false));
 
     SendMessage(tokenRequest);
   });

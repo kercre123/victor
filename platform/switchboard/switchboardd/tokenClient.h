@@ -47,10 +47,10 @@ public:
   //~TokenClient();
   bool Init();
   bool Connect();
-  std::shared_ptr<TokenResponseHandle> SendAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
-  std::shared_ptr<TokenResponseHandle> SendSecondaryAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
-  std::shared_ptr<TokenResponseHandle> SendReassociateAuthRequest(std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
-  std::shared_ptr<TokenResponseHandle> SendJwtRequest(JwtRequestCallback callback);
+  std::shared_ptr<TokenResponseHandle> SendAuthRequest(std::string spanContext, std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
+  std::shared_ptr<TokenResponseHandle> SendSecondaryAuthRequest(std::string spanContext, std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
+  std::shared_ptr<TokenResponseHandle> SendReassociateAuthRequest(std::string spanContext, std::string sessionToken, std::string clientName, std::string appId, AuthRequestCallback callback);
+  std::shared_ptr<TokenResponseHandle> SendJwtRequest(std::string spanContext, JwtRequestCallback callback);
 
 private:
   const char* kDomainSocketServer = Vector::TOKEN_SERVER_PATH;

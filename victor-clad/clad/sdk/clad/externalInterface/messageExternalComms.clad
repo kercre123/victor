@@ -269,6 +269,8 @@ message RtsCloudSessionRequest {
 }
 
 message RtsCloudSessionRequest_5 {
+    string                spanContext,
+
     string[uint_16]       sessionToken,
     string                clientName,
     string                appId,

@@ -180,7 +180,8 @@ bool Daemon::TryConnectToTokenServer() {
     Log::Write("Initialize TokenClient");
     _tokenConnectionFailureCounter = kFailureCountToLog;
 
-    (void)_tokenClient->SendJwtRequest([this](Anki::Vector::TokenError error, std::string jwt){
+    std::string spanContext = "";
+    (void)_tokenClient->SendJwtRequest(spanContext, [this](Anki::Vector::TokenError error, std::string jwt){
       Log::Write("Received response from TokenClient.");
       _hasCloudOwner = (error != Anki::Vector::TokenError::NullToken);
       _isTokenClientFullyInitialized = true;
@@ -254,7 +255,8 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
       _completedPairingHandle = _securePairing->OnCompletedPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnCompletedPairing, this));
     }
 
-    (void)_tokenClient->SendJwtRequest([this](Anki::Vector::TokenError error, std::string jwt){
+    std::string spanContext = "";
+    (void)_tokenClient->SendJwtRequest(spanContext, [this](Anki::Vector::TokenError error, std::string jwt){
       if(_securePairing == nullptr) {
         return;
       }
