@@ -63,21 +63,19 @@ PanelCell GetPanelCell(Panel* cmp, int row, int col) {
 
 PanelCell CellsAllChars[] =
   {
-   {"A", ACT_APPEND}, {"B",  ACT_APPEND}, {"C", ACT_APPEND}, {"D",  ACT_APPEND}, {"E", ACT_APPEND}, {"F", ACT_APPEND}, {"G", ACT_APPEND}, 
-   {"H", ACT_APPEND}, {"I",  ACT_APPEND}, {"J", ACT_APPEND}, {"K",  ACT_APPEND}, {"L", ACT_APPEND}, {"M", ACT_APPEND}, {"N", ACT_APPEND}, 
-   {"O", ACT_APPEND}, {"P",  ACT_APPEND}, {"Q", ACT_APPEND}, {"R",  ACT_APPEND}, {"S", ACT_APPEND}, {"T", ACT_APPEND}, {"U", ACT_APPEND}, 
-   {"V", ACT_APPEND}, {"W",  ACT_APPEND}, {"X", ACT_APPEND}, {"Y",  ACT_APPEND}, {"Z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
-   {"a", ACT_APPEND}, {"b",  ACT_APPEND}, {"c", ACT_APPEND}, {"d",  ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, 
-   {"h", ACT_APPEND}, {"i",  ACT_APPEND}, {"j", ACT_APPEND}, {"k",  ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, 
-   {"o", ACT_APPEND}, {"p",  ACT_APPEND}, {"q", ACT_APPEND}, {"r",  ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, 
-   {"v", ACT_APPEND}, {"w",  ACT_APPEND}, {"x", ACT_APPEND}, {"y",  ACT_APPEND}, {"z", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
-   {"1", ACT_APPEND}, {"2",  ACT_APPEND}, {"3", ACT_APPEND}, {"4",  ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, 
-   {"8", ACT_APPEND}, {"9",  ACT_APPEND}, {"0", ACT_APPEND}, {"-",  ACT_APPEND}, {"_", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, 
-   {"?", ACT_APPEND}, {"/",  ACT_APPEND}, {"~", ACT_APPEND}, {"#",  ACT_APPEND}, {"@", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
-   {"!", ACT_APPEND}, {"@",  ACT_APPEND}, {"#", ACT_APPEND}, {"$",  ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&", ACT_APPEND}, 
-   {"*", ACT_APPEND}, {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")",  ACT_APPEND}, {"{", ACT_APPEND}, {"}", ACT_APPEND}, {"+", ACT_APPEND}, 
-   {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"[", ACT_APPEND}, {"]", ACT_APPEND}, 
-   {"|", ACT_APPEND}, {"=",  ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, {"-", ACT_APPEND}, {"_", ACT_APPEND}, 
+   {"A",  ACT_APPEND}, {"B", ACT_APPEND}, {"C", ACT_APPEND}, {"D", ACT_APPEND}, {"E", ACT_APPEND}, {"F",  ACT_APPEND}, {"G", ACT_APPEND}, 
+   {"H",  ACT_APPEND}, {"I", ACT_APPEND}, {"J", ACT_APPEND}, {"K", ACT_APPEND}, {"L", ACT_APPEND}, {"M",  ACT_APPEND}, {"N", ACT_APPEND}, 
+   {"O",  ACT_APPEND}, {"P", ACT_APPEND}, {"Q", ACT_APPEND}, {"R", ACT_APPEND}, {"S", ACT_APPEND}, {"T",  ACT_APPEND}, {"U", ACT_APPEND}, 
+   {"V",  ACT_APPEND}, {"W", ACT_APPEND}, {"X", ACT_APPEND}, {"Y", ACT_APPEND}, {"Z", ACT_APPEND}, {"a",  ACT_APPEND}, {"b", ACT_APPEND}, 
+   {"c",  ACT_APPEND}, {"d", ACT_APPEND}, {"e", ACT_APPEND}, {"f", ACT_APPEND}, {"g", ACT_APPEND}, {"h",  ACT_APPEND}, {"i", ACT_APPEND}, 
+   {"j",  ACT_APPEND}, {"k", ACT_APPEND}, {"l", ACT_APPEND}, {"m", ACT_APPEND}, {"n", ACT_APPEND}, {"o",  ACT_APPEND}, {"p", ACT_APPEND}, 
+   {"q",  ACT_APPEND}, {"r", ACT_APPEND}, {"s", ACT_APPEND}, {"t", ACT_APPEND}, {"u", ACT_APPEND}, {"v",  ACT_APPEND}, {"w", ACT_APPEND}, 
+   {"x",  ACT_APPEND}, {"y", ACT_APPEND}, {"z", ACT_APPEND}, {"0", ACT_APPEND}, {"1", ACT_APPEND}, {"2",  ACT_APPEND}, {"3", ACT_APPEND}, 
+   {"4",  ACT_APPEND}, {"5", ACT_APPEND}, {"6", ACT_APPEND}, {"7", ACT_APPEND}, {"8", ACT_APPEND}, {"9",  ACT_APPEND}, {"-", ACT_APPEND}, 
+   {"_",  ACT_APPEND}, {"@", ACT_APPEND}, {"#", ACT_APPEND}, {",", ACT_APPEND}, {".", ACT_APPEND}, {"?",  ACT_APPEND}, {"/", ACT_APPEND}, 
+   {"~",  ACT_APPEND}, {"!", ACT_APPEND}, {"$", ACT_APPEND}, {"%", ACT_APPEND}, {"^", ACT_APPEND}, {"&",  ACT_APPEND}, {"*", ACT_APPEND}, 
+   {"\\", ACT_APPEND}, {"(", ACT_APPEND}, {")", ACT_APPEND}, {"+", ACT_APPEND}, {"`", ACT_APPEND}, {"'",  ACT_APPEND}, {";", ACT_APPEND}, 
+   {"<",  ACT_APPEND}, {">", ACT_APPEND}, {"|", ACT_APPEND}, {"=", ACT_APPEND}, {"~", ACT_APPEND}, {"\"", ACT_APPEND}, {":", ACT_APPEND}, 
   };
 
 PanelCell CellsUcaseLetters[] =
@@ -127,7 +125,7 @@ PanelCell CellsWifiSelect[] =
   };
 
 //                                    r   c  PanelCell[]                  IsSelectMenu
-Panel kPanelAllChars               = {15, 7, CellsAllChars,               false}; 
+Panel kPanelAllChars               = {13, 7, CellsAllChars,               false}; 
 Panel kPanelUcaseLetters           = {4,  7, CellsUcaseLetters,           false}; 
 Panel kPanelLcaseLetters           = {4,  7, CellsLcaseLetters,           false}; 
 Panel kPanelNumbersAndSpecialChars = {3,  7, CellsNumbersAndSpecialChars, false}; 
@@ -371,8 +369,18 @@ void BehaviorCubeDrive::BehaviorUpdate() {
         action = pc.Action;
       } else if (!panel->IsSelectMenu) {
         switch (_row - _firstScreenRow) {
-        case 1: action = ACT_DELETE; break;
-        case 2: action = ACT_DONE;   break;
+        case 0:
+          _row = (_row <= 0) ? 0 : (_row - 1);
+          break;
+        case 1:
+          action = ACT_DELETE;
+          break;
+        case 2:
+          action = ACT_DONE;
+          break;
+        case 3:
+          _row = (_row >= (panel->NumRows-1)) ? (panel->NumRows-1) : (_row + 1);
+          break;
         }
       }
 
