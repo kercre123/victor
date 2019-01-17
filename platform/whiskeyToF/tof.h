@@ -69,6 +69,8 @@ public:
   bool IsValidRoiStatus(uint8_t status);
   
 #if FACTORY_TEST
+  int LoadCalibration(const CommandCallback& callback);
+  
   int PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance,
                          const CommandCallback& callback);
   bool IsCalibrating();

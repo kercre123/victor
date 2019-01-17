@@ -62,7 +62,8 @@ namespace {
      StartRanging,
      StopRanging,
      SetupSensors,
-     PerformCalibration
+     PerformCalibration,
+     LoadCalibration,
     };
   std::queue<std::pair<Command, ToFSensor::CommandCallback>> _commandQueue;
 
@@ -200,9 +201,11 @@ int distance_mode_set(const int dev, const int mode) {
 }
 
 /// Set device reset on stop
-// 0 : Device is ut under reset when stopped
+// 0 : Device is put under reset when stopped
 // 1 : Device is not put under reset when stopped
 int reset_on_stop_set(const int dev, const int val) {
+  return 0;
+  
   struct stmvl53l1_parameter params;
 
   params.is_read = 0;
@@ -326,12 +329,32 @@ int get_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
   return rc;
 }
 
+int get_zone_calibration_data(const int dev, stmvl531_zone_calibration_data_t& calib)
+{
+  stmvl53l1_ioctl_zone_calibration_data_t calibData;
+  calibData.is_read = 1;
+  int rc = ioctl(dev, VL53L1_IOCTL_ZONE_CALIBRATION_DATA, &calibData);
+  if(rc >= 0)
+  {
+    calib = calibData.data;
+  }
+  return rc;
+}
+
 int set_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
 {
   struct stmvl53l1_ioctl_calibration_data_t calibData;
   calibData.data = calib;
   calibData.is_read = 0;
   return ioctl(dev, VL53L1_IOCTL_CALIBRATION_DATA, &calibData);
+}
+
+int set_zone_calibration_data(const int dev, stmvl531_zone_calibration_data_t& calib)
+{
+  struct stmvl53l1_ioctl_zone_calibration_data_t calibData;
+  calibData.data = calib;
+  calibData.is_read = 0;
+  return ioctl(dev, VL53L1_IOCTL_ZONE_CALIBRATION_DATA, &calibData);
 }
 
 int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
@@ -363,11 +386,56 @@ int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
                              std::string meta = "")
 {
   (void)save_calibration_to_disk(calib, dev, meta, _logPath);
-  return save_calibration_to_disk(calib, dev, meta, "/factory/nvStorage/");
+  return save_calibration_to_disk(calib, dev, meta, "/factory/");
 }
 
 int load_calibration_from_disk(VL53L1_CalibrationData_t& calib,
                                const std::string& path)
+{
+  int rc = -1;
+  FILE* f = fopen(path.c_str(), "r");
+  if(f != nullptr)
+  {
+    rc = fread(&calib, sizeof(calib), 1, f);
+    (void)fclose(f);
+  }
+  return rc;
+}
+
+int save_zone_calibration_to_disk(stmvl531_zone_calibration_data_t& calib,
+                                  int dev,
+                                  std::string meta,
+                                  std::string path)
+{
+  PRINT_NAMED_ERROR("","SAVING %u %u %u", dev, tofR_fd, tofL_fd);
+  char buf[128];
+  sprintf(buf, "%stofZone_%s%s.bin", path.c_str(), (dev == tofR_fd ? "right" : "left"), meta.c_str());
+  PRINT_NAMED_ERROR("","%s", buf);
+  int rc = -1;
+  FILE* f = fopen(buf, "w+");
+  if(f != nullptr)
+  {
+    rc = fwrite(&calib, sizeof(calib), 1, f);
+    (void)fclose(f);
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("","FAILED TO OPEN FILE %u", errno);
+  }
+  return rc;
+
+}
+
+int save_zone_calibration_to_disk(stmvl531_zone_calibration_data_t& calib,
+                                  int dev,
+                                  std::string meta = "")
+{
+  (void)save_zone_calibration_to_disk(calib, dev, meta, _logPath);
+  return save_zone_calibration_to_disk(calib, dev, meta, "/factory/");
+}
+
+int load_zone_calibration_from_disk(stmvl531_zone_calibration_data_t& calib,
+                                    const std::string& path)
 {
   int rc = -1;
   FILE* f = fopen(path.c_str(), "r");
@@ -612,7 +680,7 @@ int perform_offset_calibration(const int dev, uint32_t distanceToTarget_mm, floa
   if(rc < 0)
   {
     int deviceErr = last_error_get(dev);
-    PRINT_NAMED_WARNING("","perform offset calibration failed, device error %d", deviceErr);
+    PRINT_NAMED_ERROR("","perform offset calibration failed, device error %d", deviceErr);
   }
   return rc;
 }
@@ -648,10 +716,33 @@ int run_offset_calibration(const int dev, uint32_t distanceToTarget_mm, float ta
   rc = set_calibration_data(dev, calib);
   return_if_not(rc >= 0, rc, "Set calibration data failed: %d %d", rc, errno);
 
+  stmvl531_zone_calibration_data_t calibZone;
+  memset(&calibZone, 0, sizeof(calibZone));
+  rc = get_zone_calibration_data(dev, calibZone);
+  return_if_not(rc >= 0, rc, "Get zone calib failed: %d %d", rc, errno);
+  
+  rc = save_zone_calibration_to_disk(calibZone, dev);
+  return_if_not(rc >= 0, rc, "Save zone calibration to disk failed: %d %d", rc, errno);
+
+  rc = set_zone_calibration_data(dev, calibZone);
+  return_if_not(rc >= 0, rc, "Set zone calibration data failed: %d %d", rc, errno);
+
   return rc;
 }
 
 #endif
+
+int set_live_crosstalk(const int dev, bool enable)
+{
+  struct stmvl53l1_parameter params;
+
+  params.is_read = 0;
+  params.name = VL53L1_SMUDGECORRECTIONMODE_PAR;
+  params.value = (enable ? VL53L1_SMUDGE_CORRECTION_CONTINUOUS : VL53L1_SMUDGE_CORRECTION_NONE);
+
+  return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);  
+}
+
 
 int perform_calibration(int dev,
                         uint32_t distanceToTarget_mm,
@@ -692,9 +783,14 @@ int perform_calibration(int dev,
   rc = output_mode_set(dev, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
+  // PRINT_NAMED_ERROR("","Enable live xtalk\n");
+  // rc = set_live_crosstalk(dev, true);
+  // return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
 
   VL53L1_CalibrationData_t calib;
   memset(&calib, 0, sizeof(calib));
+  set_calibration_data(dev, calib);
+  
   rc = get_calibration_data(dev, calib);
   return_if_not(rc >= 0, rc, "1 Get calibration data failed: %d %d", rc, errno);
 
@@ -703,13 +799,13 @@ int perform_calibration(int dev,
   
 
   rc = run_refspad_calibration(dev);
-  return_if_not(rc >= 0, rc, "perform_calibration: run_refspad_calibration %u", rc);
+  return_if_not(rc >= 0, rc, "perform_calibration: run_refspad_calibration %d", rc);
   
   rc = run_xtalk_calibration(dev);
-  return_if_not(rc >= 0, rc, "perform_calibration: run_xtalk_calibration %u", rc);
+  return_if_not(rc >= 0, rc, "perform_calibration: run_xtalk_calibration %d", rc);
 
   rc = run_offset_calibration(dev, distanceToTarget_mm, targetReflectance);
-  return_if_not(rc >= 0, rc, "perform_calibration: run_offset_calibration %u", rc);
+  return_if_not(rc >= 0, rc, "perform_calibration: run_offset_calibration %d", rc);
 
   return rc;
 }
@@ -810,6 +906,10 @@ int setup(Sensor which) {
   PRINT_NAMED_ERROR("","set output mode\n");
   rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
+
+  // PRINT_NAMED_ERROR("","Enable live xtalk\n");
+  // rc = set_live_crosstalk(fd, true);
+  // return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
 
   PRINT_NAMED_ERROR("","set offset correction mode\n");
   rc = offset_correction_mode_set(fd, VL53L1_OFFSETCORRECTIONMODE_PERZONE);
@@ -926,6 +1026,44 @@ RangeDataRaw ReadData()
   return rangeData;
 }
 
+
+void load_calibration()
+{
+  PRINT_NAMED_ERROR("","Load calibration");
+
+  VL53L1_CalibrationData_t calib;
+  memset(&calib, 0, sizeof(calib));
+  int rc = load_calibration_from_disk(calib, "/factory/tof_right.bin");
+  if(rc < 0)
+  {
+    PRINT_NAMED_ERROR("","Failed to load tof calibration");
+  }
+  else
+  {
+    rc = set_calibration_data(tofR_fd, calib);
+    if(rc < 0)
+    {
+      PRINT_NAMED_ERROR("","Failed to set tof calibration");
+    }
+  }
+
+  stmvl531_zone_calibration_data_t calibZone;
+  memset(&calibZone, 0, sizeof(calibZone));
+  rc = load_zone_calibration_from_disk(calibZone, "/factory/tofZone_right.bin");
+  if(rc < 0)
+  {
+    PRINT_NAMED_ERROR("","Failed to load tof calibration");
+  }
+  else
+  {
+    rc = set_zone_calibration_data(tofR_fd, calibZone);
+    if(rc < 0)
+    {
+      PRINT_NAMED_ERROR("","Failed to set tof calibration");
+    }
+  }          
+}
+
 int ToFSensor::StartRanging(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
@@ -944,6 +1082,14 @@ int ToFSensor::SetupSensors(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
   _commandQueue.push({Command::SetupSensors, callback});
+  return 0;
+}
+
+int ToFSensor::LoadCalibration(const CommandCallback& callback)
+{
+  std::lock_guard<std::mutex> lock(_commandLock);
+  _commandQueue.push({Command::StopRanging, nullptr});
+  _commandQueue.push({Command::LoadCalibration, callback});
   return 0;
 }
 
@@ -1030,6 +1176,8 @@ void ProcessLoop()
               }
             }
             #endif
+
+            //            load_calibration();
             
             tofR_fd = setup(RIGHT);
             if(tofR_fd < 0)
@@ -1053,6 +1201,12 @@ void ProcessLoop()
             PRINT_NAMED_ERROR("","Command perform calibration");
             _rangingEnabled = false;
             res = run_calibration(_distanceToCalibTarget_mm, _calibTargetReflectance);
+          }
+          break;
+
+        case Command::LoadCalibration:
+          {
+            load_calibration();
           }
           break;
       }
