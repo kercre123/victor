@@ -124,14 +124,25 @@ void BehaviorDispatcherAdaptive::BehaviorDispatcher_OnDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
 {
+
   // here's where we choose a new behavior
   // check state
   State state = EvaluateState();
   LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.State",
       "State: %d", state);
 
-
   // if delegates other than Default are available
+  // for now, we assume actions are available if the state is non-zero. TODO: something smarter
+  ICozmoBehaviorPtr desiredBehavior;
+  if (_dVars.lastSelectedBehavior == nullptr || // first time running
+      (_dVars.lastSelectedBehavior != _iConfig.defaultBehavior) || // if we just came from a non-default behavior, force doing the default again (state is invalid)
+      (state == 0) ) // no recognized face. do default action
+  {
+    desiredBehavior = _iConfig.defaultBehavior;
+  } else {
+    desiredBehavior = FindBehavior(_iConfig.actionSpace[0]);
+  }
+
   // evaluate state-action value for each available delegate
   // for now, call method to get state action value for each available action,
   // build the "row" of the table for this state on the fly.
@@ -140,9 +151,9 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
 
   // can I do the learning update here, or should that be in DispatcherUpdate?
 
-  ICozmoBehaviorPtr desiredBehavior = _iConfig.defaultBehavior;
-  LOG_WARNING("BehaviorSispatcherAdaptive.GetDesiredBehavior.Choice",
-      "Choosing desired behavior: %s", BehaviorTypesWrapper::BehaviorIDToString(desiredBehavior->GetID()));
+  LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.Choice",
+              "Choosing desired behavior: %s", BehaviorTypesWrapper::BehaviorIDToString(desiredBehavior->GetID()));
+  _dVars.lastSelectedBehavior = desiredBehavior;
   return desiredBehavior;
 }
 
@@ -158,8 +169,9 @@ void BehaviorDispatcherAdaptive::DispatcherUpdate()
 }
 
 
-// getState
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 State BehaviorDispatcherAdaptive::EvaluateState(){
+  // TODO: problem: FFAT's FoundFace data doesn't get cleared until the next time it runs
   // call FFAT's GetFoundFace method
   std::shared_ptr<BehaviorFindFaceAndThen> ffat;
   const BehaviorContainer& container = GetBEI().GetBehaviorContainer();
@@ -189,19 +201,19 @@ State BehaviorDispatcherAdaptive::EvaluateState(){
   FaceWorld faceWorld = GetBEI().GetFaceWorld();
   const Vision::TrackedFace* trackedFace = faceWorld.GetFace(face);
   // for now use HasName/GetName. GetBestGuessName is an option if I want to relax assumptions
-  if (!trackedFace.HasName()){
+  if (!trackedFace->HasName()){
     // no name. Call it 0.
     return 0;
   }
   LOG_WARNING("BehaviorDispatcherAdaptive.EvaluateState.Name",
-      "Face has name: %s", trackedFace.GetName().c_str());
+      "Face has name: %s", trackedFace->GetName().c_str());
 
   // for now, just return.
   return id;
 }
 
 
-// get StateActionValue for state, action
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SAValue BehaviorDispatcherAdaptive::GetStateActionValue(State s, Action a){
   // check whether there's an entry for s
   if (_iConfig.SAVTable.find(s) == _iConfig.SAVTable.end()) {

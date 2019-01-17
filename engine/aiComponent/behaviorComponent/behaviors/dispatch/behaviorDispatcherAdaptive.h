@@ -89,6 +89,7 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     // TODO: put member variables here
+    ICozmoBehaviorPtr lastSelectedBehavior;
   };
 
   InstanceConfig _iConfig;

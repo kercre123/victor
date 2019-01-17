@@ -40,7 +40,7 @@ set(LIB_TYPE STATIC)
 set(LIB_POSTFIX "")
 if(VICOS)
   set(LIB_EXT so)
-  set(LIB_TYPE SHARED ../engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/ILastRewardProvider.h)
+  set(LIB_TYPE SHARED)
   set(LIB_POSTFIX .3.4)
 endif()
 
