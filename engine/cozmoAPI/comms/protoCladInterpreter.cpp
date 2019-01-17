@@ -57,14 +57,12 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
   
   ExternalInterface::MessageGameToEngine clad_message;
 
-  /*
   auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
   LOG_WARNING("ron_proto", "ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
       proto_message.oneof_message_type_case(),
       proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
       proto_message.GetMetadata().descriptor->full_name().c_str(),
       MessageGameToEngineTagToString(clad_message.GetTag()));
-  */
 
   switch(proto_message.oneof_message_type_case()) {
     case external_interface::GatewayWrapper::kDriveWheelsRequest:
@@ -92,6 +90,16 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
       ProtoCreateFixedCustomObjectRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kDeleteCustomObjectsRequest:
+    {
+      ProtoDeleteCustomObjectsRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kDefineCustomObjectRequest:
+    {
+      ProtoDefineCustomObjectRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -107,13 +115,11 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
   
   external_interface::GatewayWrapper proto_message;
 
-  /*
   LOG_WARNING("ron_proto", "Redirect(ME2G(%d, %s)=>proto): %s:%d", 
       (int)message.GetTag(),
       MessageEngineToGameTagToString(message.GetTag()),
       __FILE__, __LINE__
       );
-  */
 
   switch(message.GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::AnimationAvailable:
@@ -131,6 +137,22 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
       CladEnrolledNamesResponseToProto(message, proto_message);
       break;
     }
+    case ExternalInterface::MessageEngineToGameTag::CreatedFixedCustomObject:
+    {
+      CladCreatedFixedCustomObjectToProto(message, proto_message);
+      break;
+    }
+    case ExternalInterface::MessageEngineToGameTag::RobotDeletedFixedCustomObjects:   // Fallthrough intended
+    case ExternalInterface::MessageEngineToGameTag::RobotDeletedCustomMarkerObjects:  // Fallthrough intended
+    {
+      CladDeletedCustomObjectsToProto(message, proto_message);
+      break;
+    }
+    case ExternalInterface::MessageEngineToGameTag::DefinedCustomObject:
+    {
+      CladDefinedCustomObjectToProto(message, proto_message);
+      break;
+    }
     default:
     {
       return false;
@@ -145,23 +167,11 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   
   external_interface::GatewayWrapper proto_message;
 
-  /*
   LOG_WARNING("ron_proto", "Redirect(MG2E(%d, %s))=>proto", 
       (int)message.GetTag(),
       MessageGameToEngineTagToString(message.GetTag()));
-  */
 
   switch(message.GetTag()) {
-    case ExternalInterface::MessageGameToEngineTag::DriveWheels:
-    {
-      CladDriveWheelsToProto(message, proto_message);
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PlayAnimation:
-    {
-      CladPlayAnimationToProto(message, proto_message);
-      break;
-    }
     default:
     {
       return false;
@@ -171,6 +181,11 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   _context->GetGatewayInterface()->Broadcast(std::move(proto_message));
   return true;
 }
+
+
+//
+// Proto-to-Clad interpreters
+//
 
 void ProtoCladInterpreter::ProtoDriveWheelsRequestToClad(
     const external_interface::GatewayWrapper& proto_message,
@@ -225,12 +240,113 @@ void ProtoCladInterpreter::ProtoCreateFixedCustomObjectRequestToClad(
   clad_message.Set_CreateFixedCustomObject(create_fixed_custom_object);
 }
 
+void ProtoCladInterpreter::ProtoDeleteCustomObjectsRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  switch(proto_message.delete_custom_objects_request().mode()) {
+    case external_interface::CustomObjectDeletionMode::DELETION_MASK_FIXED_CUSTOM_OBJECTS:
+    {
+      Anki::Vector::ExternalInterface::DeleteFixedCustomObjects delete_fixed_custom_objects;
+      clad_message.Set_DeleteFixedCustomObjects(delete_fixed_custom_objects);
+      break;
+    }
+    case external_interface::CustomObjectDeletionMode::DELETION_MASK_CUSTOM_MARKER_OBJECTS:
+    {
+      Anki::Vector::ExternalInterface::DeleteCustomMarkerObjects delete_custom_marker_objects;
+      clad_message.Set_DeleteCustomMarkerObjects(delete_custom_marker_objects);
+      break;
+    }
+    case external_interface::CustomObjectDeletionMode::DELETION_MASK_ARCHETYPES:
+    {
+      Anki::Vector::ExternalInterface::UndefineAllCustomMarkerObjects undefine_all_custom_marker_objects;
+      clad_message.Set_UndefineAllCustomMarkerObjects(undefine_all_custom_marker_objects);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+
+}
+
+void ProtoCladInterpreter::ProtoDefineCustomObjectRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+    if(proto_message.define_custom_object_request().has_custom_box()) {
+      Anki::Vector::ExternalInterface::DefineCustomBox define_custom_box;
+
+      define_custom_box.customType = Anki::Vector::ObjectType(
+          proto_message.define_custom_object_request().custom_type() -
+          Anki::Vector::external_interface::CUSTOM_TYPE_00 +
+          int(Anki::Vector::ObjectType::CustomType00));
+      define_custom_box.markerFront = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_box().marker_front() - 1);
+      define_custom_box.markerBack = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_box().marker_back() - 1);
+      define_custom_box.markerTop = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_box().marker_top() - 1);
+      define_custom_box.markerBottom = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_box().marker_bottom() - 1);
+      define_custom_box.markerLeft = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_box().marker_left() - 1);
+      define_custom_box.markerRight = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_box().marker_right() - 1);
+      define_custom_box.xSize_mm = proto_message.define_custom_object_request().custom_box().x_size_mm();
+      define_custom_box.ySize_mm = proto_message.define_custom_object_request().custom_box().y_size_mm();
+      define_custom_box.zSize_mm = proto_message.define_custom_object_request().custom_box().z_size_mm();
+      define_custom_box.markerWidth_mm = proto_message.define_custom_object_request().custom_box().marker_width_mm();
+      define_custom_box.markerHeight_mm = proto_message.define_custom_object_request().custom_box().marker_height_mm();
+      define_custom_box.isUnique = proto_message.define_custom_object_request().is_unique();
+
+      clad_message.Set_DefineCustomBox(define_custom_box);
+    } else if (proto_message.define_custom_object_request().has_custom_cube()) {
+      Anki::Vector::ExternalInterface::DefineCustomCube define_custom_cube;
+
+      define_custom_cube.customType = Anki::Vector::ObjectType(
+          proto_message.define_custom_object_request().custom_type() -
+          Anki::Vector::external_interface::CUSTOM_TYPE_00 +
+          int(Anki::Vector::ObjectType::CustomType00));
+      define_custom_cube.marker = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_cube().marker() - 1);
+      define_custom_cube.size_mm = proto_message.define_custom_object_request().custom_cube().size_mm();
+      define_custom_cube.markerWidth_mm = proto_message.define_custom_object_request().custom_cube().marker_width_mm();
+      define_custom_cube.markerHeight_mm = proto_message.define_custom_object_request().custom_cube().marker_height_mm();
+      define_custom_cube.isUnique = proto_message.define_custom_object_request().is_unique();
+
+      clad_message.Set_DefineCustomCube(define_custom_cube);
+    } else if (proto_message.define_custom_object_request().has_custom_wall()) {
+      Anki::Vector::ExternalInterface::DefineCustomWall define_custom_wall;
+
+      define_custom_wall.customType = Anki::Vector::ObjectType(
+          proto_message.define_custom_object_request().custom_type() -
+          Anki::Vector::external_interface::CUSTOM_TYPE_00 +
+          int(Anki::Vector::ObjectType::CustomType00));
+      define_custom_wall.marker = Anki::Vector::CustomObjectMarker(
+          proto_message.define_custom_object_request().custom_wall().marker() - 1);
+      define_custom_wall.width_mm = proto_message.define_custom_object_request().custom_wall().width_mm();
+      define_custom_wall.height_mm = proto_message.define_custom_object_request().custom_wall().height_mm();
+      define_custom_wall.markerWidth_mm = proto_message.define_custom_object_request().custom_wall().marker_width_mm();
+      define_custom_wall.markerHeight_mm = proto_message.define_custom_object_request().custom_wall().marker_height_mm();
+      define_custom_wall.isUnique = proto_message.define_custom_object_request().is_unique();
+
+      clad_message.Set_DefineCustomWall(define_custom_wall);
+    } else {
+      //Code review: how to handle?
+    }
+}
+//
+// Clad-to-Proto interpreters
+//
 
 void ProtoCladInterpreter::CladDriveWheelsToProto(
     const ExternalInterface::MessageGameToEngine& clad_message,
     external_interface::GatewayWrapper& proto_message) {
 
-  external_interface::DriveWheelsResponse* drive_wheels_response = new external_interface::DriveWheelsResponse;
+  auto* drive_wheels_response = new external_interface::DriveWheelsResponse;
+
   proto_message = ExternalMessageRouter::WrapResponse(drive_wheels_response);
 }
 
@@ -238,7 +354,8 @@ void ProtoCladInterpreter::CladPlayAnimationToProto(
     const ExternalInterface::MessageGameToEngine& clad_message,
     external_interface::GatewayWrapper& proto_message) {
       
-  external_interface::PlayAnimationResponse* play_animation_response = new external_interface::PlayAnimationResponse;
+  auto* play_animation_response = new external_interface::PlayAnimationResponse;
+
   proto_message = ExternalMessageRouter::WrapResponse(play_animation_response);
 }
 
@@ -246,7 +363,8 @@ void ProtoCladInterpreter::CladAnimationAvailableToProto(
     const ExternalInterface::MessageEngineToGame& clad_message, 
     external_interface::GatewayWrapper& proto_message) {
       
-  external_interface::ListAnimationsResponse* list_animations_response = new external_interface::ListAnimationsResponse;
+  auto* list_animations_response = new external_interface::ListAnimationsResponse;
+
   std::string animName = clad_message.Get_AnimationAvailable().animName;
   list_animations_response->add_animation_names()->set_name(animName);
   proto_message = ExternalMessageRouter::WrapResponse(list_animations_response);
@@ -256,8 +374,8 @@ void ProtoCladInterpreter::CladEndOfMessageToProto(
     const ExternalInterface::MessageEngineToGame& clad_message, 
     external_interface::GatewayWrapper& proto_message) {
 
-  external_interface::ListAnimationsResponse* end_of_list_animations_response = 
-      new external_interface::ListAnimationsResponse;
+  auto* end_of_list_animations_response = new external_interface::ListAnimationsResponse;
+
   // Don't change "EndOfListAnimationsResponses" - The .go recipient depends upon it.
   end_of_list_animations_response->add_animation_names()->set_name("EndOfListAnimationsResponses");
   proto_message = ExternalMessageRouter::WrapResponse(end_of_list_animations_response);
@@ -267,8 +385,7 @@ void ProtoCladInterpreter::CladEnrolledNamesResponseToProto(
     const ExternalInterface::MessageEngineToGame& clad_message,
     external_interface::GatewayWrapper& proto_message) {
 
-  external_interface::RequestEnrolledNamesResponse* enrolled_names_response = 
-      new external_interface::RequestEnrolledNamesResponse;
+  auto* enrolled_names_response = new external_interface::RequestEnrolledNamesResponse;
 
   enrolled_names_response->clear_faces();
   for(auto face=clad_message.Get_EnrolledNamesResponse().faces.begin();
@@ -278,6 +395,37 @@ void ProtoCladInterpreter::CladEnrolledNamesResponseToProto(
   }
   
   proto_message = ExternalMessageRouter::WrapResponse(enrolled_names_response);
+}
+
+void ProtoCladInterpreter::CladCreatedFixedCustomObjectToProto(
+    const ExternalInterface::MessageEngineToGame& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
+
+  auto* create_fixed_custom_object_response = new external_interface::CreateFixedCustomObjectResponse;
+
+  create_fixed_custom_object_response->set_object_id(clad_message.Get_CreatedFixedCustomObject().objectID);
+
+  proto_message = ExternalMessageRouter::WrapResponse(create_fixed_custom_object_response);
+}
+
+void ProtoCladInterpreter::CladDeletedCustomObjectsToProto(
+    const ExternalInterface::MessageEngineToGame& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
+  
+  auto * deleted_custom_objects_response = new external_interface::DeleteCustomObjectsResponse;
+
+  proto_message = ExternalMessageRouter::WrapResponse(deleted_custom_objects_response);
+}
+
+void ProtoCladInterpreter::CladDefinedCustomObjectToProto(
+    const ExternalInterface::MessageEngineToGame& clad_message,
+    external_interface::GatewayWrapper& proto_message) {
+
+  auto* define_custom_object_response = new external_interface::DefineCustomObjectResponse;
+
+  define_custom_object_response->set_success(clad_message.Get_DefinedCustomObject().success);
+
+  proto_message = ExternalMessageRouter::WrapResponse(define_custom_object_response);
 }
 
 
