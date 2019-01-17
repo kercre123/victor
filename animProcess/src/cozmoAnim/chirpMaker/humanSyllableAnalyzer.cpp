@@ -25,7 +25,7 @@ namespace {
   constexpr unsigned int kBuffSize = 3*16000; // 1 sec
   
   CONSOLE_VAR_RANGED(float, kTimeScaleFactor, "Chirps.AAA_Playback", 1.2f, 0.5f, 2.0f);
-  CONSOLE_VAR_RANGED(unsigned int, kFlatPitchDuration_ms, "Chirps.AAA_Playback", 60, 0, 1000);
+  CONSOLE_VAR_RANGED(unsigned int, kFlatPitchDuration_ms, "Chirps.AAA_Playback", 165, 0, 1000);
   CONSOLE_VAR(bool, kUseTestFile, "Chirps.Debug", false);
 }
 

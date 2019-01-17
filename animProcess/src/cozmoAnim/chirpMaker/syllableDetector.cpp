@@ -20,7 +20,10 @@ namespace Anki {
 namespace Vector {
   
   namespace {
-    CONSOLE_VAR_RANGED(float, kStoppingThreshold, "Chirps.Debug", 30.0f, 0.0f, 50.0f);
+    CONSOLE_VAR_RANGED(float, kStoppingThreshold, "Chirps.Debug", 18.0f, 0.0f, 50.0f);
+    CONSOLE_VAR_RANGED(float, kStoppingThresholdPeakQueue, "Chirps.Debug", 15.0f, 0.0f, 50.0f);
+    const unsigned int kQueueSizeHead = 4;
+    const unsigned int kQueueSizeTail = 9; // sometimes voice seems to rise during the last few ms of a syllable, so take a longer window, but only choose the first kQueueSizeHead. result is choosing a window size 4 that is 5 before the end
   }
   
 // ---------------------------------------------------------------------------
@@ -309,6 +312,8 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
     }
     
     const float minAmp = amp - kStoppingThreshold;//_stoppingThreshold_dB;
+    // only include the peak in the calculation if its close to the emphasis
+    const float minAmpPeakQueue = amp - kStoppingThresholdPeakQueue;
     
     SyllableInfo info;
     info.syllableTime_s = spectrogramTimes[maxPowerTimeIdx];
@@ -333,9 +338,11 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
       info.avgFreq += freq;
       info.avgPower += maxPowerAtTime[i];
       info.firstFreq = freq;
-      firstPeakLocations.push( spectrogramFreqs[freqIdxFirstPeakAtTime[i]] );
-      if( firstPeakLocations.size() > 4 ) {
-        firstPeakLocations.pop();
+      if( maxPowerAtTime[i] >= minAmpPeakQueue ) {
+        firstPeakLocations.push( spectrogramFreqs[freqIdxFirstPeakAtTime[i]] );
+        if( firstPeakLocations.size() > kQueueSizeHead ) {
+          firstPeakLocations.pop();
+        }
       }
       if( maxPowerAtTime[i] > maxPowerHere ) {
         info.peakFreq = freq;
@@ -374,9 +381,11 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
       info.avgFreq += freq;
       info.avgPower += maxPowerAtTime[i];
       info.lastFreq = freq;
-      firstPeakLocations.push( spectrogramFreqs[freqIdxFirstPeakAtTime[i]] );
-      if( firstPeakLocations.size() > 4 ) {
-        firstPeakLocations.pop();
+      if( maxPowerAtTime[i] >= minAmpPeakQueue ) {
+        firstPeakLocations.push( spectrogramFreqs[freqIdxFirstPeakAtTime[i]] );
+        if( firstPeakLocations.size() > kQueueSizeTail ) {
+          firstPeakLocations.pop();
+        }
       }
       if( maxPowerAtTime[i] > maxPowerHere ) {
         info.peakFreq = freq;
@@ -386,15 +395,35 @@ std::vector<SyllableDetector::SyllableInfo> SyllableDetector::Run( const Syllabl
     }
     
     assert(!firstPeakLocations.empty());
-    numQueue = firstPeakLocations.size();
+    numQueue = 0;
     while( !firstPeakLocations.empty() ) {
       info.lastPeakFreq += firstPeakLocations.front();
       firstPeakLocations.pop();
+      if( ++numQueue >= kQueueSizeHead ) {
+        break;
+      }
     }
     info.lastPeakFreq /= numQueue;
     
     info.avgFreq /= count;
     info.avgPower /= count;
+    
+    // don't allow a change in more than an ~octave
+    if( info.lastPeakFreq / info.firstPeakFreq > 1.55 || info.lastPeakFreq/info.firstPeakFreq < 0.65) {
+      if( fabs(info.lastPeakFreq - info.avgFreq) < fabs(info.firstPeakFreq - info.avgFreq) ) {
+        if( info.lastPeakFreq / info.firstPeakFreq > 1.55 ) {
+          info.firstPeakFreq *= 2;
+        } else {
+          info.firstPeakFreq /= 2;
+        }
+      } else {
+        if( info.lastPeakFreq / info.firstPeakFreq > 1.55 ) {
+          info.lastPeakFreq /= 2;
+        } else {
+          info.lastPeakFreq *= 2;
+        }
+      }
+    }
     
     syllables.emplace( info.startTime_s, std::move(info) );
   }
