@@ -254,6 +254,11 @@ void OSState::Update(BaseStationTime_t currTime_nanosec)
         }
       }
 
+      {
+          std::lock_guard<std::mutex> lock(_memInfoMutex);
+          json["memory_pct"] = 100 * _availMem_kB / _totalMem_kB;
+      }
+
       _webServiceCallback(json);
 
       _lastWebvizUpdateTime_ms = _currentTime_ms;

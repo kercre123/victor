@@ -171,6 +171,8 @@ void OSState::Update(BaseStationTime_t currTime_nanosec)
         }
       }
 
+      json["memory_pct"] = 100 * _availMem_kB / _totalMem_kB;
+
       _webServiceCallback(json);
 
       _lastWebvizUpdateTime_ms = _currentTime_ms;

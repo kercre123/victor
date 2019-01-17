@@ -5,7 +5,7 @@
   
   var chartOptions = {
     legend: {
-      show: false,
+      show: true,
       position: "sw",
       labelFormatter: GetLegendLabel
     },
@@ -27,6 +27,7 @@
   }
   
   var cpuUsed = []
+  var memUsed = []
   var currentTime_ms = 0
   var plotData = []
   var chart = null
@@ -110,6 +111,7 @@
         plotData.push({label: "cpu "+i.toString(), data: cpuUsed[i], lines: {show: true}})
         CPUTimeInfo(data.usage[i], i)
       }
+      plotData.push({label: "memory", data: memUsed, lines: {show: true}, color: "lightgray"});
     }
 
     for(var i = 1; i < numCpus; ++i) {
@@ -117,6 +119,8 @@
 
       cpuUsed[i].push([currentTime_ms, usedPct])
     }
+
+    memUsed.push([currentTime_ms, data.memory_pct]);
 
     // scroll window
     var num_data = cpuUsed[1].length
@@ -127,6 +131,7 @@
       }
       --num_data;
       dt = currentTime_ms - cpuUsed[1][0][0]
+      memUsed.shift()
     }
 
     if (chart == null) {

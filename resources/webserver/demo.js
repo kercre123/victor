@@ -34,7 +34,7 @@ $(function() {
 var kUpdatePeriod_ms = 200;
 
 var moduleLinks = {
-  Cpu : 'webVizModules/cpu.js'
+  CPU : 'webVizModules/cpu.js'
 }
 
 var modules;
