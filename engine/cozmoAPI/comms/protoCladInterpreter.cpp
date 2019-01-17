@@ -167,10 +167,17 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   
   external_interface::GatewayWrapper proto_message;
 
+  /*
   LOG_WARNING("ron_proto", "Redirect(MG2E(%d, %s))=>proto", 
       (int)message.GetTag(),
       MessageGameToEngineTagToString(message.GetTag()));
-
+  */
+//  ____ _____ ___  ____  _
+// / ___|_   _/ _ \|  _ \| |
+// \___ \ | || | | | |_) | | If you're thinking about processing messages here, you're probably doing
+//  ___) || || |_| |  __/|_| something wrong. G2E messages should never be forwarded to the gateway.
+// |____/ |_| \___/|_|   (_)
+// 
   switch(message.GetTag()) {
     default:
     {
@@ -391,7 +398,13 @@ void ProtoCladInterpreter::CladEnrolledNamesResponseToProto(
   for(auto face=clad_message.Get_EnrolledNamesResponse().faces.begin();
       face!=clad_message.Get_EnrolledNamesResponse().faces.end();
       face++) {
-    enrolled_names_response->add_faces()->set_face_id(face->faceID);
+    Anki::Vector::external_interface::LoadedKnownFace* loaded_known_face = enrolled_names_response->add_faces();
+    loaded_known_face->set_face_id(face->faceID);
+    loaded_known_face->set_seconds_since_first_enrolled(face->secondsSinceFirstEnrolled);
+    loaded_known_face->set_seconds_since_last_updated(face->secondsSinceLastUpdated);
+    loaded_known_face->set_seconds_since_last_seen(face->secondsSinceLastSeen);
+    loaded_known_face->set_last_seen_seconds_since_epoch(face->lastSeenSecondsSinceEpoch);
+    loaded_known_face->set_name(face->name);
   }
   
   proto_message = ExternalMessageRouter::WrapResponse(enrolled_names_response);
