@@ -121,6 +121,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		Modes:     modes,
 	}
 	// todo: possibly not hardcode this?
+	r.Configs = &pb.ImageConfig{}
 	r.Configs.GroupName = "test123"
 
 	client := pb.NewChipperGrpcClient(rpcConn)
