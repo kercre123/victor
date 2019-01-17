@@ -11,10 +11,12 @@ import (
 
 	"anki/ipc"
 	"anki/log"
+	aot "anki/opentracing"
 	"anki/robot"
 	cloud_clad "clad/cloud"
 
 	"github.com/anki/sai-token-service/client/clienthash"
+	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -149,9 +151,14 @@ func (ctm *ClientTokenManager) UpdateTokens() error {
 	if err != nil {
 		return err
 	}
+
+	span, spanContextString := aot.StartCladSpanFromContext(context.Background(), "gw.UpdateTokens")
+	defer span.Finish()
+
 	resp, err := ctm.sendBlock(cloud_clad.NewDocRequestWithRead(&cloud_clad.ReadRequest{
-		Account: id,
-		Thing:   fmt.Sprintf("vic:%s", esn),
+		SpanContext: spanContextString,
+		Account:     id,
+		Thing:       fmt.Sprintf("vic:%s", esn),
 		Items: []cloud_clad.ReadItem{
 			cloud_clad.ReadItem{
 				DocName:      "vic.AppTokens",

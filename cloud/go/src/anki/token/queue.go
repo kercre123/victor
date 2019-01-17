@@ -80,7 +80,7 @@ func (q *tokenQueue) getConnection(creds credentials.PerRPCCredentials) (*conn, 
 // generate a CLAD response for token requests no matter what, and those responses
 // should indicate the stage of the request where an error occurred
 func (q *tokenQueue) handleJwtRequest(req *cloud.JwtRequest) (*cloud.TokenResponse, error) {
-	ctx := aot.ContextFromCladSpan("tokenQueue.handleJwtRequest", req.SpanContext)
+	_, ctx := aot.ContextFromCladSpan(nil, "tokenQueue.handleJwtRequest", req.SpanContext)
 
 	existing := q.identityProvider.GetToken()
 	errorResp := func(code cloud.TokenError) *cloud.TokenResponse {
@@ -125,7 +125,7 @@ func sessionMetadata(sessionToken string) credentials.PerRPCCredentials {
 }
 
 func (q *tokenQueue) handleAuthRequest(req *cloud.AuthRequest) (*cloud.TokenResponse, error) {
-	ctx := aot.ContextFromCladSpan("tokenQueue.handleAuthRequest", req.SpanContext)
+	_, ctx := aot.ContextFromCladSpan(nil, "tokenQueue.handleAuthRequest", req.SpanContext)
 
 	session := req.SessionToken
 	metadata := sessionMetadata(session)
@@ -136,7 +136,7 @@ func (q *tokenQueue) handleAuthRequest(req *cloud.AuthRequest) (*cloud.TokenResp
 }
 
 func (q *tokenQueue) handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest) (*cloud.TokenResponse, error) {
-	ctx := aot.ContextFromCladSpan("tokenQueue.handleSecondaryAuthRequest", req.SpanContext)
+	_, ctx := aot.ContextFromCladSpan(nil, "tokenQueue.handleSecondaryAuthRequest", req.SpanContext)
 
 	existing := q.identityProvider.GetToken()
 	if existing == nil {
@@ -151,7 +151,7 @@ func (q *tokenQueue) handleSecondaryAuthRequest(req *cloud.SecondaryAuthRequest)
 }
 
 func (q *tokenQueue) handleReassociateRequest(req *cloud.ReassociateRequest) (*cloud.TokenResponse, error) {
-	ctx := aot.ContextFromCladSpan("tokenQueue.handleReassociateRequest", req.SpanContext)
+	_, ctx := aot.ContextFromCladSpan(nil, "tokenQueue.handleReassociateRequest", req.SpanContext)
 
 	metadata := sessionMetadata(req.SessionToken)
 	requester := func(c *conn) (*pb.TokenBundle, error) {

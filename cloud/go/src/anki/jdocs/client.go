@@ -3,7 +3,7 @@ package jdocs
 import (
 	"anki/config"
 	"anki/log"
-	"anki/opentracing"
+	aot "anki/opentracing"
 	"anki/token"
 	"anki/util"
 	"clad/cloud"
@@ -32,8 +32,8 @@ func newConn(ctx context.Context, opts *options) (*conn, error) {
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(defaultTLSCert))
-	dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(opentracing.OpenTracer)))
-	dialOpts = append(dialOpts, grpc.WithStreamInterceptor(otgrpc.OpenTracingStreamClientInterceptor(opentracing.OpenTracer)))
+	dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(aot.OpenTracer)))
+	dialOpts = append(dialOpts, grpc.WithStreamInterceptor(otgrpc.OpenTracingStreamClientInterceptor(aot.OpenTracer)))
 	if opts.tokener != nil {
 		creds, err := opts.tokener.Credentials()
 		if err != nil {
@@ -62,11 +62,20 @@ func (c *conn) close() error {
 func (c *conn) handleRequest(ctx context.Context, req *cloud.DocRequest) (*cloud.DocResponse, error) {
 	switch req.Tag() {
 	case cloud.DocRequestTag_Read:
-		return c.readRequest(ctx, req.GetRead())
+		readRequest := req.GetRead()
+		span, newCtx := aot.ContextFromCladSpan(ctx, "cloud.ReadRequest", readRequest.SpanContext)
+		defer span.Finish()
+		return c.readRequest(newCtx, readRequest)
 	case cloud.DocRequestTag_Write:
-		return c.writeRequest(ctx, req.GetWrite())
+		writeRequest := req.GetWrite()
+		span, newCtx := aot.ContextFromCladSpan(ctx, "cloud.WriteRequest", writeRequest.SpanContext)
+		defer span.Finish()
+		return c.writeRequest(newCtx, writeRequest)
 	case cloud.DocRequestTag_DeleteReq:
-		return c.deleteRequest(ctx, req.GetDeleteReq())
+		deleteRequest := req.GetDeleteReq()
+		span, newCtx := aot.ContextFromCladSpan(ctx, "cloud.DeleteRequest", deleteRequest.SpanContext)
+		defer span.Finish()
+		return c.deleteRequest(newCtx, deleteRequest)
 	}
 	err := fmt.Errorf("Major error: received unknown tag %d", req.Tag())
 	log.Println(err)

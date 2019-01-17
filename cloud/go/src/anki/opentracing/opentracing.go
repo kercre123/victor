@@ -33,18 +33,17 @@ func Init() {
 // a string property in a CLAD message.
 // See https://github.com/opentracing/opentracing-go#serializing-to-the-wire
 func StartCladSpanFromContext(ctx context.Context, operationName string) (opentracing.Span, string) {
-
 	var spanContextString string
 	span, _ := opentracing.StartSpanFromContext(ctx, operationName)
 
-	span.SetTag("protocol", "CLAD")
+	ext.SpanKind.Set(serverSpan, "CLAD client")
 
 	err := OpenTracer.Inject(span.Context(), opentracing.Binary, &spanContextString)
 	if err != nil {
 		log.Println("Error injecting span context:", err)
 	}
 
-	log.Printf("StartCladSpanFromContext: span = %q (operation = %q)\n", spanContextString, operationName)
+	log.Printf("StartCladSpanFromContext: span = %q (operation = %q, ctx = %v)\n", spanContextString, operationName, ctx)
 
 	return span, spanContextString
 }
@@ -52,8 +51,8 @@ func StartCladSpanFromContext(ctx context.Context, operationName string) (opentr
 // ContextFromCladSpan de-serializes the SpanContext from the wire (i.e. a CLAD span context
 // string property) and creates a new Span that is added to a new Context that is returned.
 // See https://github.com/opentracing/opentracing-go#deserializing-from-the-wire
-func ContextFromCladSpan(operationName string, spanContextString string) context.Context {
-	log.Printf("ContextFromCladSpan: span = %q (operation = %q)\n", spanContextString, operationName)
+func ContextFromCladSpan(ctx context.Context, operationName string, spanContextString string) (opentracing.Span, context.Context) {
+	log.Printf("ContextFromCladSpan: span = %q (operation = %q, ctx = %v)\n", spanContextString, operationName, ctx)
 
 	var serverSpan opentracing.Span
 	if spanContextString != "" {
@@ -71,7 +70,12 @@ func ContextFromCladSpan(operationName string, spanContextString string) context
 		serverSpan = opentracing.StartSpan(operationName)
 	}
 
-	serverSpan.SetTag("protocol", "CLAD")
+	ext.SpanKind.Set(serverSpan, "CLAD server")
 
-	return opentracing.ContextWithSpan(context.Background(), serverSpan)
+	newCtxt := ctx
+	if newCtxt == nil {
+		newCtxt = context.Background()
+	}
+
+	return serverSpan, opentracing.ContextWithSpan(newCtxt, serverSpan)
 }

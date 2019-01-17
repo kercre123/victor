@@ -319,7 +319,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
 void JdocsManager::DeleteJdocInCloud(const external_interface::JdocType jdocTypeKey)
 {
   const auto& docName = s_JdocsManager->GetJdocName(jdocTypeKey);
-  const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{_userID, _thingID, docName});
+  const auto deleteReq = JDocs::DocRequest::CreatedeleteReq(JDocs::DeleteRequest{"", _userID, _thingID, docName});
   s_JdocsManager->SendJdocsRequest(deleteReq);
 }
 
@@ -1163,7 +1163,7 @@ void JdocsManager::HandleWriteResponse(const JDocs::WriteRequest& writeRequest, 
         // First, we have to actually GET the latest jdoc from the cloud
         std::vector<JDocs::ReadItem> itemsToRequest;
         itemsToRequest.emplace_back(jdoc._jdocName, 0); // 0 means 'get latest'
-        const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{_userID, _thingID, itemsToRequest});
+        const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{"", _userID, _thingID, itemsToRequest});
         SendJdocsRequest(readReq);
         saveToDisk = false; // Let's wait until we're done before writing to disk
       }
@@ -1540,7 +1540,7 @@ void JdocsManager::HandleThingResponse(const JDocs::ThingResponse& thingResponse
       jdoc.second._lastCloudGetTime = epochTimestamp;
     }
 
-    const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{_userID, _thingID, itemsToRequest});
+    const auto readReq = JDocs::DocRequest::Createread(JDocs::ReadRequest{"", _userID, _thingID, itemsToRequest});
     SendJdocsRequest(readReq);
   }
   else
@@ -1644,7 +1644,7 @@ void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocType
   jdocForCloud.metadata   = jdoc.client_metadata();
   jdocForCloud.jsonDoc    = jdoc.json_doc();
 
-  const auto writeReq = JDocs::DocRequest::Createwrite(JDocs::WriteRequest{_userID, _thingID, GetJdocName(jdocTypeKey), jdocForCloud});
+  const auto writeReq = JDocs::DocRequest::Createwrite(JDocs::WriteRequest{"", _userID, _thingID, GetJdocName(jdocTypeKey), jdocForCloud});
   SendJdocsRequest(writeReq);
 }
 

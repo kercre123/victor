@@ -12,6 +12,8 @@ structure Doc {
 }
 
 structure WriteRequest {
+    string spanContext,
+
     string[uint_16] account,
     string[uint_16] thing,
     string[uint_16] docName,
@@ -40,6 +42,8 @@ structure ReadItem {
 }
 
 structure ReadRequest {
+    string spanContext,
+
     string[uint_16] account,
     string[uint_16] thing,
     ReadItem items[uint_16]
@@ -62,6 +66,8 @@ structure ReadResponse {
 }
 
 structure DeleteRequest {
+    string spanContext,
+
     string[uint_16] account,
     string[uint_16] thing,
     string[uint_16] docName
