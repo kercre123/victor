@@ -494,7 +494,11 @@ struct DockingErrorSignal;
     // and takes appropriate action to deal with a lack of images
     void UpdateImageReceivedChecks(bool gotImage);
     
+    void PopulateWebVizJson(Json::Value& data) const;
+    
     Stats _processingStats;
+    bool _processingStatsDirty = false;
+    float _lastWebvizSendTime = 0.0f;
 
   }; // class VisionComponent
   

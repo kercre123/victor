@@ -66,6 +66,9 @@
 #include "util/threading/threadPriority.h"
 #include "util/bitFlags/bitFlags.h"
 
+#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
+
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "proto/external_interface/shared.pb.h"
@@ -171,6 +174,9 @@ namespace Vector {
     u16 kInitialExposureTime_ms = 16;
     
     const char* const kDefaultFaceAlbumName = "default";
+
+    static const char* kWebVizModuleName = "vision";
+    static const float kWebVizStatsSendPeriod_s = 1.0f;
   }
 
   VisionComponent::VisionComponent()
@@ -245,6 +251,26 @@ namespace Vector {
     SetLiftCrossBar();
 
     SetupVisionModeConsoleVars();
+
+    if( context != nullptr ) {
+      auto* webService = context->GetWebService();
+      if( webService != nullptr ) {
+        auto onWebVizSubscribed = [this](const std::function<void(const Json::Value&)>& sendToClient) {
+          // just got a subscription, send now
+          Json::Value data;
+          PopulateWebVizJson(data);
+          sendToClient(data);
+        };
+        _signalHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe(
+                                       onWebVizSubscribed ));
+      }
+    }
+  }
+
+  void VisionComponent::PopulateWebVizJson(Json::Value& data) const
+  {
+    data["local_images"] = _processingStats.numFramesProcessed;
+    data["cloud_images"] = _processingStats.numFramesSentToCloud;
   }
 
   void VisionComponent::ReadVisionConfig(const Json::Value& config)
@@ -1510,7 +1536,7 @@ namespace Vector {
   Result VisionComponent::UpdateProcessingStats(const VisionProcessingResult& procResult)
   {
     // TODO: Define the const lists below elsewhere or use enum_concept
-  
+
     // See if we did anything other than "non-processing" modes
     const std::list<VisionMode> kNonProcessingModes{
       VisionMode::WhiteBalance,
@@ -1523,6 +1549,7 @@ namespace Vector {
     if(!modesProcessed.IsEmpty())
     {
       _processingStats.numFramesProcessed++;
+      _processingStatsDirty = true;
     }
     
     // See if we did any cloud processing
@@ -1535,6 +1562,21 @@ namespace Vector {
     if(modesProcessed.ContainsAnyOf(kCloudModes))
     {
       _processingStats.numFramesSentToCloud++;
+      _processingStatsDirty = true;
+    }
+
+    if( _processingStatsDirty ) {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if( currTime_s > _lastWebvizSendTime + kWebVizStatsSendPeriod_s ) {
+        if( _context ) {
+          if( auto webSender = WebService::WebVizSender::CreateWebVizSender(kWebVizModuleName,
+                                                                            _context->GetWebService()) ) {
+            PopulateWebVizJson(webSender->Data());
+            _processingStatsDirty = false;
+            _lastWebvizSendTime = currTime_s;
+          }
+        }
+      }
     }
     
     return RESULT_OK;

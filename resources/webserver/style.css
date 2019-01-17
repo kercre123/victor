@@ -40,9 +40,10 @@ table {
 
 
 ul.tabs {
+    visibility: hidden;
     list-style: none;
     margin: 0;
     padding: 10px 0px;
     font-size: 14pt;
-    color: lightgray
+    color: lightgray;
 }

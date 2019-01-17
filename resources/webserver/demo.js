@@ -30,7 +30,8 @@ $(function() {
 var kUpdatePeriod_ms = 200;
 
 var moduleLinks = {
-  CPU : 'webVizModules/cpu.js'
+  CPU : 'webVizModules/cpu.js',
+  VISION : 'webVizModules/vision.js',
 }
 
 var modules;
