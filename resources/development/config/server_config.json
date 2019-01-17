@@ -5,5 +5,5 @@
 	"check": "conncheck.global.anki-dev-services.com/ok",
 	"logfiles": "s3://anki-device-logs-dev/victor",
 	"appkey": "xiepae8Ach2eequiphee4U",
-	"box": "chipper-dev-pr-201807.api.anki.com:443"
+	"box": "10.0.0.115:16643"
 }
