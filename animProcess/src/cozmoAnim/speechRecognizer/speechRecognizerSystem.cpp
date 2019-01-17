@@ -230,7 +230,9 @@ SpeechRecognizerSystem::SpeechRecognizerSystem(const AnimContext* context,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpeechRecognizerSystem::~SpeechRecognizerSystem()
 {
-  _victorTrigger->recognizer->Stop();
+  if( _victorTrigger ) {
+    _victorTrigger->recognizer->Stop();
+  }
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
   }
@@ -439,7 +441,7 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
     ApplyLocaleUpdate();
   }
   // Update recognizer
-  if (vadActive) {
+  if (vadActive && _victorTrigger) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
   }
 
@@ -461,7 +463,9 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale newLocale
   // Set local using defualt locale settings
   bool success = false;
   // We always expect to have victorTrigger
-  success = UpdateTriggerForLocale(*_victorTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
+  if( _victorTrigger ) {
+    success = UpdateTriggerForLocale(*_victorTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
+  }
   if (_alexaTrigger) {
     success &= UpdateTriggerForLocale(*_alexaTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
   }
@@ -478,7 +482,7 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(TriggerContext& trigger,
   trigger.nextTriggerPaths = trigger.micTriggerConfig->GetTriggerModelDataPaths(newLocale, modelType, searchFileIndex);
   bool success = false;
   
-  if (!_victorTrigger->nextTriggerPaths.IsValid()) {
+  if (_victorTrigger && !_victorTrigger->nextTriggerPaths.IsValid()) {
     LOG_WARNING("SpeechRecognizerSystem.UpdateTriggerForLocale.NoPathsFoundForLocale",
                 "locale: %s modelType: %d searchFileIndex: %d",
                 newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
