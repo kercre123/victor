@@ -544,7 +544,7 @@ int Sequencer::ComputeBestOctave( const std::vector<Chirp>& chirps )
         }
       }
     }
-    if( outliers < minCount ) {
+    if( outliers < minCount || (outliers == minCount && abs(i) < abs(bestOctave)) ) {
       minCount = outliers;
       bestOctave = i;
     }
