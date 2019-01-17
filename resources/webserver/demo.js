@@ -18,15 +18,16 @@ $(function() {
   console.log('hostname is: ' + hostname);
 
   // get the state names from the console function
-  $.get("consolefunccall?func=TheBoxMoveToState&args=list").success(function(data){
-    data.trim().split(" ").forEach(function(state) {
-      $('#DemoState')
-        .append($("<option></option>")
-                .attr("value",state)
-                .text(state));
-      console.log("adding demo state: " + state);
-    });
-  });
+  $.get({url:"consolefunccall?func=TheBoxMoveToState&args=list",
+         success:(function(data){
+           data.trim().split(" ").forEach(function(state) {
+             $('#DemoState')
+               .append($("<option></option>")
+                       .attr("value",state)
+                       .text(state));
+             console.log("adding demo state: " + state);
+           });
+         })});
 });
 
 
