@@ -76,8 +76,10 @@ target_link_libraries(cti_common_robot
   PUBLIC
   util
   cti_common_clad_cpplite
+  cti_common
   PRIVATE
   opencv_interface
+  ${OPENCV_LIBS}
 )
 
 target_compile_definitions(cti_common_robot

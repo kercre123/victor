@@ -33,6 +33,9 @@
 
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/motorTypes.h"
+#include "coretech/common/robot/imuUKF.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/rotation.h"
 
 #include "util/container/minMaxQueue.h"
 
@@ -56,6 +59,8 @@ namespace Anki {
       namespace {
         // Last read IMU data
         HAL::IMU_DataStructure imu_data_;
+
+        ImuUKF ukf_;
 
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
         Radians rot_ = 0;   // radians
@@ -918,6 +923,13 @@ namespace Anki {
                        accel_robot_frame_filt[2]);
 #endif
 
+
+        ukf_.Update(
+          {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
+          {gyro_[0], gyro_[1], gyro_[2]},
+          curTime
+        );
+
         UpdatePitch();
         UpdateRoll();
 
@@ -1016,8 +1028,15 @@ namespace Anki {
 
       f32 GetRotation()
       {
+        const float rot =  ukf_.GetRotation().GetAngleAroundZaxis().ToFloat();
+        static uint16_t i = 0;
+        if (++i == 1000) {
+          printf("ukf angle: %f      planar angle: %f      error: %f\n", rot, rot_.ToFloat(), rot - rot_.ToFloat());
+          i = 0;
+        }
+        return rot;
         //return _zAngle;  // Computed from 3D orientation tracker (Madgwick filter)
-        return rot_.ToFloat();     // Computed from simplified yaw-only tracker
+        // return rot_.ToFloat();     // Computed from simplified yaw-only tracker
       }
 
       f32 GetRotationSpeed()

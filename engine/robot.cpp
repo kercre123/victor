@@ -983,23 +983,26 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
   
-  {
-    static bool reset = true;
-    if ( reset ) { GetImuComponent().ResetUKF( this->GetPose().GetRotation() ); }
-    reset = false;
+  // {
+  //   static bool reset = true;
+  //   if ( reset ) { GetImuComponent().ResetUKF( this->GetPose().GetRotation() ); }
+  //   reset = false;
 
-    GetImuComponent().AddRawData(
-      {msg.accel.x, msg.accel.y, msg.accel.z},
-      {msg.gyro.x, msg.gyro.y, msg.gyro.z}, 
-      _lastMsgTimestamp
-    );
+  //   GetImuComponent().AddRawData(
+  //     {msg.accel.x, msg.accel.y, msg.accel.z},
+  //     {msg.gyro.x, msg.gyro.y, msg.gyro.z}, 
+  //     _lastMsgTimestamp
+  //   );
 
-    Point3f robotPt = this->GetPose().GetTranslation();    
-    Rotation3d headRot(msg.headAngle, Y_AXIS_3D());
-    // Pose3d pose(GetImuComponent().GetRotation(), robotPt + Point3f{0.f, 0.f, 15.f});
-    Pose3d pose(GetImuComponent().GetRotation() * headRot, robotPt + Point3f{0.f, 0.f, 50.f});
-    this->GetContext()->GetVizManager()->DrawFrameAxes("UKF", pose);
-  }
+  //   Point3f robotPt = this->GetPose().GetTranslation();    
+  //   Rotation3d headRot(msg.headAngle, Y_AXIS_3D());
+  //   const Radians z_rot = GetImuComponent().GetRotation().GetAngleAroundZaxis();
+  //   Pose3d pose(Rotation3d(z_rot, Z_AXIS_3D()), robotPt + Point3f{0.f, 0.f, 15.f});
+
+  //   // Pose3d pose(GetImuComponent().GetRotation(), robotPt + Point3f{0.f, 0.f, 15.f});
+  //   // Pose3d pose(GetImuComponent().GetRotation() * headRot, robotPt + Point3f{0.f, 0.f, 50.f});
+  //   this->GetContext()->GetVizManager()->DrawFrameAxes("UKF", pose);
+  // }
 
   for (auto imuDataFrame : msg.imuData) {
     if (imuDataFrame.timestamp > 0) {

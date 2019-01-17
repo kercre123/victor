@@ -14,7 +14,7 @@
  *
  **/
 
-#include "coretech/common/engine/imuUKF.h"
+#include "coretech/common/robot/imuUKF.h"
 #include "coretech/common/engine/math/matrix_impl.h"
 
 #define StateDim 6
@@ -126,7 +126,7 @@ void ImuUKF::Reset(const Rotation3d& rot) {
   }};
 }
 
-void ImuUKF::Update(const Point3f& accel, const Point3f& gyro, RobotTimeStamp_t t_ms)
+void ImuUKF::Update(const Point3f& accel, const Point3f& gyro, unsigned int t_ms)
 {
   if (_lastMeasurement_ms != 0) {
     // normalize accel since we assume a unit gravity vector
