@@ -23,7 +23,7 @@
 #define error(fmt, ...)  fprintf(stderr, "[E] " fmt"\n", ##__VA_ARGS__)
 #define warn(fmt, ...)  fprintf(stderr, "[W] " fmt"\n", ##__VA_ARGS__)
 
-#define USE_BOTH_SENSORS 1
+#define USE_BOTH_SENSORS 0
 
 using namespace Anki::Cozmo;
 
@@ -76,8 +76,13 @@ namespace {
   // and /dev/stmvl53l1_ranging1 devices
   enum Sensor
   {
+   #if USE_BOTH_SENSORS
    RIGHT = 0,
    LEFT = 1,
+   #else
+   RIGHT = 1,
+   LEFT = 0,
+   #endif
   };
 
   bool _dataUpdatedSinceLastGetCall = false;
@@ -496,9 +501,9 @@ int run_xtalk_calibration(const int dev)
 
   print_xtalk_calibration(calib);
 
-  rc = perform_xtalk_calibration(dev);
+  //rc = perform_xtalk_calibration(dev);
   //return_if_not(rc >= 0, rc, "Xtalk calibration failed: %d %d", rc, errno);
-  bool noXtalk = false;
+  bool noXtalk = true;
   if(rc < 0 && errno == EIO)
   {
     // An error -22 may be issued after calibration if the system failed to find
@@ -635,6 +640,8 @@ int perform_calibration(int dev,
 
   VL53L1_CalibrationData_t calib;
   memset(&calib, 0, sizeof(calib));
+  set_calibration_data(dev, calib);
+  
   rc = get_calibration_data(dev, calib);
   return_if_not(rc >= 0, rc, "1 Get calibration data failed: %d %d", rc, errno);
 
@@ -700,6 +707,17 @@ int offset_correction_mode_set(const int dev, const int mode)
   return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);  
 }
 
+int set_live_crosstalk(const int dev, bool enable)
+{
+  struct stmvl53l1_parameter params;
+
+  params.is_read = 0;
+  params.name = VL53L1_SMUDGECORRECTIONMODE_PAR;
+  params.value = (enable ? VL53L1_SMUDGE_CORRECTION_CONTINUOUS : VL53L1_SMUDGE_CORRECTION_NONE);
+
+  return ioctl(dev, VL53L1_IOCTL_PARAMETER, &params);  
+}
+
 
 /// Setup 4x4 multi-zone imaging
 int setup(Sensor which) {
@@ -726,6 +744,10 @@ int setup(Sensor which) {
   PRINT_NAMED_ERROR("","Switch to multi-zone scanning\n");
   rc = preset_mode_set(fd, VL53L1_PRESETMODE_MULTIZONES_SCANNING);
   return_if_not(rc == 0, -1, "ioctl error setting preset_mode: %d", errno);
+
+  PRINT_NAMED_ERROR("","Enable live xtalk\n");
+  rc = set_live_crosstalk(fd, true);
+  return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
 
   // Setup ROIs
   PRINT_NAMED_ERROR("","Setup ROI grid\n");

@@ -44,6 +44,7 @@ void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
                                _sendRangeData = event.GetData().Get_sendRangeData().enable;
                                if(_sendRangeData)
                                {
+                                 ToFSensor::getInstance()->LoadCalibration(nullptr);
                                  ToFSensor::getInstance()->StartRanging(nullptr);
                                }
                                else

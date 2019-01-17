@@ -427,6 +427,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
                                                  RobotInterface::SendAnimToEngine(std::move(msg));
   };
   GetScreen(ScreenName::ToF)->SetExitScreenAction(exitToFScreen);
+  DISABLE_TIMEOUT(ToF);
 
   
   // Check if we booted in recovery mode
@@ -1714,8 +1715,15 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
   const u32 gridWidth = FACE_DISPLAY_WIDTH / 4;
   for(const auto& rangeData : data.data)
   {
-    const u32 x = (rangeData.roi % 4) * gridWidth;
-    const u32 y = (rangeData.roi / 4) * gridHeight;
+    if(rangeData.roi % 8 <= 3)
+    {
+      continue;
+    }
+
+    int roi = rangeData.roi - ((rangeData.roi / 8)*4) - 4;
+    
+    const u32 x = (roi % 4) * gridWidth;
+    const u32 y = (roi / 4) * gridHeight;
     const Rectangle<f32> rect(x, y, gridWidth-1, gridHeight-1); // -1 for 1 pixel borders
 
     // Assuming max range is 1m
