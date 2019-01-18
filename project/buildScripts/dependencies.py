@@ -352,6 +352,7 @@ def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
     else:
         bin_dest = os.path.join(dest_dir, bin_name)
         shutil.move(bin_file, bin_dest)
+        shutil.rmtree(tmp_dir)
 
 
 def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=False, convert_to_binary=True):
