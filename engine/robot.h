@@ -469,8 +469,10 @@ public:
   // send the request down to the robot
   Result RequestIMU(const u32 length_ms) const;
 
+  // THEBOX
   bool IsBeingShaken() const { return _shakeStartTime_s > 0.f; }
   float HasBeenShakenTimeSec() const { return IsBeingShaken() ? _lastShakenTime_s - _shakeStartTime_s : 0.f; }
+  void ClearDebugScreenMode() { _debugScreenMode = false; }
 
   // ============ IMU Event Handling/Tracking ==============
 
@@ -739,7 +741,7 @@ protected:
 
   int   _touchCount       = 0;
   float _touchStartTime_s = 0.f;
-  bool  _enterPairing     = true;
+  bool  _debugScreenMode  = false;
   bool  _wasTouched       = false;
 
   float _shakeStartTime_s = 0.f;

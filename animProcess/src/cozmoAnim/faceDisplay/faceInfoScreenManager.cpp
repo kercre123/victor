@@ -98,7 +98,9 @@ namespace {
 
   const f32 kWheelMotionThresh_mmps = 3.f;
 
+#if !(THEBOX && ANKI_DEV_CHEATS)
   const f32 kMenuLiftRange_rad = DEG_TO_RAD(45);
+#endif  
   f32 _liftLowestAngle_rad;
   f32 _liftHighestAngle_rad;
 
@@ -129,7 +131,14 @@ namespace {
   // Fake one of several types of button presses. This value will get reset immediately, so to
   // run it again from the web interface, first set it to NoOp
   CONSOLE_VAR_ENUM(int, kFakeButtonPressType, "FaceInfoScreenManager", 0, "NoOp,singlePressDetected,doublePressDetected");
+
+  // Fake a lift raise and lower event for exiting the debug screens
+  CONSOLE_VAR( bool, kFakeRaiseLowerLiftEvent, "FaceInfoScreenManager", false);
 #endif
+
+  // THEBOX
+  // Set this to true when entering the pairing screen. Only clear it when going to None.
+  bool _enteredDebugScreenViaPairing = false;
 }
 
 
@@ -139,7 +148,7 @@ FaceInfoScreenManager::FaceInfoScreenManager()
 , _wheelMovingBackwardsCount(0)
 , _liftTriggerReady(false)
 , _headTriggerReady(false)
-, _debugInfoScreensUnlocked(false)
+, _debugInfoScreensUnlocked(THEBOX)
 , _currScreen(nullptr)
 , _webService(nullptr)
 {
@@ -245,6 +254,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     if (FACTORY_TEST) {
       InitConnectionFlow(_animationStreamer);
     }
+
+    _enteredDebugScreenViaPairing = false;
   };
   auto noneExitFcn = []() {
     // Disable calm mode
@@ -265,6 +276,10 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
 
   // === Pairing screen ===
+  auto pairingEnterFcn = []() {
+    _enteredDebugScreenViaPairing = true;
+  };
+  SET_ENTER_ACTION(Pairing, pairingEnterFcn);
   // Never timeout. Let switchboard handle timeouts.
   DISABLE_TIMEOUT(Pairing);
 
@@ -522,12 +537,17 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   bool currScreenIsDebug = IsDebugScreen(GetCurrScreenName());
   bool currScreenNeedsWait = ScreenNeedsWait(GetCurrScreenName());
   if ((currScreenIsDebug != prevScreenIsDebug) || (currScreenNeedsWait != prevScreenNeedsWait)) {
-    DebugScreenMode msg;
-    msg.isDebug = currScreenIsDebug;
-    msg.needsWait = currScreenNeedsWait;
-    // leaving the mute screen via single press may coincide with the start of a wake word trigger, so don't clear it
-    msg.fromMute = prevScreenWasMute;
-    RobotInterface::SendAnimToEngine(std::move(msg));
+
+    // THEBOX: Only send DebugScreenMode when exiting debug screen
+    //         provided you entered debug screen via Pairing
+    if (_enteredDebugScreenViaPairing && !currScreenIsDebug) {
+      DebugScreenMode msg;
+      msg.isDebug = currScreenIsDebug;
+      msg.needsWait = currScreenNeedsWait;
+      // leaving the mute screen via single press may coincide with the start of a wake word trigger, so don't clear it
+      msg.fromMute = prevScreenWasMute;
+      RobotInterface::SendAnimToEngine(std::move(msg));
+    }
   }
 
 #ifndef SIMULATOR
@@ -952,6 +972,7 @@ void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed,
 #if ANKI_DEV_CHEATS
   if( kFakeButtonPressType == 1 ) { // single press
     singlePressDetected = true;
+    buttonReleasedEvent = true;
     kFakeButtonPressType = 0;
   } else if( kFakeButtonPressType == 2 ) { // double press
     doublePressDetected = true;
@@ -982,7 +1003,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
                       singlePressDetected, 
                       doublePressDetected);
 
-  const bool isOnCharger = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
+  const bool isOnCharger = THEBOX; //static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
 
   const ScreenName currScreenName = GetCurrScreenName();
 
@@ -1084,6 +1105,9 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
   if (_currScreen->HasMenu() || currScreenName == ScreenName::Pairing) {
     // Process lift motion for confirming current menu selection
 
+#if (THEBOX && ANKI_DEV_CHEATS)
+    if (kFakeRaiseLowerLiftEvent) {
+#else
     // Update min/max lift angles and the current range observed
     const auto liftAngle = state.liftAngle;
     if (liftAngle > _liftHighestAngle_rad) {
@@ -1098,6 +1122,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       _liftTriggerReady = true;
     } else if (_liftTriggerReady && 
                (Util::Abs(liftAngle - _liftLowestAngle_rad) < kMenuAngularTriggerThresh_rad)) {
+#endif                 
       // Menu item confirmed. Go to next screen.
       _liftTriggerReady = false;
 
@@ -1108,6 +1133,9 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         RobotInterface::SendAnimToEngine(SwitchboardInterface::ExitPairing());
         SetScreen(ScreenName::Main);
       }
+#if (THEBOX && ANKI_DEV_CHEATS)      
+      kFakeRaiseLowerLiftEvent = false;
+#endif      
     }
   }
   else
@@ -1272,8 +1300,9 @@ void FaceInfoScreenManager::DrawMain()
 void FaceInfoScreenManager::DrawNetwork()
 {
   auto osstate = OSState::getInstance();
-  const std::string ble      = "BLE ID: " + osstate->GetRobotName();
-  const std::string mac      = "MAC: "  + osstate->GetMACAddress();
+  // THEBOX: Removing some items
+  //const std::string ble      = "BLE ID: " + osstate->GetRobotName();
+  //const std::string mac      = "MAC: "  + osstate->GetMACAddress();
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
   std::string ip             = osstate->GetIPAddress();
@@ -1305,21 +1334,34 @@ void FaceInfoScreenManager::DrawNetwork()
 
 #endif
 
-  ColoredTextLines lines = { {ble},
-                             {mac},
-                             {ssid},
+  // Re-arranged lines for THEBOX
+  ColoredTextLines lines = { //{ble},
+                             //{mac},
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
                             // TODO: re-enable after security team has confirmed showing email is allowed
                             //  { {"EMAIL: "}, {"dummy...@a...com"} },
-                             { {"IP: "}, {ip, (osstate->IsValidIPAddress(ip) ? NamedColors::GREEN : NamedColors::RED)} },
+                            // { {"IP: "}, {ip, (osstate->IsValidIPAddress(ip) ? NamedColors::GREEN : NamedColors::RED)} },
                              { },
-                             { {currTime} },
+                             { },
+                             { },
+                             { },
+                             { },
+                             {ssid},                             
                              { {"NETWORK: "}, _testingNetwork ? ColoredText("") : getStatusString(_networkStatus) }
                            };
 #endif
   DrawTextOnScreen(lines);
+
+  // THEBOX: Draw IP largely
+  _scratchDrawingImg->DrawText(
+      {0, 25},
+      ip,
+      osstate->IsValidIPAddress(ip) ? NamedColors::GREEN : NamedColors::RED,
+      1.6f * kDefaultTextScale, // scale
+      10);                      // thickness
+  DrawScratch();
 }
 
 void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)

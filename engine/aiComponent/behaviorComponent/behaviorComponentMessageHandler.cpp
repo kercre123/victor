@@ -173,6 +173,7 @@ void BehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMa
         // Don't clear the trigger if leaving mute since exiting mute allows a trigger word (TODO: VIC-11795 not this)
         const bool clearTrigger = !msg.fromMute;
         OnExitInfoFace(bsm, behaviorsBootLoader, uic, clearTrigger);
+        _robot.ClearDebugScreenMode();
       } else if (msg.needsWait) {
         // If the face is an Alexa face, enter the Wait behavior
         OnEnterInfoFace( bContainer, bsm );
@@ -208,11 +209,6 @@ void BehaviorComponentMessageHandler::OnEnterInfoFace( BehaviorContainer& bConta
   LOG_INFO("BehaviorComponentMessageHandler.OnEnterInfoFace", "");
   ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);
   ANKI_VERIFY(waitBehavior != nullptr, "BehaviorComponentMessageHandler.OnEnterInfoFace.NoWait", "Could not find wait behavior");
-
-  if( THEBOX ) {
-    // our behaviors will handle this
-    return;
-  }
 
   // Return early if already in wait behavior
   if (bsm.GetBaseBehavior() == waitBehavior.get()) {
@@ -255,11 +251,6 @@ void BehaviorComponentMessageHandler::OnExitInfoFace( BehaviorSystemManager& bsm
 
   auto& contComp = _robot.GetAIComponent().GetComponent<ContinuityComponent>();
   contComp.UpdateInfoFace(false);
-
-  if( THEBOX ) {
-    // our behaviors will handle this
-    return;
-  }
 
   // ignore any unclaimed trigger word or intent warnings, if a user said the wake word or a command
   // just prior to accessing a dev screen, unless clearTrigger

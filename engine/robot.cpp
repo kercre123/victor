@@ -945,42 +945,49 @@ void UpdateFaceImageRGBExample(Robot& robot)
 void Robot::ProcessTheBoxTriggers()
 {
   // Enter/Exit pairing trigger vars
-  // Hold on side and tap touch three times in 2 seconds
+  // Hold on side and tap touch three times in 3 seconds
   const int kPairingTouchCount = 3;
-  const float kPairingTouchWindow_s = 2.f;
+  const float kPairingTouchWindow_s = 3.f;
 
   // Capsense touch detection
   const auto& touchComp = GetTouchSensorComponent();
   const bool touched = touchComp.GetIsPressed();
+  const bool touchEvent = touched && !_wasTouched;
 
   // Only trigger if offTread state is OnLeftSide
   const auto offTreadState = GetOffTreadsState();
-  const float now_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();    
-  if (offTreadState != OffTreadsState::OnLeftSide) {
+  const float now_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if (touchEvent) {
+    _touchStartTime_s = now_s;
+  }
+  const bool pairingTouchWindowExpired = now_s - _touchStartTime_s > kPairingTouchWindow_s;
+  if (offTreadState != OffTreadsState::OnLeftSide || pairingTouchWindowExpired) {
     _touchCount = 0;
-  } else if (touched && !_wasTouched) {
-    if (_touchCount == 0 || now_s - _touchStartTime_s > kPairingTouchWindow_s) {
-      _touchStartTime_s = now_s;
-      _touchCount = 1;
-    } else {
-      ++_touchCount;
-      if (_touchCount == kPairingTouchCount) {
-        if (_enterPairing) {
-          LOG_INFO("TheBox.EnterPairing", "");
-          Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
-        } else {
-          LOG_INFO("TheBox.ExitPairing", "");
-          Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
-        }
-        _enterPairing = !_enterPairing;
+  } else if (touchEvent) {
+    ++_touchCount;
+    if (_touchCount == kPairingTouchCount) {
+      if (!_debugScreenMode) {
+        LOG_INFO("TheBox.EnterPairing", "");
+        Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
+        _debugScreenMode = true;
       }
     }
   }
-  _wasTouched = touched;
+  
 
+  // While in pairing / debug
+  if (_debugScreenMode) {
+    if (!_wasTouched && touched) {
+      LOG_INFO("TheBox.NextDebugScreen", "");
+      RobotInterface::SetDebugConsoleVarMessage msg;
+      snprintf((char*)msg.varName.data(), sizeof(msg.varName), "FakeButtonPressType");
+      snprintf((char*)msg.tryValue.data(), sizeof(msg.tryValue), "1"); // single button press
+      SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+    }
+  }
 
   // Shake detect
-  const float kShakeTimeout_s = 1.f;
+  const float kShakeTimeout_s = 0.25f;
   const float kShakeAccelThresh = 16000;
   const bool isShaken = GetHeadAccelMagnitudeFiltered() >= kShakeAccelThresh;
   
@@ -999,11 +1006,21 @@ void Robot::ProcessTheBoxTriggers()
 
   // Shake as an alternative way to exit pairing
   const float kShakeToExitPairingTime_s = 1.f;
-  if (!_enterPairing && HasBeenShakenTimeSec() > kShakeToExitPairingTime_s) {
-    LOG_INFO("TheBox.ExitPairingByShake", "");
-    Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
-    _enterPairing = true;
+  static float lastShakeStartTimeProcessed_s = 0.f;
+  if (_debugScreenMode && 
+      HasBeenShakenTimeSec() > kShakeToExitPairingTime_s &&
+      lastShakeStartTimeProcessed_s != _shakeStartTime_s) {   // Require shaking to stop before processing the next shake
+    
+    LOG_INFO("TheBox.FakeRaiseAndLowerLift", "");
+    RobotInterface::SetDebugConsoleVarMessage msg;
+    snprintf((char*)msg.varName.data(), sizeof(msg.varName), "FakeRaiseLowerLiftEvent");
+    snprintf((char*)msg.tryValue.data(), sizeof(msg.tryValue), "true");
+    SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+
+    lastShakeStartTimeProcessed_s = _shakeStartTime_s;
   }
+
+  _wasTouched = touched;
 }
 
 Result Robot::UpdateFullRobotState(const RobotState& msg)

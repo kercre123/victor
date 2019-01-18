@@ -152,6 +152,10 @@ void SpriteSequenceLoader::LoadSequenceLegacy(Vision::SpriteCache* cache,
   for (auto fileIter = relativeImgNames.begin(); fileIter != relativeImgNames.end(); ++fileIter)
   {
     const std::string& filename = *fileIter;
+    if (filename == ".DS_Store") {
+      continue;
+    }
+
     size_t underscorePos = filename.find_last_of("_");
     size_t dotPos = filename.find_last_of(".");
     if(dotPos == std::string::npos) {
