@@ -6,13 +6,6 @@
   
   myMethods.init = function(elem) {
     // Called once when the module is loaded.
-    $(elem).append('<div id="vision-title">Touch Sensor</div>');
-
-    $('<div class="image-stat-container">' +
-      '<div class="vision-stat-label">Touch Events</div>' +
-      '<span class="vision-stat" id="touchEvents">0</span>' +
-      '</div>').appendTo( elem );
-
   };
 
   myMethods.onData = function(data, elem) {
