@@ -866,6 +866,7 @@ namespace Vector {
     if (_redirectFaceImagesToDebugScreen) {
       Vision::ImageRGB565 debugImg;
       debugImg.SetFromImageRGB(spriteHandle->GetSpriteContentsRGBA());
+      OverlayBackpackLights(debugImg);
       FaceInfoScreenManager::getInstance()->DrawCameraImage(debugImg);
 
       // TODO: Return here or will that screw up stuff on the engine side?
@@ -1328,6 +1329,45 @@ namespace Vector {
   }
 #endif // ANKI_DEV_CHEATS
 
+  void AnimationStreamer::OverlayBackpackLights(Vision::ImageRGB565& faceImg565)
+  {
+#if ANKI_DEV_CHEATS    
+    // Draw backpack lights
+    // Render 4 lights along right side of the screen
+    if (kDisplayBackpackLights) 
+    {
+      s_lastDrawnBackpackLEDState = _context->GetBackpackLightComponent()->GetBackpackLEDState();
+      const u32 kFillRadius = 3;
+      const u32 LED_WIDTH   = 5;
+      const u32 LED_HEIGHT  = 10;
+      const u32 LED_OFFSET  = 10;
+      const u32 LED_SPACING = 4;
+
+      const Point2f pt_system(FACE_DISPLAY_WIDTH-kFillRadius, LED_OFFSET + 0.5 * LED_HEIGHT);
+      faceImg565.DrawFilledCircle(pt_system, s_lastDrawnBackpackLEDState.system, kFillRadius);
+
+      Rectangle<s32> rect_front(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                                LED_OFFSET + LED_HEIGHT + LED_SPACING, 
+                                LED_WIDTH, 
+                                LED_HEIGHT);
+      faceImg565.DrawFilledRect(rect_front, s_lastDrawnBackpackLEDState.front);
+
+      Rectangle<s32> rect_middle(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                                 LED_OFFSET + 2 * (LED_HEIGHT + LED_SPACING), 
+                                 LED_WIDTH, 
+                                 LED_HEIGHT);
+      faceImg565.DrawFilledRect(rect_middle, s_lastDrawnBackpackLEDState.middle);
+
+      Rectangle<s32> rect_back(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                               LED_OFFSET + 3 * (LED_HEIGHT + LED_SPACING), 
+                               LED_WIDTH, 
+                               LED_HEIGHT);
+      faceImg565.DrawFilledRect(rect_back, s_lastDrawnBackpackLEDState.back);
+    }
+#endif    
+  }
+
+
   void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565)
   {
     DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
@@ -1396,39 +1436,8 @@ namespace Vector {
 
     UpdateCaptureFace(faceImg565);
 
-    // Draw backpack lights
-    // Render 4 lights along right side of the screen
-    if (kDisplayBackpackLights) 
-    {
-      s_lastDrawnBackpackLEDState = _context->GetBackpackLightComponent()->GetBackpackLEDState();
-      const u32 kFillRadius = 3;
-      const u32 LED_WIDTH   = 5;
-      const u32 LED_HEIGHT  = 10;
-      const u32 LED_OFFSET  = 10;
-      const u32 LED_SPACING = 4;
-
-      const Point2f pt_system(FACE_DISPLAY_WIDTH-kFillRadius, LED_OFFSET + 0.5 * LED_HEIGHT);
-      faceImg565.DrawFilledCircle(pt_system, s_lastDrawnBackpackLEDState.system, kFillRadius);
-
-      Rectangle<s32> rect_front(FACE_DISPLAY_WIDTH-LED_WIDTH, 
-                                LED_OFFSET + LED_HEIGHT + LED_SPACING, 
-                                LED_WIDTH, 
-                                LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_front, s_lastDrawnBackpackLEDState.front);
-
-      Rectangle<s32> rect_middle(FACE_DISPLAY_WIDTH-LED_WIDTH, 
-                                 LED_OFFSET + 2 * (LED_HEIGHT + LED_SPACING), 
-                                 LED_WIDTH, 
-                                 LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_middle, s_lastDrawnBackpackLEDState.middle);
-
-      Rectangle<s32> rect_back(FACE_DISPLAY_WIDTH-LED_WIDTH, 
-                               LED_OFFSET + 3 * (LED_HEIGHT + LED_SPACING), 
-                               LED_WIDTH, 
-                               LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_back, s_lastDrawnBackpackLEDState.back);
-    }
-
+    OverlayBackpackLights(faceImg565);
+    
     // Display temperature if exceeds threshold
     if (kDisplayHighTemperature)
     {

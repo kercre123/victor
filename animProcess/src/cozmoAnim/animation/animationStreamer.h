@@ -104,6 +104,9 @@ namespace Vector {
     void Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg);
     void Process_playCompositeAnimation(const std::string& name, Tag tag);
 
+    // THEBOX
+    void OverlayBackpackLights(Vision::ImageRGB565& faceImg565);
+
     Result BlankFace();
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
