@@ -17,6 +17,7 @@
 #include "util/logging/DAS.h"
 #include "engine/clad/gateway/switchboard.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "switchboardd/opentracing.h"
 #include <sstream>
 #include <cutils/properties.h>
 
@@ -526,7 +527,7 @@ void RtsHandlerV5::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
   std::string clientName = cloudReq.clientName;
   std::string appId = cloudReq.appId;
 
-  Log::Write("Received cloud session authorization request.", spanContext);
+  Log::Write("Received cloud session authorization request (spanContext=[%s]).", spanContext.c_str());
 
   Anki::Wifi::WiFiState wifiState = Anki::Wifi::GetWiFiState();
 
@@ -538,6 +539,7 @@ void RtsHandlerV5::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
     return;
   }
 
+  auto span = createSpanFromClad("sb.JwtRequest", spanContext);
   std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(spanContext,
     [this, spanContext, sessionToken, clientName, appId](Anki::Vector::TokenError error, std::string jwtToken) {
       bool isPrimary = false;
@@ -589,6 +591,8 @@ void RtsHandlerV5::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
         }
         break;
       }
+
+      // span->Finish();
   });
 
   _tokenClientHandles.push_back(tokenHandle);

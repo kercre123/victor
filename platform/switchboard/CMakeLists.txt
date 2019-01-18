@@ -10,6 +10,12 @@ include(sodium)
 anki_build_cxx_library(switchboard ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(switchboard "ANKI" "CC0,${CMAKE_SOURCE_DIR}/licenses/simple-signal.license")
 
+add_library(opentracing STATIC IMPORTED)
+
+set_target_properties(opentracing PROPERTIES
+  IMPORTED_LOCATION "/home/vangasse/libopentracing.a"
+  INTERFACE_INCLUDE_DIRECTORIES "/home/vangasse/workspace/src/victor/victor/platform/switchboard/opentracing-cpp/include" "/home/vangasse/workspace/src/victor/victor/platform/switchboard/opentracing-cpp/.build/include" "/home/vangasse/workspace/src/victor/victor/platform/switchboard/opentracing-cpp/3rd_party/include")
+
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
@@ -41,6 +47,7 @@ PRIVATE
   util
   victorCrashReports
   anki-ble
+  opentracing
 )
 
 target_compile_options(switchboard
@@ -62,6 +69,9 @@ target_include_directories(switchboard
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cutils>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/anki-wifi>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/signals>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/opentracing-cpp/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/opentracing-cpp/.build/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/opentracing-cpp/3rd_party/include>
   $<BUILD_INTERFACE:${CORETECH_EXTERNAL_DIR}/build/libsodium/vicos/include>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/gio-unix-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/glib-2.0>
