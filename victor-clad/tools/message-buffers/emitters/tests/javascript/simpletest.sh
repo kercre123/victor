@@ -31,6 +31,8 @@ done
 
 clang++ -Wall -std=c++11 clad_test.cpp build/simple/Javascript.cpp ../../../support/cpp/source/SafeMessageBuffer.cpp -I../../../support/cpp/include -o build/simple/cpp_test;
 
+cp cladConfig.js ./build/simple/cladConfig.js
+
 node clad_test.js
 ./build/simple/cpp_test
 
