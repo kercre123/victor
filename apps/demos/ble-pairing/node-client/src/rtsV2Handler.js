@@ -124,7 +124,7 @@ class RtsV2Handler {
       data = this.decrypt(data);
     }
 
-    let comms = new ExternalComms();
+    let comms = new Rts.ExternalComms();
     comms.unpack(data);
 
     if(comms.tag == Rts.ExternalCommsTag.RtsConnection) {
