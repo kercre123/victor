@@ -1945,6 +1945,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
     } else {
       visionModesProcessed.Insert(VisionMode::MirrorMode);
+      visionModesProcessed.Enable(VisionMode::MirrorModeCacheToWhiteboard,
+                                  IsModeEnabled(VisionMode::MirrorModeCacheToWhiteboard));
     }
   }
   

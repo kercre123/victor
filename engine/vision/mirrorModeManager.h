@@ -45,7 +45,7 @@ public:
 private:
   
   Vision::ImageRGB _screenImg;
-  std::list<std::pair<EngineTimeStamp_t, Vision::SalientPoint>> _salientPointsToDraw;
+  std::map<EngineTimeStamp_t, Vision::SalientPoint> _salientPointsToDraw;
   std::array<u8,256> _gammaLUT;
   f32 _currentGamma = 0.f;
   bool _doMirror = true;

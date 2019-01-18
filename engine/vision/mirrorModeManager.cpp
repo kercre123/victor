@@ -60,6 +60,9 @@ namespace {
   CONSOLE_VAR_RANGED(f32, kTheBox_SalientPointAreaFraction_Min, "TheBox.Screen", (f32)(20*20)/(f32)FACE_DISPLAY_NUM_PIXELS, 0.f, 1.f);
   CONSOLE_VAR_RANGED(f32, kTheBox_SalientPointAreaFraction_Max, "TheBox.Screen", 0.8f, 0.f, 1.f);
   
+  // SalientPoints that overlap existing ones by this much or more will not be drawn
+  CONSOLE_VAR_RANGED(f32, kTheBox_SalientPointMaxOverlap, "TheBox.Screen", 0.5f, 0.f, 1.f);
+  
   // Darken edge of the screen to soften it a bit
   CONSOLE_VAR_ENUM(s32, kTheBox_ScreenEdgeVignettingMode, "TheBox.Screen", 1, "Off,Camera,All");
   CONSOLE_VAR_RANGED(s32, kTheBox_ScreenEdgeVignettingDist, "TheBox.Screen", 5, 0, 10);
@@ -375,7 +378,31 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
         pt.y *= DEFAULT_CAMERA_RESOLUTION_HEIGHT;
       }
       
-      _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
+      bool keep = true;
+      if(kTheBox_SalientPointMaxOverlap < 1.f)
+      {
+        // Make sure there's not already a salient point that overlaps this one too much
+        for(const auto& salientPointToDraw : _salientPointsToDraw)
+        {
+          if(salientPointToDraw.second.timestamp == salientPoint.timestamp)
+          {
+            const Rectangle<f32> rect(Poly2f(salientPoint.shape));
+            const Rectangle<f32> rectToDraw(Poly2f(salientPointToDraw.second.shape));
+            if(rect.ComputeOverlapScore(rectToDraw) > kTheBox_SalientPointMaxOverlap)
+            {
+              // Found an existing salient point to draw at the same timestamp that overlaps too much
+              // Don't draw this one
+              keep = false;
+              break;
+            }
+          }
+        }
+      }
+      
+      if(keep)
+      {
+        _salientPointsToDraw.emplace(currentTime_ms, salientPoint);
+      }
     }
   }
   
@@ -504,7 +531,8 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
   }
   
   visionProcResult.mirrorModeImg.SetFromImageRGB(_screenImg, _gammaLUT);
-
+  visionProcResult.mirrorModeImg.SetTimestamp(cameraImg.GetTimestamp());
+  
   return RESULT_OK;
 }
   

@@ -32,6 +32,7 @@
 
 #include "coretech/common/engine/math/rotation.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/engine/image.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -59,6 +60,9 @@ CONSOLE_VAR(float, kAI_MaxExtraExploringCooldown_s, "AIWhiteboard", 800.0f);
 
 // how often to update the actual exploring cooldown (yeah... it's a kind of cooldown cooldown)
 CONSOLE_VAR(float, kExploringCooldownUpdatePeriod_s, "AIWhiteboard", 60.0f);
+
+// How many MirrorMode images to keep 
+CONSOLE_VAR(size_t, kTheBox_MirrorModeImageCacheSize, "TheBox", 50);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
@@ -856,5 +860,43 @@ float AIWhiteboard::GetSecondsSinceLastDelocalization() const
   return (currentTime_sec - _lastDelocalizationTime_sec);
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::AddMirrorModeImage(const Vision::ImageRGB565& img)
+{
+  _boxDemoCameraImages.emplace(img.GetTimestamp(), img);
+  if(_boxDemoCameraImages.size() > kTheBox_MirrorModeImageCacheSize)
+  {
+    _boxDemoCameraImages.erase(_boxDemoCameraImages.begin());
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::GetMirrorModeImage(const TimeStamp_t atTimestamp, Vision::ImageRGB565& img) const
+{
+  auto iter = _boxDemoCameraImages.find(atTimestamp);
+  if(iter == _boxDemoCameraImages.end())
+  {
+    std::string timestampStr;
+    for(const auto& entry : _boxDemoCameraImages)
+    {
+      timestampStr += std::to_string(entry.first) + " ";
+    }
+    
+    LOG_WARNING("AIWhiteboard.GetMirrorModeImage.NoImageForTimestamp", "Requested:%u Have:%s",
+                atTimestamp, timestampStr.c_str());
+    
+    return false;
+  }
+  
+  img = iter->second;
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::GetOldestMirrorModeImage(Vision::ImageRGB565& img) const
+{
+  img = _boxDemoCameraImages.begin()->second;
+}
+
 } // namespace Vector
 } // namespace Anki

@@ -3,7 +3,7 @@
   "behaviorClass": "BoxDemoCountPeople",
   
   "visionRequestTimeout_sec":  10.0,
-  "waitTimeBetweenImages_sec": 1.0
+  "waitTimeBetweenImages_sec": 3.0
 }
 
 

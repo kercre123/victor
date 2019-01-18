@@ -69,6 +69,7 @@ namespace Vector {
     MirrorModeRotate180,         // Displays the mirror mode image rotated 180 degrees (upside down from normal)
     MirrorModeUnmirrored,        // Despite being in "mirror" mode, just display the normal image, unmirrored
     FlipScreenOnCloseFace,       // When face gets "close enough" flip the screen (for TheBox)
+    MirrorModeCacheToWhiteboard, // Create, but don't display the image. Instead cache to AIWhiteboard
     
     Count
   }

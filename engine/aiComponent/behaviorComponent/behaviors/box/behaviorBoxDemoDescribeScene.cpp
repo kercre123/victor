@@ -27,8 +27,6 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 
-#include "opencv2/highgui.hpp"
-
 namespace Anki {
 namespace Vector {
 

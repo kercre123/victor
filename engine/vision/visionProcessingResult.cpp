@@ -71,6 +71,7 @@ TimeStamp_t VisionProcessingResult::ContainsDetectionsForMode(const VisionMode m
       return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::Hand, atTimestamp);
       
     case VisionMode::DetectingPeople:
+    case VisionMode::OffboardPersonDetection:
       return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::Person, atTimestamp);
       
     case VisionMode::ClassifyingPeople:

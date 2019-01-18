@@ -14,6 +14,7 @@
 
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/actions/basicActions.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
@@ -1525,10 +1526,17 @@ namespace Vector {
       }
       
       // Just display the mirror mode image as is, from the processing result
-      const bool kInterruptRunning = false;
-      animComponent.DisplayFaceImage(mirrorModeImg, 
-				     AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, 
-				     kInterruptRunning);
+      if(procResult.modesProcessed.Contains(VisionMode::MirrorModeCacheToWhiteboard))
+      {
+        _robot->GetComponent<AIComponent>().GetComponent<AIWhiteboard>().AddMirrorModeImage(procResult.mirrorModeImg);
+      }
+      else
+      {
+        const bool kInterruptRunning = false;
+        animComponent.DisplayFaceImage(mirrorModeImg,
+                                       AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS,
+                                       kInterruptRunning);
+      }
     }
     return RESULT_OK;
   }

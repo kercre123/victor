@@ -36,6 +36,11 @@
 #include <unordered_map>
 
 namespace Anki {
+  
+namespace Vision {
+  class ImageRGB565;
+}
+
 namespace Vector {
 
 // Forward declarations
@@ -239,6 +244,11 @@ public:
   
   float GetSecondsSinceLastDelocalization() const;
   
+  // Cache MirrorMode images and retrieve them later by timestamp
+  void AddMirrorModeImage(const Vision::ImageRGB565& img);
+  bool GetMirrorModeImage(const TimeStamp_t atTimestamp, Vision::ImageRGB565& img) const;
+  void GetOldestMirrorModeImage(Vision::ImageRGB565& img) const;
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -332,6 +342,7 @@ private:
   float _lastExploringCooldownUpdateTime_s = 0.0f;
   
   std::list<SmartFaceID> _boxDemoFaces;
+  std::map<TimeStamp_t, Vision::ImageRGB565> _boxDemoCameraImages;
 };
   
 

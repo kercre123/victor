@@ -14,6 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorBoxDemoCountPeople__
 #pragma once
 
+#include "coretech/vision/engine/image.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
@@ -35,8 +36,10 @@ protected:
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
-  virtual void OnBehaviorDeactivated() override;
-
+  virtual void BehaviorUpdate() override;
+  
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  
 private:
 
   struct InstanceConfig {
@@ -47,16 +50,22 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    RobotTimeStamp_t lastImageTime_ms = 0;
-    int maxFacesSeen = 0; // during *each* run of this behavior
+    RobotTimeStamp_t startImageTime_ms = 0;
+    bool isWaitingForMotion = false;
+    bool motionObserved = false;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
-  void TransitionToWaitingForPeople();
-  void RespondToAnyPeopleDetected();
+  Vision::ImageRGB565 _dispImg;
   
+  void TransitionToWaitingForMotion();
+  void TransitionToWaitingForPeople();
+  void TransitionToWaitingForCloud();
+  
+  void DrawText3Lines(const std::array<std::string,3>& strings, const ColorRGBA& color);
+  bool DrawSalientPoints(const std::list<Vision::SalientPoint>& salientPoints);
 };
 
 } // namespace Vector

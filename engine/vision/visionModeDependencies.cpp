@@ -31,11 +31,11 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionModeDependencies::VisionModeDependencies()
 {
-  RegisterShouldRunFunction(VisionMode::OffboardPersonDetection,
-                            &VisionModeDependencies::ShouldRunOffboardPersonDetection);
-  
-  RegisterShouldRunFunction(VisionMode::ClassifyingPeople,
-                            &VisionModeDependencies::ShouldRunPersonClassification);
+//  RegisterShouldRunFunction(VisionMode::OffboardPersonDetection,
+//                            &VisionModeDependencies::ShouldRunOffboardPersonDetection);
+//  
+//  RegisterShouldRunFunction(VisionMode::ClassifyingPeople,
+//                            &VisionModeDependencies::ShouldRunPersonClassification);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
