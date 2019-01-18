@@ -1,14 +1,24 @@
-/*  
- * box stats
- */
+/**
+ * File: vision.js
+ *
+ * Author: Brad Neuman
+ * Created: 2019-01-16
+ *
+ * Description: basic webviz display for vision stats from vision component
+ *
+ * Copyright: Anki, Inc. 2019
+ *
+ **/
 
 (function(myMethods, sendData) {
-  
+
   myMethods.init = function(elem) {
     // Called once when the module is loaded.
   };
 
   myMethods.onData = function(data, elem) {
+    // The engine has sent a new json blob.
+
     if(data == null) {
       // TODO:(bn) figure out why this ever happens....
       return;
@@ -20,15 +30,22 @@
       return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    if(data.hasOwnProperty('wakeword_count')) {
-      $('#wakewordEvents').text( numberWithCommas(data['wakeword_count']) );
+    if(data.hasOwnProperty('local_images')) {
+      $('#locallyProcessed').text( numberWithCommas(data['local_images']) );
+    }
+
+    if(data.hasOwnProperty('cloud_images')) {
+      $('#cloudProcessed').text( numberWithCommas(data['cloud_images']) );
     }
   };
 
   myMethods.update = function(dt, elem) { 
+
   };
 
   myMethods.getStyles = function() {
   };
 
 })(moduleMethods, moduleSendDataFunc);
+
+  
