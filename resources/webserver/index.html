@@ -387,12 +387,15 @@
             return;
         }
         var whichCPU = payload.charAt(3);
-        // Parse the first 8 integers out of the line, AFTER the CPU indicator:
+        // Strip off the CPU indicator from start of string, along with space(s):
+        payload = payload.substr(payload.indexOf(' '));
+        payload = payload.trim();
+        // Parse the first 8 integers out of the line:
         var stringValues = payload.split(' ');
         var values = [];
         var totalTime = 0;
         for (var i = 0; i < kNumCPUTimeValues; i++) {
-            var v = parseInt(stringValues[i + 1]);
+            var v = parseInt(stringValues[i]);
             values[i] = v;
             totalTime += v;
         }
