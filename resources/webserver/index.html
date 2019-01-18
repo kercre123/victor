@@ -235,11 +235,17 @@
                 $("#perf_page_disabled").show();
             }
         } else if (pageName == "page_processes") {
-            UpdateProcHeader();
-            $("#proc_page_disabled_webots").hide();
-            if (procAutoUpdate) {
-                // When entering processes page and auto-update is on, do the first update immediately
-                procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+            if (!connectedToWebotsSim) {
+                UpdateProcHeader();
+                $("#proc_page_disabled_webots").hide();
+                if (procAutoUpdate) {
+                    // When entering processes page and auto-update is on, do the first update immediately
+                    procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+                }
+            }
+            else {
+                $("#proc_main_section").hide();
+                $("#proc_page_disabled_webots").show();
             }
         } else if (pageName == "page_engine") {
             if (whichWebServer == whichWebServerEnum.ENGINE) {
