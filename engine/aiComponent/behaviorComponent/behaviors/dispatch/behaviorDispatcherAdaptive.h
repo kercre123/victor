@@ -90,6 +90,8 @@ private:
     DynamicVariables();
     // TODO: put member variables here
     ICozmoBehaviorPtr lastSelectedBehavior;
+    std::string lastSelectedBehaviorStr; // a_t-1
+    State lastState; // s_t-1
   };
 
   InstanceConfig _iConfig;
@@ -97,6 +99,7 @@ private:
 
   State EvaluateState();
   SAValue GetStateActionValue(State s, Action a);
+  void LearningUpdate(State s, Action a, float r);
 };
 
 } // namespace Vector

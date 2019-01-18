@@ -33,6 +33,7 @@ namespace {
   const char* kDefaultBehaviorKey = "defaultBehavior"; // default behavior must wantToBeActivated in all states, and must be interruptable
 
   const float kActionSelectionWeightEpsilon = 0.01f;
+  const float kLearningRate = 0.2f;
   std::mt19937 rng;
 }
   
@@ -43,7 +44,10 @@ BehaviorDispatcherAdaptive::InstanceConfig::InstanceConfig()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDispatcherAdaptive::DynamicVariables::DynamicVariables()
+BehaviorDispatcherAdaptive::DynamicVariables::DynamicVariables():
+  lastSelectedBehavior(nullptr),
+  lastSelectedBehaviorStr(""),
+  lastState(-1)
 {
 }
 
@@ -135,16 +139,16 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
   LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.State",
       "State: %d", state);
 
-  if( (_dVars.lastSelectedBehavior != nullptr) && // not first time running
-      (_dVars.lastSelectedBehavior != _iConfig.defaultBehavior) ){  // if we just came from a non-default behavior)
-
-    // do learning update here?
+  if( (_dVars.lastSelectedBehavior != nullptr) &&  // not first time running
+      (_dVars.lastSelectedBehavior != _iConfig.defaultBehavior) && // if we just came from a non-default behavior)
+      ((_dVars.lastState > 0) && (_dVars.lastSelectedBehaviorStr != "")) ){ // valid learning context
 
     // have to cast the ICozmoBehavior to a IRewardProvider. TODO: a safer way to do this would be nice
     std::shared_ptr<RewardProvidingBehavior> rewardProvider = std::dynamic_pointer_cast<RewardProvidingBehavior>(_dVars.lastSelectedBehavior);
     float lastReward = rewardProvider->GetLastReward();
     LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.LastReward",
                 "reward signal from last action: %f", lastReward);
+    LearningUpdate(_dVars.lastState, _dVars.lastSelectedBehaviorStr, lastReward);
   }
 
   ICozmoBehaviorPtr desiredBehavior;
@@ -154,6 +158,7 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
   {
     // do default action
     desiredBehavior = _iConfig.defaultBehavior;
+    _dVars.lastSelectedBehaviorStr = ""; // kind of a hack, but the default behavior isn't part of the action space for learning purposes.
   } else {
     // if delegates other than Default are available
     // for now, we assume actions are available if the state is non-zero. TODO: something smarter
@@ -173,7 +178,8 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
     // It would probably be more computationally efficient to do this differently in a real implementation.
     // probabilistically select
 
-    desiredBehavior = FindBehavior(_iConfig.actionSpace[idx]);
+    _dVars.lastSelectedBehaviorStr = _iConfig.actionSpace[idx];
+    desiredBehavior = FindBehavior(_dVars.lastSelectedBehaviorStr);
   }
 
   LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.Choice",
@@ -183,6 +189,7 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
     LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.DoesNotWantToBeActivated",
         "desired behavior does not want to be activated. This might go poorly.");
   }
+  _dVars.lastState = state;
   return desiredBehavior;
 }
 
@@ -250,7 +257,7 @@ SAValue BehaviorDispatcherAdaptive::GetStateActionValue(State s, Action a){
     _iConfig.SAVTable[s] = std::map< Action, SAValue >();
     // and issue a warning so we know it happened
     LOG_WARNING("BehaviorDispatcherAdaptive.GetStateActionValue.NewState",
-        "adding new state %d in SAVTable", s);
+        "New state who dis. Adding new state %d in SAVTable.", s);
   }
   auto& Vs = _iConfig.SAVTable[s];
 
@@ -270,7 +277,37 @@ SAValue BehaviorDispatcherAdaptive::GetStateActionValue(State s, Action a){
 }
 
 
-// callback (?)
+// update the state-action value V(s,a) with reward r
+void BehaviorDispatcherAdaptive::LearningUpdate(State s, Action a, float r){
+  // check whether there's an entry for s
+  if (_iConfig.SAVTable.find(s) == _iConfig.SAVTable.end()) {
+    // if not, initialize it
+    _iConfig.SAVTable[s] = std::map< Action, SAValue >();
+    // and issue a warning so we know it happened
+    LOG_WARNING("BehaviorDispatcherAdaptive.LearningUpdate.NewState",
+                "adding new state %d in SAVTable; this shouldn't happen!", s);
+  }
+  auto& Vs = _iConfig.SAVTable[s];
+
+  // check whether there's an entry in V(s,.) for a
+  if (Vs.find(a) == Vs.end()) {
+    // if not, initialize it to neutral reward
+    Vs[a] = RewardProvidingBehavior::kRewardMid;
+    // and issue a warning so we know it happened
+    LOG_WARNING("BehaviorDispatcherAdaptive.LearningUpdate.NewAction",
+                "adding new action %s in SAVTable for state %d. This shouldn't happen!", a.c_str(), s);
+  }
+
+  // not the simplest possible learning rule, but pretty close
+  LOG_WARNING("BehaviorDispatcherAdaptive.LearningUpdate.VsaBefore",
+      "V(%d, %s) before update: %f", s, a.c_str(), Vs[a]);
+  Vs[a] = (1.0-kLearningRate)*Vs[a] + kLearningRate*r;
+  LOG_WARNING("BehaviorDispatcherAdaptive.LearningUpdate.VsaAfter",
+              "V(%d, %s) after update: %f", s, a.c_str(), Vs[a]);
+
+}
+
+
 
 
 }
