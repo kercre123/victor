@@ -8,23 +8,61 @@
 
   "states": [
     {
-      "name": "StartDemo",
+      "name": "BootAnim",
       "behavior": "BoxDemoBoot"
     },
     {
       "name": "PersonDetector",
-      "behavior": "BoxDemoFaceTracking"
+      "behavior": "BoxDemoFaceTracking",
+      "activateIntent": "switch_vision_mode",
+      "dropIntent": true
+    },
+    {
+      "name": "PeopleCounter",
+      "behavior": "BoxDemoCountPeopleBase",
+      "activateIntent": "switch_vision_mode",
+      "dropIntent": true
     }
   ],
 
   "transitionDefinitions": [
     {
-      "from": "StartDemo",
+      "from": "BootAnim",
       "exitTransitions": [
         {
           "to": "PersonDetector",
           "condition": {
             "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "PersonDetector",
+      "interruptingTransitions": [
+        {
+          "to": "PeopleCounter",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "switch_vision_mode"}
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "PeopleCounter",
+      "interruptingTransitions": [
+        {
+          "to": "PersonDetector",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "switch_vision_mode"}
+            ]
           }
         }
       ]

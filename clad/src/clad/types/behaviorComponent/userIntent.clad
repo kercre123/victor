@@ -106,6 +106,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             describe_scene,
   UserIntent_Void             show_mic_data,
   UserIntent_Void             show_ip_address,
+  UserIntent_Void             switch_vision_mode,
 
   // Vector
 

@@ -92,6 +92,7 @@ enum uint_16 BehaviorID {
   BoxDemoBase,
   BoxDemoBoot,
   BoxDemoCountPeople,
+  BoxDemoCountPeopleBase,
   BoxDemoDescribeScene,
   BoxDemoFaceTracking,
   BoxDemoProcessingAnim,
