@@ -298,6 +298,19 @@ $(function() {
       }
     }
   });
+  
+  $('#TheBox_TTSForDescription').change(function() {
+    console.log('set: ' + this.checked);
+    $.post("consolevarset", {key: "TheBox_TTSForDescription", value: this.checked}, function(result){
+      console.log('result: ' + result);
+    });
+  })
+
+  $.post('consolevarget?key=TheBox_TTSForDescription', function(result) {
+    console.log(result);
+    var value = (result.trim() == 'true' || result.trim() == 'true<br>');
+    $('#TheBox_TTSForDescription').prop("checked", value);
+  });
 });
 
 function InitConfirmDialog() {

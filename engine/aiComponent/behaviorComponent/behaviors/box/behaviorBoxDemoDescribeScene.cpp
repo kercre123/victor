@@ -16,6 +16,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/actions/sayTextAction.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoDescribeScene.h"
@@ -47,6 +48,7 @@ namespace
   CONSOLE_VAR(bool, kTheBox_TriggerDescribeSceneOnMove, "TheBox", false);
   
   CONSOLE_VAR_RANGED(float, kTheBox_SceneDescriptionTextScale, "TheBox.Screen", 0.65f, 0.1, 1.f);
+  CONSOLE_VAR(bool, kTheBox_TTSForDescription, "TheBox.Audio", true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -275,8 +277,9 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
     GetBEI().GetAnimationComponent().DisplayFaceImage(dispImg, 0);
 
     const float startTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    
-    DelegateIfInControl(new WaitForLambdaAction([this, startTime_s](Robot& r) {
+
+    CompoundActionParallel* responseAction = new CompoundActionParallel();
+    responseAction->AddAction( new WaitForLambdaAction([this, startTime_s](Robot& r) {
           if( _iConfig.touchAndReleaseCondition->AreConditionsMet(GetBEI()) ) {
             // touch and release done, time to stop the text
             return true;
@@ -294,6 +297,13 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
           const bool timedOut = (currTime_s - startTime_s) > _iConfig.textDisplayTime_sec;
           return timedOut;
         }));
+
+    if( kTheBox_TTSForDescription && !salientPoints.empty() ) {
+      responseAction->AddAction( new SayTextAction(salientPoints.begin()->description, 
+                                                   SayTextAction::AudioTtsProcessingStyle::Unprocessed));
+    }
+    
+    DelegateIfInControl(responseAction);
   }
 }
 
