@@ -16,11 +16,15 @@
     // Called once when the module is loaded.
     $(elem).append('<div id="vision-title">Vision Statistics</div>');
 
-    $('<h3 class="vision-stat" id="locallyProcessed">0</h3>').appendTo( elem );
-    $('<label for="locallyProcessed" class="vision-stat-label">Local Images</label>').appendTo( elem );
+    $('<div class="image-stat-container">' +
+      '<div class="vision-stat-label">Local Images</div>' +
+      '<span class="vision-stat" id="locallyProcessed">0</span>' +
+      '</div>').appendTo( elem );
 
-    $('<h3 class="vision-stat" id="cloudProcessed">0</h3>').appendTo( elem );
-    $('<label for="cloudProcessed" class="vision-stat-label">Cloud Images</label>').appendTo( elem );
+    $('<div class="image-stat-container">' +
+      '<div for="cloudProcessed" class="vision-stat-label">Cloud Images</div>' +
+      '<span class="vision-stat" id="cloudProcessed">0</span>' +
+      '</div>').appendTo( elem );
   };
 
   myMethods.onData = function(data, elem) {
@@ -33,12 +37,16 @@
 
     // console.log(data)
 
+    function numberWithCommas(x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
     if(data.hasOwnProperty('local_images')) {
-      $('#locallyProcessed').text( data['local_images'] );
+      $('#locallyProcessed').text( numberWithCommas(data['local_images']) );
     }
 
     if(data.hasOwnProperty('cloud_images')) {
-      $('#cloudProcessed').text( data['cloud_images'] );
+      $('#cloudProcessed').text( numberWithCommas(data['cloud_images']) );
     }
   };
 
