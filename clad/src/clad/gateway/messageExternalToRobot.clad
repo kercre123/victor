@@ -16,18 +16,6 @@ message MoveLift {
   float_32 speed_rad_per_sec,
 }
 
-message DriveArc {
-  float_32 speed,               // Target speed in mm/sec
-                                // If curvatureRadius_mm == 0, the speed is in rad/s where +ve means CCW rotation.
-  float_32 accel,               // Acceleration to approach target speed in mm/sec^2 (Sign is ignored)
-                                // (or rad/s^2 if curvatureRadius_mm == 0)
-                                // 0: Max acceleration
-  int_16 curvatureRadius_mm     // Radius of arc to drive
-                                // u16_MAX or u16_MIN: Straight
-                                // +ve: curves left, -ve: curves right
-                                // 0: Point turn
-}
-
 // Sends a chunk of oled data, to be later displayed using DisplayFaceImageRGB
 message DisplayFaceImageRGBChunk {
     uint_16  faceData[600], // Splitting into chunks of 600 similar to the e2r layer
@@ -36,10 +24,6 @@ message DisplayFaceImageRGBChunk {
     uint_8   numChunks,
     uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
     bool     interruptRunning,
-}
-
-// Request a status history
-message RobotHistoryRequest {
 }
 
 // ====================================================
@@ -108,15 +92,6 @@ message SetFaceToEnroll {
     bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
 }
 
-enum uint_32 VisionMode {
-    DetectingFaces = 0x01 // TODO: Stop exposing VisionModes directly in the SDK 
-}
-
-message EnableVisionMode {
-   VisionMode mode,
-   bool       enable
-}
-
 // Struct containing all the information relevant to how a 
 // path should be modified or traversed.
 // TODO: Include path wonkification parameters
@@ -132,52 +107,6 @@ structure PathMotionProfile {
     float_32     dockDecel_mmps2 = 500.0,
     float_32     reverseSpeed_mmps = 80.0,
     bool         isCustom = 0
-}
-
-// GotoPose
-message GotoPose {
-  float_32 x_mm,
-  float_32 y_mm,
-  float_32 rad,
-  PathMotionProfile motionProf,
-  uint_8 level,
-}
-
-// DriveStraight
-//  Drives a straight line forward or backward without using the planner.
-message DriveStraight {
-   float_32 speed_mmps,  // Speed should be positive
-   float_32 dist_mm,     // Use +ve for forward, -ve for backward
-   bool shouldPlayAnimation = 1
-}
-
-// TurnInPlace
-// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
-// If isAbsolute != 0, turns to the specified absolute orientation.
-message TurnInPlace {
-    float_32 angle_rad, // relative mode: postive turns left negative turns right
-    float_32 speed_rad_per_sec = 0.0,
-    float_32 accel_rad_per_sec2 = 0.0,
-    float_32 tol_rad = 0.0, // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
-                            // Smaller values are ignored except 0 which is interpreted to mean
-                            // default tolerance of POINT_TURN_ANGLE_TOL.
-    uint_8 isAbsolute       // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
-}
-
-// SetHeadAngle
-message SetHeadAngle {
-    float_32 angle_rad,
-    float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2,
-    float_32 duration_sec
-}
-
-// SetLiftHeight
-message SetLiftHeight {
-    float_32 height_mm,
-    float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2,
-    float_32 duration_sec
 }
 
 enum uint_8 AlignmentType {
@@ -217,8 +146,6 @@ union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
   MoveHead                           MoveHead                           = 0x03,
   MoveLift                           MoveLift                           = 0x04,
-  DriveArc                           DriveArc                           = 0x05,
-  RobotHistoryRequest                RobotHistoryRequest                = 0x06,
   DisplayFaceImageRGBChunk           DisplayFaceImageRGBChunk           = 0x08,
   AppIntent                          AppIntent                          = 0x09,
   CancelFaceEnrollment               CancelFaceEnrollment               = 0x0A,
@@ -227,12 +154,6 @@ union MessageExternalToRobot {
   EraseEnrolledFaceByID              EraseEnrolledFaceByID              = 0x0D,
   EraseAllEnrolledFaces              EraseAllEnrolledFaces              = 0x0E,
   SetFaceToEnroll                    SetFaceToEnroll                    = 0x0F,
-  EnableVisionMode                   EnableVisionMode                   = 0x10,
-  GotoPose                           GotoPose                           = 0x12,
-  DriveStraight                      DriveStraight                      = 0x13,
-  TurnInPlace                        TurnInPlace                        = 0x14,
-  SetHeadAngle                       SetHeadAngle                       = 0x15,
-  SetLiftHeight                      SetLiftHeight                      = 0x16,
   AlignWithObject                    AlignWithObject                    = 0x18,
   SetLiftAngle                       SetLiftAngle                       = 0x19,
   SetMemoryMapBroadcastFrequency_sec SetMemoryMapBroadcastFrequency_sec = 0x21,
@@ -240,4 +161,5 @@ union MessageExternalToRobot {
 
 } // Gateway
 } // Victor
+
 } // Anki
