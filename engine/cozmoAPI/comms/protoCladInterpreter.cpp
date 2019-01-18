@@ -57,12 +57,14 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
   
   ExternalInterface::MessageGameToEngine clad_message;
 
+  /*
   auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
   LOG_WARNING("ron_proto", "ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
       proto_message.oneof_message_type_case(),
       proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
       proto_message.GetMetadata().descriptor->full_name().c_str(),
       MessageGameToEngineTagToString(clad_message.GetTag()));
+  */
 
   switch(proto_message.oneof_message_type_case()) {
     case external_interface::GatewayWrapper::kDriveWheelsRequest:
@@ -115,11 +117,13 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
   
   external_interface::GatewayWrapper proto_message;
 
+  /*
   LOG_WARNING("ron_proto", "Redirect(ME2G(%d, %s)=>proto): %s:%d", 
       (int)message.GetTag(),
       MessageEngineToGameTagToString(message.GetTag()),
       __FILE__, __LINE__
       );
+  */
 
   switch(message.GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::AnimationAvailable:

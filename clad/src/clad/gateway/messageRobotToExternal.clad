@@ -5,23 +5,6 @@ namespace Vector {
 namespace Gateway {
 
 ///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  ANIMATIONS  //////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-// RobotDeletedFixedCustomObjects
-message RobotDeletedFixedCustomObjects {
-}
-
-// RobotDeletedCustomMarkerObjects
-message RobotDeletedCustomMarkerObjects {
-}
-
-// DefinedCustomObject
-message DefinedCustomObject {
-  bool success     // false if the last custom object definition failed (e.g. due to duplicate marker already in use)
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////  MEMORY MAP DATA  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -70,10 +53,6 @@ message MemoryMapMessageEnd
 
 // Note: these values and messages must match the values that get added to MessageEngineToGame
 union MessageRobotToExternal {
-  RobotDeletedFixedCustomObjects    RobotDeletedFixedCustomObjects     = 0x12,
-  RobotDeletedCustomMarkerObjects   RobotDeletedCustomMarkerObjects    = 0x13,
-  //CreatedFixedCustomObject          CreatedFixedCustomObject           = 0x14,
-  DefinedCustomObject               DefinedCustomObject                = 0x15,
   MemoryMapMessageBegin             MemoryMapMessageBegin              = 0x16,
   MemoryMapMessage                  MemoryMapMessage                   = 0x17,
   MemoryMapMessageEnd               MemoryMapMessageEnd                = 0x18,
