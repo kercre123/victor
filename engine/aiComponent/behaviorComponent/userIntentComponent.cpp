@@ -92,19 +92,31 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
   auto triggerWordCallback = [this]( const AnkiEvent<RobotInterface::RobotToEngine>& event ){
     const auto& twd = event.GetData().Get_triggerWordDetected();
     const bool willStream = twd.willOpenStream;
-    const bool muteEdgeCase = twd.fromMute;
-    SetTriggerWordPending(willStream, muteEdgeCase);
 
-    HandleTriggerWordEventForDas(event.GetData().Get_triggerWordDetected());
+    if( willStream ) {
+      ++_numWakeWords;
+      if (_context != nullptr) {
+        if( auto webSender = WebService::WebVizSender::CreateWebVizSender("box",
+                                                                          _context->GetWebService()) ) {
+          PopulateWebVizJson_box(webSender->Data());
+        }
+      }
+    }
+    
+    // ignore trigger word for the box except for stats, we don't want a listening behavior we just want
+    // streaming lights and a response
+    if( !THEBOX ) {
+
+      const bool muteEdgeCase = twd.fromMute;
+      SetTriggerWordPending(willStream, muteEdgeCase);
+      
+      HandleTriggerWordEventForDas(event.GetData().Get_triggerWordDetected());
+    }
   };
 
-  // ignore trigger word for the box, we don't want a listening behavior we just want streaming lights and a
-  // response
-  if( !THEBOX ) {
-    if( robot.GetRobotMessageHandler() != nullptr ) {
-      _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
-                                                                          triggerWordCallback ) );
-    }
+  if( robot.GetRobotMessageHandler() != nullptr ) {
+    _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
+                                                                        triggerWordCallback ) );
   }
 
   // setup app intent handler
@@ -120,6 +132,26 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
 
   SetupConsoleFuncs();
 
+  
+  if( _context != nullptr ) {
+    auto* webService = _context->GetWebService();
+    if( webService != nullptr ) {
+      auto onWebVizSubscribed = [this](const std::function<void(const Json::Value&)>& sendToClient) {
+        // just got a subscription, send now
+        Json::Value data;
+        PopulateWebVizJson_box(data);
+        sendToClient(data);
+      };
+      _eventHandles.emplace_back( webService->OnWebVizSubscribed( "box" ).ScopedSubscribe(
+                                    onWebVizSubscribed ));
+    }
+  }
+
+}
+
+void UserIntentComponent::PopulateWebVizJson_box(Json::Value& data) const
+{
+  data["wakeword_count"] = _numWakeWords;
 }
 
 UserIntentComponent::~UserIntentComponent()

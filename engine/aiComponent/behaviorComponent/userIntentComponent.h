@@ -284,6 +284,8 @@ private:
   std::string GetServerName(const Robot& robot) const;
   
   void SendWebVizIntents();
+
+  void PopulateWebVizJson_box(Json::Value& data) const;
   
   void SetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source);
   void SetUserIntentPending(UserIntent&& userIntent, const UserIntentSource& source);
@@ -364,6 +366,8 @@ private:
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 
   std::unordered_set<std::string> _disableTriggerWordNames;
+
+  int _numWakeWords = 0; // stats tracking for the box
 
   // Keep track of who has requested to disable streaming-after-wakeword
   struct TriggerWordResponseEntry{
