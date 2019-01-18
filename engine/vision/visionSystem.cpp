@@ -117,7 +117,7 @@ CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 
 CONSOLE_VAR_RANGED(f32, kFakeHandDetectionProbability, "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
-CONSOLE_VAR_RANGED(f32, kPersonClassificationProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
+CONSOLE_VAR_RANGED(f32, kFakePersonClassificationProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
 
@@ -1284,10 +1284,15 @@ void VisionSystem::CheckForNeuralNetResults()
       
       if(THEBOX && (networkName == kOffboardFaceRecognitionNetworkName))
       {
-        _faceMetaDataStorage->Update(_currentResult.salientPoints,
-                                     neuralNetRunner->GetOrigImg().GetNumRows(),
-                                     neuralNetRunner->GetOrigImg().GetNumCols());
-        
+        if(!_currentResult.salientPoints.empty())
+        {
+          PRINT_CH_INFO("NeuralNets", "VisionSystem.CheckForNeuralNetResults.GotFaceRecognitionResult",
+                        "First SalientPoint: %s", _currentResult.salientPoints.front().description.c_str());
+          
+          _faceMetaDataStorage->Update(_currentResult.salientPoints,
+                                       neuralNetRunner->GetOrigImg().GetNumRows(),
+                                       neuralNetRunner->GetOrigImg().GetNumCols());
+        }
         _currentResult.modesProcessed.Insert(VisionMode::OffboardFaceRecognition);
         continue;
       }
@@ -1350,7 +1355,7 @@ void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::s
   if(Util::IsFltGTZero(kFakeHandDetectionProbability) ||
      Util::IsFltGTZero(kFakeCatDetectionProbability) ||
      Util::IsFltGTZero(kFakeDogDetectionProbability) ||
-     Util::IsFltGTZero(kPersonClassificationProbability))
+     Util::IsFltGTZero(kFakePersonClassificationProbability))
   {
     std::vector<Vision::SalientPointType> fakeDetectionsToAdd;
     for(auto & mode : modes)
@@ -1370,7 +1375,7 @@ void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::s
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Dog);
       }
-      if((VisionMode::ClassifyingPeople == mode) && (rng.RandDbl() < kPersonClassificationProbability))
+      if((VisionMode::ClassifyingPeople == mode) && (rng.RandDbl() < kFakePersonClassificationProbability))
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::PersonPresent);
       }
@@ -1758,17 +1763,21 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     std::list<Vision::TrackedFace> facesToUpdate;
     for(auto& face : _currentResult.faces)
     {
-      // NOTE: this will update "face" with meta data if available
-      const bool hasMetaData = _faceMetaDataStorage->GetMetaData(face);
-      //PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.FaceMetaDataCheck", "ID:%d", face.GetID()); // Very verbose
-      if(!hasMetaData)
+      // Wait until faces are locally "enrolled", not just tracked
+      if(face.GetID() > 0)
       {
-        facesToUpdate.emplace_back(face);
-      }
-      else
-      {
-        PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.GotFaceMetaData", "ID:%d Name:%s Age:%u",
-                       face.GetID(), face.GetName().c_str(), face.GetAge());
+        // NOTE: this will update "face" with meta data if available
+        const bool hasMetaData = _faceMetaDataStorage->GetMetaData(face);
+        //PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.FaceMetaDataCheck", "ID:%d", face.GetID()); // Very verbose
+        if(!hasMetaData)
+        {
+          facesToUpdate.emplace_back(face);
+        }
+        else
+        {
+          PRINT_CH_INFO("NeuralNets", "VisionSystem.Update.GotFaceMetaData", "ID:%d Name:%s Age:%u",
+                        face.GetID(), face.GetName().c_str(), face.GetAge());
+        }
       }
     }
     
@@ -1783,6 +1792,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         // results come back from the neural net
         for(const auto& face : facesToUpdate)
         {
+          PRINT_CH_INFO("NeuralNets", "VisionSystem.Update.WillUpdateMetaData", "ForFace:%d", face.GetID());
           _faceMetaDataStorage->SetFaceBeingProcessed(face);
         }
       }

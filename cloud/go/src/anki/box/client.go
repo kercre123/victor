@@ -53,6 +53,8 @@ func (c *client) handleConn(ctx context.Context) {
 				log.Println("Error packing box response:", err)
 			} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
 				log.Println("Error sending box response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
+			} else {
+				log.Println("Sent %d bytes to engine", n)
 			}
 		}
 	}
@@ -109,6 +111,8 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 			modes = append(modes, pb.ImageMode_DESCRIBE_SCENE)
 		case vision.OffboardProcType_ObjectDetection:
 			modes = append(modes, pb.ImageMode_LOCATE_OBJECT)
+		case vision.OffboardProcType_FaceRecognition:
+			modes = append(modes, pb.ImageMode_IDENTIFY_FACE)
 		}
 	}
 
@@ -120,6 +124,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		ImageData: fileData,
 		Modes:     modes,
 	}
+	
 	// todo: possibly not hardcode this?
 	r.Configs = &pb.ImageConfig{}
 	r.Configs.GroupName = "test123"
@@ -141,6 +146,8 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 			resp.ProcType = vision.OffboardProcType_SceneDescription
 		case pb.ImageMode_LOCATE_OBJECT:
 			resp.ProcType = vision.OffboardProcType_ObjectDetection
+		case pb.ImageMode_IDENTIFY_FACE:
+			resp.ProcType = vision.OffboardProcType_FaceRecognition
 		}
 		resps = append(resps, resp)
 	}

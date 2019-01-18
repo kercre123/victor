@@ -194,8 +194,6 @@
         "useGrayscale"        : 0,
         "inputWidth"          : 640,
         "inputHeight"         : 360,
-        "inputScale"          : 1, // Scaling performed by the network
-        "inputShift"          : 0, //    "
         "minScore"            : 0.5,
         "verbose"             : 0,
         "pollPeriod_ms"       : 10,
@@ -205,8 +203,8 @@
       {
         "modelType"           : "offboard",
         "networkName"         : "offboard_face_recognition",
-        "graphFile"           : "CelebrityFace", // One of OffboardProcType (TODO: Support multiple)
-        "commsType"           : "FileIO",
+        "graphFile"           : "FaceRecognition", // One of OffboardProcType (TODO: Support multiple)
+        "commsType"           : "CLAD",
         "labelsFile"          : "hand-labels.txt",
         "architecture"        : "custom",
         "inputLayerName"      : "input",
@@ -214,10 +212,8 @@
         "outputType"          : "classification",
         "useFloatInput"       : 0,
         "useGrayscale"        : 0,
-        "inputWidth"          : 256,
-        "inputHeight"         : 256,
-        "inputScale"          : 1, // Scaling performed by the network
-        "inputShift"          : 0, //    "
+        "inputWidth"          : 640,
+        "inputHeight"         : 360,
         "minScore"            : 0.5,
         "verbose"             : 0,
         "pollPeriod_ms"       : 10,
@@ -228,7 +224,7 @@
         "modelType"           : "offboard",
         "networkName"         : "offboard_person_detection",
         "graphFile"           : "ObjectDetection", // One of OffboardProcType (TODO: Support multiple)
-        "commsType"           : "FileIO",
+        "commsType"           : "CLAD",
         "labelsFile"          : "hand-labels.txt",
         "architecture"        : "custom",
         "inputLayerName"      : "input",
@@ -238,8 +234,6 @@
         "useGrayscale"        : 0,
         "inputWidth"          : 640,
         "inputHeight"         : 360,
-        "inputScale"          : 1, // Scaling performed by the network
-        "inputShift"          : 0, //    "
         "minScore"            : 0.5,
         "verbose"             : 0,
         "pollPeriod_ms"       : 10,

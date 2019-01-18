@@ -4,6 +4,7 @@
 #include "engine/vision/faceMetaDataStorage.h"
 #include "util/console/consoleInterface.h"
 #include "util/string/stringUtils.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Vector {
@@ -21,11 +22,30 @@ CONSOLE_VAR(f32, kTheBox_MinFaceOverlapScore, "TheBox.Faces", 0.25);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 FaceMetaDataStorage::MetaData::MetaData(const Json::Value& json)
 {
-  const char* kNameKey = "name";
-  const char* kAgeKey  = "age";
+  const char* kNameKey    = "name";
+  const char* kAgeKey     = "age";
+  const char* kEmotionKey = "emotion";
   
   JsonTools::GetValueOptional(json, kNameKey, name);
   JsonTools::GetValueOptional(json, kAgeKey, age);
+  
+  if(json.isMember(kEmotionKey))
+  {
+    const Json::Value& emotionJson = json[kEmotionKey];
+    using Expr_t = std::underlying_type<Vision::FacialExpression>::type;
+    const Expr_t N = Util::EnumToUnderlying(Vision::FacialExpression::Count);
+    for(Expr_t i=0; i<N; ++i)
+    {
+      const Vision::FacialExpression expression = (Vision::FacialExpression)i;
+      f32 emotionScore = 0.f;
+      std::string key(EnumToString(expression));
+      key[0] = std::tolower(key[0]); // Our enum values have a capitalized first letter. Json keys do not.
+      if(JsonTools::GetValueOptional(emotionJson, key, emotionScore))
+      {
+        expressionValues[expression] = std::round(255.f * emotionScore); // Ours are u8, Json's are [0,1] float
+      }
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -34,6 +54,12 @@ void FaceMetaDataStorage::OnUpdatedID(const Vision::FaceID_t oldID, const Vision
   auto iter = _data.find(oldID);
   if(iter != _data.end())
   {
+    if(DEBUG_FACE_METADATA)
+    {
+      LOG_INFO("FaceMetaDataStorage.OnUpdatedID.UpdatingID", "OldID:%d NewID:%d (%s)",
+               oldID, newID, Util::HidePersonallyIdentifiableInfo(iter->second.name.c_str()));
+    }
+    
     _data[newID] = iter->second;
     _data.erase(oldID);
   }
@@ -60,6 +86,11 @@ bool FaceMetaDataStorage::GetMetaData(Vision::TrackedFace& forFace) const
     forFace.SetAge(metaData.age);
   }
   
+  for(const auto& expressionValue : metaData.expressionValues)
+  {
+    forFace.SetExpressionValue(expressionValue.first, expressionValue.second);
+  }
+
   return true;
 }
 
@@ -114,15 +145,9 @@ void FaceMetaDataStorage::Update(const std::list<Vision::SalientPoint>& salientP
     }
     
     if(matchingSalientPoint != nullptr)
-    {
-      // Assume the description field is a Json string containing the meta data
-      // Need to unescape the quotes though:
-      std::string metaDataString(matchingSalientPoint->description);
-      Util::StringReplace(metaDataString, "\\\"", "\""); // Replace '\"' with '"'
-      Util::StringReplace(metaDataString, "\\", "\\\\"); // Replace '\' with '\\'
-      
+    {      
       Json::Value jsonMetaData;
-      const bool success = reader.parse(metaDataString, jsonMetaData);
+      const bool success = reader.parse(matchingSalientPoint->description, jsonMetaData);
       if(!success)
       {
         LOG_ERROR("FaceMetaDataStorage.Update.FailedToParseSalientPointDescription", "");

@@ -110,6 +110,8 @@ Result OffboardModel::Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoi
   salientPoints.clear();
   
   _imageTimestamp = img.GetTimestamp();
+  _imageRows = img.GetNumRows();
+  _imageCols = img.GetNumCols();
   
   switch(_commsType)
   {
@@ -324,7 +326,19 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
         const bool parseSuccess = reader.parse(resultReadyMsg.jsonResult, detectionResult);
         if(parseSuccess)
         {
-          LOG_INFO("OffboardModel.WaitForResultCLAD.ParsedMessageJson", "");
+          std::string keys;
+          if(detectionResult.isArray())
+          {
+            keys = "<array>";
+          }
+          else
+          {
+            for(const auto& key : detectionResult.getMemberNames())
+            {
+              keys += key + " ";
+            }
+          }
+          LOG_INFO("OffboardModel.WaitForResultCLAD.ParsedMessageJson", "Keys:%s", keys.c_str());
           const Result parseResult = ParseSalientPointsFromJson(detectionResult, resultReadyMsg.procType, salientPoints);
           resultAvailable |= (parseResult == RESULT_OK);
         }
@@ -349,6 +363,9 @@ Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& detectionRes
       
     case Vision::OffboardProcType::ObjectDetection:
       return ParseObjectDetectionsFromJson(detectionResult, salientPoints);
+      
+    case Vision::OffboardProcType::FaceRecognition:
+      return ParseFaceDataFromJson(detectionResult, salientPoints);
       
     default:
     {
@@ -467,68 +484,239 @@ Result OffboardModel::ParseSceneDescriptionFromJson(const Json::Value& jsonSalie
 Result OffboardModel::ParseObjectDetectionsFromJson(const Json::Value& jsonSalientPoints,
                                                     std::list<Vision::SalientPoint>& salientPoints)
 {
-  if(jsonSalientPoints.isMember("objects"))
+  // Assume this Json structure:
+  //
+  //  {"objects": [
+  //    {
+  //      "name": "Person",
+  //      "score": 0.9962483,
+  //      "bounding_poly": [
+  //        {"x":0.01023531, "y":0.0017647222},
+  //        {"x":0.89, "y":0.0017647222},
+  //        ...
+  //      ]
+  //    }
+  //  ]}
+  
+  if(!jsonSalientPoints.isMember("objects"))
   {
-    const Json::Value& objectsJson = jsonSalientPoints["objects"];
-    if(ANKI_VERIFY(objectsJson.isArray(), "OffboardModel.ParseObjectDetectionsFromJson.ExpectingObjectsArray", ""))
+    LOG_ERROR("OffboardModel.ParseObjectDetectionsFromJson.MissingObjects", "");
+    return RESULT_FAIL;
+  }
+    
+  const Json::Value& objectsJson = jsonSalientPoints["objects"];
+  if(!objectsJson.isArray())
+  {
+    LOG_ERROR("OffboardModel.ParseObjectDetectionsFromJson.ExpectingObjectsArray", "");
+    return RESULT_FAIL;
+  }
+  
+  for(const auto& objectJson : objectsJson)
+  {
+    if(!objectJson.isMember("name") || !objectJson.isMember("bounding_poly"))
     {
-      for(const auto& objectJson : objectsJson)
+      LOG_ERROR("OffboardModel.ParseObjectDetectionsFromJson.MissingNameOrBoundingPoly", "");
+      continue;
+    }
+  
+    const std::string& name = objectJson["name"].asString();
+    
+    Vision::SalientPoint salientPoint(_imageTimestamp,
+                                      0.5f, 0.5f,
+                                      0.f, 1.f,
+                                      Vision::SalientPointType::Unknown,
+                                      name,
+                                      {}, 0);
+    
+    if(name == "Person" || name == "Man" || name == "Woman")
+    {
+      salientPoint.salientType = Vision::SalientPointType::Person;
+    }
+    // TODO: Handle other object types
+    
+    Point2f center(0.f, 0.f);
+    const Json::Value& polyJson = objectJson["bounding_poly"];
+    for(const auto& pointJson : polyJson)
+    {
+      if(ANKI_VERIFY(pointJson.isMember("x") && pointJson.isMember("y"),
+                     "OffboardModel.ParseObjectDetectionsFromJson.ExpectingXandY", ""))
       {
-        if(objectJson.isMember("name") && objectJson.isMember("bounding_poly"))
-        {
-          const std::string& name = objectJson["name"].asString();
-          
-          Vision::SalientPoint salientPoint(_imageTimestamp,
-                                            0.5f, 0.5f,
-                                            0.f, 1.f,
-                                            Vision::SalientPointType::Unknown,
-                                            name,
-                                            {}, 0);
-          
-          if(name == "Person")
-          {
-            salientPoint.salientType = Vision::SalientPointType::Person;
-          }
-          // TODO: Handle other object types
-          
-          Point2f center(0.f, 0.f);
-          const Json::Value& polyJson = objectJson["bounding_poly"];
-          for(const auto& pointJson : polyJson)
-          {
-            if(ANKI_VERIFY(pointJson.isMember("x") && pointJson.isMember("y"),
-                           "OffboardModel.ParseObjectDetectionsFromJson.ExpectingXandY", ""))
-            {
-              const Point2f point(pointJson["x"].asFloat(), pointJson["y"].asFloat());
-              center += point;
-              salientPoint.shape.emplace_back(point.ToCladPoint2d());
-            }
-          }
-          
-          if(!salientPoint.shape.empty())
-          {
-            // center contains a sum at this point: make it an average and store in SalientPoint
-            center *= 1.f / (float)salientPoint.shape.size();
-            salientPoint.x_img = center.x();
-            salientPoint.y_img = center.y();
-            
-            // For now, just using the bounding rectangle area as the area fraction
-            // TODO: Something more accurate (area of poly)
-            Rectangle<f32> boundingBox(Poly2f(salientPoint.shape));
-            salientPoint.area_fraction = boundingBox.Area();
-          }
-          
-          // Not the end of the world if we don't get a score, so make it optional
-          JsonTools::GetValueOptional(objectJson, "Score", salientPoint.score);
-          
-          salientPoints.emplace_back(std::move(salientPoint));
-        }
+        const Point2f point(pointJson["x"].asFloat(), pointJson["y"].asFloat());
+        center += point;
+        salientPoint.shape.emplace_back(point.ToCladPoint2d());
       }
     }
+    
+    if(!salientPoint.shape.empty())
+    {
+      // center contains a sum at this point: make it an average and store in SalientPoint
+      center *= 1.f / (float)salientPoint.shape.size();
+      salientPoint.x_img = center.x();
+      salientPoint.y_img = center.y();
+      
+      // For now, just using the bounding rectangle area as the area fraction
+      // TODO: Something more accurate (area of poly)
+      Rectangle<f32> boundingBox(Poly2f(salientPoint.shape));
+      salientPoint.area_fraction = boundingBox.Area();
+    }
+    
+    // Not the end of the world if we don't get a score, so make it optional
+    JsonTools::GetValueOptional(objectJson, "score", salientPoint.score);
+    
+    LOG_INFO("OffboardModel.ParseObjectDetectionsFromJson.FoundSalientPoint",
+             "Type:%s Name:%s", EnumToString(salientPoint.salientType), salientPoint.description.c_str());
+    
+    salientPoints.emplace_back(std::move(salientPoint));
   }
   
   return RESULT_OK;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result OffboardModel::ParseFaceDataFromJson(const Json::Value& resultArray,
+                                            std::list<Vision::SalientPoint>& salientPoints)
+{
+  // Assumes this Json structure:
+  //  [
+  //    {
+  //      "face_id":"1ddbd1d6-730f-47ce-bcac-a7a2954cbf45",
+  //      "raw_face_result": {
+  //        "faceId": "1ddbd1d6-730f-47ce-bcac-a7a2954cbf45",
+  //        "faceRectangle": {
+  //          "width":193,
+  //          "height":193,
+  //          "left":298,
+  //          "top":102
+  //        },
+  //        "faceAttributes": {
+  //          "age": 33,
+  //          "gender": "male",
+  //          "emotion": {
+  //            "anger":0,
+  //            "contempt":0,
+  //            "disgust":0,
+  //            "fear":0,
+  //            "happiness":1,
+  //            "neutral":0,
+  //            "sadness":0,
+  //            "surprise":0
+  //          },
+  //        }
+  //      }
+  //      "candidates": [
+  //        {
+  //          "person_name": "test-brad",
+  //          "person_id":"9e2cd8b6-e433-4de6-a81b-081e5e6fcdd2",
+  //          "confidence":0.62241
+  //        }
+  //      ]
+  //    }
+  //  ]
+  
+  if(!resultArray.isArray())
+  {
+    LOG_ERROR("OffboardModel.ParseFaceDataFromJson.ExpectingArray", "");
+    return RESULT_FAIL;
+  }
+  
+  for(const Json::Value& result : resultArray)
+  {
+    if(!result.isMember("raw_face_result"))
+    {
+      LOG_ERROR("OffboardModel.ParseFaceDataFromJson.MissingRawFaceResult", "");
+      return RESULT_FAIL;
+    }
+    
+    const Json::Value& rawFaceResultJson = result["raw_face_result"];
+    if(!rawFaceResultJson.isMember("faceRectangle"))
+    {
+      LOG_ERROR("OffboardModel.ParseFaceDataFromJson.MissingFaceRectangle", "");
+      return RESULT_FAIL;
+    }
+    
+    const Json::Value& faceRectJson = rawFaceResultJson["faceRectangle"];
+    if(!faceRectJson.isMember("width") || !faceRectJson.isMember("height") ||
+       !faceRectJson.isMember("left")  || !faceRectJson.isMember("top"))
+    {
+      LOG_ERROR("OffboardModel.ParseFaceDataFromJson.BadFaceRectangle", "");
+      return RESULT_FAIL;
+    }
+    
+    if(!rawFaceResultJson.isMember("faceAttributes"))
+    {
+      LOG_ERROR("OffboardModel.ParseFaceDataFromJson.MissingFaceAttributes", "");
+      return RESULT_FAIL;
+    }
+    
+    // NOTE: Microsoft endpoint does not send back normalized coordinates!
+    const f32 x = faceRectJson["left"].asFloat() / (f32)_imageCols;
+    const f32 y = faceRectJson["top"].asFloat() / (f32)_imageRows;
+    const f32 w = faceRectJson["width"].asFloat() / (f32)_imageCols;
+    const f32 h = faceRectJson["height"].asFloat() / (f32)_imageRows;
+    const Rectangle<f32> faceRect(x, y, w, h);
+    
+    const Json::Value& faceAttrJson = rawFaceResultJson["faceAttributes"];
+    Json::Value descriptionJson;
+    if(faceAttrJson.isMember("age"))
+    {
+      descriptionJson["age"] = faceAttrJson["age"];
+    }
+    if(faceAttrJson.isMember("emotion"))
+    {
+      descriptionJson["emotion"] = faceAttrJson["emotion"];
+    }
+    
+    Vision::SalientPoint salientPoint(_imageTimestamp,
+                                      faceRect.GetXmid(), faceRect.GetYmid(),
+                                      0.f, faceRect.Area(),
+                                      Vision::SalientPointType::Face,
+                                      "",
+                                      Poly2f(faceRect).ToCladPoint2dVector(), 0);
+    
+    if(result.isMember("candidates"))
+    {
+      const Json::Value& candidatesJson = result["candidates"];
+      if(!candidatesJson.isNull())
+      {
+        if(!candidatesJson.isArray())
+        {
+          LOG_ERROR("OffboardModel.ParseFaceDataFromJson.CandidatesNotArray", "");
+          continue;
+        }
+        
+        for(const auto& candidateJson : candidatesJson)
+        {
+          if(!candidateJson.isMember("confidence"))
+          {
+            LOG_ERROR("OffboardModel.ParseFaceDataFromJson.MissingCandidateConfidence", "");
+            continue;
+          }
+          
+          if(!candidateJson.isMember("person_name"))
+          {
+            LOG_ERROR("OffboardModel.ParseFaceDataFromJson.MissingCandidateName", "");
+            continue;
+          }
+          
+          const f32 score = candidateJson["confidence"].asFloat();
+          if(score > salientPoint.score)
+          {
+            salientPoint.score = score;
+            descriptionJson["name"] = candidateJson["person_name"];
+          }
+        }
+      }
+    }
+    
+    // Take all the description data and stuff it into the description string as Json
+    Json::FastWriter writer;
+    salientPoint.description = writer.write(descriptionJson);
+    
+    salientPoints.emplace_back(std::move(salientPoint));
+  }
+  return RESULT_OK;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool OffboardModel::Connect()
 {

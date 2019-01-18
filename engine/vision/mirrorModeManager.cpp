@@ -55,6 +55,10 @@ namespace {
   // Set to true to only draw salient points that are expected to produced localized results
   CONSOLE_VAR(bool, kTheBox_OnlyDrawLocalizableSalientPoints, "TheBox.Screen", true);
   
+  // SalientPoints must have at least (at most) this as their area fraction to be drawn
+  CONSOLE_VAR_RANGED(f32, kTheBox_SalientPointAreaFraction_Min, "TheBox.Screen", (f32)(20*20)/(f32)FACE_DISPLAY_NUM_PIXELS, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kTheBox_SalientPointAreaFraction_Max, "TheBox.Screen", 0.8f, 0.f, 1.f);
+  
   // Darken edge of the screen to soften it a bit
   CONSOLE_VAR_ENUM(s32, kTheBox_ScreenEdgeVignettingMode, "TheBox.Screen", 1, "Off,Camera,All");
   CONSOLE_VAR_RANGED(s32, kTheBox_ScreenEdgeVignettingDist, "TheBox.Screen", 5, 0, 10);
@@ -200,7 +204,23 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
     ColorRGBA color = NamedColors::RED;
     if(kTheBox_ColorFacesBasedOnID)
     {
-      color = ColorRGBA::CreateFromColorIndex((u32)faceDetection.GetID());
+      static const std::vector<ColorRGBA> kPalette{
+        {(u8)250,  50,  37},
+        {(u8)250, 150,  44},
+        {(u8)250, 250,  80},
+        {(u8)105, 175,  60},
+        {(u8) 23,  77, 250},
+        {(u8)105, 175,  60},
+        {(u8)130,  20, 170},
+        {(u8)250,  90,  36},
+        {(u8)250, 190,  50},
+        {(u8)215, 230,  70},
+        {(u8) 30, 145, 200},
+        {(u8) 60,  20, 160},
+        {(u8)165,  30,  75},
+      };
+      
+      color = kPalette.at(faceDetection.GetID() % kPalette.size());
     }
     else if (faceDetection.HasEyes())
     {
@@ -246,6 +266,14 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
         if(faceDetection.GetAge() > 0)
         {
           dispName += ": " + std::to_string(faceDetection.GetAge());
+        }
+        
+        const Vision::FacialExpression expression = faceDetection.GetMaxExpression();
+        if(Vision::FacialExpression::Unknown != expression)
+        {
+          dispName += " (";
+          dispName += EnumToString(expression);
+          dispName += ")";
         }
         
         const Point2f position{1.f, _screenImg.GetNumRows()-1-(numDisplayFaces-faceLine)*(fontSize.y()+1)};
@@ -316,6 +344,13 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
     {
       const Vision::SalientPointType salientType = salientPoint_norm.salientType;
       if(kTheBox_OnlyDrawLocalizableSalientPoints && !Vision::IsSalientPointTypeLocalized(salientType, false))
+      {
+        continue;
+      }
+      
+      if(!Util::InRange(salientPoint_norm.area_fraction,
+                        kTheBox_SalientPointAreaFraction_Min,
+                        kTheBox_SalientPointAreaFraction_Max))
       {
         continue;
       }

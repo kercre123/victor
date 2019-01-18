@@ -15,6 +15,7 @@
 #define __Anki_Vector_Engine_Vision_FaceMetaDataStorage_H__
 
 #include "clad/types/salientPointTypes.h"
+#include "clad/types/facialExpressions.h"
 #include "coretech/common/engine/math/rect.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/faceIdTypes.h"
@@ -58,7 +59,9 @@ private:
     std::string name;
     u32 age = 0;
     
-    MetaData() = default;
+    std::map<Vision::FacialExpression, u8> expressionValues;
+    
+    MetaData() : expressionValues{} { }
     MetaData(const Json::Value& json);
   };
   

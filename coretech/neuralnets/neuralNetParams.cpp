@@ -79,13 +79,7 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
   {
     GetFromConfig(visualizationDirectory);
   }
-  
-  if(config[JsonKeys::ModelType].asString() != JsonKeys::OffboardModelType)
-  {
-    // TODO: move other keys here?
-    GetFromConfig(memoryMapGraph);
-  }
-  
+
   if("ssd_mobilenet" == architecture)
   {
     inputLayerName = "image_tensor";
@@ -148,11 +142,16 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
              inputLayerName.c_str(), outputNames.c_str());
   }
   
-  if(useFloatInput)
+  if(config[JsonKeys::ModelType].asString() != JsonKeys::OffboardModelType)
   {
-    // NOTE: Only used when processing in floating point
-    GetFromConfig(inputShift);
-    GetFromConfig(inputScale);
+    GetFromConfig(memoryMapGraph);
+    
+    if(useFloatInput)
+    {
+      // NOTE: Only used when processing in floating point
+      GetFromConfig(inputShift);
+      GetFromConfig(inputScale);
+    }
   }
   
   if(OutputType::Classification == outputType)

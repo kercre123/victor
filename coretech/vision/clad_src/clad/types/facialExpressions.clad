@@ -7,16 +7,22 @@ namespace Vision {
 
 enum int_8 FacialExpression
 {
-		Unknown = -1,    // e.g. expression estimation disabled
+  Unknown = -1,    // e.g. expression estimation disabled
 
-		Neutral = 0,
-		Happiness,
-		Surprise,
-		Anger,
-		Sadness,
-		
-		Count
+  // OKAO supports these
+  Neutral = 0,
+  Happiness,
+  Surprise,
+  Anger,
+  Sadness,
+
+  // Microsoft Cloud adds these
+  Contempt,
+  Disgust,
+  Fear,
+
+  Count
 }
-      
+
 } // namespace Vision
 } // namespace Anki

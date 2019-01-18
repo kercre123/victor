@@ -56,11 +56,16 @@ private:
   Result ParseObjectDetectionsFromJson(const Json::Value& jsonSalientPoints,
                                        std::list<Vision::SalientPoint>& salientPoints);
   
+  Result ParseFaceDataFromJson(const Json::Value& jsonSalientPoints,
+                               std::list<Vision::SalientPoint>& salientPoints);
+  
   std::string _cachePath;
   int         _pollPeriod_ms;
   bool        _isVerbose = false;
   float       _timeoutDuration_sec = 10.f;
   TimeStamp_t _imageTimestamp = 0;
+  s32         _imageRows = 0;
+  s32         _imageCols = 0;
   
   Vision::OffboardCommsType _commsType = Vision::OffboardCommsType::FileIO;
   std::vector<Vision::OffboardProcType> _procTypes;

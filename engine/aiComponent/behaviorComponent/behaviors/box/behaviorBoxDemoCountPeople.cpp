@@ -143,5 +143,11 @@ void BehaviorBoxDemoCountPeople::RespondToAnyPeopleDetected()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBoxDemoCountPeople::OnBehaviorDeactivated()
+{
+  GetBEI().GetVisionComponent().SetMirrorModeDisplayString("", NamedColors::BLACK);
+}
+  
 }
 }
