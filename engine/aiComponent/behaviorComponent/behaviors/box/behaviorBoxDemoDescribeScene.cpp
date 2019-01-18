@@ -37,6 +37,8 @@ namespace ConfigKeys
   const char* const kVisionTimeout   = "visionRequestTimeout_sec";
 }
   
+CONSOLE_VAR(bool, kTheBox_TTSForDescription, "TheBox.Audio", true);
+
 namespace
 {
   const UserIntentTag kUserIntent = USER_INTENT(describe_scene);
@@ -46,7 +48,6 @@ namespace
   CONSOLE_VAR(bool, kTheBox_TriggerDescribeSceneOnMove, "TheBox", false);
   
   CONSOLE_VAR_RANGED(float, kTheBox_SceneDescriptionTextScale, "TheBox.Screen", 0.65f, 0.1, 1.f);
-  CONSOLE_VAR(bool, kTheBox_TTSForDescription, "TheBox.Audio", true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

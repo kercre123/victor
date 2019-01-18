@@ -13,13 +13,18 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoShowNetworkInfo.h"
 
+#include "engine/actions/sayTextAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
+#include "util/console/consoleInterface.h"
+#include "osState/osState.h"
 
 namespace Anki {
 namespace Vector {
-  
+
+CONSOLE_VAR_EXTERN(bool, kTheBox_TTSForDescription);
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBoxDemoShowNetworkInfo::BehaviorBoxDemoShowNetworkInfo(const Json::Value& config)
@@ -57,6 +62,14 @@ void BehaviorBoxDemoShowNetworkInfo::OnBehaviorActivated()
 
   const bool enable = true;
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableNetworkScreen( enable )));
+
+  if( kTheBox_TTSForDescription ) {
+    const bool updateIP = true;
+    const std::string& ip = OSState::getInstance()->GetIPAddress(updateIP);
+    if( !ip.empty() ) {
+      DelegateIfInControl(new SayTextAction(ip, SayTextAction::AudioTtsProcessingStyle::Unprocessed));
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
