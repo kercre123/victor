@@ -3,6 +3,7 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/appToEngineHandler.h"
+#include "engine/cozmoAPI/comms/protoCladInterpreter.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
@@ -47,6 +48,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _perfMetric(new PerfMetric(this))
   , _webService(new WebService::WebService())
   , _appToEngineHandler( new AppToEngineHandler() )
+  , _protoCladInterpreter( new ProtoCladInterpreter(this) )
 {
   //_gameLogTransferTask->Init(_transferQueueMgr.get());
   _appToEngineHandler->Init( _webService.get(), _externalInterface );
