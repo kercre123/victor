@@ -40,6 +40,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/stats/statsAccumulator.h"
 
 #include <thread>
 #include <mutex>
@@ -334,6 +335,7 @@ struct DockingErrorSignal;
     {
       s32 numFramesProcessed = 0;
       s32 numFramesSentToCloud = 0;
+      Util::Stats::StatsAccumulator avgFaceAge;
     };
     const Stats& GetProcessingStats() const { return _processingStats; }
     

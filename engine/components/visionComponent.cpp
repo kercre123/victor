@@ -272,6 +272,9 @@ namespace Vector {
   {
     data["local_images"] = _processingStats.numFramesProcessed;
     data["cloud_images"] = _processingStats.numFramesSentToCloud;
+    if( _processingStats.avgFaceAge.GetNum() > 0 ) {
+      data["avg_face_age"] = _processingStats.avgFaceAge.GetMean();
+    }
   }
 
   void VisionComponent::ReadVisionConfig(const Json::Value& config)
@@ -1571,6 +1574,15 @@ namespace Vector {
     {
       _processingStats.numFramesSentToCloud++;
       _processingStatsDirty = true;
+    }
+
+    for( const auto& face : procResult.faces ) {
+      const u32 age = face.GetAge();
+      if( age > 0 & age < 120 ) {
+        // average over each detection (face per frame)
+        _processingStats.avgFaceAge += age;
+        _processingStatsDirty = true;
+      }
     }
 
     if( _processingStatsDirty ) {
