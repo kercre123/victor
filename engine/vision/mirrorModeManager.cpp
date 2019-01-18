@@ -29,7 +29,9 @@ namespace {
   // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
   // and in mirror mode (at specified scale)
   CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,           "Vision.MirrorMode", 0.f, 0.f, 1.f);
-  CONSOLE_VAR(bool,        kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
+  CONSOLE_VAR(bool,        kDisplayMarkersInMirrorMode,        "Vision.MirrorMode", true);
+  CONSOLE_VAR(bool,        kDisplayFacesInMirrorMode,          "Vision.MirrorMode", true);
+  CONSOLE_VAR(bool,        kDisplaySalientPointsInMirrorMode,  "Vision.MirrorMode", false);
   CONSOLE_VAR(bool,        kDisplayExposureInMirrorMode,       "Vision.MirrorMode", false);
   CONSOLE_VAR(bool,        kDisplayFaceNamesInMirrorMode,      "Vision.MirrorMode", true);
   CONSOLE_VAR(f32,         kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
@@ -491,10 +493,16 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
     cv::flip(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), 1);
   }
   
-  if(kDisplayDetectionsInMirrorMode)
+  if(kDisplayMarkersInMirrorMode)
   {
     DrawVisionMarkers(visionProcResult.observedMarkers);
+  }
+
+  if( kDisplayFacesInMirrorMode ) {
     DrawFaces(visionProcResult.faces);
+  }
+
+  if( kDisplaySalientPointsInMirrorMode ) {
     DrawSalientPoints(visionProcResult);
   }
   
