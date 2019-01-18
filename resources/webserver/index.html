@@ -382,8 +382,14 @@
 
     // http://www.linuxhowtos.org/System/procstat.htm
     function CPUTimeInfo(payload, itemIndex) {
+        if (payload.length < 4) {
+            // Do nothing if CPU time info not ready
+            return;
+        }
         var whichCPU = payload.charAt(3);
-        payload = payload.substring(5); // Strip cpu name and space(s)
+        // Strip off the CPU indicator from start of string, along with space(s):
+        payload = payload.substr(payload.indexOf(' '));
+        payload = payload.trim();
         // Parse the first 8 integers out of the line:
         var stringValues = payload.split(' ');
         var values = [];
