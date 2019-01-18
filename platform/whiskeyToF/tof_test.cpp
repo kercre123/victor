@@ -289,12 +289,33 @@ int get_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
   return rc;
 }
 
+int get_zone_calibration_data(const int dev, stmvl531_zone_calibration_data_t& calib)
+{
+  stmvl53l1_ioctl_zone_calibration_data_t calibData;
+  calibData.is_read = 1;
+  int rc = ioctl(dev, VL53L1_IOCTL_ZONE_CALIBRATION_DATA, &calibData);
+  if(rc >= 0)
+  {
+    calib = calibData.data;
+  }
+  return rc;
+}
+
+
 int set_calibration_data(const int dev, VL53L1_CalibrationData_t& calib)
 {
   struct stmvl53l1_ioctl_calibration_data_t calibData;
   calibData.data = calib;
   calibData.is_read = 0;
   return ioctl(dev, VL53L1_IOCTL_CALIBRATION_DATA, &calibData);
+}
+
+int set_zone_calibration_data(const int dev, stmvl531_zone_calibration_data_t& calib)
+{
+  struct stmvl53l1_ioctl_zone_calibration_data_t calibData;
+  calibData.data = calib;
+  calibData.is_read = 0;
+  return ioctl(dev, VL53L1_IOCTL_ZONE_CALIBRATION_DATA, &calibData);
 }
 
 int save_calibration_to_disk(VL53L1_CalibrationData_t& calib,
@@ -331,6 +352,53 @@ int load_calibration_from_disk(VL53L1_CalibrationData_t& calib,
   }
   return rc;
 }
+
+int save_zone_calibration_to_disk(stmvl531_zone_calibration_data_t& calib,
+                                  int dev,
+                                  std::string meta,
+                                  std::string path)
+{
+  PRINT_NAMED_ERROR("","SAVING %u %u %u", dev, tofR_fd, tofL_fd);
+  char buf[128];
+  sprintf(buf, "%stofZone_%s%s.bin", path.c_str(), (dev == tofR_fd ? "right" : "left"), meta.c_str());
+  PRINT_NAMED_ERROR("","%s", buf);
+  int rc = -1;
+  FILE* f = fopen(buf, "w+");
+  if(f != nullptr)
+  {
+    rc = fwrite(&calib, sizeof(calib), 1, f);
+    (void)fclose(f);
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("","FAILED TO OPEN FILE %u", errno);
+  }
+  return rc;
+
+}
+
+int save_zone_calibration_to_disk(stmvl531_zone_calibration_data_t& calib,
+                                  int dev,
+                                  std::string meta = "")
+{
+  return 0;
+  // (void)save_zone_calibration_to_disk(calib, dev, meta, _logPath);
+  // return save_zone_calibration_to_disk(calib, dev, meta, "/factory/");
+}
+
+int load_zone_calibration_from_disk(stmvl531_zone_calibration_data_t& calib,
+                                    const std::string& path)
+{
+  int rc = -1;
+  FILE* f = fopen(path.c_str(), "r");
+  if(f != nullptr)
+  {
+    rc = fread(&calib, sizeof(calib), 1, f);
+    (void)fclose(f);
+  }
+  return rc;
+}
+
 
 void print_offset_calibration(const VL53L1_CalibrationData_t& calib)
 {
@@ -661,6 +729,44 @@ int perform_calibration(int dev,
   return rc;
 }
 
+void load_calibration()
+{
+  PRINT_NAMED_ERROR("","Load calibration");
+
+  VL53L1_CalibrationData_t calib;
+  memset(&calib, 0, sizeof(calib));
+  int rc = load_calibration_from_disk(calib, "/factory/tof_right.bin");
+  if(rc < 0)
+  {
+    PRINT_NAMED_ERROR("","Failed to load tof calibration");
+  }
+  else
+  {
+    rc = set_calibration_data(tofR_fd, calib);
+    if(rc < 0)
+    {
+      PRINT_NAMED_ERROR("","Failed to set tof calibration");
+    }
+  }
+
+  stmvl531_zone_calibration_data_t calibZone;
+  memset(&calibZone, 0, sizeof(calibZone));
+  rc = load_zone_calibration_from_disk(calibZone, "/factory/tofZone_right.bin");
+  if(rc < 0)
+  {
+    PRINT_NAMED_ERROR("","Failed to load tof calibration");
+  }
+  else
+  {
+    rc = set_zone_calibration_data(tofR_fd, calibZone);
+    if(rc < 0)
+    {
+      PRINT_NAMED_ERROR("","Failed to set tof calibration");
+    }
+  }          
+}
+
+
 CommandResult run_calibration(uint32_t distanceToTarget_mm,
                               float targetReflectance)
 {
@@ -734,6 +840,8 @@ int setup(Sensor which) {
   memset(origCalib, 0, sizeof(*origCalib));
   rc = get_calibration_data(fd, *origCalib);
   return_if_not(rc == 0, -1, "ioctl error getting calibration: %d", errno);
+
+  load_calibration();
   
   // Have the device reset when ranging is stopped
   PRINT_NAMED_ERROR("","reset on stop\n");
