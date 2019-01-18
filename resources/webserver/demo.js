@@ -1,5 +1,6 @@
 var hostname = "";  // (Effectively, the device IP)
 var host = "";      // hostname and port (e.g. "192.168.42.82:8888")
+var useFakeData = false;
 
 $(function() {
   InitConfirmDialog();
@@ -13,17 +14,33 @@ $(function() {
   console.log('host is: ' + host);
   console.log('hostname is: ' + hostname);
 
-  // get the state names from the console function
-  $.get({url:"consolefunccall?func=TheBoxMoveToState&args=list",
-         success:(function(data){
-           data.trim().split(" ").forEach(function(state) {
-             $('#DemoState')
-               .append($("<option></option>")
-                       .attr("value",state)
-                       .text(state));
-             console.log("adding demo state: " + state);
-           });
-         })});
+  if( useFakeData ) {
+    $('#DemoState')
+      .append($("<option></option>")
+              .attr("value","Init")
+              .text("Init"));
+    $('#DemoState')
+      .append($("<option></option>")
+              .attr("value","FaceRecognition")
+              .text("FaceRecognition"));
+    $('#DemoState')
+      .append($("<option></option>")
+              .attr("value","PersonDetection")
+              .text("PersonDetection"));
+  }
+  else {
+    // get the state names from the console function
+    $.get({url:"consolefunccall?func=TheBoxMoveToState&args=list",
+           success:(function(data){
+             data.trim().split(" ").forEach(function(state) {
+               $('#DemoState')
+                 .append($("<option></option>")
+                         .attr("value",state)
+                         .text(state));
+               console.log("adding demo state: " + state);
+             });
+           })});
+  }
 });
 
 
@@ -110,6 +127,9 @@ var onNewData = function(moduleName, data) {
 var socket;
 var subscribedModules = [];
 function setupSocket() {
+  if( useFakeData ) {
+    return;
+  }
   if( typeof socket !== 'undefined' ) {
     console.log('no socket defined!');
     return;
@@ -272,45 +292,76 @@ $(function(){
   }
   loadJS(moduleIndex, onModuleLoad, document.body);
 
+  if(useFakeData) {
+    setTimeout(function(){
+      console.log('faking');
+
+      for( var i=0; i<5; i++ ) {
+        modules['cpu'].onData({deltaTime_ms: 1000,
+                               memory_pct: 17,
+                               usage: [
+                                 "CPU 37740971 0 22626410 287529678 0 0 0 0 0 0",
+                                 "CPU0 7205923 0 5617109 30676771 0 0 0 0 0 0",
+                                 "CPU1 2542401 0 1277374 39665541 0 0 0 0 0 0",
+                                 "CPU2 6783991 0 3956787 32744714 0 0 0 0 0 0",
+                                 "CPU3 2562949 0 1298010 39624304 0 0 0 0 0 0"
+                               ]},
+                              false);
+      }
+    }, 500);
+
+    $('#avgAge').text( "28.50" );
+  }
+
 });
 
 $(function() {
   $('#MasterVolumeLevel').selectmenu({
     create: function(event, ui) {
-      $.post('consolevarget?key=MasterVolumeLevel', function(result) {
-        var value = parseInt(result);
-        $('#MasterVolumeLevel').prop("selectedIndex", value).selectmenu('refresh');
-      });
+      if( !useFakeData ) {
+        $.post('consolevarget?key=MasterVolumeLevel', function(result) {
+          var value = parseInt(result);
+          $('#MasterVolumeLevel').prop("selectedIndex", value).selectmenu('refresh');
+        });
+      }
     },
     change: function(event, data) {
-      $.post("consolevarset", {key: "MasterVolumeLevel", value: data.item.index}, function(result) {
-        $.post("consolefunccall", {func: "DebugSetMasterVolume", args: ""}, function(result) {});
-      });
+      if( !useFakeData ) {
+        $.post("consolevarset", {key: "MasterVolumeLevel", value: data.item.index}, function(result) {
+          $.post("consolefunccall", {func: "DebugSetMasterVolume", args: ""}, function(result) {});
+        });
+      }
     }
   });
   $('#DemoState').selectmenu({
     change: function(event, data) {
       if(data.item.value) {
-        $.post("consolefunccall", {func: "TheBoxMoveToState", args: data.item.value}, function(result){
-          // go back to none after sending
-          $('#DemoState').prop("selectedIndex", "none").selectmenu('refresh');
-        });
+        if( !useFakeData ) {
+          $.post("consolefunccall", {func: "TheBoxMoveToState", args: data.item.value}, function(result){
+            // go back to none after sending
+            $('#DemoState').prop("selectedIndex", "none").selectmenu('refresh');
+          });
+        }
       }
     }
   });
   
   $('#TheBox_TTSForDescription').change(function() {
     console.log('set: ' + this.checked);
-    $.post("consolevarset", {key: "TheBox_TTSForDescription", value: this.checked}, function(result){
-      console.log('result: ' + result);
-    });
+    if( !useFakeData ) {
+      $.post("consolevarset", {key: "TheBox_TTSForDescription", value: this.checked}, function(result){
+        console.log('result: ' + result);
+      });
+    }
   })
 
-  $.post('consolevarget?key=TheBox_TTSForDescription', function(result) {
-    console.log(result);
-    var value = (result.trim() == 'true' || result.trim() == 'true<br>');
-    $('#TheBox_TTSForDescription').prop("checked", value);
-  });
+  if( !useFakeData ) {
+    $.post('consolevarget?key=TheBox_TTSForDescription', function(result) {
+      console.log(result);
+      var value = (result.trim() == 'true' || result.trim() == 'true<br>');
+      $('#TheBox_TTSForDescription').prop("checked", value);
+    });
+  }
 });
 
 function InitConfirmDialog() {
