@@ -37,6 +37,10 @@
     if(data.hasOwnProperty('cloud_images')) {
       $('#cloudProcessed').text( numberWithCommas(data['cloud_images']) );
     }
+
+    if(data.hasOwnProperty('avg_face_age')) {
+      $('#avgAge').text( data['avg_face_age'].toFixed(2) );
+    }
   };
 
   myMethods.update = function(dt, elem) { 
