@@ -4,7 +4,7 @@ There are three types of intents. Each represents a user's intention for the rob
 
 * **User intents** are a CLAD union of structs, where each struct represents a different user request and its data. User intents are not exposed outside of the behavior system, but can be requested either by voice or through the companion app. In other words, any cloud or app intent is translated into a user intent before being handled by the behavior system. 
 * **Cloud intents** are received from the cloud process containing the intent type along with any parameters. The behavior system is not aware of cloud intents beyond how to translate them into user intents.
-* **App Intents** are CLAD messages received from the Switchboard (which receives them from the companion app) containing the intent type along with any parameters. The behavior system is not aware of app intents beyond how to translate them into user intents. (Note: at the time of writing, app intents arrive via the AppToEngineHandler, but this should soon switch over to the Switchboard.)
+* [DEPRECATED] **App Intents** are messages received from the companion app containing the intent type along with any parameters. The behavior system is not aware of app intents beyond how to translate them into user intents. (Note: app intents were cut from the chewie design)
 
 
 #### Creating a new intent

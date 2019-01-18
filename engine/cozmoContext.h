@@ -50,7 +50,6 @@ class RobotDataLoader;
 class RobotManager;
 class VizManager;
 class PerfMetric;
-class AppToEngineHandler;
 
 namespace WebService {
   class WebService;
@@ -136,7 +135,6 @@ private:
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;
-  std::unique_ptr<AppToEngineHandler>                   _appToEngineHandler;
 
 };
 

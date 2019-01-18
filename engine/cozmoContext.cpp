@@ -2,7 +2,6 @@
 #include "engine/cozmoContext.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "engine/appToEngineHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
@@ -46,10 +45,8 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
   , _webService(new WebService::WebService())
-  , _appToEngineHandler( new AppToEngineHandler() )
 {
   //_gameLogTransferTask->Init(_transferQueueMgr.get());
-  _appToEngineHandler->Init( _webService.get(), _externalInterface );
 }
 
 
