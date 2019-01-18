@@ -755,7 +755,7 @@ int perform_calibration(int dev,
 
   // Have the device reset when ranging is stopped
   PRINT_NAMED_ERROR("","reset on stop\n");
-  rc = reset_on_stop_set(dev, 0);
+  rc = reset_on_stop_set(dev, 1);
   return_if_not(rc == 0, -1, "ioctl error reset on stop: %d", errno);
 
   // Switch to multi-zone scanning mode
@@ -783,9 +783,9 @@ int perform_calibration(int dev,
   rc = output_mode_set(dev, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
-  // PRINT_NAMED_ERROR("","Enable live xtalk\n");
-  // rc = set_live_crosstalk(dev, true);
-  // return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
+  PRINT_NAMED_ERROR("","Enable live xtalk\n");
+  rc = set_live_crosstalk(dev, false);
+  return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
 
   VL53L1_CalibrationData_t calib;
   memset(&calib, 0, sizeof(calib));
@@ -861,6 +861,45 @@ int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm, float targetRefl
   return 0;
 }
 
+void load_calibration()
+{
+  PRINT_NAMED_ERROR("","Load calibration");
+
+  VL53L1_CalibrationData_t calib;
+  memset(&calib, 0, sizeof(calib));
+  int rc = load_calibration_from_disk(calib, "/factory/tof_right.bin");
+  if(rc < 0)
+  {
+    PRINT_NAMED_ERROR("","Failed to load tof calibration");
+  }
+  else
+  {
+    rc = set_calibration_data(tofR_fd, calib);
+    if(rc < 0)
+    {
+      PRINT_NAMED_ERROR("","Failed to set tof calibration");
+    }
+  }
+
+  stmvl531_zone_calibration_data_t calibZone;
+  memset(&calibZone, 0, sizeof(calibZone));
+  rc = load_zone_calibration_from_disk(calibZone, "/factory/tofZone_right.bin");
+  if(rc < 0)
+  {
+    PRINT_NAMED_ERROR("","Failed to load tof calibration");
+  }
+  else
+  {
+    rc = set_zone_calibration_data(tofR_fd, calibZone);
+    if(rc < 0)
+    {
+      PRINT_NAMED_ERROR("","Failed to set tof calibration");
+    }
+  }          
+}
+
+
+
 /// Setup 4x4 multi-zone imaging
 int setup(Sensor which) {
   int rc = 0;
@@ -876,10 +915,12 @@ int setup(Sensor which) {
   memset(origCalib, 0, sizeof(*origCalib));
   rc = get_calibration_data(fd, *origCalib);
   return_if_not(rc == 0, -1, "ioctl error getting calibration: %d", errno);
+
+  load_calibration();
   
   // Have the device reset when ranging is stopped
   PRINT_NAMED_ERROR("","reset on stop\n");
-  rc = reset_on_stop_set(fd, 0);
+  rc = reset_on_stop_set(fd, 1);
   return_if_not(rc == 0, -1, "ioctl error reset on stop: %d", errno);
 
   // Switch to multi-zone scanning mode
@@ -894,7 +935,7 @@ int setup(Sensor which) {
 
   // Setup timing budget
   PRINT_NAMED_ERROR("","set timing budget\n");
-  rc = timing_budget_set(fd, 16*2000);
+  rc = timing_budget_set(fd, 8*2000);
   return_if_not(rc == 0, -1, "ioctl error setting timing budged: %d", errno);
 
   // Set distance mode
@@ -907,9 +948,9 @@ int setup(Sensor which) {
   rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
 
-  // PRINT_NAMED_ERROR("","Enable live xtalk\n");
-  // rc = set_live_crosstalk(fd, true);
-  // return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
+  PRINT_NAMED_ERROR("","Enable live xtalk\n");
+  rc = set_live_crosstalk(fd, false);
+  return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
 
   PRINT_NAMED_ERROR("","set offset correction mode\n");
   rc = offset_correction_mode_set(fd, VL53L1_OFFSETCORRECTIONMODE_PERZONE);
@@ -954,6 +995,7 @@ void ParseData(Sensor whichSensor,
     {
       RangeReading reading;
       reading.status = mz_data.RangeData[r].RangeStatus;
+
       // The following three readings come up in 16.16 fixed point so convert
       reading.signalRate_mcps = ((float)mz_data.RangeData[r].SignalRateRtnMegaCps * (float)(1/(2^16)));
       reading.ambientRate_mcps = ((float)mz_data.RangeData[r].AmbientRateRtnMegaCps * (float)(1/(2^16)));
@@ -964,8 +1006,7 @@ void ParseData(Sensor whichSensor,
       // WRAP_TARGET_FAIL. The range data still appears valid though so we ignore the
       // invalid status.
       // Other common invalid status are OUTOFBOUNDS_FAIL and TARGET_PRESENT_LACK_OF_SIGNAL
-      if(mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID ||
-         mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_WRAP_TARGET_FAIL)
+      if(mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID)
       {
         const int16_t dist = mz_data.RangeData[r].RangeMilliMeter;
         if(dist < minDist)
@@ -1027,43 +1068,6 @@ RangeDataRaw ReadData()
 }
 
 
-void load_calibration()
-{
-  PRINT_NAMED_ERROR("","Load calibration");
-
-  VL53L1_CalibrationData_t calib;
-  memset(&calib, 0, sizeof(calib));
-  int rc = load_calibration_from_disk(calib, "/factory/tof_right.bin");
-  if(rc < 0)
-  {
-    PRINT_NAMED_ERROR("","Failed to load tof calibration");
-  }
-  else
-  {
-    rc = set_calibration_data(tofR_fd, calib);
-    if(rc < 0)
-    {
-      PRINT_NAMED_ERROR("","Failed to set tof calibration");
-    }
-  }
-
-  stmvl531_zone_calibration_data_t calibZone;
-  memset(&calibZone, 0, sizeof(calibZone));
-  rc = load_zone_calibration_from_disk(calibZone, "/factory/tofZone_right.bin");
-  if(rc < 0)
-  {
-    PRINT_NAMED_ERROR("","Failed to load tof calibration");
-  }
-  else
-  {
-    rc = set_zone_calibration_data(tofR_fd, calibZone);
-    if(rc < 0)
-    {
-      PRINT_NAMED_ERROR("","Failed to set tof calibration");
-    }
-  }          
-}
-
 int ToFSensor::StartRanging(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
@@ -1073,6 +1077,9 @@ int ToFSensor::StartRanging(const CommandCallback& callback)
 
 int ToFSensor::StopRanging(const CommandCallback& callback)
 {
+  callback(CommandResult::Success);
+  return 0;
+  
   std::lock_guard<std::mutex> lock(_commandLock);
   _commandQueue.push({Command::StopRanging, callback});
   return 0;
@@ -1109,6 +1116,8 @@ void ProcessLoop()
       {
         case Command::StartRanging:
           {
+            load_calibration();
+            
             PRINT_NAMED_ERROR("","Command start ranging");
             int rc = start_ranging(tofR_fd);
             if(rc < 0)
@@ -1177,8 +1186,6 @@ void ProcessLoop()
             }
             #endif
 
-            //            load_calibration();
-            
             tofR_fd = setup(RIGHT);
             if(tofR_fd < 0)
             {
@@ -1206,7 +1213,7 @@ void ProcessLoop()
 
         case Command::LoadCalibration:
           {
-            load_calibration();
+            //load_calibration();
           }
           break;
       }

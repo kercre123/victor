@@ -70,10 +70,12 @@ void RangeSensorComponent::Update()
     
     RangeDataToDisplay msg;
     auto& disp = msg.data.data;
+    memset(&disp, 0, sizeof(disp));
+    
     for(const auto& e : _latestRawRangeData.data)
     {
       disp[e.roi].signalRate_mcps = -1;
-      disp[e.roi].status = 255;
+      disp[e.roi].status = 99;
       for(const auto& reading : e.readings)
       {
         if(Util::IsFltNear((f32)reading.rawRange_mm, e.processedRange_mm))
@@ -88,6 +90,7 @@ void RangeSensorComponent::Update()
       disp[e.roi].roi = e.roi;
       disp[e.roi].roiStatus = e.roiStatus;
     }
+
     _robot->SendRobotMessage<RangeDataToDisplay>(msg);
   }
   

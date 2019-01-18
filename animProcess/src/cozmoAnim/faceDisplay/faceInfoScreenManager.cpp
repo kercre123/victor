@@ -1732,7 +1732,8 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
     
     u8 color = 255 * temp;
 
-    s8 status = rangeData.status;
+    u8 status = rangeData.status;
+
     float tempDiv = (rangeData.spadCount == 0 ? -1 : rangeData.spadCount);
     float signalQuality = (f32)(rangeData.signalRate_mcps / tempDiv);
 
@@ -1754,7 +1755,8 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
                  false,
                  1);
 
-    const f32 xPos = loc.x() + (Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)), 0.3f, 1).x() + kDefaultTextSpacing_pix);
+    //    const f32 xPos = loc.x() + (Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)), 0.3f, 1).x() + kDefaultTextSpacing_pix);
+    const f32 xPos = loc.x() + (u32)(2.75f*(f32)kDefaultTextSpacing_pix);
     img.DrawText({xPos, loc.y()},
                  std::to_string(status),
                  {textColor, textColor, textColor},
