@@ -138,7 +138,7 @@ enum SpeechRecognizerSystemClass {
 
 // Speech Recognizer Toggle
 CONSOLE_VAR_ENUM(int, kSpeechRecognizerSystemClass, "SpeechRecognizer.System",
-                      kSpeechRecognizerPocketSphinx, "Sensory,PocketSphinx,PicoVoice");
+                      kSpeechRecognizerPicoVoice, "Sensory,PocketSphinx,PicoVoice");
 } // namespace
 
 void SpeechRecognizerSystem::SetupConsoleFuncs()
