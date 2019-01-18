@@ -42,6 +42,10 @@ namespace
 {
   const UserIntentTag kUserIntent = USER_INTENT(describe_scene);
   
+  // Enable to have this behavior trigger when TheBox is moved (after actived once with voice)
+  // If false, behavior only triggers on voice command
+  CONSOLE_VAR(bool, kTheBox_TriggerDescribeSceneOnMove, "TheBox", false);
+  
   CONSOLE_VAR_RANGED(float, kTheBox_SceneDescriptionTextScale, "TheBox.Screen", 0.65f, 0.1, 1.f);
 }
 
@@ -85,17 +89,19 @@ BehaviorBoxDemoDescribeScene::~BehaviorBoxDemoDescribeScene()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBoxDemoDescribeScene::WantsToBeActivatedBehavior() const
 {
-
-  const bool hasBehaviorEverRun = ( GetNumTimesBehaviorStarted() > 0 );
-  auto& aiwb = GetAIComp<AIWhiteboard>();
-  const float secSinceLastDeloc = aiwb.GetSecondsSinceLastDelocalization();
-  const bool delocalizedRecently = (secSinceLastDeloc < _iConfig.recentDelocTimeWindow_sec);
-  const bool isOnTreads = (GetBEI().GetRobotInfo().GetOffTreadsState() == OffTreadsState::OnTreads);
-  if(hasBehaviorEverRun && delocalizedRecently && isOnTreads)
+  if(kTheBox_TriggerDescribeSceneOnMove)
   {
-    // when the box is put down, execute this behavior, but only after it's been started at least once
-    // manually or with the command
-    return true;
+    const bool hasBehaviorEverRun = ( GetNumTimesBehaviorStarted() > 0 );
+    auto& aiwb = GetAIComp<AIWhiteboard>();
+    const float secSinceLastDeloc = aiwb.GetSecondsSinceLastDelocalization();
+    const bool delocalizedRecently = (secSinceLastDeloc < _iConfig.recentDelocTimeWindow_sec);
+    const bool isOnTreads = (GetBEI().GetRobotInfo().GetOffTreadsState() == OffTreadsState::OnTreads);
+    if(hasBehaviorEverRun && delocalizedRecently && isOnTreads)
+    {
+      // when the box is put down, execute this behavior, but only after it's been started at least once
+      // manually or with the command
+      return true;
+    }
   }
   
   auto& uic = GetBehaviorComp<UserIntentComponent>();

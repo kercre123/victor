@@ -44,6 +44,7 @@ namespace {
   CONSOLE_VAR(bool, kTheBox_UseMirroredImages, "TheBox.Screen", true);
   
   CONSOLE_VAR(s32,  kTheBox_MaxFaceStrings, "TheBox.Screen", 3);
+  CONSOLE_VAR(bool, kTheBox_DrawFaceStringsAtTop, "TheBox.Screen", true);
   
   // Set to false to skip displaying names/data strings for faces with "unknown" ID
   CONSOLE_VAR(bool, kTheBox_DisplayUnknownFaceNames, "TheBox.Screen", false);
@@ -268,15 +269,24 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
           dispName += ": " + std::to_string(faceDetection.GetAge());
         }
         
-        const Vision::FacialExpression expression = faceDetection.GetMaxExpression();
-        if(Vision::FacialExpression::Unknown != expression)
-        {
-          dispName += " (";
-          dispName += EnumToString(expression);
-          dispName += ")";
-        }
+        //        const Vision::FacialExpression expression = faceDetection.GetMaxExpression();
+        //        if(Vision::FacialExpression::Unknown != expression)
+        //        {
+        //          dispName += " (";
+        //          dispName += EnumToString(expression);
+        //          dispName += ")";
+        //        }
         
-        const Point2f position{1.f, _screenImg.GetNumRows()-1-(numDisplayFaces-faceLine)*(fontSize.y()+1)};
+        Point2f position;
+        if(kTheBox_DrawFaceStringsAtTop)
+        {
+          position = {1.f, faceLine*(fontSize.y()+1)};
+        }
+        else
+        {
+          position = {1.f, _screenImg.GetNumRows()-1-(numDisplayFaces-faceLine)*(fontSize.y()+1)};
+        }
+
         _screenImg.DrawText(position, dispName, color, kMirrorModeFaceFontScale, kUseDropShadow);
         ++faceLine;
         if(faceLine > kTheBox_MaxFaceStrings)
