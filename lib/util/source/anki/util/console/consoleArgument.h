@@ -108,7 +108,7 @@ public:
   //----------------------------------------------------------------------------------------------------------------------------
   // Member data
 private:
-  char value_[256];
+  char value_[4096];
   
   ConsoleArg();
   ConsoleArg( const ConsoleArg& );

@@ -47,9 +47,14 @@ void OffboardInput::AddSamples( const int16_t* samples, unsigned int numSamples 
   
   std::lock_guard<std::mutex> lk{_mutex};
   
+  if( _chirps.empty() ) {
+    return;
+  }
+  
   uint64_t currTime_ms = Sequencer::GetCurrTime();
   for( auto& chirp : _chirps ) {
     chirp.startTime_ms += currTime_ms;
+    PRINT_NAMED_WARNING("Chirps", "offboard chirp start=%lld, duration=%d, pitch0=%f, pitch1=%f, vol=%f", chirp.startTime_ms, chirp.duration_ms, chirp.pitch0_Hz, chirp.pitch1_Hz, chirp.volume);
   }
   // advance start time of all chirps to _now_
   GetSequencer()->AddChirps( _chirps );
@@ -63,6 +68,7 @@ void OffboardInput::Parse( const std::string& data )
   std::lock_guard<std::mutex> lk{_mutex};
   
   const auto chirpStrings = Util::StringSplit(data, '-');
+  PRINT_NAMED_WARNING("WHATNOW", "Got %zu strings", chirpStrings.size());
   for( const auto& chirpString : chirpStrings ) {
     const auto params = Util::StringSplit(chirpString, '_');
     if( params.size() == 5 ) {

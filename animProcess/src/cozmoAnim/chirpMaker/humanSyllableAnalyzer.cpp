@@ -153,8 +153,6 @@ void HumanSyllableAnalyzer::RunDetector()
     const auto firstStartTime = syllables.empty() ? 0 : syllables[0].startTime_s;
     
     for( const auto& syllable : syllables ) {
-      PRINT_NAMED_WARNING("WHATNOW","Syllable info: start=%f, end=%f, freq=%f, vol=%f",
-                          syllable.startTime_s, syllable.endTime_s, syllable.avgFreq, syllable.avgPower );
       
       if( syllable.endIdx <= syllable.startIdx + 1 ) {
         continue;
