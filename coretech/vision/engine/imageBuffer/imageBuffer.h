@@ -104,6 +104,13 @@ private:
   s32           _sensorNumCols     = 0;
   ResizeMethod  _resizeMethod      = ResizeMethod::Linear;
   
+  mutable f32                 _currentGamma = 0.f;
+  mutable std::array<u8, 256> _gammaLUT;
+  template<class PixelType>
+  void ApplyGamma(ImageBase<PixelType>& img) const;
+  inline void ApplyGammaToPixel(u8& pixel) const;
+  inline void ApplyGammaToPixel(PixelRGB& pixel) const;
+  
 };
   
 }

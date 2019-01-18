@@ -20,10 +20,16 @@
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 
+#include "util/console/consoleInterface.h"
+
 #include <unistd.h>
 
 namespace Anki {
 namespace Vision {
+  
+namespace {
+  CONSOLE_VAR(f32, kImageBufferGamma, "Vision", 1.f);
+}
 
 ImageBuffer::ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding format, TimeStamp_t timestamp, s32 id)
 : _rawData(data)
@@ -32,6 +38,7 @@ ImageBuffer::ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding forma
 , _format(format)
 , _imageId(id)
 , _timestamp(timestamp)
+, _gammaLUT{}
 {
 
 }
@@ -94,7 +101,53 @@ s32 ImageBuffer::GetNumRows() const
   GetNumRowsCols(rows, cols);
   return rows;
 }
-    
+ 
+inline void ImageBuffer::ApplyGammaToPixel(u8& pixel) const
+{
+  pixel = _gammaLUT[pixel];
+}
+
+inline void ImageBuffer::ApplyGammaToPixel(PixelRGB& pixel) const
+{
+  pixel.r() = _gammaLUT[pixel.r()];
+  pixel.g() = _gammaLUT[pixel.g()];
+  pixel.b() = _gammaLUT[pixel.b()];
+}
+  
+template<class PixelType>
+void ImageBuffer::ApplyGamma(ImageBase<PixelType>& img) const
+{
+  if(!Util::IsFltNear(_currentGamma, kImageBufferGamma))
+  {
+    _currentGamma = kImageBufferGamma;
+    const f32 invGamma = 1.f / _currentGamma;
+    const f32 divisor = 1.f / 255.f;
+    for(s32 value=0; value<256; ++value)
+    {
+      _gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
+    }
+  }
+  
+  if(!Util::IsFltNear(_currentGamma, 1.f))
+  {
+    s32 nrows = img.GetNumRows();
+    s32 ncols = img.GetNumCols();
+    if(img.IsContinuous())
+    {
+      ncols *= nrows;
+      nrows = 1;
+    }
+    for(s32 i=0; i<nrows; ++i)
+    {
+      PixelType* gray_i = img.GetRow(i);
+      for(s32 j=0; j<ncols; ++j)
+      {
+        ApplyGammaToPixel(gray_i[j]);
+      }
+    }
+  }
+}
+  
 bool ImageBuffer::GetRGB(ImageRGB& rgb, ImageCacheSize size) const
 {
   DEV_ASSERT(_rawData != nullptr, "ImageBuffer.GetRGB.NullData");
@@ -133,6 +186,8 @@ bool ImageBuffer::GetRGB(ImageRGB& rgb, ImageCacheSize size) const
       break;
   }
 
+  ApplyGamma(rgb);
+  
   // Even if conversion failed doesn't matter that we set these
   rgb.SetTimestamp(_timestamp);
   rgb.SetImageId(_imageId);
@@ -178,6 +233,8 @@ bool ImageBuffer::GetGray(Image& gray, ImageCacheSize size) const
       break;
   }
 
+  ApplyGamma(gray);
+  
   gray.SetTimestamp(_timestamp);
   gray.SetImageId(_imageId);
 
