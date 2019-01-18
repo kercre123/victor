@@ -252,7 +252,7 @@ SAValue BehaviorDispatcherAdaptive::GetStateActionValue(State s, Action a){
     LOG_WARNING("BehaviorDispatcherAdaptive.GetStateActionValue.NewState",
         "adding new state %d in SAVTable", s);
   }
-  auto Vs = _iConfig.SAVTable[s];
+  auto& Vs = _iConfig.SAVTable[s];
 
   // check whether there's an entry in V(s,.) for a
   if (Vs.find(a) == Vs.end()) {
