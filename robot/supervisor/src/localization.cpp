@@ -85,7 +85,7 @@ namespace Anki {
         const u8 POSE_HISTORY_RES_IN_CYCLES = 6;
         
         // Never need to erase elements, just overwrite with new data.
-        const u8 POSE_HISTORY_SIZE = 1000/(ROBOT_TIME_STEP_MS * POSE_HISTORY_RES_IN_CYCLES); // 1000ms of history
+        const u8 POSE_HISTORY_SIZE = 2000/(ROBOT_TIME_STEP_MS * POSE_HISTORY_RES_IN_CYCLES); // 2000ms of history
 
         PoseStamp hist_[POSE_HISTORY_SIZE];
         u16 hStart_ = 0;
@@ -145,7 +145,7 @@ namespace Anki {
 
       Result GetHistIdx(TimeStamp_t t, u16& idx)
       {
-        // TODO: Binary search for timestamp
+        // TODO: Binary search for timestamp (VIC-12973)
         //       For now just doing a straight up linear search.
 
         // Check if t is older than oldest pose in history
@@ -165,10 +165,6 @@ namespace Anki {
           if (hist_[idx].t == t) {
             return RESULT_OK;
           } else if (hist_[idx].t > t) {
-
-            // TODO: Does this interpolation really help that much?
-            //       Poses in history are already really close together (5ms).
-            //       Maybe just pick the closest pose?
             return InterpolatePose(prevIdx, idx, t, idx);
           }
           prevIdx = idx;
