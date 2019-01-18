@@ -1,5 +1,5 @@
 {
-  "behaviorID": "BoxDemoFaceTracking",
+  "behaviorID": "BoxDemoCountPeopleBase",
   "behaviorClass": "DispatcherStrictPriority",
   
   "interruptActiveBehavior": true,
@@ -9,7 +9,7 @@
     "BoxDemoDescribeScene",
     "BoxDemoShowMicData",
     "BoxDemoShowNetworkInfo",
-    "BoxDemoFaceTrackingInternal",
+    "BoxDemoCountPeople",
     "Wait"
   ],
 

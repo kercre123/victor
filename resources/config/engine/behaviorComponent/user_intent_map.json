@@ -294,6 +294,10 @@
     {
       "user_intent": "show_ip_address",
       "cloud_intent": "intent_ip_address"
+    },
+    {
+      "user_intent": "switch_vision_mode",
+      "cloud_intent": "intent_switch_vision"
     }
   ],
 

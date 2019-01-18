@@ -153,6 +153,7 @@ public:
   ColorRGBA _debugColor = NamedColors::BLACK;
 
   UserIntentTag _activateIntent = USER_INTENT(INVALID);
+  bool _dropIntent = false;
 
   std::string _behaviorName;
   ICozmoBehaviorPtr _behavior;
@@ -793,6 +794,8 @@ InternalStatesBehavior::State::State(const Json::Value& config)
                  "Could not get user intent from '%s'",
                  activateIntent.c_str() );
   }
+
+  _dropIntent = config.get("dropIntent", false).asBool();
 }
 
 void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
@@ -844,13 +847,20 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
   if( _activateIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsUserIntentPending( _activateIntent ) ) {
-      // if we have a behavior associated with this state, activate the intent through it so that
-      // it can control how it wants to display the active intent feedback
-      if( nullptr != _behavior ) {
-        _behavior->ActivateUserIntentHelper( _activateIntent, ("InternalState:" + _name) );
+
+      if( _dropIntent ) {
+        // rather than activating, drop it
+        uic.DropUserIntent( _activateIntent );
       }
-      else {
-        uic.ActivateUserIntent( _activateIntent, ("InternalState:" + _name), true );
+      else {      
+        // if we have a behavior associated with this state, activate the intent through it so that
+        // it can control how it wants to display the active intent feedback
+        if( nullptr != _behavior ) {
+          _behavior->ActivateUserIntentHelper( _activateIntent, ("InternalState:" + _name) );
+        }
+        else {
+          uic.ActivateUserIntent( _activateIntent, ("InternalState:" + _name), true );
+        }
       }
     }
   }
