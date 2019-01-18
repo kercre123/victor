@@ -114,7 +114,7 @@ BehaviorInteractWithFaces::DynamicVariables::DynamicVariables()
 {
   lastImageTimestampWhileRunning = 0;
   trackFaceUntilTime_s           = -1.0f;
-  lastReward                     = 0.f;
+  lastReward                     = RewardProvidingBehavior::kRewardMid;
 }
 
 
@@ -251,14 +251,14 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _dVars.trackFaceUntilTime_s ) {
       // if we hit this we're ending based on a timeout, that's -1.0 reward
-      _dVars.lastReward = -1.0f;
+      _dVars.lastReward = RewardProvidingBehavior::kRewardMin;
       CancelDelegates();
     }
 
     // poll touch sensor here?
     if(IsReceivingTouch(GetBEI())){
       // got pet, set reward to 1 and finish
-      _dVars.lastReward = 1.0;
+      _dVars.lastReward = RewardProvidingBehavior::kRewardMax;
       CancelDelegates();
     }
   }
@@ -496,7 +496,7 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent()
     }
   }
   // if we get here we finished without a pet.
-  _dVars.lastReward = -1.0f;
+  _dVars.lastReward = RewardProvidingBehavior::kRewardMin;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

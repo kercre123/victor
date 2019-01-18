@@ -24,6 +24,10 @@ public:
 
 class RewardProvidingBehavior: public ICozmoBehavior, public ILastRewardProvider {
 public:
+  static constexpr float kRewardMax = 1.0f;
+  static constexpr float kRewardMid = 0.5f;
+  static constexpr float kRewardMin = 0.0f;
+
   RewardProvidingBehavior(const Json::Value& config): ICozmoBehavior(config) {}
   virtual ~RewardProvidingBehavior() {}
 };

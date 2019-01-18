@@ -31,6 +31,9 @@ namespace Vector {
 namespace {
   const char* kActionSpaceKey = "actionSpace"; // [json config file name of the] array of the behaviors in the action space
   const char* kDefaultBehaviorKey = "defaultBehavior"; // default behavior must wantToBeActivated in all states, and must be interruptable
+
+  const float kActionSelectionWeightEpsilon = 0.01f;
+  std::mt19937 rng;
 }
   
 
@@ -134,7 +137,9 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
 
   if( (_dVars.lastSelectedBehavior != nullptr) && // not first time running
       (_dVars.lastSelectedBehavior != _iConfig.defaultBehavior) ){  // if we just came from a non-default behavior)
+
     // do learning update here?
+
     // have to cast the ICozmoBehavior to a IRewardProvider. TODO: a safer way to do this would be nice
     std::shared_ptr<RewardProvidingBehavior> rewardProvider = std::dynamic_pointer_cast<RewardProvidingBehavior>(_dVars.lastSelectedBehavior);
     float lastReward = rewardProvider->GetLastReward();
@@ -142,26 +147,34 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
                 "reward signal from last action: %f", lastReward);
   }
 
-
-  // if delegates other than Default are available
-  // for now, we assume actions are available if the state is non-zero. TODO: something smarter
   ICozmoBehaviorPtr desiredBehavior;
   if (_dVars.lastSelectedBehavior == nullptr || // first time running
       (_dVars.lastSelectedBehavior != _iConfig.defaultBehavior) || // if we just came from a non-default behavior, force doing the default again (state is invalid)
-      (state == 0) ) // no recognized face. do default action
+      (state == 0) ) // no recognized face.
   {
+    // do default action
     desiredBehavior = _iConfig.defaultBehavior;
   } else {
-    desiredBehavior = FindBehavior(_iConfig.actionSpace[1]);
+    // if delegates other than Default are available
+    // for now, we assume actions are available if the state is non-zero. TODO: something smarter
+
+    // evaluate state-action value for each available delegate
+    // for now, call method to get state action value for each available action,
+    // build the "row" of the table for this state on the fly.
+    std::vector<float> weights(_iConfig.actionSpace.size());
+    for(int i=0; i<_iConfig.actionSpace.size(); ++i) {
+      weights[i] = GetStateActionValue(state, _iConfig.actionSpace[i]);
+      // add an epsilon so we don't divide by zero, and so things with zero weight still have some chance of selection
+      weights[i] += kActionSelectionWeightEpsilon;
+    }
+    std::discrete_distribution<> d(weights.begin(), weights.end());
+    int idx = d(rng);
+
+    // It would probably be more computationally efficient to do this differently in a real implementation.
+    // probabilistically select
+
+    desiredBehavior = FindBehavior(_iConfig.actionSpace[idx]);
   }
-
-  // evaluate state-action value for each available delegate
-  // for now, call method to get state action value for each available action,
-  // build the "row" of the table for this state on the fly.
-  // It would probably be more computationally efficient to do this differently in a real implementation.
-  // probabilistically select
-
-  // can I do the learning update here, or should that be in DispatcherUpdate?
 
   LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.Choice",
               "Choosing desired behavior: %s", BehaviorTypesWrapper::BehaviorIDToString(desiredBehavior->GetID()));
@@ -243,12 +256,14 @@ SAValue BehaviorDispatcherAdaptive::GetStateActionValue(State s, Action a){
 
   // check whether there's an entry in V(s,.) for a
   if (Vs.find(a) == Vs.end()) {
-    // if not, initialize it to 0
-    Vs[a] = 0.0;
+    // if not, initialize it to neutral reward
+    Vs[a] = RewardProvidingBehavior::kRewardMid;
     // and issue a warning so we know it happened
     LOG_WARNING("BehaviorDispatcherAdaptive.GetStateActionValue.NewAction",
                 "adding new action %s in SAVTable for state %d", a.c_str(), s);
   }
+  LOG_WARNING("BehaviorDispatcherAdaptive.GetStateActionValue.Vsa",
+      "Vsa(%d, %s): %f", s, a.c_str(), Vs[a]);
   const SAValue Vsa = Vs[a];
 
   return Vsa;

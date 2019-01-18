@@ -86,7 +86,7 @@ BehaviorFistBump::DynamicVariables::DynamicVariables()
   fistBumpRequestCnt        = 0;
   liftWaitingAngle_rad      = 0.f;
   lastTimeOffTreads_s       = 0.f;
-  lastReward                = 0.f;
+  lastReward                = RewardProvidingBehavior::kRewardMid;
 }
 
 
@@ -280,7 +280,7 @@ void BehaviorFistBump::BehaviorUpdate()
         robotInfo.GetMoveComponent().EnableHeadPower(true);
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess));
         _dVars.state = State::CompleteSuccess;
-        _dVars.lastReward = 1.0; // set reward for success
+        _dVars.lastReward = RewardProvidingBehavior::kRewardMax; // set reward for success
       }
       
       // When idle anim is complete, retry or fail
@@ -293,7 +293,7 @@ void BehaviorFistBump::BehaviorUpdate()
         } else {
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
           _dVars.state = State::CompleteFail;
-          _dVars.lastReward = -1.0; // set negative reward for fail
+          _dVars.lastReward = RewardProvidingBehavior::kRewardMin; // set negative reward for fail
         }
       }
       
