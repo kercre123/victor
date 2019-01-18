@@ -21,7 +21,7 @@ namespace Vector {
 class BEIRobotInfo;
 class IFistBumpListener;
   
-class BehaviorFistBump : public ICozmoBehavior, public ILastRewardProvider
+class BehaviorFistBump : public RewardProvidingBehavior
 {
 private:
   

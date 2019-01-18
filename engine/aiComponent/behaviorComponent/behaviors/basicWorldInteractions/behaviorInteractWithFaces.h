@@ -18,6 +18,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/ILastRewardProvider.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/smartFaceId.h"
 #include "coretech/common/engine/robotTimeStamp.h"
@@ -40,7 +41,7 @@ struct RobotDeletedFace;
 struct RobotChangedObservedFaceID;
 }
 
-class BehaviorInteractWithFaces : public ICozmoBehavior
+class BehaviorInteractWithFaces : public RewardProvidingBehavior
 {
 protected:
     
@@ -51,6 +52,10 @@ protected:
 public:
 
   virtual bool WantsToBeActivatedBehavior() const override;
+
+  float GetLastReward() const override {
+    return _dVars.lastReward;
+  }
     
 protected:
 
@@ -102,6 +107,8 @@ private:
     // In the face tracking stage the action will hang, so store a time at which we want to stop it (from within
     // Update)
     float trackFaceUntilTime_s;
+    // AS: added for RnD Adaptive Behavior Coordinator hackery
+    float lastReward;
   };
 
   InstanceConfig   _iConfig;
@@ -119,6 +126,8 @@ private:
   void TransitionToTriggerEmotionEvent();
 
   bool CanDriveIdealDistanceForward();
+
+  bool IsReceivingTouch(BehaviorExternalInterface& behaviorExternalInterface) const;
     
 }; // BehaviorInteractWithFaces
   

@@ -17,7 +17,15 @@ namespace Vector {
 
 class ILastRewardProvider {
 public:
+  virtual ~ILastRewardProvider() {}
   virtual float GetLastReward() const = 0;
+};
+
+
+class RewardProvidingBehavior: public ICozmoBehavior, public ILastRewardProvider {
+public:
+  RewardProvidingBehavior(const Json::Value& config): ICozmoBehavior(config) {}
+  virtual ~RewardProvidingBehavior() {}
 };
 
 }

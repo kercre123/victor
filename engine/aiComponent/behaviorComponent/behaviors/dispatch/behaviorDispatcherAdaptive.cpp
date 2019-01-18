@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/faceWorld.h"
+#include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/ILastRewardProvider.h"
 
 #define LOG_CHANNEL "BehaviorDispatcherAdaptive"
 
@@ -131,6 +132,17 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
   LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.State",
       "State: %d", state);
 
+  if( (_dVars.lastSelectedBehavior != nullptr) && // not first time running
+      (_dVars.lastSelectedBehavior != _iConfig.defaultBehavior) ){  // if we just came from a non-default behavior)
+    // do learning update here?
+    // have to cast the ICozmoBehavior to a IRewardProvider. TODO: a safer way to do this would be nice
+    std::shared_ptr<RewardProvidingBehavior> rewardProvider = std::dynamic_pointer_cast<RewardProvidingBehavior>(_dVars.lastSelectedBehavior);
+    float lastReward = rewardProvider->GetLastReward();
+    LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.LastReward",
+                "reward signal from last action: %f", lastReward);
+  }
+
+
   // if delegates other than Default are available
   // for now, we assume actions are available if the state is non-zero. TODO: something smarter
   ICozmoBehaviorPtr desiredBehavior;
@@ -140,7 +152,7 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
   {
     desiredBehavior = _iConfig.defaultBehavior;
   } else {
-    desiredBehavior = FindBehavior(_iConfig.actionSpace[0]);
+    desiredBehavior = FindBehavior(_iConfig.actionSpace[1]);
   }
 
   // evaluate state-action value for each available delegate
@@ -154,6 +166,10 @@ ICozmoBehaviorPtr BehaviorDispatcherAdaptive::GetDesiredBehavior()
   LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.Choice",
               "Choosing desired behavior: %s", BehaviorTypesWrapper::BehaviorIDToString(desiredBehavior->GetID()));
   _dVars.lastSelectedBehavior = desiredBehavior;
+  if( !desiredBehavior->WantsToBeActivated() ){
+    LOG_WARNING("BehaviorDispatcherAdaptive.GetDesiredBehavior.DoesNotWantToBeActivated",
+        "desired behavior does not want to be activated. This might go poorly.");
+  }
   return desiredBehavior;
 }
 

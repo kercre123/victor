@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -43,6 +44,7 @@
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #define CONSOLE_GROUP "Behavior.InteractWithFaces"
+#define LOG_CHANNEL ""
 
 namespace Anki {
 namespace Vector {
@@ -84,6 +86,8 @@ const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
 const char* const kMinTrackingTiltAngleKey = "minTrackingTiltAngle_deg";
 const char* const kMinTrackingPanAngleKey = "minTrackingPanAngle_deg";
 
+const float _kMinTouchTime = 0.0f;
+
 }
 
 
@@ -110,12 +114,13 @@ BehaviorInteractWithFaces::DynamicVariables::DynamicVariables()
 {
   lastImageTimestampWhileRunning = 0;
   trackFaceUntilTime_s           = -1.0f;
+  lastReward                     = 0.f;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInteractWithFaces::BehaviorInteractWithFaces(const Json::Value& config)
-: ICozmoBehavior(config)
+: RewardProvidingBehavior(config)
 {
   LoadConfig(config);
 
@@ -223,6 +228,7 @@ void BehaviorInteractWithFaces::OnBehaviorActivated()
 {
   // reset the time to stop tracking (in the tracking state)
   _dVars.trackFaceUntilTime_s = -1.0f;
+  _dVars.lastReward = 0.0f;
 
   if( _dVars.targetFace.IsValid() ) {
     TransitionToInitialReaction();
@@ -230,6 +236,7 @@ void BehaviorInteractWithFaces::OnBehaviorActivated()
   else {
     PRINT_NAMED_WARNING("BehaviorInteractWithFaces.Init.NoValidTarget",
                         "Decided to run, but don't have valid target when Init is called. This shouldn't happen");
+
   }
 }
 
@@ -243,6 +250,15 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
   if( _dVars.trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _dVars.trackFaceUntilTime_s ) {
+      // if we hit this we're ending based on a timeout, that's -1.0 reward
+      _dVars.lastReward = -1.0f;
+      CancelDelegates();
+    }
+
+    // poll touch sensor here?
+    if(IsReceivingTouch(GetBEI())){
+      // got pet, set reward to 1 and finish
+      _dVars.lastReward = 1.0;
       CancelDelegates();
     }
   }
@@ -479,6 +495,8 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent()
       moodManager.TriggerEmotionEvent("InteractWithUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
     }
   }
+  // if we get here we finished without a pet.
+  _dVars.lastReward = -1.0f;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -494,6 +512,20 @@ void BehaviorInteractWithFaces::SelectFaceToTrack() const
   criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
   criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
   _dVars.targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaceIDs);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorInteractWithFaces::IsReceivingTouch(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  bool ret = false;
+  const bool currPressed = behaviorExternalInterface.GetTouchSensorComponent().GetIsPressed();
+  const auto touchPressTime = behaviorExternalInterface.GetTouchSensorComponent().GetTouchPressTime();
+  if (currPressed && (now-touchPressTime)>_kMinTouchTime) {
+    ret = true;
+  }
+  return ret;
 }
 
 

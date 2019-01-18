@@ -16,6 +16,7 @@
 #include "engine/actions/dockActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFistBumpListener.h"
+#include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/ILastRewardProvider.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -91,7 +92,7 @@ BehaviorFistBump::DynamicVariables::DynamicVariables()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFistBump::BehaviorFistBump(const Json::Value& config)
-: ICozmoBehavior(config)
+: RewardProvidingBehavior(config)
 , _iConfig(config)
 {
 }
@@ -279,6 +280,7 @@ void BehaviorFistBump::BehaviorUpdate()
         robotInfo.GetMoveComponent().EnableHeadPower(true);
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess));
         _dVars.state = State::CompleteSuccess;
+        _dVars.lastReward = 1.0; // set reward for success
       }
       
       // When idle anim is complete, retry or fail
@@ -291,6 +293,7 @@ void BehaviorFistBump::BehaviorUpdate()
         } else {
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
           _dVars.state = State::CompleteFail;
+          _dVars.lastReward = -1.0; // set negative reward for fail
         }
       }
       
