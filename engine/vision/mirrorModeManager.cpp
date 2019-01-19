@@ -215,13 +215,13 @@ void MirrorModeManager::DrawFaces(const std::list<Vision::TrackedFace>& faceDete
         {(u8)105, 175,  60},
         {(u8) 23,  77, 250},
         {(u8)105, 175,  60},
-        {(u8)130,  20, 170},
+        {(u8)175,  45, 220},
         {(u8)250,  90,  36},
         {(u8)250, 190,  50},
         {(u8)215, 230,  70},
         {(u8) 30, 145, 200},
         {(u8) 60,  20, 160},
-        {(u8)165,  30,  75},
+        {(u8)200,  30,  80},
       };
       
       color = kPalette.at(faceDetection.GetID() % kPalette.size());
