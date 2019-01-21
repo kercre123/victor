@@ -3,8 +3,6 @@ var host = "";      // hostname and port (e.g. "192.168.42.82:8888")
 var useFakeData = false;
 
 $(function() {
-  InitConfirmDialog();
-
   // Pull out hostname (device IP) so we can use it in here to call into ANY of the webservers
   if( hostname === "" ) {
     var urlObject = new URL(document.URL);
@@ -363,30 +361,3 @@ $(function() {
     });
   }
 });
-
-function InitConfirmDialog() {
-  $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
-                                draggable: true,
-                                width: 'auto',
-                                buttons: {
-                                  "OK": function() {
-                                    $("#confirm_dialog").dialog("close");
-                                    if (dialogOKFunction !== undefined) {
-                                      dialogOKFunction();
-                                      dialogOKFunction = undefined;
-                                    }
-                                  },
-                                  "Cancel": function () {
-                                    $("#confirm_dialog").dialog("close");
-                                    dialogOKFunction = undefined;
-                                  }
-                                } });
-}
-
-function StartConfirmDialog(title, body, okfunction) {
-  dialogOKFunction = okfunction;
-  $("#confirm_dialog_body").html(body);
-  var d = $("#confirm_dialog");
-  d.dialog("option", "title", title);
-  d.dialog("open");
-}
