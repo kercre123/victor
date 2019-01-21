@@ -11,7 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
   <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/ui-darkness/jquery-ui.min.css"></script>
+        href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/ui-darkness/jquery-ui.min.css">
 
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
@@ -26,59 +26,69 @@
 
 <body class="ui-widget-content" style="border:0;">
   <div>
-    <img src='images/elemental.png' style='display:block;margin-left:auto;margin-right:auto;width:25%;height:25%'>
-    <br>
-    <div id="id_title0" style="color:gray; font-size:18pt; text-align:center;">DEMO  -  CONFIDENTIAL</div>
-    <div id='main_section'>
-      <hr>
+	<div class="hero-imgage-container">
+   <img src="http://image.email.ankimail.com/lib/fe4515707564057c761573/m/1/f24df06a-29f7-44ba-8b79-ceed7cde3750.jpg" alt="Snow" style="width:100%;">
+	  <div class="centered">ELEMENTAL</div>
+		<div class="centered-sub-text">DEMO - CONFIDENTIAL</div>
+	</div>
+	
+    <div id="main_section">
+
 
       <div id="container">
 
         <div id="chartContainer"></div>
+		  
+		<div class="stats-container">
+			
+				<div class="image-stat-container left">
+					<img src="https://staging.anki.com/on/demandware.static/-/Library-Sites-anki-content-global/default/vd55187f4ec4097f12b8f513e2751920ccd79a76b/Elemental/image-icon.svg?version=1,547,858,561,000" alt="Images" style="display:block;margin-left:auto;margin-right:auto; height:55px; padding-bottom:10px">
+				  <div class="vision-stat-label">Local Images</div>
+				  <span class="vision-stat" id="locallyProcessed">0</span>
+				</div>
 
-        <div class="image-stat-container">
-          <div class="vision-stat-label">Local Images</div>
-          <span class="vision-stat" id="locallyProcessed">0</span>
-        </div>
-        
-        <div class="image-stat-container">
-          <div for="cloudProcessed" class="vision-stat-label">Cloud Images</div>
-          <span class="vision-stat" id="cloudProcessed">0</span>
-        </div>
+				<div class="image-stat-container right">
+					<img src="https://staging.anki.com/on/demandware.static/-/Library-Sites-anki-content-global/default/vd55187f4ec4097f12b8f513e2751920ccd79a76b/Elemental/face-icon.svg?version=1,547,859,753,000" alt="Age" style="display:block;margin-left:auto;margin-right:auto; height:55px; padding-bottom:10px">
+				  <div for="avgAge" class="vision-stat-label">Average Face Age</div>
+				  <span class="vision-stat" id="avgAge">-</span>
+				</div>
+			<div class="image-stat-container center">
+				<img src="https://staging.anki.com/on/demandware.static/-/Library-Sites-anki-content-global/default/vd55187f4ec4097f12b8f513e2751920ccd79a76b/Elemental/cloud-icon.svg?version=1,547,858,561,000" alt="Cloud" style="display:block;margin-left:auto;margin-right:auto; height:55px; padding-bottom:10px">
+				  <div for="cloudProcessed" class="vision-stat-label">Cloud Images</div>
+				  <span class="vision-stat" id="cloudProcessed">0</span>
+				</div>
 
-        <br>
+				<br>
 
-        <div class="image-stat-container">
-          <div for="avgAge" class="vision-stat-label">Average Face Age</div>
-          <span class="vision-stat" id="avgAge">-</span>
-        </div>
+				<div style="padding-left:100px" class="image-stat-container left">
+					<img src="https://staging.anki.com/on/demandware.static/-/Library-Sites-anki-content-global/default/vd55187f4ec4097f12b8f513e2751920ccd79a76b/Elemental/voice-icon.svg?version=1,547,858,561,000" alt="Wake" style="display:block;margin-left:auto;margin-right:auto; height:55px; padding-bottom:10px">
+				  <div class="vision-stat-label">Wakeword Events</div>
+				  <span class="vision-stat" id="wakewordEvents">0</span>
+				</div>
 
-        <br>
-        
-        <div class="image-stat-container">
-          <div class="vision-stat-label">Wakeword Events</div>
-          <span class="vision-stat" id="wakewordEvents">0</span>
-        </div>
-
-        <br>
-
-        <div class="image-stat-container">
-          <div class="vision-stat-label">Touch Events</div>
-          <span class="vision-stat" id="touchEvents">0</span>
-        </div>
+				<div class="image-stat-container center-blank">
+				  
+				 </div>
+			
+				<div style="padding-right:100px" class="image-stat-container right">
+					 <img src="https://staging.anki.com/on/demandware.static/-/Library-Sites-anki-content-global/default/vd55187f4ec4097f12b8f513e2751920ccd79a76b/Elemental/touch-icon.svg?version=1,547,858,561,000" alt="Touch" style="display:block;margin-left:auto;margin-right:auto; height:55px; padding-bottom:10px">
+					
+				  <div class="vision-stat-label">Touch Events</div>
+				  <span class="vision-stat" id="touchEvents">0</span>
+				</div>
         
       </div>
-
-      <hr>
+	</div>
+   
       <div>
-        <select name="DemoState" id='DemoState' class='listbox'>
+        <select name="DemoState" id="DemoState" class="listbox">
           <option value="none">------</option>
         </select>
         <label for="DemoState-button">Switch to State</label>
       </div>
       <br>
       <div>
-        <select name="MasterVolumeLevel" id='MasterVolumeLevel' class='listbox'>
+        <select name="MasterVolumeLevel" id="MasterVolumeLevel" class="listbox">
           <option>Mute</option>
           <option>Low</option>
           <option>Medium Low</option>
@@ -93,12 +103,12 @@
         <input type="checkbox" name="TheBox_TTSForDescription" id="TheBox_TTSForDescription" checked></label>
       </div>
 
-      <hr>
+      
       <div id="status">Not connected to device</div>
     </div>
 
     <div id="confirm_dialog" title=""> <!-- BN: not currently used but may be useful -->
-      <p id='confirm_dialog_body'></p>
+      <p id="confirm_dialog_body"></p>
       <p>Are you sure?</p>
     </div>
 
