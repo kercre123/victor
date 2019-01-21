@@ -27,7 +27,7 @@ public:
   ImuUKF();
   
   // Measurement Model Update
-  void Update(const Point3f& accel, const Point3f& gyro, unsigned int t);
+  void Update(const Point3f& accel, const Point3f& gyro, float dt_s);
 
   void Reset(const Rotation3d& rot);
 
@@ -60,7 +60,7 @@ private:
   SmallMatrix<6,12,float> _W;     // a set of points representing covariance of the state 
   std::array<State,12> _Y;        // a set of points representing the average state
 
-  unsigned int _lastMeasurement_ms;    // time of last measurement update
+  // unsigned int _lastMeasurement_ms;    // time of last measurement update
       
 };
 

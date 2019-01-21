@@ -38,6 +38,7 @@
 #include "coretech/common/engine/math/rotation.h"
 
 #include "util/container/minMaxQueue.h"
+#include "util/logging/logging.h"
 
 #include <array>
 #include <cmath>
@@ -926,8 +927,8 @@ namespace Anki {
 
         ukf_.Update(
           {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-          {gyro_[0], gyro_[1], gyro_[2]},
-          curTime
+          {gyro_[0], gyro_[1], gyro_[2] / .989f},
+          CONTROL_DT
         );
 
         UpdatePitch();
@@ -1028,13 +1029,18 @@ namespace Anki {
 
       f32 GetRotation()
       {
-        const float rot =  ukf_.GetRotation().GetAngleAroundZaxis().ToFloat();
+        const float headAngle = HeadController::GetAngleRad() - DEG_TO_RAD(-2.f); // empirical testing shows this ~2 degrees off
+
+        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(headAngle, Y_AXIS_3D());
+        const float rotz = rot.GetAngleAroundZaxis().ToFloat();
+        const float pit  = -rot.GetAngleAroundYaxis().ToFloat();
+        const float accPitch = atan2f(imu_data_.accel[0], imu_data_.accel[2]) - headAngle;
         static uint16_t i = 0;
-        if (++i == 1000) {
-          printf("ukf angle: %f      planar angle: %f      error: %f\n", rot, rot_.ToFloat(), rot - rot_.ToFloat());
+        if (++i == 512) {
+          printf("ukf angle: %f (pitch: %f)      planar angle: %f (pitch: %f)\n", rotz, pit, rot_.ToFloat(), accPitch);
           i = 0;
         }
-        return rot;
+        return rotz;
         //return _zAngle;  // Computed from 3D orientation tracker (Madgwick filter)
         // return rot_.ToFloat();     // Computed from simplified yaw-only tracker
       }

@@ -41,43 +41,45 @@ namespace {
   
   // transforms rotation vector into a quaternion
   Rotation3d ErrorToQuat(Point3f v) {
-    const float alpha = v.MakeUnitLength();
-    return Rotation3d(alpha, NEAR_ZERO(alpha) ? Z_AXIS_3D() : v);
+    return Rotation3d(v.Length(), v);
   };
   
   // transforms a quaternion into a rotation vector
-  Point3f QuaternionToError(const Rotation3d& q) {
-    return q.GetAxis() * q.GetAngle().ToFloat();
-  };
+  // Point3f QuaternionToError(const Rotation3d& q) {
+  //   return q.GetAxis() * q.GetAngle().ToFloat();
+  // };
 
   template <MatDimType N>
   ImuUKF::State CalculateMean(const std::array<ImuUKF::State,N>& states) {
-    int t = 0;
-    Rotation3d qt = states[0].rotation;
-    Point3f avgErr;
-    do {
-      avgErr = {0.f, 0.f, 0.f};
-      for (const auto& e : states) {
-        avgErr += QuaternionToError(e.rotation * qt.GetInverse());
-      }
-      avgErr /= N;
+    // int t = 0;
+    // Rotation3d qt = states[0].rotation;
+    // Point3f avgErr;
+    // do {
+    //   avgErr = {0.f, 0.f, 0.f};
+    //   for (const auto& e : states) {
+    //     avgErr += QuaternionToError(e.rotation * qt.GetInverse());
+    //   }
+    //   avgErr /= N;
 
-      qt = ErrorToQuat(avgErr) * qt;
-    } while( FLT_GT(avgErr.LengthSq(), .000001f) && ++t < 10);
+    //   qt = ErrorToQuat(avgErr) * qt;
+    // } while( FLT_GT(avgErr.LengthSq(), .000001f) && ++t < 10);
     
     // mean velocity is just the linear mean
+    Point<4,double> meanRot;
     Point3f meanVel;
     for (int i = 0; i < N; ++i) {
+      meanRot += states[i].rotation.GetQuaternion(); // we assume the rotations are close in Quaternion space, so the mean should be fine
       meanVel += states[i].velocity;
     }
+    meanRot /= N;
     meanVel /= N;
 
-    return {qt, meanVel};
+    return {UnitQuaternion(meanRot), meanVel};
   }
 
   template<MatDimType M, MatDimType N, MatDimType O>
   SmallMatrix<M,O,float> GetCovariance(const SmallMatrix<M,N,float>& A, const SmallMatrix<N,O,float>& B) {
-    return (A*B) * (1.f/((float)N));
+    return (A*B) * (1.f/N);
   }
   
   template<MatDimType M, MatDimType N>
@@ -97,12 +99,12 @@ namespace {
 
   // Measurement Uncertainty
   const SmallSquareMatrix<6,float> _R{{  
-    .25f, 0.f, 0.f, 0.f, 0.f, 0.f,
-    0.f, .25f, 0.f, 0.f, 0.f, 0.f,
-    0.f, 0.f, .25f, 0.f, 0.f, 0.f,
-    0.f, 0.f, 0.f, .01f, 0.f, 0.f,
-    0.f, 0.f, 0.f, 0.f, .01f, 0.f,
-    0.f, 0.f, 0.f, 0.f, 0.f, .01f
+    .1f, 0.f, 0.f, 0.f, 0.f, 0.f,
+    0.f, .1f, 0.f, 0.f, 0.f, 0.f,
+    0.f, 0.f, .1f, 0.f, 0.f, 0.f,
+    0.f, 0.f, 0.f, .001f, 0.f, 0.f,
+    0.f, 0.f, 0.f, 0.f, .001f, 0.f,
+    0.f, 0.f, 0.f, 0.f, 0.f, .001f 
   }}; 
 }
 
@@ -117,23 +119,23 @@ ImuUKF::ImuUKF()
 void ImuUKF::Reset(const Rotation3d& rot) {
   _state = {rot, Point3f()};
   _P = SmallSquareMatrix<6,float> {{
-    .1f, 0.f, 0.f, 0.f, 0.f, 0.f,
-    0.f, .1f, 0.f, 0.f, 0.f, 0.f,
-    0.f, 0.f, .1f, 0.f, 0.f, 0.f,
-    0.f, 0.f, 0.f, .1f, 0.f, 0.f,
-    0.f, 0.f, 0.f, 0.f, .1f, 0.f,
-    0.f, 0.f, 0.f, 0.f, 0.f, .1f
+    .01f, 0.f, 0.f, 0.f, 0.f, 0.f,
+    0.f, .01f, 0.f, 0.f, 0.f, 0.f,
+    0.f, 0.f, .01f, 0.f, 0.f, 0.f,
+    0.f, 0.f, 0.f, .01f, 0.f, 0.f,
+    0.f, 0.f, 0.f, 0.f, .01f, 0.f,
+    0.f, 0.f, 0.f, 0.f, 0.f, .01f
   }};
 }
 
-void ImuUKF::Update(const Point3f& accel, const Point3f& gyro, unsigned int t_ms)
+void ImuUKF::Update(const Point3f& accel, const Point3f& gyro, float dt_s)
 {
-  if (_lastMeasurement_ms != 0) {
+  // if (_lastMeasurement_ms != 0) {
     // normalize accel since we assume a unit gravity vector
-    ProcessUpdate( static_cast<float>(t_ms - _lastMeasurement_ms) / 1000 );
+    ProcessUpdate( dt_s );
     MeasurementUpdate( Concatenate(accel * (1.f/accel.Length()), gyro) );
-  }
-  _lastMeasurement_ms = t_ms;
+  // }
+  // _lastMeasurement_ms = t_ms;
 }
 
 void ImuUKF::ProcessUpdate(float dt_s)
@@ -144,17 +146,19 @@ void ImuUKF::ProcessUpdate(float dt_s)
     const auto Si = S.GetColumn(i);
 
     // current process model assumes we continue moving at constant velocity
+    const Rotation3d q = ErrorToQuat({Si[0], Si[1], Si[2]});
     _Y[i].velocity = _state.velocity + Point3f{Si[3], Si[4], Si[5]};
-    _Y[i].rotation = _state.rotation * ErrorToQuat({Si[0], Si[1], Si[2]}) * ErrorToQuat(_Y[i].velocity * dt_s); 
+    _Y[i].rotation = _state.rotation * q * ErrorToQuat(_Y[i].velocity * dt_s); 
 
     _Y[i + StateDim].velocity = _state.velocity - Point3f{Si[3], Si[4], Si[5]};
-    _Y[i + StateDim].rotation = _state.rotation * ErrorToQuat({-Si[0], -Si[1], -Si[2]}) * ErrorToQuat(_Y[i + StateDim].velocity * dt_s); 
+    _Y[i + StateDim].rotation = _state.rotation * q.GetInverse() * ErrorToQuat(_Y[i + StateDim].velocity * dt_s); 
   }
   _state = CalculateMean(_Y);
 
   // Calculate Process Noise by mean centering Y
   for (int i = 0; i < 2*StateDim; ++i) {
-    const auto err = QuaternionToError( _state.rotation.GetInverse() * _Y[i].rotation );
+    const auto q = _state.rotation.GetInverse() * _Y[i].rotation;
+    const auto err = q.GetAxis() * q.GetAngle().ToFloat(); // map the rotation into full 3d space
     const auto omega = _Y[i].velocity - _state.velocity;
     _W.SetColumn(i, Concatenate(err, omega));
   }
