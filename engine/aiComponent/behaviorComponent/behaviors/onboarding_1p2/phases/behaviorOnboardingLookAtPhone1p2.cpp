@@ -57,34 +57,25 @@ bool BehaviorOnboardingLookAtPhone1p2::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone1p2::AlwaysHandleInScope(const GameToEngineEvent& event)
 {
-  switch(event.GetData().GetTag())
-  {
-    case GameToEngineTag::HasBleKeysResponse:
-    {
-      bool hasBleKeys = event.GetData().Get_HasBleKeysResponse().hasBleKeys;
-      
-      if(hasBleKeys != _hasBleKeys) {
-        GetBehaviorComp<OnboardingMessageHandler>().ShowUrlFace(!hasBleKeys);
-        _hasBleKeys = hasBleKeys;
-        MoveHeadUp();
-      }
-
-      break;
-    }
-      
-    default:
-      break;
-  }
+  HandleGameToEngineEvent(event); 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingLookAtPhone1p2::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event)
+{
+  HandleGameToEngineEvent(event);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorOnboardingLookAtPhone1p2::HandleGameToEngineEvent(const GameToEngineEvent& event)
 {
   switch(event.GetData().GetTag())
   {
     case GameToEngineTag::HasBleKeysResponse:
     {
       _hasBleKeys = event.GetData().Get_HasBleKeysResponse().hasBleKeys;
+      MoveHeadUp();
+
       break;
     }
       
@@ -144,6 +135,7 @@ void BehaviorOnboardingLookAtPhone1p2::BehaviorUpdate()
 void BehaviorOnboardingLookAtPhone1p2::MoveHeadUp()
 {
   if(_hasBleKeys) {
+    GetBehaviorComp<OnboardingMessageHandler>().ShowUrlFace(false);
     auto* action = new TriggerLiftSafeAnimationAction{ AnimationTrigger::OnboardingLookAtPhoneUp };
     action->SetRenderInEyeHue( false );
     DelegateIfInControl(action, [this](const ActionResult& res){
@@ -152,6 +144,7 @@ void BehaviorOnboardingLookAtPhone1p2::MoveHeadUp()
   } else {
     MoveHeadToAngleAction* action = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
     DelegateIfInControl(action);
+    GetBehaviorComp<OnboardingMessageHandler>().ShowUrlFace(true);
   }
 }
 
