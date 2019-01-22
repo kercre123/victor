@@ -276,7 +276,7 @@ void TrackLayerComponent::SetupKeepFaceAliveActivities()
     BlinkEventList eventList;
     Result result = _faceLayerManager->AddBlinkToFaceTrack(kEyeBlinkLayerName, streamTime_ms, eventList);
     if (RESULT_OK == result) {
-      _audioLayerManager->AddEyeBlinkToAudioTrack(kEyeBlinkLayerName, eventList, streamTime_ms);
+      //_audioLayerManager->AddEyeBlinkToAudioTrack(kEyeBlinkLayerName, eventList, streamTime_ms);
     }
     else {
       PRINT_NAMED_WARNING("TrackLayerComponent.SetupKeepFaceAliveActivities.eyeBlinkPerform",
@@ -298,7 +298,7 @@ void TrackLayerComponent::SetupKeepFaceAliveActivities()
                                                              streamTime_ms,
                                                              interpolationTime_ms);
     if (RESULT_OK == result) {
-      _audioLayerManager->AddEyeDartToAudioTrack(kEyeDartLayerName, interpolationTime_ms, streamTime_ms);
+      //_audioLayerManager->AddEyeDartToAudioTrack(kEyeDartLayerName, interpolationTime_ms, streamTime_ms);
     }
     else {
       PRINT_NAMED_WARNING("TrackLayerComponent.SetupKeepFaceAliveActivities.eyeDartPerform",

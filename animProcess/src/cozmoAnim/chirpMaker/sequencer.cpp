@@ -42,7 +42,7 @@ namespace {
   CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps.Pitch", 1760, 0.0f, 5000.0f);
   
   CONSOLE_VAR_ENUM(int, kSwitchType, "Chirps.AAA_Playback", 0, "TONEGEN,ASSETS");
-  CONSOLE_VAR_RANGED(unsigned int, kMaxDurationIfAssets_ms, "Chirps.Playback", 1000, 50, 1500);
+  CONSOLE_VAR_RANGED(unsigned int, kMaxDurationIfAssets_ms, "Chirps.AAA_Playback", 1000, 50, 1500);
   
   CONSOLE_VAR(bool, kPlayAnims, "Chirps.AAA_Playback", false);
   
@@ -118,7 +118,7 @@ void Sequencer::Init(const AnimContext* context, AnimationStreamer* animStreamer
     _animState = AnimationState::None;
     _animEnded = false;
   };
-  _consoleFuncs.emplace_front( "ResetAnimSystem", std::move(resetAnims), "Chirps.Playback", "" );
+  _consoleFuncs.emplace_front( "ResetAnimSystem", std::move(resetAnims), "Chirps.AAA_Playback", "" );
   
   _running = true;
   _thread = std::thread{ &Sequencer::MainLoop, this };
