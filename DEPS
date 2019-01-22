@@ -10,15 +10,6 @@
                 "package_name": "protocCppPlugin",
                 "version": "3"
             },
-            "pffft": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "90277bd4f757ee245ebf60f6e8082e99c33fc5f7245cb3126b634c488479df34"
-                },
-                "extension": "tar.gz",
-                "package_name": "pffft",
-                "version": "1"
-            },
             "speexdsp": {
                 "build_type_id": "anki",
                 "checksums": {
@@ -103,6 +94,9 @@
             },
             "opus": {
                 "version": "e04e86e0"
+            },
+            "pffft": {
+                "version": "1.0-anki"
             },
             "protobuf": {
                 "version": "v3.5.1"
