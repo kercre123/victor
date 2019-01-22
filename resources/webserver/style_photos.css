@@ -1,0 +1,15 @@
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 20px auto 0px auto;
+    max-width: 2000px;
+}
+
+.tiles {
+    border: 1px solid gray;
+    margin: 0 15px 30px 15px;
+    /* flex-grow: 1; */
+    flex: 0 0 391px;
+    padding: 0;
+    height: 220px;
+}
