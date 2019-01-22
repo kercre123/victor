@@ -23,6 +23,7 @@ THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(THIS_DIR, '..', '..', 'tools', 'build', 'tools'))
 
 import ankibuild.util
+import ankibuild.deptool
 
 # configure unbuffered output
 # https://stackoverflow.com/a/107717/217431
@@ -321,13 +322,13 @@ def get_flatc_dir():
   target_triple = platform_map.get(platform_name)
 
   if target_triple:
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
                              'flatbuffers', 'host-prebuilts',
                              'current', target_triple, 'bin')
   else: 
     # default
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
-                             'flatbuffers', 'ios', 'Release')
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+                             'flatbuffers', 'mac', 'Release')
  
   return flatc_dir
   
@@ -677,6 +678,31 @@ def files_package(files):
     return pulled_files
 
 
+def deptool_package(deptool_dict):
+   deps_retrieved = []
+   deps = deptool_dict.get("deps")
+   project = deptool_dict.get("project")
+   url_prefix = deptool_dict.get("url_prefix")
+   for dep in deps:
+      required_version = deps[dep].get("version", None)
+      dst = os.path.join(DEPENDENCY_LOCATION, dep)
+      if os.path.exists(dst):
+         version = ankibuild.deptool.get_version_from_dir(dst)
+         if version == required_version:
+            continue
+         if os.path.islink(dst):
+            os.unlink(dst)
+         else:
+            ankibuild.util.File.rm_rf(dst)
+      src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, url_prefix)
+      if not src:
+         raise RuntimeError('Could not find or install {0}/{1} at version {2} under {3}'
+                            .format(project, dep, required_version, url_prefix))
+      os.symlink(src, dst)
+      deps_retrieved.append(dep)
+
+   return deps_retrieved
+
 def teamcity_package(tc_dict):
     cache_dir = get_anki_sha256_cache_directory()
     downloaded_builds = []
@@ -691,6 +717,9 @@ def teamcity_package(tc_dict):
     password = tc_dict.get("pwd", "")
     user = tc_dict.get("default_usr", "undefined")
     builds = tc_dict.get("builds", "undefined")
+    if not builds:
+       return downloaded_builds
+
     if user == "undefined":
         # These artifacts are stored on artifactory.
         teamcity=False
@@ -836,6 +865,8 @@ def json_parser(version_file):
     if os.path.isfile(version_file):
         with open(version_file, mode="r") as file_obj:
             djson = json.load(file_obj)
+            if "deptool" in djson:
+                updated_deps.extend(deptool_package(djson["deptool"]))
             if "artifactory" in djson:
                 updated_deps.extend(teamcity_package(djson["artifactory"]))
             if "teamcity" in djson:

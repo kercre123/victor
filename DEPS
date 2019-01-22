@@ -88,18 +88,33 @@
     },
     "teamcity": {
         "builds": {
-            "coretech_external": {
-                "build_type_id": "Cte_Master",
-                "checksums": {
-                    "sha256": "fe6008376eed0adf374897057d0d097d7345a79bf81da285c6f9ed2d10e0b56b"
-                },
-                "extension": "tar.gz",
-                "package_name": "Cte",
-                "version": "195"
-            }
         },
         "default_usr": "puller_cozmo",
         "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "root_url": "https://build.ankicore.com/"
+    },
+    "deptool": {
+        "deps": {
+            "aubio": {
+                "version": "d4a1d0fb"
+            },
+            "flatbuffers": {
+                "version": "v1.5.0"
+            },
+            "libsodium": {
+                "version": "1.0.16"
+            },
+            "opencv": {
+                "version": "3.4.0"
+            },
+            "opus": {
+                "version": "e04e86e0"
+            },
+            "protobuf": {
+                "version": "v3.5.1"
+            }
+        },
+        "project": "victor",
+        "url_prefix": "https://sai-general.s3.amazonaws.com/build-assets/deps/victor/"
     }
 }

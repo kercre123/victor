@@ -63,7 +63,7 @@ if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
     )
     
     set(PLATFORM_INCLUDES
-      ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/vicos/include
+      ${ANKI_EXTERNAL_DIR}/opencv/vicos/include
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/proto
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/include
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/eigen
@@ -91,7 +91,7 @@ if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
     )
     
     set(PLATFORM_INCLUDES
-      ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac
+      ${ANKI_EXTERNAL_DIR}/opencv/mac
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/proto
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/include
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/eigen
