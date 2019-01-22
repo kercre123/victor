@@ -13,12 +13,18 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoCountPeople.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/robotDataLoader.h"
+#include "engine/vision/imageSaver.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "opencv2/highgui.hpp" // Only needed for CV_FONT_NORMAL
+
+#include <fstream>
 
 #define LOG_CHANNEL "Behaviors"
 
@@ -27,14 +33,24 @@ namespace Vector {
  
 namespace {
   CONSOLE_VAR(f32, kCountPeople_FontScale, "TheBox.Screen",  0.6f);
-  CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleMotionThreshold, "TheBox", 0.05f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleSalientPointOverlapThreshold, "TheBox", 0.5f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleMotionThreshold, "TheBox.PersonDetection", 0.05f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleSalientPointOverlapThreshold, "TheBox.PersonDetection", 0.5f, 0.f, 1.f);
+  
+  // If set to Images, will load the saved image from the neural net and re-draw any detected salient points on it.
+  // If set to JsonSalientPoints, will write the SalientPoints to Json and assume Web will render them.
+  CONSOLE_VAR_ENUM(s32, kTheBox_CountPeopleSaveMode, "TheBox.PersonDetection", 0, "Off,Images,JsonSalientPoints");
+  
+  CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleSaveThumbnailSize, "TheBox.PersonDetection", 0.f, 0.f, 1.f);
+  
+  const char* const kSaveBaseName = "person_detection";
+  const char* const kPersistentSaveSubDir = "photos";
 }
   
 namespace ConfigKeys
 {
   const char* const kVisionTimeout         = "visionRequestTimeout_sec";
   const char* const kWaitTimeBetweenImages = "waitTimeBetweenImages_sec";
+  const char* const kSaveQuality           = "saveQuality";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -56,6 +72,8 @@ BehaviorBoxDemoCountPeople::BehaviorBoxDemoCountPeople(const Json::Value& config
   
   _iConfig.waitTimeBetweenImages_sec = JsonTools::ParseFloat(config, ConfigKeys::kWaitTimeBetweenImages,
                                                             "BehaviorBoxDemoCountPeople");
+  
+  _iConfig.saveQuality = JsonTools::ParseInt8(config, ConfigKeys::kSaveQuality, "BehaviorBoxDemoCountPeople");
   
   SubscribeToTags({EngineToGameTag::RobotObservedMotion});
 }
@@ -90,6 +108,7 @@ void BehaviorBoxDemoCountPeople::GetBehaviorJsonKeys(std::set<const char*>& expe
   const char* list[] = {
     ConfigKeys::kVisionTimeout,
     ConfigKeys::kWaitTimeBetweenImages,
+    ConfigKeys::kSaveQuality,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -191,6 +210,24 @@ void BehaviorBoxDemoCountPeople::TransitionToWaitingForCloud()
   
   WaitForImagesAction* waitForImage = new WaitForImagesAction(1, VisionMode::OffboardPersonDetection);
   waitForImage->SetTimeoutInSeconds(_iConfig.visionRequestTimeout_sec);
+  
+  if(_iConfig.saveQuality != 0)
+  {
+    const std::string cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("cloud_vison");
+    const bool kRemoveDistortion = false;
+    ImageSaverParams saveParams(cachePath,
+                                ImageSaverParams::Mode::SingleShot,
+                                _iConfig.saveQuality,
+                                kSaveBaseName,
+                                Vision::ImageCacheSize::Full,
+                                kTheBox_CountPeopleSaveThumbnailSize,
+                                1.f,
+                                kRemoveDistortion);
+    
+    saveParams.saveConditions[VisionMode::OffboardPersonDetection] = ImageSaverParams::SaveConditionType::OnDetection;
+    waitForImage->SetSaveParams(saveParams);
+  }
+  
   DelegateIfInControl(waitForImage, [this]() {
     
     std::list<Vision::SalientPoint> salientPoints;
@@ -204,6 +241,11 @@ void BehaviorBoxDemoCountPeople::TransitionToWaitingForCloud()
     const bool drewSomething = DrawSalientPoints(salientPoints);
     if(drewSomething)
     {
+      if(_iConfig.saveQuality != 0)
+      {
+        DrawSalientPointsOnSavedImage(salientPoints);
+      }
+      
       WaitAction* waitAction = new WaitAction(_iConfig.waitTimeBetweenImages_sec);
       DelegateIfInControl(waitAction, &BehaviorBoxDemoCountPeople::TransitionToWaitingForMotion);
     }
@@ -272,6 +314,83 @@ bool BehaviorBoxDemoCountPeople::DrawSalientPoints(const std::list<Vision::Salie
   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<Vision::SalientPoint>& salientPoints) const
+{
+  const std::string cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("cloud_vison");
+  const std::string imgFilename = Util::FileUtils::FullFilePath({cachePath, std::string(kSaveBaseName) + ".jpg"});
+  
+  const TimeStamp_t timestamp = salientPoints.front().timestamp;
+  const std::string persistentPath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetPersistentPath(kPersistentSaveSubDir);
+  std::string saveFilename = Util::FileUtils::FullFilePath({persistentPath, (std::string(kSaveBaseName) + "_"
+                                                                             + std::to_string(timestamp))});
+  
+  switch(kTheBox_CountPeopleSaveMode)
+  {
+    case 1:
+    {
+      std::async(std::launch::async, [salientPoints, imgFilename, saveFilename]()
+                 {
+                   // Load up the saved image and draw the detections, then re-save for the web
+                   Vision::ImageRGB imgForWeb;
+                   const Result loadResult = imgForWeb.Load(imgFilename);
+                   if(ANKI_VERIFY(loadResult == RESULT_OK,
+                                  "BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.LoadSavedImageFailed", ""))
+                   {
+                     for(const auto& salientPoint : salientPoints)
+                     {
+                       Poly2f poly(salientPoint.shape);
+                       for(auto & pt : poly)
+                       {
+                         pt.x() *= imgForWeb.GetNumCols();
+                         pt.y() *= imgForWeb.GetNumRows();
+                       }
+                       imgForWeb.DrawPoly(poly, NamedColors::YELLOW, 2);
+                     }
+                     
+                     const Result saveResult = imgForWeb.Save(saveFilename + ".jpg");
+                     if(RESULT_OK != saveResult)
+                     {
+                       LOG_ERROR("BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.SaveImageFailed", "%s",
+                                 saveFilename.c_str());
+                     }
+                   }
+                 });
+      break;
+    }
+      
+    case 2:
+    {
+      // Move the saved image into place and write out a correspond Json file
+      saveFilename += ".jpg";
+      const bool success = Util::FileUtils::MoveFile(saveFilename + ".jpg", imgFilename);
+      if(ANKI_VERIFY(success, "BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.MoveFailed",
+                     "%s->%s", imgFilename.c_str(), (saveFilename+".jpg").c_str()))
+      {
+        Json::Value salientPointsJson;
+        for(const auto& salientPoint : salientPoints)
+        {
+          salientPointsJson.append(salientPoint.GetJSON());
+        }
+        Json::StyledWriter writer;
+        std::ofstream file(saveFilename + ".json");
+        if(ANKI_VERIFY(file.is_open(),
+                       "BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.OpenJsonFileFailed", "%s",
+                       (saveFilename + ".json").c_str()))
+        {
+          file << writer.write(salientPointsJson);
+          file.close();
+        }
+      }
+      break;
+    }
+      
+    default:
+      // Nothing to do
+      break;
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBoxDemoCountPeople::HandleWhileActivated(const EngineToGameEvent& event)
 {

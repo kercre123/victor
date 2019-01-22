@@ -56,7 +56,7 @@ void BehaviorBoxDemoFaceTracking::GetBehaviorOperationModifiers(BehaviorOperatio
   modifiers.behaviorAlwaysDelegates = false;
   modifiers.visionModesForActiveScope->insert({VisionMode::MirrorMode,              EVisionUpdateFrequency::High});
   modifiers.visionModesForActiveScope->insert({VisionMode::DetectingFaces,          EVisionUpdateFrequency::High});
-  modifiers.visionModesForActiveScope->insert({VisionMode::FlipScreenOnCloseFace,   EVisionUpdateFrequency::High});
+  //modifiers.visionModesForActiveScope->insert({VisionMode::FlipScreenOnCloseFace,   EVisionUpdateFrequency::High});
   modifiers.visionModesForActiveScope->insert({VisionMode::OffboardFaceRecognition, EVisionUpdateFrequency::High});
 }
 

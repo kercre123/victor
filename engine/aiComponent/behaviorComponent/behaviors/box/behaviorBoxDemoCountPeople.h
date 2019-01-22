@@ -46,6 +46,7 @@ private:
     InstanceConfig();
     float visionRequestTimeout_sec = 10.f;
     float waitTimeBetweenImages_sec = 1.f;
+    int   saveQuality = 90; // set to zero to disable
   };
 
   struct DynamicVariables {
@@ -66,6 +67,7 @@ private:
   
   void DrawText3Lines(const std::array<std::string,3>& strings, const ColorRGBA& color);
   bool DrawSalientPoints(const std::list<Vision::SalientPoint>& salientPoints);
+  void DrawSalientPointsOnSavedImage(const std::list<Vision::SalientPoint>& salientPoints) const;
 };
 
 } // namespace Vector
