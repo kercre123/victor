@@ -4,7 +4,13 @@
   <head>
     <meta charset="utf-8">
 
-    <title>Vector photos</title>
+    <title>Vector images</title>
+
+    <div class="hero-imgage-container">
+      <img src="http://image.email.ankimail.com/lib/fe4515707564057c761573/m/1/f24df06a-29f7-44ba-8b79-ceed7cde3750.jpg" alt="Snow" style="width:100%;">
+      <div class="centered">ELEMENTAL</div>
+      <div class="centered-sub-text">Person Detection Cloud Results</div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="photos.js"></script>
@@ -19,7 +25,20 @@
   </head>
 
   <body>
-    <div class="container">
+    <div class="tile_container">
+      <div class="error_text">No Images Available<br>(try reloading)</div>
     </div>
+
+    <div id="myModal" class="modal">
+
+      <span class="close">&times;</span>
+      <img class="modal-content" id="imgModal">
+
+    </div>
+
+    <div class="photo_controls">
+      <button id="delete_photos" class="ui-button">Delete Images</button>
+    </div>
+
   </body>
 </html>
