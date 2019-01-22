@@ -1,23 +1,17 @@
 {
   // NOTE: for now, see also InvalidateBannedTracks
   
-  // animations which start on the charger, need to move the body, but are not expected to end on the charger
+  // animations which start on the charger and need to move the body
+  //
+  // Note: Any animation name that begins with or is equal to the provided string will be
+  // considered. E.g. if "anim_test_" appears in the list, it will match "anim_test_01",
+  // "anim_test_02", "anim_test_drive_01", etc.
   "driveOffChargerAnims": [
-    "anim_chargerdocking_comeoff_left_01",
-    "anim_chargerdocking_comeoff_left_02",
-    "anim_chargerdocking_comeoff_right_01",
-    "anim_chargerdocking_comeoff_right_02",
-    "anim_chargerdocking_comeoff_straight_01",
-    "anim_onboarding_driveoff_charger_01",
-    "anim_onboarding_wakeup_01",
-    "anim_onboarding_driveoff_charger_alt_01",
-    "anim_movement_forward_01"
-  ],
-
-
-  // animations which should have the body unlocked on the charger (meaning they should be very small motions,
-  // or start and end on the charger safely)
-  "safeChargerAnims": [
-    "anim_chargerdocking_settle_01"
+    "anim_chargerdocking_comeoff_",
+    "anim_chargerdocking_settle_",
+    "anim_movement_forward_",
+    "anim_onboarding_driveoff_charger_",
+    "anim_onboarding_wakeup_"
   ]
+
 }

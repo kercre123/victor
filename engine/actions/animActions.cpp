@@ -113,8 +113,8 @@ namespace Anki {
         // default here is now to LOCK the body track, but first check the whitelist
 
         auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
-        const auto& whitelist = dataLoader->GetAllWhitelistedChargerAnimationClips();
-        if( whitelist.find(_animName) == whitelist.end() ) {
+        const bool onWhitelist = dataLoader->IsAnimationAllowedToMoveBodyOnCharger(_animName);
+        if( !onWhitelist ) {
 
           // time to lock the body track. Unfortunately, the action has already been Init'd, so it's tracks
           // are already locked. Therefore we have to manually lock the body to make this work
