@@ -10,15 +10,6 @@
                 "package_name": "protocCppPlugin",
                 "version": "3"
             },
-            "avs-device-sdk": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "031fde1a05dd81bb4b794adacc60c08c5400ffe97b56d29e1fe6318741dbb75f"
-                },
-                "extension": "tar.gz",
-                "package_name": "avs-device-sdk",
-                "version": "5"
-            },
             "pffft": {
                 "build_type_id": "anki",
                 "checksums": {
@@ -97,6 +88,9 @@
         "deps": {
             "aubio": {
                 "version": "d4a1d0fb"
+            },
+            "avs-device-sdk": {
+                "version": "v1.10-anki"
             },
             "flatbuffers": {
                 "version": "v1.5.0"
