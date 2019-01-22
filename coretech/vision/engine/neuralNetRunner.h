@@ -71,6 +71,8 @@ public:
   //
   
   const ImageRGB& GetOrigImg() const { return _imgOrig; }
+  s32 GetProcessingWidth()  const { return _processingWidth; }
+  s32 GetProcessingHeight() const { return _processingHeight; }
   
 private:
   

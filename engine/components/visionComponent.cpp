@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/actions/basicActions.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -125,6 +126,8 @@ namespace Vector {
   // Prints warning if haven't captured valid frame in this amount of time.
   // This is dependent on how fast we can process an image
   CONSOLE_VAR(u32, kMaxExpectedTimeBetweenCapturedFrames_ms, "Vision.General", 500);
+  
+  CONSOLE_VAR(bool, kTheBox_PlaySoundForCloudVision, "TheBox", true);
   
   void DebugEraseAllEnrolledFaces(ConsoleFunctionContextRef context)
   {
@@ -1162,6 +1165,7 @@ namespace Vector {
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
+      
     }
 
     lastResult = _robot->GetFaceWorld().Update(procResult.faces);
@@ -1574,6 +1578,15 @@ namespace Vector {
     {
       _processingStats.numFramesSentToCloud++;
       _processingStatsDirty = true;
+      
+      if(kTheBox_PlaySoundForCloudVision)
+      {
+        // Trigger a sound anytime we process an image in the Cloud
+        // NOTE: Calling this a "Behavior" GameObject type because not sure what else to call it
+        using GE = AudioMetaData::GameEvent::GenericEvent;
+        using GO = AudioMetaData::GameObjectType;
+        _robot->GetAudioClient()->PostEvent(GE::Play__Robot_Vic_Sfx__Cube_Search_Ping, GO::Behavior);
+      }
     }
 
     for( const auto& face : procResult.faces ) {

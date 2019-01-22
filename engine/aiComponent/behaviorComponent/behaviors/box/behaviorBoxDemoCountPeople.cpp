@@ -41,6 +41,7 @@ namespace {
   CONSOLE_VAR_ENUM(s32, kTheBox_CountPeopleSaveMode, "TheBox.PersonDetection", 0, "Off,Images,JsonSalientPoints");
   
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleSaveThumbnailSize, "TheBox.PersonDetection", 0.f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleDrawSalientPointThickness, "TheBox.PersonDetection", 3, 1, 5);
   
   const char* const kSaveBaseName = "person_detection";
   const char* const kPersistentSaveSubDir = "photos";
@@ -219,7 +220,7 @@ void BehaviorBoxDemoCountPeople::TransitionToWaitingForCloud()
                                 ImageSaverParams::Mode::SingleShot,
                                 _iConfig.saveQuality,
                                 kSaveBaseName,
-                                Vision::ImageCacheSize::Full,
+                                Vision::ImageCacheSize::Full, // NOTE: this has no effect. Image is taken from NeuralNetRunner
                                 kTheBox_CountPeopleSaveThumbnailSize,
                                 1.f,
                                 kRemoveDistortion);
@@ -305,7 +306,7 @@ bool BehaviorBoxDemoCountPeople::DrawSalientPoints(const std::list<Vision::Salie
         pt.y() *= FACE_DISPLAY_HEIGHT;
       }
       
-      _dispImg.DrawPoly(poly, NamedColors::YELLOW, 2);
+      _dispImg.DrawPoly(poly, NamedColors::YELLOW, kTheBox_CountPeopleDrawSalientPointThickness);
     }
   }
   
@@ -345,7 +346,7 @@ void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<V
                          pt.x() *= imgForWeb.GetNumCols();
                          pt.y() *= imgForWeb.GetNumRows();
                        }
-                       imgForWeb.DrawPoly(poly, NamedColors::YELLOW, 2);
+                       imgForWeb.DrawPoly(poly, NamedColors::YELLOW, kTheBox_CountPeopleDrawSalientPointThickness);
                      }
                      
                      const Result saveResult = imgForWeb.Save(saveFilename + ".jpg");

@@ -31,8 +31,7 @@ protected:
   explicit BehaviorBoxDemoFaceTracking(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
-  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
@@ -43,7 +42,7 @@ private:
   struct InstanceConfig {
     InstanceConfig();
     
-    bool playSoundOnNewFace = true;
+    bool playSoundOnNewFace = false;
     
     // TODO: put configuration variables here
   };

@@ -1290,8 +1290,8 @@ void VisionSystem::CheckForNeuralNetResults()
                         "First SalientPoint: %s", _currentResult.salientPoints.front().description.c_str());
           
           _faceMetaDataStorage->Update(_currentResult.salientPoints,
-                                       neuralNetRunner->GetOrigImg().GetNumRows(),
-                                       neuralNetRunner->GetOrigImg().GetNumCols());
+                                       neuralNetRunner->GetProcessingHeight(),
+                                       neuralNetRunner->GetProcessingWidth());
         }
         _currentResult.modesProcessed.Insert(VisionMode::OffboardFaceRecognition);
         continue;

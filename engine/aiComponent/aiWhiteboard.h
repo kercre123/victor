@@ -236,12 +236,6 @@ public:
   // TheBox Demo
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // Returns true if new face was inserted, false if it was already present
-  bool InsertNewFace(const SmartFaceID& smartFaceID);
-  
-  // TODO: Call this on some kind of "Forget faces" VC
-  void ClearFacesRespondedTo() { _boxDemoFaces.clear(); }
-  
   float GetSecondsSinceLastDelocalization() const;
   
   // Cache MirrorMode images and retrieve them later by timestamp
@@ -341,7 +335,6 @@ private:
   float _exploringTransitionCooldownExtra_s = 0.0f;
   float _lastExploringCooldownUpdateTime_s = 0.0f;
   
-  std::list<SmartFaceID> _boxDemoFaces;
   std::map<TimeStamp_t, Vision::ImageRGB565> _boxDemoCameraImages;
 };
   
