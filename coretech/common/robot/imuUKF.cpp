@@ -17,19 +17,17 @@
 #include "coretech/common/robot/imuUKF.h"
 #include "coretech/common/engine/math/matrix_impl.h"
 
-#define StateDim 6
-
 namespace Anki {
 
 namespace {
-  // calculates the decomposition of a positive definite n x n matrix A s.t. A = L' * L    
+  // calculates the decomposition of a positive definite NxN matrix A s.t. A = L' * L    
   template<MatDimType N>
-  SmallSquareMatrix<N,float> Cholesky(const SmallSquareMatrix<N,float>& A) {
-    SmallSquareMatrix<N,float> L;
+  SmallSquareMatrix<N,double> Cholesky(const SmallSquareMatrix<N,double>& A) {
+    SmallSquareMatrix<N,double> L;
 
     for (size_t i = 0; i < N; ++i) {
       for (size_t j = 0; j <= i; ++j) {
-          float s = 0;
+          double s = 0;
           for (size_t k = 0; k < j; ++k) {
               s += L(j, k) * L(i, k);
           }
@@ -40,72 +38,47 @@ namespace {
   }
   
   // transforms rotation vector into a quaternion
-  Rotation3d ErrorToQuat(Point3f v) {
-    return Rotation3d(v.Length(), v);
+  inline UnitQuaternion ToQuat(Point<3,double> v) { 
+    const double alpha = v.MakeUnitLength();
+    const double sinAlpha = sin(alpha * .5);
+    return {cos(alpha * .5), sinAlpha * v.x(),  sinAlpha * v.y(),  sinAlpha * v.z()};
   };
   
-  // transforms a quaternion into a rotation vector
-  // Point3f QuaternionToError(const Rotation3d& q) {
-  //   return q.GetAxis() * q.GetAngle().ToFloat();
-  // };
+  inline Point<3,double> FromQuat(const UnitQuaternion& q) { 
+    Point<3,double> axis = q.Slice<1,3>();
+    const double alpha = asin( axis.MakeUnitLength() ) * 2;
+    return axis * alpha;
+  };
 
-  template <MatDimType N>
-  ImuUKF::State CalculateMean(const std::array<ImuUKF::State,N>& states) {
-    // int t = 0;
-    // Rotation3d qt = states[0].rotation;
-    // Point3f avgErr;
-    // do {
-    //   avgErr = {0.f, 0.f, 0.f};
-    //   for (const auto& e : states) {
-    //     avgErr += QuaternionToError(e.rotation * qt.GetInverse());
-    //   }
-    //   avgErr /= N;
-
-    //   qt = ErrorToQuat(avgErr) * qt;
-    // } while( FLT_GT(avgErr.LengthSq(), .000001f) && ++t < 10);
+  UnitQuaternion FindRotation(const Point<3,double>& from, const Point<3,double>& to) {
+    Point<3,double> a = from;
+    Point<3,double> b = to;
+    a.MakeUnitLength();
+    b.MakeUnitLength();
     
-    // mean velocity is just the linear mean
-    Point<4,double> meanRot;
-    Point3f meanVel;
-    for (int i = 0; i < N; ++i) {
-      meanRot += states[i].rotation.GetQuaternion(); // we assume the rotations are close in Quaternion space, so the mean should be fine
-      meanVel += states[i].velocity;
-    }
-    meanRot /= N;
-    meanVel /= N;
+    const double cosAlpha = DotProduct(a, b);
+    const double sinAlpha2 = sqrt( (1-cosAlpha) / 2 );
+    const double cosAlpha2 = sqrt( (1+cosAlpha) / 2 );
+    const auto v = CrossProduct(a,b) * sinAlpha2;
+    return {cosAlpha2, v.x(), v.y(), v.z()};
+  }
 
-    return {UnitQuaternion(meanRot), meanVel};
+  template <MatDimType M, MatDimType N>
+  Point<M,double> CalculateMean(const SmallMatrix<M,N,double>& A) {
+    return A * Point<N,double>(1./N);
   }
 
   template<MatDimType M, MatDimType N, MatDimType O>
-  SmallMatrix<M,O,float> GetCovariance(const SmallMatrix<M,N,float>& A, const SmallMatrix<N,O,float>& B) {
-    return (A*B) * (1.f/N);
+  SmallMatrix<M,O,double> GetCovariance(const SmallMatrix<M,N,double>& A, const SmallMatrix<N,O,double>& B) {
+    return (A*B) * (1./N);
   }
   
   template<MatDimType M, MatDimType N>
-  SmallSquareMatrix<M,float> GetCovariance(const SmallMatrix<M,N,float>& A) {
+  SmallSquareMatrix<M,double> GetCovariance(const SmallMatrix<M,N,double>& A) {
     return GetCovariance(A, A.GetTranspose());
   }
-  
-  // Process Uncertainty
-  const SmallSquareMatrix<6,float> _Q{{  
-    .000001f, 0.f, 0.f, 0.f, 0.f, 0.f,
-    0.f, .000001f, 0.f, 0.f, 0.f, 0.f,
-    0.f, 0.f, .000001f, 0.f, 0.f, 0.f,
-    0.f, 0.f, 0.f, .1f, 0.f, 0.f,
-    0.f, 0.f, 0.f, 0.f, .1f, 0.f,
-    0.f, 0.f, 0.f, 0.f, 0.f, .1f
-  }}; 
 
-  // Measurement Uncertainty
-  const SmallSquareMatrix<6,float> _R{{  
-    .1f, 0.f, 0.f, 0.f, 0.f, 0.f,
-    0.f, .1f, 0.f, 0.f, 0.f, 0.f,
-    0.f, 0.f, .1f, 0.f, 0.f, 0.f,
-    0.f, 0.f, 0.f, .001f, 0.f, 0.f,
-    0.f, 0.f, 0.f, 0.f, .001f, 0.f,
-    0.f, 0.f, 0.f, 0.f, 0.f, .001f 
-  }}; 
+  const Point<3,double> kGravity(0., 0., 9810.);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -117,78 +90,126 @@ ImuUKF::ImuUKF()
 }
 
 void ImuUKF::Reset(const Rotation3d& rot) {
-  _state = {rot, Point3f()};
-  _P = SmallSquareMatrix<6,float> {{
-    .01f, 0.f, 0.f, 0.f, 0.f, 0.f,
-    0.f, .01f, 0.f, 0.f, 0.f, 0.f,
-    0.f, 0.f, .01f, 0.f, 0.f, 0.f,
-    0.f, 0.f, 0.f, .01f, 0.f, 0.f,
-    0.f, 0.f, 0.f, 0.f, .01f, 0.f,
-    0.f, 0.f, 0.f, 0.f, 0.f, .01f
+  _state = {rot.GetQuaternion(), Point<3,double>(), Point<3,double>()};
+  _P = SmallSquareMatrix<State::Dim,double> {{
+    .01, 0., 0., 0., 0., 0., 0., 0., 0.,    // low uncertainty for pose, since we initialize to Quaternion{1,0,0,0}
+    0., .01, 0., 0., 0., 0., 0., 0., 0.,
+    0., 0., .01, 0., 0., 0., 0., 0., 0.,
+    0., 0., 0., .01, 0., 0., 0., 0., 0.,    // high uncertainty for velocity??
+    0., 0., 0., 0., .01, 0., 0., 0., 0.,
+    0., 0., 0., 0., 0., .01, 0., 0., 0.,
+    0., 0., 0., 0., 0., 0., .00001, 0., 0.,
+    0., 0., 0., 0., 0., 0., 0., .00001, 0.,
+    0., 0., 0., 0., 0., 0., 0., 0., .00001
   }};
 }
+ 
+// Process Uncertainty
+const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_Q{{  
+  .0001, 0., 0., 0., 0., 0., 0., 0., 0.,
+  0., .0001, 0., 0., 0., 0., 0., 0., 0.,
+  0., 0., .0001, 0., 0., 0., 0., 0., 0.,
+  0., 0., 0., .1, 0., 0., 0., 0., 0.,
+  0., 0., 0., 0., .1, 0., 0., 0., 0.,
+  0., 0., 0., 0., 0., .1, 0., 0., 0.,
+  0., 0., 0., 0., 0., 0., .00001, 0., 0.,
+  0., 0., 0., 0., 0., 0., 0., .00001, 0.,
+  0., 0., 0., 0., 0., 0., 0., 0., .00001
+}}; 
 
-void ImuUKF::Update(const Point3f& accel, const Point3f& gyro, float dt_s)
+// Measurement Uncertainty
+const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_R{{  
+  17.7, 0., 0., 0., 0., 0., 0., 0., 0.,      // mm/s^2 rms (we may want to increase this, since this does not account for translation acc)
+  0., 17.7, 0., 0., 0., 0., 0., 0., 0.,      // mm/s^2 rms
+  0., 0., 17.7, 0., 0., 0., 0., 0., 0.,      // mm/s^2 rms
+  0., 0., 0., .00123, 0., 0., 0., 0., 0.,    // rad/s rms
+  0., 0., 0., 0., .00123, 0., 0., 0., 0.,    // rad/s rms
+  0., 0., 0., 0., 0., .00123, 0., 0., 0.,    // rad/s rms
+  0., 0., 0., 0., 0., 0., .003, 0., 0.,      // rad/s - no noise on bias, but make it a bit higher than raw gyro noise so that we don't update aggressively
+  0., 0., 0., 0., 0., 0., 0., .003, 0.,      // rad/s
+  0., 0., 0., 0., 0., 0., 0., 0., .003       // rad/s
+}}; 
+
+void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float timestamp_s)
 {
-  // if (_lastMeasurement_ms != 0) {
-    // normalize accel since we assume a unit gravity vector
-    ProcessUpdate( dt_s );
-    MeasurementUpdate( Concatenate(accel * (1.f/accel.Length()), gyro) );
-  // }
-  // _lastMeasurement_ms = t_ms;
+  if (!NEAR_ZERO(_lastMeasurement_s)) {
+    const auto measurement = Concatenate(Concatenate(accel, gyro), _state.GetGyroBias() );
+    ProcessUpdate( timestamp_s - _lastMeasurement_s );
+    MeasurementUpdate( measurement );
+  }
+  _lastMeasurement_s = timestamp_s;
+}
+
+
+void ImuUKF::UpdateBias(const Point<3,double>& accel, const Point<3,double>& gyro, float timestamp_s)
+{
+  if (!NEAR_ZERO(_lastMeasurement_s)) {
+    ProcessUpdate( timestamp_s - _lastMeasurement_s );
+    const auto measurement = Concatenate(Concatenate(accel, gyro), gyro );
+    BiasUpdate( measurement );
+  }
+  _lastMeasurement_s = timestamp_s;
 }
 
 void ImuUKF::ProcessUpdate(float dt_s)
 { 
   // sample the covariance, generating the set {𝑊ᵢ} and add the mean
-  const auto S = Cholesky( SmallSquareMatrix<6,float>{_P + _Q} ) * sqrtf(StateDim);
-  for (int i = 0; i < StateDim; ++i) {
-    const auto Si = S.GetColumn(i);
-
+  const auto S = Cholesky(_P + _Q) * sqrt(State::Dim);
+  for (int i = 0; i < State::Dim; ++i) {
     // current process model assumes we continue moving at constant velocity
-    const Rotation3d q = ErrorToQuat({Si[0], Si[1], Si[2]});
-    _Y[i].velocity = _state.velocity + Point3f{Si[3], Si[4], Si[5]};
-    _Y[i].rotation = _state.rotation * q * ErrorToQuat(_Y[i].velocity * dt_s); 
+    const auto Si = S.GetColumn(i);
+    const auto q  = ToQuat(Si.Slice<0,2>());
+    const auto w1 = _state.GetVelocity() + Si.Slice<3,5>();
+    const auto w2 = _state.GetVelocity() - Si.Slice<3,5>();
+    const auto b1 = _state.GetGyroBias() + Si.Slice<6,8>();
+    const auto b2 = _state.GetGyroBias() - Si.Slice<6,8>();
+    const State s1(_state.GetRotation() * q * ToQuat((w1-b1) * dt_s), w1, b1);
+    const State s2(_state.GetRotation() * q.GetConj() * ToQuat((w2-b2) * dt_s), w2, b2);
 
-    _Y[i + StateDim].velocity = _state.velocity - Point3f{Si[3], Si[4], Si[5]};
-    _Y[i + StateDim].rotation = _state.rotation * q.GetInverse() * ErrorToQuat(_Y[i + StateDim].velocity * dt_s); 
+    _Y.SetColumn(2*i,s1);
+    _Y.SetColumn((2*i)+1, s2);
   }
+
+  // NOTE: we are making a huge assumption here. Technically, quaternions cannot be averaged using
+  //       typical average calculation: Σ(xᵢ)/N. However, we assume in this model that we are calling
+  //       the process update frequently enough that the elements of _Y do not diverge very quickly,
+  //       in which case an element wise mean will converge to the same result as more accurate
+  //       quaternion mean calculation methods. If this does not hold in the future, I have verified
+  //       that both a gradient decent method and largest Eigen Vector method work well.
   _state = CalculateMean(_Y);
 
   // Calculate Process Noise by mean centering Y
-  for (int i = 0; i < 2*StateDim; ++i) {
-    const auto q = _state.rotation.GetInverse() * _Y[i].rotation;
-    const auto err = q.GetAxis() * q.GetAngle().ToFloat(); // map the rotation into full 3d space
-    const auto omega = _Y[i].velocity - _state.velocity;
-    _W.SetColumn(i, Concatenate(err, omega));
+  const auto meanRot  = _state.GetRotation();
+  const auto meanVel  = _state.GetVelocity();
+  const auto meanBias = _state.GetGyroBias();
+  for (int i = 0; i < 2*State::Dim; ++i) {
+    const State yi = _Y.GetColumn(i);
+    const auto err = FromQuat(meanRot.GetConj() * yi.GetRotation());
+    const auto omega = yi.GetVelocity() - meanVel;
+    const auto bias = yi.GetGyroBias() - meanBias;
+    _W.SetColumn(i, Concatenate(Concatenate(err, omega), bias));
   }
-
   _P = GetCovariance(_W);
 }
 
-void ImuUKF::MeasurementUpdate(const Point<6,float>& measurement)
+void ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 {
   // Calculate Predicted Measurement Distribution {Zᵢ}
-  SmallMatrix<6,12,float> Z;
-  const Point3f kGravity(0.f, 0.f, 1.f);
-  for (int i = 0; i < 2*StateDim; ++i) {
-    Z.SetColumn(i, Concatenate(_Y[i].rotation.GetInverse() * kGravity, _Y[i].velocity));
+  SmallMatrix<State::Dim,State::Dim*2,double> Z;
+  for (int i = 0; i < 2*State::Dim; ++i) {
+    const State yi = _Y.GetColumn(i);
+    Z.SetColumn(i, Concatenate(Concatenate( yi.GetRotation().GetConj() * kGravity, yi.GetVelocity() ), yi.GetGyroBias()));
   }
 
   // mean center {Zᵢ}
-  Point<6,float> meanZ;
-  for (int i = 0; i < 2*StateDim; ++i) {
-    meanZ += Z.GetColumn(i);
-  }
-  meanZ /= 12;
-  
-  for (int i = 0; i < 2*StateDim; ++i) { 
+  const auto meanZ = CalculateMean(Z);
+  for (int i = 0; i < 2*State::Dim; ++i) { 
     Z.SetColumn(i, Z.GetColumn(i) - meanZ); 
   }
 
   // get Covariance
-  const SmallSquareMatrix<6,float> Pvv = GetCovariance(Z) + _R;
-  const SmallSquareMatrix<6,float> Pxz = GetCovariance(_W, Z.GetTranspose());
+  const auto Pvv = GetCovariance(Z) + _R;
+  const auto Pxz = GetCovariance(_W, Z.GetTranspose());
 
   // get Kalman gain and update covariance
   const auto K = Pxz * Pvv.CopyInverse();
@@ -196,8 +217,50 @@ void ImuUKF::MeasurementUpdate(const Point<6,float>& measurement)
 
   // get measurement residual and update state
   const auto residual = K*(measurement - meanZ);
-  _state.rotation *= ErrorToQuat({residual[0], residual[1], residual[2]});
-  _state.velocity += {residual[3], residual[4], residual[5]};
+  const auto rotG = _state.GetRotation().GetConj() * kGravity;
+  // NOTE: I think there is a more computationally efficient way for getting the 
+  //       correct rotation using just the residual and rotG, but this makes more
+  //       intuitive sense for now...
+  const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
+  _state = State{ _state.GetRotation() * rotCorrection,
+                  _state.GetVelocity() + residual.Slice<3,5>(),
+                  _state.GetGyroBias() };
+}
+
+
+void ImuUKF::BiasUpdate(const Point<9,double>& measurement)
+{
+  // Calculate Predicted Measurement Distribution {Zᵢ}
+  SmallMatrix<State::Dim,State::Dim*2,double> Z;
+  for (int i = 0; i < 2*State::Dim; ++i) {
+    const State yi = _Y.GetColumn(i);
+    Z.SetColumn(i, Concatenate(Concatenate( yi.GetRotation().GetConj() * kGravity, yi.GetVelocity() ), yi.GetGyroBias()));
+  }
+
+  // mean center {Zᵢ}
+  const auto meanZ = CalculateMean(Z);
+  for (int i = 0; i < 2*State::Dim; ++i) { 
+    Z.SetColumn(i, Z.GetColumn(i) - meanZ); 
+  }
+
+  // get Covariance
+  const auto Pvv = GetCovariance(Z) + _R;
+  const auto Pxz = GetCovariance(_W, Z.GetTranspose());
+
+  // get Kalman gain and update covariance
+  const auto K = Pxz * Pvv.CopyInverse();
+  _P -= K * Pvv * K.GetTranspose();
+
+  // get measurement residual and update state
+  const auto residual = K*(measurement - meanZ);
+  const auto rotG = _state.GetRotation().GetConj() * kGravity;
+  // NOTE: I think there is a more computationally efficient way for getting the 
+  //       correct rotation using just the residual and rotG, but this makes more
+  //       intuitive sense for now...
+  const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
+  _state = State{ _state.GetRotation() * rotCorrection,
+                  _state.GetVelocity() + residual.Slice<3,5>(),     // we do want to update velocity so we approach 0
+                  _state.GetGyroBias() + residual.Slice<6,8>() };
 }
       
 } // namespace Anki

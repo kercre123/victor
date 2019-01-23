@@ -202,6 +202,9 @@ namespace Anki {
     using SmallMatrix<DIM,DIM,T>::operator*;
     using SmallMatrix<DIM,DIM,T>::operator*=;
     using SmallMatrix<DIM,DIM,T>::operator+=;
+
+    template<typename T_other>
+    SmallSquareMatrix<DIM,T> operator+(const SmallSquareMatrix<DIM,T_other> &other);
     
     // Matrix multiplication in place...
     // ... this = this * other;

@@ -737,6 +737,19 @@ namespace Anki {
 
   template<MatDimType DIM, typename T>
   template<typename T_other>
+  SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::operator+(const SmallSquareMatrix<DIM,T_other> &other)
+  {
+    SmallSquareMatrix<DIM,T> retv = *this;
+    for(MatDimType i=0; i<DIM; ++i) {
+      for(MatDimType j=0; j<DIM; ++j) {
+        retv(i,j) += other(i,j);
+      }
+    }
+    return retv;
+  }
+
+  template<MatDimType DIM, typename T>
+  template<typename T_other>
   SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::PreMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
   {
     // TODO: Come up with our own in-place, super-awesome pre-multiplcation

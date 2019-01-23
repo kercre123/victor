@@ -832,7 +832,7 @@ namespace Anki {
         // VECTOR: Correct for observed sensitivity error on z axis of gyro (VIC-285)
         // It has been observed that the z axis gyro usually reports about a 1.03% higher
         // rate than it is actually experiencing, so simply scale it here.
-         gyro_[2] *= 0.989f;
+        gyro_[2] *= 0.989f;
 #endif
 
 
@@ -923,13 +923,19 @@ namespace Anki {
                        accel_robot_frame_filt[1],
                        accel_robot_frame_filt[2]);
 #endif
-
-
-        ukf_.Update(
-          {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-          {gyro_[0], gyro_[1], gyro_[2] / .989f},
-          CONTROL_DT
-        );
+        if (!isMotionDetected_) {
+          ukf_.UpdateBias(
+            {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
+            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * 0.989f},
+            static_cast<float>(curTime) / 1000.f
+          );
+        } else {
+          ukf_.Update(
+            {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
+            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * 0.989f},
+            static_cast<float>(curTime) / 1000.f
+          );
+        }
 
         UpdatePitch();
         UpdateRoll();
@@ -1029,20 +1035,24 @@ namespace Anki {
 
       f32 GetRotation()
       {
-        const float headAngle = HeadController::GetAngleRad() - DEG_TO_RAD(-2.f); // empirical testing shows this ~2 degrees off
+        const float headAngle = HeadController::GetAngleRad();// - DEG_TO_RAD(2.f); // empirical testing shows this ~2 degrees off
 
         const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(headAngle, Y_AXIS_3D());
-        const float rotz = rot.GetAngleAroundZaxis().ToFloat();
-        const float pit  = -rot.GetAngleAroundYaxis().ToFloat();
-        const float accPitch = atan2f(imu_data_.accel[0], imu_data_.accel[2]) - headAngle;
+        const float yaw  = RAD_TO_DEG( rot.GetAngleAroundZaxis().ToFloat() );
+        const float pit  = RAD_TO_DEG( rot.GetAngleAroundYaxis().ToFloat() );
+        const float roll = RAD_TO_DEG( rot.GetAngleAroundXaxis().ToFloat() );
         static uint16_t i = 0;
-        if (++i == 512) {
-          printf("ukf angle: %f (pitch: %f)      planar angle: %f (pitch: %f)\n", rotz, pit, rot_.ToFloat(), accPitch);
+        if (++i == 256) {
+          // printf("ukf acc: {X %.2f, Y %.2f, Z %.2f}\n", imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
+          const auto bias = ukf_.GetBias();
+          printf("ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
+                bias[0], bias[1], bias[2], 
+                gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
+          // printf("ukf gyro: {Z %.5f, Y %.5f, X %.5f}\n", imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2]);
+          printf("ukf eul: {Z %.2f, Y %.2f, X %.2f} old yaw: %.2f\n", yaw, pit, roll, RAD_TO_DEG(rot_.ToFloat()));
           i = 0;
         }
-        return rotz;
-        //return _zAngle;  // Computed from 3D orientation tracker (Madgwick filter)
-        // return rot_.ToFloat();     // Computed from simplified yaw-only tracker
+        return DEG_TO_RAD(yaw);
       }
 
       f32 GetRotationSpeed()

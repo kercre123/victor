@@ -533,7 +533,7 @@ template<PointDimType A, PointDimType B, typename>
 constexpr Point<B-A+1,T> Point<N,T>::Slice() const
 {
   Point<B-A+1,T> retv;
-  for (int i = A; i < B; ++i) { retv[i - A] = (*this)[i]; }
+  for (int i = A; i <= B; ++i) { retv[i - A] = (*this)[i]; }
   return retv;
 }
 
