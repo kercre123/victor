@@ -75,9 +75,9 @@ public:
   
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
-  uint32_t GetMessageCountRtE() const { return _messageCountRtE; }
-  uint32_t GetMessageCountEtR() const { return _messageCountEtR; }
-  void     ResetMessageCounts() { _messageCountRtE = 0; _messageCountEtR = 0; }
+  uint32_t GetMessageCountRtE() const { return _messageCountRobotToEngine; }
+  uint32_t GetMessageCountEtR() const { return _messageCountEngineToRobot; }
+  void     ResetMessageCounts() { _messageCountRobotToEngine = 0; _messageCountEngineToRobot = 0; }
 
 protected:
   void Broadcast(const RobotInterface::RobotToEngine& message);
@@ -89,8 +89,8 @@ private:
   std::unique_ptr<RobotConnectionManager> _robotConnectionManager;
   bool _isInitialized;
   std::vector<Signal::SmartHandle> _signalHandles;
-  uint32_t _messageCountRtE = 0;
-  uint32_t _messageCountEtR = 0;
+  uint32_t _messageCountRobotToEngine = 0;
+  uint32_t _messageCountEngineToRobot = 0;
 };
 
 

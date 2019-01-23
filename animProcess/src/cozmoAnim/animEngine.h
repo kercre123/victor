@@ -56,6 +56,11 @@ public:
   // Hook this up to whatever is ticking the game "heartbeat"
   Result Update(BaseStationTime_t currTime_nanosec);
 
+  void RegisterTickPerformance(const float tickDuration_ms,
+                               const float tickFrequency_ms,
+                               const float sleepDurationIntended_ms,
+                               const float sleepDurationActual_ms) const;
+
   // Message handlers
   void HandleMessage(const RobotInterface::SetLocale& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);

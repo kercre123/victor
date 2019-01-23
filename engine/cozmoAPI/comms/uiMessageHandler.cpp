@@ -128,8 +128,8 @@ namespace Anki {
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
       : _sdkStatus()
       , _hostUiDeviceID(hostUiDeviceID)
-      , _messageCountGtE(0)
-      , _messageCountEtG(0)
+      , _messageCountGameToEngine(0)
+      , _messageCountEngineToGame(0)
     {
 
       // Currently not supporting UI connections for any sim robot other
@@ -245,7 +245,7 @@ namespace Anki {
       {
         ANKI_CPU_PROFILE("UiMH::DeliverToGame");
 
-        ++_messageCountEtG;
+        ++_messageCountEngineToGame;
 
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
@@ -348,7 +348,7 @@ namespace Anki {
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
                                 UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
-      ++_messageCountGtE;
+      ++_messageCountGameToEngine;
 
       const ExternalInterface::MessageGameToEngine::Tag messageTag = message.GetTag();
       if (!handleMessagesFromConnection)

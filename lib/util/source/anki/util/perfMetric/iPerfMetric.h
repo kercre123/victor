@@ -1,31 +1,40 @@
 /**
- * File: perfMetric
+ * File: iPerfMetric.h
  *
  * Author: Paul Terry
  * Created: 11/03/2017
  *
- * Description: Lightweight performance metric recording
+ * Description: Lightweight performance metric recording: interface class
  *
  * Copyright: Anki, Inc. 2017
  *
  **/
 
 
-#ifndef __Cozmo_Engine_PerfMetric_H__
-#define __Cozmo_Engine_PerfMetric_H__
+#ifndef __Vector_iPerfMetric_H__
+#define __Vector_iPerfMetric_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
-#include "engine/aiComponent/behaviorComponent/iBehavior.h"
-#include "clad/types/behaviorComponent/activeFeatures.h"
-
+#include "util/global/globalDefinitions.h"
 #include <string>
 #include <queue>
-#include <vector>
+
+
+// To enable PerfMetric in a build, define ANKI_PERF_METRIC_ENABLED as 1
+#if !defined(ANKI_PERF_METRIC_ENABLED)
+  #if ANKI_DEV_CHEATS
+    #define ANKI_PERF_METRIC_ENABLED 1
+  #else
+    #define ANKI_PERF_METRIC_ENABLED 0
+  #endif
+#endif
 
 
 namespace Anki {
 namespace Vector {
 
+namespace WebService {
+  class WebService;
+}
 
 typedef enum
 {
@@ -39,41 +48,35 @@ typedef enum
 class PerfMetric
 {
 public:
-  explicit PerfMetric(const CozmoContext* context);
-  ~PerfMetric();
+  explicit PerfMetric();
+  virtual ~PerfMetric();
 
-  void Init();
-
-  void Update(const float tickDuration_ms,
-              const float tickFrequency_ms,
-              const float sleepDurationIntended_ms,
-              const float sleepDurationActual_ms);
-
-  void Status(std::string* resultStr) const;
+  virtual void Init(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService) = 0;
+  virtual void Update(const float tickDuration_ms,
+                      const float tickFrequency_ms,
+                      const float sleepDurationIntended_ms,
+                      const float sleepDurationActual_ms) = 0;
   void Start();
-  void Stop();
-  void Dump(const DumpType dumpType, const bool dumpAll,
-            const std::string* fileName = nullptr, std::string* resultStr = nullptr) const;
-  void DumpFiles() const;
-  void WaitSeconds(const float seconds);
-  void WaitTicks(const int ticks);
 
-  const CozmoContext* GetContext() { return _context; }
+  WebService::WebService* GetWebService() { return _webService; }
 
   bool GetAutoRecord() const { return _autoRecord; }
 
   int  ParseCommands(std::string& queryString);
   void ExecuteQueuedCommands(std::string* resultStr = nullptr);
 
-  // Handle various message types
-  template<typename T>
-  void HandleMessage(const T& msg);
-
-private:
-
+protected:
+  void Status(std::string* resultStr) const;
+  void Stop();
+  virtual void Dump(const DumpType dumpType, const bool dumpAll,
+                    const std::string* fileName = nullptr, std::string* resultStr = nullptr) const = 0;
+  void DumpFiles() const;
+  void WaitSeconds(const float seconds);
+  void WaitTicks(const int ticks);
+  void OnShutdown();
+  void InitInternal(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService);
+  void UpdateWaitMode();
   void RemoveOldFiles() const;
-  void DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
-                   FILE* fd, std::string* resultStr) const;
   bool FrameBufferEmpty() const { return _nextFrameIndex == 0 && !_bufferFilled; }
 
   struct FrameMetric
@@ -82,26 +85,10 @@ private:
     float _tickTotal_ms;
     float _tickSleepIntended_ms;
     float _tickSleepActual_ms;
-
-    uint32_t _messageCountRtE;
-    uint32_t _messageCountEtR;
-    uint32_t _messageCountGtE;
-    uint32_t _messageCountEtG;
-    uint32_t _messageCountViz;
-    uint32_t _messageCountGatewayToE;
-    uint32_t _messageCountEToGateway;
-
-    float _batteryVoltage;
-    uint32_t _cpuFreq_kHz;
-
-    ActiveFeature    _activeFeature;
-    static const int kBehaviorStringMaxSize = 32;
-    char _behavior[kBehaviorStringMaxSize]; // Some description of what Victor is doing
   };
 
   static const int kNumFramesInBuffer = 4000;
 
-  FrameMetric*        _frameBuffer = nullptr;
   int                 _nextFrameIndex = 0;
   bool                _bufferFilled = false;
   bool                _isRecording = false;
@@ -110,9 +97,10 @@ private:
   int                 _waitTicksRemaining = 0;
   float               _waitTimeToExpire = 0.0f;
 
-  const CozmoContext* _context;
+  WebService::WebService* _webService;
   std::string         _fileDir = "";
   static const std::string _logBaseFileName;
+  std::string         _fileNameSuffix = "";
   static const int    kNumCharsInLineBuffer = 256;
   char*               _lineBuffer;
 
@@ -127,7 +115,7 @@ private:
     WAIT_SECONDS,
     WAIT_TICKS,
   } CommandType;
-  
+
   struct PerfMetricCommand
   {
     CommandType _command;
@@ -154,4 +142,4 @@ private:
 } // namespace Anki
 
 
-#endif // __Cozmo_Engine_PerfMetric_H__
+#endif // __Vector_iPerfMetric_H__
