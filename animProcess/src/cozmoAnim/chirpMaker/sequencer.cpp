@@ -42,7 +42,7 @@ namespace {
   CONSOLE_VAR_RANGED(float, kMaxPitchSlider_Hz, "Chirps.Pitch", 1760, 0.0f, 5000.0f);
   
   CONSOLE_VAR_ENUM(int, kSwitchType, "Chirps.AAA_Playback", 0, "TONEGEN,ASSETS");
-  CONSOLE_VAR_RANGED(unsigned int, kMaxDurationIfAssets_ms, "Chirps.AAA_Playback", 1000, 50, 1500);
+  CONSOLE_VAR_RANGED(unsigned int, kMaxDurationIfAssets_ms, "Chirps.AAA_Playback", 849, 50, 1500);
   
   CONSOLE_VAR(bool, kPlayAnims, "Chirps.AAA_Playback", false);
   
