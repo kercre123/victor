@@ -79,7 +79,7 @@ func main() {
 	log.Println("Install crash reporter")
 	robot.InstallCrashReporter(log.Tag)
 
-	opentracing.Init()
+	opentracing.Init("")
 
 	// if we want to error, we should do it after we get socket connections, to make sure
 	// vic-anim is running and able to handle it

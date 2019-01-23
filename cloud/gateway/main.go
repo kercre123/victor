@@ -157,7 +157,7 @@ func main() {
 	log.Println("Install crash reporter")
 	robot.InstallCrashReporter("vic-gateway")
 
-	opentracing.Init()
+	opentracing.Init("")
 
 	signalHandler = make(chan os.Signal, 1)
 	signal.Notify(signalHandler, syscall.SIGTERM)

@@ -3,6 +3,10 @@ package opentracing
 import (
 	"anki/log"
 	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 
 	lightstep "github.com/lightstep/lightstep-tracer-go"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -14,12 +18,18 @@ var (
 	OpenTracerApiKey string
 )
 
-func Init() {
+func Init(componentName string) {
 	if OpenTracerApiKey != "" {
-		log.Println("Initializing LightStep Open Tracing")
+		log.Printf("Initializing LightStep Open Tracing with key: %q\n", OpenTracerApiKey)
+
+		tags := make(opentracing.Tags)
+		if componentName != "" {
+			tags[lightstep.ComponentNameKey] = componentName
+		}
 
 		OpenTracer = lightstep.NewTracer(lightstep.Options{
 			AccessToken: OpenTracerApiKey,
+			Tags:        tags,
 		})
 
 		opentracing.SetGlobalTracer(OpenTracer)
@@ -34,18 +44,47 @@ func Init() {
 // See https://github.com/opentracing/opentracing-go#serializing-to-the-wire
 func StartCladSpanFromContext(ctx context.Context, operationName string) (opentracing.Span, string) {
 	var spanContextString string
-	span, _ := opentracing.StartSpanFromContext(ctx, operationName)
+	clientSpan, _ := opentracing.StartSpanFromContext(ctx, operationName)
 
-	ext.SpanKind.Set(serverSpan, "CLAD client")
+	ext.SpanKind.Set(clientSpan, "CLAD client")
 
-	err := OpenTracer.Inject(span.Context(), opentracing.Binary, &spanContextString)
+	err := OpenTracer.Inject(clientSpan.Context(), opentracing.Binary, &spanContextString)
 	if err != nil {
 		log.Println("Error injecting span context:", err)
 	}
 
 	log.Printf("StartCladSpanFromContext: span = %q (operation = %q, ctx = %v)\n", spanContextString, operationName, ctx)
 
-	return span, spanContextString
+	return clientSpan, spanContextString
+}
+
+func createWireContext(spanContextString string) (opentracing.SpanContext, error) {
+	if strings.ContainsAny(spanContextString, ",") {
+		// base64 does not contains strings, so we assume CSV string
+		parts := strings.Split(spanContextString, ",")
+		if len(parts) != 2 {
+			return nil, errors.New("invalid csv string")
+		}
+
+		traceID, err := strconv.ParseUint(parts[0], 10, 64)
+		if err != nil {
+			return nil, errors.New("can not parse traceID")
+		}
+
+		spanID, err := strconv.ParseUint(parts[1], 10, 64)
+		if err != nil {
+			return nil, errors.New("can not parse spanID")
+		}
+
+		spanContext := &lightstep.SpanContext{
+			TraceID: traceID,
+			SpanID:  spanID,
+		}
+
+		return spanContext, nil
+	}
+
+	return OpenTracer.Extract(opentracing.Binary, &spanContextString)
 }
 
 // ContextFromCladSpan de-serializes the SpanContext from the wire (i.e. a CLAD span context
@@ -56,10 +95,11 @@ func ContextFromCladSpan(ctx context.Context, operationName string, spanContextS
 
 	var serverSpan opentracing.Span
 	if spanContextString != "" {
-		wireContext, err := OpenTracer.Extract(opentracing.Binary, &spanContextString)
+		wireContext, err := createWireContext(spanContextString)
 		if err != nil {
-			log.Println("Error extracting span context:", err)
+			log.Println("Error extracting/creating span context:", err)
 		}
+		fmt.Println("ContextFromCladSpan wireContext:", wireContext)
 
 		// TODO: this new span may again be created in the client interceptor, to be looked into.
 		serverSpan = opentracing.StartSpan(operationName, ext.RPCServerOption(wireContext))

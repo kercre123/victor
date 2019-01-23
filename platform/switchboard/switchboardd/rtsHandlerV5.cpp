@@ -539,9 +539,9 @@ void RtsHandlerV5::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
     return;
   }
 
-  auto span = createSpanFromClad("sb.JwtRequest", spanContext);
+  auto jwtSpan = createSpanFromClad("sb.JwtRequest", spanContext);
   std::weak_ptr<TokenResponseHandle> tokenHandle = _tokenClient->SendJwtRequest(spanContext,
-    [this, spanContext, sessionToken, clientName, appId](Anki::Vector::TokenError error, std::string jwtToken) {
+    [this, &jwtSpan, spanContext, sessionToken, clientName, appId](Anki::Vector::TokenError error, std::string jwtToken) {
       bool isPrimary = false;
       Log::Write("CloudRequest JWT Response Handler");
 
@@ -549,10 +549,12 @@ void RtsHandlerV5::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
         case Anki::Vector::TokenError::NullToken: {
           // Primary association
           isPrimary = true;
+          // auto childSpan = createChildSpan("sb.AuthRequest", jwtSpan);
           std::weak_ptr<TokenResponseHandle> authHandle =
 			  _tokenClient->SendAuthRequest(spanContext, sessionToken, clientName, appId,
             [this, isPrimary](Anki::Vector::TokenError authError, std::string appToken, std::string authJwtToken) {
             ProcessCloudAuthResponse(isPrimary, authError, appToken, authJwtToken);
+            // childSpan->Finish()
           });
           _tokenClientHandles.push_back(authHandle);
         }
@@ -592,7 +594,7 @@ void RtsHandlerV5::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
         break;
       }
 
-      // span->Finish();
+      jwtSpan->Finish();
   });
 
   _tokenClientHandles.push_back(tokenHandle);
