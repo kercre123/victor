@@ -465,6 +465,15 @@ void PhotographyManager::DeleteAllPhotos()
   {
     SavePhotosFile();
   }
+
+  if( THEBOX ) {
+    // for the box, also delete anything else in the folder that looks like a photo
+    const bool useFullPath = true;
+    const auto& files = Util::FileUtils::FilesInDirectory(_savePath, useFullPath, ".jpg");
+    for( const auto& file : files ) {
+      Util::FileUtils::DeleteFile(file);
+    }
+  }
 }
 
 
