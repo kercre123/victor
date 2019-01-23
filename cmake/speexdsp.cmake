@@ -1,18 +1,16 @@
 
-set(SPEEXDSP_HOME "${ANKI_EXTERNAL_DIR}/speexdsp/speexdsp")
+set(SPEEXDSP_HOME "${ANKI_EXTERNAL_DIR}/speexdsp")
 
 set(PLATFORM_DIR "")
 
-if (ANDROID)
-  set(PLATFORM_DIR "android")
-elseif (MACOSX)
+if (MACOSX)
   set(PLATFORM_DIR "mac")
 elseif (VICOS)
-set(PLATFORM_DIR "vicos")
+  set(PLATFORM_DIR "vicos")
 endif()
 
-set(SPEEXDSP_LIB_PATH "${SPEEXDSP_HOME}/project/${PLATFORM_DIR}/lib")
-set(SPEEXDSP_INCLUDE_PATHS "${SPEEXDSP_HOME}/project/${PLATFORM_DIR}/include")
+set(SPEEXDSP_LIB_PATH "${SPEEXDSP_HOME}/${PLATFORM_DIR}/lib")
+set(SPEEXDSP_INCLUDE_PATHS "${SPEEXDSP_HOME}/${PLATFORM_DIR}/include")
 set(SPEEXDSP_LIBS "speexdsp")
 
 foreach(LIB ${SPEEXDSP_LIBS})
