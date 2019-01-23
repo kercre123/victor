@@ -83,7 +83,6 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/adaptive
   AdaptiveFindFaceAndThen,
   AdaptiveDispatcher,
-  AdaptiveLookAtFaces,
 
   // victorBehaviorTree/alexa
   Alexa,
