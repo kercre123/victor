@@ -451,6 +451,7 @@ static void OTPbootloader(void)
   if( g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 )
     cubeid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
   
+  appSetPreviousESN( cubeid.esn==CUBEID_ESN_INVALID ? 0 : cubeid.esn ); //report used ESN for display
   uint32_t crc = cubebootSignature();
   
   //XXX: how long should this take?

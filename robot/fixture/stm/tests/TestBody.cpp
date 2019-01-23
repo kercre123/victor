@@ -322,6 +322,8 @@ static void BodyLoadProductionFirmware(void)
     }
   }
   
+  appSetPreviousESN( bodyid.esn==BODYID_ESN_EMPTY ? 0 : bodyid.esn ); //report used ESN for display
+  
   //buffer the bootloader image and insert ESN/HW info
   const int bodybootSize = g_BodyBootEnd - g_BodyBoot;
   uint8_t* bodyboot = app_global_buffer;

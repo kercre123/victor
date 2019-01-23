@@ -30,5 +30,6 @@ extern u32              g_dateCode;
 extern uint8_t app_global_buffer[APP_GLOBAL_BUF_SIZE];
 
 char* snformat(char *s, size_t n, const char *format, ...);
+void appSetPreviousESN(uint32_t previousESN);
 
 #endif //APP_H

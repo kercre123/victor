@@ -18,24 +18,6 @@ static const int CURRENT_HEAD_HW_REV = HEADID_HWREV_WHSK_DVT1;
 static const int CURRENT_HEAD_MODEL = 1;
 const int HEAD_PRESENT_CURRENT_MA = 10;
 
-static uint32_t m_previous_esn = ~0;
-uint32_t TestHeadGetPrevESN(void)
-{
-  //initialize on first use (app display at boot)
-  if( m_previous_esn & 0x80000000 )
-  {
-    if( g_fixmode == FIXMODE_HEAD1 ) {
-      m_previous_esn = fixtureReadSerial(); //readSerial returns the next s/n to be allocated
-      if( fixtureReadSequence() > 0 ) //adjust to last used esn
-        m_previous_esn -= 1;
-    }
-    else //debug head mode (HEAD1_OL, HEAD2, HELPER1...)
-      m_previous_esn = 0x00100000;
-  }
-  
-  return m_previous_esn;
-}
-
 bool TestHeadDetect(void)
 {
   memset( &headnfo, 0, sizeof(headnfo) );
@@ -116,7 +98,7 @@ void TestHeadDutProgram(void)
   
   //provision ESN
   headnfo.esn = g_fixmode == FIXMODE_HEAD1 ? fixtureGetSerial() : 0x00100000;
-  m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
+  appSetPreviousESN( headnfo.esn ); //even if programming fails, report the (now unusable) ESN
   int hwrev = g_isReleaseBuild && g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_HW_REV : HEADID_HWREV_DEBUG;
   int model = g_fixmode == FIXMODE_HEAD1 ? CURRENT_HEAD_MODEL : 1 /*debug*/ ;
   

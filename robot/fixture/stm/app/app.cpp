@@ -62,6 +62,30 @@ char* snformat(char *s, size_t n, const char *format, ...) {
   return s;
 }
 
+static uint32_t m_previous_esn = ~0;
+void appSetPreviousESN(uint32_t previousESN) { 
+  m_previous_esn = previousESN & 0x7FFFffff;
+}
+
+uint32_t getPrevESN_(void)
+{
+  //initialize on first use (app display at boot)
+  if( m_previous_esn & 0x80000000 )
+  {
+    if( g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_BODY1 || g_fixmode == FIXMODE_CUBE1 || g_fixmode == FIXMODE_CUBE2 ) {
+      m_previous_esn = fixtureReadSerial(); //readSerial returns the next s/n to be allocated
+      if( fixtureReadSequence() > 0 ) //adjust to last used esn
+        m_previous_esn -= 1;
+    }
+    else if( g_fixmode > FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1 ) //debug head mode
+      m_previous_esn = 0x00100000;
+    else
+      m_previous_esn = 0;
+  }
+  
+  return m_previous_esn;
+}
+
 // Show the name of the fixture and version information
 extern int HelperTempC;
 extern time_t RtcDisplayTime;
@@ -81,6 +105,8 @@ void SetFixtureText(bool reinit)
   bool is_fixmode_head = g_fixmode==FIXMODE_HEAD1 || g_fixmode==FIXMODE_HEAD1_OL || g_fixmode==FIXMODE_HEAD2 || g_fixmode==FIXMODE_HELPER1;
   bool is_fixmode_packout = g_fixmode==FIXMODE_PACKOUT || g_fixmode==FIXMODE_PACKOUT_OL;
   bool is_fixmode_tof = g_fixmode==FIXMODE_TOF || g_fixmode==FIXMODE_TOF_DEBUG;
+  bool is_fixmode_body = g_fixmode==FIXMODE_BODY0A || g_fixmode==FIXMODE_BODY0 || g_fixmode==FIXMODE_BODY1 || g_fixmode==FIXMODE_BODY1_OL || g_fixmode==FIXMODE_BODY2 || g_fixmode==FIXMODE_BODY3;
+  bool is_fixmode_cube = g_fixmode==FIXMODE_CUBE_OL || g_fixmode==FIXMODE_CUBE0 || g_fixmode==FIXMODE_CUBE1 || g_fixmode==FIXMODE_CUBE2;
   
   //different colors for debug builds
   char color = 'b';
@@ -92,8 +118,8 @@ void SetFixtureText(bool reinit)
   //for head programming fixtures, show last written ESN on the display
   //for packout fixtures, show current RTC time on the display
   //for TOF fixtures, show last sensor reading
-  if( is_fixmode_head )
-    helperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
+  if( is_fixmode_head || is_fixmode_body || is_fixmode_cube )
+    helperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", getPrevESN_()) );
   else if( is_fixmode_packout )
     helperLcdSetLine(1, fixtureTimeStr(RtcDisplayTime) ); //e.g. "Sun Sep16 01:03 1973"
   else if( is_fixmode_tof )
