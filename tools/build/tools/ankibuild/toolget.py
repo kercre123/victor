@@ -120,7 +120,7 @@ def download_and_install(archive_url,
 
         download_file.close()
         sys.stdout.write("\n")
-        sys.stdout.write("Verifying that SHA1 hash matches {0}\n".format(download_hash))
+        sys.stdout.write("Verifying that SHA256 hash matches {0}\n".format(download_hash))
         sha256 = sha256sum(download_path)
         if sha256 == download_hash:
             os.rename(download_path, final_path)
