@@ -10,15 +10,6 @@
                 "package_name": "protocCppPlugin",
                 "version": "3"
             },
-            "speexdsp": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "73dbe001ab6f76696553fcc92b7c1559eb19733337c2a3a7796d891a52c81a06"
-                },
-                "extension": "tar.gz",
-                "package_name": "speexdsp-1.2rc3",
-                "version": "1"
-            },
             "tensorflow": {
                 "build_type_id": "anki",
                 "checksums": {
@@ -124,6 +115,12 @@
                     "sha256": "4324cffd82c0c76b7ed11a4ef6967c7013d33928aacea57c187256554d0a58b1"
                 },
                 "version": "v3.5.1"
+            },
+            "speexdsp": {
+                "checksums": {
+                    "sha256": "cfcbcfe19fcce8868245997079beb5074c78688979e0e297a14731aa0de6d3cf"
+                },
+                "version": "SpeexDSP-1.2rc3"
             }
         },
         "project": "victor",
