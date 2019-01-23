@@ -432,6 +432,8 @@ void BehaviorReactToTapeBoundary::TransitionToViewBoundary()
   action->AddAction(new DriveToPoseAction(poseToDriveTo));
   action->AddAction(new TurnTowardsPoseAction(_dVars.boundaryLeftEndPoint));
   action->AddAction(new TurnTowardsPoseAction(_dVars.boundaryRightEndPoint));
+  action->AddAction(new TurnTowardsPoseAction(_dVars.boundaryFL));
+  action->AddAction(new PlayAnimationAction("anim_reacttocliff_edge_01"));
   
   DelegateIfInControl(action,
                       [this](){

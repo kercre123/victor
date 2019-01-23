@@ -55,7 +55,7 @@ BehaviorReactToBoundary::~BehaviorReactToBoundary()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToBoundary::WantsToBeActivatedBehavior() const
 {
-  // Want to be activated if the robot is at all touching the 'boundary'
+  // Want to be activated if the robot is at all touching the 'boundary'. Use a simple ball check.
   const float diskCheckRadius_mm = 25.f;
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   const Point2f robotPt{robotPose.GetTranslation()};
@@ -69,7 +69,6 @@ bool BehaviorReactToBoundary::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBoundary::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.behaviorAlwaysDelegates = false; // TMP
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,9 +79,6 @@ void BehaviorReactToBoundary::GetAllDelegates(std::set<IBehavior*>& delegates) c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBoundary::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-//  const char* list[] = {
-//  };
-//  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -111,9 +107,20 @@ void BehaviorReactToBoundary::OnBehaviorActivated()
   }
   
   auto* vizm = GetBEI().GetRobotInfo().GetContext()->GetVizManager();
-  vizm->DrawQuadAsSegments(GetDebugLabel(), closestBoundary->_boundaryQuad, 10.f, NamedColors::PINK, false);
+  vizm->DrawQuadAsSegments(GetDebugLabel(), closestBoundary->_boundaryQuad, 10.f, NamedColors::PINK, true);
+  
+  // React to the boundary
+  // NOTE: Assuming that we hit the boundary from the front
+  
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToCliffFront));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToBoundary::OnBehaviorDeactivated()
+{
+  auto* vizm = GetBEI().GetRobotInfo().GetContext()->GetVizManager();
+  vizm->EraseSegments(GetDebugLabel());
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToBoundary::BehaviorUpdate() 
