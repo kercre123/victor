@@ -47,8 +47,10 @@ namespace
   // If false, behavior only triggers on voice command
   CONSOLE_VAR(bool, kTheBox_TriggerDescribeSceneOnMove, "TheBox", false);
   
-  CONSOLE_VAR_RANGED(float, kTheBox_SceneDescriptionTextScale, "TheBox.Screen", 0.65f, 0.1, 1.f);
+  CONSOLE_VAR_RANGED(f32, kTheBox_DescribeSceneTextScale, "TheBox.Screen", 0.65f, 0.1, 1.f);
+  CONSOLE_VAR_RANGED(s32, kTheBox_DescribeSceneLineSpacing_pix, "TheBox.Screen", 2, 1, 10);
 }
+  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBoxDemoDescribeScene::InstanceConfig::InstanceConfig()
@@ -216,13 +218,13 @@ static void BreakIntoLines(const std::string& description, const float imageWidt
   std::string nextLine;
   float nextLineLength = 0.f;
   lineHeight = 0.f;
-  const float spaceLength = Vision::ImageRGB::GetTextSize(" ", kTheBox_SceneDescriptionTextScale, 1).x();
+  const float spaceLength = Vision::ImageRGB::GetTextSize(" ", kTheBox_DescribeSceneTextScale, 1).x();
   do {
     // Grab next word from the description
     std::string word;
     descriptionStream >> word;
     
-    const Vec2f wordSize = Vision::ImageRGB::GetTextSize(word, kTheBox_SceneDescriptionTextScale, 1);
+    const Vec2f wordSize = Vision::ImageRGB::GetTextSize(word, kTheBox_DescribeSceneTextScale, 1);
     if(!word.empty() && (nextLineLength + wordSize.x() < imageWidth))
     {
       nextLine += word + " ";
@@ -249,12 +251,32 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
                                              _dVars.lastImageTime_ms);
   if(!salientPoints.empty())
   {
+    auto iter = salientPoints.begin();
+    const std::string* newestDescription = &(iter->description);
+    if(salientPoints.size() > 1)
+    {
+      LOG_WARNING("BehaviorBoxDemoDescribeScene.DisplayDescription.MultipleSalientPoints",
+                  "Got %zu instead of expected 1. Finding newest.", salientPoints.size());
+      
+      TimeStamp_t newestTime = iter->timestamp;
+      ++iter;
+      while (iter != salientPoints.end())
+      {
+        if(iter->timestamp > newestTime)
+        {
+          newestTime = iter->timestamp;
+          newestDescription = &(iter->description);
+        }
+        ++iter;
+      }
+    }
+    
     Vision::ImageRGB dispImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     dispImg.FillWith(Vision::PixelRGB(0,0,0));
     
     std::vector<std::string> lines;
     float lineHeight = 0.f;
-    BreakIntoLines(salientPoints.begin()->description, dispImg.GetNumCols(), lines, lineHeight);
+    BreakIntoLines(*newestDescription, dispImg.GetNumCols(), lines, lineHeight);
     
     // Draw all the lines of text
     s32 lineNum = 1;
@@ -262,13 +284,13 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
     {
       const bool kDropShadow = true;
       const s32  kThickness = 1;
-      const f32  ypos = lineNum*(lineHeight+1.f);
+      const f32  ypos = lineNum*(lineHeight+kTheBox_DescribeSceneLineSpacing_pix);
       if(ypos >= dispImg.GetNumRows())
       {
         break;
       }
       dispImg.DrawText({1.f, ypos}, line, NamedColors::YELLOW,
-                       kTheBox_SceneDescriptionTextScale, kDropShadow, kThickness);
+                       kTheBox_DescribeSceneTextScale, kDropShadow, kThickness);
       ++lineNum;
     }
     

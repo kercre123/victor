@@ -20,6 +20,7 @@
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/neuralnets/neuralNetModel_offboard.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include <list>
@@ -33,6 +34,10 @@
 
 namespace Anki {
 namespace NeuralNets {
+  
+namespace {
+  CONSOLE_VAR_RANGED(s32, kTheBox_MaxNumSceneDescriptionTags, "TheBox", 5, 3, 10);
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OffboardModel::OffboardModel(const std::string& cachePath)
@@ -440,14 +445,20 @@ Result OffboardModel::ParseSceneDescriptionFromJson(const Json::Value& jsonSalie
           
           if(tagsJson.isArray() && !tagsJson.empty())
           {
-            auto iter = tagsJson.begin();
-            salientPoint.description = iter->asString();
-            ++iter;
-            while(iter != tagsJson.end())
+            salientPoint.description = "A scene with: " + tagsJson[0].asString();
+            s32 tagCount = 1;
+            const s32 maxCount = std::min((s32)tagsJson.size(), kTheBox_MaxNumSceneDescriptionTags);
+            while(tagCount < maxCount-1)
             {
-              salientPoint.description += ", " + iter->asString();
-              ++iter;
+              salientPoint.description += ", " + tagsJson[tagCount].asString();
+              ++tagCount;
             }
+            if(tagCount < maxCount)
+            {
+              // Put "and" in front of last tag, if there are any left
+              salientPoint.description += ", and " + tagsJson[tagCount].asString();
+            }
+            
             salientPoints.emplace_back(std::move(salientPoint));
             gotSalientPoint = true;
           }
