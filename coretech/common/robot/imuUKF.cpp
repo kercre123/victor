@@ -92,15 +92,15 @@ ImuUKF::ImuUKF()
 void ImuUKF::Reset(const Rotation3d& rot) {
   _state = {rot.GetQuaternion(), Point<3,double>(), Point<3,double>()};
   _P = SmallSquareMatrix<State::Dim,double> {{
-    .01, 0., 0., 0., 0., 0., 0., 0., 0.,    // low uncertainty for pose, since we initialize to Quaternion{1,0,0,0}
-    0., .01, 0., 0., 0., 0., 0., 0., 0.,
-    0., 0., .01, 0., 0., 0., 0., 0., 0.,
-    0., 0., 0., .01, 0., 0., 0., 0., 0.,    // high uncertainty for velocity??
-    0., 0., 0., 0., .01, 0., 0., 0., 0.,
-    0., 0., 0., 0., 0., .01, 0., 0., 0.,
-    0., 0., 0., 0., 0., 0., .00001, 0., 0.,
-    0., 0., 0., 0., 0., 0., 0., .00001, 0.,
-    0., 0., 0., 0., 0., 0., 0., 0., .00001
+    .000001, 0., 0., 0., 0., 0., 0., 0., 0.,    // low uncertainty for pose, since we initialize to Quaternion{1,0,0,0}
+    0., .000001, 0., 0., 0., 0., 0., 0., 0.,
+    0., 0., .000001, 0., 0., 0., 0., 0., 0.,
+    0., 0., 0., .000001, 0., 0., 0., 0., 0.,        // high uncertainty for velocity?
+    0., 0., 0., 0., .000001, 0., 0., 0., 0.,
+    0., 0., 0., 0., 0., .000001, 0., 0., 0.,
+    0., 0., 0., 0., 0., 0., .000001, 0., 0.,
+    0., 0., 0., 0., 0., 0., 0., .000001, 0.,
+    0., 0., 0., 0., 0., 0., 0., 0., .000001
   }};
 }
  
@@ -109,12 +109,12 @@ const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_Q{{
   .0001, 0., 0., 0., 0., 0., 0., 0., 0.,
   0., .0001, 0., 0., 0., 0., 0., 0., 0.,
   0., 0., .0001, 0., 0., 0., 0., 0., 0.,
-  0., 0., 0., .1, 0., 0., 0., 0., 0.,
-  0., 0., 0., 0., .1, 0., 0., 0., 0.,
-  0., 0., 0., 0., 0., .1, 0., 0., 0.,
-  0., 0., 0., 0., 0., 0., .00001, 0., 0.,
-  0., 0., 0., 0., 0., 0., 0., .00001, 0.,
-  0., 0., 0., 0., 0., 0., 0., 0., .00001
+  0., 0., 0., .05, 0., 0., 0., 0., 0.,
+  0., 0., 0., 0., .05, 0., 0., 0., 0.,
+  0., 0., 0., 0., 0., .05 , 0., 0., 0.,
+  0., 0., 0., 0., 0., 0., .000001, 0., 0.,
+  0., 0., 0., 0., 0., 0., 0., .000001, 0.,
+  0., 0., 0., 0., 0., 0., 0., 0., .000001
 }}; 
 
 // Measurement Uncertainty
@@ -125,9 +125,9 @@ const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_R{{
   0., 0., 0., .00123, 0., 0., 0., 0., 0.,    // rad/s rms
   0., 0., 0., 0., .00123, 0., 0., 0., 0.,    // rad/s rms
   0., 0., 0., 0., 0., .00123, 0., 0., 0.,    // rad/s rms
-  0., 0., 0., 0., 0., 0., .003, 0., 0.,      // rad/s - no noise on bias, but make it a bit higher than raw gyro noise so that we don't update aggressively
-  0., 0., 0., 0., 0., 0., 0., .003, 0.,      // rad/s
-  0., 0., 0., 0., 0., 0., 0., 0., .003       // rad/s
+  0., 0., 0., 0., 0., 0., .002, 0., 0.,      // rad/s - no noise on bias, but make it a bit higher than raw gyro noise so that we don't update aggressively
+  0., 0., 0., 0., 0., 0., 0., .002, 0.,      // rad/s
+  0., 0., 0., 0., 0., 0., 0., 0., .002       // rad/s
 }}; 
 
 void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float timestamp_s)
@@ -135,7 +135,16 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
   if (!NEAR_ZERO(_lastMeasurement_s)) {
     const auto measurement = Concatenate(Concatenate(accel, gyro), _state.GetGyroBias() );
     ProcessUpdate( timestamp_s - _lastMeasurement_s );
-    MeasurementUpdate( measurement );
+    const auto residual = MeasurementUpdate( measurement );
+
+    // NOTE: I think there is a more computationally efficient way for getting the 
+    //       correct rotation using just the residual and rotG, but this makes more
+    //       intuitive sense for now...
+    const auto rotG = _state.GetRotation().GetConj() * kGravity;
+    const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
+    _state = State{ _state.GetRotation() * rotCorrection,
+                    _state.GetVelocity() + residual.Slice<3,5>(),
+                    _state.GetGyroBias() };
   }
   _lastMeasurement_s = timestamp_s;
 }
@@ -146,7 +155,16 @@ void ImuUKF::UpdateBias(const Point<3,double>& accel, const Point<3,double>& gyr
   if (!NEAR_ZERO(_lastMeasurement_s)) {
     ProcessUpdate( timestamp_s - _lastMeasurement_s );
     const auto measurement = Concatenate(Concatenate(accel, gyro), gyro );
-    BiasUpdate( measurement );
+    const auto residual = MeasurementUpdate( measurement );
+
+    // NOTE: I think there is a more computationally efficient way for getting the 
+    //       correct rotation using just the residual and rotG, but this makes more
+    //       intuitive sense for now...
+    const auto rotG = _state.GetRotation().GetConj() * kGravity;
+    const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
+    _state = State{ _state.GetRotation() * rotCorrection,
+                    _state.GetVelocity() + residual.Slice<3,5>(),
+                    _state.GetGyroBias() + residual.Slice<6,8>() };
   }
   _lastMeasurement_s = timestamp_s;
 }
@@ -192,7 +210,7 @@ void ImuUKF::ProcessUpdate(float dt_s)
   _P = GetCovariance(_W);
 }
 
-void ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
+Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 {
   // Calculate Predicted Measurement Distribution {Zᵢ}
   SmallMatrix<State::Dim,State::Dim*2,double> Z;
@@ -215,52 +233,8 @@ void ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
   const auto K = Pxz * Pvv.CopyInverse();
   _P -= K * Pvv * K.GetTranspose();
 
-  // get measurement residual and update state
-  const auto residual = K*(measurement - meanZ);
-  const auto rotG = _state.GetRotation().GetConj() * kGravity;
-  // NOTE: I think there is a more computationally efficient way for getting the 
-  //       correct rotation using just the residual and rotG, but this makes more
-  //       intuitive sense for now...
-  const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
-  _state = State{ _state.GetRotation() * rotCorrection,
-                  _state.GetVelocity() + residual.Slice<3,5>(),
-                  _state.GetGyroBias() };
-}
-
-
-void ImuUKF::BiasUpdate(const Point<9,double>& measurement)
-{
-  // Calculate Predicted Measurement Distribution {Zᵢ}
-  SmallMatrix<State::Dim,State::Dim*2,double> Z;
-  for (int i = 0; i < 2*State::Dim; ++i) {
-    const State yi = _Y.GetColumn(i);
-    Z.SetColumn(i, Concatenate(Concatenate( yi.GetRotation().GetConj() * kGravity, yi.GetVelocity() ), yi.GetGyroBias()));
-  }
-
-  // mean center {Zᵢ}
-  const auto meanZ = CalculateMean(Z);
-  for (int i = 0; i < 2*State::Dim; ++i) { 
-    Z.SetColumn(i, Z.GetColumn(i) - meanZ); 
-  }
-
-  // get Covariance
-  const auto Pvv = GetCovariance(Z) + _R;
-  const auto Pxz = GetCovariance(_W, Z.GetTranspose());
-
-  // get Kalman gain and update covariance
-  const auto K = Pxz * Pvv.CopyInverse();
-  _P -= K * Pvv * K.GetTranspose();
-
-  // get measurement residual and update state
-  const auto residual = K*(measurement - meanZ);
-  const auto rotG = _state.GetRotation().GetConj() * kGravity;
-  // NOTE: I think there is a more computationally efficient way for getting the 
-  //       correct rotation using just the residual and rotG, but this makes more
-  //       intuitive sense for now...
-  const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
-  _state = State{ _state.GetRotation() * rotCorrection,
-                  _state.GetVelocity() + residual.Slice<3,5>(),     // we do want to update velocity so we approach 0
-                  _state.GetGyroBias() + residual.Slice<6,8>() };
+  // get measurement residual
+  return K*(measurement - meanZ);
 }
       
 } // namespace Anki

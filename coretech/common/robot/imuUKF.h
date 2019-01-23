@@ -63,9 +63,9 @@ private:
   // update predicted state to current timestamp and increase uncertainty
   void ProcessUpdate(float dt_s);
 
-  // update state according to measurement and decrease uncertainty
-  void MeasurementUpdate(const Point<9,double>& measurement);
-  void BiasUpdate(const Point<9,double>& measurement);
+  // calculates the residual according to the provided measurement
+  Point<9,double> MeasurementUpdate(const Point<9,double>& measurement);
+  // void BiasUpdate(const Point<9,double>& measurement);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // UKF Variables
