@@ -3,6 +3,7 @@
     flex-wrap: wrap;
     margin: 20px auto 0px auto;
     max-width: 2000px;
+	justify-content: center;
 }
 
 .tiles {
@@ -10,13 +11,15 @@
     border-color: #0081c2;
     margin: 0 15px 30px 15px;
     /* flex-grow: 1; */
-    flex: 0 0 391px;
+    flex: 0 0 300px;
     padding: 0;
     height: 220px;
 }
 
 .photo_controls {
     margin: 0px 20px;
+	display: flex;
+    justify-content: center;
 }
 
 /* modal style borroed heavily from https://www.w3schools.com/howto/howto_css_modal_images.asp */
@@ -64,7 +67,6 @@
   right: 35px;
   color: #f1f1f1;
   font-size: 40px;
-  font-weight: bold;
   transition: 0.3s;
 }
 
@@ -87,3 +89,14 @@
     text-align: center;
     display: none;
 }
+
+.ui-button{
+	font-size:12px; 
+	letter-spacing: 2px;
+	font-weight: bold;
+	color:#0081c2;
+	text-transform: uppercase;
+	padding:10px 40px;
+	width:300px;
+}
+
