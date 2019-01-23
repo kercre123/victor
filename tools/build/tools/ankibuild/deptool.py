@@ -32,17 +32,19 @@ def get_dep_dist_directory_for_version(project, name, version):
     d = os.path.join(get_dep_dist_directory(project, name), version)
     return d
 
-def install_dep(project, name, version, url_prefix):
+def install_dep(project, name, version, url_prefix, sha256=None):
     base_name = "{0}-{1}".format(name, version)
     archive_url = "{0}{1}.tar.bz2".format(url_prefix, base_name)
-    hash_url = "{0}{1}-SHA-256.txt".format(url_prefix, base_name)
+    download_hash = sha256;
+    if not download_hash:
+        download_hash = "{0}{1}-SHA-256.txt".format(url_prefix, base_name)
     downloads_path = get_dep_downloads_directory(project, name)
     dist_path = get_dep_dist_directory(project, name)
     extracted_dir_name = name;
     title = "deps/{0}/{1}".format(project, name)
 
     toolget.download_and_install(archive_url,
-                                 hash_url,
+                                 download_hash,
                                  downloads_path,
                                  dist_path,
                                  base_name,
@@ -75,14 +77,14 @@ def find_dep_root_dir(project, name, required_ver, envname=None):
     else:
         return None
 
-def find_or_install_dep(project, name, required_ver, url_prefix, install=True, envname=None):
+def find_or_install_dep(project, name, required_ver, url_prefix, sha256=None, install=True, envname=None):
     dep_root_dir = find_dep_root_dir(project, name, required_ver, envname)
 
     if dep_root_dir:
         return dep_root_dir
 
     if install:
-        install_dep(project, name, required_ver, url_prefix)
+        install_dep(project, name, required_ver, url_prefix, sha256)
     dep_root_dir = find_dep_root_dir(project, name, required_ver)
 
     return dep_root_dir
@@ -103,6 +105,10 @@ def parseArgs(scriptArgs):
     parser.add_argument('--url-prefix',
                         action='store',
                         dest='url_prefix',
+                        nargs='?')
+    parser.add_argument('--sha256',
+                        action='store',
+                        dest='sha256',
                         nargs='?')
     parser.add_argument('--envname',
                         action='store',
@@ -129,6 +135,7 @@ def main(argv):
                                    options.name,
                                    version,
                                    options.url_prefix,
+                                   options.sha256,
                                    bool(options.install_version),
                                    options.envname)
         if not path:

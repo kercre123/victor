@@ -685,16 +685,20 @@ def deptool_package(deptool_dict):
    url_prefix = deptool_dict.get("url_prefix")
    for dep in deps:
       required_version = deps[dep].get("version", None)
+      sha256_checksum = None
+      checksums = deps[dep].get("checksums", None)
+      if checksums:
+         sha256_checksum = checksums.get("sha256", sha256_checksum)
       dst = os.path.join(DEPENDENCY_LOCATION, dep)
       if os.path.exists(dst):
          version = ankibuild.deptool.get_version_from_dir(dst)
          if version == required_version:
             continue
-         if os.path.islink(dst):
-            os.unlink(dst)
-         else:
-            ankibuild.util.File.rm_rf(dst)
-      src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, url_prefix)
+      if os.path.islink(dst):
+         os.unlink(dst)
+      else:
+         ankibuild.util.File.rm_rf(dst)
+      src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, url_prefix, sha256_checksum)
       if not src:
          raise RuntimeError('Could not find or install {0}/{1} at version {2} under {3}'
                             .format(project, dep, required_version, url_prefix))

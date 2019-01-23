@@ -78,27 +78,51 @@
     "deptool": {
         "deps": {
             "aubio": {
+                "checksums": {
+                    "sha256": "4e27b985dfb02ce8ffc61e9a24c0bdc93ca82a917adfbfd8de802168ece62b44"
+                },
                 "version": "d4a1d0fb"
             },
             "avs-device-sdk": {
+                "checksums": {
+                    "sha256": "052ad8307236e262b64839ec427a33c9c18e7567e57c5175a65fc4f661f8181d"
+                },
                 "version": "v1.10-anki"
             },
             "flatbuffers": {
+                "checksums": {
+                    "sha256": "1f24769f7d6084e141c3e36fb7c72c1a00ef682d0db7518fd4b827f85260c372"
+                },
                 "version": "v1.5.0"
             },
             "libsodium": {
+                "checksums": {
+                    "sha256": "18fefd8b70bfeab16fcb9ac87ed9b22bc376c7e316d46fec1ed71512edb18c11"
+                },
                 "version": "1.0.16"
             },
             "opencv": {
+                "checksums": {
+                    "sha256": "824cca8bcabf04a5223d28c88168c6af092500aea38a54bc98283807ef7c54d4"
+                },
                 "version": "3.4.0"
             },
             "opus": {
+                "checksums": {
+                    "sha256": "6b046a65a9c79fc2c096246760b9dbc504bd0a9901be0b8da76d926ea943a886"
+                },
                 "version": "e04e86e0"
             },
             "pffft": {
+                "checksums": {
+                    "sha256": "681a3b239326719b456af828998af3818f34a1070fa03bc9413acc27bfd7c969"
+                },
                 "version": "1.0-anki"
             },
             "protobuf": {
+                "checksums": {
+                    "sha256": "4324cffd82c0c76b7ed11a4ef6967c7013d33928aacea57c187256554d0a58b1"
+                },
                 "version": "v3.5.1"
             }
         },
