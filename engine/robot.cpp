@@ -971,15 +971,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update robot pitch angle
   GetComponent<FullRobotPose>().SetPitchAngle(Radians(msg.pose.pitch_angle));
 
-  // Update sensor components:
-  GetCliffSensorComponent().NotifyOfRobotState(msg);
-  GetProxSensorComponent().NotifyOfRobotState(msg);
-  GetTouchSensorComponent().NotifyOfRobotState(msg);
-  GetPowerStateManager().NotifyOfRobotState(msg);
-
-  // update current path segment in the path component
-  GetPathComponent().UpdateCurrentPathSegment(msg.currPathSegment);
-
   // Update IMU data
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
@@ -1038,17 +1029,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _isBeingHeld = IS_STATUS_FLAG_SET(IS_BEING_HELD);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
 
+  const bool isHeadMoving = !IS_STATUS_FLAG_SET(HEAD_IN_POS);
+  const bool areWheelsMoving = IS_STATUS_FLAG_SET(ARE_WHEELS_MOVING);
+  _hasMovedSinceLocalization |= (isHeadMoving || areWheelsMoving || _offTreadsState != OffTreadsState::OnTreads);
+  
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
-  GetBatteryComponent().NotifyOfRobotState(msg);
-
-  GetMoveComponent().NotifyOfRobotState(msg);
-
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
-
-  _hasMovedSinceLocalization |= (GetMoveComponent().IsCameraMoving() || _offTreadsState != OffTreadsState::OnTreads);
 
   if (isDelocalizing)
   {
@@ -1114,8 +1103,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     // Add to history
     const HistRobotState histState(newPose,
                                    msg,
-                                   GetProxSensorComponent().GetLatestProxData(),
-                                   GetCliffSensorComponent().GetCliffDetectedFlags() );
+                                   GetProxSensorComponent().GetLatestProxData() );
     lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
 
     if (lastResult != RESULT_OK) {
@@ -1161,6 +1149,22 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     }
 
   }
+
+
+  // Update sensor components:
+  GetBatteryComponent().NotifyOfRobotState(msg);
+  GetMoveComponent().NotifyOfRobotState(msg);
+  GetCliffSensorComponent().NotifyOfRobotState(msg);
+  GetProxSensorComponent().NotifyOfRobotState(msg);
+  GetTouchSensorComponent().NotifyOfRobotState(msg);
+  GetPowerStateManager().NotifyOfRobotState(msg);
+
+  // Update processed proxSensorData in history after ProxSensorComponent was updated
+  GetStateHistory()->UpdateProxSensorData(msg.timestamp, GetProxSensorComponent().GetLatestProxData());
+
+  // update current path segment in the path component
+  GetPathComponent().UpdateCurrentPathSegment(msg.currPathSegment);
+
 
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations"

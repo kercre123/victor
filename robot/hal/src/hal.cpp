@@ -50,6 +50,9 @@ namespace { // "Private members"
     .cliffSense = {800, 800, 800, 800}
   };
 #endif
+  // For storing latest prox data from body
+  ProxSensorDataRaw proxData_;
+  uint16_t lastProxDataSampleCount_ = 0;
 
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
@@ -115,6 +118,7 @@ void ProcessIMUEvents();
 void ProcessFailureCode();
 void ProcessTouchLevel(void);
 void ProcessMicError();
+void ProcessProxData();
 void PrintConsoleOutput(void);
 void PrintBodyDataUpdate();
 
@@ -592,6 +596,8 @@ Result HAL::Step(void)
 
   ProcessTouchLevel(); // filter invalid values from touch sensor
 
+  ProcessProxData();
+
 #if(DEBUG_TOUCH_SENSOR)
   static FILE* fp = nullptr;
   if(fp == nullptr) {
@@ -825,29 +831,35 @@ inline RangeStatus ConvertToApiRangeStatus(const u8 deviceRangeStatus)
 
 ProxSensorDataRaw HAL::GetRawProxData()
 {
-  ProxSensorDataRaw proxData;
-  proxData.rangeStatus = ConvertToApiRangeStatus(bodyData_->proximity.rangeStatus);
-  // Track the occurrences of invalid prox sensor readings, reported on a periodic basis
-  if (proxData.rangeStatus != RangeStatus::RANGE_VALID) {
-    ++invalidProxSensorStatusCounts.at(proxData.rangeStatus);
-  }
-  if (HAL::PowerGetMode() == POWER_MODE_ACTIVE) {
-    proxData.distance_mm      = FlipBytes(bodyData_->proximity.rangeMM);
+  return proxData_;
+}
+
+void ProcessProxData()
+{
+  if (HAL::PowerGetMode() == POWER_MODE_CALM) {
+    proxData_.distance_mm      = PROX_CALM_MODE_DIST_MM;
+    proxData_.signalIntensity  = 0.f;
+    proxData_.ambientIntensity = 0.f;
+    proxData_.spadCount        = 200.f;
+    proxData_.timestamp_ms     = HAL::GetTimeStamp();
+    proxData_.rangeStatus      = RangeStatus::RANGE_VALID;
+  } else if (bodyData_->proximity.sampleCount != lastProxDataSampleCount_) {
+    proxData_.rangeStatus = ConvertToApiRangeStatus(bodyData_->proximity.rangeStatus);
+    // Track the occurrences of invalid prox sensor readings, reported on a periodic basis
+    if (proxData_.rangeStatus != RangeStatus::RANGE_VALID) {
+      ++invalidProxSensorStatusCounts.at(proxData_.rangeStatus);
+    }
+  
+    proxData_.distance_mm      = FlipBytes(bodyData_->proximity.rangeMM);
     // Signal/Ambient Rate are fixed point 9.7, so convert to float:
-    proxData.signalIntensity  = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
-    proxData.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
+    proxData_.signalIntensity  = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
+    proxData_.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
     // SPAD count is fixed point 8.8, so convert to float:
-    proxData.spadCount        = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
-    proxData.timestamp_ms     = HAL::GetTimeStamp();
-  } else {
-    // Calm mode values
-    proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
-    proxData.signalIntensity  = 0.f;
-    proxData.ambientIntensity = 0.f;
-    proxData.spadCount        = 200.f;
-    proxData.timestamp_ms     = HAL::GetTimeStamp();
+    proxData_.spadCount        = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
+    proxData_.timestamp_ms     = HAL::GetTimeStamp();
+    
+    lastProxDataSampleCount_ = bodyData_->proximity.sampleCount;
   }
-  return proxData;
 }
 
 u16 HAL::GetButtonState(const ButtonID button_id)

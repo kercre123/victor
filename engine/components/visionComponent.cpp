@@ -597,10 +597,6 @@ namespace Vector {
       return lastResult;
     }
 
-    // Get most recent pose data in history
-    Anki::Vector::HistRobotState lastHistState;
-    _robot->GetStateHistory()->GetLastStateWithFrameID(_robot->GetPoseFrameID(), lastHistState);
-
     const Pose3d& cameraPose = _robot->GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
     Matrix_3x3f groundPlaneHomography;
     const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
