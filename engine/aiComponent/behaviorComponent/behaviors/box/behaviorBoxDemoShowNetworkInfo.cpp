@@ -13,12 +13,13 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoShowNetworkInfo.h"
 
+#include "engine/actions/basicActions.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "util/console/consoleInterface.h"
 #include "osState/osState.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Vector {
@@ -55,33 +56,37 @@ void BehaviorBoxDemoShowNetworkInfo::GetBehaviorOperationModifiers(BehaviorOpera
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBoxDemoShowNetworkInfo::OnBehaviorActivated() 
 {
-  // TODO:(bn) use TTS to read IP?
+  _messageSent = false;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should be removed
-  Robot& robot = GetBEI().GetRobotInfo()._robot;
+  WaitForImagesAction* waitAction = new WaitForImagesAction(5);
+  DelegateIfInControl(waitAction, [this]() {
+      // DEPRECATED - Grabbing robot to support current cozmo code, but this should be removed
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const bool enable = true;
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableNetworkScreen( enable )));
+      const bool enable = true;
+      robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableNetworkScreen( enable )));
+      _messageSent = true;
 
-  if( kTheBox_TTSForDescription ) {
-    const bool updateIP = true;
-    const std::string& ip = OSState::getInstance()->GetIPAddress(updateIP);
-    if( !ip.empty() ) {
-      DelegateIfInControl(new SayTextAction(ip, SayTextAction::AudioTtsProcessingStyle::Unprocessed));
-    }
-  }
+      if( kTheBox_TTSForDescription ) {
+        const bool updateIP = true;
+        const std::string& ip = OSState::getInstance()->GetIPAddress(updateIP);
+        if( !ip.empty() ) {
+          DelegateIfInControl(new SayTextAction(ip, SayTextAction::AudioTtsProcessingStyle::Unprocessed));
+        }
+      }
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBoxDemoShowNetworkInfo::OnBehaviorDeactivated() 
 {
-  // TODO:(bn) use TTS to read IP?
+  if( _messageSent ) {
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should be removed
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should be removed
-  Robot& robot = GetBEI().GetRobotInfo()._robot;
-
-  const bool enable = false;
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableNetworkScreen( enable )));
+    const bool enable = false;
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableNetworkScreen( enable )));
+  }
 }
 
 

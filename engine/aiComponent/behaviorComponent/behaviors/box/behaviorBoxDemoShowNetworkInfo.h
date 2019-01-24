@@ -37,6 +37,8 @@ protected:
   virtual void OnBehaviorDeactivated() override;
 
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}  
+
+  bool _messageSent = false;
 };
 
 } // namespace Vector

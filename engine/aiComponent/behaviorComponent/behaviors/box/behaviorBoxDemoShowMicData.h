@@ -38,6 +38,7 @@ protected:
 
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
+  bool _messageSent = false;
   
 };
 
