@@ -6,9 +6,13 @@ function AddImage(url) {
   var modal = document.getElementById('myModal');
   var modalImg = document.getElementById("imgModal");
 
-  var img = $('<div class="tiles" style="background: url(\'' + url + '\'); ' +
-              'background-repeat: no-repeat; background-size: 391px 220px;"></div>').appendTo($('.tile_container'))[0];
-  img.onclick = function(){
+  var thumbnailUrl = url.replace('.jpg', '.thm.jpg');
+
+  var img = $('<div class="tiles" style="background-image: url(\'' + thumbnailUrl + '\'); ' +
+              // 'url(\'' + url + '\'); ' + // use full image url as a backup
+              'background-repeat: no-repeat; background-size: 397px 223px;"></div>').appendTo($('.tile_container'))[0];
+
+  img.onclick = function(){ // 1280x720 -> 320x180 -> * 0.31 = 396.8 x 223.2
     modal.style.display = "block";
     modalImg.src = url;
   }
@@ -52,12 +56,21 @@ $.ajax({
   success: function (data) {
     var anyDisplayed = false;
 
+    var images = [];
+    
     $(data).find("a:contains(" + fileextension + ")").each(function () {
       var filename = this.href.replace(window.location.host, "").replace("http://", "");
       if( filename.indexOf('.thm') < 0 ) {
-        AddImage(filename);
-        anyDisplayed = true;
+        images.push(filename);
       }
+    });
+
+    // latest 20 images only
+    images.sort();
+    images.reverse();
+    images.slice(0, 20).forEach(function(filename) {
+      AddImage(filename);
+      anyDisplayed = true;
     });
 
     if( !anyDisplayed && !loadStockImages ) {

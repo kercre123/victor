@@ -42,7 +42,9 @@ namespace {
   
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleSaveThumbnailSize, "TheBox.PersonDetection", 0.f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleDrawSalientPointThickness, "TheBox.PersonDetection", 3, 1, 5);
-  
+  CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleDrawSalientPointThumbnailThickness, "TheBox.PersonDetection", 2, 1, 5); 
+  CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleJpegQuality, "TheBox.PersonDetection", 60, 0, 100);
+ 
   const char* const kSaveBaseName = "person_detection";
   const char* const kPersistentSaveSubDir = "photos";
 }
@@ -320,6 +322,8 @@ void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<V
 {
   const std::string cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("cloud_vison");
   const std::string imgFilename = Util::FileUtils::FullFilePath({cachePath, std::string(kSaveBaseName) + ".jpg"});
+  const std::string thumbnailFilename = Util::FileUtils::FullFilePath({cachePath,
+                                                                       std::string(kSaveBaseName) + ".thm.jpg"});
   
   const TimeStamp_t timestamp = salientPoints.front().timestamp;
   const std::string persistentPath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetPersistentPath(kPersistentSaveSubDir);
@@ -330,31 +334,63 @@ void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<V
   {
     case 1:
     {
-      std::async(std::launch::async, [salientPoints, imgFilename, saveFilename]()
+      std::async(std::launch::async, [salientPoints, imgFilename, thumbnailFilename, saveFilename]()
                  {
-                   // Load up the saved image and draw the detections, then re-save for the web
-                   Vision::ImageRGB imgForWeb;
-                   const Result loadResult = imgForWeb.Load(imgFilename);
-                   if(ANKI_VERIFY(loadResult == RESULT_OK,
-                                  "BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.LoadSavedImageFailed", ""))
                    {
-                     for(const auto& salientPoint : salientPoints)
+                     // Load up the saved image and draw the detections, then re-save for the web
+                     Vision::ImageRGB imgForWeb;
+                     const Result loadResult = imgForWeb.Load(imgFilename);
+                     if(ANKI_VERIFY(loadResult == RESULT_OK,
+                                    "BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.LoadSavedImageFailed", ""))
                      {
-                       Poly2f poly(salientPoint.shape);
-                       for(auto & pt : poly)
+                       for(const auto& salientPoint : salientPoints)
                        {
-                         pt.x() *= imgForWeb.GetNumCols();
-                         pt.y() *= imgForWeb.GetNumRows();
+                         Poly2f poly(salientPoint.shape);
+                         for(auto & pt : poly)
+                         {
+                           pt.x() *= imgForWeb.GetNumCols();
+                           pt.y() *= imgForWeb.GetNumRows();
+                         }
+                         imgForWeb.DrawPoly(poly, NamedColors::YELLOW, kTheBox_CountPeopleDrawSalientPointThickness);
                        }
-                       imgForWeb.DrawPoly(poly, NamedColors::YELLOW, kTheBox_CountPeopleDrawSalientPointThickness);
+
+                       const Result saveResult = imgForWeb.Save(saveFilename + ".jpg", kTheBox_CountPeopleJpegQuality);
+                       if(RESULT_OK != saveResult)
+                       {
+                         LOG_ERROR("BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.SaveImageFailed", "%s",
+                                   saveFilename.c_str());
+                       }
                      }
-                     
-                     const Result saveResult = imgForWeb.Save(saveFilename + ".jpg");
-                     if(RESULT_OK != saveResult)
+                   }
+
+                   {
+                     // same as above, but for the thumbnail (if it exists)
+                     Vision::ImageRGB imgForWeb;
+                     const Result loadResult = imgForWeb.Load(thumbnailFilename);
+                     if(loadResult == RESULT_OK )
                      {
-                       LOG_ERROR("BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.SaveImageFailed", "%s",
-                                 saveFilename.c_str());
+                       for(const auto& salientPoint : salientPoints)
+                       {
+                         Poly2f poly(salientPoint.shape);
+                         for(auto & pt : poly)
+                         {
+                           pt.x() *= imgForWeb.GetNumCols();
+                           pt.y() *= imgForWeb.GetNumRows();
+                         }
+                         imgForWeb.DrawPoly(poly,
+                                            NamedColors::YELLOW,
+                                            kTheBox_CountPeopleDrawSalientPointThumbnailThickness);
+                       }
+                     
+                       const Result saveResult = imgForWeb.Save(saveFilename + ".thm.jpg",
+                                                                kTheBox_CountPeopleJpegQuality);
+                       if(RESULT_OK != saveResult)
+                       {
+                         LOG_ERROR("BehaviorBoxDemoCountPeople.DrawSalientPointsOnSavedImage.SaveThumbnailFailed", "%s",
+                                   saveFilename.c_str());
+                       }
                      }
+
                    }
                  });
       break;
@@ -383,6 +419,8 @@ void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<V
           file.close();
         }
       }
+      Util::FileUtils::MoveFile(saveFilename + ".thm.jpg", thumbnailFilename);
+      
       break;
     }
       

@@ -11,9 +11,9 @@
     border-color: #0081c2;
     margin: 0 15px 30px 15px;
     /* flex-grow: 1; */
-    flex: 0 0 300px;
+    flex: 0 0 397px;
     padding: 0;
-    height: 220px;
+    height: 223px;
 }
 
 .photo_controls {
@@ -97,6 +97,6 @@
 	color:#0081c2;
 	text-transform: uppercase;
 	padding:10px 40px;
-	width:300px;
+	width:397px;
 }
 
