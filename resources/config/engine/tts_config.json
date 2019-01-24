@@ -58,7 +58,7 @@
         { "textLengthMin": 10, "textLengthMax": 9999, "rangeMin": 83, "rangeMax": 83}
       ],
       "pitch": 100,
-      "shaping": 130
+      "shaping": 100
     },
     "fr":
     {
