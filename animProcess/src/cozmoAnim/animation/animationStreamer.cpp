@@ -224,6 +224,7 @@ namespace Vector {
 
   // Rendering backpack lights on screen
   CONSOLE_VAR(bool, kDisplayBackpackLights, "AnimationStreamer", THEBOX);
+  CONSOLE_VAR(bool, kDisplayBackpackLights_simple, "AnimationStreamer", THEBOX);
   BackpackLightComponent::BackpackLEDState s_lastDrawnBackpackLEDState;
   Vision::ImageRGB565 s_lastDrawnImage565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   bool s_firstImageDrawn = false;
@@ -1336,33 +1337,54 @@ namespace Vector {
     // Render 4 lights along right side of the screen
     if (kDisplayBackpackLights) 
     {
+      // save light state to static
       s_lastDrawnBackpackLEDState = _context->GetBackpackLightComponent()->GetBackpackLEDState();
-      const u32 kFillRadius = 3;
-      const u32 LED_WIDTH   = 5;
-      const u32 LED_HEIGHT  = 10;
-      const u32 LED_OFFSET  = 10;
-      const u32 LED_SPACING = 4;
+      
+      if( kDisplayBackpackLights_simple ) {
 
-      const Point2f pt_system(FACE_DISPLAY_WIDTH-kFillRadius, LED_OFFSET + 0.5 * LED_HEIGHT);
-      faceImg565.DrawFilledCircle(pt_system, s_lastDrawnBackpackLEDState.system, kFillRadius);
+        const u32 greenColor = 16711680; // empirically determined to be the default green color.....
 
-      Rectangle<s32> rect_front(FACE_DISPLAY_WIDTH-LED_WIDTH, 
-                                LED_OFFSET + LED_HEIGHT + LED_SPACING, 
-                                LED_WIDTH, 
-                                LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_front, s_lastDrawnBackpackLEDState.front);
+        if( s_lastDrawnBackpackLEDState.system != greenColor ) {
 
-      Rectangle<s32> rect_middle(FACE_DISPLAY_WIDTH-LED_WIDTH, 
-                                 LED_OFFSET + 2 * (LED_HEIGHT + LED_SPACING), 
+          // simpler rendering only showing status if non-green to look a bit nicer
+          const u32 kFillRadius = 8;
+          const u32 kEdgeOffset = 3;
+
+          // draw black outline with color filling the circle
+          const Point2f pt_system(FACE_DISPLAY_WIDTH-kFillRadius-kEdgeOffset, kEdgeOffset+kFillRadius);
+          faceImg565.DrawFilledCircle(pt_system, s_lastDrawnBackpackLEDState.system, kFillRadius);
+          faceImg565.DrawCircle(pt_system, 0, kFillRadius, 1);
+        }
+      }
+      else {
+        // full rendering of all lights
+        const u32 kFillRadius = 3;
+        const u32 LED_WIDTH   = 5;
+        const u32 LED_HEIGHT  = 10;
+        const u32 LED_OFFSET  = 10;
+        const u32 LED_SPACING = 4;
+
+        const Point2f pt_system(FACE_DISPLAY_WIDTH-kFillRadius, LED_OFFSET + 0.5 * LED_HEIGHT);
+        faceImg565.DrawFilledCircle(pt_system, s_lastDrawnBackpackLEDState.system, kFillRadius);
+
+        Rectangle<s32> rect_front(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                                  LED_OFFSET + LED_HEIGHT + LED_SPACING, 
+                                  LED_WIDTH, 
+                                  LED_HEIGHT);
+        faceImg565.DrawFilledRect(rect_front, s_lastDrawnBackpackLEDState.front);
+
+        Rectangle<s32> rect_middle(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                                   LED_OFFSET + 2 * (LED_HEIGHT + LED_SPACING), 
+                                   LED_WIDTH, 
+                                   LED_HEIGHT);
+        faceImg565.DrawFilledRect(rect_middle, s_lastDrawnBackpackLEDState.middle);
+
+        Rectangle<s32> rect_back(FACE_DISPLAY_WIDTH-LED_WIDTH, 
+                                 LED_OFFSET + 3 * (LED_HEIGHT + LED_SPACING), 
                                  LED_WIDTH, 
                                  LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_middle, s_lastDrawnBackpackLEDState.middle);
-
-      Rectangle<s32> rect_back(FACE_DISPLAY_WIDTH-LED_WIDTH, 
-                               LED_OFFSET + 3 * (LED_HEIGHT + LED_SPACING), 
-                               LED_WIDTH, 
-                               LED_HEIGHT);
-      faceImg565.DrawFilledRect(rect_back, s_lastDrawnBackpackLEDState.back);
+        faceImg565.DrawFilledRect(rect_back, s_lastDrawnBackpackLEDState.back);
+      }
     }
 #endif    
   }
