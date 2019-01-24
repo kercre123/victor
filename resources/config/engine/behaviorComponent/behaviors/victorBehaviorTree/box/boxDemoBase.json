@@ -4,7 +4,7 @@
 
   "associatedActiveFeature": "NoFeature",
 
-  "initialState": "PersonDetector",
+  "initialState": "Faces",
 
   "states": [
     {
@@ -12,7 +12,7 @@
       "behavior": "BoxDemoBoot"
     },
     {
-      "name": "PersonDetector",
+      "name": "Faces",
       "behavior": "BoxDemoFaceTracking",
       "activateIntent": "switch_vision_mode",
       "dropIntent": true
@@ -22,6 +22,10 @@
       "behavior": "BoxDemoCountPeopleBase",
       "activateIntent": "switch_vision_mode",
       "dropIntent": true
+    },
+    {
+      "name": "MicData",
+      "behavior": "BoxDemoShowMicDataWithoutVoice"
     }
   ],
 
@@ -30,7 +34,7 @@
       "from": "BootAnim",
       "exitTransitions": [
         {
-          "to": "PersonDetector",
+          "to": "Faces",
           "condition": {
             "conditionType": "TrueCondition"
           }
@@ -39,7 +43,7 @@
     },
 
     {
-      "from": "PersonDetector",
+      "from": "Faces",
       "interruptingTransitions": [
         {
           "to": "PeopleCounter",
@@ -57,7 +61,7 @@
       "from": "PeopleCounter",
       "interruptingTransitions": [
         {
-          "to": "PersonDetector",
+          "to": "Faces",
           "condition": {
             "conditionType": "UserIntentPending",
             "list": [
@@ -66,6 +70,30 @@
           }
         }
       ]
+    },
+
+    {
+      "from": "MicData",
+      "interruptingTransitions": [
+        {
+          "to": "Faces",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "switch_vision_mode"}
+            ]
+          }
+        }
+      ],
+      "exitTransitions": [
+        {
+          "to": "Faces",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
     }
+
   ]
 }

@@ -98,6 +98,7 @@ enum uint_16 BehaviorID {
   BoxDemoProcessingAnim,
   BoxDemoShortAnim,
   BoxDemoShowMicData,
+  BoxDemoShowMicDataWithoutVoice,
   BoxDemoShowNetworkInfo,
   BoxDemoWaitWithTriggerWord,
 

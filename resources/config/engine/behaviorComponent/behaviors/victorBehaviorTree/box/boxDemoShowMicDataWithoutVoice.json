@@ -1,0 +1,12 @@
+{
+  "behaviorID": "BoxDemoShowMicDataWithoutVoice",
+  "behaviorClass": "BoxDemoShowMicData",
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "RobotTouched",
+    "minTouchTime": 0.2,
+    "waitForRelease": true,
+    "waitForReleaseTimeout_s": 1.0
+  }
+}
+
