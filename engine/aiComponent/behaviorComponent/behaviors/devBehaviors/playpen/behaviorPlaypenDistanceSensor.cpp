@@ -152,7 +152,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
       RangeSensorData data;
       data.rangeData = rangeData;
       data.visualDistanceToTarget_mm = 0;
-      data.visualAngleAwayFromTarget_rad = 0;
+     data.visualAngleAwayFromTarget_rad = 0;
       data.headAngle_rad = robot.GetHeadAngle();
 
       // Pose3d markerPose;
@@ -373,6 +373,9 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
         return _calibrationComplete;
       });
     action->AddAction(wait);
+
+    action->AddAction(new WaitAction(3.f));
+    
     DelegateIfInControl(action, [this]() { _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord; });
   }
   else

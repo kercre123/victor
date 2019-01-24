@@ -13,7 +13,7 @@ structure RangingDataDisplay {
 }
 
 structure RangeDataDisplay {
-  RangingDataDisplay data[32]
+  RangingDataDisplay data[16]
 }
 
 } // namespace Vector

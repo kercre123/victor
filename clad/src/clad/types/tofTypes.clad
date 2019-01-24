@@ -24,7 +24,7 @@ structure RangingData {
 }
 
 structure RangeDataRaw {
-  RangingData data[32]
+  RangingData data[16]
 }
 
 } // namespace Vector
