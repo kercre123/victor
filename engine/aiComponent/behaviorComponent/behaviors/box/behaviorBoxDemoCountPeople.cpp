@@ -38,9 +38,9 @@ namespace {
   
   // If set to Images, will load the saved image from the neural net and re-draw any detected salient points on it.
   // If set to JsonSalientPoints, will write the SalientPoints to Json and assume Web will render them.
-  CONSOLE_VAR_ENUM(s32, kTheBox_CountPeopleSaveMode, "TheBox.PersonDetection", 0, "Off,Images,JsonSalientPoints");
+  CONSOLE_VAR_ENUM(s32, kTheBox_CountPeopleSaveMode, "TheBox.PersonDetection", 1, "Off,Images,JsonSalientPoints");
   
-  CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleSaveThumbnailSize, "TheBox.PersonDetection", 0.f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleSaveThumbnailSize, "TheBox.PersonDetection", 0.31f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleDrawSalientPointThickness, "TheBox.PersonDetection", 3, 1, 5);
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleDrawSalientPointThumbnailThickness, "TheBox.PersonDetection", 2, 1, 5); 
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleJpegQuality, "TheBox.PersonDetection", 60, 0, 100);
