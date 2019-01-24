@@ -78,9 +78,6 @@ namespace {
   
   float kReturnToCenterSpeed_deg_s = 300.0f;
   
-  const unsigned int kNumFloodFillSteps = 10;
-  
-  
   // if discovered an obstacle within this long, and an unrelated path brings you nearby turn toward it
   int kTimeForTurnToPassingObstacles_ms = 15000;
 }
@@ -448,11 +445,7 @@ void BehaviorExploringExamineObstacle::BehaviorUpdate()
     // flood fill any explored prox obstacles into unexplored obstacles.
     // while this one could be called from elsewhere, currently we only care about the result
     // when this behavior is in scope, so it's called here
-    for( int i=0; i<kNumFloodFillSteps; ++i ) {
-      if( !GetBEI().GetMapComponent().FlagProxObstaclesTouchingExplored() ) {
-        break;
-      }
-    }
+    GetBEI().GetMapComponent().FlagProxObstaclesTouchingExplored();
     
     const static bool forActivation = true;
     _dVars.persistent.seesFrontObstacle = RobotSeesObstacleInFront( kDistanceForActivation_mm, forActivation );
@@ -472,11 +465,7 @@ void BehaviorExploringExamineObstacle::BehaviorUpdate()
       // this is done before the flood fill step ( see above comment ) so that obstacles flagged as
       // explored this tick count as seens for filling
       GetBEI().GetMapComponent().FlagProxObstaclesUsingPose();
-      for( int i=0; i<kNumFloodFillSteps; ++i ) {
-        if( !GetBEI().GetMapComponent().FlagProxObstaclesTouchingExplored() ) {
-          break;
-        }
-      }
+      GetBEI().GetMapComponent().FlagProxObstaclesTouchingExplored();
     }
   }
   

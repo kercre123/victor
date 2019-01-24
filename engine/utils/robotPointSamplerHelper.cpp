@@ -12,7 +12,6 @@
 
 #include "engine/utils/robotPointSamplerHelper.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/pose.h"
 #include "engine/charger.h"
 #include "engine/navMap/iNavMap.h"

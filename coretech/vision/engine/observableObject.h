@@ -26,7 +26,6 @@
 
 #include "coretech/common/engine/colorRGBA.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/pose.h"
 
 #include "clad/types/poseStructs.h"

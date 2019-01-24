@@ -9,7 +9,6 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/vision/engine/cameraCalibration.h"

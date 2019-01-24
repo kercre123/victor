@@ -17,7 +17,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/pose.h"
 
 #include <list>

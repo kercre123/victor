@@ -13,13 +13,24 @@
 #ifndef __Anki_AudioUtil_SpeechRecognizer_H_
 #define __Anki_AudioUtil_SpeechRecognizer_H_
 
-#include "audioDataTypes.h"
+#include "audioUtil/audioDataTypes.h"
   
 #include <functional>
 #include <string>
 
 namespace Anki {
 namespace AudioUtil {
+  
+struct SpeechRecognizerCallbackInfo {
+  const char* result;
+  int startTime_ms;
+  int endTime_ms;
+  uint64_t startSampleIndex;
+  uint64_t endSampleIndex;
+  float score;
+  
+  const std::string Description() const;
+};
     
 class SpeechRecognizer
 {
@@ -31,20 +42,7 @@ public:
   SpeechRecognizer(SpeechRecognizer&& other) = default;
   SpeechRecognizer& operator=(SpeechRecognizer&& other) = default;
   
-  // Trigger Callback types
-  struct SpeechCallbackInfo {
-    const char* result;
-    int startTime_ms;
-    int endTime_ms;
-
-    uint64_t startSampleIndex;
-    uint64_t endSampleIndex;
-
-    float score;
-    
-    const std::string Description() const;
-  };
-  using SpeechCallback = std::function<void(const SpeechCallbackInfo& info)>;
+  using SpeechCallback = std::function<void(const SpeechRecognizerCallbackInfo& info)>;
   
   void SetCallback(SpeechCallback callback = SpeechCallback{} ) { _speechCallback = callback; }
   void Start();
@@ -63,7 +61,7 @@ protected:
   virtual void StartInternal() { }
   virtual void StopInternal() { }
   
-  void DoCallback(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
+  void DoCallback(const SpeechRecognizerCallbackInfo& info) const;
   
 private:
   SpeechCallback _speechCallback;

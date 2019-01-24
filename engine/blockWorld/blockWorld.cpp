@@ -16,7 +16,6 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
@@ -162,8 +161,12 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     // 1x1 Light Cubes
     //
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE1));
+#ifdef SIMULATOR
+    // VIC-12886 These object types are only used in Webots tests (not in the real world), so only define them if this
+    // is sim. The physical robot can sometimes hallucinate these objects, which causes issues.
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
+#endif
 
     //////////////////////////////////////////////////////////////////////////
     // 2x1 Blocks
@@ -573,15 +576,19 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   {
     // TODO: Keep some kind of OctTree data structure to make these queries faster?
 
-    Vec3f closestDist(distThreshold);
-    //ObservableObject* matchingObject = nullptr;
+    // Note: This function only considers the magnitude of distThreshold, not the individual elements (see VIC-12526)
+    float closestDist = distThreshold.Length();
 
     BlockWorldFilter filter(filterIn);
     filter.AddFilterFcn([&pose, &closestDist](const ObservableObject* current)
                         {
-                          Vec3f dist = ComputeVectorBetween(pose, current->GetPose());
-                          dist.Abs();
-                          if(dist.Length() < closestDist.Length()) {
+                          float dist = 0.f;
+                          if (!ComputeDistanceBetween(pose, current->GetPose(), dist)) {
+                            LOG_ERROR("BlockWorld.FindLocatedObjectClosestToHelper.FilterFcn",
+                                      "Failed to compute distance between input pose and block pose");
+                            return false;
+                          }
+                          if(dist < closestDist) {
                             closestDist = dist;
                             return true;
                           } else {
@@ -1155,7 +1162,12 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       // We use the distance to the observed object to decide (a) if the object is
       // close enough to do localization/identification and (b) to use only the
       // closest object in each coordinate frame for localization.
-      const f32 distToObjSeen = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
+      f32 distToObjSeen = 0.f;
+      if (!ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose(), distToObjSeen)) {
+        LOG_ERROR("BlockWorld.AddAndUpdateObjects.ComputeDistanceFailure",
+                  "Failed to compute distance between robot and object seen");
+        return RESULT_FAIL;
+      }
 
       // First thing that we have to do is ask the PoseConfirmer whether this is a confirmed object,
       // or a visual observation of an object that we want to consider for the future (unconfirmed object).

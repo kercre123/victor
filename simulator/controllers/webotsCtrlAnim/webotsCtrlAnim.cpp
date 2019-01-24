@@ -24,6 +24,7 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/logging.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
+#include "util/time/stopWatch.h"
 
 #include <fstream>
 
@@ -113,18 +114,32 @@ int main(int argc, char **argv)
 
   LOG_INFO("webotsCtrlAnim.main", "AnimEngine created and initialized.");
 
+  Anki::Util::Time::StopWatch stopWatch("tick");
+  
   //
   // Main Execution loop: step the world forward forever
   //
-  auto tick_start = std::chrono::system_clock::now();
   while (animSupervisor.step(ANIM_TIME_STEP_MS) != -1)
   {
-    double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
+    stopWatch.Start();
+    
+    const double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
     animEngine.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
 
-    tick_start = std::chrono::system_clock::now();
+    const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
 
-  } // while still stepping
+    // Record tick performance; this includes a call to PerfMetric.
+    // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
+    // we don't actually sleep in this loop
+    static const float kTargetDuration_ms = Util::numeric_cast<float>(ANIM_TIME_STEP_MS);
+    const float animFreq_ms  = std::max(time_ms, kTargetDuration_ms);
+    const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
+    const float sleepTimeActual_ms = sleepTime_ms;
+    animEngine.RegisterTickPerformance(time_ms,
+                                       animFreq_ms,
+                                       sleepTime_ms,
+                                       sleepTimeActual_ms);
+  }
 
   Util::gLoggerProvider = nullptr;
   return 0;

@@ -28,7 +28,7 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/factory/factoryTestLogger.h"
-#include "engine/perfMetric.h"
+#include "engine/perfMetricEngine.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -344,7 +344,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
                     _context->GetDataLoader()->GetWebServerEngineConfig());
   webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
 
-  _context->GetPerfMetric()->Init();
+  _context->GetPerfMetric()->Init(_context->GetDataPlatform(), _context->GetWebService());
 
   LOG_INFO("CozmoEngine.Init.Version", "2");
 

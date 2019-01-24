@@ -237,6 +237,7 @@ namespace Anki {
               LiftController::IsCalibrated() &&
               HeadController::IsCalibrated()) {
             RobotInterface::SyncRobotAck syncRobotAckMsg;
+            memcpy(&syncRobotAckMsg.sysconVersion, HAL::GetSysconVersionInfo(), 16);
             while (RobotInterface::SendMessage(syncRobotAckMsg) == false);
             syncRobotAckSent_ = true;
 

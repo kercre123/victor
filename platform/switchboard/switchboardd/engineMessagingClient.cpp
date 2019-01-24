@@ -16,11 +16,13 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
+#include <iomanip>
 #include "anki-ble/common/log.h"
 #include "anki-wifi/wifi.h"
 #include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "switchboardd/savedSessionManager.h"
 #include "switchboardd/log.h"
 
 using GMessageTag = Anki::Vector::ExternalInterface::MessageGameToEngineTag;
@@ -47,7 +49,7 @@ bool EngineMessagingClient::Init() {
 }
 
 bool Anki::Switchboard::EngineMessagingClient::Connect() {
-  bool connected = _client.Connect(Anki::Victor::ENGINE_SWITCH_CLIENT_PATH, Anki::Victor::ENGINE_SWITCH_SERVER_PATH);
+  bool connected = _client.Connect(Anki::Vector::ENGINE_SWITCH_CLIENT_PATH, Anki::Vector::ENGINE_SWITCH_SERVER_PATH);
 
   if(connected) {
     ev_timer_start(loop_, &_handleEngineMessageTimer.timer);
@@ -89,6 +91,8 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
       case EMessageTag::EnterPairing:
       case EMessageTag::ExitPairing:
       case EMessageTag::WifiScanRequest:
+      case EMessageTag::WifiConnectRequest:
+      case EMessageTag::HasBleKeysRequest:
       {
         // Emit signal for message
         wData->signal->emit(message);
@@ -112,6 +116,83 @@ void EngineMessagingClient::HandleWifiScanRequest() {
 
   Log::Write("Sending wifi scan results.");
   SendMessage(GMessage::CreateWifiScanResponse(std::move(rsp)));
+}
+
+void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid,
+                                                     const std::string& pwd,
+                                                     bool disconnectAfterConnection) {
+  // Convert ssid to hex string
+  std::stringstream ss;
+  for(char c : ssid)
+  {
+    ss << std::hex << std::setfill('0') << std::setw(2) << (int)c;
+  }
+  const std::string ssidHex = ss.str();
+
+  Anki::Vector::SwitchboardInterface::WifiConnectResponse rcp;
+  rcp.status_code = 255;
+
+  // Scan for access points
+  std::vector<Wifi::WiFiScanResult> wifiResults;
+  Wifi::WifiScanErrorCode code = Wifi::ScanForWiFiAccessPoints(wifiResults);
+  
+  if(code == Wifi::WifiScanErrorCode::SUCCESS)
+  {
+    // Scan was a success, look though results for an AP with matching ssid
+    bool ssidInRange = false;
+    for(const auto& result : wifiResults)
+    {
+      if(strcmp(ssidHex.c_str(), result.ssid.c_str()) == 0)
+      {
+        ssidInRange = true;
+        
+        Log::Write("HandleWifiConnectRequest: Found requested ssid from scan, attempting to connect");
+        Wifi::ConnectWifiResult res = Wifi::ConnectWiFiBySsid(result.ssid,
+                                                              pwd,
+                                                              (uint8_t)result.auth,
+                                                              result.hidden,
+                                                              nullptr,
+                                                              nullptr);
+
+        if(res != 0)
+        {
+          Log::Write("HandleWifiConnectRequest: Failed to connect to ssid");
+        }
+        
+        rcp.status_code = (uint8_t)res;
+        break;
+      }
+    }
+    
+    if(!ssidInRange)
+    {
+      Log::Write("HandleWifiConnectRequest: Requested ssid not in range");
+    }
+  }
+  else
+  {
+    Log::Write("HandleWifiConnectRequest: Wifi scan failed");
+    rcp.status_code = (uint8_t)code;
+  }
+
+  if(disconnectAfterConnection)
+  {
+    // Immediately disconnect from ssid
+    // Will do nothing if not connected to ssid
+    (void)Wifi::RemoveWifiService(ssidHex);
+  }
+  
+  SendMessage(GMessage::CreateWifiConnectResponse(std::move(rcp)));
+}
+
+void EngineMessagingClient::HandleHasBleKeysRequest() {
+  Anki::Vector::SwitchboardInterface::HasBleKeysResponse rsp;
+
+  // load keys
+  RtsKeys keys = SavedSessionManager::LoadRtsKeys();
+  rsp.hasBleKeys = keys.clients.size() > 0;
+
+  SendMessage(GMessage::CreateHasBleKeysResponse(std::move(rsp)));
 }
 
 void EngineMessagingClient::SendMessage(const GMessage& message) {

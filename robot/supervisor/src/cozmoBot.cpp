@@ -1,4 +1,3 @@
-#include <sys/mman.h>
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
@@ -12,7 +11,6 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "platform/anki-trace/tracing.h"
-#include "util/threading/fork_and_exec.h"
 
 #include "backpackLightController.h"
 #include "dockingController.h"
@@ -30,11 +28,46 @@
 #include "testModeController.h"
 #include "timeProfiler.h"
 #include "wheelController.h"
-#include "util/dispatchQueue/taskExecutor.h"
 
 #ifndef SIMULATOR
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #endif
+
+#ifdef VICOS
+static int triggerFakeHwClock() {
+  static const char* kFakeHwClockFifoName = "/run/fake-hwclock-cmd";
+  char cmd[] = "tick";
+  FILE *fifo = fopen(kFakeHwClockFifoName, "w");
+  if (fifo == NULL) {
+    AnkiError("CozmoBot.triggerFakeHwClock",
+              "Failed to open fifo (errno %d)\n", errno);
+    return -1;
+  }
+
+  const int numToWrite = sizeof(cmd);
+  const ssize_t numWritten = fprintf(fifo, "%s\n", cmd);
+
+  if (fclose(fifo) != 0) {
+    AnkiError("CozmoBot.triggerFakeHwClock",
+              "Failed to close fifo (errno %d)\n", errno);
+  }
+
+  if(numWritten != numToWrite) {
+    AnkiError("CozmoBot.triggerFakeHwClock",
+              "Expected to write %d bytes but only wrote %zd (errno = %d)\n",
+              numToWrite,
+              numWritten,
+              errno);
+    return -1;
+  }
+
+  return 0;
+}
+#endif
+
 
 namespace Anki {
   namespace Vector {
@@ -43,11 +76,6 @@ namespace Anki {
       // "Private Member Variables"
       namespace {
 
-#ifdef VICOS
-        // Create background thread for fork/exec of fake-hwclock-tick service
-        // because Forking after mlockall is very expensive.
-        std::shared_ptr<Anki::Util::TaskExecutor> fakeHWClockTick_(new Anki::Util::TaskExecutor("fake-hwclock-tick", Anki::Util::ThreadPriority::Low));
-#endif
         // Parameters / Constants:
         bool wasConnected_ = false;
 
@@ -115,23 +143,6 @@ namespace Anki {
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.LiftController", "");
 
-#ifdef VICOS
-        //Move fakeHWClockTick  off RT thread
-        fakeHWClockTick_->WakeAfter([]() {
-            cpu_set_t targetCpuset;
-            cpu_set_t currentCpuset;
-            CPU_ZERO(&targetCpuset);
-            pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &currentCpuset);
-
-            for(int i = 0; i < std::thread::hardware_concurrency(); i++) {
-              if(!CPU_ISSET(i, &currentCpuset)) {
-                CPU_SET(i, &targetCpuset);
-              }
-            }
-            pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &targetCpuset);
-          }, std::chrono::steady_clock::now(), "setAffinity");
-#endif
-
         // Calibrate motors
         const bool autoStarted = true;
         const auto reason = MotorCalibrationReason::Startup;
@@ -164,10 +175,7 @@ namespace Anki {
         // If we end up shutting down due to the user holding the button
         // we still want to record the current time to disk to keep our
         // clock as close to accurate as possible on the next boot.
-        fakeHWClockTick_->WakeAfter([]() {
-             AnkiWarn("fake-hwclock-tick", "Starting fake-hwclock-tick");
-             (void) ForkAndExecAndForget({"sudo", "/bin/systemctl", "start", "fake-hwclock-tick"});
-        }, std::chrono::steady_clock::now(), "fake-hwclock-tick");
+        triggerFakeHwClock();
         #endif
       }
 

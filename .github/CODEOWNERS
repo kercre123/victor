@@ -12,3 +12,6 @@ robot/syscon/* @bryon
 
 # The OTA client
 platform/update-engine/update-engine.py @seichert
+
+# Proto files
+tools/protobuf/gateway/* @anki/cozmo-sdk-admins

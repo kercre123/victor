@@ -13,7 +13,6 @@
 #ifndef __Engine_Utils_RobotPointSamplerHelper_H__
 #define __Engine_Utils_RobotPointSamplerHelper_H__
 
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/pose.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"

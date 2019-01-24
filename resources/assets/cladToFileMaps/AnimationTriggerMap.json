@@ -488,6 +488,26 @@
     "AnimName": "ag_rtshake_lv3rtonground"
   },
   {
+    "CladEvent": "ReactToShakeSnowGlobe_GetIn",
+    "AnimName": "ag_snowglobe_getin"
+  },
+  {
+    "CladEvent": "ReactToShakeSnowGlobe_Lvl1Loop",
+    "AnimName": "ag_snowglobe_loop"
+  },
+  {
+    "CladEvent": "ReactToShakeSnowGlobe_Lvl1Waiting",
+    "AnimName": "ag_snowglobe_pregetout"
+  },
+  {
+    "CladEvent": "ReactToShakeSnowGlobe_Lvl1InHand",
+    "AnimName": "ag_snowglobe_rtonhand"
+  },
+  {
+    "CladEvent": "ReactToShakeSnowGlobe_Lvl1OnGround",
+    "AnimName": "ag_snowglobe_rtonground"
+  },
+  {
     "CladEvent": "DEPRECATED_DizzyReactionHard",
     "AnimName": "ag_dizzy_reaction_hard"
   },

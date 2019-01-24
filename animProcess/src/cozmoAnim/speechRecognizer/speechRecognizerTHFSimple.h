@@ -21,12 +21,10 @@
 
 namespace Anki {
 namespace Vector {
-  
 namespace VoiceCommand {
-  class PhraseData;
-  using PhraseDataSharedPtr = std::shared_ptr<PhraseData>;
-  
-  class RecognitionSetupData;
+class PhraseData;
+using PhraseDataSharedPtr = std::shared_ptr<PhraseData>;
+class RecognitionSetupData;
 }
 
 class SpeechRecognizerTHF : public AudioUtil::SpeechRecognizer

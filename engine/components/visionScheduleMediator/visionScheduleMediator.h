@@ -27,6 +27,7 @@
 
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace Anki{
@@ -91,6 +92,10 @@ public:
 
   const AllVisionModesSchedule& GetSchedule() const { return _schedule; }
   
+  // If andReset=true, also counts the single shot modes as "processed" so they won't be returned anymore after this
+  // VisionComponent (the actual user of the schedule) is expected to be the only caller to use andReset=true
+  void AddSingleShotModesToSet(VisionModeSet& modeSet, bool andReset);
+  
   // in debug builds, send viz messages to webots
   void SendDebugVizMessages(const CozmoContext* context);
   
@@ -124,7 +129,7 @@ private:
       return (minRecord == requestMap.end() ? 0 : minRecord->second);
     }
   };
-
+  
   // Internal call to parse the subscription record and send the emergent config to the VisionComponent if it changed
   void UpdateVisionSchedule(VisionComponent& visionComponent, const CozmoContext* context);
 
@@ -146,7 +151,8 @@ private:
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
   bool _subscriptionRecordIsDirty = false;
   uint8_t _framesSinceSendingDebugViz = 0;
-
+  std::unordered_set<VisionMode> _singleShotModes;
+  
   // Final fully balanced schedule that VisionComponent will use
   AllVisionModesSchedule _schedule;
 }; // class VisionScheduleMediator

@@ -53,8 +53,8 @@ public:
   std::shared_ptr<TokenResponseHandle> SendJwtRequest(JwtRequestCallback callback);
 
 private:
-  const char* kDomainSocketServer = Victor::TOKEN_SERVER_PATH;
-  const char* kDomainSocketClient = Victor::TOKEN_SWITCHBOARD_CLIENT_PATH;
+  const char* kDomainSocketServer = Vector::TOKEN_SERVER_PATH;
+  const char* kDomainSocketClient = Vector::TOKEN_SWITCHBOARD_CLIENT_PATH;
 
   static uint8_t sMessageData[2048];
   const float kMessageFrequency_s = 0.1;

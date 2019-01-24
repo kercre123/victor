@@ -156,28 +156,35 @@ service ExternalInterface {
       body: "*"
     };
   }
-  
+
   rpc EnableMotionDetection(EnableMotionDetectionRequest) returns (EnableMotionDetectionResponse) {
     option (google.api.http) = {
       post: "/v1/enable_motion_detection",
       body: "*"
     };
   }
-  
+
   rpc EnableMirrorMode(EnableMirrorModeRequest) returns (EnableMirrorModeResponse) {
     option (google.api.http) = {
       post: "/v1/enable_mirror_mode",
       body: "*"
     };
   }
-  
+
   rpc EnableImageStreaming(EnableImageStreamingRequest) returns (EnableImageStreamingResponse) {
     option (google.api.http) = {
       post: "/v1/enable_image_streaming",
       body: "*"
     };
   }
-  
+
+  rpc IsImageStreamingEnabled(IsImageStreamingEnabledRequest) returns (IsImageStreamingEnabledResponse) {
+    option (google.api.http) = {
+      post: "/v1/is_image_streaming_enabled",
+      body: "*"
+    };
+  }
+
   // Tells Vector to drive to the specified pose and orientation.
   rpc GoToPose(GoToPoseRequest) returns (GoToPoseResponse) {
     option (google.api.http) = {
@@ -273,14 +280,6 @@ service ExternalInterface {
   rpc VersionState(VersionStateRequest) returns (VersionStateResponse) {
     option (google.api.http) = {
       post: "/v1/version_state",
-      body: "*"
-    };
-  }
-
-  // Get the network information for Vector.
-  rpc NetworkState(NetworkStateRequest) returns (NetworkStateResponse) {
-    option (google.api.http) = {
-      post: "/v1/network_state",
       body: "*"
     };
   }
@@ -400,6 +399,7 @@ service ExternalInterface {
     };
   }
 
+  // Stream navigation map data.
   rpc NavMapFeed(NavMapFeedRequest) returns (stream NavMapFeedResponse) {
     option (google.api.http) = {
       post: "/v1/nav_map_feed",

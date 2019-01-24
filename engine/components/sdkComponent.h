@@ -82,6 +82,7 @@ private:
   std::set<std::pair<VisionMode, bool>> _visionModesWaitingToChange;
 
   void OnSendAudioModeRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void IsImageStreamingEnabledRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void DispatchSDKActivationResult(bool enabled);
   // Returns true if the subscription was actually updated
   bool SubscribeToVisionMode(bool subscribe, VisionMode mode, bool updateWaitingToChangeSet = true);

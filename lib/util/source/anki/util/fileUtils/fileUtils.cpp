@@ -570,5 +570,18 @@ std::string FileUtils::AddTrailingFileSeparator(const std::string& path)
   return newPath;
 }
 
+long FileUtils::GetFileLastModificationTime(const std::string &path)
+{
+  struct stat info;
+  if( stat(path.c_str(), &info)==0 ) {
+    // fun fact: linux and macos have diverged in the name for this field,
+    // but the older version used here has backwards compatibility on both systems,
+    // as long as we don't need nanosecond resolution...which we don't.
+    return info.st_mtime;
+  } else {
+    return -1; // bogus.
+  }
+}
+
 }
 }

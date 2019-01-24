@@ -146,6 +146,9 @@ public:
   virtual void onError() override;
   virtual void doShutdown() override;
 
+  // true if this player is or is about to become active (playing, decode, etc.)
+  bool IsActive();
+
 private:
 
   Type _type;

@@ -60,6 +60,24 @@ enum uint_16 BehaviorID {
   ReactToBody,
   ReactToGazeDirection,
   ReactToGazeDirectionSurface,
+
+  // devBehaviors/selfTest
+  SelfTest,
+  SelfTestButton,
+  SelfTestDockWithCharger,
+  SelfTestDriftCheck,
+  SelfTestDriveForwards,
+  SelfTestInitChecks,
+  SelfTestLookAtCharger,
+  SelfTestMotorCalibration,
+  SelfTestPickup,
+  SelfTestPutOnCharger,
+  SelfTestPutOnCharger2,
+  SelfTestScreenAndBackpack,
+  SelfTestSoundCheck,
+  SelfTestTouch,
+
+  // devBehaviors
   TestStackMonitors,
 
   // victorBehaviorTree/alexa
@@ -189,6 +207,7 @@ enum uint_16 BehaviorID {
   KnowledgeGraphTTS,
 
   // victorBehaviorTree/highLevelDelegates
+  LookInPlaceHeadDownInAir,
   LookInPlaceHeadUp,
   LookInPlaceHeadUpInAir,
 
@@ -296,6 +315,11 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   WhatsMyNameVoiceCommand,
 
+  // victorBehaviorTree/highLevelDelegates/whileInAir/heldInPalm
+  ReactToJoltInPalm,
+  HeldInPalmDispatcher,
+  HeldInPalmResponses,
+
   // victorBehaviorTree/highLevelDelegates/whileInAir
   InitialPickupAnimation,
   WhileInAirDispatcher,
@@ -389,6 +413,7 @@ enum uint_16 BehaviorID {
   ReactToRobotOnFace,
   ReactToRobotOnSide,
   ReactToRobotShaken,
+  ReactToRobotShakenSnowGlobe,
   ReactToSoundAsleep,
   ReactToSoundAwake,
   ReactToSoundDirectionAsleep,

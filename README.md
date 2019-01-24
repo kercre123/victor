@@ -83,26 +83,32 @@ git submodule update --recursive
 
 If you're a developer, it is highly recommended that you check out the [Victor Build System Walkthrough](/docs/build-system-walkthrough.md) doc to familiarize yourself with the build system. The underlying build system for victor is [`CMake`](https://cmake.org/).  The appropriate version of CMake and other dependencies required for building victor will be fetched automatically.
 
-1. To build for vicos (the default), ensure you are in the `victor` directory and run
+1. Note that we often build in `release` mode, since `debug` mode is extremely slow on the robot. To build for vicos (the default), ensure you are in the `victor` directory and run
+
+    ```
+    victor_build_release
+    ```
+
+    If this command fails for some reason, try running `victor_build_release -fX`<sup>1</sup>.
+
+    The release build is NOT the shipping build. The release build still includes developer tools like the webserver. 
+    
+    The shipping build, which end consumers use, does not have these tools. To make the shipping build, do:
+
+    ```
+    victor_build_shipping
+    ```
+
+    We can also build in `debug` mode by running:
 
     ```
     victor_build_debug
     ```
 
-    If this command fails for some reason, try running `victor_build_debug -fX`<sup>1</sup>.
-    
     Note if performance is a problem there is an option for a debug build with compiler optimizations enabled
 
     ```
     victor_build_debugo2
-    ```
-
-    Note that we often build in `release` mode, since `debug` mode is extremely slow on the robot. You can build in release by using `victor_build_release`.
-
-    This differs from a shipping build as some developer tools are included, e.g. webserver, for a build that is shipped to consumers use
-
-    ```
-    victor_build_shipping
     ```
 
 1. To build for mac, run
@@ -117,6 +123,13 @@ If you're a developer, it is highly recommended that you check out the [Victor B
 
     ```
     git clean -dffx _build EXTERNALS generated
+    ```
+    
+    or 
+    
+    ```
+    git clean -dffx .
+    git submodule foreach --recursive 'git clean -dffx .'
     ```
     
     then rebuild. Note that it will now take 10-20 minutes to rebuild.
@@ -175,9 +188,11 @@ If your robot is >= 0.9.1 then it has a built-in ssh key. To interact with the r
 
 ### Connecting over WiFi
 
-Follow the instructions at:
+If Victor is in factory mode update Victor to the latest Dev version. Follow the instructions at:
 
-[Victor OTA udpate using Mac-Client tool](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand\OTAupdateusingMac-Clienttool-OTA) to setup WiFi on your robot.
+[Victor OTA update using Mac-Client tool](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSand\OTAupdateusingMac-Clienttool-OTA) to setup WiFi on your robot.
+
+Alternatively, use an authorized iPhone/Android test phone and the Vector Robot app (aka Chewie) to configure Victor. On HockeyApp, see `Vector-master-dev-os` or `Vector-master-dev-android`.
 
 ### Getting Victor's IP address
 
@@ -192,6 +207,11 @@ Follow the instructions at:
 1. For convenience when working with multiple robots, or if you just want to be sure you're targeting a specific robot, almost all of the commands accept a robot IP with the -s option. For example:
 
     ```
+    victor_deploy_release -s 192.168.43.45
+    ```
+    will deploy the release version to the robot at 192.168.43.45.
+
+    ```
     victor_deploy_debug -s 192.168.43.45
     ```
 
@@ -201,13 +221,29 @@ Follow the instructions at:
 
 1. Run `victor_stop` to stop the processes running on the robot.
 
-1. Run `victor_deploy_debug` to deploy the binaries and asset files to the robot. To deploy the release version, use `victor_deploy_release`.
+1. Run `victor_deploy_release` to deploy the binaries and asset files to the robot. To deploy the debug version, use `victor_deploy_debug`.
  
 1. If the operation times out, power cycle the robot and try again.
 
+### Factory Reset Victor
+
+In case you need a clean environment for troubleshooting. Follow the steps for a factory reset:
+
+1. Place your Victor on the charger
+2. Press and hold the backpack button
+3. Wait for the robot to shutdown and reboot 
+4. Keep holding the backpack button until the little circle light comes on, then release. This should put your robot into factory mode
+5. After the robot finishes booting up into factory mode (you will see `anki.com/v` on the face), double click the backpack button
+6. Raise and lower the lift to get to the customer care screen
+7. Roll the tread to move the `>` from EXIT to CLEAR USER DATA
+8. Raise and lower the lift again
+9. Roll the tread to get the `>` to `CONFIRM`
+10. Raise and lower the lift again
+11. You should see `REBOOTING....`
+
 ## Running Victor
 
-Once the binaries and assets are deployed, you can run everything by running `victor_start`.
+Once the binaries and assets are deployed, Victor's face should be blank. You can run everything by running `victor_start`. At this point, Victor should wake up and not show an error code on his face.
 
 You can view output from all processes by running `victor_log`. You can save the output to file while also viewing the live output by running `victor_log | tee log.txt`.
 

@@ -180,6 +180,85 @@ namespace Anki {
         TimeStamp_t fallStartedTime_ = 0;        // timestamp of when freefall started
         TimeStamp_t freefallDuration_ = 0;       // approximate duration of freefall
         TimeStamp_t braceStartedTime_ = 0;
+
+        // Impact detection
+
+        // note:
+        //
+        // In brief, there are three events used to determine if an impact was experienced:
+        //  BeingHeld, Freefall, and AccelerationSpike.
+        // The last one is when the measured acceleration norm from the imu shows high force
+        // which we know occurs when the robot hits the ground, or when is snapped or jerked
+        // during handling, or forcibly put onto a table.
+        // We care about not firing fall-impact events for the latter two cases, as a result
+        // we use a combination of heuristics on BeingHeld and Freefall detection to have
+        // confidence we experience a true-fall.
+        // 
+        // Empirical testing shows that both BeingHeld and Freefall are prone to false results
+        // as well as inconsistent timing of detection. For example:
+        // - the robot may detect teetering right before rolling off of the edge of a table
+        //   as being held
+        // - during very fast tumbling mid-air, the robot may misclassify the Freefall state
+        // - the robot may register as being held either instantly, or up to a second later
+        //
+        // To combat this, we buffer the AccelerationSpike event with a rolling-window, which
+        // means when an impact is detected there is an active period during which we may
+        // catch other pertinent events like BeingHeld and Freefall to determine if it was a
+        // true-fall.
+        //
+        // Examples of how this is applied are:
+        //
+        // - suppressing impact-detection if being-held was recently true prevents handling
+        //   and moving the robot around as registering as a true-positive fall.
+        //
+        // - suppressing impact-detection if being-held is true for a minimum duration means
+        //   we can be more confident in the being-held state. The flipside is that it takes
+        //   longer to be certain, which necessitates buffering the acceleration spike event
+        //   in order to correlate it correctly.
+        // 
+        // - free-fall detection has some cases (i.e. tumbling) that causes the robot to
+        //   misdetect this case. To combat this, we use a timeout that is conditioned on
+        //   freefall state variables to catch this case and thus check for impact more
+        //   aggressively (thus reducing false-negatives where we ignore impacts because
+        //   there was no confirmed fall)
+
+        // compute the max acceleration in a sliding-window for detecting the impact spike
+        Util::MinMaxQueue<f32> maxAccelerationMagnitudeBuffer_;
+
+        // previous update tick's state of being-held
+        bool lastRobotBeingHeldState_ = false;
+
+        // the instant the robot started being-held
+        TimeStamp_t timeOfStartBeingHeld_ = 0;
+
+        // the instant the robot stopped being held
+        TimeStamp_t timeOfEndBeingHeld_ = 0;
+
+        // max size of the acceleration-magnitutde buffer
+        const size_t MAX_ACCEL_MAGNITUDE_BUFFER_SIZE = 20;
+
+        // while the robot is being held, the minimum duration of a hold that suppresses impact-detection from activating
+        const TimeStamp_t MIN_TIME_HELD_SUPPRESS_IMPACT_MS = 500;
+
+        // after the robot is being putdown, suppress impacts for a duration of time (helps ignore being put down forcefully)
+        const TimeStamp_t MIN_TIME_SINCE_PUTDOWN_SUPPRESS_IMPACT_MS = 500;
+        
+        // we expect to see a spike in acceleration in excess of 1.0g's at the time of impact
+        const float MIN_ACCEL_MAG_SQUARED_FOR_IMPACT_MMPS2 = pow(2.2e4,2);
+
+        // last time when the falling-detector registered a potential fall
+        TimeStamp_t lastPotentialFallTime_ = 0; 
+
+        // minimum time period after a fall was detected to check for impact
+        const TimeStamp_t IMPACT_DETECTION_WINDOW_AFTER_FALL_MS = 600;
+
+        // throttle the number of times per second we can send the 
+        // ImpactMsg since it may trigger multiple times after the 
+        // first possible detection
+        const TimeStamp_t IMPACT_MESSAGE_THROTTLE_TIME_MS = 5000;
+
+        TimeStamp_t lastImpactSendTime_ms_ = 0;
+
         // === End of Falling detection ===
 
         // N-side down
@@ -494,12 +573,11 @@ namespace Anki {
             // to determine when the robot is definitely no longer moving.
             if((fabsf(accel_robot_frame_high_pass[0]) < STOPPED_TUMBLING_THRESH) &&
                (now - braceStartedTime_ > bracingTime_ms)) {
-              // Send the FallingEvent message:
+              // Send the FallingEvent message
               RobotInterface::FallingEvent msg;
               msg.timestamp = fallStartedTime_;
               msg.duration_ms = freefallDuration_;
               RobotInterface::SendMessage(msg);
-
               DASMSG(imu_filter_falling_event,  "imu_filter.falling_event", "Robot experienced a fall");
               DASMSG_SET(i1, freefallDuration_, "Duration of fall (ms)");
               DASMSG_SEND();
@@ -527,6 +605,64 @@ namespace Anki {
               fallStarted_ = true;
               fallStartedTime_ = now;
             }
+          }
+        }
+      }
+      
+      // impact detection works based on seeing a high enough acceleration norm
+      // over a sliding window of time. If the robot is being handled (in-hand
+      // manipulation), then impact detection is suppressed.
+      // additionally, we check for impact only for a short duration after a fall
+      // is potentially detected
+      void DetectImpact()
+      {
+        const TimeStamp_t now = HAL::GetTimeStamp();
+
+        f32 currTickAccelNormSq = (accel_robot_frame[0]*accel_robot_frame[0] +
+                                   accel_robot_frame[1]*accel_robot_frame[1] +
+                                   accel_robot_frame[2]*accel_robot_frame[2]);
+        
+        maxAccelerationMagnitudeBuffer_.push(currTickAccelNormSq);
+        if(maxAccelerationMagnitudeBuffer_.size() > MAX_ACCEL_MAGNITUDE_BUFFER_SIZE) {
+          maxAccelerationMagnitudeBuffer_.pop();
+        }
+        f32 maxAccMagnitude = maxAccelerationMagnitudeBuffer_.max();
+
+        // compute whether the robot's being-held state should suppress the impact detector
+        const bool currRobotBeingHeldState = IMUFilter::IsBeingHeld();
+        if(currRobotBeingHeldState && !lastRobotBeingHeldState_) {
+          timeOfStartBeingHeld_ = now;
+        }
+        if(!currRobotBeingHeldState && lastRobotBeingHeldState_) {
+          timeOfEndBeingHeld_ = now;
+        }
+        lastRobotBeingHeldState_ = currRobotBeingHeldState;
+        const bool isCurrentlyHeld    = currRobotBeingHeldState && ((now - timeOfStartBeingHeld_) > MIN_TIME_HELD_SUPPRESS_IMPACT_MS);
+        const bool wasRecentlyHeld    = !currRobotBeingHeldState && ((now - timeOfEndBeingHeld_) < MIN_TIME_SINCE_PUTDOWN_SUPPRESS_IMPACT_MS);
+        const bool beingHeldSuppressImpact = (wasRecentlyHeld || isCurrentlyHeld);
+
+        // determine if we should query for impact detection, because of a possible fall
+        if(falling_ || fallStarted_) {
+          lastPotentialFallTime_ = now;
+        }
+        const TimeStamp_t timeSinceFallingDetected = now - lastPotentialFallTime_;
+        const TimeStamp_t timeSinceImpactMsg = now - lastImpactSendTime_ms_;
+        const bool shouldCheckForImpact = (timeSinceFallingDetected < IMPACT_DETECTION_WINDOW_AFTER_FALL_MS);
+
+        // throttle sending the impact message if we've sent it already
+        const bool canSendMessage = (timeSinceImpactMsg > IMPACT_MESSAGE_THROTTLE_TIME_MS);
+
+        if(canSendMessage) {
+          const bool didAccelerationSpike = (maxAccMagnitude > MIN_ACCEL_MAG_SQUARED_FOR_IMPACT_MMPS2);
+          const bool detectedImpact = shouldCheckForImpact && !beingHeldSuppressImpact && didAccelerationSpike;
+
+          if(detectedImpact) {
+            RobotInterface::SendMessage(RobotInterface::FallImpactEvent());
+
+            DASMSG(imu_filter_fall_impact_event,  "imu_filter.fall_impact_event", "Robot experienced a freefall for a minimum duration and then a sudden impact");
+            DASMSG_SEND();
+
+            lastImpactSendTime_ms_ = now;
           }
         }
       }
@@ -941,6 +1077,8 @@ namespace Anki {
         DetectPoke();
 
         DetectFalling();
+
+        DetectImpact();
 
         // Queue ImuData to be sent as part of RobotState
         auto& thisDataFrame = imuDataBuffer_.push_back();

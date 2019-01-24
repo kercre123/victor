@@ -243,6 +243,11 @@ message PlaypenStart
 
 }
 
+message SelfTestEnd
+{
+
+}
+
 message PrintBodyData
 {
   // Print syscon body data to log every specified number of tics.
@@ -498,6 +503,11 @@ message DrawTextOnScreen
   ColorRGB textColor,
   ColorRGB bgColor,
   string   text
+}
+
+message ShowUrlFace
+{
+  bool show
 }
 
 // Switch to the debug screen used for the vision system's "MirrorMode"
@@ -828,6 +838,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   FakeWakeWordFromExternalInterface fakeWakeWordFromExternalInterface = 0x80,
+  ShowUrlFace                   showUrlFace                 = 0x81,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
@@ -853,6 +864,8 @@ union EngineToRobot
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,
   AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
+
+  SelfTestEnd                   selfTestEnd                 = 0xA4,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 

@@ -10,7 +10,6 @@
  *
  **/
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/math/rotatedRect.h"
 #include "coretech/common/engine/math/rotation.h"

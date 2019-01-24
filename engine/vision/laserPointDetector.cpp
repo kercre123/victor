@@ -12,7 +12,6 @@
 
 #include "laserPointDetector.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
@@ -29,45 +28,45 @@ static const char * const kLogChannelName = "VisionSystem";
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace Params
 {
 # define CONSOLE_GROUP_NAME "Vision.LaserPointDetector"
-  
+
   // Set > 1 to process at lower resolution for speed
   CONSOLE_VAR_RANGED(s32, kLaser_scaleMultiplier, CONSOLE_GROUP_NAME, 2, 1, 8);
-  
+
   // NOTE: these are tuned for 320x240 resolution:
   static const Point2f kRadiusAtResolution{320.f, 240.f};
   CONSOLE_VAR(f32, kLaser_minRadius_pix, CONSOLE_GROUP_NAME, 2.f);
   CONSOLE_VAR(f32, kLaser_maxRadius_pix, CONSOLE_GROUP_NAME, 25.f);
-  
+
   CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_darkExposure, CONSOLE_GROUP_NAME,  0.7f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_normalExposure, CONSOLE_GROUP_NAME,  0.9f, 0.f, 1.f);
-  
+
   CONSOLE_VAR(f32, kLaser_darkSurroundRadiusFraction, CONSOLE_GROUP_NAME, 2.5f);
-  
+
   CONSOLE_VAR(s32, kLaser_MaxSurroundStdDev, CONSOLE_GROUP_NAME, 25);
-  
+
   CONSOLE_VAR(u8, kLaser_lowThreshold_normalExposure,  CONSOLE_GROUP_NAME, 235);
   CONSOLE_VAR(u8, kLaser_highThreshold_normalExposure, CONSOLE_GROUP_NAME, 240);
-  
+
   CONSOLE_VAR(u8, kLaser_lowThreshold_darkExposure,    CONSOLE_GROUP_NAME, 128);
   CONSOLE_VAR(u8, kLaser_highThreshold_darkExposure,   CONSOLE_GROUP_NAME, 160);
-  
+
   // For determining when a laser point is saturated enough in either red or green, when color
   // data is available. Bounding box fraction should be >= 1.0
   CONSOLE_VAR(f32, kLaser_saturationThreshold_red,       CONSOLE_GROUP_NAME, 30.f);
   CONSOLE_VAR(f32, kLaser_saturationThreshold_green,     CONSOLE_GROUP_NAME, 15.f);
   CONSOLE_VAR(f32, kLaser_saturationBoundingBoxFraction, CONSOLE_GROUP_NAME, 1.25f);
-  
+
   CONSOLE_VAR(bool, kLaser_DrawDetectionsInCameraView, CONSOLE_GROUP_NAME, false);
-  
+
   // Set to 0 to disable
   // Set to 1 to draw laser point(s) in the camera image
   // Set to 2 to also draw separate debug images showing laser saliency (in image and on ground)
   CONSOLE_VAR(s32, kLaserDetectionDebug, CONSOLE_GROUP_NAME, 0 )
-  
+
 # undef CONSOLE_GROUP_NAME
 }
 
@@ -313,7 +312,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     groundCentroidInImage = 0.f;
   } else if(temp.z() <= 0.f) {
     PRINT_NAMED_WARNING("LaserPointDetector.Detect.BadProjectedZ",
-                        "z<=0 (%f) when projecting laser centroid to ground. Bad homography at head angle %.3fdeg?",
+                        "z<=0 (%f) when projecting laser centroid to ground. Bad homography at head angle %.3f deg?",
                         temp.z(), RAD_TO_DEG(poseData.histState.GetHeadAngle_rad()));
 
     // Don't report this centroid
@@ -346,7 +345,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
   }
 
   {
-    // Nove that we convert area to fraction of image area (to be resolution-independent)
+    // Note that we convert area to fraction of image area (to be resolution-independent)
     ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray.GetTimestamp(),
                                                           groundRegionArea / imgQuadArea,
                                                           std::round(groundPlaneCentroid.x()),
@@ -403,7 +402,6 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
                                   DebugImageList<Vision::CompressedImage>& debugImages)
 {
 
-  Point2f centroid(0.f,0.f);
   Point2f centroidInImage(0.f, 0.f);
 
   const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);
@@ -434,7 +432,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
                               Point2f(0, imageGray.GetNumRows()),
                               Point2f(imageGray.GetNumCols(), 0),
                               Point2f(imageGray.GetNumCols(), imageGray.GetNumRows()));
-  
+
   f32 regionArea = FindLargestRegionCentroid(imageColor, imageGray,
                                              wholeImageQuad,
                                              isDarkExposure,
@@ -530,7 +528,7 @@ inline bool LaserPointDetector::IsOnGroundPlane(const Quad2f& groundQuadInImage,
   const bool isCentroidContained = groundQuadInImage.Contains(stat.centroid);
   return isCentroidContained;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
                                             const Vision::Image::ConnectedComponentStats& stat,
@@ -538,24 +536,24 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
 {
   const u8 centerPixel = std::round(darkThresholdFraction * (f32)image(std::round(stat.centroid.y()),
                                                                        std::round(stat.centroid.x())));
-  
+
   const f32 radius = Params::kLaser_darkSurroundRadiusFraction*std::sqrtf((f32)stat.area / M_PI_F);
-  
+
   // sin/cos of [0 45 90 135 180 225 270 315] degrees. (cos is first, sin is second)
   const s32 kNumSurroundPoints = 8;
   const std::array<std::pair<f32,f32>,kNumSurroundPoints> sinCosPairs{{
     { 1.f, 0.f}, { 0.7071f,  0.7071f}, {0.f, 1.f}, {-0.7071f,  0.7071f},
     {-1.f, 0.f}, {-0.7071f, -0.7071f}, {0.f,-1.f}, { 0.7071f, -0.7071f}
   }};
-  
+
   s32 surroundSum   = 0;
   s32 surroundSumSq = 0;
-  
+
   for(auto &sinCosPair : sinCosPairs)
   {
     const s32 x = std::round(stat.centroid.x() + radius*sinCosPair.first);
     const s32 y = std::round(stat.centroid.y() + radius*sinCosPair.second);
-    
+
     if(x >= 0 && x < image.GetNumCols() && y >= 0 && y < image.GetNumRows())
     {
       if(Params::kLaser_DrawDetectionsInCameraView && (nullptr != _vizManager))
@@ -563,7 +561,7 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
         _vizManager->DrawCameraOval({(f32)x*(f32)Params::kLaser_scaleMultiplier, (f32)y*Params::kLaser_scaleMultiplier},
                                     0.5f, 0.5f, NamedColors::RED);
       }
-      
+
       // If any surrounding point in the saliency image is _on_ ignore this region (not dot shaped!)
       const u8 pixVal = image(y,x);
       if( pixVal > centerPixel )
@@ -575,12 +573,12 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
         }
         return false; // once a single point is off, no reason to continue
       }
-      
+
       surroundSum += pixVal;
       surroundSumSq += pixVal*pixVal;
     }
   }
-  
+
   // Are surround points sufficiently similar?
   const s32 surroundMean = surroundSum / kNumSurroundPoints;
   const s32 surroundVar = (surroundSumSq / kNumSurroundPoints) - (surroundMean*surroundMean);
@@ -593,24 +591,24 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
     }
     return false;
   }
-  
+
   // All points passed
   return true;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool LaserPointDetector::IsSaturated(const Vision::ImageRGB& image,
                                      const Vision::Image::ConnectedComponentStats& stat,
                                      const f32 redThreshold, const f32 greenThreshold)
 {
   DEV_ASSERT(!image.IsEmpty(), "LaserPointDetector.IsSaturated.EmptyColorImage");
-  
+
   // check if the region is somewhat saturated (i.e. mostly red, green, or blue), to help reduce
   // false positives for bright spots which are uncolored
   Anki::Rectangle<s32> boundingBoxScaled(stat.boundingBox);
   boundingBoxScaled.Scale( Params::kLaser_saturationBoundingBoxFraction );
   Vision::ImageRGB roi = image.GetROI(boundingBoxScaled);
-  
+
   s32 sumSaturation_red   = 0;
   s32 sumSaturation_green = 0;
   for(s32 i=0; i<roi.GetNumRows(); ++i)
@@ -623,10 +621,10 @@ bool LaserPointDetector::IsSaturated(const Vision::ImageRGB& image,
       sumSaturation_green += std::max(0, (s32)pixel.g() - std::max((s32)pixel.r(), (s32)pixel.b()));
     }
   }
-  
+
   const f32 avgSaturation_red   = (f32)sumSaturation_red   / (f32)roi.GetNumElements();
   const f32 avgSaturation_green = (f32)sumSaturation_green / (f32)roi.GetNumElements();
-  
+
   // Debug display
   if(Params::kLaserDetectionDebug && _vizManager)
   {
@@ -634,7 +632,7 @@ bool LaserPointDetector::IsSaturated(const Vision::ImageRGB& image,
                                 std::to_string((s32)std::round(avgSaturation_red)) + ":" +
                                 std::to_string((s32)std::round(avgSaturation_green)), NamedColors::RED);
   }
-  
+
   if(avgSaturation_red > redThreshold || avgSaturation_green > greenThreshold)
   {
     return true;

@@ -817,14 +817,18 @@ namespace Anki {
               const bool isBlackBL = cliffBL < kChargerCliffBlackThreshold;
               const bool isBlackBR = cliffBR < kChargerCliffBlackThreshold;
 
-              if (isBlackBL) {
+              if (isBlackBL && !cliffHasSeenBlackBL_) {
                 cliffHasSeenBlackBL_ = true;
+                AnkiInfo("PAP.BACKUP_ON_CHARGER.SawBlackBL", "");
               }
-              if (isBlackBR) {
+              if (isBlackBR && !cliffHasSeenBlackBR_) {
                 cliffHasSeenBlackBR_ = true;
+                AnkiInfo("PAP.BACKUP_ON_CHARGER.SawBlackBR", "");
               }
-              if (IMUFilter::GetPitch() < pitchAngleAtStartOfBackup_rad_ - kChargerDockingMinPitchAngleChange_rad) {
+              if (!robotHasStartedPitching_ &&
+                  (IMUFilter::GetPitch() < pitchAngleAtStartOfBackup_rad_ - kChargerDockingMinPitchAngleChange_rad)) {
                 robotHasStartedPitching_ = true;
+                AnkiInfo("PAP.BACKUP_ON_CHARGER.StartedPitching", "pitch: %.2f deg", RAD_TO_DEG(IMUFilter::GetPitch()));
               }
               
               // Slow down one of the sides if it's seeing white, but only if we have first seen black at some point

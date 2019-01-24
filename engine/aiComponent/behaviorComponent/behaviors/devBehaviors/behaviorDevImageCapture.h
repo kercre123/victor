@@ -15,6 +15,7 @@
 
 #include "coretech/vision/engine/imageCache.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/vision/imageSaver.h"
 #include "clad/types/imageTypes.h"
 
 #include <list>
@@ -52,6 +53,7 @@ private:
     std::string            imageSavePath;
     std::string            imageSavePrefix;
     std::string            serialNumber;
+    std::string            buildSha;
     int8_t                 imageSaveQuality;
     Vision::ImageCacheSize imageSaveSize;
     bool                   useSavePrefix;

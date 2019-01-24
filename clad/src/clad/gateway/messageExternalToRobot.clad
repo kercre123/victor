@@ -1,29 +1,11 @@
 #include "clad/gateway/shared.clad"
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 namespace Gateway {
 
 message UiDeviceConnectionWrongVersion {
   string placeHolder,
-}
-
-message DriveWheels {
-  float_32 left_wheel_mmps,
-  float_32 right_wheel_mmps,
-  float_32 left_wheel_mmps2 = 0.0,
-  float_32 right_wheel_mmps2 = 0.0,
-}
-
-message PlayAnimation {
-  uint_32 numLoops,
-  string  animationName,
-  bool    ignoreBodyTrack = 0,
-  bool    ignoreHeadTrack = 0,
-  bool    ignoreLiftTrack = 0,
-}
-
-message RequestAvailableAnimations {
 }
 
 message MoveHead {
@@ -198,17 +180,6 @@ message SetLiftHeight {
     float_32 duration_sec
 }
 
-// SetBackpackLEDs
-message SetBackpackLEDs {
-  uint_32  onColor[3],
-  uint_32  offColor[3],
-  uint_32  onPeriod_ms[3],
-  uint_32  offPeriod_ms[3],
-  uint_32  transitionOnPeriod_ms[3],
-  uint_32  transitionOffPeriod_ms[3],
-  int_32   offset[3]
-}
-
 enum uint_8 AlignmentType {
   LIFT_FINGER = 0, // Fingers aligned with object
   LIFT_PLATE,      // Lift plate aligned with object
@@ -349,8 +320,6 @@ message SetMemoryMapBroadcastFrequency_sec {
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
-  DriveWheels                        DriveWheels                        = 0x01,
-  PlayAnimation                      PlayAnimation                      = 0x02,
   MoveHead                           MoveHead                           = 0x03,
   MoveLift                           MoveLift                           = 0x04,
   DriveArc                           DriveArc                           = 0x05,
@@ -365,13 +334,11 @@ union MessageExternalToRobot {
   EraseAllEnrolledFaces              EraseAllEnrolledFaces              = 0x0E,
   SetFaceToEnroll                    SetFaceToEnroll                    = 0x0F,
   EnableVisionMode                   EnableVisionMode                   = 0x10,
-  RequestAvailableAnimations         RequestAvailableAnimations         = 0x11,
   GotoPose                           GotoPose                           = 0x12,
   DriveStraight                      DriveStraight                      = 0x13,
   TurnInPlace                        TurnInPlace                        = 0x14,
   SetHeadAngle                       SetHeadAngle                       = 0x15,
   SetLiftHeight                      SetLiftHeight                      = 0x16,
-  SetBackpackLEDs                    SetBackpackLEDs                    = 0x17,
   AlignWithObject                    AlignWithObject                    = 0x18,
   SetLiftAngle                       SetLiftAngle                       = 0x19,
   DeleteCustomMarkerObjects          DeleteCustomMarkerObjects          = 0x1A,

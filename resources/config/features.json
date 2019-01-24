@@ -72,7 +72,7 @@
     "enabled": true
   },
   {
-    "feature": "FindFacesWhileHeld",
+    "feature": "HeldInPalm",
     "enabled": false
   },
   {
@@ -101,7 +101,7 @@
   },
   {
     "feature": "HowOldAreYou",
-    "enabled": false
+    "enabled": true
   }
 ]
 

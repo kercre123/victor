@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_ScanlineDistorter_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 
 #include "coretech/common/engine/math/matrix_impl.h"
 #include "util/random/randomGenerator.h"

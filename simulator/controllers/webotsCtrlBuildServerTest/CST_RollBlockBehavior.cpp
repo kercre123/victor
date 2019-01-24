@@ -180,7 +180,10 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       //  stop driving, then give it a shove backward but still in view.
       Pose3d robotPose = GetRobotPoseActual();
       Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
-      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
+      float distToCube_mm = 0.f;
+      const bool result = ComputeDistanceBetween(robotPose, cubePose, distToCube_mm);
+      CST_ASSERT(result, "Failed computing distance between robot and cube");
+      const bool nearBlock = (distToCube_mm < _kRobotNearBlockThreshold_mm);
       
       // Still driving?
       const bool wheelsMoving = IsRobotStatus(RobotStatusFlag::ARE_WHEELS_MOVING);
@@ -208,7 +211,10 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       // Wait for robot to get close to block, then give it a shove to the side such that it is out of view.
       Pose3d robotPose = GetRobotPoseActual();
       Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
-      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
+      float distToCube_mm = 0.f;
+      const bool result = ComputeDistanceBetween(robotPose, cubePose, distToCube_mm);
+      CST_ASSERT(result, "Failed computing distance between robot and cube");
+      const bool nearBlock = (distToCube_mm < _kRobotNearBlockThreshold_mm);
       
       // wait a bit for the block to move away after the previous push.
       const double timeToWait_s = 0.5;

@@ -1,20 +1,20 @@
 # PerfMetric Tool
 
-PerfMetric is a tool that is optionally compiled into Victor's engine, that records information about each engine tick.  After a short recording session, one can examine the buffer of recorded ticks.  This tool was used in Cozmo.  PerfMetric's CPU overhead is minimal.
+PerfMetric is a tool that is compiled into Victor's engine and anim processes, and records information about each tick in a circular buffer. After a short recording session, one can examine the buffer of recorded tick information. PerfMetric's CPU overhead is minimal. PerfMetric is compiled out of shipping builds.
 
 Some uses:
-* See how spikey or smooth the engine tick rate is
-* See that certain behaviors or activities use more or less engine CPU
+* See how spikey or smooth the engine or anim tick rate is
+* See that certain behaviors or activities use more or less CPU
 * Measure before-and-after average tick rates, for optimization attempts
 * Compare Debug vs. Release performance
 * For automated performance testing
 
-What is recorded for each tick:
+What is recorded for each vic-engine tick:
 * Engine duration: The time the engine tick took to execute, in ms
 * Engine frequency: The total time of the engine tick, including sleep, in ms
 * Sleep intended: The duration the engine intended to sleep, in ms
 * Sleep actual: The duration the engine actually slept, in ms; this is often more than what was intended
-* Oversleep: How much longer the engine sleep than intended, in ms
+* Oversleep: How much longer the engine slept than intended, in ms
 * RtE Count: How many robot-to-engine messages were received
 * EtR Count: How many engine-to-robot messages were sent
 * GtE Count: How many game-to-engine messages were received
@@ -27,9 +27,17 @@ What is recorded for each tick:
 * Active Feature: The current 'active feature'
 * Behavior: The current top-of-stack behavior
 
-When results are dumped, a summary section shows extra information, including the mininum, maximum, average, and standard deviation for each of the appropriate stats.  This allows you to see, for example, the average engine tick rate, or the longest engine tick.
+What is recorded for each vic-anim tick:
+* Anim duration: The time the anim tick took to execute, in ms
+* Anim frequency: The total time of the anim tick, including sleep, in ms
+* Sleep intended: The duration the anim process intended to sleep, in ms
+* Sleep actual: The duration the anim process actually slept, in ms; this is often more than what was intended
+* Oversleep: How much longer the anim process slept than intended, in ms
+* (more to come later)
 
-### Sample output
+When results are dumped, a summary section shows extra information, including the mininum, maximum, average, and standard deviation for each of the appropriate stats. This allows you to see, for example, the average tick rate, or the longest tick.
+
+### Sample output (for vic-engine)
 
 ```
          Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG   Viz  Battery
@@ -64,25 +72,26 @@ When results are dumped, a summary section shows extra information, including th
 ```
 
 ### Prerequisites
-PerfMetric is compiled into the engine by default for Debug and Release builds, but not for Shipping builds.  To override the default, use
+PerfMetric is compiled into the engine and anim processes by default for Debug and Release builds, but not for Shipping builds. To override the default, use
 
 ```-DANKI_PERF_METRIC_ENABLED=1```
 
 (or 0 to disable)
 
 ### Use from command line
-The interface to PerfMetric is through Victor's embedded web server.  From the command line, this will start a recording session, assuming ANKI_ROBOT_HOST is set to your robot IP:
+The interface to PerfMetric is through Victor's embedded web server. From the command line, this will start a recording session for vic-engine, assuming ANKI_ROBOT_HOST is set to your robot IP (use port 8889 for vic-anim):
 
 ```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?start'```
 
-(You can also use your robot IP directly, this way:)
+You can also use your robot IP directly, this way:
+
 ```curl '192.168.42.82:8888/perfmetric?start'```
 
 Now some time later, one can dump the results with:
 
 ```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?stop&dumplogall'```
 
-Note that multiple commands can be entered at the same time, separated by ampersands.  This includes some 'wait' commands that allow you to do a recording session with one single command:
+Note that multiple commands can be entered at the same time, separated by ampersands. This includes some 'wait' commands that allow you to do a recording session with one single command:
 
 ```curl ${ANKI_ROBOT_HOST}':8888/perfmetric?start&waitseconds30&stop&dumplogall'```
 
@@ -94,10 +103,10 @@ Here is the complete list of commands and what they do:
 * "dumplogall" dumps the entire recorded tick buffer, along with the summary, to the log
 * "dumpresponse" returns summary as HTTP response
 * "dumpresponseall" returns all info as HTTP response
-* "dumpfiles" writes all info to two files on the robot:  One is a formatted txt file, and the other a csv file.  These go in cache/perfMetricLogs
+* "dumpfiles" writes all info to two files on the robot: One is a formatted txt file, and the other a csv file. These go in /data/data/com.anki.victor/cache/perfMetricLogs. The filename has the time of the file write baked in, as well as "R" or "D" to indicate Release or Debug build, and "Eng" or "Anim" to indicate vic-engine or vic-anim. An example: "perfMetric_2018-11-29_17-41-05_R_Eng.txt"
 
 ### Use from webserver page in a browser
-The engine (port 8888) webserver page has a "PERF METRIC" page button.  This brings you to a page with all of the PerfMetric controls, including the ability to dump the formatted output to the page itself.
+The engine (port 8888) and anim (port 8889) webserver pages have a "PERF METRIC" page button. This brings you to a page with all of the PerfMetric controls, including the ability to dump the formatted output to the page itself.
 
 ### Helper script
 A script has been created for convenience and as an example:
@@ -105,10 +114,9 @@ A script has been created for convenience and as an example:
 ```tools/perfMetric/autoPerfMetric.sh```
 
 ### Use with webots (pure simulator)
-When using with webots pure simulator, use 'localhost' as your IP.  Also note that webots pure simulator does NOT sleep between engine ticks, so the output will reflect that.
+When using with webots pure simulator, use 'localhost' as your IP. Also note that webots pure simulator does NOT sleep between engine ticks, so the output will reflect that.
 
 ### Future features
-* Build into the Anim process (vic-anim)
 * Create a bucket-based histogram feature that can help us quickly find code issue culprits
 * Record visual schedule mediator info
-* Automated performance testing
+* More vic-anim stats

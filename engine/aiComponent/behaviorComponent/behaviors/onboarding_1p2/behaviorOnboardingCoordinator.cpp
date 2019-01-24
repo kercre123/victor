@@ -40,6 +40,7 @@ namespace Vector {
 const std::string BehaviorOnboardingCoordinator::kOnboardingFolder   = "onboarding";
 const std::string BehaviorOnboardingCoordinator::kOnboardingFilename = "onboardingState.json";
 const std::string BehaviorOnboardingCoordinator::kOnboardingStageKey = "onboardingStage";
+const std::string BehaviorOnboardingCoordinator::kOnboardingTimeKey = "onboardingCompletionTime";
 
 namespace {
   const char* kDebugLabel = "BehaviorOnboardingCoordinator";
@@ -763,6 +764,11 @@ void BehaviorOnboardingCoordinator::SaveToDisk(OnboardingStages stage) const
 {
   Json::Value toSave;
   toSave[kOnboardingStageKey] = OnboardingStagesToString( stage );
+  // time of completion is used by How Old Are You
+  if (stage == OnboardingStages::Complete) {
+    const auto tse = std::chrono::system_clock::now().time_since_epoch();
+    toSave[kOnboardingTimeKey] = std::chrono::duration_cast<std::chrono::seconds>(tse).count(); // write out as seconds since the epoch
+  }
   const std::string filename = _iConfig.saveFolder + kOnboardingFilename;
   Util::FileUtils::WriteFile( filename, toSave.toStyledString() );
   LOG_INFO("BehaviorOnboardingCoordinator.SaveToDisk",

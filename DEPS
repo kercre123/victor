@@ -10,33 +10,6 @@
                 "package_name": "protocCppPlugin",
                 "version": "3"
             },
-            "avs-device-sdk": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "19d7cdb0ff93590b3f2100e6108f9456f5b11b5f8d396daf38ee87edb27d7231"
-                },
-                "extension": "tar.gz",
-                "package_name": "avs-device-sdk",
-                "version": "4"
-            },
-            "pffft": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "90277bd4f757ee245ebf60f6e8082e99c33fc5f7245cb3126b634c488479df34"
-                },
-                "extension": "tar.gz",
-                "package_name": "pffft",
-                "version": "1"
-            },
-            "speexdsp": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "73dbe001ab6f76696553fcc92b7c1559eb19733337c2a3a7796d891a52c81a06"
-                },
-                "extension": "tar.gz",
-                "package_name": "speexdsp-1.2rc3",
-                "version": "1"
-            },
             "tensorflow": {
                 "build_type_id": "anki",
                 "checksums": {
@@ -50,9 +23,6 @@
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "files": {
-        "chipper_key": {
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-chipper-tmp-client-key/victor-chipper-key"
-        },
         "victor-blobstore-qalogs-key": {
             "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
         }
@@ -63,7 +33,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "193"
+                "version": "196"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -80,26 +50,80 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4777"
+                "version": "4825"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "138"
+                "version": "150"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
     },
     "teamcity": {
         "builds": {
-            "coretech_external": {
-                "build_type_id": "Cte_Master",
-                "extension": "tar.gz",
-                "package_name": "Cte",
-                "version": "195"
-            }
         },
         "default_usr": "puller_cozmo",
         "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "root_url": "https://build.ankicore.com/"
+    },
+    "deptool": {
+        "deps": {
+            "aubio": {
+                "checksums": {
+                    "sha256": "4e27b985dfb02ce8ffc61e9a24c0bdc93ca82a917adfbfd8de802168ece62b44"
+                },
+                "version": "d4a1d0fb"
+            },
+            "avs-device-sdk": {
+                "checksums": {
+                    "sha256": "052ad8307236e262b64839ec427a33c9c18e7567e57c5175a65fc4f661f8181d"
+                },
+                "version": "v1.10-anki"
+            },
+            "flatbuffers": {
+                "checksums": {
+                    "sha256": "1f24769f7d6084e141c3e36fb7c72c1a00ef682d0db7518fd4b827f85260c372"
+                },
+                "version": "v1.5.0"
+            },
+            "libsodium": {
+                "checksums": {
+                    "sha256": "18fefd8b70bfeab16fcb9ac87ed9b22bc376c7e316d46fec1ed71512edb18c11"
+                },
+                "version": "1.0.16"
+            },
+            "opencv": {
+                "checksums": {
+                    "sha256": "824cca8bcabf04a5223d28c88168c6af092500aea38a54bc98283807ef7c54d4"
+                },
+                "version": "3.4.0"
+            },
+            "opus": {
+                "checksums": {
+                    "sha256": "6b046a65a9c79fc2c096246760b9dbc504bd0a9901be0b8da76d926ea943a886"
+                },
+                "version": "e04e86e0"
+            },
+            "pffft": {
+                "checksums": {
+                    "sha256": "681a3b239326719b456af828998af3818f34a1070fa03bc9413acc27bfd7c969"
+                },
+                "version": "1.0-anki"
+            },
+            "protobuf": {
+                "checksums": {
+                    "sha256": "4324cffd82c0c76b7ed11a4ef6967c7013d33928aacea57c187256554d0a58b1"
+                },
+                "version": "v3.5.1"
+            },
+            "speexdsp": {
+                "checksums": {
+                    "sha256": "cfcbcfe19fcce8868245997079beb5074c78688979e0e297a14731aa0de6d3cf"
+                },
+                "version": "SpeexDSP-1.2rc3"
+            }
+        },
+        "project": "victor",
+        "url_prefix": "https://sai-general.s3.amazonaws.com/build-assets/deps/victor/"
     }
 }

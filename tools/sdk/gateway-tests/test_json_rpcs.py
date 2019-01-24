@@ -9,25 +9,18 @@ import sys
 import pytest
 
 try:
-    import anki_vector.messaging.protocol as p
+    import protocol as p
     from google.protobuf.json_format import Parse
 except ImportError:
-    sys.exit("Error: This script requires you to install the Vector SDK")
+    sys.exit("Error: This script requires you to run setup.sh")
 
-from util import vector_connection, image_data_from_file
+from util import vector_connection
 
 def test_protocol_version(vector_connection):
     vector_connection.send("v1/protocol_version", p.ProtocolVersionRequest(), p.ProtocolVersionResponse())
 
 def test_list_animations(vector_connection):
     vector_connection.send("v1/list_animations", p.ListAnimationsRequest(), p.ListAnimationsResponse())
-
-@pytest.mark.parametrize("data", [
-    pytest.param(image_data_from_file(os.path.join('assets', 'cozmo_image.jpg')), id='cozmo_image.jpg')
-])
-def test_display_face_image_rgb(vector_connection, data):
-    message = p.DisplayFaceImageRGBRequest(face_data=data, duration_ms=1000, interrupt_running=True)
-    vector_connection.send("v1/display_face_image_rgb", message, p.DisplayFaceImageRGBResponse())
 
 @pytest.mark.parametrize("data", [
     '{"intent":"intent_meet_victor","param":"Bobert"}'
@@ -210,9 +203,6 @@ def test_battery_state(vector_connection):
 
 def test_version_state(vector_connection):
     vector_connection.send("v1/version_state", p.VersionStateRequest(), p.VersionStateResponse())
-
-def test_network_state(vector_connection):
-    vector_connection.send("v1/network_state", p.NetworkStateRequest(), p.NetworkStateResponse())
 
 def test_say_text(vector_connection):
     vector_connection.send("v1/say_text", p.SayTextRequest(), p.SayTextResponse())

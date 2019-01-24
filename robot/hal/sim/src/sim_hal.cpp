@@ -797,8 +797,8 @@ namespace Anki {
       switch(button_id) {
         case BUTTON_CAPACITIVE:
         {        
-          const u16 touchSignal = 700;
-          const u16 noTouchSignal = 600;
+          const u16 touchSignal = 5000;
+          const u16 noTouchSignal = 4700;
           if (touchSensorTouchedField_->getSFBool()) {
             return touchSignal;
           } else {
@@ -884,6 +884,7 @@ namespace Anki {
 
     bool HAL::BatteryIsOverheated()
     {
+      // NOTE: This doesn't simulate syscon cutoff after 30 min
       return false;
     }
 
@@ -955,5 +956,11 @@ namespace Anki {
       return false;
     }
 
+    const uint8_t* const HAL::GetSysconVersionInfo()
+    {
+      static const uint8_t arr[16] = {0};
+      return arr;
+    }
+  
   } // namespace Vector
 } // namespace Anki

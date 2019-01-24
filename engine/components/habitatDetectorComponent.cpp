@@ -242,7 +242,12 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       _habitatBelief == HabitatBeliefState::Unknown && 
       !isPickedUp) {
     // determine if we have driven too far without detecting white from cliffs
-    f32 distance = ComputeDistanceBetween(_robot->GetPose(), _robot->GetWorldOrigin());
+    f32 distance = 0.f;
+    if (!ComputeDistanceBetween(_robot->GetPose(), _robot->GetWorldOrigin(), distance)) {
+      LOG_ERROR("HabitatDetectorComponent.UpdateDependent.ComputeDistanceFailure",
+                "Failed to get robot distance from world origin");
+      return;
+    }
     if(!_detectedWhiteFromCliffs && distance > kMinTravelDistanceWithoutSeeingWhite_mm) {
       SetBelief(HabitatBeliefState::NotInHabitat, "OdometryTooHigh");
     }

@@ -127,7 +127,12 @@ ObjectID BehaviorTrackCube::GetVisibleCube() const
       const bool recent = (_iConfig.maxTimeSinceObserved_ms < 0)
                           || (object->GetLastObservedTime() + _iConfig.maxTimeSinceObserved_ms >= currentTime_ms);
       if( isVisible && recent ) {
-        const float dist = ComputeDistanceBetween( object->GetPose(), robotPose );
+        float dist = 0.f;
+        if (!ComputeDistanceBetween( object->GetPose(), robotPose , dist )) {
+          LOG_ERROR("BehaviorTrackCube.GetVisibleCube.ComputeDistanceFailed",
+                    "Failed to compute distance between object and robot");
+          return ObjectID();
+        }
         if( dist <= _iConfig.maxDistance_mm ) {
           objectsByDist.emplace( dist, object );
           const bool isMoving = object->IsMoving();

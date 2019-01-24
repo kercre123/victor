@@ -33,6 +33,7 @@
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
+#include "util/environment/locale.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
@@ -151,6 +152,11 @@ void Alexa::Update()
     _implDtorResult = {};
   }
   
+  if( _pendingLocale && HasInitializedImpl() ) {
+    _impl->SetLocale( *_pendingLocale );
+    _pendingLocale.reset();
+  }
+  
   if( _impl != nullptr) {
     // should be called even if not initialized, because this drives the init process
     _impl->Update();
@@ -160,8 +166,7 @@ void Alexa::Update()
 
   if( (_timeEnableWakeWord_s >= 0.0f) && (currTime_s >= _timeEnableWakeWord_s) ) {
     _timeEnableWakeWord_s = -1.0f;
-    // TODO (VIC-11517): downgrade. for now this is useful in webots
-    LOG_WARNING("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
+    LOG_INFO("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
     // enable the wakeword
     SetSimpleState( AlexaSimpleState::Idle );
   }
@@ -372,12 +377,11 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
   const auto oldState = _authState;
   bool codeExpired = false;
 
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
-               EnumToString(oldState),
-               EnumToString(state),
-               url.c_str(),
-               code.c_str() );
+  LOG_INFO( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
+            EnumToString(oldState),
+            EnumToString(state),
+            url.c_str(),
+            code.c_str() );
 
   switch( state ) {
     case AlexaAuthState::Uninitialized:
@@ -790,7 +794,28 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::UpdateLocale( const Util::Locale& locale )
+{
+  if( HasInitializedImpl() ) {
+    _impl->SetLocale( locale );
+    _pendingLocale.reset();
+  } else {
+    _pendingLocale.reset( new Util::Locale{locale} );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint64_t Alexa::GetMichrophoneSampleIndex() const
+{
+  std::lock_guard<std::mutex> lg{ _implMutex };
+  if( HasInitializedImpl() ) {
+    return _impl->GetMicrophoneTotalNumSamples();
+  }
+  return 0;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
 {

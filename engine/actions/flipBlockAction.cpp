@@ -22,6 +22,7 @@
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
 namespace Vector {
@@ -116,7 +117,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(const Pose3d& robotPose,
                                                        bool& alreadyInPosition,
                                                        const bool shouldDriveToClosestPose)
 {
-  PRINT_CH_INFO("Actions", "DriveAndFlipBlockAction.GetPossiblePoses", "Getting possible preActionPoses");
+  LOG_INFO("DriveAndFlipBlockAction.GetPossiblePoses", "Getting possible preActionPoses");
   const IDockAction::PreActionPoseInput preActionPoseInput(object,
                                                            PreActionPose::FLIPPING,
                                                            false,
@@ -146,7 +147,7 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(const Pose3d& robotPose,
   
   if(shouldDriveToClosestPose)
   {
-    PRINT_CH_INFO("Actions", "DriveAndFlipBlockAction.GetPossiblePoses", "Selecting closest preAction pose");
+    LOG_INFO("DriveAndFlipBlockAction.GetPossiblePoses", "Selecting closest preAction pose");
     possiblePoses.push_back(preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetPose());
     return ActionResult::SUCCESS;
   }

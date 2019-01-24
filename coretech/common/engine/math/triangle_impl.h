@@ -12,7 +12,6 @@
 
 #include "coretech/common/engine/math/triangle.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
   

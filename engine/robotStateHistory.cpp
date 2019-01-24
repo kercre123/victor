@@ -10,7 +10,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/robot.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/robot/utilities.h"
 
 #include "util/logging/logging.h"

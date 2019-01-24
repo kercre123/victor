@@ -18,6 +18,7 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
@@ -28,7 +29,6 @@
 #include "micDataTypes.h"
 
 #include "coretech/common/engine/array2d_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
@@ -76,6 +76,8 @@
 #else
 #define FORCE_TRANSITION_TO_PAIRING 0
 #endif
+
+#define ENABLE_SELF_TEST 1
 
 #if !FACTORY_TEST
 
@@ -208,6 +210,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
   ADD_SCREEN_WITH_TEXT(Rebooting, Rebooting, {"REBOOTING..."});
   ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
+  ADD_SCREEN(SelfTestRunning, SelfTestRunning)
   ADD_SCREEN(Network, SensorInfo);
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
@@ -285,14 +288,24 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_ENTER_ACTION(Main, mainEnterFcn);
 
   ADD_MENU_ITEM(Main, "EXIT", None);
-  // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
+#if ENABLE_SELF_TEST
+  ADD_MENU_ITEM(Main, "RUN SELF TEST", SelfTest);
+#endif
   ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
 
   // === Self test screen ===
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
-  ADD_MENU_ITEM(SelfTest, "CONFIRM", Main);        // TODO: VIC-1498
-
-  // === Clear User Data menu ===
+  FaceInfoScreen::MenuItemAction confirmSelfTest = [animStreamer, this]() {
+    animStreamer->Abort();
+    animStreamer->EnableKeepFaceAlive(false, 0);
+    _context->GetBackpackLightComponent()->SetSelfTestRunning(true);
+    RobotInterface::SendAnimToEngine(RobotInterface::StartSelfTest());
+    return ScreenName::SelfTestRunning;
+  };
+  ADD_MENU_ITEM_WITH_ACTION(SelfTest, "CONFIRM", confirmSelfTest);
+  DISABLE_TIMEOUT(SelfTestRunning);
+  
+  // Clear User Data menu
   FaceInfoScreen::MenuItemAction confirmClearUserData = [this]() {
     // Write this file to indicate that the data partition should be wiped on reboot
     if (!Util::FileUtils::WriteFile("/run/wipe-data", "1")) {
@@ -430,6 +443,7 @@ bool FaceInfoScreenManager::IsActivelyDrawingToScreen() const
     case ScreenName::Pairing:
     case ScreenName::ToggleMute:
     case ScreenName::AlexaNotification:
+    case ScreenName::SelfTestRunning:
       return false;
     default:
       return true;
@@ -520,7 +534,9 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   // Enable/Disable lift
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
-  msg.enable = !currScreenIsDebug || GetCurrScreenName() == ScreenName::CameraMotorTest;
+  msg.enable = (!currScreenIsDebug ||
+                GetCurrScreenName() == ScreenName::CameraMotorTest ||
+                GetCurrScreenName() == ScreenName::SelfTestRunning);
   SendAnimToRobot(std::move(msg));
 #endif
 
@@ -1310,6 +1326,12 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 {
   char temp[32] = "";
   sprintf(temp,
+          "SYS: %s",
+          _sysconVersion.c_str());
+  const std::string syscon = temp;
+
+
+  sprintf(temp,
           "CLF: %4u %4u %4u %4u",
           state.cliffDataRaw[0],
           state.cliffDataRaw[1],
@@ -1354,8 +1376,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.battTemp_C);
   const std::string tempC = temp;
 
-
-  DrawTextOnScreen({cliffs, prox1, prox2, touch, batt, charger, tempC});
+  DrawTextOnScreen({syscon, cliffs, prox1, prox2, touch, batt, charger, tempC});
 }
 
 void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
@@ -1896,6 +1917,20 @@ bool FaceInfoScreenManager::ScreenNeedsWait(const ScreenName& screenName) const
     default:
       return false;
   }
+}
+
+void FaceInfoScreenManager::SelfTestEnd(AnimationStreamer* animStreamer)
+{
+  const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
+  if(curScreen != ScreenName::SelfTestRunning)
+  {
+    return;
+  }
+
+  animStreamer->EnableKeepFaceAlive(true, 0);
+  _context->GetBackpackLightComponent()->SetSelfTestRunning(false);
+  
+  SetScreen(ScreenName::Main);
 }
 
 } // namespace Vector

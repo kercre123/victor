@@ -20,7 +20,6 @@
 #include "coretech/common/engine/exceptions.h"
 
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/triangle_impl.h"
 #include "coretech/common/engine/utils/helpers/compareFcns.h"
 #include "coretech/common/shared/utilities_shared.h"

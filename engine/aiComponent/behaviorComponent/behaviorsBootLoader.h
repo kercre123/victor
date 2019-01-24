@@ -75,6 +75,7 @@ private:
   void RestartOnboarding();
 
   void SetNewBehavior(BehaviorID behavior, bool requestStackReset = true);
+  void SetNewBehavior(IBehavior* behavior, bool requestStackReset = true);
   
   IExternalInterface* _externalInterface = nullptr;
   const BehaviorContainer* _behaviorContainer = nullptr;
@@ -82,7 +83,12 @@ private:
   IBehavior* _bootBehavior = nullptr;
   IBehavior* _behaviorToSwitchTo = nullptr;
   IBehavior* _overrideBehavior = nullptr;
-  
+
+  IBehavior* _prevBootBehavior = nullptr;
+  IBehavior* _prevBottomOfStackBehavior = nullptr;
+
+  bool _selfTestEnded = false;
+ 
   std::vector<Signal::SmartHandle> _eventHandles;
   
   bool _hasGrabbedBootBehavior = false;
@@ -99,6 +105,7 @@ private:
     BehaviorID postOnboardingBehavior; // normal use behavior tree, but doesn't wake up
     BehaviorID devBaseBehavior; // for people who want it to turn on, eyes too, but not go anywhere
     BehaviorID prDemoBehavior; // for the pr demo
+    BehaviorID selfTestBehavior; // for self test
   };
   
   Behaviors _behaviors;

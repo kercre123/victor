@@ -27,8 +27,8 @@ namespace Vector {
 Result RobotLogUploader::Connect()
 {
   // Construct client path with PID so it will be unique on this host
-  _clientPath = Anki::Victor::LOGCOLLECTOR_CLIENT_PATH + std::to_string(getpid());
-  _serverPath = Anki::Victor::LOGCOLLECTOR_SERVER_PATH;
+  _clientPath = LOGCOLLECTOR_CLIENT_PATH + std::to_string(getpid());
+  _serverPath = LOGCOLLECTOR_SERVER_PATH;
 
   const bool ok = _udpClient.Connect(_clientPath, _serverPath);
   if (!ok) {
@@ -87,10 +87,10 @@ Result RobotLogUploader::Upload(const std::string & path, std::string & url)
     return result;
   }
 
-  Anki::Vector::LogCollector::UploadRequest request;
+  LogCollector::UploadRequest request;
   request.logFileName = path;
 
-  result  = Send(Anki::Vector::LogCollector::LogCollectorRequest(std::move(request)));
+  result  = Send(LogCollector::LogCollectorRequest(std::move(request)));
   if (result != RESULT_OK) {
     LOG_ERROR("RobotLogUploader.Upload", "Unable to send upload request (error %d)", result);
     Disconnect();
@@ -132,7 +132,7 @@ Result RobotLogUploader::Upload(const std::string & path, std::string & url)
     return result;
   }
 
-  using LogCollectorResponseTag = Anki::Vector::LogCollector::LogCollectorResponseTag;
+  using LogCollectorResponseTag = LogCollector::LogCollectorResponseTag;
   const auto tag = response.GetTag();
   switch (tag)
   {

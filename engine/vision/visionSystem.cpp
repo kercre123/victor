@@ -15,7 +15,6 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
 #include "coretech/common/engine/math/linearClassifier.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -34,6 +33,7 @@
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
+#include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/vision/engine/benchmark.h"
 #include "coretech/vision/engine/cameraParamsController.h"
@@ -91,9 +91,6 @@ CONSOLE_VAR(bool, kMarkerDetector_VizCropScheduler, "Vision.MarkerDetection", fa
 // How long to disable auto exposure after using detections to meter
 CONSOLE_VAR(u32, kMeteringHoldTime_ms,    "Vision.PreProcessing", 2000);
   
-CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
-CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
-
 // Loose constraints on how fast Cozmo can move and still trust tracker (which has no
 // knowledge of or access to camera movement). Rough means of deciding these angles:
 // look at angle created by distance between two faces seen close together at the max
@@ -1284,6 +1281,29 @@ void VisionSystem::CheckForNeuralNetResults()
           _currentResult.modesProcessed.Insert(mode);
         }
         
+        if(IsModeEnabled(VisionMode::SavingImages) &&
+           !_neuralNetRunnerImage.IsEmpty() &&
+           _imageSaver->WantsToSave(_currentResult, _neuralNetRunnerImage.GetTimestamp()))
+        {
+          const Result saveResult = _imageSaver->Save(_neuralNetRunnerImage, _frameNumber);
+          if(RESULT_OK == saveResult)
+          {
+            _currentResult.modesProcessed.Insert(VisionMode::SavingImages);
+          }
+          
+          const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
+          Json::Value jsonSalientPoints;
+          NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(_currentResult.salientPoints, false,
+                                                                 jsonSalientPoints);
+          const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
+          if(!success)
+          {
+            LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
+                        "Writing %zu salient points to %s",
+                        _currentResult.salientPoints.size(), jsonFilename.c_str());
+          }
+        }
+        
         if(ANKI_DEV_CHEATS)
         {
           AddFakeDetections(modes);
@@ -1323,7 +1343,7 @@ void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
     for(const auto& type : fakeDetectionsToAdd)
     {
       // Simple full-image "classification" SalientPoint
-      Vision::SalientPoint salientPoint(u32(_neuralNetRunnerTimestamp),
+      Vision::SalientPoint salientPoint(u32(_neuralNetRunnerImage.GetTimestamp()),
                                         0.5f, 0.5f, 1.f, 1.f,
                                         type, EnumToString(type),
                                         {CladPoint2d{0.f,0.f}, CladPoint2d{0.f,1.f}, CladPoint2d{1.f,1.f}, CladPoint2d{1.f,0.f}},
@@ -1664,8 +1684,19 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     const bool started = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
     if(started)
     {
-      // Remember the timestamp of the image used to do object detection
-      _neuralNetRunnerTimestamp = imageCache.GetTimeStamp();
+      // Remember the timestamp of the image used to do object detection, or the entire image
+      // if saving is enabled
+      if(IsModeEnabled(VisionMode::SavingImages))
+      {
+        _neuralNetRunnerImage = imageCache.GetRGB(_imageSaver->GetParams().size);
+      }
+      else
+      {
+        // This is just a tiny optimization that doesn't bother storing all the image data if saving is
+        // not enabled (which is the normal case). So we just store the timestamp like the old code this replaces.
+        _neuralNetRunnerImage.Clear();
+        _neuralNetRunnerImage.SetTimestamp(imageCache.GetTimeStamp());
+      }
     }
   }
   
@@ -1719,7 +1750,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
   
-  if(IsModeEnabled(VisionMode::SavingImages) && _imageSaver->WantsToSave())
+  if(IsModeEnabled(VisionMode::SavingImages) && _imageSaver->WantsToSave(_currentResult, imageCache.GetTimeStamp()))
   {
     Tic("SavingImages");
     

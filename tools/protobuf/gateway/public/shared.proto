@@ -59,6 +59,7 @@ message Event {
     PhotoTaken                       photo_taken                         = 9;
     RobotState                       robot_state                         = 10;
     CubeBattery                      cube_battery                        = 11;
+    // Used by Vector to verify the connection is still alive.
     KeepAlivePing                    keep_alive                          = 12;
     ConnectionResponse               connection_response                 = 13;
     JdocsChanged                     jdocs_changed                       = 14; // App only
@@ -175,7 +176,11 @@ message GatewayWrapper {
     GoToPoseResponse              go_to_pose_response                = 511;
     DockWithCubeRequest           dock_with_cube_request             = 512;
     DockWithCubeResponse          dock_with_cube_response            = 513;
-
+    DriveWheelsRequest            drive_wheels_request               = 514;
+    DriveWheelsResponse           drive_wheels_response              = 515;
+    ListAnimationsRequest         list_animations_request            = 516;
+    ListAnimationsResponse        list_animations_response           = 517;
+    
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 600;
     RobotHistoryResponse          robot_history_response             = 601;
@@ -196,8 +201,6 @@ message GatewayWrapper {
     BatteryStateResponse            battery_state_response           = 801;
     VersionStateRequest             version_state_request            = 802;
     VersionStateResponse            version_state_response           = 803;
-    NetworkStateRequest             network_state_request            = 804;
-    NetworkStateResponse            network_state_response           = 805;
 
     // ------------ text-to-speech pairs ------------
     SayTextRequest                say_text_request                   = 900;
@@ -220,6 +223,9 @@ message GatewayWrapper {
     EnableMirrorModeResponse      enable_mirror_mode_response        = 1109;
     EnableImageStreamingRequest   enable_image_streaming_request     = 1110;
     EnableImageStreamingResponse  enable_image_streaming_response    = 1111;
+
+    IsImageStreamingEnabledRequest  is_image_streaming_enabled_request  = 1112;
+    IsImageStreamingEnabledResponse is_image_streaming_enabled_response = 1113;
 
     // ------------ Message and response for cloud connectivity check ------------
     CheckCloudRequest             check_cloud_request                = 1200;

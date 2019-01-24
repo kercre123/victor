@@ -17,6 +17,8 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
+#define LOG_CHANNEL "Actions"
+
 namespace Anki {
 namespace Vector {
   
@@ -71,9 +73,9 @@ namespace Vector {
     const ActionResult compoundResult = _compoundAction->Update();
     if(ActionResult::RUNNING != compoundResult)
     {
-      PRINT_CH_INFO("Actions", "IVisuallyVerifyAction.CheckIfDone.TimedOut",
-                       "%s: Did not see object before processing %d images",
-                       GetName().c_str(), GetNumImagesToWaitFor());
+      LOG_INFO("IVisuallyVerifyAction.CheckIfDone.TimedOut",
+               "%s: Did not see object before processing %d images",
+               GetName().c_str(), GetNumImagesToWaitFor());
       
       return ActionResult::VISUAL_OBSERVATION_FAILED;
     }
@@ -101,9 +103,22 @@ VisuallyVerifyObjectAction::~VisuallyVerifyObjectAction()
 
 }
 
+void VisuallyVerifyObjectAction::SetUseCyclingExposure()
+{
+  _useCyclingExposure = true;
+
+  // The CyclingExposure mode cycles exposures every 5 frames, with a cycle length of 3. Therefore, wait for 15 images.
+  // Note: This should be computed directly from the vision config instead (VIC-12803)
+  const int kNumImagesToWaitFor = 15;
+  SetNumImagesToWaitFor(kNumImagesToWaitFor);
+}
+
 void VisuallyVerifyObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
   requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  if (_useCyclingExposure) {
+    requests.insert({ VisionMode::CyclingExposure, EVisionUpdateFrequency::High });
+  }
 }
 
 ActionResult VisuallyVerifyObjectAction::InitInternal()
@@ -170,9 +185,9 @@ bool VisuallyVerifyObjectAction::HaveSeenObject()
           observedMarkerNames += " ";
         }
         
-        PRINT_CH_INFO("Actions", "VisuallyVerifyObjectAction.HaveSeenObject.WrongMarker",
-                         "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
-                         GetTag(), _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
+        LOG_INFO("VisuallyVerifyObjectAction.HaveSeenObject.WrongMarker",
+                 "[%d] Have seen object %d, but not marker code %d. Have seen: %s",
+                 GetTag(), _objectID.GetValue(), _whichCode, observedMarkerNames.c_str());
       }
     } // if(!_markerSeen)
     
@@ -349,11 +364,11 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::CheckIfDone()
     // there isn't actually an object at the pose but blockworld thinks there is
     if(GetRobot().GetBlockWorld().FindLocatedObjectClosestTo(_pose, _thresholds_mm, _filter) != nullptr)
     {
-      PRINT_CH_DEBUG("Actions", "VisuallyVerifyNoObjectAtPose.FoundObject",
-                     "Seeing object near pose (%f %f %f)",
-                     _pose.GetTranslation().x(),
-                     _pose.GetTranslation().y(),
-                     _pose.GetTranslation().z());
+      LOG_DEBUG("VisuallyVerifyNoObjectAtPose.FoundObject",
+                "Seeing object near pose (%f %f %f)",
+                _pose.GetTranslation().x(),
+                _pose.GetTranslation().y(),
+                _pose.GetTranslation().z());
       return ActionResult::VISUAL_OBSERVATION_FAILED;
     }
     

@@ -235,11 +235,17 @@
                 $("#perf_page_disabled").show();
             }
         } else if (pageName == "page_processes") {
-            UpdateProcHeader();
-            $("#proc_page_disabled_webots").hide();
-            if (procAutoUpdate) {
-                // When entering processes page and auto-update is on, do the first update immediately
-                procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+            if (!connectedToWebotsSim) {
+                UpdateProcHeader();
+                $("#proc_page_disabled_webots").hide();
+                if (procAutoUpdate) {
+                    // When entering processes page and auto-update is on, do the first update immediately
+                    procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+                }
+            }
+            else {
+                $("#proc_main_section").hide();
+                $("#proc_page_disabled_webots").show();
             }
         } else if (pageName == "page_engine") {
             if (whichWebServer == whichWebServerEnum.ENGINE) {
@@ -382,8 +388,14 @@
 
     // http://www.linuxhowtos.org/System/procstat.htm
     function CPUTimeInfo(payload, itemIndex) {
+        if (payload.length < 4) {
+            // Do nothing if CPU time info not ready
+            return;
+        }
         var whichCPU = payload.charAt(3);
-        payload = payload.substring(5); // Strip cpu name and space(s)
+        // Strip off the CPU indicator from start of string, along with space(s):
+        payload = payload.substr(payload.indexOf(' '));
+        payload = payload.trim();
         // Parse the first 8 integers out of the line:
         var stringValues = payload.split(' ');
         var values = [];

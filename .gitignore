@@ -400,3 +400,7 @@ apps/xamarin/chewie/codelab.Droid/obj
 apps/xamarin/chewie/codelab.iOS/bin
 apps/xamarin/chewie/codelab.iOS/obj
 robot_ip.txt
+
+# Allow us to include okaoVision libs
+!okaoVision/lib/Android/armeabi-v7a/*.a
+!okaoVision/lib/MacOSX/*.a

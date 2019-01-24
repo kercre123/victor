@@ -18,6 +18,7 @@
 #define __COMMON_ENGINE_MATH_AFFINE_HYPERPLANE_H__
 
 #include "coretech/common/engine/math/pointSet.h"
+#include "coretech/common/engine/math/point.h"
 #include "util/math/math.h"
 
 namespace Anki {

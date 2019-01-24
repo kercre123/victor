@@ -48,6 +48,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotInHabitat.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionRobotPitchInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPickedUp.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPoked.h"
@@ -346,6 +347,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::RobotPickedUp:
     {
       condition = std::make_shared<ConditionRobotPickedUp>(config);
+      break;
+    }
+    case BEIConditionType::RobotPitchInRange:
+    {
+      condition = std::make_shared<ConditionRobotPitchInRange>(config);
       break;
     }
     case BEIConditionType::RobotPlacedOnSlope:

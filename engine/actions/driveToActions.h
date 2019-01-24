@@ -154,6 +154,8 @@ namespace Anki {
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
       
+      void SetVisuallyVerifyWhenDone(const bool b) { _visuallyVerifyWhenDone = b; }
+      
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
     protected:
@@ -188,6 +190,7 @@ namespace Anki {
       bool _shouldSetCubeLights = false;
       bool _lightsSet = false;
       
+      bool _visuallyVerifyWhenDone = true;
     }; // DriveToObjectAction
 
   

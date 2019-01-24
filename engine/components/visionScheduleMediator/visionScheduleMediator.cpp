@@ -143,6 +143,11 @@ void VisionScheduleMediator::UpdateModeDataMapWithRequests(IVisionModeSubscriber
         "Vision mode %s was requested by a subscriber, missing settings in visionScheduleMediator_config.json",
         EnumToString(request.mode));
     }
+    else if(request.frequency == EVisionUpdateFrequency::SingleShot)
+    {
+      // Track these separately since they don't persist
+      _singleShotModes.insert(request.mode);
+    }
     else
     {
       // Record the new request
@@ -332,13 +337,26 @@ void VisionScheduleMediator::UpdateVisionSchedule(VisionComponent& visionCompone
     const bool kUseDefaultsForUnspecified = true;
     _schedule = AllVisionModesSchedule(modeScheduleList, kUseDefaultsForUnspecified);
   }
-
+ 
   // On any occasion where we made updates, update the debug viz
   if(ANKI_DEV_CHEATS && (scheduleDirty || activeModesDirty)){
     SendDebugVizMessages(context);
   }
-
+  
   _subscriptionRecordIsDirty = false;
+}
+  
+void VisionScheduleMediator::AddSingleShotModesToSet(VisionModeSet& modeSet, bool andReset)
+{
+  for(auto singleShotMode : _singleShotModes)
+  {
+    modeSet.Insert(singleShotMode);
+  }
+  
+  if(andReset)
+  {
+    _singleShotModes.clear();
+  }
 }
 
 const AllVisionModesSchedule::ModeScheduleList VisionScheduleMediator::GenerateBalancedSchedule(

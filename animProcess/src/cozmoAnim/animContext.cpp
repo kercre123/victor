@@ -7,6 +7,7 @@
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/perfMetricAnim.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
@@ -37,12 +38,13 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
+  , _alexa(new Alexa())
   , _micDataSystem(new MicData::MicDataSystem(dataPlatform, this))
   , _showStreamStateManager(new ShowAudioStreamStateManager(this))
   , _webService(new WebService::WebService())
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
-  , _alexa(new Alexa())
   , _backpackLightComponent(new BackpackLightComponent(this))
+  , _perfMetric(new PerfMetricAnim(this))
 {
   InitAudio(_dataPlatform);
 }
@@ -107,6 +109,9 @@ void AnimContext::SetLocale(const std::string & locale)
 
   if (_micDataSystem != nullptr) {
     _micDataSystem->UpdateLocale(*_locale);
+  }
+  if (_alexa != nullptr) {
+    _alexa->UpdateLocale(*_locale);
   }
 }
 } // namespace Vector

@@ -21,7 +21,6 @@
 #define __Anki_Cozmo_Basestation_Components_CubeLightComponent_H__
 
 #include "coretech/common/engine/colorRGBA.h"
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/common/shared/types.h"
 #include "clad/types/cubeAnimationTrigger.h"
@@ -262,9 +261,6 @@ private:
   bool _robotDelocalized = false;
   
   bool _onlyGameLayerEnabledForAll = false;
-  
-  // Whether or not cube sleep is enabled
-  bool _enableCubeSleep = false;
   
   // Whether or not to play the fade out cube sleep animation
   bool _skipSleepAnim = false;

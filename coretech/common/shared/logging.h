@@ -23,14 +23,36 @@
 #define CORETECH_LOGLEVEL_INFO    3
 #define CORETECH_LOGLEVEL_DEBUG   4
 
-// Which level are we using for this configuration?
+// Do we allow developer code?
+#if !defined(ANKI_DEVELOPER_CODE)
+  #if defined(NDEBUG)
+    #define ANKI_DEVELOPER_CODE 0
+  #else
+    #define ANKI_DEVELOPER_CODE 1
+  #endif
+#endif
+
+// Do we allow debug logs?
+#if !defined(ALLOW_DEBUG_LOGGING)
+  #define ALLOW_DEBUG_LOGGING ANKI_DEVELOPER_CODE
+#endif
+
+// Which log level are we using for this configuration?
 #if !defined(CORETECH_LOGLEVEL)
   #if defined(CORETECH_ROBOT)
     #define CORETECH_LOGLEVEL CORETECH_LOGLEVEL_INFO
   #elif defined(CORETECH_ENGINE)
-    #define CORETECH_LOGLEVEL CORETECH_LOGLEVEL_DEBUG
+    #if ALLOW_DEBUG_LOGGING
+      #define CORETECH_LOGLEVEL CORETECH_LOGLEVEL_DEBUG
+    #else
+      #define CORETECH_LOGLEVEL CORETECH_LOGLEVEL_INFO
+    #endif
   #elif defined(CORETECH_SHARED)
-    #define CORETECH_LOGLEVEL CORETECH_LOGLEVEL_DEBUG
+    #if ALLOW_DEBUG_LOGGING
+      #define CORETECH_LOGLEVEL CORETECH_LOGLEVEL_DEBUG
+    #else
+      #define CORETECH_LOGLEVEL CORETECH_LOGLEVEL_INFO
+    #endif
   #else
     #error "You must define CORETECH_ROBOT, CORETECH_ENGINE or CORETECH_SHARED"
   #endif

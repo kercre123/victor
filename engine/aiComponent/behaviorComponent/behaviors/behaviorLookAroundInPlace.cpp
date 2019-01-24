@@ -16,7 +16,6 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"

@@ -104,7 +104,7 @@ static void UninstallTombstoneHook(int signum)
 }
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 // Install handler for each signal we want to intercept
 void InstallTombstoneHooks()
@@ -122,5 +122,5 @@ void UninstallTombstoneHooks()
   }
 }
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki

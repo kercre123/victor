@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 using DataPlatform = Anki::Util::Data::DataPlatform;
-using DASConfig = Anki::Victor::DASConfig;
+using DASConfig = Anki::Vector::DASConfig;
 
 #define LOG_PROCNAME "vic-dasmgr"
 #define LOG_CHANNEL  LOG_PROCNAME
@@ -60,7 +60,7 @@ static std::unique_ptr<DASConfig> GetDASConfig(const DataPlatform & dataPlatform
 int main(int argc, const char * argv[])
 {
   // Set up crash reporter
-  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+  Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
   // Set up logging
   auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
@@ -90,7 +90,7 @@ int main(int argc, const char * argv[])
   }
 
   // Process log records until shutdown or error
-  Anki::Victor::DASManager dasManager(*dasConfig);
+  Anki::Vector::DASManager dasManager(*dasConfig);
 
   const int status = dasManager.Run(gShutdown);
 
@@ -100,7 +100,7 @@ int main(int argc, const char * argv[])
   Anki::Util::gLoggerProvider = nullptr;
   Anki::Util::gEventProvider = nullptr;
 
-  Anki::Victor::UninstallCrashReporter();
+  Anki::Vector::UninstallCrashReporter();
 
   exit(status);
 

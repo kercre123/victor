@@ -47,6 +47,8 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Internal Data Structures and Functions ...
 
+  using ReactionLevel = size_t;
+
   // Main behavior states:
   enum class EState : uint8_t
   {
@@ -55,32 +57,42 @@ private:
     DoneShaking,
   };
 
-  enum class EReactionLevel : uint8_t
-  {
-    Soft,
-    Medium,
-    Hard,
-  };
-
   enum class EReactionAnimation : uint8_t
   {
     Loop,
     ShakeTransition,
     InHand,
     OnGround,
+    Last = OnGround,
+  };
+  static constexpr uint8_t kNumReactionTypes = (int)EReactionAnimation::Last + 1;
+
+  struct ShakeReaction
+  {
+    ShakeReaction( const Json::Value& config );
+
+    float threshold;
+    AnimationTrigger animations[kNumReactionTypes];
   };
 
-  
-  EReactionLevel GetReactionLevelFromMagnitude() const;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Helper Functions ...
+
+  float GetShakeStopThreshold() const { return _iVars.shakeReactions[0].threshold; }
+
+  // Reaction level helpers
+  ReactionLevel GetReactionLevelFromMagnitude() const;
   void UpdateCurrentReactionLevel();
 
+  // Animation related functions ...
+  void LoadReactionAnimations( const Json::Value& config );
   AnimationTrigger GetReactionAnimation( EReactionAnimation type ) const;
-  AnimationTrigger GetReactionAnimation( EReactionLevel level, EReactionAnimation type ) const;
+  AnimationTrigger GetReactionAnimation( ReactionLevel level, EReactionAnimation type ) const;
 
+  // Transition functions ...
   void PlayNextShakeReactionLoop();
   void TransitionToDoneShaking();
-  
-  const char* EReactionLevelToString( EReactionLevel reaction ) const;
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -90,15 +102,15 @@ private:
   {
     InstanceConfig();
     
-    float shakeThresholdStop;
-    float shakeThresholdMedium;
-    float shakeThresholdHard;
+    bool renderInEyeHue;
+    AnimationTrigger getInAnimation;
+    std::vector<ShakeReaction> shakeReactions;
   };
 
   struct DynamicVariables
   {
     EState state                = EState::ShakeGetIn;
-    EReactionLevel currentLevel = EReactionLevel::Soft;
+    ReactionLevel currentLevel  = 0;
 
     float shakeMaxMagnitude     = 0.f;
     float shakeStartTime        = 0.f;

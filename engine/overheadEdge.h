@@ -15,7 +15,6 @@
 #ifndef __Anki_Cozmo_Basestation_OverheadEdge_H__
 #define __Anki_Cozmo_Basestation_OverheadEdge_H__
 
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 

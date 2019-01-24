@@ -1,23 +1,19 @@
-set(OPENCV_VERSION 3.4.0)
-
-set(OPENCV_DIR opencv-${OPENCV_VERSION})
-
 if(VICOS)
-  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos/3rdparty/lib)
-  
-  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos/lib)
-  
-  set(OPENCV_INCLUDE_PATHS 
-      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR} 
-      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos
-      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos/include)
+  set(OPENCV_3RDPARTY_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/vicos/3rdparty/lib)
+
+  set(OPENCV_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/vicos/lib)
+
+  set(OPENCV_INCLUDE_PATHS
+      ${ANKI_EXTERNAL_DIR}/opencv
+      ${ANKI_EXTERNAL_DIR}/opencv/vicos
+      ${ANKI_EXTERNAL_DIR}/opencv/vicos/include)
 
 else()
-  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/mac/3rdparty/lib/Release)
-  
-  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/mac/lib/Release)
-  
-  set(OPENCV_INCLUDE_PATHS ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/mac)
+  set(OPENCV_3RDPARTY_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/mac/3rdparty/lib/Release)
+
+  set(OPENCV_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/mac/lib/Release)
+
+  set(OPENCV_INCLUDE_PATHS ${ANKI_EXTERNAL_DIR}/opencv/mac)
 
 endif()
 
@@ -48,7 +44,7 @@ endif()
 foreach(OPENCV_MODULE ${OPENCV_LIBS})
   add_library(${OPENCV_MODULE} ${LIB_TYPE} IMPORTED)
 
-  set(MODULE_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/${OPENCV_DIR}/modules/${OPENCV_MODULE}/include")
+  set(MODULE_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/opencv/modules/${OPENCV_MODULE}/include")
 
   set(include_paths
       ${MODULE_INCLUDE_PATH}
@@ -109,7 +105,7 @@ if(MACOSX)
     anki_build_target_license(ittnotify  "BSD-3,${CMAKE_SOURCE_DIR}/licenses/ittnotify.license")
 endif()
 
-message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
+message(STATUS "including OpenCV, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
 
 list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
 

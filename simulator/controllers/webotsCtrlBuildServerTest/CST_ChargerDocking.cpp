@@ -56,7 +56,9 @@ s32 CST_ChargerDocking::UpdateSimInternal()
       auto* chargerNode = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "VictorCharger").nodePtr;
       auto chargerPose = GetPose3dOfNode(chargerNode);
       const auto& robotPose = GetRobotPoseActual();
-      const float distanceAway_mm = ComputeDistanceBetween(chargerPose, robotPose);
+      float distanceAway_mm = 0.f;
+      const bool result = ComputeDistanceBetween(chargerPose, robotPose, distanceAway_mm);
+      CST_ASSERT(result, "Failed computing distance between charger pose and robot pose");
       const float angleBetween_deg = (chargerPose.GetRotationAngle<'Z'>() - robotPose.GetRotationAngle<'Z'>()).getDegrees();
       if (distanceAway_mm < 180.f &&
           NEAR(angleBetween_deg, -90.f, 10.f)) {

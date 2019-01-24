@@ -73,7 +73,9 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
 
     case TestState::IntroduceObstacle:
     {
-      const auto distanceToObstructingPose_mm = ComputeDistanceBetween(GetRobotPoseActual(), kObstructingPose);
+      float distanceToObstructingPose_mm = 0.f;
+      const bool result = ComputeDistanceBetween(GetRobotPoseActual(), kObstructingPose, distanceToObstructingPose_mm);
+      CST_ASSERT(result, "Failed computing distance between robot pose and obstructing pose");
       IF_CONDITION_WITH_TIMEOUT_ASSERT(distanceToObstructingPose_mm < 150.0, 10){
         // Put the rubber duck in the way of the robot path.
         SetNodePose(_duckNode, kObstructingPose);

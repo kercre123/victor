@@ -16,8 +16,7 @@
 #include "engine/actionableObject.h"
 
 #include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 #include "util/math/math.h"
 
 #include "anki/cozmo/shared/cozmoEngineConfig.h"

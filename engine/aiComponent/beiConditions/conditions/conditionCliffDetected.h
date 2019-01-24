@@ -33,6 +33,8 @@ protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
 private:
+  
+  uint8_t _numCliffDetectionsToTrigger;
 
 };
 

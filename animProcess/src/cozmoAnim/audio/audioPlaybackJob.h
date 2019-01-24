@@ -14,7 +14,6 @@
 #ifndef __AnimProcess_CozmoAnim_AudioPlaybackJob_H__
 #define __AnimProcess_CozmoAnim_AudioPlaybackJob_H__
 
-#include "audioUtil/audioDataTypes.h"
 #include "coretech/common/shared/types.h"
 
 #include <atomic>

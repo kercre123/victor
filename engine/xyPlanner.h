@@ -15,7 +15,7 @@
 
 #include "engine/pathPlanner.h"
 #include "coretech/planning/shared/goalDefs.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/point_fwd.h"
 #include "coretech/common/engine/math/pose.h"
 
 #include "util/helpers/noncopyable.h"

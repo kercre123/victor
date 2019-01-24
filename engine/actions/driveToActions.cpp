@@ -279,7 +279,11 @@ namespace Anki {
         // are doing a DriveToPlaceCarriedObject action)
         if(!GetRobot().GetCarryingComponent().IsCarryingObject(object->GetID()))
         {
-          TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_objectID, Radians(0), true, false);
+          const bool headTrackWhenDone = false;
+          auto* turnTowardsObjectAction = new TurnTowardsObjectAction(_objectID,
+                                                                      Radians(0),
+                                                                      _visuallyVerifyWhenDone,
+                                                                      headTrackWhenDone);
           LOG_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                     GetTag(),
                     GetName().c_str(),
@@ -1556,7 +1560,14 @@ namespace Anki {
         if( nullptr != marker && marker->GetCode() == bottomMarker.GetCode() ) {
           // found at least one valid pre-action pose using the bottom marker, so limit the approach angle so
           // we will roll the block to upright
-          Vec3f approachVec = ComputeVectorBetween(block->GetPose(), preActionPose.GetPose());
+          // Compute approachVec in the frame of the preActionPose itself
+          Pose3d blockPoseWrtPreactionPose;
+          if (!block->GetPose().GetWithRespectTo(preActionPose.GetPose(), blockPoseWrtPreactionPose)) {
+            LOG_WARNING("DriveToRollObjectAction.RollToUpright.GetWithRespectToFailed",
+                        "Could not get block pose w.r.t. preaction pose");
+            return false;
+          }
+          const auto& approachVec = blockPoseWrtPreactionPose.GetTranslation();
           approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
           LOG_INFO("DriveToRollObjectAction.RollToUpright.WillUpright",
                    "Found a predock pose that should upright cube %d",

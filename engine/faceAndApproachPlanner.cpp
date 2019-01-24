@@ -12,7 +12,6 @@
  **/
 
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"

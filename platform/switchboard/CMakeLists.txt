@@ -62,7 +62,7 @@ target_include_directories(switchboard
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cutils>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/anki-wifi>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/signals>
-  $<BUILD_INTERFACE:${CORETECH_EXTERNAL_DIR}/build/libsodium/vicos/include>
+  $<BUILD_INTERFACE:${LIBSODIUM_INCLUDE_PATH}>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/gio-unix-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/glib-2.0>
   $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/lib/glib-2.0/include>

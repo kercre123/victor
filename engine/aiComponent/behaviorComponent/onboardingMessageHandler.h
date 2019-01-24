@@ -18,6 +18,8 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 
 #include <list>
 
@@ -49,6 +51,9 @@ public:
   void SubscribeToAppTags(std::set<AppToEngineTag>&& tags,
                           std::function<void(const AppToEngineEvent&)> messageHandler);
 
+  void ShowUrlFace(bool show);
+  void RequestBleSessions();
+
 private:
   // - - - - - Message Handling functions - - - - -
   // These messages are handled ONLY locally by the OnboardingMessageHandler
@@ -62,6 +67,8 @@ private:
   IGatewayInterface* _gatewayInterface = nullptr;
 
   std::vector<Signal::SmartHandle> _eventHandles;
+
+  Robot* _robot = nullptr;
 
 };
 

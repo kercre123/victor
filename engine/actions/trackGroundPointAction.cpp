@@ -27,7 +27,7 @@
 #include "util/math/math.h"
 
 #define DEBUG_TRACKING_ACTIONS 0
-#define kLogChannelName "Actions"
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
 namespace Vector {
@@ -163,10 +163,10 @@ ITrackAction::UpdateResult TrackGroundPointAction::UpdateTrackingHelper(Radians&
   
   if(DEBUG_TRACKING_ACTIONS)
   {
-    PRINT_CH_DEBUG("Actions", "TrackGroundPointAction.UpdateTrackingHelper.GotObservation",
-                      "Ground: area=%.3f%% centroid=(%.1f,%.1f)",
-                      _pointObservation.groundArea * 100.f,
-                      _pointObservation.groundPoint.x(), _pointObservation.groundPoint.y());
+    LOG_DEBUG("TrackGroundPointAction.UpdateTrackingHelper.GotObservation",
+              "Ground: area=%.3f%% centroid=(%.1f,%.1f)",
+              _pointObservation.groundArea * 100.f,
+              _pointObservation.groundPoint.x(), _pointObservation.groundPoint.y());
   }
   
   // If too close: distance will remain 0.f
@@ -209,11 +209,10 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   
   if(DEBUG_TRACKING_ACTIONS)
   {
-    PRINT_CH_DEBUG(kLogChannelName,
-                   "TrackGroundPointAction.PredictTrackingHelper.GroundPoint1",
-                   "PrevPoint:(%.1f,%.1f) WrtCurrentRobot:%s",
-                   _prevPointObservation.groundPoint.x(), _prevPointObservation.groundPoint.y(),
-                   groundPoint1.ToString().c_str());
+    LOG_DEBUG("TrackGroundPointAction.PredictTrackingHelper.GroundPoint1",
+              "PrevPoint:(%.1f,%.1f) WrtCurrentRobot:%s",
+              _prevPointObservation.groundPoint.x(), _prevPointObservation.groundPoint.y(),
+              groundPoint1.ToString().c_str());
   }
   
   HistRobotState* histStatePtr2 = nullptr;
@@ -235,11 +234,10 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   
   if(DEBUG_TRACKING_ACTIONS)
   {
-    PRINT_CH_DEBUG(kLogChannelName,
-                   "TrackGroundPointAction.PredictTrackingHelper.GroundPoint2",
-                   "LastPoint:(%.1f,%.1f) WrtCurrentRobot:%s",
-                   _pointObservation.groundPoint.x(), _pointObservation.groundPoint.y(),
-                   groundPoint2.ToString().c_str());
+    LOG_DEBUG("TrackGroundPointAction.PredictTrackingHelper.GroundPoint2",
+              "LastPoint:(%.1f,%.1f) WrtCurrentRobot:%s",
+              _pointObservation.groundPoint.x(), _pointObservation.groundPoint.y(),
+              groundPoint2.ToString().c_str());
   }
   
   // Estimate ground point's velocity, relative to the current robot's position
@@ -276,16 +274,15 @@ ITrackAction::UpdateResult TrackGroundPointAction::PredictTrackingHelper(Radians
   
   if(DEBUG_TRACKING_ACTIONS)
   {
-    PRINT_CH_DEBUG(kLogChannelName,
-                   "TrackGroundPointAction.PredictTrackingHelper.Prediction",
-                   "t: %u->%u->%u x: %.2f->%.2f->%.2f y: %.2f->%.2f->%.2f "
-                   "pan:%.1fdeg tilt:%.1fdeg d:%.1fmm",
-                   (TimeStamp_t)_prevPointObservation.timestamp, (TimeStamp_t)_pointObservation.timestamp, (TimeStamp_t)now,
-                   _prevPointObservation.groundPoint.x(),  _pointObservation.groundPoint.x(),
-                   predictedGroundPoint.x(),
-                   _prevPointObservation.groundPoint.y(),  _pointObservation.groundPoint.y(),
-                   predictedGroundPoint.y(),
-                   absPanAngle_out.getDegrees(), absTiltAngle_out.getDegrees(), distance_mm_out);
+    LOG_DEBUG("TrackGroundPointAction.PredictTrackingHelper.Prediction",
+              "t: %u->%u->%u x: %.2f->%.2f->%.2f y: %.2f->%.2f->%.2f "
+              "pan:%.1fdeg tilt:%.1fdeg d:%.1fmm",
+              (TimeStamp_t)_prevPointObservation.timestamp, (TimeStamp_t)_pointObservation.timestamp, (TimeStamp_t)now,
+              _prevPointObservation.groundPoint.x(),  _pointObservation.groundPoint.x(),
+              predictedGroundPoint.x(),
+              _prevPointObservation.groundPoint.y(),  _pointObservation.groundPoint.y(),
+              predictedGroundPoint.y(),
+              absPanAngle_out.getDegrees(), absTiltAngle_out.getDegrees(), distance_mm_out);
   }
   
   return UpdateResult::PredictedInfo;

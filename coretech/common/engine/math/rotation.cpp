@@ -9,7 +9,6 @@
 #include "coretech/common/engine/math/rotation.h"
 
 #include "coretech/common/engine/math/matrix_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 
 #include "coretech/common/shared/utilities_shared.h"
 
@@ -622,7 +621,7 @@ namespace Anki {
   UnitQuaternion_<T>& UnitQuaternion_<T>::SetCast(const UnitQuaternion_<T_other> &other)
   {
     for(int i=0; i<4; ++i) {
-      this->data[i] = static_cast<T>(other[i]);
+      (*this)[i] = static_cast<T>(other[i]);
     }
     return *this;
   }

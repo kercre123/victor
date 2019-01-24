@@ -52,13 +52,17 @@ int main(int argc, const char* argv[])
 {
   using Result = Anki::Result;
 
+  // Set output buffering for use with systemd journal
+  setlinebuf(stdout);
+  setlinebuf(stderr);
+
   struct sched_param params;
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
 
   signal(SIGTERM, Shutdown);
 
-  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+  Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
   if (argc > 1) {
     ccc_set_shutdown_function(Shutdown);
@@ -72,7 +76,7 @@ int main(int argc, const char* argv[])
   const Result result = Anki::Vector::Robot::Init(&shutdownSignal);
   if (result != Result::RESULT_OK) {
     AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
-    Anki::Victor::UninstallCrashReporter();
+    Anki::Vector::UninstallCrashReporter();
     sync();
     if (shutdownSignal == SIGTERM) {
       return 0;
@@ -101,7 +105,7 @@ int main(int argc, const char* argv[])
     if (Anki::Vector::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Vector::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main.MainStepFailed", "");
-        Anki::Victor::UninstallCrashReporter();
+        Anki::Vector::UninstallCrashReporter();
         return -1;
       }
     } else {
@@ -156,7 +160,7 @@ int main(int argc, const char* argv[])
         Anki::Vector::Robot::Destroy();
       } else if (shutdownCounter == 0) {
         AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
-        Anki::Victor::UninstallCrashReporter();
+        Anki::Vector::UninstallCrashReporter();
         sync();
         exit(0);
       }
@@ -167,6 +171,7 @@ int main(int argc, const char* argv[])
 }
 
 #include "spine/spine.h"
+
 int main_test(int argc, const char* argv[])
 {
   mlockall(MCL_FUTURE);

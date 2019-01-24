@@ -79,7 +79,7 @@ fi
 
 # Calling full ssh log command here.
 # Doing it via robot_sh makes $! return the wrong pid for some reason.
-ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} /bin/tail -F -n +1 /var/log/messages > ${LOG_FILE} &
+ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} /bin/tail -F -n +1 /var/log/messages \| /bin/tr '\\x1f' ':' > ${LOG_FILE} &
 
 # Get PID so we can kill the backgrounded task at the end
 LOGGING_PID=$!

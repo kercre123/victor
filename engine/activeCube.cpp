@@ -10,9 +10,7 @@
 
 #include "engine/activeCube.h"
 
-//#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 //#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 

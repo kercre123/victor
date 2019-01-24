@@ -382,10 +382,10 @@ namespace Anki {
     }
     
     if(&fromPose == &toPose) {
-      // Asked for pose w.r.t. itself. Just return fromPose
+      // Asked for pose w.r.t. itself. Just return a pose with a zero transform, parented to toPose.
       PRINT_NAMED_WARNING("PoseBase.GetWithRespectTo.FromEqualsTo",
                           "Pose w.r.t. itself requested.");
-      P_wrt_other = fromPose;
+      P_wrt_other._node->GetTransform() = TransformNd{};
       P_wrt_other.SetParent(toPose);
       return true;
     }
