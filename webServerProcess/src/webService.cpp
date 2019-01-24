@@ -918,6 +918,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
 //https://ankiinc.atlassian.net/browse/VIC-1554
 //  const std::string& passwordFile = platform->pathToResource(Util::Data::Scope::Resources, "webserver/htpasswd");
 
+  
   const char *options[] = {
     "document_root",
     webserverPath.c_str(),
@@ -929,6 +930,11 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
     rewrite.c_str(),
     "static_file_max_age",
     "0",
+
+    // THEBOX: use demo.html as root url
+    "index_files",
+    "demo.html,index.html",
+    
 //https://ankiinc.atlassian.net/browse/VIC-1554
 //    "put_delete_auth_file",
 //    passwordFile.c_str(),
