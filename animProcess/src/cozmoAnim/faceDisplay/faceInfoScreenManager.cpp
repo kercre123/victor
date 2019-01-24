@@ -1716,12 +1716,7 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
   const u32 gridWidth = FACE_DISPLAY_WIDTH / 4;
   for(const auto& rangeData : data.data)
   {
-    if(rangeData.roi % 8 <= 3)
-    {
-      continue;
-    }
-
-    int roi = rangeData.roi - ((rangeData.roi / 8)*4) - 4;
+    int roi = rangeData.roi;
     
     const u32 x = (roi % 4) * gridWidth;
     const u32 y = (roi / 4) * gridHeight;

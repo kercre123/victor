@@ -134,47 +134,36 @@ void RangeSensorComponent::Update()
   #endif
   
   // 
-  const f32 kInnerAngle_rad = TOF_FOV_RAD / 8.f;
-  const f32 kOuterAngle_rad = kInnerAngle_rad * 3.f;
-  const f32 kPixToAngle[] = {kOuterAngle_rad,
-                             kInnerAngle_rad,
-                             -kInnerAngle_rad,
-                             -kOuterAngle_rad};
+  // const f32 kInnerAngle_rad = TOF_FOV_RAD / 8.f;
+  // const f32 kOuterAngle_rad = kInnerAngle_rad * 3.f;
+  // const f32 kPixToAngle[] = {kOuterAngle_rad,
+  //                            kInnerAngle_rad,
+  //                            -kInnerAngle_rad,
+  //                            -kOuterAngle_rad};
 
-  std::vector<RangeData> navMapData;
+  // std::vector<RangeData> navMapData;
   
-  for(int r = 0; r < TOF_RESOLUTION; r++)
-  {
-    const f32 pitch = sin(kPixToAngle[r]);
+  // for(int r = 0; r < TOF_RESOLUTION; r++)
+  // {
+  //   const f32 pitch = sin(kPixToAngle[r]);
 
-    for(int c = 0; c < TOF_RESOLUTION; c++)
-    {
-      const f32 yaw = sin(kPixToAngle[c]);
+  //   for(int c = 0; c < TOF_RESOLUTION; c++)
+  //   {
+  //     const f32 yaw = sin(kPixToAngle[c]);
 
-      const f32 leftDist_mm = _latestRawRangeData.data[c + (r*8)].processedRange_mm; 
+  //     const f32 leftDist_mm = _latestRawRangeData.data[c + (r*8)].processedRange_mm; 
 
-      const f32 yl = yaw * leftDist_mm;
-      const f32 zl = pitch * leftDist_mm;
+  //     const f32 yl = yaw * leftDist_mm;
+  //     const f32 zl = pitch * leftDist_mm;
 
-      Pose3d pl(0, Z_AXIS_3D(), {leftDist_mm, yl, zl}, lp, "point");
-      Pose3d rootl = pl.GetWithRespectToRoot();
-      _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
-                                                        {3, 3, 3},
-                                                        rootl);
-      _latestRangeData[r*8 + c] = pl.GetTranslation();
-      
-      const f32 rightDist_mm = _latestRawRangeData.data[4+c + (r*8)].processedRange_mm;
-      const f32 yr = yaw * rightDist_mm;
-      const f32 zr = pitch * rightDist_mm;
-        
-      Pose3d pr(0, Z_AXIS_3D(), {rightDist_mm, yr, zr}, rp, "point");
-      Pose3d rootr = pr.GetWithRespectToRoot();
-      _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
-                                                        {3, 3, 3},
-                                                        rootr);
-      _latestRangeData[r*8 + c + 4] = pr.GetTranslation();
-    }
-  }
+  //     Pose3d pl(0, Z_AXIS_3D(), {leftDist_mm, yl, zl}, lp, "point");
+  //     Pose3d rootl = pl.GetWithRespectToRoot();
+  //     _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
+  //                                                       {3, 3, 3},
+  //                                                       rootl);
+  //     _latestRangeData[r*8 + c] = pl.GetTranslation();      
+  //   }
+  // }
 }
 
 } // Cozmo namespace
