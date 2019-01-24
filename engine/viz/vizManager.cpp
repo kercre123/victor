@@ -121,7 +121,7 @@ namespace Anki {
     
     // ===== Robot drawing function =======
     
-    void VizManager::DrawRobot(const u32 robotID, const Pose3d& pose, const f32 headAngle, const f32 liftAngle) {
+    void VizManager::DrawRobot(const Pose3d& pose, const f32 headAngle, const f32 liftAngle) {
       ANKI_CPU_PROFILE("VizManager::DrawRobot");
       SendMessage(VizInterface::MessageViz(
         VizInterface::SetRobot(
@@ -731,7 +731,7 @@ namespace Anki {
     }
 
     
-    void VizManager::SendImageChunk(const RobotID_t robotID, const ImageChunk& robotImageChunk)
+    void VizManager::SendImageChunk(const ImageChunk& robotImageChunk)
     {
       if(!_sendImages) {
         return;

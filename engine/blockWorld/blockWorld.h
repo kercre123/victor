@@ -22,7 +22,6 @@
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/mat.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/overheadEdge.h"
 #include "coretech/common/engine/exceptions.h"

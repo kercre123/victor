@@ -296,8 +296,7 @@ protected:
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message
   //
-  // See the .clad file for documentation on parameters. The parameter robotID does not need to be
-  // passed in.
+  // See the .clad file for documentation on parameters.
   //
   void SendSetActiveObjectLEDs(const u32 objectID, 
                                const u32 onColor,

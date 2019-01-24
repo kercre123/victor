@@ -1666,7 +1666,7 @@ namespace Anki {
       // Robot must be carrying something to put something down!
       if(carryingComponentRef.IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
-                            "Robot %d executing PlaceObjectOnGroundAction but not carrying object.", GetRobot().GetID());
+                            "Executing PlaceObjectOnGroundAction but not carrying object.");
         result = ActionResult::NOT_CARRYING_OBJECT_ABORT;
       } else {
 

@@ -35,8 +35,6 @@ namespace Anki {
 
     
     // ======== Message handler callbacks =======
-      
-    // TODO: Update these not to need robotID
     
     void UiGameController::AddOrUpdateObject(s32 objID, ObjectType objType, ObjectFamily objFamily,
                                              const PoseStruct3d& poseStruct)
@@ -1133,24 +1131,6 @@ namespace Anki {
       ExternalInterface::ForceDelocalizeRobot delocMsg;
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
     }
-    
-//    void UiGameController::SendClearAllBlocks()
-//    {
-//      ExternalInterface::ClearAllBlocks m;
-//      m.robotID = 1;
-//      ExternalInterface::MessageGameToEngine message;
-//      message.Set_ClearAllBlocks(m);
-//      SendMessage(message);
-//    }
-    
-//    void UiGameController::SendClearAllObjects()
-//    {
-//      ExternalInterface::ClearAllObjects m;
-//      m.robotID = 1;
-//      ExternalInterface::MessageGameToEngine message;
-//      message.Set_ClearAllObjects(m);
-//      SendMessage(message);
-//    }
     
     void UiGameController::SendSelectNextObject()
     {

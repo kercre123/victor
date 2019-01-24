@@ -72,8 +72,7 @@ namespace Anki {
       // function below which is just a wrapper around DrawObject. This one
       // actually sets the pose of a CozmoBot model in the world providing
       // more detailed visualization capabilities.
-      void DrawRobot(const u32 robotID,
-                     const Pose3d &pose,
+      void DrawRobot(const Pose3d &pose,
                      const f32 headAngle,
                      const f32 liftAngle);
       
@@ -318,7 +317,7 @@ namespace Anki {
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
 
-      void SendImageChunk(const RobotID_t robotID, const ImageChunk& robotImageChunk);
+      void SendImageChunk(const ImageChunk& robotImageChunk);
       
       void SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                            const u16 topRight_x, const u16 topRight_y,

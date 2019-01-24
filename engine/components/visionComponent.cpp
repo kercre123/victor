@@ -1665,7 +1665,7 @@ namespace Vector {
         _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
         // Forward the image chunks to Viz as well (Note that this does nothing if
         // sending images is disabled in VizManager)
-        _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
+        _robot->GetContext()->GetVizManager()->SendImageChunk(m);
       }
 
       bytesRemainingToSend -= chunkSize;

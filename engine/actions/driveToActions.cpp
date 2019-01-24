@@ -311,8 +311,8 @@ namespace Anki {
       if(object == nullptr)
       {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
-                            "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                            GetRobot().GetID(), _objectID.GetValue());
+                            "Block world does not have an ActionableObject with ID=%d.",
+                            _objectID.GetValue());
         return ActionResult::BAD_OBJECT;
       }
 
@@ -358,8 +358,8 @@ namespace Anki {
         if(object == nullptr)
         {
           PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone.NoObjectWithID",
-                              "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                              GetRobot().GetID(), _objectID.GetValue());
+                              "Block world does not have an ActionableObject with ID=%d.",
+                              _objectID.GetValue());
           result = ActionResult::BAD_OBJECT;
         }
         else if( _actionType == PreActionPose::ActionType::NONE)
@@ -439,8 +439,7 @@ namespace Anki {
       
       if(GetRobot().GetCarryingComponent().IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
-                          "Robot %d cannot place an object because it is not carrying anything.",
-                          GetRobot().GetID());
+                            "Robot cannot place an object because it is not carrying anything.");
         result = ActionResult::NOT_CARRYING_OBJECT_ABORT;
       } else {
         _objectID = GetRobot().GetCarryingComponent().GetCarryingObject();
@@ -739,9 +738,8 @@ namespace Anki {
           if(GetRobot().GetPose().IsSameAs(_goalPoses[*_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             LOG_INFO("DriveToPoseAction.CheckIfDone.Success",
-                     "[%d] Robot %d successfully finished following path (Tdiff=%.1fmm) robotPose (%.1f, %.1f) goalPose (%.1f %.1f) threshold (%.1f %.1f).",
+                     "[%d] Robot successfully finished following path (Tdiff=%.1fmm) robotPose (%.1f, %.1f) goalPose (%.1f %.1f) threshold (%.1f %.1f).",
                      GetTag(),
-                     GetRobot().GetID(),
                      Tdiff.Length(),
                      GetRobot().GetPose().GetTranslation().x(),
                      GetRobot().GetPose().GetTranslation().y(),
