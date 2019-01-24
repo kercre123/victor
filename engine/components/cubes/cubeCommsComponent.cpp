@@ -601,10 +601,10 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
       
       
       
-      using GE = AudioMetaData::GameEvent::GenericEvent;
-      using GO = AudioMetaData::GameObjectType;
-      const auto event = GE::Play__Dev_Robot__Tone_10_Frames_01;
-      _robot->GetAudioClient()->PostEvent(event, GO::Behavior);
+      // using GE = AudioMetaData::GameEvent::GenericEvent;
+      // using GO = AudioMetaData::GameObjectType;
+      // const auto event = GE::Play__Dev_Robot__Tone_10_Frames_01;
+      // _robot->GetAudioClient()->PostEvent(event, GO::Behavior);
       
       if( msg.extraPayload.size() >= 2 )  {
         // A sees B with synced clock
