@@ -34,9 +34,11 @@ def get_dep_dist_directory_for_version(project, name, version):
 
 def install_dep(project, name, version, url_prefix, sha256=None):
     base_name = "{0}-{1}".format(name, version)
-    archive_url = "{0}{1}.tar.bz2".format(url_prefix, base_name)
-    download_hash = sha256;
-    if not download_hash:
+    if sha256:
+        archive_url = "{0}sha256/{1}".format(url_prefix, sha256)
+        download_hash = sha256
+    else:
+        archive_url = "{0}{1}.tar.bz2".format(url_prefix, base_name)
         download_hash = "{0}{1}-SHA-256.txt".format(url_prefix, base_name)
     downloads_path = get_dep_downloads_directory(project, name)
     dist_path = get_dep_dist_directory(project, name)
