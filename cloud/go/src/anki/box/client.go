@@ -124,10 +124,10 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		ImageData: fileData,
 		Modes:     modes,
 	}
-	
+
 	// todo: possibly not hardcode this?
 	r.Configs = &pb.ImageConfig{}
-	r.Configs.GroupName = "test123"
+	r.Configs.GroupName = "box-demo"
 
 	client := pb.NewChipperGrpcClient(rpcConn)
 	resp, err := client.AnalyzeImage(ctx, r)
