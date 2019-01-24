@@ -175,6 +175,8 @@ int main(void)
   using TimeClock = steady_clock;
 
   const auto runStart = TimeClock::now();
+  auto prevTickStart  = runStart;
+  auto tickStart      = runStart;
 
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(ANIM_TIME_STEP_US);
@@ -182,7 +184,6 @@ int main(void)
   // Loop until shutdown or error
   while (!gShutdown) {
 
-    const auto tickStart = TimeClock::now();
     const duration<double> curTime_s = tickStart - runStart;
     const BaseStationTime_t curTime_ns = Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
 
@@ -198,10 +199,11 @@ int main(void)
       break;
     }
 
-    const auto tickNow = TimeClock::now();
-    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
-    tracepoint(anki_ust, vic_anim_loop_duration, duration_cast<microseconds>(tickNow - tickStart).count());
+    const auto tickAfterAnimExecution = TimeClock::now();
+    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterAnimExecution);
+    const auto tickDuration_us = duration_cast<microseconds>(tickAfterAnimExecution - tickStart);
 
+    tracepoint(anki_ust, vic_anim_loop_duration, tickDuration_us.count());
 #if ENABLE_TICK_TIME_WARNINGS
     // Complain if we're going overtime
     if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
@@ -210,11 +212,11 @@ int main(void)
                           ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
 #endif
-
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
-    std::this_thread::sleep_for(std::max(minimumSleepTime_us, remaining_us));
+    const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
+    std::this_thread::sleep_for(sleepTime_us);
 
     // Set the target end time for the next frame
     targetEndFrameTime += (microseconds)(ANIM_TIME_STEP_US);
@@ -237,6 +239,16 @@ int main(void)
                           (float)(forwardJumpDuration * 0.001f));
 #endif
     }
+    tickStart = TimeClock::now();
+
+    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
+    prevTickStart = tickStart;
+
+    const auto sleepTimeActual_us = duration_cast<microseconds>(tickStart - tickAfterAnimExecution);
+    animEngine->RegisterTickPerformance(tickDuration_us.count() * 0.001f,
+                                        timeSinceLastTick_us.count() * 0.001f,
+                                        sleepTime_us.count() * 0.001f,
+                                        sleepTimeActual_us.count() * 0.001f);
   }
 
   LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down (exit %d)", result);

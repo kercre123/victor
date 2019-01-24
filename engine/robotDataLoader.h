@@ -106,15 +106,12 @@ public:
   const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
   const std::set<std::string>& GetDasBlacklistedAnimationNames() const { return _dasBlacklistedAnimationNames; }
 
+  // Returns true if the given animation is allowed to move the body while on the charger
+  bool IsAnimationAllowedToMoveBodyOnCharger(const std::string& animName) const;
+  
   // all clips that are allowed to move the body while on the charger
-  const std::set<std::string>& GetAllWhitelistedChargerAnimationClips() const {
-    return _allWhitelistedChargerAnimationClips;
-  }
-
-  // get _just_ the ones that are supposed to be safe to stay on the charger (a subset of
-  // GetWhitelistedChargerAnimationClips)
-  const std::set<std::string>& GetWhitelistedChargerSafeAnimationClips() const {
-    return _whitelistedChargerSafeAnimationClips;
+  const std::vector<std::string>& GetAllWhitelistedChargerAnimationPrefixes() const {
+    return _whitelistedChargerAnimationPrefixes;
   }
 
   // robot configuration json files
@@ -286,8 +283,7 @@ private:
   std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
   std::set<std::string> _dasBlacklistedAnimationNames;
 
-  std::set<std::string> _allWhitelistedChargerAnimationClips;
-  std::set<std::string> _whitelistedChargerSafeAnimationClips;
+  std::vector<std::string> _whitelistedChargerAnimationPrefixes;
 };
 
 }

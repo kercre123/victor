@@ -49,6 +49,7 @@ enum : uint16_t {
   //critical processes
   NO_CLOUD_PROCESS      = 923,
   NO_GATEWAY            = 921,
+  NO_GATEWAY_CERT       = 920,
   SYSTEMD               = 919,
   NO_ROBOT_COMMS        = 917,
   NO_ROBOT_PROCESS      = 916,

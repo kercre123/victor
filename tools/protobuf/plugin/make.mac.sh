@@ -1,7 +1,7 @@
 #!/bin/bash
 
 GIT_ROOT=`git rev-parse --show-toplevel`
-PROTOBUF_LOC="${GIT_ROOT}/EXTERNALS/coretech_external/build/protobuf/mac/"
+PROTOBUF_LOC="${GIT_ROOT}/EXTERNALS/protobuf/mac/"
 INCLUDES="${PROTOBUF_LOC}/include/"
 LIBS="${PROTOBUF_LOC}/lib/"
 SRCS=`find . -type f -iname "*.cpp"`

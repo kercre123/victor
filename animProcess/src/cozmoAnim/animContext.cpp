@@ -7,6 +7,7 @@
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/perfMetricAnim.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
@@ -43,6 +44,7 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _webService(new WebService::WebService())
   , _audioPlayer(new Audio::AudioPlaybackSystem(this))
   , _backpackLightComponent(new BackpackLightComponent(this))
+  , _perfMetric(new PerfMetricAnim(this))
 {
   InitAudio(_dataPlatform);
 }

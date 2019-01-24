@@ -28,6 +28,11 @@ message WifiConnectRequest
   bool disconnectAfterConnection
 }
 
+// Request to see if switchboard has any BLE session keys saved
+message HasBleKeysRequest
+{
+}
+
 } // SwitchboardInterface
 } // Cozmo
 } // Anki

@@ -42,6 +42,7 @@ public:
   void HandleWifiConnectRequest(const std::string& ssid,
                                 const std::string& pwd,
                                 bool disconnectAfterConnection);
+  void HandleHasBleKeysRequest();
   EngineMessageSignal& OnReceivePairingStatus() {
     return _pairingStatusSignal;
   }

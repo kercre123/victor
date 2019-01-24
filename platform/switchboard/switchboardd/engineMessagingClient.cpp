@@ -22,6 +22,7 @@
 #include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "switchboardd/savedSessionManager.h"
 #include "switchboardd/log.h"
 
 using GMessageTag = Anki::Vector::ExternalInterface::MessageGameToEngineTag;
@@ -91,6 +92,7 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
       case EMessageTag::ExitPairing:
       case EMessageTag::WifiScanRequest:
       case EMessageTag::WifiConnectRequest:
+      case EMessageTag::HasBleKeysRequest:
       {
         // Emit signal for message
         wData->signal->emit(message);
@@ -181,6 +183,16 @@ void EngineMessagingClient::HandleWifiConnectRequest(const std::string& ssid,
   }
   
   SendMessage(GMessage::CreateWifiConnectResponse(std::move(rcp)));
+}
+
+void EngineMessagingClient::HandleHasBleKeysRequest() {
+  Anki::Vector::SwitchboardInterface::HasBleKeysResponse rsp;
+
+  // load keys
+  RtsKeys keys = SavedSessionManager::LoadRtsKeys();
+  rsp.hasBleKeys = keys.clients.size() > 0;
+
+  SendMessage(GMessage::CreateHasBleKeysResponse(std::move(rsp)));
 }
 
 void EngineMessagingClient::SendMessage(const GMessage& message) {

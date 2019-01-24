@@ -57,6 +57,8 @@
 #include "util/logging/DAS.h"
 #include "util/signals/signalHolder.h"
 
+#include "webServerProcess/src/webService.h"
+
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include <functional>
@@ -108,6 +110,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   // bind to specific handlers in the robotImplMessaging class
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::pickAndPlaceResult,             &RobotToEngineImplMessaging::HandlePickAndPlaceResult);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::fallingEvent,                   &RobotToEngineImplMessaging::HandleFallingEvent);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::fallImpactEvent,                &RobotToEngineImplMessaging::HandleFallImpactEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::goalPose,                       &RobotToEngineImplMessaging::HandleGoalPose);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
@@ -303,11 +306,29 @@ void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterfa
   const auto& msg = message.GetData().Get_fallingEvent();
 
   LOG_INFO("Robot.HandleFallingEvent.FallingEvent",
-           "timestamp: %u, duration (ms): %u",
+           "timestamp: %u duration: %u",
            msg.timestamp,
            msg.duration_ms);
 
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotFallingEvent(msg.duration_ms)));
+}
+
+void RobotToEngineImplMessaging::HandleFallImpactEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  LOG_INFO("Robot.HandleFallImpactEvent", "");
+
+  // webviz counter for the number of detected fall impacts
+  static size_t webvizFallImpactCounter = 0;
+  webvizFallImpactCounter++;
+  const auto* context = robot->GetContext();
+  if (context != nullptr) {
+    auto* webService = context->GetWebService();
+    if (webService != nullptr) {
+      Json::Value toSendJson;
+      toSendJson["fall_impact_count"] = (int)webvizFallImpactCounter;
+      webService->SendToWebViz("imu", toSendJson);
+    }
+  }
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

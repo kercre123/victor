@@ -61,11 +61,19 @@ public:
   // Dispatch message from robot
   static void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg);
 
+  static uint32_t GetMessageCountAtR() { return _messageCountAnimToRobot; }
+  static uint32_t GetMessageCountAtE() { return _messageCountAnimToEngine; }
+  static uint32_t GetMessageCountRtA() { return _messageCountRobotToAnim; }
+  static uint32_t GetMessageCountEtA() { return _messageCountEngineToAnim; }
+
 private:
   // Check state & send firmware handshake when engine connects
   static Result MonitorConnectionState(BaseStationTime_t currTime_nanosec);
 
-
+  static uint32_t _messageCountAnimToRobot;
+  static uint32_t _messageCountAnimToEngine;
+  static uint32_t _messageCountRobotToAnim;
+  static uint32_t _messageCountEngineToAnim;
 };
 
 } // namespace Vector
