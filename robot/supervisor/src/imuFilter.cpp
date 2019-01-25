@@ -1062,13 +1062,13 @@ namespace Anki {
         if (!isMotionDetected_) {
           ukf_.UpdateBias(
             {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * 0.989f},
+            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * 0.987f},
             static_cast<float>(curTime) / 1000.f
           );
         } else {
           ukf_.Update(
             {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * 0.989f},
+            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * 0.987f},
             static_cast<float>(curTime) / 1000.f
           );
         }

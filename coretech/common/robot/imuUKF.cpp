@@ -44,12 +44,14 @@ namespace {
     return {cos(alpha * .5), sinAlpha * v.x(),  sinAlpha * v.y(),  sinAlpha * v.z()};
   };
   
+  // transforms quaternion into a rotation vector 
   inline Point<3,double> FromQuat(const UnitQuaternion& q) { 
     Point<3,double> axis = q.Slice<1,3>();
     const double alpha = asin( axis.MakeUnitLength() ) * 2;
     return axis * alpha;
   };
 
+  // given two vectors, find the rotation that maps `from` onto `to`
   UnitQuaternion FindRotation(const Point<3,double>& from, const Point<3,double>& to) {
     Point<3,double> a = from;
     Point<3,double> b = to;
@@ -63,6 +65,7 @@ namespace {
     return {cosAlpha2, v.x(), v.y(), v.z()};
   }
 
+  // fast mean calculation for columns of a matrix
   template <MatDimType M, MatDimType N>
   Point<M,double> CalculateMean(const SmallMatrix<M,N,double>& A) {
     return A * Point<N,double>(1./N);
@@ -78,7 +81,19 @@ namespace {
     return GetCovariance(A, A.GetTranspose());
   }
 
-  const Point<3,double> kGravity(0., 0., 9810.);
+  // Tunable Parameters
+  constexpr const double          kRotAccel_radpsSq      = 4.36;     // currently this is half max rot velocity reading, 
+                                                                     // so we assume a ramp of 0 to max measurement in 2 seconds
+  constexpr const double          kBiasStability_radpsSq = .0000145; // from spec sheet
+
+  // Measurement Noise
+  
+  // this is rms noise + max cross axis sensitivity over gravity + package alignment error
+  constexpr const double          kAccelNoise_mmpsSq     = .0205;  // atan2(17.7 + 98.1 + 85.6, 9810.);   
+  constexpr const double          kGyroNoise_radps       = .00123; // rms
+  constexpr const double          kBiasNoise_radps       = kGyroNoise_radps + .052;       // gyro noise + temp offset
+  
+  constexpr const Point<3,double> kGravity_mmpsSq        = {0., 0., 9810.};
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -92,15 +107,15 @@ ImuUKF::ImuUKF()
 void ImuUKF::Reset(const Rotation3d& rot) {
   _state = {rot.GetQuaternion(), Point<3,double>(), Point<3,double>()};
   _P = SmallSquareMatrix<State::Dim,double> {{
-    .000001, 0., 0., 0., 0., 0., 0., 0., 0.,    // low uncertainty for pose, since we initialize to Quaternion{1,0,0,0}
-    0., .000001, 0., 0., 0., 0., 0., 0., 0.,
-    0., 0., .000001, 0., 0., 0., 0., 0., 0.,
-    0., 0., 0., .000001, 0., 0., 0., 0., 0.,        // high uncertainty for velocity?
-    0., 0., 0., 0., .000001, 0., 0., 0., 0.,
-    0., 0., 0., 0., 0., .000001, 0., 0., 0.,
-    0., 0., 0., 0., 0., 0., .000001, 0., 0.,
-    0., 0., 0., 0., 0., 0., 0., .000001, 0.,
-    0., 0., 0., 0., 0., 0., 0., 0., .000001
+    .01, 0., 0., 0., 0., 0., 0., 0., 0., 
+    0., .01, 0., 0., 0., 0., 0., 0., 0.,
+    0., 0., .01, 0., 0., 0., 0., 0., 0.,
+    0., 0., 0., .0001, 0., 0., 0., 0., 0.,
+    0., 0., 0., 0., .0001, 0., 0., 0., 0.,
+    0., 0., 0., 0., 0., .0001, 0., 0., 0.,
+    0., 0., 0., 0., 0., 0., .00001, 0., 0.,
+    0., 0., 0., 0., 0., 0., 0., .00001, 0.,
+    0., 0., 0., 0., 0., 0., 0., 0., .00001
   }};
 }
  
@@ -109,25 +124,25 @@ const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_Q{{
   .0001, 0., 0., 0., 0., 0., 0., 0., 0.,
   0., .0001, 0., 0., 0., 0., 0., 0., 0.,
   0., 0., .0001, 0., 0., 0., 0., 0., 0.,
-  0., 0., 0., .05, 0., 0., 0., 0., 0.,
-  0., 0., 0., 0., .05, 0., 0., 0., 0.,
-  0., 0., 0., 0., 0., .05 , 0., 0., 0.,
-  0., 0., 0., 0., 0., 0., .000001, 0., 0.,
-  0., 0., 0., 0., 0., 0., 0., .000001, 0.,
-  0., 0., 0., 0., 0., 0., 0., 0., .000001
+  0., 0., 0., Util::Square(kRotAccel_radpsSq), 0., 0., 0., 0., 0.,
+  0., 0., 0., 0., Util::Square(kRotAccel_radpsSq), 0., 0., 0., 0.,
+  0., 0., 0., 0., 0., Util::Square(kRotAccel_radpsSq) , 0., 0., 0.,
+  0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radpsSq), 0., 0.,
+  0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radpsSq), 0.,
+  0., 0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radpsSq)
 }}; 
 
 // Measurement Uncertainty
 const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_R{{  
-  17.7, 0., 0., 0., 0., 0., 0., 0., 0.,      // mm/s^2 rms (we may want to increase this, since this does not account for translation acc)
-  0., 17.7, 0., 0., 0., 0., 0., 0., 0.,      // mm/s^2 rms
-  0., 0., 17.7, 0., 0., 0., 0., 0., 0.,      // mm/s^2 rms
-  0., 0., 0., .00123, 0., 0., 0., 0., 0.,    // rad/s rms
-  0., 0., 0., 0., .00123, 0., 0., 0., 0.,    // rad/s rms
-  0., 0., 0., 0., 0., .00123, 0., 0., 0.,    // rad/s rms
-  0., 0., 0., 0., 0., 0., .002, 0., 0.,      // rad/s - no noise on bias, but make it a bit higher than raw gyro noise so that we don't update aggressively
-  0., 0., 0., 0., 0., 0., 0., .002, 0.,      // rad/s
-  0., 0., 0., 0., 0., 0., 0., 0., .002       // rad/s
+  Util::Square(kAccelNoise_mmpsSq), 0., 0., 0., 0., 0., 0., 0., 0.,
+  0., Util::Square(kAccelNoise_mmpsSq), 0., 0., 0., 0., 0., 0., 0.,
+  0., 0., Util::Square(kAccelNoise_mmpsSq), 0., 0., 0., 0., 0., 0.,
+  0., 0., 0., Util::Square(kGyroNoise_radps), 0., 0., 0., 0., 0.,
+  0., 0., 0., 0., Util::Square(kGyroNoise_radps), 0., 0., 0., 0.,
+  0., 0., 0., 0., 0., Util::Square(kGyroNoise_radps), 0., 0., 0.,
+  0., 0., 0., 0., 0., 0., Util::Square(kBiasNoise_radps), 0., 0.,
+  0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasNoise_radps), 0.,
+  0., 0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasNoise_radps)
 }}; 
 
 void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float timestamp_s)
@@ -140,7 +155,7 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
     // NOTE: I think there is a more computationally efficient way for getting the 
     //       correct rotation using just the residual and rotG, but this makes more
     //       intuitive sense for now...
-    const auto rotG = _state.GetRotation().GetConj() * kGravity;
+    const auto rotG = _state.GetRotation().GetConj() * kGravity_mmpsSq;
     const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
     _state = State{ _state.GetRotation() * rotCorrection,
                     _state.GetVelocity() + residual.Slice<3,5>(),
@@ -160,7 +175,7 @@ void ImuUKF::UpdateBias(const Point<3,double>& accel, const Point<3,double>& gyr
     // NOTE: I think there is a more computationally efficient way for getting the 
     //       correct rotation using just the residual and rotG, but this makes more
     //       intuitive sense for now...
-    const auto rotG = _state.GetRotation().GetConj() * kGravity;
+    const auto rotG = _state.GetRotation().GetConj() * kGravity_mmpsSq;
     const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
     _state = State{ _state.GetRotation() * rotCorrection,
                     _state.GetVelocity() + residual.Slice<3,5>(),
@@ -169,10 +184,11 @@ void ImuUKF::UpdateBias(const Point<3,double>& accel, const Point<3,double>& gyr
   _lastMeasurement_s = timestamp_s;
 }
 
-void ImuUKF::ProcessUpdate(float dt_s)
+void ImuUKF::ProcessUpdate(double dt_s)
 { 
   // sample the covariance, generating the set {𝑊ᵢ} and add the mean
-  const auto S = Cholesky(_P + _Q) * sqrt(State::Dim);
+  const SmallSquareMatrix<State::Dim,double> Qdt = _Q * dt_s;
+  const auto S = Cholesky(_P + Qdt) * sqrt(2*State::Dim);
   for (int i = 0; i < State::Dim; ++i) {
     // current process model assumes we continue moving at constant velocity
     const auto Si = S.GetColumn(i);
@@ -216,7 +232,7 @@ Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
   SmallMatrix<State::Dim,State::Dim*2,double> Z;
   for (int i = 0; i < 2*State::Dim; ++i) {
     const State yi = _Y.GetColumn(i);
-    Z.SetColumn(i, Concatenate(Concatenate( yi.GetRotation().GetConj() * kGravity, yi.GetVelocity() ), yi.GetGyroBias()));
+    Z.SetColumn(i, Concatenate(Concatenate( yi.GetRotation().GetConj() * kGravity_mmpsSq, yi.GetVelocity() ), yi.GetGyroBias()));
   }
 
   // mean center {Zᵢ}
@@ -228,6 +244,7 @@ Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
   // get Covariance
   const auto Pvv = GetCovariance(Z) + _R;
   const auto Pxz = GetCovariance(_W, Z.GetTranspose());
+
 
   // get Kalman gain and update covariance
   const auto K = Pxz * Pvv.CopyInverse();

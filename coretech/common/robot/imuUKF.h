@@ -61,7 +61,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // update predicted state to current timestamp and increase uncertainty
-  void ProcessUpdate(float dt_s);
+  void ProcessUpdate(double dt_s);
 
   // calculates the residual according to the provided measurement
   Point<9,double> MeasurementUpdate(const Point<9,double>& measurement);
