@@ -148,6 +148,11 @@ void PhotographyManager::InitDependent(Robot* robot, const RobotCompMap& depende
 
   const auto& webService = robot->GetContext()->GetWebService();
   webService->RegisterRequestHandler("/deleteallphotos", DeleteAllPhotosWebServerHandler, this);
+
+  if( THEBOX ) {
+    // delete photos on startup to avoid seeing old stuff
+    DeleteAllPhotos();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
