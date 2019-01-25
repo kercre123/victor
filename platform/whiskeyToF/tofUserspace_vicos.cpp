@@ -203,7 +203,7 @@ int setup(VL53L1_Dev_t* dev)
 
   // Setup timing budget
   PRINT_NAMED_ERROR("","set timing budget\n");
-  rc = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 8*2000);
+  rc = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 16000);
   return_if_error(rc, "ioctl error setting timing budged");
 
   // Set distance mode
