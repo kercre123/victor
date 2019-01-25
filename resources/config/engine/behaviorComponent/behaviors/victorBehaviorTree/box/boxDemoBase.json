@@ -18,7 +18,7 @@
       "dropIntent": true
     },
     {
-      "name": "PeopleCounter",
+      "name": "PeopleDetector",
       "behavior": "BoxDemoCountPeopleBase",
       "activateIntent": "switch_vision_mode",
       "dropIntent": true
@@ -46,7 +46,7 @@
       "from": "Faces",
       "interruptingTransitions": [
         {
-          "to": "PeopleCounter",
+          "to": "PeopleDetector",
           "condition": {
             "conditionType": "UserIntentPending",
             "list": [
@@ -58,7 +58,7 @@
     },
 
     {
-      "from": "PeopleCounter",
+      "from": "PeopleDetector",
       "interruptingTransitions": [
         {
           "to": "Faces",
