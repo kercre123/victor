@@ -11,10 +11,12 @@
  *
  **/
 
+#include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDisplayImpl.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -44,6 +46,9 @@ namespace {
   uint16_t _fault = FaultCode::NONE;
 
   static const std::string kFaultURL = "support.anki.com";
+
+  // THEBOX
+  Vision::ImageRGB565 slastDrawnImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
 #if REMOTE_CONSOLE_ENABLED
   FaceDisplayImpl* sDisplayImpl = nullptr;
@@ -143,6 +148,11 @@ void FaceDisplay::DrawToFace(const Vision::ImageRGB565& img)
   DrawToFaceInternal(img);
 }
 
+void FaceDisplay::RedrawLastFace()
+{
+  DrawToFaceInternal(slastDrawnImage); 
+}
+
 void FaceDisplay::DrawToFaceInternal(const Vision::ImageRGB565& img)
 {
   // Don't update images and pointers while the boot animation is still playing
@@ -151,12 +161,20 @@ void FaceDisplay::DrawToFaceInternal(const Vision::ImageRGB565& img)
     return;
   }
 
+  // THEBOX
+  img.CopyTo(slastDrawnImage);
+  Vision::ImageRGB565 img_plus_overlay(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  img.CopyTo(img_plus_overlay);
+  if (_animStreamer != nullptr) {
+    _animStreamer->OverlayBackpackLights(img_plus_overlay);
+  }
+
   std::lock_guard<std::mutex> lock(_faceDrawMutex);
   // Prevent drawing if we have a fault code
   if(_fault == 0)
   {
     UpdateNextImgPtr();
-    img.CopyTo(*_faceDrawNextImg);
+    img_plus_overlay.CopyTo(*_faceDrawNextImg);
   }
 }
 

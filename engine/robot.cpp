@@ -987,8 +987,8 @@ void Robot::ProcessTheBoxTriggers()
   }
 
   // Shake detect
-  const float kShakeTimeout_s = 0.25f;
-  const float kShakeAccelThresh = 16000;
+  const float kShakeTimeout_s = 0.f;
+  const float kShakeAccelThresh = 12000;
   const bool isShaken = GetHeadAccelMagnitudeFiltered() >= kShakeAccelThresh;
   
   if (isShaken) {

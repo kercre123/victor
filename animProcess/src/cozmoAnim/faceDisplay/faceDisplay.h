@@ -35,6 +35,7 @@ namespace Vector {
 
 class FaceDisplayImpl;
 class FaceInfoScreenManager;
+class AnimationStreamer;
 
 class FaceDisplay : public Util::DynamicSingleton<FaceDisplay>
 {
@@ -51,6 +52,10 @@ public:
 
   // Stops the boot animation process if it is running
   void StopBootAnim();
+
+  // THEBOX hack for making sure backpacklights overlay on every image
+  void SetAnimationStreamer(AnimationStreamer* animStreamer) { _animStreamer = animStreamer; }
+  void RedrawLastFace();
   
 protected:
   FaceDisplay();
@@ -76,6 +81,8 @@ private:
   
   void DrawFaceLoop();
   void UpdateNextImgPtr();
+
+  AnimationStreamer* _animStreamer = nullptr;
 }; // class FaceDisplay
 
 } // namespace Vector

@@ -226,9 +226,6 @@ namespace Vector {
   CONSOLE_VAR(bool, kDisplayBackpackLights, "AnimationStreamer", THEBOX);
   CONSOLE_VAR(bool, kDisplayBackpackLights_simple, "AnimationStreamer", THEBOX);
   BackpackLightComponent::BackpackLEDState s_lastDrawnBackpackLEDState;
-  Vision::ImageRGB565 s_lastDrawnImage565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-  bool s_firstImageDrawn = false;
-
 
   //////////
   /// Manual Playback Console Vars - allow user to play back/hold single frames within an animation
@@ -479,6 +476,9 @@ namespace Vector {
     if (_animAudioClient != nullptr) {
       _animAudioClient->SetTextToSpeechComponent(ttsComponent);
     }
+
+    // THEBOX
+    FaceDisplay::getInstance()->SetAnimationStreamer(this);
 
     return RESULT_OK;
   }
@@ -867,7 +867,6 @@ namespace Vector {
     if (_redirectFaceImagesToDebugScreen) {
       Vision::ImageRGB565 debugImg;
       debugImg.SetFromImageRGB(spriteHandle->GetSpriteContentsRGBA());
-      OverlayBackpackLights(debugImg);
       FaceInfoScreenManager::getInstance()->DrawCameraImage(debugImg);
 
       // TODO: Return here or will that screw up stuff on the engine side?
@@ -1401,12 +1400,6 @@ namespace Vector {
 
 #if ANKI_DEV_CHEATS
 
-    // Keep a copy of the last drawn face in case we want to redraw to update backpack lights overlay
-    if (&faceImg565 != &s_lastDrawnImage565) {
-      faceImg565.CopyTo(s_lastDrawnImage565);
-    } 
-    s_firstImageDrawn = true;
-
     static int kProcFace_GammaType_old = (int)FaceGammaType::None;
     static f32 kProcFace_Gamma_old = -1.f;
 
@@ -1457,8 +1450,6 @@ namespace Vector {
     }
 
     UpdateCaptureFace(faceImg565);
-
-    OverlayBackpackLights(faceImg565);
     
     // Display temperature if exceeds threshold
     if (kDisplayHighTemperature)
@@ -2048,9 +2039,9 @@ namespace Vector {
 #if ANKI_DEV_CHEATS
     // If a new face wasn't drawn, but the backpack light state has changed
     // then update the face anyway.
-    if (s_firstImageDrawn && 
-        s_lastDrawnBackpackLEDState != _context->GetBackpackLightComponent()->GetBackpackLEDState()) {
-      BufferFaceToSend(s_lastDrawnImage565);
+
+    if (s_lastDrawnBackpackLEDState != _context->GetBackpackLightComponent()->GetBackpackLEDState()) {
+      FaceDisplay::getInstance()->RedrawLastFace();
     }
 #endif
 
