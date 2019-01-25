@@ -218,8 +218,14 @@ void BehaviorBoxDemoDescribeScene::OnBehaviorActivated()
   
   _dVars.lastImageTime_ms = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
 
+  const VisionMode visionMode = (_dVars.isUsingOCR ? VisionMode::OffboardOCR : VisionMode::OffboardSceneDescription);
+
+  PRINT_CH_INFO("Behaviors", "BehaviorBoxDemoDescribeScene.Start",
+                "lastImageTime = %u using %s mode",
+                (unsigned int)_dVars.lastImageTime_ms,
+                VisionModeToString(visionMode));
+
   {
-    const VisionMode visionMode = (_dVars.isUsingOCR ? VisionMode::OffboardOCR : VisionMode::OffboardSceneDescription);
     WaitForImagesAction* waitAction = new WaitForImagesAction(1, visionMode, _dVars.lastImageTime_ms);
     waitAction->SetTimeoutInSeconds(_iConfig.visionRequestTimeout_sec); // in case we never hear back from vision
 

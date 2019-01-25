@@ -63,10 +63,19 @@ void SalientPointsComponent::AddSalientPoints(const std::list<Vision::SalientPoi
       std::list<Vision::SalientPoint>& prevList = _salientPoints[type];
       prevList.push_back(salientPoint);
     }
+
+    if( type == Vision::SalientPointType::Text ) {
+      // hacks for box debugging
+      PRINT_CH_INFO("Behaviors", "SalientPointsComponent.AddText", "t = %u description = '%s' numInList = %zu",
+                    salientPoint.timestamp,
+                    salientPoint.description.c_str(),
+                    _salientPoints[type].size());
+    }
+
   }
 
-  PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.AddSalientPoints.NewPointsSize",
-                 "Number of salient point after adding: %zu", _salientPoints.size());
+  PRINT_CH_INFO("Behaviors", "SalientPointsComponent.AddSalientPoints.NewPointsSize",
+                "Number of salient point after adding: %zu", _salientPoints.size());
 
 #if ANKI_DEVELOPER_CODE
   for (auto &element : _salientPoints) {
@@ -97,7 +106,7 @@ void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientP
 
   }
 
-  PRINT_CH_DEBUG("Behaviors", "SalientPointsComponent.GetSalientPointSinceTime.CopiedElements",
+  PRINT_CH_INFO("Behaviors", "SalientPointsComponent.GetSalientPointSinceTime.CopiedElements",
                  "Number of salient points of type %s received since timestamp %u: %zu",
                  Vision::SalientPointTypeToString(type), (TimeStamp_t)timestamp,
                  salientPoints.size() - previousSize);
