@@ -31,6 +31,9 @@ namespace {
   CONSOLE_VAR(f32, kImageBufferGamma, "Vision", 1.f);
 }
 
+f32 ImageBuffer::sCurrentGamma = 0.f;
+std::array<u8,256> ImageBuffer::sGammaLUT{};
+  
 ImageBuffer::ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding format, TimeStamp_t timestamp, s32 id)
 : _rawData(data)
 , _rawNumRows(numRows)
@@ -38,7 +41,6 @@ ImageBuffer::ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding forma
 , _format(format)
 , _imageId(id)
 , _timestamp(timestamp)
-, _gammaLUT{}
 {
 
 }
@@ -104,31 +106,34 @@ s32 ImageBuffer::GetNumRows() const
  
 inline void ImageBuffer::ApplyGammaToPixel(u8& pixel) const
 {
-  pixel = _gammaLUT[pixel];
+  pixel = sGammaLUT[pixel];
 }
 
 inline void ImageBuffer::ApplyGammaToPixel(PixelRGB& pixel) const
 {
-  pixel.r() = _gammaLUT[pixel.r()];
-  pixel.g() = _gammaLUT[pixel.g()];
-  pixel.b() = _gammaLUT[pixel.b()];
+  pixel.r() = sGammaLUT[pixel.r()];
+  pixel.g() = sGammaLUT[pixel.g()];
+  pixel.b() = sGammaLUT[pixel.b()];
 }
   
 template<class PixelType>
 void ImageBuffer::ApplyGamma(ImageBase<PixelType>& img) const
 {
-  if(!Util::IsFltNear(_currentGamma, kImageBufferGamma))
+  if(!Util::IsFltNear(sCurrentGamma, kImageBufferGamma))
   {
-    _currentGamma = kImageBufferGamma;
-    const f32 invGamma = 1.f / _currentGamma;
+    PRINT_CH_INFO("VisionSystem", "ImageBuffer.ApplyGamma.BuildingTable",
+                  "Gamma:%.3f->%.3f", sCurrentGamma, kImageBufferGamma);
+    
+    sCurrentGamma = kImageBufferGamma;
+    const f32 invGamma = 1.f / sCurrentGamma;
     const f32 divisor = 1.f / 255.f;
     for(s32 value=0; value<256; ++value)
     {
-      _gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
+      sGammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, invGamma));
     }
   }
   
-  if(!Util::IsFltNear(_currentGamma, 1.f))
+  if(!Util::IsFltNear(sCurrentGamma, 1.f))
   {
     s32 nrows = img.GetNumRows();
     s32 ncols = img.GetNumCols();

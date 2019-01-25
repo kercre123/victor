@@ -1540,7 +1540,7 @@ namespace Vector {
       }
       else
       {
-        const bool kInterruptRunning = false;
+        const bool kInterruptRunning = (THEBOX ? true : false);
         animComponent.DisplayFaceImage(mirrorModeImg,
                                        AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS,
                                        kInterruptRunning);

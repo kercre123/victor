@@ -66,7 +66,7 @@ private:
   void TransitionToWaitingForCloud();
   
   void DrawText3Lines(const std::array<std::string,3>& strings, const ColorRGBA& color);
-  bool DrawSalientPoints(const std::list<Vision::SalientPoint>& salientPoints);
+  bool DrawPersonSalientPoints(std::list<Vision::SalientPoint>& salientPoints); // Also removes those with too much overlap
   void DrawSalientPointsOnSavedImage(const std::list<Vision::SalientPoint>& salientPoints) const;
 };
 

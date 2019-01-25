@@ -40,7 +40,7 @@
     // Auto-exposure settings
     "InitialExposureTime_ms"    : 31,    // Sent each time we request camera calibration
     "TargetValue"               : 128,   // [0,255] - Try to make targetPercentile have this value
-    "TargetPercentile"          : 0.50,  // [0.0, 1.0]
+    "TargetPercentile"          : 0.75,  // [0.0, 1.0]
     "CyclingTargetValues"       : [5, 100, 250], // When "cycling" exposure is enabled, the target values to use [0,255]
     "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this
     "TooBrightValue"            : 230,   // "Too Bright" if LowPercentile is above this
@@ -48,7 +48,7 @@
     "HighPercentile"            : 0.90,  // [0.0, 1.0]  (Near 1.0)
     "MaxChangeFraction"         : 0.0,   // [0.0, inf]  (Relative amount we can change current exposure/wb each update, zero disables)
     "SubSample"                 : 3,     // >= 1
-    "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
+    "MeterFromDetections"       : false,  // Base auto-exposure on detected markers, faces, etc, if any
 
     "TimeBeforeErrorMessage_ms" :       3000,  // How long VisionSystem must detect "bad" quality before notifying game
     "RepeatedErrorMessageInterval_ms" : 300000 // Time between error messages once triggered

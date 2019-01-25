@@ -34,7 +34,7 @@ namespace Vector {
 namespace {
   CONSOLE_VAR(f32, kCountPeople_FontScale, "TheBox.Screen",  0.6f);
   CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleMotionThreshold, "TheBox.PersonDetection", 0.05f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleSalientPointOverlapThreshold, "TheBox.PersonDetection", 0.5f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleSalientPointOverlapThreshold, "TheBox.PersonDetection", 0.25f, 0.f, 1.f);
   
   // If set to Images, will load the saved image from the neural net and re-draw any detected salient points on it.
   // If set to JsonSalientPoints, will write the SalientPoints to Json and assume Web will render them.
@@ -42,9 +42,10 @@ namespace {
   
   CONSOLE_VAR_RANGED(f32, kTheBox_CountPeopleSaveThumbnailSize, "TheBox.PersonDetection", 0.31f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleDrawSalientPointThickness, "TheBox.PersonDetection", 3, 1, 5);
-  CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleDrawSalientPointThumbnailThickness, "TheBox.PersonDetection", 2, 1, 5); 
   CONSOLE_VAR_RANGED(s32, kTheBox_CountPeopleJpegQuality, "TheBox.PersonDetection", 60, 0, 100);
  
+  CONSOLE_VAR(bool, kTheBox_CountPeopleDrawNonPeople, "TheBox.PersonDetection", true);
+  
   const char* const kSaveBaseName = "person_detection";
   const char* const kPersistentSaveSubDir = "photos";
 }
@@ -240,10 +241,16 @@ void BehaviorBoxDemoCountPeople::TransitionToWaitingForCloud()
     salientPointsComp.GetSalientPointSinceTime(salientPoints, Vision::SalientPointType::Person,
                                                _dVars.startImageTime_ms);
     
+    if(kTheBox_CountPeopleDrawNonPeople)
+    {
+      salientPointsComp.GetSalientPointSinceTime(salientPoints, Vision::SalientPointType::Unknown,
+                                                 _dVars.startImageTime_ms);
+    }
+    
     LOG_INFO("BehaviorBoxDemoCountPeople.TransitionToWaitingForCloud.OffboardPersonDetectionRan",
              "SalientPoints:%zu", salientPoints.size());
     
-    const bool drewSomething = DrawSalientPoints(salientPoints);
+    const bool drewSomething = DrawPersonSalientPoints(salientPoints);
     if(drewSomething)
     {
       if(_iConfig.saveQuality != 0)
@@ -262,7 +269,15 @@ void BehaviorBoxDemoCountPeople::TransitionToWaitingForCloud()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBoxDemoCountPeople::DrawSalientPoints(const std::list<Vision::SalientPoint>& salientPoints)
+static inline const ColorRGBA& GetColor(const Vision::SalientPoint& salientPoint)
+{
+  return (salientPoint.salientType == Vision::SalientPointType::Person ?
+          NamedColors::YELLOW :
+          NamedColors::CYAN);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorBoxDemoCountPeople::DrawPersonSalientPoints(std::list<Vision::SalientPoint>& salientPoints)
 {
   if(salientPoints.empty())
   {
@@ -282,20 +297,26 @@ bool BehaviorBoxDemoCountPeople::DrawSalientPoints(const std::list<Vision::Salie
   }
   
   std::vector<Rectangle<f32>> alreadyDrawn;
-  for(const auto& salientPoint : salientPoints)
+  auto iter = salientPoints.begin();
+  while(iter != salientPoints.end())
   {
+    Vision::SalientPoint& salientPoint = *iter;
+    
     Poly2f poly(salientPoint.shape);
     
     Rectangle<f32> rect(poly);
     bool keep = true;
-    for(const auto& rectAlreadyDrawn : alreadyDrawn)
+    if(salientPoint.salientType == Vision::SalientPointType::Person)
     {
-      // Simple "non-maxima suppression". Don't draw this salient point if it overlaps one we've
-      // already drawn too much
-      if(rect.ComputeOverlapScore(rectAlreadyDrawn) > kTheBox_CountPeopleSalientPointOverlapThreshold)
+      for(const auto& rectAlreadyDrawn : alreadyDrawn)
       {
-        keep = false;
-        break;
+        // Simple "non-maxima suppression". Don't draw this salient point if it overlaps one we've
+        // already drawn too much
+        if(rect.ComputeOverlapScore(rectAlreadyDrawn) > kTheBox_CountPeopleSalientPointOverlapThreshold)
+        {
+          keep = false;
+          break;
+        }
       }
     }
     
@@ -310,7 +331,12 @@ bool BehaviorBoxDemoCountPeople::DrawSalientPoints(const std::list<Vision::Salie
         pt.y() *= FACE_DISPLAY_HEIGHT;
       }
       
-      _dispImg.DrawPoly(poly, NamedColors::YELLOW, kTheBox_CountPeopleDrawSalientPointThickness);
+      _dispImg.DrawPoly(poly, GetColor(salientPoint), kTheBox_CountPeopleDrawSalientPointThickness);
+      ++iter;
+    }
+    else
+    {
+      iter = salientPoints.erase(iter);
     }
   }
   
@@ -356,7 +382,18 @@ void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<V
                            pt.x() *= imgForWeb.GetNumCols();
                            pt.y() *= imgForWeb.GetNumRows();
                          }
-                         imgForWeb.DrawPoly(poly, NamedColors::YELLOW, kTheBox_CountPeopleDrawSalientPointThickness);
+                         
+                         const ColorRGBA& color = GetColor(salientPoint);
+                         
+                         imgForWeb.DrawPoly(poly, color, kTheBox_CountPeopleDrawSalientPointThickness);
+                         
+                         const f32 kFontScale = 0.75f;
+                         const bool kShadow = true;
+                         const bool kCenter = true;
+                         const s32 kThickness = 1;
+                         const Rectangle<f32> rect(poly);
+                         imgForWeb.DrawText(rect.GetMidPoint(), salientPoint.description, color,
+                                            kFontScale, kShadow, kThickness, kCenter);
                        }
 
                        const Result saveResult = imgForWeb.Save(saveFilename + ".jpg", kTheBox_CountPeopleJpegQuality);
@@ -366,27 +403,11 @@ void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<V
                                    saveFilename.c_str());
                        }
                      }
-                   }
-
-                   {
-                     // same as above, but for the thumbnail (if it exists)
-                     Vision::ImageRGB imgForWeb;
-                     const Result loadResult = imgForWeb.Load(thumbnailFilename);
-                     if(loadResult == RESULT_OK )
-                     {
-                       for(const auto& salientPoint : salientPoints)
-                       {
-                         Poly2f poly(salientPoint.shape);
-                         for(auto & pt : poly)
-                         {
-                           pt.x() *= imgForWeb.GetNumCols();
-                           pt.y() *= imgForWeb.GetNumRows();
-                         }
-                         imgForWeb.DrawPoly(poly,
-                                            NamedColors::YELLOW,
-                                            kTheBox_CountPeopleDrawSalientPointThumbnailThickness);
-                       }
                      
+                     if(Util::IsFltLT(kTheBox_CountPeopleSaveThumbnailSize, 1.f))
+                     {
+                       imgForWeb.Resize(kTheBox_CountPeopleSaveThumbnailSize);
+                       
                        const Result saveResult = imgForWeb.Save(saveFilename + ".thm.jpg",
                                                                 kTheBox_CountPeopleJpegQuality);
                        if(RESULT_OK != saveResult)
@@ -395,7 +416,6 @@ void BehaviorBoxDemoCountPeople::DrawSalientPointsOnSavedImage(const std::list<V
                                    saveFilename.c_str());
                        }
                      }
-
                    }
                  });
       break;
