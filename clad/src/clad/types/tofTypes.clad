@@ -23,6 +23,7 @@ structure RangingData {
   uint_8 roiStatus
 }
 
+// Contains all 16 ROIs worth of raw ranging data
 structure RangeDataRaw {
   RangingData data[32]
 }

@@ -1711,6 +1711,7 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
   const auto& clearColor = NamedColors::BLACK;
   img.FillWith( {clearColor.r(), clearColor.g(), clearColor.b()} );
 
+  // Draw the range data in a 4x4 grid where each cell is one of the range ROIs
   const u32 gridHeight = FACE_DISPLAY_HEIGHT / 4;
   const u32 gridWidth = FACE_DISPLAY_WIDTH / 4;
   for(const auto& rangeData : data.data)
@@ -1729,14 +1730,19 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
     // Assuming max range is 1m
     f32 temp = std::max(rangeData.processedRange_mm, 0.000001f); // Prevent divide by zero
     temp = std::min(temp, 1000.f) / 1000.f;
-    
+
+    // Scale color based on distance
     u8 color = 255 * temp;
 
     u8 status = rangeData.status;
 
+    // Signal quality is signalRate / spadCount
     float tempDiv = (rangeData.spadCount == 0 ? -1 : rangeData.spadCount);
     float signalQuality = (f32)(rangeData.signalRate_mcps / tempDiv);
 
+    // Default background color is green
+    // unless this ROI reported an invalid status in which the background
+    // is red
     ColorRGBA bg(0, (u8)(255-color), 0);
     if(status != 0)
     {
@@ -1746,6 +1752,7 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
 
     img.DrawFilledRect(rect, bg);
 
+    // Draw three things in each cell, distance (top left), status (top right), and signal quality (bottom left)
     Point2f loc(x, y + 8);
     const u8 textColor = (color > 128 ? 255 : 0);
     img.DrawText(loc,
@@ -1755,7 +1762,6 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
                  false,
                  1);
 
-    //    const f32 xPos = loc.x() + (Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)), 0.3f, 1).x() + kDefaultTextSpacing_pix);
     const f32 xPos = loc.x() + (u32)(2.75f*(f32)kDefaultTextSpacing_pix);
     img.DrawText({xPos, loc.y()},
                  std::to_string(status),
@@ -1773,12 +1779,7 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
                  0.3f,
                  false,
                  1);
-    
-
-  }
-
-  
-  //  img.Save("/test.png", 100);
+  }  
   
   DrawScratch();
 }

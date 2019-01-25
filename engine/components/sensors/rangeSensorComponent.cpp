@@ -38,13 +38,12 @@ void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
 {
   _robot = robot;
 
-  // Subscribe to motor command ack      
+  // Subscribe to the SendRangeData request
   auto sendRangeDataLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
                              {
                                _sendRangeData = event.GetData().Get_sendRangeData().enable;
                                if(_sendRangeData)
                                {
-                                 ToFSensor::getInstance()->LoadCalibration(nullptr);
                                  ToFSensor::getInstance()->StartRanging(nullptr);
                                }
                                else
@@ -64,10 +63,11 @@ void RangeSensorComponent::Update()
 {
   _latestRawRangeData = ToFSensor::getInstance()->GetData(_rawDataIsNew);
 
+  // If we have been requested to send range data, then populate a RangeDataToDisplay message
   if(_sendRangeData)
   {
     using namespace RobotInterface;
-    
+
     RangeDataToDisplay msg;
     auto& disp = msg.data.data;
     memset(&disp, 0, sizeof(disp));
@@ -78,6 +78,7 @@ void RangeSensorComponent::Update()
       disp[e.roi].status = 99;
       for(const auto& reading : e.readings)
       {
+        // Use the status and signalRate from the reading that corresponds to the processedRange_mm
         if(Util::IsFltNear((f32)reading.rawRange_mm, e.processedRange_mm))
         {
           disp[e.roi].signalRate_mcps = reading.signalRate_mcps;

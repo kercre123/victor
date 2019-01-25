@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 10/18/2018
  *
- * Description: Defines interface to a some number(2) of tof sensors
+ * Description: Defines interface to a tof sensor
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -27,7 +27,6 @@
 #include <thread>
 #include <mutex>
 #include <queue>
-#include <iomanip>
 
 #ifdef SIMULATOR
 #error SIMULATOR should be defined by any target using tof_vicos.cpp
@@ -48,14 +47,16 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  int tofR_fd = -1;
-  int tofL_fd = -1;
 
-  // thread and mutex for setting up and reading from the sensors
+  // Handle to the actual device
+  VL53L1_Dev_t _dev;
+
+  // Thread and mutex for setting up and reading from the sensor
   std::thread _processor;
   std::mutex _mutex;
   bool _stopProcessing = false;
 
+  // Asynchonous commands in order to interact with the device on a thread
   std::mutex _commandLock;
   enum Command
     {
@@ -63,35 +64,22 @@ namespace {
      StopRanging,
      SetupSensors,
      PerformCalibration,
-     LoadCalibration,
     };
   std::queue<std::pair<Command, ToFSensor::CommandCallback>> _commandQueue;
 
+  // Whether or not ranging is currently enabled
   std::atomic<bool> _rangingEnabled;
+
+  // Whether or not calibration is currently running
   std::atomic<bool> _isCalibrating;
 
   // The latest available tof data
   RangeDataRaw _latestData;
 
-  // Enum for which sensor we are trying to operate on
-  // Values map directly to corresponsing /dev/stmvl53l1_ranging
-  // and /dev/stmvl53l1_ranging1 devices
-  enum Sensor
-  {
-   #if USE_BOTH_SENSORS
-   RIGHT = 0,
-   LEFT = 1,
-   #else
-   RIGHT = 1,
-   LEFT = 0,
-   #endif
-  };
-
+  // Whether or not _latestData has updated since the last call to get it
   bool _dataUpdatedSinceLastGetCall = false;
 
-  VL53L1_CalibrationData_t _origCalib_left;
-  VL53L1_CalibrationData_t _origCalib_right;
-
+  // Settings for calibration
   uint32_t _distanceToCalibTarget_mm = 0;
   float _calibTargetReflectance = 0;
 
@@ -838,136 +826,26 @@ ToFSensor::CommandResult run_calibration(uint32_t distanceToTarget_mm,
   #endif
   _isCalibrating = false;
 
-  ToFSensor::CommandResult res = ToFSensor::CommandResult::Success;
-  if(rcR < 0)
-  {
-    res = ToFSensor::CommandResult::CalibrateRightFailed;
-  }
-  else if(rcL < 0)
-  {
-    res = ToFSensor::CommandResult::CalibrateLeftFailed;
-  }
+  ToFSensor::CommandResult res = (rc < 0 ?
+                                  ToFSensor::CommandResult::CalibrateFailed :
+                                  ToFSensor::CommandResult::Success);
   return res;
 }
 
-int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance,
+int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
+                                  float targetReflectance,
                                   const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
-  _commandQueue.push({Command::PerformCalibration, callback});
   _distanceToCalibTarget_mm = distanceToTarget_mm;
   _calibTargetReflectance = targetReflectance;
+  _commandQueue.push({Command::PerformCalibration, callback});
   _isCalibrating = true;
   return 0;
 }
 
-void load_calibration()
-{
-  PRINT_NAMED_ERROR("","Load calibration");
-
-  VL53L1_CalibrationData_t calib;
-  memset(&calib, 0, sizeof(calib));
-  int rc = load_calibration_from_disk(calib, "/factory/tof_right.bin");
-  if(rc < 0)
-  {
-    PRINT_NAMED_ERROR("","Failed to load tof calibration");
-  }
-  else
-  {
-    rc = set_calibration_data(tofR_fd, calib);
-    if(rc < 0)
-    {
-      PRINT_NAMED_ERROR("","Failed to set tof calibration");
-    }
-  }
-
-  stmvl531_zone_calibration_data_t calibZone;
-  memset(&calibZone, 0, sizeof(calibZone));
-  rc = load_zone_calibration_from_disk(calibZone, "/factory/tofZone_right.bin");
-  if(rc < 0)
-  {
-    PRINT_NAMED_ERROR("","Failed to load tof calibration");
-  }
-  else
-  {
-    rc = set_zone_calibration_data(tofR_fd, calibZone);
-    if(rc < 0)
-    {
-      PRINT_NAMED_ERROR("","Failed to set tof calibration");
-    }
-  }          
-}
-
-
-
-/// Setup 4x4 multi-zone imaging
-int setup(Sensor which) {
-  int rc = 0;
-
-  int fd = (which == LEFT ? tofL_fd : tofR_fd);
-
-  // Stop all ranging so we can change settings
-  PRINT_NAMED_ERROR("","stop ranging\n");
-  rc = stop_ranging(fd);
-  return_if_not(rc == 0, -1, "ioctl error stopping ranging: %d", errno);
-
-  auto* origCalib = (which == LEFT ? &_origCalib_left : &_origCalib_right);
-  memset(origCalib, 0, sizeof(*origCalib));
-  rc = get_calibration_data(fd, *origCalib);
-  return_if_not(rc == 0, -1, "ioctl error getting calibration: %d", errno);
-
-  load_calibration();
-  
-  // Have the device reset when ranging is stopped
-  PRINT_NAMED_ERROR("","reset on stop\n");
-  rc = reset_on_stop_set(fd, 1);
-  return_if_not(rc == 0, -1, "ioctl error reset on stop: %d", errno);
-
-  // Switch to multi-zone scanning mode
-  PRINT_NAMED_ERROR("","Switch to multi-zone scanning\n");
-  rc = preset_mode_set(fd, VL53L1_PRESETMODE_MULTIZONES_SCANNING);
-  return_if_not(rc == 0, -1, "ioctl error setting preset_mode: %d", errno);
-
-  // Setup ROIs
-  PRINT_NAMED_ERROR("","Setup ROI grid\n");
-  rc = setup_roi_grid(fd, 4, 4);
-  return_if_not(rc == 0, -1, "ioctl error setting up preset grid: %d", errno);
-
-  // Setup timing budget
-  PRINT_NAMED_ERROR("","set timing budget\n");
-  rc = timing_budget_set(fd, 8*2000);
-  return_if_not(rc == 0, -1, "ioctl error setting timing budged: %d", errno);
-
-  // Set distance mode
-  PRINT_NAMED_ERROR("","set distance mode\n");
-  rc = distance_mode_set(fd, VL53L1_DISTANCEMODE_SHORT);
-  return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
-
-  // Set output mode
-  PRINT_NAMED_ERROR("","set output mode\n");
-  rc = output_mode_set(fd, VL53L1_OUTPUTMODE_STRONGEST);
-  return_if_not(rc == 0, -1, "ioctl error setting distance mode: %d", errno);
-
-  PRINT_NAMED_ERROR("","Enable live xtalk\n");
-  rc = set_live_crosstalk(fd, false);
-  return_if_not(rc == 0, -1, "ioctl error setting live xtalk: %d", errno);
-
-  PRINT_NAMED_ERROR("","set offset correction mode\n");
-  rc = offset_correction_mode_set(fd, VL53L1_OFFSETCORRECTIONMODE_PERZONE);
-  return_if_not(rc == 0, -1, "ioctl error setting offset correction mode: %d", errno);
-
-  return fd;
-}
-
-
-/// Get multi-zone ranging data measurements.
-int get_mz_data(const int dev, const int blocking, VL53L1_MultiRangingData_t *data) {
-  return ioctl(dev, blocking ? VL53L1_IOCTL_MZ_DATA_BLOCKING : VL53L1_IOCTL_MZ_DATA, data);
-}
-
-
-void ParseData(Sensor whichSensor,
-               VL53L1_MultiRangingData_t& mz_data,
+// Parses and converts VL53L1_MultiRangingData_t into RangeDataRaw
+void ParseData(VL53L1_MultiRangingData_t& mz_data,
                RangeDataRaw& rangeData)
 {
   // Right sensor is flipped compared to left
@@ -981,6 +859,7 @@ void ParseData(Sensor whichSensor,
   const int index = (mz_data.RoiNumber / 4 * 8) + (mz_data.RoiNumber % 4) + offset;
 
   RangingData& roiData = rangeData.data[index];
+  // Populate singular data from this ROI
   roiData.readings.clear();
   roiData.roi = index;
   roiData.numObjects = mz_data.NumberOfObjectsFound;
@@ -988,24 +867,23 @@ void ParseData(Sensor whichSensor,
   roiData.spadCount = mz_data.EffectiveSpadRtnCount / 256.f;
   roiData.processedRange_mm = 0;
 
+  // Populate the list of "readings" for this ROIs RangingData for each object detected
   if(mz_data.NumberOfObjectsFound > 0)
   {
-    int16_t minDist = 1000;
+    int16_t minDist = 1000; // Assuming max distance of 1000mm
     for(int r = 0; r < mz_data.NumberOfObjectsFound; r++)
     {
       RangeReading reading;
       reading.status = mz_data.RangeData[r].RangeStatus;
 
       // The following three readings come up in 16.16 fixed point so convert
-      reading.signalRate_mcps = ((float)mz_data.RangeData[r].SignalRateRtnMegaCps * (float)(1/(2^16)));
-      reading.ambientRate_mcps = ((float)mz_data.RangeData[r].AmbientRateRtnMegaCps * (float)(1/(2^16)));
-      reading.sigma_mm = ((float)mz_data.RangeData[r].SigmaMilliMeter * (float)(1/(2^16)));
+      reading.signalRate_mcps = ((float)mz_data.RangeData[r].SignalRateRtnMegaCps * (float)(1/(2 << 16)));
+      reading.ambientRate_mcps = ((float)mz_data.RangeData[r].AmbientRateRtnMegaCps * (float)(1/(2 << 16)));
+      reading.sigma_mm = ((float)mz_data.RangeData[r].SigmaMilliMeter * (float)(1/(2 << 16)));
       reading.rawRange_mm = mz_data.RangeData[r].RangeMilliMeter;
-      
-      // The right sensor reports a lot of invalid RangeStatuses, usually
-      // WRAP_TARGET_FAIL. The range data still appears valid though so we ignore the
-      // invalid status.
-      // Other common invalid status are OUTOFBOUNDS_FAIL and TARGET_PRESENT_LACK_OF_SIGNAL
+
+      // For all valid detected objects in this ROI keep track of which one was the closest and
+      // use that for the overall processedRange_mm
       if(mz_data.RangeData[r].RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID)
       {
         const int16_t dist = mz_data.RangeData[r].RangeMilliMeter;
@@ -1021,52 +899,23 @@ void ParseData(Sensor whichSensor,
 
 }
 
-void ReadDataFromSensor(Sensor which, RangeDataRaw& rangeData)
+// Get the most recent ranging data and parse it to a useable format
+int ReadDataFromSensor(RangeDataRaw& rangeData)
 {
-  const int fd = (which == LEFT ? tofL_fd : tofR_fd);
-  
-  int rc = 0;
-  
-  for(int i = 0; i < 4; i++)
+  int rc = 0;  
+  VL53L1_MultiRangingData_t mz_data;
+  rc = get_mz_data(&_dev, 1, &mz_data);
+  if(rc == 0)
   {
-    for(int j = 0; j < 4; j++)
-    {
-      VL53L1_MultiRangingData_t mz_data;
-      rc = get_mz_data(fd, 1, &mz_data);
-      if(rc == 0)
-      {
-        ParseData(which, mz_data, rangeData);
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("","FAILED TO GET_MZ_DATA %d\n", rc);
-      }
-    }
+    ParseData(mz_data, rangeData);
   }
-}
-
-RangeDataRaw ReadData()
-{
-  static RangeDataRaw rangeData;
-
-  // Alternate reading from each sensor
-  static bool b = true;
-  if(b)
-  {
-    ReadDataFromSensor(RIGHT, rangeData);
-  }
-#if USE_BOTH_SENSORS
   else
   {
-    ReadDataFromSensor(LEFT, rangeData);
+    PRINT_NAMED_ERROR("ReadDataFromSensor", "Failed to get mz data %d", rc);
   }
-  b = !b;
-#endif
-
   
-  return rangeData;
+  return rc;
 }
-
 
 int ToFSensor::StartRanging(const CommandCallback& callback)
 {
@@ -1077,9 +926,6 @@ int ToFSensor::StartRanging(const CommandCallback& callback)
 
 int ToFSensor::StopRanging(const CommandCallback& callback)
 {
-  callback(CommandResult::Success);
-  return 0;
-  
   std::lock_guard<std::mutex> lock(_commandLock);
   _commandQueue.push({Command::StopRanging, callback});
   return 0;
@@ -1092,18 +938,11 @@ int ToFSensor::SetupSensors(const CommandCallback& callback)
   return 0;
 }
 
-int ToFSensor::LoadCalibration(const CommandCallback& callback)
-{
-  std::lock_guard<std::mutex> lock(_commandLock);
-  _commandQueue.push({Command::StopRanging, nullptr});
-  _commandQueue.push({Command::LoadCalibration, callback});
-  return 0;
-}
-
 void ProcessLoop()
 {
   while(!_stopProcessing)
   {
+    // Process the next command if there is one
     _commandLock.lock();
     if(_commandQueue.size() > 0)
     {
@@ -1116,13 +955,11 @@ void ProcessLoop()
       {
         case Command::StartRanging:
           {
-            load_calibration();
-            
-            PRINT_NAMED_ERROR("","Command start ranging");
-            int rc = start_ranging(tofR_fd);
+            PRINT_NAMED_INFO("ToF.ProcessLoop.StartRanging", "");
+            int rc = start_ranging(&_dev);
             if(rc < 0)
             {
-              res = ToFSensor::CommandResult::StartRangingRightFailed;
+              res = ToFSensor::CommandResult::StartRangingFailed;
               break;
             }
 
@@ -1139,11 +976,11 @@ void ProcessLoop()
           break;
         case Command::StopRanging:
           {
-            PRINT_NAMED_ERROR("","Command stop ranging");
-            int rc = stop_ranging(tofR_fd);
+            PRINT_NAMED_INFO("ToF.ProcessLoop.StopRanging","");
+            int rc = stop_ranging(&_dev);
             if(rc < 0)
             {
-              res = ToFSensor::CommandResult::StopRangingRightFailed;
+              res = ToFSensor::CommandResult::StopRangingFailed;
               break;
             }
             
@@ -1160,16 +997,18 @@ void ProcessLoop()
           break;
         case Command::SetupSensors:
           {
-            PRINT_NAMED_ERROR("","Command setup sensors");
+            PRINT_NAMED_INFO("ToF.ProcessLoop.SetupSensors","");
             _rangingEnabled = false;
 
-            if(tofR_fd < 0)
+            int rc = 0;
+            // Only attempt to open the device if the file handle is invalid
+            if(_dev.platform_data.i2c_file_handle <= 0)
             {
               tofR_fd = open_dev(RIGHT);
               if(tofR_fd < 0)
               {
-                res = ToFSensor::CommandResult::OpenRightDevFailed;
-                PRINT_NAMED_ERROR("","FAILED TO OPEN RIGHT");
+                res = ToFSensor::CommandResult::OpenDevFailed;
+                PRINT_NAMED_ERROR("ToF.ProcessLoop.SetupSensors","Failed to open sensor");
                 break;
               }
             }
@@ -1186,34 +1025,21 @@ void ProcessLoop()
             }
             #endif
 
-            tofR_fd = setup(RIGHT);
-            if(tofR_fd < 0)
+            // Device is open so set it up for multizone ranging
+            rc = setup(&_dev);
+            if(rc < 0)
             {
-              res = ToFSensor::CommandResult::SetupRightFailed;
-              PRINT_NAMED_ERROR("","FAILED TO OPEN TOF R");
-            }
-
-            #if USE_BOTH_SENSORS
-            tofL_fd = setup(LEFT);
-            if(tofL_fd < 0)
-            {
-              res = ToFSensor::CommandResult::SetupLeftFailed;
-              PRINT_NAMED_ERROR("","FAILED TO OPEN TOF L");
+              res = ToFSensor::CommandResult::SetupFailed;
+              PRINT_NAMED_ERROR("ToF.ProcessLoop.SetupFailed","Failed to setup sensor");
             }
             #endif
           }
           break;
         case Command::PerformCalibration:
           {
-            PRINT_NAMED_ERROR("","Command perform calibration");
+            PRINT_NAMED_INFO("ToF.ProcessLoop.PerformCalibration","");
             _rangingEnabled = false;
             res = run_calibration(_distanceToCalibTarget_mm, _calibTargetReflectance);
-          }
-          break;
-
-        case Command::LoadCalibration:
-          {
-            //load_calibration();
           }
           break;
       }
@@ -1229,12 +1055,15 @@ void ProcessLoop()
       _commandLock.unlock();
     }
 
+    // As long as ranging is enabled, try to read data from the sensor
     if(_rangingEnabled)
     {
-      RangeDataRaw data = ReadData();
+      // Note: static is important here in order to preserve previous readings
+      // as, typically, only one ROI is read at a time
+      static RangeDataRaw data;
+      const int rc = ReadDataFromSensor(data);
 
-      static RangeDataRaw lastValid = data;
-      
+      // static RangeDataRaw lastValid = data;
       // std::stringstream ss;
       // for(int i = 0; i < 4; i++)
       // {
@@ -1254,13 +1083,15 @@ void ProcessLoop()
       // }
       // PRINT_NAMED_ERROR("","%s", ss.str().c_str());
 
-      
+      // Got a valid reading so update our latest data
+      if(rc >= 0)
       {
         std::lock_guard<std::mutex> lock(_mutex);
         _dataUpdatedSinceLastGetCall = true;
         _latestData = data;
       }
     }
+    // Ranging is not enabled so sleep
     else
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(32));
@@ -1298,7 +1129,6 @@ ToFSensor::~ToFSensor()
 
 Result ToFSensor::Update()
 {
-  
   return RESULT_OK;
 }
 

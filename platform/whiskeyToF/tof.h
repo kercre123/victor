@@ -42,38 +42,49 @@ public:
 
 #endif
 
+  // Get the latest ToF reading
+  // hasDataUpdatedSinceLastCall indicates if the reading has changed since the last time this
+  // function was called
   RangeDataRaw GetData(bool& hasDataUpdatedSinceLastCall);
 
   enum class CommandResult
-    {
-     Success = 0,
-     Failure = -1,
-     OpenLeftDevFailed,
-     OpenRightDevFailed,
-     SetupRightFailed,
-     SetupLeftFailed,
-     StartRangingLeftFailed,
-     StartRangingRightFailed,
-     StopRangingLeftFailed,
-     StopRangingRightFailed,
-     CalibrateRightFailed,
-     CalibrateLeftFailed
-    };
-  // Callbacks are called on a thread
+  {
+    Success = 0,
+    Failure = -1,
+    OpenDevFailed,
+    SetupFailed,
+    StartRangingFailed,
+    StopRangingFailed,
+    CalibrateFailed,
+  };
+  // All CommandCallbacks are called from a thread
   using CommandCallback = std::function<void(CommandResult)>;
+
+  // Request the ToF device to be setup and configured for ranging
   int SetupSensors(const CommandCallback& callback);
+
+  // Start ranging
   int StartRanging(const CommandCallback& callback);
+
+  // Stop ranging
   int StopRanging(const CommandCallback& callback);
+
+  // Whether or not the device is actively ranging
   bool IsRanging();
 
+  // Whether or not the RoiStatus is considered valid
   bool IsValidRoiStatus(uint8_t status);
   
 #if FACTORY_TEST
-  int LoadCalibration(const CommandCallback& callback);
-  
-  int PerformCalibration(uint32_t distanceToTarget_mm, float targetReflectance,
+  // Run the calibration procedure at the given distance and target reflectance
+  int PerformCalibration(uint32_t distanceToTarget_mm,
+                         float targetReflectance,
                          const CommandCallback& callback);
+
+  // Whether or not the device is currently calibrating
   bool IsCalibrating();
+
+  // Set where to save calibration
   void SetLogPath(const std::string& path);
 #endif
   
