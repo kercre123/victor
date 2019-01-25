@@ -115,7 +115,7 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithGetIn(OnTriggerAudioCo
   }
 
   auto* anim = _context->GetDataLoader()->GetCannedAnimation(_getInAnimName);
-  if((_streamer != nullptr) && (anim != nullptr)){
+  if((_streamer != nullptr) && (anim != nullptr) && (!_getInAnimName.empty())){
     _streamer->SetStreamingAnimation(_getInAnimName, _getInAnimationTag);
   }else{
     PRINT_NAMED_ERROR("ShowAudioStreamStateManager.StartTriggerResponseWithGetIn.NoValidGetInAnimation",
