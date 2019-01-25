@@ -6,6 +6,7 @@
   
   "behaviors": [
     "Alexa",
+    "BoxDemoTouchForStream",
     "BoxDemoDescribeScene",
     "BoxDemoShowMicData",
     "BoxDemoShowNetworkInfo",

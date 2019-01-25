@@ -1,0 +1,11 @@
+{
+  "behaviorID": "BoxDemoTouchForStream",
+  "behaviorClass": "BoxDemoOpenStream",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "RobotTouched",
+    "minTouchTime": 0.5
+  }
+}
+
+

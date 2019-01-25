@@ -49,6 +49,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoCountPeople.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoDescribeScene.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoFaceTracking.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoOpenStream.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoShowMicData.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/box/behaviorBoxDemoShowNetworkInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/character/howOldAreYou/behaviorHowOldAreYou.h"
@@ -443,6 +444,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::BoxDemoFaceTracking:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorBoxDemoFaceTracking(config));
+      break;
+    }
+    
+    case BehaviorClass::BoxDemoOpenStream:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBoxDemoOpenStream(config));
       break;
     }
     
