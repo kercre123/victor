@@ -132,6 +132,19 @@ private:
   bool _detectedWhiteFromCliffs = false;
   
   f32 _nextSendWebVizDataTime_sec = 0.0f;
+
+  // when the robot is put down, record this origin ID
+  // then, when computing the distance the robot has driven
+  // we can account for rejiggered maps when localizing to the charger
+  PoseOriginID_t _poseOriginIdOnPutdown;
+
+  // after the robot is putdown, it will then get delocalized
+  // and a new origin and frame system will be tracked for this
+  // new resting position. This variable is checked when checking
+  // for robot delocalization, to ensure it is because of putdown events
+  bool _robotWasPutdownRecently = false;
+
+  PoseOriginID_t _poseOriginIdOnDelocalize;
   
   // - - - - - - - - - -
   // Prox Sensor Members
