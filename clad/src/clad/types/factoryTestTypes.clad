@@ -235,6 +235,9 @@ enum no_cpp_class uint_32 PlaypenTestMask {
   NoisyTouchSensorError        = 0x00000004,
   CubeRadioError               = 0x00000008,
   WifiScanError                = 0x00000010,
+
+  CubePoseCheck                = 0x00000020,
+  
 }
 
 } // namespace Cozmo
