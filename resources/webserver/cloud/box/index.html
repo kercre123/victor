@@ -8,18 +8,41 @@ function validate() {
 		if (!link.startsWith('http')) {
 			link = 'http://' + link;
 		}
-		location = 'request?file=' + encodeURIComponent(link);
+		location = 'request?file=' + encodeURIComponent(link) + '&type=' + document.getElementById("select").value;
 	}
 	return false;
 }
+
+function selectChanged() {
+	var sel = document.getElementById("select");
+	var links = document.getElementsByName("reqlink");
+	for (var i = 0; i < links.length; i++) {
+		var link = links[i];
+		var typeIdx = link.href.indexOf("type=");
+		if (typeIdx > 0) {
+			link.href = link.href.substring(0, typeIdx) + "type=" + sel.value;
+		}
+	}
+}
+
+window.onload = selectChanged;
 </script>
 <form onSubmit="return validate();">
 	<input id="link" type="text" />
 	<input type="submit" value="Load URL" />
 </form>
 
+<form>
+	<select id="select" onchange="selectChanged();">
+		<option value="SceneDescription">SceneDescription</option>
+		<option value="ObjectDetection">ObjectDetection</option>
+		<option value="FaceRecognition">FaceRecognition</option>
+		<option value="OCR">OCR</option>
+	</select>
+</form>
+
 {{range .}}
-  <div><a href="request?file={{.Name}}">{{.Name}}<br><img src="images/{{.Name}}"></div>
+  <div><a href="request?file={{.Name}}&type=SceneDescription" name="reqlink">{{.Name}}<br><img src="images/{{.Name}}"></div>
 {{else}}
   <div>
     No files found - please add test photos to resources/webserver/cloud/box/images in the Victor repo
