@@ -307,6 +307,15 @@
       "high"         : 1,
       "standard"     : 1,
       "relativeCost" : 1
+    },
+    {
+      "mode"         : "OffboardOCR",
+      "low"          : 16,
+      "med"          : 8,
+      "high"         : 1,
+      "standard"     : 1,
+      "relativeCost" : 1
     }
+    
   ]
 }

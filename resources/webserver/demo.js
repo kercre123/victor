@@ -352,12 +352,27 @@ $(function() {
       });
     }
   })
+  
+  $('#TheBox_TTSForOCR').change(function() {
+    console.log('set: ' + this.checked);
+    if( !useFakeData ) {
+      $.post("consolevarset", {key: "TheBox_TTSForOCR", value: this.checked}, function(result){
+        console.log('result: ' + result);
+      });
+    }
+  })
 
   if( !useFakeData ) {
     $.post('consolevarget?key=TheBox_TTSForDescription', function(result) {
       console.log(result);
       var value = (result.trim() == 'true' || result.trim() == 'true<br>');
       $('#TheBox_TTSForDescription').prop("checked", value);
+    });
+  
+    $.post('consolevarget?key=TheBox_TTSForOCR', function(result) {
+      console.log(result);
+      var value = (result.trim() == 'true' || result.trim() == 'true<br>');
+      $('#TheBox_TTSForOCR').prop("checked", value);
     });
   }
 });

@@ -372,6 +372,9 @@ Result OffboardModel::ParseSalientPointsFromJson(const Json::Value& detectionRes
     case Vision::OffboardProcType::FaceRecognition:
       return ParseFaceDataFromJson(detectionResult, salientPoints);
       
+    case Vision::OffboardProcType::OCR:
+      return ParseTextDetectionsFromJson(detectionResult, salientPoints);
+      
     default:
     {
       // Assume the detectionResult just contains an array of SalientPoints in Json format
@@ -729,18 +732,100 @@ Result OffboardModel::ParseFaceDataFromJson(const Json::Value& resultArray,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result OffboardModel::ParseTextDetectionsFromJson(const Json::Value& detectionResult,
+                                                  std::list<Vision::SalientPoint>& salientPoints)
+{
+
+  if(detectionResult.isMember("recognitionResult"))
+  {
+    //  "recognitionResult": {
+    //    "lines": [
+    //              {
+    //              "boundingBox": [
+    //                              122,
+    //                              122,
+    //                              401,
+    //                              85,
+    //                              404,
+    //                              229,
+    //                              143,
+    //                              233
+    //                              ],
+    //              "text": "Sorry!",
+    
+    const Json::Value& recResult = detectionResult["recognitionResult"];
+    
+    DEV_ASSERT(recResult.isMember("lines"), "OffboardModel.ParseTextDetectionsFromJson.MissingLines");
+    const Json::Value& linesJson = recResult["lines"];
+    DEV_ASSERT(linesJson.isArray(), "OffboardModel.ParseTextDetectionsFromJson.LinesNotArray");
+    
+    // One SalientPoint per line of text
+    for(const auto& lineJson : linesJson)
+    {
+      Vision::SalientPoint salientPoint(_imageTimestamp,
+                                        0.f, 0.f,
+                                        0.f, 1.f,
+                                        Vision::SalientPointType::Text,
+                                        "", {}, 0);
+     
+      DEV_ASSERT(lineJson.isMember("boundingBox"), "OffboardModel.ParseTextDetectionsFromJson.MissingBoundingBox");
+      const Json::Value& bboxJson = lineJson["boundingBox"];
+      DEV_ASSERT(bboxJson.isArray(), "OffboardModel.ParseTextDetectionsFromJson.BoundingBoxNotArray");
+      DEV_ASSERT(bboxJson.size() % 2 == 0, "OffboardModel.ParseTextDetectionsFromJson.BoundingBoxNotEvenSize");
+      for(s32 i=0; i<bboxJson.size(); i+=2)
+      {
+        CladPoint2d pt(bboxJson[i].asFloat() / (f32)_imageCols, bboxJson[i+1].asFloat() / (f32)_imageRows);
+        salientPoint.x_img += (f32)pt.x;
+        salientPoint.y_img += (f32)pt.y;
+        salientPoint.shape.emplace_back(std::move(pt));
+      }
+      salientPoint.x_img /= (f32)bboxJson.size()/2;
+      salientPoint.y_img /= (f32)bboxJson.size()/2;
+      
+      DEV_ASSERT(lineJson.isMember("text"), "OffboardModel.ParseTextDetectionsFromJson.MissingText");
+      salientPoint.description = lineJson["text"].asString();
+      
+      salientPoints.emplace_back(std::move(salientPoint));
+    }
+  }
+  else if(detectionResult.isMember("text"))
+  {
+    // {"text": "Hello World!"}
+    
+    Vision::SalientPoint salientPoint(_imageTimestamp,
+                                      0.f, 0.f,
+                                      0.f, 1.f,
+                                      Vision::SalientPointType::Text,
+                                      detectionResult["text"].asString(), {}, 0);
+    
+    LOG_INFO("OffboardModel.ParseTextDetectionsFromJson.CreatedSalientPoint",
+             "Text: %s", salientPoint.description.c_str());
+    
+    salientPoints.emplace_back(salientPoint);
+  }
+  else
+  {
+    LOG_ERROR("OffboardModel.ParseTextDetectionsFromJson.UnrecognizedFormat",
+              "Expecting 'text' or 'recognitionResult' fields.");
+    return RESULT_FAIL;
+  }
+  
+  return RESULT_OK;
+}
+              
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool OffboardModel::Connect()
 {
   static s32 numTries = 0;
   
   const char* serverPath = LOCAL_SOCKET_PATH "box_server";
-  const char* clientPath = LOCAL_SOCKET_PATH "_box_vision_client";
+  const std::string clientPath = std::string(LOCAL_SOCKET_PATH) + "_" + GetName();
   
-  const bool udpSuccess = _udpClient->Connect(clientPath, serverPath);
+  const bool udpSuccess = _udpClient->Connect(clientPath.c_str(), serverPath);
   ++numTries;
   
   LOG_INFO("OffboardModel.Connect.Status", "Try %d: %s - Server:%s Client:%s",
-           numTries, (udpSuccess ? "Success" : "Fail"), serverPath, clientPath);
+           numTries, (udpSuccess ? "Success" : "Fail"), serverPath, clientPath.c_str());
   
   return udpSuccess;
 }

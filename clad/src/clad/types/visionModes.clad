@@ -36,6 +36,7 @@ namespace Vector {
     OffboardFaceRecognition,
     OffboardPersonDetection,
     OffboardSceneDescription,
+    OffboardOCR,
     
     // This is a gross thing to do: a mode to disable another mode. TODO: Remove with VIC-6838
     // If this is "enabled", then it takes precedence over DetectingMarkers mode above and will force that

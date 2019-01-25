@@ -40,7 +40,7 @@ namespace {
 
 // Minimum number of times we need to observe an object at a pose to switch from
 // unknown to known or dirty
-CONSOLE_VAR_RANGED(s32, kMinTimesToObserveObject, "PoseConfirmation", 2, 1,10);
+CONSOLE_VAR_RANGED(s32, kMinTimesToObserveObject, "PoseConfirmation", 1, 1,10);
 
 // If this is true, and an observation is made while the robot is not moving, it
 // is immediately "confirmed", regardless of MinTimesToObserveObject above. Otherwise

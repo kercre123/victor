@@ -15,6 +15,7 @@ enum uint_8 OffboardProcType {
   HumanPose,
   ImageSegmentation,
   ObjectDetection,
+  OCR,
   SceneDescription
 }
 

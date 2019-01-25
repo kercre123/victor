@@ -298,6 +298,10 @@
     {
       "user_intent": "switch_vision_mode",
       "cloud_intent": "intent_switch_vision"
+    },
+    {
+      "user_intent": "perform_ocr",
+      "cloud_intent": "intent_perform_ocr"
     }
   ],
 

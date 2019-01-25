@@ -107,6 +107,7 @@ union dupes_allowed UserIntent
   UserIntent_Void             show_mic_data,
   UserIntent_Void             show_ip_address,
   UserIntent_Void             switch_vision_mode,
+  UserIntent_Void             perform_ocr,
 
   // Vector
 

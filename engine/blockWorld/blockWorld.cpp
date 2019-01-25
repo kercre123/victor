@@ -164,6 +164,29 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
 
+    // For the box demo, to trigger OCR when seen
+    if(THEBOX)
+    {
+      CustomObject* customOCR = CustomObject::CreateWall(ObjectType::CustomType00,
+                                                         CustomObjectMarker::Circles2,
+                                                         216.f, 280.f,
+                                                         13.f, 13.f,
+                                                         true);
+      
+      if(nullptr != customOCR)
+      {
+        const Result result = DefineObject(std::unique_ptr<CustomObject>(customOCR));
+        if(RESULT_OK == result)
+        {
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.InitDependent.DefinedCustomOCRObject", "");
+        }
+        else
+        {
+          LOG_ERROR("BlockWorld.InitDependent.FailedToDefineCustomOCRObject", "");
+        }
+      }
+    }
+    
     //////////////////////////////////////////////////////////////////////////
     // 2x1 Blocks
     //

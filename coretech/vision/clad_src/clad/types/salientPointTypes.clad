@@ -17,11 +17,8 @@ enum uint_8 SalientPointType
   Cat,
   Dog,
   BrightColors,  // For brightly colored areas
-  SceneDescription
-
-  // TODO:
-  // Text,
-
+  SceneDescription,
+  Text
 }
 
 // Return whether each SalientPointType is expected to return a localized shape/bounding box
@@ -36,7 +33,8 @@ enum_concept bool IsSalientPointTypeLocalized[SalientPointType]
   Cat              = 0,
   Dog              = 0,
   BrightColors     = 1,
-  SceneDescription = 0
+  SceneDescription = 0,
+  Text             = 1
 }
 
 structure SalientPoint {

@@ -20,6 +20,8 @@
 namespace Anki {
 namespace Vector {
 
+class BlockWorldFilter;
+
 class BehaviorBoxDemoDescribeScene : public ICozmoBehavior
 {
 public: 
@@ -50,11 +52,15 @@ private:
     float textDisplayTime_sec = 3.f;
     float visionRequestTimeout_sec = 5.f;
     IBEIConditionPtr touchAndReleaseCondition;
+    
+    std::unique_ptr<BlockWorldFilter> blockWorldFilter;
+    TimeStamp_t recentObjectSeenTimeWindow_ms = 2000;
   };
 
   struct DynamicVariables {
     DynamicVariables();
     RobotTimeStamp_t lastImageTime_ms = 0;
+    bool isUsingOCR = false;
   };
 
   InstanceConfig _iConfig;

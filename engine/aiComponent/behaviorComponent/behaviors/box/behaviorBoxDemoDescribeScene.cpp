@@ -24,6 +24,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 
@@ -36,12 +37,15 @@ namespace ConfigKeys
   const char* const kTextDisplayTime = "textDisplayTime_sec";
   const char* const kVisionTimeout   = "visionRequestTimeout_sec";
 }
-  
+ 
+// Not in anonymous namespace so they are visible to demo web page
 CONSOLE_VAR(bool, kTheBox_TTSForDescription, "TheBox.Audio", true);
-
+CONSOLE_VAR(bool, kTheBox_TTSForOCR,         "TheBox.Audio", false);
+  
 namespace
 {
-  const UserIntentTag kUserIntent = USER_INTENT(describe_scene);
+  const UserIntentTag kUserIntent_DescribeScene = USER_INTENT(describe_scene);
+  const UserIntentTag kUserIntent_OCR = USER_INTENT(perform_ocr);
   
   // Enable to have this behavior trigger when TheBox is moved (after actived once with voice)
   // If false, behavior only triggers on voice command
@@ -82,6 +86,21 @@ BehaviorBoxDemoDescribeScene::BehaviorBoxDemoDescribeScene(const Json::Value& co
   
   _iConfig.visionRequestTimeout_sec = JsonTools::ParseFloat(config, ConfigKeys::kVisionTimeout,
                                                             "BehaviorBoxDemoDescribeScene");
+  
+  _iConfig.blockWorldFilter = std::make_unique<BlockWorldFilter>();
+  _iConfig.blockWorldFilter->AddAllowedType(ObjectType::CustomType00);
+  
+  _iConfig.blockWorldFilter->AddFilterFcn([this](const ObservableObject* object)
+  {
+    // Kinda gross to get these for _each_ object, but better than creating the whole filter every tick?
+    const TimeStamp_t lastImageTime_ms = (TimeStamp_t)GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
+    
+    if(lastImageTime_ms - object->GetLastObservedTime() < _iConfig.recentDelocTimeWindow_sec)
+    {
+      return true;
+    }
+    return false;
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -108,12 +127,19 @@ bool BehaviorBoxDemoDescribeScene::WantsToBeActivatedBehavior() const
   }
   
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  const bool pendingIntent = uic.IsUserIntentPending(kUserIntent);
+  const bool pendingIntent = (uic.IsUserIntentPending(kUserIntent_DescribeScene) ||
+                              uic.IsUserIntentPending(kUserIntent_OCR));
   if(pendingIntent)
   {
     return true;
   }
   
+  const BlockWorld& blockWorld = GetBEI().GetBlockWorld();
+  const ObservableObject* obj = blockWorld.FindLocatedMatchingObject(*_iConfig.blockWorldFilter);
+  if(obj != nullptr)
+  {
+    return true;
+  }
   return false;
 }
 
@@ -130,6 +156,9 @@ void BehaviorBoxDemoDescribeScene::GetBehaviorOperationModifiers(BehaviorOperati
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  
+  modifiers.visionModesForActivatableScope->insert({VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low});
+  modifiers.visionModesForActivatableScope->insert({VisionMode::FullHeightMarkerDetection, EVisionUpdateFrequency::High});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -153,16 +182,29 @@ void BehaviorBoxDemoDescribeScene::GetBehaviorJsonKeys(std::set<const char*>& ex
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBoxDemoDescribeScene::OnBehaviorActivated() 
 {
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
-  const bool pendingIntent = uic.IsUserIntentPending(kUserIntent);
-  if(pendingIntent)
-  {
-    SmartActivateUserIntent(kUserIntent);
-  }
-  
   // reset dynamic variables
   _dVars = DynamicVariables();
 
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(uic.IsUserIntentPending(kUserIntent_DescribeScene))
+  {
+    SmartActivateUserIntent(kUserIntent_DescribeScene);
+  }
+  else if(uic.IsUserIntentPending(kUserIntent_OCR))
+  {
+    SmartActivateUserIntent(kUserIntent_OCR);
+    _dVars.isUsingOCR = true;
+  }
+  else
+  {
+    const BlockWorld& blockWorld = GetBEI().GetBlockWorld();
+    const ObservableObject* obj = blockWorld.FindLocatedMatchingObject(*_iConfig.blockWorldFilter);
+    if(obj != nullptr)
+    {
+      _dVars.isUsingOCR = true;
+    }
+  }
+  
   _iConfig.touchAndReleaseCondition->SetActive(GetBEI(), true);
   
   CompoundActionParallel* processingAction = new CompoundActionParallel();
@@ -177,8 +219,8 @@ void BehaviorBoxDemoDescribeScene::OnBehaviorActivated()
   _dVars.lastImageTime_ms = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
 
   {
-    WaitForImagesAction* waitAction = new WaitForImagesAction(1, VisionMode::OffboardSceneDescription,
-                                                              _dVars.lastImageTime_ms);
+    const VisionMode visionMode = (_dVars.isUsingOCR ? VisionMode::OffboardOCR : VisionMode::OffboardSceneDescription);
+    WaitForImagesAction* waitAction = new WaitForImagesAction(1, visionMode, _dVars.lastImageTime_ms);
     waitAction->SetTimeoutInSeconds(_iConfig.visionRequestTimeout_sec); // in case we never hear back from vision
 
     processingAction->AddAction(waitAction);
@@ -246,9 +288,12 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
   // TODO: is there a pretty way to reuse (delegate to) CheckForAndReactToSalientPoint here instead?
   const SalientPointsComponent& salientPointsComp = GetAIComp<SalientPointsComponent>();
   
+  const Vision::SalientPointType salientType = (_dVars.isUsingOCR ?
+                                                Vision::SalientPointType::Text :
+                                                Vision::SalientPointType::SceneDescription);
+  
   std::list<Vision::SalientPoint> salientPoints;
-  salientPointsComp.GetSalientPointSinceTime(salientPoints, Vision::SalientPointType::SceneDescription,
-                                             _dVars.lastImageTime_ms);
+  salientPointsComp.GetSalientPointSinceTime(salientPoints, salientType, _dVars.lastImageTime_ms);
   if(!salientPoints.empty())
   {
     auto iter = salientPoints.begin();
@@ -294,8 +339,10 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
       ++lineNum;
     }
     
-    // display "forever" (the behavior will decide when to stop displaying)
-    GetBEI().GetAnimationComponent().DisplayFaceImage(dispImg, 0);
+    const bool kInterruptRunning = true;
+    GetBEI().GetAnimationComponent().DisplayFaceImage(dispImg,
+                                                      AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS,
+                                                      kInterruptRunning);
 
     const float startTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
@@ -319,7 +366,8 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
           return timedOut;
         }));
 
-    if( kTheBox_TTSForDescription && !salientPoints.empty() ) {
+    if( (_dVars.isUsingOCR && kTheBox_TTSForOCR) || (!_dVars.isUsingOCR && kTheBox_TTSForDescription) )
+    {
       responseAction->AddAction( new SayTextAction(salientPoints.begin()->description, 
                                                    SayTextAction::AudioTtsProcessingStyle::Unprocessed));
     }

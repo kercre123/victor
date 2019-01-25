@@ -1515,10 +1515,11 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         anyModeFailures = true;
-      } else {
-        visionModesProcessed.Insert(VisionMode::DetectingMarkers);
-        visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
       }
+      
+      visionModesProcessed.Insert(VisionMode::DetectingMarkers);
+      visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
+      
       Toc("TotalDetectingMarkers");
     }
   }
@@ -1775,8 +1776,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         }
         else
         {
-          PRINT_CH_INFO("NeuralNets", "VisionSystem.Update.GotFaceMetaData", "ID:%d Name:%s Age:%u",
-                        face.GetID(), face.GetName().c_str(), face.GetAge());
+          PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.GotFaceMetaData", "ID:%d Name:%s Age:%u",
+                         face.GetID(), face.GetName().c_str(), face.GetAge());
         }
       }
     }
@@ -1792,7 +1793,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         // results come back from the neural net
         for(const auto& face : facesToUpdate)
         {
-          PRINT_CH_INFO("NeuralNets", "VisionSystem.Update.WillUpdateMetaData", "ForFace:%d", face.GetID());
+          PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.WillUpdateMetaData", "ForFace:%d", face.GetID());
           _faceMetaDataStorage->SetFaceBeingProcessed(face);
         }
       }

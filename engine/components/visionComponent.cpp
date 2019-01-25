@@ -101,7 +101,7 @@ namespace Vector {
   CONSOLE_VAR(bool, kSendUndistortedImages, "Vision.General", false);
   
   // Whether or not to do rolling shutter correction for physical robots
-  CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
+  CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", false);
   CONSOLE_VAR(f32,  kMinCameraGain,                   "Vision.PreProcessing", 0.1f);
 
   // Amount of time we sleep when paused, waiting for next image, and after processing each image
@@ -1233,6 +1233,7 @@ namespace Vector {
     
     const auto& visionModesUsingNeuralNets = GetVisionModesUsingNeuralNets();
     if(procResult.modesProcessed.ContainsAnyOf(visionModesUsingNeuralNets)
+       || procResult.modesProcessed.Contains(VisionMode::OffboardOCR) // Hacked special case because it runs specially
        || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors))
     {
       if(!usingFixedDrawTime)
@@ -1572,6 +1573,7 @@ namespace Vector {
       VisionMode::OffboardFaceRecognition,
       VisionMode::OffboardPersonDetection,
       VisionMode::OffboardSceneDescription,
+      VisionMode::OffboardOCR,
     };
     
     if(modesProcessed.ContainsAnyOf(kCloudModes))

@@ -113,6 +113,8 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 			modes = append(modes, pb.ImageMode_LOCATE_OBJECT)
 		case vision.OffboardProcType_FaceRecognition:
 			modes = append(modes, pb.ImageMode_IDENTIFY_FACE)
+		case vision.OffboardProcType_OCR:
+			modes = append(modes, pb.ImageMode_OCR_HANDWRITING)
 		}
 	}
 
@@ -148,6 +150,8 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 			resp.ProcType = vision.OffboardProcType_ObjectDetection
 		case pb.ImageMode_IDENTIFY_FACE:
 			resp.ProcType = vision.OffboardProcType_FaceRecognition
+		case pb.ImageMode_OCR_HANDWRITING:
+			resp.ProcType = vision.OffboardProcType_OCR
 		}
 		resps = append(resps, resp)
 	}

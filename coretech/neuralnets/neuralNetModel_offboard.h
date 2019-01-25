@@ -59,6 +59,9 @@ private:
   Result ParseFaceDataFromJson(const Json::Value& jsonSalientPoints,
                                std::list<Vision::SalientPoint>& salientPoints);
   
+  Result ParseTextDetectionsFromJson(const Json::Value& detectionResult,
+                                     std::list<Vision::SalientPoint>& salientPoints);
+  
   std::string _cachePath;
   int         _pollPeriod_ms;
   bool        _isVerbose = false;

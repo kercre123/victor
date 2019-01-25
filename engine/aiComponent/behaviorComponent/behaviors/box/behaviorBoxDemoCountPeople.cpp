@@ -148,7 +148,9 @@ void BehaviorBoxDemoCountPeople::DrawText3Lines(const std::array<std::string,3>&
   }
   
   const bool kInterruptRunning = true;
-  GetBEI().GetAnimationComponent().DisplayFaceImage(_dispImg, ANIM_TIME_STEP_MS, kInterruptRunning);
+  GetBEI().GetAnimationComponent().DisplayFaceImage(_dispImg,
+                                                    AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS,
+                                                    kInterruptRunning);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -312,7 +314,10 @@ bool BehaviorBoxDemoCountPeople::DrawSalientPoints(const std::list<Vision::Salie
     }
   }
   
-  GetBEI().GetAnimationComponent().DisplayFaceImage(_dispImg, ANIM_TIME_STEP_MS);
+  const bool kInterruptRunning = true;
+  GetBEI().GetAnimationComponent().DisplayFaceImage(_dispImg,
+                                                    AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS,
+                                                    kInterruptRunning);
   
   return true;
 }
