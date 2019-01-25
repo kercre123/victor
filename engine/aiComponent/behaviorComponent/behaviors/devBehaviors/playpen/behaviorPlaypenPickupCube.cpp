@@ -21,6 +21,8 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -151,8 +153,11 @@ void BehaviorPlaypenPickupCube::TransitionToPickupCube()
                         kExpectedCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
                         Tdiff.x(), Tdiff.y(), Tdiff.z(),
                         angleDiff.getDegrees());
-    
-    PLAYPEN_SET_RESULT(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
+
+    if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::CubePoseCheck))
+    {
+      PLAYPEN_SET_RESULT(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
+    }
   }
   
   const f32 kObservedCubePoseHeightDiff_mm = object->GetPose().GetTranslation().z() - (0.5f*object->GetSize().z());
@@ -176,7 +181,11 @@ void BehaviorPlaypenPickupCube::TransitionToPickupCube()
   
   PickupObjectAction* action = new PickupObjectAction(object->GetID());
   action->SetMotionProfile(DEFAULT_PATH_MOTION_PROFILE);
-  action->SetDoNearPredockPoseCheck(true);
+
+  // NOTE: Disabling this for now (DVT1) due to fact that the robot is no longer
+  // reliably near the predock pose after all the extra movement from ToF calibration
+  // action->SetDoNearPredockPoseCheck(true);
+  action->SetDoNearPredockPoseCheck(false);
   action->SetShouldCheckForObjectOnTopOf(false);
   action->SetDoLiftLoadCheck(true);
   

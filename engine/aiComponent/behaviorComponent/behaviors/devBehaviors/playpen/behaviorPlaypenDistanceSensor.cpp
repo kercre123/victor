@@ -119,10 +119,12 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
 
   TurnInPlaceAction* turn = new TurnInPlaceAction(_angleToTurn.ToFloat(), false);
 
+  DriveStraightAction* driveBack = new DriveStraightAction(-30);
+
   // After turning wait to process 10 images before trying to refine the turn
   WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
   
-  CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
+  CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, driveBack, wait});
   DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });
   
   return RESULT_OK;
@@ -277,9 +279,6 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
     turn->SetRequestedTurnAngle(angle.ToFloat());
   }
   action->AddAction(turn);
-
-  action->AddAction(new DriveStraightAction(-30));
-
 
   action->AddAction(new WaitForImagesAction(5, VisionMode::DetectingMarkers));
 
