@@ -59,8 +59,8 @@
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
             "anki-thirdparty": {
-                "branch": "branches/victor",
-                "version": "193"
+                "branch": "branches/the_box",
+                "version": "200"
             },
             "victor-animation-assets": {
                 "additional_files": [

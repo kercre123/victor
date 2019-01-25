@@ -368,7 +368,7 @@ void BehaviorBoxDemoDescribeScene::DisplayDescription()
 
     if( (_dVars.isUsingOCR && kTheBox_TTSForOCR) || (!_dVars.isUsingOCR && kTheBox_TTSForDescription) )
     {
-      responseAction->AddAction( new SayTextAction(salientPoints.begin()->description, 
+      responseAction->AddAction( new SayTextAction(salientPoints.begin()->description + ".",
                                                    SayTextAction::AudioTtsProcessingStyle::Unprocessed));
     }
     
