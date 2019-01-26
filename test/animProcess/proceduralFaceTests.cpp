@@ -170,7 +170,7 @@ static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const s
 }
 
 // Render known set of expressions and compare bitmap output to known good versions
-TEST(ProceduralFace, RenderKeyframeCheck)
+TEST(ProceduralFace, DISABLED_RenderKeyframeCheck)
 {
   const std::vector<std::string> files = {
     "anim_eyes_angry",
@@ -200,7 +200,7 @@ TEST(ProceduralFace, RenderKeyframeCheck)
 
 
 // Render a sub-set of parames with a fixed expression and compare bitmap output to known good versions
-TEST(ProceduralFace, RenderParamsCheck)
+TEST(ProceduralFace, DISABLED_RenderParamsCheck)
 {
   // Note: hard-coded values extracted by hand from .json files, original sources in resources
 

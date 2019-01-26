@@ -440,7 +440,7 @@ static Anki::Result FakeRobotMovement(Anki::Vector::Robot& robot,
   return lastResult;
 }
 
-TEST(BlockWorld, UpdateObjectOrigins)
+TEST(BlockWorld, DISABLED_UpdateObjectOrigins)
 {
   using namespace Anki;
   using namespace Vector;
@@ -1656,7 +1656,7 @@ TEST(BlockWorld, DISABLED_UnobserveCubeStack)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, CopyObjectsFromZombieOrigins)
+TEST(BlockWorld, DISABLED_CopyObjectsFromZombieOrigins)
 {
   using namespace Anki;
   using namespace Vector;
@@ -1782,7 +1782,7 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 #define DISPLAY_ERRORS 0
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(Localization, LocalizationDistance)
+TEST(Localization, DISABLED_LocalizationDistance)
 {
   using namespace Anki;
   using namespace Vector;

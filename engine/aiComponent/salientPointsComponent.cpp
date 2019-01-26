@@ -94,7 +94,7 @@ void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientP
 {
 
 #if ANKI_DEVELOPER_CODE || defined(USE_ANKITRACE)
-  const size_t previousSize = salientPoints.size();
+  const size_t __attribute__((unused)) previousSize = salientPoints.size();
 #endif
 
   auto it = _salientPoints.find(type);
@@ -106,10 +106,12 @@ void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientP
 
   }
 
+#if ANKI_DEVELOPER_CODE
   PRINT_CH_INFO("Behaviors", "SalientPointsComponent.GetSalientPointSinceTime.CopiedElements",
                  "Number of salient points of type %s received since timestamp %u: %zu",
                  Vision::SalientPointTypeToString(type), (TimeStamp_t)timestamp,
                  salientPoints.size() - previousSize);
+#endif
 
 
 }
