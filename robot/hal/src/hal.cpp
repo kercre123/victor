@@ -106,6 +106,9 @@ namespace { // "Private members"
   bool maxNumSelectTimeoutsReached_ = false;
 
   VersionInfo _sysconVersionInfo;
+  
+  const u32 SPINE_GET_FRAME_TIMEOUT_MS = 1000;
+  const int* shutdownSignal_ = 0;
 
 } // "private" namespace
 
@@ -320,6 +323,8 @@ Result HAL::Init(const int * shutdownSignal)
 
   // Set ID
   robotID_ = Anki::Vector::DEFAULT_ROBOT_ID;
+
+  shutdownSignal_ = shutdownSignal;
 
   InitIMU();
 
@@ -572,8 +577,24 @@ Result HAL::Step(void)
 
   EventStart(EventType::READ_SPINE);
 
+  const u32 startSpineGetFrameTime_ms = GetTimeStamp();
   do {
     result = spine_get_frame();
+
+    // Check for timeout
+    const u32 timeSinceStartOfGetFrame_ms = GetTimeStamp() - startSpineGetFrameTime_ms;
+    if (timeSinceStartOfGetFrame_ms > SPINE_GET_FRAME_TIMEOUT_MS) {
+      AnkiError("HAL.Step.SpineLoopTimeout", "");
+      return result;
+    }
+
+    // Check for early exit due to shutdown.
+    // But we don't want to exit earlier than 5ms so that subsequent tics
+    // are still processed at least at the normal rate.
+    if (*shutdownSignal_ != 0 && timeSinceStartOfGetFrame_ms > ROBOT_TIME_STEP_MS) {
+      AnkiInfo("HAL.Step.ShuttingDown", "");
+      return RESULT_OK;
+    }
   } while(result != RESULT_OK && result != RESULT_FAIL_IO_TIMEOUT);
 
   EventStop(EventType::READ_SPINE);
