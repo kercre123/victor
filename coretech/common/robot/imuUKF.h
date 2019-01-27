@@ -27,8 +27,7 @@ public:
   ImuUKF();
   
   // Measurement Model Update
-  void Update(const Point<3,double>& accel, const Point<3,double>& gyro, float timestamp_s);
-  void UpdateBias(const Point<3,double>& accel, const Point<3,double>& gyro, float timestamp_s);
+  void Update(const Point<3,double>& accel, const Point<3,double>& gyro, float timestamp_s, bool motorsMoving = true);
 
   void Reset(const Rotation3d& rot);
 
