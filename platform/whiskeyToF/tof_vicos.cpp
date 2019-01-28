@@ -22,6 +22,8 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <iomanip>
+#include <chrono>
 
 #ifdef SIMULATOR
 #error SIMULATOR should be defined by any target using tof_vicos.cpp
@@ -299,6 +301,17 @@ int ToFSensor::StartRanging(const CommandCallback& callback)
 
 int ToFSensor::StopRanging(const CommandCallback& callback)
 {
+  // There is currently an issue with bringing the sensor back online after stopping it.
+  // I think calibration or some initial setting must be changing when the sensor is stopped
+  // so for now StopRanging is not supported.
+  PRINT_NAMED_INFO("ToFSensor.StopRanging.NotImplemented","");
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+      
+  
   std::lock_guard<std::mutex> lock(_commandLock);
   _commandQueue.push({Command::StopRanging, callback});
   return 0;
@@ -411,21 +424,22 @@ void ProcessLoop()
       // std::stringstream ss;
       // for(int i = 0; i < 4; i++)
       // {
-      //   for(int j = 0; j < 8; j++)
+      //   for(int j = 0; j < 4; j++)
       //   {
-      //     if(data.data[i*8 + j].numObjects > 0 && data.data[i*8 + j].readings[0].status == 0)
+      //     if(data.data[i*4 + j].numObjects > 0 && data.data[i*4 + j].readings[0].status == 0)
       //     {
-      //       ss << std::setw(7) << (uint32_t)(data.data[i*8 + j].processedRange_mm);
-      //       lastValid.data[i*8 + j] = data.data[i*8 + j];
+      //       ss << std::setw(7) << (uint32_t)(data.data[i*4 + j].processedRange_mm);
+      //       lastValid.data[i*4 + j] = data.data[i*4 + j];
       //     }
       //     else
       //     {
-      //       ss << std::setw(7) << (uint32_t)(lastValid.data[i*8 + j].processedRange_mm);
+      //       ss << std::setw(7) << (uint32_t)(lastValid.data[i*4 + j].processedRange_mm);
       //     }
       //   }
       //   ss << "\n";
       // }
-      // PRINT_NAMED_ERROR("","%s", ss.str().c_str());
+      // //PRINT_NAMED_ERROR("","%s", ss.str().c_str());
+      // printf("Data\n%s\n", ss.str().c_str());
 
       // Got a valid reading so update our latest data
       if(rc >= 0)

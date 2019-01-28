@@ -53,8 +53,8 @@ target_include_directories(whiskeyToF
 
 project(tof_test)
 
-  add_executable(tof_test
-    ${CMAKE_SOURCE_DIR}/platform/whiskeyToF/tof_test.cpp)
+add_executable(tof_test
+  ${CMAKE_SOURCE_DIR}/platform/whiskeyToF/tof_test.cpp)
 
 target_include_directories(tof_test
   PUBLIC
@@ -65,6 +65,7 @@ target_include_directories(tof_test
 
 target_link_libraries(tof_test
 PRIVATE
+  whiskeyToF
   util
   cti_common
   cti_vision
@@ -73,8 +74,7 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-
-  target_compile_definitions(tof_test
-    PRIVATE
-    ${PLATFORM_COMPILE_DEFS}
-  )
+target_compile_definitions(tof_test
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
+)
