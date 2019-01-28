@@ -50,6 +50,7 @@ struct MotorStatus {
   uint32_t        last_time;
   int             power;
   MotorDirection  direction;
+  MotorDirection  hysteresis_direction;
   uint8_t         serviceCountdown;
 };
 
@@ -122,7 +123,7 @@ static void Motors::transmit(BodyToHead *payload) {
       switch (i) {
         case MOTOR_LEFT:
         case MOTOR_RIGHT:
-          payload->motor[i].delta = (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
+          payload->motor[i].delta = (state->hysteresis_direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
           break ;
         default:
           payload->motor[i].delta = delta_last[i];
@@ -280,6 +281,7 @@ void Motors::tick() {
         }
 
         state->direction = direction;
+        state->hysteresis_direction = direction;
         break ;
     }
   }
