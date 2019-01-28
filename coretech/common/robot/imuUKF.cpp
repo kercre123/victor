@@ -84,9 +84,9 @@ namespace {
   }
 
   // Process Noise
-  constexpr const double kRotStability_radps    = .01;   
-  constexpr const double kRotAccel_radpsSq      = 1.;      
-  constexpr const double kBiasStability_radpsSq = .000001; 
+  constexpr const double kRotStability_rad    = .01;   
+  constexpr const double kGyroStability_radps = 1.;      
+  constexpr const double kBiasStability_radps = .000001; 
 
   // Measurement Noise
   constexpr const double kAccelNoise_rad  = .0017;     // rms noise := atan2(17.7, 9810)
@@ -99,28 +99,18 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // UKF Implementation
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImuUKF::ImuUKF()
-{ 
-  Reset( UnitQuaternion() ); 
-}
 
-void ImuUKF::Reset(const Rotation3d& rot) {
-  _state = {rot.GetQuaternion(), {}, {}};
-  _lastMeasurement_s = 0.;
-  _P = _Q;
-}
- 
 // Process Uncertainty
 const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_Q{{  
-  Util::Square(kRotStability_radps), 0., 0., 0., 0., 0., 0., 0., 0.,
-  0., Util::Square(kRotStability_radps), 0., 0., 0., 0., 0., 0., 0.,
-  0., 0., Util::Square(kRotStability_radps), 0., 0., 0., 0., 0., 0.,
-  0., 0., 0., Util::Square(kRotAccel_radpsSq), 0., 0., 0., 0., 0.,
-  0., 0., 0., 0., Util::Square(kRotAccel_radpsSq), 0., 0., 0., 0.,
-  0., 0., 0., 0., 0., Util::Square(kRotAccel_radpsSq) , 0., 0., 0.,
-  0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radpsSq), 0., 0.,
-  0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radpsSq), 0.,
-  0., 0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radpsSq)
+  Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0., 0., 0.,
+  0., Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0., 0.,
+  0., 0., Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0.,
+  0., 0., 0., Util::Square(kGyroStability_radps), 0., 0., 0., 0., 0.,
+  0., 0., 0., 0., Util::Square(kGyroStability_radps), 0., 0., 0., 0.,
+  0., 0., 0., 0., 0., Util::Square(kGyroStability_radps) , 0., 0., 0.,
+  0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radps), 0., 0.,
+  0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radps), 0.,
+  0., 0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radps)
 }}; 
 
 // Measurement Uncertainty
@@ -136,11 +126,25 @@ const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_R{{
   0., 0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasNoise_radps)
 }}; 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ImuUKF::ImuUKF()
+{ 
+  Reset( UnitQuaternion() ); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ImuUKF::Reset(const Rotation3d& rot) {
+  _state = {rot.GetQuaternion(), {}, {}};
+  _lastMeasurement_s = 0.;
+  _P = _Q;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float timestamp_s, bool isMoving)
 {
   ProcessUpdate( NEAR_ZERO(_lastMeasurement_s) ? 0. : timestamp_s - _lastMeasurement_s );
 
-  const auto measurement = Concatenate(Concatenate(accel, gyro), (isMoving ? _state.GetGyroBias() : gyro));
+  const auto measurement = Join(Join(accel, gyro), (isMoving ? _state.GetGyroBias() : gyro));
   const auto residual = MeasurementUpdate( measurement );
 
   // NOTE: I think there is a more computationally efficient way for getting the 
@@ -156,11 +160,11 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
   _lastMeasurement_s = timestamp_s;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuUKF::ProcessUpdate(double dt_s)
 { 
   // sample the covariance, generating the set {𝑊ᵢ} and add the mean
-  const SmallSquareMatrix<State::Dim,double> Qdt = _Q * 1.;
-  const auto S = Cholesky(_P + Qdt) * sqrt(2*State::Dim);
+  const auto S = Cholesky(_P + _Q) * sqrt(2*State::Dim);
   for (int i = 0; i < State::Dim; ++i) {
     // current process model assumes we continue moving at constant velocity
     const auto Si = S.GetColumn(i);
@@ -193,19 +197,20 @@ void ImuUKF::ProcessUpdate(double dt_s)
     const auto err = FromQuat(meanRot.GetConj() * yi.GetRotation());
     const auto omega = yi.GetVelocity() - meanVel;
     const auto bias = yi.GetGyroBias() - meanBias;
-    const auto wi = Concatenate(Concatenate(err, omega), bias);
+    const auto wi = Join(Join(err, omega), bias);
     _W.SetColumn(i, wi);
   }
   _P = GetCovariance(_W);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 {
   // Calculate Predicted Measurement Distribution {Zᵢ}
   SmallMatrix<State::Dim,State::Dim*2,double> Z;
   for (int i = 0; i < 2*State::Dim; ++i) {
     const State yi = _Y.GetColumn(i);
-    const auto zi = Concatenate(Concatenate( yi.GetRotation().GetConj() * kGravity_mmps, yi.GetVelocity() ), yi.GetGyroBias());
+    const auto zi = Join(Join( yi.GetRotation().GetConj() * kGravity_mmps, yi.GetVelocity() ), yi.GetGyroBias());
     Z.SetColumn(i, zi);
   }
 

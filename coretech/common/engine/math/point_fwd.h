@@ -305,10 +305,10 @@ namespace Anki {
 
   
   template<PointDimType M, PointDimType N, typename T>
-  constexpr Point<M+N,T> Concatenate(const Point<M,T>& point1, const Point<N,T>& point2);
+  constexpr Point<M+N,T> Join(const Point<M,T>& point1, const Point<N,T>& point2);
 
   template<PointDimType M, PointDimType N, typename T, typename... Ps>
-  constexpr decltype(auto) Concatenate(const Point<M,T>& point1, const Point<N,T>& point2, Ps... ps);
+  constexpr decltype(auto) Join(const Point<M,T>& point1, const Point<N,T>& point2, Ps... ps);
   
   // Return true if the two points (vectors) are aligned within the given angle threshold
   template<PointDimType N, typename T>

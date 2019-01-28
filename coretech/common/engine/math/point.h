@@ -519,7 +519,7 @@ constexpr T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& p
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<PointDimType M, PointDimType N, typename T>
-constexpr Point<M+N,T> Concatenate(const Point<M,T>& point1, const Point<N,T>& point2)
+constexpr Point<M+N,T> Join(const Point<M,T>& point1, const Point<N,T>& point2)
 {
   Point<M+N,T> retv;
   for (int i = 0; i < M; ++i) { retv[i] = point1[i]; }

@@ -24,13 +24,16 @@ namespace Anki {
 class ImuUKF {
 public:
 
+  // Constructor
   ImuUKF();
   
   // Measurement Model Update
   void Update(const Point<3,double>& accel, const Point<3,double>& gyro, float timestamp_s, bool motorsMoving = true);
 
+  // Clear current uncertainty and reset the orientation to the specified rotation
   void Reset(const Rotation3d& rot);
 
+  // Public Accessors
   inline Rotation3d GetRotation() const { return _state.GetRotation(); }
   inline Point3f GetBias() const { return _state.GetGyroBias().CastTo<float>(); }
 
@@ -44,38 +47,32 @@ private:
     State(Point<10,double>&& p) : Point<10,double>(p) {}
 
     State(const UnitQuaternion& q, const Point<3,double>& w, const Point<3,double> b) 
-    : Point<10,double>( Concatenate(Concatenate(q,w),b) ) {}
+    : Point<10,double>( Join(Join(q,w),b) ) {}
 
     UnitQuaternion GetRotation() const { return this->Slice<0,3>(); }
     Point3<double> GetVelocity() const { return this->Slice<4,6>(); }
     Point3<double> GetGyroBias() const { return this->Slice<7,9>(); }
 
-    // this is 1 less than the state, size, since the rotation quaternion only has 4 DoF and 1 constraint
+    // this is 1 less than the state, size, since the rotation quaternion only has 3 DoF (4 Dims and 1 constraint)
     static constexpr size_t Dim = 9;
   };
 
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // UKF Methods
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // update predicted state to current timestamp and increase uncertainty
+  // Update predicted state to current timestamp and increase uncertainty
   void ProcessUpdate(double dt_s);
 
-  // calculates the residual according to the provided measurement
+  // Calculates the residual according to the provided measurement
   Point<9,double> MeasurementUpdate(const Point<9,double>& measurement);
-  // void BiasUpdate(const Point<9,double>& measurement);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // UKF Variables
+  // Variables
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  State _state;                                     // current state estimate
-  SmallSquareMatrix<State::Dim, double>          _P;  // current state covariance matrix
-  SmallMatrix<State::Dim, State::Dim*2, double>  _W;  // a set of points representing covariance of the state 
-  SmallMatrix<State::Size, State::Dim*2, double> _Y;  // a set of points representing the average state
+  State                                          _state;      // current state estimate
+  SmallSquareMatrix<State::Dim, double>          _P;          // current state covariance matrix
+  SmallMatrix<State::Size, State::Dim*2, double> _Y;          // a discrete set of points representing the state estimate
+  SmallMatrix<State::Dim, State::Dim*2, double>  _W;          // a discrete set of points representing covariance of the state 
 
-  static const SmallSquareMatrix<State::Dim,double> _Q, _R;    // process and measurement noise
-  float _lastMeasurement_s;                            // time of last measurement update
+  static const SmallSquareMatrix<State::Dim,double> _Q, _R;   // process and measurement uncertainty
+  float _lastMeasurement_s;                                   // time of last measurement update for calculating predicted process update
 };
 
 } // namespace Anki
