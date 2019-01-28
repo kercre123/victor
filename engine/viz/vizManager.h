@@ -139,7 +139,8 @@ namespace Anki {
         const Point3f &size,
         const Pose3d &pose,
         const ColorRGBA& color = ::Anki::NamedColors::DEFAULT,
-        const f32* params = nullptr);
+        const f32* params = nullptr,
+        const std::string& text = "");
       
       // Erases the object corresponding to the objectID
       void EraseVizObject(const Handle_t objectID);
@@ -309,6 +310,8 @@ namespace Anki {
     
       // ==== Text functions =====
       void SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...);
+
+      Handle_t DrawTextAtPose(const u32 textObjectID, const std::string& text, const ColorRGBA& color, const Pose3d& pose);
         
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle);

@@ -170,6 +170,21 @@ namespace Anki {
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_CUBOID, size, pose, color);
       return vizID;
     }
+
+    VizManager::Handle_t VizManager::DrawTextAtPose(const u32 textObjectID, const std::string& text, const ColorRGBA& color, const Pose3d& pose)
+    {
+      if(textObjectID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_TEXT]) {
+        PRINT_NAMED_WARNING("VizManager.DrawTextAtPose.IDtooLarge",
+                            "Specified text object ID=%d larger than maxID=%d",
+                            textObjectID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_TEXT]);
+        return INVALID_HANDLE;
+      }
+      
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_TEXT] + textObjectID;
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_TEXT, Point3f(0.f, 0.f, 0.f), pose, color, nullptr, text);
+
+      return vizID;
+    }
     
     VizManager::Handle_t VizManager::DrawPreDockPose(const u32 preDockPoseID, const Pose3d& pose, const ColorRGBA& color)
     {
@@ -472,7 +487,8 @@ namespace Anki {
       const Anki::Point3f &size_mm,
       const Anki::Pose3d &pose,
       const ColorRGBA& color,
-      const f32* params)
+      const f32* params,
+      const std::string& text)
     {
       ANKI_CPU_PROFILE("VizManager::DrawObject");
       
@@ -502,6 +518,8 @@ namespace Anki {
           v.objParameters[i] = params[i];
         }
       }
+
+      v.text = text;
       
       SendMessage(VizInterface::MessageViz(std::move(v)));
     }
