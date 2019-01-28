@@ -1115,6 +1115,15 @@ message FeatureFlagResponse {
   bool feature_enabled = 3;
 }
 
+message FeatureFlagListRequest {
+  repeated string request_list = 1;
+}
+
+message FeatureFlagListResponse {
+  ResponseStatus status = 1;
+  repeated string list = 2;
+}
+
 // NOTE: must match attentionTransferTypes.clad
 enum AttentionTransferReason {
   Invalid = 0;

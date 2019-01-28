@@ -262,6 +262,21 @@ def test_feature_flag(vector_connection, data, result):
         assert data["feature_enabled"] == 0
     vector_connection.send_raw("v1/feature_flag", data, p.FeatureFlagResponse(), callback=callback)
 
+@pytest.mark.parametrize("data,result", [
+    ('{"request_list":[]}', 1),  # result is whether the result list is non-empty
+    ('{"request_list":["TestFeature"]}', 0),
+    ('{"request_list":["NotAFeature"]}', 0)
+])
+def test_feature_flag_list(vector_connection, data, result):
+    length = 0
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+        data = json.loads(response.content)
+        assert "list" in data
+        
+        assert ((len(data["list"]) > 0) == result)
+    vector_connection.send_raw("v1/feature_flag_list", data, p.FeatureFlagListResponse(), callback=callback)
+
 def test_alexa_auth_state(vector_connection):
     def callback(response, response_type):
         print("Default response: {}".format(response.content))

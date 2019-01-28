@@ -501,6 +501,13 @@ service ExternalInterface {
     };
   }
 
+  rpc GetFeatureFlagList(FeatureFlagListRequest) returns (FeatureFlagListResponse) {
+    option (google.api.http) = {
+      post: "/v1/feature_flag_list",
+      body: "*"
+    };
+  }
+
   rpc GetAlexaAuthState(AlexaAuthStateRequest) returns (AlexaAuthStateResponse) {
     option (google.api.http) = {
       post: "/v1/alexa_auth_state",

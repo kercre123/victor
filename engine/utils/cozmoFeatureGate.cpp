@@ -259,9 +259,31 @@ void CozmoFeatureGate::Init(const CozmoContext* context, const std::string& json
           featureFlagResponse->set_valid_feature( valid );
           featureFlagResponse->set_feature_enabled( enabled );
           gi->Broadcast( ExternalMessageRouter::WrapResponse(featureFlagResponse) );
+        } else if( msg.GetData().GetTag() == external_interface::GatewayWrapperTag::kFeatureFlagListRequest ) {
+          const bool returnAll = msg.GetData().feature_flag_list_request().request_list().empty();
+          // list only those features that are enabled so that an sdk user can't find SuperSecretFeature without brute forcing it
+          auto* response = new external_interface::FeatureFlagListResponse;
+          response->mutable_list()->Reserve( FeatureTypeNumEntries );
+          const auto begin = msg.GetData().feature_flag_list_request().request_list().begin();
+          const auto end = msg.GetData().feature_flag_list_request().request_list().end();
+          for ( uint8_t i = 0; i < FeatureTypeNumEntries; ++i ) {
+            const auto featureType = static_cast<FeatureType>(i);
+            if( IsFeatureEnabled( featureType ) ) {
+              const bool featureMatches = returnAll || (std::find_if(begin, end, [&](const auto& s) {
+                  return Util::StringCaseInsensitiveEquals(EnumToString(featureType), s);
+              }) != end);
+              if( featureMatches ) {
+                auto* feature = response->mutable_list()->Add();
+                *feature = EnumToString( featureType );
+              }
+            }
+          }
+          gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
         }
+        
       };
       _signalHandles.push_back( gi->Subscribe( external_interface::GatewayWrapperTag::kFeatureFlagRequest, handleFeatureFlagRequest ) );
+      _signalHandles.push_back( gi->Subscribe( external_interface::GatewayWrapperTag::kFeatureFlagListRequest, handleFeatureFlagRequest ) );
     }
     
     // register to webviz
