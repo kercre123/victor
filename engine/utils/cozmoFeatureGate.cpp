@@ -23,16 +23,21 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
+#include "webServerProcess/src/webService.h"
 
 namespace Anki {
 namespace Vector {
 
 #define FEATURE_OVERRIDES_ENABLED ( REMOTE_CONSOLE_ENABLED )
   
+namespace {
+  const std::string kWebVizModuleName = "features";
+}
+
 #if FEATURE_OVERRIDES_ENABLED
 
 namespace {
-
+  
   // don't change the order of this, else your overrides will be wrong
   enum FeatureTypeOverride
   {
@@ -259,6 +264,95 @@ void CozmoFeatureGate::Init(const CozmoContext* context, const std::string& json
       _signalHandles.push_back( gi->Subscribe( external_interface::GatewayWrapperTag::kFeatureFlagRequest, handleFeatureFlagRequest ) );
     }
     
+    // register to webviz
+    auto* webService = context->GetWebService();
+    if (webService != nullptr) {
+      
+      auto onDataFeatures = [](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+        bool success = false;
+        #if FEATURE_OVERRIDES_ENABLED
+        {
+          if( data["type"].isString() && (data["type"].asString() == "reset") )
+          {
+            {
+              for( uint8_t i=0; i<FeatureTypeNumEntries; ++i )
+              {
+                sFeatureTypeOverrides[i] = Default;
+              }
+              success = true;
+            }
+          }
+          else if( data["type"].isString() && (data["type"].asString() == "override")
+                   && data["name"].isString() && data["override"].isString() )
+          {
+            FeatureType feature;
+            if( FeatureTypeFromString(data["name"].asString(), feature) ) {
+              if( data["override"].asString() == "default" ) {
+                sFeatureTypeOverrides[static_cast<uint8_t>(feature)] = Default;
+                success = true;
+              } else if( data["override"].asString() == "enabled" ) {
+                sFeatureTypeOverrides[static_cast<uint8_t>(feature)] = Enabled;
+                success = true;
+              } else if( data["override"].asString() == "disabled" ) {
+                sFeatureTypeOverrides[static_cast<uint8_t>(feature)] = Disabled;
+                success = true;
+              }
+            }
+          }
+          
+          if( success ) 
+          {
+            SaveFeatureOverrides();
+          }
+        }
+        #endif
+
+        if( !success )
+        {
+          Json::Value error;
+          error["error"] = true;
+          sendToClient( error );
+        }
+      };
+      
+      _signalHandles.emplace_back( webService->OnWebVizData( kWebVizModuleName ).ScopedSubscribe( onDataFeatures ) );
+      _signalHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe( std::bind(&CozmoFeatureGate::SendFeaturesToWebViz,
+                                                                                                                  this,
+                                                                                                                  std::placeholders::_1) ) );
+    }
+  }
+}
+  
+void CozmoFeatureGate::SendFeaturesToWebViz(const std::function<void(const Json::Value&)>& sendFunc) const
+{
+  Json::Value data;
+  for ( uint8_t i = 0; i < FeatureTypeNumEntries; ++i )
+  {
+    const auto feature = static_cast<FeatureType>(i);
+    Json::Value entry;
+    entry["name"] = FeatureTypeToString( feature );
+    const std::string featureName = Util::StringToLower( FeatureTypeToString( feature ) );
+    entry["default"] = FeatureGate::IsFeatureEnabled( featureName ) ? "enabled" : "disabled";
+    #if FEATURE_OVERRIDES_ENABLED
+    {
+      if( sFeatureTypeOverrides[i] == FeatureTypeOverride::Default )
+      {
+        entry["override"] = "none";
+      }
+      else if( sFeatureTypeOverrides[i] == FeatureTypeOverride::Enabled )
+      {
+        entry["override"] = "enabled";
+      }
+      else if( sFeatureTypeOverrides[i] == FeatureTypeOverride::Disabled )
+      {
+        entry["override"] = "disabled";
+      }
+    }
+    # endif
+    data.append(entry);
+  }
+  if( sendFunc ) {
+    sendFunc( data );
   }
 }
 
