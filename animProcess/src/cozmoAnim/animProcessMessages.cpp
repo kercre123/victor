@@ -473,14 +473,6 @@ void Process_setButtonWakeWord(const Anki::Vector::RobotInterface::SetButtonWake
   }
 }
 
-void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPendingAlexaAuth& msg)
-{
-  auto* alexa = _context->GetAlexa();
-  if (alexa != nullptr) {
-    alexa->CancelPendingAlexaAuth(EnumToString(msg.reason));
-  }
-}
-
 void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
 {
   FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
