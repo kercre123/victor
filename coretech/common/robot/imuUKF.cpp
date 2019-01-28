@@ -86,12 +86,12 @@ namespace {
   // Process Noise
   constexpr const double kRotStability_rad    = .01;   
   constexpr const double kGyroStability_radps = 1.;      
-  constexpr const double kBiasStability_radps = .000001; 
+  constexpr const double kBiasStability_radps = .0000001; 
 
   // Measurement Noise
-  constexpr const double kAccelNoise_rad  = .0017;     // rms noise := atan2(17.7, 9810)
-  constexpr const double kGyroNoise_radps = .00123;    // rms noise
-  constexpr const double kBiasNoise_radps = .0000001;  // need this to be small so it doesn't change too quickly
+  constexpr const double kAccelNoise_rad  = .0105;     // alignment error + rms noise := atan2(17.7, 9810)
+  constexpr const double kGyroNoise_radps = .1059;     // zero-rate offset + temp offset + rms noise
+  constexpr const double kBiasNoise_radps = .0000145;  // bias stability
 
   constexpr const Point<3,double> kGravity_mmps = {0., 0., 9810.};
 }

@@ -28,7 +28,7 @@ public:
   ImuUKF();
   
   // Measurement Model Update
-  void Update(const Point<3,double>& accel, const Point<3,double>& gyro, float timestamp_s, bool motorsMoving = true);
+  void Update(const Point<3,double>& accel, const Point<3,double>& gyro, float timestamp_s, bool isMoving = true);
 
   // Clear current uncertainty and reset the orientation to the specified rotation
   void Reset(const Rotation3d& rot);
