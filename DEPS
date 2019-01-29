@@ -50,9 +50,9 @@
             },
             "opencv": {
                 "checksums": {
-                    "sha256": "824cca8bcabf04a5223d28c88168c6af092500aea38a54bc98283807ef7c54d4"
+                    "sha256": "0f3263df69448fe9d9fe9ab655f9d9b1c16b616f4208399fbe9f17758807f420"
                 },
-                "version": "3.4.0"
+                "version": "3.4.0-victor"
             },
             "opus": {
                 "checksums": {
@@ -68,9 +68,9 @@
             },
             "protobuf": {
                 "checksums": {
-                    "sha256": "4324cffd82c0c76b7ed11a4ef6967c7013d33928aacea57c187256554d0a58b1"
+                    "sha256": "9c0699bf3aad7d2ea3b3ad38e32a85edd0f5143193debaaaf9270f1e9f0300ea"
                 },
-                "version": "v3.5.1"
+                "version": "v3.6.1.3"
             },
             "speexdsp": {
                 "checksums": {
