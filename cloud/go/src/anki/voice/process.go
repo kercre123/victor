@@ -3,6 +3,7 @@ package voice
 import (
 	"anki/config"
 	"anki/log"
+	"anki/util/cvars"
 	"anki/voice/stream"
 	"clad/cloud"
 	"context"
@@ -146,6 +147,20 @@ func (p *Process) Run(ctx context.Context, options ...Option) {
 	for _, opt := range options {
 		opt(&p.opts)
 	}
+
+	cvarOpts := []cvars.Option{}
+	for k, v := range pb.IntentService_name {
+		cvarOpts = append(cvarOpts, cvars.Option{
+			Value: fmt.Sprint(k),
+			Title: v,
+		})
+	}
+	cvars.AddIntSet("VoiceHandler", func(x int) interface{} {
+		p.opts.handler = pb.IntentService(x)
+		return p.opts.handler
+	}, func() interface{} {
+		return p.opts.handler
+	}, cvarOpts)
 
 	cloudChans := &strmReceiver{
 		intent: make(chan cloudIntent),
