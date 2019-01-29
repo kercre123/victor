@@ -8,43 +8,6 @@ namespace Gateway {
 /////////////////////////////  MEMORY MAP DATA  ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-enum uint_8 ENodeContentTypeEnum
-{
-  Unknown,
-  ClearOfObstacle,
-  ClearOfCliff,
-  ObstacleCube,
-  ObstacleProx,
-  ObstacleProxExplored,
-  ObstacleUnrecognized,
-  Cliff,
-  InterestingEdge,
-  NotInterestingEdge,
-}
-
-// Info about an individual quad in the memory map
-structure MemoryMapQuadInfo
-{
-  ENodeContentTypeEnum content,
-  uint_8               depth,
-  uint_32              colorRGBA
-}
-
-// We are about to send one or several messages with memory map info
-message MemoryMapMessageBegin
-{
-  uint_32  originId,
-  int_32   rootDepth,
-  float_32 rootSize_mm,
-  float_32 rootCenterX,
-  float_32 rootCenterY
-}
-
-// A group of quad infos
-message MemoryMapMessage
-{
-  MemoryMapQuadInfo quadInfos[uint_16]
-}
 
 // We finished sending memory map messages
 message MemoryMapMessageEnd
@@ -53,8 +16,6 @@ message MemoryMapMessageEnd
 
 // Note: these values and messages must match the values that get added to MessageEngineToGame
 union MessageRobotToExternal {
-  MemoryMapMessageBegin             MemoryMapMessageBegin              = 0x16,
-  MemoryMapMessage                  MemoryMapMessage                   = 0x17,
   MemoryMapMessageEnd               MemoryMapMessageEnd                = 0x18,
 }
 
