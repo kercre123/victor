@@ -4,6 +4,7 @@ project(engine)
 
 # Build options
 option(USE_DAS "Enable DAS reporting" OFF)
+option(ALEXA_ACOUSTIC_TEST "Enable alexa acoustic testing (no movement mode)" OFF)
 
 include(opencv)
 include(okao)
@@ -107,6 +108,7 @@ anki_build_strip(TARGET cozmo_engine)
 target_compile_definitions(cozmo_engine
   PUBLIC
   USE_DAS=$<BOOL:${USE_DAS}>
+  ALEXA_ACOUSTIC_TEST=$<BOOL:${ALEXA_ACOUSTIC_TEST}>
   PRIVATE
   CORETECH_ENGINE
   "${PLATFORM_COMPILE_DEFS}"

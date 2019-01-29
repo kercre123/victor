@@ -16,6 +16,7 @@ enum uint_16 BehaviorID {
   Wait_TestInjectable,
 
   // devBehaviors
+  AcousticTestMode,
   DevBaseBehavior,
   DevBatteryLogging,
   DevCubeSpinner,
@@ -362,7 +363,6 @@ enum uint_16 BehaviorID {
   OnboardingTeachMeetVictor1p2,
   OnboardingTeachWakeWord1p2,
   OnboardingWakeUp1p2,
-  ResetOnboarding1p2Safely,
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,

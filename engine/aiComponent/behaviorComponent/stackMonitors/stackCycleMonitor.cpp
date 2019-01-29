@@ -16,6 +16,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
@@ -29,6 +31,8 @@ namespace Vector {
 namespace {
   constexpr unsigned int kCapacity = 5; // see comment in NotifyOfChange
   constexpr unsigned int kMaxTicks = 2; // ditto
+  
+  const BehaviorID kBehaviorIDForReset = BEHAVIOR_ID(ResetSafely);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -64,8 +68,11 @@ void StackCycleMonitor::NotifyOfChange( BehaviorExternalInterface& bei,
                              "A cycle was detected between %s and %s",
                              behaviorA.c_str(), behaviorB.c_str() );
       }
-      auto* oldBaseOfStack = stackComponent->GetBottomOfStack();
-      SwitchToSafeStack( bei, oldBaseOfStack );
+      auto& bbl = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorsBootLoader>();
+      IBehavior* bootBehavior = bbl.GetBootBehavior();
+      if( bootBehavior != nullptr ) {
+        SwitchToSafeStack( bei, bootBehavior );
+      }
       // start checking over again
       _recentBehaviors.clear();
     }
@@ -108,34 +115,24 @@ bool StackCycleMonitor::CheckForCycle() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StackCycleMonitor::SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* oldBaseOfStack ) const
+void StackCycleMonitor::SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* newBaseBehavior ) const
 {
-  // ideally this would inject the current base of the stack into the new stack, similar to
-  // DevExecuteBehaviorRerun. For now, just check if onboarding was at the base, and run one of two reset queues.
-  const auto& BC = bei.GetBehaviorContainer();
-  BehaviorID behaviorID = BEHAVIOR_ID(ResetSafely); // normal reset behavior
-  if( oldBaseOfStack != nullptr ) {
-    auto onboardingBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(Onboarding1p2) );
-    auto onboardingBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetOnboarding1p2Safely) );
-    if( (onboardingBehavior1.get() == oldBaseOfStack) || (onboardingBehavior2.get() == oldBaseOfStack) ) {
-      behaviorID = BEHAVIOR_ID(ResetOnboarding1p2Safely); // onboarding reset behavior
-    } else {
-      auto normalBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(ModeSelector) );
-      auto normalBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetSafely) );
-      if( !((normalBehavior1.get() == oldBaseOfStack) || (normalBehavior2.get() == oldBaseOfStack)) ) {
-        PRINT_NAMED_WARNING( "StackCycleMonitor.SwitchToSafeStack.UnknownBase",
-                             "Switching to a stack with base ResetSafely, which contains ModeSelector, but the previous base was %s",
-                             oldBaseOfStack->GetDebugLabel().c_str() );
-      }
-    }
-  }
+  auto& BC = bei.GetBehaviorContainer();
   
-  ICozmoBehaviorPtr behaviorToRun = BC.FindBehaviorByID( behaviorID );
-  if( behaviorToRun != nullptr ) {
-    auto& bsm = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
-    const bool waitUntilNextTick = true;
-    bsm.ResetBehaviorStack( behaviorToRun.get(), waitUntilNextTick );
-    // note that even if behaviorToRun is already the base of the stack, it will be stopped and restarted
+  std::shared_ptr<BehaviorResetState> resetBehavior;
+  if( BC.FindBehaviorByIDAndDowncast( kBehaviorIDForReset, BEHAVIOR_CLASS(ResetState), resetBehavior ) ) {
+    
+    auto* castPtr = dynamic_cast<ICozmoBehavior*>( newBaseBehavior );
+    if( ANKI_VERIFY( castPtr != nullptr, "StackCycleMonitor.SwitchToSafeStack.Invalid", "Could not cast") ) {
+      const BehaviorID id = castPtr->GetID();
+      resetBehavior->SetFollowupBehaviorID( id );
+    
+  
+      auto& bsm = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
+      const bool waitUntilNextTick = true;
+      bsm.ResetBehaviorStack( resetBehavior.get(), waitUntilNextTick );
+      // note that even if resetBehavior is already the base of the stack, it will be stopped and restarted
+    }
   }
 }
 
