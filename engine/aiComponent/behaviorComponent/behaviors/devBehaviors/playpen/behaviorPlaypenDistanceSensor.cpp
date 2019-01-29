@@ -103,13 +103,13 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
     IncreaseTimeoutTimer(30000);
   // }
 
-  ToFSensor::getInstance()->SetupSensors([this](ToFSensor::CommandResult res)
-                                         {
-                                           if(res != ToFSensor::CommandResult::Success)
-                                           {
-                                             PLAYPEN_SET_RESULT(FactoryTestResultCode::SETUP_TOF_FAILED);
-                                           }
-                                         });
+  // ToFSensor::getInstance()->SetupSensors([this](ToFSensor::CommandResult res)
+  //                                        {
+  //                                          if(res != ToFSensor::CommandResult::Success)
+  //                                          {
+  //                                            PLAYPEN_SET_RESULT(FactoryTestResultCode::SETUP_TOF_FAILED);
+  //                                          }
+  //                                        });
 
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
@@ -384,12 +384,14 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
     CompoundActionSequential* action = new CompoundActionSequential({turn, head});
 
     DelegateIfInControl(action, [this](){
-      ToFSensor::getInstance()->StartRanging([this](ToFSensor::CommandResult res)
+      ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
                                              {
-                                               if(res != ToFSensor::CommandResult::Success)
-                                               {
-                                                 PLAYPEN_SET_RESULT(FactoryTestResultCode::START_TOF_FAILED);
-                                               }
+                                               // Should already be ranging from initial setup of the sensor
+                                               // so not checking res here
+                                               // if(res != ToFSensor::CommandResult::Success)
+                                               // {
+                                               //   PLAYPEN_SET_RESULT(FactoryTestResultCode::START_TOF_FAILED);
+                                               // }
                                              });
 
       _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;

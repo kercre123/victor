@@ -248,10 +248,14 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
 
 int start_ranging(VL53L1_Dev_t* dev)
 {
-  return VL53L1_StartMeasurement(dev);
+  const int rc = VL53L1_StartMeasurement(dev);
+  return_if_error(rc, "start_ranging failed");
+  return 0;
 }
 
 int stop_ranging(VL53L1_Dev_t* dev)
 {
-  return VL53L1_StopMeasurement(dev);
+  const int rc = VL53L1_StopMeasurement(dev);
+  return_if_error(rc, "stop_ranging failed");
+  return 0;
 }
