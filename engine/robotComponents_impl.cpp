@@ -137,6 +137,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(JdocsManager,                  RobotComponentID, Jdo
 LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent, RobotComponentID, RobotExternalRequestComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(AccountSettingsManager,        RobotComponentID, AccountSettingsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(UserEntitlementsManager,       RobotComponentID, UserEntitlementsManager)
+LINK_COMPONENT_TYPE_TO_ENUM(RangeSensorComponent,          RobotComponentID, RangeSensor)
 
 // Translate entity into string
 template<>
@@ -191,6 +192,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(PowerStateManager)
     CASE(ProxSensor)
     CASE(PublicStateBroadcaster)
+    CASE(RangeSensor)
     CASE(RobotExternalRequestComponent)
     CASE(RobotHealthReporter)
     CASE(RobotStatsTracker)

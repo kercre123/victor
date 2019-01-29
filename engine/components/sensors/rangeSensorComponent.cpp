@@ -95,7 +95,7 @@ void RangeSensorComponent::Update()
     _robot->SendRobotMessage<RangeDataToDisplay>(msg);
   }
   
-  Pose3d co = _robot->GetCameraPose(_robot->GetHeadAngle());
+  Pose3d co = _robot->GetCameraPose(_robot->GetComponent<FullRobotPose>().GetHeadAngle());
   // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
   // also account for angle tof sensor is relative to camera
   Pose3d c(TOF_ANGLE_DOWN_REL_CAMERA_RAD, Y_AXIS_3D(), {0, 0, 0}, co);

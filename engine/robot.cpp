@@ -965,16 +965,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _lastMsgTimestamp = msg.timestamp;
   _newStateMsgAvailable = true;
 
-  if(_trackTouchSensorFilt)
-  {
-    // Keep track of the last 6000 (3 min) filtered touch sensor values
-    _touchSensorFiltDeque.push_back(msg.backpackTouchSensorFilt);
-    if(_touchSensorFiltDeque.size() > 6000)
-    {
-      _touchSensorFiltDeque.pop_front();
-    }
-  }
-  
   // Update head angle
   SetHeadAngle(msg.headAngle);
 
@@ -2573,31 +2563,6 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 
 bool Robot::UpdateCameraStartupChecks(Result& res)
 {
-  static bool rampostFileRead = false;
-  static bool rampostError = false;
-  if(!rampostFileRead)
-  {
-    rampostFileRead = true;
-    const Result res = Robot::CheckForRampostError();
-    if(res != RESULT_OK)
-    {
-      rampostError = true;
-      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);    
-    }
-  }
-
-  if(rampostError)
-  {
-    return RESULT_FAIL;
-  }
-  
-  bool tofCheckDone = false;
-  Result res = UpdateToFStartupChecks(tofCheckDone);
-  if(res != RESULT_OK)
-  {
-    return res;
-  }
-  
   enum State {
     FAILED = -1,
     WAITING,
@@ -2640,32 +2605,13 @@ bool Robot::UpdateCameraStartupChecks(Result& res)
     }
   }
 
-  // Once the camera and tof startup checks are done (successful)
-  // Play a sound to indicate "successful" boot
-  static bool playedSound = false;
-  if(state == State::PASSED && tofCheckDone && !playedSound)
-  {
-    #if FACTORY_TEST
-    // Manually init AnimationComponent
-    // Normally it would init when we receive syncTime from robot process
-    // but since there might not be a body (robot process won't init)
-    // we need to do it here
-    GetAnimationComponent().Init();
-        
-    // Once we have gotten a frame from the camera play a sound to indicate 
-    // a "successful" boot
-    GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-    GetAnimationComponent().PlayAnimByName("soundTestAnim", 1, true, nullptr, 0, 0.4f);
-    playedSound = true;
-    #endif    
-  }
-  
-  return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  res = (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+  return (state != State::WAITING);
 }
 
-Result Robot::UpdateToFStartupChecks(bool& isDone)
+bool Robot::UpdateToFStartupChecks(Result& res)
 {
-  isDone = false;
+  static bool isDone = false;
   
   enum class State
   {
@@ -2757,19 +2703,19 @@ Result Robot::UpdateToFStartupChecks(bool& isDone)
       // Intentional fallthrough
     case State::WaitingForCallback:
       {
-        return RESULT_OK;
+        res =  RESULT_OK;
       }
       break;
 
     case State::Failure:
       {
         isDone = true;
-        return RESULT_FAIL;
+        res =  RESULT_FAIL;
       }
       break;
   }
 
-  return RESULT_OK;
+  return isDone;
   
   #undef HANDLE_RESULT
 }
@@ -2834,6 +2780,8 @@ bool Robot::UpdateStartupChecks(Result& res)
   res = RESULT_OK;
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
+  RUN_CHECK(UpdateToFStartupChecks);
+  RUN_CHECK(UpdateRampostErrorChecks);
   return checkDone;
 
 #undef RUN_CHECK
@@ -2856,79 +2804,6 @@ bool Robot::SetLocale(const std::string & locale)
   return true;
 }
 
-void Robot::UpdateToF()
-{
-  const RangeDataRaw data = ToFSensor::getInstance()->GetData();
- 
-  Pose3d co = GetCameraPose(GetComponent<FullRobotPose>().GetHeadAngle());
-  Pose3d c(TOF_ANGLE_DOWN_REL_CAMERA_RAD, Y_AXIS_3D(), {0, 0, 0}, co);
-  c.RotateBy(Rotation3d(DEG_TO_RAD(-90), Y_AXIS_3D()));
-  c.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
-
-#if TOF_CONFIGURATION ==TOF_SIDE_BY_SIDE
-  const auto leftAngle = TOF_LEFT_ROT_Z_REL_CAMERA_RAD;
-  const auto rightAngle = TOF_RIGHT_ROT_Z_REL_CAMERA_RAD;
-  const auto axis = Z_AXIS_3D();  
-#elif TOF_CONFIGURATION == TOF_ABOVE_BELOW || TOF_CONFIGURATION == TOF_CENTER_OF_FACE
-  const auto leftAngle = TOF_LEFT_ROT_Y_REL_CAMERA_RAD;
-  const auto rightAngle = TOF_RIGHT_ROT_Y_REL_CAMERA_RAD;
-  const auto axis = Y_AXIS_3D();
-#endif
-
-    Pose3d lp(leftAngle,
-              axis,
-              {TOF_LEFT_TRANS_REL_CAMERA_MM[0],
-               TOF_LEFT_TRANS_REL_CAMERA_MM[1],
-               TOF_LEFT_TRANS_REL_CAMERA_MM[2]},
-              c,
-              "leftProx");
-    Pose3d rp(rightAngle,
-              axis,
-              {TOF_RIGHT_TRANS_REL_CAMERA_MM[0],
-               TOF_RIGHT_TRANS_REL_CAMERA_MM[1],
-               TOF_RIGHT_TRANS_REL_CAMERA_MM[2]},
-              c,
-              "rightProx");
-
-  const f32 kInnerAngle_rad = TOF_FOV_RAD / 8.f;
-  const f32 kOuterAngle_rad = kInnerAngle_rad * 3.f;
-  const f32 kPixToAngle[] = {kOuterAngle_rad,
-                             kInnerAngle_rad,
-                             -kInnerAngle_rad,
-                             -kOuterAngle_rad};
-  
-  for(int r = 0; r < TOF_RESOLUTION; r++)
-  {
-    const f32 pitch = sin(kPixToAngle[r]);
-
-    for(int c = 0; c < TOF_RESOLUTION; c++)
-    {
-      const f32 yaw = sin(kPixToAngle[c]);
-
-      const f32 leftDist_mm = data.data[c + (r*8)] * 1000; 
-
-      const f32 yl = yaw * leftDist_mm;
-      const f32 zl = pitch * leftDist_mm;
-
-      Pose3d pl(0, Z_AXIS_3D(), {leftDist_mm, yl, zl}, lp, "point");
-      Pose3d rootl = pl.GetWithRespectToRoot();
-      GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
-                                                {3, 3, 3},
-                                                rootl);
-
-      const f32 rightDist_mm = data.data[4+c + (r*8)] * 1000;
-      const f32 yr = yaw * rightDist_mm;
-      const f32 zr = pitch * rightDist_mm;
-        
-      Pose3d pr(0, Z_AXIS_3D(), {rightDist_mm, yr, zr}, rp, "point");
-      Pose3d rootr = pr.GetWithRespectToRoot();
-      GetContext()->GetVizManager()->DrawCuboid(r*8 + c+4 + 1,
-                                                {3, 3, 3},
-                                                rootr);
-    }
-  }
-}
-
 void Robot::Shutdown(ShutdownReason reason)
 {
   if (_toldToShutdown) {
@@ -2939,42 +2814,56 @@ void Robot::Shutdown(ShutdownReason reason)
   _shutdownReason = reason;
 }
 
-Result Robot::CheckForRampostError()
+bool Robot::UpdateRampostErrorChecks(Result& res)
 {
-  const std::string path = "/dev/rampost_error";
-  struct stat buffer;
-  int rc = stat(path.c_str(), &buffer);
-  if(rc == 0)
+  static bool rampostFileRead = false;
+  static bool rampostError = false;
+  
+  if(!rampostFileRead)
   {
-    FILE* f = fopen(path.c_str(), "r");
-    if(f != nullptr)
+    rampostFileRead = true;
+
+    const std::string path = "/dev/rampost_error";
+    struct stat buffer;
+    int rc = stat(path.c_str(), &buffer);
+    if(rc == 0)
     {
-      char data[32] = {0};
-      rc = fread(data, sizeof(data), 1, f);
-      (void)fclose(f);
-      if(rc < 0)
+      FILE* f = fopen(path.c_str(), "r");
+      if(f != nullptr)
       {
-        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
-                          "Failed to read from rampost_error file %u %u",
-                          rc,
-                          errno);
+        char data[32] = {0};
+        rc = (int)fread(data, sizeof(data), 1, f);
+        (void)fclose(f);
+        if(rc < 0)
+        {
+          PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
+                            "Failed to read from rampost_error file %u %u",
+                            rc,
+                            errno);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
+        }
       }
       else
       {
-        PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
+        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
+                          "%d",
+                          rc);
       }
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
-                        "%d",
-                        rc);
+
+      res = RESULT_FAIL;
     }
     
-    return RESULT_FAIL;
+    if(res != RESULT_OK)
+    {
+      rampostError = true;
+      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);    
+    }
   }
 
-  return RESULT_OK;
+  return rampostFileRead;  
 }
 
 } // namespace Vector

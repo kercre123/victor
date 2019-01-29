@@ -4,9 +4,13 @@ project(vl53l1)
 
 if (VICOS)
 
-add_library(vl53l1 STATIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core/src>
+file(GLOB SRCS
+     ${CMAKE_CURRENT_SOURCE_DIR}/core/src/*.c
+     ${CMAKE_CURRENT_SOURCE_DIR}/platform/src/*.c
+     ${CMAKE_CURRENT_SOURCE_DIR}/protected/src/*.c
 )
+
+add_library(vl53l1 STATIC ${SRCS})
 
 target_include_directories(vl53l1
   SYSTEM PUBLIC

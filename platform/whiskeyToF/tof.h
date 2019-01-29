@@ -70,23 +70,21 @@ public:
   int StopRanging(const CommandCallback& callback);
 
   // Whether or not the device is actively ranging
-  bool IsRanging();
+  bool IsRanging() const;
 
   // Whether or not the RoiStatus is considered valid
-  bool IsValidRoiStatus(uint8_t status);
+  bool IsValidRoiStatus(uint8_t status) const;
   
-#if FACTORY_TEST
   // Run the calibration procedure at the given distance and target reflectance
   int PerformCalibration(uint32_t distanceToTarget_mm,
                          float targetReflectance,
                          const CommandCallback& callback);
 
   // Whether or not the device is currently calibrating
-  bool IsCalibrating();
+  bool IsCalibrating() const;
 
   // Set where to save calibration
   void SetLogPath(const std::string& path);
-#endif
   
 private:
   

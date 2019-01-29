@@ -73,7 +73,6 @@ int main(int argc, char **argv)
   CubeBleClient::SetSupervisor(&engineSupervisor);
   ToFSensor::SetSupervisor(&engineSupervisor);
   
-#if ANKI_DEV_CHEATS
   // Get robotID to determine if devlogger should be created
   // Only create devLogs for robot with DEFAULT_ROBOT_ID.
   // The only time it shouldn't create a log is for sim robots

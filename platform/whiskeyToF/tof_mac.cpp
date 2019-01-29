@@ -129,6 +129,64 @@ RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
   
   return rangeData;
 }
+
+int ToFSensor::SetupSensors(const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+int ToFSensor::StartRanging(const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+int ToFSensor::StopRanging(const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+bool ToFSensor::IsRanging() const
+{
+  return true;
+}
+
+bool ToFSensor::IsValidRoiStatus(uint8_t status) const
+{
+  return true;
+}
+  
+int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
+                                  float targetReflectance,
+                                  const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+bool ToFSensor::IsCalibrating() const
+{
+  return false;
+}
+
+void ToFSensor::SetLogPath(const std::string& path)
+{
+  return;
+}
   
 }
 }

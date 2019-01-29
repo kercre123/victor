@@ -564,7 +564,7 @@ void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
-void Process_rangeDataToDisplay(const Anki::Cozmo::RobotInterface::RangeDataToDisplay& msg)
+void Process_rangeDataToDisplay(const Anki::Vector::RobotInterface::RangeDataToDisplay& msg)
 {
   FaceInfoScreenManager::getInstance()->DrawToF(msg.data);
 }

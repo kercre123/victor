@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.6)
 
-add_subdirectory(vicos/vl53l1)
-
 project(whiskeyToF)
 
 include(anki_build_cxx)
+
+if (VICOS)
+   add_subdirectory(vicos/vl53l1)
+endif()
+
 
 anki_build_cxx_library(whiskeyToF ${ANKI_SRCLIST_DIR})
 
@@ -50,6 +53,7 @@ target_include_directories(whiskeyToF
 )
 
 
+if (VICOS AND ANKI_DEV_CHEATS)
 
 project(tof_test)
 
@@ -78,3 +82,5 @@ target_compile_definitions(tof_test
   PRIVATE
   ${PLATFORM_COMPILE_DEFS}
 )
+
+endif()

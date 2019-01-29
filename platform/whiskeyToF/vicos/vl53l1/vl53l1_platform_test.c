@@ -84,8 +84,8 @@ int main(int argc, char **argv)
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	VL53L1_Dev_t                   dev;
 	VL53L1_DEV                     Dev = &dev;
-	VL53L1_PresetModes             PresetMode;
-	VL53L1_DeviceInfo_t            DeviceInfo;
+	//VL53L1_PresetModes             PresetMode;
+	//VL53L1_DeviceInfo_t            DeviceInfo;
 
 //	setvbuf(stdout, NULL, _IONBF, 0);
 //	setvbuf(stderr, NULL, _IONBF, 0);

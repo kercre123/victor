@@ -67,7 +67,7 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
   if(!res)
   {
     PRINT_NAMED_ERROR("BehaviorPlaypenDistanceSensor.Constructor.MissingConfigKey",
-                      "Missing %s key from PlaypenDistanceSensor Config", kPerformCalibrationKey.c_str());
+                      "Missing %s key from PlaypenDistanceSensor Config", kPerformCalibrationKey);
   }
   
   JsonTools::GetValueOptional(config, kDistToDriveKey, _distToDrive_mm);
@@ -161,8 +161,8 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
       RangeSensorData data;
       data.rangeData = rangeData;
       data.visualDistanceToTarget_mm = 0;
-     data.visualAngleAwayFromTarget_rad = 0;
-      data.headAngle_rad = robot.GetHeadAngle();
+      data.visualAngleAwayFromTarget_rad = 0;
+      data.headAngle_rad = robot.GetComponent<FullRobotPose>().GetHeadAngle();
 
       // Pose3d markerPose;
       // const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
@@ -302,10 +302,10 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  static int i = 0;
-  robot.GetVisionComponent().SetSaveImageParameters(ImageSendMode::SingleShot,
-                                                    "/data/misc/camera/test/" + std::to_string(i++) + ".png",
-                                                    100);
+  // static int i = 0;
+  // robot.GetVisionComponent().SetSaveImageParameters(ImageSendMode::SingleShot,
+  //                                                   "/data/misc/camera/test/" + std::to_string(i++) + ".png",
+  //                                                   100);
 
   Pose3d markerPose;
   const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
@@ -478,12 +478,13 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
       }
     }
 
-    if(!Util::IsNear(lastObservedTime, robot.GetLastImageTimeStamp(), 500.f))
+    if(!Util::IsNear((float)lastObservedTime, (float)robot.GetLastImageTimeStamp(), 500.f))
     {
-      PRINT_CH_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld",
+      PRINT_CH_INFO("Behaviors",
+                    "BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld",
                     "%u %u",
-                    lastObservedTime,
-                    robot.GetLastImageTimeStamp());
+                    (u32)lastObservedTime,
+                    (u32)robot.GetLastImageTimeStamp());
       return false;
     }
     

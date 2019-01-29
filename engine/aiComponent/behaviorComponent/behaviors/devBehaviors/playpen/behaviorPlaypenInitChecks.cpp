@@ -37,11 +37,11 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const Result res = Robot::CheckForRampostError();
-  if(res != RESULT_OK)
-  {
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::RAMPOST_ERROR, RESULT_FAIL);
-  }
+  // const Result res = Robot::CheckForRampostError();
+  // if(res != RESULT_OK)
+  // {
+  //   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::RAMPOST_ERROR, RESULT_FAIL);
+  // }
       
   // Should not be seeing any cliffs
   if(robot.GetCliffSensorComponent().IsCliffDetected())

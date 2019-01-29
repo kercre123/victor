@@ -193,7 +193,9 @@ void ToFSensor::removeInstance()
 
 void ToFSensor::SetLogPath(const std::string& path)
 {
+  #if FACTORY_TEST
   set_calibration_save_path(path);
+  #endif
 }
 
 ToFSensor::CommandResult run_calibration(uint32_t distanceToTarget_mm,
@@ -219,13 +221,17 @@ int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
                                   float targetReflectance,
                                   const CommandCallback& callback)
 {
+  #if FACTORY_TEST
   std::lock_guard<std::mutex> lock(_commandLock);
   _distanceToCalibTarget_mm = distanceToTarget_mm;
   _calibTargetReflectance = targetReflectance;
   _commandQueue.push({Command::PerformCalibration, callback});
   _isCalibrating = true;
+  #endif
+  
   return 0;
 }
+
 
 // Parses and converts VL53L1_MultiRangingData_t into RangeDataRaw
 void ParseData(VL53L1_MultiRangingData_t& mz_data,
@@ -295,7 +301,6 @@ int ReadDataFromSensor(RangeDataRaw& rangeData)
 int ToFSensor::StartRanging(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
-  _commandQueue.push({Command::LoadCalibration, callback});
   _commandQueue.push({Command::StartRanging, callback});
   return 0;
 }
@@ -461,12 +466,12 @@ void ProcessLoop()
   close_dev(&_dev);
 }
 
-bool ToFSensor::IsRanging()
+bool ToFSensor::IsRanging() const
 {
   return _rangingEnabled;
 }
 
-bool ToFSensor::IsCalibrating()
+bool ToFSensor::IsCalibrating() const
 {
   return _isCalibrating;
 }
@@ -497,7 +502,7 @@ RangeDataRaw ToFSensor::GetData(bool& hasDataUpdatedSinceLastCall)
   return _latestData;
 }
 
-bool ToFSensor::IsValidRoiStatus(uint8_t status)
+bool ToFSensor::IsValidRoiStatus(uint8_t status) const
 {
   return (status != VL53L1_ROISTATUS_NOT_VALID);
 }
