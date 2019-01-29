@@ -163,7 +163,7 @@ namespace Anki {
     T MakeUnitLength(void);
 
     // Returns "(x, y, ...)"
-    std::string ToString() const;    
+    std::string ToString() const;
         
   }; // class Point
   

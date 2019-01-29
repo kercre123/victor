@@ -120,7 +120,6 @@ namespace Anki {
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
     template<MatDimType KCOLS, typename T_other, typename T_work=T>
     SmallMatrix<NROWS,KCOLS,T_work> operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const;
-
     
     SmallMatrix<NROWS,NCOLS,T>  operator* (T value) const;
     SmallMatrix<NROWS,NCOLS,T>& operator*=(T value);
