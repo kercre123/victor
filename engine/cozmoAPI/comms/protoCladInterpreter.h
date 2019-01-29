@@ -19,7 +19,6 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/gateway/messageRobotToExternalTag.h"
 #include "proto/external_interface/messages.pb.h"
 #include "proto/external_interface/shared.pb.h"
 
@@ -118,6 +117,23 @@ private:
   void ProtoDefineCustomObjectRequestToClad(
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoMoveHeadRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoMoveLiftRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoAppIntentRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoNavMapFeedRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
 
   //
   // Clad-to-Proto interpreters

@@ -30,20 +30,6 @@ var (
 )
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
-		SpeedRadPerSec: msg.SpeedRadPerSec,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoMoveLiftToClad(msg *extint.MoveLiftRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithMoveLift(&gw_clad.MoveLift{
-		SpeedRadPerSec: msg.SpeedRadPerSec,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount uint16, chunkIndex uint8, chunkCount uint8, durationMs uint32, interruptRunning bool) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithDisplayFaceImageRGBChunk(&gw_clad.DisplayFaceImageRGBChunk{
 		FaceData:         faceData,
@@ -52,13 +38,6 @@ func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount u
 		NumChunks:        chunkCount,
 		DurationMs:       durationMs,
 		InterruptRunning: interruptRunning,
-	})
-}
-
-func ProtoAppIntentToClad(msg *extint.AppIntentRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithAppIntent(&gw_clad.AppIntent{
-		Param:  msg.Param,
-		Intent: msg.Intent,
 	})
 }
 
@@ -124,37 +103,6 @@ func CladExpressionValuesToProto(msg []uint8) []uint32 {
 		expression_values = append(expression_values, uint32(val))
 	}
 	return expression_values
-}
-
-func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
-	return &extint.PoseStruct{
-		X:        msg.X,
-		Y:        msg.Y,
-		Z:        msg.Z,
-		Q0:       msg.Q0,
-		Q1:       msg.Q1,
-		Q2:       msg.Q2,
-		Q3:       msg.Q3,
-		OriginId: msg.OriginID,
-	}
-}
-
-func CladMemoryMapBeginToProtoNavMapInfo(msg *gw_clad.MemoryMapMessageBegin) *extint.NavMapInfo {
-	return &extint.NavMapInfo{
-		RootDepth:   int32(msg.RootDepth),
-		RootSizeMm:  msg.RootSizeMm,
-		RootCenterX: msg.RootCenterX,
-		RootCenterY: msg.RootCenterY,
-		RootCenterZ: 0.0,
-	}
-}
-
-func CladMemoryMapQuadInfoToProto(msg *gw_clad.MemoryMapQuadInfo) *extint.NavMapQuadInfo {
-	return &extint.NavMapQuadInfo{
-		Content:   extint.NavNodeContentType(msg.Content), // Not incrementing this one because the CLAD enum has 0 as unknown
-		Depth:     uint32(msg.Depth),
-		ColorRgba: msg.ColorRGBA,
-	}
 }
 
 func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest) (*extint.OnboardingInputResponse, error) {
@@ -455,7 +403,13 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 }
 
 func (service *rpcService) MoveHead(ctx context.Context, in *extint.MoveHeadRequest) (*extint.MoveHeadResponse, error) {
-	_, err := engineCladManager.Write(ProtoMoveHeadToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_MoveHeadRequest{
+			MoveHeadRequest: in,
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +421,13 @@ func (service *rpcService) MoveHead(ctx context.Context, in *extint.MoveHeadRequ
 }
 
 func (service *rpcService) MoveLift(ctx context.Context, in *extint.MoveLiftRequest) (*extint.MoveLiftResponse, error) {
-	_, err := engineCladManager.Write(ProtoMoveLiftToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_MoveLiftRequest{
+			MoveLiftRequest: in,
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -523,7 +483,13 @@ func (service *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.D
 }
 
 func (service *rpcService) AppIntent(ctx context.Context, in *extint.AppIntentRequest) (*extint.AppIntentResponse, error) {
-	_, err := engineCladManager.Write(ProtoAppIntentToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_AppIntentRequest{
+			AppIntentRequest: in,
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -792,7 +758,6 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
 			}
 			event := response.GetEvent()
-			log.Printf("ron_proto EventStream: %s", event.String())
 			if checkFilters(event, whiteList, blackList) {
 				if logVerbose {
 					log.Printf("EventStream: Sending event to client: %#v\n", *event)
@@ -2461,94 +2426,67 @@ func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptIn
 	}, nil
 }
 
+// TODO: While this is the way it was done before, note that two requestors for the feed will
+//       interfere with each other. If there's a navmap request from the SDK and from... elsewhere...
+//       when this one completes, it will stop the feed to the other.
 func SetNavMapBroadcastFrequency(frequency float32) error {
-	log.Println("Setting NavMapBroadcastFrequency to (", frequency, ") seconds")
-
-	cladMsg := gw_clad.NewMessageExternalToRobotWithSetMemoryMapBroadcastFrequencySec(&gw_clad.SetMemoryMapBroadcastFrequency_sec{
+	navMapFeedRequest := &extint.NavMapFeedRequest{
 		Frequency: frequency,
+	}
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_NavMapFeedRequest{
+			NavMapFeedRequest: navMapFeedRequest,
+		},
 	})
-	_, err := engineCladManager.Write(cladMsg)
 
 	return err
 }
 
 func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extint.ExternalInterface_NavMapFeedServer) error {
-
-	// Enable nav map stream
 	err := SetNavMapBroadcastFrequency(in.Frequency)
 	if err != nil {
 		return err
 	}
 
-	// Disable nav map stream when the RPC exits
 	defer SetNavMapBroadcastFrequency(-1.0)
 
-	f1, memoryMapMessageBegin := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageBegin, 1)
+	f1, memoryMapMessage := engineProtoManager.CreateChannel(&extint.GatewayWrapper_NavMapFeedResponse{}, 1)
 	defer f1()
-
-	// Every frame the engine can send up to: (Anki::Comms::MsgPacket::MAX_SIZE-3)/sizeof(QuadInfoVector::value_type) quads.
-	// 50 feels like a reasonable educated guess.
-	f2, memoryMapMessageData := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessage, 50)
-	defer f2()
-
-	f3, memoryMapMessageEnd := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_MemoryMapMessageEnd, 1)
-	defer f3()
 
 	var pendingMap *extint.NavMapFeedResponse = nil
 
 	for {
 		select {
-		case chanResponse, ok := <-memoryMapMessageBegin:
+		case chanResponse, ok := <-memoryMapMessage:
 			if !ok {
 				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
-			if pendingMap != nil {
-				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapBegin recieved from engine while still processing a pending memory map; discarding pending map.")
+			navMapFeedResponse := chanResponse.GetNavMapFeedResponse()
+			if navMapFeedResponse == nil {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message: navMapFeedResponse is nil")
 			}
 
-			response := chanResponse.GetMemoryMapMessageBegin()
-			pendingMap = &extint.NavMapFeedResponse{
-				OriginId:  response.OriginId,
-				MapInfo:   CladMemoryMapBeginToProtoNavMapInfo(response),
-				QuadInfos: []*extint.NavMapQuadInfo{},
-			}
-
-		case chanResponse, ok := <-memoryMapMessageData:
-			if !ok {
-				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
-			}
 			if pendingMap == nil {
-				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapData recieved from engine with no pending content to add to.")
+				pendingMap = navMapFeedResponse
 			} else {
-				response := chanResponse.GetMemoryMapMessage()
-				for i := 0; i < len(response.QuadInfos); i++ {
-					newQuad := CladMemoryMapQuadInfoToProto(&response.QuadInfos[i])
-					pendingMap.QuadInfos = append(pendingMap.QuadInfos, newQuad)
+				pendingMap.QuadInfos = append(pendingMap.QuadInfos, navMapFeedResponse.QuadInfos...)
+			}
+
+			if navMapFeedResponse.LastResponse == true {
+				if err := stream.Send(pendingMap); err != nil {
+					log.Println("stream.Send ERROR!!!", err)
+					return err
+				} else if err = stream.Context().Err(); err != nil {
+					// This is the case where the user disconnects the stream
+					// We should still return the err in case the user doesn't think they disconnected
+					log.Println("Stream disconnected by user?")
+					return err
 				}
+				pendingMap = nil
 			}
-
-		case _, ok := <-memoryMapMessageEnd:
-			if !ok {
-				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
-			}
-
-			if pendingMap == nil {
-				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapEnd recieved from engine with no pending content to send.")
-			} else if err := stream.Send(pendingMap); err != nil {
-				return err
-			} else if err = stream.Context().Err(); err != nil {
-				// This is the case where the user disconnects the stream
-				// We should still return the err in case the user doesn't think they disconnected
-				return err
-			}
-
-			pendingMap = nil
 		}
 	}
-
-	errMsg := "NavMemoryMap engine stream died unexpectedly"
-	log.Errorln(errMsg)
-	return grpc.Errorf(codes.Internal, errMsg)
+	return err
 }
 
 func newServer() *rpcService {

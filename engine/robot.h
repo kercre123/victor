@@ -54,10 +54,14 @@
 #include <utility>
 
 
+namespace external_interface {
+  class BatteryStateRequest;
+  class GatewayWrapper;
+}
+
 namespace Anki {
 
 // Forward declaration:
-
 class PoseOriginList;
 
 namespace Util {
@@ -88,8 +92,6 @@ class DrivingAnimationHandler;
 class DataAccessorComponent;
 enum class EngineErrorCode : uint8_t;
 class FaceWorld;
-class IExternalInterface;
-class IGatewayInterface;
 class MatPiece;
 class MoodManager;
 class MovementComponent;
@@ -105,6 +107,7 @@ class RobotHealthReporter;
 class RobotStateHistory;
 class HistRobotState;
 class IExternalInterface;
+class IGatewayInterface;
 struct RobotState;
 class ActiveCube;
 class CubeLightComponent;
@@ -149,6 +152,7 @@ struct RobotState;
 }
 
 namespace external_interface {
+class GatewayWrapper;
 class RobotState;
 }
 
@@ -565,6 +569,8 @@ public:
   bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
 
   bool Broadcast(VizInterface::MessageViz&& event);
+
+  bool Broadcast(external_interface::GatewayWrapper&& proto_message);
 
   Util::Data::DataPlatform* GetContextDataPlatform();
 

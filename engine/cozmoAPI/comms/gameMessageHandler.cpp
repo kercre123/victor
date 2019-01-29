@@ -45,7 +45,6 @@ namespace Vector {
         p.dataLen = msg.Size();
         p.destId = devID;
         
-        LOG_WARNING("ron_proto", "%d", __LINE__);
         return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
         
 //#else
@@ -69,8 +68,6 @@ namespace Vector {
             ExternalInterface::MessageEngineToGameTagToString(message.GetTag()) << ", expected " << message.Size() <<
             ", recvd " << buffer.size() << ")");
         }
-
-        LOG_WARNING("ron_proto", "%d %s", __LINE__, ExternalInterface::MessageEngineToGameTagToString(message.GetTag()));
 
         if (messageCallback != nullptr) {
           messageCallback(message);

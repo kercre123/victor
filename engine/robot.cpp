@@ -59,6 +59,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/drivingAnimationHandler.h"
+#include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/fullRobotPose.h"
 #include "engine/moodSystem/moodManager.h"
@@ -2466,6 +2467,15 @@ f32 Robot::GetDriveCenterOffset() const
     driveCenterOffset = 0;
   }
   return driveCenterOffset;
+}
+
+bool Robot::Broadcast(external_interface::GatewayWrapper&& proto_message)
+{
+  if (HasGatewayInterface()) {
+    GetGatewayInterface()->Broadcast(proto_message);
+    return true;
+  }
+  return false;
 }
 
 bool Robot::Broadcast(ExternalInterface::MessageEngineToGame&& event)

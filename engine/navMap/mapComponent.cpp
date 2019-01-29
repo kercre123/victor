@@ -41,6 +41,9 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/vision/groundPlaneROI.h"
 
+#include "proto/external_interface/messages.pb.h"
+#include "proto/external_interface/shared.pb.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
@@ -761,7 +764,8 @@ namespace {
   const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
   const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
   const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
-  const size_t kQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoVector::value_type);
+  const size_t kQuadsPerMessage = 
+      (kMaxBufferForQuads - sizeof(external_interface::NavMapQuadInfo)) / sizeof(external_interface::NavMapInfo);
   const size_t kFullQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoFullVector::value_type);
 
   static_assert(kQuadsPerMessage > 0,     "MapComponent.Broadcast.InvalidQuadsPerMessage");
@@ -842,25 +846,38 @@ void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& mapData) const
 {
-  using namespace ExternalInterface;
-
-  // Send the begin message
-  _robot->Broadcast(MessageEngineToGame(MemoryMapMessageBegin(
-      _currentMapOriginID, mapData.mapInfo.rootDepth, mapData.mapInfo.rootSize_mm,
-      mapData.mapInfo.rootCenterX, mapData.mapInfo.rootCenterY)
-  ));
-
-  // chunk the quad messages
-  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
-  {
-    auto start = seqNum*kQuadsPerMessage;
-    auto end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
-    _robot->Broadcast(MessageEngineToGame(MemoryMapMessage(
-      QuadInfoVector(mapData.quadInfo.begin() + start, mapData.quadInfo.begin() + end))));
+  if(mapData.quadInfo.size() <= 0) {
+    return;
   }
 
-  // Send the end message
-  _robot->Broadcast(MessageEngineToGame(MemoryMapMessageEnd()));
+  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
+  {
+    external_interface::GatewayWrapper gateway_wrapper;
+  
+    auto* nav_map_feed_response = new external_interface::NavMapFeedResponse;
+    nav_map_feed_response->set_origin_id(_currentMapOriginID);
+    auto* nav_map_info = new external_interface::NavMapInfo;
+    nav_map_info->set_root_depth(mapData.mapInfo.rootDepth);
+    nav_map_info->set_root_size_mm(mapData.mapInfo.rootSize_mm);
+    nav_map_info->set_root_center_x(mapData.mapInfo.rootCenterX);
+    nav_map_info->set_root_center_y(mapData.mapInfo.rootCenterY);
+    nav_map_info->set_root_center_z(0.0);
+    nav_map_feed_response->set_allocated_map_info(nav_map_info);
+    size_t start = seqNum*kQuadsPerMessage;
+    size_t end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
+    nav_map_feed_response->set_last_response(end < mapData.quadInfo.size() ? false : true);
+    gateway_wrapper.set_allocated_nav_map_feed_response(nav_map_feed_response);
+
+    nav_map_feed_response->clear_quad_infos();
+
+    for(size_t quad_index=start; quad_index<end; quad_index++) {
+      external_interface::NavMapQuadInfo* quad_info = nav_map_feed_response->add_quad_infos();
+      quad_info->set_depth(mapData.quadInfo[quad_index].depth);
+      quad_info->set_color_rgba(mapData.quadInfo[quad_index].colorRGBA);
+      quad_info->set_content((external_interface::NavNodeContentType)mapData.quadInfo[quad_index].content);
+    }
+    _robot->Broadcast(std::move(gateway_wrapper));
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

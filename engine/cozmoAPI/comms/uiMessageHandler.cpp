@@ -750,16 +750,6 @@ namespace Anki {
         default:
           return;
       }
-      auto debug_string = proto_message.DebugString();
-      int last_ch = 0;
-      remove_if(
-        debug_string.begin(), 
-        debug_string.end(), 
-        [last_ch](int ch)mutable->int{
-          bool retval = ((ch=='\n') | (last_ch == ' ' and ch == ' '));
-          last_ch = ch;
-          return retval;
-        });
       _context->GetGatewayInterface()->Broadcast(proto_message);
     }
 

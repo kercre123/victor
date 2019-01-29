@@ -69,7 +69,8 @@ message NavMapFeedRequest
 // content.
 message NavMapFeedResponse
 {
-  uint32                  origin_id  = 1;
-  NavMapInfo              map_info   = 2;
-  repeated NavMapQuadInfo quad_infos = 3;
+  uint32                  origin_id        = 1;
+  NavMapInfo              map_info         = 2;
+  repeated NavMapQuadInfo quad_infos       = 3;
+  bool                    last_response    = 4;
 }

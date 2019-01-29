@@ -18,13 +18,14 @@ syntax = "proto3";
 
 package Anki.Vector.external_interface;
 
+import "alexa.proto"; // App only
 import "behavior.proto";
 import "cube.proto";
-import "alexa.proto"; // App only
-import "messages.proto";
-import "settings.proto";
 import "extensions.proto";
+import "messages.proto";
+import "nav_map.proto";
 import "response_status.proto";
+import "settings.proto";
 
 message ProtocolVersionRequest {
   int64 client_version = 1;
@@ -181,6 +182,10 @@ message GatewayWrapper {
     DriveWheelsResponse           drive_wheels_response              = 515;
     ListAnimationsRequest         list_animations_request            = 516;
     ListAnimationsResponse        list_animations_response           = 517;
+    MoveHeadRequest               move_head_request                  = 518;
+    MoveHeadResponse              move_head_response                 = 519;
+    MoveLiftRequest               move_lift_request                  = 520;
+    MoveLiftResponse              move_lift_response                 = 521;
     
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 600;
@@ -243,6 +248,8 @@ message GatewayWrapper {
 
     // ------------ App/engine connectivity ------------
     AppDisconnected               app_disconnected                   = 1500;
+    AppIntentRequest              app_intent_request                 = 1501;
+    AppIntentResponse             app_intent_response                = 1502;
 
     // ------------ Alexa ------------
     AlexaAuthStateRequest         alexa_auth_state_request           = 1600;
@@ -262,20 +269,15 @@ message GatewayWrapper {
     DefineCustomObjectRequest       define_custom_object_request        = 1754;
     DefineCustomObjectResponse      define_custom_object_response       = 1755;
     
-    // ------------ Events -------------------------
-    RobotObservedFace             robot_observed_face                = 1800;
-    RobotChangedObservedFaceID    robot_changed_observed_face_id     = 1801;
-    RobotObservedObject           robot_observed_object              = 1802;
-    ObjectMoved                   object_moved                       = 1803;
-    ObjectAvailable               object_available                   = 1804;
-    ObjectStoppedMoving           object_stopped_moving              = 1805;
-    ObjectUpAxisChanged           object_up_axis_changed             = 1806;
-    ObjectTapped                  object_tapped                      = 1807;
-    ObjectConnectionState         object_connection_state            = 1808;
-
     // ------------ Facial Registration -------------------------
     RequestEnrolledNamesRequest   request_enrolled_names_request     = 2000;
     RequestEnrolledNamesResponse  request_enrolled_names_response    = 2001;
+
+    // ------------ NavMap -------------------------
+    NavMapFeedRequest             nav_map_feed_request               = 2050;
+    NavMapFeedResponse            nav_map_feed_response              = 2051;
+    NavMapQuadInfo                nav_map_quad_info                  = 2052;
+
 
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------

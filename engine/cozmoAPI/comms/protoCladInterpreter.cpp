@@ -59,7 +59,7 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
 
   /*
   auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
-  LOG_WARNING("ron_proto", "ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
+  LOG_WARNING("proto_clad_interpreter", "ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
       proto_message.oneof_message_type_case(),
       proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
       proto_message.GetMetadata().descriptor->full_name().c_str(),
@@ -102,6 +102,26 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
       ProtoDefineCustomObjectRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kMoveHeadRequest:
+    {
+      ProtoMoveHeadRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kMoveLiftRequest:
+    {
+      ProtoMoveLiftRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kAppIntentRequest:
+    {
+      ProtoAppIntentRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kNavMapFeedRequest:
+    {
+      ProtoNavMapFeedRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -118,7 +138,7 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
   external_interface::GatewayWrapper proto_message;
 
   /*
-  LOG_WARNING("ron_proto", "Redirect(ME2G(%d, %s)=>proto): %s:%d", 
+  LOG_WARNING("proto_clad_interpreter", "Redirect(ME2G(%d, %s)=>proto): %s:%d", 
       (int)message.GetTag(),
       MessageEngineToGameTagToString(message.GetTag()),
       __FILE__, __LINE__
@@ -172,7 +192,7 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   external_interface::GatewayWrapper proto_message;
 
   /*
-  LOG_WARNING("ron_proto", "Redirect(MG2E(%d, %s))=>proto", 
+  LOG_WARNING("proto_clad_interpreter", "Redirect(MG2E(%d, %s))=>proto", 
       (int)message.GetTag(),
       MessageGameToEngineTagToString(message.GetTag()));
   */
@@ -348,6 +368,49 @@ void ProtoCladInterpreter::ProtoDefineCustomObjectRequestToClad(
       //Code review: how to handle?
     }
 }
+
+void ProtoCladInterpreter::ProtoMoveHeadRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::MoveHead move_head;
+
+  move_head.speed_rad_per_sec = proto_message.move_head_request().speed_rad_per_sec();
+
+  clad_message.Set_MoveHead(move_head);
+}
+
+void ProtoCladInterpreter::ProtoMoveLiftRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::MoveLift move_lift;
+
+  move_lift.speed_rad_per_sec = proto_message.move_lift_request().speed_rad_per_sec();
+
+  clad_message.Set_MoveLift(move_lift);
+}
+
+void ProtoCladInterpreter::ProtoAppIntentRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::AppIntent app_intent;
+
+  app_intent.intent = proto_message.app_intent_request().intent();
+  app_intent.param = proto_message.app_intent_request().param();
+
+  clad_message.Set_AppIntent(app_intent);
+}
+
+void ProtoCladInterpreter::ProtoNavMapFeedRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  ExternalInterface::SetMemoryMapBroadcastFrequency_sec memory_map_broadcast_frequency_sec;
+
+  memory_map_broadcast_frequency_sec.frequency = proto_message.nav_map_feed_request().frequency();
+
+  clad_message.Set_SetMemoryMapBroadcastFrequency_sec(memory_map_broadcast_frequency_sec);
+}
+
+
 //
 // Clad-to-Proto interpreters
 //
