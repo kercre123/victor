@@ -38,6 +38,7 @@ target_link_libraries(robot_hal
   robot_clad_cpplite
   hdr_histogram_static
   log
+  ${ASAN_LINKER_FLAGS}
 )
 
 target_include_directories(robot_hal
@@ -51,6 +52,7 @@ target_include_directories(robot_hal
 target_compile_options(robot_hal
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+  ${ASAN_CXX_FLAGS} 
 )
 
 target_compile_definitions(robot_hal
@@ -128,7 +130,11 @@ add_executable(displayFaultCode
   ${CMAKE_SOURCE_DIR}/robot/include/anki/cozmo/shared/factory/faultCodeMain.cpp
 )
 
-target_compile_options(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_OPTIONS})
+target_compile_options(displayFaultCode
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+  ${ASAN_CXX_FLAGS}
+)
 
 target_compile_definitions(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS})
 
@@ -137,7 +143,10 @@ target_include_directories(displayFaultCode
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>)
 
 target_link_libraries(displayFaultCode
-  ${ANKITRACE})
+  PRIVATE
+  ${ANKITRACE}
+  ${ASAN_EXE_LINKER_FLAGS}
+)
 
 anki_build_strip(TARGET displayFaultCode)
 
@@ -253,6 +262,7 @@ if (VICOS)
     victorCrashReports
     ${ANKITRACE}
     ${PLATFORM_LIBS}
+    ${ASAN_EXE_LINKER_FLAGS}
   )
 
   anki_build_strip(TARGET vic-robot)

@@ -170,6 +170,7 @@ int main(int argc, const char* argv[])
   return 0;
 }
 
+#ifdef DEBUG_SPINE_TEST
 #include "spine/spine.h"
 
 int main_test(int argc, const char* argv[])
@@ -195,3 +196,4 @@ int main_test(int argc, const char* argv[])
   }
   return 0;
 }
+#endif

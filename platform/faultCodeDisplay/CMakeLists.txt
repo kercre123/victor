@@ -16,6 +16,7 @@ if (VICOS)
     cti_common
     cti_vision
     ${ANKITRACE}
+    ${ASAN_EXE_LINKER_FLAGS}
   )
 
   anki_build_strip(TARGET vic-faultCodeDisplay)
