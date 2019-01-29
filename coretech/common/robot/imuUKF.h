@@ -34,8 +34,9 @@ public:
   void Reset(const Rotation3d& rot);
 
   // Public Accessors
-  inline Rotation3d GetRotation() const { return _state.GetRotation(); }
-  inline Point3f GetBias() const { return _state.GetGyroBias().CastTo<float>(); }
+  inline Rotation3d GetRotation()      const { return _state.GetRotation(); }
+  inline Point3f    GetRotationSpeed() const { return _state.GetVelocity().CastTo<float>(); }
+  inline Point3f    GetBias()          const { return _state.GetGyroBias().CastTo<float>(); }
 
 private:
 
