@@ -208,7 +208,9 @@ void RtsHandlerV4::SaveSessionKeys() {
   SaveKeys();
 
   // Tell engine
-  _engineClient->HandleHasBleKeysRequest();
+  if(_engineClient != nullptr) {
+    _engineClient->HandleHasBleKeysRequest();
+  }
 }
 
 //

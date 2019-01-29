@@ -37,14 +37,11 @@
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/flatMat.h"
 #include "engine/humanHead.h"
 #include "engine/markerlessObject.h"
-#include "engine/mat.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/objectPoseConfirmer.h"
-#include "engine/platform.h"
 #include "engine/potentialObjectsForLocalizingTo.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -108,55 +105,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
 
-
-    // TODO: Create each known block / matpiece from a configuration/definitions file
-
-    //////////////////////////////////////////////////////////////////////////
-    // 1x1 Cubes
-    //
-
-    //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
-
-    /*
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANGRYFACE));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BULLSEYE2));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BULLSEYE2_INVERTED));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_SQTARGET));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FIRE));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANKILOGO));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_STAR5));
-    */
-
-    //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_DICE));
-
-    /*
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER1));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER2));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER3));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER4));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER5));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER6));
-     */
-    //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_BANGBANGBANG));
-
-    /*
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ARROW));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG2));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG_INVERTED));
-
-    // For CREEP Test
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_SPIDER));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_KITTY));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BEE));
-    */
-
     //////////////////////////////////////////////////////////////////////////
     // 1x1 Light Cubes
     //
@@ -167,25 +115,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
 #endif
-
-    //////////////////////////////////////////////////////////////////////////
-    // 2x1 Blocks
-    //
-
-    //_objectLibrary[ObjectFamily::Block].AddObject(new Block_2x1(ObjectType::Block_BANGBANGBANG));
-
-
-    //////////////////////////////////////////////////////////////////////////
-    // Mat Pieces
-    //
-
-    // Flat mats:
-    //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_LETTERS_4x4));
-    //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
-
-    // Platform piece:
-    //_objectLibrary[ObjectFamily::Mat].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
-
 
     //////////////////////////////////////////////////////////////////////////
     // Charger
@@ -2587,8 +2516,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     if(bboxIntersects)
     {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForCollisionWithRobot.ObjectRobotIntersection",
-                    "Marking object %s %d as 'dirty', because it intersects robot %d's bounding quad.",
-                    EnumToString(object->GetType()), object->GetID().GetValue(), _robot->GetID());
+                    "Marking object %s %d as 'dirty', because it intersects robot's bounding quad.",
+                    EnumToString(object->GetType()), object->GetID().GetValue());
 
       return true;
     }
@@ -2668,23 +2597,19 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     // If so, the robot needs to be marked as localized to nothing.
     if(_robot->GetLocalizedTo() == object->GetID()) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
-                    "Setting robot %d as localized to no object, because it "
+                    "Setting robot as localized to no object, because it "
                     "is currently localized to %s object with ID=%d, which is "
                     "about to be cleared.",
-                    _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
+                    ObjectTypeToString(object->GetType()), object->GetID().GetValue());
       _robot->SetLocalizedTo(nullptr);
     }
-
-    // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
-    // If so, clear them too or update their poses somehow? (Deleting seems easier)
 
     // Check to see if this object is the one the robot is carrying.
     if(_robot->GetCarryingComponent().GetCarryingObject() == object->GetID()) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingCarriedObject",
-                    "Clearing %s object %d which robot %d thinks it is carrying.",
+                    "Clearing %s object %d which robot thinks it is carrying.",
                     ObjectTypeToString(object->GetType()),
-                    object->GetID().GetValue(),
-                    _robot->GetID());
+                    object->GetID().GetValue());
       _robot->GetCarryingComponent().UnSetCarryingObjects();
     }
 

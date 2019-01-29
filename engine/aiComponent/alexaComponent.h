@@ -102,9 +102,6 @@ private:
   
   void SendAuthStateToApp( bool isResponse );
   
-  // tell anim to cancel any pending auth, but not any completed auth
-  void SendCancelPendingAuth(const RobotInterface::CancelAlexaFromEngineReason& reason) const;
-  
   void ToggleButtonWakewordSetting( bool isAlexa ) const;
   
   std::string GetAnimName( AnimationTrigger trigger ) const;

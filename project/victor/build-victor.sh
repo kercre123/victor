@@ -330,8 +330,20 @@ else
 fi
 
 # install build tool binaries + set protoc location
-PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install --helpers | tail -1`
+PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install 3.5.1 | tail -1`
 PROTOBUF_HOME=`cd $(dirname "${PROTOC_EXE}")/.. && pwd`
+
+# Build/Install the protoc generators for go
+GOBIN="${TOPLEVEL}/cloud/go/bin"
+if [[ ! -x $GOBIN/protoc-gen-go ]] || [[ ! -x $GOBIN/protoc-gen-grpc-gateway ]]; then
+    echo "Building/Installing protoc-gen-go and protoc-gen-grpc-gateway"
+    GOBIN=$GOBIN \
+    CC=/usr/bin/cc \
+    CXX=/usr/bin/c++ \
+    "${GOROOT}/bin/go" install \
+    github.com/golang/protobuf/protoc-gen-go \
+    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+fi
 
 #
 # generate source file lists

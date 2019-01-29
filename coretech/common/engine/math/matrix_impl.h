@@ -518,15 +518,6 @@ namespace Anki {
     }
     return *this;
   }
-
-  template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator*=(const SmallMatrix<NROWS,NCOLS,T>& other)
-  {
-    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
-      this->val[i] *= other.val[i];
-    }
-    return *this;
-  }
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator+=(const SmallMatrix<NROWS,NCOLS,T>& other)
@@ -536,7 +527,7 @@ namespace Anki {
     }
     return *this;
   }
-
+    
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator-=(const SmallMatrix<NROWS,NCOLS,T>& other)
   {
@@ -545,29 +536,18 @@ namespace Anki {
     }
     return *this;
   }
-  
-  
-  // Matrix transpose:
-//   template<MatDimType NROWS, MatDimType NCOLS, typename T>
-//   void SmallMatrix<NROWS,NCOLS,T>::GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const
-//   {
-// #if ANKICORETECH_USE_OPENCV
-//     outTransposed = this->t();
-// #else
-//     CORETECH_ASSERT(false);
-//     // TODO: Define our own opencv-free tranpose?
-// #endif
-//   }
-    
+
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NCOLS,NROWS,T> SmallMatrix<NROWS,NCOLS,T>::GetTranspose() const
   {
+    SmallMatrix<NCOLS,NROWS,T> retv;
 #if ANKICORETECH_USE_OPENCV
-    return this->t();
+    retv = this->t();
 #else
     CORETECH_ASSERT(false);
     return *this;
 #endif
+    return retv;
   }
   
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
@@ -737,19 +717,6 @@ namespace Anki {
 
   template<MatDimType DIM, typename T>
   template<typename T_other>
-  SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::operator+(const SmallSquareMatrix<DIM,T_other> &other)
-  {
-    SmallSquareMatrix<DIM,T> retv = *this;
-    for(MatDimType i=0; i<DIM; ++i) {
-      for(MatDimType j=0; j<DIM; ++j) {
-        retv(i,j) += other(i,j);
-      }
-    }
-    return retv;
-  }
-
-  template<MatDimType DIM, typename T>
-  template<typename T_other>
   SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::PreMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
   {
     // TODO: Come up with our own in-place, super-awesome pre-multiplcation
@@ -781,20 +748,11 @@ namespace Anki {
   }
   
   template<MatDimType DIM, typename T>
-  void SmallSquareMatrix<DIM,T>::GetInverse(SmallSquareMatrix<DIM,T>& outInverse) const
+  SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::GetInverse() const
   {
-    outInverse = *this;
-    outInverse.Invert();
-  }
-
-  template<MatDimType DIM, typename T>
-  SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::CopyInverse() const
-  {
-    SmallSquareMatrix<DIM,T> retv;
-    this->GetInverse(retv);
-    return retv;
-  }
-  
+    SmallSquareMatrix<DIM,T> retv = *this;
+    return retv.Invert();
+  }   
   
   template<MatDimType DIM, typename T>
   T SmallSquareMatrix<DIM,T>::Trace() const

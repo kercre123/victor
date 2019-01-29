@@ -337,7 +337,7 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
 
     case PowerSaveSetting::ProxSensorNavMap: {
       const bool proxEnabled = !savePower;
-      components.GetComponent<ProxSensorComponent>().SetEnabled(proxEnabled);
+      components.GetComponent<ProxSensorComponent>().SetNavMapUpdateEnabled(proxEnabled);
       PRINT_CH_DEBUG("PowerStates", "PowerStateManager.Toggle.ProxSensor",
                      "prox sensor nav map updates %s",
                      proxEnabled ? "ENABLED" : "DISABLED");

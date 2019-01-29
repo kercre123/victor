@@ -248,14 +248,14 @@ set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_GO_GEN_SRCS} ${GATEWAY_GRPC_GO_GEN_SRCS}
   COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${GATEWAY_PROTO_HOME_DIR}/public"
     "-I${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"
     "-I${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
     "--go_out=plugins=grpc:${GATEWAY_GRPC_OUTPUT_DIR}"
     ${GATEWAY_GRPC_SRCS} ${GATEWAY_PROTO_SRCS}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${GATEWAY_PROTO_HOME_DIR}/public"
     "-I${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"

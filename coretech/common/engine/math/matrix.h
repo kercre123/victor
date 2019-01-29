@@ -126,15 +126,12 @@ namespace Anki {
     SmallMatrix<NROWS,NCOLS,T>& operator*=(T value);
     SmallMatrix<NROWS,NCOLS,T>  operator+ (T value) const;
     SmallMatrix<NROWS,NCOLS,T>& operator+=(T value);
-    SmallMatrix<NROWS,NCOLS,T>& operator*=(const SmallMatrix<NROWS,NCOLS,T>& other);
-    SmallMatrix<NROWS,NCOLS,T>  operator+ (const SmallMatrix<NROWS,NCOLS,T> &other) const;
+    SmallMatrix<NROWS,NCOLS,T>  operator+ (const SmallMatrix<NROWS,NCOLS,T>& other) const;
     SmallMatrix<NROWS,NCOLS,T>& operator+=(const SmallMatrix<NROWS,NCOLS,T>& other);
-    SmallMatrix<NROWS,NCOLS,T>  operator- (const SmallMatrix<NROWS,NCOLS,T> &other) const;
+    SmallMatrix<NROWS,NCOLS,T>  operator- (const SmallMatrix<NROWS,NCOLS,T>& other) const;
     SmallMatrix<NROWS,NCOLS,T>& operator-=(const SmallMatrix<NROWS,NCOLS,T>& other);
-    // TODO: add subtraction...
     
     // Matrix transpose:
-    // void GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const;
     SmallMatrix<NCOLS,NROWS,T> GetTranspose() const;
     
     // Take absolute value of all elements (return reference to self)
@@ -200,11 +197,13 @@ namespace Anki {
     
     using SmallMatrix<DIM,DIM,T>::operator();
     using SmallMatrix<DIM,DIM,T>::operator*;
-    using SmallMatrix<DIM,DIM,T>::operator*=;
-    using SmallMatrix<DIM,DIM,T>::operator+=;
 
-    template<typename T_other>
-    SmallSquareMatrix<DIM,T> operator+(const SmallSquareMatrix<DIM,T_other> &other);
+    using SmallMatrix<DIM,DIM,T>::operator+=;
+    using SmallMatrix<DIM,DIM,T>::operator-=;
+
+    // use inline function to force type checker to keep the derived type
+    inline SmallSquareMatrix<DIM,T> operator+(const SmallSquareMatrix<DIM,T> &other) const { return SmallMatrix<DIM,DIM,T>::operator+(other); }
+    inline SmallSquareMatrix<DIM,T> operator-(const SmallSquareMatrix<DIM,T> &other) const { return SmallMatrix<DIM,DIM,T>::operator-(other); }
     
     // Matrix multiplication in place...
     // ... this = this * other;
@@ -220,8 +219,7 @@ namespace Anki {
     
     // Matrix inversion:
     SmallSquareMatrix<DIM,T>& Invert(void); // in place
-    void GetInverse(SmallSquareMatrix<DIM,T>& outInverse) const;
-    SmallSquareMatrix<DIM,T> CopyInverse() const;
+    SmallSquareMatrix<DIM,T> GetInverse() const;
     
     // Compute the trace (sum of diagonal elements)
     T Trace(void) const;

@@ -509,7 +509,7 @@ namespace Vector {
           Matrix_2x2f W22t = W22.GetTranspose();
           const Matrix_2x2f sigma{sigmaX, 0.f, 0.f, sigmaY};
           const Matrix_2x2f sigmaWarped(sigma * W22t * W22 * sigma);
-          sigmaWarped.GetInverse(sigmaInv);
+          sigmaInv = sigmaWarped.GetInverse();
         }
 
         DEV_ASSERT_MSG(upperLeft.y()>=0 && bottomRight.y()<_eyeShape.GetNumRows(), "ProceduralFaceDrawer.DrawEye.BadRow", "%f %f", upperLeft.y(), bottomRight.y());

@@ -477,17 +477,6 @@ message SetAlexaUsage
   bool optedIn
 }
 
-enum uint_8 CancelAlexaFromEngineReason
-{
-  AppDisconnect
-}
-
-message CancelPendingAlexaAuth
-{
-  // reason of cancellation (for DAS message)
-  CancelAlexaFromEngineReason reason
-}
-
 structure ColorRGB
 {
   uint_8 r,
@@ -858,7 +847,6 @@ union EngineToRobot
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 
   SetAlexaUsage                 setAlexaUsage               = 0x9D,
-  CancelPendingAlexaAuth        cancelPendingAlexaAuth      = 0x9E,
 
   SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,

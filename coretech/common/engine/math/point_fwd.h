@@ -47,7 +47,7 @@ namespace Anki {
     // Constructors
     // Populate all dimensions with the same scalar value
     constexpr Point(const T scalar = T(0));
-    
+  
     // Construct a point from a higher-dimensional point by just dropping the
     // the last dimensions. For example, construct a 2D point from a 3D point
     // by just using the (x,y) dimensions and ignoring z.
@@ -81,6 +81,13 @@ namespace Anki {
     // Return a cast version of this
     template<typename T_other>
     constexpr Point<N, T_other> CastTo() const;
+
+    // extract elements in inclusive range [A,B] from the current point into a smaller point
+    // e.g.:
+    //    Point<5,int> a{1,2,3,4,5};
+    //    Point<3,int> b = a.Slice<1,3>();  // b == {2,3,4}
+    template<PointDimType A, PointDimType B, typename = std::enable_if_t< B <= N && A <= N && A<B >>
+    constexpr Point<B-A+1, T> Slice() const;
     
     // Return a CladPoint
     constexpr CladPoint2d ToCladPoint2d() const;
@@ -158,11 +165,7 @@ namespace Anki {
     T MakeUnitLength(void);
 
     // Returns "(x, y, ...)"
-    std::string ToString() const;
-
-    template<PointDimType A, PointDimType B, typename = std::enable_if_t< B <= N && A <= N && A<B >>
-    constexpr Point<B-A+1, T> Slice() const;
-        
+    std::string ToString() const;        
   }; // class Point
   
   // Create some convenience aliases/typedefs for 2D and 3D points:
@@ -292,6 +295,10 @@ namespace Anki {
   
   template<PointDimType N, typename T>
   Point<N,T> operator- (const Point<N,T> &point1, const Point<N,T> &point2);
+
+  // append point2 onto the end of point1, making a new point of size Dim(p1) + Dim(p2)
+  template<PointDimType M, PointDimType N, typename T>
+  constexpr Point<M+N,T> Join(const Point<M,T>& point1, const Point<N,T>& point2);
   
   template<PointDimType N, typename T>
   constexpr T DotProduct(const Point<N,T> &point1, const Point<N,T> &point2);

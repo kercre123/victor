@@ -1426,7 +1426,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 
   } else if(!robot->IsPhysical()) {
     LOG_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
-                     "Forcibly delocalizing robot %d", robot->GetID());
+             "Forcibly delocalizing robot");
 
     robot->SendRobotMessage<RobotInterface::ForceDelocalizeSimulatedRobot>();
   } else {

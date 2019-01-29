@@ -36,8 +36,7 @@ namespace Anki {
       
       HistRobotState(const Pose3d& pose,
                      const RobotState& state,
-                     const ProxSensorData& proxData,
-                     const uint8_t cliffDetectedFlags);
+                     const ProxSensorData& proxData);
       
       HistRobotState(const HistRobotState& other) = default;
       
@@ -61,6 +60,12 @@ namespace Anki {
 
       const ProxSensorData& GetProxSensorData()            const {return _proxData;}
       const u16           GetProxSensorVal_mm()            const {return _proxData.distance_mm;}
+
+      // Only meant to be used by RobotStateHistory::UpdateProxSensorData()
+      // VIC-13035: The better thing to do would be to pull out ProxSensorData into 
+      //            its own history buffer and keep HistRobotState as a container for
+      //            raw unprocessed states (i.e. RobotState) only.
+      void SetProxSensorData(const ProxSensorData& data) {_proxData = data;}
                                                           
       bool WasCarryingObject() const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK)); }
       bool WasMoving()         const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_MOVING)); }
@@ -159,6 +164,16 @@ namespace Anki {
                                        HistRobotState& state_before,
                                        RobotTimeStamp_t&    t_after,
                                        HistRobotState& state_after);
+
+      // If a raw state with the given timestamp is found, its proxSensorData
+      // is updated. Otherwise, returns RESULT_FAIL.
+      //
+      // NOTE: Only meant to be used in Robot::UpdateFullRobotState() to update
+      //       the robot state history with processed prox data
+      // VIC-13035: The better thing to do would be to pull out ProxSensorData into 
+      //            its own history buffer and keep HistRobotState as a container for
+      //            raw unprocessed states (i.e. RobotState) only.
+      Result UpdateProxSensorData(const RobotTimeStamp_t t, const ProxSensorData& data);
       
       // Returns OK and points statePtr to a vision-based state at the specified time if such a state exists.
       // Note: The state that statePtr points to may be invalidated by subsequent calls to
@@ -195,6 +210,9 @@ namespace Anki {
       
       // Get the last state in history with the given pose frame ID.
       Result GetLastStateWithFrameID(const PoseFrameID_t frameID, HistRobotState& state) const;
+
+      // Returns the number of raw states with the given pose frame ID.
+      u32 GetNumRawStatesWithFrameID(const PoseFrameID_t frameID) const;
       
       // Checks whether or not the given key is associated with a valid computed state
       bool IsValidKey(const HistStateKey key) const;

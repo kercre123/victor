@@ -154,25 +154,25 @@ struct std::greater_equal<Anki::Point<N,T>>  {
 namespace {
   // NOTE: since `std::fill` is not constexpr until C++20, use an index_sequence to create 
   //       pack expansion for an initializer list
-  template <typename T, Anki::PointDimType N, size_t... Is>
-  constexpr std::array<T,N> fill_array(const T& init, std::index_sequence<Is...> const&) {
+  template <Anki::PointDimType N, typename T, size_t... Is>
+  constexpr Anki::Point<N,T> fill_point(const T& init, std::index_sequence<Is...> const&) {
     // use `Is` to duplicate `init`, but cast `Is` to void to ignore it
-    return {{ ((void)Is, init)...}}; 
+    return Anki::Point<N,T>{ ((void)Is, init)...}; 
   }
     
-  template <typename T, Anki::PointDimType N>
-  constexpr std::array<T,N> fill_array(const T& init) {
-    return fill_array<T,N>( init, std::make_index_sequence<N>{} );
+  template <Anki::PointDimType N, typename T>
+  constexpr Anki::Point<N,T> fill_point(const T& init) {
+    return fill_point<N,T>( init, std::make_index_sequence<N>{} );
   }
 
-  template <typename T, Anki::PointDimType N, typename Generator, size_t... Is>
-  constexpr std::array<T,N> generate_array(const Generator& gen, std::index_sequence<Is...> const&) {
-    return {{ gen[Is]... }};
+  template <Anki::PointDimType N, typename T, typename Generator, size_t... Is>
+  constexpr Anki::Point<N,T> generate_point(const Generator& gen, std::index_sequence<Is...> const&) {
+    return Anki::Point<N,T>{ gen[Is]... };
   }
     
-  template <typename T, Anki::PointDimType N, typename Generator>
-  constexpr std::array<T,N> generate_array(const Generator& gen) {
-    return generate_array<T,N>( gen, std::make_index_sequence<N>{} );
+  template <Anki::PointDimType N, typename T, typename Generator>
+  constexpr Anki::Point<N,T> generate_point(const Generator& gen) {
+    return generate_point<N,T>( gen, std::make_index_sequence<N>{} );
   }
 }
 
@@ -183,13 +183,13 @@ namespace Anki {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<PointDimType N, typename T>
 constexpr Point<N,T>::Point(const T scalar) 
-: std::array<T,N>( fill_array<T,N>(scalar) ) {}
+: Point<N,T>( fill_point<N,T>(scalar) ) {} 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template <PointDimType N, typename T>
 template <PointDimType M, typename>
 constexpr Point<N,T>::Point(const Point<M,T>& pt) 
-: std::array<T,N>( generate_array<T,N>(pt) ) {}
+: Point<N,T>( generate_point<N,T>(pt) ) {} 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template <PointDimType N, typename T>
@@ -304,6 +304,32 @@ constexpr CladPoint3d Point<N,T>::ToCladPoint3d() const
                               static_cast<float>(this->y()),
                               static_cast<float>(this->z()));
   return cladPoint;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType N, typename T>
+template<PointDimType A, PointDimType B, typename>
+constexpr Point<B-A+1,T> Point<N,T>::Slice() const
+{
+  struct {    // use a struct because lambdas are not constexpr in C++14
+    const Point<N,T>& p;
+    constexpr const T& operator[](size_t i) const { return p[i+A]; }
+  } slicer{*this};
+
+  return generate_point<B-A+1,T>(slicer);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<PointDimType M, PointDimType N, typename T>
+constexpr Point<M+N,T> Join(const Point<M,T>& point1, const Point<N,T>& point2)
+{
+  struct {    // use a struct because lambdas are not constexpr in C++14
+    const Point<M,T> &p1;
+    const Point<N,T> &p2;
+    constexpr const T& operator[](size_t i) const { return (i<M) ? p1[i] : p2[i-M]; }
+  } joinedArr{point1, point2};
+
+  return generate_point<M+N,T>(joinedArr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -515,26 +541,6 @@ template<PointDimType N, typename T>
 constexpr T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2)
 {
   return (point1 - point2).Length();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<PointDimType M, PointDimType N, typename T>
-constexpr Point<M+N,T> Join(const Point<M,T>& point1, const Point<N,T>& point2)
-{
-  Point<M+N,T> retv;
-  for (int i = 0; i < M; ++i) { retv[i] = point1[i]; }
-  for (int i = 0; i < N; ++i) { retv[i+M] = point2[i]; }
-  return retv;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<PointDimType N, typename T>
-template<PointDimType A, PointDimType B, typename>
-constexpr Point<B-A+1,T> Point<N,T>::Slice() const
-{
-  Point<B-A+1,T> retv;
-  for (int i = A; i <= B; ++i) { retv[i - A] = (*this)[i]; }
-  return retv;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

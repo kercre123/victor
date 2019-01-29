@@ -507,15 +507,13 @@ static void AgentCallback(GDBusConnection *connection,
       logi("%s: found 'Passphrase'", __func__);
       g_variant_builder_add(dict_builder, "{sv}", "Passphrase", g_variant_new_string(wpaConnectInfo->passphrase));
     }
+    
     g_variant_builder_close(dict_builder);
 
     GVariant *response = g_variant_builder_end(dict_builder);
     g_variant_builder_unref(dict_builder);
 
     g_dbus_method_invocation_return_value(invocation, response);
-
-    g_variant_unref(dict);
-    g_variant_unref(response);
   }
 
   if (!strcmp(method_name, "ReportError")) {

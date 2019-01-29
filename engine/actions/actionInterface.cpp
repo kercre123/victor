@@ -741,8 +741,8 @@ namespace Anki {
       if(shouldRetry && RetriesRemain()) {
         if(IsMessageDisplayEnabled()) {
           LOG_INFO("IAction.Update.CurrentActionFailedRetrying",
-                   "Robot %d failed running action %s. Retrying.",
-                   GetRobot().GetID(), GetName().c_str());
+                   "Failed running action %s. Retrying.",
+                   GetName().c_str());
         }
 
         // Don't unlock the tracks if retrying

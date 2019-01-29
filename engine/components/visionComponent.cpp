@@ -597,10 +597,6 @@ namespace Vector {
       return lastResult;
     }
 
-    // Get most recent pose data in history
-    Anki::Vector::HistRobotState lastHistState;
-    _robot->GetStateHistory()->GetLastStateWithFrameID(_robot->GetPoseFrameID(), lastHistState);
-
     const Pose3d& cameraPose = _robot->GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
     Matrix_3x3f groundPlaneHomography;
     const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
@@ -1665,7 +1661,7 @@ namespace Vector {
         _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
         // Forward the image chunks to Viz as well (Note that this does nothing if
         // sending images is disabled in VizManager)
-        _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
+        _robot->GetContext()->GetVizManager()->SendImageChunk(m);
       }
 
       bytesRemainingToSend -= chunkSize;

@@ -102,7 +102,6 @@ public:
   const f32                   GetHeadAngle()                          const;
   const GyroData&             GetHeadGyroData()                       const;
   u32                         GetHeadSerialNumber()                   const;
-  const RobotID_t             GetID()                                 const;
   RobotTimeStamp_t            GetLastImageTimeStamp()                 const;
   RobotTimeStamp_t            GetLastMsgTimestamp()                   const;
   f32                         GetLiftAngle()                          const;

@@ -256,15 +256,15 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
     case BlockStatus::NO_BLOCK:
     {
       LOG_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.NoBlock",
-               "Robot %d reported it %s doing something without a block. Stopping docking and turning on Look-for-Markers mode.",
-               robot->GetID(), successStr);
+               "Robot reported it %s doing something without a block. Stopping docking and turning on Look-for-Markers mode.",
+               successStr);
       break;
     }
     case BlockStatus::BLOCK_PLACED:
     {
       LOG_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.BlockPlaced",
-               "Robot %d reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.",
-               robot->GetID(), successStr);
+               "Robot reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.",
+               successStr);
 
       if (payload.didSucceed) {
         robot->GetCarryingComponent().SetCarriedObjectAsUnattached();

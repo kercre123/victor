@@ -223,7 +223,7 @@ Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
   // get Kalman gain and update covariance
   const auto Pvv = GetCovariance(Z) + _R;
   const auto Pxz = GetCovariance(_W, Z.GetTranspose());
-  const auto K = Pxz * Pvv.CopyInverse();
+  const auto K = Pxz * Pvv.GetInverse();
   _P -= K * Pvv * K.GetTranspose();
 
   // get measurement residual

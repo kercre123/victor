@@ -26,7 +26,7 @@ You can either use the Chewie app to logout, or use the engine console var `Forc
 
 ### SDK Details
 
-We use a fork of the avs-device-sdk repo, which is built as part of coretech-external. At the time of writing, the sdk is compiled as a set of shared libs for both robot and mac. There are plans to make the robot libs static. Also, the sdk has a number of dependencies that are also compiled in coretech-external.
+We use a fork of the avs-device-sdk repo, which is built on our build server as a dependency. At the time of writing, the sdk is compiled as a set of shared libs for both robot and mac. There are plans to make the robot libs static.
 
 [SDK repo](https://github.com/anki/avs-device-sdk)
 

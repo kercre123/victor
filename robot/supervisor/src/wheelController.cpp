@@ -157,21 +157,27 @@ namespace Anki {
          }
          */
 
-        power_l_ = CLIP(outl, -HAL::MOTOR_MAX_POWER, HAL::MOTOR_MAX_POWER);
-        power_r_ = CLIP(outr, -HAL::MOTOR_MAX_POWER, HAL::MOTOR_MAX_POWER);
-
-
-        // If considered stopped, force stop
-        if (ABS(desiredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S && ABS(measuredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
-          power_l_ = 0;
-          error_sumL_ = 0;
+        
+        // Don't power in the opposite direction of the current desired speed,
+        // otherwise encoder position will update with the wrong sign.
+        // The wheel is sufficiently damped that you shouldn't need to apply
+        // opposing power to slow down quickly.
+        if (ABS(desiredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+          power_l_ = 0.f;
+          error_sumL_ = 0.f;
+        } else if (desiredWheelSpeedL_ > WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+          power_l_ = CLIP(outl, 0.f, HAL::MOTOR_MAX_POWER);
+        } else {
+          power_l_ = CLIP(outl, -HAL::MOTOR_MAX_POWER, 0.f);
         }
 
-
-        // If considered stopped, force stop
-        if (ABS(desiredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S && ABS(measuredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
-          power_r_ = 0;
-          error_sumR_ = 0;
+        if (ABS(desiredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+          power_r_ = 0.f;
+          error_sumR_ = 0.f;
+        } else if (desiredWheelSpeedR_ > WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+          power_r_ = CLIP(outr, 0.f, HAL::MOTOR_MAX_POWER);
+        } else {
+          power_r_ = CLIP(outr, -HAL::MOTOR_MAX_POWER, 0.f);
         }
 
         //Sum the error (integrate it). But ONLY, if we are not commading max output already
