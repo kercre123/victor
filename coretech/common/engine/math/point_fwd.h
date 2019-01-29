@@ -41,8 +41,6 @@ namespace Anki {
 
   public:
     using std::array<T,N>::operator[];
-
-    static constexpr PointDimType Size = N;
     
     // Constructors
     // Populate all dimensions with the same scalar value
@@ -165,7 +163,8 @@ namespace Anki {
     T MakeUnitLength(void);
 
     // Returns "(x, y, ...)"
-    std::string ToString() const;        
+    std::string ToString() const;    
+        
   }; // class Point
   
   // Create some convenience aliases/typedefs for 2D and 3D points:
@@ -309,13 +308,6 @@ namespace Anki {
   // TODO: should output type always be float/double?
   template<PointDimType N, typename T>
   constexpr T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
-
-  
-  template<PointDimType M, PointDimType N, typename T>
-  constexpr Point<M+N,T> Join(const Point<M,T>& point1, const Point<N,T>& point2);
-
-  template<PointDimType M, PointDimType N, typename T, typename... Ps>
-  constexpr decltype(auto) Join(const Point<M,T>& point1, const Point<N,T>& point2, Ps... ps);
   
   // Return true if the two points (vectors) are aligned within the given angle threshold
   template<PointDimType N, typename T>
