@@ -5,6 +5,7 @@ import (
 	"anki/ipc"
 	"anki/log"
 	"anki/util"
+	"anki/util/cvars"
 	"bytes"
 	"clad/vision"
 	"context"
@@ -19,6 +20,16 @@ import (
 )
 
 var deviceID = "mac-build"
+var defaultGroupName = "box-demo"
+
+func init() {
+	cvars.AddString("FaceGroup", func(x string) interface{} {
+		defaultGroupName = x
+		return x
+	}, func() interface{} {
+		return defaultGroupName
+	})
+}
 
 type client struct {
 	ipc.Conn
@@ -129,7 +140,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 
 	// todo: possibly not hardcode this?
 	r.Configs = &pb.ImageConfig{}
-	r.Configs.GroupName = "box-demo"
+	r.Configs.GroupName = defaultGroupName
 
 	client := pb.NewChipperGrpcClient(rpcConn)
 	resp, err := client.AnalyzeImage(ctx, r)
