@@ -333,6 +333,11 @@ fi
 HOST=`uname -a | awk '{print tolower($1);}' | sed -e 's/darwin/mac/'`
 PROTOBUF_HOME=${TOPLEVEL}/EXTERNALS/protobuf/${HOST}
 
+# Build protocCppPlugin if needed
+if [[ ! -x ${TOPLEVEL}/tools/protobuf/plugin/protocCppPlugin ]]; then
+    ${TOPLEVEL}/tools/protobuf/plugin/make.sh
+fi
+
 # Build/Install the protoc generators for go
 GOBIN="${TOPLEVEL}/cloud/go/bin"
 if [[ ! -x $GOBIN/protoc-gen-go ]] || [[ ! -x $GOBIN/protoc-gen-grpc-gateway ]]; then
