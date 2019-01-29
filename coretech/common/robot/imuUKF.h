@@ -54,7 +54,8 @@ private:
     Point3<double> GetVelocity() const { return this->Slice<4,6>(); }
     Point3<double> GetGyroBias() const { return this->Slice<7,9>(); }
 
-    // this is 1 less than the state, size, since the rotation quaternion only has 3 DoF (4 Dims and 1 constraint)
+    // Dim is 1 less than the state Size, since the rotation quaternion only has 3 DoF (4 Dims and 1 constraint)
+    static constexpr size_t Size = 10;
     static constexpr size_t Dim = 9;
   };
 
