@@ -535,10 +535,15 @@ func SendOnboardingMarkCompleteAndExit(in *extint.GatewayWrapper_OnboardingMarkC
 type rpcService struct{}
 
 func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.ProtocolVersionRequest) (*extint.ProtocolVersionResponse, error) {
-	return &extint.ProtocolVersionResponse{
-		Result:      extint.ProtocolVersionResponse_SUCCESS,
-		HostVersion: hostProtocolVersion,
-	}, nil
+	response := &extint.ProtocolVersionResponse{
+		HostVersion: int64(extint.ProtocolVersion_PROTOCOL_VERSION_CURRENT),
+	}
+	if in.ClientVersion < int64(extint.ProtocolVersion_PROTOCOL_VERSION_MINIMUM) {
+		response.Result = extint.ProtocolVersionResponse_UNSUPPORTED
+	} else {
+		response.Result = extint.ProtocolVersionResponse_SUCCESS
+	}
+	return response, nil
 }
 
 func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
