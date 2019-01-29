@@ -117,6 +117,8 @@ typedef uint32_t PowerState;
 enum {
   POWER_DISCONNECT_CHARGER = 0x8000,
   POWER_CONNECT_CHARGER    = 0x4000,
+  POWER_DISCONNECT_BATTERY = 0x2000,
+  POWER_CONNECT_BATTERY    = 0x1000
 };
 typedef uint32_t PowerFlags;
 
