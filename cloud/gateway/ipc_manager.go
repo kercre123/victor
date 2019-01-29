@@ -1,3 +1,16 @@
+// ipc_manager.go handles messages between gateway and the following other processes:
+//   - vic-engine: There are both a CLAD (EngineCladIpcManager) and a Protobuf (EngineProtoIpcManager)
+//                 domain socket connecting gateway to the engine. The CLAD socket is currently in the
+//                 process of being deprecated because it was designed as a temporary connection while
+//                 messages were converted to Protobuf.
+//   - vic-switchboard: There is a CLAD domain socket connecting gateway to switchboard. This socket is
+//                      used to coordinate authentication between the two processes.
+//   - vic-cloud: There is a CLAD domain socket connecting gateway to vic-cloud. This socket is used to
+//                refresh the latest authentication tokens from vic-cloud. This socket is defined inside
+//                the tokens.go file because the properties of that socket are a special case.
+// To add a new connection, add the domain socket name (as defined by the server) to the list of consts
+// below. And create a new IpcManager struct for that given socket. In main.go the connection should be
+// Init-ed. Then it will be ready to use.
 package main
 
 import (
@@ -18,12 +31,22 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+// The names of the domain sockets to which gateway will connect.
+// They will be created in the location defined by config_{platform}.go for the appropriate
+// platform.
 const (
 	cladDomainSocket        = "_engine_gateway_server_"
 	protoDomainSocket       = "_engine_gateway_proto_server_"
 	switchboardDomainSocket = "_switchboard_gateway_server_"
 )
 
+// IpcManager is a struct which handles synchronously sending and receiving messages from
+// other processes via domain sockets. This acts like a base class for the other IpcManagers
+// to prevent duplication of the Connect and Close functions.
+//
+// field connMutex: A mutex to prevent simultaneous reads and writes to the domain socket.
+// field conn: The connection to the domain socket by which messages are passed between processes.
+//
 // Note: If there is a function that can be shared, use the engine manager.
 //       The only reason I duplicated the functions so far was interfaces
 //       were strangely causing the deleteListenerUnsafe to fail. - shawn 7/17/18
@@ -32,6 +55,9 @@ type IpcManager struct {
 	conn      ipc.Conn
 }
 
+// Connect establishes a connection to the domain socket of a given path.
+// vic-gateway acts as the client in all of its domain socket connections since
+// it is the part of the system closest to the outside world.
 func (manager *IpcManager) Connect(path string, name string) {
 	for {
 		conn, err := ipc.NewUnixgramClient(path, name)
@@ -45,21 +71,29 @@ func (manager *IpcManager) Connect(path string, name string) {
 	}
 }
 
+// Close tears down the connection to a domain socket.
 func (manager *IpcManager) Close() error {
 	return manager.conn.Close()
 }
 
+// EngineProtoIpcManager handles passing Protobuf messages between vic-gateway and vic-engine.
+// field IpcManager: An anonymous field which basically acts like a subclass.
+// field managerMutex: A mutex which prevents asynchronous reads and writes to the managedChannels map.
+// field managedChannels: A mapping of messages to listening channels for the rpc handlers.
 type EngineProtoIpcManager struct {
 	IpcManager
 	managerMutex    sync.RWMutex
 	managedChannels map[string]([]chan extint.GatewayWrapper)
 }
 
+// Init sets up the channel manager and the domain socket connection
 func (manager *EngineProtoIpcManager) Init() {
 	manager.managedChannels = make(map[string]([]chan extint.GatewayWrapper))
 	manager.Connect(path.Join(SocketPath, protoDomainSocket), "client")
 }
 
+// Write sends a Protobuf message to vic-engine. This will be handled by
+// ProtoMessageHandler::ProcessMessages() in the engine C++ code.
 func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
 	var err error
 	var buf bytes.Buffer
@@ -85,7 +119,7 @@ func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
 	return manager.conn.Write(buf.Bytes())
 }
 
-// This function is "unsafe" in that it requires the calling function to have already acquired the
+// deleteListenerUnsafe is "unsafe" in that it requires the calling function to have already acquired the
 // appropriate lock. Otherwise, there is a chance of simultaneous map access.
 func (manager *EngineProtoIpcManager) deleteListenerUnsafe(listener chan extint.GatewayWrapper, tag string) {
 	chanSlice := manager.managedChannels[tag]
@@ -105,6 +139,7 @@ func (manager *EngineProtoIpcManager) deleteListenerUnsafe(listener chan extint.
 	}
 }
 
+// deleteListenerCallback provides a callback which may be invoked to remove the channel from the listeners.
 func (manager *EngineProtoIpcManager) deleteListenerCallback(listener chan extint.GatewayWrapper, tag string) func() {
 	return func() {
 		manager.managerMutex.Lock()
@@ -113,6 +148,7 @@ func (manager *EngineProtoIpcManager) deleteListenerCallback(listener chan extin
 	}
 }
 
+// CreateChannel establishes a chan by which the ipc manager will pass the requested message type.
 func (manager *EngineProtoIpcManager) CreateChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper) {
 	result := make(chan extint.GatewayWrapper, numChannels)
 	reflectedType := reflect.TypeOf(tag).String()
@@ -129,11 +165,13 @@ func (manager *EngineProtoIpcManager) CreateChannel(tag interface{}, numChannels
 	return manager.deleteListenerCallback(result, reflectedType), result
 }
 
+// CreateUniqueChannel establishes a chan by which the ipc manager will pass the requested message type as long as there isn't already one open.
+// This is useful in cases where we want to prevent spamming of the engine. See UpdateSettings in message_handler.go.
 func (manager *EngineProtoIpcManager) CreateUniqueChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper, bool) {
 	reflectedType := reflect.TypeOf(tag).String()
 	manager.managerMutex.RLock()
+	defer manager.managerMutex.RUnlock() // TODO: test this change
 	_, ok := manager.managedChannels[reflectedType]
-	manager.managerMutex.RUnlock()
 	if ok {
 		return nil, nil, false
 	}
@@ -142,6 +180,7 @@ func (manager *EngineProtoIpcManager) CreateUniqueChannel(tag interface{}, numCh
 	return f, c, true
 }
 
+// SafeClose closes a channel if possible.
 func (manager *EngineProtoIpcManager) SafeClose(listener chan extint.GatewayWrapper) {
 	select {
 	case _, ok := <-listener:
@@ -153,6 +192,7 @@ func (manager *EngineProtoIpcManager) SafeClose(listener chan extint.GatewayWrap
 	}
 }
 
+// SendToListeners propagates messages to all waiting listener channels.
 func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.GatewayWrapper) {
 	markedForDelete := make(chan chan extint.GatewayWrapper, 5)
 	defer func() {
@@ -193,6 +233,7 @@ func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.Gat
 	wg.Wait()
 }
 
+// ProcessMessages loops through incoming messages on the ipc channel.
 func (manager *EngineProtoIpcManager) ProcessMessages() {
 	var msg extint.GatewayWrapper
 	var b, block []byte
@@ -217,12 +258,17 @@ func (manager *EngineProtoIpcManager) ProcessMessages() {
 	}
 }
 
+// SwitchboardIpcManager handles passing CLAD messages between vic-gateway and vic-switchboard.
+// field IpcManager: An anonymous field which basically acts like a subclass.
+// field managerMutex: A mutex which prevents asynchronous reads and writes to the managedChannels map.
+// field managedChannels: A mapping of messages to listening channels for the rpc handlers.
 type SwitchboardIpcManager struct {
 	IpcManager
 	managerMutex    sync.RWMutex
 	managedChannels map[gw_clad.SwitchboardResponseTag]([]chan gw_clad.SwitchboardResponse)
 }
 
+// Init sets up the channel manager and the domain socket connection
 func (manager *SwitchboardIpcManager) Init() {
 	manager.managedChannels = make(map[gw_clad.SwitchboardResponseTag]([]chan gw_clad.SwitchboardResponse))
 	manager.Connect(path.Join(SocketPath, switchboardDomainSocket), "client")
@@ -256,6 +302,7 @@ func (manager *SwitchboardIpcManager) handleSwitchboardMessages(msg *gw_clad.Swi
 	}
 }
 
+// ProcessMessages loops through incoming messages on the ipc channel.
 func (manager *SwitchboardIpcManager) ProcessMessages() {
 	var msg gw_clad.SwitchboardResponse
 	var b, block []byte
@@ -282,6 +329,7 @@ func (manager *SwitchboardIpcManager) ProcessMessages() {
 	}
 }
 
+// Write sends a CLAD message to vic-switchboard.
 func (manager *SwitchboardIpcManager) Write(msg *gw_clad.SwitchboardRequest) (int, error) {
 	var err error
 	var buf bytes.Buffer
@@ -303,7 +351,7 @@ func (manager *SwitchboardIpcManager) Write(msg *gw_clad.SwitchboardRequest) (in
 	return manager.conn.Write(buf.Bytes())
 }
 
-// This function is "unsafe" in that it requires the calling function to have already acquired the
+// deleteListenerUnsafe is "unsafe" in that it requires the calling function to have already acquired the
 // appropriate lock. Otherwise, there is a chance of simultaneous map access.
 func (manager *SwitchboardIpcManager) deleteListenerUnsafe(listener chan gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) {
 	chanSlice := manager.managedChannels[tag]
@@ -323,6 +371,7 @@ func (manager *SwitchboardIpcManager) deleteListenerUnsafe(listener chan gw_clad
 	}
 }
 
+// deleteListenerCallback provides a callback which may be invoked to remove the channel from the listeners.
 func (manager *SwitchboardIpcManager) deleteListenerCallback(listener chan gw_clad.SwitchboardResponse, tag gw_clad.SwitchboardResponseTag) func() {
 	return func() {
 		manager.managerMutex.Lock()
@@ -331,6 +380,7 @@ func (manager *SwitchboardIpcManager) deleteListenerCallback(listener chan gw_cl
 	}
 }
 
+// CreateChannel establishes a chan by which the ipc manager will pass the requested message type.
 func (manager *SwitchboardIpcManager) CreateChannel(tag gw_clad.SwitchboardResponseTag, numChannels int) (func(), chan gw_clad.SwitchboardResponse) {
 	result := make(chan gw_clad.SwitchboardResponse, numChannels)
 	if logVerbose {
@@ -346,6 +396,7 @@ func (manager *SwitchboardIpcManager) CreateChannel(tag gw_clad.SwitchboardRespo
 	return manager.deleteListenerCallback(result, tag), result
 }
 
+// SafeClose closes a channel if possible.
 func (manager *SwitchboardIpcManager) SafeClose(listener chan gw_clad.SwitchboardResponse) {
 	select {
 	case _, ok := <-listener:
@@ -357,6 +408,7 @@ func (manager *SwitchboardIpcManager) SafeClose(listener chan gw_clad.Switchboar
 	}
 }
 
+// SendToListeners propagates messages to all waiting listener channels.
 func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardResponse) {
 	tag := msg.Tag()
 	markedForDelete := make(chan chan gw_clad.SwitchboardResponse, 5)
@@ -400,17 +452,24 @@ func (manager *SwitchboardIpcManager) SendToListeners(msg gw_clad.SwitchboardRes
 
 // TODO: Remove CLAD manager once it's no longer needed
 
+// EngineCladIpcManager handles passing CLAD messages between vic-gateway and vic-engine.
+// field IpcManager: An anonymous field which basically acts like a subclass.
+// field managerMutex: A mutex which prevents asynchronous reads and writes to the managedChannels map.
+// field managedChannels: A mapping of messages to listening channels for the rpc handlers.
 type EngineCladIpcManager struct {
 	IpcManager
 	managerMutex    sync.RWMutex
 	managedChannels map[gw_clad.MessageRobotToExternalTag]([]chan gw_clad.MessageRobotToExternal)
 }
 
+// Init sets up the channel manager and the domain socket connection
 func (manager *EngineCladIpcManager) Init() {
 	manager.managedChannels = make(map[gw_clad.MessageRobotToExternalTag]([]chan gw_clad.MessageRobotToExternal))
 	manager.Connect(path.Join(SocketPath, cladDomainSocket), "client")
 }
 
+// Write sends a CLAD message to vic-engine. This will be handled by
+// UiMessageHandler::ProcessMessages() in the engine C++ code.
 func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) (int, error) {
 	var err error
 	var buf bytes.Buffer
@@ -432,7 +491,7 @@ func (manager *EngineCladIpcManager) Write(msg *gw_clad.MessageExternalToRobot) 
 	return manager.conn.Write(buf.Bytes())
 }
 
-// This function is "unsafe" in that it requires the calling function to have already acquired the
+// deleteListenerUnsafe is "unsafe" in that it requires the calling function to have already acquired the
 // appropriate lock. Otherwise, there is a chance of simultaneous map access.
 func (manager *EngineCladIpcManager) deleteListenerUnsafe(listener chan gw_clad.MessageRobotToExternal, tag gw_clad.MessageRobotToExternalTag) {
 	chanSlice := manager.managedChannels[tag]
@@ -452,6 +511,7 @@ func (manager *EngineCladIpcManager) deleteListenerUnsafe(listener chan gw_clad.
 	}
 }
 
+// deleteListenerCallback provides a callback which may be invoked to remove the channel from the listeners.
 func (manager *EngineCladIpcManager) deleteListenerCallback(listener chan gw_clad.MessageRobotToExternal, tag gw_clad.MessageRobotToExternalTag) func() {
 	return func() {
 		manager.managerMutex.Lock()
@@ -460,6 +520,7 @@ func (manager *EngineCladIpcManager) deleteListenerCallback(listener chan gw_cla
 	}
 }
 
+// CreateChannel establishes a chan by which the ipc manager will pass the requested message type.
 func (manager *EngineCladIpcManager) CreateChannel(tag gw_clad.MessageRobotToExternalTag, numChannels int) (func(), chan gw_clad.MessageRobotToExternal) {
 	result := make(chan gw_clad.MessageRobotToExternal, numChannels)
 	if logVerbose {
@@ -475,6 +536,7 @@ func (manager *EngineCladIpcManager) CreateChannel(tag gw_clad.MessageRobotToExt
 	return manager.deleteListenerCallback(result, tag), result
 }
 
+// SafeClose closes a channel if possible.
 func (manager *EngineCladIpcManager) SafeClose(listener chan gw_clad.MessageRobotToExternal) {
 	select {
 	case _, ok := <-listener:
@@ -486,6 +548,7 @@ func (manager *EngineCladIpcManager) SafeClose(listener chan gw_clad.MessageRobo
 	}
 }
 
+// SendToListeners propagates messages to all waiting listener channels.
 func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToExternal) {
 	tag := msg.Tag()
 	markedForDelete := make(chan chan gw_clad.MessageRobotToExternal, 5)
@@ -527,6 +590,7 @@ func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToE
 	wg.Wait()
 }
 
+// SendEventToChannel is a temporary function to more easily turn CLAD messages into Protobuf events.
 func (manager *EngineCladIpcManager) SendEventToChannel(event *extint.Event) {
 	tag := reflect.TypeOf(&extint.GatewayWrapper_Event{}).String()
 	msg := extint.GatewayWrapper{
@@ -538,6 +602,9 @@ func (manager *EngineCladIpcManager) SendEventToChannel(event *extint.Event) {
 	engineProtoManager.SendToListeners(tag, msg)
 }
 
+// ProcessMessages loops through incoming messages on the ipc channel.
+// Note: this will ignore unparsable messages because there are more
+// clad messages sent from engine than understood by gateway.
 func (manager *EngineCladIpcManager) ProcessMessages() {
 	var msg gw_clad.MessageRobotToExternal
 	var b, block []byte
