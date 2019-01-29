@@ -166,8 +166,9 @@ struct DockingErrorSignal;
     Result UpdateSalientPoints(const VisionProcessingResult& result);
     Result UpdatePhotoManager(const VisionProcessingResult& procResult);
     Result UpdateDetectedIllumination(const VisionProcessingResult& procResult);
-    Result UpdateMirrorMode(const VisionProcessingResult& procResult);
     Result UpdateProcessingStats(const VisionProcessingResult& procResult);
+    
+    Result UpdateMirrorMode(Vision::ImageRGB565& mirrorModeImg, bool cacheToWhiteboard);
     
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);

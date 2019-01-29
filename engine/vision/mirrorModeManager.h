@@ -40,7 +40,11 @@ public:
   
   // Populates the mirrorModeImg field of the VisionProcessingResult with the given image and
   // any detections it can from the same result.
-  Result CreateMirrorModeImage(const Vision::ImageRGB& cameraImg, VisionProcessingResult& procResult);
+  // Note that the mirrorModeImg field of the main "procResult" will be populated. The "additional" 
+  // processing results are just used to draw more detections on that same mirrorModeImg.
+  Result CreateMirrorModeImage(const Vision::ImageRGB& cameraImg,
+                               VisionProcessingResult& procResult,
+                               const std::list<VisionProcessingResult>& additionalDetectionResults);
   
 private:
   
@@ -50,6 +54,7 @@ private:
   f32 _currentGamma = 0.f;
   bool _doMirror = true;
   
+  void DrawAllDetections(const VisionProcessingResult& procResult);
   void DrawVisionMarkers(const std::list<Vision::ObservedMarker>& visionMarkers);
   void DrawFaces(const std::list<Vision::TrackedFace>& faceDetections);
   void DrawSalientPoints(const VisionProcessingResult& procResult);

@@ -326,6 +326,7 @@ namespace Vector {
     std::mutex _mutex;
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
+    std::list<VisionProcessingResult> _neuralNetResults;
 
 }; // class VisionSystem
   

@@ -908,13 +908,19 @@ namespace Vector {
     ANKI_CPU_PROFILE("VC::UpdateAllResults");
 
     bool anyFailures = false;
-
+    
+    bool anyResults = false;
+    bool cacheMirrorMode = false;
+    Vision::ImageRGB565 mirrorModeImg;
+    
     if(_visionSystem != nullptr)
     {
       VisionProcessingResult result;
 
       while(true == _visionSystem->CheckMailbox(result))
       {
+        anyResults = true;
+        
         if((_vizManager != nullptr) &&
            _vizManager->IsConnected())
         {
@@ -976,10 +982,32 @@ namespace Vector {
         tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::DetectingIllumination});
         tryAndReport(&VisionComponent::UpdateProcessingStats,      {});
         
-        // Note: we always run this because it handles switching to the mirror mode debug screen
-        // It internally checks whether the MirrorMode flag is set in modesProcessed
-        tryAndReport(&VisionComponent::UpdateMirrorMode,           {}); // Use empty set to always run
-                
+        
+        // Keep track of the first result that has MirrorMode enabled this tick of checking for results from
+        // VisionSystem.
+        if(result.modesProcessed.Contains(VisionMode::MirrorMode))
+        {
+          if(!mirrorModeImg.IsEmpty())
+          {
+            PRINT_NAMED_WARNING("VisionComponent.UpdateAllResults.MultipleMirrorModeImages",
+                                "Got a MirrorMode image with t:%ums at tick %zu but already have "
+                                "one with t:%ums",
+                                result.mirrorModeImg.GetTimestamp(),
+                                BaseStationTimer::getInstance()->GetTickCount(),
+                                mirrorModeImg.GetTimestamp());
+          }
+          else
+          {
+            // NOTE: This creates a non-const image "header" around the same data as is in result.mirrorModeImg.
+            // Due to a bug / design flaw in OpenCV, this actually allows us to draw on that image later in
+            // UpdateMirrorMode(), even though it's technically const. Since this is a debug mode, we're using
+            // this to avoid a copy in the case that we have eye contact or a display string, since performance
+            // is the higher priority here.
+            mirrorModeImg = result.mirrorModeImg;
+            cacheMirrorMode = result.modesProcessed.Contains(VisionMode::MirrorModeCacheToWhiteboard);
+          }
+        }
+        
 #       undef ToVisionModeMask
                 
         // Store frame rate and last image processed time. Time should only move forward.
@@ -1010,8 +1038,15 @@ namespace Vector {
         }
         
       }
+      
+      if(anyResults)
+      {
+        // Note: we always run this when results were found (whether or not MirrorMode was present in 
+        // any individual result) because it handles switching to the mirror mode debug screen.
+        anyFailures |= (RESULT_OK != UpdateMirrorMode(mirrorModeImg, cacheMirrorMode));
+      }
     }
-
+    
     if(anyFailures) {
       return RESULT_FAIL;
     } else {
@@ -1473,11 +1508,11 @@ namespace Vector {
     return RESULT_OK;
   }
   
-  Result VisionComponent::UpdateMirrorMode(const VisionProcessingResult& procResult)
+  Result VisionComponent::UpdateMirrorMode(Vision::ImageRGB565& mirrorModeImg, bool cacheToWhiteboard)
   {
     // Handle switching the debug screen on/off when mirror mode changes
     static bool wasMirrorModeEnabled = false;
-    const bool isMirrorModeEnabled = procResult.modesProcessed.Contains(VisionMode::MirrorMode);
+    const bool isMirrorModeEnabled = !mirrorModeImg.IsEmpty();
     if(wasMirrorModeEnabled != isMirrorModeEnabled)
     {
       PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateMirrorMode.TogglingMirrorMode",
@@ -1506,12 +1541,6 @@ namespace Vector {
     auto & animComponent = _robot->GetAnimationComponent();
     if(isMirrorModeEnabled && animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
     {
-      // NOTE: This creates a non-const image "header" around the same data as is in procResult.mirrorModeImg.
-      // Due to a bug / design flaw in OpenCV, this actually allows us to draw on that image, even though
-      // it's technically const. Since this is a debug mode, we're using this to avoid a copy in the case
-      // that we have eye contact or a display string, since performance is the higher priority here.
-      Vision::ImageRGB565 mirrorModeImg = procResult.mirrorModeImg;
-      
       if(!_mirrorModeDisplayString.empty())
       {
         mirrorModeImg.DrawText({1,14}, _mirrorModeDisplayString, _mirrorModeStringColor, 0.6f, true);
@@ -1524,19 +1553,19 @@ namespace Vector {
         if(making_eye_contact)
         {
           // Put eye contact indicator right in the middle
-          const f32 x = .5f * (f32)procResult.mirrorModeImg.GetNumCols();
-          const f32 y = .5f * (f32)procResult.mirrorModeImg.GetNumRows();;
-          const f32 width = .2f * (f32)procResult.mirrorModeImg.GetNumCols();
-          const f32 height = .2f * (f32)procResult.mirrorModeImg.GetNumRows();;
+          const f32 x = .5f * (f32)mirrorModeImg.GetNumCols();
+          const f32 y = .5f * (f32)mirrorModeImg.GetNumRows();;
+          const f32 width = .2f * (f32)mirrorModeImg.GetNumCols();
+          const f32 height = .2f * (f32)mirrorModeImg.GetNumRows();;
           
           mirrorModeImg.DrawFilledRect(Rectangle<f32>(x, y, width, height), NamedColors::YELLOW);
         }
       }
       
       // Just display the mirror mode image as is, from the processing result
-      if(procResult.modesProcessed.Contains(VisionMode::MirrorModeCacheToWhiteboard))
+      if(cacheToWhiteboard)
       {
-        _robot->GetComponent<AIComponent>().GetComponent<AIWhiteboard>().AddMirrorModeImage(procResult.mirrorModeImg);
+        _robot->GetComponent<AIComponent>().GetComponent<AIWhiteboard>().AddMirrorModeImage(mirrorModeImg);
       }
       else
       {

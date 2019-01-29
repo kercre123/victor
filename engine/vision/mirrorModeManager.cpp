@@ -474,7 +474,8 @@ static void AddVignetting(Vision::ImageRGB& img)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraImg,
-                                                VisionProcessingResult& visionProcResult)
+                                                VisionProcessingResult& visionProcResult,
+                                                const std::list<VisionProcessingResult>& additionalDetectionResults)
 {
   cameraImg.Resize(_screenImg, Vision::ResizeMethod::NearestNeighbor);
   
@@ -494,22 +495,11 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
     cv::flip(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), 1);
   }
   
-  if(kDisplayMarkersInMirrorMode)
-  {
-    DrawVisionMarkers(visionProcResult.observedMarkers);
-  }
-
-  if( kDisplayFacesInMirrorMode ) {
-    DrawFaces(visionProcResult.faces);
-  }
-
-  if( kDisplaySalientPointsInMirrorMode ) {
-    DrawSalientPoints(visionProcResult);
-  }
+  DrawAllDetections(visionProcResult);
   
-  if(kDisplayExposureInMirrorMode)
+  for(const auto& additionalDetectionResult : additionalDetectionResults)
   {
-    DrawAutoExposure(visionProcResult);
+    DrawAllDetections(additionalDetectionResult);
   }
   
   // Use gamma to make it easier to see
@@ -543,6 +533,28 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
   visionProcResult.mirrorModeImg.SetTimestamp(cameraImg.GetTimestamp());
   
   return RESULT_OK;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MirrorModeManager::DrawAllDetections(const VisionProcessingResult& visionProcResult)
+{
+  if(kDisplayMarkersInMirrorMode)
+  {
+    DrawVisionMarkers(visionProcResult.observedMarkers);
+  }
+  
+  if( kDisplayFacesInMirrorMode ) {
+    DrawFaces(visionProcResult.faces);
+  }
+  
+  if( kDisplaySalientPointsInMirrorMode ) {
+    DrawSalientPoints(visionProcResult);
+  }
+  
+  if(kDisplayExposureInMirrorMode)
+  {
+    DrawAutoExposure(visionProcResult);
+  }
 }
   
 } // namespace Vector
