@@ -61,6 +61,6 @@ structure ProxSensorDataRaw {
   uint_8      padding,
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki
 

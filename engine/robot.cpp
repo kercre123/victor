@@ -2977,5 +2977,5 @@ Result Robot::CheckForRampostError()
   return RESULT_OK;
 }
 
-} // namespace Cozmo
+} // namespace Vector
 } // namespace Anki

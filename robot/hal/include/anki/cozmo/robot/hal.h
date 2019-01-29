@@ -176,7 +176,7 @@ typedef enum
 } CliffID; //TODO: assert matches DropSensor, or use directly
 
 /// Face proximity sensor
-ProxSensorData GetRawProxData();
+ProxSensorDataRaw GetRawProxData();
 
 /// Cliff sensors
 u16 GetRawCliffData(const CliffID cliff_id);

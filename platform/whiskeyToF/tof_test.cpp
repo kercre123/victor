@@ -25,7 +25,7 @@
 #endif
 #define PRINT_NAMED_INFO(a, b, ...) printf(a b "\n", ##__VA_ARGS__);
 
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 uint32_t GetTimeStamp(void)
 {

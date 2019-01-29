@@ -1,5 +1,5 @@
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Data from each ROI to be displayed
 structure RangingDataDisplay {
@@ -15,7 +15,7 @@ structure RangingDataDisplay {
 
 // Contains all 16 ROIs worth of ranging data to be displayed
 structure RangeDataDisplay {
-  RangingDataDisplay data[32]
+  RangingDataDisplay data[16]
 }
 
 } // namespace Vector

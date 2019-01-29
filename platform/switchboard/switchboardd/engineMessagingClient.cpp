@@ -98,21 +98,6 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
         wData->signal->emit(message);
       }
         break;
-      case EMessageTag::WifiConnectRequest:
-      {
-        EMessage message;
-        uint16_t msgSize = *(uint16_t*)sMessageData;
-        size_t unpackedSize = message.Unpack(msgPayload, msgSize);
-
-        if(unpackedSize != (size_t)msgSize) {
-          Log::Error("Received message from engine but had mismatch size when unpacked.");
-          continue;
-        } 
-
-        // Handle request to Run WiFi scan
-        wData->client->HandleWifiConnectRequest(message.Get_WifiConnectRequest().ssid);
-      }
-        break;
       default:
         break;
     }

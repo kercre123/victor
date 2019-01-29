@@ -1,5 +1,5 @@
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 // Single range reading from an ROI
 // Mirrors "VL53L1_TargetRangeData_t" in vl53l1_def.h
@@ -25,7 +25,7 @@ structure RangingData {
 
 // Contains all 16 ROIs worth of raw ranging data
 structure RangeDataRaw {
-  RangingData data[32]
+  RangingData data[16]
 }
 
 } // namespace Vector

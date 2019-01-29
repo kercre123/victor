@@ -157,6 +157,8 @@ message BeatDetectorState
 message StartSelfTest
 {
 
+}
+
 message SendRangeData
 {
   bool enable

@@ -27,7 +27,7 @@
 #include "whiskeyToF/tof.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 RangeSensorComponent::RangeSensorComponent() 
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RangeSensor)

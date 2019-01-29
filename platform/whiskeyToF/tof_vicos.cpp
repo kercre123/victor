@@ -46,7 +46,7 @@
 #define USE_BOTH_SENSORS 0
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
 
