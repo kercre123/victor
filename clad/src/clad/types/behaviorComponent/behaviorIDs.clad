@@ -389,6 +389,7 @@ enum uint_16 BehaviorID {
   AskForHelpOnSide,
   BasicVoiceCommands,
   CheckForAndReactToHand,
+  ForceStuckOnEdge,
   InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,

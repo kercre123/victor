@@ -178,7 +178,7 @@ void BehaviorReactToCliff::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.stuckOnEdgeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(StuckOnEdge));
-  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(AskForHelp));
+  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ForceStuckOnEdge));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -277,7 +277,7 @@ void BehaviorReactToCliff::TransitionToStuckOnEdge()
     DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
   } else {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated",
-                  "Behavior %s does not want to be activated, re-starting cliff reaction",
+                  "Behavior %s does not want to be activated!",
                   _iConfig.stuckOnEdgeBehavior->GetDebugLabel().c_str());
     // We should ALWAYS be able to delegate to the AskForHelp behavior,
     // i.e. no activation conditions should block this delegation
