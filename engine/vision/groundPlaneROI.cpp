@@ -70,8 +70,7 @@ bool GroundPlaneROI::GetVisibleGroundQuad(const Matrix_3x3f& H, s32 imgWidth, s3
     // Project back into ground
     //  Technically, we are only checking for "near" intersection in GetImageQuad above,
     //  so the far points can't move, so there's no reason to warp them.
-    Matrix_3x3f invH;
-    H.GetInverse(invH);
+    Matrix_3x3f invH = H.GetInverse();
     for(Quad::CornerName iCorner : {Quad::BottomLeft, Quad::BottomRight})
     {
       Point3f temp = invH * Point3f(imgQuad[iCorner].x(), imgQuad[iCorner].y(), 1.f);
@@ -116,8 +115,7 @@ const Vision::Image GroundPlaneROI::GetVisibleOverheadMask(const Matrix_3x3f& H,
 void GroundPlaneROI::GetVisibleX(const Matrix_3x3f& H, s32 imageWidth, s32 imageHeight,
                                  f32& near, f32& far) const
 {
-  Matrix_3x3f invH;
-  H.GetInverse(invH);
+  Matrix_3x3f invH = H.GetInverse();
   
   Point3f temp = invH * Point3f(imageWidth/2, 0/*-imageHeight/2*/, 1.f);
   //ASSERT_NAMED(temp.z() > 0, "Projected points should have z > 0");

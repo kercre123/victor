@@ -310,6 +310,55 @@ GTEST_TEST(TestMatrix, MatrixMatrixMultiplication)
 
 
 
+GTEST_TEST(TestMatrix, SmallMatrixAddition)
+{
+  Matrix_3x3f A;
+  
+  A(0,0) = 1.f;
+  A(1,1) = 2.f;
+  A(2,2) = 3.f;
+  
+  Matrix_3x3f B{{
+    10.f, 1.f, 1.f,
+    1.f, 10.f, 1.f,
+    1.f, 1.f, 10.f
+  }};
+
+  // Normal SmallMatrix multiplication
+  Matrix_3x3f C = A+B;
+  
+#ifdef DEBUG_TEST_MATRIX
+  cout << "SmallMatrix A: \n" << A << "\n";
+  cout << "SmallMatrix B: \n" << B << "\n";
+  cout << "SmallMatrix C = A+B: \n" << C << "\n";
+#endif
+  
+  ASSERT_NEAR_EQ(C(0,0), 11.f);  ASSERT_NEAR_EQ(C(0,1), 1.f);    ASSERT_NEAR_EQ(C(0,2), 1.f);
+  ASSERT_NEAR_EQ(C(1,0), 1.f);   ASSERT_NEAR_EQ(C(1,1), 12.f);   ASSERT_NEAR_EQ(C(1,2), 1.f);
+  ASSERT_NEAR_EQ(C(2,0), 1.f);   ASSERT_NEAR_EQ(C(2,1), 1.f);    ASSERT_NEAR_EQ(C(2,2), 13.f);
+  
+  C += A;
+
+  ASSERT_NEAR_EQ(C(0,0), 12.f);  ASSERT_NEAR_EQ(C(0,1), 1.f);    ASSERT_NEAR_EQ(C(0,2), 1.f);
+  ASSERT_NEAR_EQ(C(1,0), 1.f);   ASSERT_NEAR_EQ(C(1,1), 14.f);   ASSERT_NEAR_EQ(C(1,2), 1.f);
+  ASSERT_NEAR_EQ(C(2,0), 1.f);   ASSERT_NEAR_EQ(C(2,1), 1.f);    ASSERT_NEAR_EQ(C(2,2), 16.f);
+
+  
+  Matrix_3x3f D = C - A;
+
+  ASSERT_NEAR_EQ(D(0,0), 11.f);  ASSERT_NEAR_EQ(D(0,1), 1.f);    ASSERT_NEAR_EQ(D(0,2), 1.f);
+  ASSERT_NEAR_EQ(D(1,0), 1.f);   ASSERT_NEAR_EQ(D(1,1), 12.f);   ASSERT_NEAR_EQ(D(1,2), 1.f);
+  ASSERT_NEAR_EQ(D(2,0), 1.f);   ASSERT_NEAR_EQ(D(2,1), 1.f);    ASSERT_NEAR_EQ(D(2,2), 13.f);
+
+  D -= B;
+
+  ASSERT_NEAR_EQ(D(0,0), 1.f);  ASSERT_NEAR_EQ(D(0,1), 0.f);   ASSERT_NEAR_EQ(D(0,2), 0.f);
+  ASSERT_NEAR_EQ(D(1,0), 0.f);  ASSERT_NEAR_EQ(D(1,1), 2.f);   ASSERT_NEAR_EQ(D(1,2), 0.f);
+  ASSERT_NEAR_EQ(D(2,0), 0.f);  ASSERT_NEAR_EQ(D(2,1), 0.f);   ASSERT_NEAR_EQ(D(2,2), 3.f);
+  
+}
+
+
 GTEST_TEST(TestMatrix, SmallMatrixMultiplication)
 {
   Matrix_3x3f A;
@@ -409,7 +458,7 @@ GTEST_TEST(TestMatrix, SmallMatrixInverse)
   Matrix_3x3f Ainv, I;
   const Matrix_3x3f A_orig(initValsA);
   
-  A.GetInverse(Ainv);
+  Ainv = A.GetInverse();
   
   // Verify A has not changed
   ASSERT_TRUE(IsNearlyEqual(A, A_orig));
@@ -540,8 +589,7 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   const Matrix_3x3f A(initValsA);
   const Matrix_3x3f A_orig(initValsA);
   
-  Matrix_3x3f A_t;
-  A.GetTranspose(A_t);
+  Matrix_3x3f A_t = A.GetTranspose();
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix A: \n" << A << "\n";
@@ -563,8 +611,7 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   const Matrix_3x4f B(initValsB);
   const Matrix_3x4f B_orig(initValsB);
   
-  SmallMatrix<4,3,float> B_t;
-  B.GetTranspose(B_t);
+  SmallMatrix<4,3,float> B_t = B.GetTranspose();
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix B: \n" << B << "\n";

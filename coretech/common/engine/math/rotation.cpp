@@ -747,8 +747,7 @@ namespace Anki {
     //
     
     // R = R_this * R_other^T
-    RotationMatrix3d R;
-    other.GetTranspose(R);
+    RotationMatrix3d R( other.GetTranspose() );
     R.PreMultiplyBy(*this);
     
     return R.GetAngle();

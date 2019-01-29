@@ -148,8 +148,7 @@ s32 CropScheduler::GetCurrentCropY(const CropPosition cropPosition, const Vision
   //  Relationship to x_M:      x_B  = x_G - x_M
   //  Solve for x_M:            x_M  = x_G - (x_G - x_C) * (z_M / z_C)  <-- What is coded below
   
-  Matrix_3x3f invH;
-  poseData.groundPlaneHomography.GetInverse(invH);
+  Matrix_3x3f invH = poseData.groundPlaneHomography.GetInverse();
   
   const Point3f temp = invH * Point3f(undistortedPoint.x(), undistortedPoint.y(), 1.f);
   const f32 x_G = temp.x() / temp.z();
