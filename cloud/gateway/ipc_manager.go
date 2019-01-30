@@ -170,8 +170,8 @@ func (manager *EngineProtoIpcManager) CreateChannel(tag interface{}, numChannels
 func (manager *EngineProtoIpcManager) CreateUniqueChannel(tag interface{}, numChannels int) (func(), chan extint.GatewayWrapper, bool) {
 	reflectedType := reflect.TypeOf(tag).String()
 	manager.managerMutex.RLock()
-	defer manager.managerMutex.RUnlock() // TODO: test this change
 	_, ok := manager.managedChannels[reflectedType]
+	defer manager.managerMutex.RUnlock()
 	if ok {
 		return nil, nil, false
 	}
