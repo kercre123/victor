@@ -75,7 +75,7 @@ TaskExecutor::~TaskExecutor()
 void TaskExecutor::StopExecution()
 {
   // Cause Execute and ProcessDeferredQueue to break out of their while loops
-  _executing = false;
+  _executing.exchange(false);
 
   // Clear the _taskQueue.  Use a scope so that the mutex is only locked
   // while clearing the queue and notifying the background thread.

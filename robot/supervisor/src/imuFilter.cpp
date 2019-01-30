@@ -438,6 +438,9 @@ namespace Anki {
 
       Result Init()
       {
+//#ifdef SIMULATOR
+//        imu_data_.gyro[0] = 0.5;
+//#endif
         EnableBraceWhenFalling(DEFAULT_BRACE_WHEN_FALLING);
         return RESULT_OK;
       }

@@ -98,7 +98,7 @@ FaceDisplay::~FaceDisplay()
   sDisplayImpl = nullptr;
 #endif
 
-  _stopDrawFace = true;
+  _stopDrawFace.exchange(true);
   _faceDrawThread.join();
 }
 

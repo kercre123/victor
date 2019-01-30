@@ -26,7 +26,7 @@
 #define SPINE_TTY_LEGACY "/dev/ttyHSL1"
 #define SPINE_BAUD B3000000
 
-#define static_assert _Static_assert
+// #define static_assert _Static_assert
 
 #elif defined(PLATFORM_OSX)
 
