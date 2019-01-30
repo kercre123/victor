@@ -144,6 +144,7 @@ func main() {
 	var options []cloudproc.Option
 	options = append(options, platformOpts...)
 	voiceOpts = append(voiceOpts, voice.WithCompression(true))
+	voiceOpts = append(voiceOpts, voice.WithHandler(voice.HandlerMicrosoft))
 
 	if err := config.SetGlobal(""); err != nil {
 		log.Println("Could not load server config! This is not good!:", err)
