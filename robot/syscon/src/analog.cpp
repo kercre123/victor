@@ -55,6 +55,7 @@ static bool allow_power;
 
 static int16_t temperature;
 static bool disable_charger = false;
+static bool disable_battery = false;
 static int overheated = 0;
 
 static uint16_t volatile adc_values[ADC_CHANNELS];
@@ -182,6 +183,12 @@ void Analog::receive(HeadToBody* data) {
   }
   if (data->powerFlags & POWER_CONNECT_CHARGER) {
     disable_charger = false;
+  }
+  if (data->powerFlags & POWER_DISCONNECT_BATTERY) {
+    disable_battery = true;
+  }
+  if (data->powerFlags & POWER_CONNECT_BATTERY) {
+    disable_battery = false;
   }
 }
 
@@ -354,7 +361,7 @@ void Analog::tick(void) {
   }
 
   bool prevent_charge = too_hot
-    || disable_charger;
+    || disable_battery;
 
   if (on_charger) {
     // This holds the on_charger_time at zero if charging is disabled
@@ -386,7 +393,7 @@ void Analog::tick(void) {
     overheated = 0;
     heat_counter = 0;
     is_charging = false;
-  } else if (!on_charger) {
+  } else if (!on_charger || disable_charger) {
     // Powered on, off charger
     POWER_EN::pull(PULL_UP);
     POWER_EN::mode(MODE_INPUT);
@@ -413,7 +420,7 @@ void Analog::tick(void) {
 
     // As long as the 30 min timer hasn't expired (and we're not manually disabling charging)
     // continue to report that we are charging.
-    is_charging = !max_charge_time_expired && !disable_charger;
+    is_charging = !max_charge_time_expired && !disable_battery;
   } else {
     // Battery connected, on charger (charging)  
     nCHG_PWR::reset();
