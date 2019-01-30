@@ -12,6 +12,7 @@
 #define __Engine_Components_SDKComponent_H_
 
 #include "engine/robotComponents_fwd.h"
+#include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 
 #include "clad/types/visionModes.h"
@@ -87,6 +88,8 @@ private:
   // Returns true if the subscription was actually updated
   bool SubscribeToVisionMode(bool subscribe, VisionMode mode, bool updateWaitingToChangeSet = true);
   void DisableMirrorMode();
+  void SayText(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event);
 };
 
 } // namespace Vector
