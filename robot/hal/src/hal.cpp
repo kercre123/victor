@@ -234,7 +234,9 @@ void das_log_version_info(const VersionInfo* versionInfo)
   DASMSG_SET(i2, versionInfo->hw_model,    "Hardware model");
   DASMSG_SET(s1, ein,                      "Electronic Identification Number");
   DASMSG_SET(s2, app_version,              "Application version");
+  DASMSG_SET(s3, ANKI_BUILD_SHA,           "Build SHA")
   DASMSG_SEND();
+
 }
 
 Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
