@@ -1,15 +1,6 @@
 {
     "artifactory": {
         "builds": {
-            "External_Dependencies": {
-                "build_type_id": "protocCppPlugin",
-                "checksums": {
-                    "sha256": "e1d9dce8484979da37ca7ddfaffdf5bec31d933de81c030dfd124150cf936e6a"
-                },
-                "extension": "tar.gz",
-                "package_name": "protocCppPlugin",
-                "version": "3"
-            },
             "tensorflow": {
                 "build_type_id": "anki",
                 "checksums": {

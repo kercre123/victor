@@ -19,12 +19,7 @@ include(anki_build_cxx)
 
 # Generate c++ protobuf files
 set(PROTOBUF_CPP_PLUGIN "protocCppPlugin")
-if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
-    set(HOST_PLATFORM "mac")
-elseif (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
-    set(HOST_PLATFORM "linux")
-endif()
-set(PROTOBUF_CPP_PLUGIN_PATH "${CMAKE_SOURCE_DIR}/EXTERNALS/External_Dependencies/${HOST_PLATFORM}/${PROTOBUF_CPP_PLUGIN}")
+set(PROTOBUF_CPP_PLUGIN_PATH "${CMAKE_SOURCE_DIR}/tools/protobuf/plugin/${PROTOBUF_CPP_PLUGIN}")
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_CPP_GEN_HEADERS} ${GATEWAY_PROTO_CPP_GEN_SRCS}
   COMMAND mkdir -p ${PROTOBUF_OUTPUT_DIR}
