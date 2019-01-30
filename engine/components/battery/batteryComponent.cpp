@@ -54,11 +54,11 @@ namespace {
 
   // Voltage above which the battery is considered fully charged
   // after _saturationChargeTimeRemaining_sec expires.
-  const float kSaturationChargingThresholdVolts = 4.1f;
+  const float kSaturationChargingThresholdVolts = 4.2f;
 
   // Max time to wait after kSaturationChargingThresholdVolts is reached
   // before battery is considered "fully charged".
-  const float kMaxSaturationTime_sec = 7 * 60.f;
+  const float kMaxSaturationTime_sec = 1.f;
 
   // Voltage below which battery is considered in a low charge state
   // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
@@ -385,6 +385,22 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     bool encodersDisabled = msg.status & (uint32_t)RobotStatusFlag::ENCODERS_DISABLED;
     bool calmMode         = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
     _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, calmMode);
+  }
+
+
+  // DEBUG: Battery lifetime testing
+  static int s_nextReportTime_sec = now_sec;
+  static const int kReportPeriod_sec = 5;
+  if (now_sec > s_nextReportTime_sec) {
+    s_nextReportTime_sec += kReportPeriod_sec;
+    DASMSG(battery_periodic_log, "battery.periodic_log", "For battery life debug logging");
+    DASMSG_SET(i1, GetBatteryVoltsRaw_mV(), "Raw voltage (mV)");
+    DASMSG_SET(i2, GetBatteryVolts_mV(), "Filtered voltage (mV)");
+    DASMSG_SET(i3, GetBatteryTemperature_C(), "Temperature (C)");
+    DASMSG_SET(i4, IsOnChargerContacts(), "On charge contacts");
+    DASMSG_SET(s1, IsBatteryDisconnectedFromCharger() ? "D" : "", "Battery disconnected state");
+    DASMSG_SET(s2, IsCharging() ? "C" : "", "Battery charging state");
+    DASMSG_SEND();
   }
 }
 

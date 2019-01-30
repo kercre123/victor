@@ -12,6 +12,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/actions/basicActions.h"
 #include "engine/components/animationComponent.h"
@@ -58,6 +59,7 @@ namespace {
   static const char* kStressCPU = "stressCPU";
   static const char* kStressSpeaker = "stressSpeaker";
   static const char* kDriveOffChargerWhenFull = "driveOffChargerWhenFull";
+  static const char* kDoExploring = "driveOffChargerWhenFull";
 
   bool _startMovingVoltageReached = false;
 }
@@ -76,6 +78,7 @@ BehaviorDevBatteryLogging::InstanceConfig::InstanceConfig()
   stressSpeaker = false;
 
   driveOffChargerWhenFull = false;
+  doExploring = false;
 }
 
 
@@ -92,6 +95,7 @@ BehaviorDevBatteryLogging::BehaviorDevBatteryLogging(const Json::Value& config)
   _iConfig.stressSpeaker = config.get(kStressSpeaker, false).asBool();
 
   _iConfig.driveOffChargerWhenFull = config.get(kDriveOffChargerWhenFull, false).asBool();
+  _iConfig.doExploring = config.get(kDoExploring, false).asBool();
 }
 
 void BehaviorDevBatteryLogging::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
@@ -118,8 +122,15 @@ bool BehaviorDevBatteryLogging::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::InitBehavior()
 {
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _iConfig.testBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ModeSelector));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevBatteryLogging::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  delegates.insert(_iConfig.testBehavior.get());
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::OnBehaviorActivated()
@@ -175,45 +186,54 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
     return;
   }
 
-  // Drive off charger when full
   const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
-  if (_iConfig.driveOffChargerWhenFull && battComp.IsBatteryFull()) {
-    DriveStraightAction* driveAction = new DriveStraightAction(40.f);
-    DelegateIfInControl(driveAction);
-  }
 
-  // Start motors if voltage threshold has been reached
-  if (!_startMovingVoltageReached ) {
-    const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
-    f32 battVoltage = battComp.GetBatteryVolts();
-    if (battVoltage < _iConfig.startMovingVoltage ) {
-      _startMovingVoltageReached = true;
-
-      if (_iConfig.wheelSpeed_mmps != 0 || _iConfig.liftSpeed_radps != 0 || _iConfig.headSpeed_radps != 0) {
-        EnqueueMotorActions();
-      }
-
-      if (_iConfig.stressCPU) {
-        GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
-          {VisionMode::DetectingFaces, EVisionUpdateFrequency::High},
-          {VisionMode::DetectingMarkers, EVisionUpdateFrequency::High},
-          {VisionMode::DetectingMotion, EVisionUpdateFrequency::High}
-         });
-      }
-
-      if (_iConfig.stressSpeaker) {
-        GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Behavior);
-      }
-
+  if (battComp.IsOnChargerPlatform()) {
+    // Drive off charger when full
+    if (_iConfig.driveOffChargerWhenFull && battComp.IsBatteryFull()) {
+      DriveStraightAction* driveAction = new DriveStraightAction(100.f);
+      driveAction->SetCanMoveOnCharger(true);
+      DelegateIfInControl(driveAction);
     }
-  }
+  } else {
 
-  if (_startMovingVoltageReached) {
-    if (_iConfig.stressCPU) {
-      auto& animComp = GetBEI().GetRobotInfo()._robot.GetAnimationComponent();
-      Vision::ImageRGB565 img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-      img.FillWith({255, 255, 255});
-      animComp.DisplayFaceImage(img, BS_TIME_STEP_MS, true);
+    if (_iConfig.doExploring) {
+      if (!IsControlDelegated()) {
+        DelegateIfInControl(_iConfig.testBehavior.get());
+      }
+    } else {
+
+      // Start motors if voltage threshold has been reached
+      if (!_startMovingVoltageReached && !IsControlDelegated()) {
+        f32 battVoltage = battComp.GetBatteryVolts();
+        if (battVoltage < _iConfig.startMovingVoltage ) {
+          _startMovingVoltageReached = true;
+
+          if (_iConfig.wheelSpeed_mmps != 0 || _iConfig.liftSpeed_radps != 0 || _iConfig.headSpeed_radps != 0) {
+            EnqueueMotorActions();
+          }
+
+          if (_iConfig.stressCPU) {
+            GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
+              {VisionMode::DetectingFaces, EVisionUpdateFrequency::High},
+              {VisionMode::DetectingMarkers, EVisionUpdateFrequency::High},
+              {VisionMode::DetectingMotion, EVisionUpdateFrequency::High}
+            });
+          }
+
+          if (_iConfig.stressSpeaker) {
+            GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Behavior);
+          }
+
+        }
+      } else {
+        if (_iConfig.stressCPU) {
+          auto& animComp = GetBEI().GetRobotInfo()._robot.GetAnimationComponent();
+          Vision::ImageRGB565 img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+          img.FillWith({255, 255, 255});
+          animComp.DisplayFaceImage(img, BS_TIME_STEP_MS, true);
+        }
+      }
     }
   }
 
@@ -224,7 +244,7 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
 void BehaviorDevBatteryLogging::InitLog()
 {
   // Initialize log file
-  std::string outputPath = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "battery_logs");
+  std::string outputPath = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "battery_logs");
   Util::FileUtils::CreateDirectory(outputPath);
 
   // Get robot serial number
@@ -249,6 +269,7 @@ void BehaviorDevBatteryLogging::InitLog()
   fs << "Time_ms, "
       << "BatteryVolts, "
       << "BatteryVolts_filtered, "
+      << "BatteryTemp_C, "
       << "txBytes, "
       << "rxBytes, "
       << "CPU_activeTime), "
@@ -263,13 +284,14 @@ void BehaviorDevBatteryLogging::LogData() const
 {
   EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
 
-  if (currTime_ms > _nextLogTime_ms) {
+  if (currTime_ms >= _nextLogTime_ms) {
     _nextLogTime_ms += LOGGING_PERIOD_MS;
 
     // Get battery voltage
     const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
     f32 battVoltage = battComp.GetBatteryVolts();
     f32 battVoltageRaw = battComp.GetBatteryVoltsRaw();
+    uint8_t battTemperature = battComp.GetBatteryTemperature_C();
 
     // Get CPU usage
     int activeTime = 0;
@@ -299,6 +321,7 @@ void BehaviorDevBatteryLogging::LogData() const
     fs << currTime_ms << ", "
       << battVoltageRaw << ", "
       << battVoltage << ", "
+      << battTemperature << ", "
       << txBytes << ", "
       << rxBytes << ", "
       << activeTime << ", "
@@ -322,7 +345,7 @@ void BehaviorDevBatteryLogging::OnBehaviorDeactivated()
   }
 
   if (_iConfig.stressSpeaker) {
-    GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Behavior);
+    GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Behavior);
   }
 
   _logFile = "";
