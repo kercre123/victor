@@ -45,8 +45,12 @@ private:
   void SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* newBaseBehavior ) const;
   bool CheckForCycle() const;
   
+  void SendDASEvent( const std::string& behaviorA, const std::string& behaviorB );
+  
   size_t _lastTick;
   Util::CircularBuffer<const IBehavior*> _recentBehaviors;
+  
+  std::vector<std::string> _dasMsgsSent;
 };
 
 } // namespace Vector
