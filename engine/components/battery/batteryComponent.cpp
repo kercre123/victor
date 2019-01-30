@@ -77,13 +77,16 @@ namespace {
   // battery charging will be re-enabled. (Only matters if it was previously disabled of course).
   const float kOffChargerReEnableBatteryChargingTimeout_sec = 10.f;
 
+  const float kInvalidPitchAngle = std::numeric_limits<float>::max();
+
+
   #define CONSOLE_GROUP "BatteryComponent"
 
   // Console var for faking low battery
   CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, false);
   const float kFakeLowBatteryVoltage = 3.5f;
 
-  const float kInvalidPitchAngle = std::numeric_limits<float>::max();
+  CONSOLE_VAR(bool, kPeriodicDebugDASLogging, CONSOLE_GROUP, true);
 
   // Console var for faking disconnected battery
   CONSOLE_VAR(bool, kFakeDisconnectedBattery, CONSOLE_GROUP, false);
@@ -304,7 +307,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // the engine started while the battery was already disconnected which
   // does not warrant a warning.
   if (_battDisconnected && !IsCharging()) {
-    if (!wasDisconnected && !IsBatteryFull() && !NEAR_ZERO(_batteryVoltsFilt) ) {
+    if (!_wasBattDisconnected && wasCharging && !IsBatteryFull() && !NEAR_ZERO(_batteryVoltsFilt) ) {
       PRINT_NAMED_WARNING("BatteryComponent.NotifyOfRobotState.FullBatteryExpected", "%f", _batteryVoltsFilt);
     }
 
@@ -387,11 +390,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, calmMode);
   }
 
-
+#if ANKI_DEV_CHEATS
   // DEBUG: Battery lifetime testing
   static int s_nextReportTime_sec = now_sec;
   static const int kReportPeriod_sec = 5;
-  if (now_sec > s_nextReportTime_sec) {
+  if (kPeriodicDebugDASLogging && now_sec > s_nextReportTime_sec) {
     s_nextReportTime_sec += kReportPeriod_sec;
     DASMSG(battery_periodic_log, "battery.periodic_log", "For battery life debug logging");
     DASMSG_SET(i1, GetBatteryVoltsRaw_mV(), "Raw voltage (mV)");
@@ -402,6 +405,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG_SET(s2, IsCharging() ? "C" : "", "Battery charging state");
     DASMSG_SEND();
   }
+#endif  
 }
 
 
