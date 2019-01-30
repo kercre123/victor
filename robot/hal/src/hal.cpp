@@ -973,7 +973,7 @@ u8 HAL::BatteryGetTemperature_C()
 
 void HAL::EnableBatteryCharging(bool enable)
 {
-  AnkiInfo("HAL.EnableBatteryCharing", "new %d, old %d", enable, enableBatteryCharging_);
+  AnkiInfo("HAL.EnableBatteryCharging", "new %d, old %d", enable, enableBatteryCharging_);
   enableBatteryCharging_ = enable;
   if (enable) {
     headData_.powerFlags |= POWER_CONNECT_BATTERY;
