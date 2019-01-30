@@ -18,7 +18,9 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
+#ifdef WEBOTS
 #include <webots/Supervisor.hpp>
+#endif
 
 #include <array>
 
@@ -69,8 +71,10 @@ namespace {
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
   // Whether or not SetSupervisor() was called
+#ifdef WEBOTS
   bool _supervisorIsSet = false;
   webots::Supervisor *_supervisor = nullptr;
+#endif
 
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
@@ -117,6 +121,7 @@ std::string GetSerialNumberInternal()
 
 OSState::OSState()
 {
+#ifdef WEBOTS
   DEV_ASSERT(_supervisorIsSet, "OSState.Ctor.SupervisorNotSet");
 
   if (_supervisor != nullptr) {
@@ -125,6 +130,7 @@ OSState::OSState()
     DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
     _robotID = robotIDField->getSFInt32();
   }
+#endif
 
   // Set simulated attributes
   _serialNumString = GetSerialNumberInternal();
@@ -147,11 +153,13 @@ OSState::~OSState()
 {
 }
 
+#ifdef WEBOTS
 void OSState::SetSupervisor(webots::Supervisor *sup)
 {
   _supervisor = sup;
   _supervisorIsSet = true;
 }
+#endif
 
 void OSState::Update(BaseStationTime_t currTime_nanosec)
 {

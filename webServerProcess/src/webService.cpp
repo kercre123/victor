@@ -1225,7 +1225,7 @@ void WebService::Update()
 void WebService::Stop()
 {
   if (_ctx) {
-    mg_stop(_ctx);
+    // TODO:REG can't fix mg_stop(_ctx);
   }
   _ctx = nullptr;
 }

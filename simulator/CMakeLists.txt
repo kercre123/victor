@@ -125,11 +125,6 @@ target_link_libraries(webotsCtrlLightCube
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(webotsCtrlLightCube
-  PRIVATE
-  SIMULATOR
-)
-
 symlink_target(
   TARGET webotsCtrlLightCube
   DST "${CONTROLLERS_DIR}/webotsCtrlLightCube/"
@@ -190,7 +185,6 @@ target_link_libraries(webotsCtrlRobot2
 target_compile_definitions(webotsCtrlRobot2
   PRIVATE
   COZMO_ROBOT
-  SIMULATOR
 )
 
 symlink_target(
@@ -227,11 +221,6 @@ target_link_libraries(webotsCtrlAnim
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(webotsCtrlAnim
-  PRIVATE
-  SIMULATOR
-)
-
 symlink_target(
   TARGET webotsCtrlAnim
   DST "${CONTROLLERS_DIR}/webotsCtrlAnim/"
@@ -256,11 +245,6 @@ target_link_libraries(webotsCtrlWebServer
   webotsCtrlCommon
   osState
   victor_web_library
-)
-
-target_compile_definitions(webotsCtrlWebServer
-  PRIVATE
-  SIMULATOR
 )
 
 symlink_target(
@@ -297,11 +281,6 @@ target_link_libraries(webotsCtrlGameEngine2
   webotsCtrlCommon
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
-)
-
-target_compile_definitions(webotsCtrlGameEngine2
-  PRIVATE
-  SIMULATOR
 )
 
 symlink_target(
@@ -438,11 +417,6 @@ anki_build_target_license(webotsCtrlGateway "ANKI")
 target_link_libraries(webotsCtrlGateway
   PRIVATE
   webotsCtrlCommon
-)
-
-target_compile_definitions(webotsCtrlGateway
-  PRIVATE
-  SIMULATOR
 )
 
 symlink_target(

@@ -23,11 +23,15 @@ if (VICOS)
         log
     )
 elseif (MACOSX)
-    include(webots)
-    set(PLATFORM_LIBS
-        ${WEBOTS_LIBS}
-    )
-    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
+    if (WEBOTS)
+        include(webots)
+        set(PLATFORM_LIBS
+            ${WEBOTS_LIBS}
+        )
+    else()
+        set(PLATFORM_LIBS
+        )
+    endif()
 endif()
 
 target_link_libraries(victor_web_library

@@ -34,6 +34,9 @@ target_compile_definitions(${target_name}
   ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
 )
 
+# Note: if there are any target_compile_options in project CMakeLists.txt these
+#       options will be overwritten
+
 target_compile_options(${target_name}
   PRIVATE
   ${ASAN_CXX_FLAGS} 

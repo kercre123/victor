@@ -402,6 +402,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
                                   DebugImageList<Vision::CompressedImage>& debugImages)
 {
 
+  // Point2f centroid(0.f,0.f);
   Point2f centroidInImage(0.f, 0.f);
 
   const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);

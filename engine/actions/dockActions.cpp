@@ -1551,6 +1551,7 @@ namespace Anki {
           // that we can do IsSameAs checks below.
           _dockObjectOrigPose.SetParent(GetRobot().GetPose().GetParent());
 
+          // Vec3f Tdiff;
           Radians angleDiff;
           ObservableObject* objectInOriginalPose = nullptr;
           for(const auto& object : objectsWithType)
