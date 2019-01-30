@@ -66,18 +66,6 @@ public:
   void ExecuteQueuedCommands(std::string* resultStr = nullptr);
 
 protected:
-  void Status(std::string* resultStr) const;
-  void Stop();
-  virtual void Dump(const DumpType dumpType, const bool dumpAll,
-                    const std::string* fileName = nullptr, std::string* resultStr = nullptr) const = 0;
-  void DumpFiles() const;
-  void WaitSeconds(const float seconds);
-  void WaitTicks(const int ticks);
-  void OnShutdown();
-  void InitInternal(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService);
-  void UpdateWaitMode();
-  void RemoveOldFiles() const;
-  bool FrameBufferEmpty() const { return _nextFrameIndex == 0 && !_bufferFilled; }
 
   struct FrameMetric
   {
@@ -87,11 +75,40 @@ protected:
     float _tickSleepActual_ms;
   };
 
-  static const int kNumFramesInBuffer = 4000;
+  void Status(std::string* resultStr) const;
+  void Stop();
+  void Dump(const DumpType dumpType, const bool dumpAll,
+            const std::string* fileName = nullptr, std::string* resultStr = nullptr);
+  void DumpHeading(const DumpType dumpType, const bool dumpLine2Extra,
+                   FILE* fd, std::string* resultStr) const;
+  virtual void InitDumpAccumulators() = 0;
+  virtual const FrameMetric& UpdateDumpAccumulators(const int frameBufferIndex) = 0;
+  virtual int AppendFrameData(const DumpType dumpType,
+                              const int frameBufferIndex,
+                              const int dumpBufferOffset) = 0;
+  virtual int AppendSummaryData(const DumpType dumpType,
+                                const int dumpBufferOffset,
+                                const int lineIndex) = 0;
+  void DumpFiles();
+  void DumpLine(const DumpType dumpType,
+                int dumpBufferOffset,
+                FILE* fd,
+                std::string* resultStr) const;
+  float IncrementFrameTime(float msSinceMidnight, const float msToAdd) const;
+  void WaitSeconds(const float seconds);
+  void WaitTicks(const int ticks);
+  void OnShutdown();
+  void InitInternal(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService);
+  void UpdateWaitMode();
+  void RemoveOldFiles() const;
+  bool FrameBufferEmpty() const { return _nextFrameIndex == 0 && !_bufferFilled; }
+
+  static const int kNumFramesInBuffer = 1000;
 
   int                 _nextFrameIndex = 0;
   bool                _bufferFilled = false;
   bool                _isRecording = false;
+  float               _firstFrameTime = 0.0f;
   bool                _autoRecord;
   bool                _waitMode = false;
   int                 _waitTicksRemaining = 0;
@@ -101,8 +118,8 @@ protected:
   std::string         _fileDir = "";
   static const std::string _logBaseFileName;
   std::string         _fileNameSuffix = "";
-  static const int    kNumCharsInLineBuffer = 256;
-  char*               _lineBuffer;
+  static const int    kSizeDumpBuffer = 512;
+  char*               _dumpBuffer;
 
   typedef enum
   {
@@ -135,6 +152,13 @@ protected:
   };
   
   std::queue<PerfMetricCommand> _queuedCommands;
+  
+  const char* _headingLine1;
+  const char* _headingLine2;
+  const char* _headingLine2Extra;
+  const char* _headingLine1CSV;
+  const char* _headingLine2CSV;
+  const char* _headingLine2ExtraCSV;
 };
 
 

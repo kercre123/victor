@@ -18,8 +18,6 @@
 #include "util/perfMetric/perfMetricImpl.h"
 #include "util/stats/statsAccumulator.h"
 
-#include <iomanip>
-
 
 #define LOG_CHANNEL "PerfMetric"
 
@@ -27,10 +25,18 @@ namespace Anki {
 namespace Vector {
 
 
+
+
 PerfMetricAnim::PerfMetricAnim(const AnimContext* context)
   : _frameBuffer(nullptr)
   //, _context(context)
 {
+  _headingLine1 = "                       Anim     Anim    Sleep    Sleep     Over      RtA   AtR   EtA   AtE";
+  _headingLine2 = "                   Duration     Freq Intended   Actual    Sleep    Count Count Count Count";
+  _headingLine2Extra = "";
+  _headingLine1CSV = ",,Anim,Anim,Sleep,Sleep,Over,RtA,AtR,EtA,AtE";
+  _headingLine2CSV = ",,Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count";
+  _headingLine2ExtraCSV = "";
 }
 
 PerfMetricAnim::~PerfMetricAnim()
@@ -69,6 +75,12 @@ void PerfMetricAnim::Update(const float tickDuration_ms,
   {
     FrameMetricAnim& frame = _frameBuffer[_nextFrameIndex];
 
+    if (_bufferFilled)
+    {
+      // Move the 'first frame start time' up by the frame's time we're about to overwrite
+      _firstFrameTime = IncrementFrameTime(_firstFrameTime, frame._tickTotal_ms);
+    }
+
     frame._tickExecution_ms     = tickDuration_ms;
     frame._tickTotal_ms         = tickFrequency_ms;
     frame._tickSleepIntended_ms = sleepDurationIntended_ms;
@@ -90,297 +102,77 @@ void PerfMetricAnim::Update(const float tickDuration_ms,
 #endif
 }
 
-void PerfMetricAnim::Dump(const DumpType dumpType, const bool dumpAll,
-                          const std::string* fileName, std::string* resultStr) const
+
+void PerfMetricAnim::InitDumpAccumulators()
 {
-  if (FrameBufferEmpty())
-  {
-    LOG_INFO("PerfMetric.Dump", "Nothing to dump; buffer is empty");
-    return;
-  }
-
-  FILE* fd = nullptr;
-  if (dumpType == DT_FILE_TEXT || dumpType == DT_FILE_CSV)
-  {
-    fd = fopen(fileName->c_str(), "w");
-  }
-
-  int frameBufferIndex = _bufferFilled ? _nextFrameIndex : 0;
-  const int numFrames  = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
-  Util::Stats::StatsAccumulator accTickDuration;
-  Util::Stats::StatsAccumulator accTickTotal;
-  Util::Stats::StatsAccumulator accSleepIntended;
-  Util::Stats::StatsAccumulator accSleepActual;
-  Util::Stats::StatsAccumulator accSleepOver;
-  Util::Stats::StatsAccumulator accMessageCountRtA;
-  Util::Stats::StatsAccumulator accMessageCountAtR;
-  Util::Stats::StatsAccumulator accMessageCountEtA;
-  Util::Stats::StatsAccumulator accMessageCountAtE;
-
-  if (dumpAll)
-  {
-    DumpHeading(dumpType, dumpAll, fd, resultStr);
-  }
-
-  for (int frameIndex = 0; frameIndex < numFrames; frameIndex++)
-  {
-    const FrameMetricAnim& frame = _frameBuffer[frameBufferIndex];
-
-    // This stat is calculated rather than stored
-    const float tickSleepOver_ms = frame._tickSleepActual_ms - frame._tickSleepIntended_ms;
-
-    accTickDuration    += frame._tickExecution_ms;
-    accTickTotal       += frame._tickTotal_ms;
-    accSleepIntended   += frame._tickSleepIntended_ms;
-    accSleepActual     += frame._tickSleepActual_ms;
-    accSleepOver       += tickSleepOver_ms;
-    accMessageCountRtA += frame._messageCountRobotToAnim;
-    accMessageCountAtR += frame._messageCountAnimToRobot;
-    accMessageCountEtA += frame._messageCountEngineToAnim;
-    accMessageCountAtE += frame._messageCountAnimToEngine;
-
-    static const std::string kFormatLineText = "%5i %8.3f %8.3f %8.3f %8.3f %8.3f    %5i %5i %5i %5i";
-    static const std::string kFormatLineCSVText = "%5i,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5i,%5i,%5i,%5i";
-
-#define LINE_DATA_VARS \
-    frameIndex, frame._tickExecution_ms, frame._tickTotal_ms,\
-    frame._tickSleepIntended_ms, frame._tickSleepActual_ms,\
-    tickSleepOver_ms,\
-    frame._messageCountRobotToAnim, frame._messageCountAnimToRobot,\
-    frame._messageCountEngineToAnim, frame._messageCountAnimToEngine
-
-    if (dumpAll)
-    {
-      switch (dumpType)
-      {
-        case DT_LOG:
-          {
-            LOG_INFO("PerfMetric.Dump", kFormatLineText.c_str(), LINE_DATA_VARS);
-          }
-          break;
-        case DT_RESPONSE_STRING:  // Intentional fall-through
-        case DT_FILE_TEXT:
-          {
-            int strSize = 0;
-            strSize += sprintf(&_lineBuffer[strSize],
-                               (kFormatLineText + "\n").c_str(), LINE_DATA_VARS);
-            if (dumpType == DT_FILE_TEXT)
-            {
-              fwrite(_lineBuffer, 1, strSize, fd);
-            }
-            else if (resultStr)
-            {
-              *resultStr += _lineBuffer;
-            }
-          }
-          break;
-        case DT_FILE_CSV:
-          {
-            int strSize = 0;
-            strSize += sprintf(&_lineBuffer[strSize],
-                               (kFormatLineCSVText + "\n").c_str(), LINE_DATA_VARS);
-            fwrite(_lineBuffer, 1, strSize, fd);
-            if (resultStr)
-            {
-              *resultStr += _lineBuffer;
-            }
-          }
-          break;
-      }
-    }
-
-    if (++frameBufferIndex >= kNumFramesInBuffer)
-    {
-      frameBufferIndex = 0;
-    }
-  }
-
-  const float totalTime_sec = accTickTotal.GetVal() * 0.001f;
-  sprintf(_lineBuffer, "Summary:  (%s build; %s; %i anim ticks; %.3f seconds total)",
-#if defined(NDEBUG)
-                "RELEASE"
-#else
-                "DEBUG"
-#endif
-                ,
-#if defined(SIMULATOR)  // ANKI_PLATFORM_* is not defined in vic-anim for some reason
-                "MAC"
-#else
-                "VICOS"
-#endif
-          , numFrames, totalTime_sec);
-  switch (dumpType)
-  {
-    case DT_LOG:
-      LOG_INFO("PerfMetric.Dump", "%s", _lineBuffer);
-      break;
-    case DT_RESPONSE_STRING:  // Intentional fall-through
-    case DT_FILE_TEXT:        // Intentional fall-through
-    case DT_FILE_CSV:
-      {
-        auto index = strlen(_lineBuffer);
-        _lineBuffer[index++] = '\n';
-        _lineBuffer[index] = '\0';
-        if (dumpType != DT_RESPONSE_STRING)
-        {
-          fwrite(_lineBuffer, 1, strlen(_lineBuffer), fd);
-        }
-        else if (resultStr)
-        {
-          *resultStr += _lineBuffer;
-        }
-      }
-      break;
-  }
-
-  static const bool kShowBehaviorHeading = false;
-  DumpHeading(dumpType, kShowBehaviorHeading, fd, resultStr);
-
-  static const std::string kSummaryLineFormat = " %8.3f %8.3f %8.3f %8.3f %8.3f    %5.1f %5.1f %5.1f %5.1f\n";
-  static const std::string kSummaryLineCSVFormat = ",%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%5.1f,%5.1f,%5.1f,%5.1f\n";
-
-#define SUMMARY_LINE_VARS(StatCall)\
-  accTickDuration.StatCall(), accTickTotal.StatCall(),\
-  accSleepIntended.StatCall(), accSleepActual.StatCall(), accSleepOver.StatCall(),\
-  accMessageCountRtA.StatCall(), accMessageCountAtR.StatCall(),\
-  accMessageCountEtA.StatCall(), accMessageCountAtE.StatCall()
-
-  switch (dumpType)
-  {
-    case DT_LOG:
-      {
-        LOG_INFO("PerfMetric.Dump", (" Min:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMin));
-        LOG_INFO("PerfMetric.Dump", (" Max:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMax));
-        LOG_INFO("PerfMetric.Dump", ("Mean:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetMean));
-        LOG_INFO("PerfMetric.Dump", (" Std:" + kSummaryLineFormat).c_str(), SUMMARY_LINE_VARS(GetStd));
-      }
-      break;
-    case DT_RESPONSE_STRING:  // Intentional fall-through
-    case DT_FILE_TEXT:
-      {
-        int strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], " Min:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetMin));
-        if (dumpType == DT_FILE_TEXT)
-        {
-          fwrite(_lineBuffer, 1, strSize, fd);
-        }
-        else if (resultStr)
-        {
-          *resultStr += _lineBuffer;
-        }
-        strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], " Max:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetMax));
-        if (dumpType == DT_FILE_TEXT)
-        {
-          fwrite(_lineBuffer, 1, strSize, fd);
-        }
-        else if (resultStr)
-        {
-          *resultStr += _lineBuffer;
-        }
-        strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], "Mean:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetMean));
-        if (dumpType == DT_FILE_TEXT)
-        {
-          fwrite(_lineBuffer, 1, strSize, fd);
-        }
-        else if (resultStr)
-        {
-          *resultStr += _lineBuffer;
-        }
-        strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], " Std:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetStd));
-        if (dumpType == DT_FILE_TEXT)
-        {
-          fwrite(_lineBuffer, 1, strSize, fd);
-        }
-        else if (resultStr)
-        {
-          *resultStr += _lineBuffer;
-        }
-      }
-      break;
-    case DT_FILE_CSV:
-      {
-        int strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], " Min:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineCSVFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetMin));
-        fwrite(_lineBuffer, 1, strSize, fd);
-        strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], " Max:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineCSVFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetMax));
-        fwrite(_lineBuffer, 1, strSize, fd);
-        strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], "Mean:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineCSVFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetMean));
-        fwrite(_lineBuffer, 1, strSize, fd);
-        strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], " Std:");
-        strSize += sprintf(&_lineBuffer[strSize], (kSummaryLineCSVFormat.c_str()),
-                           SUMMARY_LINE_VARS(GetStd));
-        fwrite(_lineBuffer, 1, strSize, fd);
-      }
-      break;
-  }
-
-  if (dumpType == DT_FILE_TEXT || dumpType == DT_FILE_CSV)
-  {
-    fclose(fd);
-  }
+  _accMessageCountRtA.Clear();
+  _accMessageCountAtR.Clear();
+  _accMessageCountEtA.Clear();
+  _accMessageCountAtE.Clear();
 }
 
 
-void PerfMetricAnim::DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
-                                 FILE* fd, std::string* resultStr) const
+const PerfMetric::FrameMetric& PerfMetricAnim::UpdateDumpAccumulators(const int frameBufferIndex)
 {
-  static const char* kHeading1 = "          Anim     Anim    Sleep    Sleep     Over      RtA   AtR   EtA   AtE";
-  static const char* kHeading2 = "      Duration     Freq Intended   Actual    Sleep    Count Count Count Count";
-  static const char* kHeadingCSV1 = ",Engine,Engine,Sleep,Sleep,Over,RtA,AtR,EtA,AtE";
-  static const char* kHeadingCSV2 = ",Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count";
+  const FrameMetricAnim& frame = _frameBuffer[frameBufferIndex];
+  _accMessageCountRtA += frame._messageCountRobotToAnim;
+  _accMessageCountAtR += frame._messageCountAnimToRobot;
+  _accMessageCountEtA += frame._messageCountEngineToAnim;
+  _accMessageCountAtE += frame._messageCountAnimToEngine;
 
-  switch (dumpType)
-  {
-    case DT_LOG:
-      {
-        LOG_INFO("PerfMetric.Dump", "%s", kHeading1);
-        LOG_INFO("PerfMetric.Dump", "%s", kHeading2);
-      }
-      break;
-    case DT_RESPONSE_STRING:  // Intentional fall-through
-    case DT_FILE_TEXT:
-      {
-        int strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], "%s\n%s\n", kHeading1, kHeading2);
-        if (dumpType == DT_FILE_TEXT)
-        {
-          fwrite(_lineBuffer, 1, strSize, fd);
-        }
-        else if (resultStr)
-        {
-          *resultStr += _lineBuffer;
-        }
-      }
-      break;
-    case DT_FILE_CSV:
-      {
-        int strSize = 0;
-        strSize += sprintf(&_lineBuffer[strSize], "%s\n%s\n", kHeadingCSV1, kHeadingCSV2);
-        fwrite(_lineBuffer, 1, strSize, fd);
-      }
-      break;
-  }
+  return _frameBuffer[frameBufferIndex];  // Return the base class data
 }
+
+
+int PerfMetricAnim::AppendFrameData(const DumpType dumpType,
+                                    const int frameBufferIndex,
+                                    const int dumpBufferOffset)
+{
+  const FrameMetricAnim& frame = _frameBuffer[frameBufferIndex];
+#define ANIM_LINE_DATA_VARS \
+  frame._messageCountRobotToAnim, frame._messageCountAnimToRobot,\
+  frame._messageCountEngineToAnim, frame._messageCountAnimToEngine
+
+  static const char* kFormatLine = "    %5i %5i %5i %5i\n";
+  static const char* kFormatLineCSV = ",%5i,%5i,%5i,%5i\n";
+
+  const int lenOut = snprintf(&_dumpBuffer[dumpBufferOffset], kSizeDumpBuffer - dumpBufferOffset,
+                              dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
+                              ANIM_LINE_DATA_VARS);
+  return lenOut;
+}
+
+
+int PerfMetricAnim::AppendSummaryData(const DumpType dumpType,
+                                      const int dumpBufferOffset,
+                                      const int lineIndex)
+{
+  DEV_ASSERT_MSG(lineIndex < kNumLinesInSummary, "PerfMetricAnim.AppendSummaryData",
+                 "lineIndex %d out of range", lineIndex);
+
+#define ANIM_SUMMARY_LINE_VARS(StatCall)\
+  _accMessageCountRtA.StatCall(), _accMessageCountAtR.StatCall(),\
+  _accMessageCountEtA.StatCall(), _accMessageCountAtE.StatCall()
+
+  static const char* kFormatLine = "    %5.1f %5.1f %5.1f %5.1f\n";
+  static const char* kFormatLineCSV = ",%5.1f,%5.1f,%5.1f,%5.1f\n";
+
+#define APPEND_SUMMARY_LINE(StatCall)\
+  lenOut = snprintf(&_dumpBuffer[dumpBufferOffset],    - dumpBufferOffset,\
+                    dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,\
+                    ANIM_SUMMARY_LINE_VARS(StatCall));
+
+  int lenOut = 0;
+  switch (lineIndex)
+  {
+    case 0:   APPEND_SUMMARY_LINE(GetMin);   break;
+    case 1:   APPEND_SUMMARY_LINE(GetMax);   break;
+    case 2:   APPEND_SUMMARY_LINE(GetMean);  break;
+    case 3:   APPEND_SUMMARY_LINE(GetStd);   break;
+  }
+  return lenOut;
+}
+
 
 } // namespace Vector
 } // namespace Anki
