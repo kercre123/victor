@@ -1359,10 +1359,12 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
   const std::string touch = temp;
 
   const bool batteryDisconnected = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
+  const bool batteryCharging = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
   sprintf(temp,
-          "BATT:  %0.2fV   %s",
+          "BATT:  %0.2fV   %s%s",
           state.batteryVoltage,
-          batteryDisconnected ? "D" : "");
+          batteryDisconnected ? "D" : " ",
+          batteryCharging     ? "C" : " ");
   const std::string batt = temp;
 
   sprintf(temp,
