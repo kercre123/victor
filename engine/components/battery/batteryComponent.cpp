@@ -73,6 +73,10 @@ namespace {
   // (the 'off-charger' low battery threshold).
   const float kOnChargerLowBatteryThresholdVolts = 4.0f;
 
+  // The amount of time that the robot must be off charger before
+  // battery charging will be re-enabled. (Only matters if it was previously disabled of course).
+  const float kOffChargerReEnableBatteryChargingTimeout_sec = 10.f;
+
   #define CONSOLE_GROUP "BatteryComponent"
 
   // Console var for faking low battery
@@ -144,7 +148,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   _battOverheated = msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED;
 
   // Only update filtered value if the battery isn't disconnected
-  bool wasDisconnected = _battDisconnected;
+  _wasBattDisconnected = _battDisconnected;
   _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED)
                       || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
                                                   // Anything under 3V doesn't make sense.
@@ -191,7 +195,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
 
   // Check for change in disconnected state
-  if (_battDisconnected != wasDisconnected) {
+  if (_battDisconnected != _wasBattDisconnected) {
     _lastDisconnectedChange_sec = now_sec;
 
     // DAS message for when battery is disconnected for cooldown
@@ -252,6 +256,14 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
       DASMSG(battery_fully_charged_voltage, "battery.fully_charged_voltage", "Transitioning to Full battery after saturation charging");
       DASMSG_SET(i1, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
       DASMSG_SEND();
+    }
+
+    if (isFullyCharged && _enableBatteryCharging) {
+      LOG_INFO("BatteryComponent.DisableBatteryCharging", "");
+      _enableBatteryCharging = false;
+      RobotInterface::EnableBatteryCharging msg;
+      msg.enable = false;
+      _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
     }
 
   } else if (_saturationChargingStartTime_sec > 0.f) {
@@ -336,6 +348,17 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
     _lastBatteryLevelChange_sec = now_sec;
     _batteryLevel = level;
+  }
+
+  // Re-enable battery charging if was off charger for more than a certain amount
+  if (!_enableBatteryCharging && 
+      !_isOnChargerContacts && 
+      (now_sec - _lastOnChargerContactsChange_sec) > kOffChargerReEnableBatteryChargingTimeout_sec) {
+    LOG_INFO("BatteryComponent.EnableBatteryCharging", "");
+    _enableBatteryCharging = true;
+    RobotInterface::EnableBatteryCharging msg;
+    msg.enable = true;
+    _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
   }
 
   static RobotInterface::BatteryStatus prevStatus;

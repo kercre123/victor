@@ -168,6 +168,7 @@ private:
   
   bool _battOverheated = false;
   bool _battDisconnected = false;
+  bool _wasBattDisconnected = false;
   bool _isCharging = false;
   bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;
@@ -182,6 +183,8 @@ private:
   float _lastSaturationChargingEndTime_sec = 0.f;
 
   bool _resetVoltageFilterWhenBatteryConnected = false;
+
+  bool _enableBatteryCharging = true;
 
   // The timestamp of the RobotState message with the latest data
   RobotTimeStamp_t _lastMsgTimestamp = 0;

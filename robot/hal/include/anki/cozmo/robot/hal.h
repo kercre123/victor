@@ -240,6 +240,8 @@ bool BatteryIsOverheated();
 
 /// Return detected charger voltage
 f32 ChargerGetVoltage();
+
+void EnableBatteryCharging(bool enable);
 /************************************************************************
  * \section LEDs
  */

@@ -107,6 +107,9 @@ namespace { // "Private members"
 
   VersionInfo _sysconVersionInfo;
   
+  // Battery charging
+  bool enableBatteryCharging_ = true;
+
   const u32 SPINE_GET_FRAME_TIMEOUT_MS = 1000;
   const int* shutdownSignal_ = 0;
 
@@ -326,6 +329,8 @@ Result HAL::Init(const int * shutdownSignal)
 
   shutdownSignal_ = shutdownSignal;
 
+  EnableBatteryCharging(true);
+
   InitIMU();
 
   if (InitRadio() != RESULT_OK) {
@@ -531,7 +536,8 @@ Result HAL::Step(void)
     if(haveValidSyscon_)
     {
       EventStart(EventType::WRITE_SPINE);
-      if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
+      const bool hasPowerFlagsToSend = h2bp->powerFlags > 0;
+      if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active && !hasPowerFlagsToSend) {
         if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
           spine_set_lights(&spine_, &(h2bp->lightState));
           calmModeSkipFrameCount_ = 0;
@@ -539,6 +545,9 @@ Result HAL::Step(void)
       } else {
         spine_write_h2b_frame(&spine_, h2bp);
         lastH2BSendTime_ms_ = now_ms;
+
+        // Clear power flags since they only need to be sent once
+        h2bp->powerFlags = 0;
       }
       EventStop(EventType::WRITE_SPINE);
     }
@@ -960,6 +969,17 @@ u8 HAL::BatteryGetTemperature_C()
     return 0;
   }
   return static_cast<u8>(bodyData_->battery.temperature);
+}
+
+void HAL::EnableBatteryCharging(bool enable)
+{
+  AnkiInfo("HAL.EnableBatteryCharing", "new %d, old %d", enable, enableBatteryCharging_);
+  enableBatteryCharging_ = enable;
+  if (enable) {
+    headData_.powerFlags |= POWER_CONNECT_BATTERY;
+  } else {
+    headData_.powerFlags |= POWER_DISCONNECT_BATTERY;
+  }
 }
 
 u8 HAL::GetWatchdogResetCounter()

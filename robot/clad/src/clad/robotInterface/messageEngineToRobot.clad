@@ -315,6 +315,10 @@ message EnableBraceWhenFalling
   bool enable
 }
 
+message EnableBatteryCharging
+{
+  bool enable
+}
 
 // ========== V2 Animation process messages ===========
 
@@ -729,6 +733,7 @@ union EngineToRobot
   SyncRobot                     syncRobot                   = 0x02,
   Shutdown                      shutdown                    = 0x03,
   CalmPowerMode                 calmPowerMode               = 0x04,
+  EnableBatteryCharging         enableBatteryCharging       = 0x05,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,
