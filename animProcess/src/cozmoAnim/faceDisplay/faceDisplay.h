@@ -65,7 +65,6 @@ private:
   std::unique_ptr<Vision::ImageRGB565>  _faceDrawImg[2];
   Vision::ImageRGB565*                  _faceDrawNextImg = nullptr;
   Vision::ImageRGB565*                  _faceDrawCurImg = nullptr;
-  Vision::ImageRGB565*                  _faceDrawLastImg = nullptr;
   std::thread                           _faceDrawThread;
   std::mutex                            _faceDrawMutex;
   bool                                  _stopDrawFace = false;

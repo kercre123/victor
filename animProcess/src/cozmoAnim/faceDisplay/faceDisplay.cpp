@@ -209,7 +209,6 @@ void FaceDisplay::DrawFaceLoop()
       // Done with this image, clear the pointer
       {
         std::lock_guard<std::mutex> lock(_faceDrawMutex);
-        _faceDrawLastImg = _faceDrawCurImg;
         _faceDrawCurImg = nullptr;
       }
     }
