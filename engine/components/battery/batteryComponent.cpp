@@ -86,8 +86,9 @@ namespace {
   CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, false);
   const float kFakeLowBatteryVoltage = 3.5f;
 
+#if ANKI_DEV_CHEATS
   CONSOLE_VAR(bool, kPeriodicDebugDASLogging, CONSOLE_GROUP, true);
-
+#endif
   // Console var for faking disconnected battery
   CONSOLE_VAR(bool, kFakeDisconnectedBattery, CONSOLE_GROUP, false);
 
