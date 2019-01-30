@@ -326,6 +326,15 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
         LOG_INFO("OffboardModel.WaitForResultCLAD.ProcessMessage", "Read %zu/%zu", n, sizeof(buf));
 
         Vision::OffboardResultReady resultReadyMsg{(const uint8_t*)buf, (size_t)n};
+        
+        if(resultReadyMsg.timestamp != _imageTimestamp)
+        {
+          LOG_INFO("OffboardModel.WaitForResultCLAD.DumpingOldResult",
+                   "Found result with t:%u, instead of t:%u. Dropping on floor and continuing to wait.",
+                   resultReadyMsg.timestamp, _imageTimestamp);
+          continue;
+        }
+        
         Json::Reader reader;
         Json::Value detectionResult;
         const bool parseSuccess = reader.parse(resultReadyMsg.jsonResult, detectionResult);

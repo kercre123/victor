@@ -37,6 +37,7 @@ structure OffboardImageReady {
 }
 
 structure OffboardResultReady {
+  uint_32           timestamp,
   OffboardProcType  procType,
   string[uint_16]   jsonResult
 }
