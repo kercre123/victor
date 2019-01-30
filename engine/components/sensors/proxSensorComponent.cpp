@@ -19,6 +19,7 @@
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "coretech/common/engine/math/convexIntersection.h"
 #include "coretech/common/engine/math/polygon_impl.h"
@@ -88,7 +89,7 @@ ProxSensorComponent::ProxSensorComponent()
 
 void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
-  if (kProxSensorEnabled)
+  if (!IsWhiskey() && kProxSensorEnabled)
   {
     _lastMsgTimestamp = msg.timestamp;
     _lastMsgPoseFrameID = msg.pose_frame_id;

@@ -19,8 +19,6 @@
 
 #include "util/logging/logging.h"
 
-#define WORKING_LCD 0
-
 namespace Anki {
 namespace Vector {
 
@@ -35,24 +33,18 @@ namespace Vector {
 
   FaceDisplayImpl::~FaceDisplayImpl()
   {
-#if WORKING_LCD
     FaceClear();
     lcd_shutdown();
-#endif
   }
   
   void FaceDisplayImpl::FaceClear()
   {
-#if WORKING_LCD
     lcd_clear_screen();
-#endif
   }
   
   void FaceDisplayImpl::FaceDraw(const u16* frame)
   {
-#if WORKING_LCD
     lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
-#endif
   }
   
   void FaceDisplayImpl::FacePrintf(const char* format, ...)

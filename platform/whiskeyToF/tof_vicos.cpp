@@ -19,6 +19,8 @@
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include <thread>
 #include <mutex>
 #include <queue>
@@ -74,6 +76,11 @@ ToFSensor* ToFSensor::_instance = nullptr;
 
 ToFSensor* ToFSensor::getInstance()
 {
+  if(!IsWhiskey())
+  {
+    return nullptr;
+  }
+  
   if(nullptr == _instance)
   {
     _instance = new ToFSensor();

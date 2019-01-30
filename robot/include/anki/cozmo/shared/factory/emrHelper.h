@@ -150,6 +150,20 @@ namespace Factory {
   }
 }
 
+static inline bool IsWhiskey()
+{
+  /* 
+    From robot/fixture/stm/hwid.h
+    #define HEADID_HWREV_EMPTY      0 //unprogrammed/empty value
+    #define HEADID_HWREV_DEBUG      1 //debug use and DVT1-3
+    #define HEADID_HWREV_DVT4       4
+    #define HEADID_HWREV_PVT        5
+    #define HEADID_HWREV_MP         6
+    #define HEADID_HWREV_WHSK_DVT1  7 //Whiskey (Vector 2019)
+  */
+  return (Factory::GetEMR()->fields.HW_VER >= 7);
+}
+
 }
 }
 

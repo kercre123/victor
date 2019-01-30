@@ -1282,7 +1282,12 @@ Result Robot::Update()
 
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
-  ToFSensor::getInstance()->Update();
+
+  auto* tof = ToFSensor::getInstance();
+  if(tof != nullptr)
+  {
+    tof->Update();
+  }
 
   Result factoryRes;
   const bool checkDone = UpdateStartupChecks(factoryRes);
@@ -2624,6 +2629,13 @@ bool Robot::UpdateToFStartupChecks(Result& res)
   };
   static State state = State::Setup;
 
+  auto* tof = ToFSensor::getInstance();
+  if(tof == nullptr)
+  {
+    res = RESULT_OK;
+    return true;
+  }
+
 #define HANDLE_RESULT(res, nextState) {                                 \
     if(res != ToFSensor::CommandResult::Success) {                      \
       PRINT_NAMED_ERROR("Robot.UpdateToFStartupChecks.Fail", "State: %u", state); \
@@ -2651,33 +2663,33 @@ bool Robot::UpdateToFStartupChecks(Result& res)
     case State::Setup:
       {
         state = State::WaitingForCallback;
-        ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
-                                               {
-                                                 HANDLE_RESULT(res, State::StartRanging);
-                                               });
+        tof->SetupSensors([](ToFSensor::CommandResult res)
+                          {
+                            HANDLE_RESULT(res, State::StartRanging);
+                          });
       }
       break;
 
     case State::StartRanging:
       {
         state = State::WaitingForCallback;
-        ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
-                                               {
-                                                 HANDLE_RESULT(res, State::EndRanging);
-                                               });
+        tof->StartRanging([](ToFSensor::CommandResult res)
+                          {
+                            HANDLE_RESULT(res, State::EndRanging);
+                          });
       }
       break;
 
     case State::EndRanging:
       {
         bool isDataNew = false;
-        RangeDataRaw data = ToFSensor::getInstance()->GetData(isDataNew);
+        RangeDataRaw data = tof->GetData(isDataNew);
         if(isDataNew)
         {
           bool atLeastOneValidRoi = false;
           for(const auto& roiReading : data.data)
           {
-            if(ToFSensor::getInstance()->IsValidRoiStatus(roiReading.roiStatus))
+            if(tof->IsValidRoiStatus(roiReading.roiStatus))
             {
               atLeastOneValidRoi = true;
             }
@@ -2686,11 +2698,11 @@ bool Robot::UpdateToFStartupChecks(Result& res)
           if(atLeastOneValidRoi)
           {
             state = State::WaitingForCallback;
-            ToFSensor::getInstance()->StopRanging([](ToFSensor::CommandResult res)
-                                                  {
-                                                    PRINT_NAMED_INFO("Robot.UpdateToFStartupChecks.Success","");
-                                                    HANDLE_RESULT(res, State::Success);
-                                                  });
+            tof->StopRanging([](ToFSensor::CommandResult res)
+                             {
+                               PRINT_NAMED_INFO("Robot.UpdateToFStartupChecks.Success","");
+                               HANDLE_RESULT(res, State::Success);
+                             });
           }
         }
       }

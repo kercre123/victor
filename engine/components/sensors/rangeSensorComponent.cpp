@@ -41,14 +41,20 @@ void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
   // Subscribe to the SendRangeData request
   auto sendRangeDataLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
                              {
+                               auto* tof = ToFSensor::getInstance();
+                               if(tof == nullptr)
+                               {
+                                 return;
+                               }
+                               
                                _sendRangeData = event.GetData().Get_sendRangeData().enable;
                                if(_sendRangeData)
                                {
-                                 ToFSensor::getInstance()->StartRanging(nullptr);
+                                 tof->StartRanging(nullptr);
                                }
                                else
                                {
-                                 ToFSensor::getInstance()->StopRanging(nullptr);
+                                 tof->StopRanging(nullptr);
                                }
                              };
   
@@ -61,7 +67,13 @@ void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
 
 void RangeSensorComponent::Update()
 {
-  _latestRawRangeData = ToFSensor::getInstance()->GetData(_rawDataIsNew);
+  auto* tof = ToFSensor::getInstance();
+  if(tof == nullptr)
+  {
+    return;
+  }
+  
+  _latestRawRangeData = tof->GetData(_rawDataIsNew);
 
   // If we have been requested to send range data, then populate a RangeDataToDisplay message
   if(_sendRangeData)
