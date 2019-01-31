@@ -1288,6 +1288,30 @@
     "AnimName": "ag_reacttocliff_wheelie_01"
   },
   {
+    "CladEvent": "ReactToCliffTurnLeft60",
+    "AnimName": "ag_reacttocliff_turnleft_60"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnLeft120",
+    "AnimName": "ag_reacttocliff_turnleft_120"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnLeft180",
+    "AnimName": "ag_reacttocliff_turnleft_180"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnRight60",
+    "AnimName": "ag_reacttocliff_turnright_60"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnRight120",
+    "AnimName": "ag_reacttocliff_turnright_120"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnRight180",
+    "AnimName": "ag_reacttocliff_turnright_180"
+  },
+  {
     "CladEvent": "TakeAPictureFocusing",
     "AnimName": "ag_takepicture_focusing"
   },
