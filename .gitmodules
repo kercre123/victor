@@ -12,4 +12,4 @@
 	url = git@github.com:anki/vector-python-sdk-private.git
 [submodule "cloud/voice-intent-resolution-config"]
 	path = cloud/voice-intent-resolution-config
-	url = https://github.com/anki/voice-intent-resolution-config
+	url = git@github.com:anki/voice-intent-resolution-config.git
