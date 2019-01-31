@@ -107,7 +107,8 @@ void BehaviorDevBatteryLogging::GetBehaviorJsonKeys(std::set<const char*>& expec
     kStartMovingVoltageKey,
     kStressCPU,
     kStressSpeaker,
-    kDriveOffChargerWhenFull
+    kDriveOffChargerWhenFull,
+    kDoExploring
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
