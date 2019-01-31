@@ -59,7 +59,7 @@ namespace {
   static const char* kStressCPU = "stressCPU";
   static const char* kStressSpeaker = "stressSpeaker";
   static const char* kDriveOffChargerWhenFull = "driveOffChargerWhenFull";
-  static const char* kDoExploring = "driveOffChargerWhenFull";
+  static const char* kDoExploring = "doExploring";
 
   bool _startMovingVoltageReached = false;
 }
