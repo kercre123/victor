@@ -654,7 +654,7 @@ void SecurePairing::HandleRtsLogRequest(const Victor::ExternalComms::RtsConnecti
     return;
   }
 
-  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"});
+  int exitCode = ExecCommand({"sudo", "python", "/anki/bin/diagnostics-logger"});
 
   std::vector<uint8_t> logBytes;
 
@@ -691,7 +691,10 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& m
     std::string sshPath = "/home/root/.ssh";
     std::string sshFile = "authorized_keys";
 
-    CreateDirectory(sshPath);
+    CreateDirectory(sshPath,
+                    Anki::kModeUserReadWriteExecute,
+                    kNetUid,
+                    kAnkiGid);
 
     std::string data = "";
 
@@ -700,7 +703,11 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& m
     }
 
     Log::Write("Writing public SSH key to file: %s/%s", sshPath.c_str(), sshFile.c_str());
-    WriteFileAtomically(sshPath + "/" + sshFile, data, Anki::kModeUserReadWrite);
+    WriteFileAtomically(sshPath + "/" + sshFile,
+                        data,
+                        Anki::kModeUserReadWrite,
+                        kNetUid,
+                        kAnkiGid);
   }
 }
 #else

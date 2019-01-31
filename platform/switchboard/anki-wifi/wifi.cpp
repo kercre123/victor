@@ -834,15 +834,6 @@ bool DisconnectFromWifiService(ConnManBusService* service) {
   return conn_man_bus_service_call_disconnect_sync (service, nullptr, &error);
 }
 
-void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
-  if (enable) {
-    ExecCommandInBackground({"connmanctl", "enable", "wifi"}, callback);
-  } else {
-    ExecCommandInBackground({"connmanctl", "disable", "wifi"}, callback);
-    ExecCommandInBackground({"ifconfig", "wlan0"}, callback);
-  }
-}
-
 std::string GetObjectPathForService(GVariant* service) {
   GVariantIter iter;
   GVariant *serviceChild;
@@ -956,7 +947,11 @@ void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback 
     }
   }
 
-  int rc = WriteFileAtomically(GetPathToWiFiConfigFile(), wifiConfigStream.str());
+  int rc = WriteFileAtomically(GetPathToWiFiConfigFile(),
+                               wifiConfigStream.str(),
+                               kModeUserGroupReadWrite,
+                               kNetUid,
+                               kAnkiGid);
 
   if (rc) {
     std::string error = "Failed to write wifi config. rc = " + std::to_string(rc);
@@ -964,7 +959,7 @@ void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback 
     return;
   }
 
-  ExecCommandInBackground({"connmanctl", "enable", "wifi"}, callback);
+  ExecCommandInBackground({"sudo", "/usr/bin/connmanctl", "enable", "wifi"}, callback);
 }
 
 WiFiState GetWiFiState() {

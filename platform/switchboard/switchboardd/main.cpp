@@ -449,14 +449,14 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
 
   // remove progress files if exist
   Log::Write("Ota Update Initialized...");
-  int clearFilesStatus = ExecCommand({ kUpdateEngineExecPath + "/update-engine"});
+  int clearFilesStatus = ExecCommand({ "sudo", kUpdateEngineExecPath + "/update-engine"});
 
   if(clearFilesStatus != 0) {
     // we *shouldn't* let progress file errors keep us from trying to update
     Log::Write("Couldn't clear progress files. Continuing update anyway.");
   }
 
-  ExecCommandInBackground({ kUpdateEngineExecPath + "/update-engine", url},
+  ExecCommandInBackground({ "sudo", kUpdateEngineExecPath + "/update-engine", url},
                           std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1));
 }
 
