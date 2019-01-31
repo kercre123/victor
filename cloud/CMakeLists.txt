@@ -54,12 +54,12 @@ set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATE
 # anki_go_set_ldflags(${target_name} ${chipper_flags})
 
 if(VICOS)
-  set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-vicos)
+  set(__opus_build_dir ${ANKI_EXTERNAL_DIR}/opus/vicos)
   add_library(opus SHARED IMPORTED)
   anki_build_target_license(opus "BSD-3,${CMAKE_SOURCE_DIR}/licenses/opus.license")
   set_target_properties(opus PROPERTIES IMPORTED_LOCATION ${__opus_build_dir}/lib/libopus.so.0.6.1)
 elseif(MACOSX)
-  set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-mac)
+  set(__opus_build_dir ${ANKI_EXTERNAL_DIR}/opus/mac)
   add_library(opus STATIC IMPORTED)
   anki_build_target_license(opus "BSD-3,${CMAKE_SOURCE_DIR}/licenses/opus.license")
   set_target_properties(opus PROPERTIES IMPORTED_LOCATION ${__opus_build_dir}/lib/libopus.a)
@@ -248,14 +248,14 @@ set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_GO_GEN_SRCS} ${GATEWAY_GRPC_GO_GEN_SRCS}
   COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${GATEWAY_PROTO_HOME_DIR}/public"
     "-I${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"
     "-I${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
     "--go_out=plugins=grpc:${GATEWAY_GRPC_OUTPUT_DIR}"
     ${GATEWAY_GRPC_SRCS} ${GATEWAY_PROTO_SRCS}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${GATEWAY_PROTO_HOME_DIR}/public"
     "-I${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"

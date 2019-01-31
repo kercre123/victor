@@ -1268,6 +1268,7 @@ void VizControllerImpl::DrawObjects()
     {VizObjectType::VIZ_OBJECT_CHARGER,     "WireframeCharger {}"},
     {VizObjectType::VIZ_OBJECT_PREDOCKPOSE, "PoseMarker {}"},
     {VizObjectType::VIZ_OBJECT_HUMAN_HEAD,  "HumanHead {}"},
+    {VizObjectType::VIZ_OBJECT_TEXT,        "Text {}"},
   };
   
   static_assert( IsSequentialArray(kVizObjectTypeToProtoString),

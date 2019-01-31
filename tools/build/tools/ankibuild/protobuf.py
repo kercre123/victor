@@ -14,9 +14,6 @@ import sys
 import toolget
 
 PROTOBUF = 'protobuf'
-generators = ['protoc-gen-go', 'protoc-gen-grpc-gateway']
-generator_urls = ['github.com/golang/protobuf/protoc-gen-go',
-  'github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway']
 
 def get_protoc_version_from_command(exe):
     version = None
@@ -44,13 +41,6 @@ def find_anki_protoc_exe(version):
                 return os.path.join(d_ver, root, 'protoc')
 
     return None
-
-def find_anki_helper_generators(version):
-    bindir = os.path.join(find_anki_protoc_dist_dir(version), 'go', 'bin')
-    if not os.path.exists(bindir):
-        return None
-
-    return all([os.path.exists(os.path.join(bindir, gen)) for gen in generators])
 
 def install_protobuf(version):
     platform_map = {
@@ -82,19 +72,6 @@ def install_protobuf(version):
                                  version,
                                  "protobuf")
 
-def install_generators(version):
-    godir = os.path.join(find_anki_protoc_dist_dir(version), 'go', 'bin')
-    go_env = os.environ.copy()
-    go_env["GOBIN"] = godir
-    # for yocto linux, make sure host CC/CXX are used, not target
-    go_env["CC"] = "/usr/bin/cc"
-    go_env["CXX"] = "/usr/bin/c++"
-    go_cmd = "go"
-    if os.environ["GOROOT"]:
-        go_cmd = os.path.join(os.environ["GOROOT"], "bin", "go")
-    for gen in generator_urls:
-        p = subprocess.Popen([go_cmd, 'install', gen], env=go_env)
-        p.communicate()
 
 def find_protoc(required_ver, exe=None):
 #    if not exe:
@@ -112,14 +89,11 @@ def find_protoc(required_ver, exe=None):
 
     return None
 
-def find_or_install_protoc(required_ver, install_helpers, exe=None):
+def find_or_install_protoc(required_ver, exe=None):
     exe = find_protoc(required_ver, exe)
     if not exe:
         install_protobuf(required_ver)
         exe = find_anki_protoc_exe(required_ver)
-
-    if install_helpers and not find_anki_helper_generators(required_ver):
-        install_generators(required_ver)
 
     return exe
 
@@ -138,7 +112,6 @@ def parseArgs(scriptArgs):
                         nargs='?',
                         const=default_version,
                         default=None)
-    parser.add_argument('--helpers', action='store_true')
     parser.add_argument('--find',
                         nargs='?',
                         const=default_version,
@@ -150,7 +123,7 @@ def parseArgs(scriptArgs):
 def main(argv):
     options = parseArgs(argv)
     if options.install:
-        path = find_or_install_protoc(options.install, options.helpers)
+        path = find_or_install_protoc(options.install)
         if not path:
             return 1
         print("%s" % path)

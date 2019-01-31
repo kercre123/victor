@@ -425,7 +425,7 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
   visuallyVerifyAction->SetUseCyclingExposure();
   compoundAction->AddAction(visuallyVerifyAction);
   
-  const int kNumAdditionalImagesToWaitFor = 2;
+  const int kNumAdditionalImagesToWaitFor = 3;
   compoundAction->AddAction(new WaitForImagesAction(kNumAdditionalImagesToWaitFor, VisionMode::DetectingMarkers));
 
   auto checkPoseFunc = [this]() -> bool {

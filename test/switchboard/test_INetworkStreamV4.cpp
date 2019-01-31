@@ -18,6 +18,7 @@ _reconnect(false) {
 
 Test_INetworkStreamV4::~Test_INetworkStreamV4() {
   delete _cladHandler;
+  delete _securePairing;
 
   if(_keyExchange != nullptr) {
     delete _keyExchange;

@@ -93,6 +93,8 @@ class DataAccessorComponent;
 enum class EngineErrorCode : uint8_t;
 class FaceWorld;
 class MatPiece;
+class IExternalInterface;
+class IGatewayInterface;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
@@ -323,9 +325,6 @@ public:
   // on the object we are localized to
   f32 GetLocalizedToDistanceSq() const;
 
-  // TODO: Can this be removed in favor of the more general LocalizeToObject() below?
-  Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece);
-
   Result LocalizeToObject(const ObservableObject* seenObject, ObservableObject* existingObject);
 
   // Updates pose to be on charger
@@ -546,8 +545,6 @@ public:
 
 
   // =========  Events  ============
-  using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
-  RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
   bool HasExternalInterface() const;
   bool HasGatewayInterface() const;
 
@@ -615,7 +612,6 @@ protected:
 
   ComponentPtr _components;
 
-  RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
   // The robot's identifier
   RobotID_t _ID;
   u32       _serialNumberHead = 0;
@@ -643,8 +639,6 @@ protected:
 
   // Stores (squared) distance to the closest observed marker of the object we're localized to
   f32 _localizedMarkerDistToCameraSq = -1.0f;
-
-  Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
 
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;

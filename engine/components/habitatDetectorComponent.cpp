@@ -16,12 +16,14 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/math/poseOriginList.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/settingsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -134,6 +136,8 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
     using namespace ExternalInterface;
     auto helper = MakeAnkiEventUtil(*(robot->GetExternalInterface()), *this, _signalHandles);
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotStopped>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDelocalized>();
     
     // webviz subscription to externally control the robot's belief state
     if (ANKI_DEV_CHEATS) {
@@ -152,8 +156,17 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
     PRINT_NAMED_WARNING("HabitatDetectorComponent.InitDependent.MissingExternalIterface","");
   }
 
+  // ensure it's not initialized to garbage before trying to use it
+  _poseOriginIdOnPutdown = _robot->GetWorldOriginID();
+  _poseOriginIdOnDelocalize = _robot->GetWorldOriginID();
+
   _toSendJson["reason"] = "~";
   _toSendJson["whiteThresholds"] = "~";
+
+  std::function<SettingsManager::SettingsCallbackOnSetFunc> onVolumeChangeFunc = std::bind(&HabitatDetectorComponent::OnVolumeChanged, this);
+  _signalHandles.emplace_back(_robot->GetComponentPtr<SettingsManager>()->RegisterSettingsCallbackOnSet(external_interface::RobotSetting::master_volume, onVolumeChangeFunc));
+
+  _lastMasterVolumeBeforeInHabitat = _robot->GetComponentPtr<SettingsManager>()->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
 }
 
 template<>
@@ -162,6 +175,36 @@ void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotStopp
   if(msg.reason == StopReason::CLIFF) {
     SetBelief(HabitatBeliefState::NotInHabitat, "CliffDetected");
   }
+}
+
+template<>
+void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
+{
+  _robotWasPutdownRecently = msg.treadsState == OffTreadsState::OnTreads;
+}
+
+
+template<>
+void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotDelocalized& msg)
+{
+  if(_robotWasPutdownRecently) {
+    _robotWasPutdownRecently = false;
+    _poseOriginIdOnPutdown = _robot->GetWorldOriginID();
+  }
+  // note: if we are delocalized, without previously being picked up
+  // then we shouldn't change the putdown-pose origin
+  // that way we are able to always make sure we're computing odometry with respect to
+  // the last known putdown position (rather than some arbitrary one from localization)
+
+  // we save the pose-origin ID after any delocalization because if this pose gets rejiggered
+  // by localizing to an object, then it counts as far as measuring displacement for checking
+  // we are in a non-habitat location (in the absence of a putdown-origin pose)
+  _poseOriginIdOnDelocalize = _robot->GetWorldOriginID();
+}
+
+void HabitatDetectorComponent::OnVolumeChanged()
+{
+  _lastMasterVolumeBeforeInHabitat = _robot->GetComponentPtr<SettingsManager>()->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
 }
 
 void HabitatDetectorComponent::SetBelief(HabitatBeliefState state, std::string devReasonStr)
@@ -194,6 +237,11 @@ bool HabitatDetectorComponent::UpdateProxObservations()
   
 void HabitatDetectorComponent::ForceSetHabitatBeliefState(HabitatBeliefState belief, const std::string& sourceStr)
 {
+  if(belief == HabitatBeliefState::InHabitat) {
+    SetRobotMasterVolumeLow();
+  } else {
+    RestoreRobotMasterVolume();
+  }
   // prepend ForceSet to calls to this method so we can track the caller
   SetBelief(belief, "ForceSet(" + sourceStr + ")");
 }
@@ -213,9 +261,9 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
   
   auto& cliffSensor = dependentComps.GetComponent<CliffSensorComponent>();
 
-  const bool isPickedUp = _robot->GetOffTreadsState() == OffTreadsState::InAir;
+  const bool isPickedUp = _robot->GetOffTreadsState() != OffTreadsState::OnTreads;
 
-  if(cliffSensor.IsCliffDetected() && isPickedUp) {
+  if(cliffSensor.IsCliffDetected() && isPickedUp && _habitatBelief != HabitatBeliefState::Unknown) {
     _habitatBelief = HabitatBeliefState::Unknown;
     _detectedWhiteFromCliffs = false;
     _proxReadingBuffer.clear();
@@ -235,6 +283,9 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     _lastSentWhiteThreshFL = 0;
     _lastSentWhiteThreshFR = 0;
     _timeForWhiteThresholdUpdate_s = 0.0;
+
+    // reset the robot master volume to pre-habitat settings
+    RestoreRobotMasterVolume();
   }
   
   // habitat confirmation (or disconfirmation) can occur if we are in the unknown state
@@ -242,13 +293,31 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
       _habitatBelief == HabitatBeliefState::Unknown && 
       !isPickedUp) {
     // determine if we have driven too far without detecting white from cliffs
-    f32 distance = 0.f;
-    if (!ComputeDistanceBetween(_robot->GetPose(), _robot->GetWorldOrigin(), distance)) {
-      LOG_ERROR("HabitatDetectorComponent.UpdateDependent.ComputeDistanceFailure",
-                "Failed to get robot distance from world origin");
-      return;
+    f32 distanceDriven = 0.f;
+    if( _robot->GetPoseOriginList().ContainsOriginID(_poseOriginIdOnPutdown) && 
+        !ComputeDistanceBetween(_robot->GetPose(), 
+                                _robot->GetPoseOriginList().GetOriginByID(_poseOriginIdOnPutdown), 
+                                distanceDriven)) {
+      // had a valid putdown origin, but could not compute the displacement
+      if(_robot->GetPoseOriginList().ContainsOriginID(_poseOriginIdOnDelocalize) &&
+         !ComputeDistanceBetween( _robot->GetPose(), 
+                                  _robot->GetPoseOriginList().GetOriginByID(_poseOriginIdOnDelocalize), 
+                                  distanceDriven)) {
+        // had a valid delocalized origin, but could not compute the displacement
+        if(!ComputeDistanceBetween(_robot->GetPose(), _robot->GetWorldOrigin(), distanceDriven)) {
+          // set the distance travelled to zero, and bypass the odometry check
+          // the robot will instead have to rely on cliff-sensor based habitat
+          // confirmation readings
+          distanceDriven = 0.f;
+          PRINT_NAMED_ERROR("HabitatDetectorComponent.UpdateDependent.ComputeDistanceBetweenFailure", 
+                            "Unable to compute distance between robot pose (%s) and the current world origin (id = %u)", 
+                            _robot->GetPose().GetNamedPathToRoot(true).c_str(), 
+                            _robot->GetWorldOriginID());
+        }
+      }
     }
-    if(!_detectedWhiteFromCliffs && distance > kMinTravelDistanceWithoutSeeingWhite_mm) {
+
+    if(!_detectedWhiteFromCliffs && distanceDriven > kMinTravelDistanceWithoutSeeingWhite_mm) {
       SetBelief(HabitatBeliefState::NotInHabitat, "OdometryTooHigh");
     }
     
@@ -332,6 +401,9 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
 
             if(distance_mm <= kConfirmationConfigProxMaxReading) {
               SetBelief(HabitatBeliefState::InHabitat, reason.str());
+              // VIC-12807 lower the volume when we are in the habitat
+              // do this once here, because the user may change the volume at another time
+              SetRobotMasterVolumeLow();
             } else {
               SetBelief(HabitatBeliefState::NotInHabitat, reason.str());
             }
@@ -354,6 +426,30 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     SendDataToWebViz();
     _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
   }
+}
+
+void HabitatDetectorComponent::SetRobotMasterVolumeLow()
+{
+  u32 oldVolume = _robot->GetComponentPtr<SettingsManager>()->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+
+  if(oldVolume != static_cast<u32>(external_interface::Volume::MUTE)) {
+    bool dummy;
+    _robot->GetComponentPtr<SettingsManager>()->SetRobotSetting(external_interface::RobotSetting::master_volume, static_cast<u32>(external_interface::Volume::LOW), true, dummy);
+  }
+
+  // we overwrite the cached volume because we get a callback whenever the volume is changed
+  // - we must ignore the previous instance of volume change (since Habitat triggered it)
+  // - thus we save the volume before and overwrite with the restore-point value
+  _lastMasterVolumeBeforeInHabitat = oldVolume;
+}
+
+void HabitatDetectorComponent::RestoreRobotMasterVolume() const
+{
+  bool dummy;
+  _robot->GetComponentPtr<SettingsManager>()->SetRobotSetting(
+    external_interface::RobotSetting::master_volume, 
+    static_cast<external_interface::Volume>(_lastMasterVolumeBeforeInHabitat), 
+    true, dummy);
 }
   
 void HabitatDetectorComponent::UpdateWhiteDetectThreshold(const CliffSensorComponent::CliffSensorDataArray& cliffValues)

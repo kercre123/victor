@@ -88,16 +88,17 @@ ProxSensorComponent::ProxSensorComponent()
 
 void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
-  if (kProxSensorEnabled && _enabled)
+  if (kProxSensorEnabled)
   {
     _lastMsgTimestamp = msg.timestamp;
+    _lastMsgPoseFrameID = msg.pose_frame_id;
     _latestDataRaw = msg.proxData;
 
     UpdateReadingValidity();
 
     // Reading is meaningless in calm mode so just skip map update
     const bool isCalmPowerMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
-    if (!isCalmPowerMode) {
+    if (_enabled && !isCalmPowerMode) {
       UpdateNavMap();
     }
   }
@@ -257,9 +258,22 @@ void ProxSensorComponent::UpdateNavMap()
       const bool kUseInterp = true;
       const auto& res = _robot->GetStateHistory()->ComputeStateAt(_latestDataRaw.timestamp_ms, histTimestamp, histState, kUseInterp);
       if (res != RESULT_OK) {
-        LOG_ERROR("ProxSensorComponent.UpdateNavMap.NoHistoricalPose",
-                  "Could not retrieve historical pose for timestamp %u (msg time %u)",
-                  _latestDataRaw.timestamp_ms, _lastMsgTimestamp);
+        // If robot is localized and there are at least 3 RobotState messages in history
+        // which span 60ms (i.e. the slowest rate expected of the prox sensor) then
+        // report warning since a historical state should've been found.
+        const u32 numRawStatesInSameFrame = _robot->GetStateHistory()->GetNumRawStatesWithFrameID(_lastMsgPoseFrameID);
+        if (numRawStatesInSameFrame >= 3 && _robot->IsLocalized()) {
+          LOG_WARNING("ProxSensorComponent.UpdateNavMap.NoHistoricalPose",
+                      "Could not retrieve historical pose for timestamp %u (msg time %u)",
+                      _latestDataRaw.timestamp_ms, _lastMsgTimestamp);
+        }
+        return;
+      }
+      if (histState.GetFrameId() != _robot->GetPoseFrameID()) {
+        // Don't update nav map since this could've been from before
+        // we cleared the map due to delocalization. 
+        // It could also be from a localization but it's not a big deal
+        // to drop a few readings when this happens.
         return;
       }
       robotPose = histState.GetPose();

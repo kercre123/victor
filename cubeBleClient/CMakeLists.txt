@@ -32,6 +32,7 @@ PRIVATE
   libev
 # platform
   ${PLATFORM_LIBS}
+  ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET cubeBleClient)

@@ -105,8 +105,8 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   }
   
   PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.ObjectPlaced",
-                   "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).",
-                   _robot->GetID(), object->GetID().GetValue(),
+                   "Robot successfully placed object %d at (%.2f, %.2f, %.2f).",
+                   object->GetID().GetValue(),
                    object->GetPose().GetTranslation().x(),
                    object->GetPose().GetTranslation().y(),
                    object->GetPose().GetTranslation().z());
@@ -212,8 +212,8 @@ void CarryingComponent::UnSetCarryingObjects(bool topOnly)
     ObservableObject* carriedObject = _robot->GetBlockWorld().GetLocatedObjectByID(objID);
     if(carriedObject == nullptr) {
       PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
-                        "Object %d robot %d thought it was carrying no longer exists in the world.",
-                        objID.GetValue(), _robot->GetID());
+                        "Object %d robot thought it was carrying no longer exists in the world.",
+                        objID.GetValue());
       continue;
     }
     

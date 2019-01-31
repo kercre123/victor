@@ -46,11 +46,11 @@ protected:
   virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
   virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) override;
 
-
 private:
 
   void MoveHeadUp();
   void RunLoopAction();
+  void HandleGameToEngineEvent(const GameToEngineEvent& event);
 
   struct InstanceConfig {
     InstanceConfig();

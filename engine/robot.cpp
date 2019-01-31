@@ -427,7 +427,7 @@ Robot::~Robot()
   // four components that it needs to talk to
   _components->RemoveComponent(RobotComponentID::JdocsManager);
 
-  LOG_INFO("robot.destructor", "%d", GetID());
+  LOG_INFO("Robot.Destructor", "");
 }
 
 
@@ -579,8 +579,8 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       // odometry alone)
       if (!IsLocalized() && !GetBlockWorld().AnyRemainingLocalizableObjects()) {
         LOG_INFO("Robot.UpdateOfftreadsState.NoMoreRemainingLocalizableObjects",
-                 "Marking previously-unlocalized robot %d as localized to odometry because "
-                 "there are no more objects to localize to in the world.", GetID());
+                 "Marking previously-unlocalized robot as localized to odometry because "
+                 "there are no more objects to localize to in the world.");
         SetLocalizedTo(nullptr); // marks us as localized to odometry only
       }
     }
@@ -682,8 +682,9 @@ void Robot::Delocalize(bool isCarryingObject)
                  worldOriginID, worldOrigin.GetID());
 
   // Log delocalization, new origin name, and num origins to DAS
-  LOG_INFO("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
-                   GetID(), worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
+  LOG_INFO("Robot.Delocalize",
+           "Delocalizing robot. New origin: %s. NumOrigins=%zu",
+           worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
 
   GetComponent<FullRobotPose>().GetPose().SetRotation(0, Z_AXIS_3D());
   GetComponent<FullRobotPose>().GetPose().SetTranslation({0.f, 0.f, 0.f});
@@ -971,15 +972,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update robot pitch angle
   GetComponent<FullRobotPose>().SetPitchAngle(Radians(msg.pose.pitch_angle));
 
-  // Update sensor components:
-  GetCliffSensorComponent().NotifyOfRobotState(msg);
-  GetProxSensorComponent().NotifyOfRobotState(msg);
-  GetTouchSensorComponent().NotifyOfRobotState(msg);
-  GetPowerStateManager().NotifyOfRobotState(msg);
-
-  // update current path segment in the path component
-  GetPathComponent().UpdateCurrentPathSegment(msg.currPathSegment);
-
   // Update IMU data
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
@@ -1038,17 +1030,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _isBeingHeld = IS_STATUS_FLAG_SET(IS_BEING_HELD);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
 
+  const bool isHeadMoving = !IS_STATUS_FLAG_SET(HEAD_IN_POS);
+  const bool areWheelsMoving = IS_STATUS_FLAG_SET(ARE_WHEELS_MOVING);
+  _hasMovedSinceLocalization |= (isHeadMoving || areWheelsMoving || _offTreadsState != OffTreadsState::OnTreads);
+  
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
-  GetBatteryComponent().NotifyOfRobotState(msg);
-
-  GetMoveComponent().NotifyOfRobotState(msg);
-
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
-
-  _hasMovedSinceLocalization |= (GetMoveComponent().IsCameraMoving() || _offTreadsState != OffTreadsState::OnTreads);
 
   if (isDelocalizing)
   {
@@ -1114,8 +1104,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     // Add to history
     const HistRobotState histState(newPose,
                                    msg,
-                                   GetProxSensorComponent().GetLatestProxData(),
-                                   GetCliffSensorComponent().GetCliffDetectedFlags() );
+                                   GetProxSensorComponent().GetLatestProxData() );
     lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
 
     if (lastResult != RESULT_OK) {
@@ -1161,6 +1150,22 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     }
 
   }
+
+
+  // Update sensor components:
+  GetBatteryComponent().NotifyOfRobotState(msg);
+  GetMoveComponent().NotifyOfRobotState(msg);
+  GetCliffSensorComponent().NotifyOfRobotState(msg);
+  GetProxSensorComponent().NotifyOfRobotState(msg);
+  GetTouchSensorComponent().NotifyOfRobotState(msg);
+  GetPowerStateManager().NotifyOfRobotState(msg);
+
+  // Update processed proxSensorData in history after ProxSensorComponent was updated
+  GetStateHistory()->UpdateProxSensorData(msg.timestamp, GetProxSensorComponent().GetLatestProxData());
+
+  // update current path segment in the path component
+  GetPathComponent().UpdateCurrentPathSegment(msg.currPathSegment);
+
 
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -1327,7 +1332,7 @@ Result Robot::Update()
 
   // Full Webots CozmoBot model
   if (IsPhysical()) {
-    GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetComponent<FullRobotPose>().GetHeadAngle(), GetComponent<FullRobotPose>().GetLiftAngle());
+    GetContext()->GetVizManager()->DrawRobot(robotPoseWrtOrigin, GetComponent<FullRobotPose>().GetHeadAngle(), GetComponent<FullRobotPose>().GetLiftAngle());
   }
 
   // Robot bounding box
@@ -1618,14 +1623,6 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     return RESULT_FAIL;
   }
 
-  /* Useful for Debug:
-     LOG_INFO("Robot.LocalizeToMat.MatSeenChain",
-     "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
-
-     LOG_INFO("Robot.LocalizeToMat.ExistingMatChain",
-     "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
-  */
-
   HistStateKey histStateKey;
   HistRobotState* histStatePtr = nullptr;
   Pose3d robotPoseWrtObject;
@@ -1704,8 +1701,8 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   if (!existingObject->GetPose().HasSameRootAs(origOrigin))
   {
     LOG_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
-                     "Robot %d's current origin is %s, about to localize to origin %s.",
-                     GetID(), origOrigin.GetName().c_str(),
+                     "Robot's current origin is %s, about to localize to origin %s.",
+                     origOrigin.GetName().c_str(),
                      existingObject->GetPose().FindRoot().GetName().c_str());
 
     const PoseOriginID_t origOriginID = GetPoseOriginList().GetCurrentOriginID();
@@ -1798,190 +1795,6 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
 
   return RESULT_OK;
 } // LocalizeToObject()
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
-{
-  Result lastResult;
-
-  if (matSeen == nullptr) {
-    LOG_ERROR("Robot.LocalizeToMat.MatSeenNullPointer", "");
-    return RESULT_FAIL;
-  } else if (existingMatPiece == nullptr) {
-    LOG_ERROR("Robot.LocalizeToMat.ExistingMatPieceNullPointer", "");
-    return RESULT_FAIL;
-  }
-
-  /* Useful for Debug:
-     LOG_INFO("Robot.LocalizeToMat.MatSeenChain",
-     "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
-
-     LOG_INFO("Robot.LocalizeToMat.ExistingMatChain",
-     "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
-  */
-
-  // Get computed HistRobotState at the time the mat was observed.
-  HistStateKey histStateKey;
-  HistRobotState* histStatePtr = nullptr;
-  if ((lastResult = GetStateHistory()->GetComputedStateAt(matSeen->GetLastObservedTime(), &histStatePtr, &histStateKey)) != RESULT_OK) {
-    LOG_ERROR("Robot.LocalizeToMat.CouldNotFindHistoricalPose", "Time %d", matSeen->GetLastObservedTime());
-    return lastResult;
-  }
-
-  // The computed historical pose is always stored w.r.t. the robot's world
-  // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
-  // will work correctly
-  Pose3d robotPoseAtObsTime = histStatePtr->GetPose();
-  robotPoseAtObsTime.SetParent(GetWorldOrigin());
-
-  /*
-  // Get computed Robot pose at the time the mat was observed (note that this
-  // also makes the pose have the robot's current world origin as its parent
-  Pose3d robotPoseAtObsTime;
-  if(robot->GetComputedStateAt(matSeen->GetLastObservedTime(), robotPoseAtObsTime) != RESULT_OK) {
-  PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.CouldNotComputeHistoricalPose",
-                    "Time %d\n",
-                    matSeen->GetLastObservedTime());
-  return false;
-  }
-  */
-
-  // Get the pose of the robot with respect to the observed mat piece
-  Pose3d robotPoseWrtMat;
-  if (robotPoseAtObsTime.GetWithRespectTo(matSeen->GetPose(), robotPoseWrtMat) == false) {
-    LOG_ERROR("Robot.LocalizeToMat.MatPoseOriginMisMatch", "Could not get HistRobotState w.r.t. matPose.");
-    return RESULT_FAIL;
-  }
-
-  // Make the computed robot pose use the existing mat piece as its parent
-  robotPoseWrtMat.SetParent(existingMatPiece->GetPose());
-  //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
-
-
-  // If there is any significant rotation, make sure that it is roughly
-  // around the Z axis
-  Radians rotAngle;
-  Vec3f rotAxis;
-  robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-
-  if (std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
-    LOG_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
-                "Refusing to localize to %s because "
-                "Robot %d's Z axis would not be well aligned with the world Z axis. "
-                "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)",
-                ObjectTypeToString(existingMatPiece->GetType()), GetID(),
-                rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
-    return RESULT_FAIL;
-  }
-
-  // Snap to purely horizontal rotation and surface of the mat
-  if (existingMatPiece->IsPoseOn(robotPoseWrtMat, 0, 10.f)) {
-    Vec3f robotPoseWrtMat_trans = robotPoseWrtMat.GetTranslation();
-    robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
-    robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
-  }
-  robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
-
-
-  if (!_localizedToFixedObject && !existingMatPiece->IsMoveable()) {
-    // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
-    // the origins so that we use it as the world origin
-    LOG_INFO("Robot.LocalizeToMat.LocalizingToFirstFixedMat",
-             "Localizing robot %d to fixed %s mat for the first time.",
-             GetID(), ObjectTypeToString(existingMatPiece->GetType()));
-
-    if ((lastResult = UpdateWorldOrigin(robotPoseWrtMat)) != RESULT_OK) {
-      LOG_ERROR("Robot.LocalizeToMat.SetPoseOriginFailure",
-                "Failed to update robot %d's pose origin when (re-)localizing it.", GetID());
-      return lastResult;
-    }
-
-    _localizedToFixedObject = true;
-  }
-  else if (IsLocalized() == false) {
-    // If the robot is not yet localized, it is about to be, so we need to
-    // update pose origins so that anything it has seen so far becomes rooted
-    // to this mat's origin (whether mat is fixed or not)
-    LOG_INFO("Robot.LocalizeToMat.LocalizingRobotFirstTime",
-             "Localizing robot %d for the first time (to %s mat).",
-             GetID(), ObjectTypeToString(existingMatPiece->GetType()));
-
-    if ((lastResult = UpdateWorldOrigin(robotPoseWrtMat)) != RESULT_OK) {
-      LOG_ERROR("Robot.LocalizeToMat.SetPoseOriginFailure",
-                "Failed to update robot %d's pose origin when (re-)localizing it.", GetID());
-      return lastResult;
-    }
-
-    if (!existingMatPiece->IsMoveable()) {
-      // If this also happens to be a fixed mat, then we have now localized
-      // to a fixed mat
-      _localizedToFixedObject = true;
-    }
-  }
-
-  // Add the new vision-based pose to the robot's history. Note that we use
-  // the pose w.r.t. the origin for storing poses in history.
-  // HistRobotState p(robot->GetPoseFrameID(),
-  //                  robotPoseWrtMat.GetWithRespectToRoot(),
-  //                  posePtr->GetComponent<FullRobotPose>().GetHeadAngle(),
-  //                  posePtr->GetComponent<FullRobotPose>().GetLiftAngle());
-  Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToRoot();
-
-  if ((lastResult = AddVisionOnlyStateToHistory(existingMatPiece->GetLastObservedTime(),
-                                                robotPoseWrtOrigin,
-                                                histStatePtr->GetHeadAngle_rad(),
-                                                histStatePtr->GetLiftAngle_rad())) != RESULT_OK)
-  {
-    LOG_ERROR("Robot.LocalizeToMat.FailedAddingVisionOnlyPoseToHistory", "");
-    return lastResult;
-  }
-
-
-  // Update the computed historical pose as well so that subsequent block
-  // pose updates use obsMarkers whose camera's parent pose is correct.
-  // Note again that we store the pose w.r.t. the origin in history.
-  // TODO: Should SetPose() do the flattening w.r.t. origin?
-  histStatePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, histStatePtr->GetHeadAngle_rad(), histStatePtr->GetLiftAngle_rad());
-
-  // Compute the new "current" pose from history which uses the
-  // past vision-based "ground truth" pose we just computed.
-  if (UpdateCurrPoseFromHistory() == false) {
-    LOG_ERROR("Robot.LocalizeToMat.FailedUpdateCurrPoseFromHistory", "");
-    return RESULT_FAIL;
-  }
-
-  // Mark the robot as now being localized to this mat
-  // NOTE: this should be _after_ calling AddVisionOnlyStateToHistory, since
-  //    that function checks whether the robot is already localized
-  lastResult = SetLocalizedTo(existingMatPiece);
-  if (RESULT_OK != lastResult) {
-    LOG_ERROR("Robot.LocalizeToMat.SetLocalizedToFail", "");
-    return lastResult;
-  }
-
-  // Overly-verbose. Use for debugging localization issues
-  /*
-    PRINT_INFO("Using %s mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-    existingMatPiece->GetType().GetName().c_str(),
-    existingMatPiece->GetID().GetValue(), GetID(),
-    GetPose().GetTranslation().x(),
-    GetPose().GetTranslation().y(),
-    GetPose().GetTranslation().z(),
-    GetPose().GetRotationAngle<'Z'>().getDegrees(),
-    GetPose().GetRotationAxis().x(),
-    GetPose().GetRotationAxis().y(),
-    GetPose().GetRotationAxis().z());
-  */
-
-  // Send the ground truth pose that was computed instead of the new current
-  // pose and let the robot deal with updating its current pose based on the
-  // history that it keeps.
-  SendAbsLocalizationUpdate();
-
-  return RESULT_OK;
-
-} // LocalizeToMat()
 
 
 Result Robot::SetPoseOnCharger()
@@ -2284,62 +2097,6 @@ Result Robot::RequestIMU(const u32 length_ms) const
 }
 
 // ============ Pose history ===============
-
-Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
-{
-  // Reverse the connection between origin and robot, and connect the new
-  // reversed connection
-  //ASSERT_NAMED(p.GetPose().GetParent() == _poseOrigin, "Robot.UpdateWorldOrigin.InvalidPose");
-  //Pose3d originWrtRobot = GetComponent<FullRobotPose>().GetPose().GetInverse();
-  //originWrtRobot.SetParent(&newPoseOrigin);
-
-  // TODO: Update to use PoseOriginList::Rejigger
-  // This is only called by LocalizeToMat, which is not currently used.
-  DEV_ASSERT(false, "Robot.UpdateWorldOrigin.NeedsUpdateToUseRejigger");
-
-# if 0
-  // TODO: get rid of nasty const_cast somehow
-  Pose3d* newOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
-  newOrigin->SetParent(nullptr);
-
-  // TODO: We should only be doing this (modifying what _worldOrigin points to) when it is one of the
-  // placeHolder poseOrigins, not if it is a mat!
-  std::string origName(_worldOrigin->GetName());
-  *_worldOrigin = GetComponent<FullRobotPose>().GetPose().GetInverse();
-  _worldOrigin->SetParent(&newPoseWrtNewOrigin);
-
-
-  // Connect the old origin's pose to the same root the robot now has.
-  // It is no longer the robot's origin, but for any of its children,
-  // it is now in the right coordinates.
-  if (_worldOrigin->GetWithRespectTo(*newOrigin, *_worldOrigin) == false) {
-    LOG_ERROR("Robot.UpdateWorldOrigin.NewLocalizationOriginProblem",
-              "Could not get pose origin w.r.t. new origin pose.");
-    return RESULT_FAIL;
-  }
-
-  //_worldOrigin->PreComposeWith(*newOrigin);
-
-  // Preserve the old world origin's name, despite updates above
-  _worldOrigin->SetName(origName);
-
-  // Now make the robot's world origin point to the new origin
-  _worldOrigin = newOrigin;
-
-  newOrigin->SetRotation(0, Z_AXIS_3D());
-  newOrigin->SetTranslation({0,0,0});
-
-  // Now make the robot's origin point to the new origin
-  // TODO: avoid the icky const_cast here...
-  _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
-
-  _robotWorldOriginChangedSignal.emit(GetID());
-# endif
-
-  return RESULT_OK;
-
-} // UpdateWorldOrigin()
-
 
 Result Robot::AddVisionOnlyStateToHistory(const RobotTimeStamp_t t,
                                           const Pose3d& pose,

@@ -16,11 +16,14 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
+#include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/container/circularBuffer.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -29,6 +32,10 @@ namespace Vector {
 namespace {
   constexpr unsigned int kCapacity = 5; // see comment in NotifyOfChange
   constexpr unsigned int kMaxTicks = 2; // ditto
+  
+  const BehaviorID kBehaviorIDForReset = BEHAVIOR_ID(ResetSafely);
+
+  #define LOG_CHANNEL "Behaviors"
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -54,18 +61,24 @@ void StackCycleMonitor::NotifyOfChange( BehaviorExternalInterface& bei,
     if( CheckForCycle() ) {
       std::string behaviorA = (_recentBehaviors[0] != nullptr) ? _recentBehaviors[0]->GetDebugLabel() : "null";
       std::string behaviorB = (_recentBehaviors[1] != nullptr) ? _recentBehaviors[1]->GetDebugLabel() : "null";
-      // intentional spam. deal with it
+      // intentional spam. deal with it. this will also become a das event in dev
       if( behaviorA == behaviorB ) {
-        PRINT_NAMED_WARNING( "StackCycleMonitor.NotifyOfChange.CycleDetected",
-                             "A cycle was detected. %s is repeatedly delegating to something that ends immediately",
-                             behaviorA.c_str() );
+        LOG_ERROR( "StackCycleMonitor.NotifyOfChange.CycleDetected",
+                   "A cycle was detected. %s is repeatedly delegating to something that ends immediately",
+                   behaviorA.c_str() );
       } else {
-        PRINT_NAMED_WARNING( "StackCycleMonitor.NotifyOfChange.CycleDetected",
-                             "A cycle was detected between %s and %s",
-                             behaviorA.c_str(), behaviorB.c_str() );
+        LOG_ERROR( "StackCycleMonitor.NotifyOfChange.CycleDetected",
+                   "A cycle was detected between %s and %s",
+                   behaviorA.c_str(), behaviorB.c_str() );
       }
-      auto* oldBaseOfStack = stackComponent->GetBottomOfStack();
-      SwitchToSafeStack( bei, oldBaseOfStack );
+      // in prod, send a das event only once per robot boot
+      SendDASEvent( behaviorA, behaviorB );
+      
+      auto& bbl = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorsBootLoader>();
+      IBehavior* bootBehavior = bbl.GetBootBehavior();
+      if( bootBehavior != nullptr ) {
+        SwitchToSafeStack( bei, bootBehavior );
+      }
       // start checking over again
       _recentBehaviors.clear();
     }
@@ -108,34 +121,41 @@ bool StackCycleMonitor::CheckForCycle() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StackCycleMonitor::SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* oldBaseOfStack ) const
+void StackCycleMonitor::SwitchToSafeStack( BehaviorExternalInterface& bei, IBehavior* newBaseBehavior ) const
 {
-  // ideally this would inject the current base of the stack into the new stack, similar to
-  // DevExecuteBehaviorRerun. For now, just check if onboarding was at the base, and run one of two reset queues.
-  const auto& BC = bei.GetBehaviorContainer();
-  BehaviorID behaviorID = BEHAVIOR_ID(ResetSafely); // normal reset behavior
-  if( oldBaseOfStack != nullptr ) {
-    auto onboardingBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(Onboarding1p2) );
-    auto onboardingBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetOnboarding1p2Safely) );
-    if( (onboardingBehavior1.get() == oldBaseOfStack) || (onboardingBehavior2.get() == oldBaseOfStack) ) {
-      behaviorID = BEHAVIOR_ID(ResetOnboarding1p2Safely); // onboarding reset behavior
-    } else {
-      auto normalBehavior1 = BC.FindBehaviorByID( BEHAVIOR_ID(ModeSelector) );
-      auto normalBehavior2 = BC.FindBehaviorByID( BEHAVIOR_ID(ResetSafely) );
-      if( !((normalBehavior1.get() == oldBaseOfStack) || (normalBehavior2.get() == oldBaseOfStack)) ) {
-        PRINT_NAMED_WARNING( "StackCycleMonitor.SwitchToSafeStack.UnknownBase",
-                             "Switching to a stack with base ResetSafely, which contains ModeSelector, but the previous base was %s",
-                             oldBaseOfStack->GetDebugLabel().c_str() );
-      }
+  auto& BC = bei.GetBehaviorContainer();
+  
+  std::shared_ptr<BehaviorResetState> resetBehavior;
+  if( BC.FindBehaviorByIDAndDowncast( kBehaviorIDForReset, BEHAVIOR_CLASS(ResetState), resetBehavior ) ) {
+    
+    auto* castPtr = dynamic_cast<ICozmoBehavior*>( newBaseBehavior );
+    if( ANKI_VERIFY( castPtr != nullptr, "StackCycleMonitor.SwitchToSafeStack.Invalid", "Could not cast") ) {
+      const BehaviorID id = castPtr->GetID();
+      resetBehavior->SetFollowupBehaviorID( id );
+    
+  
+      auto& bsm = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
+      const bool waitUntilNextTick = true;
+      bsm.ResetBehaviorStack( resetBehavior.get(), waitUntilNextTick );
+      // note that even if resetBehavior is already the base of the stack, it will be stopped and restarted
     }
   }
+}
   
-  ICozmoBehaviorPtr behaviorToRun = BC.FindBehaviorByID( behaviorID );
-  if( behaviorToRun != nullptr ) {
-    auto& bsm = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
-    const bool waitUntilNextTick = true;
-    bsm.ResetBehaviorStack( behaviorToRun.get(), waitUntilNextTick );
-    // note that even if behaviorToRun is already the base of the stack, it will be stopped and restarted
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StackCycleMonitor::SendDASEvent( const std::string& behaviorA, const std::string& behaviorB )
+{
+  std::string key = behaviorA + behaviorB;
+  auto it = std::find( _dasMsgsSent.begin(), _dasMsgsSent.end(), key );
+  if( it == _dasMsgsSent.end() ) {
+    _dasMsgsSent.push_back( std::move(key) );
+    
+    DASMSG( behavior_cycle_detected,
+            "behavior.cycle_detected",
+            "A cycle was detected. Only one msg is sent per behavior pair per boot" );
+    DASMSG_SET( s1, behaviorA, "One behavior" );
+    DASMSG_SET( s2, behaviorB, "The other behavior" );
+    DASMSG_SEND();
   }
 }
 

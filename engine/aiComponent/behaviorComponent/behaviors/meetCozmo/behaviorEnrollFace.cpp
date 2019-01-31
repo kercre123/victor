@@ -359,12 +359,36 @@ void BehaviorEnrollFace::CheckForIntentData()
 bool BehaviorEnrollFace::WantsToBeActivatedBehavior() const
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
-  const bool pendingIntent = uic.IsUserIntentPending(USER_INTENT(meet_victor) );
-  const bool isWaitingResume = (_dVars->persistent.state != State::NotStarted);
-  const bool requestedRescan = _dVars->persistent.requestedRescan;
-
-  const bool wantsToBeActivated = pendingIntent || isWaitingResume || requestedRescan;
-  return wantsToBeActivated;
+  UserIntent intent;
+  const bool pendingIntent = uic.IsUserIntentPending(USER_INTENT(meet_victor), intent);
+  if(pendingIntent)
+  {
+    const bool intentHasName = !intent.Get_meet_victor().username.empty();
+    if(intentHasName)
+    {
+      // Only activate for pending intents that actually have a name
+      return true;
+    }
+    else
+    {
+      // Don't activate. Let behavior system's "normal" reaction to an unknown/unhandled intent kick in.
+      PRINT_NAMED_WARNING("BehaviorEnrollFace.WantsToBeActivatedBehavior.PendingIntentWithNoName", "");
+      return false;
+    }
+  }
+  
+  const bool isWaitingToResume = (_dVars->persistent.state != State::NotStarted);
+  if(isWaitingToResume)
+  {
+    return true;
+  }
+  
+  if(_dVars->persistent.requestedRescan)
+  {
+    return true;
+  }
+  
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -591,7 +615,6 @@ void BehaviorEnrollFace::BehaviorUpdate()
     const bool triggerWordPending = uic.IsTriggerWordPending();
     if( lowBattery || triggerWordPending ) {
       DisableEnrollment();
-      SET_STATE( NotStarted );
       return;
     }
   }
@@ -600,13 +623,11 @@ void BehaviorEnrollFace::BehaviorUpdate()
     if( _dVars->persistent.state != State::NotStarted ) {
       // interrupted
       if( GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
-        SET_STATE( NotStarted );
         DisableEnrollment();
       } else if( _dVars->persistent.lastDeactivationTime_ms > 0 ) {
         EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         if( currTime_ms - _dVars->persistent.lastDeactivationTime_ms > kEnrollFace_MaxInterruptionBeforeReset_ms ) {
           DisableEnrollment();
-          SET_STATE( NotStarted );
         }
       }
     }
@@ -892,8 +913,8 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     // in unit tests, this behavior will always want to re-activate when Cancel via the delegation component,
     // unless we disable enrollment. Use a special name (one that would almost certainly never be spoken)
     if( _dVars->faceName == "Special name for unit tests to end enrollment" ) {
-      SET_STATE(Success);
       DisableEnrollment();
+      SET_STATE(Success); // Must be done *after* DisableEnrollment, which normally puts us in NotStarted state!
     }
   }
 
@@ -1007,14 +1028,12 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
   // and don't disable face enrollment.
   if(info.result != FaceEnrollmentResult::Incomplete)
   {
-    DisableEnrollment();
-
     // If enrollment did not succeed (but is complete) and we're enrolling a *new* face:
     // It is possible that the vision system (on its own thread!) actually finished enrolling internally. Therefore we
     // want to erase any *new* face (not a face that was being re-enrolled) since it will not be communicated out in the
     // enrollment result as successfully enrolled, and thus would mean the engine's known faces would be out of sync
     // with the external world. This is largely precautionary.
-    const bool isNewEnrollment = Vision::UnknownFaceID != _dVars->faceID && Vision::UnknownFaceID == _dVars->saveID;
+    const bool isNewEnrollment = (Vision::UnknownFaceID != _dVars->faceID) && (Vision::UnknownFaceID == _dVars->saveID);
     if(info.result != FaceEnrollmentResult::Success && isNewEnrollment)
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.ErasingNewlyEnrolledFace",
@@ -1045,7 +1064,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     }
 
     // Done (whether success or failure), so reset state for next run
-    SET_STATE(NotStarted);
+    DisableEnrollment();
   } else {
     numInterruptions = ++_dVars->persistent.numInterruptions;
   }
@@ -1086,12 +1105,13 @@ bool BehaviorEnrollFace::IsEnrollmentRequested() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::DisableEnrollment()
 {
-  _dVars->persistent.settings->name.clear();
-  _dVars->persistent.didEverLeaveCharger = false;
-  _dVars->persistent.lastDeactivationTime_ms = 0;
-  _dVars->persistent.numInterruptions = 0;
-  _dVars->persistent.wrongFaceStats.clear();
-  _dVars->persistent.isManualReEnroll = false;
+  // Reset all persistent variables
+  _dVars->persistent = DynamicVariables::Persistent();
+  
+  // Technically this was already done by resetting the persistent variables, but
+  // this has the additional effect of a log message and setting DebugStateName,
+  // which may be helpful for debugging.
+  SET_STATE(NotStarted);
   
   // Leave "session-only" face enrollment enabled when we finish
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
@@ -1255,7 +1275,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
               {
                 if(_dVars->lastFaceSeenTime_ms == 0)
                 {
-                  // Still no face seen: either time out or try again
+                  // Still no enrollable face seen: either time out or try again
                   if(HasTimedOut())
                   {
                     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.TimedOut", "");
@@ -1279,7 +1299,8 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   auto* face = GetBEI().GetFaceWorld().GetFace(_dVars->faceID);
                   if(ANKI_VERIFY(nullptr != face,
                                  "BehaviorEnrollFace.LookingForFace.NullFace",
-                                 "Not re-enrolling, expecting face to be present in FaceWorld"))
+                                 "Not re-enrolling, expecting face %d to be present in FaceWorld",
+                                 _dVars->faceID))
                   {
                     if(!face->HasName())
                     {
@@ -1931,7 +1952,7 @@ void BehaviorEnrollFace::UpdateFaceTime(const Face* newFace)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
 {
-  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceToEnroll.NullNewFace");
+  DEV_ASSERT(nullptr != newFace, "BehaviorEnrollFace.UpdateFaceIDandTime.NullNewFace");
   _dVars->faceID = newFace->GetID();
   UpdateFaceTime(newFace);
   _dVars->observedUnusableName.clear();

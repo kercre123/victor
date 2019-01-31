@@ -238,8 +238,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   // Note: transposing so we can work along rows, which is more efficient.
   //       (this also means using bbox.X for transposed rows and bbox.Y for transposed cols)
   _profiler.Tic("FindingGroundEdgePoints");
-  Matrix_3x3f invH;
-  H.GetInverse(invH);
+  Matrix_3x3f invH = H.GetInverse();
   Array2d<typename ImageTraitType::FPixelType> edgeTrans(edgeImgX.get_CvMat_().t());
   OverheadEdgePoint edgePoint;
   for (s32 i = bbox.GetX(); i < bbox.GetXmax(); ++i)

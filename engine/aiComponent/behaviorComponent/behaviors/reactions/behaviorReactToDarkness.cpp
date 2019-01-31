@@ -48,27 +48,20 @@ static const char* kSleepInPlaceKey       = "sleepInPlace";
 BehaviorReactToDarkness::BehaviorReactToDarkness( const Json::Value& config )
 : ICozmoBehavior( config )
 {
-  _iConfig.lookHeadAngleMin_deg = JsonTools::ParseFloat( config, kLookHeadAngleMinKey,
-                                                         "BehaviorReactToDarkness.Constructor" );
-  _iConfig.lookHeadAngleMax_deg = JsonTools::ParseFloat( config, kLookHeadAngleMaxKey,
-                                                         "BehaviorReactToDarkness.Constructor" );
-  _iConfig.lookWaitTime_s = JsonTools::ParseFloat( config, kLookWaitTimeKey,
-                                                   "BehaviorReactToDarkness.Constructor" );
-  _iConfig.lookTurnAngleMax_deg = JsonTools::ParseFloat( config, kLookTurnAngleMaxKey,
-                                                         "BehaviorReactToDarkness.Constructor" );
-  _iConfig.lookTurnAngleMin_deg = JsonTools::ParseFloat( config, kLookTurnAngleMinKey,
-                                                         "BehaviorReactToDarkness.Constructor" );
-  _iConfig.numOnChargerLooks = JsonTools::ParseUInt32( config, kNumOnChargerLooksKey,
-                                                       "BehaviorReactToDarkness.Constructor" );
-  _iConfig.numOffChargerLooks = JsonTools::ParseUInt32( config, kNumOffChargerLooksKey,
-                                                       "BehaviorReactToDarkness.Constructor" );
-  _iConfig.sleepInPlace = JsonTools::ParseBool( config, kSleepInPlaceKey,
-                                                "BehaviorReactToDarkness.Constructor" );
-  _iConfig.reactionEmotion = JsonTools::ParseString( config, kEmotionKey,
-                                                     "BehaviorReactToDarkness.Constructor" );
+  const char* debugStr = "BehaviorReactToDarkness.Constructor";
   
-  const u32 lookMinImages = JsonTools::ParseUInt32( config, kLookMinImages,
-                                                    "BehaviorReactToDarkness.Constructor" );
+  _iConfig.lookHeadAngleMin_deg = JsonTools::ParseFloat( config, kLookHeadAngleMinKey, debugStr);
+  _iConfig.lookHeadAngleMax_deg = JsonTools::ParseFloat( config, kLookHeadAngleMaxKey, debugStr );
+  _iConfig.lookWaitTime_s = JsonTools::ParseFloat( config, kLookWaitTimeKey, debugStr );
+  _iConfig.lookTurnAngleMax_deg = JsonTools::ParseFloat( config, kLookTurnAngleMaxKey, debugStr );
+  _iConfig.lookTurnAngleMin_deg = JsonTools::ParseFloat( config, kLookTurnAngleMinKey, debugStr );
+  _iConfig.numOnChargerLooks = JsonTools::ParseUInt32( config, kNumOnChargerLooksKey, debugStr );
+  _iConfig.numOffChargerLooks = JsonTools::ParseUInt32( config, kNumOffChargerLooksKey, debugStr );
+  _iConfig.sleepInPlace = JsonTools::ParseBool( config, kSleepInPlaceKey, debugStr );
+  _iConfig.reactionEmotion = JsonTools::ParseString( config, kEmotionKey, debugStr );
+  
+  const u32 lookMinImages = JsonTools::ParseUInt32( config, kLookMinImages, debugStr );
+  
   // NOTE These are hard-coded so they don't have to be in the config JSON
   // Any state is valid for positive pre-transition, so we don't specify any pre parameters
   _iConfig.positiveConfig = IBEICondition::GenerateBaseConditionConfig( BEIConditionType::IlluminationDetected );
@@ -125,7 +118,6 @@ void BehaviorReactToDarkness::InitBehavior()
   _iConfig.negativeCondition.reset( new ConditionIlluminationDetected( _iConfig.negativeConfig ) );
   _iConfig.negativeCondition->SetOwnerDebugLabel( GetDebugLabel() );
   _iConfig.negativeCondition->Init( GetBEI() );
-  _dVars.Reset();
 
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.goHomeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(FindAndGoToHome));
@@ -137,7 +129,7 @@ void BehaviorReactToDarkness::OnBehaviorActivated()
 {
   _iConfig.positiveCondition->Reset();
   _iConfig.negativeCondition->Reset();
-  _dVars.Reset();
+  _dVars = DynamicVariables();
 }
 
 void BehaviorReactToDarkness::OnBehaviorEnteredActivatableScope()
@@ -177,6 +169,7 @@ void BehaviorReactToDarkness::BehaviorUpdate()
       {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.BehaviorUpdate.Timeout", "");
         CancelSelf();
+        break;
       }
 
       // Illumination check succeeded, increment counter
@@ -191,6 +184,7 @@ void BehaviorReactToDarkness::BehaviorUpdate()
       {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.BehaviorUpdate.NegativeMet", "" );
         CancelSelf();
+        break;
       }
       // Not sure yet, keep waiting
       else
@@ -225,17 +219,11 @@ void BehaviorReactToDarkness::BehaviorUpdate()
   }
 }
 
-void BehaviorReactToDarkness::DynamicVariables::Reset()
-{
-  state = State::Waiting;
-  numChecksSucceeded = 0;
-}
-
 void BehaviorReactToDarkness::TransitionToTurning()
 {
   _dVars.state = State::Turning;
 
-  // Sample a new head angle angle
+  // Sample a new head angle
   Util::RandomGenerator& rng = GetRNG();
   const double headAngle_deg = rng.RandDblInRange( _iConfig.lookHeadAngleMin_deg, _iConfig.lookHeadAngleMax_deg );
   
@@ -324,7 +312,12 @@ void BehaviorReactToDarkness::TransitionToGoingHome()
     PRINT_CH_INFO("Behaviors", "BehaviorReactToDarkness.TransitionToGoingHome.FindAndGoHome",
                   "Attempting to go home, delegating to FindAndGoHome" );
     _dVars.state = State::GoingHome;
-    DelegateIfInControl( _iConfig.goHomeBehavior.get() );
+    const bool goHomeWantsToRun = _iConfig.goHomeBehavior->WantsToBeActivated();
+    if (ANKI_VERIFY(goHomeWantsToRun,
+                    "BehaviorReactToDarkness.TransitionToGoingHome.DoesNotWantToRun",
+                    "GoHomeBehavior does not want to run")) {
+      DelegateIfInControl( _iConfig.goHomeBehavior.get() );
+    }
   }
 }
 

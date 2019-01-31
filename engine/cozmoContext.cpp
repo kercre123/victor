@@ -2,10 +2,9 @@
 #include "engine/cozmoContext.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "engine/appToEngineHandler.h"
 #include "engine/cozmoAPI/comms/protoCladInterpreter.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/perfMetric.h"
+#include "engine/perfMetricEngine.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 //#include "engine/util/transferQueue/gameLogTransferTask.h"
@@ -45,13 +44,11 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   //, _transferQueueMgr(new Anki::Util::TransferQueueMgr())
   //, _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
   , _cozmoExperiments(new CozmoExperiments(this))
-  , _perfMetric(new PerfMetric(this))
+  , _perfMetric(new PerfMetricEngine(this))
   , _webService(new WebService::WebService())
-  , _appToEngineHandler( new AppToEngineHandler() )
   , _protoCladInterpreter( new ProtoCladInterpreter(this) )
 {
   //_gameLogTransferTask->Init(_transferQueueMgr.get());
-  _appToEngineHandler->Init( _webService.get(), _externalInterface );
 }
 
 

@@ -30,6 +30,8 @@ public:
   
   AudioLayerManager(const Util::RandomGenerator& rng);
   
+  void EnableProceduralAudio(bool enabled) { _enabled = enabled; };
+  
   // Add Audio Keyframes for Eye Blink
   Result AddEyeBlinkToAudioTrack(const std::string& layerName,
                                  const BlinkEventList& eventList,
@@ -51,6 +53,8 @@ public:
   void GenerateGlitchAudio(u32 numFramesToGen,
                            Animations::Track<RobotAudioKeyFrame>& outTrack) const;
 
+private:
+  bool _enabled = true;
 };
 
 }

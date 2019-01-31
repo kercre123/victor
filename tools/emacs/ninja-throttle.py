@@ -10,6 +10,8 @@ import sys
 import re
 import datetime
 
+sys.stdin.reconfigure(errors='replace')
+
 #TODO: arg
 
 matcher = re.compile(r'\[([0-9]*)/([0-9*]*)\] [a-z,A-Z]*')

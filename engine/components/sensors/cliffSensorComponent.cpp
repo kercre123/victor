@@ -334,10 +334,9 @@ bool CliffSensorComponent::ComputeCliffPose(uint32_t timestampOfCliff, uint8_t c
   const auto& robotPoseAtCliff = histState.GetPose();
   
   Pose3d cliffWrtRobot;
-  bool isValidPose = GetCliffPoseRelativeToRobot(cliffDetectedFlags, cliffWrtRobot);
+  const bool isValidPose = GetCliffPoseRelativeToRobot(cliffDetectedFlags, cliffWrtRobot);
   if(!isValidPose) {
-    LOG_ERROR("CliffSensorComponent.ComputeCliffPose.NoPoseForCliffFlags",
-              "flags=%hhu", cliffDetectedFlags);
+    LOG_INFO("CliffSensorComponent.ComputeCliffPose.NoPoseForCliffFlags", "flags=%hhu", cliffDetectedFlags);
     return false;
   }
 

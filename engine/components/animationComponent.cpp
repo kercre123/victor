@@ -34,6 +34,8 @@
 
 #include "json/json.h"
 
+#include "util/string/stringUtils.h"
+
 #define LOG_CHANNEL "Animations"
 
 namespace Anki {
@@ -160,13 +162,21 @@ void AnimationComponent::Init()
 
   if( ANKI_DEVELOPER_CODE ) {
     // now that we loaded the animations, go check the animation whitelist and make sure everything in there is
-    // a valid animation
-    const auto& whitelist = _robot->GetContext()->GetDataLoader()->GetAllWhitelistedChargerAnimationClips();
-    for( const auto& anim : whitelist ) {
-      if( _availableAnims.find(anim) == _availableAnims.end() ) {
+    // a valid animation prefix
+    const auto& whitelistedPrefixes = _robot->GetContext()->GetDataLoader()->GetAllWhitelistedChargerAnimationPrefixes();
+    for( const auto& prefix : whitelistedPrefixes ) {
+      // Ensure that at least one available animation has the given prefix
+      bool hasMatchingAnim = false;
+      for (const auto& availableAnim : _availableAnims) {
+        if (Util::StringStartsWith(availableAnim.first, prefix)) {
+          hasMatchingAnim = true;
+          break;
+        }
+      }
+      if (!hasMatchingAnim) {
         LOG_WARNING("AnimationComponent.AnimWhitelistInvalid",
-                    "Anim whitelist in RobotDataLoader contains animation '%s' which isn't a valid clip name",
-                    anim.c_str());
+                    "Anim whitelist in RobotDataLoader contains prefix '%s' for which there is no valid clip name",
+                    prefix.c_str());
       }
     }
   }

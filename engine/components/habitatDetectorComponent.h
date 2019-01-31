@@ -59,6 +59,7 @@ public:
     dependencies.insert(RobotComponentID::BlockWorld);
     dependencies.insert(RobotComponentID::FullRobotPose);
     dependencies.insert(RobotComponentID::Vision);
+    dependencies.insert(RobotComponentID::SettingsManager);
   }
   
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override
@@ -69,6 +70,7 @@ public:
     dependencies.insert(RobotComponentID::BlockWorld);
     dependencies.insert(RobotComponentID::FullRobotPose);
     dependencies.insert(RobotComponentID::Vision);
+    dependencies.insert(RobotComponentID::SettingsManager);
   }
 
   virtual void UpdateDependent(const DependencyManagedEntity<RobotComponentID>& dependentComps) override;
@@ -88,6 +90,15 @@ public:
   HabitatBeliefState GetHabitatBeliefState() const { return _habitatBelief; }
   
   void ForceSetHabitatBeliefState(HabitatBeliefState belief, const std::string& sourceStr);
+
+  // track user and system initiated volume changes
+  // - if we are currently in the habitat and we get a volume-change callback, 
+  //   then we clear the volume we will restore to (and not change the volume
+  //   after leaving the InHabitat state)
+  // - if other systems change the volume, we want to know the last volume it
+  //   was set to, and restore to this value when we can
+  //    (e.g. user requests through voice/app, webviz, console vars)
+  void OnVolumeChanged();
   
 protected:
   
@@ -108,6 +119,11 @@ protected:
   // - white thresholds changed appreciably since the last message
   // - enough time has elapsed since the last message
   void SendWhiteDetectThresholdsIfNeeded();
+
+  // sets the robot master volume to Low, if it is not Muted
+  // caches the previously set volume level, to be restored from
+  void SetRobotMasterVolumeLow();
+  void RestoreRobotMasterVolume() const;
 
 private:
   
@@ -132,6 +148,23 @@ private:
   bool _detectedWhiteFromCliffs = false;
   
   f32 _nextSendWebVizDataTime_sec = 0.0f;
+
+  // save the last volume level the robot was set to
+  // restore from this value whenever we are not InHabitat
+  u32 _lastMasterVolumeBeforeInHabitat = 0;
+
+  // when the robot is put down, record this origin ID
+  // then, when computing the distance the robot has driven
+  // we can account for rejiggered maps when localizing to the charger
+  PoseOriginID_t _poseOriginIdOnPutdown;
+
+  // after the robot is putdown, it will then get delocalized
+  // and a new origin and frame system will be tracked for this
+  // new resting position. This variable is checked when checking
+  // for robot delocalization, to ensure it is because of putdown events
+  bool _robotWasPutdownRecently = false;
+
+  PoseOriginID_t _poseOriginIdOnDelocalize;
   
   // - - - - - - - - - -
   // Prox Sensor Members

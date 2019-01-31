@@ -52,6 +52,11 @@ namespace
   static_assert(!A.AllGTE(F), "");
   static_assert(!A.AllLTE(F), "");
 
+  // Join and Slice
+  constexpr const auto AB = Join(A,B);
+  static_assert(AB == Point<6,float>{1.f, 2.f, 3.f, 4.f, 5.f, 6.f}, "");
+  static_assert(AB.Slice<1,3>() == Point3f{2.f, 3.f, 4.f}, "");
+
   // TODO: operator checks
 }
 

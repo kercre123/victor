@@ -243,7 +243,6 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Scene__Working_On_It_On = 238773808,
   Play__Robot_Vic_Sfx__Alexa_Display_Off = 652872314,
   Play__Robot_Vic_Sfx__Alexa_Display_On = 2943586044,
-  Play__Robot_Vic_Sfx__Animation_Test_Loop_Play = 1613467257,
   Play__Robot_Vic_Sfx__Attention_Device_Loop_Play = 1135332675,
   Play__Robot_Vic_Sfx__Attention_Device_Phone = 3705436708,
   Play__Robot_Vic_Sfx__Behavior_Playback_Audio = 2989671047,
@@ -672,9 +671,10 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Vo__React_Wake_Word = 3499138811,
   Play__Robot_Vic_Vo__React_Wake_Word_Surprised = 515534641,
   Play__Robot_Vic_Vo__Temp_Fist_Bump = 1376298574,
+  Play__Robot_Vic__External_Sdk_Playback_01 = 2749641932,
+  Play__Robot_Vic__External_Sdk_Playback_02 = 2749641935,
   Play__Robot_Vic__External_Voice_Message = 3168753800,
   Play__Robot_Vic__External_Voice_Text = 2774572774,
-  Stop__Robot_Vic_Sfx__Animation_Test_Loop_Stop = 2482179925,
   Stop__Robot_Vic_Sfx__Attention_Device_Loop_Stop = 2479504035,
   Stop__Robot_Vic_Sfx__Camera_Charge_Stop = 3169780311,
   Stop__Robot_Vic_Sfx__Concentrate_Loop_Stop = 1731537112,
@@ -713,6 +713,8 @@ enum uint_32 GenericEvent
   Stop__Robot_Vic_Sfx__Weather_Thunder_Loop_Stop = 1325430319,
   Stop__Robot_Vic_Sfx__Weather_Windy_Loop_Stop = 1678900650,
   Stop__Robot_Vic_Sfx__Working_Loop_Stop = 2468739505,
+  Stop__Robot_Vic__External_Sdk_Playback_01 = 3298247410,
+  Stop__Robot_Vic__External_Sdk_Playback_02 = 3298247409,
 }
 
 enum uint_32 Robot_Sfx
@@ -723,6 +725,8 @@ enum uint_32 Robot_Sfx
 
 enum uint_32 Robot_Vic
 {
+  External_Sdk_Playback_01 = 3298247410,
+  External_Sdk_Playback_02 = 3298247409,
   External_Voice_Message = 3168753800,
   External_Voice_Text = 2774572774,
   Invalid = 0,  // Use this to check for Invalid events
@@ -900,8 +904,6 @@ enum uint_32 Robot_Vic_Sfx
 {
   Alexa_Display_Off = 652872314,
   Alexa_Display_On = 2943586044,
-  Animation_Test_Loop_Play = 1613467257,
-  Animation_Test_Loop_Stop = 2482179925,
   Attention_Device_Loop_Play = 1135332675,
   Attention_Device_Loop_Stop = 2479504035,
   Attention_Device_Phone = 3705436708,

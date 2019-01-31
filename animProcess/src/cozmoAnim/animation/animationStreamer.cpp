@@ -40,6 +40,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 #include "webServerProcess/src/webService.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -2194,22 +2195,42 @@ namespace Vector {
   void AnimationStreamer::InvalidateBannedTracks(const std::string& animName,
                                                  AnimationMessageWrapper& messageWrapper) const
   {
+    const bool needToCheckWhitelist = _onCharger &&
+                                      ((_lockedTracks & (u8)AnimTrackFlag::BODY_TRACK) == 0);
+    
     // note: this duplicates engine's animation_whitelist.json, but hopefully InvalidateBannedTracks is removed soon
-    static const std::set<std::string> whitelisted = {
-      "anim_chargerdocking_comeoff_left_01",
-      "anim_chargerdocking_comeoff_left_02",
-      "anim_chargerdocking_comeoff_right_01",
-      "anim_chargerdocking_comeoff_right_02",
-      "anim_chargerdocking_comeoff_straight_01",
-      "anim_onboarding_driveoff_charger_01",
-      "anim_onboarding_wakeup_01",
-      "anim_onboarding_driveoff_charger_alt_01",
-      "anim_chargerdocking_settle_01",
-      "anim_movement_forward_01",
+    //
+    // Note: Any animation name that begins with or is equal to the provided string will be considered. E.g. if
+    // "anim_test_" appears in the list, it will match "anim_test_01", "anim_test_02", "anim_test_drive_01", etc.
+    static const std::vector<std::string> whitelisted = {
+      "anim_chargerdocking_comeoff_",
+      "anim_chargerdocking_settle_",
+      "anim_movement_forward_",
+      "anim_onboarding_driveoff_charger_",
+      "anim_onboarding_wakeup_",
     };
-    if(_bodyWhiteListActive
-       && ((_lockedTracks & (u8)AnimTrackFlag::BODY_TRACK) == 0)
-       && (whitelisted.find(animName) == whitelisted.end()))
+    
+    bool animWhitelisted = false;
+    if (needToCheckWhitelist) {
+      for (const auto& listEntry : whitelisted) {
+        if (Util::StringStartsWith(animName, listEntry)) {
+          animWhitelisted = true;
+          break;
+        }
+      }
+    }
+    
+    if (_onCharger && _frozenOnCharger)
+    {
+      // When on charger, don't move or play audio! (This could be alexa acoustic test mode)
+      // Don't lock tracks so as to not disturb any other functionality, simply drop the messages
+      // on the floor.
+      Anki::Util::SafeDelete(messageWrapper.bodyMotionMessage);
+      Anki::Util::SafeDelete(messageWrapper.moveLiftMessage);
+      Anki::Util::SafeDelete(messageWrapper.moveHeadMessage);
+      Anki::Util::SafeDelete(messageWrapper.audioKeyFrameMessage);
+    }
+    else if (needToCheckWhitelist && !animWhitelisted)
     {
       Anki::Util::SafeDelete(messageWrapper.bodyMotionMessage);
 
@@ -2228,6 +2249,28 @@ namespace Vector {
                       animName.c_str());
         }
       }
+    }
+  }
+  
+  void AnimationStreamer::SetFrozenOnCharger(bool enabled)
+  {
+    const bool wasFrozen = _onCharger && _frozenOnCharger;
+    _frozenOnCharger = enabled;
+    const bool isFrozen = _onCharger && _frozenOnCharger;
+    if (wasFrozen != isFrozen)
+    {
+      _proceduralTrackComponent->EnableProceduralAudio(!isFrozen);
+    }
+  }
+  
+  void AnimationStreamer::SetOnCharger(bool onCharger)
+  {
+    const bool wasFrozen = _onCharger && _frozenOnCharger;
+    _onCharger = onCharger;
+    const bool isFrozen = _onCharger && _frozenOnCharger;
+    if (wasFrozen != isFrozen)
+    {
+      _proceduralTrackComponent->EnableProceduralAudio(!isFrozen);
     }
   }
 
