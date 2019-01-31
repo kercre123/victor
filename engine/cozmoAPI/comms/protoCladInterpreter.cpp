@@ -61,7 +61,7 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
   ExternalInterface::MessageGameToEngine clad_message;
   /*
   auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
-  LOG_WARNING("proto_clad_interpreter", "========ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
+  LOG_WARNING("proto_clad_interpreter", "ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
       proto_message.oneof_message_type_case(),
       proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
       proto_message.GetMetadata().descriptor->full_name().c_str(),
@@ -197,10 +197,11 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   
   external_interface::GatewayWrapper proto_message;
 
-  
+  /*
   LOG_WARNING("proto_clad_interpreter", "Redirect(MG2E(%d, %s))=>proto", 
       (int)message.GetTag(),
       MessageGameToEngineTagToString(message.GetTag()));
+  */
   
 //  ____ _____ ___  ____  _
 // / ___|_   _/ _ \|  _ \| |
