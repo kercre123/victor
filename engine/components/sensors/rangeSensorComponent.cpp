@@ -1,12 +1,12 @@
 /**
  * File: rangeSensorComponent.cpp
  *
- * Author: Matt Michini
- * Created: 8/30/2017
+ * Author: Al Chaussee
+ * Created: 10/18/2018
  *
- * Description: Component for managing forward distance sensor
+ * Description: Component for managing Whiskey's head mounted ToF sensor
  *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2018
  *
  **/
 

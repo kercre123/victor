@@ -1767,33 +1767,40 @@ void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
 
     img.DrawFilledRect(rect, bg);
 
+    const float kTextScale = 0.3f;
+    const int kTextThickness = 1;
+    
     // Draw three things in each cell, distance (top left), status (top right), and signal quality (bottom left)
-    Point2f loc(x, y + 8);
-    const u8 textColor = (color > 128 ? 255 : 0);
+    Point2f loc(x, y + 8); // Draw text 8 pixels below top cell border
+    const u8 textColor = (color > 128 ? 255 : 0); // Make text color opposite of background for readability
     img.DrawText(loc,
                  std::to_string((u32)(rangeData.processedRange_mm)),
                  {textColor, textColor, textColor},
-                 0.3f,
+                 kTextScale,
                  false,
-                 1);
+                 kTextThickness);
 
+    // Range status is drawn a fixed amount from range distance (close to top right corner of cell)
     const f32 xPos = loc.x() + (u32)(2.75f*(f32)kDefaultTextSpacing_pix);
     img.DrawText({xPos, loc.y()},
                  std::to_string(status),
                  {textColor, textColor, textColor},
-                 0.3f,
+                 kTextScale,
                  false,
-                 1);
+                 kTextThickness);
 
-    const f32 yPos = loc.y() + (Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)), 0.3f, 1).y() + 1);
+    const int yOffset = Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)),
+                                                   kTextScale,
+                                                   kTextThickness).y();
+    const f32 yPos = loc.y() + yOffset + 1; // +1 for extra spacing between text lines
     char t[8];
     sprintf(t, "%2.1f", signalQuality);
     img.DrawText({loc.x(), yPos},
                  std::string(t),
                  {textColor, textColor, textColor},
-                 0.3f,
+                 kTextScale,
                  false,
-                 1);
+                 kTextThickness);
   }  
   
   DrawScratch();

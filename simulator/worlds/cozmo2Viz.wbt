@@ -1,11 +1,14 @@
-#VRML_SIM R2018a utf8
+#VRML_SIM V7.3.0 utf8
 CozmoWorldInfo {
-  info [
-    "For connecting to cozmoEngine+cozmoRobot running on physical robot / Android device"
-  ]
+  info ["For connecting to cozmoEngine+cozmoRobot running on physical robot / Android device"]
+  #basicTimeStep 60
 }
 Viewpoint {
   fieldOfView 0.8
+  #orientation 0 1 0 0
+  #position 0 0 1.5
+
+  #demo
   orientation 1 0 0 0.56
   position 0 -0.55 0.84
 }
@@ -16,12 +19,19 @@ Background {
 }
 DirectionalLight {
   ambientIntensity 0.75
+  direction 0 0 -1
+  castShadows FALSE
 }
 CozmoMat {
 }
+
 DEF CozmoViz_1 CozmoBot2 {
   name "CozmoBot_1"
+  
+  # Move robot off mat
   translation 0 1 0
+
+  # Enable vizMode
   vizMode TRUE
 }
 CozmoVizDisplay {

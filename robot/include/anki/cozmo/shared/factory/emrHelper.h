@@ -28,7 +28,7 @@ namespace Factory {
 
   namespace 
   {
-#if SIMULATOR
+#ifdef SIMULATOR
     // The simulated EMR is created at runtime by webotsCtrlRobot2.cpp which allows us
     // to determine if the simulated robot is Whiskey or Vector. As such it needs to be created
     // in a shared location so all webots controllers that need access to it can easily access it.

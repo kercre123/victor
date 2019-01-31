@@ -1,10 +1,10 @@
 /**
- * File: proxSensorComponent.h
+ * File: rangeSensorComponent.h
  *
  * Author: Al Chaussee
- * Created: 10/19/2018
+ * Created: 10/18/2018
  *
- * Description: Component for managing range sensor data
+ * Description: Component for managing Whiskey's head mounted ToF sensor
  *
  * Copyright: Anki, Inc. 2018
  *
