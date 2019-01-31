@@ -881,7 +881,7 @@ union EngineToRobot
 
   UpdatedSettings           updatedSettings           = 0xAF,
 
-  // 0xb0 to 0xFE: To engine, see messageRobotToEngine.clad
+  // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 
 

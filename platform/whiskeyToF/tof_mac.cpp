@@ -15,6 +15,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "simulator/controllers/shared/webotsHelpers.h"

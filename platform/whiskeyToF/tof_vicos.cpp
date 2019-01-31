@@ -42,7 +42,7 @@ namespace {
   // Thread and mutex for setting up and reading from the sensor
   std::thread _processor;
   std::mutex _mutex;
-  bool _stopProcessing = false;
+  std::atomic<bool> _stopProcessing = false;
 
   // Asynchonous commands in order to interact with the device on a thread
   std::mutex _commandLock;
@@ -387,12 +387,15 @@ ToFSensor::ToFSensor()
   _rangingEnabled = false;
   _isCalibrating = false;
   _processor = std::thread(ProcessLoop);
-  _processor.detach();
 }
 
 ToFSensor::~ToFSensor()
 {
   _stopProcessing = true;
+  if(_processor.joinable())
+  {
+    _processor.join();
+  }
 }
 
 Result ToFSensor::Update()

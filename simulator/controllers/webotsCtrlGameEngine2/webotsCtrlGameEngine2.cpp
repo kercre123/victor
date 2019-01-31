@@ -60,6 +60,11 @@ int main(int argc, char **argv)
   // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
   webots::Supervisor engineSupervisor;
 
+  CameraService::SetSupervisor(&engineSupervisor);
+  OSState::SetSupervisor(&engineSupervisor);
+  CubeBleClient::SetSupervisor(&engineSupervisor);
+  ToFSensor::SetSupervisor(&engineSupervisor);
+  
   // Start with a step so that we can attach to the process here for debugging
   engineSupervisor.step(BS_TIME_STEP_MS);
   
@@ -71,11 +76,6 @@ int main(int argc, char **argv)
   // is too big of a change, since it involves changing down to the context, so create a non-const platform
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlGameEngine2");
-
-  CameraService::SetSupervisor(&engineSupervisor);
-  OSState::SetSupervisor(&engineSupervisor);
-  CubeBleClient::SetSupervisor(&engineSupervisor);
-  ToFSensor::SetSupervisor(&engineSupervisor);
   
   // Get robotID to determine if devlogger should be created
   // Only create devLogs for robot with DEFAULT_ROBOT_ID.

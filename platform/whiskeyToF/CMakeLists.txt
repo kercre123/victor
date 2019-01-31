@@ -23,7 +23,6 @@ elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS
         webotsCtrlCommon
-        ${OPENCV_LIBS}
         ${WEBOTS_LIBS}
     )
     set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
@@ -33,9 +32,8 @@ target_link_libraries(whiskeyToF
 PRIVATE
   util
   cti_common
-  cti_vision
-  engine_clad # imageTypes.h
-  robot_interface # cozmoConfig.h
+  engine_clad
+  robot_interface # emrHelper.h
   ${PLATFORM_LIBS}
 )
 

@@ -83,6 +83,7 @@ void BehaviorPlaypenDistanceSensor::GetBehaviorJsonKeys(std::set<const char*>& e
     kDistToDriveKey,
     kExpectedObjectKey,
     kExpectedDistKey,
+    kPerformCalibrationKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }

@@ -14,7 +14,6 @@
 #define __platform_tof_h__
 
 #include "coretech/common/shared/types.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/tofTypes.h"
 
 namespace webots {
