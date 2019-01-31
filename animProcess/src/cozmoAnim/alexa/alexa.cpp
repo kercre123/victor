@@ -571,23 +571,26 @@ void Alexa::SetUXState( AlexaUXState newState )
     }
   }
   
-  using namespace AudioEngine;
-  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-  // Play Audio Event for state change
-  if (_uxState == AlexaUXState::Listening) {
-    if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
-      // Alexa triggered by voice or button press
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+  // Only play earcons when not frozen on charger (alexa acoustic test mode)
+  if( !(_frozenOnCharger && _onCharger) ) {
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    // Play Audio Event for state change
+    if (_uxState == AlexaUXState::Listening) {
+      if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
+        // Alexa triggered by voice or button press
+        PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+      }
+      else if (oldState == AlexaUXState::Speaking) {
+        // Play EarCon for follow up question
+        PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+      }
+      _notifyType = NotifyType::None;
     }
-    else if (oldState == AlexaUXState::Speaking) {
-      // Play EarCon for follow up question
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+    else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+      // Play when listening ends
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
     }
-    _notifyType = NotifyType::None;
-  }
-  else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
-    // Play when listening ends
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
   }
 }
   

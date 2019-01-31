@@ -12,6 +12,13 @@ list(APPEND CMAKE_MODULE_PATH
 option(CLAD_VICTOR_EMIT_CPP "Enable SDK C++ Emitter" ON)
 option(CLAD_VICTOR_EMIT_PYTHON "Enable SDK Python Emitter" OFF)
 option(CLAD_VICTOR_EMIT_CSHARP "Enable SDK C# Emitter" OFF)
+option(CLAD_VICTOR_SKIP_LICENSE "Skip licensing for builds outside of victor" OFF)
+
+if(CLAD_VICTOR_SKIP_LICENSE)
+    function(anki_build_target_license target)
+        message(WARNING "skipping license for ${target} because CLAD_VICTOR_SKIP_LICENSE is ${CLAD_VICTOR_SKIP_LICENSE}")
+    endfunction()
+endif()
 
 # default directories
 set(CLAD_OUTPUT_DIR_CPP "${CMAKE_SOURCE_DIR}/generated/clad")

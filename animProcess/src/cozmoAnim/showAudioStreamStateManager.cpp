@@ -279,15 +279,18 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ig
     }
   }
   
-  Audio::CozmoAudioController* controller = _context->GetAudioController();
-  if( ANKI_VERIFY(nullptr != controller, "ShowAudioStreamStateManager.StartAlexaResponse.NullAudioController",
-                  "The CozmoAudioController is null so the audio event cannot be played" ) )
-  {
-    using namespace AudioEngine;
-    const auto audioEvent = response->audioEvent.audioEvent;
-    if ( audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid ) {
-      controller->PostAudioEvent( ToAudioEventId( audioEvent ),
-                                  ToAudioGameObject( response->audioEvent.gameObject ) );
+  // Only play earcons when not frozen on charger (alexa acoustic test mode)
+  if( !(_onCharger && _frozenOnCharger) ) {
+    Audio::CozmoAudioController* controller = _context->GetAudioController();
+    if( ANKI_VERIFY(nullptr != controller, "ShowAudioStreamStateManager.StartAlexaResponse.NullAudioController",
+                    "The CozmoAudioController is null so the audio event cannot be played" ) )
+    {
+      using namespace AudioEngine;
+      const auto audioEvent = response->audioEvent.audioEvent;
+      if ( audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid ) {
+        controller->PostAudioEvent( ToAudioEventId( audioEvent ),
+                                    ToAudioGameObject( response->audioEvent.gameObject ) );
+      }
     }
   }
   

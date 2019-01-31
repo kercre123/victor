@@ -324,7 +324,7 @@ function(check_licenses)
     foreach(lib libcutils libglib libgio libgobject libffi libdl libz libresolv libgmodule libpcre
                 Accelerate AppKit AudioToolbox AudioUnit CoreAudio CoreBluetooth CoreFoundation
                 OpenCL OpenGL Foundation GLUT Security
-                "-Wl" "-ldl"
+                "-Wl" "-ldl" "-fsanitize=address"
                 ankiutil                     # hack: because of other hacks
                 Controller CppController ode # webots
                 opus                         # cloud
@@ -334,6 +334,7 @@ function(check_licenses)
                 liblttng-ust.so
                 liblttng-ust-tracepoint.so
                 liblttng-ust-dl.so
+                libclang_rt.asan-arm.a rt    # address sanitiser
                 )
       if(${target} MATCHES ${lib})
         set(system_lib TRUE)

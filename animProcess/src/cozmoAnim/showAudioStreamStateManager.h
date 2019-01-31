@@ -70,6 +70,9 @@ public:
   bool HasAnyAlexaResponse() const; // ok to call off thread
   bool HasValidAlexaUXResponse(AlexaUXState state) const;
   bool StartAlexaResponse(AlexaUXState state, bool ignoreGetIn = false);
+  
+  void SetOnCharger(bool onCharger) { _onCharger = onCharger; }
+  void SetFrozenOnCharger(bool frozenOnCharger) { _frozenOnCharger = frozenOnCharger; }
 
 private:
 
@@ -86,6 +89,9 @@ private:
   bool _shouldTriggerWordSimulateStream;
   uint8_t _getInAnimationTag;
   std::string _getInAnimName;
+  
+  bool _frozenOnCharger = false;
+  bool _onCharger = false;
 
   // Trigger word responses are triggered via callbacks from the trigger word detector thread
   // so we need to be thread safe and have pending responses to be executed on the main thread in Update

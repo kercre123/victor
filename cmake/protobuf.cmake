@@ -23,5 +23,5 @@ foreach(LIB ${PROTOBUF_LIBS})
     "${PROTOBUF_LIB_PATH}/lib${LIB}.a"
     INTERFACE_INCLUDE_DIRECTORIES
     "${PROTOBUF_INCLUDE_PATH}")
-  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/protobuf.license") # TODO: USE REAL LICENSE
+  anki_build_target_license(${LIB} "BSD-3,${CMAKE_SOURCE_DIR}/licenses/protobuf.license")
 endforeach()

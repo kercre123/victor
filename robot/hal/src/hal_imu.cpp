@@ -205,6 +205,7 @@ void StopIMU()
 #else
   imu_close();
 #endif
+  AnkiInfo("HAL.StopIMU.Stopped", "");
 }
 
 
