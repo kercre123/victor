@@ -15,6 +15,7 @@
 #define __Vector_PerfMetric_Anim_H__
 
 #include "util/perfMetric/iPerfMetric.h"
+#include "util/stats/statsAccumulator.h"
 
 #include <string>
 
@@ -35,13 +36,17 @@ public:
                       const float tickFrequency_ms,
                       const float sleepDurationIntended_ms,
                       const float sleepDurationActual_ms) override final;
-  virtual void Dump(const DumpType dumpType, const bool dumpAll,
-                    const std::string* fileName = nullptr, std::string* resultStr = nullptr) const override final;
 
 private:
 
-  void DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
-                   FILE* fd, std::string* resultStr) const;
+  virtual void InitDumpAccumulators() override final;
+  virtual const FrameMetric& UpdateDumpAccumulators(const int frameBufferIndex) override final;
+  virtual int AppendFrameData(const DumpType dumpType,
+                              const int frameBufferIndex,
+                              const int dumpBufferOffset) override final;
+  virtual int AppendSummaryData(const DumpType dumpType,
+                                const int dumpBufferOffset,
+                                const int lineIndex) override final;
 
   // Frame size:  Base struct is 16 bytes; here is 4 words * 4 (16 bytes) = 32 bytes
   // x 4000 frames is 125 KB
@@ -55,8 +60,11 @@ private:
 
   FrameMetricAnim*  _frameBuffer = nullptr;
 //  const AnimContext* _context;
+  Util::Stats::StatsAccumulator _accMessageCountRtA;
+  Util::Stats::StatsAccumulator _accMessageCountAtR;
+  Util::Stats::StatsAccumulator _accMessageCountEtA;
+  Util::Stats::StatsAccumulator _accMessageCountAtE;
 };
-
 
 } // namespace Vector
 } // namespace Anki

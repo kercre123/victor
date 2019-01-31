@@ -26,7 +26,7 @@ def gen_src_list_files(gen_src_dir):
 
 def build(output_dir, useCpp, useCsharp, usePython):
     global verbose
-    process = ["cmake", "-G", "Ninja"]
+    process = ["cmake", "-G", "Ninja", "-DCLAD_VICTOR_SKIP_LICENSE=ON"]
     process.append("-DCLAD_VICTOR_EMIT_CPP={}".format("ON" if useCpp else "OFF"))
     process.append("-DCLAD_VICTOR_EMIT_CSHARP={}".format("ON" if useCsharp else "OFF"))
     process.append("-DCLAD_VICTOR_EMIT_PYTHON={}".format("ON" if usePython else "OFF"))

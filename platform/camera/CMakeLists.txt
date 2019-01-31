@@ -66,6 +66,7 @@ PRIVATE
   engine_clad # imageTypes.h
   robot_interface # cozmoConfig.h
   ${PLATFORM_LIBS}
+  ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET cameraService)

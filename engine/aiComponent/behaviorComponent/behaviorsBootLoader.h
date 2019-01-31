@@ -77,10 +77,13 @@ private:
   void SetNewBehavior(BehaviorID behavior, bool requestStackReset = true);
   void SetNewBehavior(IBehavior* behavior, bool requestStackReset = true);
   
+  const Robot* _robot = nullptr;
+  
   IExternalInterface* _externalInterface = nullptr;
   const BehaviorContainer* _behaviorContainer = nullptr;
   
   IBehavior* _bootBehavior = nullptr;
+  BehaviorID _bootBehaviorID;
   IBehavior* _behaviorToSwitchTo = nullptr;
   IBehavior* _overrideBehavior = nullptr;
 
@@ -106,6 +109,7 @@ private:
     BehaviorID devBaseBehavior; // for people who want it to turn on, eyes too, but not go anywhere
     BehaviorID prDemoBehavior; // for the pr demo
     BehaviorID selfTestBehavior; // for self test
+    BehaviorID acousticTestBehavior; // for acoustic testing
   };
   
   Behaviors _behaviors;
@@ -113,6 +117,7 @@ private:
   OnboardingStages _stage;
   
   int _countUntilResetOnboarding = 0;
+  bool _wasAcousticTestMode = false;
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 };
 

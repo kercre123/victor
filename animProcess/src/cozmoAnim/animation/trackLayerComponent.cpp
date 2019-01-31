@@ -449,6 +449,15 @@ void TrackLayerComponent::ApplyFaceLayersToAnim(Animation* anim,
                                                                                applyFunc);
   }
 }
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TrackLayerComponent::EnableProceduralAudio(bool enabled)
+{
+  if (_audioLayerManager)
+  {
+    _audioLayerManager->EnableProceduralAudio(enabled);
+  }
+}
 
 
 }

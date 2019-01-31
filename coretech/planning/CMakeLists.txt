@@ -30,6 +30,7 @@ target_compile_options(cti_planning
   PRIVATE
   -stdlib=libc++
   -Os
+  ${ASAN_CXX_FLAGS} 
 )
 
 target_link_libraries(cti_planning
@@ -37,6 +38,7 @@ target_link_libraries(cti_planning
   cti_common
   PRIVATE
   ${OPENCV_LIBS}
+  ${ASAN_LINKER_FLAGS}
 )
 
 target_include_directories(cti_planning
@@ -64,11 +66,13 @@ target_compile_options(cti_planning_robot
   PRIVATE
   -stdlib=libc++
   -Os
+  ${ASAN_CXX_FLAGS} 
 )
 
 target_link_libraries(cti_planning_robot
   PUBLIC
   cti_common_robot
+  ${ASAN_LINKER_FLAGS}
 )
 
 target_include_directories(cti_planning_robot

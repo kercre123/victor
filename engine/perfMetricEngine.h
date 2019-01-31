@@ -16,6 +16,7 @@
 
 #include "util/perfMetric/iPerfMetric.h"
 #include "clad/types/behaviorComponent/activeFeatures.h"
+#include "util/stats/statsAccumulator.h"
 
 #include <string>
 
@@ -35,13 +36,17 @@ public:
                       const float tickFrequency_ms,
                       const float sleepDurationIntended_ms,
                       const float sleepDurationActual_ms) override final;
-  virtual void Dump(const DumpType dumpType, const bool dumpAll,
-                    const std::string* fileName = nullptr, std::string* resultStr = nullptr) const override final;
 
 private:
 
-  void DumpHeading(const DumpType dumpType, const bool showBehaviorHeading,
-                   FILE* fd, std::string* resultStr) const;
+  virtual void InitDumpAccumulators() override final;
+  virtual const FrameMetric& UpdateDumpAccumulators(const int frameBufferIndex) override final;
+  virtual int AppendFrameData(const DumpType dumpType,
+                              const int frameBufferIndex,
+                              const int dumpBufferOffset) override final;
+  virtual int AppendSummaryData(const DumpType dumpType,
+                                const int dumpBufferOffset,
+                                const int lineIndex) override final;
 
   // Frame size:  Base struct is 16 bytes; here is 10 words * 4 (40 bytes), plus 32 bytes = 88 bytes
   // x 4000 frames is ~344 KB
@@ -67,8 +72,17 @@ private:
 #if ANKI_PERF_METRIC_ENABLED
   const CozmoContext* _context;
 #endif
-};
 
+  Util::Stats::StatsAccumulator _accMessageCountRtE;
+  Util::Stats::StatsAccumulator _accMessageCountEtR;
+  Util::Stats::StatsAccumulator _accMessageCountGtE;
+  Util::Stats::StatsAccumulator _accMessageCountEtG;
+  Util::Stats::StatsAccumulator _accMessageCountGatewayToE;
+  Util::Stats::StatsAccumulator _accMessageCountEToGateway;
+  Util::Stats::StatsAccumulator _accMessageCountViz;
+  Util::Stats::StatsAccumulator _accBatteryVoltage;
+  Util::Stats::StatsAccumulator _accCPUFreq;
+};
 
 } // namespace Vector
 } // namespace Anki

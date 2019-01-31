@@ -62,6 +62,8 @@ public:
   void Update();
   void AdvanceTracks(const TimeStamp_t toTime_ms);
   
+  void EnableProceduralAudio(bool enabled);
+  
   // Pulls the current keyframe from various tracks of the anim
   // and combines it with any track layers that may exist
   // Outputs layeredKeyframes struct which contains the final combined

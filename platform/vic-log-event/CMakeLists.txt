@@ -21,6 +21,7 @@ if (VICOS)
   target_link_libraries(vic-log-event
     PRIVATE
     util
+    ${ASAN_LINKER_FLAGS}
   )
 
   anki_build_strip(TARGET vic-log-event)

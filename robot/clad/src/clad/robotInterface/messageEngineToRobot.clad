@@ -679,6 +679,10 @@ message TriggerBackpackAnimation {
   BackpackAnimationTrigger trigger,
 }
 
+message AcousticTestEnabled {
+  bool enabled,
+}
+
 // Because we're running low on message tags, expand this enum and message as we add more settings
 // that we want to send to anim/robot.  To expand, update the Process_updatedSettings() method.
 // We're not using the proto enums for the settings here, because it's proto, not clad, and because
@@ -854,6 +858,8 @@ union EngineToRobot
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
 
   SelfTestEnd                   selfTestEnd                 = 0xA4,
+
+  AcousticTestEnabled           acousticTestEnabled         = 0xA5,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 

@@ -2195,12 +2195,8 @@ namespace Vector {
   void AnimationStreamer::InvalidateBannedTracks(const std::string& animName,
                                                  AnimationMessageWrapper& messageWrapper) const
   {
-    const bool needToCheckWhitelist = _bodyWhiteListActive &&
+    const bool needToCheckWhitelist = _onCharger &&
                                       ((_lockedTracks & (u8)AnimTrackFlag::BODY_TRACK) == 0);
-    
-    if (!needToCheckWhitelist) {
-      return;
-    }
     
     // note: this duplicates engine's animation_whitelist.json, but hopefully InvalidateBannedTracks is removed soon
     //
@@ -2215,14 +2211,26 @@ namespace Vector {
     };
     
     bool animWhitelisted = false;
-    for (const auto& listEntry : whitelisted) {
-      if (Util::StringStartsWith(animName, listEntry)) {
-        animWhitelisted = true;
-        break;
+    if (needToCheckWhitelist) {
+      for (const auto& listEntry : whitelisted) {
+        if (Util::StringStartsWith(animName, listEntry)) {
+          animWhitelisted = true;
+          break;
+        }
       }
     }
     
-    if (!animWhitelisted)
+    if (_onCharger && _frozenOnCharger)
+    {
+      // When on charger, don't move or play audio! (This could be alexa acoustic test mode)
+      // Don't lock tracks so as to not disturb any other functionality, simply drop the messages
+      // on the floor.
+      Anki::Util::SafeDelete(messageWrapper.bodyMotionMessage);
+      Anki::Util::SafeDelete(messageWrapper.moveLiftMessage);
+      Anki::Util::SafeDelete(messageWrapper.moveHeadMessage);
+      Anki::Util::SafeDelete(messageWrapper.audioKeyFrameMessage);
+    }
+    else if (needToCheckWhitelist && !animWhitelisted)
     {
       Anki::Util::SafeDelete(messageWrapper.bodyMotionMessage);
 
@@ -2241,6 +2249,28 @@ namespace Vector {
                       animName.c_str());
         }
       }
+    }
+  }
+  
+  void AnimationStreamer::SetFrozenOnCharger(bool enabled)
+  {
+    const bool wasFrozen = _onCharger && _frozenOnCharger;
+    _frozenOnCharger = enabled;
+    const bool isFrozen = _onCharger && _frozenOnCharger;
+    if (wasFrozen != isFrozen)
+    {
+      _proceduralTrackComponent->EnableProceduralAudio(!isFrozen);
+    }
+  }
+  
+  void AnimationStreamer::SetOnCharger(bool onCharger)
+  {
+    const bool wasFrozen = _onCharger && _frozenOnCharger;
+    _onCharger = onCharger;
+    const bool isFrozen = _onCharger && _frozenOnCharger;
+    if (wasFrozen != isFrozen)
+    {
+      _proceduralTrackComponent->EnableProceduralAudio(!isFrozen);
     }
   }
 

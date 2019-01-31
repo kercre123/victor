@@ -329,9 +329,14 @@ else
   echo "Ignore Go dependencies"
 fi
 
-# install build tool binaries + set protoc location
-PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install 3.5.1 | tail -1`
-PROTOBUF_HOME=`cd $(dirname "${PROTOC_EXE}")/.. && pwd`
+# Set protobuf location
+HOST=`uname -a | awk '{print tolower($1);}' | sed -e 's/darwin/mac/'`
+PROTOBUF_HOME=${TOPLEVEL}/EXTERNALS/protobuf/${HOST}
+
+# Build protocCppPlugin if needed
+if [[ ! -x ${TOPLEVEL}/tools/protobuf/plugin/protocCppPlugin ]]; then
+    ${TOPLEVEL}/tools/protobuf/plugin/make.sh
+fi
 
 # Build/Install the protoc generators for go
 GOBIN="${TOPLEVEL}/cloud/go/bin"

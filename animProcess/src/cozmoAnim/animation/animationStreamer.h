@@ -197,7 +197,10 @@ namespace Vector {
     // for display on a debug screen
     void RedirectFaceImagesToDebugScreen(bool redirect) { _redirectFaceImagesToDebugScreen = redirect; }
     
-    void SetBodyWhitelistActive(bool active) { _bodyWhiteListActive = active; }
+    void SetOnCharger(bool onCharger);
+    
+    // When on the charger, the robot won't play any motion or audio frames, irrespective of locked tracks
+    void SetFrozenOnCharger(bool enabled);
 
     // Procedural Eye
     void ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg);
@@ -326,7 +329,9 @@ namespace Vector {
 
     std::vector<NewAnimationCallback> _newAnimationCallbacks;
     
-    bool _bodyWhiteListActive = false;
+    bool _onCharger = false;
+    
+    bool _frozenOnCharger = false;
 
     static bool IsTrackLocked(u8 lockedTracks, u8 trackFlagToCheck) {
       return ((lockedTracks & trackFlagToCheck) == trackFlagToCheck);
