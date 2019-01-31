@@ -214,6 +214,16 @@ enum int_32 AnimationTrigger
   GazingLookAtVectorReaction,
   
   HighTemperatureWarningFace,
+  
+  HeldOnPalmGetInNervous,
+  HeldOnPalmGetInRelaxed,
+  HeldOnPalmReactToJolt,
+  HeldOnPalmNestling,
+  HeldOnPalmPickupNervous,
+  HeldOnPalmPickupRelaxed,
+  HeldOnPalmPutDownNervous,
+  HeldOnPalmPutDownRelaxed,
+  HeldOnPalmRollOff,
 
   SeasonalHappyHolidays,
   SeasonalHappyNewYear,

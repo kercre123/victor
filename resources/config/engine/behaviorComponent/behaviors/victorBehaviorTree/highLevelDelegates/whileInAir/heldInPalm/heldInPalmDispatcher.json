@@ -44,7 +44,7 @@
       "behaviorClass" : "AnimSequence",
       
       // TODO(GB): Change to corresponding "initial held-in-palm" animation
-      "animTriggers": ["ReactToPickupInitial"]
+      "animTriggers": ["HeldOnPalmGetInRelaxed"]
     }
   ]
 }
